@@ -76,7 +76,7 @@ interface MedicalHistoryTabProps {
   medicalconCount: number | undefined
   patientLinkData: PatientLinkData
   childHealthCount?: number | undefined
-  childHealthRecords: ChildHealthRecord[] // This is the array of formatted records
+  childHealthRecords: ChildHealthRecord[]
   prenatalCount: number | undefined
 }
 

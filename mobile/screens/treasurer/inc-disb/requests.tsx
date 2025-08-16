@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { IncomeImage, DisbursementImage } from "./queries";
+import { IncomeImage, DisbursementImage } from "./inc-disc-types";
 
 export const archiveIncomeImage = async (infi_num: number) => {
   const res = await api.patch(`treasurer/income-tab/images/${infi_num}/`, { infi_is_archive: true });
@@ -53,29 +53,6 @@ export const permanentDeleteDisbursementFolder = async (dis_num: number) => {
   return res.data;
 };
 
-export const restoreIncomeFolder = async (inf_num: number) => {
-  const res = await api.patch(`treasurer/income-tab/folders/${inf_num}/restore/`);
-  return res.data;
-};
-
-export const restoreDisbursementFolder = async (dis_num: number) => {
-  const res = await api.patch(`treasurer/disbursement-tab/folders/${dis_num}/restore/`);
-  return res.data;
-};
-
-// export const deleteIncomeFolder = async (inf_num: number, permanent: boolean = false) => {
-//   const res = await api.delete(`treasurer/income-tab/folders/${inf_num}/`, {
-//     params: { permanent: permanent.toString() }
-//   });
-//   return res.data;
-// };
-
-// export const deleteDisbursementFolder = async (dis_num: number, permanent: boolean = false) => {
-//   const res = await api.delete(`treasurer/disbursement-tab/folders/${dis_num}/`, {
-//     params: { permanent: permanent.toString() }
-//   });
-//   return res.data;
-// };
 
 export const getIncomeImages = async (archive: boolean = false, folderId?: number) => {
   try {
@@ -101,30 +78,6 @@ export const getDisbursementImages = async (archive: boolean = false, folderId?:
     console.error("API Error:", err)
     return []
   }
-}
-
-export const createIncomeImage = async (data: {
-  upload_date: string
-  type: string
-  name: string
-  path: string
-  url: string
-  inf_num: number
-}) => {
-  const res = await api.post(`treasurer/income-tab/images/`, data)
-  return res.data
-}
-
-export const createDisbursementImage = async (data: {
-  upload_date: string
-  type: string
-  name: string
-  path: string
-  url: string
-  dis_num: number
-}) => {
-  const res = await api.post(`treasurer/disbursement-tab/images/`, data)
-  return res.data
 }
 
 export const createFolder = async (data: { type: "income" | "disbursement"; name: string; year: string, desc?: string }) => {

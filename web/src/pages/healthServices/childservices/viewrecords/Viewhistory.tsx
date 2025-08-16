@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button/button";
 import { Accordion } from "@/components/ui/accordion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChildHealthHistoryRecord } from "./types";
-import { getSupplementStatusesFields } from "./Config";
+import { getSupplementStatusesFields } from "./config";
 import { PatientSummarySection } from "./CurrentHistoryView";
 import CardLayout from "@/components/ui/card/card-layout";
 import { History, Baby } from "lucide-react";
@@ -20,7 +20,7 @@ export default function ChildHealthHistoryDetail() {
   // Navigation and routing
   const navigate = useNavigate();
   const location = useLocation();
-  const { patId, chrecId, chhistId } = location.state?.params || {};
+  const {  chrecId, chhistId } = location.state?.params || {};
 
   // State management
   const [fullHistoryData, setFullHistoryData] = useState<
@@ -39,7 +39,6 @@ export default function ChildHealthHistoryDetail() {
   const { 
     data: historyData, 
     isLoading, 
-    isError 
   } = useChildHealthHistory(chrecId);
 
   

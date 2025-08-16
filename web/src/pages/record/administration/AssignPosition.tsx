@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 // Import hooks for both databases
 import { usePositions } from "./queries/administrationFetchQueries";
-import { formatPositions } from "./administrationFormats";
+import { formatPositions } from "./AdministrationFormats";
 import { useAddStaff } from "./queries/administrationAddQueries";
 import { useAddStaffHealth } from "../health/administration/queries/administrationAddQueries";
 import { useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";

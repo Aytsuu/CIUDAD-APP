@@ -1,5 +1,3 @@
-"use client"
-
 import _ScreenLayout from "@/screens/_ScreenLayout"
 import { View, TouchableOpacity, Text, ScrollView, Image } from "react-native"
 import { ChevronLeft } from "lucide-react-native"

@@ -15,6 +15,10 @@ from .utils import *
 from apps.childhealthservices.models import ChildHealthImmunizationHistory
 from apps.childhealthservices.serializers import ChildHealthImmunizationHistorySerializer
 from rest_framework.decorators import api_view
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
+from django.utils.timezone import now
+
 
 
 class VaccineRecordView(generics.ListCreateAPIView):
@@ -92,7 +96,6 @@ class DeleteUpdateVaccinationRecordView(generics.RetrieveUpdateDestroyAPIView):
         except NotFound:
             return Response({"error": "Vaccination record not found."}, status=status.HTTP_404_NOT_FOUND)
     
-    
 
 class DeleteUpdateVaccinationHistoryView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VaccinationHistorySerializer
@@ -149,8 +152,7 @@ class GetVaccinationCountView(APIView):
             return Response({'pat_id': pat_id, 'vaccination_count': count}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        
+            
         
 class GetAllResidentsNotVaccinated(APIView):
     def get(self, request):
@@ -159,7 +161,7 @@ class GetAllResidentsNotVaccinated(APIView):
             return Response(data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+       
 
 class CountVaccinatedByPatientTypeView(APIView):
     def get(self, request):
@@ -189,67 +191,6 @@ class ForwardedVaccinationCountView(APIView):
         return Response({"count": count})
 
 
-
-class MonthlyVaccinationRecordsAPIView(APIView):
-    def get(self, request):
-        try:
-            # Get base queryset with proper relationships
-            queryset = VaccinationHistory.objects.select_related(
-                'vachist',  # ForeignKey to FirstAidInventory
-                'vacStck_id__inv_id',  # OneToOne to Inventory
-                'vacStck_id__vac_id',  # ForeignKey to FirstAidList
-                'vital__vital_id'
-                'vacrec__patrec_id'  
-            ).order_by('-created_at')
-            
-            # Filter by year if provided
-            year = request.GET.get('year')
-            if year and year != 'all':
-                queryset = queryset.filter(created_at__year=year)
-            
-            # Group by month and get counts
-            monthly_data = queryset.annotate(
-                month=TruncMonth('created_at')
-            ).values('month').annotate(
-                record_count=Count('vachist_id')
-            ).order_by('-month')
-            
-            # Format the response
-            formatted_data = []
-            for item in monthly_data:
-                month_str = item['month'].strftime('%Y-%m')
-                month_records = queryset.filter(
-                    created_at__year=item['month'].year,
-                    created_at__month=item['month'].month
-                )
-                
-                # Serialize records
-                serialized_records = []
-                for record in month_records:
-                    # Serialize record
-                    serialized_record = VaccinationRecordSerializer(record).data
-                    serialized_records.append(serialized_record)
-                
-                formatted_data.append({
-                    'month': month_str,
-                    'record_count': item['record_count'],
-                    'records': serialized_records
-                })
-            
-            return Response({
-                'success': True,
-                'data': formatted_data,
-                'total_records': len(formatted_data)
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            return Response({
-                'success': False,
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-            
-            
  
 class BulkVaccinationCreateView(APIView):
     def post(self, request):
@@ -321,3 +262,193 @@ def bulk_create_immunization_histories(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ======================== Monthly Vaccination REPORTS ========================
+            
+class MonthlyVaccinationSummariesAPIView(APIView):
+    def get(self, request):
+        try:
+            queryset = VaccinationHistory.objects.select_related(
+                'staff',
+                'vital',
+                'vacrec',
+                'vacrec__patrec_id',
+                'vacStck_id',
+                'vacStck_id__inv_id',
+                'vacStck_id__vac_id',
+                'vac',
+                'followv'
+            ).order_by('-created_at')
+
+            year_param = request.GET.get('year')  # '2025' or '2025-07'
+
+            if year_param and year_param != 'all':
+                try:
+                    if '-' in year_param:
+                        year, month = map(int, year_param.split('-'))
+                        queryset = queryset.filter(
+                            created_at__year=year,
+                            created_at__month=month
+                        )
+                    else:
+                        year = int(year_param)
+                        queryset = queryset.filter(
+                            created_at__year=year
+                        )
+                except ValueError:
+                    return Response({
+                        'success': False,
+                        'error': 'Invalid format for year. Use YYYY or YYYY-MM.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Annotate and count records by month
+            monthly_data = queryset.annotate(
+                month=TruncMonth('created_at')
+            ).values('month').annotate(
+                record_count=Count('vachist_id')
+            ).order_by('-month')
+
+            formatted_data = [{
+                'month': item['month'].strftime('%Y-%m'),
+                'record_count': item['record_count']
+            } for item in monthly_data]
+
+            return Response({
+                'success': True,
+                'data': formatted_data,
+                'total_months': len(formatted_data)
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class MonthlyVaccinationRecordsDetailAPIView(APIView):
+    def get(self, request, month):
+        try:
+            # Validate month format (YYYY-MM)
+            try:
+                year, month_num = map(int, month.split('-'))
+                if month_num < 1 or month_num > 12:
+                    raise ValueError
+            except ValueError:
+                return Response({
+                    'success': False,
+                    'error': 'Invalid month format. Use YYYY-MM.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get records for the specified month
+            queryset = VaccinationHistory.objects.select_related(
+                'staff',
+                'vital',
+                'vacrec',
+                'vacrec__patrec_id',
+                'vacStck_id',
+                'vacStck_id__inv_id',
+                'vacStck_id__vac_id',
+                'vac',
+                'followv'
+            ).filter(
+                created_at__year=year,
+                created_at__month=month_num
+            ).order_by('-created_at')
+
+            serialized_records = [
+                VaccinationHistorySerializer(record).data for record in queryset
+            ]
+
+            return Response({
+                'success': True,
+                'data': {
+                    'month': month,
+                    'record_count': len(serialized_records),
+                    'records': serialized_records
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)     
+
+            
+
+class MonthlyVaccinationChart(APIView):
+    def get(self, request, month):
+        try:
+            # Validate month format (YYYY-MM)
+            try:
+                year, month_num = map(int, month.split('-'))
+                if month_num < 1 or month_num > 12:
+                    raise ValueError
+            except ValueError:
+                return Response({
+                    'success': False,
+                    'error': 'Invalid month format. Use YYYY-MM.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get vaccination counts for the specified month
+            queryset = VaccinationHistory.objects.filter(
+                created_at__year=year,
+                created_at__month=month_num
+            ).values(
+                'vacStck_id__vac_id__vac_name'  # Path to vaccine name
+            ).annotate(
+                count=Count('vacStck_id__vac_id')
+            ).order_by('-count')
+
+            # Convert to dictionary format {vaccine_name: count}
+            vaccine_counts = {
+                item['vacStck_id__vac_id__vac_name']: item['count'] 
+                for item in queryset
+            }
+
+            return Response({
+                'success': True,
+                'month': month,
+                'vaccine_counts': vaccine_counts,
+                'total_records': sum(vaccine_counts.values())
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+class VaccinationTotalCountAPIView(APIView):
+    def get(self, request):
+        try:
+            # Count records connected to vacStck_id (and not vac_id)
+            total_records = VaccinationHistory.objects.filter(
+                vacStck_id__isnull=False,
+                vac__isnull=True  # Exclude records with vac_id
+            ).count()
+
+            # Count records grouped by vaccine name from vacStck_id
+            items_count = VaccinationHistory.objects.filter(
+                vacStck_id__isnull=False,
+                vac__isnull=True
+            ).values(
+                'vacStck_id__vac_id__vac_name'  # Adjust based on your model relationships
+            ).annotate(
+                count=Count('vachist_id')
+            ).order_by('-count')
+
+            return Response({
+                'success': True,
+                'total_records': total_records,
+                'items_count': items_count
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

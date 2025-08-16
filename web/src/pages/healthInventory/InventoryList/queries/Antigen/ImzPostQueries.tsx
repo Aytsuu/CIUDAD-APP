@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { addImzSupplies } from "../../restful-api/Antigen/ImzPostAPI";
 import {toast} from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
+import { addImzSupplies } from "../../restful-api/Antigen/postAPI";
 
 export const useAddImzSupplies = () => {
   const queryClient = useQueryClient();

@@ -1,17 +1,13 @@
-"use client";
+// MAIN FIX: Update your SoapForm component
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router";
-
+import { useState, useCallback, useEffect, useRef } from "react";
 import SoapFormFields from "@/components/ui/soap-form";
-
 import { useAuth } from "@/context/AuthContext";
 import { usePhysicalExamQueries } from "../queries.tsx/fetch";
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI";
 import { useSubmitSoapForm } from "../queries.tsx/soap-submission";
-
 import { soapSchema, SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { ExamSection } from "../../types";
 
@@ -35,10 +31,7 @@ export default function SoapForm({
   const { user } = useAuth();
   const staff = user?.staff?.staff_id || null;
 
-  const navigate = useNavigate();
-
   const [currentPage, setCurrentPage] = useState(1);
-  const [showReceipt, setShowReceipt] = useState(false);
   const { mutate: submitSoapForm, isPending: isSubmitting } =
     useSubmitSoapForm();
 
@@ -53,6 +46,8 @@ export default function SoapForm({
   });
 
   const [examSections, setExamSections] = useState<ExamSection[]>([]);
+  // Add a ref to prevent infinite loops
+  const isUpdatingFromChild = useRef(false);
 
   const { data: medicineStocksOptions } = fetchMedicinesWithStock();
 
@@ -97,18 +92,7 @@ export default function SoapForm({
     }
   }, [initialData, form, patientData]);
 
-  useEffect(() => {
-    return () => {
-      if (onFormDataUpdate) {
-        const currentValues = form.getValues();
-        onFormDataUpdate({
-          ...currentValues,
-          selectedMedicines,
-        });
-      }
-    };
-  }, [form, selectedMedicines, onFormDataUpdate]);
-
+ 
   const hasInvalidQuantities = selectedMedicines.some((med) => {
     const stock = medicineStocksOptions?.find((m: any) => m.id === med.minv_id);
     return med.medrec_qty < 1 || (stock && med.medrec_qty > stock.avail);
@@ -121,6 +105,20 @@ export default function SoapForm({
 
   const handleSelectedMedicinesChange = useCallback(
     (updated: any[]) => {
+      // Prevent infinite loops by checking if update is from child component
+      if (isUpdatingFromChild.current) {
+        isUpdatingFromChild.current = false;
+        return;
+      }
+
+      // Deep comparison to avoid unnecessary updates
+      const currentJson = JSON.stringify(selectedMedicines.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
+      const updatedJson = JSON.stringify(updated.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
+      
+      if (currentJson === updatedJson) {
+        return;
+      }
+
       setSelectedMedicines(updated);
 
       const summaryWithoutMeds = form
@@ -146,14 +144,16 @@ export default function SoapForm({
         medicines: updated,
       });
 
+      // Only call onFormDataUpdate if it exists
       if (onFormDataUpdate) {
+        const currentValues = form.getValues();
         onFormDataUpdate({
-          ...form.getValues(),
+          ...currentValues,
           selectedMedicines: updated,
         });
       }
     },
-    [form, patientData, medicineStocksOptions, onFormDataUpdate]
+    [form, patientData, medicineStocksOptions, onFormDataUpdate] // Remove selectedMedicines from dependencies
   );
 
   const handlePageChange = useCallback((page: number) => {
@@ -226,6 +226,7 @@ export default function SoapForm({
   }, [sectionsQuery.data, optionsQuery.data, form]);
 
   const handleBack = useCallback(() => {
+    // Only update form data when going back
     if (onFormDataUpdate) {
       const currentValues = form.getValues();
       onFormDataUpdate({

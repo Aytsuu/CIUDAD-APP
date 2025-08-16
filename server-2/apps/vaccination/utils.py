@@ -1,6 +1,6 @@
 from .models import *
 from apps.inventory.models import *
-from apps.inventory.serializers import VacccinationListSerializer
+from apps.inventory.serializers.vaccine_serializers import *
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer
 from apps.patientrecords.models import *
 from django.db.models import Q
@@ -22,7 +22,7 @@ def get_unvaccinated_vaccines_for_patient(pat_id):
         vacrec__patrec_id__pat_id=pat_id
     ).values_list('vacStck_id__vac_id', flat=True).distinct()
 
-    # Get overdue follow-up vaccines of type "routine"
+    # Get overdue follow-up vaccines of type "routine" 
     overdue_vac_ids = VaccinationHistory.objects.filter(
         vacrec__patrec_id__pat_id=pat_id,
         vacStck_id__vac_id__vac_type_choices="routine",

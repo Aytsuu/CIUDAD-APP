@@ -17,7 +17,6 @@ import { AppointmentFilters } from "../restful-api/get";
 	  queryFn: () => getchilddata(patientId ?? ""),
 	  refetchOnMount: false,
 	  staleTime: 300000, // 5 minutes
-	  gcTime: 600000, // 10 minutes
 	});
   };
 // resident query keys

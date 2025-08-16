@@ -31,15 +31,31 @@ export function VaccinationStatusCards({
     return acc;
   }, {});
 
+  // For each vaccine, find the maximum dose number administered
+  const maxDoseNumbers = vaccinations.reduce((acc, record) => {
+    const vaccineId =
+      record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id;
+    if (!vaccineId) return acc;
+
+    if (!acc[vaccineId] || record.vachist_doseNo > acc[vaccineId]) {
+      acc[vaccineId] = record.vachist_doseNo;
+    }
+    return acc;
+  }, {});
+
   // Categorize the latest records
   const categorizedVaccines = {
     completed: Object.values(groupedVaccinations).filter(
       (record: any) =>
-        record.vachist_doseNo === record.vacrec_details?.vacrec_totaldose
+        maxDoseNumbers[
+          record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id
+        ] === record.vacrec_details?.vacrec_totaldose
     ),
     partial: Object.values(groupedVaccinations).filter(
       (record: any) =>
-        record.vachist_doseNo < record.vacrec_details?.vacrec_totaldose
+        maxDoseNumbers[
+          record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id
+        ] < record.vacrec_details?.vacrec_totaldose
     ),
     unvaccinated: unvaccinatedVaccines,
   };
@@ -80,7 +96,7 @@ export function VaccinationStatusCards({
           {type === "partial" ? "Partially " : type}
         </span>
         <span
-          className={`text-xs px-2 py-0.5 rounded-full ${
+          className={`text-xs px-2 py-0.5 rounded-md ${
             active
               ? `bg-${config.color}-100 text-${config.color}-800`
               : "bg-gray-200 text-gray-600"
@@ -95,9 +111,9 @@ export function VaccinationStatusCards({
   const renderVaccineList = (vaccines: any[]) => {
     if (vaccines.length === 0) {
       return (
-        <div className="flex items-center justify-center h-[200px]">
+        <div className="flex items-center justify-center h-[250px]">
           <div className="text-center">
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <div className="w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center mx-auto mb-4 shadow-sm">
               {activeTab === "completed" ? (
                 <CheckCircle className="h-8 w-8 text-gray-700" />
               ) : activeTab === "partial" ? (
@@ -119,7 +135,7 @@ export function VaccinationStatusCards({
     }
 
     return (
-      <div className="overflow-y-auto h-[200px]">
+      <div className="overflow-y-auto h-[250px]">
         <ul className="space-y-3 pr-2">
           {vaccines.map((record: any, index: number) => {
             // For unvaccinated, the structure is different
@@ -131,7 +147,7 @@ export function VaccinationStatusCards({
                   role="listitem"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 bg-red-500 rounded-full flex-shrink-0 shadow-sm"></div>
+                    <div className="w-4 h-4 bg-red-500 rounded-md flex-shrink-0 shadow-sm"></div>
                     <div className="flex flex-col">
                       <span className="font-semibold text-gray-800">
                         {record.vac_name}
@@ -166,7 +182,7 @@ export function VaccinationStatusCards({
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-4 h-4 rounded-full flex-shrink-0 shadow-sm ${
+                    className={`w-4 h-4 rounded-md flex-shrink-0 shadow-sm ${
                       activeTab === "completed"
                         ? "bg-green-500"
                         : "bg-yellow-500"
@@ -179,7 +195,7 @@ export function VaccinationStatusCards({
                     <div className="flex gap-4 mt-1">
                       <span className="text-xs text-gray-500 flex items-center gap-1">
                         <span className="font-medium">Dose:</span>
-                        {record.vachist_doseNo} of{" "}
+                        {maxDoseNumbers[vaccineData.vac_id]} of{" "}
                         {record.vacrec_details?.vacrec_totaldose}
                       </span>
                       {ageGroup && (
@@ -238,7 +254,7 @@ export function VaccinationStatusCards({
       </div>
 
       {/* Content structure with scrollable area */}
-      <div className="bg-gray-100 rounded-xl p-6 border border-gray-300 shadow-sm">
+      <div>
         {activeTab === "unvaccinated" &&
           renderVaccineList(categorizedVaccines.unvaccinated)}
         {activeTab === "partial" &&

@@ -12,25 +12,20 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { Label } from "@/components/ui/label";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { AlertCircle, ChevronLeft, Loader2 } from "lucide-react";
-
 import { format } from "date-fns";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import CardLayout from "@/components/ui/card/card-layout";
 import { useStep2VaccinationMutation } from "../queries/Step2Vaccination";
 import { Patient } from "../../restful-api-patient/type";
+import { useAuth } from "@/context/AuthContext";
 
 
 export default function ForwardedVaccinationForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const { params } = location.state || {};
-  const {
-    vaccineName,
-    vaccineType,
-    vaccineDose,
-    maxDoses,
-    follow_up_visit,
-  } = params || {};
+  const { user } = useAuth();
+  const staff_id = user?.staff?.staff_id || null;
 
   const form = useForm<VitalSignsType>({
     resolver: zodResolver(VitalSignsSchema),
@@ -60,7 +55,7 @@ export default function ForwardedVaccinationForm() {
   const submit = async (data: VitalSignsType) => {
     setIsSubmitting(true);
     try {
-      await mutation.mutateAsync({ data, params });
+      await mutation.mutateAsync({ data, params,staff_id });
       navigate(-1);
     } catch (error) {
       console.error("Error during submission:", error);
@@ -149,21 +144,21 @@ export default function ForwardedVaccinationForm() {
                     <div>
                       <p className="text-sm text-gray-500">Vaccine Name</p>
                       <p className="font-medium text-gray-800">
-                        {vaccineName || "-"}
+                        {params?.vaccineName || "-"}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Vaccine Type</p>
                       <p className="font-medium text-gray-800">
-                        {vaccineType || "-"}
+                        {params?.vaccineType || "-"}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Dose</p>
                       <p className="font-medium text-gray-800">
-                        {vaccineDose
-                          ? `${vaccineDose}${
-                              ["st", "nd", "rd"][(vaccineDose % 10) - 1] || "th"
+                        {params?.vaccineDose
+                          ? `${params?.vaccineDose}${
+                              ["st", "nd", "rd"][(params?.vaccineDose % 10) - 1] || "th"
                             } Dose`
                           : "-"}
                       </p>
@@ -177,7 +172,7 @@ export default function ForwardedVaccinationForm() {
                       Total Doses Required
                     </p>
                     <p className="font-medium text-gray-800">
-                      {maxDoses || "-"}
+                      {params?.maxDoses || "-"}
                     </p>
                   </div>
 
@@ -186,9 +181,9 @@ export default function ForwardedVaccinationForm() {
                       Next Follow-up Visit
                     </p>
                     <p className="font-medium text-gray-800">
-                      {follow_up_visit?.followv_date
+                      {params?.follow_up_visit?.followv_date
                         ? format(
-                            new Date(follow_up_visit.followv_date),
+                            new Date(params?.follow_up_visit.followv_date),
                             "MMM dd, yyyy"
                           )
                         : "No follow-up scheduled"}
@@ -225,6 +220,8 @@ export default function ForwardedVaccinationForm() {
                 </div>
               </div>
             </div>
+
+            <span className="text-sm  text-gray-400">Note* Please fill required field needed depending on vaccines</span>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-white">
               <FormInput

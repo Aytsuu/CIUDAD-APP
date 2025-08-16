@@ -3,32 +3,36 @@ import { useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput } from "lucide-react";
+import { Search, Plus, FileInput, Loader2 } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { MedicineRecords } from "../tables/columns/MedicineCol";
 import { Medcolumns } from "../tables/columns/MedicineCol";
 import { useMedicines } from "../queries/medicine/MedicineFetchQueries";
-import { Link } from "react-router";
 import { useDeleteMedicine } from "../queries/medicine/MedicineDeleteQueries";
+import { MedicineModal } from "../addListModal/MedicineModal";
+
 export default function MedicineList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [medToDelete, setMedToDelete] = useState<string | null>(null);
-  const [isDialog, setIsDialog] = useState(false);
-  const queryClient = useQueryClient();
+  const [showMedicineModal, setShowMedicineModal] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [selectedMedicine, setSelectedMedicine] = useState<MedicineRecords | null>(null);
+  
   const columns = Medcolumns(
-    setMedToDelete,
-    setIsDeleteConfirmationOpen
+    setMedToDelete, 
+    setIsDeleteConfirmationOpen, 
+    setSelectedMedicine, 
+    setModalMode, 
+    setShowMedicineModal
   );
-  // 
+  
   const { data: medicines, isLoading: isLoadingMedicines } = useMedicines();
+  const deleteMutation = useDeleteMedicine();
 
   const formatMedicineData = useCallback((): MedicineRecords[] => {
     if (!medicines) return [];
@@ -50,26 +54,12 @@ export default function MedicineList() {
     );
   }, [searchQuery, formatMedicineData]);
 
-  const deleteMutation = useDeleteMedicine();
-
   const handleDelete = () => {
     if (medToDelete === null) return;
-    
     deleteMutation.mutate(medToDelete);
     setIsDeleteConfirmationOpen(false);
     setMedToDelete(null);
   };
-
-  if (isLoadingMedicines) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
 
   const totalPages = Math.ceil(filteredMedicines.length / pageSize);
   const paginatedMedicines = filteredMedicines.slice(
@@ -77,8 +67,14 @@ export default function MedicineList() {
     currentPage * pageSize
   );
 
+  const handleAddNew = () => {
+    setModalMode('add');
+    setSelectedMedicine(null);
+    setShowMedicineModal(true);
+  };
+
   return (
-    <div>
+    <div className="relative">
       <div className="hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative w-full">
@@ -94,17 +90,11 @@ export default function MedicineList() {
             />
           </div>
         </div>
-        <Button>
-          <Link
-            to="/addMedicineList"
-            className="flex justify-center items-center gap-2 px-2"
-          >
+        <Button onClick={handleAddNew}>
+          <div className="flex justify-center items-center gap-2 px-2">
             <Plus size={15} /> New
-          </Link>
+          </div>
         </Button>
-        
-
-       
       </div>
 
       <div className="bg-white rounded-md">
@@ -120,7 +110,7 @@ export default function MedicineList() {
                 if (value >= 1) {
                   setPageSize(value);
                 } else {
-                  setPageSize(1); // Reset to 1 if invalid
+                  setPageSize(1);
                 }
               }}
               min="1"
@@ -140,8 +130,16 @@ export default function MedicineList() {
             ]}
           />
         </div>
-        <div className="overflow-x-auto">
-          <DataTable columns={columns} data={paginatedMedicines} />
+
+        <div className="bg-white w-full overflow-x-auto">
+          {isLoadingMedicines ? (
+            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">loading....</span>
+            </div>
+          ) : (
+            <DataTable columns={columns} data={paginatedMedicines} />
+          )}
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
@@ -166,6 +164,18 @@ export default function MedicineList() {
         title="Delete Medicine"
         description="Are you sure you want to delete this medicine? This action cannot be undone."
       />
+
+      {showMedicineModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <MedicineModal
+              mode={modalMode}
+              initialData={selectedMedicine ?? undefined}
+              onClose={() => setShowMedicineModal(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

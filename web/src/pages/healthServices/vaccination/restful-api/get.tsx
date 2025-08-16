@@ -50,6 +50,15 @@ export const getVaccinationRecords =  async () => {
   }
 };
 
+export const getLatestVitals =  async (patId: string) => {
+  try {
+    const response = await api2.get(`/patientrecords/vital-signs/latest/${patId}/`);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 // id ani kay pat_id
 export const getVaccinationRecordById =  async (id: string) => {
   try {
@@ -142,7 +151,7 @@ export const getUnvaccinatedResidents = async () => {
 export const getUnvaccinatedVaccines = async (patientId: string) => {
   try {
     const response = await api2.get(`/vaccination/unvaccinated-vaccines/${patientId}/`);
-    return response.data;
+    return response.data || [];
   } catch (error) {
     console.error('Error fetching unvaccinated vaccines:', error);
     throw error; // Re-throw the error for the caller to handle

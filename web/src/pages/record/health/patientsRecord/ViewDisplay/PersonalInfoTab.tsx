@@ -48,7 +48,6 @@ export default function PersonalInfoTab({
   form,
   isEditable,
   isTransient,
-  patientData,
   handleSaveEdit,
   handleCancelEdit,
 }: PersonalInfoTabProps) {

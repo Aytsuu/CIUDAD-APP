@@ -1,26 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
-import { GADBudgetEntry } from "../request/get";
-import { GADBudgetCreatePayload, createGADBudget, createGADBudgetFile, GADBudgetFile } from "../request/post";
-
-type BudgetYear = {
-  gbudy_year: string;
-  gbudy_budget: number;
-  gbudy_expenses: number;
-  gbudy_income: number;
-};
-
-type BudgetEntry = {
-  gbud_type: string;
-  gbud_actual_expense?: number;
-};
-
-type FileData = {
-  name: string;
-  type: string;
-  path: string;
-  uri: string;
-};
+import { createGADBudget, createGADBudgetFile } from "../request/post";
+import { GADBudgetCreatePayload, BudgetYear, BudgetEntry, FileData } from "../bt-types";
 
 export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: BudgetEntry[]) => {
   const queryClient = useQueryClient();

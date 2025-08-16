@@ -3,8 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
 } from "react-native";
 import { DonorSelect } from "../personalizedCompo/search_input";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -16,8 +14,8 @@ import {
   useGetDonations,
   useUpdateDonation,
   useGetPersonalList,
-  type Donation,
 } from "./queries";
+import { Donation } from "../don-types";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
@@ -31,10 +29,8 @@ const DonationView = () => {
   const { data: donations = [] } = useGetDonations();
   const { data: personalList = [] } = useGetPersonalList();
   const updateDonationMutation = useUpdateDonation();
-
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const donation = donations.find(
     (d: Donation) => d.don_num === don_num
   );
@@ -96,9 +92,7 @@ const DonationView = () => {
       });
 
       setIsEditing(false);
-    } catch (error: any) {
-      console.error("Error updating donation:", error);
-    } finally {
+    }  finally {
       setIsSubmitting(false);
     }
   };

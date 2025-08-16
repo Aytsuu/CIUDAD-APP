@@ -17,13 +17,13 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete"
 
 import { HexColorPicker } from "react-colorful"
-import { ITodo, generateId } from "./EventCalendar"
+import { generateId } from "./EventCalendar"
 
 interface IProps {
     open: boolean
     handleClose: Dispatch<SetStateAction<void>>
-    todos: ITodo[]
-    setTodos: Dispatch<SetStateAction<ITodo[]>>
+    todos: any[]
+    setTodos: Dispatch<SetStateAction<any[]>>
   }
 
   export const AddTodoModal = ({ open, handleClose, todos, setTodos }: IProps) => {

@@ -11,20 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
 import { useLoading } from "@/context/LoadingContext"
-import { cn } from "@/lib/utils"
-import { useNavigate } from "react-router"
-
-type RequestType = "individual" | "family"
+import { CardSidebar } from "@/components/ui/card-sidebar"
 
 export default function RegistrationRequests() {
   // ----------------- STATE INITIALIZATION --------------------
   const currentPath = location.pathname.split("/").pop() || ""
-  const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading()
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
   const [currentPage, setCurrentPage] = React.useState<number>(1)
-  const [selectedRequestType, setSelectedRequestType] = React.useState<RequestType>(currentPath as RequestType)
+  const [selectedRequestType, setSelectedRequestType] = React.useState<string>(currentPath)
 
   const debouncedPageSize = useDebounce(pageSize, 100)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
@@ -44,14 +40,14 @@ export default function RegistrationRequests() {
 
   const sidebarItems = [
     {
-      id: "individual" as RequestType,
+      id: "individual",
       label: "Individual",
       icon: User,
       description: "Personal registrations",
       route: "individual",
     },
     {
-      id: "family" as RequestType,
+      id: "family",
       label: "Family",
       icon: Users,
       description: "Family registrations",
@@ -69,10 +65,6 @@ export default function RegistrationRequests() {
   React.useEffect(() => {
     setCurrentPage(1)
   }, [selectedRequestType])
-
-  const handleRequestTypeChange = (type: RequestType) => {
-    setSelectedRequestType(type)
-  }
 
   // ----------------- HANDLERS --------------------
   const formatRequestList = React.useCallback(() => {
@@ -138,60 +130,15 @@ export default function RegistrationRequests() {
 
         <div className="w-full flex gap-4">
           <div className="w-64 flex-shrink-0">
-            <Card className="overflow-hidden">
-              <div className="p-4 bg-gray-50 border-b">
+            <CardSidebar 
+              header={<div className="p-4 bg-gray-50 border-b">
                 <h3 className="font-semibold text-gray-900">Request Types</h3>
                 <p className="text-xs text-gray-600 mt-1">Select registration type</p>
-              </div>
-              <div className="p-2">
-                {sidebarItems.map((item) => {
-                  const Icon = item.icon
-                  const isSelected = selectedRequestType == item.id
-
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        handleRequestTypeChange(item.id)
-                        navigate(item.route, { replace: true })
-                      }}
-                                              className={cn(
-                        "w-full flex items-center justify-between p-3 rounded-lg text-left outline-none transition-colors duration-200 group",
-                        isSelected
-                          ? "bg-blue-50 text-blue-700 border border-blue-200"
-                          : "hover:bg-gray-50 text-gray-700 hover:text-gray-900",
-                      )}
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div
-                          className={cn(
-                            "p-1.5 rounded-md transition-colors",
-                            isSelected
-                              ? "bg-blue-100 text-blue-600"
-                              : "bg-gray-100 text-gray-500 group-hover:bg-gray-200",
-                          )}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div
-                            className={cn(
-                              "font-medium text-sm truncate",
-                              isSelected ? "text-blue-700" : "text-gray-900",
-                            )}
-                          >
-                            {item.label}
-                          </div>
-                          <div className={cn("text-xs truncate", isSelected ? "text-blue-600" : "text-gray-500")}>
-                            {item.description}
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </Card>
+              </div>}
+              sidebarItems={sidebarItems}
+              selectedItem={selectedRequestType}
+              setSelectedItem={setSelectedRequestType}
+            />
           </div>
 
           {/* Main Content Card */}

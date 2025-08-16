@@ -1,60 +1,8 @@
 import { api } from "@/api/api";
-import { GADBudgetFile } from './BTPostRequest';
-
-// Types
-export type GADBudgetEntry = {
-    gbud_num?: number;
-    gbud_datetime: string;
-    gbud_type: string;
-    gbud_add_notes?: string;
-    
-    // Income fields
-    gbud_inc_particulars?: string;
-    gbud_inc_amt?: number;
-    
-    // Expense fields
-    gbud_exp_particulars?: string;
-    gbud_proposed_budget?: number;
-    gbud_actual_expense?: number;
-    gbud_remaining_bal?: number;
-    gbud_reference_num?: string;
-    gbud_is_archive?: boolean;
-    // Relations
-    gdb?: {
-        gdb_id?: number;
-        gdb_name?: string;
-    };
-    files?: Array<{
-        gbf_id: number;
-        gbf_name: string;
-        gbf_type: string;
-        gbf_path: string;
-        gbf_url: string;
-    }> | null;
-};
-
-export type DevelopmentBudgetItem = {
-    gdb_id: number;
-    gdb_name: string;
-    gdb_pax: number;
-    gdb_price: number;
-};
-
-// export const fetchGADBudgets = async (year: string): Promise<GADBudgetEntry[]> => {
-//     const response = await api.get(`/gad/gad-budget-tracker-table/${year}/`);
-//     return response.data || [];
-// };
+import { GADBudgetEntry, DevelopmentBudgetItem, GADBudgetFile } from "../budget-tracker-types";
 
 export const fetchGADBudgets = async (year: string): Promise<GADBudgetEntry[]> => {
     const response = await api.get(`/gad/gad-budget-tracker-table/${year}/`);
-    console.log('API Response with Remaining Balances:', 
-        response.data.map((entry: GADBudgetEntry) => ({
-            id: entry.gbud_num,
-            datetime: entry.gbud_datetime,
-            type: entry.gbud_type,
-            remaining: entry.gbud_remaining_bal
-        }))
-    );
     return response.data || [];
 };
 
@@ -76,21 +24,13 @@ export const fetchExpenseParticulars = async (): Promise<DevelopmentBudgetItem[]
 export const fetchIncomeParticulars = async (year: string): Promise<string[]> => {
     try {
         const budgets = await fetchGADBudgets(year);
-        
-        // Debug log to check the raw data
-        console.log('Raw income entries:', budgets.filter(entry => entry.gbud_type === 'Income'));
-        
         const particulars = budgets
             .filter(entry => entry.gbud_type === 'Income' && entry.gbud_inc_particulars)
             .map(entry => entry.gbud_inc_particulars as string)
             .filter((value, index, self) => value && self.indexOf(value) === index);
-        
-        // Debug log to check processed particulars
-        console.log('Processed income particulars:', particulars);
-        
+    
         return particulars;
     } catch (error) {
-        console.error('Error fetching income particulars:', error);
         return [];
     }
 };

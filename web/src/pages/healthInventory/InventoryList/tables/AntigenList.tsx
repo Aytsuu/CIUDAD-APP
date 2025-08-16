@@ -14,9 +14,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useAntigen } from "../queries/Antigen/VaccineFetchQueries";
 import { useDeleteAntigen } from "../queries/Antigen/AntigenDeleteQueries";
+
 export type VaccineRecords = {
   id: number;
   vaccineName: string;
@@ -41,17 +42,17 @@ export default function AntigenList() {
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     React.useState(false);
   const [vaccineToDelete, setVaccineToDelete] = useState<number | null>(null);
-  const [isDialog, setIsDialog] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<"vaccine" | "supplies">(
-    "vaccine"
-  );
+  // const [isDialog, setIsDialog] = useState(false);
+  // const [selectedOption, setSelectedOption] = useState<"vaccine" | "supplies">(
+  //   "vaccine"
+  // );
   const navigate = useNavigate();
 
   // Use the custom hook here
   const { data: vaccineData, isLoading: isLoadingVaccines } = useAntigen();
 
   const formatVaccineData = React.useCallback(() => {
-    if (!vaccineData) return [];
+    if (!Array.isArray(vaccineData)) return [];
 
     return vaccineData
       .map((item: any) => {
@@ -127,7 +128,7 @@ export default function AntigenList() {
 
   const filteredVaccines = React.useMemo(() => {
     return formatVaccineData()
-      .filter((record): record is VaccineRecords => record !== null)
+      .filter((record: any): record is VaccineRecords => record !== null)
       .filter((record: VaccineRecords) =>
         Object.values(record)
           .join(" ")
@@ -203,11 +204,14 @@ export default function AntigenList() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="min-w-[200px]" align="end">
-              <DropdownMenuItem
-                onSelect={() => navigate("/addVaccinationList")}
-                className="cursor-pointer hover:bg-gray-100 px-4 py-2"
-              >
-                Vaccine
+              <DropdownMenuItem className="cursor-pointer hover:bg-gray-100 px-4 py-2">
+                <Link
+                  to="/addVaccinationList"
+                  state={{ mode: "add" }}
+                  className="flex items-center gap-2"
+                >
+                  Vaccine
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => navigate("/addImmunizationSupplies")}

@@ -1,29 +1,5 @@
 import { api } from "@/api/api";
-
-export type GADBudgetFile = {
-  gbf_id?: number;
-  gbf_name: string;
-  gbf_type: string;
-  gbf_path: string;
-  gbf_url: string;
-  gbud_num: number;
-};
-
-export type GADBudgetCreatePayload = {
-  gbud_type: 'Income' | 'Expense';
-  gbud_datetime: string;
-  gbud_add_notes?: string | null;
-  gbud_inc_particulars?: string | null;
-  gbud_inc_amt?: number | null;
-  gbud_exp_particulars?: string | null;
-  gbud_proposed_budget?: number | null;
-  gbud_actual_expense?: number | null;
-  gbud_remaining_bal?: number | null;
-  gbud_reference_num?: string | null;
-  gbudy: number;
-  gdb_id?: number | null;
-  onChange?: string;
-};
+import { GADBudgetCreatePayload } from "../bt-types";
 
 export const createGADBudget = async (payload: GADBudgetCreatePayload) => {
   const response = await api.post('/gad/gad-budget-tracker-table/', payload);
@@ -49,7 +25,6 @@ export const createGADBudgetFile = async (data: {
     });
     return res.data;
   } catch (err) {
-    console.error(`Failed to create file ${data.file_data.name}:`, err);
     throw err;
   }
 }

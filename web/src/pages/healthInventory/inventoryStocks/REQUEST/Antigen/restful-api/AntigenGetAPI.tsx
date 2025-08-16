@@ -38,7 +38,6 @@ export const getCombinedStock = async () => {
           expiryDate: inventoryData?.expiry_date,
           inv_id: stock.inv_id,
           solvent: stock.solvent,
-          volume: stock.volume,
           vacStck_id: stock.vacStck_id,
           vac_id: stock.vac_id,
           qty_number: stock.qty,

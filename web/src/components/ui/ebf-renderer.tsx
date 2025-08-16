@@ -23,7 +23,7 @@ export const EbfRenderer: React.FC<EbfRendererProps> = ({
       }}
     >
       <div className="font-bold text-gray-700 left-0 bg-white py-2 border-gray-100"></div>
-      {recordsToDisplay.map((record, idx) => {
+      {recordsToDisplay.map((record) => {
         const isCurrentRecord = record.chhist_id === chhistId;
         return (
           <div

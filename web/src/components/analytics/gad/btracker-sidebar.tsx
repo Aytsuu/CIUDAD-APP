@@ -12,7 +12,7 @@ export const GADExpenseSidebar = () => {
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear().toString();
   const { data: expenses, isLoading } = useLatestExpenses(currentYear);
-  const [selectedExpense, setSelectedExpense] = useState<GADBudgetEntryUI | null>(null);
+  const [_, setSelectedExpense] = useState<GADBudgetEntryUI | null>(null);
 
   return (
     <Card className="w-80 bg-white h-full flex flex-col">

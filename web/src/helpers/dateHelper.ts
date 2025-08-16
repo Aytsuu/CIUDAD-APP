@@ -8,6 +8,24 @@ export const formatDate = (date: string | Date, isLong?: boolean) => {
     }) : new Date(date).toISOString().split('T')[0]
 }
 
+
+// Helper functions for date formatting (same as in your main component)
+export const formatSupplementDate = (dateString: string | null) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  });
+};
+
+
+
+export const formatMnpDates = (dates: string[]) => {
+  if (!dates || dates.length === 0) return "-";
+  return dates.map((date) => formatSupplementDate(date)).join(", ");
+};
 // Get week number based on a given date format (YYYY-MM-DD)
 // Example: date = 2025-06-11 --> returns 2
 export const getWeekNumber = (dateString: string): number => {

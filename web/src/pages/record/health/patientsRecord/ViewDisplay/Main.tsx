@@ -15,14 +15,11 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CardLayout from "@/components/ui/card/card-layout"
 import { calculateAge } from "@/helpers/ageCalculator"
-
 import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
 import {PatientData,ChildHealthRecord} from "./types"
-
 import PersonalInfoTab from "./PersonalInfoTab"
 import Records from "./Records"
 import VisitHistoryTab from "./VisitHistoryTab"
-
 import { useUpdatePatient } from "../queries/update"
 import { usePatientDetails } from "../queries/fetch"
 import { useChildHealthRecords } from "../queries/fetch"
@@ -201,7 +198,6 @@ export default function ViewPatientRecord() {
 
   const formatChildHealthData = React.useCallback((): ChildHealthRecord[] => {
     if (!rawChildHealthRecords || !rawChildHealthRecords.child_health_histories) return []
-
     return rawChildHealthRecords.child_health_histories.map((record: any) => {
       const chrecDetails = record.chrec_details || {}
       const patrecDetails = chrecDetails.patrec_details || {}
@@ -248,13 +244,13 @@ export default function ViewPatientRecord() {
         delivery_type: chrecDetails.place_of_delivery_type || "",
         place_of_delivery_type: chrecDetails.place_of_delivery_type || "",
         pod_location: chrecDetails.pod_location || "",
-        pod_location_details: "",
-        health_checkup_count: 0,
         birth_order: chrecDetails.birth_order || 0,
         tt_status: record.tt_status || "",
       }
     })
+    
   }, [rawChildHealthRecords])
+
 
   const formattedChildHealthData = formatChildHealthData()
 

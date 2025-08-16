@@ -5,32 +5,23 @@ import {
   updateInventoryTimestamp,
 } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/restful-api/MedicinePutAPI";
 import { addMedicineTransaction } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/restful-api/MedicinePostAPI";
-import {
-  createMedicineRecord,
-  createPatientRecord,
-} from "@/pages/healthServices/medicineservices/restful-api/postAPI";
-export interface MedicineRequestData {
-  pat_id: string;
-  medicines: {
-    minv_id: string;
-    medrec_qty: number;
-    reason: string;
-  }[];
-}
+import { createMedicineRecord } from "@/pages/healthServices/medicineservices/restful-api/postAPI";
+import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
 
-
-export const processMedicineRequest = async (data: MedicineRequestData,staffId:string | null) => {
+export const processMedicineRequest = async (
+  data: any,
+  staffId: string | null
+) => {
   const results = [];
- 
+
   for (const med of data.medicines) {
     try {
       // 1. Create patient record
-      const patientRecord = await createPatientRecord(data.pat_id,"Medicine Record");
-      if (!patientRecord?.patrec_id) {
-        throw new Error(
-          "Failed to create patient record: No patrec_id returned"
-        );
-      }
+      const patientRecord = await createPatientRecord({
+        pat_id: data.pat_id,
+        patrec_type: "Medicine Record",
+        staff: staffId,
+      });
 
       // 2. Verify medicine exists
       const inventoryList = await getMedicineInventory();
@@ -58,13 +49,12 @@ export const processMedicineRequest = async (data: MedicineRequestData,staffId:s
 
       await updateMedicineStocks(parseInt(med.minv_id, 10), {
         minv_qty_avail: newQty,
-        staff:staffId || null,
+        staff: staffId || null,
       });
 
       // Update inventory timestamp if exists
       if (inv_id) {
         await updateInventoryTimestamp(inv_id);
-        
       }
 
       const transactionPayload = {
@@ -72,27 +62,23 @@ export const processMedicineRequest = async (data: MedicineRequestData,staffId:s
         mdt_action: "Deducted (Medicine Request)",
         mdt_staff: 1, // You might want to get this from auth/session
         minv_id: parseInt(med.minv_id, 10),
-        staff:staffId||null
+        staff: staffId || null,
       };
 
       await addMedicineTransaction(transactionPayload);
 
       // 5. Create medicine record
-      const submissionData = {
-        pat_id: data.pat_id,
+
+      const response = await createMedicineRecord({
         patrec_id: patientRecord.patrec_id,
         minv_id: med.minv_id,
         medrec_qty: med.medrec_qty,
         reason: med.reason || null,
+        signature: data.signature,
         requested_at: new Date().toISOString(),
         fulfilled_at: new Date().toISOString(),
         staff: staffId || null,
-
-        // req_type: "WALK IN",
-        // status: "RECORDED",
-      };
-
-      const response = await createMedicineRecord(submissionData);
+      });
       results.push({ success: true, data: response.data });
     } catch (error) {
       results.push({
@@ -100,7 +86,7 @@ export const processMedicineRequest = async (data: MedicineRequestData,staffId:s
         medicineId: med.minv_id,
         error: error instanceof Error ? error.message : "Unknown error",
       });
-      throw error; // Re-throw to exit the loop
+      throw error; 
     }
   }
 

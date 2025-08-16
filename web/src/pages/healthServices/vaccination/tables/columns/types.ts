@@ -1,4 +1,15 @@
-import { VaccineDetails } from "@/pages/healthServices/childservices/viewrecords/types";
+import { VaccineDetails,FollowUpVisit } from "@/pages/healthServices/childservices/viewrecords/types";
+import { Address } from "@/pages/healthServices/childservices/viewrecords/types";
+
+export interface VacrecDetails  {
+  vacrec_id?: string,
+  vacrec_totaldose?: string,
+  created_at?: string,
+  updated_at?: string,
+  patrec_id?: string
+
+}
+
 
 export interface VaccinationRecord {
   patrec_id?: number;
@@ -14,6 +25,17 @@ export interface VaccinationRecord {
   vacStck?: number;
   vacrec_status?: string;
   vacrec_totaldose?: number;
+  signature?: string | null;
+
+  patient?:{
+    pat_id?: string;
+    pat_type?: string;
+    personal_info?: PersonalInfo
+    address?:Address;  
+    households: any[];
+
+
+  };
 
   vital_signs: {
     vital_bp_systolic: string;
@@ -76,21 +98,9 @@ export interface VaccinationRecord {
     vac_type?: string;
   };
 
-  follow_up_visit?: {
-    followv_id?: number;
-    followv_date?: string;
-    followv_status?: string;
-    patrec?: string;
-  };
-  vacrec_details?: {
-    vacrec_id?: string,
-    vacrec_totaldose?: string,
-    created_at?: string,
-    updated_at?: string,
-    patrec_id?: string
-  },
+  follow_up_visit?:FollowUpVisit
+  vacrec_details?: VacrecDetails
 }
-
 
 
 
@@ -117,12 +127,6 @@ export type BasicInfoVaccinationRecord = {
 }
 export type filter = "all" | "partially_vaccinated" | "completed";
 
-//   export interface VaccinationCountsCardProps {
-//     residentCount: number;
-//     transientCount: number;
-//     totalCount: number;
-//   }
-
 export interface VaccinationCounts {
   residentCount: number;
   transientCount: number;
@@ -131,44 +135,6 @@ export interface VaccinationCounts {
 
 
 
-
-//   interface Address {
-//     add_street?: string;
-//     sitio?: string;
-//     add_barangay?: string;
-//     add_city?: string;
-//     add_province?: string;
-//   }
-
-//   interface PersonalInfo {
-//     per_lname: string;
-//     per_fname: string;
-//     per_mname: string | null;
-//     per_sex: string;
-//     per_dob: string;
-//     per_addresses: Address[];
-//   }
-
-//   export interface Resident {
-//     pat_id: string;
-//     rp_id: string | null;
-//     personal_info: PersonalInfo;
-//     vaccine_not_received: string;
-//   }
-
-//   export interface UnvaccinatedResident {
-//     vaccine_name: string;
-//     pat_id: string;
-//     fname: string;
-//     lname: string;
-//     mname: string;
-//     sex: string;
-//     age: string;
-//     dob: string;
-//     sitio: string;
-//     address: string;
-//     pat_type: string;
-//   }
 export interface PersonalInfo {
   per_id: number
   per_lname: string

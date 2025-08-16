@@ -210,7 +210,7 @@ type ActivityItem = {
 
 export const WasteActivitySidebar = () => {
   const [period, setPeriod] = React.useState<string>("today");
-  const [selectedActivity, setSelectedActivity] = React.useState<ActivityItem | null>(null);
+  const [_, setSelectedActivity] = React.useState<ActivityItem | null>(null);
   const { data: upcomingHotspots, isLoading: isLoadingHotspots } = useGetUpcomingHotspots();
   const { data: wasteCollections, isLoading: isLoadingCollections } = useGetWasteCollectionSchedFull();
   const navigate = useNavigate();

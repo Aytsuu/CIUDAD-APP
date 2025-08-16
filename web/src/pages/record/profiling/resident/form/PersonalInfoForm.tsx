@@ -85,7 +85,7 @@ const PersonalInfoForm = ({
 
   const handleRemoveAddress = (idx: number) => {
     setValidAddresses && setValidAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
-    setAddresses&& setAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
+    setAddresses && setAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
   }
 
   // ==================== RENDER ====================

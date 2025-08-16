@@ -1,209 +1,184 @@
-import { useState } from 'react';
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Plus, Search } from 'lucide-react';
-import {SelectLayout} from "@/components/ui/select/select-layout";
-import {Input} from "@/components/ui/input";
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Search, Loader2 } from 'lucide-react';
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Input } from "@/components/ui/input";
+import { DataTable } from "@/components/ui/table/data-table";
+import { ArrowUpDown } from "lucide-react";
+import { ColumnDef } from "@tanstack/react-table";
 
-import {DataTable} from "@/components/ui/table/data-table";
-import {ArrowUpDown} from "lucide-react";
-import {ColumnDef} from "@tanstack/react-table";
-
-import AddCertificate from "@/pages/record/clearances/CreateDocumentModal";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { getCertificates } from "@/pages/record/clearances/restful-api/certificateGetAPI";
 
 type Certificate = {
-  requestNo: string;
-  firstname: string;
-  lastname: string;
-  paymentMethod: string;
-  dateRequested: string;
-  dateClaim: string;
-  purpose: string[]; // Changed to string array
+  cr_id: string;
+  resident_details: {
+    per_fname: string;
+    per_lname: string;
+  };
+  req_pay_method: string;
+  req_request_date: string;
+  req_claim_date: string;
+  req_type: string;
+  req_payment_status: string;
+  req_transac_id: string;
+  invoice?: {
+    inv_num: string;
+    inv_serial_num: string;
+    inv_date: string;
+    inv_amount: string;
+    inv_nat_of_collection: string;
+  };
 };
 
 export const columns: ColumnDef<Certificate>[] = [
   {
-    accessorKey: "requestNo",
-    header: ({column}) => (
+    accessorKey: "cr_id",
+    header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Request No.
-        <ArrowUpDown size={15} />
+        <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
       </div>
     ),
-    cell: ({row}) => (
-      <div className="capitalize">{row.getValue("requestNo")}</div>
-    ),
+    cell: ({ row }) => <div className="capitalize">{row.getValue("cr_id")}</div>,
   },
   {
-    accessorKey: "firstname",
-    header: ({column}) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        First Name
-        <ArrowUpDown size={15} />
-      </div>
-    ),
-    cell: ({row}) => (
-      <div className="capitalize">{row.getValue("firstname")}</div>
-    ),
+    accessorKey: "resident_details.per_fname",
+    header: "First Name",
+    cell: ({ row }) => <div>{row.original.resident_details?.per_fname}</div>,
   },
   {
-    accessorKey: "lastname",
-    header: ({column}) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Last Name
-        <ArrowUpDown size={15} />
-      </div>
-    ),
-    cell: ({row}) => (
-      <div className="capitalize">{row.getValue("lastname")}</div>
-    ),
+    accessorKey: "resident_details.per_lname",
+    header: "Last Name",
+    cell: ({ row }) => <div>{row.original.resident_details?.per_lname}</div>,
   },
   {
-    accessorKey: "paymentMethod",
+    accessorKey: "req_pay_method",
     header: "Payment Method",
+    cell: ({ row }) => <div className="capitalize">{row.getValue("req_pay_method")}</div>,
   },
   {
-    accessorKey: "dateRequested",
+    accessorKey: "req_request_date",
     header: "Date Requested",
+    cell: ({ row }) => <div>{row.getValue("req_request_date")}</div>,
   },
   {
-    accessorKey: "dateClaim",
+    accessorKey: "req_claim_date",
     header: "Date to Claim",
+    cell: ({ row }) => <div>{row.getValue("req_claim_date")}</div>,
   },
   {
-    accessorKey: "purpose",
+    accessorKey: "req_type",
     header: "Purpose",
-    cell: ({row}) => {
-      const purposes = row.getValue("purpose") as string[];
-      return (
-        <ul className="list-disc list-outside inline-block pl-6">
-          {purposes.map((purpose, index) => (
-            <li key={index}>{purpose}</li>
-          ))}
-        </ul>
-      );
-    },
-  },
-];
-
-export const certificateRecords: Certificate[] = [
-  {
-    requestNo: "001",
-    firstname: "John",
-    lastname: "Doe",
-    paymentMethod: "Cash",
-    dateRequested: "2024-02-23",
-    dateClaim: "2024-02-25",
-    purpose: ["NBI", "Medical Assistance"],
-  },
-  {
-    requestNo: "002",
-    firstname: "Jane",
-    lastname: "Smith",
-    paymentMethod: "GCash",
-    dateRequested: "2024-02-23",
-    dateClaim: "2024-02-26",
-    purpose: ["NBI", "Employment"],
-  },
-  {
-    requestNo: "003",
-    firstname: "Mike",
-    lastname: "Johnson",
-    paymentMethod: "Cash",
-    dateRequested: "2024-02-24",
-    dateClaim: "2024-02-27",
-    purpose: ["First Time Job Seeker", "Medical Assistance"],
-  },
+    cell: ({ row }) => <div className="capitalize">{row.getValue("req_type")}</div>,
+  }
 ];
 
 function CertificatePage() {
-  const data = certificateRecords;
-
+  const navigate = useNavigate();
+  const { id } = useParams();
   const [currentPage, setCurrentPage] = useState(1);
-  
-      
-      const handlePageChange = (page: number) => {
-          setCurrentPage(page);
-      };
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const { data: certificates, isLoading, error } = useQuery({
+    queryKey: ["certificates"],
+    queryFn: getCertificates,
+  });
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleRowClick = (row: Certificate) => {
+    const fullName = `${row.resident_details?.per_fname || ''} ${row.resident_details?.per_lname || ''}`.trim();
+    navigate(`/record/clearances/ViewDocument/${row.cr_id}`, {
+      state: {
+        name: fullName || row.cr_id, // Use full name if available, fallback to ID
+        purpose: row.req_type,
+        date: row.req_claim_date,
+        requestId: row.cr_id,
+        requestDate: row.req_request_date,
+        paymentMethod: row.req_pay_method,
+      },
+    });
+  };
 
   return (
-    <div className="w-full h-full px-4 md:px-8 lg:px-16">
-      <div className="mb-4 mt-10">
-        <div className="text-left font-bold text-[#394360] text-2xl md:text-3xl mb-[20px]">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-                    Certification Request
-                </h1>
-                <p className="text-xs sm:text-sm text-darkGray">
-                    Manage and view certification request 
-                </p>
-                </div>
-                <hr className="border-gray mb-5 sm:mb-8" />
+    <div className="w-full h-full flex flex-col">
+      <div className="flex-col items-center mb-4">
+        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Certification Request</h1>
+        <p className="text-xs sm:text-sm text-darkGray">Manage and view paid certification requests</p>
+      </div>
+      <hr className="border-gray mb-5 sm:mb-8" />
 
-        <div className="w-full bg-white border border-gray rounded-[5px]">
-          <div className="w-full flex justify-between mb-4 p-5">
-            {/* Filter Section */}
-            <div className="flex gap-3">
-              <div className="relative flex items-center">
-                <Search className="absolute left-3 text-gray-500" size={18} />
-                <Input placeholder="Search..." className="pl-10 max-w-sm" />
-              </div>
-
-              <SelectLayout
-                className={""}
-                label=""
-                placeholder="Filter Type"
-                options={[
-                  {id: "test", name: "Employment"},
-                  {id: "test", name: "BIR"},
-                ]}
-                value=""
-                onChange={() => {}}
-              />
-            </div>
-            <div>
-              <DialogLayout
-                trigger={
-                  <div className="bg-[#3D4C77] hover:bg-[#4e6a9b] text-white px-4 py-1.5 rounded cursor-pointer flex items-center">
-                    Create Certificate <Plus className="ml-2" />
-                  </div>
-                }
-                className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                title="Create Certificate"
-                description="Request a new certificate."
-                mainContent={<AddCertificate />}
-              />
-            </div>
+      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+        <div className="flex gap-x-2 items-center">
+          <div className="relative flex-1 bg-white">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+            <Input placeholder="Search..." className="pl-10 w-72" />
           </div>
-
-          {/*Table Section */}
-          <DataTable columns={columns} data={data} />
+          <SelectLayout
+            placeholder="Filter by"
+            label=""
+            className="bg-white"
+            options={[
+              { id: "employment", name: "Employment" },
+              { id: "bir", name: "BIR" },
+            ]}
+            value=""
+            onChange={() => {}}
+          />
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          {/* Showing Rows Info */}
-          
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing 1-10 of 150 rows
-          </p>
+        {/* <DialogLayout
+          isOpen={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          trigger={<Button onClick={() => setIsModalOpen(true)}><Plus className="mr-2" /> Create Certificate</Button>}
+          className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+          title="Create Certificate"
+          description="Request a new certificate."
+          mainContent={<AddCertificate closeModal={() => setIsModalOpen(false)} />}
+        /> */}
+      </div>
 
-          {/* Pagination */}
-          <div className="w-full sm:w-auto flex justify-center">
-           <PaginationLayout 
-                totalPages={15} 
-                currentPage={currentPage} 
-                onPageChange={handlePageChange} 
-            />
+      <div className="w-full flex flex-col">
+        <div className="w-full h-auto bg-white p-3">
+          <div className="flex gap-x-2 items-center">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input type="number" className="w-14 h-8" defaultValue="10" />
+            <p className="text-xs sm:text-sm">Entries</p>
           </div>
+        </div>
+
+        <div className="bg-white w-full overflow-x-auto">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-5 text-red-500">Error loading data</div>
+          ) : (
+            <DataTable columns={columns} data={certificates || []} />
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+          Showing 1-10 of {certificates ? certificates.length : 0} rows
+        </p>
+
+        <div className="w-full sm:w-auto flex justify-center">
+          <PaginationLayout
+            totalPages={Math.ceil((certificates?.length || 1) / 10)}
+            currentPage={currentPage}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
     </div>

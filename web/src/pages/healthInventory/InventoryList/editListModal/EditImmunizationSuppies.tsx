@@ -9,13 +9,12 @@ import {
 } from "@/form-schema/inventory/lists/inventoryListSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { FormInput } from "@/components/ui/form/form-input";
-import { getImzSup } from "../restful-api/Antigen/ImzFetchAPI";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Package, CircleCheck } from "lucide-react";
 import { useUpdateImzSupply } from "../queries/Antigen/ImzPutQueries";
 import CardLayout from "@/components/ui/card/card-layout";
-
+import { getImzSup } from "../restful-api/Antigen/fetchAPI";
 interface ImmunizationData {
   id: number;
   vaccineName: string;

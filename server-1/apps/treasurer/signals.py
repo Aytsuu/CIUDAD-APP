@@ -1,7 +1,7 @@
 # signals.py
-from django.db.models.signals import post_save, pre_delete, pre_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
-from .models import *
+from .models import Budget_Plan, Income_Expense_Main, Budget_Plan_Detail
 from django.apps import apps
 from django.db import transaction
 

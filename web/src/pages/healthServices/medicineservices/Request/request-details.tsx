@@ -21,16 +21,15 @@ import {
   Trash2,
   Mail,
   HeartPulse,
-  Home
+  Home,
 } from "lucide-react";
 import { MedicineRequestDetailProps, MedicineRequestItem } from "./types";
 import { fetchRequestItems } from "./restful-api/get";
 import { createPatients } from "@/pages/record/health/patientsRecord/restful-api/post";
-import {
-  createPatientRecord,
-  createMedicineRecord,
-} from "@/pages/healthServices/medicineservices/restful-api/postAPI";
+import { createMedicineRecord } from "@/pages/healthServices/medicineservices/restful-api/postAPI";
 import { updateMedicineRequest } from "./restful-api/update";
+import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
+import { useAuth } from "@/context/AuthContext";
 
 export default function MedicineRequestDetail() {
   const location = useLocation();
@@ -38,9 +37,15 @@ export default function MedicineRequestDetail() {
   const request = location.state?.request as MedicineRequestDetailProps;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [currentPatId, setCurrentPatId] = useState<string | null>(request.pat_id);
+  const [currentPatId, setCurrentPatId] = useState<string | null>(
+    request.pat_id
+  );
   const [items, setItems] = useState<MedicineRequestItem[]>([]);
-  const [quantityErrors, setQuantityErrors] = useState<{[key: number]: string}>({});
+  const [quantityErrors, setQuantityErrors] = useState<{
+    [key: number]: string;
+  }>({});
+  const { user } = useAuth();
+  const staff_id = user?.staff?.staff_id || null;
 
   const { data: requestItems, isLoading } = useQuery<MedicineRequestItem[]>({
     queryKey: ["requestItem"],
@@ -64,9 +69,9 @@ export default function MedicineRequestDetail() {
   const updateQuantity = (index: number, newQuantity: number) => {
     const item = items[index];
     const availableQty = item?.minv_details?.minv_qty_avail || 0;
-    
+
     // Clear any existing error for this item
-    setQuantityErrors(prev => {
+    setQuantityErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors[index];
       return newErrors;
@@ -74,15 +79,15 @@ export default function MedicineRequestDetail() {
 
     // Validate quantity
     if (newQuantity > availableQty) {
-      setQuantityErrors(prev => ({
+      setQuantityErrors((prev) => ({
         ...prev,
-        [index]: `Cannot exceed available quantity of ${availableQty}`
+        [index]: `Cannot exceed available quantity of ${availableQty}`,
       }));
       // Still update the quantity to show the error state
     } else if (newQuantity < 1) {
-      setQuantityErrors(prev => ({
+      setQuantityErrors((prev) => ({
         ...prev,
-        [index]: "Quantity must be at least 1"
+        [index]: "Quantity must be at least 1",
       }));
     }
 
@@ -97,14 +102,18 @@ export default function MedicineRequestDetail() {
   };
 
   const handleDeleteItem = (index: number) => {
-    if (window.confirm("Are you sure you want to remove this item from the request?")) {
+    if (
+      window.confirm(
+        "Are you sure you want to remove this item from the request?"
+      )
+    ) {
       setItems((prevItems) => {
         const newItems = [...prevItems];
         newItems.splice(index, 1);
         return newItems;
       });
       // Clear any error for this item
-      setQuantityErrors(prev => {
+      setQuantityErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[index];
         return newErrors;
@@ -119,7 +128,8 @@ export default function MedicineRequestDetail() {
       header: "Medicine",
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px]">
-          {row.original.minv_details?.med_detail?.med_name || "Unknown Medicine"}
+          {row.original.minv_details?.med_detail?.med_name ||
+            "Unknown Medicine"}
         </div>
       ),
     },
@@ -128,14 +138,19 @@ export default function MedicineRequestDetail() {
       header: "Available Quantity",
       cell: ({ row }) => {
         const minvDetails = row.original.minv_details;
-        const unit = minvDetails?.minv_qty_unit === "boxes" ? "pcs" : minvDetails?.minv_qty_unit;
+        const unit =
+          minvDetails?.minv_qty_unit === "boxes"
+            ? "pcs"
+            : minvDetails?.minv_qty_unit;
         const availableQty = minvDetails?.minv_qty_avail || 0;
 
         return (
           <div className="flex justify-center min-w-[200px]">
-            {availableQty === 0 
-              ? <span className="text-red-500">Out of stock</span> 
-              : `${availableQty} ${unit || ""}`}
+            {availableQty === 0 ? (
+              <span className="text-red-500">Out of stock</span>
+            ) : (
+              `${availableQty} ${unit || ""}`
+            )}
           </div>
         );
       },
@@ -152,7 +167,8 @@ export default function MedicineRequestDetail() {
         const isOutOfStock = availableQty === 0;
 
         const handleIncrement = () => updateQuantity(index, quantity + 1);
-        const handleDecrement = () => updateQuantity(index, Math.max(1, quantity - 1));
+        const handleDecrement = () =>
+          updateQuantity(index, Math.max(1, quantity - 1));
 
         const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           const value = parseInt(e.target.value) || 0;
@@ -166,7 +182,9 @@ export default function MedicineRequestDetail() {
           return (
             <div className="flex flex-col items-center gap-2">
               <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-md">
-                <span className="text-red-600 text-sm font-medium">Out of Stock</span>
+                <span className="text-red-600 text-sm font-medium">
+                  Out of Stock
+                </span>
               </div>
             </div>
           );
@@ -178,39 +196,49 @@ export default function MedicineRequestDetail() {
               <button
                 onClick={handleDecrement}
                 className={`w-8 h-8 flex items-center justify-center rounded border transition-colors ${
-                  isMinusDisabled 
-                    ? 'border-gray-200 text-gray-300 cursor-not-allowed' 
-                    : 'border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400'
+                  isMinusDisabled
+                    ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                    : "border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400"
                 }`}
                 disabled={isMinusDisabled}
-                title={isMinusDisabled ? "Minimum quantity is 1" : "Decrease quantity"}
+                title={
+                  isMinusDisabled
+                    ? "Minimum quantity is 1"
+                    : "Decrease quantity"
+                }
               >
                 -
               </button>
-              
+
               <input
                 type="number"
                 value={quantity}
                 onChange={handleInputChange}
                 className={`w-16 text-center border rounded py-1 px-2 transition-colors ${
-                  hasError 
-                    ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-500' 
-                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                  hasError
+                    ? "border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 }`}
                 min="1"
                 max={availableQty}
-                title={hasError ? hasError : `Maximum available: ${availableQty}`}
+                title={
+                  hasError ? hasError : `Maximum available: ${availableQty}`
+                }
               />
-              
+
               <button
                 onClick={handleIncrement}
                 className={`w-8 h-8 flex items-center justify-center rounded border transition-colors ${
-                  isPlusDisabled 
-                    ? 'border-gray-200 text-gray-300 cursor-not-allowed' 
-                    : 'border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400'
+                  isPlusDisabled
+                    ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                    : "border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400"
                 }`}
                 disabled={isPlusDisabled}
-                title={isPlusDisabled ? `Maximum available quantity is ${availableQty}` : "Increase quantity"}
+                title={
+                  isPlusDisabled
+                    ? `Maximum available quantity is ${availableQty}`
+                    : "Increase quantity"
+                }
               >
                 +
               </button>
@@ -256,7 +284,7 @@ export default function MedicineRequestDetail() {
           </div>
         );
       },
-    }
+    },
   ];
 
   const handleRegisterPatient = async () => {
@@ -291,7 +319,7 @@ export default function MedicineRequestDetail() {
     }
 
     // Validate all quantities before processing
-    const errors: {[key: number]: string} = {};
+    const errors: { [key: number]: string } = {};
     let hasValidationErrors = false;
 
     items.forEach((item, index) => {
@@ -323,7 +351,11 @@ export default function MedicineRequestDetail() {
 
       if (effectivePatId) {
         try {
-          const patientRecordResponse = await createPatientRecord(effectivePatId, "Medicine Record");
+          const patientRecordResponse = await createPatientRecord({
+            pat_id: effectivePatId,
+            patrec_type: "Medicine Record",
+            staff: staff_id,
+          });
           patientRecordId = patientRecordResponse.patrec_id;
         } catch (error) {
           console.error("Error creating patient record:", error);
@@ -362,9 +394,17 @@ export default function MedicineRequestDetail() {
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Request Data</h3>
-          <p className="text-gray-500">The medicine request data could not be found.</p>
-          <Button variant="outline" onClick={() => navigate(-1)} className="mt-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            No Request Data
+          </h3>
+          <p className="text-gray-500">
+            The medicine request data could not be found.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="mt-4"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Go Back
           </Button>
@@ -373,20 +413,30 @@ export default function MedicineRequestDetail() {
     );
   }
 
-  const fullName = `${request.personal_info.per_lname}, ${request.personal_info.per_fname} ${request.personal_info.per_mname || ""}`.trim();
+  const fullName = `${request.personal_info.per_lname}, ${
+    request.personal_info.per_fname
+  } ${request.personal_info.per_mname || ""}`.trim();
   const age = calculateAge(request.personal_info.per_dob);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       <div className=" w-full p-6">
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <Button className="text-black p-2 mb-2 self-start" variant={"outline"} onClick={() => navigate(-1)}>
+            <Button
+              className="text-black p-2 mb-2 self-start"
+              variant={"outline"}
+              onClick={() => navigate(-1)}
+            >
               <ChevronLeft />
             </Button>
             <div className="flex-col items-center mb-4">
-              <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Medicine Request Details</h1>
-              <p className="text-xs sm:text-sm text-darkGray">View details of requested medicine</p>
+              <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                Medicine Request Details
+              </h1>
+              <p className="text-xs sm:text-sm text-darkGray">
+                View details of requested medicine
+              </p>
             </div>
           </div>
           <hr className="border-gray mb-5 sm:mb-8" />
@@ -396,13 +446,6 @@ export default function MedicineRequestDetail() {
           {/* Patient Information Card */}
           <div className="xl:col-span-2">
             <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 h-full">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <User className="w-5 h-5 text-blue-600" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900">Patient Information</h2>
-              </div>
-
               <div className="space-y-6">
                 {/* Main Patient Info */}
                 <div className="flex items-start gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
@@ -410,7 +453,9 @@ export default function MedicineRequestDetail() {
                     <User className="w-6 h-6 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-1">{fullName}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">
+                      {fullName}
+                    </h3>
                     <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
@@ -424,37 +469,47 @@ export default function MedicineRequestDetail() {
 
                 {/* Compact Info Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-3  rounded-lg">
                     <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Date of Birth</p>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Date of Birth
+                      </p>
                       <p className="text-sm font-semibold text-gray-900">
-                        {new Date(request.personal_info.per_dob).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
+                        {new Date(
+                          request.personal_info.per_dob
+                        ).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
                         })}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-3  rounded-lg">
                     <Phone className="w-5 h-5 text-gray-500 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact Number</p>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Contact Number
+                      </p>
                       <p className="text-sm font-semibold text-gray-900">
                         {request.personal_info.per_contact || "Not provided"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-3  rounded-lg">
                     <HeartPulse className="w-5 h-5 text-gray-500 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Patient Status</p>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Patient Status
+                      </p>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-gray-900">
-                          {currentPatId || request.pat_id ? "Registered" : "Not Registered"}
+                          {currentPatId || request.pat_id
+                            ? "Registered"
+                            : "Not Registered"}
                         </p>
                         {currentPatId || request.pat_id ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -469,25 +524,29 @@ export default function MedicineRequestDetail() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-3  rounded-lg">
                     <Mail className="w-5 h-5 text-gray-500 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Civil Status</p>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Civil Status
+                      </p>
                       <p className="text-sm font-semibold text-gray-900">
                         {request.personal_info.per_status || "Not specified"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3">
-                      <Home className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-xs font-medium text-green-600 uppercase tracking-wide mb-1">Complete Address</p>
-                        <p className="text-sm font-semibold text-gray-900 leading-relaxed">
-                          {request.address?.full_address || "No Address Provided"}
-                        </p>
-                      </div>
+                  <div className="flex items-start p-3  gap-3">
+                    <Home className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
+                        Complete Address
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900 leading-relaxed">
+                        {request.address?.full_address || "No Address Provided"}
+                      </p>
                     </div>
+                  </div>
                 </div>
 
                 {/* Registration Alert */}
@@ -498,21 +557,40 @@ export default function MedicineRequestDetail() {
                         <UserPlus className="w-4 h-4 text-blue-600" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="text-blue-900 font-semibold mb-1">Registration Required</h4>
+                        <h4 className="text-blue-900 font-semibold mb-1">
+                          Registration Required
+                        </h4>
                         <p className="text-blue-700 text-sm mb-3">
-                          Register this person as a patient to enable medical tracking and history.
+                          Register this person as a patient to enable medical
+                          tracking and history.
                         </p>
-                        <Button 
-                          onClick={handleRegisterPatient} 
-                          size="sm" 
+                        <Button
+                          onClick={handleRegisterPatient}
+                          size="sm"
                           disabled={isRegistering}
                           className="bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           {isRegistering ? (
                             <>
-                              <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-3 w-3 text-white"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
                               </svg>
                               Registering...
                             </>
@@ -530,7 +608,6 @@ export default function MedicineRequestDetail() {
               </div>
             </div>
           </div>
-
         </div>
 
         {/* Requested Medicines Section */}
@@ -540,7 +617,9 @@ export default function MedicineRequestDetail() {
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <Package className="w-5 h-5 text-purple-600" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-900">Requested Medicines</h2>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Requested Medicines
+              </h2>
             </div>
 
             <div className="flex items-center gap-2 text-gray-600">

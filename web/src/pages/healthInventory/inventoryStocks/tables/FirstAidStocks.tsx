@@ -59,7 +59,6 @@ const isLowStock = (availQty: number, unit: string, pcs: number) => {
 export default function FirstAidStocks() {
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false)
   const [firstAidToArchive, setFirstAidToArchive] = useState<string | null>(null)
-  const [isDialog, setIsDialog] = useState(false) // This state seems unused, consider removing if not needed
   const [searchQuery, setSearchQuery] = useState("")
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
@@ -221,16 +220,7 @@ export default function FirstAidStocks() {
     }
   }
 
-  if (isLoadingFirstAid) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    )
-  }
+ 
 
   const columns = getColumns(handleArchiveInventory)
   return (

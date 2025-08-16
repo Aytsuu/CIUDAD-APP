@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, ChevronLeft, ArrowUpDown, FileInput } from "lucide-react";
+import {
+  Search,
+  ChevronLeft,
+  ArrowUpDown,
+  FileInput,
+  Loader2,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,12 +18,11 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
 import { api2 } from "@/api/api";
 import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
+import { useLoading } from "@/context/LoadingContext";
 
 export const getChildHealthHistoryRecordRecords = async (): Promise<
   ChildHealthHistoryRecord[]
@@ -42,20 +47,20 @@ export default function ForwardedCHimmunization() {
     gcTime: 600000,
   });
 
+  const { showLoading, hideLoading } = useLoading();
+
   const formatRecordForTable = (record: ChildHealthHistoryRecord) => {
     const patDetails = record.chrec_details?.patrec_details?.pat_details;
     const personalInfo = patDetails?.personal_info;
     const addressInfo = patDetails?.address;
     const familyHeadInfo = patDetails?.family_head_info;
-
     const motherInfo = familyHeadInfo?.family_heads?.mother?.personal_info;
     const fatherInfo = familyHeadInfo?.family_heads?.father?.personal_info;
-
     return {
-      record, // Keep the full record
+      record, 
       chrec_id: record.chrec,
       chhist_id: record.chhist_id,
-    
+
       fname: personalInfo?.per_fname || "",
       lname: personalInfo?.per_lname || "",
       mname: personalInfo?.per_mname || "",
@@ -88,30 +93,11 @@ export default function ForwardedCHimmunization() {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const navigate = useNavigate();
 
-  const filterOptions = [
-    { id: "all", name: "All Records" },
-    { id: "home", name: "Home Delivery" },
-    { id: "hospital", name: "Hospital Delivery" },
-    { id: "resident", name: "Resident" },
-    { id: "transient", name: "Transient" },
-  ];
-
   useEffect(() => {
     if (!immunizationRecords) return;
 
     const formattedData = immunizationRecords.map(formatRecordForTable);
     const filtered = formattedData.filter((item) => {
-      const matchesFilter =
-        selectedFilter === "all" ||
-        (selectedFilter === "resident" &&
-          item.pat_type.toLowerCase() === "resident") ||
-        (selectedFilter === "transient" &&
-          item.pat_type.toLowerCase() === "transient") ||
-        (selectedFilter === "home" &&
-          item.delivery_type.toLowerCase() === "home") ||
-        (selectedFilter === "hospital" &&
-          item.delivery_type.toLowerCase() === "hospital");
-
       const matchesSearch =
         `${item.fname} ${item.lname} ${item.mname} ` +
         `${item.mother_fname} ${item.mother_lname} ${item.mother_mname} ` +
@@ -120,7 +106,7 @@ export default function ForwardedCHimmunization() {
           .toLowerCase()
           .includes(searchQuery.toLowerCase());
 
-      return matchesFilter && matchesSearch;
+      return matchesSearch;
     });
 
     setFilteredData(filtered);
@@ -252,7 +238,13 @@ export default function ForwardedCHimmunization() {
     },
   ];
 
-
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -289,14 +281,6 @@ export default function ForwardedCHimmunization() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <SelectLayout
-            placeholder="Filter records"
-            label=""
-            className="bg-white w-full sm:w-48"
-            options={filterOptions}
-            value={selectedFilter}
-            onChange={(value) => setSelectedFilter(value)}
-          />
         </div>
       </div>
 
@@ -339,34 +323,15 @@ export default function ForwardedCHimmunization() {
 
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <div className="bg-white rounded-md border border-gray-200">
-              {/* Skeleton for table header */}
-              <div className="w-full h-16 bg-gray-50 flex items-center p-4">
-                {columns.map((_, i) => (
-                  <Skeleton key={`header-${i}`} className="h-6 flex-1 mx-2" />
-                ))}
-              </div>
-              {/* Skeleton for table rows */}
-              <div className="p-4 space-y-4">
-                {[...Array(5)].map((_, rowIndex) => (
-                  <div
-                    key={`row-${rowIndex}`}
-                    className="flex items-center justify-between space-x-4"
-                  >
-                    {columns.map((_, colIndex) => (
-                      <Skeleton
-                        key={`cell-${rowIndex}-${colIndex}`}
-                        className="h-12 flex-1 mx-2"
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
+            <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">loading....</span>
             </div>
           ) : (
             <DataTable columns={columns} data={currentData} />
           )}
         </div>
+
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing{" "}

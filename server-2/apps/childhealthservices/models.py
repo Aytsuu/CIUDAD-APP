@@ -8,10 +8,8 @@ from apps.medicineservices.models import MedicineRequestItem,MedicineRequest,Med
 
 
 # Create your models here.
-class ChildHealthrecord(models.Model):
-    
+class ChildHealthrecord(models.Model):  
     chrec_id =models.BigAutoField(primary_key=True)
-    # chr_date = models.DateField(blank=True, null=True)
     ufc_no = models.CharField(max_length=100, blank=True, null=True)
     family_no=models.CharField(max_length=100, blank=True, null=True)
     mother_occupation = models.CharField(max_length=100, blank=True, null=True)
@@ -77,10 +75,8 @@ class ChildHealthVitalSigns(models.Model):
     chvital_id = models.BigAutoField(primary_key=True)
     vital =models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='child_health_histories', blank=True, null=True)
     bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_vital_signs', blank=True, null=True)
-    # temp = models.CharField(max_length=100, blank=True, null=True)  # Temperature
     find =models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='child_health_vital_signs', blank=True, null=True)
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_vital_signs')
-    # chnotes = models.ForeignKey(ChildHealthNotes, on_delete=models.CASCADE, related_name='child_health_vital_signs', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'child_health_vital_signs'
@@ -88,8 +84,6 @@ class ChildHealthVitalSigns(models.Model):
 
 class ChildHealthSupplements(models.Model):
     chsupplement_id = models.BigAutoField(primary_key=True)
-    # supplement_summary = models.TextField(blank=True, null=True)
-    # medreq= models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='child_health_supplements', blank=True, null=True)
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_supplements')
     # staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_supplements', null=True, blank=True)
     medrec = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='child_health_supplements')

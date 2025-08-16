@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Plus, Download, Building2, FileDown, Loader2 } from "lucide-react"
+import { Search, Plus, Building2, FileDown, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { Link } from "react-router"
@@ -7,11 +7,11 @@ import { DataTable } from "@/components/ui/table/data-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { activeColumns } from "./BusinessColumns"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card } from "@/components/ui/card/card"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { useActiveBusinesses } from "../queries/profilingFetchQueries"
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 
 export default function ActiveRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -70,28 +70,22 @@ export default function ActiveRecords() {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex-1 sm:flex-none">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleExport("csv")}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Export as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport("excel")}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Export as Excel
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport("pdf")}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Export as PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-2">
+              <DropdownLayout
+                trigger={
+                  <Button variant="outline" className="gap-2 border">
+                    <FileDown className="h-4 w-4" />
+                    Export
+                  </Button>
+                }
+                options={[
+                  { id: "csv", name: "Export as CSV" },
+                  { id: "excel", name: "Export as Excel" },
+                  { id: "pdf", name: "Export as PDF" },
+                ]}
+                onSelect={(type: any) => handleExport(type)}
+              />
+            </div>  
 
             <Link
               to="/business/form"

@@ -1,5 +1,3 @@
-"use client"
-
 import React from "react"
 import {
   type ColumnDef,
@@ -20,7 +18,6 @@ import {
 } from "@tanstack/react-table"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../table/table"
 import { Button } from "@/components/ui/button/button"
-
 
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ChevronLeft, ChevronRight } from "lucide-react" // Added ArrowUpDown
@@ -61,7 +58,6 @@ export function DataTable<TData, TValue>({
   className = "",
   pageSize = 10,
   manualPagination,
-  title,
 }: DataTableProps<TData, TValue>) {
   const [sortingState, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])

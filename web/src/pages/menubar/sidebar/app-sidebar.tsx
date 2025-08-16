@@ -188,8 +188,7 @@ const items: MenuItem[] = [
         url: "/",
         anotherItems: [
           { title: "Inventory List", url: "/mainInventoryList" },
-          { title: "Inventory Stocks", url: "/mainInventoryStocks" },
-          { title: "Transactions List", url: "/transactionMainInventoryList" },
+          { title: "Inventory Stocks", url: "/main-inventory" },
         ],
       },
       {
@@ -201,6 +200,21 @@ const items: MenuItem[] = [
         ],
       },
     ],
+  },
+  {
+    title: "Clerk",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Certifications", url: "record/clearances/certification" },
+      { title: "Business Permits", url: "record/clearances/businesspermit" },
+      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
+    ],
+  },
+  {
+    title: "Activity Log",
+    url: "/record/activity-log",
+
   },
 ];
 

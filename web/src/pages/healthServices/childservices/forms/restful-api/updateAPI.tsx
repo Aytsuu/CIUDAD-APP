@@ -71,7 +71,6 @@ export async function updatePatientRecord(
   export async function updateSupplementStatus(
     updates: Array<{
       chssupplementstat_id: number;
-      date_given_iron: string | null;
       date_completed: string | null;
     }>
   ): Promise<any[]> {
@@ -80,7 +79,6 @@ export async function updatePatientRecord(
         '/child-health/update-supplement-status/',
         updates.map(update => ({
           chssupplementstat_id: update.chssupplementstat_id,
-          date_given_iron:update.date_given_iron,
           date_completed: update.date_completed,
           updated_at: new Date().toISOString(),
         }))

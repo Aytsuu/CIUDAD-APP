@@ -11,18 +11,18 @@ import {
   Syringe,
   Pill,
 } from "lucide-react";
-import {
-  recordOverviewFields,
-  findingsFields,
-  disabilitiesFields,
-  vitalSignsFields,
-  nutritionStatusesFields,
-  notesFields,
-  supplementsFields,
-  exclusiveBfCheckFields,
-  immunizationTrackingFields,
-} from "@/pages/healthServices/childservices/viewrecords/Config";
 import { AccordionSection } from "@/components/ui/accordion-section";
+import {
+  disabilitiesFields,
+  exclusiveBfCheckFields,
+  findingsFields,
+  immunizationTrackingFields,
+  notesFields,
+  nutritionStatusesFields,
+  recordOverviewFields,
+  supplementsFields,
+  vitalSignsFields,
+} from "@/pages/healthServices/childservices/viewrecords/config";
 
 interface HealthHistoryAccordionsProps {
   recordsToDisplay: ChildHealthHistoryRecord[];
@@ -49,7 +49,6 @@ export function HealthHistoryAccordions({
         />
       </AccordionSection>
 
-
       {/* <AccordionSection
         value="parent-newborn"
         title="Parent & Newborn Screening"
@@ -74,7 +73,6 @@ export function HealthHistoryAccordions({
         />
       </AccordionSection>
 
-
       <AccordionSection
         value="find-details"
         title="Findings Details"
@@ -86,7 +84,7 @@ export function HealthHistoryAccordions({
           chhistId={chhistId}
         />
       </AccordionSection>
-      
+
       <AccordionSection
         value="disabilities"
         title="Disabilities"

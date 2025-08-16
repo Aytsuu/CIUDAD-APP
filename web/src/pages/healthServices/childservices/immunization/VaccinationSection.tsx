@@ -57,15 +57,13 @@ interface VaccinationSectionProps {
 }
 
 export function VaccinationSection({
-  showVaccineList,
-  handleShowVaccineListChange,
+  
   vaccineListOptions,
   selectedVaccineListId,
   handleExistingVaccineChange,
   setSelectedVaccineListId,
   existingVaccineErrors,
   form,
-  existingVaccineTotalDoses,
   addExistingVac,
   vaccinesData,
   formWatch,
@@ -73,7 +71,7 @@ export function VaccinationSection({
   setSelectedVaccineId,
   isLoading,
   newVaccineErrors,
-  currentVaccineTotalDoses,
+  // currentVaccineTotalDoses,
   selectedVaccineId,
   addVac,
   isVaccineCompleted,
@@ -125,7 +123,6 @@ export function VaccinationSection({
                 min={1}
                 placeholder="enter dose number"
               />
-             
             </div>
             <div className="space-y-2">
               <FormInput
@@ -135,7 +132,6 @@ export function VaccinationSection({
                 type="number"
                 min={1}
                 placeholder="enter total dose"
-                className="bg-gray-50"
               />
             </div>
             <div className="space-y-2">
@@ -145,21 +141,19 @@ export function VaccinationSection({
                 label="Date Administered"
                 type="date"
               />
-             
             </div>
-           
           </div>
           <div className="flex justify-end pt-4">
-              <Button
-                type="button"
-                onClick={addExistingVac}
-                className=" bg-amber-600 hover:bg-amber-700"
-                disabled={!selectedVaccineListId || isVaccineCompleted}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Previous Vaccine
-              </Button>
-            </div>
+            <Button
+              type="button"
+              onClick={addExistingVac}
+              className=" bg-amber-600 hover:bg-amber-700"
+              disabled={!selectedVaccineListId || isVaccineCompleted}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Previous Vaccine
+            </Button>
+          </div>
 
           <div>
             {existingVaccines.length > 0 && (
@@ -179,7 +173,6 @@ export function VaccinationSection({
               </Card>
             )}
           </div>
-
 
           {existingVaccines.length === 0 && (
             <Card>
@@ -212,38 +205,38 @@ export function VaccinationSection({
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
+            <div className="my-4">
+              <Label>Vaccine Name</Label>
+              <Combobox
+                options={vaccinesData?.formatted ?? []}
+                value={formWatch("vaccines.0.vaccineType") || ""}
+                onChange={(value) => {
+                  handleVaccineChange(value);
+                  setSelectedVaccineId(value);
+                }}
+                placeholder={
+                  isLoading
+                    ? "Loading vaccines..."
+                    : "Search and select a vaccine"
+                }
+                triggerClassName="font-normal w-full"
+                emptyMessage={
+                  <div className="flex gap-2 justify-center items-center">
+                    <Label className="font-normal text-xs">
+                      {isLoading
+                        ? "Loading..."
+                        : "No available vaccines in stock."}
+                    </Label>
+                  </div>
+                }
+              />
+              {newVaccineErrors.vaccine && (
+                <p className="text-red-500 text-sm">
+                  {newVaccineErrors.vaccine}
+                </p>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Vaccine Name</Label>
-                <Combobox
-                  options={vaccinesData?.formatted ?? []}
-                  value={formWatch("vaccines.0.vaccineType") || ""}
-                  onChange={(value) => {
-                    handleVaccineChange(value);
-                    setSelectedVaccineId(value);
-                  }}
-                  placeholder={
-                    isLoading
-                      ? "Loading vaccines..."
-                      : "Search and select a vaccine"
-                  }
-                  triggerClassName="font-normal w-full"
-                  emptyMessage={
-                    <div className="flex gap-2 justify-center items-center">
-                      <Label className="font-normal text-xs">
-                        {isLoading
-                          ? "Loading..."
-                          : "No available vaccines in stock."}
-                      </Label>
-                    </div>
-                  }
-                />
-                {newVaccineErrors.vaccine && (
-                  <p className="text-red-500 text-sm">
-                    {newVaccineErrors.vaccine}
-                  </p>
-                )}
-              </div>
               <div className="space-y-2">
                 <FormInput
                   control={form.control}
@@ -253,7 +246,6 @@ export function VaccinationSection({
                   min={1}
                   placeholder="enter dose number"
                 />
-               
               </div>
               <div className="space-y-2">
                 <FormInput
@@ -273,17 +265,14 @@ export function VaccinationSection({
                   label="Date Administered"
                   type="date"
                 />
-               
               </div>
               <FormDateTimeInput
-                      control={form.control}
-                      name="vaccines.0.nextFollowUpDate"
-                      label="Next Follow-up Visit Date"
-                      type="date"
-                    />
+                control={form.control}
+                name="vaccines.0.nextFollowUpDate"
+                label="Next Follow-up Visit Date"
+                type="date"
+              />
             </div>
-
-           
           </div>
 
           <div className="flex justify-end">
@@ -312,7 +301,7 @@ export function VaccinationSection({
             </Card>
           )}
 
-          {vaccines.length === 0 &&  (
+          {vaccines.length === 0 && (
             <Card>
               <CardContent className="py-12 text-center">
                 <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">

@@ -127,37 +127,37 @@ export function PatientSearch({
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 p-4 ${className}`}
+      className={`bg-white pb-4 ${className}`}
     >
-      <div className="flex items-center gap-3 mb-4">
-        <User className="h-4 w-4 text-darkBlue3" />
-        <Label className="text-base font-semibold text-darkBlue3">
-          {ischildren ? "Select Child Patient" : "Select Patient"}
-        </Label>
+      <div className="flex items-center gap-3 mb-2">
+      <User className="h-4 w-4 text-darkBlue3" />
+      <Label className="text-base font-semibold text-darkBlue3">
+        {ischildren ? "Select Child Patient" : "Select Patient"}
+      </Label>
       </div>
       <Combobox
-        options={currentData?.formatted ?? []}
-        value={value}
-        onChange={handlePatientSelection}
-        placeholder={
-          currentIsLoading ? "Loading patients..." : `Search and select ${ischildren ? "a child" : "a"} patient`
-        }
-        triggerClassName="font-normal w-full"
-        emptyMessage={
-          <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
-            <Label className="font-normal text-xs">
-              {currentIsLoading ? "Loading..." : currentEmptyMessage}
-            </Label>
-            <Link to="/patient-records/new">
-              <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">
-                Register New Patient
-              </Label>
-            </Link>
-          </div>
-        }
+      options={currentData?.formatted ?? []}
+      value={value}
+      onChange={handlePatientSelection}
+      placeholder={
+        currentIsLoading ? "Loading patients..." : `Search and select ${ischildren ? "a child" : "a"} patient`
+      }
+      triggerClassName="font-normal w-full"
+      emptyMessage={
+        <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
+        <Label className="font-normal text-xs">
+          {currentIsLoading ? "Loading..." : currentEmptyMessage}
+        </Label>
+        <Link to="/patient-records/new">
+          <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">
+          Register New Patient
+          </Label>
+        </Link>
+        </div>
+      }
       />
       {/* <span className="text-xs italic text-red-400 mt-2">
-        Note: Ensure the selected patient does not have any existing records. 
+      Note: Ensure the selected patient does not have any existing records. 
       </span> */}
     </div>
   );

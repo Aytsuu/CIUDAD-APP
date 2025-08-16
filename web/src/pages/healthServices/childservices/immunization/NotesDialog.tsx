@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 interface NotesDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  form: any; // You might want to create a proper type for your form
+  form: any;
   isLoading: boolean;
   onSave: (formValues: any) => void;
 }
@@ -60,9 +60,9 @@ export function NotesDialog({
             onClick={() => {
               const formValues = form.getValues();
               onSave(formValues);
-              onClose();
             }}
             className="bg-green-600 hover:bg-green-700"
+            disabled={isLoading}
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

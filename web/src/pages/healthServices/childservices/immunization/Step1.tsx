@@ -1,11 +1,10 @@
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion } from "@/components/ui/accordion";
 import { ChildHealthHistoryRecord } from "../viewrecords/types";
-import { getSupplementStatusesFields } from "../viewrecords/Config";
+import { getSupplementStatusesFields } from "../viewrecords/config";
 import { PatientSummarySection } from "../viewrecords/CurrentHistoryView";
 import { HealthHistoryAccordions } from "@/components/ui/childhealth-history-accordion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -23,11 +22,8 @@ export default function PendingDisplayMedicalConsultation({
   onNext,
   fullHistoryData,
 }: PendingDisplayMedicalConsultationProps) {
-  const navigate = useNavigate();
   const chhistId = ChildHealthRecord.chhist_id;
 
-  // State management
-  const [isLoading, setIsLoading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [recordsPerPage, setRecordsPerPage] = useState(2);
   const [activeTab, setActiveTab] = useState("current");
@@ -66,23 +62,11 @@ export default function PendingDisplayMedicalConsultation({
     }
   };
 
-  // Set default value for recordsPerPage
   useEffect(() => {
     setRecordsPerPage(3);
   }, []);
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="w-full h-full p-6">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
-
+ 
   return (
     <div className="p-6">
       <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
@@ -214,10 +198,7 @@ export default function PendingDisplayMedicalConsultation({
       <div className="flex justify-end mt-6 sm:mt-8">
         <Button
           onClick={onNext}
-          className={`w-[100px] flex items-center justify-center gap-2 ${
-            isLoading ? "opacity-70 cursor-not-allowed" : ""
-          }`}
-          disabled={isLoading}
+          
         >
           Next
           <ChevronRight className="h-4 w-4" />

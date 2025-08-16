@@ -108,7 +108,7 @@ export default function MediaPicker({
             return {
               uri: data.uri,
               id: `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-              name: data.filename || `image_${Date.now()}.${mimeType.split('/')[1] || 'jpg'}`,
+              name: `media_${data.filename}_${Date.now()}.${mimeType.split('/')[1]}${Math.random().toString(36).substring(2, 8)}`,
               type: mimeType || 'image/jpeg',
               file: base64Data,
             };

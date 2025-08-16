@@ -1,58 +1,70 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import MainInventoryStocks from "./StocksMain";
+import ArchiveMainInventoryStocks from "@/pages/healthServices/Archive/Inventory/tables/MainArchiveInventoryStocks";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import TransactionMainInventoryList from "../../transaction/tables/TransactionMainInventoryList";
 
-export default function MainInventoryStocks() {
-  // Initialize state with value from localStorage or default to "medicine"
-  const [selectedView, setSelectedView] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("selectedInventoryView") || "medicine";
-    }
-    return "medicine";
-  });
+export default function MainInventory() {
+  const [selectedView, setSelectedView] = useState("stocks"); // Start with direct default
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Update localStorage whenever selectedView changes
   useEffect(() => {
-    localStorage.setItem("selectedInventoryView", selectedView);
-  }, [selectedView]);
+    setIsMounted(true);
+    // Only access localStorage after component mounts (client-side)
+    const savedView = localStorage.getItem("selectedInventoryView");
+    if (savedView && ["stocks", "archive", "transaction"].includes(savedView)) {
+      setSelectedView(savedView);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem("selectedInventoryView", selectedView);
+    }
+  }, [selectedView, isMounted]);
+
+  if (!isMounted) {
+    return null; // or a loading spinner
+  }
 
   return (
-    <>
-      {/* Title Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-        <div className="mb-4">
-          <h1 className="font-semibold text-lg sm:text-xl md:text-2xl text-darkBlue2">
-            Inventory
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray mt-1">
-            Manage and view inventory information
-          </p>
-        </div>
-
-        {/* Stocks and Archive Tabs */}
+    <MainLayoutComponent
+      title="Inventory"
+      description="Manage your inventory stocks efficiently."
+    >
+      <div className="bg-white p-4">
         <Tabs
-          defaultValue="stocks"
+          value={selectedView} // Use value instead of defaultValue
           className="mb-4"
-          onValueChange={(value) =>
-            setSelectedView(value as "stocks" | "archive")
-          }
+          onValueChange={(value) => setSelectedView(value)}
         >
-          <TabsList className="grid grid-cols-2 w-full sm:w-[200px]">
+          <TabsList className="grid grid-cols-3 w-full sm:w-[300px]">
             <TabsTrigger
               value="stocks"
-              className="py-2 text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+              className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
             >
               Stocks
             </TabsTrigger>
             <TabsTrigger
               value="archive"
-              className="py-2 text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+              className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
             >
               Archive
             </TabsTrigger>
+            <TabsTrigger
+              value="transaction"
+              className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+            >
+              Transaction
+            </TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {selectedView === "stocks" && <MainInventoryStocks />}
+        {selectedView === "archive" && <ArchiveMainInventoryStocks />}
+        {selectedView === "transaction" && <TransactionMainInventoryList />}
       </div>
-      <hr className="border-gray mb-4 sm:mb-6 md:mb-8" />
-    </>
+    </MainLayoutComponent>
   );
 }

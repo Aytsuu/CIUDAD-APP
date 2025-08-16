@@ -73,9 +73,9 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
               )
               .map(({ record, status }, index) => {
                 const isCurrentRecord = record.chhist_id === chhistId;
-                const supplement = record.child_health_supplements?.find(
-                  (s) => s.chsupplement_id === status.chsupplement
-                );
+                // const supplement = record.child_health_supplements?.find(
+                //   (s) => s.chsupplement_id === status.chsupplement
+                // );
 
                 return (
                   <TableRow

@@ -19,8 +19,8 @@ import { Loader2, Pill } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { getAgegroup } from "@/pages/healthServices/agegroup/restful-api/agepostAPI";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { getVaccineList } from "../restful-api/Antigen/VaccineFetchAPI";
 import CardLayout from "@/components/ui/card/card-layout";
+import { getVaccineList } from "../restful-api/Antigen/fetchAPI";
 
 const timeUnits = [
   { id: "years", name: "Years" },
@@ -77,18 +77,15 @@ export const fetchAgeGroups = async () => {
   }
 };
 
-const isDuplicateVaccineList = (
-  vaccinelist: any[],
-  newVaccinelist: string,
-  age_group: string,
+const isDuplicateVaccine = (
+  vaccineList: any[],
+  vaccineName: string,
   currentVaccineId?: number
 ) => {
-  return vaccinelist.some(
+  return vaccineList.some(
     (vac) =>
       vac.id !== currentVaccineId &&
-      vac.vac_name.trim().toLowerCase() ===
-        newVaccinelist.trim().toLowerCase() &&
-      String(vac.agegrp_id) === String(age_group)
+      vac.vac_name.trim().toLowerCase() === vaccineName.trim().toLowerCase()
   );
 };
 
@@ -159,7 +156,7 @@ export default function EditVaccineModal() {
     formState: { errors, isValid },
   } = form;
 
-  const [type, ageGroup, noOfDoses] = watch(["type", "ageGroup", "noOfDoses"]);
+  const [type, noOfDoses] = watch(["type", "noOfDoses"]);
   const updateVaccineMutation = useUpdateVaccine();
 
   // Set initial form values when component mounts
@@ -264,40 +261,27 @@ export default function EditVaccineModal() {
   };
 
   const handleFormSubmit = async (data: VaccineType) => {
-    const age_id = data.ageGroup.split(",")[0];
     const currentValues = form.getValues();
 
-    if (
-      currentValues.vaccineName !== initialFormValues?.vaccineName ||
-      currentValues.ageGroup !== initialFormValues?.ageGroup
-    ) {
+    if (currentValues.vaccineName !== initialFormValues?.vaccineName) {
       setIsCheckingDuplicate(true);
 
       try {
-        if (!data.ageGroup) {
-          form.setError("ageGroup", {
-            type: "manual",
-            message: "Please select an age group",
-          });
-          return;
-        }
-
         const existingVaccineList = await getVaccineList();
         if (!Array.isArray(existingVaccineList)) {
           throw new Error("Invalid API response - expected an array");
         }
 
-        const isDuplicate = isDuplicateVaccineList(
+        const isDuplicate = isDuplicateVaccine(
           existingVaccineList,
           data.vaccineName,
-          age_id,
           vaccineData.id
         );
 
         if (isDuplicate) {
           form.setError("vaccineName", {
             type: "manual",
-            message: "This vaccine already exists",
+            message: "This vaccine name already exists",
           });
           return;
         }
@@ -466,7 +450,7 @@ export default function EditVaccineModal() {
                 <div className="flex items-center justify-center mb-8">
                   <Pill className="h-6 w-6 text-blue-600 mr-2" />
                   <h2 className="text-2xl font-bold text-gray-800">
-                    Add Vaccine List
+                    Edit Vaccine List
                   </h2>
                 </div>
               </div>
@@ -502,7 +486,7 @@ export default function EditVaccineModal() {
                                 to="/age-group-management"
                                 className="text-sm text-teal-600 hover:underline"
                               >
-                                Add New Age Group
+                                edir New Age Group
                               </Link>
                             </div>
                           }
@@ -547,7 +531,7 @@ export default function EditVaccineModal() {
                   <div className="flex justify-end gap-3 pt-4">
                     <Button
                       variant="outline"
-                      type="button" // Add this line
+                      type="button"
                       onClick={() => {
                         navigate(-1);
                       }}

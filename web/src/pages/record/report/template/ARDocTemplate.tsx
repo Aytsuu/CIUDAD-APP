@@ -1,6 +1,5 @@
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { useInstantFileUpload } from "@/hooks/use-file-upload";
 import { pdf } from "@react-pdf/renderer";
 import { CircleAlert, Loader2, Pen, Printer, Upload, X } from "lucide-react";
 import React from "react";
@@ -12,7 +11,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Card, CardContent } from "@/components/ui/card/card";
 import { Combobox } from "@/components/ui/combobox";
 import { useGetStaffByTitle } from "../../administration/queries/administrationFetchQueries";
-import { formatStaffs } from "../../administration/administrationFormats";
+import { formatStaffs } from "../../administration/AdministrationFormats";
 import { toast } from "sonner";
 
 export const ARDocTemplate = ({
@@ -28,7 +27,6 @@ export const ARDocTemplate = ({
   act_taken: string;
   images: any[];
 }) => {
-  const { uploadFile } = useInstantFileUpload({});
   const { mutateAsync: updateTemplate } = useUpdateTemplate();
   const { data: reportTemplate, isLoading: isLoadingTemplate } = useGetSpecificTemplate('AR'); 
   const { data: staffByTitle, isLoading: isLoadingStaffByTitle } = useGetStaffByTitle('all');
@@ -190,21 +188,17 @@ export const ARDocTemplate = ({
   const handleImageUpload = React.useCallback(async (files: any[]) => {
     if (files.length === 0) return;
 
-    const newFile = {
-      type: files[0].type.startsWith("image/")
-        ? "image"
-        : files[0].type.startsWith("video/")
-        ? "video"
-        : ("document" as "image" | "video" | "document"),
-      file: files[0],
-      status: "uploading" as const,
-      previewUrl: URL.createObjectURL(files[0]),
-    };
+    // const newFile = {
+    //   type: files[0].type.startsWith("image/")
+    //     ? "image"
+    //     : files[0].type.startsWith("video/")
+    //     ? "video"
+    //     : ("document" as "image" | "video" | "document"),
+    //   file: files[0],
+    //   status: "uploading" as const,
+    //   previewUrl: URL.createObjectURL(files[0]),
+    // };
 
-    const { publicUrl } = await uploadFile(newFile.file);
-    if (publicUrl) {
-      return publicUrl
-    }
     return null;
   }, []);
 

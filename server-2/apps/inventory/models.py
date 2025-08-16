@@ -4,7 +4,8 @@ from datetime import datetime
 from django.utils import timezone  # Import timezone for default value
 from django.core.validators import MinValueValidator
 from apps.administration.models import Staff
-# kene,e
+
+
 class Category(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
     cat_type = models.CharField(max_length=100)
@@ -51,7 +52,14 @@ class CommodityList(models.Model):
         ('New acceptor', 'New acceptor'),
         ('Both', 'Both'),
     ]
+    
+    SEX_TYPE_CHOICES = [
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Both', 'Both'),
+    ]
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
+    gender_type = models.CharField(max_length=10, choices=SEX_TYPE_CHOICES, default='Both')
 
     class Meta:
         db_table = 'commodity_list'
@@ -147,6 +155,7 @@ class Inventory(models.Model):
         super().save(*args, **kwargs)
     class Meta:
         db_table = 'inventory'
+        
 class MedicineInventory(models.Model):
     minv_id =models.BigAutoField(primary_key=True)
     minv_dsg = models.PositiveIntegerField(default=0)
@@ -192,7 +201,6 @@ class CommodityInventory(models.Model):
     cinv_qty = models.PositiveIntegerField(default=0)
     cinv_qty_unit = models.CharField(max_length=100)
     cinv_pcs = models.PositiveIntegerField(default=0)
-    cinv_dispensed = models.PositiveIntegerField(default=0)
     cinv_recevFrom = models.CharField(max_length=100,default='OTHERS')
     cinv_qty_avail = models.PositiveIntegerField(default=0)
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE, db_column='inv_id')
@@ -326,7 +334,6 @@ class VaccineStock(models.Model):
     vacStck_id =models.BigAutoField(primary_key=True)
     solvent = models.CharField(max_length=10 )
     batch_number = models.CharField(max_length=100, default=" N/A")
-    volume = models.PositiveIntegerField(default=0)
     qty = models.PositiveIntegerField(default=0)
     dose_ml = models.PositiveIntegerField(default=0)
     vacStck_qty_avail = models.PositiveIntegerField(default=0)

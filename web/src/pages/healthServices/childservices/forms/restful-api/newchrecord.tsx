@@ -3,7 +3,7 @@ import {
   createFollowUpVisit,
   createBodyMeasurement,
   createPatientDisability,
-  processMedicineRequest,
+  
   createChildHealthNotes,
   createChildVitalSign,
   createNutritionalStatus,
@@ -11,8 +11,8 @@ import {
   createExclusiveBFCheck,
   createChildHealthRecord,
   createChildHealthHistory,
+  processMedicineRequest
 } from "./createAPI";
-
 import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
 
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
@@ -80,9 +80,9 @@ export async function addChildHealthRecord({
 
   // Create patient record
   const newPatrec = await createPatientRecord(
-    submittedData.pat_id,
-    "Child Health Record",
-    staff
+   { pat_id:submittedData.pat_id,
+    patrec_type:"Child Health Record",
+    staff:staff}
   );
 
   const patrec_id = newPatrec.patrec_id;
@@ -131,7 +131,7 @@ export async function addChildHealthRecord({
 
   // Create health notes if there are notes added
   if (submittedData.vitalSigns?.[0]?.notes) {
-    const newNotes = await createChildHealthNotes({
+    await createChildHealthNotes({
       chn_notes: submittedData.vitalSigns[0].notes,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -139,7 +139,6 @@ export async function addChildHealthRecord({
       chhist: current_chhist_id,
       staff: staff || null,
     });
-    const chnotes_id = newNotes.chnotes_id;
   }
 
   // Create body measurements
@@ -154,7 +153,9 @@ export async function addChildHealthRecord({
   const bmi_id = newBMI.bm_id;
 
   const vitalsigns = await createVitalSigns({
-    temp: submittedData.vitalSigns?.[0]?.temp || "",
+    vital_temp: submittedData.vitalSigns?.[0]?.temp || "",
+    staff: staff || null,
+    patrec:patrec_id
   });
   const vital_id = vitalsigns.vital_id;
 
@@ -249,8 +250,10 @@ export async function addChildHealthRecord({
         })),
       },
       staff || null,
-      current_chhist_id 
+      current_chhist_id
+
     );
+    
   }
 
   return {

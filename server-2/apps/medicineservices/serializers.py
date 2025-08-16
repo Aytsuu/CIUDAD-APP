@@ -6,8 +6,7 @@ from apps.patientrecords.models import *
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer, PatientRecordSerializer
 from apps.healthProfiling.serializers.base import PersonalSerializer
 from apps.healthProfiling.models import *
-# serializers.py
-
+from apps.inventory.serializers.medicine_serializers import *
 
 
 # ALL  medicine RECORD 

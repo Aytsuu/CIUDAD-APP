@@ -64,16 +64,7 @@ export default function CommodityList() {
 
   // Generate columns using CommodityColumns
   const columns = CommodityColumns()
-  if (isLoadingCommodities) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    )
-  }
+  
   return (
     <div>
       <div className="hidden lg:flex justify-between items-center mb-4">
@@ -109,7 +100,7 @@ export default function CommodityList() {
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <ExportButton data={filteredCommodities} filename="commodity-transactions" columns={exportColumns} />
+          <ExportButton data={paginatedCommodities} filename="commodity-transactions" columns={exportColumns} />
         </div>
         <div className="overflow-x-auto">
           <DataTable columns={columns} data={paginatedCommodities} />

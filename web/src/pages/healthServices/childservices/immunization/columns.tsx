@@ -156,7 +156,7 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
       accessorKey: "vaccineType",
       header: "Vaccine Type",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        <div className="flex justify-center gap-2">
           <CheckCircle className="h-4 w-4 text-green-500" />
           <span className="font-medium">{row.original.vaccineType}</span>
         </div>
@@ -184,7 +184,7 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
       accessorKey: "date",
       header: "Date Administered",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        <div className="flex justify-center items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm">
             {row.original.date
@@ -216,7 +216,7 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
       accessorKey: "vaccineType",
       header: "Vaccine Type",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        <div className="flex justify-center gap-2">
           <Info className="h-4 w-4 text-amber-500" />
           <span className="font-medium">{row.original.vaccineType}</span>
         </div>
@@ -235,7 +235,7 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
       accessorKey: "date",
       header: "Date Administered",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        <div className="flex justify-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm">
             {row.original.date

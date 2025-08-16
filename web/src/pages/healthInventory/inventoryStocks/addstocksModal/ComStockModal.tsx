@@ -48,12 +48,12 @@ export default function AddCommodityStock() {
   const { mutate: submit, isPending } = useSubmitCommodityStock();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<CommodityStockType | null>(null);
-  const [selectedUserType, setSelectedUserType] = useState<string>(""); // State to store user_type
+  const [selectedUserType, setSelectedUserType] = useState<string>(""); 
   const navigate = useNavigate();
   const currentUnit = form.watch("cinv_qty_unit");
   const qty = form.watch("cinv_qty") || 0;
   const pcs = form.watch("cinv_pcs") || 0;
-  const comId = form.watch("com_id"); // Watch for com_id changes
+  const comId = form.watch("com_id"); 
   const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
   // Update user_type when com_id changes

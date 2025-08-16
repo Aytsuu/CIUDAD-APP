@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,14 +16,16 @@ import { useMedicineRequestMutation } from "./queries/postQueries";
 import { PatientSearch } from "@/components/ui/patientSearch";
 import { useAuth } from "@/context/AuthContext";
 import { FirstAidRequestSkeleton } from "../skeleton/firstmed-skeleton";
-import {
-  MedicineRequestArraySchema,
-  MedicineRequestArrayType,
-} from "@/form-schema/medicineRequest";
+import {MedicineRequestArraySchema,MedicineRequestArrayType,} from "@/form-schema/medicineRequest";
 import { Patient } from "@/components/ui/patientSearch";
 import CardLayout from "@/components/ui/card/card-layout";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { MedicineRequestError } from "./medicine-error";
+import { SignatureFieldRef } from "../Reports/firstaid-report/signature";
+import { SignatureField } from "../Reports/firstaid-report/signature";
+import { showErrorToast } from "@/components/ui/toast";
+
+
 
 export default function MedicineRequestForm() {
   const navigate = useNavigate();
@@ -32,22 +34,27 @@ export default function MedicineRequestForm() {
   const staffId = user?.staff?.staff_id || null;
   const mode = location.state?.params?.mode || "fromallrecordtable";
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [selectedPatientData, setSelectedPatientData] =
-    useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] =useState<Patient | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const { data: medicineStocksOptions, isLoading: isMedicinesLoading } =
-    fetchMedicinesWithStock();
-  const [selectedMedicines, setSelectedMedicines] = useState<
-    { minv_id: string; medrec_qty: number; reason: string }[]
-  >([]);
+  const { data: medicineStocksOptions, isLoading: isMedicinesLoading } =fetchMedicinesWithStock();
+  const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const { mutateAsync: submitMedicineRequest, isPending: isSubmitting } =
-    useMedicineRequestMutation();
+  const { mutateAsync: submitMedicineRequest } = useMedicineRequestMutation();
+  const signatureRef = useRef<SignatureFieldRef>(null);
+  const [signature, setSignature] = useState<string | null>(null);
 
-  // Initialize patient data based on mode
-  useEffect(() => {
+  const form = useForm<MedicineRequestArrayType>({
+    resolver: zodResolver(MedicineRequestArraySchema),
+    defaultValues: {
+      pat_id: "",
+      medicines: [],
+    },
+  });
+
+   // Initialize patient data based on mode
+   useEffect(() => {
     if (mode === "fromindivrecord" && location.state?.params?.patientData) {
       const patientData = location.state.params.patientData;
       setSelectedPatientData(patientData);
@@ -56,6 +63,15 @@ export default function MedicineRequestForm() {
     }
   }, [location.state, mode]);
 
+  useEffect(() => {
+    form.setValue("medicines", selectedMedicines);
+  }, [selectedMedicines, form]);
+
+  const handleSignatureChange = useCallback((signature: string | null) => {
+    setSignature(signature);
+  }, []);
+
+  // Handle patient selection from PatientSearch component
   const handlePatientSelect = (patient: Patient | null, patientId: string) => {
     setSelectedPatientId(patientId);
     setSelectedPatientData(patient);
@@ -66,46 +82,37 @@ export default function MedicineRequestForm() {
     }
   };
 
+  // Handle selected medicines change from MedicineDisplay component
   const handleSelectedMedicinesChange = useCallback(
-    (
-      updatedMedicines: {
-        minv_id: string;
-        medrec_qty: number;
-        reason: string;
-      }[]
+    ( updatedMedicines: {minv_id: string; medrec_qty: number; reason: string; }[]
     ) => {
       setSelectedMedicines(updatedMedicines);
     },
     []
   );
+
+  // Handle page change in MedicineDisplay component
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
 
-  const form = useForm<MedicineRequestArrayType>({
-    resolver: zodResolver(MedicineRequestArraySchema),
-    defaultValues: {
-      pat_id: "",
-      medicines: [],
-    },
-  });
-
-  useEffect(() => {
-    form.setValue("medicines", selectedMedicines);
-  }, [selectedMedicines, form]);
-
   const onSubmit = useCallback(
     async (data: MedicineRequestArrayType) => {
+      const currentSignature = signatureRef.current?.getSignature();
+      if (!currentSignature) {
+        showErrorToast("Please provide a signature before submitting.");
+        return;
+      }
       setIsConfirming(true);
       const requestData = {
         pat_id: data.pat_id,
+        signature: currentSignature || null,
         medicines: selectedMedicines.map((med) => ({
           minv_id: med.minv_id,
           medrec_qty: med.medrec_qty,
           reason: med.reason || "No reason provided",
         })),
       };
-
       try {
         await submitMedicineRequest({ data: requestData, staff_id: staffId });
       } catch (error) {
@@ -136,6 +143,7 @@ export default function MedicineRequestForm() {
     return medicine && med.medrec_qty > medicine.avail;
   });
 
+
   const handlePreview = useCallback(() => {
     const patientCheck =
       mode === "fromindivrecord" ? selectedPatientData : selectedPatientId;
@@ -145,7 +153,7 @@ export default function MedicineRequestForm() {
       selectedMedicines.length === 0 ||
       hasInvalidQuantities
     ) {
-      toast.error("Please complete all required fields");
+      showErrorToast("Please complete all required fields");
       return;
     }
     setShowSummary(true);
@@ -156,6 +164,7 @@ export default function MedicineRequestForm() {
     hasInvalidQuantities,
     mode,
   ]);
+
 
   return (
     <>
@@ -188,20 +197,6 @@ export default function MedicineRequestForm() {
             ) : (
               <div className="w-full py-6">
                 <div className="px-4">
-                  {!isMedicinesLoading &&
-                    ((mode === "fromindivrecord" && !selectedPatientData) ||
-                      (mode === "fromallrecordtable" && !selectedPatientId) ||
-                      selectedMedicines.length === 0 ||
-                      hasInvalidQuantities) && (
-                      <MedicineRequestError
-                        mode={mode}
-                        selectedPatientData={selectedPatientData}
-                        selectedPatientId={selectedPatientId}
-                        selectedMedicinesLength={selectedMedicines.length}
-                        hasExceededStock={hasExceededStock}
-                      />
-                    )}
-
                   {/* Patient Selection Section - only shown in fromallrecordtable mode */}
                   {mode === "fromallrecordtable" && (
                     <PatientSearch
@@ -242,6 +237,14 @@ export default function MedicineRequestForm() {
                       medicineStocksOptions={medicineStocksOptions || []}
                       totalSelectedQuantity={totalSelectedQuantity}
                     />
+                    <div className="w-full px-4">
+                      <SignatureField
+                        ref={signatureRef}
+                        title="Signature"
+                        onSignatureChange={handleSignatureChange}
+                        required={true}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div className="w-full overflow-x-auto">
@@ -253,6 +256,23 @@ export default function MedicineRequestForm() {
                       currentPage={currentPage}
                       onPageChange={handlePageChange}
                     />
+
+                    <div className="px-3 pt-6">
+                      {!isMedicinesLoading &&
+                        ((mode === "fromindivrecord" && !selectedPatientData) ||
+                          (mode === "fromallrecordtable" &&
+                            !selectedPatientId) ||
+                          selectedMedicines.length === 0 ||
+                          hasInvalidQuantities) && (
+                          <MedicineRequestError
+                            mode={mode}
+                            selectedPatientData={selectedPatientData}
+                            selectedPatientId={selectedPatientId}
+                            selectedMedicinesLength={selectedMedicines.length}
+                            hasExceededStock={hasExceededStock}
+                          />
+                        )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -311,6 +331,7 @@ export default function MedicineRequestForm() {
                     >
                       Back to Edit
                     </Button>
+
                     <ConfirmationModal
                       trigger={
                         <Button

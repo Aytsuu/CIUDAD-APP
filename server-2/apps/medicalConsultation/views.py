@@ -87,3 +87,20 @@ class PendingMedConCountView(APIView):
             .count()
         )
         return Response({"count": count})
+    
+class MedicalConsultationTotalCountAPIView(APIView):
+    def get(self, request):
+        try:
+            # Count total unique medical consultation records
+            total_records = MedicalConsultation_Record.objects.count()
+            
+            return Response({
+                'success': True,
+                'total_records': total_records
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
