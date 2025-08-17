@@ -1,10 +1,10 @@
 // src/services/patientService.ts
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 import { toast } from "sonner";
 
 export const fetchPatientRecords = async () => {
   try {
-    const response = await api.get("patientrecords/patient/");
+    const response = await api2.get("patientrecords/patient/");
     const patientData = response.data;
 
     return {

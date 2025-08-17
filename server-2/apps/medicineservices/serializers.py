@@ -182,7 +182,7 @@ class MedicineFileCreateSerializer(serializers.ModelSerializer):
                 medreq_id=medreq_id
             )
 
-            url = upload_to_storage(file_data['file'], 'medicine-bucket', 'uploads')
+            url = upload_to_storage(file_data['file'], 'medicine-bucket')
             med_file.ief_url = url
             med_files.append(med_file)
 

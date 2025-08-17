@@ -32,3 +32,22 @@ class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     
+# serializers.py
+# serializers.py
+
+class MedicalConsultationCreateSerializer(serializers.Serializer):
+    pat_id = serializers.IntegerField()
+    vital_bp_systolic = serializers.CharField(required=False, allow_blank=True)
+    vital_bp_diastolic = serializers.CharField(required=False, allow_blank=True)
+    vital_temp = serializers.CharField(required=False, allow_blank=True)
+    vital_RR = serializers.CharField(required=False, allow_blank=True)
+    vital_pulse = serializers.CharField(required=False, allow_blank=True)
+    height = serializers.FloatField()
+    weight = serializers.FloatField()
+    medrec_chief_complaint = serializers.CharField()
+
+    def validate_height(self, value):
+        return value or 0
+
+    def validate_weight(self, value):
+        return value or 0

@@ -179,6 +179,7 @@ class PrenatalCareCreateSerializer(serializers.ModelSerializer):
         }
 
 
+
 # Main Prenatal Form Serializer for complete creation
 class PrenatalCompleteSerializer(serializers.ModelSerializer):
     # Fields from motherPersonalInfo
@@ -602,6 +603,8 @@ class PostpartumDetailViewSerializer(serializers.ModelSerializer):
     def get_delivery_date(self, obj):
         delivery_record = obj.postpartum_delivery_record.first()
         return delivery_record.ppdr_date_of_delivery if delivery_record else None
+
+
 
 
 class PostpartumDeliveryRecordSerializer(serializers.ModelSerializer):
@@ -1083,6 +1086,8 @@ class PrenatalCareSerializer(serializers.ModelSerializer):
             'pfpc_id', 'pf_id', 'pfpc_date', 'pfpc_aog_wks', 'pfpc_aog_days', 'pfpc_fundal_ht',
             'pfpc_fetal_hr', 'pfpc_fetal_pos', 'pfpc_complaints', 'pfpc_advises'
         ]
+
+
 
 class PregnancyDetailSerializer(serializers.ModelSerializer):
     prenatal_form = PrenatalDetailViewSerializer(many=True, read_only=True)

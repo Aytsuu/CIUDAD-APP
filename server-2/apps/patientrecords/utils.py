@@ -67,6 +67,7 @@ def get_latest_vital_signs(pat_id):
 
         if latest:
             return {
+                'pat_id': pat_id,
                 'bp_systolic': latest.vital_bp_systolic,
                 'bp_diastolic': latest.vital_bp_diastolic,
                 'temperature': latest.vital_temp,
