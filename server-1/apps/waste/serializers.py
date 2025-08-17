@@ -8,6 +8,8 @@ from apps.profiling.models import Sitio
 from utils.supabase_client import upload_to_storage
 from .models import WasteTruck
 from apps.profiling.models import Sitio
+from apps.treasurer.serializers import FileInputSerializer
+from django.db import transaction
 
 
 class WasteEventSerializer(serializers.ModelSerializer):
@@ -374,6 +376,49 @@ class SitioSerializer(serializers.ModelSerializer):
         model = Sitio
         fields = ['sitio_id', 'sitio_name']
 
+class GarbagePickupFileSerializer(serializers.ModelSerializer):
+    files = FileInputSerializer(write_only=True, required=False, many=True)
+
+    class Meta:
+        model = GarbagePickupRequestFile
+        fields = '__all__'
+        extra_kwargs = {
+            'gprf_url': {'read_only': True},
+            'gprf_name': {'required': False},  
+            'gprf_path': {'required': False},
+            'gprf_type': {'required': False},
+        }
+
+    @transaction.atomic
+    def create(self, validated_data):
+        files_data = validated_data.pop('files', [])
+        if not files_data:
+            raise serializers.ValidationError({"files": "At least one file must be provided"})
+            
+        created_files = self._upload_files(files_data)
+
+        if not created_files:
+            raise serializers.ValidationError("Failed to upload files")
+
+        return created_files[0]
+
+    def _upload_files(self, files_data):
+        gprf_files = []
+        for file_data in files_data:
+            gprf_file = GarbagePickupRequestFile(
+                gprf_name=file_data['name'],
+                gprf_type=file_data['type'],
+                gprf_path=file_data['name'],
+            )
+
+            url = upload_to_storage(file_data, 'request-bucket', 'garbage-pickup')
+            gprf_file.gprf_url = url
+            gprf_files.append(gprf_file)
+
+        if gprf_files:
+            return GarbagePickupRequestFile.objects.bulk_create(gprf_files)
+        return []
+
 class GarbagePickupRequestPendingSerializer(serializers.ModelSerializer):
     garb_requester = serializers.SerializerMethodField()
     file_url = serializers.SerializerMethodField()
@@ -392,8 +437,8 @@ class GarbagePickupRequestPendingSerializer(serializers.ModelSerializer):
         return "Unknown"
     
     def get_file_url(self, obj):
-        return obj.file.file_url if obj.file else ""
-    
+        return obj.gprf.gprf_url if obj.gprf else ""
+
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
     

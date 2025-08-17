@@ -694,17 +694,6 @@ class UpdateIncome_Expense_MainView(generics.RetrieveUpdateAPIView):
 
 # ------------- INCOME_EXPENSE FILE FOLDER
 
-# class Income_Expense_FileView(generics.ListCreateAPIView):
-#     serializer_class = Income_Expense_FileSerializers
-#     queryset = Income_Expense_File.objects.all()
-
-#     def get_queryset(self):
-#         queryset = super().get_queryset()
-#         iet_num = self.request.query_params.get('iet_num')
-#         if iet_num:
-#             queryset = queryset.filter(iet_num=iet_num)
-#         return queryset
-
 class Income_Expense_FileView(generics.ListCreateAPIView):
     serializer_class = Income_Expense_FileSerializers
     queryset = Income_Expense_File.objects.all()

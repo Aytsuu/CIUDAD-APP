@@ -50,7 +50,8 @@ urlpatterns = [
     path("sitio/", SitioListView.as_view(), name="sitio-list"),
 
     # Garbage Pickup Urls
-    # Staff
+    # Staff and Resident
+    path('garbage-pickup-file/', GarbagePickupFileView.as_view(), name='garbage-pickup-file'),
     path('garbage-pickup-request-pending/', GarbagePickupRequestPendingView.as_view(), name='garbage-pickup-request-pending'), #retrieve pending requests
     path('garbage-pickup-request-rejected/', GarbagePickupRequestRejectedView.as_view(), name='garbage-pickup-request-rejected'), #retrieve rejected requests
     path('garbage-pickup-request-accepted/', GarbagePickupRequestAcceptedView.as_view(), name='garbage-pickup-request-accepted'), #retrieve accepted requests
