@@ -224,7 +224,9 @@ class PurposeRatesListViewSerializer(serializers.ModelSerializer):
         fields = ['pr_id', 'pr_purpose', 'pr_is_archive']
 
 
-class MOMSuppDocSerializer(serializers.ModelSerializer):
+# =================== MINUTES OF MEETING SERIALIZERS ======================
+
+class MOMSuppDocCreateSerializer(serializers.ModelSerializer):
     suppDocs = FileInputSerializer(write_only=True, required=False, many=True)
 
     class Meta:
@@ -262,37 +264,39 @@ class MOMSuppDocSerializer(serializers.ModelSerializer):
         if momsp_files:
             return MOMSuppDoc.objects.bulk_create(momsp_files)
         return []
+    
+class MOMSuppDocViewSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = MOMSuppDoc
+        fields = '__all__'
         
 class MinutesOfMeetingSerializer(serializers.ModelSerializer):
-    momf_url = serializers.SerializerMethodField(read_only=True)  
-    areas_of_focus = serializers.SerializerMethodField(read_only=True) 
-    supporting_docs = MOMSuppDocSerializer(source='momsuppdoc_set', many=True, read_only=True)  
+    mom_file = serializers.SerializerMethodField(read_only=True)  # Combined field
+    areas_of_focus = serializers.SerializerMethodField(read_only=True)
+    supporting_docs = MOMSuppDocViewSerializer(source='momsuppdoc_set', many=True, read_only=True)
 
     class Meta:
         model = MinutesOfMeeting
         fields = '__all__'
         extra_fields = [
-            'momf_url',
-            'momf_id',
+            'mom_file',  # Replaces individual momf fields
             'areas_of_focus',
             'supporting_docs'
         ]
         read_only_fields = [
-            'momf_url',
-            'momf_id',
+            'mom_file',
             'areas_of_focus',
             'supporting_docs'
         ]
 
-    def get_momf_url(self, obj):
+    def get_mom_file(self, obj):
         try:
-            return obj.momfile.momf_url 
-        except MOMFile.DoesNotExist:
-            return None
-
-    def get_momf_id(self, obj):
-        try:
-            return obj.momfile.momf_id  
+            mom_file = obj.momfile
+            return {
+                'momf_id': mom_file.momf_id,
+                'momf_url': mom_file.momf_url,
+                'momf_name': mom_file.momf_name
+            }
         except MOMFile.DoesNotExist:
             return None
 

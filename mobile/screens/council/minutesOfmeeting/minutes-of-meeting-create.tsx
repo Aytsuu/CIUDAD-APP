@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import FormComboCheckbox from "@/components/ui/form/form-combo-checkbox";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-or-time-input";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useInsertMinutesOfMeeting } from "./queries/MOMInsertQueries";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import DocumentPickerComponent, {DocumentItem} from '@/components/ui/document-upload';
@@ -143,15 +143,6 @@ export default function MOMCreate(){
                                     multiple={true}
                                 />
                             </View>
-
-                            {/* <View className="pt-4 pb-8 bg-white border-t border-gray-100 px-4 mt-5">
-                                <Button
-                                    onPress={handleSubmit(onSubmit)}
-                                    className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
-                                >
-                                    <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
-                                </Button>
-                            </View> */}
                     </View>
                 </View>
             </ScrollView>
