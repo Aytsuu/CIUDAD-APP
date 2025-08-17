@@ -171,11 +171,11 @@ class Income_Expense_FileSerializers(serializers.ModelSerializer):
             ief_file = Income_Expense_File(
                 ief_name=file_data['name'],
                 ief_type=file_data['type'],
-                ief_path=f"images/{file_data['name']}",
+                ief_path=file_data['name'],
                 iet_num=tracking_instance  # THIS SETS THE FOREIGN KEY
             )
 
-            url = upload_to_storage(file_data, 'finance-tracker-bucket', 'images')
+            url = upload_to_storage(file_data, 'fbudget-tracker-bucket', '')
             ief_file.ief_url = url
             ief_files.append(ief_file)
 
