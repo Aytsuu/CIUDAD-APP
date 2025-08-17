@@ -1,10 +1,24 @@
+import { formatDate } from "@/helpers/dateHelper";
 import { z } from "zod";
+
+const today = new Date();
+today.setHours(0, 0, 0, 0);
 
 export const ServiceProvisionRecordSchema = z.object({
   dateOfVisit: z.string().min(1, "Date of visit is required"),
   methodAccepted: z.string().optional(),
   nameOfServiceProvider: z.string().nonempty("Provider name is required"),
-  dateOfFollowUp: z.string().optional(),
+  dateOfFollowUp: z.preprocess(
+  (arg) => (arg === '' ? null : arg),
+  z.union([
+    z.literal(null),
+    z.coerce.date()
+      .refine((date) => date > today, { message: "Date of follow-up must be a future date." })
+      .transform((date) => formatDate(date)),  
+  ])
+),
+
+
   methodQuantity: z.string().optional(),
   serviceProviderSignature: z.string().nonempty("Please sign and save the signature first"),
   medicalFindings: z.string().nonempty("Findings are required"),
@@ -53,9 +67,9 @@ const FamilyPlanningBaseSchema = z.object({
   address: z.object({
     houseNumber: z.string().optional(),
     street: z.string().optional(),
-    barangay: z.string().nonempty("Barangay is required"),
-    municipality: z.string().nonempty("Municipality/City is required"),
-    province: z.string().nonempty("Province is required"),
+    barangay: z.string().optional(),
+    municipality: z.string().optional(),
+    province: z.string().optional(),
   }),
 
   spouse: z.object({
@@ -75,14 +89,15 @@ const FamilyPlanningBaseSchema = z.object({
   subTypeOfClient: z.string().optional(), 
   
   // for new acceptor
-  reasonForFP: z.string().nonempty(), 
-  otherReasonForFP: z.string(),
+  reasonForFP: z.string().optional(), 
+  otherReasonForFP: z.string().optional(),
   // For "Current User" reasons
   reason: z.string().optional(), 
   otherReason: z.string().optional(),
   otherMethod: z.string().optional(),
   
   methodCurrentlyUsed: z.string().nonempty(),
+  methodCurrentlyUsedName: z.string().optional(),
 
   medicalHistory: z.object({
     severeHeadaches: z.boolean(),
@@ -107,11 +122,41 @@ const FamilyPlanningBaseSchema = z.object({
     premature: z.coerce.number().min(0),
     abortion: z.coerce.number().min(0),
     numOfLivingChildren: z.coerce.number().min(0),
-    lastDeliveryDate: z.string().optional(),
+    lastDeliveryDate: z.preprocess(
+    (arg) => (arg === '' ? null : arg), // Preprocess empty string to null
+    z.union([
+      z.literal(null), // Allows the value to be explicitly null
+      z.coerce.date().refine(
+        (date) => date <= today,
+        { message: "Cannot select a future date." }
+      ),
+    ])
+  ).optional(),
+
     typeOfLastDelivery: z.string().optional(),
-    lastMenstrualPeriod: z.string().nonempty("Enter date of last menstrual period"),
-    previousMenstrualPeriod: z.string().nonempty("Enter date of previous menstrual period"),
-    menstrualFlow: z.enum(["Scanty", "Moderate", "Heavy"]),
+
+    lastMenstrualPeriod: z.preprocess(
+    (arg) => (arg === '' ? null : arg),
+    z.union([
+      z.literal(null),
+      z.coerce.date().refine(
+        (date) => date <= today,
+        { message: "Cannot select a future date." }
+      ),
+    ])
+  ).optional(),
+
+    previousMenstrualPeriod: z.preprocess(
+    (arg) => (arg === '' ? null : arg),
+    z.union([
+      z.literal(null),
+      z.coerce.date().refine(
+        (date) => date <= today,
+        { message: "Cannot select a future date." }
+      ),
+    ])
+  ).optional(),
+    menstrualFlow: z.string().optional(),
     dysmenorrhea: z.boolean().default(false),
     hydatidiformMole: z.boolean().default(false),
     ectopicPregnancyHistory: z.boolean().default(false),
@@ -133,11 +178,41 @@ const FamilyPlanningBaseSchema = z.object({
     referredTo: z.string().optional(),
     otherReferral: z.string().optional()
   }),
+    weight: z.coerce
+    .number({
+      invalid_type_error: "Weight must be a number",
+    })
+    .min(1, {
+      message: "Weight cannot be less than 1kg.",
+    })
+    .max(300, {
+      message: "Weight is unrealistically high.",
+    }),
+  height: z.coerce
+    .number({
+      invalid_type_error: "Height must be a number",
+    })
+    .min(30, {
+      message: "Height cannot be less than 30cm.",
+    })
+    .max(250, {
+      message: "Height is unrealistically high.",
+    }),
 
-  weight: z.coerce.number().min(1),
-  height: z.coerce.number().min(1),
   bloodPressure: z.string().nonempty("Blood pressure is required (e.g., 120/80)"),
-  pulseRate: z.coerce.number().min(1),
+  pulseRate: z.coerce
+    .number({
+      invalid_type_error: "Pulse rate must be a number",
+    })
+    .min(30, {
+      message: "Pulse rate is too low. Please verify."
+    })
+    .max(200, {
+      message: "Pulse rate is too high. Please verify."
+    })
+    .refine((val) => val >= 60 && val <= 100, {
+      message: "A normal resting pulse rate is between 60-100 beats per minute. This reading is outside that range. Please verify."
+    }),
   bodyMeasurementRecordedAt: z.string().optional(),
 
   skinExamination: z.string().optional(),
@@ -178,11 +253,26 @@ const FamilyPlanningBaseSchema = z.object({
  acknowledgement: z.object({
   selectedMethod: z.string().nonempty("Please select a family planning method"),
   clientSignature: z.string().nonempty("Please sign and save the signature first"),
-  clientSignatureDate: z.string().nonempty("Client signature date is required"),
+  clientSignatureDate: z.string()
+  .nonempty("Client signature date is required")
+  .refine((dateString) => {
+    const inputDate = new Date(dateString);
+    inputDate.setHours(0, 0, 0, 0);
+    return inputDate.getTime() === today.getTime();
+  }, {
+    message: "Client signature date must be today's date"
+  }),
   clientName: z.string().nonempty("Client name is required"),
   guardianName: z.string().optional(),
   guardianSignature: z.string().optional(),
-  guardianSignatureDate: z.string().optional(),
+  guardianSignatureDate: z.string().optional().refine((dateString) => {
+  if (!dateString) return true; // Optional field
+  const inputDate = new Date(dateString);
+  inputDate.setHours(0, 0, 0, 0);
+  return inputDate.getTime() === today.getTime();
+}, {
+  message: "Guardian signature date must be today's date"
+}),
   methodQuantity: z.coerce.number().optional(),
 }),
   serviceProvisionRecords: z.array(ServiceProvisionRecordSchema).optional().default([]),
@@ -210,12 +300,12 @@ export const page1Schema = FamilyPlanningBaseSchema.pick({
   avg_monthly_income: true,
   typeOfClient: true,
   subTypeOfClient: true,
-  reasonForFP: true,
-  otherReasonForFP: true,
-  reason: true, // For current user reason
-  otherReason: true, // For current user reason specify
+  // reasonForFP: true,
+  // otherReasonForFP: true,
+  // reason: true, // For current user reason
+  // otherReason: true, // For current user reason specify
   methodCurrentlyUsed: true,
-  otherMethod: true,
+  // otherMethod: true,
 });
 
 
@@ -230,6 +320,7 @@ export const page3Schema = FamilyPlanningBaseSchema.pick({
 });
 
 export const page4Schema = FamilyPlanningBaseSchema.pick({
+  
   weight: true,
   height: true,
   bloodPressure: true,
@@ -301,39 +392,39 @@ export const FamilyPlanningSchema = FamilyPlanningBaseSchema.superRefine((data, 
   // --- Conditional Logic for Type of Client ---
 
   if (data.typeOfClient === "newacceptor") {
-    // For "New Acceptor", reasonForFP and methodCurrentlyUsed are required
-    if (!data.reasonForFP) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason for family planning is required for new acceptors", path: ["reasonForFP"] });
-    }
+    // // For "New Acceptor", reasonForFP and methodCurrentlyUsed are required
+    // if (!data.reasonForFP) {
+    //   ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason for family planning is required for new acceptors", path: ["reasonForFP"] });
+    // }
     if (!data.methodCurrentlyUsed) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Method currently used is required for new acceptors", path: ["methodCurrentlyUsed"] });
     }
-    if (data.reasonForFP === "fp_others" && !data.otherReasonForFP) { // Corrected from "Others (Specify)" to "fp_others" based on your options
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please specify the reason for FP", path: ["otherReasonForFP"] });
-    }
+    // if (data.reasonForFP === "fp_others" && !data.otherReasonForFP) { // Corrected from "Others (Specify)" to "fp_others" based on your options
+    //   ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please specify the reason for FP", path: ["otherReasonForFP"] });
+    // }
 
-    if (data.subTypeOfClient) { // If subTypeOfClient is present when it shouldn't be
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Sub-type of client is not applicable for new acceptors", path: ["subTypeOfClient"] });
-    }
-    if (data.reason) { // If reason (for Current User) is present
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason for current user is not applicable for new acceptors", path: ["reason"] });
-    }
-    if (data.otherReasonForFP) { // If other reason (for Current User side effects) is present
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Specific reason for current user is not applicable for new acceptors", path: ["fpt_other_reason_fp"] });
-    }
+    // if (data.subTypeOfClient) { // If subTypeOfClient is present when it shouldn't be
+    //     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Sub-type of client is not applicable for new acceptors", path: ["subTypeOfClient"] });
+    // }
+    // if (data.reason) { // If reason (for Current User) is present
+    //     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason for current user is not applicable for new acceptors", path: ["reason"] });
+    // }
+    // if (data.otherReasonForFP) { // If other reason (for Current User side effects) is present
+    //     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Specific reason for current user is not applicable for new acceptors", path: ["fpt_other_reason_fp"] });
+    // }
 
 
   } else if (data.typeOfClient === "currentuser") { // Corrected from "Current User" to "currentuser" based on your options
     // For "Current User", subTypeOfClient is always required
-    if (!data.subTypeOfClient) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Sub-type of client is required for current users", path: ["subTypeOfClient"] });
-    }
+    // if (!data.subTypeOfClient) {
+    //   ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Sub-type of client is required for current users", path: ["subTypeOfClient"] });
+    // }
 
     // Conditional logic based on subTypeOfClient
     if (data.subTypeOfClient === "changingmethod") { // Corrected from "Changing Method" to "changingmethod"
-      if (!data.reason) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason is required for changing method", path: ["reason"] });
-      }
+      // if (!data.reason) {
+      //   ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason is required for changing method", path: ["reason"] });
+      // }
       if (!data.methodCurrentlyUsed) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Method currently used is required for changing method", path: ["methodCurrentlyUsed"] });
       }
@@ -348,12 +439,12 @@ export const FamilyPlanningSchema = FamilyPlanningBaseSchema.superRefine((data, 
       if (data.otherReasonForFP) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Other reason for FP is not applicable for this sub-type", path: ["otherReasonForFP"] });
       }
-      if (data.reason) { // Reason for Current User is not needed
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason is not applicable for this sub-type", path: ["reason"] });
-      }
-      if (data.reasonForFP) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Specific reason is not applicable for this sub-type", path: ["fpt_other_reason_fp"] });
-      }
+      // if (data.reason) { // Reason for Current User is not needed
+      //     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reason is not applicable for this sub-type", path: ["reason"] });
+      // }
+      // if (data.reasonForFP) {
+      //     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Specific reason is not applicable for this sub-type", path: ["fpt_other_reason_fp"] });
+      // }
       if (data.methodCurrentlyUsed) { // Method currently used is not needed
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Method currently used is not applicable for this sub-type", path: ["methodCurrentlyUsed"] });
       }

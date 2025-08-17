@@ -145,7 +145,7 @@ export default function FamilyPlanningForm2({
       abnormalVaginalDischarge: false,
       phenobarbitalOrRifampicin: false,
       smoker: false,
-      disability: fieldValues.medicalHistory?.disability || false,
+      disability: data.medicalHistory?.disability || false,
       disabilityDetails: data.medicalHistory?.disabilityDetails || "",
     }
 

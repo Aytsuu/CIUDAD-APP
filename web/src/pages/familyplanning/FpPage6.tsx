@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useNavigate } from "react-router-dom"
+// import { useNavigate } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button/button"
@@ -20,6 +20,7 @@ import { toast } from "sonner"
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
 import { Trash2 } from "lucide-react"
 import z from "zod"
+import { formatDate } from "@/helpers/dateFormatter"
 
 const methods = [
   "COC", "POP", "Injectable", "Implant", "Condom",
@@ -91,7 +92,7 @@ export default function FamilyPlanningForm6({
   onSubmitFinal,
   updateFormData,
   formData,
-  isSubmitting,
+  // isSubmitting,
   mode = "create",
 }: Props) {
   const isReadOnly = mode === "view"
@@ -113,7 +114,7 @@ export default function FamilyPlanningForm6({
     dateOfVisit: new Date().toISOString().split("T")[0],
     methodAccepted: getMethodFromPage1(),
     nameOfServiceProvider: "",
-    dateOfFollowUp: "",
+    dateOfFollowUp: null,
     methodQuantity: "",
     serviceProviderSignature: "",
     medicalFindings: "",
@@ -126,7 +127,7 @@ export default function FamilyPlanningForm6({
   const [sigRef, setSigRef] = useState<SignatureCanvas | null>(null)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
 
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
 
   const form = useForm<FormData>({
     resolver: zodResolver(page6Schema),
@@ -236,7 +237,7 @@ export default function FamilyPlanningForm6({
         dateOfVisit: new Date().toISOString().split("T")[0],
         methodAccepted: getMethodFromPage1(),
         nameOfServiceProvider: "",
-        dateOfFollowUp: "",
+        dateOfFollowUp: null,
         methodQuantity: "",
         serviceProviderSignature: "",
         medicalFindings: "",
@@ -268,7 +269,7 @@ export default function FamilyPlanningForm6({
     if (sigRef) setRecord((prev) => ({ ...prev, serviceProviderSignature: sigRef.toDataURL() }))
   }
 
-  const onConfirmSubmit = form.handleSubmit((data) => {
+  const onConfirmSubmit = form.handleSubmit(() => {
     const complete = record.methodAccepted && record.nameOfServiceProvider
     const finalRecords = complete ? [...records, record] : records
 
@@ -281,6 +282,7 @@ export default function FamilyPlanningForm6({
       return;
     }
 
+    
     updateFormData({
       serviceProvisionRecords: finalRecords,
       pregnancyCheck: formData.pregnancyCheck,
@@ -360,12 +362,14 @@ export default function FamilyPlanningForm6({
                 </div>
               ))}
 
-              {["weight", "bp_systolic", "bp_diastolic"].map((field) => (
+              
+
+               {["weight", "bp_systolic", "bp_diastolic"].map((field) => (
                 <div key={field}>
                   <Label>{field.replace("_", " ").toUpperCase()}</Label>
                   <Input
                     type="number"
-                    value={record[field as keyof ServiceProvisionRecord]}
+                    value={record[field as keyof ServiceProvisionRecord] as number | string | undefined}
                     onChange={(e) => handleChange(field as keyof ServiceProvisionRecord, e.target.value)}
                     disabled={isReadOnly}
                   />
@@ -472,7 +476,7 @@ export default function FamilyPlanningForm6({
                       <TableCell>{r.methodQuantity}</TableCell>
                       <TableCell>{r.medicalFindings || "-"}</TableCell>
                       <TableCell>{r.nameOfServiceProvider}</TableCell>
-                      <TableCell>{r.serviceProviderSignature ? "✔" : "—"}</TableCell>
+                      <TableCell>{r.serviceProviderSignature ? "Done" : "—"}</TableCell>
                       <TableCell>{r.dateOfFollowUp}</TableCell>
                       <TableCell>
                         <Button
@@ -522,13 +526,13 @@ export default function FamilyPlanningForm6({
               ))}
             </div>
 
-            <div className="mt-6 p-4 rounded-md bg-gray-50">
-              <div className="font-medium mb-2">
-                ■ If the client answered YES to at least one of the questions and she is free of signs or symptoms of
+            <div className="mt-6 p-4 rounded-md ">
+              <div className="font-small mb-2 text-sm">
+                ☐ If the client answered YES to at least one of the questions and she is free of signs or symptoms of
                 pregnancy, provide client with desired method.
               </div>
-              <div className="font-medium mb-2">
-                ■ If the client answered NO to all of the questions, pregnancy cannot be ruled out. The client should
+              <div className="font-small text-sm">
+                ☐ If the client answered NO to all of the questions, pregnancy cannot be ruled out. The client should
                 await menses or use a pregnancy test.
               </div>
             </div>

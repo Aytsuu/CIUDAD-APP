@@ -1,7 +1,7 @@
 import { useFamilyPlanningFormSubmission, useFollowUpFamilyPlanningFormSubmission } from "./request-db/PostRequest"
 import { getFPCompleteRecord, getLatestCompleteFPRecordForPatient } from "./request-db/GetRequest"
 import { useCallback, useState, useEffect } from "react"
-import { useParams, useSearchParams } from "react-router-dom"
+import { useLocation, useParams, useSearchParams } from "react-router-dom"
 import type { FormData } from "@/form-schema/FamilyPlanningSchema" // Ensure patrec_id is in this interface
 import FamilyPlanningForm from "./FpPage1"
 import FamilyPlanningForm2 from "./FpPage2"
@@ -27,6 +27,7 @@ const initialFormData: FormData = {
   age: 0,
   educationalAttainment: "",
   occupation: "",
+  gender: "",
   address: { houseNumber: "", street: "", barangay: "", municipality: "", province: "" },
   spouse: { s_lastName: "", s_givenName: "", s_middleInitial: "", s_dateOfBirth: "", s_age: 0, s_occupation: "" },
   numOfLivingChildren: 0,
@@ -62,11 +63,11 @@ const initialFormData: FormData = {
     premature: 0,
     abortion: 0,
     numOfLivingChildren: 0,
-    lastDeliveryDate: "",
+    lastDeliveryDate: null,
     typeOfLastDelivery: "",
-    lastMenstrualPeriod: "",
-    previousMenstrualPeriod: "",
-    menstrualFlow: "Scanty",
+    lastMenstrualPeriod: null,
+    previousMenstrualPeriod: null,
+    menstrualFlow: "",
     dysmenorrhea: false,
     hydatidiformMole: false,
     ectopicPregnancyHistory: false,
@@ -180,6 +181,8 @@ export default function FamilyPlanningPage() {
       setFormData(fetchedRecord)
     }
   }, [fetchedRecord])
+   const location = useLocation();
+   const passedGender = (location.state as { gender?: string })?.gender || "";
 
   // Effect to set formData when latestRecord changes ('create' mode with prefill)
   useEffect(() => {
@@ -187,8 +190,9 @@ export default function FamilyPlanningPage() {
       setIsPrefillingData(true)
       const prefillData = {
         ...latestRecord,
-        fprecord_id: undefined, // Clear fprecord_id as it's a new FP record
-        fpt_id: "", // Clear fpt_id as it's a new FP type record
+        fprecord_id: undefined, 
+        fpt_id: "", 
+        gender: passedGender ||  "Unknown",
         acknowledgement: {
           ...latestRecord.acknowledgement,
           clientSignature: "",
@@ -200,6 +204,8 @@ export default function FamilyPlanningPage() {
         plan_more_children: latestRecord.plan_more_children, // Keep this from previous record
         pat_id: actualPatientId || latestRecord.pat_id, // Ensure pat_id is set correctly
         patrec_id: "", // Ensure patrec_id is cleared for new record set (will be created by backend)
+        typeOfClient: "currentuser",
+        subTypeOfClient: "",
       }
       setFormData(prefillData)
       setIsPrefillingData(false)
@@ -226,6 +232,10 @@ export default function FamilyPlanningPage() {
         plan_more_children: followUpPrefillRecord.plan_more_children, // Keep this from previous record
         pat_id: actualPatientId || followUpPrefillRecord.pat_id, // Ensure pat_id is set correctly
         patrec_id: patrecIdParam || followUpPrefillRecord.patrec_id, // Crucial: Use the patrecId from URL or fetched record
+        typeOfClient: "currentuser",
+        gender: passedGender ||  "Unknown",
+        subTypeOfClient: "",
+        reasonForFP: "",
       }
       setFormData(prefillData)
       setIsPrefillingData(false)
@@ -321,6 +331,7 @@ export default function FamilyPlanningPage() {
         }
         await submitFollowUpRecord(finalFormData) // Use new mutation for follow-up
         toast.success("Family Planning follow-up record submitted successfully!")
+        
       } else {
         await submitNewRecordSet(finalFormData) // Use original mutation for new record set
         toast.success("Family Planning record submitted successfully!")
@@ -347,6 +358,7 @@ export default function FamilyPlanningPage() {
     )
   }
 
+ 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="w-full mx-auto bg-white p-8 rounded-lg shadow-md">
@@ -375,13 +387,15 @@ export default function FamilyPlanningPage() {
 
         <div className="text-right text-sm  text-gray-500 mb-4">Page {currentPage}/6</div>
 
+
         {currentPage === 1 && (
           <FamilyPlanningForm
             onNext2={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-            // mode={currentMode}
+            mode={currentMode} // Pass the current mode
             isPatientPreSelected={!!actualPatientId && (prefillParam === "true" || currentMode === "followup")}
+            patientGender={(location.state as { gender?: string })?.gender || passedGender}
           />
         )}
         {currentPage === 2 && (
@@ -390,7 +404,7 @@ export default function FamilyPlanningPage() {
             onNext3={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-            // mode={currentMode}
+          // mode={currentMode}
           />
         )}
         {currentPage === 3 && (
@@ -399,7 +413,7 @@ export default function FamilyPlanningPage() {
             onNext4={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-            // mode={currentMode}
+          // mode={currentMode}
           />
         )}
         {currentPage === 4 && (
@@ -408,7 +422,7 @@ export default function FamilyPlanningPage() {
             onNext5={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-            // mode={currentMode}
+          // mode={currentMode}
           />
         )}
         {currentPage === 5 && (
@@ -428,7 +442,7 @@ export default function FamilyPlanningPage() {
             updateFormData={updateFormData}
             formData={formData}
             isSubmitting={isSubmitting}
-            // mode={currentMode}
+          // mode={currentMode}
           />
         )}
       </div>

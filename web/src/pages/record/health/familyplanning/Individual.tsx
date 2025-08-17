@@ -133,20 +133,24 @@ const IndividualFamPlanningTable: React.FC = () => {
   };
 
   const handleAddFollowUp = (record: IndividualFPRecordDetail) => {
-    if (!record.fprecord) {
-      toast.error("Record ID not found for follow-up.");
-      return;
+  if (!record.fprecord) {
+    toast.error("Record ID not found for follow-up.");
+    return;
+  }
+  const patrecIdToReuse = record.patrec_id;
+  if (!patrecIdToReuse) {
+    toast.error("Patient Record not found for follow-up.");
+    return;
+  }
+  navigate(
+    `/familyplanning/new-record/${record.patient_id}?mode=followup&patrecId=${patrecIdToReuse}&prefillFromFpRecord=${record.fprecord}`,
+    { 
+      state: { 
+        gender: record.sex || patientInfoForCard?.personal_info.per_sex || "Unknown"
+      } 
     }
-    const patrecIdToReuse = record.patrec_id;
-    if (!patrecIdToReuse) {
-      toast.error("Patient Record ID (patrec_id) not found for follow-up.");
-      return;
-    }
-    navigate(
-      `/familyplanning/new-record/${record.patient_id}?mode=followup&patrecId=${patrecIdToReuse}&prefillFromFpRecord=${record.fprecord}`,
-      { state: { gender: record.sex } }
-    );
-  };
+  );
+};
 
   const handleCompareRecords = () => {
     if (selectedRecords.length < 2) {
@@ -158,16 +162,15 @@ const IndividualFamPlanningTable: React.FC = () => {
     });
   };
 
-  const handleCreateNewRecord = (patient: { gender: any }) => {
-    if (!patientId) {
-      toast.error("Patient ID not found");
-      return;
-    }
-    navigate(`/familyplanning/new-record/${patientId}?mode=create&prefill=true`, {
-      state: { gender: patient.gender },
-    });
-  };
-
+  const handleCreateNewRecord = ({ gender }: { gender: any }) => {
+  if (!patientId) {
+    toast.error("Patient ID not found");
+    return;
+  }
+  navigate(`/familyplanning/new-record/${patientId}?mode=create&prefill=true`, {
+    state: { gender: patientInfoForCard?.personal_info.per_sex || "Unknown" },
+  });
+};
   const groupedRecords = useMemo(() => {
     const groups: { [key: string]: IndividualFPRecordDetail[] } = {};
     fpPatientRecords.forEach((record) => {
@@ -339,7 +342,7 @@ const IndividualFamPlanningTable: React.FC = () => {
             onClick={() => handleCreateNewRecord({ gender: patientInfoForCard?.personal_info.per_sex || "Unknown" })}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
-            <Plus className="h-5 w-5 mr-2" /> New Record for Patient
+            <Plus className="h-5 w-5 mr-2" /> New method for Patient
           </Button>
         </div>
       </div>

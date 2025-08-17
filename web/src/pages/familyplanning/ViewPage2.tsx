@@ -226,7 +226,7 @@ export default function FamilyPlanningView2() {
     <div>
       <Label className="font-bold">Date:</Label>
       <span className="font-semibold underline"> <br/>
-      {recordData.acknowledgement?.guardianSignatureDate}</span>
+      {recordData.acknowledgement?.guardianSignatureDate } </span>
     </div>
   </div>
 </div>

@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction  # For atomic operations if needed
 from django.db.models import Count, Max, OuterRef, Subquery, Sum # Import Sum for aggregation
 from django.utils import timezone
-from datetime import date
+from datetime import date, timedelta
 from .models import *
 from django.db.models import Prefetch
 from .serializers import *
@@ -27,9 +27,16 @@ from apps.inventory.models import CommodityList, CommodityInventory # Import Com
 @api_view(['GET'])
 def get_fp_patient_counts(request):
     """
-    API view to get counts of total, resident, and transient Family Planning patients.
+    API view to get counts of total, resident, transient, and minor Family Planning patients.
     """
     try:
+        # Get current date for age calculation
+        today = timezone.now().date()
+        
+        # Calculate the date 18 years ago
+        eighteen_years_ago = today - timedelta(days=18*365.25)  # Using 365.25 to account for leap years
+        
+        # Get all FP patients
         all_fp_patients = FP_Record.objects.select_related('pat').values('pat__pat_id', 'pat__pat_type').distinct()
         
         total_fp_patients = all_fp_patients.count()
@@ -39,11 +46,27 @@ def get_fp_patient_counts(request):
         
         # Count transients among FP patients
         transient_fp_patients = all_fp_patients.filter(pat__pat_type='Transient').count()
+        
+        # Count minor residents (under 18) among FP patients
+        minor_resident_fp_patients = FP_Record.objects.filter(
+            pat__pat_type='Resident',
+            pat__rp_id__per__per_dob__gt=eighteen_years_ago
+        ).values('pat__pat_id').distinct().count()
+        
+        # Count minor transients (under 18) among FP patients
+        minor_transient_fp_patients = FP_Record.objects.filter(
+            pat__pat_type='Transient',
+            pat__trans_id__tran_dob__gt=eighteen_years_ago
+        ).values('pat__pat_id').distinct().count()
+        
+        # Total minor FP patients (residents + transients)
+        minor_fp_patients = minor_resident_fp_patients + minor_transient_fp_patients
 
         response_data = {
             "total_fp_patients": total_fp_patients,
             "resident_fp_patients": resident_fp_patients,
             "transient_fp_patients": transient_fp_patients,
+            "minor_fp_patients": minor_fp_patients,
         }
         
         return Response(response_data, status=status.HTTP_200_OK)
@@ -427,98 +450,99 @@ def get_patient_health_and_nhts_data(request, patient_id):
         traceback.print_exc()
         return Response({"detail": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@api_view(["GET"])
-def get_patient_spouse(request, patient_id):
-    try:
-        print(f"\n=== DEBUG: Starting spouse lookup for patient {patient_id} ===")
-        patient = get_object_or_404(Patient, pat_id=patient_id)
+# @api_view(["GET"])
+# def get_patient_spouse(request, patient_id):
+#     try:
+#         print(f"\n=== DEBUG: Starting spouse lookup for patient {patient_id} ===")
+#         patient = get_object_or_404(Patient, pat_id=patient_id)
         
-        # Initialize default empty spouse data
-        spouse_data = {
-            "spouse_lname": "",
-            "spouse_fname": "",
-            "spouse_mname": "",
-            "spouse_dob": "",
-            "spouse_occupation": ""
-        }
+#         # Initialize default empty spouse data
+#         spouse_data = {
+#             "spouse_lname": "",
+#             "spouse_fname": "",
+#             "spouse_mname": "",
+#             "spouse_dob": "",
+#             "spouse_occupation": ""
+#         }
 
-        # 1. First try to get spouse from FP records
-        print("\nDEBUG: Checking FP Records for spouse...")
-        fp_record = FP_Record.objects.filter(pat=patient).order_by('-created_at').first()
+#         # 1. First try to get spouse from FP records
+#         print("\nDEBUG: Checking FP Records for spouse...")
+#         fp_record = FP_Record.objects.filter(pat=patient).order_by('-created_at').first()
         
-        if fp_record:
-            print(f"DEBUG: Found FP Record {fp_record.fprecord_id}")
-            if fp_record.spouse:
-                spouse = fp_record.spouse
-                print(f"DEBUG: Found spouse in FP Record: {spouse.spouse_lname}, {spouse.spouse_fname}")
-                print(f"DEBUG: Spouse details - DOB: {spouse.spouse_dob}, Occupation: {spouse.spouse_occupation}")
+#         if fp_record:
+#             print(f"DEBUG: Found FP Record {fp_record.fprecord_id}")
+#             if fp_record.spouse:
+#                 spouse = fp_record.spouse
+#                 print(f"DEBUG: Found spouse in FP Record: {spouse.spouse_lname}, {spouse.spouse_fname}")
+#                 print(f"DEBUG: Spouse details - DOB: {spouse.spouse_dob}, Occupation: {spouse.spouse_occupation}")
                 
-                spouse_data = {
-                    "spouse_lname": spouse.spouse_lname or "",
-                    "spouse_fname": spouse.spouse_fname or "",
-                    "spouse_mname": spouse.spouse_mname or "",
-                    "spouse_dob": spouse.spouse_dob.isoformat() if spouse.spouse_dob else "",
-                    "spouse_occupation": spouse.spouse_occupation or ""
-                }
-            else:
-                print("DEBUG: No spouse associated with this FP Record")
-        else:
-            print("DEBUG: No FP Records found for this patient")
+#                 spouse_data = {
+#                     "spouse_lname": spouse.spouse_lname or "",
+#                     "spouse_fname": spouse.spouse_fname or "",
+#                     "spouse_mname": spouse.spouse_mname or "",
+#                     "spouse_dob": spouse.spouse_dob.isoformat() if spouse.spouse_dob else "",
+#                     "spouse_occupation": spouse.spouse_occupation or ""
+#                 }
+#             else:
+#                 print("DEBUG: No spouse associated with this FP Record")
+#         else:
+#             print("DEBUG: No FP Records found for this patient")
 
-        # 2. For resident patients, if no spouse in FP records, check family composition
-        if not any(spouse_data.values()) and patient.pat_type == "Resident" and patient.rp_id:
-            print("\nDEBUG: Checking family composition for spouse...")
-            try:
-                household = Household.objects.filter(rp=patient.rp_id).first()
-                if household:
-                    print(f"DEBUG: Found household {household.hh_id}")
+#         # 2. For resident patients, if no spouse in FP records, check family composition
+#         if not any(spouse_data.values()) and patient.pat_type == "Resident" and patient.rp_id:
+#             print("\nDEBUG: Checking family composition for spouse...")
+#             try:
+#                 household = Household.objects.filter(rp=patient.rp_id).first()
+#                 if household:
+#                     print(f"DEBUG: Found household {household.hh_id}")
                     
-                    spouse_composition = FamilyComposition.objects.filter(
-                        fam__hh=household,
-                        fc_role='Spouse'
-                    ).first()
+#                     # Fixed: Using select_related('rp') instead of select_related('rp_id')
+#                     spouse_composition = FamilyComposition.objects.filter(
+#                         fam__hh=household,
+#                         fc_role='Spouse'
+#                     ).select_related('rp', 'rp__per').first()
                     
-                    if spouse_composition:
-                        print(f"DEBUG: Found spouse in family composition: {spouse_composition.rp_id}")
+#                     if spouse_composition:
+#                         print(f"DEBUG: Found spouse in family composition: {spouse_composition.rp}")
                         
-                        if spouse_composition.rp_id.per:
-                            personal_info = spouse_composition.rp_id.per
-                            print(f"DEBUG: Spouse personal info - Name: {personal_info.per_lname}, {personal_info.per_fname}")
+#                         if hasattr(spouse_composition.rp, 'per'):
+#                             personal_info = spouse_composition.rp.per
+#                             print(f"DEBUG: Spouse personal info - Name: {personal_info.per_lname}, {personal_info.per_fname}")
                             
-                            spouse_data = {
-                                "spouse_lname": personal_info.per_lname or "",
-                                "spouse_fname": personal_info.per_fname or "",
-                                "spouse_mname": personal_info.per_mname or "",
-                                "spouse_dob": personal_info.per_dob.isoformat() if personal_info.per_dob else "",
-                                "spouse_occupation": personal_info.per_occupation or ""
-                            }
-                        else:
-                            print("DEBUG: No personal info for this family composition")
-                    else:
-                        print("DEBUG: No spouse found in family composition")
-                else:
-                    print("DEBUG: No household found for this resident")
-            except Exception as e:
-                print(f"DEBUG ERROR in family composition check: {str(e)}")
+#                             spouse_data = {
+#                                 "spouse_lname": personal_info.per_lname or "",
+#                                 "spouse_fname": personal_info.per_fname or "",
+#                                 "spouse_mname": personal_info.per_mname or "",
+#                                 "spouse_dob": personal_info.per_dob.isoformat() if personal_info.per_dob else "",
+#                                 "spouse_occupation": personal_info.per_occupation or ""
+#                             }
+#                         else:
+#                             print("DEBUG: No personal info for this family composition")
+#                     else:
+#                         print("DEBUG: No spouse found in family composition")
+#                 else:
+#                     print("DEBUG: No household found for this resident")
+#             except Exception as e:
+#                 print(f"DEBUG ERROR in family composition check: {str(e)}")
 
-        print("\nDEBUG: Final spouse data to return:", spouse_data)
-        print("=== DEBUG: End of spouse lookup ===")
+#         print("\nDEBUG: Final spouse data to return:", spouse_data)
+#         print("=== DEBUG: End of spouse lookup ===")
         
-        return Response(spouse_data, status=status.HTTP_200_OK)
+#         return Response(spouse_data, status=status.HTTP_200_OK)
 
-    except Patient.DoesNotExist:
-        print(f"DEBUG ERROR: Patient {patient_id} not found")
-        return Response(
-            {"error": "Patient not found"}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
-    except Exception as e:
-        print(f"DEBUG ERROR: {str(e)}")
-        return Response(
-            {"error": str(e)}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
+#     except Patient.DoesNotExist:
+#         print(f"DEBUG ERROR: Patient {patient_id} not found")
+#         return Response(
+#             {"error": "Patient not found"}, 
+#             status=status.HTTP_404_NOT_FOUND
+#         )
+#     except Exception as e:
+#         print(f"DEBUG ERROR: {str(e)}")
+#         return Response(
+#             {"error": str(e)}, 
+#             status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#         )
+    
 class PatientListForOverallTable(generics.ListAPIView):
     serializer_class = FPRecordSerializer
 
@@ -1480,33 +1504,72 @@ def get_complete_fp_record(request, fprecord_id):
             }
 
         # Fetch ALL historical FP_Assessment_Records for the patient, filtered by method if not latest
-        current_method = fp_type.fpt_method_used if fp_type else None
-        is_latest = fp_record.created_at == FP_Record.objects.filter(pat_id=pat_id).aggregate(Max('created_at'))['created_at__max']
+        # Replace the service provision records section in your get_complete_fp_record view with this:
 
-        all_fp_records_qs = FP_Record.objects.filter(pat_id=pat_id)
-        if not is_latest and current_method:
-            all_fp_records_qs = all_fp_records_qs.filter(fp_type__fpt_method_used=current_method)  # Filter by method
-        all_fp_records = all_fp_records_qs.order_by('-created_at').prefetch_related(
+# Fetch service provision records based on the accordion context
+        current_patrec_id = fp_record.patrec_id
+        current_method = fp_type.fpt_method_used if fp_type else None
+
+        # Get all FP records that belong to the SAME patient record (patrec_id)
+        # This ensures we only get records from the same accordion
+        all_fp_records_for_patrec = FP_Record.objects.filter(
+            patrec_id=current_patrec_id  # Only records from the same patient record
+        ).order_by('created_at').prefetch_related(  # Changed to ascending order for chronological
             Prefetch('fp_assessment_record', queryset=FP_Assessment_Record.objects.select_related('followv')),
             Prefetch('fp_physical_exam', queryset=FP_Physical_Exam.objects.select_related('bm', 'vital')),
             Prefetch('fp_acknowledgement', queryset=FP_Acknowledgement.objects.select_related('type'))
         )
 
+        # Additional filtering for method consistency within the patient record
+        if current_method:
+            # Filter to only show records with the same method within this patient record
+            all_fp_records_for_patrec = all_fp_records_for_patrec.filter(
+                fp_type__fpt_method_used=current_method
+            )
+
+        print(f"Debug: Current patrec_id: {current_patrec_id}")
+        print(f"Debug: Current method: {current_method}")
+        print(f"Debug: Found {all_fp_records_for_patrec.count()} FP records for this patient record")
+
+        # Build service provision records
         service_provision_records = []
-        for historical_fp_record in all_fp_records:
+
+        # Determine the chronological limit for the current view
+        current_fp_record_date = fp_record.created_at.date()
+        print(f"Debug: Current FP record date: {current_fp_record_date}")
+
+        for historical_fp_record in all_fp_records_for_patrec:
+            # Only include records that have assessment records (actual visits)
             assessment = historical_fp_record.fp_assessment_record.first()
             if not assessment:
+                print(f"Debug: Skipping FP record {historical_fp_record.fprecord_id} - no assessment")
                 continue
+
+            # For historical records (not the current one), only show if they were created 
+            # before or at the same time as the current record being viewed
+            if historical_fp_record.fprecord_id != fp_record.fprecord_id:
+                historical_record_date = historical_fp_record.created_at.date()
+                if historical_record_date > current_fp_record_date:
+                    print(f"Debug: Skipping future record {historical_fp_record.fprecord_id}")
+                    continue
 
             physical_exam = historical_fp_record.fp_physical_exam.first()
             acknowledgement = historical_fp_record.fp_acknowledgement.first()
 
+            # Determine the visit date - use completed_at if available, otherwise created_at
+            visit_date = None
+            if assessment.followv:
+                if assessment.followv.completed_at:
+                    visit_date = assessment.followv.completed_at.strftime('%Y-%m-%d')
+                elif assessment.followv.created_at:
+                    visit_date = assessment.followv.created_at.strftime('%Y-%m-%d')
+            
+            # Fallback to FP record creation date
+            if not visit_date:
+                visit_date = historical_fp_record.created_at.strftime('%Y-%m-%d')
+
             service_dict = {
-                'dateOfVisit': (
-                    assessment.followv.date_of_visit.strftime('%Y-%m-%d')
-                    if assessment.followv and hasattr(assessment.followv, 'date_of_visit') and assessment.followv.date_of_visit
-                    else historical_fp_record.created_at.strftime('%Y-%m-%d')
-                ),
+                'dateOfVisit': visit_date,
                 'dateOfFollowUp': (
                     assessment.followv.followv_date.strftime('%Y-%m-%d')
                     if assessment.followv and assessment.followv.followv_date
@@ -1527,10 +1590,19 @@ def get_complete_fp_record(request, fprecord_id):
                 'methodQuantity': assessment.quantity or 0,
                 'serviceProviderSignature': assessment.as_provider_signature or '',
                 'nameOfServiceProvider': assessment.as_provider_name or '',
+                'fprecord_id': historical_fp_record.fprecord_id,  # Add this for debugging
             }
             service_provision_records.append(service_dict)
+            print(f"Debug: Added service record for FP {historical_fp_record.fprecord_id}")
 
-        complete_data["serviceProvisionRecords"] = service_provision_records if service_provision_records else []
+        print(f"Debug: Final service provision records count: {len(service_provision_records)}")
+
+        # Sort by visit date (earliest first to match chronological order)
+        service_provision_records.sort(
+            key=lambda x: x['dateOfVisit'] if x['dateOfVisit'] else '1900-01-01'
+        )
+
+        complete_data["serviceProvisionRecords"] = service_provision_records
 
         print("Final occupation before response:", complete_data["occupation"])  # Debug
         return Response(complete_data, status=status.HTTP_200_OK)
@@ -2194,7 +2266,6 @@ def get_complete_fp_record_data(request, fprecord_id):
             complete_data["follow_up_visit"] = None
             complete_data["serviceProvisionRecords"] = []
 
-        print("Final occupation before return:", complete_data["occupation"])  # Debug
         return complete_data
 
     except Exception as e:

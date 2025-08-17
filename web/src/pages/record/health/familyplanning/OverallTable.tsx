@@ -210,10 +210,10 @@ interface FPRecord {
   const totalFPPatients = fpCounts?.total_fp_patients || 0;
   const residentFPPatients = fpCounts?.resident_fp_patients || 0;
   const transientFPPatients = fpCounts?.transient_fp_patients || 0;
-
+  const minorFPPatients = fpCounts?.minor_fp_patients || 0;
   const residentFPPercentage = totalFPPatients > 0 ? Math.round((residentFPPatients / totalFPPatients) * 100) : 0;
   const transientFPPercentage = totalFPPatients > 0 ? Math.round((transientFPPatients / totalFPPatients) * 100) : 0;
-
+  const minorFPPercentage = totalFPPatients > 0 ? Math.round((minorFPPatients / totalFPPatients) * 100) : 0;
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -231,7 +231,7 @@ interface FPRecord {
       <hr className="border-gray mb-6 sm:mb-10" />
 
       {/* NEW: Stats Cards for Family Planning Patients */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <CardLayout
           title='Total Patients'
           description="All patients who availed Family Planning"
@@ -302,6 +302,33 @@ interface FPRecord {
           headerClassName="pb-2"
           contentClassName="pt-0"
         />
+
+         <CardLayout
+          title="Minor Patients"
+          description="Below 18 years old who availed Family Planning"
+          content={
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold">{minorFPPatients}</span>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  {minorFPPercentage > residentFPPercentage ? (
+                    <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
+                  ) : (
+                    <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
+                  )}
+                  <span>{minorFPPercentage}% of total</span>
+                </div>
+              </div>
+              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                <UserCog className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </div>
+          }
+          cardClassName="border shadow-sm rounded-lg"
+          headerClassName="pb-2"
+          contentClassName="pt-0"
+        />
+
       </div>
 
       {/* Search & New Record Button */}
@@ -336,7 +363,7 @@ interface FPRecord {
 
         {/* New Record Button */}
         <div className="flex justify-end">
-          <Link to={`/familyplanning/new-record`}>
+          <Link to={`/familyplanning/new-record`} state={{ gender: "Unknown" }}>
             <Button variant="default" className="flex items-center gap-2">
               New Record
             </Button>

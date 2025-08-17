@@ -142,8 +142,8 @@ class AddressForFpSerializer(serializers.ModelSerializer):
 
 
 class SpouseForFpSerializer(serializers.ModelSerializer):
-    s_lastName = serializers.CharField(source='spouse_lname')
-    s_givenName = serializers.CharField(source='spouse_fname')
+    s_lastName = serializers.CharField(source='spouse_lname', allow_null=True, allow_blank=True)
+    s_givenName = serializers.CharField(source='spouse_fname', allow_null=True, allow_blank=True)
     s_middleInitial = serializers.CharField(source='spouse_mname', allow_null=True, allow_blank=True)
     s_dateOfBirth = serializers.DateField(source='spouse_dob', allow_null=True)
     s_occupation = serializers.CharField(source='spouse_occupation', allow_null=True, allow_blank=True)

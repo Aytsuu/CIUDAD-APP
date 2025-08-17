@@ -14,7 +14,7 @@ urlpatterns = [
     path('commodity-stock/<str:commodity_name>/', get_commodity_stock, name='get_commodity_stock'),
     path('complete-fp-record/<int:fprecord_id>/', get_complete_fp_record, name='get_complete_fp_record'),
     path('latest-fp-record-by-patient/<str:patient_id>/', get_latest_fp_record_for_patient, name='get_latest_fp_record_for_patient'),
-    path('patient-spouse/<str:patient_id>/', get_patient_spouse, name='get_patient_spouse'),
+    # path('patient-spouse/<str:patient_id>/', get_patient_spouse, name='get_patient_spouse'),
     # Endpoints for overall table and individual patient FP records
     path('overall-records/', PatientListForOverallTable.as_view(), name='fp-overall-list'), # Overall table with counts
     path('fp-records-by-patient/<str:patient_id>/', get_fp_records_for_patient, name='get_fp_records_by_patient'), # All records for one patient
