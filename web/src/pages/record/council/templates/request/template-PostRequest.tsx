@@ -4,50 +4,6 @@ import { capitalize } from "@/helpers/capitalize";
 import { useState } from "react";
 
 
-// export const template_record = async (templateInfo: Record<string, any>) => {
-
-//     try{
-
-
-//         console.log({
-//             temp_header: templateInfo.temp_header,
-//             temp_below_headerContent: templateInfo.temp_below_headerContent,
-//             temp_title: templateInfo.temp_title,
-//             temp_subtitle: templateInfo.temp_subtitle,
-//             temp_w_sign:  templateInfo.temp_w_sign,
-//             temp_w_seal: templateInfo.temp_w_seal,
-//             temp_w_summon: templateInfo.temp_w_summon,
-//             temp_paperSize: templateInfo.temp_paperSize,
-//             temp_margin: templateInfo.temp_margin,
-//             temp_filename: templateInfo.temp_filename,
-//             temp_body: templateInfo.temp_body
-//         })
-
-//         const res = await api.post('council/template/',{
-
-//             temp_header: templateInfo.temp_header,
-//             temp_below_headerContent: templateInfo.temp_below_headerContent,
-//             temp_title: templateInfo.temp_title,
-//             temp_subtitle: templateInfo.temp_subtitle,
-//             temp_w_sign:  templateInfo.temp_w_sign,
-//             temp_w_seal: templateInfo.temp_w_seal,
-//             temp_w_summon: templateInfo.temp_w_summon,
-//             temp_paperSize: templateInfo.temp_paperSize,
-//             temp_margin: templateInfo.temp_margin,
-//             temp_filename: templateInfo.temp_filename,
-//             temp_body: templateInfo.temp_body
-
-//         })
-
-//         return res.data.temp_id;
-//     }
-//     catch (err){
-//         console.error(err);
-//     }
-// }
-
-
-
 
 export const template_record = async (templateInfo: Record<string, any>) => {
 
@@ -55,35 +11,15 @@ export const template_record = async (templateInfo: Record<string, any>) => {
 
 
         console.log({
-            temp_header: templateInfo.temp_header,
-            temp_below_headerContent: templateInfo.temp_below_headerContent,
-            temp_title: templateInfo.temp_title,
-            temp_subtitle: templateInfo.temp_subtitle,
-            temp_w_sign:  templateInfo.temp_w_sign,
-            temp_w_seal: templateInfo.temp_w_seal,
-            temp_w_summon: templateInfo.temp_w_summon,
-            temp_paperSize: templateInfo.temp_paperSize,
-            temp_margin: templateInfo.temp_margin,
-            temp_filename: templateInfo.temp_filename,
-            temp_body: templateInfo.temp_body,
-            pr_id: templateInfo.pr_id, 
+            temp_contact_num: templateInfo.temp_contact_number,
+            temp_email: templateInfo.temp_email,
             staff_id: templateInfo.staff_id || null,
         })
 
         const res = await api.post('council/template/',{
 
-            temp_header: templateInfo.temp_header,
-            temp_below_headerContent: templateInfo.temp_below_headerContent,
-            temp_title: templateInfo.temp_title,
-            temp_subtitle: templateInfo.temp_subtitle,
-            temp_w_sign:  templateInfo.temp_w_sign,
-            temp_w_seal: templateInfo.temp_w_seal,
-            temp_w_summon: templateInfo.temp_w_summon,
-            temp_paperSize: templateInfo.temp_paperSize,
-            temp_margin: templateInfo.temp_margin,
-            temp_filename: templateInfo.temp_filename,
-            temp_body: templateInfo.temp_body,
-            pr_id: templateInfo.pr_id, 
+            temp_contact_num: templateInfo.temp_contact_number,
+            temp_email: templateInfo.temp_email,
             staff_id: templateInfo.staff_id || null,
 
         })
@@ -93,4 +29,34 @@ export const template_record = async (templateInfo: Record<string, any>) => {
     catch (err){
         console.error(err);
     }
+}
+
+
+
+
+export const template_file = async (data: {
+  temp_id: number;
+  file_data: {
+    name: string;
+    type: string;
+    file: any;
+  };
+}) => {
+  try {
+    // Create the payload that matches your serializer's _upload_files method
+    const payload = {
+      temp_id: data.temp_id,
+      files: [{
+        name: data.file_data.name,
+        type: data.file_data.type,
+        file: data.file_data.file // The actual file object
+      }]
+    };
+
+    const res = await api.post('council/template-file/', payload);
+    return res.data;
+  } catch (err) {
+    console.error(`Failed to create file ${data.file_data.name}:`, err);
+    throw err;
+  }
 }

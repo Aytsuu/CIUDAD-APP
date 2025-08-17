@@ -272,20 +272,17 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import TemplateCreateForm from "./template-create";
 import TemplateUpdateForm from "./template-update";
+import { useGetTemplateRecord } from './queries/template-FetchQueries';
 import TemplatePreview from './template-preview';
 import { Skeleton } from "@/components/ui/skeleton";
 
-const BarangayLogo = "https://isxckceeyjcwvjipndfd.supabase.co/storage/v1/object/public/report-bucket/illegal-dumping/media_Barangay Logo.png_1755416593032.pngytwjya?"
-const CityLogo = "https://isxckceeyjcwvjipndfd.supabase.co/storage/v1/object/public/report-bucket/illegal-dumping/media_Cebu City Seal.png_1755416595338.pngw6mjzq?"
-const telNum = "021302-231"
-const email = "barangaykeneme@gmail.com"
+
 
 type Template = {
   temp_title: string;
   temp_belowHeaderContent?: string;
   temp_barangayLogo: string;
   temp_LogoStyle: number;
-  temp_cityLogo: string;
   temp_email?: string;
   temp_telNum: string;
   temp_paperSize: string;
@@ -299,66 +296,68 @@ type Template = {
   temp_id?: number; // Added optional temp_id for consistency
 }
 
-export const TemplateRecords: Template[] = [
-  {
-    temp_id: 1,
-    temp_title: "BARANGAY CLEARANCE",
-    temp_barangayLogo: BarangayLogo,
-    temp_LogoStyle: 2,
-    temp_cityLogo: CityLogo,
-    temp_email: email,
-    temp_telNum: telNum,
-    temp_paperSize: "letter",
-    temp_margin: "normal",
-    temp_filename: "Barangay Clearance",
-    temp_w_sign_right: false,
-    temp_w_sign_left: true,
-    temp_w_sign_applicant: false,
-    temp_w_seal: false,
-    temp_body: "/*TO WHOM IT MAY CONCERN:*/\n\nThis is to certify that [ BUSINESS NAME ] with business address located at [ LOCATION ]" +
-    ", after complying with the requirements prescribed by this offic, is hereby issued a Barangay Clearance for the purpose of " +
-    "securing/obtaining /*WORK PERMIT*/ and be able to work within the barangay jurisdiction. However, this Barangay Clearance may be " +
-    "cancelled or revoked anytime the public safety and interest so required.\n\nIssued this [9th] day of [AUGUST] [2022] at Barangay " +
-    "San Roque (Ciudad), Cebu City"
-  },
-  {
-    temp_id: 2,
-    temp_title: "CERTIFICATION",
-    temp_LogoStyle: 1,
-    temp_barangayLogo: BarangayLogo,
-    temp_cityLogo: CityLogo,
-    temp_telNum: telNum,
-    temp_paperSize: "letter",
-    temp_margin: "normal",
-    temp_filename: "Business Permit",
-    temp_w_sign_right: false,
-    temp_w_sign_left: false,
-    temp_w_sign_applicant: true,
-    temp_w_seal: true,
-    temp_body: "secret"
-  },
-  {
-    temp_id: 3,
-    temp_title: "CERTIFICATION",
-    temp_barangayLogo: BarangayLogo,
-    temp_LogoStyle: 2,
-    temp_cityLogo: CityLogo,
-    temp_telNum: telNum,
-    temp_paperSize: "letter",
-    temp_margin: "normal",
-    temp_filename: "Cedula",
-    temp_w_sign_right: false,
-    temp_w_sign_left: false,
-    temp_w_sign_applicant: true,
-    temp_w_seal: false,
-    temp_body: "secret"
-  },      
-];
 
 function TemplateMainPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
-  const [isLoading] = useState(false); // Added for consistent skeleton loading
+
+  // Fetch data
+  const { data: templates = [], isLoading } = useGetTemplateRecord();
+
+  console.log("TEMPLATES: ", templates)
+
+  const TemplateRecords: Template[] = [
+    {
+      temp_id: 1,
+      temp_title: "BARANGAY CLEARANCE",
+      temp_barangayLogo: templates[0]?.template_files[0].tf_url,
+      temp_LogoStyle: 1,  
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Barangay Clearance",
+      temp_w_sign_right: false,
+      temp_w_sign_left: true,
+      temp_w_sign_applicant: false,
+      temp_w_seal: false,
+      temp_body: "/*TO WHOM IT MAY CONCERN:*/\n\nThis is to certify that [ BUSINESS NAME ] with business address located at [ LOCATION ]" +
+      ", after complying with the requirements prescribed by this offic, is hereby issued a Barangay Clearance for the purpose of " +
+      "securing/obtaining /*WORK PERMIT*/ and be able to work within the barangay jurisdiction. However, this Barangay Clearance may be " +
+      "cancelled or revoked anytime the public safety and interest so required.\n\nIssued this [9th] day of [AUGUST] [2022] at Barangay " +
+      "San Roque (Ciudad), Cebu City"
+    },
+    {
+      temp_id: 2,
+      temp_title: "CERTIFICATION",
+      temp_LogoStyle: 1,
+      temp_barangayLogo: templates[0]?.template_files[0].tf_url,
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Business Permit",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "secret"
+    },
+    {
+      temp_id: 3,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: templates[0]?.template_files[0].tf_url,
+      temp_LogoStyle: 2,
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Cedula",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: false,
+      temp_body: "secret"
+    },      
+  ];  
 
   if (isLoading) {
     return (
@@ -384,12 +383,12 @@ function TemplateMainPage() {
         <DialogLayout
           trigger={
             <Button>
-              <Plus size={20} /> Create Template
+              <Plus size={20} /> Add Details
             </Button>
           }
-          className="max-w-[60%] h-[90%] flex flex-col overflow-auto scrollbar-custom"
-          title="Create New Template"
-          description="Add new certification template."
+          className="max-w-[30%] flex flex-col overflow-auto scrollbar-custom"
+          title="Template Common Details"
+          description="please provide the needed details"
           mainContent={
             <div className="w-full h-full">
               <TemplateCreateForm onSuccess={() => setIsDialogOpen(false)} />
@@ -449,7 +448,6 @@ function TemplateMainPage() {
               <TemplatePreview
                 logoStyle={previewTemplate.temp_LogoStyle}
                 barangayLogo={previewTemplate.temp_barangayLogo}
-                cityLogo={previewTemplate.temp_cityLogo}
                 email={previewTemplate.temp_email}
                 telNum={previewTemplate.temp_telNum}
                 belowHeaderContent={previewTemplate.temp_belowHeaderContent}

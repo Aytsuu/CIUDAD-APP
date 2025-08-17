@@ -77,17 +77,46 @@ class CouncilAttendanceSerializer(serializers.ModelSerializer):
         return attendance_sheets
 
 
-class TemplateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Template
-        fields = '__all__'
-
 class TemplateFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = TemplateFile
         fields = '__all__'
 
+    def _upload_files(self, files, temp_id=None):
+
+        if not temp_id:
+            return
         
+        try:
+            tracking_instance = Template.objects.get(pk=temp_id)
+        except Template.DoesNotExist:
+            
+            raise ValueError(f"Income_Expense_Tracking with id {temp_id} does not exist")       
+        
+        tf_files = []
+        for file_data in files:
+            tf_file = TemplateFile(
+                tf_name=file_data['name'],
+                tf_type=file_data['type'],
+                tf_path=file_data['name'],
+                temp_id=tracking_instance  # THIS SETS THE FOREIGN KEY
+            )
+
+            url = upload_to_storage(file_data, 'template-bucket', '')
+            tf_file.tf_url = url
+            tf_files.append(tf_file)
+
+        if tf_files:
+            TemplateFile.objects.bulk_create(tf_files)    
+
+
+class TemplateSerializer(serializers.ModelSerializer):
+    template_files = TemplateFileSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Template
+        fields = '__all__'        
+
 
 Staff = apps.get_model('administration', 'Staff')
 

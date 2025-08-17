@@ -242,6 +242,29 @@ class TemplateFileView(generics.ListCreateAPIView):
     serializer_class = TemplateFileSerializer
     queryset = TemplateFile.objects.all()
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        temp_id = self.request.query_params.get('temp_id')
+        if temp_id:
+            queryset = queryset.filter(temp_id=temp_id)
+        return queryset    
+
+    def create(self, request, *args, **kwargs):
+        # Get iet_num from either query params or request data
+        temp_id = request.query_params.get('temp_id') or request.data.get('temp_id')
+        
+        if not temp_id:
+            return Response(
+                {"error": "temp_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Call your serializer's upload method
+        files = request.data.get('files', [])
+        self.get_serializer()._upload_files(files, temp_id=temp_id)
+        
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)    
+
 
 class SummonTemplateView(APIView):
     def get(self, request):
