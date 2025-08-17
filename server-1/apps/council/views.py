@@ -238,6 +238,11 @@ class TemplateView(generics.ListCreateAPIView):
     queryset = Template.objects.all()
 
 
+class TemplateFileView(generics.ListCreateAPIView):
+    serializer_class = TemplateFileSerializer
+    queryset = TemplateFile.objects.all()
+
+
 class SummonTemplateView(APIView):
     def get(self, request):
         filename = request.query_params.get('filename')

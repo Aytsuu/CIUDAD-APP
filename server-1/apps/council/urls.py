@@ -22,6 +22,8 @@ urlpatterns=[
     path('delete-template-with-pr-id/<int:pr_id>/', DeleteTemplateByPrIdView.as_view(), name='delete-template-pr-id'),
     path('summon-template/', SummonTemplateView.as_view(), name='summon-template'),
 
+    path("template-file/", TemplateFileView.as_view(), name="council-template-file"),
+
     path('minutes-of-meeting/', MinutesOfMeetingView.as_view(), name="minutes-of-meeting"),
     path('mom-area-of-focus/', MOMAreaOfFocusView.as_view(), name='mom-area-of-focus'),
     path('mom-file/', MOMFileView.as_view(), name='mom-file'),

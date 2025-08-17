@@ -76,18 +76,15 @@ class CouncilAttendanceSerializer(serializers.ModelSerializer):
             CouncilAttendance.objects.bulk_create(attendance_sheets)
         return attendance_sheets
 
+
 class TemplateSerializer(serializers.ModelSerializer):
-
-    temp_below_headerContent = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        trim_whitespace=False
-    )
-    
-    temp_body = serializers.CharField(trim_whitespace=False)
-
     class Meta:
         model = Template
+        fields = '__all__'
+
+class TemplateFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TemplateFile
         fields = '__all__'
 
         
