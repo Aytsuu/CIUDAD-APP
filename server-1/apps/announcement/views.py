@@ -1,4 +1,3 @@
-
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -51,7 +50,7 @@ class AnnouncementRecipientView(generics.ListCreateAPIView):
 
     def get_serializer_class(self):
         if self.request.method == 'POST' and isinstance(self.request.data, dict) and 'recipients' in self.request.data:
-            return BulkAnnouncementRecipientSerializer  # ✅ must return this
+            return BulkAnnouncementRecipientSerializer
         return AnnouncementRecipientSerializer
 
     def create(self, request, *args, **kwargs):
@@ -69,7 +68,6 @@ class AnnouncementRecipientView(generics.ListCreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class AnnouncementRecipientDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = AnnouncementRecipient.objects.all()
     serializer_class = AnnouncementRecipientSerializer
@@ -82,6 +80,3 @@ class AnnouncementRecipientByTypeView(APIView):
         queryset = AnnouncementRecipient.objects.filter(ar_type=ar_type)
         serializer = AnnouncementRecipientFilteredSerializer(queryset, many=True)
         return Response(serializer.data)
-
-
-

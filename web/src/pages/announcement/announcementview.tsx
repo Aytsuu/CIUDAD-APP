@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Key, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -127,102 +127,117 @@ function AnnouncementView() {
               </CardContent>
             </Card>
 
-            {/* Attached Files */}
-            {(announcement.files?.length ?? 0) > 0 && (
-              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-gray-600" />
-                    <CardTitle className="text-lg">Attached Files</CardTitle>
-                  </div>
-                  <CardDescription>Media attached to the announcement</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-4">
-                  {announcement.files?.map((file, index) => (
-                    <div key={index} className="w-40 h-40 border rounded overflow-hidden shadow-sm">
-                      {file.af_type.startsWith("image/") ? (
-                        <img
-                          src={file.af_url}
-                          alt={capitalizeWords(file.af_name)}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-sm text-gray-500">
-                          {capitalizeWords(file.af_name)}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+      {/* Attached Files */}
+{(announcement.announcement_files?.length ?? 0) > 0 && (
+  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+    <CardHeader className="pb-4">
+      <div className="flex items-center gap-2">
+        <FileText className="h-5 w-5 text-gray-600" />
+        <CardTitle className="text-lg">Attached Files</CardTitle>
+      </div>
+      <CardDescription>Media attached to the announcement</CardDescription>
+    </CardHeader>
+    <CardContent className="flex flex-wrap gap-4">
+      {announcement.announcement_files?.map(
+        (file: { af_type: string; af_url: string; af_name: string }, index: Key) => (
+          <div
+            key={index}
+            className="w-40 h-40 border rounded overflow-hidden shadow-sm"
+          >
+            {file.af_type.startsWith("image/") ? (
+              <img
+                src={file.af_url}
+                alt={capitalizeWords(file.af_name)}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-sm text-gray-500 px-2 text-center">
+                {capitalizeWords(file.af_name)}
+              </div>
             )}
+          </div>
+        )
+      )}
+    </CardContent>
+  </Card>
+)}
 
-            {/* Schedule */}
-            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-gray-600" />
-                  <CardTitle className="text-lg">Schedule</CardTitle>
-                </div>
-                <CardDescription>When this announcement is active</CardDescription>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <Clock className="h-4 w-4" />
-                    Start Date & Time
-                  </div>
-                  <FormDateTimeInput
-                    control={form.control}
-                    name="ann_start_at"
-                    label=""
-                    readOnly={!isEditing}
-                    type="datetime-local"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <Clock className="h-4 w-4" />
-                    End Date & Time
-                  </div>
-                  <FormDateTimeInput
-                    control={form.control}
-                    name="ann_end_at"
-                    label=""
-                    readOnly={!isEditing}
-                    type="datetime-local"
-                  />
-                </div>
-                {announcement.ann_event_start && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                      <Clock className="h-4 w-4" />
-                      Event Start
-                    </div>
-                    <input
-                      type="datetime-local"
-                      value={formatDateTimeLocal(announcement.ann_event_start)}
-                      readOnly
-                      className="flex w-full rounded-md border border-input px-3 py-2 text-sm"
-                    />
-                  </div>
-                )}
-                {announcement.ann_event_end && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                      <Clock className="h-4 w-4" />
-                      Event End
-                    </div>
-                    <input
-                      type="datetime-local"
-                      value={formatDateTimeLocal(announcement.ann_event_end)}
-                      readOnly
-                      className="flex w-full rounded-md border border-input px-3 py-2 text-sm"
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          {/* Schedule */}
+          <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+      <Calendar className="h-5 w-5 text-gray-600" />
+      <CardTitle className="text-lg">Schedule</CardTitle>
+    </div>
+    <CardDescription>When this announcement is active</CardDescription>
+  </CardHeader>
+  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {/* Normal Announcement */}
+    {announcement.ann_type?.toLowerCase() !== "event" && (
+      <>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <Clock className="h-4 w-4" />
+            Start Posting
+          </div>
+          <FormDateTimeInput
+            control={form.control}
+            name="ann_start_at"
+            label=""
+            readOnly={!isEditing}
+            type="datetime-local"
+          />
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <Clock className="h-4 w-4" />
+            End Posting
+          </div>
+          <FormDateTimeInput
+            control={form.control}
+            name="ann_end_at"
+            label=""
+            readOnly={!isEditing}
+            type="datetime-local"
+          />
+        </div>
+      </>
+    )}
+
+    {/* Event Announcement */}
+    {announcement.ann_type?.toLowerCase() === "event" && (
+      <>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <Clock className="h-4 w-4" />
+            Event Start
+          </div>
+          <FormDateTimeInput
+            control={form.control}
+            name="ann_event_start"
+            label=""
+            readOnly={!isEditing}
+            type="datetime-local"
+          />
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <Clock className="h-4 w-4" />
+            Event End
+          </div>
+          <FormDateTimeInput
+            control={form.control}
+            name="ann_event_end"
+            label=""
+            readOnly={!isEditing}
+            type="datetime-local"
+          />
+        </div>
+      </>
+    )}
+  </CardContent>
+</Card>
+
 
          {/* Recipients - Hide if public */}
 {announcement.ann_type?.toLowerCase() !== "public" &&

@@ -18,10 +18,9 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import axios from "axios";
 import { usePositions } from "@/pages/record/administration/queries/administrationFetchQueries";
 import { useNavigate } from "react-router-dom";
+import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 
-
-
-/** display helper */
+// Helpers
 function capitalizeWords(str: string) {
   if (!str) return "";
   return str
@@ -31,19 +30,14 @@ function capitalizeWords(str: string) {
     .join(" ");
 }
 
-/** robust normalizer for titles to kill dupes like "BHW  ", "bhw", "Bhw" */
 function normalizeTitle(value: string) {
   return String(value || "")
     .normalize("NFKC")
     .trim()
-    .replace(/\s+/g, " "); // collapse internal spaces
+    .replace(/\s+/g, " ");
 }
 
-/** case-insensitive unique while preserving first-seen original */
-function uniquePreserve<T>(
-  items: T[],
-  keyFn: (x: T) => string
-): T[] {
+function uniquePreserve<T>(items: T[], keyFn: (x: T) => string): T[] {
   const seen = new Set<string>();
   const out: T[] = [];
   for (const it of items) {
@@ -61,6 +55,8 @@ const AnnouncementCreate = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
+  const [activeVideoId, setActiveVideoId] = React.useState<string>("");
 
   type AnnouncementCreateFormValues = z.infer<typeof AnnouncementSchema> & {
     pos_category: string;
@@ -94,7 +90,6 @@ const AnnouncementCreate = () => {
   const posCategory = form.watch("pos_category");
   const posGroup = form.watch("pos_group");
 
-  // ✅ Only reset dates if type is "general"
   React.useEffect(() => {
     if (annType === "general") {
       form.setValue("ann_start_at", "");
@@ -104,7 +99,6 @@ const AnnouncementCreate = () => {
     }
   }, [annType, form]);
 
-  // ✅ Only clear staff-specific fields when switching away from "staff"
   React.useEffect(() => {
     if (recipientType !== "staff") {
       form.setValue("ar_type", []);
@@ -139,15 +133,13 @@ const AnnouncementCreate = () => {
     }));
   }, [positions, posCategory]);
 
-  /** Dedup positions *by title* within the selected group (case/space-insensitive) */
   const positionsForGroup = React.useMemo(() => {
     if (!posCategory || !posGroup) return [];
     const filtered = positions.filter(
       (p: { pos_category: string; pos_group: string }) =>
         p.pos_category === posCategory && p.pos_group === posGroup
     );
-    const unique = uniquePreserve(filtered, (p: any) => normalizeTitle(p.pos_title));
-    return unique;
+    return uniquePreserve(filtered, (p: any) => normalizeTitle(p.pos_title));
   }, [positions, posCategory, posGroup]);
 
   const onSubmit = async (data: AnnouncementCreateFormValues) => {
@@ -160,9 +152,7 @@ const AnnouncementCreate = () => {
 
       let { ar_type, pos_category, pos_group, ...announcementData } = cleanedData;
 
-      // 🧹 Sanitize & de-duplicate selected recipients (fixes “All Barangay Health Staff”)
       if (Array.isArray(ar_type)) {
-        // normalize each title, but keep first-seen original for payload
         const origWithKey = (ar_type as string[]).map((t: string) => ({
           orig: t,
           key: normalizeTitle(t),
@@ -171,13 +161,17 @@ const AnnouncementCreate = () => {
         ar_type = unique;
       }
 
-      console.log("Sending announcement payload:", announcementData);
-      console.log("Recipients (deduped):", ar_type);
+      if (mediaFiles.length > 0) {
+        const filesPayload = mediaFiles.map((file) => ({
+          name: file.name,
+          type: file.type,
+          file: file.url,
+        }));
+        announcementData.files = filesPayload;
+      }
 
-      // 1️⃣ Create announcement in backend
       const createdAnnouncement = await postAnnouncement(announcementData);
 
-      // 2️⃣ Send recipients if any
       if (Array.isArray(ar_type) && ar_type.length > 0) {
         const recipientsPayload = (ar_type as string[])
           .filter(Boolean)
@@ -186,25 +180,13 @@ const AnnouncementCreate = () => {
             ar_type: String(type).trim(),
           }));
 
-        console.log("Recipients payload (deduped):", recipientsPayload);
         await postAnnouncementRecipient({ recipients: recipientsPayload });
       }
 
-      // ♻️ Reset form to defaults after success (keep staff id)
-form.reset({
-  ...defaultValues,
-  staff: user?.staff?.staff_id || "",
-});
-
-// 🔄 Refresh list
-queryClient.invalidateQueries({ queryKey: ["announcements"] });
-
-// ⬅ Go back
-navigate("/announcement"); // goes to previous page
-
-
-      // 🔄 Refresh list
+      form.reset({ ...defaultValues, staff: user?.staff?.staff_id || "" });
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      navigate("/announcement");
+
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         console.error("Validation errors from backend:", error.response.data);
@@ -222,6 +204,7 @@ navigate("/announcement"); // goes to previous page
       <div className="max-w-4xl mx-auto">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
             {/* Basic Info */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
               <CardHeader className="pb-4">
@@ -306,7 +289,6 @@ navigate("/announcement"); // goes to previous page
                       { id: "staff", name: "Staff" },
                     ]}
                   />
-
                   {recipientType === "staff" && (
                     <>
                       <FormSelect control={form.control} name="pos_category" label="Category" options={categoryOptions} />
@@ -315,21 +297,17 @@ navigate("/announcement"); // goes to previous page
                       )}
                       {posGroup && (
                         <FormComboCheckbox
-                        label = "Positions"
+                          label="Positions"
                           control={form.control}
                           name="ar_type"
-                          options={positionsForGroup.map((pos: { pos_title: string }) => {
-                            // show pretty names, but ids remain original titles (we normalize only for dedupe)
-                            return {
-                              id: pos.pos_title,
-                              name: pos.pos_title,
-                            };
-                          })}
+                          options={positionsForGroup.map((pos: { pos_title: string }) => ({
+                            id: pos.pos_title,
+                            name: pos.pos_title,
+                          }))}
                         />
                       )}
                     </>
                   )}
-
                   {recipientType === "resident" && (
                     <FormComboCheckbox
                       label="Age Groups"
@@ -346,6 +324,27 @@ navigate("/announcement"); // goes to previous page
                 </CardContent>
               </Card>
             )}
+
+            {/* Media Upload */}
+            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-gray-600" />
+                  <CardTitle className="text-lg">Media Upload</CardTitle>
+                </div>
+                <CardDescription>Upload images or videos to include with your announcement</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MediaUpload
+                  title="Upload Image/Video"
+                  description="Drag or select files to upload"
+                  mediaFiles={mediaFiles}
+                  activeVideoId={activeVideoId}
+                  setActiveVideoId={setActiveVideoId}
+                  setMediaFiles={setMediaFiles}
+                />
+              </CardContent>
+            </Card>
 
             {/* Notification Options */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
@@ -370,11 +369,13 @@ navigate("/announcement"); // goes to previous page
               </CardContent>
             </Card>
 
+            {/* Submit Button */}
             <div className="flex justify-end pt-4">
               <Button type="submit">
                 <Send className="h-4 w-4 mr-2" /> Create Announcement
               </Button>
             </div>
+
           </form>
         </Form>
       </div>
