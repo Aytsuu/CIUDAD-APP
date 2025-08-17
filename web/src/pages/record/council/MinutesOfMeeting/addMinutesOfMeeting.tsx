@@ -17,6 +17,7 @@ export default function AddMinutesOfMeeting({onSuccess}: {
 }) {
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
+    const [fileError, setFileError] = useState<string>("");
     const {mutate: addMOM, isPending} = useInsertMinutesOfMeeting(onSuccess)
     const form = useForm<z.infer<typeof minutesOfMeetingFormSchema>>({
         resolver: zodResolver(minutesOfMeetingFormSchema),
@@ -37,6 +38,12 @@ export default function AddMinutesOfMeeting({onSuccess}: {
 
 
     const onSubmit = (values: z.infer<typeof minutesOfMeetingFormSchema>)  => {
+        if (!mediaFiles || mediaFiles.length === 0) {
+            setFileError("Meeting file is required.");
+            return;
+        }
+        setFileError("");
+
         const files = mediaFiles.map((media) => ({
                 'name': media.name,
                 'type': media.type,
@@ -75,7 +82,6 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                         max={new Date().toISOString().split('T')[0]}
                     />
 
-                    
                     <FormItem>
                         <FormControl>
                             <MediaUpload
@@ -85,9 +91,14 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                                 setMediaFiles={setMediaFiles}
                                 activeVideoId={activeVideoId}
                                 setActiveVideoId={setActiveVideoId}
+                                maxFiles={1}
+                                acceptableFiles='document'
                             />
                         </FormControl>
                         <FormMessage />
+                        {fileError && (
+                            <div className="text-red-500 text-xs mt-2">{fileError}</div>
+                        )}
                     </FormItem>
                       
                     

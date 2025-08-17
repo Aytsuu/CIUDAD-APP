@@ -43,16 +43,17 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ProjectProposal, SupportDoc } from "./projprop-types";
 import { Link } from "react-router";
-import { DocumentCard } from "./main-docu-card";
+import { DocumentCard } from "./supp-docs-modal";
 
 function GADProjectProposal() {
   const style = {
     projStat: {
       pending: "text-blue",
-      approved: "text-green-500",
       amend: "text-yellow-500",
+      approved: "text-green-500",
       rejected: "text-red-500",
       viewed: "text-darkGray",
+      resubmitted: "text-indigo-600",
     },
   };
 
@@ -61,6 +62,7 @@ function GADProjectProposal() {
     { id: "Pending", name: "Pending" },
     { id: "Viewed", name: "Viewed" },
     { id: "Amend", name: "Amend" },
+    { id: "Resubmitted", name: "Resubmitted"},
     { id: "Approved", name: "Approved" },
     { id: "Rejected", name: "Rejected" },
   ];
@@ -112,10 +114,10 @@ function GADProjectProposal() {
     });
 
   useEffect(() => {
-    if (isSuppDocDialogOpen && supportDocs.length > 0) {
-      setSelectedSuppDocs(supportDocs);
-    }
-  }, [supportDocs, isSuppDocDialogOpen]);
+  if (isSuppDocDialogOpen) {
+    setSelectedSuppDocs(supportDocs);
+  }
+}, [supportDocs, isSuppDocDialogOpen]);
 
   useEffect(() => {
     if (detailedProject && selectedProject?.gprId === detailedProject.gprId) {

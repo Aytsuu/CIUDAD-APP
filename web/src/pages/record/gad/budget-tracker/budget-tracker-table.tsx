@@ -134,6 +134,35 @@ function BudgetTracker() {
     currentPage * pageSize
   );
 
+    const calculateTotalProposedWithoutActual = () => {
+    if (!budgetEntries || budgetEntries.length === 0) return 0;
+
+    return budgetEntries.reduce((total, entry) => {
+      // Skip archived or non-expense entries
+      if (entry.gbud_is_archive || entry.gbud_type !== "Expense") return total;
+
+      // Convert all values to numbers safely (handles strings like "0.00")
+      const toNum = (val: any) => {
+        if (val === undefined || val === null) return undefined;
+        const num = +val; // Convert to number
+        return isNaN(num) ? undefined : num;
+      };
+
+      const actual = toNum(entry.gbud_actual_expense);
+      const proposed = toNum(entry.gbud_proposed_budget);
+      const shouldInclude =
+        (actual === undefined || actual === null || actual === 0) &&
+        proposed !== undefined &&
+        proposed !== null &&
+        proposed !== 0;
+
+      if (shouldInclude) {
+        return total + proposed;
+      }
+      return total;
+    }, 0);
+  };
+
   const getLatestRemainingBalance = (): number => {
     // If no entries, return the initial budget
     if (!budgetEntries || budgetEntries.length === 0) {
@@ -408,15 +437,21 @@ function BudgetTracker() {
 
       <div className="flex flex-row gap-5 mb-5 flex-wrap">
         <div className="flex flex-row gap-2">
-          <Label className="w-35 text-md">Budget:</Label>
-          <Label className="text-red-500 text-md font-bold">
+          <Label className="w-35 text-md">Whole Year Budget:</Label>
+          <Label className="text-blue text-md font-bold">
             Php {formattedBudget}
           </Label>
         </div>
         <div className="flex flex-row gap-2">
-          <Label className="w-35 text-md">Remaining:</Label>
+          <Label className="w-35 text-md">Remaining Balance:</Label>
           <Label className="text-green-600 text-md font-bold">
             Php {getLatestRemainingBalance()}
+          </Label>
+        </div>
+        <div className="flex flex-row gap-2">
+          <Label className="w-35 text-md">Pending Expenses:</Label>
+          <Label className="text-red-500 text-md font-bold">
+            Php {calculateTotalProposedWithoutActual()}
           </Label>
         </div>
       </div>

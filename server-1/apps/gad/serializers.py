@@ -103,10 +103,6 @@ class GADBudgetFileSerializer(serializers.ModelSerializer):
             except Exception as e:
                 print(f"Error deleting file {file_data.get('id', 'unknown')}: {str(e)}")
                 continue
-            
-    # def get_gbf_url(self, obj):
-    #     import urllib.parse
-    #     return urllib.parse.quote(obj.gbf_url, safe=':/')
 
 class GADBudgetFileReadSerializer(serializers.ModelSerializer):
     gbf_url = serializers.SerializerMethodField()

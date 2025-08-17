@@ -17,7 +17,6 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
         return insertMinutesOfMeeting(data.values, data.files);
     },
     onSuccess: () => {
-        toast.loading('Creating Meeting Minutes...', { id: "createMOM" });
         queryClient.invalidateQueries({ queryKey: ['momRecords'] });
         queryClient.invalidateQueries({ queryKey: ['momAreasOfFocus'] });
         queryClient.invalidateQueries({ queryKey: ['momFiles'] });
