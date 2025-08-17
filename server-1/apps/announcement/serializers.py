@@ -11,23 +11,15 @@ class AnnouncementFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementFile
         fields = ['af_id', 'af_name', 'af_type', 'af_path', 'af_url']  
+
+
 class AnnouncementRecipientSerializer(serializers.ModelSerializer):
-    ar_type = serializers.ChoiceField(choices=[
-        ('adolecent', 'Adolecent'),
-        ('adult', 'Adult'),
-        ('senior citizen', 'Senior Citizen'),
-        ('midwife', 'Midwife'),
-        ('doctor', 'Doctor'),
-        ('barangay health worker', 'Barangay Health Worker'),
-        ('watchman', 'Watchman'),
-        ('waste driver', 'Waste Driver'),
-        ('waste collector', 'Waste Collector'),
-        ('barangay captain', 'Barangay Captain')
-    ])
+    ar_type = serializers.CharField()  # removed choices
 
     class Meta:
         model = AnnouncementRecipient
         fields = ['ar_id', 'ann', 'ar_type']
+
 
 
 class FileInputSerializer(serializers.Serializer):

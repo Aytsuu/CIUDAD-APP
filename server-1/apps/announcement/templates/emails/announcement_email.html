@@ -14,108 +14,24 @@
             margin: 0;
             padding: 20px;
         }
-        
-        .email-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-        }
-        
-        .header {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e5e5e5;
-        }
-        
-        .sender-info {
-            margin-bottom: 8px;
-        }
-        
-        .sender-name {
-            font-weight: 600;
-            color: #333333;
-            font-size: 15px;
-        }
-        
-        .timestamp {
-            color: #666666;
-            font-size: 13px;
-            margin-top: 2px;
-        }
-        
-        .subject {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333333;
-            margin: 20px 0;
-        }
-        
-        .content {
-            color: #333333;
-            line-height: 1.6;
-        }
-        
-        .content p {
-            margin: 16px 0;
-        }
-        
-        .content p:first-child {
-            margin-top: 0;
-        }
-        
-        .content p:last-child {
-            margin-bottom: 0;
-        }
-        
-    
-        .info-item {
-            margin: 8px 0;
-        }
-        
-        .info-label {
-            font-weight: 600;
-            display: inline;
-        }
-        
-        .details-section {
-            margin: 20px 0;
-        }
-        
-        .attachments {
-            margin: 20px 0;
-        }
-        
-        .attachment-item {
-            margin: 8px 0;
-        }
-        
-        .attachment-link {
-            color: #0066cc;
-            text-decoration: none;
-        }
-        
-        .attachment-link:hover {
-            text-decoration: underline;
-        }
-        
-        .signature {
-            margin-top: 30px;
-            padding-top: 20px;
-        }
-        
-        .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e5e5;
-            color: #999999;
-            font-size: 12px;
-        }
-        
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-        }
+        .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+        .header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e5e5e5; }
+        .sender-info { margin-bottom: 8px; }
+        .sender-name { font-weight: 600; color: #333333; font-size: 15px; }
+        .timestamp { color: #666666; font-size: 13px; margin-top: 2px; }
+        .subject { font-size: 16px; font-weight: 600; color: #333333; margin: 20px 0; }
+        .content { color: #333333; line-height: 1.6; }
+        .content p { margin: 16px 0; }
+        .info-item { margin: 8px 0; }
+        .info-label { font-weight: 600; display: inline; }
+        .details-section { margin: 20px 0; }
+        .attachments { margin: 20px 0; }
+        .attachment-item { margin: 8px 0; }
+        .attachment-link { color: #0066cc; text-decoration: none; }
+        .attachment-link:hover { text-decoration: underline; }
+        .signature { margin-top: 30px; padding-top: 20px; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e5e5; color: #999999; font-size: 12px; }
+        @media (max-width: 600px) { body { padding: 10px; } }
     </style>
 </head>
 <body>
@@ -126,33 +42,42 @@
                 <div class="timestamp">{{ current_date }}</div>
             </div>
         </div>
-        
-        <div class="subject">{{ ann_title }}</div>
-        
-        <div class="content">
-          
 
-            
+        <div class="subject">{{ ann_title }}</div>
+
+        <div class="content">
             <div class="details-section">
                 <p>{{ ann_details }}</p>
             </div>
-            
-            {% if ann_start_at or ann_end_at %}
+
             <div class="info-section">
                 {% if ann_start_at %}
                 <div class="info-item">
                     <span class="info-label">Start Date:</span> {{ ann_start_at }}
                 </div>
                 {% endif %}
-                
                 {% if ann_end_at %}
                 <div class="info-item">
                     <span class="info-label">End Date:</span> {{ ann_end_at }}
                 </div>
                 {% endif %}
+                {% if ann_event_start %}
+                <div class="info-item">
+                    <span class="info-label">Event Start:</span> {{ ann_event_start }}
+                </div>
+                {% endif %}
+                {% if ann_event_end %}
+                <div class="info-item">
+                    <span class="info-label">Event End:</span> {{ ann_event_end }}
+                </div>
+                {% endif %}
+                {% if ann_type %}
+                <div class="info-item">
+                    <span class="info-label">Type:</span> {{ ann_type }}
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
-            
+
             {% if files %}
             <div class="attachments">
                 <p><span class="info-label">Attachments:</span></p>
@@ -170,14 +95,12 @@
                 {% endfor %}
             </div>
             {% endif %}
-            
 
-            
             <div class="signature">
-                <p> Barangay San Roque</p>
+                <p>Barangay San Roque</p>
             </div>
         </div>
-        
+
         <div class="footer">
             This email is a service announcement. Sent by Staff ID: {{ staff_id }}
         </div>
