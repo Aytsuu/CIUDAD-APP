@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 import { useState } from "react";
 import {
@@ -11,40 +9,38 @@ import {
   SafeAreaView,
   StatusBar,
   RefreshControl,
-  Modal,
 } from "react-native";
 import {
-  ArrowLeft,
   Archive,
   ArchiveRestore,
   Trash,
   ChevronLeft,
+  ClipboardCheck
 } from "lucide-react-native";
-import {
-  useGetProjectProposals,
-  type ProjectProposal,
-} from "./queries/fetchqueries";
+import { useGetProjectProposals } from "./queries/fetchqueries";
 import {
   usePermanentDeleteProjectProposal,
   useArchiveProjectProposal,
   useRestoreProjectProposal,
 } from "./queries/delqueries";
-import { QueryProvider } from "./api/query-provider";
 import { ProjectProposalView } from "./view-projprop";
 import { useRouter } from "expo-router";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { SelectLayout } from "@/components/ui/select-layout";
+import { ProjectProposal } from "./projprop-types";
 
-const ProjectProposalListContent: React.FC = () => {
+const ProjectProposalList: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
-  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
+  const [_showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedProject, setSelectedProject] =
     useState<ProjectProposal | null>(null);
-
+  const [pageSize] = useState(5); 
+  const [currentPage, setCurrentPage] = useState(1);
+  
   const {
     data: projects = [],
     isLoading,
@@ -56,11 +52,12 @@ const ProjectProposalListContent: React.FC = () => {
   const { mutate: restoreProject } = useRestoreProjectProposal();
 
   const statusColors = {
-    pending: "text-blue",
+    pending: "text-blue-800",
     amend: "text-yellow-500",
     approved: "text-green-500",
     rejected: "text-red-500",
     viewed: "text-darkGray",
+    resubmitted: "text-indigo-600",
   };
 
   const filteredProjects = projects
@@ -74,23 +71,37 @@ const ProjectProposalListContent: React.FC = () => {
       return project.status === selectedFilter;
     });
 
- // Calculate total budget of all displayed projects
+  // Calculate pagination values
+  const totalPages = Math.ceil(filteredProjects.length / pageSize);
+  const paginatedProjects = filteredProjects.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  // Calculate total budget of all displayed projects
   const totalBudget = filteredProjects.reduce((sum, project) => {
     if (!project.budgetItems || project.budgetItems.length === 0) return sum;
 
     const projectTotal = project.budgetItems.reduce((projectSum, item) => {
       const amount = item.amount || 0;
       const paxCount = item.pax?.includes("pax") ? parseInt(item.pax) || 1 : 1;
-      return projectSum + (paxCount * amount);
+      return projectSum + paxCount * amount;
     }, 0);
 
     return sum + projectTotal;
   }, 0);
 
+  const handleViewLogs = () => {
+    router.push({
+      pathname: "/gad/project-proposal/projprop-logs",
+    });
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
+    setCurrentPage(1); // Reset to first page on refresh
   };
 
   const handleArchivePress = (project: ProjectProposal, event?: any) => {
@@ -164,6 +175,7 @@ const ProjectProposalListContent: React.FC = () => {
 
   const handleViewModeChange = (mode: "active" | "archived") => {
     setViewMode(mode);
+    setCurrentPage(1); // Reset to first page when changing view mode
   };
 
   if (selectedProject) {
@@ -228,12 +240,12 @@ const ProjectProposalListContent: React.FC = () => {
     >
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      <View className="mt-5 px-4 pt-4 pb-2">
+      <View className="mt-5 pt-4 pb-2">
         <View className="flex-row justify-center mb-3">
           <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
             <TouchableOpacity
               className={`px-4 py-2 ${viewMode === "active" ? "bg-white" : ""}`}
-              onPress={() => setViewMode("active")}
+              onPress={() => handleViewModeChange("active")}
             >
               <Text className="text-sm font-medium">Active</Text>
             </TouchableOpacity>
@@ -241,7 +253,7 @@ const ProjectProposalListContent: React.FC = () => {
               className={`px-4 py-2 ${
                 viewMode === "archived" ? "bg-white" : ""
               }`}
-              onPress={() => setViewMode("archived")}
+              onPress={() => handleViewModeChange("archived")}
             >
               <Text className="text-sm font-medium">Archived</Text>
             </TouchableOpacity>
@@ -255,20 +267,23 @@ const ProjectProposalListContent: React.FC = () => {
               { label: "Pending", value: "Pending" },
               { label: "Viewed", value: "Viewed" },
               { label: "Amend", value: "Amend" },
+              { label: "Resubmitted", value: "Resubmitted" },
               { label: "Approved", value: "Approved" },
               { label: "Rejected", value: "Rejected" },
             ]}
             selectedValue={selectedFilter}
-            onSelect={(option) => setSelectedFilter(option.value)}
+            onSelect={(option) => {
+              setSelectedFilter(option.value);
+              setCurrentPage(1);
+            }}
             placeholder="Select Status"
             isInModal={true}
           />
         </View>
 
-{/* Dynamic Total Budget Display */}
-        <View className="flex-row justify-end mb-2">
-          <View className=" px-4 py-2 rounded-lg">
-            <Text className="font-medium">
+        <View className="flex-row justify-between mb-2">
+          <View className="px-2 py-2 rounded-lg">
+            <Text className="font-medium ">
               Grand Total:{" "}
               <Text className="font-bold text-green-700">
                 ₱
@@ -279,16 +294,26 @@ const ProjectProposalListContent: React.FC = () => {
               </Text>
             </Text>
           </View>
+          <View className="flex-row justify-end p-2">
+            <TouchableOpacity
+              onPress={handleViewLogs}
+              className="bg-primaryBlue px-3 py-2 rounded-md"
+            >
+              <Text className="text-white text-[17px]">
+                <ClipboardCheck size={14} color="white" /> Logs
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
       <ScrollView
-        className="flex-1 px-4"
+        className="flex-1"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {filteredProjects.length === 0 ? (
+        {paginatedProjects.length === 0 ? (
           <View className="flex-1 justify-center items-center py-12">
             <Text className="text-gray-500 text-center">
               No {viewMode === "active" ? "active" : "archived"} project
@@ -301,7 +326,7 @@ const ProjectProposalListContent: React.FC = () => {
             </Text>
           </View>
         ) : (
-          filteredProjects.map((project) => (
+          paginatedProjects.map((project) => (
             <TouchableOpacity
               key={project.gprId}
               onPress={() => handleProjectPress(project)}
@@ -313,7 +338,7 @@ const ProjectProposalListContent: React.FC = () => {
                 </Text>
                 <View className="flex-row">
                   {viewMode === "active" ? (
-                    project.status !== 'Viewed' && project.status !== 'Amend' && (
+                     ["Pending", "Amend", "Rejected"].includes(project.status) && (
                       <ConfirmationModal
                         trigger={
                           <TouchableOpacity className="p-1">
@@ -368,7 +393,7 @@ const ProjectProposalListContent: React.FC = () => {
                   Date: {project.date || "No date provided"}
                 </Text>
               </View>
-              
+
               <View className="mb-2">
                 <Text className="text-sm text-gray-600 underline">
                   Total Budget: ₱
@@ -409,16 +434,37 @@ const ProjectProposalListContent: React.FC = () => {
             </TouchableOpacity>
           ))
         )}
+
+        {/* Pagination Controls */}
+        {filteredProjects.length > pageSize && (
+          <View className="flex-row justify-between items-center mt-4 px-4 pb-4">
+            <TouchableOpacity
+              onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
+            >
+              <Text className="text-primaryBlue font-bold">← Previous</Text>
+            </TouchableOpacity>
+
+            <Text className="text-gray-500">
+              Page {currentPage} of {totalPages}
+            </Text>
+
+            <TouchableOpacity
+              onPress={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className={`p-2 ${
+                currentPage === totalPages ? "opacity-50" : ""
+              }`}
+            >
+              <Text className="text-primaryBlue font-bold">Next →</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </ScreenLayout>
-  );
-};
-
-const ProjectProposalList: React.FC = () => {
-  return (
-    <QueryProvider>
-      <ProjectProposalListContent />
-    </QueryProvider>
   );
 };
 

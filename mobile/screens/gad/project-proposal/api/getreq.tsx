@@ -20,7 +20,6 @@ export const getProjectProposals = async (status?: string) => {
           ]);
           return transformProposalWithData(proposal, logsRes.data, suppDocsRes.data);
         } catch (err) {
-          console.error(`Error fetching data for gprId ${gprId}:`, err);
           return transformProposalWithData(proposal, [], []);
         }
       })
@@ -28,7 +27,6 @@ export const getProjectProposals = async (status?: string) => {
     
     return proposalsWithData;
   } catch (err) {
-    console.error('Error fetching project proposals:', err);
     return [];
   }
 };
@@ -44,7 +42,6 @@ export const getProjectProposal = async (gprId: number) => {
     ]);
     return transformProposalWithData(proposalRes.data, logsRes.data, suppDocsRes.data);
   } catch (err) {
-    console.error(`Error fetching project proposal ${gprId}:`, err);
     throw err;
   }
 };
@@ -59,7 +56,7 @@ export const getStaffList = async () => {
       position: staff.position,
     }));
   } catch (err) {
-    console.error('Error fetching staff list:', err);
+
     return [];
   }
 };
@@ -69,7 +66,6 @@ export const getSupportDocs = async (proposalId: number) => {
     const res = await api.get(`gad/project-proposals/${proposalId}/support-docs/`, {
       params: { is_archive: false }
     });
-    console.log('Support Docs API Response:', res.data); // Debug log
     const data = res.data?.data ?? res.data ?? [];
     return data.map((doc: any) => ({
       psd_id: doc.psd_id ?? 0,
@@ -80,7 +76,6 @@ export const getSupportDocs = async (proposalId: number) => {
       psd_is_archive: doc.psd_is_archive ?? false
     }));
   } catch (err) {
-    console.error(`Error fetching support docs for proposal ${proposalId}:`, err);
     return [];
   }
 };
@@ -115,7 +110,6 @@ const transformProposalWithData = (proposal: any, logs: any[], suppDocs: any[]) 
       staffId: log.staff
     })),
     supportDocs: (suppDocs || []).map(doc => {
-      console.log('Mapping Support Doc:', JSON.stringify(doc, null, 2)); // Debug
       return {
         psd_id: doc.psd_id ?? 0,
         psd_url: doc.psd_url ?? '',
@@ -140,4 +134,14 @@ const transformProposalWithData = (proposal: any, logs: any[], suppDocs: any[]) 
   }
   
   return transformed;
+};
+
+export const getAllProposalLogs = async () => {
+  try {
+    const res = await api.get(`gad/project-proposal-logs/all/`);
+    return res.data?.data ?? res.data ?? [];
+  } catch (err) {
+    console.error('API error:', err);
+    return [];
+  }
 };

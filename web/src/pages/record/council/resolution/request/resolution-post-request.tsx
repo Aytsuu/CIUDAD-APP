@@ -57,8 +57,8 @@ export const resolution_file_create = async (data: {
     };
 
     console.log(payload)
-    // const res = await api.post('council/resolution-file/', payload);
-    // return res.data;
+    const res = await api.post('council/resolution-file/', payload);
+    return res.data;
   } catch (err) {
     console.error(`Failed to create file ${data.file_data.name}:`, err);
     throw err;

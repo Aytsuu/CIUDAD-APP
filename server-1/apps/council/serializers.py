@@ -95,7 +95,7 @@ class ResolutionFileSerializer(serializers.ModelSerializer):
                 res_num=tracking_instance  # THIS SETS THE FOREIGN KEY
             )
 
-            url = upload_to_storage(file_data, 'council-res-bucket', 'documents')
+            url = upload_to_storage(file_data, 'resolution-bucket', 'documents')
             rf_file.rf_url = url
             rf_files.append(rf_file)
 
@@ -127,7 +127,7 @@ class ResolutionSupDocsSerializer(serializers.ModelSerializer):
                 res_num=tracking_instance  # THIS SETS THE FOREIGN KEY
             )
 
-            url = upload_to_storage(file_data, 'council-res-bucket', 'images')
+            url = upload_to_storage(file_data, 'resolution-bucket', 'images')
             rsd_file.rsd_url = url
             rsd_files.append(rsd_file)
 

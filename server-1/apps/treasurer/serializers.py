@@ -87,6 +87,9 @@ class BudgetPlanHistorySerializer(serializers.ModelSerializer):
         model = Budget_Plan_History
         fields = '__all__'
 
+
+# =========================== INCOME & DISBURSEMENT ==========================
+
 class Income_Folder_Serializer(serializers.ModelSerializer):
     class Meta:
         model = Income_File_Folder
@@ -94,7 +97,6 @@ class Income_Folder_Serializer(serializers.ModelSerializer):
         read_only_fields = ['inf_is_archive']
 
 class Income_ImageSerializers(serializers.ModelSerializer):
-    # file_url = serializers.CharField(source='file.file_url', read_only=True)
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
     inf_year = serializers.CharField(source='inf_num.inf_year', read_only=True)
     inf_name = serializers.CharField(source='inf_num.inf_name', read_only=True)
@@ -106,12 +108,42 @@ class Income_ImageSerializers(serializers.ModelSerializer):
             'inf_num': {'required': True},
             'infi_name': {'required': True},
             'infi_type': {'required': True},
-            'infi_url': {'required': True},
-            'infi_path': {'required': True},
+            'infi_url': {'read_only': True},
+            'infi_path': {'read_only': True},
         }
+    
+    def _upload_files(self, files, inf_num_id=None):
+        """Upload multiple files for an income folder"""
+        if not inf_num_id:
+            raise serializers.ValidationError({"error": "inf_num is required"})
+
+        try:
+            folder = Income_File_Folder.objects.get(pk=inf_num_id)
+        except Income_File_Folder.DoesNotExist:
+            raise serializers.ValidationError(f"Income folder with id {inf_num_id} does not exist")
+
+        income_images = []
+        for file_data in files:
+            if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
+                continue
+
+            income_image = Income_Image(
+                infi_name=file_data['name'],
+                infi_type=file_data['type'],
+                infi_path=f"Uploads/income/{file_data['name']}",
+                inf_num=folder,
+                staff=self.context['request'].user.staff if hasattr(self.context['request'].user, 'staff') else None
+            )
+            
+            income_image.infi_url = upload_to_storage(file_data, 'income-disbursement-bucket', 'income_images')
+            income_images.append(income_image)
+
+        if income_images:
+            Income_Image.objects.bulk_create(income_images)
+        
+        return income_images
 
 class Disbursement_ImageSerializers(serializers.ModelSerializer):
-    # file_url = serializers.CharField(source='file.file_url', read_only=True)
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
     dis_year = serializers.CharField(source='dis_num.dis_year', read_only=True)
     dis_name = serializers.CharField(source='dis_num.dis_name', read_only=True)
@@ -123,9 +155,42 @@ class Disbursement_ImageSerializers(serializers.ModelSerializer):
             'dis_num': {'required': True},
             'disf_name': {'required': True},
             'disf_type': {'required': True},
-            'disf_url': {'required': True},
-            'disf_path': {'required': True},
+            'disf_url': {'read_only': True},
+            'disf_path': {'read_only': True},
         }
+    
+    def _upload_files(self, files, dis_num_id=None):
+        """Upload multiple files for a disbursement folder"""
+        if not dis_num_id:
+            raise serializers.ValidationError({"error": "dis_num is required"})
+
+        try:
+            folder = Disbursement_File_Folder.objects.get(pk=dis_num_id)
+        except Disbursement_File_Folder.DoesNotExist:
+            raise serializers.ValidationError(f"Disbursement folder with id {dis_num_id} does not exist")
+
+        disbursement_images = []
+        for file_data in files:
+            if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
+                continue
+
+            disbursement_image = Disbursement_Image(
+                disf_name=file_data['name'],
+                disf_type=file_data['type'],
+                disf_path=f"Uploads/disbursement/{file_data['name']}",
+                dis_num=folder,
+                staff=self.context['request'].user.staff if hasattr(self.context['request'].user, 'staff') else None
+            )
+            
+            # Upload to your storage system
+            disbursement_image.disf_url = upload_to_storage(file_data, 'income-disbursement-bucket', 'disbursement_images')
+            disbursement_images.append(disbursement_image)
+
+        if disbursement_images:
+            Disbursement_Image.objects.bulk_create(disbursement_images)
+        
+        return disbursement_images
+
         
 class Disbursement_Folder_Serializer(serializers.ModelSerializer):
     class Meta:
@@ -171,11 +236,11 @@ class Income_Expense_FileSerializers(serializers.ModelSerializer):
             ief_file = Income_Expense_File(
                 ief_name=file_data['name'],
                 ief_type=file_data['type'],
-                ief_path=f"images/{file_data['name']}",
+                ief_path=file_data['name'],
                 iet_num=tracking_instance  # THIS SETS THE FOREIGN KEY
             )
 
-            url = upload_to_storage(file_data, 'finance-tracker-bucket', 'images')
+            url = upload_to_storage(file_data, 'fbudget-tracker-bucket', '')
             ief_file.ief_url = url
             ief_files.append(ief_file)
 

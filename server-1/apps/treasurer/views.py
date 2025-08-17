@@ -142,6 +142,195 @@ class UpdateBudgetDetails(generics.UpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 # -------------------------------- INCOME & DISBURSEMENT ------------------------------------
+class ImageBaseView: #helper function
+    permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        queryset = self.model.objects.all()
+        archive_status = self.request.query_params.get('archive', None)
+        folder_id = self.request.query_params.get('folder', None)
+        
+        # Filter by archive status
+        if archive_status == 'true':
+            queryset = queryset.filter(**{f'{self.archive_field}': True})
+        elif archive_status == 'false':
+            queryset = queryset.filter(**{f'{self.archive_field}': False})
+        
+        # Filter by folder if provided
+        if folder_id:
+            if hasattr(self.model, 'inf_num'):  # For Income images
+                queryset = queryset.filter(inf_num=folder_id)
+            elif hasattr(self.model, 'dis_num'):  # For Disbursement images
+                queryset = queryset.filter(dis_num=folder_id)
+            
+        return queryset
+
+    def perform_archive_unarchive(self, instance, archive):
+        setattr(instance, self.archive_field, archive)
+        instance.save()
+        
+        # Update parent folder status
+        if hasattr(instance, 'inf_num'):  # Income image
+            folder = instance.inf_num
+            folder.inf_is_archive = not Income_Image.objects.filter(
+                inf_num=folder, 
+                infi_is_archive=False
+            ).exists()
+            folder.save()
+        elif hasattr(instance, 'dis_num'):  # Disbursement image
+            folder = instance.dis_num
+            folder.dis_is_archive = not Disbursement_Image.objects.filter(
+                dis_num=folder, 
+                disf_is_archive=False
+            ).exists()
+            folder.save()
+
+    def perform_destroy(self, instance):
+        # Get folder reference before deletion
+        folder = None
+        if hasattr(instance, 'inf_num'):
+            folder = instance.inf_num
+        elif hasattr(instance, 'dis_num'):
+            folder = instance.dis_num
+        
+        instance.delete()
+        
+        # Check if folder is now empty and delete if needed
+        if folder:
+            if hasattr(folder, 'inf_num') and not Income_Image.objects.filter(inf_num=folder).exists():
+                folder.delete()
+            elif hasattr(folder, 'dis_num') and not Disbursement_Image.objects.filter(dis_num=folder).exists():
+                folder.delete()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
+        
+        if permanent:
+            self.perform_destroy(instance)
+            return Response(
+                {"message": f"{self.model.__name__} permanently deleted"}, 
+                status=status.HTTP_200_OK
+            )
+        else:
+            self.perform_archive_unarchive(instance, True)
+            return Response(
+                {"message": f"{self.model.__name__} archived"}, 
+                status=status.HTTP_200_OK
+            )
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if request.data.get('restore'):
+            self.perform_archive_unarchive(instance, False)
+            return Response(
+                {"message": f"{self.model.__name__} restored"},
+                status=status.HTTP_200_OK
+            )
+        return super().patch(request, *args, **kwargs)
+
+class Income_ImageListView(ImageBaseView, generics.ListCreateAPIView):
+    model = Income_Image
+    serializer_class = Income_ImageSerializers
+    archive_field = 'infi_is_archive'
+
+    def create(self, request, *args, **kwargs):
+        """Handle both single image and bulk image upload"""
+        inf_num = request.data.get('inf_num')
+        files = request.data.get('files', [])
+        
+        if not inf_num:
+            return Response(
+                {"error": "inf_num is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if files:
+            # Bulk upload
+            serializer = self.get_serializer()
+            try:
+                uploaded_images = serializer._upload_files(files, inf_num)
+                return Response(
+                    {
+                        "message": f"{len(uploaded_images)} images uploaded successfully",
+                        "uploaded_count": len(uploaded_images)
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+            except serializers.ValidationError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Single image upload (traditional way)
+            return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        inf_num = self.request.data.get('inf_num')
+        try:
+            folder = Income_File_Folder.objects.get(inf_num=inf_num)
+            serializer.save(
+                inf_num=folder,
+                staff=self.request.user.staff if hasattr(self.request.user, 'staff') else None
+            )
+        except Income_File_Folder.DoesNotExist:
+            raise serializers.ValidationError("Invalid income folder ID")
+
+class Income_ImageView(ImageBaseView, generics.RetrieveUpdateDestroyAPIView):
+    model = Income_Image
+    serializer_class = Income_ImageSerializers
+    lookup_field = 'infi_num'
+    archive_field = 'infi_is_archive'
+
+class Disbursement_ImageListView(ImageBaseView, generics.ListCreateAPIView):
+    model = Disbursement_Image
+    serializer_class = Disbursement_ImageSerializers
+    archive_field = 'disf_is_archive'
+
+    def create(self, request, *args, **kwargs):
+        """Handle both single image and bulk image upload"""
+        dis_num = request.data.get('dis_num')
+        files = request.data.get('files', [])
+        
+        if not dis_num:
+            return Response(
+                {"error": "dis_num is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if files:
+            # Bulk upload
+            serializer = self.get_serializer()
+            try:
+                uploaded_images = serializer._upload_files(files, dis_num)
+                return Response(
+                    {
+                        "message": f"{len(uploaded_images)} images uploaded successfully",
+                        "uploaded_count": len(uploaded_images)
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+            except serializers.ValidationError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Single image upload (traditional way)
+            return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        dis_num = self.request.data.get('dis_num')
+        try:
+            folder = Disbursement_File_Folder.objects.get(dis_num=dis_num)
+            serializer.save(
+                dis_num=folder,
+                staff=self.request.user.staff if hasattr(self.request.user, 'staff') else None
+            )
+        except Disbursement_File_Folder.DoesNotExist:
+            raise serializers.ValidationError("Invalid disbursement folder ID")
+
+class Disbursement_ImageView(ImageBaseView, generics.RetrieveUpdateDestroyAPIView):
+    model = Disbursement_Image
+    serializer_class = Disbursement_ImageSerializers
+    lookup_field = 'disf_num'
+    archive_field = 'disf_is_archive'
+
 class IncomeFolderListView(generics.ListCreateAPIView):
     serializer_class = Income_Folder_Serializer
     permission_classes = [AllowAny]
@@ -216,7 +405,6 @@ class PermanentDeleteFolder(APIView):
             
             if all(img.infi_is_archive for img in images):
                 images.delete()
-                # Delete folder only if it has no images left
                 if not Income_Image.objects.filter(inf_num=folder).exists():
                     folder.delete()
                     return Response(
@@ -231,14 +419,12 @@ class PermanentDeleteFolder(APIView):
                 archived_images = images.filter(infi_is_archive=True)
                 count = archived_images.count()
                 archived_images.delete()
-                # Check if folder is now empty
                 if not Income_Image.objects.filter(inf_num=folder).exists():
                     folder.delete()
                     return Response(
                         {"message": f"{count} archived income images deleted and empty folder removed"},
                         status=status.HTTP_200_OK
                     )
-                # Update folder archive status
                 folder.inf_is_archive = not Income_Image.objects.filter(
                     inf_num=folder, 
                     infi_is_archive=False
@@ -284,122 +470,6 @@ class PermanentDeleteFolder(APIView):
                     {"message": f"{count} archived disbursement images deleted"},
                     status=status.HTTP_200_OK
                 )
-
-class ImageBaseView:
-    permission_classes = [AllowAny]
-    
-    def get_queryset(self):
-        queryset = self.model.objects.all()
-        archive_status = self.request.query_params.get('archive', None)
-        
-        if archive_status == 'true':
-            queryset = queryset.filter(**{f'{self.archive_field}': True})
-        elif archive_status == 'false':
-            queryset = queryset.filter(**{f'{self.archive_field}': False})
-            
-        return queryset
-
-    def perform_archive_unarchive(self, instance, archive):
-        setattr(instance, self.archive_field, archive)
-        instance.save()
-        
-        # Update parent folder status
-        if hasattr(instance, 'inf_num'):  # Income image
-            folder = instance.inf_num
-            folder.inf_is_archive = not Income_Image.objects.filter(
-                inf_num=folder, 
-                infi_is_archive=False
-            ).exists()
-            folder.save()
-        elif hasattr(instance, 'dis_num'):  # Disbursement image
-            folder = instance.dis_num
-            folder.dis_is_archive = not Disbursement_Image.objects.filter(
-                dis_num=folder, 
-                disf_is_archive=False
-            ).exists()
-            folder.save()
-
-    def perform_destroy(self, instance):
-        # Get folder reference before deletion
-        folder = None
-        if hasattr(instance, 'inf_num'):
-            folder = instance.inf_num
-        elif hasattr(instance, 'dis_num'):
-            folder = instance.dis_num
-        
-        instance.delete()
-        
-        # Check if folder is now empty
-        if folder:
-            if hasattr(folder, 'inf_num') and not Income_Image.objects.filter(inf_num=folder).exists():
-                folder.delete()
-            elif hasattr(folder, 'dis_num') and not Disbursement_Image.objects.filter(dis_num=folder).exists():
-                folder.delete()
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
-        
-        if permanent:
-            self.perform_destroy(instance)
-            return Response(
-                {"message": f"{self.model.__name__} permanently deleted"}, 
-                status=status.HTTP_200_OK
-            )
-        else:
-            self.perform_archive_unarchive(instance, True)
-            return Response(
-                {"message": f"{self.model.__name__} archived"}, 
-                status=status.HTTP_200_OK
-            )
-
-    def patch(self, request, *args, **kwargs):
-        instance = self.get_object()
-        if request.data.get('restore'):
-            self.perform_archive_unarchive(instance, False)
-            return Response(
-                {"message": f"{self.model.__name__} restored"},
-                status=status.HTTP_200_OK
-            )
-        return super().patch(request, *args, **kwargs)
-
-class Income_ImageListView(ImageBaseView, generics.ListCreateAPIView):
-    model = Income_Image
-    serializer_class = Income_ImageSerializers
-    archive_field = 'infi_is_archive'
-
-    def perform_create(self, serializer):
-        inf_num = self.request.data.get('inf_num')
-        try:
-            folder = Income_File_Folder.objects.get(inf_num=inf_num)
-            serializer.save(inf_num=folder)
-        except Income_File_Folder.DoesNotExist:
-            raise serializers.ValidationError("Invalid income folder ID")
-
-class Income_ImageView(ImageBaseView, generics.RetrieveUpdateDestroyAPIView):
-    model = Income_Image
-    serializer_class = Income_ImageSerializers
-    lookup_field = 'infi_num'
-    archive_field = 'infi_is_archive'
-
-class Disbursement_ImageListView(ImageBaseView, generics.ListCreateAPIView):
-    model = Disbursement_Image
-    serializer_class = Disbursement_ImageSerializers
-    archive_field = 'disf_is_archive'
-
-    def perform_create(self, serializer):
-        dis_num = self.request.data.get('dis_num')
-        try:
-            folder = Disbursement_File_Folder.objects.get(dis_num=dis_num)
-            serializer.save(dis_num=folder)
-        except Disbursement_File_Folder.DoesNotExist:
-            raise serializers.ValidationError("Invalid disbursement folder ID")
-
-class Disbursement_ImageView(ImageBaseView, generics.RetrieveUpdateDestroyAPIView):
-    model = Disbursement_Image
-    serializer_class = Disbursement_ImageSerializers
-    lookup_field = 'disf_num'
-    archive_field = 'disf_is_archive'
             
 # -------------------------------- INCOME & EXPENSE ------------------------------------
 

@@ -11,6 +11,10 @@ interface PageLayoutProps {
   headerTitle?: React.ReactNode
   leftAction?: React.ReactNode
   rightAction?: React.ReactNode
+  // Footer configuration
+  footer?: React.ReactNode
+  showFooter?: boolean
+  footerBackgroundColor?: string
   // Style customization
   contentPadding?: number
   backgroundColor?: string
@@ -22,6 +26,9 @@ export default function PageLayout({
   headerTitle,
   leftAction,
   rightAction,
+  footer,
+  showFooter = false,
+  footerBackgroundColor = 'bg-white',
   contentPadding = 16,
   backgroundColor = 'bg-transparent'
 }: PageLayoutProps) {
@@ -61,9 +68,24 @@ export default function PageLayout({
     }
   }
 
+  // Responsive footer height
+  const getResponsiveFooterHeight = () => {
+    if (screenWidth < 375) {
+      return 80
+    } else if (screenWidth < 768) {
+      return 88
+    } else {
+      return 96
+    }
+  }
+
   const responsiveHeaderHeight = getResponsiveHeaderHeight()
   const responsiveFontSize = getResponsiveFontSize()
   const responsivePadding = getResponsivePadding()
+  const responsiveFooterHeight = getResponsiveFooterHeight()
+
+  // Determine if footer should be shown (either showFooter is true or footer content is provided)
+  const shouldShowFooter = showFooter || !!footer
 
   return (
     <SafeAreaView className={`flex-1 ${backgroundColor}`}>
@@ -93,10 +115,26 @@ export default function PageLayout({
         style={{
           flex: 1,
           paddingTop: showHeader ? responsivePadding : 0,
+          paddingBottom: shouldShowFooter ? responsivePadding : 0,
         }}
       >
         {children}
       </View>
+
+      {/* Footer */}
+      {shouldShowFooter && (
+        <View
+          className={`border-t border-gray-200 ${footerBackgroundColor}`}
+          style={{
+            minHeight: responsiveFooterHeight,
+            paddingHorizontal: responsivePadding,
+            paddingVertical: responsivePadding,
+            justifyContent: 'center',
+          }}
+        >
+          {footer}
+        </View>
+      )}
     </SafeAreaView>
   )
 }

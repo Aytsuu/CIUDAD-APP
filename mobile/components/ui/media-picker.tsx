@@ -20,6 +20,11 @@ interface MediaPickerProps {
   multiple?: boolean
   maxImages?: number
   editable?: boolean
+  // New props for remove functionality
+  showRemoveButtons?: boolean
+  showClearAllButton?: boolean
+  onlyRemoveNewImages?: boolean
+  initialImageIds?: string[] // IDs of images that were initially loaded (existing images)
 }
 
 export default function MediaPicker({
@@ -28,6 +33,10 @@ export default function MediaPicker({
   multiple = false,
   maxImages = 10,
   editable = true,
+  showRemoveButtons = true,
+  showClearAllButton = true,
+  onlyRemoveNewImages = false,
+  initialImageIds = [],
 }: MediaPickerProps) {
   const [galleryVisible, setGalleryVisible] = React.useState<boolean>(false)
   const [cameraVisible, setCameraVisible] = React.useState<boolean>(false)
@@ -218,17 +227,46 @@ export default function MediaPicker({
     setGalleryVisible(true)
   }
 
+  // Helper function to determine if an image can be removed
+  const canRemoveImage = (image: MediaItem, index: number) => {
+    if (!editable || !showRemoveButtons) return false;
+    
+    if (onlyRemoveNewImages) {
+      // Only allow removal if the image is NOT in the initial images list
+      return !initialImageIds.includes(image.id || '');
+    }
+    
+    return true; // Allow removal of all images if not restricted
+  }
+
   const removeImage = (index: number) => {
-    if (!editable) return;
+    const image = selectedImages[index];
+    if (!canRemoveImage(image, index)) return;
+    
     setSelectedImages((prev) => prev.filter((_, i) => i !== index))
   }
 
+  // Helper function to get removable images count
+  const getRemovableImagesCount = () => {
+    if (!onlyRemoveNewImages) return selectedImages.length;
+    
+    return selectedImages.filter(image => !initialImageIds.includes(image.id || '')).length;
+  }
+
   const removeAllImages = () => {
-    if (!editable) return;
-    setSelectedImages([])
+    if (!editable || !showClearAllButton) return;
+    
+    if (onlyRemoveNewImages) {
+      // Only remove new images, keep existing ones
+      setSelectedImages((prev) => prev.filter(image => initialImageIds.includes(image.id || '')));
+    } else {
+      // Remove all images
+      setSelectedImages([]);
+    }
   }
 
   const canSelectMore = multiple && selectedImages?.length < maxImages
+  const removableCount = getRemovableImagesCount()
 
   if (!device) {
     return (
@@ -245,24 +283,32 @@ export default function MediaPicker({
           <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
             <View className="p-4">
               <Text className="text-lg font-semibold mb-3">Selected Files:</Text>
-              {selectedImages.map((image, index) => (
-                <View key={index} className="flex-row items-center justify-between bg-gray-100 p-3 mb-2 rounded-lg">
-                  <View className="flex-row items-center flex-1">
-                    <Ionicons name="image" size={20} color="#666" />
-                    <Text className="ml-2 flex-1 text-gray-800" numberOfLines={1}>
-                      {image.name || `image_${index + 1}.jpg`}
-                    </Text>
+              {selectedImages.map((image, index) => {
+                const isExistingImage = initialImageIds.includes(image.id || '');
+                const showRemoveButton = canRemoveImage(image, index);
+                
+                return (
+                  <View key={index} className="flex-row items-center justify-between bg-gray-100 p-3 mb-2 rounded-lg">
+                    <View className="flex-row items-center flex-1">
+                      <Ionicons name="image" size={20} color="#666" />
+                      <Text className="ml-2 flex-1 text-gray-800" numberOfLines={1}>
+                        {image.name || `image_${index + 1}.jpg`}
+                      </Text>
+                      {onlyRemoveNewImages && isExistingImage && (
+                        <Text className="text-xs text-blue-600 mr-2">existing</Text>
+                      )}
+                    </View>
+                    {showRemoveButton && (
+                      <TouchableOpacity
+                        className="bg-red-500 rounded-full w-6 h-6 justify-center items-center ml-2"
+                        onPress={() => removeImage(index)}
+                      >
+                        <Ionicons name="close" size={14} color="white" />
+                      </TouchableOpacity>
+                    )}
                   </View>
-                  {editable && (
-                    <TouchableOpacity
-                      className="bg-red-500 rounded-full w-6 h-6 justify-center items-center ml-2"
-                      onPress={() => removeImage(index)}
-                    >
-                      <Ionicons name="close" size={14} color="white" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ))}
+                );
+              })}
             </View>
           </ScrollView>
         </View>
@@ -278,12 +324,14 @@ export default function MediaPicker({
         </TouchableOpacity>
       )}
 
-      {editable && multiple && selectedImages?.length > 1 && (
+      {editable && multiple && showClearAllButton && removableCount > 1 && (
         <TouchableOpacity
           className="mt-2 p-2 bg-red-500 rounded-lg justify-center items-center"
           onPress={removeAllImages}
         >
-          <Text className="text-white font-medium">Clear All ({selectedImages.length})</Text>
+          <Text className="text-white font-medium">
+            {onlyRemoveNewImages ? `Clear New Images (${removableCount})` : `Clear All (${selectedImages.length})`}
+          </Text>
         </TouchableOpacity>
       )}
 

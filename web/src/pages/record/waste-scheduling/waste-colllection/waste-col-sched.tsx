@@ -41,7 +41,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
     //ADD QUERY MUTATIONS
     const { mutate: createSchedule } = useCreateWasteSchedule();
-    const { mutate: assignCollectors } = useAssignCollectors();
+    const { mutate: assignCollectors, isPending } = useAssignCollectors();
 
 
 
@@ -236,8 +236,8 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
-                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto">
-                        Schedule
+                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto" disabled={isPending}>
+                        {isPending ? "Submitting..." : "Schedule"}
                     </Button>
                 </div>
             </form>

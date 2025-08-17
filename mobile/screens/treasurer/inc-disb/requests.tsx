@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { IncomeImage, DisbursementImage } from "./queries";
+import { IncomeImage, DisbursementImage } from "./inc-disc-types";
 
 export const archiveIncomeImage = async (infi_num: number) => {
   const res = await api.patch(`treasurer/income-tab/images/${infi_num}/`, { infi_is_archive: true });
@@ -53,29 +53,6 @@ export const permanentDeleteDisbursementFolder = async (dis_num: number) => {
   return res.data;
 };
 
-export const restoreIncomeFolder = async (inf_num: number) => {
-  const res = await api.patch(`treasurer/income-tab/folders/${inf_num}/restore/`);
-  return res.data;
-};
-
-export const restoreDisbursementFolder = async (dis_num: number) => {
-  const res = await api.patch(`treasurer/disbursement-tab/folders/${dis_num}/restore/`);
-  return res.data;
-};
-
-// export const deleteIncomeFolder = async (inf_num: number, permanent: boolean = false) => {
-//   const res = await api.delete(`treasurer/income-tab/folders/${inf_num}/`, {
-//     params: { permanent: permanent.toString() }
-//   });
-//   return res.data;
-// };
-
-// export const deleteDisbursementFolder = async (dis_num: number, permanent: boolean = false) => {
-//   const res = await api.delete(`treasurer/disbursement-tab/folders/${dis_num}/`, {
-//     params: { permanent: permanent.toString() }
-//   });
-//   return res.data;
-// };
 
 export const getIncomeImages = async (archive: boolean = false, folderId?: number) => {
   try {
@@ -103,31 +80,12 @@ export const getDisbursementImages = async (archive: boolean = false, folderId?:
   }
 }
 
-export const createIncomeImage = async (data: {
-  upload_date: string
-  type: string
-  name: string
-  path: string
-  url: string
-  inf_num: number
+export const createFolder = async (data: { 
+  type: "income" | "disbursement"; 
+  name: string; 
+  year: string; 
+  desc?: string; 
 }) => {
-  const res = await api.post(`treasurer/income-tab/images/`, data)
-  return res.data
-}
-
-export const createDisbursementImage = async (data: {
-  upload_date: string
-  type: string
-  name: string
-  path: string
-  url: string
-  dis_num: number
-}) => {
-  const res = await api.post(`treasurer/disbursement-tab/images/`, data)
-  return res.data
-}
-
-export const createFolder = async (data: { type: "income" | "disbursement"; name: string; year: string, desc?: string }) => {
   const endpoint = data.type === "income" 
     ? "treasurer/income-tab/folders/" 
     : "treasurer/disbursement-tab/folders/";
@@ -147,12 +105,9 @@ export const createFolder = async (data: { type: "income" | "disbursement"; name
         dis_is_archive: false,
       };
 
-  console.log("Creating folder at endpoint:", endpoint);
-  console.log("Payload:", payload);
-
   const res = await api.post(endpoint, payload);
   return res.data;
-}
+};
 
 export const updateIncomeFolder = async (inf_num: number, data: { inf_name: string; inf_year: string , inf_desc?: string}) => {
   const res = await api.patch(`treasurer/income-tab/folders/${inf_num}/`, data)
@@ -161,15 +116,5 @@ export const updateIncomeFolder = async (inf_num: number, data: { inf_name: stri
 
 export const updateDisbursementFolder = async (dis_num: number, data: { dis_name: string; dis_year: string; dis_desc?: string }) => {
   const res = await api.patch(`treasurer/disbursement-tab/folders/${dis_num}/`, data)
-  return res.data
-}
-
-export const updateIncomeImage = async (infi_num: number, data: Partial<IncomeImage>) => {
-  const res = await api.patch(`treasurer/income-tab/images/${infi_num}/`, data)
-  return res.data
-}
-
-export const updateDisbursementImage = async (disf_num: number, data: Partial<DisbursementImage>) => {
-  const res = await api.patch(`treasurer/disbursement-tab/images/${disf_num}/`, data)
   return res.data
 }

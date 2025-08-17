@@ -20,6 +20,12 @@ export function DocumentCard({
   isDeleting: boolean;
   isArchived?: boolean;
 }) {
+  const displayName = doc.psd_name 
+    ? doc.psd_name.length > 21 
+      ? `${doc.psd_name.substring(0, 25)}...` 
+      : doc.psd_name
+    : "Unknown";
+  
   return (
     <div className="flex flex-col items-center p-4 rounded-lg">
       <div className="relative w-full h-64 flex justify-center items-center">
@@ -99,7 +105,7 @@ export function DocumentCard({
           >
             <img
               src={doc.psd_url}
-              alt={`Supporting Document ${doc.psd_name || "Unknown"}`}
+              alt={`Supporting Document ${displayName}`}
               className="w-full h-full object-contain rounded-md cursor-pointer"
               onError={(e) => {
                 console.error(`Failed to load image: ${doc.psd_url}`);
@@ -110,7 +116,7 @@ export function DocumentCard({
         ) : (
           <div className="flex flex-col items-center justify-center h-full w-full bg-gray-100 rounded-md">
             <p className="mt-2 text-sm text-gray-600">
-              {doc.psd_name || "No file name"}
+              {displayName}
             </p>
             {doc.psd_url ? (
               <a
@@ -128,7 +134,7 @@ export function DocumentCard({
         )}
       </div>
       <p className="mt-2 text-sm text-gray-500 text-center">
-        {doc.psd_name || "Unknown"} {isArchived && "(Archived)"}
+        {displayName} {isArchived}
       </p>
     </div>
   );
