@@ -2,9 +2,9 @@ import {z} from "zod"
 import { BudgetPlanStep1Schema } from "@/form-schema/treasurer/budgetplan-schema";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { updateBudgetHeader, restoreBudgetPlan, archiveBudgetPlan, updateBudgetItem } from "../restful-API/budgetPlanPutAPI";
-
+import { showSuccessToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 
 export const useUpdateBudgetHeader = (onSuccess: () => void) => {
     const queryClient = useQueryClient();
@@ -15,20 +15,13 @@ export const useUpdateBudgetHeader = (onSuccess: () => void) => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
             queryClient.invalidateQueries({ queryKey: ['budgetDetails'] });
-    
-            toast.success('Budget Header Updated!', {
-                id: "updateHeader",
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
+
+            showSuccessToast('Budget Header Updated!')
             onSuccess?.()
         },
         onError: (err) => {
             console.error("Error updating budget header:", err);
-            toast.error(
-                "Failed to udpate budget header. Please check the input data and try again.",
-                { duration: 2000 }
-            );
+            showErrorToast("Failed to udpate budget header. Please check the input data and try again.",)
         }
     })
 }
@@ -43,20 +36,12 @@ export const useArchiveBudgetPlan = (onSuccess?: () => void) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] })
-            toast.success('Budget Plan is archived successfully', {
-                id: "archivePlan",
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
-            
+            showSuccessToast('Budget Plan is archived successfully')
             onSuccess?.();
         },
         onError: (err) => {
             console.error("Error archiving budget plan:", err);
-            toast.error("Failed to archive budget plan", {
-            id: "archivePlan",
-            duration: 2000
-            });
+            showErrorToast("Failed to archive budget plan")
         }
     })
 }
@@ -71,20 +56,13 @@ export const useRestoreBudgetPlan = (onSuccess?: () => void) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] })
-            toast.success('Budget Plan is restored successfully', {
-                id: "restorePlan",
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
-            
+            showSuccessToast('Budget Plan is restored successfully')
+
             onSuccess?.();
         },
         onError: (err) => {
             console.error("Error restoring budget plan:", err);
-            toast.error("Failed to restore budget plan", {
-            id: "restorePlan",
-            duration: 2000
-            });
+            showErrorToast("Failed to restore budget plan")
         }
     })
 }
@@ -110,20 +88,13 @@ export const useUpdateBudgetItem = (onSuccess: () => void) => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
             queryClient.invalidateQueries({ queryKey: ['budgetDetails'] });
             queryClient.invalidateQueries({ queryKey: ['budgetPlanHistory'] });
-    
-            toast.success('Budget Items Updated!', {
-                id: "updateItems",
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
+
+            showSuccessToast('Budget Items Updated!')
             onSuccess?.()
         },
         onError: (err) => {
             console.error("Error updating budget items:", err);
-            toast.error(
-                "Failed to update budget items. Please check the input data and try again.",
-                { duration: 2000 }
-            );
+            showErrorToast("Failed to update budget items. Please check the input data and try again.")
         }
     })
 }

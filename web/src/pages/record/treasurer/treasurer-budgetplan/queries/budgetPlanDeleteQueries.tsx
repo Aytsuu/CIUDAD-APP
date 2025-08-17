@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { deleteBudgetPlan, deleteBudgetPlanFile } from "../restful-API/budgetPlanDeleteAPI";
+import { showSuccessToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 
 export const useDeleteBudgetPlan = () => {
     const queryClient = useQueryClient();
@@ -14,17 +15,10 @@ export const useDeleteBudgetPlan = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
-            toast.success("Budget Plan deleted successfully", {
-                id: "deleteBudgetplan",
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
+            showSuccessToast("Budget Plan deleted successfully")
         },
         onError: (err) => {
-            toast.error("Failed to delete budget plan", {
-                id: "deleteBudgetplan",
-                duration: 1000
-            });
+            showErrorToast("Failed to delete budget plan")
             console.error("Failed to delete entry:", err);
         }
     });
@@ -41,17 +35,10 @@ export const useDeleteBudgetPlanFile = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlanFiles'] });
-            toast.success("Document deleted successfully", {
-                id: "deleteBudgetplanfile",
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
+            showSuccessToast("Document deleted successfully")
         },
         onError: (err) => {
-            toast.error("Failed to delete document", {
-                id: "deleteBudgetplanfile",
-                duration: 1000
-            });
+            showErrorToast("Failed to delete document")
             console.error("Failed to delete file:", err);
         }
     });

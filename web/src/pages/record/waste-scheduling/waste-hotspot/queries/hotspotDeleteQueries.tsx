@@ -1,9 +1,8 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { deleteHotspot } from "../restful-API/hotspotDeleteAPI";
-
-
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 
 export const useDeleteHotspot = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
@@ -13,11 +12,7 @@ export const useDeleteHotspot = (onSuccess?: () => void) => {
       onSuccess: () => {
             toast.loading("Deleting schedule...", { id: "deleteHotspot" });
 
-            toast.success('Schedule deleted successfully', {
-            id: 'deleteHotspot',
-            icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-            duration: 2000
-        });
+            showSuccessToast('Schedule deleted successfully')
 
         queryClient.invalidateQueries({ queryKey: ['hotspots'] });
         
@@ -25,10 +20,7 @@ export const useDeleteHotspot = (onSuccess?: () => void) => {
     },
         onError: (err) => {
             console.error("Error archiving schedule:", err);
-            toast.error("Failed to archive schedule", {
-                id: "archiveHotspot",
-                duration: 2000
-            });
+            showErrorToast("Failed to archive schedule");
         }
     })
 }

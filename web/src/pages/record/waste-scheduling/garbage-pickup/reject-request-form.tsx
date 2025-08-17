@@ -13,7 +13,7 @@ function RejectPickupForm({garb_id, onSuccess}:{
     onSuccess?: () => void;
 }){
 
-    const{mutate: createDecision} = useAddDecision(onSuccess)
+    const{mutate: createDecision, isPending} = useAddDecision(onSuccess)
 
     const onSubmit = (value: z.infer<typeof RejectPickupRequestSchema>) => {
         console.log("Data: ", value);
@@ -50,7 +50,9 @@ function RejectPickupForm({garb_id, onSuccess}:{
                         />
                     </div>
                     <div className="flex justify-end mt-[20px]">
-                        <Button type="submit">Confirm</Button>  
+                        <Button type="submit" className="w-[100px]" disabled={isPending}>
+                            {isPending ? "Saving..." : "Save"}
+                        </Button> 
                     </div>
                 </form>
             </Form>

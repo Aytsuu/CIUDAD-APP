@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import z from "zod"
 import { RejectPickupRequestSchema, AcceptPickupRequestSchema } from "@/form-schema/garbage-pickup-schema";
 import { addPickupAssignmentandCollectors, addDecision } from "../restful-api/GarbageRequestPostAPI";
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 
 export const useAddDecision = (onSuccess?: () => void) => {
         const queryClient = useQueryClient();
@@ -20,20 +21,13 @@ export const useAddDecision = (onSuccess?: () => void) => {
                 ]);
 
                 toast.loading('Rejecting Request....', {id: "rejectGarbageRequest"});
-        
-                toast.success('Request rejected!', {
-                    id: "rejectGarbageRequest",
-                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                    duration: 2000
-                });
+
+                showSuccessToast('Request rejected')
                 onSuccess?.()
             },
             onError: (err) => {
                 console.error("Error submitting record:", err);
-                toast.error(
-                    "Failed to submit record. Please check the input data and try again.",
-                    { duration: 2000 }
-                );
+                showErrorToast("Failed to submit record. Please check the input data and try again.")
             }
         })
 }
@@ -58,22 +52,12 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
                     queryClient.invalidateQueries({ queryKey: ['garbageRequest'] }),
                     queryClient.invalidateQueries({ queryKey: ['garbageAcceptedRequest'] })
             ]);
-            toast.success('Request Accepted!', {
-                id: "createPickupAssignment",
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
+            showSuccessToast('Request Accepted!')
             onSuccess?.();
         },
         onError: (err) => {
             console.error("Error creating pickup assignment:", err);
-            toast.error(
-                "Failed to create pickup assignment. Please check the input data and try again.",
-                { 
-                    id: "createPickupAssignment",
-                    duration: 2000 
-                }
-            );
+            showErrorToast("Failed to create pickup assignment. Please check the input data and try again.")
         }
     });
 };
