@@ -377,7 +377,7 @@
 
 
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
@@ -458,27 +458,34 @@ function ReceiptPage() {
     },
   ];
 
-  const filterOptions = [
-    { id: "all", name: "All" },
-    { id: "Barangay Certification", name: "Barangay Certification" },
-    { id: "Business Permit", name: "Business Permit" },
-  ];
+  const filterOptions = useMemo(() => {
+    const uniqueNatures = Array.from(
+      new Set(fetchedData.map(item => item.inv_nat_of_collection))
+    ).filter(Boolean); // Remove null/undefined values
+
+    return [
+      { id: "all", name: "All" },
+      ...uniqueNatures.map(nature => ({ id: nature, name: nature })),
+    ];
+  }, [fetchedData]);
 
   const [selectedFilterId, setSelectedFilterId] = useState("all");
 
   // Filter data based on selected filter and search query
   const filteredData = fetchedData.filter(item => {
-    const matchesFilter = selectedFilterId === "all" || 
+    const matchesFilter =
+      selectedFilterId === "all" ||
       item.inv_nat_of_collection?.toLowerCase() === selectedFilterId.toLowerCase();
-    
-    const matchesSearch = !searchQuery || 
-      Object.values(item).some(val => 
+
+    const matchesSearch =
+      !searchQuery ||
+      Object.values(item).some(val =>
         String(val).toLowerCase().includes(searchQuery.toLowerCase())
       );
-    
+
     return matchesFilter && matchesSearch;
   });
-
+  
   // Pagination calculations
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
