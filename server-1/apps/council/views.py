@@ -153,6 +153,21 @@ class AttendanceSheetListView(generics.ListCreateAPIView):
             
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        ce_id = kwargs.get('ce_id') or request.data.get('ce_id')
+        files = request.data.get('files', [])
+        
+        if not ce_id:
+            return Response({"error": "ce_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not files:
+            return Response({"error": "No files provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer()
+        serializer._upload_file(files, ce_id=ce_id)
+        
+        return Response({"message": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)
+
 class AttendanceSheetDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilAttendanceSerializer
     queryset = CouncilAttendance.objects.all()

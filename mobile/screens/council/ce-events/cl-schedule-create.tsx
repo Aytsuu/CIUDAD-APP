@@ -5,11 +5,10 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Loader2, ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { AddEventFormSchema } from '../../../form-schema/council-event-schema';
 import { useAddCouncilEvent, useAddAttendee } from './queries';
 import { useGetStaffList } from './queries';
@@ -20,7 +19,7 @@ import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
 import { formatDate } from '@/helpers/dateFormatter';
-import type { Staff } from './queries';
+import { Staff } from './ce-att-typeFile';
 import { useQueryClient } from '@tanstack/react-query';
 import PageLayout from '@/screens/_PageLayout';
 
@@ -28,7 +27,6 @@ const CLCreateEvent = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const { control, handleSubmit, watch, trigger } = useForm({
     resolver: zodResolver(AddEventFormSchema),
     defaultValues: {
@@ -44,17 +42,9 @@ const CLCreateEvent = () => {
 
   const eventCategory = watch('eventCategory');
   const staffAttendees = watch('staffAttendees');
-
   const addEventMutation = useAddCouncilEvent();
   const addAttendeeMutation = useAddAttendee();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-
-  // Log staffList to verify available staff IDs
-  console.log('Staff List:', staffList.map(s => ({
-    staff_id: s.staff_id,
-    full_name: s.full_name,
-    position_title: s.position_title,
-  })));
 
   const staffOptions = useMemo(() => {
     return staffList.map((staff: Staff) => ({
@@ -64,8 +54,6 @@ const CLCreateEvent = () => {
   }, [staffList]);
 
   const selectedAttendeeDetails = useMemo(() => {
-    // Log selected staffAttendees to verify input
-    console.log('Selected staffAttendees:', staffAttendees);
     return staffAttendees.map((staffId: string) => {
       const staff = staffList.find(s => s.staff_id.toLowerCase() === staffId.toLowerCase());
       return {
@@ -76,19 +64,9 @@ const CLCreateEvent = () => {
     });
   }, [staffAttendees, staffList]);
 
-  const handlePreview = async () => {
-    const isValid = await trigger();
-    if (isValid) {
-      console.log('Form Data Preview:', watch());
-    } else {
-      console.log('Form Errors:', control._formState.errors);
-    }
-  };
-
   const onSubmit = async (formData: any) => {
     const isValid = await trigger();
     if (!isValid) {
-      console.log('Form Errors:', control._formState.errors);
       return;
     }
     setIsSubmitting(true);
@@ -105,18 +83,14 @@ const CLCreateEvent = () => {
         ce_is_archive: false,
         staff_id: null,
       };
-      console.log('Sending Event Payload to DB:', eventPayload);
 
       const newEvent = await addEventMutation.mutateAsync(eventPayload);
-      console.log('Event Creation Response:', newEvent);
 
       if (formData.eventCategory === 'meeting' && formData.staffAttendees?.length > 0) {
-        console.log(`Creating ${formData.staffAttendees.length} attendees for ce_id: ${newEvent}`);
         await Promise.all(
           formData.staffAttendees.map(async (staffId: string) => {
             const staff = staffList.find(s => s.staff_id.toLowerCase() === staffId.toLowerCase());
             if (!staff) {
-              console.warn(`Skipping attendee with invalid staff_id: ${staffId}`);
               return;
             }
             const attendeePayload = {
@@ -126,10 +100,8 @@ const CLCreateEvent = () => {
               atn_designation: staff.position_title || 'No Designation',
               atn_present_or_absent: 'Present',
             };
-            console.log('Sending Attendee Payload to DB:', attendeePayload);
             try {
               const res = await addAttendeeMutation.mutateAsync(attendeePayload);
-              console.log(`Attendee Creation Response for staff_id ${staffId}:`, res);
             } catch (error: any) {
               console.error(`Failed to add attendee ${staffId}:`, {
                 error: error.message,
@@ -141,16 +113,8 @@ const CLCreateEvent = () => {
         );
       }
 
-      console.log('Invalidating attendees cache for ce_id:', newEvent);
       queryClient.invalidateQueries({ queryKey: ['attendees', newEvent] });
-      console.log('Navigating back after successful event creation');
       router.back();
-    } catch (error: any) {
-      console.error('API Error:', {
-        error: error.message,
-        response: error.response?.data || 'No response data',
-        status: error.response?.status,
-      });
     } finally {
       setIsSubmitting(false);
     }
@@ -165,13 +129,10 @@ const CLCreateEvent = () => {
         }
         headerTitle={<Text>Schedule Events</Text>}
         rightAction={
-          <TouchableOpacity>
-            <ChevronLeft size={30} color="black" className="text-white" />
-          </TouchableOpacity>
+          <View/>
         }
     >
-        <View className="flex-1 px-4 py-4">
-          <View className="space-y-4">
+        <View className="flex-1 p-4">
             <FormInput
               control={control}
               name="eventTitle"
@@ -222,7 +183,6 @@ const CLCreateEvent = () => {
                 {isStaffLoading ? (
                   <View className="flex-row justify-center">
                     <Text className="text-gray-500 mr-2">Loading staff...</Text>
-                    <Loader2 size={20} color="gray" className="animate-spin" />
                   </View>
                 ) : (
                   <FormComboCheckbox
@@ -233,41 +193,22 @@ const CLCreateEvent = () => {
                     placeholder="Select staff attendees"
                   />
                 )}
-                
-                <View className="mt-4">
-                  <Text className="text-sm font-medium text-gray-700 mb-2">Selected Attendees</Text>
-                  <View className="border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
-                    {selectedAttendeeDetails.length > 0 ? (
-                      selectedAttendeeDetails.map((attendee, index) => (
-                        <View key={index} className="flex-row items-center py-1">
-                          <MaterialIcons name="person" size={16} color="#4b5563" />
-                          <Text className="text-sm text-gray-900 ml-2">
-                            {attendee.atn_name} ({attendee.atn_designation})
-                          </Text>
-                        </View>
-                      ))
-                    ) : (
-                      <Text className="text-sm text-gray-500">No attendees selected</Text>
-                    )}
-                  </View>
-                </View>
               </View>
             )}
 
-            <View className="flex-row justify-end mt-6">
+            <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
               <TouchableOpacity
-                className="px-6 py-3 bg-blue-500 rounded-lg flex-row items-center"
+                className="bg-primaryBlue py-3 rounded-lg"
                 onPress={handleSubmit(onSubmit)}
                 disabled={isSubmitting}
               >
-                <Text className="text-white text-lg font-medium">
+                <Text className="text-white text-base font-semibold text-center">
                   {isSubmitting ? 'Creating...' : 'Create'}
                 </Text>
-                {isSubmitting && <Loader2 size={20} color="white" className="ml-2 animate-spin" />}
+                {isSubmitting}
               </TouchableOpacity>
             </View>
           </View>
-        </View>
     </PageLayout>
   );
 };
