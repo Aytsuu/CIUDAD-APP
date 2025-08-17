@@ -180,7 +180,7 @@ class MOMFileCreateSerializer(serializers.ModelSerializer):
                 mom_id=mom_id
             )
 
-            url = upload_to_storage(file_data, 'council-mom-bucket', 'documents')
+            url = upload_to_storage(file_data, 'mom-bucket', 'documents')
             mom_file.momf_url = url
             mom_files.append(mom_file)
 
