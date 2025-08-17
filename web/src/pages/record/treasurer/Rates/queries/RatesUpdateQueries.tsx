@@ -18,8 +18,6 @@ export const useEditAnnualGrossSales = (onSuccess?: () => void) => {
             }),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['grossSales'] });
-
-                toast.loading('Submitting Record...', {id: "editGrossSales"});
         
                 toast.success('Record Updated!', {
                     id: "editGrossSales",
@@ -49,10 +47,7 @@ export const useEditPurposeAndRate = (onSuccess?: () => void) => {
                 category: values.category
             }),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['purposeRates'] });
-
-                toast.loading('Submitting Record...', {id: "editPurposeRates"});
-        
+                queryClient.invalidateQueries({ queryKey: ['purposeRates'] });        
                 toast.success('Record Updated!', {
                     id: "editPurposeRates",
                     icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,

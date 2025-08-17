@@ -13,8 +13,6 @@ export const useAddAnnualGrossSales = (onSuccess?: () => void) => {
             addAnnualGrossSales(values),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['grossSales'] });
-
-                toast.loading('Submitting Record...', {id: "addGrossSales"});
         
                 toast.success('Record Submitted!', {
                     id: "addGrossSales",
@@ -40,10 +38,7 @@ export const useAddPurposeAndRate = (onSuccess?: () => void) => {
             mutationFn: (values: z.infer<typeof PurposeAndRatesSchema>) => 
                 addPurposeAndRate(values),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['purposeRates']});
-
-                toast.loading('Submitting Record...', {id: "addPurposeRate"});
-        
+                queryClient.invalidateQueries({ queryKey: ['purposeRates']});        
                 toast.success('Record Submitted!', {
                     id: "addPurposeRate",
                     icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
