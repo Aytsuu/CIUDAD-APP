@@ -21,11 +21,60 @@ class CouncilAttendeesSerializer(serializers.ModelSerializer):
         fields = ['atn_id', 'atn_name','atn_designation', 'atn_present_or_absent', 'ce_id', 'staff_id']
 
 class CouncilAttendanceSerializer(serializers.ModelSerializer):
-    # file_url = serializers.CharField(source='file.file_url', read_only=True)
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
+    
     class Meta:
         model = CouncilAttendance
         fields = '__all__'
+        extra_kwargs = {
+            'att_file_url': {'read_only': True},
+            'att_file_path': {'read_only': True},
+        }
+    
+    def _upload_file(self, files, ce_id=None):
+        """Upload multiple attendance sheet files"""
+        if not ce_id:
+            raise serializers.ValidationError({"error": "ce_id is required"})
+
+        try:
+            event = CouncilScheduling.objects.get(pk=ce_id)
+        except CouncilScheduling.DoesNotExist:
+            raise serializers.ValidationError(f"Event with id {ce_id} does not exist")
+
+        attendance_sheets = []
+        for file_data in files:
+            try:
+                # Ensure required fields exist
+                if not all(key in file_data for key in ['name', 'type', 'file']):
+                    raise ValueError("Missing required file fields")
+                
+                # Upload file and get URL
+                file_url = upload_to_storage(
+                    file_data,
+                    'meeting-attendance-bucket',
+                    'images'
+                )
+                
+                if not file_url:
+                    raise ValueError("File upload failed (no URL returned)")
+
+                # Create attendance sheet record
+                attendance_sheet = CouncilAttendance(
+                    att_file_name=file_data['name'],
+                    att_file_type=file_data['type'],
+                    att_file_path=f"attendance/{file_data['name']}",
+                    att_file_url=file_url,
+                    ce_id=event
+                )
+                attendance_sheets.append(attendance_sheet)
+                
+            except Exception as e:
+                print(f"Failed to process file {file_data.get('name')}: {str(e)}")
+                continue
+
+        if attendance_sheets:
+            CouncilAttendance.objects.bulk_create(attendance_sheets)
+        return attendance_sheets
 
 class TemplateSerializer(serializers.ModelSerializer):
 
@@ -234,7 +283,7 @@ class MOMFileCreateSerializer(serializers.ModelSerializer):
                 mom_id=mom_id
             )
 
-            url = upload_to_storage(file_data, 'council-mom-bucket', 'documents')
+            url = upload_to_storage(file_data, 'mom-bucket', 'documents')
             mom_file.momf_url = url
             mom_files.append(mom_file)
 

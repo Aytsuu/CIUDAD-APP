@@ -68,7 +68,7 @@ class BudgetPlanFileCreateSerializer(serializers.ModelSerializer):
                 plan_id= plan_id
             )
 
-            url = upload_to_storage(file_data, 'finance-budgetplan-bucket', '')
+            url = upload_to_storage(file_data, 'budgetplan-bucket', '')
             bpf_file.bpf_url = url
             bpf_files.append(bpf_file)
 
