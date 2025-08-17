@@ -462,6 +462,10 @@ class WatchmanView(generics.GenericAPIView):
 
         data = [watchman.to_dict() for watchman in watchmen]
         return Response(data)
+
+class GarbagePickupFileView(generics.ListCreateAPIView):
+    serializer_class = GarbagePickupFileSerializer
+    queryset = GarbagePickupRequestFile.objects.all()
      
 class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
     serializer_class = GarbagePickupRequestPendingSerializer

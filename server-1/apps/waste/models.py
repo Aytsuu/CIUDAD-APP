@@ -231,7 +231,7 @@ class GarbagePickupRequestFile(models.Model):
 class Garbage_Pickup_Request(models.Model):
     garb_id = models.BigAutoField(primary_key=True)
     garb_location = models.CharField(max_length=20, null=False)
-    garb_waste_type = models.CharField(max_length=20, null=False)
+    garb_waste_type = models.CharField(max_length=250, null=False)
     garb_pref_date = models.DateField(default=date.today)
     garb_pref_time = models.TimeField(default=current_time)
     garb_req_status = models.CharField(max_length=20, null=False)
