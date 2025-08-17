@@ -15,7 +15,8 @@ import Request from "../(request)";
 import GarbagePickupTasksMain from "@/screens/waste/waste-garbage-pickup-request/driver/garbage-pickup-tasks-main";
 import ResolutionPage from "@/screens/council/resolution/resolution-main";
 import ExpenseLogMain from "@/screens/treasurer/treasurer-budget-tracker/expense-income-log/expense-log-main";
+import MinutesOfMeetingMain from "../../screens/council/minutesOfmeeting/minutes-of-meeting-main";
 
 export default () => {
-    return <BudgetPlanMain/>
+    return <MinutesOfMeetingMain/>
 }
