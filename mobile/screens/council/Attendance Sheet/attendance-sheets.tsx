@@ -35,7 +35,6 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToastContext } from "@/components/ui/toast";
-import ScreenLayout from "@/screens/_ScreenLayout";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { Button } from "@/components/ui/button";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
@@ -235,7 +234,7 @@ const MarkAttendance = ({ ceId }: { ceId: number }) => {
                 })}
               </View>
             </ScrollView>
-            <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
+            <View className=" bg-white border-t border-gray-200 px-4 py-4">
               <ConfirmationModal
                 trigger={
                   <Button className="bg-primaryBlue py-3 rounded-lg">
@@ -274,6 +273,7 @@ const AttendanceSheets = () => {
   const [modalTab, setModalTab] = useState<"view" | "mark">("view");
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
   const [zoomModalVisible, setZoomModalVisible] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [zoomedImage, setZoomedImage] = useState("");
   const [selectedImages, setSelectedImages] = useState<MediaItem[]>([]);
   const router = useRouter();
@@ -299,14 +299,21 @@ const AttendanceSheets = () => {
   };
 
   const handleAddAttendanceSheet = async () => {
-   try {
+    if (isUploading) return;
+    setIsUploading(true); 
+    
+    try {
       await addAttendanceSheet.mutateAsync({
         ceId: parsedCeId,
-        files: selectedImages
+        files: selectedImages,
       });
       setSelectedImages([]);
+      setUploadModalVisible(false);
+      await refetch();
     } catch (error) {
       console.error("Upload failed:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -318,22 +325,16 @@ const AttendanceSheets = () => {
   const handleTabChange = (value: string) => {
     setModalTab(value as "view" | "mark");
   };
-  
 
   return (
-    <ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
+          <ChevronLeft size={30} color="black" />
         </TouchableOpacity>
       }
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
     >
-      <View className="flex-1 p-2">
+      <ScrollView className="flex-1 p-2">
         <Tabs value={modalTab} onValueChange={handleTabChange}>
           <TabsList className="flex-row bg-white px-4 pb-4">
             <TabsTrigger
@@ -404,15 +405,11 @@ const AttendanceSheets = () => {
                 </Text>
               </View>
             ) : (
-              <ScrollView
-                className="px-4"
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                  />
-                }
-              >
+              <View className="px-4">
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                />
                 {filteredSheets.map((sheet) => (
                   <Card key={sheet.att_id} className="mb-4">
                     <CardContent>
@@ -468,7 +465,7 @@ const AttendanceSheets = () => {
                     </CardContent>
                   </Card>
                 ))}
-              </ScrollView>
+              </View>
             )}
           </TabsContent>
 
@@ -499,19 +496,48 @@ const AttendanceSheets = () => {
             />
 
             <View className="flex-row space-x-2 mt-4 gap-2">
-              <Button
-                className="flex-1 bg-gray-300"
+              <TouchableOpacity
+                className={`flex-1 py-3 rounded-lg flex-row justify-center items-center ${
+                  isUploading ? "bg-gray-200" : "bg-gray-300"
+                }`}
                 onPress={() => setUploadModalVisible(false)}
+                disabled={isUploading}
               >
-                <Text className="text-gray-800">Cancel</Text>
-              </Button>
-              <Button
-                className="flex-1 bg-primaryBlue"
+                <Text
+                  className={`text-base font-medium ${
+                    isUploading ? "text-gray-400" : "text-gray-800"
+                  }`}
+                >
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className={`flex-1 py-3 rounded-lg flex-row justify-center items-center ${
+                  isUploading || selectedImages.length === 0
+                    ? "bg-primaryBlue/50"
+                    : "bg-primaryBlue"
+                }`}
                 onPress={handleAddAttendanceSheet}
-                disabled={selectedImages.length === 0}
+                disabled={selectedImages.length === 0 || isUploading}
               >
-                <Text className="text-white">Upload</Text>
-              </Button>
+                {isUploading ? (
+                  <>
+                    <Loader2
+                      size={20}
+                      color="white"
+                      className="animate-spin mr-2"
+                    />
+                    <Text className="text-white text-base font-medium">
+                      Uploading...
+                    </Text>
+                  </>
+                ) : (
+                  <Text className="text-white text-base font-medium">
+                    Upload
+                  </Text>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         </Modal>
@@ -539,8 +565,8 @@ const AttendanceSheets = () => {
             />
           </View>
         </Modal>
-      </View>
-    </ScreenLayout>
+      </ScrollView>
+    </PageLayout>
   );
 };
 

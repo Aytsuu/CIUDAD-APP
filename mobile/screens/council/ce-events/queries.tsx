@@ -93,7 +93,7 @@ export const useAddAttendanceSheet = () => {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["attendees", data.ce_id] });
       queryClient.invalidateQueries({ queryKey: ["attendanceSheets", variables.ceId] });
-      toast.success(`${data.length} attendance sheet(s) uploaded successfully`);
+      toast.success(`Attendance sheet(s) uploaded successfully`);
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to upload attendance sheets");
