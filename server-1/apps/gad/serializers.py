@@ -53,7 +53,7 @@ class GADBudgetFileSerializer(serializers.ModelSerializer):
                 # Upload to storage and get URL
                 file_url = upload_to_storage(
                     file_data,
-                    'gad-btracker-bucket',
+                    'budget-tracker-bucket',
                     'images'
                 )
                 
@@ -95,7 +95,7 @@ class GADBudgetFileSerializer(serializers.ModelSerializer):
                     continue
 
                 # Delete from Supabase storage
-                remove_from_storage('gad-btracker-bucket', file_path)
+                remove_from_storage('budget-tracker-bucket', file_path)
                 
                 # Delete the database record
                 GAD_Budget_File.objects.filter(gbf_id=file_id, gbud=tracker_instance).delete()
@@ -320,7 +320,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         if header_img_data:
             try:
                 # Upload to Supabase
-                url = upload_to_storage(header_img_data, 'gad-projprop-bucket', 'header_images')
+                url = upload_to_storage(header_img_data, 'project-proposal-bucket', 'header_images')
                 instance.gpr_header_img = url
                 instance.save()
             except Exception as e:
@@ -346,7 +346,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             elif isinstance(header_img_data, dict):
                 try:
                     # Upload new file
-                    url = upload_to_storage(header_img_data, 'gad-projprop-bucket', 'header_images')
+                    url = upload_to_storage(header_img_data, 'project-proposal-bucket', 'header_images')
                     instance.gpr_header_img = url
                 except Exception as e:
                     raise serializers.ValidationError({
@@ -424,7 +424,7 @@ class ProposalSuppDocSerializer(serializers.ModelSerializer):
                 psd_path=f"Uploads/{file_data['name']}",
                 gpr=proposal
             )
-            psd_file.psd_url = upload_to_storage(file_data, 'gad-projprop-bucket', 'supp_docs')
+            psd_file.psd_url = upload_to_storage(file_data, 'project-proposal-bucket', 'supp_docs')
             psd_files.append(psd_file)
 
         if psd_files:
