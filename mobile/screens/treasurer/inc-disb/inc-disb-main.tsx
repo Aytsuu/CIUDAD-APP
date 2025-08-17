@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Modal, Dimensions, ScrollView, RefreshControl } from "react-native";
+import { View, Text, TouchableOpacity, FlatList, Image, Modal, Dimensions, RefreshControl } from "react-native";
 import { router } from "expo-router";
 import { Input } from "@/components/ui/input";
 import { Search, Trash, Archive, ArchiveRestore, Edit, X, ChevronLeft } from "lucide-react-native";
@@ -9,10 +9,6 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { 
   useGetIncomeImages, 
   useGetDisbursementImages, 
-  IncomeImage, 
-  DisbursementImage,
-  Album,
-  ImageItem,
   useArchiveIncomeImage,
   useRestoreIncomeImage,
   useDeleteIncomeImage,
@@ -23,12 +19,10 @@ import {
   usePermanentDeleteDisbursementImage,
   usePermanentDeleteDisbursementFolder,
   usePermanentDeleteIncomeFolder,
-  useRestoreDisbursementFolder,
-  useRestoreIncomeFolder
 } from "./queries";
 import { formatDate } from "@/helpers/dateFormatter";
 import PageLayout from "@/screens/_PageLayout";
-import { SearchInput } from "@/components/ui/search-input";
+import { IncomeImage, DisbursementImage, Album, ImageItem } from "./inc-disc-types";
 
 const PLACEHOLDER_IMAGE = "/placeholder-image.png";
 
@@ -41,10 +35,8 @@ const IncomeandDisbursementMain = () => {
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   const [zoomVisible, setZoomVisible] = useState(false);
-
   const { data: incomeImages = [], isLoading: isIncomeLoading, error: incomeError, refetch } = useGetIncomeImages(viewMode === "archived");
   const { data: disbursementImages = [], isLoading: isDisbursementLoading, error: disbursementError } = useGetDisbursementImages(viewMode === "archived");
-
   const archiveIncomeImage = useArchiveIncomeImage();
   const restoreIncomeImage = useRestoreIncomeImage();
   const deleteIncomeImage = useDeleteIncomeImage();
@@ -54,9 +46,7 @@ const IncomeandDisbursementMain = () => {
   const deleteDisbursementImage = useDeleteDisbursementImage();
   const permanentDeleteDisbursementImage = usePermanentDeleteDisbursementImage();
   const permanentDeleteIncomeFolder = usePermanentDeleteIncomeFolder();
-  const restoreIncomeFolder = useRestoreIncomeFolder();
   const permanentDeleteDisbursementFolder = usePermanentDeleteDisbursementFolder();
-  const restoreDisbursementFolder = useRestoreDisbursementFolder();
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
   const [refreshing, setRefreshing] = useState(false)
@@ -164,7 +154,6 @@ const IncomeandDisbursementMain = () => {
     return result;
   }, [albums, selectedYear, selectedType, viewMode, searchQuery]);
 
-  const totalPages = Math.ceil(filteredAlbums.length / pageSize);
   const paginatedAlbums = filteredAlbums.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
@@ -308,19 +297,22 @@ const IncomeandDisbursementMain = () => {
             {album.type === "income" ? album.inf_name || "Unnamed Income" : album.dis_name || "Unnamed Disbursement"}
           </Text>
           <Text className="text-xs text-gray-500">
-            Date Uploaded: {album.images[0]?.type === "income" 
+            Uploaded: {album.images[0]?.type === "income" 
             ? formatDate((album.images[0] as IncomeImage).infi_upload_date) || "N/A" 
             : formatDate((album.images[0] as DisbursementImage).disf_upload_date) || "N/A"}
           </Text>
           <Text className="text-xs text-gray-500">
             For Year: {album.images[0]?.type === "income" ? (album.images[0] as IncomeImage).inf_year || "N/A" : (album.images[0] as DisbursementImage).dis_year || "N/A"}
           </Text>
+          <Text className="text-xs text-gray-500">
+            Description: {album.images[0]?.type === "income" ? (album.images[0] as IncomeImage).inf_desc || "N/A" : (album.images[0] as DisbursementImage).dis_desc || "N/A"}
+          </Text>
         </View>
         <View className="mt-2 flex-row justify-end gap-1">
           {viewMode === "active" && (
             <>
               <TouchableOpacity
-                className="bg-blue-600 p-1 rounded-md"
+                className="bg-primaryBlue p-1 rounded-md"
                 onPress={(e) => {
                   e.stopPropagation();
                   router.push({
@@ -447,7 +439,7 @@ const IncomeandDisbursementMain = () => {
             </TouchableOpacity>
           }
     >
-      <View className="flex-1 p-4">
+      <View className="flex-1 p-5">
         <View className="flex flex-col gap-4 mb-4">
           <View className="flex-row justify-between items-center">
             <View className="flex-row gap-4 flex-1">
@@ -494,7 +486,7 @@ const IncomeandDisbursementMain = () => {
           <View className="flex-row justify-between items-center">
             <View className="flex-row space-x-2 gap-1">
               <TouchableOpacity
-                className={`px-4 py-2 rounded-md ${viewMode === "active" ? "bg-blue-600" : "bg-gray-200"}`}
+                className={`px-4 py-2 rounded-md ${viewMode === "active" ? "bg-primaryBlue" : "bg-gray-200"}`}
                 onPress={() => {
                   setViewMode("active");
                   setCurrentPage(1);
@@ -503,7 +495,7 @@ const IncomeandDisbursementMain = () => {
                 <Text className={`${viewMode === "active" ? "text-white" : "text-gray-600"}`}>Active</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                className={`px-4 py-2 rounded-md ${viewMode === "archived" ? "bg-blue-600" : "bg-gray-200"}`}
+                className={`px-4 py-2 rounded-md ${viewMode === "archived" ? "bg-primaryBlue" : "bg-gray-200"}`}
                 onPress={() => {
                   setViewMode("archived");
                   setCurrentPage(1);
@@ -513,10 +505,10 @@ const IncomeandDisbursementMain = () => {
               </TouchableOpacity>
             </View>
             <TouchableOpacity
-              className="bg-blue-600 px-4 py-2 rounded-md"
+              className="bg-primaryBlue px-4 py-2 rounded-md"
               onPress={() => router.push("/(treasurer)/inc-disbursement/inc-disb-create")}
             >
-              <Text className="text-white text-base font-semibold">Create New</Text>
+              <Text className="text-white text-base font-semibold">Create</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -548,46 +540,6 @@ const IncomeandDisbursementMain = () => {
           )}
         </View>
 
-        <View className="flex-row justify-between items-center mt-4">
-          <View className="flex-row items-center gap-2">
-            <Text className="text-sm text-gray-600">Show</Text>
-            <TextInput
-              className="w-16 h-8 border border-gray-300 rounded-md text-center"
-              keyboardType="numeric"
-              value={pageSize.toString()}
-              onChangeText={(text) => {
-                const value = Math.max(1, Number(text) || 1);
-                setPageSize(value);
-                setCurrentPage(1);
-              }}
-            />
-            <Text className="text-sm text-gray-600">entries</Text>
-          </View>
-          <View className="flex-row items-center gap-2">
-            <Text className="text-sm text-gray-600">
-              Showing {(currentPage - 1) * pageSize + 1} to{' '}
-              {Math.min(currentPage * pageSize, filteredAlbums.length)} of{' '}
-              {filteredAlbums.length} albums
-            </Text>
-            <View className="flex-row gap-2">
-              <TouchableOpacity
-                className={`px-2 py-1 rounded-md ${currentPage > 1 ? "bg-blue-600" : "bg-gray-300"}`}
-                onPress={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-              >
-                <Text className="text-white">Prev</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`px-2 py-1 rounded-md ${currentPage < totalPages ? "bg-blue-600" : "bg-gray-300"}`}
-                onPress={() => setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev))}
-                disabled={currentPage === totalPages}
-              >
-                <Text className="text-white">Next</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
         <Modal visible={zoomVisible} transparent={true} onRequestClose={() => setZoomVisible(false)}>
           <View className="flex-1 bg-black/80 justify-center items-center">
             <View className="w-[90%] h-[80%] bg-white rounded-lg overflow-hidden">
@@ -614,12 +566,12 @@ const IncomeandDisbursementMain = () => {
                       onError={() => console.log("Image failed to load")}
                       style={{ width: screenWidth * 0.9, height: screenHeight * 0.8 }}
                     />
-                    <View className="mt-2 flex-row justify-end gap-1 absolute bottom-2 right-2">
+                    <View className="mt-2 bg-red-500 p-1 rounded-md flex-row justify-end gap-1 absolute bottom-2 right-2">
                       {viewMode === "active" && (
                         <ConfirmationModal
                           trigger={
                             <TouchableOpacity>
-                              <Archive size={20} color="red" />
+                              <Archive size={20} color='white'/>
                             </TouchableOpacity>
                           }
                           title="Archive Image"

@@ -19,7 +19,6 @@ urlpatterns=[
     path('previous-budget-plan-details/', PreviousYearBudgetPlanDetailsView.as_view(), name='previous-budget-plan-details'),
 
 
-
     #Income and Disbursement URL
     # Income Folder URLs
     path('income-tab/folders/', IncomeFolderListView.as_view()),
