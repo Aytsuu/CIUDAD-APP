@@ -5019,7 +5019,7 @@ function TemplatePreview({
       const headerText = [
         { text: "REPUBLIC OF THE PHILIPPINES", bold: false, size: 12 },
         { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
-        { text: "", bold: false, size: 10 },
+        { text: "-".repeat(65), bold: false, size: 9 },
         { text: "Office of the Barangay Captain", bold: false, size: 11 },
         { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
         { text: `${email}`, bold: false, size: 11 },
