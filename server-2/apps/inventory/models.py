@@ -171,10 +171,6 @@ class MedicineInventory(models.Model):
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_inventories', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
 
-    # APP NA END
-    # min_qty_to_display = models.PositiveIntegerField(default=0)
-    # set_low_stock = models.PositiveBigIntegerField(default=0)
-    # set_near_expiry =models.PositiveBigIntegerField(default=0)
     class Meta: 
         db_table = 'medicine_inventory'
         ordering = ['-created_at']

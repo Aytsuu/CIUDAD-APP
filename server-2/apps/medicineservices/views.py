@@ -3,6 +3,7 @@ from rest_framework import generics
 from django.db.models import Q, Count
 from datetime import timedelta
 from django.utils.timezone import now
+import json
 from dateutil.relativedelta import relativedelta
 from django.db.models.functions import TruncMonth
 from rest_framework.response import Response
@@ -236,6 +237,103 @@ class FindingPlanTreatmentView(generics.CreateAPIView):
 class MedicineFileView(generics.ListCreateAPIView):
     serializer_class = MedicineFileCreateSerializer
     queryset = Medicine_File.objects.all()
+    
+    
+class ProcessMedicineRequestView(APIView):
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        staff_id = data.get("staff_id")
+        pat_id = data.get("pat_id")
+        signature = data.get("signature")
+
+        # Medicines may come in as JSON string if multipart/form-data
+        medicines_raw = data.get("medicines", "[]")
+        if isinstance(medicines_raw, str):
+            try:
+                medicines = json.loads(medicines_raw)
+            except Exception:
+                return Response({"error": "Invalid medicines format"}, status=400)
+        else:
+            medicines = medicines_raw
+
+        # Files must come from request.FILES
+        files = request.FILES.getlist("files")
+
+        results = []
+
+        try:
+            patient = Patient.objects.get(pk=pat_id)
+        except Patient.DoesNotExist:
+            return Response({"error": f"Patient {pat_id} not found"}, status=404)
+
+        staff = Staff.objects.filter(pk=staff_id).first()
+
+        patient_record = PatientRecord.objects.create(
+            pat_id=patient,
+            patrec_type="Medicine Record",
+        )
+
+        for med in medicines:
+            try:
+                minv_id = int(med.get("minv_id"))
+                qty_requested = int(med.get("medrec_qty"))
+
+                # Inventory
+                medicine_inv = MedicineInventory.objects.select_for_update().get(minv_id=minv_id)
+                if medicine_inv.minv_qty_avail < qty_requested:
+                    raise serializers.ValidationError(f"Insufficient stock for medicine {minv_id}")
+
+                medicine_inv.minv_qty_avail -= qty_requested
+                medicine_inv.staff = staff
+                medicine_inv.save(update_fields=["minv_qty_avail", "staff", "created_at"])
+
+                # Transaction
+                MedicineTransactions.objects.create(
+                    mdt_qty=f"{qty_requested} {medicine_inv.minv_qty_unit}",
+                    mdt_action="Deducted (Medicine Request)",
+                    staff=staff,
+                    minv_id=medicine_inv
+                )
+
+                # Medicine record
+                med_record = MedicineRecord.objects.create(
+                    patrec_id=patient_record,
+                    minv_id=medicine_inv,
+                    medrec_qty=qty_requested,
+                    reason=med.get("reason"),
+                    signature=signature,
+                    requested_at=timezone.now(),
+                    fulfilled_at=timezone.now(),
+                    staff=staff
+                )
+
+                # Files upload
+                if files:
+                    file_data = [{"name": f.name, "type": f.content_type, "file": f} for f in files]
+                    file_serializer = MedicineFileCreateSerializer(
+                        data={"files": file_data, "medrec": med_record.pk}
+                    )
+                    file_serializer.is_valid(raise_exception=True)
+                    file_serializer.save()
+
+                results.append({"success": True, "medicine_id": minv_id, "medrec_id": med_record.pk})
+
+            except Exception as e:
+                transaction.set_rollback(True)
+                return Response({"results": [{"success": False, "error": str(e)}]}, status=400)
+
+        return Response({"results": results, "patrec_id": patient_record.patrec_id}, status=201)
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
  
 class MonthlyMedicineSummariesAPIView(APIView):
     def get(self, request):

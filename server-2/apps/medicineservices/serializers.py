@@ -39,6 +39,7 @@ class MedicineRecordSerializerMinimal(serializers.ModelSerializer):
     class Meta:
         model = MedicineRecord
         fields = '__all__'
+        
 class MedicineRequestSerializer(serializers.ModelSerializer):
     address = serializers.SerializerMethodField()
     personal_info = serializers.SerializerMethodField()
@@ -142,7 +143,13 @@ class FindingPlanTreatmentSerializer(serializers.ModelSerializer):
         model = FindingsPlanTreatment
         fields = '__all__'
         
-        
+class MedicineFileSerializer(serializers.ModelSerializer):
+    medrec_details = MedicineRecordSerialzer(source='medrec', read_only=True)
+
+    class Meta:
+        model = Medicine_File
+        fields = '__all__'
+        read_only_fields = ('medf_id', 'created_at', 'medf_url')
         
 class MedicineFileCreateSerializer(serializers.ModelSerializer):
     files = FileInputSerializer(write_only=True, required=False, many=True)
@@ -158,19 +165,18 @@ class MedicineFileCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"files": "At least one file must be provided"})
             
         medrec_id = validated_data.pop('medrec', None)
-        medreq_id = validated_data.pop('medreq', None)
         
-        if not medrec_id and not medreq_id:
+        if not medrec_id :
             raise serializers.ValidationError("Either medrec or medreq must be provided")
             
-        created_files = self._upload_files(files_data, medrec_id, medreq_id)
+        created_files = self._upload_files(files_data, medrec_id)
 
         if not created_files:
             raise serializers.ValidationError("Failed to upload files")
 
         return created_files[0]
 
-    def _upload_files(self, files_data, medrec_id, medreq_id):
+    def _upload_files(self, files_data, medrec_id):
         med_files = []
         for file_data in files_data:
             med_file = Medicine_File(
@@ -179,7 +185,6 @@ class MedicineFileCreateSerializer(serializers.ModelSerializer):
                 medf_path=file_data['name'],
                 created_at=timezone.now(),
                 medrec_id=medrec_id,
-                medreq_id=medreq_id
             )
 
             url = upload_to_storage(file_data['file'], 'medicine-bucket')

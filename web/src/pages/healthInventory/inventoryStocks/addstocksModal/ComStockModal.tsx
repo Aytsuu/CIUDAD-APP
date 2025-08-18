@@ -1,16 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import {
-  Form,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form/form";
+import { Form, FormItem, FormLabel } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  CommodityStockType,
-  CommodityStocksSchema,
-} from "@/form-schema/inventory/stocks/inventoryStocksSchema";
+import { CommodityStockType, CommodityStocksSchema } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { fetchCommodity } from "../REQUEST/Commodity/restful-api/CommodityFetchAPI";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { FormInput } from "@/components/ui/form/form-input";
@@ -24,9 +17,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AddCommodityStock() {
-
-  const {user}=useAuth()
-  const staff_id = user?.staff?.staff_id
+  const { user } = useAuth();
+  const staff_id = user?.staff?.staff_id;
   const form = useForm<CommodityStockType>({
     resolver: zodResolver(CommodityStocksSchema),
     defaultValues: {
@@ -35,8 +27,8 @@ export default function AddCommodityStock() {
       cinv_qty: undefined,
       cinv_pcs: undefined,
       cinv_recevFrom: "",
-      expiryDate: new Date().toISOString().split("T")[0],
-    },
+      expiryDate: new Date().toISOString().split("T")[0]
+    }
   });
 
   const commodity: Array<{
@@ -48,12 +40,12 @@ export default function AddCommodityStock() {
   const { mutate: submit, isPending } = useSubmitCommodityStock();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<CommodityStockType | null>(null);
-  const [selectedUserType, setSelectedUserType] = useState<string>(""); 
+  const [selectedUserType, setSelectedUserType] = useState<string>("");
   const navigate = useNavigate();
   const currentUnit = form.watch("cinv_qty_unit");
   const qty = form.watch("cinv_qty") || 0;
   const pcs = form.watch("cinv_pcs") || 0;
-  const comId = form.watch("com_id"); 
+  const comId = form.watch("com_id");
   const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
   // Update user_type when com_id changes
@@ -75,43 +67,27 @@ export default function AddCommodityStock() {
   const confirmAdd = async () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit({data: formData, staff: staff_id});
+    submit({ data: formData, staff: staff_id });
   };
 
   return (
     <div className="w-full flex items-center justify-center p-4 sm:p-4">
       <Form {...form}>
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="bg-white p-5 w-full max-w-[600px] rounded-sm space-y-5"
-        >
-          <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
-            <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-            Add Commodity Stocks
-          </Label>
+        <form onSubmit={(e) => e.preventDefault()} className="bg-white p-5 w-full max-w-[600px] rounded-sm space-y-5">
+          <Label className="flex justify-center text-lg font-bold text-darkBlue2 text-center ">Add Stocks</Label>
+          <hr className="mb-2" />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormSelect
-              control={form.control}
-              name="com_id"
-              label="Commodity Name"
-              options={commodity}
-            />
+            <FormSelect control={form.control} name="com_id" label="Commodity Name" options={commodity} />
 
             <div className="flex flex-col">
               <FormLabel className="text-darkGray">User Type</FormLabel>
-              <div className="flex items-center mt-4 h-10 rounded-md border border-input bg-background px-3  text-sm">
-                {selectedUserType || "Select a commodity"}
-              </div>
+              <div className="flex items-center mt-4 h-10 rounded-md border border-input bg-background px-3  text-sm">{selectedUserType || "Select a commodity"}</div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateTimeInput
-              control={form.control}
-              name="expiryDate"
-              label="Expiry Date"
-              type="date"
-            />
+            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date" />
             <FormSelect
               control={form.control}
               name="cinv_recevFrom"
@@ -119,18 +95,12 @@ export default function AddCommodityStock() {
               options={[
                 { id: "doh", name: "DOH" },
                 { id: "chd", name: "CHD" },
-                { id: "others", name: "OTHERS" },
+                { id: "others", name: "OTHERS" }
               ]}
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormInput
-              control={form.control}
-              name="cinv_qty"
-              label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
-              type="number"
-              placeholder="Quantity"
-            />
+            <FormInput control={form.control} name="cinv_qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"} type="number" placeholder="Quantity" />
             <FormSelect
               control={form.control}
               name="cinv_qty_unit"
@@ -138,20 +108,14 @@ export default function AddCommodityStock() {
               options={[
                 { id: "boxes", name: "Boxes" },
                 { id: "bottles", name: "Bottles" },
-                { id: "packs", name: "Packs" },
+                { id: "packs", name: "Packs" }
               ]}
             />
           </div>
 
           {currentUnit === "boxes" && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <FormInput
-                control={form.control}
-                name="cinv_pcs"
-                label="Pieces per Box"
-                type="number"
-                placeholder="Pieces per box"
-              />
+              <FormInput control={form.control} name="cinv_pcs" label="Pieces per Box" type="number" placeholder="Pieces per box" />
               <FormItem className="sm:col-span-2">
                 <FormLabel>Total Pieces</FormLabel>
                 <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
@@ -167,16 +131,11 @@ export default function AddCommodityStock() {
           )}
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-            <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>
+            <Button variant="outline" className="w-[150px]"  onClick={() => navigate(-1)}>
               Cancel{" "}
             </Button>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isPending}
-              onClick={form.handleSubmit(onSubmit)}
-            >
+            <Button type="submit" className="w-[150px]"  disabled={isPending} onClick={form.handleSubmit(onSubmit)}>
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -190,13 +149,7 @@ export default function AddCommodityStock() {
         </form>
       </Form>
 
-      <ConfirmationDialog
-        isOpen={isAddConfirmationOpen}
-        onOpenChange={setIsAddConfirmationOpen}
-        onConfirm={confirmAdd}
-        title="Add Commodity"
-        description={`Are you sure you want to add this commodity item?`}
-      />
+      <ConfirmationDialog isOpen={isAddConfirmationOpen} onOpenChange={setIsAddConfirmationOpen} onConfirm={confirmAdd} title="Add Commodity" description={`Are you sure you want to add this commodity item?`} />
     </div>
   );
 }

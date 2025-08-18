@@ -45,7 +45,7 @@ class MedicineRecord(models.Model):
     reason = models.TextField(blank=True, null=True)  # (OP) 
     requested_at = models.DateTimeField(auto_now_add=True)
     fulfilled_at = models.DateTimeField(null=True, blank=True)
-    signature = models.TextField(blank=True, null=True),
+    signature = models.TextField(blank=True, null=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, blank=True,null=True, db_column='patrec_id', related_name='medicine_records')
     minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_records')
     medreq_id = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, db_column='medreq_id', related_name='medicine_records',blank=True,null=True,)
@@ -63,9 +63,8 @@ class Medicine_File(models.Model):
     medf_name = models.CharField(max_length=255)
     medf_type = models.CharField(max_length=100)
     medf_path = models.CharField(max_length=500)
-    ief_url = models.CharField(max_length=500)
+    medf_url = models.CharField(max_length=500)
     medrec= models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='medicine_files', blank=True, null=True)
-    medreq= models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='medicine_file', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

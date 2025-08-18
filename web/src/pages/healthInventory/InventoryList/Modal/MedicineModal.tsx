@@ -119,13 +119,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
   };
 
   
-  const hasChanges = (data: MedicineType) => {
-    if (mode === "add") return true;
-    if (!initialData) return false;
-
-    return data.medicineName.trim().toLowerCase() !== initialData.medicineName.trim().toLowerCase() || String(data.cat_id) !== String(initialData.cat_id) || data.med_type !== initialData.med_type;
-  };
-
+ 
   const onSubmit = (data: MedicineType) => {
     if (!data.cat_id) {
       toast.error("Please select a category");

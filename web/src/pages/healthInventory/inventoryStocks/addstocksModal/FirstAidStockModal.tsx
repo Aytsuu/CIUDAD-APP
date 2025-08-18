@@ -74,10 +74,9 @@ export default function () {
           onSubmit={(e) => e.preventDefault()}
           className="bg-white p-5 w-full max-w-[500px] rounded-sm space-y-5"
         >
-          <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
-            <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-            Add First Aid Stocks
-          </Label>
+           <Label className="flex justify-center text-lg font-bold text-darkBlue2 text-center ">Add Stocks</Label>
+          <hr className="mb-2" />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormSelect
               control={form.control}
@@ -146,13 +145,13 @@ export default function () {
           )}
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-[150px]" >
               <Link to="/mainInventoryStocks">Cancel</Link>
             </Button>
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-[150px]" 
               disabled={isPending}
               onClick={form.handleSubmit(onSubmit)}
             >
