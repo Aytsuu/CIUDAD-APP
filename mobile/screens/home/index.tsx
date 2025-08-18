@@ -6,6 +6,7 @@ import {
   Text,
   FlatList,
   RefreshControl,
+  StyleSheet
 } from "react-native";
 import { Card } from "@/components/ui/card";
 import { features } from "./features";
@@ -17,11 +18,52 @@ import React from "react";
 import ShowMore from '@/assets/icons/features/showmore.svg'
 import ShowLess from '@/assets/icons/features/showless.svg'
 import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
+import Video from 'react-native-video'
+import { SafeAreaView } from "react-native-safe-area-context";
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  video: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  },
+});
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const [showMoreFeatures, setShowMoreFeatures] = React.useState<boolean>(false);
+   const [showSplash, setShowSplash] = React.useState(true);
+  const videoRef = React.useRef(null);
+
+  if (true) {
+    return (
+      <SafeAreaView className="flex-1">
+        <Video 
+          source={require('@/assets/animated/splashscreen.mp4')}
+          ref={videoRef}
+          style={styles.video}
+          resizeMode="cover" // or 'contain', 'stretch'
+          repeat={true}
+          onError={(error) => {
+            console.log('Video error:', error);
+
+          }}
+          muted={true} // Usually splash screens are silent
+          playInBackground={false}
+          playWhenInactive={false}
+        />
+      </SafeAreaView>
+    )
+  }
 
   if (isLoading) {
     return <LoadingModal visible={true} />;
