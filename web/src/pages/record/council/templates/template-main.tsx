@@ -266,7 +266,7 @@
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button/button";
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, SquarePen  } from 'lucide-react';
 import CardLayout from "@/components/ui/card/card-layout";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -347,6 +347,7 @@ function TemplateMainPage() {
       temp_title: "CERTIFICATION",
       temp_barangayLogo: templates[0]?.template_files[0].tf_url,
       temp_LogoStyle: 2,
+      temp_email: templates[0]?.temp_email,  
       temp_telNum: templates[0]?.temp_contact_num,
       temp_paperSize: "letter",
       temp_margin: "normal",
@@ -370,6 +371,11 @@ function TemplateMainPage() {
     );
   }
 
+
+  const isTemplateEmpty = (template: Template) => {
+    return !template.temp_body || !template.temp_title || !template.temp_barangayLogo;
+  };
+
   return (
     <div className="w-full h-full">
       <div className="flex flex-col mb-4">
@@ -378,36 +384,66 @@ function TemplateMainPage() {
       </div>
       <hr className="border-gray mb-6 sm:mb-10" />
 
-      {/* Create Button */}
       <div className="w-full flex justify-end pb-7">
-        <DialogLayout
-          trigger={
-            <Button>
-              <Plus size={20} /> Add Details
-            </Button>
-          }
-          className="max-w-[30%] flex flex-col overflow-auto scrollbar-custom"
-          title="Template Common Details"
-          description="please provide the needed details"
-          mainContent={
-            <div className="w-full h-full">
-              <TemplateCreateForm onSuccess={() => setIsDialogOpen(false)} />
-            </div>
-          }
-          isOpen={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-        />
+        {templates.length > 0 ? (
+          <DialogLayout
+            trigger={
+              <Button>
+                <SquarePen size={20} /> Edit Details
+              </Button>
+            }
+            className="max-w-[30%] flex flex-col overflow-auto scrollbar-custom"
+            title="Template Common Details"
+            description="Edit the needed details"
+            mainContent={
+              <div className="w-full h-full">
+                <TemplateUpdateForm 
+                  temp_id={templates[0].temp_id}
+                  temp_contact_num={templates[0].temp_contact_num}
+                  temp_email={templates[0].temp_email}
+                  template_files={templates[0].template_files}
+                  onSuccess={() => setIsDialogOpen(false)} 
+                />
+              </div>
+            }
+            isOpen={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+          />
+        ) : (
+          <DialogLayout
+            trigger={
+              <Button>
+                <Plus size={20} /> Add Details
+              </Button>
+            }
+            className="max-w-[30%] flex flex-col overflow-auto scrollbar-custom"
+            title="Template Common Details"
+            description="please provide the needed details"
+            mainContent={
+              <div className="w-full h-full">
+                <TemplateCreateForm onSuccess={() => setIsDialogOpen(false)} />
+              </div>
+            }
+            isOpen={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+          />
+        )}
       </div>
 
-      {/*Templates Grid*/}
       <div className="rounded bg-white min-h-[200px] p-10">
         {TemplateRecords.length === 0 ? (
           <p className="text-center text-gray-500">No template found.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {TemplateRecords.map((template) => (
-              <div key={template.temp_id} className="relative group">
-                <div onClick={() => setPreviewTemplate(template)} className="cursor-pointer">
+              <div 
+                key={template.temp_id} 
+                className={`relative group ${isTemplateEmpty(template) ? 'opacity-70' : ''}`}
+              >
+                <div 
+                  onClick={() => !isTemplateEmpty(template) && setPreviewTemplate(template)} 
+                  className={`cursor-pointer ${isTemplateEmpty(template) ? 'cursor-not-allowed' : ''}`}
+                >
                   <CardLayout
                     title=""
                     description=""
@@ -423,10 +459,15 @@ function TemplateMainPage() {
                         </div>
                         <div className="absolute bottom-0 w-full bg-black bg-opacity-60 text-white text-xs sm:text-sm text-center py-1 px-2 z-20">
                           {template.temp_filename}
+                          {isTemplateEmpty(template) && (
+                            <span className="block text-xs text-yellow-200">Please provide the neccessary details first.</span>
+                          )}
                         </div>
                       </div>
                     }
-                    cardClassName="p-0 shadow hover:shadow-lg transition-shadow rounded-xl"
+                    cardClassName={`p-0 shadow hover:shadow-lg transition-shadow rounded-xl ${
+                      isTemplateEmpty(template) ? 'hover:shadow-none' : ''
+                    }`}
                   />
                 </div>
               </div>
@@ -435,7 +476,6 @@ function TemplateMainPage() {
         )}
       </div>
 
-      {/* Preview Modal */}
       {previewTemplate && (
         <DialogLayout
           isOpen={!!previewTemplate}

@@ -266,6 +266,12 @@ class TemplateFileView(generics.ListCreateAPIView):
         return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)    
 
 
+class TemplateFileDetailView(generics.RetrieveDestroyAPIView):
+    queryset = TemplateFile.objects.all()
+    serializer_class = TemplateFileSerializer
+    lookup_field = 'tf_id' 
+
+
 class SummonTemplateView(APIView):
     def get(self, request):
         filename = request.query_params.get('filename')

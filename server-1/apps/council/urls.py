@@ -15,6 +15,7 @@ urlpatterns=[
     path('api/staff/', StaffListView.as_view(), name='staff-list'),
     path('staff-attendance-ranking/', StaffAttendanceRankingView.as_view(), name='staff-attendance-ranking'),
 
+    # TEMPLATE
     path("template/", TemplateView.as_view(), name="document-template"),
     path("update-template/<int:temp_id>/", UpdateTemplateView.as_view(), name="update-document-template"),
     path('delete-template/<int:temp_id>/', DeleteTemplateView.as_view(), name='delete-document-template'), 
@@ -22,7 +23,14 @@ urlpatterns=[
     path('delete-template-with-pr-id/<int:pr_id>/', DeleteTemplateByPrIdView.as_view(), name='delete-template-pr-id'),
     path('summon-template/', SummonTemplateView.as_view(), name='summon-template'),
 
+    # TEMPLATE FILE
+    # main fetch
     path("template-file/", TemplateFileView.as_view(), name="council-template-file"),
+    # for the update
+    path("template-files/", TemplateFileView.as_view(), name="council-template-files-list"),
+    # delete temp files
+    path('delete-temp-file/<int:tf_id>/', TemplateFileDetailView.as_view(), name='template-file-detail'),
+
 
     # MINUTES OF MEETING
     # mobile and web
