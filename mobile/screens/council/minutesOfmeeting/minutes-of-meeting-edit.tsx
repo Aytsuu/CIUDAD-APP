@@ -23,19 +23,20 @@ export default function MOMEdit() {
     const meetingAgenda = String(params.meetingAgenda || "");
     const meetingDate = String(params.meetingDate || "");
     const meetingAreas = params.meetingAreas ? JSON.parse(String(params.meetingAreas)) : [];
-    const meetingFile = params.meetingFile ? JSON.parse(String(params.meetingFile)) : [];
+    const meetingFile = params.meetingFile ? JSON.parse(String(params.meetingFile)) : null;
     const meetingSuppDocs = params.meetingSuppDocs ? JSON.parse(String(params.meetingSuppDocs)) : [];
     const parsedAreaOfFocus = Array.isArray(meetingAreas) ? meetingAreas : [];
     const [formError, setFormError] = useState<string | null>(null);
-
     const [selectedDocuments, setSelectedDocuments] = useState<DocumentItem[]>(
-        meetingFile.map((file: any) => ({
-        id: `existing-${file.momf_id}`,
-        name: file.momf_name || `file-${file.momf_id}`,
-        type: 'application/pdf',
-        uri: file.momf_url
-        }))
-    );
+      meetingFile
+              ? [{
+                  id: `existing-${meetingFile.momf_id}`,
+                  name: meetingFile.momf_name || `file-${meetingFile.momf_id}`,
+                  type: 'application/pdf',
+                  uri: meetingFile.momf_url
+              }]
+              : []
+      );
 
     const [selectedImages, setSelectedImages] = useState<MediaItem[]>(
         meetingSuppDocs.map((file: any) => ({
@@ -55,7 +56,7 @@ export default function MOMEdit() {
         { id: "waste", name: "Waste" },
     ];
 
-    const form = useForm<z.infer<typeof minutesOfMeetingEditFormSchema>>({
+    const {control, handleSubmit, setValue} = useForm<z.infer<typeof minutesOfMeetingEditFormSchema>>({
         resolver: zodResolver(minutesOfMeetingEditFormSchema),
         mode: "onChange",
         defaultValues: {
@@ -72,7 +73,27 @@ export default function MOMEdit() {
       if(selectedDocuments.length === 0) {
           setFormError("Meeting File is required.");
           return;
-      } 
+      } else{
+
+        const files = selectedDocuments.map((media) => ({
+            id: media.id,
+            name: media.name,
+            type: media.type,
+            file: media.file
+        }))
+
+        const suppDocs = selectedImages.map((media) => ({
+            id: media.id,
+            name: media.name,
+            type: media.type,
+            file: media.file
+        }))
+        updateMOM({
+          ...values,
+          files,
+          suppDocs
+        })
+      }
       // updateMOM({
       //     mom_id,
       //     meetingTitle: values.meetingTitle,
@@ -83,13 +104,6 @@ export default function MOMEdit() {
       //     mediaFiles,
       // });
     };
-
-
-    // const handleFormSubmit = () => {
-    //     form.setValue("meetingFile", documentFiles);
-    //     form.setValue("meetingSuppDoc", mediaFiles);
-    //     form.handleSubmit(onSubmit)();
-    // };
 
   return (
     <_ScreenLayout
@@ -105,7 +119,7 @@ export default function MOMEdit() {
       footer={
         <Button
           className="bg-primaryBlue py-3 rounded-md w-full items-center"
-          // onPress={handleFormSubmit}
+          onPress={handleSubmit(onSubmit)}
         >
           <Text className="text-white text-base font-semibold">Update</Text>
         </Button>
@@ -115,28 +129,29 @@ export default function MOMEdit() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="mb-8 space-y-4">
           <FormInput
-            control={form.control}
+            control={control}
             label="Meeting Title"
             name="meetingTitle"
             placeholder="Enter meeting title"
           />
 
           <FormInput
-            control={form.control}
+            control={control}
             label="Meeting Agenda"
             name="meetingAgenda"
             placeholder="Enter meeting agenda"
           />
 
           <FormDateTimeInput
-            control={form.control}
+            control={control}
             label="Meeting Date"
             name="meetingDate"
             type="date"
+            maximumDate={new Date()}
           />
 
           <FormComboCheckbox
-            control={form.control}
+            control={control}
             name="meetingAreaOfFocus"
             label="Area of Focus"
             options={areaOfFocusOptions}
@@ -148,7 +163,7 @@ export default function MOMEdit() {
             <DocumentPickerComponent
                 selectedDocuments={selectedDocuments}
                 setSelectedDocuments={setSelectedDocuments}
-                multiple={false} 
+                multiple={true} 
                 maxDocuments={1} 
             />
             {formError && (

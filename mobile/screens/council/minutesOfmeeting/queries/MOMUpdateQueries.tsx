@@ -3,10 +3,9 @@ import { restoreMinutesOfMeeting, archiveMinutesOfMeeting, deleteMOMAreas, updat
 import { useToastContext } from "@/components/ui/toast";
 import { useRouter } from "expo-router";
 import { minutesOfMeetingEditFormSchema } from "@/form-schema/council/minutesOfMeetingSchema";
+// import { MediaFileType } from "@/components/ui/multi-media-upload";
+// import { DocumentFileType } from "@/components/ui/document-upload";
 import z from "zod"
-import { MediaFileType } from "@/components/ui/multi-media-upload";
-import { DocumentFileType } from "@/components/ui/document-upload";
-import { api } from "@/api/api";
 
 export const useRestoreMinutesOfMeeting = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
@@ -51,17 +50,23 @@ export const useArchiveMinutesOfMeeting = (onSuccess?: () => void) => {
     })
 }
 
+export type MOMFileType = {
+    id: string;
+    name: string | undefined;
+    type: string | undefined;
+    file: string | undefined;
+}
+export type MOMSuppDoc = {
+    id: string;
+    name: string | undefined;
+    type: string | undefined;
+    file: string | undefined;
+}
 
-type MOMUpdateValues = {
-  mom_id: number;
-  momf_id: number;
-  meetingTitle: string;
-  meetingAgenda: string;
-  meetingDate: string;
-  meetingAreaOfFocus: string[];
-  documentFiles: DocumentFileType[];
-  mediaFiles: MediaFileType[];
-};
+type MOMData = z.infer<typeof minutesOfMeetingEditFormSchema> & {
+    files: MOMFileType[],
+    suppDocs: MOMSuppDoc[],
+}
 
 export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
@@ -69,16 +74,16 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (values: MOMUpdateValues) => {
+    mutationFn: async (values: MOMData) => {
       const res = await updateMinutesOfMeeting(values.mom_id, values.meetingTitle, values.meetingAgenda, values.meetingDate);
 
       await deleteMOMAreas(values.mom_id);
 
       await handleMOMAreaOfFocus(values.mom_id, values.meetingAreaOfFocus);
 
-      await handleMOMFileUpdates(values.mom_id, values.momf_id, values.documentFiles);
+      await handleMOMFileUpdates(values.mom_id, values.files);
 
-      await handleMOMSuppDocUpdates(values.mom_id, values.mediaFiles)
+      await handleMOMSuppDocUpdates(values.mom_id, values.suppDocs)
      
       return values.mom_id;
     },
