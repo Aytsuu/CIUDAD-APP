@@ -124,7 +124,7 @@ export default function EditGeneralDetails({
           <Combobox
             options={formattedResidents}
             value={form.watch("householdHead")}
-            onChange={(value) => form.setValue("householdHead", value)}
+            onChange={(value) => form.setValue("householdHead", value as string)}
             placeholder="Select a household"
             triggerClassName="font-normal"
             emptyMessage={
