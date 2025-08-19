@@ -8,7 +8,7 @@ import { getOrdinalSuffix } from "@/helpers/getOrdinalSuffix";
 
 export const IndivVaccineColumns = (
   patientData: Patient,
-  allVaccinationRecords: VaccinationRecord[]
+  // allVaccinationRecords: VaccinationRecord[]
 ): ColumnDef<VaccinationRecord>[] => [
   {
     accessorKey: "index",
@@ -175,13 +175,13 @@ export const IndivVaccineColumns = (
     accessorKey: "nextDose",
     header: "Next Dose",
     cell: ({ row }) => {
-      const displayStatus = row.original.vachist_status;
+      // const displayStatus = row.original.vachist_status;
 
-      const statusColors = {
-        completed: "bg-green-100 text-green-800",
-        "partially vaccinated": "bg-red-100 text-red-800",
-        "in queue": "bg-yellow-100 text-yellow-800",
-      };
+      // const statusColors = {
+      //   completed: "bg-green-100 text-green-800",
+      //   "partially vaccinated": "bg-red-100 text-red-800",
+      //   "in queue": "bg-yellow-100 text-yellow-800",
+      // };
 
       return (
         <div className="flex flex-col justify-center">
@@ -230,19 +230,19 @@ export const IndivVaccineColumns = (
     header: "Actions",
     cell: ({ row }) => {
       const currentRecord = row.original;
-      const followUpStatus =
-        currentRecord.follow_up_visit?.followv_status?.toLowerCase();
+      // const followUpStatus =
+      //   currentRecord.follow_up_visit?.followv_status?.toLowerCase();
 
-      const sameVacRecRecords = allVaccinationRecords.filter(
-        (record) => record.vacrec === currentRecord.vacrec
-      );
+      // const sameVacRecRecords = allVaccinationRecords.filter(
+      //   (record) => record.vacrec === currentRecord.vacrec
+      // );
 
-      const hasScheduledInSameVacRec = sameVacRecRecords.some(
-        (record) => record.vachist_status?.toLowerCase() === "scheduled"
-      );
+      // const hasScheduledInSameVacRec = sameVacRecRecords.some(
+      //   (record) => record.vachist_status?.toLowerCase() === "scheduled"
+      // );
 
-      const shouldShowButton =
-        followUpStatus === "pending" && !hasScheduledInSameVacRec;
+      // const shouldShowButton =
+      //   followUpStatus === "pending" && !hasScheduledInSameVacRec;
 
       return (
         <div className="flex justify-center gap-2">

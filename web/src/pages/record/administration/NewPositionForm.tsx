@@ -7,25 +7,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormInput } from "@/components/ui/form/form-input";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
-import { CircleAlert, Users, Badge, CheckCircle, Info } from "lucide-react";
+import { CircleAlert, Users, Badge, Info, CheckCircle } from "lucide-react";
 import { useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { useAddPosition } from "./queries/administrationAddQueries";
-import { useAddPositionHealth } from "../health/administration/queries/administrationAddQueries";
-import { useEditPosition } from "./queries/administrationUpdateQueries";
-import { useEditPositionHealth } from "../health/administration/queries/administrationUpdateQueries";
-import { renderActionButton } from "./administrationActionConfig";
+import { useUpdatePosition } from "./queries/administrationUpdateQueries";
+import { renderActionButton } from "./AdministrationActionConfig";
 import { Type } from "./AdministrationEnums";
 import { usePositionGroups } from "./queries/administrationFetchQueries";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { formatPositionGroups } from "./AdministrationFormats";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 export default function NewPositionForm() {
   const { user } = useAuth();
   const { mutate: addPosition, isPending: isAdding } = useAddPosition();
-  const { mutate: addPositionHealth, isPending: isAddingHealth } = useAddPositionHealth();
-  const { mutate: editPosition, isPending: isUpdating } = useEditPosition();
-  const { mutate: editPositionHealth, isPending: isUpdatingHealth } = useEditPositionHealth();
+  const { mutate: editPosition, isPending: isUpdating } = useUpdatePosition();
   const { data: positionGroups, isLoading: isLoadingGroups } = usePositionGroups();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const location = useLocation();
@@ -44,9 +41,9 @@ export default function NewPositionForm() {
   });
 
   React.useEffect(() => {
-    if (isAdding || isUpdating || isAddingHealth || isUpdatingHealth) setIsSubmitting(true);
+    if (isAdding || isUpdating) setIsSubmitting(true);
     else setIsSubmitting(false);
-  }, [isAdding, isUpdating, isAddingHealth, isUpdatingHealth]);
+  }, [isAdding, isUpdating]);
 
   // Prevent typing negative values and 0
   React.useEffect(() => {
@@ -77,7 +74,7 @@ export default function NewPositionForm() {
     form.setValue("pos_max", String(position.pos_max));
   }, [params.data]);
 
-  // Add new position with health database integration
+  // Add new position (dual database insertion handled by API)
   const submit = React.useCallback(async () => {
     const formIsValid = await form.trigger();
     if (!formIsValid) {
@@ -93,82 +90,44 @@ export default function NewPositionForm() {
     const staffId = user?.staff?.staff_id || "";
 
     if (formType === Type.Add) {
-      // Add to both databases
-      const promises = [
-        new Promise((resolve, reject) => {
-          addPosition(
-            { data: values, staffId },
-            {
-              onSuccess: resolve,
-              onError: reject
-            }
-          );
-        }),
-        new Promise((resolve, reject) => {
-          addPositionHealth(
-            { data: values, staffId },
-            {
-              onSuccess: resolve,
-              onError: reject
-            }
-          );
-        })
-      ];
-
-      try {
-        await Promise.all(promises);
-        
-        // Reset form on success
-        form.setValue('pos_title', '');
-        form.setValue('pos_max', '1');
-        form.setValue('pos_group', '');
-        
-        toast("Position created in both databases successfully", {
-          icon: <CheckCircle size={24} className="fill-green-500 stroke-white" />
-        });
-      } catch (error) {
-        toast("Failed to create position. Please try again.", {
-          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
-        });
-      }
+      // Add position (API handles dual database insertion)
+      addPosition(
+        { data: values, staffId },
+        {
+          onSuccess: () => {
+            // Reset form on success
+            form.setValue('pos_title', '');
+            form.setValue('pos_max', '1');
+            form.setValue('pos_group', '');
+            
+            showSuccessToast("Position created successfully");
+          },
+          onError: () => {
+            showErrorToast("Failed to create position. Please try again.");
+          }
+        }
+      );
     } else {
-      // Edit in both databases
+      // Edit position (API handles dual database update)
       const positionId = params.data.pos_id;
       
-      const promises = [
-        new Promise((resolve, reject) => {
-          editPosition(
-            { positionId, values },
-            {
-              onSuccess: resolve,
-              onError: reject
-            }
-          );
-        }),
-        new Promise((resolve, reject) => {
-          editPositionHealth(
-            { positionId, values },
-            {
-              onSuccess: resolve,
-              onError: reject
-            }
-          );
-        })
-      ];
-
-      try {
-        await Promise.all(promises);
-        
-        toast("Position updated in both databases successfully", {
-          icon: <CheckCircle size={24} className="fill-green-500 stroke-white" />
-        });
-      } catch (error) {
-        toast("Failed to update position. Please try again.", {
-          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
-        });
-      }
+      editPosition(
+        { positionId, values },
+        {
+          onSuccess: () => {
+            toast("Position updated successfully", {
+              icon: <CheckCircle size={24} className="fill-green-500 stroke-white" />
+            });
+          },
+          onError: () => {
+            toast("Failed to update position. Please try again.", {
+              icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+            });
+          }
+        }
+      );
     }
-  }, [addPosition, addPositionHealth, editPosition, editPositionHealth, user, formType, params.data, form]);
+  }, [addPosition, editPosition, user, formType, params.data, form]);
 
   return (
     <main className="min-h-screen py-8">

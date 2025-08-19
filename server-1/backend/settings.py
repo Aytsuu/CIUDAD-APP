@@ -177,9 +177,10 @@
 # # INTERNATIONALIZATION
 # # ========================
 # LANGUAGE_CODE = 'en-us'
-# TIME_ZONE = 'UTC'
+# TIME_ZONE = 'Asia/Manila'
 # USE_I18N = True
-# USE_TZ = True
+# USE_L10N = True
+# USE_TZ = True 
 
 # # ========================
 # # STATIC FILES
@@ -307,6 +308,7 @@
 
 
 
+
 # ---------------------------------------------------
 # DEVELOPMENT SERVER
 # ---------------------------------------------------
@@ -331,11 +333,6 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-f
 
 # DEBUG = config('DEBUG', default=False, cast=bool)
 DEBUG=True
-# ALLOWED_HOSTS = config(
-#     'ALLOWED_HOSTS',
-#     default='localhost,127.0.0.1',
-#     cast=lambda v: [s.strip() for s in v.split(',')]
-# )
 
 # ========================
 # SUPABASE CONFIGURATION
@@ -396,8 +393,8 @@ INSTALLED_APPS = [
     'apps.authentication',
     'apps.gad',
     'apps.clerk',
-    'apps.act_log',
     'backend.firebase.notifications',
+    'apps.act_log',
     
 ]
 

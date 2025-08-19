@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion } from "@/components/ui/accordion";
 import { ChildHealthHistoryRecord } from "../viewrecords/types";
@@ -23,7 +23,7 @@ export default function PendingDisplayMedicalConsultation({
   onNext,
   fullHistoryData,
 }: PendingDisplayMedicalConsultationProps) {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();  
   const chhistId = ChildHealthRecord.chhist_id;
 
   // State management

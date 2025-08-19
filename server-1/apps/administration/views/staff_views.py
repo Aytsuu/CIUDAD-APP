@@ -14,12 +14,14 @@ class StaffTableView(generics.ListCreateAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = Staff.objects.select_related(
+    staff_type = self.request.query_params.get('staff_type', None)
+    queryset = Staff.objects.filter(staff_type=staff_type).select_related(
       'rp',
       'pos',
     ).only(
       'staff_id',
       'staff_assign_date',
+      'staff_type',
       'rp__per__per_lname',
       'rp__per__per_fname',
       'rp__per__per_mname',
@@ -35,7 +37,8 @@ class StaffTableView(generics.ListCreateAPIView):
         Q(rp__per__per_fname__icontains=search_query) |
         Q(rp__per__per_mname__icontains=search_query) |
         Q(rp__per__per_contact__icontains=search_query) |
-        Q(pos__pos_title__icontains=search_query) 
+        Q(pos__pos_title__icontains=search_query) |
+        Q(staff_type__icontains=search_query)
       ).distinct()
 
     return queryset

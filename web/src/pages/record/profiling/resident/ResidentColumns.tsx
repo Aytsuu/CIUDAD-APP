@@ -5,8 +5,8 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import ViewButton from "@/components/ui/view-button";
 import { Badge } from "@/components/ui/badge";
 import React from "react";
-import { ResidentBusinessRecord, ResidentFamilyRecord, ResidentRecord } from "../ProfilingTypes";
 import { formatDate } from "@/helpers/dateHelper";
+import { ResidentRecord, ResidentFamilyRecord, ResidentBusinessRecord } from "../ProfilingTypes";
 
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------

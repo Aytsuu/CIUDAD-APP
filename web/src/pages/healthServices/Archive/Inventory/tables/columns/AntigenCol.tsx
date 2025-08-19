@@ -84,7 +84,7 @@ export const getStockColumns = (
         const dosesPerVial = record.dose_ml;
         const availableDoses = record.availableStock;
         const fullVials = Math.ceil(availableDoses / dosesPerVial);
-        const leftoverDoses = availableDoses % dosesPerVial;
+        // const leftoverDoses = availableDoses % dosesPerVial;
 
         return (
           <div

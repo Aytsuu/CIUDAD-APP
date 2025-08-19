@@ -9,7 +9,7 @@ import { VaccinationRecord } from "../tables/columns/types";
 import { useLocation } from "react-router-dom";
 import CardLayout from "@/components/ui/card/card-layout";
 import { useIndivPatientVaccinationRecords } from "../queries/fetch";
-import { useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 
 export default function VaccinationView() {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function VaccinationView() {
   const { params } = location.state || {};
   const { patientData, Vaccination } = params || {};
   const patientId = useMemo(() => patientData?.pat_id, [patientData]);
-  const queryClient =useQueryClient();
+  // const queryClient =useQueryClient();
 
             // queryClient.invalidateQueries({ queryKey: ['patientVaccinationRecords', patientId] });
 

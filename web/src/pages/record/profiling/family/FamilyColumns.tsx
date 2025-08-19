@@ -114,6 +114,26 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     )
   },
   {
+    accessorKey: "registered_by",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Registered By
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const registeredBy = row.getValue("registered_by") as string;
+      return (
+        <div className="text-center">
+          {registeredBy || "-"}
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => {
@@ -186,19 +206,16 @@ export const familyViewColumns = (
         }
       }
 
-      const handleRoleChange = (value: string) => {
-        if(value !== role?.toLowerCase()) {
-          setRole(capitalize(value));
-          updateFamilyRole({
-            familyId: family.fam_id,
-            residentId: data.rp_id,
-            fc_role: capitalize(value)
-          }, {
-            onError: (status) => {
-              setRole(data.fc_role);
-              throw status;
-            }
-          })
+      const handleRoleChange = async (value: string) => {
+        if (value !== role?.toLowerCase()) {
+          const newRole = capitalize(value);
+          setRole(newRole);
+          try {
+            await updateFamilyRole({ familyId: family.fam_id, residentId: data.rp_id, fc_role: newRole })
+          } catch (error) {
+            setRole(data.fc_role);
+            throw error;
+          }
         }
       }
 

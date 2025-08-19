@@ -310,7 +310,6 @@ function BudgetPlanMainForm({ headerData, onBack, formData, updateFormData, tota
         {currentForm === "page2" && (
           <CreateBudgetPlanWithoutLimits
             form={forms.page2}
-            updateFormData={(data) => updateFormData("page2", data)}
             budgetLimit={availableResources}
             onPrevious={handlePrevious}
           />

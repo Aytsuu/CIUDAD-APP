@@ -9,7 +9,6 @@ import { minutesOfMeetingFormSchema } from '@/form-schema/council/minutesOfMeeti
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useState } from 'react';
-import { useEffect } from 'react';
 import { useInsertMinutesOfMeeting } from './queries/MOMInsertQueries';
 
 
@@ -45,13 +44,13 @@ export default function AddMinutesOfMeeting({onSuccess}: {
 
     }
 
-    useEffect(() => {
-            if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
-            form.setValue('meetingFile', mediaFiles[0].publicUrl);
-        } else {
-            form.setValue('meetingFile', 'no-image-url-fetched');
-        }
-    }, [mediaFiles, form]);
+    // useEffect(() => {
+    //         if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+    //         form.setValue('meetingFile', mediaFiles[0].publicUrl);
+    //     } else {
+    //         form.setValue('meetingFile', 'no-image-url-fetched');
+    //     }
+    // }, [mediaFiles, form]);
 
     return(
        <div className="max-h-[80vh] overflow-y-auto p-4">
@@ -83,7 +82,7 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                     <FormField
                         control={form.control}
                         name="meetingFile"
-                        render={({ field }) => (
+                        render={({ }) => (
                             <FormItem>
                                 <FormControl>
                                     <MediaUpload

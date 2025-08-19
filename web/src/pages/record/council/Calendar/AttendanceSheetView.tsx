@@ -27,7 +27,7 @@ async function generatePDF(
   dataChunks: any[][],
   activity: string,
   date: string,
-  time: string,
+  _time: string,
   place: string,
   formattedTime: string,
   logoBase64: string | null

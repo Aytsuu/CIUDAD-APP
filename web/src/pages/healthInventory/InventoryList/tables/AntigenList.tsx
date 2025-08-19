@@ -41,10 +41,10 @@ export default function AntigenList() {
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     React.useState(false);
   const [vaccineToDelete, setVaccineToDelete] = useState<number | null>(null);
-  const [isDialog, setIsDialog] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<"vaccine" | "supplies">(
-    "vaccine"
-  );
+  // const [isDialog, setIsDialog] = useState(false);
+  // const [selectedOption, setSelectedOption] = useState<"vaccine" | "supplies">(
+  //   "vaccine"
+  // );
   const navigate = useNavigate();
 
   // Use the custom hook here

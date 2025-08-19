@@ -11,7 +11,7 @@ export const useAddDonation = () => {
   
   return useMutation({
     mutationFn: (donationData: DonationInput) => postdonationreq(donationData),
-    onSuccess: (don_num) => {
+    onSuccess: (_don_num) => {
       // Invalidate the donations query to trigger refetch
       queryClient.invalidateQueries({ queryKey: ["donations"] });
 

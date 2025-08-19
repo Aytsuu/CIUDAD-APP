@@ -7,7 +7,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import React from "react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { Badge } from "@/components/ui/badge";
 
 // Define the columns for the data table
 export const IRColumns = (): ColumnDef<IRReport>[] => [

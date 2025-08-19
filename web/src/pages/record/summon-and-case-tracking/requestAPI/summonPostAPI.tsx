@@ -27,30 +27,31 @@ export const addCaseActivity = async (caseInfo: Record<string, any>) => {
     }
 }
 
-export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], description: string) => {    try{
+export const addSuppDoc = async(_ca_id: string, _media: MediaUploadType[number], _description: string) => {   
+    // try{
 
-        if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
-            throw new Error('File upload incomplete: missing URL or path');
-        }
+    //     if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
+    //         throw new Error('File upload incomplete: missing URL or path');
+    //     }
 
  
 
-        const formData = new FormData();
-        formData.append('file', media.file);
-        formData.append('ca_id', ca_id);
-        formData.append('csd_name', media.file.name);
-        formData.append('csd_type', media.file.type || 'application/octet-stream');
-        formData.append('csd_path', media.storagePath);
-        formData.append('csd_url', media.publicUrl);
-        formData.append('csd_upload_date', new Date().toISOString());
-        formData.append('csd_description', description);
+    //     const formData = new FormData();
+    //     formData.append('file', media.file);
+    //     formData.append('ca_id', ca_id);
+    //     formData.append('csd_name', media.file.name);
+    //     formData.append('csd_type', media.file.type || 'application/octet-stream');
+    //     formData.append('csd_path', media.storagePath);
+    //     formData.append('csd_url', media.publicUrl);
+    //     formData.append('csd_upload_date', new Date().toISOString());
+    //     formData.append('csd_description', description);
 
-        console.log(formData)
+    //     console.log(formData)
 
-        const res = await api.post('clerk/case-supp-doc/', formData)
+    //     const res = await api.post('clerk/case-supp-doc/', formData)
 
-        return res.data
-    }catch(err){
-        console.error(err)
-    }
+    //     return res.data
+    // }catch(err){
+    //     console.error(err)
+    // }
 }

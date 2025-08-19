@@ -8,9 +8,7 @@ from django.db.models import Q
 from datetime import datetime
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
-from simple_history.utils import update_change_reason
 from .models import Budget_Plan_Detail, Budget_Plan
-from .serializers import ClearanceRequestSerializer, ClearanceRequestDetailSerializer, PaymentStatusUpdateSerializer
 
 class BudgetPlanView(generics.ListCreateAPIView):
     serializer_class = BudgetPlanSerializer
@@ -60,11 +58,11 @@ class BudgetPlanHistoryView(generics.ListCreateAPIView):
 
         
 class BudgetPlanFileView(generics.ListCreateAPIView):
-    serializer_class = BudgetPlanFileSerializer
+    serializer_class = BudgetPlanFileCreateSerializer
     queryset = BudgetPlan_File.objects.all()
 
 class BudgetPlanFileRetrieveView(generics.ListCreateAPIView):
-    serializer_class = BudgetPlanFileSerializer
+    serializer_class = BudgetPlanFileViewSerializer
 
     def get_queryset(self):
         plan_id = self.kwargs.get('plan_id')
@@ -106,7 +104,7 @@ class PreviousYearBudgetPlanDetailsView(generics.ListAPIView):
     
 class DeleteBudgetPlanFile(generics.RetrieveDestroyAPIView):
     queryset = BudgetPlan_File.objects.all()
-    serializer_class = BudgetPlanFileSerializer
+    serializer_class = BudgetPlanFileViewSerializer
     lookup_field = 'bpf_id'
 
 class DeleteRetrieveBudgetPlanAndDetails(generics.RetrieveDestroyAPIView):
@@ -140,35 +138,7 @@ class UpdateBudgetDetails(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
-
-class BudgetPlanHistoryView(generics.ListAPIView):
-    serializer_class = BudgetPlanHistorySerializer
-
-    def get_queryset(self):
-        plan_id = self.kwargs['plan_id']
-        return Budget_Plan.history.filter(
-            plan_id=plan_id,
-            history_type='~'  
-        ).order_by('-history_date')
-
-
-    def list(self, request, *args, **kwargs):
-        plan_id = self.kwargs['plan_id']
-        plan = get_object_or_404(Budget_Plan, plan_id=plan_id)
-        
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        
-        response_data = {
-            'plan_id': plan.plan_id,
-            'plan_year': plan.plan_year,
-            'history': serializer.data
-        }
-        
-        return Response(response_data)
-    
 
 # -------------------------------- INCOME & DISBURSEMENT ------------------------------------
 class IncomeFolderListView(generics.ListAPIView):
@@ -404,25 +374,6 @@ class UpdateExpenseParticularView(generics.RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True) 
         return super().update(request, *args, **kwargs)
     
-
-class UpdateBudgetPlanDetailView(generics.RetrieveUpdateAPIView):
-    serializer_class = Budget_Plan_DetailSerializer
-    lookup_field = 'dtl_id'
-
-    def get_queryset(self):
-        year = self.kwargs['year']
-        queryset = Budget_Plan_Detail.objects.filter(plan__plan_year=year)
-
-        if not queryset.exists():
-            raise NotFound(detail=f"No budget plan found for the year {year}.")
-
-        return queryset
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True) 
-        return super().update(request, *args, **kwargs)
 
 
 class Income_Expense_TrackingView(generics.ListCreateAPIView):

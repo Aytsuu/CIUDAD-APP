@@ -443,7 +443,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
 
   const residentRegistrationForm = () => (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full shadow-lg border-0 bg-gradient-to-br from-white to-orange-50/30">
+      <Card className="w-full shadow-none">
         <CardHeader className="text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <Store className="w-8 h-8 text-blue-600" />
@@ -477,19 +477,13 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
             {MainContent}
           </div>
 
-          {/* Security Notice */}
-          {!isBusinessInfoLoading && (
-            <Alert className="border-green-200 bg-green-50">
-              <AlertDescription className="text-green-800">
-                <strong>Data Security:</strong> All business information and documents are securely stored and
-                encrypted. Access is restricted to authorized personnel only.
-              </AlertDescription>
-            </Alert>
-          )}
-
           {/* Help Section */}
           {!isBusinessInfoLoading && (
             <div className="text-center pt-4 border-t border-gray-100">
+              <p className="text-xs text-gray-500 mb-2">
+                All business information and documents are securely stored and
+                encrypted. Access is restricted to authorized personnel only.
+              </p>
               <p className="text-xs text-gray-500 mb-2">
                 Need assistance with business registration? Contact your administrator for help.
               </p>

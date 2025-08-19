@@ -7,7 +7,6 @@ import {
   addBusinessFile,
   addFamily,
   addFamilyComposition,
-  addFile,
   addHousehold,
   addPersonal,
   addPersonalAddress,
@@ -195,16 +194,5 @@ export const useAddBusiness = () => {
 export const useAddBusinessFile = () => {
   return useMutation({
     mutationFn: (data: Record<string, any>[]) => addBusinessFile(data),
-  })
-}
-
-export const useAddFile = () => {
-  return useMutation({
-    mutationFn: ({name, type, path, url} : {
-      name: string;
-      type: string;
-      path: string;
-      url: string
-    }) => addFile(name, type, path,url),
   })
 }

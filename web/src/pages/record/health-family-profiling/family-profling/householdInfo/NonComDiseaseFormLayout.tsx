@@ -2,7 +2,7 @@ import React from "react";
 import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import NonComDiseaseForm from "./NonComDiseaseForm";
-import { familyFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { Separator } from "@/components/ui/separator";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -28,16 +28,24 @@ type PersonInfo = {
 
 export default function NoncomDiseaseFormLayout({
   form,
-  residents,
+  familyMembers, // Changed from residents to familyMembers
   selectedResidentId,
   setSelectedResidentId
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
-  residents: any;
+  familyMembers: any[]; // Family members from composition
   selectedResidentId: string;
   setSelectedResidentId: React.Dispatch<React.SetStateAction<string>>;
 }) {
   const ncdRecords = form.watch("ncdRecords.list");
+  
+  // Ensure familyMembers is always an array
+  const safeFamilyMembers = familyMembers || [];
+  
+  // Debug logging
+  React.useEffect(() => {
+    console.log('NonComDiseaseFormLayout - familyMembers:', safeFamilyMembers);
+  }, [safeFamilyMembers]);
   
   // Updated columns with lifestyle risk and maintenance status
   const columns: ColumnDef<PersonInfo>[] = [
@@ -99,7 +107,14 @@ export default function NoncomDiseaseFormLayout({
       <div className="space-y-6">
         {/* Respondents Information */}
         <NonComDiseaseForm
-          residents={residents}
+          residents={{
+            default: safeFamilyMembers,
+            formatted: safeFamilyMembers.map(member => ({
+              ...member,
+              // Use rp_id as the ID and format name properly
+              id: `${member.rp_id} - ${member.per?.per_fname || member.firstName || ''} ${member.per?.per_lname || member.lastName || ''}`
+            }))
+          }}
           form={form}
           selectedResidentId={selectedResidentId}
           onSelect={setSelectedResidentId}
@@ -110,8 +125,8 @@ export default function NoncomDiseaseFormLayout({
         <Separator className="my-6" />
 
         <div className="mb-4">
-          <h3 className="font-semibold text-lg">NCD Patient Records</h3>
-          <p className="text-xs text-black/50">Manage patient records</p>
+          <h3 className="font-semibold text-lg">NCD Records</h3>
+          <p className="text-xs text-black/50">Manage NCD records</p>
         </div>
 
         <DataTable

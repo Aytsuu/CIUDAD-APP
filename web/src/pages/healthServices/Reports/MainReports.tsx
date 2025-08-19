@@ -16,11 +16,11 @@ import { MeduseMonthCount } from "./medicine-report/queries/fetchQueries";
 
 export default function HealthcareReports() {
 
-  const { data: monthCountData, isLoading: isMonthCountLoading } =
+  const { data: monthCountData } =
   FAuseMonthCount();
-  const { data: vacMonthCountData, isLoading: isVacMonthCountLoading } =
+  const { data: vacMonthCountData } =
     VacuseMonthCount();
-  const { data: medMonthCountData, isLoading: isMedMonthCountLoading } =
+  const { data: medMonthCountData } =
     MeduseMonthCount();
 
 

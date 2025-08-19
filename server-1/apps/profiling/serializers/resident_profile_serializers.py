@@ -57,6 +57,22 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     def get_has_account(self, obj):
         return hasattr(obj, 'account')
     
+    def get_registered_by(self, obj):
+        if obj.staff:
+            staff_type = obj.staff.staff_type
+            staff_id = obj.staff.staff_id
+            
+            # Determine prefix based on staff type
+            if staff_type == "Barangay Staff":
+                prefix = "B-"
+            elif staff_type == "Health Staff":
+                prefix = "H-"
+            else:
+                prefix = ""  # Default for unknown types
+                
+            return f"{prefix}{staff_id}"
+        return "-"
+    
     def get_age(self, obj):
         dob = obj.per.per_dob
         today = datetime.today().date()

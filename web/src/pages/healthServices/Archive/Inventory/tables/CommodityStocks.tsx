@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CommodityStocksColumns } from "./columns/CommodityCol";
 import { Link } from "react-router";
@@ -63,17 +63,17 @@ const isLowStock = (availQty: number, unit: string, pcs: number) => {
 };
 
 export default function CommodityStocks() {
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
-    useState(false);
-  const [commodityToArchive, setCommodityToArchive] = useState<string | null>(
-    null
-  );
+  // const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
+  //   useState(false);
+  // const [commodityToArchive, setCommodityToArchive] = useState<string | null>(
+  //   null
+  // );
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
 
   const { data: commodityStocks, isLoading, error } = useCommodityStocks();
 

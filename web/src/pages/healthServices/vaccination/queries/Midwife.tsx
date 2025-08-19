@@ -31,7 +31,7 @@ export const useSubmitStep1 = () => {
     mutationFn: async ({
       data,
       assignmentOption,
-      form,
+      // form,
       vacStck_id,
       vac_id,
       staff_id,
@@ -124,11 +124,11 @@ export const useSubmitStep2 = () => {
     mutationFn: async ({
       data,
       form,
-      form2,
+      // form2,
       vacStck_id,
       vac_id,
       vac_name,
-      expiry_date,
+      // expiry_date,
       pat_id,
       staff_id
     }: {

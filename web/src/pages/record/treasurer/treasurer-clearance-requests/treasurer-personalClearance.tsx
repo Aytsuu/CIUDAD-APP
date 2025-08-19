@@ -14,6 +14,7 @@ import ReceiptForm from "./treasurer-create-receipt-form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { format } from "date-fns";
 import { getPersonalClearances } from "./restful-api/personalClearanceGetAPI";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 const styles = {
     ViewFormLabelStyle: "font-semibold text-blue",

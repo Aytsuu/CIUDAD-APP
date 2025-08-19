@@ -64,6 +64,7 @@ export type FamilyRecord = {
   father: string;
   guardian: string;
   fam_date_registered: string;
+  registered_by: string;
 }
 
 export type MemberRecord = {

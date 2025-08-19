@@ -72,9 +72,9 @@ function WasteHotSchedEdit({wh_num, wh_date, wh_start_time, wh_end_time, wh_add_
         })    
     };
 
-    const handleResetAnnouncements = () => {
-        form.setValue('selectedAnnouncements', []);
-    };
+    // const handleResetAnnouncements = () => {
+    //     form.setValue('selectedAnnouncements', []);
+    // };
 
     if(isLoadingSitio || isLoadingWatchman){
          return (

@@ -145,6 +145,7 @@ export const useUpdateBusinessModification = () => {
       queryClient.setQueryData(['modificationRequests'], (old: any[] = []) => 
         old.filter((req: any) => req.bm_id != bm_id)
       )
+      queryClient.invalidateQueries({queryKey: ['businessHistory']})
     }
   })
 }

@@ -199,8 +199,8 @@ interface IncomeCreateFormProps {
 }
 
 function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
-    const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
-    const [activeVideoId, setActiveVideoId] = useState<string>("");
+    const [_mediaFiles, _setMediaFiles] = useState<MediaUploadType>([]);
+    const [_activeVideoId, _setActiveVideoId] = useState<string>("");
     const inputcss = "mt-[12px] w-full p-1.5 shadow-sm sm:text-sm";
     const inputCss = "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
     
