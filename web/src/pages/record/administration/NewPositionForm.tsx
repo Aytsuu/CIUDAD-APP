@@ -1,13 +1,12 @@
 import { Form } from "@/components/ui/form/form";
 import React from "react";
-import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { positionFormSchema, useValidatePosition } from "@/form-schema/administration-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormInput } from "@/components/ui/form/form-input";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
-import { CircleAlert, Users, Badge, Info, CheckCircle } from "lucide-react";
+import { Users, Badge, Info } from "lucide-react";
 import { useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { useAddPosition } from "./queries/administrationAddQueries";
@@ -18,12 +17,13 @@ import { usePositionGroups } from "./queries/administrationFetchQueries";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { formatPositionGroups } from "./AdministrationFormats";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function NewPositionForm() {
   const { user } = useAuth(); 
-  const { mutate: addPosition, isPending: isAdding } = useAddPosition();
-  const { mutate: editPosition, isPending: isUpdating } = useUpdatePosition();
-  const { data: positionGroups, isLoading: isLoadingGroups } = usePositionGroups();
+  const { mutateAsync: addPosition, isPending: isAdding } = useAddPosition();
+  const { mutateAsync: editPosition, isPending: isUpdating } = useUpdatePosition();
+  const { data: positionGroups } = usePositionGroups();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params || {}, [location.state]);
@@ -51,16 +51,9 @@ export default function NewPositionForm() {
     const maxHoldersNumber = Number(max_holders);
     if (max_holders === '0' || maxHoldersNumber < 0) {
       form.setValue('pos_max', '1');
+      console.log('max_holders:',max_holders)
     }
   }, [form.watch('pos_max')]);
-
-  // Auto select non-grouped for position group if empty
-  React.useEffect(() => {
-    const group = form.watch('pos_group')
-    if(!group) {
-      form.setValue('pos_group', 'non-grouped')
-    }
-  }, [form.watch('pos_group')])
 
   // Execute population of fields if type edit
   React.useEffect(() => {
@@ -74,60 +67,61 @@ export default function NewPositionForm() {
     form.setValue("pos_max", String(position.pos_max));
   }, [params.data]);
 
+  const create = async (values: Record<string, any>, staffId: string) => {
+    try {
+      // Add position (API handles dual database insertion)
+      await addPosition({ data: values, staffId });
+      // Reset form on success
+      form.setValue('pos_title', '');
+      form.setValue('pos_max', '1');
+      form.setValue('pos_group', '');
+      
+      showSuccessToast("Position created successfully");
+    } catch (err) {
+      showErrorToast('Failed to create position. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const update = async (values: Record<string, any>, positionId: string) => {
+    try {
+      await editPosition({ positionId, values });
+      showSuccessToast("Position has been updated successfully.")
+    } catch (err) {
+      showErrorToast("Failed to update position. Please try again.")
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   // Add new position (dual database insertion handled by API)
-  const submit = React.useCallback(async () => {
+  const submit = async () => {
     const formIsValid = await form.trigger();
     if (!formIsValid) {
       (!form.watch('pos_title') || !form.watch('pos_max') || !form.watch('pos_group')) &&
-        toast("Please fill out all required fields", {
-          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
-        });
-
+        showErrorToast("Please fill out all required fields.")
       return;
     }
 
     const values = form.getValues();
     const staffId = user?.staff?.staff_id || "";
+    const staffType = user?.staff?.staff_type;
 
-    if (formType === Type.Add) {
-      // Add position (API handles dual database insertion)
-      addPosition(
-        { data: values, staffId },
-        {
-          onSuccess: () => {
-            // Reset form on success
-            form.setValue('pos_title', '');
-            form.setValue('pos_max', '1');
-            form.setValue('pos_group', '');
-            
-            showSuccessToast("Position created successfully");
-          },
-          onError: () => {
-            showErrorToast("Failed to create position. Please try again.");
-          }
-        }
-      );
-    } else {
-      // Edit position (API handles dual database update)
-      const positionId = params.data.pos_id;
-      
-      editPosition(
-        { positionId, values },
-        {
-          onSuccess: () => {
-            toast("Position updated successfully", {
-              icon: <CheckCircle size={24} className="fill-green-500 stroke-white" />
-            });
-          },
-          onError: () => {
-            toast("Failed to update position. Please try again.", {
-              icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
-            });
-          }
-        }
-      );
+    setIsSubmitting(true);
+    switch(formType){
+      case Type.Add:
+        create({
+          ...values, 
+          pos_category: staffType == "Barangay Staff" ? "Barangay Position" : "Health Position" 
+        }, staffId);
+        break;
+      case Type.Edit:
+        const positionId = params.data.pos_id;
+        update(values, positionId);
+        break;
     }
-  }, [addPosition, editPosition, user, formType, params.data, form]);
+  };
 
   return (
     <main className="min-h-screen py-8">
@@ -156,12 +150,15 @@ export default function NewPositionForm() {
                           Group Assignment
                         </span>
                       </div>
-                      <FormSelect 
-                        control={form.control} 
-                        name="pos_group" 
-                        label="Position Group" 
+
+                      <Combobox 
                         options={formattedPositionGroups}
+                        value={form.watch("pos_group")}
+                        onChange={(value) => form.setValue("pos_group", value as string)}
+                        placeholder="Select a Position Group (optional)"
+                        triggerClassName="w-full"
                       />
+
                       <p className="text-xs text-gray-500 ml-1">
                         Choose which organizational group this position belongs to
                         (default non-grouped)
@@ -229,16 +226,6 @@ export default function NewPositionForm() {
                 </form>
               </Form>
             </Card>
-
-            {/* Loading State for Groups */}
-            {isLoadingGroups && (
-              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex items-center gap-2 text-yellow-800">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600"></div>
-                  <span className="text-sm">Loading position groups...</span>
-                </div>
-              </div>
-            )}
 
             {/* Status indicator for dual database operations */}
             {isSubmitting && (
