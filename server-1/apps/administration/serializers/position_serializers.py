@@ -14,7 +14,7 @@ class PositionListSerializer(serializers.ModelSerializer):
 
   class Meta:
     model = Position
-    fields = ['pos_id', 'pos_title', 'pos_group', 'pos_max', 'total_holders', 'pos_is_predefined', 
+    fields = ['pos_id', 'pos_title', 'pos_group', 'pos_max', 'pos_category', 'total_holders', 'pos_is_predefined', 
               'staff', 'creator_staff_type', 'is_maxed']
 
   def get_is_maxed(self, obj):

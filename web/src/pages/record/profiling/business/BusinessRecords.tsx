@@ -191,21 +191,6 @@ export default function BusinessRecords() {
                 ? `No businesses match "${searchQuery}". Try adjusting your search.`
                 : "Get started by registering your first business."}
             </p>
-            {!searchQuery && (
-              <Link
-                to="/profling/business/form"
-                state={{
-                  params: {
-                    type: "create",
-                  },
-                }}
-              >
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Register First Business
-                </Button>
-              </Link>
-            )}
           </div>
         )}
 

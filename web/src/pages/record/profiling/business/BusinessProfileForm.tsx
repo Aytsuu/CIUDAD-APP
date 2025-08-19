@@ -45,6 +45,7 @@ export default function BusinessProfileForm({
   setMediaFiles,
   setActiveVideoId,
   submit,
+  handleSkip
 }: {
   addresses?: any[];
   validAddresses?: boolean[];
@@ -64,7 +65,8 @@ export default function BusinessProfileForm({
   setFormType: React.Dispatch<React.SetStateAction<Type>>
   setMediaFiles: React.Dispatch<React.SetStateAction<MediaUploadType>>
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>
-  submit: () => void
+  submit: () => void,
+  handleSkip: () => void
 }) {
   const watchedValues = form.watch()
   const residentSelected = watchedValues?.rp_id ? true : false;
@@ -368,13 +370,13 @@ export default function BusinessProfileForm({
       )}
 
       {/* Business Information Section */}
-      <div className="p-10">
+      <div className={`p-10 ${isRegistrationTab && "border-t"}`}>
         <SectionHeader
           title="Business Information"
           description="Essential details about the business being profiled"
         />
 
-        {formType === Type.Create || formType === Type.Editing &&  <InfoAlert>
+        {(formType === Type.Create || formType === Type.Editing) &&  <InfoAlert>
           Provide accurate business information as this will be used for official records and tax assessment purposes.
         </InfoAlert>}
 
@@ -505,6 +507,17 @@ export default function BusinessProfileForm({
               {!isReadOnly && <p>Make sure all required information is complete before submitting.</p>}
             </div>
             <div className="flex gap-3">
+              {isRegistrationTab && 
+                <Button
+                  variant="ghost"
+                  className="flex-1 h-11"
+                  type="button"
+                  onClick={handleSkip}
+                  disabled={isSubmitting}
+                >
+                  Skip for Now
+                </Button>
+              }
               {renderActionButton({
                 formType,
                 origin: "defaultOrigin",

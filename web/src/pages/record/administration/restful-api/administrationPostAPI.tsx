@@ -1,5 +1,5 @@
 import { api, api2 } from "@/api/api";
-import { capitalize } from "@/helpers/capitalize";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 import { formatDate } from "@/helpers/dateHelper";
 
 export const addStaff = async (
@@ -27,14 +27,8 @@ export const addStaff = async (
 // Add new position
 export const addPosition = async (data: any, staffId: string) => {
   try {
-    const body = {
-      pos_title: capitalize(data.pos_title),
-      pos_max: data.pos_max,
-      pos_group: data.pos_group?.toUpperCase(),
-      staff: staffId,
-    };
-    const res = await api.post("administration/position/", body);
-    await api2.post("administration/position/", body);
+    const res = await api.post("administration/position/", {...capitalizeAllFields(data), staffId});
+    await api2.post("administration/position/", {...capitalizeAllFields(data), staffId});
     return res.data;
   } catch (err) {
     console.error(err);

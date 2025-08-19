@@ -133,7 +133,7 @@ export const addHousehold = async (householdInfo: Record<string, string>, staffI
   try {
     const data = {
       hh_nhts: capitalize(householdInfo.nhts),
-      add: householdInfo.add_id,
+      add: householdInfo.address.split(" ")[0],
       rp: householdInfo.householdHead.split(" ")[0],
       staff: staffId
     }

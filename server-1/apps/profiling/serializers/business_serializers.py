@@ -192,6 +192,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     required=False)
   modification_files = FileInputSerializer(write_only=True, many=True, required=False)
   edit_files = FileInputSerializer(write_only=True, many=True, required=False)
+  create_files = FileInputSerializer(write_only=True, many=True, required=False)
   respondent = RespondentInputSerializer(write_only=True, required=False)
   rp = serializers.CharField(write_only=True, required=False)
   br = serializers.CharField(write_only=True, required=False)
@@ -201,14 +202,14 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
     model = Business
     fields = ['bus_name', 'rp', 'br', 'respondent', 'bus_gross_sales', 
               'bus_status', 'bus_date_verified','sitio', 'bus_street', 
-              'staff', 'modification_files', 'edit_files', 'add']
+              'staff', 'modification_files', 'edit_files', 'create_files', 'add']
 
   @transaction.atomic
   def create(self, validated_data):
     try:
         sitio = validated_data.pop('sitio', None)
         street = validated_data.pop('bus_street', '')
-        files = validated_data.pop('files', [])
+        create_files = validated_data.pop('create_files', [])
         rp = validated_data.pop('rp', None)
         br = validated_data.pop('br', None)
 
@@ -232,8 +233,8 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         )
 
         # Handle file uploads
-        if files:
-            self._upload_files(business_instance, files)
+        if create_files:
+            self._upload_files(business_instance, create_files)
 
         return business_instance
 
@@ -265,7 +266,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         business_file.bf_url=url
         business_files.append(business_file)
 
-      if business_files:
+      if len(business_files) > 0:
           BusinessFile.objects.bulk_create(business_files)
   
   @transaction.atomic

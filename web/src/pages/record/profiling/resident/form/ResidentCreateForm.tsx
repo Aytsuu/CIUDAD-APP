@@ -27,7 +27,7 @@ import {
   UserRoundPlus,
 } from "lucide-react";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
-import { formatSitio, formatResidents } from "../../ProfilingFormats";
+import { formatResidents, formatSitio } from "../../ProfilingFormats";
 
 const DEFAULT_ADDRESS = [
   {
@@ -184,7 +184,7 @@ export default function ResidentCreateForm({ params }: {
       if (params?.isRegistrationTab) {
         params.setResidentId(resident.rp_id);
         params.setAddresses(new_addresses);
-        params?.next();
+        params?.next(true);
       }
       setIsSubmitting(false);
       form.reset(defaultValues);
@@ -231,15 +231,15 @@ export default function ResidentCreateForm({ params }: {
 
   const residentRegistrationForm = () => (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full shadow-none">
+      <Card className="w-full shadow-none max-h-[700px] overflow-y-auto">
         <CardHeader className="text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <UserRoundPlus className="w-8 h-8 text-blue-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">
+          <h2 className="text-xl font-semibold mb-2">
             Resident Registration
           </h2>
-          <p className="max-w-2xl mx-auto leading-relaxed">
+          <p className="mx-auto leading-relaxed">
             Create a comprehensive profile for a new resident. This includes
             personal information, contact details, and address information.
           </p>
@@ -247,14 +247,14 @@ export default function ResidentCreateForm({ params }: {
 
         <CardContent className="space-y-6">
           {/* Info Alert */}
-          <Alert className="border-blue-200 bg-blue-50">
+          {/* <Alert className="border-blue-200 bg-blue-50">
             <AlertDescription className="text-blue-800 flex items-center gap-2">
               <strong>Resident Registration:</strong> Please ensure all
               information is accurate as this will be used for official records
               and identification purposes.
             </AlertDescription>
           </Alert>
-          <Separator />
+          <Separator /> */}
 
           {/* Form Content */}
           <div className="p-6">{MainContent}</div>

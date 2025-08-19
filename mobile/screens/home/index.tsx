@@ -44,26 +44,26 @@ export default function HomeScreen() {
    const [showSplash, setShowSplash] = React.useState(true);
   const videoRef = React.useRef(null);
 
-  if (true) {
-    return (
-      <SafeAreaView className="flex-1">
-        <Video 
-          source={require('@/assets/animated/splashscreen.mp4')}
-          ref={videoRef}
-          style={styles.video}
-          resizeMode="cover" // or 'contain', 'stretch'
-          repeat={true}
-          onError={(error) => {
-            console.log('Video error:', error);
+  // if (true) {
+  //   return (
+  //     <SafeAreaView className="flex-1">
+  //       <Video 
+  //         source={require('@/assets/animated/splashscreen.mp4')}
+  //         ref={videoRef}
+  //         style={styles.video}
+  //         resizeMode="cover" // or 'contain', 'stretch'
+  //         repeat={true}
+  //         onError={(error) => {
+  //           console.log('Video error:', error);
 
-          }}
-          muted={true} // Usually splash screens are silent
-          playInBackground={false}
-          playWhenInactive={false}
-        />
-      </SafeAreaView>
-    )
-  }
+  //         }}
+  //         muted={true} // Usually splash screens are silent
+  //         playInBackground={false}
+  //         playWhenInactive={false}
+  //       />
+  //     </SafeAreaView>
+  //   )
+  // }
 
   if (isLoading) {
     return <LoadingModal visible={true} />;

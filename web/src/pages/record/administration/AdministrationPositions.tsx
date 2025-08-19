@@ -192,7 +192,7 @@ export default function AdministrationPositions({
                                   <div className="flex items-center gap-4 text-black/60">
                                     <div className="flex items-center gap-1">
                                       <Users className="w-3 h-3" />
-                                      <Label className="text-[12px]">Max holders: {position.total_holders}/{position.pos_max}</Label>
+                                      <Label className="text-[12px]">Position Holders: {position.total_holders}/{position.pos_max}</Label>
                                     </div>
                                     {position.is_maxed && 
                                       <Badge variant={"secondary"} className="bg-red-100 border-red-200 text-red-800 hover:bg-red-100 rounded-full">
