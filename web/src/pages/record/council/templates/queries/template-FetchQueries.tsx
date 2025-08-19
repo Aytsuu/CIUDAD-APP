@@ -13,6 +13,7 @@ export type TemplateRecord = {
         tf_id: number;
         tf_url: string;
         tf_name: string;
+        tf_logoType: string;
     }[];
 };
   
