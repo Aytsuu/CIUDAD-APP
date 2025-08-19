@@ -68,6 +68,7 @@ class StaffDeleteView(generics.DestroyAPIView):
   queryset = Staff.objects.all()
   lookup_field = "staff_id"
 
+
 class StaffDataByTitleView(APIView):
   def get(self, request, *args, **kwargs):
     title = request.query_params.get('pos_title', None)
