@@ -49,7 +49,7 @@ export default function MinutesOfMeetingView() {
                 meetingAgenda: item?.mom_agenda ?? '',
                 meetingDate: item?.mom_date ?? '',
                 meetingAreas: JSON.stringify(item?.areas_of_focus ?? []),
-                meetingFile: JSON.stringify(item?.mom_file ?? {}),
+                meetingFile: JSON.stringify(item?.mom_file ?? []),
                 meetingSuppDocs: JSON.stringify(item?.supporting_docs ?? []),
                 mom_id: item?.mom_id?.toString(),
             }
@@ -86,7 +86,7 @@ export default function MinutesOfMeetingView() {
                     <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
                         {/* Meeting Date Section */}
 
-                         <View className="bg-white rounded-lg p-4 mb-4 mx-4 shadow-sm border border-gray-100">
+                         <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                             <View className="flex-row items-center mb-3 gap-2">
                                 <FileText size={20} color="gray"/>
                                 <Text className="text-lg font-semibold text-gray-800">Title</Text>
@@ -96,7 +96,7 @@ export default function MinutesOfMeetingView() {
                             </Text>
                         </View>
 
-                        <View className="bg-white rounded-lg p-4 mb-4 mx-4 shadow-sm border border-gray-100">
+                        <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                             <View className="flex-row items-center mb-2 gap-2">
                                 <Calendar size={20} color="gray" />
                                 <Text className="text-lg font-semibold text-gray-800">Meeting Date</Text>
@@ -108,7 +108,7 @@ export default function MinutesOfMeetingView() {
 
                         {/* Main Document Section */}
                         {momDetails.mom_file.momf_url && (
-                            <View className="bg-white rounded-lg p-4 mb-4 mx-4 shadow-sm border border-gray-100">
+                            <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                                 <View className="flex-row items-center mb-3 gap-2">
                                     <FileText size={20}  color="gray"/>
                                     <Text className="text-lg font-semibold text-gray-800">Meeting Document</Text>
@@ -128,7 +128,7 @@ export default function MinutesOfMeetingView() {
                         )}
 
                         {/* Agenda Section */}
-                        <View className="bg-white rounded-lg p-4 mb-4 mx-4 shadow-sm border border-gray-100">
+                        <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                             <View className="flex-row items-center mb-3 gap-2">
                                 <FileText size={20} color="gray"/>
                                 <Text className="text-lg font-semibold text-gray-800">Agenda</Text>
@@ -140,7 +140,7 @@ export default function MinutesOfMeetingView() {
 
                         {/* Areas of Focus Section */}
                         {momDetails.areas_of_focus && momDetails.areas_of_focus.length > 0 && (
-                            <View className="bg-white rounded-lg p-4 mb-4 mx-4 shadow-sm border border-gray-100">
+                            <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                                 <View className="flex-row items-center mb-3 gap-2">
                                     <Target size={20} color="gray"/>
                                     <Text className="text-lg font-semibold text-gray-800">Areas of Focus</Text>
@@ -158,7 +158,7 @@ export default function MinutesOfMeetingView() {
 
                         {/* Supporting Documents Section */}
                         {momDetails.supporting_docs && momDetails.supporting_docs.length > 0 && (
-                            <View className="bg-white rounded-lg p-4 mb-4 mx-4 shadow-sm border border-gray-100">
+                            <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                                 <View className="flex-row items-center mb-3 gap-2">
                                     <Paperclip size={20} color="gray" />
                                     <Text className="text-lg font-semibold text-gray-800">

@@ -110,6 +110,7 @@ export default function MOMCreate(){
                                 label="Meeting Date"
                                 name="meetingDate"
                                 type="date"
+                                maximumDate={new Date()}
                             />
 
                             <FormComboCheckbox
