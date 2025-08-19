@@ -19,41 +19,14 @@ import { formatSitio } from "../../ProfilingFormats"
 import { useAddAddress, useAddPerAddress } from "../../queries/profilingAddQueries"
 import { capitalizeAllFields } from "@/helpers/capitalize"
 import { useLoading } from "@/context/LoadingContext"
-import { Loader2, Users, Building2, History, Clock, User, Calendar } from "lucide-react"
+import { Users, History, Clock } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
-import { Button } from "@/components/ui/button/button"
 import { Label } from "@/components/ui/label"
 import { useNavigate } from "react-router"
-
-// Loading Component
-const ActivityIndicator = ({ message }: { message: string }) => (
-  <div className="flex flex-col items-center justify-center py-12 space-y-4">
-    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-    <p className="text-sm text-gray-500">{message}</p>
-  </div>
-)
-
-// Empty State Component
-const EmptyState = ({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: React.ElementType
-  title: string
-  description: string
-}) => (
-  <div className="flex flex-col items-center justify-center py-12 space-y-4">
-    <div className="rounded-full bg-gray-100 p-4">
-      <Icon className="h-8 w-8 text-gray-400" />
-    </div>
-    <div className="text-center space-y-1">
-      <h3 className="text-sm font-medium text-gray-900">{title}</h3>
-      <p className="text-sm text-gray-500">{description}</p>
-    </div>
-  </div>
-)
+import { RenderHistory } from "../../ProfilingHistory"
+import { ActivityIndicator } from "@/components/ui/activity-indicator"
+import { EmptyState } from "@/components/ui/empty-state"
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
@@ -92,8 +65,6 @@ export default function ResidentViewForm({ params }: { params: any }) {
       ),
     [addresses],
   )
-
-  console.log(personalHistory)
   
   // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
@@ -215,7 +186,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
   }
 
   const handleHistoryItemClick = (index: number) => {
-    navigate('/profiling/resident/update/view', {
+    navigate('/profiling/resident/history/view', {
       state: {
         params: {
           newData: personalHistory[index],
@@ -223,87 +194,6 @@ export default function ResidentViewForm({ params }: { params: any }) {
         }
       }
     })
-  }
-
-  // Render Personal History Content
-  const renderPersonalHistory = () => {
-    if (isLoadingPersonalHistory) {
-      return (
-        <div className="p-4">
-          <ActivityIndicator message="Loading history..." />
-        </div>
-      )
-    }
-
-    if (!personalHistory || personalHistory.length === 0) {
-      return (
-        <div className="p-4">
-          <EmptyState icon={Clock} title="No history found" description="No recorded updates." />
-        </div>
-      )
-    }
-
-    return (
-      <div className="py-5 max-h-[80vh] overflow-y-auto">
-        <div className="space-y-2">
-
-          {personalHistory.map((historyItem: any, index: number) => (
-            <div
-              key={historyItem.history_id}
-              className={`border rounded-md p-3 hover:bg-gray-50 transition-all duration-300`}
-              style={{
-                opacity: 0,
-                animation: `fadeInUp 0.4s ease-out ${index * 0.1}s forwards`,
-              }}
-            >
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-medium text-green-700">Personal Information Update</h4>
-                  {(index + 1) < personalHistory.length ? (<Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleHistoryItemClick(index)
-                    }}
-                  >
-                    View
-                  </Button>) : (
-                    <Label className="text-xs mb-1 text-gray-500">Created</Label>
-                  )}
-                </div>
-                <div className="flex items-center justify-between text-xs text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <User className="h-3 w-3" />
-                    <span className="truncate max-w-[120px]">{historyItem.history_user_name}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs">
-                    <Calendar className="h-3 w-3" />
-                    <span className="whitespace-nowrap">{historyItem.history_date}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <style>
-          {`
-            @keyframes fadeInUp {
-              from {
-                opacity: 0;
-                transform: translateY(10px);
-              }
-              to {
-                opacity: 1;
-                transform: translateY(0);
-              }
-            }
-          `}
-        </style>
-      </div>
-    )
   }
 
   // Render Family Card Content
@@ -336,18 +226,6 @@ export default function ResidentViewForm({ params }: { params: any }) {
 
   // Render Business Card Content
   const renderBusinessContent = () => {
-    if (isLoadingBusinesses) {
-      return <ActivityIndicator message="Loading business information..." />
-    }
-    if (!businesses || businesses.length === 0) {
-      return (
-        <EmptyState
-          icon={Building2}
-          title="No businesses found"
-          description="This resident has no registered business ownership."
-        />
-      )
-    }
     return (
       <div className="flex justify-center">
         <div className="w-full max-w-5xl mt-5 border">
@@ -380,7 +258,14 @@ export default function ResidentViewForm({ params }: { params: any }) {
                 trigger={
                   <History size={20} className="text-gray-800 cursor-pointer hover:text-blue-600 transition-colors" />
                 }
-                content={renderPersonalHistory()}
+                content={
+                  <RenderHistory 
+                    history={personalHistory}
+                    isLoadingHistory={isLoadingPersonalHistory}
+                    itemTitle="Personal Information Update"
+                    handleHistoryItemClick={handleHistoryItemClick}
+                  />
+                }
                 title={
                   <Label className="flex items-center gap-2 text-lg text-darkBlue1">
                     <Clock size={20}/>
@@ -427,14 +312,17 @@ export default function ResidentViewForm({ params }: { params: any }) {
           </div>
           {renderFamilyContent()}
         </Card>
-
-        <Card className="w-full p-10">
-          <div className="pb-4">
-            <h2 className="text-lg font-semibold">Business</h2>
-            <p className="text-xs text-black/50">Shows owned business of this resident</p>
-          </div>
-          {renderBusinessContent()}
-        </Card>
+        
+        {(!isLoadingBusinesses && (!businesses || businesses.length === 0)) &&
+          <Card className="w-full p-10">
+            <div className="pb-4">
+              <h2 className="text-lg font-semibold">Business</h2>
+              <p className="text-xs text-black/50">Shows owned business of this resident</p>
+            </div>
+            {renderBusinessContent()}
+          </Card>
+        }
+        
       </div>
     </LayoutWithBack>
   )

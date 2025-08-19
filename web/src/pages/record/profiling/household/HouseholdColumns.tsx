@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button/button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { capitalize } from "@/helpers/capitalize";
 import { useUpdateFamily } from "../queries/profilingUpdateQueries";
-import { useUpdateFamilyHealth } from "../../health-family-profiling/family-profling/queries/profilingUpdateQueries";
+import { formatDate } from "@/helpers/dateHelper";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -123,7 +123,10 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
   },
   {
     accessorKey: 'date_registered',
-    header: 'Date Registered'
+    header: 'Date Registered',
+    cell: ({row}) => (
+      formatDate(row.original.date_registered, "long")
+    )
   },
   {
     accessorKey: 'registered_by',
@@ -195,7 +198,6 @@ export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
       const navigate = useNavigate();
       const { showLoading, hideLoading } = useLoading();
       const { mutateAsync: updateFamily } = useUpdateFamily();
-      const { mutateAsync: updateFamilyHealth } = useUpdateFamilyHealth();
       const family = row.getValue('data') as any;
       const [building, setBuilding] = React.useState<string | null>(family.fam_building);
       
@@ -230,18 +232,11 @@ export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
           setBuilding(newBuilding);
           const data = { fam_building: newBuilding };
           try {
-            await Promise.all([
-              updateFamily({
-                data: data,
-                familyId: family.fam_id,
-                oldHouseholdId: ""
-              }),
-              updateFamilyHealth({
-                data: data,
-                familyId: family.fam_id,
-                oldHouseholdId: ""
-              })
-            ]);
+            await updateFamily({
+              data: data,
+              familyId: family.fam_id,
+              oldHouseholdId: ""
+            })
           } catch (error) {
             setBuilding(family.fam_building);
           }

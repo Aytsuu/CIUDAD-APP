@@ -37,7 +37,13 @@ export const useAssignFeature = () => {
       featureId: string;
       staffId: string;
     }) => assignFeature(positionId, featureId, staffId),
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+    onSuccess: (data) => {
+      queryClient.setQueryData(['allAssignedFeatures'], (old: any[] = []) => [
+        ...old,
+        data
+      ])
+      queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+    }
   })
 }
 

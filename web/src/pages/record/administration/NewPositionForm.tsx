@@ -11,17 +11,18 @@ import { CircleAlert, Users, Badge, Info, CheckCircle } from "lucide-react";
 import { useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { useAddPosition } from "./queries/administrationAddQueries";
-import { useEditPosition } from "./queries/administrationUpdateQueries";
+import { useUpdatePosition } from "./queries/administrationUpdateQueries";
 import { renderActionButton } from "./AdministrationActionConfig";
 import { Type } from "./AdministrationEnums";
 import { usePositionGroups } from "./queries/administrationFetchQueries";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { formatPositionGroups } from "./AdministrationFormats";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 export default function NewPositionForm() {
   const { user } = useAuth();
   const { mutate: addPosition, isPending: isAdding } = useAddPosition();
-  const { mutate: editPosition, isPending: isUpdating } = useEditPosition();
+  const { mutate: editPosition, isPending: isUpdating } = useUpdatePosition();
   const { data: positionGroups, isLoading: isLoadingGroups } = usePositionGroups();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const location = useLocation();
@@ -99,14 +100,10 @@ export default function NewPositionForm() {
             form.setValue('pos_max', '1');
             form.setValue('pos_group', '');
             
-            toast("Position created successfully", {
-              icon: <CheckCircle size={24} className="fill-green-500 stroke-white" />
-            });
+            showSuccessToast("Position created successfully");
           },
           onError: () => {
-            toast("Failed to create position. Please try again.", {
-              icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
-            });
+            showErrorToast("Failed to create position. Please try again.");
           }
         }
       );

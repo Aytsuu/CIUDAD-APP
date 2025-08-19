@@ -31,18 +31,10 @@ import { LoadButton } from "@/components/ui/button/load-button";
 import { usePositions } from "./queries/administrationFetchQueries";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
-import { useLoading } from "@/context/LoadingContext";
-import { getPersonalInfo } from "../profiling/restful-api/profilingGetAPI";
 import { formatPositions } from "./AdministrationFormats";
+import { useAuth } from "@/context/AuthContext";
 
 export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
-  {
-    accessorKey: "icon",
-    header: "",
-    cell: () => (
-      <UserRoundCheck size={20} className="text-green-600 w-full text-center" />
-    ),
-  },
   {
     accessorKey: "staff_id",
     header: ({ column }) => (
@@ -89,12 +81,15 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         Middle Name
         <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
       </div>
+    )
+  },
+  {
+    accessorKey: "sex",
+    header: "Sex",
+    cell: ({row}) => (
+      row.original.sex[0]
     ),
-    cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("mname") ? row.getValue("mname") : "-"}
-      </div>
-    ),
+    size: 60
   },
   {
     accessorKey: "contact",
@@ -105,15 +100,11 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
     header: "Position",
   },
   {
-    accessorKey: "staff_assign_date",
-    header: "Date Assigned",
-  },
-  {
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => {
       const navigate = useNavigate();
-      const { showLoading, hideLoading } = useLoading();
+      const { user } = useAuth()
       const [isEditModalOpen, setIsEditModalOpen] =
         React.useState<boolean>(false);
       const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -122,7 +113,9 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
       const { mutateAsync: updateStaff, isPending: isUpdatingMain } = useUpdateStaff();
       const { mutateAsync: deleteStaff, isPending: isDeletingMain } = useDeleteStaff();
       
-      const { data: positions, isLoading: isLoadingPositions } = usePositions();
+      const { data: positions, isLoading: isLoadingPositions } = usePositions(
+        user?.staff?.staff_type
+      );
 
       // Combined loading states
       const isUpdatingAny = isUpdatingMain;
@@ -170,24 +163,17 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
       };
 
       const handleView = async () => {
-        showLoading();
-        try {
-          const personalInfo = await getPersonalInfo(row.original.staff_id);
-          navigate("/resident/view", {
-            state: {
-              params: {
-                type: 'viewing',
-                data: {
-                  personalInfo: personalInfo,
-                  residentId: row.original.staff_id,
-                  familyId: row.original.fam
-                },
-              }
-            },
-          });
-        } finally {
-          hideLoading();
-        }
+        navigate("/profiling/resident/view", {
+          state: {
+            params: {
+              type: 'viewing',
+              data: {
+                residentId: row.original.staff_id,
+                familyId: row.original.fam
+              },
+            }
+          },
+        });
       }
 
       const handleEdit = () => {
@@ -367,7 +353,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                       control={form.control}
                       name="assignPosition"
                       label="Select New Position"
-                      options={formatPositions(positions)}
+                      options={formatPositions(positions?.filter((pos: any) => !pos.is_maxed || pos.pos_id == form.watch('assignPosition')))}
                     />
 
                     {isLoadingPositions && (
@@ -420,5 +406,6 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         </div>
       );
     },
+    
   },
 ];

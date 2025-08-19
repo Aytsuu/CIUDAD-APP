@@ -6,18 +6,21 @@ import { Button } from "@/components/ui/button/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import type { Assigned, Feature } from "./AdministrationTypes"
 import { formatDate } from "@/helpers/dateHelper"
 import { useAuth } from "@/context/AuthContext"
-import { useAssignFeature, useSetPermission } from "./queries/administrationAddQueries"
+import { useAssignFeature } from "./queries/administrationAddQueries"
 import { useDeleteAssignedFeature } from "./queries/administrationDeleteQueries"
 import {
   ChevronDown,
-  ChevronRight,
   Check,
   Loader2,
 } from "lucide-react"
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
+import { capitalize } from "@/helpers/capitalize"
+import { useUpdateAssignment } from "./queries/administrationUpdateQueries"
+import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 
 interface FeatureSelectionProps {
   selectedPosition: string
@@ -34,16 +37,10 @@ export default function FeatureSelection({
 }: FeatureSelectionProps) {
   const { user } = useAuth()
   const { mutateAsync: assignFeature } = useAssignFeature()
-  const { mutateAsync: setPermissions } = useSetPermission()
+  const { mutateAsync: updateAssignment } = useUpdateAssignment();
   const { mutate: deleteAssignedFeature } = useDeleteAssignedFeature()
-  const [openCategories, setOpenCategories] = React.useState<Set<string>>(new Set())
   const [loadingFeatures, setLoadingFeatures] = React.useState<Set<string>>(new Set())
-
-  // Initialize all categories as open
-  React.useEffect(() => {
-    const categories = Object.keys(groupedFeatures)
-    setOpenCategories(new Set(categories))
-  }, [groupedFeatures])
+  const [loadingPermissions, setLoadingPermissions] = React.useState<Set<string>>(new Set())
 
   // Create a set for quick lookup of assigned feature IDs
   const assignedFeatureIds = React.useMemo(() => {
@@ -54,20 +51,27 @@ export default function FeatureSelection({
     return ids
   }, [assignedFeatures])
 
-  const toggleCategory = (category: string) => {
-    setOpenCategories((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(category)) {
-        newSet.delete(category)
-      } else {
-        newSet.add(category)
-      }
-      return newSet
-    })
+  const handleChangePermission = async (feat_id: string, assi_id: string, permission: string) => {
+    setLoadingPermissions((prev) => new Set([...prev, feat_id]))
+    try {
+      const formatPerm = permission === 'view only' ? 'VIEW ONLY' : 'FULL CONTROL'
+      await updateAssignment({
+        assi_id: assi_id,
+        data: {
+          assi_permission: formatPerm
+        }
+      })
+    } finally {
+      setLoadingPermissions((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(feat_id);
+        return newSet;
+      })
+    }
   }
 
   // Optimistic update for feature assignment
-  const handleAssignment = React.useCallback(
+  const handleCheckbox = React.useCallback(
     async (feature: any, checked: boolean) => {
       const featureId = feature.feat_id
 
@@ -87,31 +91,20 @@ export default function FeatureSelection({
             assi_id: tempId,
             assi_date: formatDate(new Date()) ?? "",
             feat: feature,
-            pos: selectedPosition,
-            permissions: [
-              {
-                perm_id: `perm-${tempId}`,
-                view: true,
-                create: false,
-                update: false,
-                delete: false,
-                assi_id: tempId,
-              },
-            ],
+            pos: {
+              pos_id: selectedPosition
+            },
+            assi_permission: 'VIEW ONLY'
           }
 
           // Update state immediately
           setAssignedFeatures((prev) => [...prev, newAssignment])
 
-          // Make API calls
+          // // Make API calls
           const assignment = await assignFeature({
             positionId: selectedPosition,
             featureId: feature.feat_id,
             staffId: user?.staff?.staff_id || "",
-          })
-
-          const permission = await setPermissions({
-            assi_id: assignment.assi_id,
           })
 
           // Update with real data
@@ -120,17 +113,7 @@ export default function FeatureSelection({
               item.feat.feat_id === feature.feat_id && item.assi_id === tempId
                 ? {
                     ...item,
-                    assi_id: assignment.assi_id,
-                    permissions: [
-                      {
-                        perm_id: permission.perm_id,
-                        view: true,
-                        create: false,
-                        update: false,
-                        delete: false,
-                        assi_id: assignment.assi_id,
-                      },
-                    ],
+                    assi_id: assignment.assi_id
                   }
                 : item,
             ),
@@ -172,6 +155,14 @@ export default function FeatureSelection({
     [assignedFeatureIds],
   )
 
+  const getPermission = React.useCallback((feat_id: string) => {
+    if(!feat_id) return;
+    const feature = assignedFeatures.find((assi: any) =>
+      assi.feat.feat_id == feat_id
+    );
+    return feature?.assi_permission
+  }, [assignedFeatures])
+
   // Get category stats
   const getCategoryStats = (categoryFeatures: Feature[]) => {
     const assigned = categoryFeatures.filter((f) => isFeatureAssigned(f.feat_id)).length
@@ -184,9 +175,9 @@ export default function FeatureSelection({
     categoryFeatures.forEach((feature) => {
       const isAssigned = isFeatureAssigned(feature.feat_id)
       if (selectAll && !isAssigned) {
-        handleAssignment(feature, true)
+        handleCheckbox(feature, true)
       } else if (!selectAll && isAssigned) {
-        handleAssignment(feature, false)
+        handleCheckbox(feature, false)
       }
     })
   }
@@ -211,111 +202,148 @@ export default function FeatureSelection({
 
       <Separator />
 
-      {/* Feature categories */}
-      <div className="w-full flex flex-col gap-3">
-        {Object.entries(groupedFeatures).map(([category, categoryFeatures]) => {
-            const stats = getCategoryStats(categoryFeatures)
-            const isAllSelected = stats.assigned === stats.total && stats.total > 0
+      {/* Feature categories - Accordion */}
+      <ScrollArea className="h-[calc(100vh-300px)]">
+        <div className="w-full pr-4 pt-1 pb-16">
+          <Accordion type="single" collapsible className="w-full space-y-3">
+            {Object.entries(groupedFeatures).map(([category, categoryFeatures]) => {
+              const stats = getCategoryStats(categoryFeatures)
+              const isAllSelected = stats.assigned === stats.total && stats.total > 0
 
-            return (
-              <Card key={category} className="w-full">
-                <Collapsible open={openCategories.has(category)} onOpenChange={() => toggleCategory(category)}>
-                  <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer hover:bg-gray-50/50 transition-colors pb-3">
-                      <CardTitle className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-3">
+              return (
+                <AccordionItem key={category} value={category} className="border-none">
+                  <Card className="w-full">
+                    <AccordionTrigger className="hover:no-underline p-0 pr-5">
+                      <CardHeader className="cursor-pointer hover:bg-gray-50/50 transition-colors pb-4 w-full">
+                        <CardTitle className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{category}</span>
+                            </div>
+                            <Badge variant={"secondary"} className={`text-xs 
+                            ${stats.assigned === stats.total ? 'bg-green-100 text-green-800 border-green-200' : ''}`}>
+                              {stats.assigned}/{stats.total}
+                            </Badge>
+                          </div>  
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{category}</span>
+                            {stats.total > 1 && (
+                              <ConfirmationModal 
+                                trigger={
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 px-2 text-xs"
+                                  > 
+                                    {isAllSelected ? "Deselect All" : "Select All"} 
+                                  </Button>
+                                }
+                                title={`${isAllSelected ? "Deselection" : "Selection"} Confirmation`}
+                                description={`Are you sure you want to ${isAllSelected ? "deselect" : "select"} all ${category} features?`}
+                                onClick={() => {
+                                  handleSelectAllInCategory(categoryFeatures, !isAllSelected)
+                                }}
+                                variant={isAllSelected ? "destructive" : ""}
+                              />
+                            )}
                           </div>
-                          <Badge variant={stats.assigned === stats.total ? "default" : "secondary"} className="text-xs">
-                            {stats.assigned}/{stats.total}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {stats.total > 1 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleSelectAllInCategory(categoryFeatures, !isAllSelected)
-                              }}
-                              className="h-6 px-2 text-xs"
-                            >
-                              {isAllSelected ? "Deselect All" : "Select All"}
-                            </Button>
-                          )}
-                          {openCategories.has(category) ? (
-                            <ChevronDown className="w-4 h-4 text-gray-500" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4 text-gray-500" />
-                          )}
-                        </div>
-                      </CardTitle>
-                    </CardHeader>
-                  </CollapsibleTrigger>
+                        </CardTitle>
+                      </CardHeader>
+                    </AccordionTrigger>
 
-                  <CollapsibleContent>
-                    <CardContent className="pt-0">
-                      <ScrollArea className="max-h-64">
-                        <div className="flex flex-col gap-2">
-                          {categoryFeatures.map((feature) => {
-                            const isAssigned = isFeatureAssigned(feature.feat_id)
-                            const isLoading = loadingFeatures.has(feature.feat_id)
+                    <AccordionContent className="pb-0">
+                      <CardContent className="pt-0">
+                        <ScrollArea className="max-h-64">
+                          <div className="grid gap-2">
+                            {categoryFeatures.map((feature) => {
+                              const isAssigned = isFeatureAssigned(feature.feat_id)
+                              const isLoading = loadingFeatures.has(feature.feat_id)
 
-                            return (
-                              <div
-                                key={feature.feat_id}
-                                className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-200 ${
-                                  isAssigned
-                                    ? "bg-green-50 border-green-200"
-                                    : "bg-white border-gray-200 hover:border-gray-300"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="relative">
-                                    <Checkbox
-                                      id={feature.feat_id}
-                                      checked={isAssigned}
-                                      onCheckedChange={(checked) => handleAssignment(feature, checked as boolean)}
-                                      disabled={isLoading}
-                                    />
-                                    {isLoading && (
-                                      <Loader2 className="absolute inset-0 w-4 h-4 animate-spin text-blue-500" />
-                                    )}
+                              return (
+                                <div
+                                  key={feature.feat_id}
+                                  className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-200 ${
+                                    isAssigned
+                                      ? "bg-green-50 border-green-200"
+                                      : "bg-white border-gray-200 hover:border-gray-300"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="relative">
+                                      <Checkbox
+                                        id={feature.feat_id}
+                                        checked={isAssigned}
+                                        onCheckedChange={(checked) => handleCheckbox(feature, checked as boolean)}
+                                        disabled={isLoading}
+                                      />
+                                      {isLoading && (
+                                        <Loader2 className="absolute inset-0 w-4 h-4 animate-spin text-blue-500" />
+                                      )}
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                      <Label
+                                        htmlFor={feature.feat_id}
+                                        className={`text-[14px] cursor-pointer font-medium ${
+                                          isAssigned ? "text-green-800" : "text-black/80"
+                                        }`}
+                                      >
+                                        {feature.feat_name}
+                                      </Label>
+                                    </div>
                                   </div>
-                                  <div className="flex flex-col gap-1">
-                                    <Label
-                                      htmlFor={feature.feat_id}
-                                      className={`text-[14px] cursor-pointer font-medium ${
-                                        isAssigned ? "text-green-800" : "text-black/80"
-                                      }`}
-                                    >
-                                      {feature.feat_name}
-                                    </Label>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                  {isAssigned && (
-                                    <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
-                                      <Check className="w-3 h-3 mr-1" />
-                                      Assigned
-                                    </Badge>
+                                  {!isLoading && isAssigned && (
+                                    <div className="flex items-center gap-2">
+                                      {loadingPermissions.has(feature.feat_id) ? (
+                                        <Button variant="outline" className="text-xs font-semibold h-6 p-2 shadow-none bg-green-100 
+                                          border-green-100 text-green-800 cursor-pointer hover:border-green-500 hover:bg-green-50
+                                          hover:text-green-800 gap-1
+                                          "
+                                          disabled
+                                        > 
+                                          <Loader2 className="w-4 h-4 animate-spin text-green-800" />
+                                        </Button>
+                                      ) : (<DropdownLayout 
+                                        trigger={
+                                          <Button variant="outline" className="text-xs font-semibold h-6 p-2 shadow-none bg-green-100 
+                                          border-green-100 text-green-800 cursor-pointer hover:border-green-500 hover:bg-green-50
+                                          hover:text-green-800 gap-1
+                                          "> 
+                                            {capitalize(getPermission(feature.feat_id) as string)} 
+                                            <ChevronDown className="w-3 h-3 "/>
+                                          </Button>
+                                        }
+                                        options={[
+                                          {id: 'view only', name: "View Only"},
+                                          {id: 'full control', name: "Full Control"}
+                                        ]}
+                                        onSelect={(value) => {
+                                          if(value !== getPermission(feature.feat_id)?.toLowerCase()) {
+                                            const assigment = assignedFeatures.find((assi: any) => assi.feat.feat_id == feature.feat_id)
+                                            handleChangePermission(feature.feat_id, assigment?.assi_id as string, value)
+                                          }
+                                        }}
+                                      />)}
+                                      
+                                      <Badge variant="secondary" className="text-xs bg-green-100 
+                                      text-green-800 hover:bg-green-100 hover:text-green-800">
+                                        <Check className="w-3 h-3 mr-1" />
+                                        Assigned
+                                      </Badge>
+                                    </div>
                                   )}
                                 </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </ScrollArea>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-            )
-          })}
-      </div>
+                              )
+                            })}
+                          </div>
+                        </ScrollArea>
+                      </CardContent>
+                    </AccordionContent>
+                  </Card>
+                </AccordionItem>
+              )
+            })}
+          </Accordion>
+        </div>
+      </ScrollArea>
     </div>
   )
 }
