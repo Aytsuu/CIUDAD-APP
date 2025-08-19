@@ -53,7 +53,7 @@ module.exports = {
         },
 
         // Custom colors
-        primaryBlue: '#00A8F0',
+        primaryBlue: '#0084F0',
         lightBlue: {
           1: '#ECF8FF',
           2: '#E0F2FF'

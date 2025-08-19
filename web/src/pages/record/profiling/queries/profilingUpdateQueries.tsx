@@ -112,6 +112,7 @@ export const useUpdateBusiness = () => {
       businessId: string;
     }) => updateBusiness(data, businessId),
     onSuccess: (newData) => {
+      console.log(newData)
       queryclient.setQueryData(['businessInfo'], (old: any) => ({
         ...(old || {}),
         ...newData
@@ -120,6 +121,31 @@ export const useUpdateBusiness = () => {
       queryclient.invalidateQueries({queryKey: ['activeBusinesses']});
       queryclient.invalidateQueries({queryKey: ['pendingBusinesses']});
       queryclient.invalidateQueries({queryKey: ['businessInfo']});
+    }
+  })
+}
+
+export const useUpdateBusinessModification = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({data, bm_id}:{
+      data: Record<string, any>
+      bm_id: string
+    }) => {
+      try {
+        const res = await api.patch(`profiling/business/modification/${bm_id}/result/`, data);
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    }, 
+    onSuccess: (_, variables) => {
+      const { bm_id } = variables
+      queryClient.setQueryData(['modificationRequests'], (old: any[] = []) => 
+        old.filter((req: any) => req.bm_id != bm_id)
+      )
+      queryClient.invalidateQueries({queryKey: ['businessHistory']})
     }
   })
 }

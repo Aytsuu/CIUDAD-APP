@@ -194,7 +194,7 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   // ==================== RENDER ======================
   const residentRegistrationForm = () => (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full max-w-4xl shadow-lg border-0 bg-gradient-to-br from-white to-gray-50/50">
+      <Card className="w-full max-w-4xl shadow-none">
         {/* Navigation Button */}
         <div className="flex justify-end p-4 pb-0">
           <Button

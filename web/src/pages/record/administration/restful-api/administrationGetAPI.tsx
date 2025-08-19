@@ -1,4 +1,4 @@
-import { api, api2 } from "@/api/api";
+import { api } from "@/api/api";
 
 // Fetch staffs with optional staff type filtering
 export const getStaffs = async (
@@ -20,7 +20,6 @@ export const getStaffs = async (
     }
     
     const res = await api.get("administration/staff/list/table/", { params });
-    await api2.get("administration/staff/list/table/", { params });
     return res.data;
   } catch (err) {
     console.error(err);
@@ -29,10 +28,13 @@ export const getStaffs = async (
 };
 
 // Fetch positions with optional filtering for staff type
-export const getPositions = async () => {
+export const getPositions = async (staff_type: string) => {
   try {
-    const res = await api.get("administration/position/");
-    await api2.get("administration/position/");
+    const res = await api.get("administration/position/", {
+      params: {
+        staff_type
+      }
+    });
     return res.data;
   } catch (err) {
     console.error(err);
@@ -43,7 +45,6 @@ export const getPositions = async () => {
 export const getFeatures = async () => {
   try {
     const res = await api.get("administration/feature/");
-    await api2.get("administration/feature/");
     return res.data;
   } catch (err) {
     console.error(err);
@@ -55,7 +56,6 @@ export const getAssignedFeatures = async (selectedPosition: string) => {
   try {
     const path = `administration/assignment/${selectedPosition}/`;
     const res = await api.get(path);
-    await api2.get(path);
     return res.data;
   } catch (err) {
     console.error(err);
@@ -66,7 +66,6 @@ export const getAssignedFeatures = async (selectedPosition: string) => {
 export const getAllAssignedFeatures = async () => {
   try {
     const res = await api.get("administration/assignment/list/");
-    await api2.get("administration/assignment/list/");
     return res.data;
   } catch (err) {
     console.error(err);

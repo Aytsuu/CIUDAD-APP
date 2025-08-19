@@ -28,7 +28,7 @@ export default function ResidentDetails() {
     }
   }, [params.resident])
 
-  const { data: personalInfo, isLoading: loadingPersonalInfo } = useGetPersonalInfo(resident?.rp_id)
+  const { data: personalInfo, isLoading: loadingPersonalInfo } = useGetPersonalInfo(resident?.rp_id, resident?.per_id)
   const { data: familyMembers, isLoading: loadingFam } = useGetFamilyMembers(resident?.family_no)
 
   const members = familyMembers?.results || []

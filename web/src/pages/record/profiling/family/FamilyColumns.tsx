@@ -19,7 +19,7 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
 import { capitalize } from "@/helpers/capitalize";
 import { useUpdateFamilyRole } from "../queries/profilingUpdateQueries";
-import { useUpdateFamilyRoleHealth } from "../../health-family-profiling/family-profling/queries/profilingUpdateQueries";
+import { formatDate } from "@/helpers/dateHelper";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -109,6 +109,9 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
   {
     accessorKey: "fam_date_registered",
     header: "Date Registered",
+    cell: ({row}) => (
+      formatDate(row.original.fam_date_registered, "long")
+    )
   },
   {
     accessorKey: "registered_by",
@@ -180,7 +183,6 @@ export const familyViewColumns = (
       const data = row.getValue("data") as any;
       const { showLoading, hideLoading } = useLoading();
       const { mutateAsync: updateFamilyRole } = useUpdateFamilyRole();
-      const { mutateAsync: updateFamilyRoleHealth } = useUpdateFamilyRoleHealth();
       const [role, setRole] = React.useState<string | null>(data.fc_role);
 
       const handleViewClick = async () => {
@@ -209,10 +211,7 @@ export const familyViewColumns = (
           const newRole = capitalize(value);
           setRole(newRole);
           try {
-            await Promise.all([
-              updateFamilyRole({ familyId: family.fam_id, residentId: data.rp_id, fc_role: newRole }),
-              updateFamilyRoleHealth({ familyId: family.fam_id, residentId: data.rp_id, fc_role: newRole }),
-            ]);
+            await updateFamilyRole({ familyId: family.fam_id, residentId: data.rp_id, fc_role: newRole })
           } catch (error) {
             setRole(data.fc_role);
             throw error;

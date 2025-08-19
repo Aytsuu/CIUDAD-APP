@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { batchPermissionUpdate, updatePermission, updatePosition } from "../restful-api/administrationPutAPI";
+import { updatePosition } from "../restful-api/administrationPutAPI";
 import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { api } from "@/api/api";
 
-export const useEditPosition = () => {
+export const useUpdatePosition = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({
@@ -36,29 +36,34 @@ export const useEditPosition = () => {
   })
 }
 
-export const useUpdatePermission = () => {
+export const useUpdateAssignment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({assignmentId, option, permission} : {
-      assignmentId: string,
-      option: string,
-      permission: boolean
-    }) => updatePermission(assignmentId, option, permission),
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+    mutationFn: async ({assi_id, data} : {
+      assi_id: string
+      data: Record<string, any>
+    }) => {
+      try {
+        const res = await api.patch(`administration/assignment/${assi_id}/update/`, data);
+        return res.data;
+      } catch (err) {
+        console.error(err)
+        throw err;
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['allAssignedFeatures'], (old: any[] = []) => 
+        old.map((assi: any) => {
+          if(assi.assi_id == data.assi_id) {
+            return data
+          }
+          return assi
+        })
+      )
+      queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+    }
   })
 }
-
-export const useBatchPermissionUpdate = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({assignmentId, checked} : {
-      assignmentId: string,
-      checked: boolean
-    }) => batchPermissionUpdate(assignmentId, checked),
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
-  })
-}
-
 export const useUpdateStaff = () => {
   const queryClient = useQueryClient();
   return useMutation({ 

@@ -7,9 +7,9 @@ export type Position = {
 export type Assigned = {
     assi_id: string
     assi_date: string
+    assi_permission: string
     feat: any
-    pos: string
-    permissions: any
+    pos: Record<string, any>
 }
 
 export type Feature = {
@@ -32,6 +32,7 @@ export type AdministrationRecord = {
     lname: string
     fname: string
     mname: string
+    sex: string
     suffix: string
     dateOfBirth: string
     contact: number

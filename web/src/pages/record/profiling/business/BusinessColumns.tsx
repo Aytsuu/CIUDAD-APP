@@ -35,7 +35,7 @@ export const activeColumns: ColumnDef<BusinessRecord>[] = [
     accessorKey: "bus_date_verified",
     header: "Date Registered",
     cell: ({row}) => (
-      formatDate(row.original.bus_date_verified, true)
+      formatDate(row.original.bus_date_verified, "long")
     )
   },
   {
@@ -45,7 +45,7 @@ export const activeColumns: ColumnDef<BusinessRecord>[] = [
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/profiling/business/form", {
+        navigate("form", {
           state: {
             params: {
               type: "viewing",
@@ -90,7 +90,7 @@ export const pendingColumns: ColumnDef<BusinessRecord>[] = [
     accessorKey: "bus_date_of_registration",
     header: "Date Submitted",
     cell: ({row}) => (
-      formatDate(row.original.bus_date_of_registration, true)
+      formatDate(row.original.bus_date_of_registration, "long")
     )
   },
   {
@@ -100,7 +100,7 @@ export const pendingColumns: ColumnDef<BusinessRecord>[] = [
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/profiling/business/form", {
+        navigate("form", {
           state: {
             params: {
               type: "request",
@@ -136,9 +136,21 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
     header: "Last Name",
   },
   {
+    accessorKey: "suffix",
+    header: "Suffix",
+  },
+   {
+    accessorKey: "sex",
+    header: "Sex",
+    cell: ({row}) => (
+      row.original.sex[0]
+    )
+  },
+  {
     accessorKey: "businesses",
     header: "Owned Businesses",
     cell: ({row}) => {
+      const navigate = useNavigate();
       const businesses = row.original.businesses;
       const formattedBusinesses = React.useMemo(() => formatOwnedBusinesses(businesses), [businesses])
 
@@ -146,6 +158,16 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
         <Combobox 
           options={formattedBusinesses}
           value={String(row.original.businesses.length)}
+          onChange={(value) => {
+            navigate("/profiling/business/record/form", {
+              state: {
+                params: {
+                  type: "viewing",
+                  busId: value.split(' ')[0],
+                }
+              }
+            })
+          }}
           emptyMessage="No businesses owned"
           placeholder="Search business"
           staticVal={true}
@@ -158,7 +180,7 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
     accessorKey: "br_date_registered",
     header: "Date Regitered",
     cell: ({row}) => (
-      formatDate(row.original.br_date_registered, true)
+      formatDate(row.original.br_date_registered, "long")
     )
   },
   {

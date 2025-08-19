@@ -31,7 +31,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
       info = father.rp.per
       return f"{info.per_fname}"
     
-    return "-"
+    return ""
   
   def get_mother(self, obj):
     mother = FamilyComposition.objects.filter(fam=obj, fc_role='Mother').first()
@@ -39,7 +39,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
       info = mother.rp.per
       return f"{info.per_fname}"
     
-    return "-"
+    return ""
   
   def get_guardian(self, obj):
     guardian = FamilyComposition.objects.filter(fam=obj, fc_role='Guardian').first()
@@ -47,7 +47,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
       info = guardian.rp.per
       return f"{info.per_fname}"
     
-    return "-"
+    return ""
 
   def get_registered_by(self, obj):
     staff = obj.staff

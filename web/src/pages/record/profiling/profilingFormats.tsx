@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { capitalize } from "@/helpers/capitalize";
 import { formatCurrency } from "@/helpers/currencyFormat";
+import { useNavigate } from "react-router";
 
 // Format residents for searching
 export const formatResidents = (residents: any) => {
@@ -108,7 +109,7 @@ export const formatOwnedBusinesses = (businesses: any) => {
   if(!businesses) return [];
 
   return businesses.map((bus: any) => ({
-    id: bus.bus_id,
+    id: `${bus.bus_id} ${bus.bus_name} ${bus.bus_gross_sales} ${bus.bus_status}`,
     name: (
       <div className="flex flex-col w-full items-start">
         <p className="text-[15px]">{bus.bus_name}</p>
@@ -123,4 +124,29 @@ export const formatOwnedBusinesses = (businesses: any) => {
       </div>
     )
   }))
+}
+
+export const formatModificationRequests = (requests: any) => {
+  if(!requests) return [];
+  return requests.map((req: any) => ({
+      id: `${req.current_details.bus_id} ${req.current_details.bus_name} ${req.current_details.bm_id}`,
+      name: (
+        <div className="flex flex-col w-full items-start py-2">
+          <div className="flex items-center gap-2">
+            <p className="text-[15px] font-medium">{req.current_details.bus_name}</p>
+            <Badge variant="outline" className="text-xs">
+              ID: {req.current_details.bus_id}
+            </Badge>
+          </div>
+          <div className="flex w-full justify-between items-center mt-1">
+            <p className="text-xs text-gray-600">
+              Modification Request Pending
+            </p>
+            <Badge className="bg-amber-500 hover:bg-amber-500">
+              Pending Review
+            </Badge>
+          </div>
+        </div>
+      )
+    }))
 }

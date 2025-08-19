@@ -83,7 +83,7 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
 
   return (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full max-w-2xl shadow-lg border-0 bg-gradient-to-br from-white to-indigo-50/30">
+      <Card className="w-full max-w-2xl shadow-none">
         <CardHeader className="text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
             <CircleUserRound className="w-8 h-8 text-indigo-600" />
@@ -147,16 +147,12 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
             />
           </div>
 
-          {/* Security Notice */}
-          <Alert className="border-green-200 bg-green-50">
-            <AlertDescription className="text-green-800">
-              <strong>Security Notice:</strong> All account information is encrypted and stored securely. The resident
-              will receive their login credentials via secure channels.
-            </AlertDescription>
-          </Alert>
-
           {/* Help Section */}
           <div className="text-center pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-500 mb-2">  
+              All account information is encrypted and stored securely. The resident
+              will receive their login credentials via secure channels.
+            </p>
             <p className="text-xs text-gray-500 mb-2">
               Need help with account creation? Contact your system administrator for assistance.
             </p>

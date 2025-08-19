@@ -30,6 +30,7 @@ export default function BusinessProfileForm({
   addresses,
   validAddresses,
   isRegistrationTab,
+  isModificationRequest,
   formattedResidents,
   formType,
   sitio,
@@ -48,6 +49,7 @@ export default function BusinessProfileForm({
   addresses?: any[];
   validAddresses?: boolean[];
   isRegistrationTab: boolean
+  isModificationRequest: boolean
   formattedResidents: any
   formType: Type
   sitio: any
@@ -472,30 +474,20 @@ export default function BusinessProfileForm({
           <div className="space-y-4">
             <Alert className="border-amber-200 bg-amber-50">
               <AlertDescription className="text-amber-800">
-                <strong>Required Documents:</strong> Please upload documents that support your reported gross sales
-                amount. This helps ensure accurate business classification and tax assessment.
+                <strong>Required Documents:</strong> Please upload a business permit to support the reported gross sales
+                amount. This helps ensure accurate business classification.
               </AlertDescription>
             </Alert>
 
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-2">Acceptable Documents Include:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Official sales receipts or invoices from recent transactions</li>
-                <li>• Bank statements showing business income and transactions</li>
-                <li>• Annual tax returns (BIR Form 1701 or 1701A)</li>
-                <li>• Business permits and licenses</li>
-                <li>• Financial statements or income reports</li>
-                <li>• DTI or SEC registration certificates</li>
-              </ul>
-            </div>
 
             <MediaUpload
               title=""
-              description="Click to browse. Supported formats: PDF, JPG, PNG, DOC, DOCX (Max 10MB per file)"
+              description="Click to browse. Supported formats: JPG, PNG,"
               mediaFiles={mediaFiles}
               setMediaFiles={setMediaFiles}
               activeVideoId={activeVideoId}
               setActiveVideoId={setActiveVideoId}
+              acceptableFiles="image"
             />
           </div>
         ) : (
@@ -506,22 +498,24 @@ export default function BusinessProfileForm({
       </div>
       <Separator />
       {/* Action Buttons */}
-      <div className="p-10">
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            {!isReadOnly && <p>Make sure all required information is complete before submitting.</p>}
-          </div>
-          <div className="flex gap-3">
-            {renderActionButton({
-              formType,
-              origin: "defaultOrigin",
-              isSubmitting,
-              setFormType,
-              submit,
-            })}
+      {!isModificationRequest && 
+        <div className="p-10">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              {!isReadOnly && <p>Make sure all required information is complete before submitting.</p>}
+            </div>
+            <div className="flex gap-3">
+              {renderActionButton({
+                formType,
+                origin: "defaultOrigin",
+                isSubmitting,
+                setFormType,
+                submit,
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      }
     </div>
   )
 }
