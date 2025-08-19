@@ -2,6 +2,7 @@ name: PR Reminder
 
 on:
   pull_request:
+    branches: [main, master]
     types: [opened]
 
 jobs:
