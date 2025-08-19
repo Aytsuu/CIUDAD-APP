@@ -148,17 +148,6 @@ export default function FamilyRecords() {
                   ? `No families match "${searchQuery}". Try adjusting your search.`
                   : "Get started by registering your first family."}
               </p>
-              {!searchQuery && (
-                <DialogLayout
-                  trigger={
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Register First Family
-                    </Button>
-                  }
-                  mainContent={<FamilyProfileOptions />}
-                />
-              )}
             </div>
           )}
 

@@ -51,7 +51,8 @@ export default function ResidentViewForm({ params }: { params: any }) {
 
   const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } = useResidentForm(personalInfo)
   const family = familyMembers?.results || []
-  const businesses = ownedBusinesses || []
+  const businesses = ownedBusinesses?.results || []
+  console.log(businesses)
   const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList])
 
   const validator = React.useMemo(
@@ -246,7 +247,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
       title="Resident Details"
       description="Information is displayed in a clear, organized, and secure manner."
     >
-      <div className="grid gap-8">
+      <div className="grid gap-8 max-h-[800px] overflow-y-auto">
         <Card className="w-full p-10">
           <div className="pb-4 flex justify-between">
             <div>
@@ -313,7 +314,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
           {renderFamilyContent()}
         </Card>
         
-        {(!isLoadingBusinesses && (!businesses || businesses.length === 0)) &&
+        {(!isLoadingBusinesses && (!businesses || businesses.length > 0)) &&
           <Card className="w-full p-10">
             <div className="pb-4">
               <h2 className="text-lg font-semibold">Business</h2>

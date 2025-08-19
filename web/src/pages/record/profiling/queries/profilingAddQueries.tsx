@@ -155,10 +155,6 @@ export const useAddHousehold = () => {
       ]);
 
       queryClient.invalidateQueries({ queryKey: ["households"] });
-
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
     },
   });
 };

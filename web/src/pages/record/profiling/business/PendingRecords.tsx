@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card/card"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 
 export default function PendingRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -37,7 +37,7 @@ export default function PendingRecords() {
 
   return (
     // ----------------- RENDER --------------------
-    <MainLayoutComponent
+    <LayoutWithBack
       title={<>
         Pending / <span className="text-gray-400">Business Registration</span>
       </>}
@@ -123,6 +123,6 @@ export default function PendingRecords() {
             </div>
           )}
       </Card>
-    </MainLayoutComponent>
+    </LayoutWithBack>
   )
 }

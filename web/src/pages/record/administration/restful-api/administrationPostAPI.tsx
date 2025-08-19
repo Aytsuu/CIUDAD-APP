@@ -1,5 +1,5 @@
 import { api, api2 } from "@/api/api";
-import { capitalize, capitalizeAllFields } from "@/helpers/capitalize";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 import { formatDate } from "@/helpers/dateHelper";
 
 export const addStaff = async (

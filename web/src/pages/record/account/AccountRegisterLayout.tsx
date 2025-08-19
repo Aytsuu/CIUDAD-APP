@@ -1,5 +1,3 @@
-"use client"
-
 import React from "react"
 import { Form } from "@/components/ui/form/form"
 import { useForm } from "react-hook-form"
@@ -59,7 +57,7 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
 
       // Navigate based on context
       if (tab_params?.isRegistrationTab) {
-        tab_params.next?.()
+        tab_params.next?.(true)
       } else {
         safeNavigate.back()
       }
@@ -73,7 +71,7 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
 
   const handleSkip = () => {
     if (tab_params?.isRegistrationTab) {
-      tab_params.next?.()
+      tab_params.next?.(false)
     } else {
       safeNavigate.back()
     }
@@ -83,12 +81,12 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
 
   return (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full max-w-2xl shadow-none">
+      <Card className="w-full max-w-2xl max-h-[700px] shadow-none overflow-y-auto">
         <CardHeader className="text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
             <CircleUserRound className="w-8 h-8 text-indigo-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Account Registration</h2>
+          <h2 className="text-xl font-semibold mb-2">Account Registration</h2>
           <p className="max-w-xl mx-auto leading-relaxed">
             Create a secure account for this resident. This will enable them to access digital services and maintain
             their personal information.
@@ -97,13 +95,12 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
 
         <CardContent className="space-y-6">
           {/* Info Alert */}
-          <Alert className="border-indigo-200 bg-indigo-50">
-
+          {/* <Alert className="border-indigo-200 bg-indigo-50">
             <AlertDescription className="text-indigo-800">
               <strong>Account Creation:</strong> This step is optional but recommended. Creating an account allows the
               resident to access their information online and receive important updates.
             </AlertDescription>
-          </Alert>
+          </Alert> */}
 
           <Separator />
 

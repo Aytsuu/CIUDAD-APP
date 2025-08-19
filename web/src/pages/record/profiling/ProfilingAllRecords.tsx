@@ -184,7 +184,7 @@ export default function ProfilingAllRecords() {
 
             {/* Pagination */}
             {!isLoading && recordList.length > 0 && (
-              <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
+              <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t rounded-b-lg bg-gray-50">
                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
                   Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
                   <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}

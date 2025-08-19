@@ -97,10 +97,10 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="w-full">
-      <div className="border relative overflow-hidden">
+      <div className="relative overflow-hidden">
         {/* Fixed Header */}
         {header && (
-          <div className="border-b bg-white relative z-10">
+          <div className="bg-white relative z-10">
             <Table className="table-fixed">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (

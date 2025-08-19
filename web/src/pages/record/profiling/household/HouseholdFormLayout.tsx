@@ -116,7 +116,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
       }
 
       const householdInfo = form.getValues()
-
+      console.log(householdInfo)
       // Add to main household database and health household database
       await addHousehold({
         householdInfo: householdInfo,
@@ -128,7 +128,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
 
       // Navigate based on context
       if (tab_params?.isRegistrationTab) {
-        tab_params.next?.()
+        tab_params.next?.(true)
       } else {
         safeNavigate.back()
       }
@@ -141,31 +141,32 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   }
 
   const handleSkip = () => {
-    tab_params?.next?.()
+    tab_params?.next?.(false)
   }
 
   // ==================== RENDER HELPERS ======================
   const residentRegistrationForm = () => (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full max-w-2xl shadow-none">
+      <Card className="w-full max-w-2xl max-h-[700px] shadow-none overflow-y-auto">
         <CardHeader className="text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <HousePlus className="w-8 h-8 text-blue-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Household Registration</h2>
-          <p className="max-w-md mx-auto leading-relaxed">
+          <h2 className="text-xl font-semibold mb-2">Household Registration</h2>
+          <p className="max-w-lg mx-auto leading-relaxed">
             Is this resident a house owner? If yes, please complete the household information below to proceed.
           </p>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 mt-4">
+          <Separator />
           {/* Info Alert */}
-          <Alert className="border-blue-200 bg-blue-50">
+          {/* <Alert className="border-blue-200 bg-blue-50">
             <AlertDescription className="text-blue-800">
               This step is optional. You can skip if the resident is not a house owner or if you prefer to register the
               household later.
             </AlertDescription>
-          </Alert>
+          </Alert> */}
           <Form {...form}>
             <form
               onSubmit={(e) => {

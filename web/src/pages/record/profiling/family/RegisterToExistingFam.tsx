@@ -52,7 +52,7 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
       ])
 
       showSuccessToast("Successfully added to existing family!")
-      tab_params.next?.()
+      tab_params.next?.(true)
     } catch (error) {
       console.error("Error adding to family:", error)
       showErrorToast("Failed to add to family. Please try again.")
@@ -64,7 +64,7 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
   // -------------------- RENDER ----------------------
   return (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full max-w-4xl shadow-none">
+      <Card className="w-full max-w-4xl max-h-[700px] shadow-none overflow-y-auto">
         {/* Navigation Button */}
         <div className="flex justify-start p-4 pb-0">
           <Button
@@ -81,7 +81,7 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <UsersRound className="w-8 h-8 text-blue-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Join Existing Family</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Join Existing Family</h2>
           <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">
             Add this resident to an existing family unit. This is ideal for family members who want to be registered
             under the same family record.
@@ -90,12 +90,12 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
 
         <CardContent className="space-y-6">
           {/* Info Alert */}
-          <Alert className="border-blue-200 bg-blue-50">
+          {/* <Alert className="border-blue-200 bg-blue-50">
             <AlertDescription className="text-blue-800">
               <strong>Existing Family Registration:</strong> This option allows you to add the resident to a family that
               already exists in the system. Make sure you have the correct Family ID and role information.
             </AlertDescription>
-          </Alert>
+          </Alert> */}
 
           <Separator />
 
@@ -154,7 +154,7 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
           </div>
 
           {/* Help Section */}
-          <div className="text-center pt-4 border-t border-gray-100">
+          <div className="text-center pt-4">
             <p className="text-xs text-gray-500 mb-2">
               Need help finding the Family ID? Contact your administrator for assistance.
             </p>
