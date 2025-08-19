@@ -163,7 +163,7 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
               state: {
                 params: {
                   type: "viewing",
-                  busId: value.split(' ')[0],
+                  busId: value?.split(' ')[0],
                 }
               }
             })

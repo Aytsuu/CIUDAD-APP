@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { capitalize } from "@/helpers/capitalize";
 import { formatCurrency } from "@/helpers/currencyFormat";
-import { useNavigate } from "react-router";
 
 // Format residents for searching
 export const formatResidents = (residents: any) => {

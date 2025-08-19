@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Plus, Building2, FileDown, Loader2, Clock, ClockArrowUp, Paperclip } from "lucide-react"
+import { Search, Plus, Building2, FileDown, Loader2, ClockArrowUp, Paperclip } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { Link, useNavigate } from "react-router"
@@ -120,7 +120,7 @@ export default function BusinessRecords() {
                       state: {
                         params: {
                           type: "viewing",
-                          busId: value.split(' ')[0],
+                          busId: value?.split(' ')[0],
                         }
                       }
                     })
