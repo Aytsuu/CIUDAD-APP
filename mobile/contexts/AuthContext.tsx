@@ -5,10 +5,10 @@ import {
   useEffect,
   ReactNode,
   useCallback,
+  useRef,
 } from "react";
 import { AuthContextType, User } from "./auth-types";
-import { api } from "@/api/api";
-import { supabase } from "@/lib/supabase";
+import { api, setAccessToken } from "@/api/api";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -17,170 +17,242 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
-  const clearError = () => setError(null);
+  // ✅ keep instant reference to user
+  const userRef = useRef<User | null>(null);
 
-  const handleError = (error: any, defaultMessage: string) => {
-    const message = error?.message || defaultMessage;
-    setError(message);
-    throw new Error(message);
+  const hasInitialized = useRef(false);
+  const isAuthenticating = useRef(false);
+  const refreshTokenRef = useRef<string | null>(null);
+
+  const clearError = () => {
+    setError(null);
   };
 
-  // Check authentication status on app load
+  const clearAuthState = useCallback(() => {
+    setUser(null);
+    userRef.current = null;
+    setIsAuthenticated(false);
+    setError(null);
+    setAccessToken(null);
+    refreshTokenRef.current = null;
+  }, []);
+
+  const setUserSync = (userData: User | null) => {
+    setUser(userData);
+    userRef.current = userData; // ✅ always in sync
+  };
+
   const checkAuthStatus = useCallback(async () => {
+    if (isAuthenticating.current) return;
+
     try {
       setIsLoading(true);
 
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
+      const authorizationHeader = api.defaults.headers.common["Authorization"];
+      const currentToken =
+        typeof authorizationHeader === "string"
+          ? authorizationHeader.split(" ")[1]
+          : undefined;
 
-      if (sessionError || !session?.access_token) {
-        console.log("No valid Supabase session found");
-        setUser(null);
-        setIsAuthenticated(false);
+      if (!currentToken) {
+        clearAuthState();
         return;
       }
 
-      const response = await api.get("authentication/mobile/user/");
-      setUser(response.data.user);
-      setIsAuthenticated(true);
-    } catch (error: any) {
-      console.error("Authentication check failed:", error);
+      try {
+        // Validate current token
+        const validateResponse = await api.post(
+          "authentication/mobile/refresh/",
+          { access_token: currentToken }
+        );
 
-      if (error?.response?.status === 401 || error?.response?.status === 403) {
-        await supabase.auth.signOut();
-      }
+        if (validateResponse.data.valid && validateResponse.data.user) {
+          setUserSync(validateResponse.data.user);
+          setIsAuthenticated(true);
+          return;
+        }
 
-      setUser(null);
-      setIsAuthenticated(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+        // Try refresh token
+        if (refreshTokenRef.current) {
+          const refreshResponse = await api.post(
+            "authentication/mobile/refresh-token/",
+            { refresh_token: refreshTokenRef.current }
+          );
 
-  // Listen to Supabase auth changes
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Supabase auth state changed:", event, session?.user?.email);
+          if (refreshResponse.data.user && refreshResponse.data.access_token) {
+            setUserSync(refreshResponse.data.user);
+            setIsAuthenticated(true);
+            setAccessToken(refreshResponse.data.access_token);
 
-      if (event === "SIGNED_OUT" || !session) {
-        setUser(null);
-        setIsAuthenticated(false);
-        setIsLoading(false);
-      } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        // It does not automatically set as authenticated it waits for backend verification
-        if (event === "TOKEN_REFRESHED") {
-          checkAuthStatus();
+            if (refreshResponse.data.refresh_token) {
+              refreshTokenRef.current = refreshResponse.data.refresh_token;
+            }
+            return;
+          }
+        }
+
+        clearAuthState();
+      } catch (refreshError: any) {
+        if (refreshError?.response?.status === 401) {
+          clearAuthState();
+          setError("Session expired - please login again");
+        } else if (refreshError?.response?.status === 404) {
+          clearAuthState();
+          setError("Account not found - please login again");
+        } else {
+          setError("Network error during authentication check");
         }
       }
-    });
+    } catch (error: any) {
+      if (!error?.response?.status) {
+        setError("Network error during authentication check");
+      }
+    } finally {
+      setIsLoading(false);
+      setHasCheckedAuth(true);
+    }
+  }, [clearAuthState]);
 
+  // Initial check
+  useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
     checkAuthStatus();
-
-    return () => subscription.unsubscribe();
   }, [checkAuthStatus]);
 
+  // Auto-refresh
+  useEffect(() => {
+    let refreshInterval: NodeJS.Timeout;
+
+    if (isAuthenticated && !isLoading && user && hasCheckedAuth) {
+      const refreshIntervalTime = 50 * 60 * 1000;
+      refreshInterval = setInterval(() => {
+        checkAuthStatus();
+      }, refreshIntervalTime);
+    }
+
+    return () => {
+      if (refreshInterval) clearInterval(refreshInterval);
+    };
+  }, [isAuthenticated, isLoading, user, hasCheckedAuth, checkAuthStatus]);
+
   const login = async (email: string, password: string) => {
+    isAuthenticating.current = true;
     setIsLoading(true);
     clearError();
 
     try {
-      const { data: _supabaseData, error: supabaseError } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-      if (supabaseError) {
-        throw new Error(supabaseError.message);
-      }
-
       const response = await api.post("authentication/mobile/login/", {
         email,
         password,
       });
 
-      console.log("Login successful:", response.data);
-      setUser(response.data.user);
+      if (!response.data?.access_token || !response.data?.user) {
+        throw new Error("Invalid response from server");
+      }
+
+      const { access_token, refresh_token, user: userData } = response.data;
+
+      setAccessToken(access_token);
+      refreshTokenRef.current = refresh_token;
+
+      setUserSync(userData);
       setIsAuthenticated(true);
-      console.log(
-        "position: ",
-        response.data.user.staff.assignments[0].pos.pos_title
-      );
-      console.log(
-        "position: ",
-        response.data.user.staff.assignments[1].pos.pos_title
-      );
+      setHasCheckedAuth(true);
+
+      console.log("userData:", userData.acc_id);
+      console.log("userRef:", userRef.current?.acc_id);
+
+      return userData;
     } catch (error: any) {
-      console.error("Login error:", error);
+      let message =
+        error?.response?.data?.error ||
+        error?.message ||
+        "Login failed";
+      if (error?.response?.status === 401)
+        message = "Invalid email or password";
+      if (error?.response?.status === 404) message = "Account not found";
 
-      await supabase.auth.signOut();
+      setError(message);
+      clearAuthState();
+      throw new Error(message);
+    } finally {
+      setIsLoading(false);
+      isAuthenticating.current = false;
+    }
+  };
 
-      const message =
-        error?.response?.data?.error || error?.message || "Login failed";
-      handleError({ message }, "Login failed");
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      await api.post("authentication/logout/");
+    } catch {}
+    finally {
+      clearAuthState();
+      setIsLoading(false);
+      setHasCheckedAuth(false);
+    }
+  };
+
+  const sendOtp = async (phoneNumber: string) => {
+    setIsLoading(true);
+    clearError();
+
+    try {
+      const response = await api.post("authentication/mobile/send-otp/", {
+        phone_number: phoneNumber,
+      });
+
+      return {
+        success: true,
+        message: response.data?.message || "OTP sent successfully!",
+      };
+    } catch (error: any) {
+      const message = error?.response?.data?.error || "Failed to send OTP";
+      setError(message);
+      return { success: false, message };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const sendOtp = async (phoneNumber: string): Promise<{ success: boolean; message: string }> => {
-    setIsLoading(true);
-    clearError();
-
-    try {
-      const res = await api.post("authentication/mobile/send-otp/", {
-        phone_number: phoneNumber,
-      });
-
-      return { success: true, message: "OTP sent successfully!" };
-    } catch (error: any) {
-      const message = error?.response?.data?.error || "Failed to send OTP";
-      handleError({ message }, "Failed to send OTP");
-      return { success: false, message };
-    }
-  };
-
   const verifyOtp = async (phoneNumber: string, otp: string) => {
+    isAuthenticating.current = true;
     setIsLoading(true);
     clearError();
 
     try {
-      const res = await api.post("authentication/mobile/verify-otp/", {
+      const response = await api.post("authentication/mobile/verify-otp/", {
         phone_number: phoneNumber,
-        otp: otp,
+        otp,
       });
 
-      if (!res) {
-        console.log("No Existing Data Fetched");
-        return;
-      }
-      setUser(res.data.user);
-      setIsAuthenticated(true);
+      if (response.data?.access_token && response.data?.user) {
+        const { access_token, refresh_token, user: userData } = response.data;
 
-      return res.data
-      
+        setAccessToken(access_token);
+        if (refresh_token) refreshTokenRef.current = refresh_token;
+
+        setUserSync(userData);
+        setIsAuthenticated(true);
+        setHasCheckedAuth(true);
+      }
+
+      return response.data;
     } catch (error: any) {
-      console.log(
-        "Failed to send OTP Verification. Check connection between frontend and backend if established"
-      );
-      const message = error?.response?.data?.error;
-      handleError(
-        { message },
-        "Failed to Verify Otp. Check connection if its established between backend and frontend"
-      );
+      const message = error?.response?.data?.error || "OTP verification failed";
+      setError(message);
+      throw error;
+    } finally {
+      setIsLoading(false);
+      isAuthenticating.current = false;
     }
   };
 
-  const signUp = async (
-    email: string,
-    password: string,
-    username?: string
-  ): Promise<{ requiresConfirmation?: boolean }> => {
+  const signUp = async (email: string, password: string, username?: string) => {
+    isAuthenticating.current = true;
     setIsLoading(true);
     clearError();
 
@@ -191,81 +263,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         username,
       });
 
-      // If signup successful and no confirmation required, user might be auto-logged in
-      if (!response.data.requiresConfirmation && response.data.user) {
-        setUser(response.data.user);
+      if (!response.data.requiresConfirmation &&
+          response.data.user &&
+          response.data.access_token) {
+        const { access_token, refresh_token, user: userData } = response.data;
+
+        setAccessToken(access_token);
+        if (refresh_token) refreshTokenRef.current = refresh_token;
+
+        setUserSync(userData);
         setIsAuthenticated(true);
+        setHasCheckedAuth(true);
       }
 
       return {
         requiresConfirmation: response.data?.requiresConfirmation ?? false,
       };
     } catch (error: any) {
-      try {
-        await supabase.auth.signOut();
-      } catch (cleanupError) {
-        console.error("Error during signup cleanup:", cleanupError);
-      }
-
       const message = error.response?.data?.error || "Signup failed";
-      handleError({ message }, "Signup failed");
+      setError(message);
       throw error;
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    setIsLoading(true);
-
-    try {
-      await supabase.auth.signOut();
-
-      await api.post("authentication/logout/");
-    } catch (error) {
-      console.error("Logout error: ", error);
-    } finally {
-      setUser(null);
-      setIsAuthenticated(false);
-      setIsLoading(false);
-    }
-  };
-
-  const refreshSession = async () => {
-    setIsLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.refreshSession();
-
-      if (error || !data.session) {
-        throw new Error("Failed to refresh Supabase session");
-      }
-
-      const response = await api.post("authentication/refresh/");
-      setUser(response.data.user);
-      setIsAuthenticated(true);
-    } catch (error: any) {
-      console.error("Session refresh failed: ", error);
-
-      await supabase.auth.signOut();
-      setUser(null);
-      setIsAuthenticated(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loginWithGoogle = async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-      });
-
-      if (error) {
-        console.error("Google sign-in error", error.message);
-      }
-    } catch (error) {
-      console.error("Unexpected error: ", error);
+      isAuthenticating.current = false;
     }
   };
 
@@ -279,11 +299,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         signUp,
-        refreshSession,
+        refreshSession: checkAuthStatus,
         clearError,
-        loginWithGoogle,
         verifyOtp,
-        sendOtp
+        sendOtp,
       }}
     >
       {children}

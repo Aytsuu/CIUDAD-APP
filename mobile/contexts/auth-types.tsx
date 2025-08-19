@@ -18,7 +18,7 @@ export interface AuthContextType {
   signUp: (email: string, password: string, username?: string) => Promise<{ requiresConfirmation?: boolean }>;
   refreshSession: () => Promise<void>;
   clearError: () => void;
-  loginWithGoogle: () => Promise<void>;
+  // loginWithGoogle: () => Promise<void>;
   verifyOtp: (phoneNumber: string, otp: string) => Promise<User>;
   sendOtp: (phoneNumber: string) => Promise<{success: boolean; message: string}>; 
 }

@@ -1,53 +1,33 @@
-import axios from "axios";
-import { supabase } from "@/lib/supabase";
+  import axios from "axios";
 
-export const api = axios.create({
-  baseURL: "http://192.168.209.208:8000",
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
+  export const api = axios.create({
+    baseURL: "http://192.168.209.208:8000",
+    withCredentials: true,
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    },
+  });
 
-export const api2 = axios.create({
-  baseURL: "http://192.168.1.52:8001",
-  timeout: 10000,
-});
+  export const api2 = axios.create({
+    baseURL: "http://192.168.1.52:8001",
+    timeout: 10000,
+  });
 
+  // Track refresh state to prevent multiple refresh attempts
+  let isRefreshing = false;
+  let refreshPromise: Promise<string | null> | null = null;
 
-// Request interceptor to add auth token
-api.interceptors.request.use(async (config) => {
-  // Define unprotected paths
-  const unprotectedPaths = [
-    "/authentication/mobile/login/",
-    "/authentication/signup/",
-    "/authentication/mobile/send-otp/",
-  ];
+  let currentAccessToken: string | null = null;
 
-  const requestPath = new URL(config.url!, api.defaults.baseURL).pathname;
-
-  if (unprotectedPaths.includes(requestPath)) {
-    console.log("Skipping token for:", requestPath);
-    return config;
-  }
-
-  try {
-    const { data: { session }, error } = await supabase.auth.getSession();
-
-    if (error) {
-      console.error("Error getting session:", error);
-      return config;
-    }
-
-    if (session?.access_token) {
-      config.headers.Authorization = `Bearer ${session.access_token}`;
-      console.log("✅ Added auth token to request:", requestPath);
+  // Function to set access token (called from AuthContext)
+  export const setAccessToken = (token: string | null) => {
+    currentAccessToken = token;
+    
+    // Update axios default header immediately
+    if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
-      console.warn("⚠️ No access token found in session for:", requestPath);
+      delete api.defaults.headers.common['Authorization'];
     }
-  } catch (err) {
-    console.error("Error in request interceptor:", err);
-  }
-  return config;
-});
+  };

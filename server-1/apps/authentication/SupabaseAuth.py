@@ -39,3 +39,4 @@ class SupabaseAuthentication(BaseAuthentication):
         except Exception as e:
             logger.error(f"Token validation failed: {str(e)}", exc_info=True)
             raise AuthenticationFailed('Session validation failed')
+        

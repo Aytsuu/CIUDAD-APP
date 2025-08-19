@@ -10,21 +10,19 @@ import { Card } from "@/components/ui/card";
 import { features } from "./features";
 import { useRouter } from "expo-router";
 import ScreenLayout from "../_ScreenLayout";
-import { useAuth } from "@/contexts/AuthContext";
 import { LoadingModal } from "@/components/ui/loading-modal";
+import { useAuth } from "@/contexts/AuthContext";
 
 const { width: screenWidth } = Dimensions.get("window");
 const cardWidth = screenWidth * 0.75;
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
-
+  const {user, isLoading} = useAuth()
   if (isLoading) {
     return <LoadingModal visible={true} />;
   }
-
-  console.log("Value",user);
+  console.log("Value of user: ", user?.email)
 
   return (
     <ScreenLayout
@@ -37,7 +35,7 @@ export default function HomeScreen() {
         {/* Discovery Section */}
         <View className="py-6 bg-primaryBlue">
           <View className="px-5 mb-6">
-            <Text className="text-xl font-semibold text-white">Discovery</Text>
+            <Text className="text-xl font-semibold text-white">Discovery {user?.acc_id}</Text>
             <Text className="text-sm text-white">
               Explore new content and features
             </Text>

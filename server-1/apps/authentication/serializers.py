@@ -30,23 +30,22 @@ class UserAccountSerializer(serializers.ModelSerializer):
         rp = getattr(obj, 'rp', None)
         if not rp:
             return None
-        
+
         # Check if resident profile is associated with any staff record
-        staff_record = Staff.objects.filter(staff_id=obj.rp.rp_id).first()
+        staff_record = Staff.objects.filter(staff_id=rp.rp_id).first()
         if not staff_record:
             return None
-            
+
         # Check if staff has assignments
         has_assignments = Assignment.objects.filter(staff=staff_record).exists()
         # Check if staff has a position
         has_position = staff_record.pos is not None
-        
+
         if has_assignments and has_position:
             return StaffFullSerializer(staff_record).data
-        else:
-            return None
-            
+
         return None
+
         
 class AuthResponseSerializer(serializers.Serializer):
     acc_id = serializers.IntegerField()

@@ -31,7 +31,7 @@ urlpatterns = [
     path('assignment/delete/<int:feat>/<int:pos>/', AssignmentDeleteView.as_view(), name='delete-assignment'),
 
     # Permission Urls 
-    path('permission/', PermissionView.as_view(), name='permissions-list'),
-    path('permission/update/<int:assi>/', PermissionUpdateView.as_view(), name='permission-update'),
+    # path('permission/', PermissionView.as_view(), name='permissions-list'),
+    # path('permission/update/<int:assi>/', PermissionUpdateView.as_view(), name='permission-update'),
     path('card/analytics/data/', CardAnalyticsView.as_view(), name='card-analytics'),
 ]   

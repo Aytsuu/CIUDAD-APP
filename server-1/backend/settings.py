@@ -455,10 +455,9 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # ========================
 # SMS CONFIGURATION
 # ========================
-PHIL_SMS_API_KEY = config('PHILSMS_API_KEY')
-PHIL_SMS_URL = config('PHILSMS_URL')
+SEMAPHORE_API_KEY = config('SEMAPHORE_API_KEY', default=None)
 
-SEPHAMORE_API_KEY = config('SEPHAMORE_API_KEY', default=None)
+
 # ========================
 # DATABASE CONFIGURATION
 # ========================
@@ -574,6 +573,11 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
+    
+
+SECURE_COOKIE_HTTPONLY = True  # Prevent JavaScript access to cookies
+SECURE_COOKIE_SECURE = True    # Only send cookies over HTTPS (set False in dev if not using HTTPS)
+SECURE_COOKIE_SAMESITE = 'Lax'
 
 # ========================
 # LOGGING
