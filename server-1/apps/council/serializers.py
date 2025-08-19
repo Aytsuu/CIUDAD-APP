@@ -95,42 +95,79 @@ class PurposeRatesListViewSerializer(serializers.ModelSerializer):
         fields = ['pr_id', 'pr_purpose', 'pr_is_archive']
 
 
-class MOMSuppDocSerializer(serializers.ModelSerializer):
+# =================== MINUTES OF MEETING SERIALIZERS ======================
+
+class MOMSuppDocCreateSerializer(serializers.ModelSerializer):
+    suppDocs = FileInputSerializer(write_only=True, required=False, many=True)
+
+    class Meta:
+        model = MOMSuppDoc
+        fields = ['mom_id', 'suppDocs']
+
+    @transaction.atomic
+    def create(self, validated_data):   
+        files = validated_data.pop('suppDocs', [])
+        if not files:
+            raise serializers.ValidationError({"files": "At least one file must be provided"})
+            
+        mom_id = validated_data.pop('mom_id')
+        created_files = self._upload_files(files, mom_id)
+
+        if not created_files:
+            raise serializers.ValidationError("Failed to upload files")
+
+        return created_files[0]
+
+    def _upload_files(self, files, mom_id):
+        momsp_files = []
+        for file_data in files:
+            momsp_file = MOMSuppDoc(
+                momsp_name=file_data['name'],
+                momsp_type=file_data['type'],
+                momsp_path=f"images/{file_data['name']}",
+                mom_id=mom_id
+            )
+
+            url = upload_to_storage(file_data, 'mom-bucket', 'images')
+            momsp_file.momsp_url = url
+            momsp_files.append(momsp_file)
+
+        if momsp_files:
+            return MOMSuppDoc.objects.bulk_create(momsp_files)
+        return []
+    
+class MOMSuppDocViewSerializer(serializers.ModelSerializer):
     class Meta: 
         model = MOMSuppDoc
         fields = '__all__'
         
 class MinutesOfMeetingSerializer(serializers.ModelSerializer):
-    momf_url = serializers.SerializerMethodField(read_only=True)  # Read-only
-    momf_id = serializers.SerializerMethodField(read_only=True)   # Read-only
-    areas_of_focus = serializers.SerializerMethodField(read_only=True)  # Read-only
-    supporting_docs = MOMSuppDocSerializer(source='momsuppdoc_set', many=True, read_only=True)  # Read-only
+    mom_file = serializers.SerializerMethodField(read_only=True)  # Combined field
+    areas_of_focus = serializers.SerializerMethodField(read_only=True)
+    supporting_docs = MOMSuppDocViewSerializer(source='momsuppdoc_set', many=True, read_only=True)
 
     class Meta:
         model = MinutesOfMeeting
         fields = '__all__'
         extra_fields = [
-            'momf_url',
-            'momf_id',
+            'mom_file',  # Replaces individual momf fields
             'areas_of_focus',
             'supporting_docs'
         ]
         read_only_fields = [
-            'momf_url',
-            'momf_id',
+            'mom_file',
             'areas_of_focus',
             'supporting_docs'
         ]
 
-    def get_momf_url(self, obj):
+    def get_mom_file(self, obj):
         try:
-            return obj.momfile.momf_url 
-        except MOMFile.DoesNotExist:
-            return None
-
-    def get_momf_id(self, obj):
-        try:
-            return obj.momfile.momf_id  
+            mom_file = obj.momfile
+            return {
+                'momf_id': mom_file.momf_id,
+                'momf_url': mom_file.momf_url,
+                'momf_name': mom_file.momf_name
+            }
         except MOMFile.DoesNotExist:
             return None
 
@@ -176,7 +213,7 @@ class MOMFileCreateSerializer(serializers.ModelSerializer):
             mom_file = MOMFile(
                 momf_name=file_data['name'],
                 momf_type=file_data['type'],
-                momf_path=file_data['name'],
+                momf_path=f"documents/{file_data['name']}",
                 mom_id=mom_id
             )
 

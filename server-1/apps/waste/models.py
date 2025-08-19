@@ -218,10 +218,21 @@ class WasteCollector(models.Model):
     class Meta:
         db_table = 'waste_collector'
         
+class GarbagePickupRequestFile(models.Model):
+    gprf_id = models.BigAutoField(primary_key=True)
+    gprf_name = models.CharField(max_length=255)
+    gprf_type = models.CharField(max_length=100)
+    gprf_path = models.CharField(max_length=500)
+    gprf_url = models.CharField(max_length=500)
+
+    class Meta:
+        db_table = 'garbage_pickup_request_file'
+
+
 class Garbage_Pickup_Request(models.Model):
     garb_id = models.BigAutoField(primary_key=True)
     garb_location = models.CharField(max_length=20, null=False)
-    garb_waste_type = models.CharField(max_length=20, null=False)
+    garb_waste_type = models.CharField(max_length=250, null=False)
     garb_pref_date = models.DateField(default=date.today)
     garb_pref_time = models.TimeField(default=current_time)
     garb_req_status = models.CharField(max_length=20, null=False)
@@ -234,12 +245,12 @@ class Garbage_Pickup_Request(models.Model):
         blank=True,
     )
     
-    file = models.ForeignKey(
-        'file.File',
+    gprf = models.ForeignKey(
+        'GarbagePickupRequestFile',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        db_column='file_id'
+        db_column='gprf_id'
     )
     
     sitio_id = models.ForeignKey(

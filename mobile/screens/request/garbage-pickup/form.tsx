@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { FormInput } from "@/components/ui/form/form-input";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { garbagePickupRequestCreateSchema } from '@/form-schema/waste/garbage-pickup-schema-resident';
-import { Form, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -13,14 +13,13 @@ import z from "zod";
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
-import MultiImageUploader, {MediaFileType} from '@/components/ui/multi-media-upload';
-import { useEffect, useState } from 'react';
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useGetSitio } from './queries/garbagePickupResidentFetchQueries';
 import { useAddaGarbagePickupRequest } from './queries/garbagePickupResidentInsertQueries';
 
 export default function GarbagePickupForm() {
   const router = useRouter();
-  const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
+  const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
   const { data: fetchedSitio = [], isLoading } = useGetSitio();
   const {mutate: addRequest, isPending} = useAddaGarbagePickupRequest()
 
@@ -47,22 +46,18 @@ export default function GarbagePickupForm() {
       garb_pref_time: '',
       garb_waste_type: '',
       garb_additional_notes: '',
-      garb_image: [],
     }
   });
 
-  useEffect(() => {
-    setValue('garb_image', mediaFiles.map(file => ({
-      name: file.name,
-      type: file.type,
-      path: file.path,
-      uri: file.publicUrl || file.uri
-    })));
-  }, [mediaFiles, setValue]);
-
   const onSubmit = (values: z.infer<typeof garbagePickupRequestCreateSchema>) => {
-    addRequest(values)
-    // alert(values.garb_image)
+
+    const files = selectedImages.map((media) => ({
+        name: media.name,
+        type: media.type,
+        file: media.file
+    }))
+
+    addRequest({values, files})
   };
 
   if (isLoading) {
@@ -131,16 +126,12 @@ export default function GarbagePickupForm() {
 
             <View className="mb-3 mt-3">
               <Text className="text-[12px] font-PoppinsRegular pb-1">Add a Photo of Items for Pickup</Text>
-              {errors.garb_image && (
-                <Text className="text-red-500 text-xs">
-                  {errors.garb_image.message}
-                </Text>
-              )}
-              <MultiImageUploader
-                mediaFiles={mediaFiles}
-                setMediaFiles={setMediaFiles}
-                maxFiles={1}
-              />
+              <MediaPicker
+                selectedImages={selectedImages}
+                setSelectedImages={setSelectedImages}
+                multiple={false}
+                maxImages={1}
+              /> 
             </View>
 
             <FormTextArea

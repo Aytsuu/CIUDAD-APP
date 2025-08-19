@@ -66,7 +66,7 @@ class BudgetPlanFileCreateSerializer(serializers.ModelSerializer):
                 plan_id= plan_id
             )
 
-            url = upload_to_storage(file_data, 'budgetplan-bucket')
+            url = upload_to_storage(file_data, 'budgetplan-bucket', '')
             bpf_file.bpf_url = url
             bpf_files.append(bpf_file)
 
@@ -80,11 +80,11 @@ class BudgetPlanFileViewSerializer(serializers.ModelSerializer):
         model = BudgetPlan_File
         fields='__all__'
 
-
 class BudgetPlanHistorySerializer(serializers.ModelSerializer):
     class Meta: 
         model = Budget_Plan_History
         fields = '__all__'
+
 
 class Income_Folder_Serializer(serializers.ModelSerializer):
     class Meta:

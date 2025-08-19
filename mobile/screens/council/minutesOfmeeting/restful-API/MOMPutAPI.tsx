@@ -1,6 +1,5 @@
 import { api } from "@/api/api";
-import { MediaFileType } from "@/components/ui/multi-media-upload";
-import { DocumentFileType } from "@/components/ui/document-upload";
+import type { MOMFileType, MOMSuppDoc } from "../queries/MOMUpdateQueries";
 
 export const restoreMinutesOfMeeting = async (mom_id: string) => {
     try{
@@ -75,28 +74,28 @@ export const handleMOMAreaOfFocus = async (mom_id: number, areas: string[]) => {
   }
 };
 
-export const handleMOMFileUpdates = async (mom_id: number, momf_id: number, documentFiles: DocumentFileType[]) => {
+export const handleMOMFileUpdates = async (mom_id: number, files: MOMFileType[]) => {
   try {
-    const mainFile = documentFiles[0];
+    if (files && files.length > 0) {
+       
+      await api.delete(`council/delete-mom-file/${mom_id}/`);
+      for (const file of files) {
+          if (!file.id?.startsWith('existing-')) {
+              
+              const payload = {
+                  mom_id: mom_id,
+                  files: [{
+                      name: file.name,
+                      type: file.type,
+                      file: file.file
+                  }]
+              };
 
-    if(!mainFile.path)
-      return;
-    
-    if (mainFile) {
-      const payload = {
-        momf_name: mainFile.name,
-        momf_type: mainFile.type || 'application/pdf',
-        momf_path: mainFile.path || '',
-        momf_url: mainFile.publicUrl
-      };
-
-      if (mainFile.id?.startsWith('existing-')) {
-        // Update existing file metadata
-        await api.patch(`council/update-mom-file/${momf_id}/`, payload);
-      } else {
-        // Create new file record
-        await api.post('council/mom-file/', { ...payload, mom_id });
-      }
+              console.log('Uploading file payload:', payload);
+              const response = await api.post('council/mom-file/', payload);
+              console.log('Upload response:', response);
+          }
+        }
     }
   } catch (err) {
     console.error("Error updating MOM file:", err);
@@ -104,14 +103,15 @@ export const handleMOMFileUpdates = async (mom_id: number, momf_id: number, docu
   }
 };
 
-export const handleMOMSuppDocUpdates = async (mom_id: number, mediaFiles: MediaFileType[]) => {
+export const handleMOMSuppDocUpdates = async (mom_id: number, suppDocs: MOMSuppDoc[]) => {
   try {
-    // Get current files from server
+     // Get current files from server
     const currentFilesRes = await api.get(`council/meeting-supp-docs/${mom_id}/`);
     const currentFiles = currentFilesRes.data || [];
+
     
     // Determine files to keep and delete
-    const existingFileIds = mediaFiles
+    const existingFileIds = suppDocs
       .filter(file => file.id?.startsWith('existing-'))
       .map(file => parseInt(file.id.replace('existing-', '')));
     
@@ -122,16 +122,21 @@ export const handleMOMSuppDocUpdates = async (mom_id: number, mediaFiles: MediaF
     ));
     
     // Add new files
-    const filesToAdd = mediaFiles.filter(file => !file.id?.startsWith('existing-'));
-    await Promise.all(filesToAdd.map(file =>
-      api.post('council/mom-supp-doc/', {
-        mom_id,
-        momsp_name: file.name || `file-${Date.now()}`,
-        momsp_type: file.type.includes('image') ? 'image' : 'file',
-        momsp_path: file.path || '',
-        momsp_url: file.publicUrl || file.uri
-      })
-    ));
+    const filesToAdd = suppDocs.filter(file => !file.id?.startsWith('existing-'));
+
+    const payload = {
+      mom_id,
+      suppDocs: filesToAdd.map(file => ({
+        name: file.name,
+        type: file.type,
+        file: file.file
+      }))
+    }
+
+    if (payload.suppDocs.length > 0) {
+      const res = await api.post('council/mom-supp-doc/', payload);
+      return res.data;
+    }
   } catch (err) {
     console.error("Error updating supporting documents:", err);
     throw err;

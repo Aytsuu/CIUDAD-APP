@@ -468,6 +468,10 @@ class GarbagePickupRequestAnalyticsView(APIView):
         return Response(counts, status=status.HTTP_200_OK)
 
      
+class GarbagePickupFileView(generics.ListCreateAPIView):
+    serializer_class = GarbagePickupFileSerializer
+    queryset = GarbagePickupRequestFile.objects.all()
+     
 class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
     serializer_class = GarbagePickupRequestPendingSerializer
     def get_queryset(self):

@@ -188,7 +188,7 @@ class MOMFile(models.Model):
     momf_type = models.CharField(max_length=100)
     momf_path = models.CharField(max_length=500)
     momf_url = models.CharField(max_length=500)
-    mom_id = models.ForeignKey(
+    mom_id = models.OneToOneField(
         'council.MinutesOfMeeting',
         on_delete=models.CASCADE,
         null=True,

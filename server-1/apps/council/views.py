@@ -436,6 +436,8 @@ class PurposeRatesListView(generics.ListCreateAPIView):
 #     serializer_class = MOMSuppDocSerializer
 #     lookup_field = 'momsp_id'
 
+# =================== MINUTES OF MEETING VIEWS ======================
+
 class MinutesOfMeetingView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
     queryset = MinutesOfMeeting.objects.all()
@@ -500,14 +502,9 @@ class DeleteMOMAreaOfFocusView(APIView):
             {"detail": f"{deleted_count} area(s) of focus deleted."},
             status=status.HTTP_204_NO_CONTENT
         )
-    
-
-class MOMSuppDocView(generics.ListCreateAPIView):
-    serializer_class = MOMSuppDocSerializer
-    query_set = MOMSuppDoc.objects.all()
 
 class MeetingSuppDocsView(generics.ListAPIView):
-    serializer_class = MOMSuppDocSerializer
+    serializer_class = MOMSuppDocViewSerializer
     
     def get_queryset(self):
         mom_id = self.kwargs['mom_id']
@@ -515,9 +512,12 @@ class MeetingSuppDocsView(generics.ListAPIView):
 
 class DeleteMOMSuppDocView(generics.DestroyAPIView):
     queryset = MOMSuppDoc.objects.all()
-    serializer_class = MOMSuppDocSerializer
+    serializer_class = MOMSuppDocViewSerializer
     lookup_field = 'momsp_id'
 
+class MOMSuppDocView(generics.ListCreateAPIView):
+    serializer_class = MOMSuppDocCreateSerializer
+    query_set = MOMSuppDoc.objects.all()
 
 # ==================== ORDINANCE =======================
 # Ordinance Views (moved from secretary app)
