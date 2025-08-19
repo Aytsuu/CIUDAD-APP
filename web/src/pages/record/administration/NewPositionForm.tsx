@@ -20,7 +20,7 @@ import { formatPositionGroups } from "./AdministrationFormats";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 export default function NewPositionForm() {
-  const { user } = useAuth();
+  const { user } = useAuth(); 
   const { mutate: addPosition, isPending: isAdding } = useAddPosition();
   const { mutate: editPosition, isPending: isUpdating } = useUpdatePosition();
   const { data: positionGroups, isLoading: isLoadingGroups } = usePositionGroups();
