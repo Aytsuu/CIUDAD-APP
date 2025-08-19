@@ -22,7 +22,7 @@ import {
   EditProjectProposalFormProps,
 } from "./projprop-types";
 import { Signatory } from "./projprop-types";
-import { ComboboxInput } from "@/components/ui/form/form-combo-box";
+import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 
 export const EditProjectProposalForm: React.FC<
   EditProjectProposalFormProps

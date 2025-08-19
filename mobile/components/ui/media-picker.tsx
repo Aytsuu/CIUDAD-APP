@@ -19,6 +19,12 @@ interface MediaPickerProps {
   setSelectedImages: React.Dispatch<React.SetStateAction<MediaItem[]>>
   multiple?: boolean
   maxImages?: number
+  editable?: boolean
+  // New props for remove functionality
+  showRemoveButtons?: boolean
+  showClearAllButton?: boolean
+  onlyRemoveNewImages?: boolean
+  initialImageIds?: string[] // IDs of images that were initially loaded (existing images)
 }
 
 export default function MediaPicker({
@@ -26,6 +32,11 @@ export default function MediaPicker({
   setSelectedImages,
   multiple = false,
   maxImages = 10,
+  editable = true,
+  showRemoveButtons = true,
+  showClearAllButton = true,
+  onlyRemoveNewImages = false,
+  initialImageIds = [],
 }: MediaPickerProps) {
   const [galleryVisible, setGalleryVisible] = React.useState<boolean>(false)
   const [cameraVisible, setCameraVisible] = React.useState<boolean>(false)
@@ -40,12 +51,10 @@ export default function MediaPicker({
     let isMounted = true
     const checkPermissions = async () => {
       try {
-        // Request media library permission
         const mediaLibraryStatus = await MediaLibrary.requestPermissionsAsync()
         if (mediaLibraryStatus.status !== "granted" && isMounted) {
           console.warn("Permission to access media library was denied")
         }
-        // Request camera permission
         if (!hasPermission) {
           const cameraPermission = await requestPermission()
           if (!cameraPermission && isMounted) {
@@ -57,11 +66,13 @@ export default function MediaPicker({
       }
     }
 
-    checkPermissions()
+    if (editable) {
+      checkPermissions()
+    }
     return () => {
       isMounted = false
     }
-  }, [hasPermission, requestPermission])
+  }, [hasPermission, requestPermission, editable])
 
   const fetchGalleryAssets = async () => {
     try {
@@ -77,6 +88,8 @@ export default function MediaPicker({
   }
 
   const openGallery = async () => {
+    if (!editable) return;
+    
     const { status } = await MediaLibrary.getPermissionsAsync()
     if (status !== "granted") {
       const { status: reqStatus } = await MediaLibrary.requestPermissionsAsync()
@@ -86,7 +99,22 @@ export default function MediaPicker({
       }
     }
     await fetchGalleryAssets()
-    setSelectedGalleryItems(new Set())
+    
+    const preSelectedItems = new Set<string>()
+    const media = await MediaLibrary.getAssetsAsync({
+      mediaType: "photo",
+      first: 100,
+      sortBy: ["creationTime"],
+    })
+    
+    selectedImages.forEach(selectedImage => {
+      const matchingAsset = media.assets.find(asset => asset.uri === selectedImage.uri)
+      if (matchingAsset) {
+        preSelectedItems.add(matchingAsset.id)
+      }
+    })
+    
+    setSelectedGalleryItems(preSelectedItems)
     setGalleryVisible(true)
   }
 
@@ -97,12 +125,10 @@ export default function MediaPicker({
       const newMediaItems = await Promise.all(
         imageData.map(async (data) => {
           try {
-            // Read as base64
             const base64Data = await FileSystem.readAsStringAsync(data.uri, {
               encoding: FileSystem.EncodingType.Base64
             });
 
-            // Determine MIME type
             const mimeType = await getMimeType(data.uri);
 
             return {
@@ -119,7 +145,6 @@ export default function MediaPicker({
         })
       );
 
-      // Filter out any null values from failed processing
       const validMediaItems = newMediaItems.filter((item) => item !== null);
 
       if (multiple) {
@@ -138,17 +163,19 @@ export default function MediaPicker({
   };
 
   const handleGallerySelection = (item: MediaLibrary.Asset) => {
+    if (!editable) return;
+    
     if (!multiple) {
-      // Single selection mode
       handleSelectedImages([{uri: item.uri, filename: item.filename}])
       setGalleryVisible(false)
       return
     }
 
-    // Multiple selection mode
     const newSelected = new Set(selectedGalleryItems)
+    
     if (newSelected.has(item.id)) {
       newSelected.delete(item.id)
+      setSelectedImages(prev => prev.filter(selectedImage => selectedImage.uri !== item.uri))
     } else {
       if (newSelected.size < maxImages) {
         newSelected.add(item.id)
@@ -167,7 +194,7 @@ export default function MediaPicker({
   }
 
   const takePhoto = async () => {
-    if (!hasPermission) {
+    if (!editable || !hasPermission) {
       Alert.alert("Permission Required", "Camera permission is required to take photos.")
       return
     }
@@ -182,14 +209,11 @@ export default function MediaPicker({
           flash: "off",
         })
         
-        // Save photo to media library to get proper URI
         const asset = await MediaLibrary.createAssetAsync(`file://${photo.path}`)
-        console.log("Photo captured and saved:", asset)
 
         handleSelectedImages([{uri: asset.uri, filename: `photo_${Date.now()}.jpg`}])
         setCameraVisible(false)
 
-        // Refresh gallery after capturing
         setTimeout(fetchGalleryAssets, 1000)
       } catch (error) {
         console.error("Error taking photo:", error)
@@ -203,21 +227,46 @@ export default function MediaPicker({
     setGalleryVisible(true)
   }
 
+  // Helper function to determine if an image can be removed
+  const canRemoveImage = (image: MediaItem, index: number) => {
+    if (!editable || !showRemoveButtons) return false;
+    
+    if (onlyRemoveNewImages) {
+      // Only allow removal if the image is NOT in the initial images list
+      return !initialImageIds.includes(image.id || '');
+    }
+    
+    return true; // Allow removal of all images if not restricted
+  }
+
   const removeImage = (index: number) => {
-    setSelectedImages((prev) => {
-      const updated = prev.filter((_, i) => i !== index)
-      console.log("Removed image at index", index, "Updated list:", updated)
-      return updated
-    })
+    const image = selectedImages[index];
+    if (!canRemoveImage(image, index)) return;
+    
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index))
   }
 
-  // Function to remove all images
+  // Helper function to get removable images count
+  const getRemovableImagesCount = () => {
+    if (!onlyRemoveNewImages) return selectedImages.length;
+    
+    return selectedImages.filter(image => !initialImageIds.includes(image.id || '')).length;
+  }
+
   const removeAllImages = () => {
-    setSelectedImages([])
-    console.log("All images cleared")
+    if (!editable || !showClearAllButton) return;
+    
+    if (onlyRemoveNewImages) {
+      // Only remove new images, keep existing ones
+      setSelectedImages((prev) => prev.filter(image => initialImageIds.includes(image.id || '')));
+    } else {
+      // Remove all images
+      setSelectedImages([]);
+    }
   }
 
-  const canSelectMore = multiple && selectedImages.length < maxImages
+  const canSelectMore = multiple && selectedImages?.length < maxImages
+  const removableCount = getRemovableImagesCount()
 
   if (!device) {
     return (
@@ -229,35 +278,36 @@ export default function MediaPicker({
 
   return (
     <View className="flex-1">
-      {/* Display selected images as file names */}
-      {selectedImages.length > 0 ? (
+      {selectedImages?.length > 0 ? (
         <View className="flex-1">
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            className="flex-1"
-          >
+          <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
             <View className="p-4">
               <Text className="text-lg font-semibold mb-3">Selected Files:</Text>
               {selectedImages.map((image, index) => {
+                const isExistingImage = initialImageIds.includes(image.id || '');
+                const showRemoveButton = canRemoveImage(image, index);
+                
                 return (
-                  <View
-                    key={index}
-                    className="flex-row items-center justify-between bg-gray-100 p-3 mb-2 rounded-lg"
-                  >
+                  <View key={index} className="flex-row items-center justify-between bg-gray-100 p-3 mb-2 rounded-lg">
                     <View className="flex-row items-center flex-1">
                       <Ionicons name="image" size={20} color="#666" />
                       <Text className="ml-2 flex-1 text-gray-800" numberOfLines={1}>
                         {image.name || `image_${index + 1}.jpg`}
                       </Text>
+                      {onlyRemoveNewImages && isExistingImage && (
+                        <Text className="text-xs text-blue-600 mr-2">existing</Text>
+                      )}
                     </View>
-                    <TouchableOpacity
-                      className="bg-red-500 rounded-full w-6 h-6 justify-center items-center ml-2"
-                      onPress={() => removeImage(index)}
-                    >
-                      <Ionicons name="close" size={14} color="white" />
-                    </TouchableOpacity>
+                    {showRemoveButton && (
+                      <TouchableOpacity
+                        className="bg-red-500 rounded-full w-6 h-6 justify-center items-center ml-2"
+                        onPress={() => removeImage(index)}
+                      >
+                        <Ionicons name="close" size={14} color="white" />
+                      </TouchableOpacity>
+                    )}
                   </View>
-                )
+                );
               })}
             </View>
           </ScrollView>
@@ -265,7 +315,7 @@ export default function MediaPicker({
       ) : (
         <TouchableOpacity
           className="w-full h-[300px] bg-[#f0f2f5] justify-center items-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300"
-          onPress={openGallery}
+          onPress={editable ? openGallery : undefined}
         >
           <View className="items-center">
             <Ionicons name="add" size={28} color="#1778F2" />
@@ -274,18 +324,18 @@ export default function MediaPicker({
         </TouchableOpacity>
       )}
 
-      {/* Clear all button for multiple mode */}
-      {multiple && selectedImages.length > 1 && (
+      {editable && multiple && showClearAllButton && removableCount > 1 && (
         <TouchableOpacity
           className="mt-2 p-2 bg-red-500 rounded-lg justify-center items-center"
           onPress={removeAllImages}
         >
-          <Text className="text-white font-medium">Clear All ({selectedImages.length})</Text>
+          <Text className="text-white font-medium">
+            {onlyRemoveNewImages ? `Clear New Images (${removableCount})` : `Clear All (${selectedImages.length})`}
+          </Text>
         </TouchableOpacity>
       )}
 
-      {/* Add more button for multiple mode */}
-      {multiple && selectedImages.length > 0 && canSelectMore && (
+      {editable && multiple && selectedImages?.length > 0 && canSelectMore && (
         <TouchableOpacity
           className="mt-2 p-3 bg-[#1778F2] rounded-lg justify-center items-center"
           onPress={openGallery}
@@ -296,7 +346,6 @@ export default function MediaPicker({
         </TouchableOpacity>
       )}
 
-      {/* Gallery Modal */}
       <Modal
         visible={galleryVisible}
         animationType="slide"
@@ -346,22 +395,20 @@ export default function MediaPicker({
             }}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ padding: 4 }}
-            initialNumToRender={10}
-            maxToRenderPerBatch={20}
-            windowSize={5}
           />
-          <TouchableOpacity
-            className="flex-row bg-[#1778F2] p-4 rounded mx-4 my-4 justify-center items-center"
-            onPress={takePhoto}
-            disabled={!hasPermission}
-          >
-            <Ionicons name="camera" size={24} color="white" />
-            <Text className="text-white ml-2 font-semibold">Camera</Text>
-          </TouchableOpacity>
+          {editable && (
+            <TouchableOpacity
+              className="flex-row bg-[#1778F2] p-4 rounded mx-4 my-4 justify-center items-center"
+              onPress={takePhoto}
+              disabled={!hasPermission}
+            >
+              <Ionicons name="camera" size={24} color="white" />
+              <Text className="text-white ml-2 font-semibold">Camera</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </Modal>
 
-      {/* Camera Modal */}
       <Modal visible={cameraVisible} animationType="slide" transparent={false} onRequestClose={closeCamera}>
         <View className="flex-1 relative">
           {device && (
