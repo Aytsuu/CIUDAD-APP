@@ -12,7 +12,7 @@ import { useGetPersonalList } from "./queries/donationFetchQueries";
 import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { ClerkDonateCreateFormProps } from "./donation-types";
-import { ComboboxInput } from "@/components/ui/form/form-combo-box";
+import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 
 function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
   const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({

@@ -25,7 +25,7 @@ import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
 import { generateProposalPdf } from "./personalized-compo/pdfGenerator";
 import { Signatory, ProjectProposalFormProps } from "./projprop-types";
-import { ComboboxInput } from "@/components/ui/form/form-combo-box";
+import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 
 export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   existingProposal,
