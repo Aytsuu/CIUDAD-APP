@@ -147,7 +147,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   // ==================== RENDER HELPERS ======================
   const residentRegistrationForm = () => (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full max-w-2xl shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
+      <Card className="w-full max-w-2xl shadow-none">
         <CardHeader className="text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <HousePlus className="w-8 h-8 text-blue-600" />

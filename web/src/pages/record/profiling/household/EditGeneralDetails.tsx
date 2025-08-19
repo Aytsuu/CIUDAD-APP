@@ -38,7 +38,6 @@ export default function EditGeneralDetails({
   const [invalidHead, setInvalidHead] = React.useState<boolean>(false);
   const [isSaving, setIsSaving] = React.useState<boolean>(false);
   const { mutateAsync: updateHousehold } = useUpdateHousehold();
-  // const { mutateAsync: updateHouseholdHealth } = useUpdateHouseholdHealth();
   const formattedResidents = React.useMemo(() => 
     formatResidents(residents), [residents]
   );
@@ -92,7 +91,6 @@ export default function EditGeneralDetails({
       // Double update: main and health database
       await Promise.all([
         updateHousehold({ ...values, hh_id: household.hh_id }),
-        // updateHouseholdHealth({ ...values, hh_id: household.hh_id })
       ]);
       setIsSaving(false);
       setIsOpenDialog(false);
@@ -126,7 +124,7 @@ export default function EditGeneralDetails({
           <Combobox
             options={formattedResidents}
             value={form.watch("householdHead")}
-            onChange={(value) => form.setValue("householdHead", value)}
+            onChange={(value) => form.setValue("householdHead", value as string)}
             placeholder="Select a household"
             triggerClassName="font-normal"
             emptyMessage={

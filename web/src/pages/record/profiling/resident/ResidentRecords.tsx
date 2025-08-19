@@ -353,18 +353,18 @@ export default function ResidentRecords() {
 
               <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                 <DropdownLayout
-                    trigger={
-                      <Button variant="outline" className="gap-2">
-                        <FileDown className="h-4 w-4" />
-                        Export
-                      </Button>
-                    }
-                    options={[
-                      { id: "csv", name: "Export as CSV" },
-                      { id: "excel", name: "Export as Excel" },
-                      { id: "pdf", name: "Export as PDF" },
-                    ]}
-                  />
+                  trigger={
+                    <Button variant="outline" className="gap-2">
+                      <FileDown className="h-4 w-4" />
+                      Export
+                    </Button>
+                  }
+                  options={[
+                    { id: "csv", name: "Export as CSV" },
+                    { id: "excel", name: "Export as Excel" },
+                    { id: "pdf", name: "Export as PDF" },
+                  ]}
+                />
 
                 <Link to="/profiling/request/pending/individual" className="flex-1 sm:flex-none">
                   <Button variant="outline" className="w-full sm:w-auto">
@@ -385,7 +385,7 @@ export default function ResidentRecords() {
                   state={{
                     params: {
                       origin: "create",
-                      title: "Resident Registration",
+                      title: "Complete Resident Profiling",
                       description: "Provide the necessary details, and complete the registration.",
                     },
                   }}

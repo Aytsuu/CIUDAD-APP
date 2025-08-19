@@ -1,5 +1,4 @@
 import { useQuery} from "@tanstack/react-query";
-
 import {
   getFeatures,
   getPositions,
@@ -18,15 +17,15 @@ export const useStaffs = (
   return useQuery({
     queryKey: ["staffs", page, pageSize, searchQuery, staffTypeFilter],
     queryFn: () => getStaffs(page, pageSize, searchQuery, staffTypeFilter),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 5000
   });
 };
 
-export const usePositions = () => {
+export const usePositions = (staff_type: string) => {
   return useQuery({
-    queryKey: ["positions"],
-    queryFn: getPositions,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    queryKey: ["positions", staff_type],
+    queryFn: () => getPositions(staff_type),
+    staleTime: 5000
   });
 };
 
@@ -34,7 +33,7 @@ export const useFeatures = () => {
   return useQuery({
     queryKey: ["features"],
     queryFn: getFeatures,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 5000
   });
 };
 
@@ -42,7 +41,7 @@ export const useAllAssignedFeatures = () => {
   return useQuery({
     queryKey: ["allAssignedFeatures"],
     queryFn: getAllAssignedFeatures,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 5000
   });
 };
 
@@ -57,7 +56,8 @@ export const usePositionGroups = () => {
         console.error(err);
         throw err;
       }
-    }
+    },
+    staleTime: 5000
   })
 }
 

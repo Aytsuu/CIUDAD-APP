@@ -13,7 +13,7 @@ import { LoadButton } from "@/components/ui/button/load-button";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { useUpdateFamily } from "../queries/profilingUpdateQueries";
 import { useUpdateFamilyHealth } from "../../health-family-profiling/family-profling/queries/profilingUpdateQueries";
-import { formatHouseholds } from "../profilingFormats";
+import { formatHouseholds } from "../ProfilingFormats";
 import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { capitalize } from "@/helpers/capitalize";

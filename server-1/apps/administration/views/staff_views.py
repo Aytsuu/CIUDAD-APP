@@ -14,7 +14,8 @@ class StaffTableView(generics.ListCreateAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = Staff.objects.select_related(
+    staff_type = self.request.query_params.get('staff_type', None)
+    queryset = Staff.objects.filter(staff_type=staff_type).select_related(
       'rp',
       'pos',
     ).only(
@@ -27,11 +28,6 @@ class StaffTableView(generics.ListCreateAPIView):
       'rp__per__per_contact',
       'pos__pos_title'
     )
-
-    # Add staff_type filtering (but don't filter out Admin users)
-    staff_type_filter = self.request.query_params.get('staff_type', '').strip()
-    if staff_type_filter and staff_type_filter != 'Admin':
-      queryset = queryset.filter(staff_type=staff_type_filter)
 
     search_query = self.request.query_params.get('search', '').strip()
     if search_query:
@@ -71,6 +67,7 @@ class StaffDeleteView(generics.DestroyAPIView):
   serializer_class = StaffBaseSerializer
   queryset = Staff.objects.all()
   lookup_field = "staff_id"
+
 
 class StaffDataByTitleView(APIView):
   def get(self, request, *args, **kwargs):

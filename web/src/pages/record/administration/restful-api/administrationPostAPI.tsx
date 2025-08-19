@@ -48,6 +48,12 @@ export const assignFeature = async (
   staffId: string
 ) => {
   try {
+    console.log({
+      feat: featureId,
+      pos: selectedPositionId,
+      assi_date: formatDate(new Date()),
+      staff: staffId,
+    })
     const body = {
       feat: featureId,
       pos: selectedPositionId,

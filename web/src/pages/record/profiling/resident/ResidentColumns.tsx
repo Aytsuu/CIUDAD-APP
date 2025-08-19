@@ -1,11 +1,12 @@
 import { useNavigate } from "react-router";
 import { ArrowUpDown, Building, CircleUserRound, House, UsersRound } from "lucide-react";
-import { ResidentFamilyRecord, ResidentRecord, ResidentBusinessRecord} from "../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import ViewButton from "@/components/ui/view-button";
 import { Badge } from "@/components/ui/badge";
 import React from "react";
+import { formatDate } from "@/helpers/dateHelper";
+import { ResidentRecord, ResidentFamilyRecord, ResidentBusinessRecord } from "../ProfilingTypes";
 
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -258,28 +259,22 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     ),
   },
   {
-    accessorKey: "registered_by",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Registered By
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const registeredBy = row.getValue("registered_by") as string;
-      return (
-        <div className="text-center">
-          {registeredBy || "-"}
-        </div>
-      );
-    },
+    accessorKey: "suffix",
+    header: "Suffix"
+  },
+  {
+    accessorKey: "sex",
+    header: "Sex",
+    cell: ({row}) => (
+      row.original.sex[0]
+    )
   },
   {
     accessorKey: "rp_date_registered",
-    header: "Date Registered"
+    header: "Date Registered",
+    cell: ({row}) => (
+      formatDate(row.original.rp_date_registered, "long")
+    )
   },
   {
     accessorKey: "completed_profiles",
@@ -311,7 +306,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
                 }
                 content={profile.tooltip}
               />
-              ) : (
+              ) : (profile.id !== 'business' &&
                 <profile.icon size={20} 
                   className="text-gray-300"
                 />

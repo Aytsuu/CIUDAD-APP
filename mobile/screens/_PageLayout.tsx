@@ -29,13 +29,13 @@ export default function PageLayout({
   const getResponsiveHeaderHeight = () => {
     if (screenWidth < 375) {
       // Small screens (iPhone SE, etc.)
-      return 56
+      return 40
     } else if (screenWidth < 768) {
       // Mobile screens
-      return 60
+      return 40
     } else {
       // Tablet screens
-      return 72
+      return 60
     }
   }
 
@@ -66,7 +66,7 @@ export default function PageLayout({
   const responsivePadding = getResponsivePadding()
 
   return (
-    <SafeAreaView className={`flex-1 ${backgroundColor}`}>
+    <SafeAreaView className={`flex-1 ${backgroundColor} pt-4`}>
       {showHeader && (
         <View
           className="border-none shadow-none"

@@ -14,7 +14,8 @@ class StaffTableView(generics.ListCreateAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = Staff.objects.select_related(
+    staff_type = self.request.query_params.get('staff_type', None)
+    queryset = Staff.objects.filter(staff_type=staff_type).select_related(
       'rp',
       'pos',
     ).only(
@@ -27,11 +28,6 @@ class StaffTableView(generics.ListCreateAPIView):
       'rp__per__per_contact',
       'pos__pos_title'
     )
-
-    # Add staff_type filtering (but don't filter out Admin users)
-    staff_type_filter = self.request.query_params.get('staff_type', '').strip()
-    if staff_type_filter and staff_type_filter != 'Admin':
-      queryset = queryset.filter(staff_type=staff_type_filter)
 
     search_query = self.request.query_params.get('search', '').strip()
     if search_query:
@@ -46,7 +42,6 @@ class StaffTableView(generics.ListCreateAPIView):
       ).distinct()
 
     return queryset
-  
   
 class StaffUpdateView(generics.UpdateAPIView):
   serializer_class = StaffBaseSerializer
@@ -79,6 +74,7 @@ class HealthStaffListView(generics.ListAPIView):
   def get_queryset(self):
     return Staff.objects.filter(staff_type="Health Staff")
 
+
 class StaffDataByTitleView(APIView):
   def get(self, request, *args, **kwargs):
     title = request.query_params.get('pos_title', None)
@@ -90,3 +86,7 @@ class StaffDataByTitleView(APIView):
     req_position = Position.objects.get(pos_title=title)
     staff = Staff.objects.filter(pos=req_position.pos_id)
     return Response(StaffTableSerializer(staff, many=True).data)
+
+class StaffLandingPageView(generics.ListAPIView):
+  serializer_class = StaffLandingPageSerializer
+  queryset = Staff.objects.filter(~Q(pos__pos_title='Admin') & Q(staff_type='Health Staff'))

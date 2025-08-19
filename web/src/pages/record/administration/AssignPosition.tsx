@@ -6,17 +6,17 @@ import { positionAssignmentSchema } from "@/form-schema/administration-schema";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { Loader2, UserPlus, Building2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, UserPlus } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "sonner";
 
 // Import hooks for dual database operations (handled by APIs)
 import { usePositions } from "./queries/administrationFetchQueries";
 import { formatPositions } from "./AdministrationFormats";
 import { useAddStaff } from "./queries/administrationAddQueries";
 import { useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 export default function AssignPosition({
   personalInfoform,
@@ -26,10 +26,12 @@ export default function AssignPosition({
   close: () => void;
 }) {
   // ============= STATE INITIALIZATION ===============
-  const { user } = React.useRef(useAuth()).current;
+  const { user } = useAuth();
   
   // Use regular database for positions (primary source)
-  const {data: positions, isLoading: isLoadingPositions} = usePositions();
+  const {data: positions, isLoading: isLoadingPositions} = usePositions(
+    user?.staff?.staff_type
+  );
   
   // Hooks for dual database operations (APIs handle both databases)
   const {mutateAsync: addResidentAndPersonal} = useAddResidentAndPersonal();
@@ -45,7 +47,6 @@ export default function AssignPosition({
 
   // Get resident info for preview
   const residentInfo = personalInfoform.getValues();
-  const isExistingResident = !!residentInfo.per_id?.split(" ")[0];
 
   // ==================== HANDLERS ====================
   const submit = async () => {
@@ -62,11 +63,11 @@ export default function AssignPosition({
       const residentId = personalInfoform.getValues().per_id?.split(" ")[0];
       const positionId = form.getValues().assignPosition;
 
-      // If resident exists, assign position (API handles dual database insertion)
-      if (residentId) {
+      // If resident exists, assign position 
+      if (residentId && residentId !== "undefined") {
         console.log(residentId, positionId);
         
-        // Assign staff position (API handles both databases)
+        // Assign staff position 
         await addStaff({
           residentId: residentId, 
           positionId: positionId,
@@ -101,7 +102,7 @@ export default function AssignPosition({
       }
     } catch (error) {
       console.error('Error during submission:', error);
-      toast.error('An error occurred while processing the request');
+      showErrorToast('An error occurred while processing the request');
       setIsSubmitting(false);
     }
   };
@@ -114,10 +115,8 @@ export default function AssignPosition({
     setIsSubmitting(false);
     
     // Show success message
-    toast.success(
-      isExistingResident 
-        ? 'Position assigned successfully!' 
-        : 'Resident registered and position assigned successfully!'
+    showSuccessToast(
+      'Position assigned successfully!'
     );
   };
 
@@ -143,7 +142,7 @@ export default function AssignPosition({
           <div>
             <h2 className="text-xl font-bold text-white">Position Assignment</h2>
             <p className="text-blue-100 text-sm">
-              {isExistingResident ? 'Assign position to existing resident' : 'Register new resident and assign position'}
+              Assign position to existing resident
             </p>
           </div>
         </div>
@@ -155,9 +154,6 @@ export default function AssignPosition({
         {(residentInfo.per_fname || residentInfo.per_lname) && (
           <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
             <div className="flex items-start space-x-4">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Building2 className="h-5 w-5 text-blue-600" />
-              </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900 mb-2">Resident Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
@@ -169,22 +165,8 @@ export default function AssignPosition({
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">Status:</span>
-                    <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      isExistingResident 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-amber-100 text-amber-800'
-                    }`}>
-                      {isExistingResident ? (
-                        <>
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Existing Resident
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="h-3 w-3 mr-1" />
-                          New Registration
-                        </>
-                      )}
+                    <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800`}>
+                      Existing Resident
                     </span>
                   </div>
                 </div>
@@ -208,7 +190,7 @@ export default function AssignPosition({
             control={form.control}
             name="assignPosition"
             label="Select Position"
-            options={formatPositions(positions)}
+            options={formatPositions(positions.filter((pos: any) => !pos.is_maxed))}
             readOnly={false}
           />
 
@@ -231,12 +213,12 @@ export default function AssignPosition({
                     className="w-full h-12"
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
-                    {isExistingResident ? 'Assign Position' : 'Register & Assign'}
+                    Assign Position
                   </Button>
                 ) : (
                   <Button className="w-full h-12" disabled>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {isExistingResident ? 'Assigning to both databases...' : 'Registering & assigning to both databases...'}
+                    Assigning staff...
                   </Button>
                 )}
               </div>
@@ -248,10 +230,7 @@ export default function AssignPosition({
       {/* Footer Info */}
       <div className="px-8 py-4 bg-gray-50 border-t border-gray-200">
         <p className="text-xs text-gray-500 text-center">
-          {isExistingResident 
-            ? 'This will assign the selected position to the existing resident in both main and health databases.'
-            : 'This will first register the resident in both systems, then assign the selected position to both databases.'
-          }
+          This will assign the selected position to the existing resident.
         </p>
       </div>
     </div>

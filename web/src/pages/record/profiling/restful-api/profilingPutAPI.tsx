@@ -6,10 +6,7 @@ export const updateProfile = async (
   data: Record<string, any>
 ) => {
   try {
-    const res = await api.patch(
-      `profiling/personal/update/${perId}/`, data
-    );
-    // Also update health-profiling
+    const res = await api.patch(`profiling/personal/update/${perId}/`, data);
     await api2.patch(`health-profiling/personal/update/${perId}/`, data);
     return res.data;
   } catch (err) {
@@ -23,7 +20,6 @@ export const updateFamily = async (
 ) => {
   try {
     const res = await api.put(`profiling/family/update/${familyId}/`, data)
-    // Also update health-profiling
     await api2.put(`health-profiling/family/update/${familyId}/`, data);
     return res.data;
   } catch (err) {
@@ -36,7 +32,6 @@ export const updateFamilyRole = async (familyId: string, residentId: string, fc_
     const res = await api.put(`profiling/family/role/update/${familyId}/${residentId}/`, {
       fc_role
     })
-    // Also update health-profiling
     await api2.put(`health-profiling/family/role/update/${familyId}/${residentId}/`, { fc_role });
     return res.data;
   } catch (err) {
@@ -46,15 +41,13 @@ export const updateFamilyRole = async (familyId: string, residentId: string, fc_
 
 export const updateHousehold = async (householdInfo: Record<string, any>) => {
   try {
-    const res = await api.put(`profiling/household/update/${householdInfo.hh_id}/`, {
+    const data = {
       rp: householdInfo.householdHead.split(" ")[0],
       hh_nhts: householdInfo.nhts,
-    })
-    // Also update health-profiling
-    await api2.put(`health-profiling/household/update/${householdInfo.hh_id}/`, {
-      rp: householdInfo.householdHead.split(" ")[0],
-      hh_nhts: householdInfo.nhts,
-    });
+    }
+    const res = await api.put(`profiling/household/update/${householdInfo.hh_id}/`, data)
+    await api2.put(`health-profiling/household/update/${householdInfo.hh_id}/`, data);
+
     return res.data
   } catch (err) {
     throw err;
@@ -63,9 +56,7 @@ export const updateHousehold = async (householdInfo: Record<string, any>) => {
 
 export const updateBusiness = async (data: Record<string, any>, businessId: string) => {
   try {
-    const res = await api.put(`profiling/business/${businessId}/update/`, data);
-   
-   
+    const res = await api.patch(`profiling/business/${businessId}/update/`, data);
     return res.data;
   } catch (err) {
     console.error(err);

@@ -11,16 +11,15 @@ import FamilyRecordView from "@/pages/record/profiling/family/FamilyRecordView";
 import HouseholdRecordView from "@/pages/record/profiling/household/HouseholdRecordView";
 import BusinessFormLayout from "@/pages/record/profiling/business/BusinessFormLayout";
 import AccountRegistrationLayout from "@/pages/record/account/AccountRegisterLayout";
-import AddRegOptions from "@/pages/record/profiling/resident/AddRegOptions";
 import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm";
 import RegistrationLayout from "@/pages/record/profiling/resident/RegistrationLayout";
 import RequestFamilyReg from "@/pages/record/profiling/resident/RequestFamilyReg";
-import UpdateComparisonView from "@/pages/record/profiling/resident/form/UpdateComparisonView";
-import ActiveRecords from "@/pages/record/profiling/business/ActiveRecords";
+import PersonalHistoryView from "@/pages/record/profiling/resident/form/PersonalHistoryView";
 import PendingRecords from "@/pages/record/profiling/business/PendingRecords";
 import RespondentRecords from "@/pages/record/profiling/business/RespondentRecords";
 import RespondentDetails from "@/pages/record/profiling/business/RespondentDetails";
 import ProfilingAllRecords from "@/pages/record/profiling/ProfilingAllRecords";
+import BusinessHistoryView from "@/pages/record/profiling/business/BusinessHistoryView";
 
 export const profiling_router = [
   // All Records
@@ -53,8 +52,8 @@ export const profiling_router = [
     element: <ResidentFormLayout />,
   },
   {
-    path: "profiling/resident/update/view",
-    element: <UpdateComparisonView />,
+    path: "profiling/resident/history/view",
+    element: <PersonalHistoryView />,
   },
   {
     path: "profiling/request/pending",
@@ -119,27 +118,29 @@ export const profiling_router = [
   {
     path: "profiling/business/record",
     element: <BusinessRecords />,
-    children: [
-      {
-        path: "active",
-        element: <ActiveRecords />,
-      },
-      {
-        path: "pending",
-        element: <PendingRecords />,
-      },
-      {
-        path: "respondent",
-        element: <RespondentRecords />,
-      },
-      {
-        path: "respondent/details",
-        element: <RespondentDetails />,
-      },
-    ]
   },
   {
-    path: "profiling/business/form",
+    path: "profiling/business/record/form",
     element: <BusinessFormLayout />,
+  },
+  {
+    path: "profiling/business/record/pending",
+    element: <PendingRecords />,
+  },
+  {
+    path: "profiling/business/record/pending/form",
+    element: <BusinessFormLayout />,
+  },
+  {
+    path: "profiling/business/record/respondent",
+    element: <RespondentRecords />,
+  },
+  {
+    path: "profiling/business/record/respondent/details",
+    element: <RespondentDetails />,
+  },
+  {
+    path: "profiling/business/history/view",
+    element: <BusinessHistoryView />,
   },
 ];

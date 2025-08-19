@@ -1,0 +1,39 @@
+name: PR Reminder
+
+on:
+  pull_request:
+    branches: [main, master]
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR reminder comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.payload.pull_request.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `BEFORE SUBMITTING PULL REQUEST
+
+              /helpers (web and mobile)
+              dateFormatter.tsx        <--- Delete file
+              withTransition.tsx       <--- Only tsx, the rest should be changed to ts
+
+              server-1 and server-2    <--- Production ready (change settings.py to production), Most importantly, make sure all your installed libraries are present in the requirements.txt
+              APIs                     <--- Production ready (change api baseUrl to import.meta.env.VITE_API_URL and api2 baseUrl to import.meta.env.VITE_API_URL2)
+
+              /routers
+              main_router.tsx          <--- Ensure children has withTransition()
+
+              check BUILD ERROR FOR PRODUCTION in the issues page, fix bugs on files under your module`
+            })

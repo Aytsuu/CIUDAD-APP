@@ -13,7 +13,7 @@ import { CircleAlert, CircleCheck, Plus, Users, Trash2, Badge as Position } from
 import { useLocation } from "react-router"
 import { useAuth } from "@/context/AuthContext"
 import { useAddPositionBulk } from "./queries/administrationAddQueries"
-import { renderActionButton } from "./administrationActionConfig"
+import { renderActionButton } from "./AdministrationActionConfig"
 import type { z } from "zod"
 import { Button } from "@/components/ui/button/button"
 

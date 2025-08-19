@@ -64,7 +64,7 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
   // -------------------- RENDER ----------------------
   return (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full max-w-4xl shadow-lg border-0 bg-gradient-to-br from-white to-purple-50/30">
+      <Card className="w-full max-w-4xl shadow-none">
         {/* Navigation Button */}
         <div className="flex justify-start p-4 pb-0">
           <Button
