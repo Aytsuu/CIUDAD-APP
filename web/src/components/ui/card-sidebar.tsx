@@ -30,7 +30,10 @@ export const CardSidebar = ({
               key={item.id}
               onClick={() => {
                 setSelectedItem(item.id);
-                navigate(item.route, { replace: true })
+                navigate(item.route, { 
+                  state: item.state,
+                  replace: true 
+                })
               }}
                                       className={cn(
                 "w-full flex items-center justify-between p-3 rounded-lg text-left outline-none transition-colors duration-200 group",
