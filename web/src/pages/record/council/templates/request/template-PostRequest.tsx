@@ -40,6 +40,7 @@ export const template_file = async (data: {
     name: string;
     type: string;
     file: any;
+    logoType: any;
   };
 }) => {
   try {
@@ -49,7 +50,8 @@ export const template_file = async (data: {
       files: [{
         name: data.file_data.name,
         type: data.file_data.type,
-        file: data.file_data.file // The actual file object
+        file: data.file_data.file, // The actual file object
+        logoType: data.file_data.logoType
       }]
     };
 

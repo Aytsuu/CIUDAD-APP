@@ -213,6 +213,8 @@ interface TemplateUpdateFormProps {
   template_files: {  
     tf_id: number;
     tf_url: string;
+    tf_logoType: string;
+    tf_name: string;
   }[];
   onSuccess?: () => void;
   onClose?: () => void; 
@@ -228,19 +230,34 @@ function TemplateUpdateForm({
 }: TemplateUpdateFormProps) {
   const [activeVideoId, setActiveVideoId] = useState<string>("");
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [_formValues, setFormValues] = useState<z.infer<typeof documentTemplateFormSchema>>();
   const [isEditing, setIsEditing] = useState(false);
 
-  const [initialMediaFiles, _setInitialMediaFiles] = useState<MediaUploadType>(() => {
-    return template_files?.map(file => ({
-      id: `existing-${file.tf_id}`,
-      name: `file-${file.tf_id}`,
-      type: 'image/jpeg',
-      url: file.tf_url
-    })) || [];
+  // Separate initial files by logo type
+  const [initialBarangayFiles, _setInitialBarangayFiles] = useState<MediaUploadType>(() => {
+    return template_files
+      ?.filter(file => file.tf_logoType === "barangayLogo")
+      .map(file => ({
+        id: `existing-${file.tf_id}`,
+        name: file.tf_name || `file-${file.tf_id}`,
+        type: 'image/jpeg', // You might want to get actual type from backend
+        url: file.tf_url
+      })) || [];
   });
 
-  const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(initialMediaFiles);
+  const [initialCityFiles, _setInitialCityFiles] = useState<MediaUploadType>(() => {
+    return template_files
+      ?.filter(file => file.tf_logoType === "cityLogo")
+      .map(file => ({
+        id: `existing-${file.tf_id}`,
+        name: file.tf_name || `file-${file.tf_id}`,
+        type: 'image/jpeg', // You might want to get actual type from backend
+        url: file.tf_url
+      })) || [];
+  });
+
+  // State for current files
+  const [barangayFiles, setBarangayFiles] = useState<MediaUploadType>(initialBarangayFiles);
+  const [cityFiles, setCityFiles] = useState<MediaUploadType>(initialCityFiles);
 
   const form = useForm<z.infer<typeof documentTemplateFormSchema>>({
     resolver: zodResolver(documentTemplateFormSchema),
@@ -257,21 +274,30 @@ function TemplateUpdateForm({
   });
 
   function onSubmit(values: z.infer<typeof documentTemplateFormSchema>) {
-    const files = mediaFiles.map((media) => ({
-      'id': media.id,
-      'name': media.name,
-      'type': media.type,
-      'file': media.file
+    const barangayFilesData = barangayFiles.map((media) => ({
+      id: media.id,
+      name: media.name,
+      type: media.type,
+      file: media.file,
+      logoType: "barangayLogo" as const,
+    }));
+
+    const cityFilesData = cityFiles.map((media) => ({
+      id: media.id,
+      name: media.name,
+      type: media.type,
+      file: media.file,
+      logoType: "cityLogo" as const,
     }));
 
     const updatedValues = {
       ...values,
-      files
+      files: barangayFilesData,
+      files2: cityFilesData,
     };
 
     updateTemplateRecord(updatedValues);
   }
-
 
   const handleConfirmSave = () => {
     setIsConfirmOpen(false);
@@ -284,8 +310,11 @@ function TemplateUpdateForm({
       temp_contact_number: temp_contact_num,
       temp_email: temp_email
     });
-    // Reset media files
-    setMediaFiles([...initialMediaFiles]);
+    
+    // Reset media files to initial state
+    setBarangayFiles([...initialBarangayFiles]);
+    setCityFiles([...initialCityFiles]);
+    
     // Exit edit mode
     setIsEditing(false);
   };
@@ -294,17 +323,34 @@ function TemplateUpdateForm({
     <div className="flex flex-col p-2 min-h-0 h-auto rounded-lg overflow-auto">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          
+          {/* Barangay Logo */}
           <div className="flex-1">
             <MediaUpload
-              title=""
+              title="Barangay Logo"
               description="Upload barangay logo"
-              mediaFiles={mediaFiles}
+              mediaFiles={barangayFiles}
               activeVideoId={activeVideoId}
-              setMediaFiles={setMediaFiles}
+              setMediaFiles={setBarangayFiles}
               setActiveVideoId={setActiveVideoId}
               maxFiles={1}
+              hideRemoveButton={!isEditing}
             />  
-          </div>                                                 
+          </div>
+
+          {/* City Logo */}
+          <div className="flex-1">
+            <MediaUpload
+              title="City Logo"
+              description="Upload city logo"
+              mediaFiles={cityFiles}
+              activeVideoId={activeVideoId}
+              setMediaFiles={setCityFiles}
+              setActiveVideoId={setActiveVideoId}
+              maxFiles={1}
+              hideRemoveButton={!isEditing}
+            />  
+          </div>
 
           <div className="flex-1">
             <FormInput

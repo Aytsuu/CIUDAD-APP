@@ -242,11 +242,23 @@ class TemplateFileView(generics.ListCreateAPIView):
     serializer_class = TemplateFileSerializer
     queryset = TemplateFile.objects.all()
 
+    # def get_queryset(self):
+    #     queryset = super().get_queryset()
+    #     temp_id = self.request.query_params.get('temp_id')
+    #     if temp_id:
+    #         queryset = queryset.filter(temp_id=temp_id)
+    #     return queryset    
+
     def get_queryset(self):
         queryset = super().get_queryset()
         temp_id = self.request.query_params.get('temp_id')
+        logo_type = self.request.query_params.get('logoType')  # Add this
+        
         if temp_id:
             queryset = queryset.filter(temp_id=temp_id)
+        if logo_type:  # Add this filter
+            queryset = queryset.filter(tf_logoType=logo_type)
+            
         return queryset    
 
     def create(self, request, *args, **kwargs):

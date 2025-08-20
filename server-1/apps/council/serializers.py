@@ -99,6 +99,7 @@ class TemplateFileSerializer(serializers.ModelSerializer):
                 tf_name=file_data['name'],
                 tf_type=file_data['type'],
                 tf_path=file_data['name'],
+                tf_logoType=file_data['logoType'],
                 temp_id=tracking_instance  # THIS SETS THE FOREIGN KEY
             )
 

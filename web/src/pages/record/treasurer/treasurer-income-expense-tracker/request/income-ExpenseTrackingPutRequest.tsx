@@ -1,5 +1,4 @@
 import {api} from "@/api/api";
-import { formatDate } from '@/helpers/dateFormatter';
 import { parseFloatSafe } from '@/helpers/floatformatter';
 import { capitalize } from "@/helpers/capitalize";
 
@@ -21,7 +20,7 @@ export const updateIncomeExpense = async (iet_num: number, incomeExpenseInfo: Re
             iet_receipt_image: 'nothing',
             inv_num: "None",
             exp_id:  parseInt(incomeExpenseInfo.iet_particulars),
-            staff_id: "00004250722"
+            staff_id: "00001250820"
 
         })
 
@@ -46,7 +45,7 @@ export const updateIncomeTracking = async (inc_num: number, incomeInfo: Record<s
             inc_additional_notes: incomeInfo.inc_additional_notes,
             inc_receipt_image: incomeInfo.inc_receipt_image || null,
             incp_id:  parseInt(incomeInfo.inc_particulars),
-            staff_id: "00004250722"
+            staff_id: "00001250820"
 
         })
 

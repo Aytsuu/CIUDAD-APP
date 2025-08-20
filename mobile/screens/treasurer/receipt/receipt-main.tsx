@@ -453,14 +453,10 @@ const ReceiptPage = () => {
       <View className="flex-row justify-between mb-2">
         <Text className="text-gray-600">Date Issued:</Text>
         <Text>
-          {new Date(item.inv_date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-          })} at {new Date(item.inv_date).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true,
+          {new Date(item.inv_date).toLocaleString("en-US", {
+              timeZone: "UTC",
+              dateStyle: "medium",
+              timeStyle: "short"
           })}
         </Text>
       </View>
@@ -469,19 +465,21 @@ const ReceiptPage = () => {
         <Text>{item.inv_payor}</Text>
       </View>
       <View className="flex-row justify-between mb-2">
-        <Text className="text-gray-600">Payment Method:</Text>
-        <Text>{item.inv_pay_method}</Text>
-      </View>
-      <View className="flex-row justify-between mb-2">
         <Text className="text-gray-600">Nature of Collection:</Text>
         <Text>{item.inv_nat_of_collection}</Text>
       </View>
-      <View className="flex-row justify-between">
+      <View className="flex-row justify-between mb-2">
         <Text className="text-gray-600">Amount:</Text>
         <Text className="font-semibold">
           ₱{Number(item.inv_amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
         </Text>
       </View>
+      <View className="flex-row justify-between">
+        <Text className="text-gray-600">Change:</Text>
+        <Text className="font-semibold">
+          ₱{Number(item.inv_change).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+        </Text>
+      </View>      
     </View>
   );
 
@@ -538,7 +536,7 @@ const ReceiptPage = () => {
               <Search className="absolute left-3 top-3 text-gray-500" size={17} />
               <TextInput
                 placeholder="Search..."
-                className="pl-10 w-full h-12 bg-white text-base rounded-lg p-2 border border-gray-300"
+                className="pl-3 w-full h-12 bg-white text-base rounded-lg p-2 border border-gray-300"
                 value={searchQuery}
                 onChangeText={(text) => setSearchQuery(text)}
               />

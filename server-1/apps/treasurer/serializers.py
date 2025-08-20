@@ -361,12 +361,11 @@ class Purpose_And_RatesSerializers(serializers.ModelSerializer):
 
 class InvoiceSerializers(serializers.ModelSerializer):
     inv_payor = serializers.SerializerMethodField()
-    inv_pay_method = serializers.CharField(source='cr_id.req_pay_method') 
     
     class Meta:
         model = Invoice
         fields = ['inv_num', 'inv_serial_num', 'inv_date', 'inv_amount', 
-                 'inv_nat_of_collection', 'cr_id', 'inv_payor', 'inv_pay_method']
+                 'inv_nat_of_collection', 'cr_id', 'inv_payor', 'inv_change']
     
     def get_inv_payor(self, obj):
         try:

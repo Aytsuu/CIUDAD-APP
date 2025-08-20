@@ -1,13 +1,13 @@
 import { jsPDF } from "jspdf";
 import { useEffect, useState } from "react";
 import sealImage from "@/assets/images/Seal.png";
-import cityLogoImage from "@/assets/images/cebucity_logo.png";
 import { veraMonoNormal } from "@/assets/fonts/VeraMono-normal";
 import { veraMonoBold } from "@/assets/fonts/VeraMono-Bold-bold";
 
 interface TemplatePreviewProps {
   logoStyle: number;
   barangayLogo: string;
+  cityLogo: string
   email?: string;
   telNum: string;
   belowHeaderContent?: string;
@@ -25,6 +25,7 @@ interface TemplatePreviewProps {
 function TemplatePreview({
   logoStyle,
   barangayLogo,
+  cityLogo,
   email,
   telNum,
   belowHeaderContent,
@@ -49,7 +50,7 @@ function TemplatePreview({
 
   useEffect(() => {
     generatePDF();
-  }, [logoStyle, barangayLogo, email, telNum, belowHeaderContent, title, body, withSeal, withSignRight, withSignLeft, withSignatureApplicant, withSummon, paperSize, margin]);
+  }, [logoStyle, barangayLogo, cityLogo, email, telNum, belowHeaderContent, title, body, withSeal, withSignRight, withSignLeft, withSignatureApplicant, withSummon, paperSize, margin]);
 
   const generatePDF = () => {
     // Convert paper size to jsPDF format
@@ -108,9 +109,9 @@ function TemplatePreview({
         }
       }
 
-      if (cityLogoImage && cityLogoImage !== "no-image-url-fetched") {
+      if (cityLogo && cityLogo !== "no-image-url-fetched") {
         try {
-          doc.addImage(cityLogoImage, "PNG", rightLogoX, yPos, logoWidth, logoHeight);
+          doc.addImage(cityLogo, "PNG", rightLogoX, yPos, logoWidth, logoHeight);
         } catch (e) {
           console.error("Error adding city logo:", e);
         }

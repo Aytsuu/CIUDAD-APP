@@ -86,6 +86,7 @@ class TemplateFile(models.Model):
     tf_type = models.CharField(max_length=500)
     tf_path = models.CharField(max_length=500)
     tf_url = models.CharField(max_length=500)
+    tf_logoType = models.CharField(max_length=500)
  
     temp_id = models.ForeignKey(
         Template,

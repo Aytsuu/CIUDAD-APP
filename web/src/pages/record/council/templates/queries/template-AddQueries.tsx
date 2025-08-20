@@ -9,10 +9,12 @@
     name: string;
     type: string;
     file?: string;
+    logoType?: string;
   };
 
   type ExtendedIncomeExpense = z.infer<typeof documentTemplateFormSchema> & {
     files: FileData[]; 
+    files2: FileData[]; 
   };
 
 
@@ -35,15 +37,35 @@
                 file_data: {
                   name: file.name,
                   type: file.type,
-                  file: file.file
+                  file: file.file,
+                  logoType: file.logoType
                 }
               }).catch(error => {
-                console.error("Error creating file entry:", error);
+                console.error("Error creating city logo file:", error);
                 return null;
               })
             )
           );
-        }          
+        }     
+        
+        if (values.files2 && values.files2.length > 0) {
+          await Promise.all(
+            values.files2.map(file => 
+              template_file({
+                temp_id,
+                file_data: {
+                  name: file.name,
+                  type: file.type,
+                  file: file.file,
+                  logoType: file.logoType
+                }
+              }).catch(error => {
+                console.error("Error creating city logo file:", error);
+                return null;
+              })
+            )
+          );
+        }           
 
       },
       onSuccess: () => {

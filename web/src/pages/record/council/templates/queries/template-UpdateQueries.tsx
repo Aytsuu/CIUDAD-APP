@@ -12,10 +12,12 @@ type FileData = {
     name: string;
     type: string;
     file?: string;
+    logoType?: string;
 };
 
 type ExtendedTemplateUpdateValues = z.infer<typeof documentTemplateFormSchema> & {
   files: FileData[]; 
+  files2: FileData[]; 
 };
 
 
@@ -30,8 +32,12 @@ export const useUpdateTemplate = (
       //1. update template details
       await updateTemplateRec(temp_id, values);
 
-      //2 update template files
-      await handleFileUpdates(temp_id, values.files);
+      //2 update barangay logo 
+      await handleFileUpdates(temp_id, values.files, "barangayLogo");
+
+      //3 update city logo
+      await handleFileUpdates(temp_id, values.files2, "cityLogo");     
+
 
     },
     onSuccess: () => {
@@ -59,11 +65,11 @@ export const useUpdateTemplate = (
 
 
 
-const handleFileUpdates = async (temp_id: number, mediaFiles: any[]) => {
+const handleFileUpdates = async (temp_id: number, mediaFiles: any[], logoType: string) => {
   try {
     console.log("MEDIA FILESS SA QUERY EDIT: ", mediaFiles)
     // Get current files from server
-    const currentFilesRes = await api.get(`council/template-files/?temp_id=${temp_id}`);
+    const currentFilesRes = await api.get(`council/template-files/?temp_id=${temp_id}&logoType=${logoType}`);
     const currentFiles = currentFilesRes.data || [];
     
     // Determine files to keep and delete
@@ -72,7 +78,7 @@ const handleFileUpdates = async (temp_id: number, mediaFiles: any[]) => {
       .map(file => parseInt(file.id.replace('existing-', '')));
     
     // Delete files that were removed
-   const filesToDelete = currentFiles.filter((file: any) => !existingFileIds.includes(file.ief_id));
+   const filesToDelete = currentFiles.filter((file: any) => !existingFileIds.includes(file.tf_id));
     await Promise.all(filesToDelete.map((file: any) => 
       api.delete(`council/delete-temp-file/${file.tf_id}/`)
     ));
@@ -85,7 +91,8 @@ const handleFileUpdates = async (temp_id: number, mediaFiles: any[]) => {
         files: [{
           name: file.name,
           type: file.type,
-          file: file.file // The actual file object
+          file: file.file, // The actual file object
+          logoType: file.logoType
         }]
       })
     ));

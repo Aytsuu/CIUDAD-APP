@@ -282,6 +282,7 @@ type Template = {
   temp_title: string;
   temp_belowHeaderContent?: string;
   temp_barangayLogo: string;
+  temp_cityLogo: string;
   temp_LogoStyle: number;
   temp_email?: string;
   temp_telNum: string;
@@ -304,13 +305,20 @@ function TemplateMainPage() {
   // Fetch data
   const { data: templates = [], isLoading } = useGetTemplateRecord();
 
+  // Find the barangay logo directly
+  const barangayLogo = templates[0]?.template_files.find(file => file.tf_logoType === "barangayLogo")?.tf_url || "";
+
+  // Find the city logo directly  
+  const cityLogo = templates[0]?.template_files.find(file => file.tf_logoType === "cityLogo")?.tf_url || "";
+
   console.log("TEMPLATES: ", templates)
 
   const TemplateRecords: Template[] = [
     {
       temp_id: 1,
       temp_title: "BARANGAY CLEARANCE",
-      temp_barangayLogo: templates[0]?.template_files[0].tf_url,
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
       temp_LogoStyle: 1,  
       temp_email: templates[0]?.temp_email,  
       temp_telNum: templates[0]?.temp_contact_num,
@@ -331,7 +339,8 @@ function TemplateMainPage() {
       temp_id: 2,
       temp_title: "CERTIFICATION",
       temp_LogoStyle: 1,
-      temp_barangayLogo: templates[0]?.template_files[0].tf_url,
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
       temp_telNum: templates[0]?.temp_contact_num,
       temp_paperSize: "letter",
       temp_margin: "normal",
@@ -345,7 +354,8 @@ function TemplateMainPage() {
     {
       temp_id: 3,
       temp_title: "CERTIFICATION",
-      temp_barangayLogo: templates[0]?.template_files[0].tf_url,
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
       temp_LogoStyle: 2,
       temp_email: templates[0]?.temp_email,  
       temp_telNum: templates[0]?.temp_contact_num,
@@ -392,7 +402,7 @@ function TemplateMainPage() {
                 <SquarePen size={20} /> Edit Details
               </Button>
             }
-            className="max-w-[30%] flex flex-col overflow-auto scrollbar-custom"
+            className="max-w-[30%] max-h-[80%] flex flex-col overflow-auto scrollbar-custom"
             title="Template Common Details"
             description="Edit the needed details"
             mainContent={
@@ -416,7 +426,7 @@ function TemplateMainPage() {
                 <Plus size={20} /> Add Details
               </Button>
             }
-            className="max-w-[30%] flex flex-col overflow-auto scrollbar-custom"
+            className="max-w-[30%] max-h-[80%] flex flex-col overflow-auto scrollbar-custom"
             title="Template Common Details"
             description="please provide the needed details"
             mainContent={
@@ -488,6 +498,7 @@ function TemplateMainPage() {
               <TemplatePreview
                 logoStyle={previewTemplate.temp_LogoStyle}
                 barangayLogo={previewTemplate.temp_barangayLogo}
+                cityLogo={previewTemplate.temp_cityLogo}
                 email={previewTemplate.temp_email}
                 telNum={previewTemplate.temp_telNum}
                 belowHeaderContent={previewTemplate.temp_belowHeaderContent}
