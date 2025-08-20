@@ -608,6 +608,15 @@ class GetExpenseParticularsView(generics.ListAPIView):
         return Expense_Particular.objects.none()
     
 
+class Expense_LogView(generics.ListCreateAPIView):
+    serializer_class = Expense_LogSerializers
+
+    def get_queryset(self):
+        # Get year from query params (default to current year if not provided)
+        year = self.request.query_params.get('year', datetime.now().year)
+        return Expense_Log.objects.filter(
+            Q(el_datetime__year=year)
+        ).select_related('iet_num')
 
 # ------------------------- INCOME --------------------------------------
 

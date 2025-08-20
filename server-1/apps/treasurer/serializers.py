@@ -289,6 +289,32 @@ class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
         return None
 
 
+class Expense_LogSerializers(serializers.ModelSerializer):
+    el_particular = serializers.CharField(source='iet_num.exp_id.exp_budget_item', read_only=True)
+    el_is_archive = serializers.BooleanField(source='iet_num.iet_is_archive', read_only=True)
+    staff_name = serializers.SerializerMethodField()   
+
+    class Meta:
+        model = Expense_Log
+        fields = '__all__'
+    
+    def get_staff_name(self, obj):
+        if obj.iet_num and obj.iet_num.staff_id and obj.iet_num.staff_id.rp and obj.iet_num.staff_id.rp.per:
+            per = obj.iet_num.staff_id.rp.per
+
+            # Build full name
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+
+            return full_name
+        return None
+
+
 # -------- INCOME 
 
 class Income_ParticularSerializers(serializers.ModelSerializer):

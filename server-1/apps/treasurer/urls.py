@@ -46,6 +46,9 @@ urlpatterns=[
     path('get-particular/', GetParticularsView.as_view(), name='current-year-budget-items'),
     path('update-budget-detail/<int:year>/<int:dtl_id>/', UpdateBudgetPlanDetailView.as_view(), name = 'treasurer-update-budget-plan-detail'),
 
+    #EXPENSE LOG
+    path('expense-log/', Expense_LogView.as_view(), name='expense-log-list'),
+
     #INCOME URL
     path('income-tracking/', Income_TrackingView.as_view(), name = 'treasurer-income-tracking'),
     path('income-particular/', Income_ParticularView.as_view(), name = 'treasurer-income-particular'),

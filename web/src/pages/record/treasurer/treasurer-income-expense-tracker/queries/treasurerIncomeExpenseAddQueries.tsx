@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { income_expense_tracking } from "../request/income-ExpenseTrackingPostRequest";
 import { income_tracking } from "../request/income-ExpenseTrackingPostRequest";
 import { income_expense_file_create } from "../request/income-ExpenseTrackingPostRequest";
+import { expense_log } from "../request/income-ExpenseTrackingPostRequest";
 import { updateIncomeExpenseMain } from "../request/income-ExpenseTrackingPostRequest";
 import { updateIncomeMain } from "../request/income-ExpenseTrackingPostRequest";
 import { updateExpenseParticular } from "../request/income-ExpenseTrackingPostRequest";
@@ -104,6 +105,7 @@ type FileData = {
 };
 
 type ExtendedIncomeExpense = z.infer<typeof IncomeExpenseFormSchema> & {
+  returnAmount: number;
   totalBudget: number;
   totalExpense: number;
   years: number;
@@ -146,11 +148,20 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
         totalExpense: values.totalExpense,
       });
 
-
+      //4. Update Expense particular
       await updateExpenseParticular(values.particularId, {
         years: values.years,
         exp_proposed_budget: values.proposedBud,
       });
+
+      //5. Add new expense log
+      if(values.returnAmount > 0){
+        await expense_log(iet_num, {
+          returnAmount: values.returnAmount,
+          el_proposed_budget: values.iet_amount,
+          el_actual_expense: values.iet_actual_amount
+        });
+      }
       
       return iet_num;
     },  
@@ -159,6 +170,7 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
       queryClient.invalidateQueries({ queryKey: ['incomeExpense'] });
       queryClient.invalidateQueries({ queryKey: ['budgetItems'] });
       queryClient.invalidateQueries({ queryKey: ['income_expense_card'] });
+      queryClient.invalidateQueries({ queryKey: ['expense_log'] });
 
       toast.loading("Creating entry...", { id: "createExpense" });
       
