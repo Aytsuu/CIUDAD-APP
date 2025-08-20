@@ -32,5 +32,5 @@ class OTPLog(models.Model):
     
     def is_valid(self, otp_input):
         return self.otp == otp_input and now() < self.expires_at
-    
-    
+
+

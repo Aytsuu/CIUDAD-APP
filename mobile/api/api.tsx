@@ -2,7 +2,7 @@
 
   export const api = axios.create({
     baseURL: "http://192.168.209.208:8000",
-    withCredentials: true,
+    // withCredentials: true,
     headers: {
       "Content-Type": "application/json",
       "Accept": "application/json",

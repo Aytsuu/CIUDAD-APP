@@ -16,7 +16,7 @@ import { ChevronLeft } from "lucide-react-native";
 
 const otpImage = require("@/assets/images/otp.png");
 
-export default function OtpScreen() {
+export default function PhoneOTP() {
   const { verifyOtp } = useAuth();
   const { toast } = useToastContext();
   const router = useRouter();

@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -15,8 +16,19 @@ from apps.administration.models import Staff, Assignment
 from ..serializers import UserAccountSerializer
 from utils.supabase_client import supabase
 import random
+from django.core.mail import send_mail
+import requests
+import random
 
 logger = logging.getLogger(__name__)
+
+def generate_otp(length=6):
+    return str(random.randint(10**(length-1), (10**length)-1))
+
+def send_otp_email(email, otp):
+    subject = "Your OTP Code"
+    message = f"Your OTP code is: {otp}. It will expire in 5 minutes."
+    send_mail(subject, message, None, [email])
 
 class SignupView(APIView):
     permission_classes = [AllowAny]
@@ -280,7 +292,27 @@ class WebLoginView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+class GoogleLoginView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        email = request.user.get('userEmail')
+        
+        account = Account.objects.filter(email=user_email).first()
+            
+        if not account:
+            return Response(
+                {'error': 'Account not found in system'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
+        # Serialize and validate user data
+        serializer = UserAccountSerializer(account)
+        
+        return Response({
+            'user': serializer.data,
+            
+        })
+        
 class WebUserView(APIView):
 
     def get(self, request):
@@ -490,5 +522,220 @@ class LogoutView(APIView):
             )
             response.delete_cookie('refresh_token')
             return response
+
+class SendOTPEmail(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email')       
+        if not email:
+            return Response(
+                {'error': 'Email is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        otp = generate_otp()
+        cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
+        send_otp_email(email, otp)
+        return Response({'message': 'OTP sent via email'}, status=status.HTTP_200_OK)   
+    
+# class VerifyOTPEmail(APIView):
+#     permission_classes = [AllowAny]
+
+#     def post(self, request):
+#         logger.info("EMAIL IS HERE")
+#         email = request.data.get('email')
+#         otp_input = request.data.get('otp')
+
+#         if not email or not otp_input:
+#             return Response(
+#                 {'error': 'Email and OTP are required'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+#         cached_otp = cache.get(email)
+#         logger.info(f"CACHED OTP:  {cached_otp}")
+#         logger.info(f"OTP INPUT:  {otp_input}")
+        
+#         if cached_otp is None:
+#             return Response(
+#                 {'error': 'OTP has expired or was never sent'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+
+#         if cached_otp == otp_input:
+#             # cache.delete(email)  # Clear the OTP after successful verification
+#             account = Account.objects.filter(email=email).first()
+            
+#             if not account:
+#                 return Response(
+#                     {'error': 'Account not found'},
+#                     status=status.HTTP_404_NOT_FOUND
+#                 )
+            
+#             # Serialize and validate
+#             serializer = UserAccountSerializer(account)
+#             logger.info(f"OTP verified successfully for email: {email}")
+#             return Response({
+#                 'success': True,
+#                 'user': serializer.data,
+#                 'refresh_token': request.COOKIES.get('refresh_token'),
+#                 'message': 'OTP verified successfully', }, status=status.HTTP_200_OK)
+#         else:
+#             return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+
+class VerifyOTPEmail(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        logger.info("EMAIL IS HERE")
+        email = request.data.get('email')
+        otp_input = request.data.get('otp')
+
+        if not email or not otp_input:
+            return Response(
+                {'error': 'Email and OTP are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        cached_otp = cache.get(email)
+        logger.info(f"CACHED OTP:  {cached_otp}")
+        logger.info(f"OTP INPUT:  {otp_input}")
+        
+        if cached_otp is None:
+            return Response(
+                {'error': 'OTP has expired or was never sent'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if cached_otp == otp_input:
+            # Optionally clear OTP after verification
+            # cache.delete(email)
+
+            account = Account.objects.filter(email=email).first()
+            
+            response_data = {
+                'success': True,
+                'message': 'OTP verified successfully',
+                'user': None,  # default to None if no account exists
+                'refresh_token': request.COOKIES.get('refresh_token')
+            }
+
+            if account:
+                serializer = UserAccountSerializer(account)
+                response_data['user'] = serializer.data
+
+            logger.info(f"OTP verified successfully for email: {email}")
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+
+        
+class SendOTP(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        logger.info("SendOTP called")
+
+        try:
+            phone_number = request.data.get('phone_number')
+            logger.info(f"Received phone number: {phone_number}")
+            if not phone_number:
+                return Response(
+                    {'error': 'Phone number is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if not phone_number.startswith("63"):
+                phone_number = f"63{phone_number.lstrip('0')}"
+
+            payload = {
+                "apikey": settings.SEMAPHORE_API_KEY,
+                "number": phone_number,
+                "message": "Your OTP code is: %otp_code%", 
+                "code": "numeric",
+                "length": 6
+            }
+            logger.info(f"OTP SENT! Payload: {payload}")
+            try:
+                response = requests.post(
+                    "https://api.semaphore.co/api/v4/otp",
+                    data=payload
+                )
+                response.raise_for_status()
+                data = response.json()
+                logger.info(f"Semaphore OTP Response: {data}")
+            except requests.RequestException as e:
+                logger.error(f"Failed to send OTP via Semaphore: {str(e)}", exc_info=True)
+                return Response(
+                    {'error': 'Failed to send OTP'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Unexpected OTP send error: {str(e)}", exc_info=True)
+            return Response({'error': 'Failed to send OTP'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class VerifyOTP(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        phone_number = request.data.get('phone_number')
+        otp_input = request.data.get('otp')
+
+        if not phone_number or not otp_input:
+            return Response(
+                {'error': 'Phone number and OTP are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not phone_number.startswith("63"):
+            phone_number = f"63{phone_number.lstrip('0')}"
+
+        payload = {
+            "apikey": settings.SEMAPHORE_API_KEY,
+            "number": phone_number,
+            "code": otp_input
+        }
+
+        try:
+            response = requests.post(
+                "https://api.semaphore.co/api/v4/otp/validate",
+                data=payload
+            )
+            response.raise_for_status()
+            data = response.json()
+            logger.info(f"Semaphore OTP Verify Response: {data}")
+
+            if data.get("status") == "success":
+                return Response({'message': 'OTP verified successfully'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+
+        except requests.RequestException as e:
+            logger.error(f"Failed to verify OTP via Semaphore: {str(e)}", exc_info=True)
+            return Response({'error': 'Failed to verify OTP'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+# class send_otp_email(request):
+#     email = request.data.get('email')
+#     otp = request.data.get('otp')
+
+#     if not email or not otp:
+#         return Response(
+#             {'error': 'Email and OTP are required'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+
+#     subject = "Your OTP Code"
+#     message = f"Your OTP code is: {otp}"
+    
+#     try:
+#         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+#         return Response({'message': 'OTP sent via email'}, status=status.HTTP_200_OK)
+#     except Exception as e:
+#         logger.error(f"Failed to send OTP email: {str(e)}", exc_info=True)
+#         return Response({'error': 'Failed to send OTP email'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
 
 

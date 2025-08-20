@@ -7,4 +7,7 @@ const SignInSchema = z.object({
 
 });
 
-export default SignInSchema;
+export const SignInSchema2 = z.object({
+    phone_number: z.string().min(1, {message: ""})
+})
+export default SignInSchema2;

@@ -41,7 +41,7 @@ class MobileLoginView(APIView):
                     "password": password
                 })
                 supabase_user = supabase_response.user
-                
+                logger.info(f"Supabase user: {supabase_user.email if supabase_user else 'None'}")
                 if not supabase_user or not supabase_response.session:
                     raise Exception("Authentication failed")
                     
@@ -272,124 +272,33 @@ class MobileValidateTokenView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
-# class MobileLogoutView(APIView):
-#     """
-#     Logout endpoint that invalidates the session on Supabase
-#     """
-#     permission_classes = [AllowAny]
+class MobileLogoutView(APIView):
+    permission_classes = [AllowAny]
     
-#     def post(self, request):
-#         try:
-#             # Get access token from Authorization header
-#             auth_header = request.headers.get('Authorization') or request.META.get('HTTP_AUTHORIZATION')
+    def post(self, request):
+        try:
+            # Get access token from Authorization header
+            auth_header = request.headers.get('Authorization') or request.META.get('HTTP_AUTHORIZATION')
             
-#             if auth_header and auth_header.startswith('Bearer '):
-#                 access_token = auth_header.split(' ')[1]
+            if auth_header and auth_header.startswith('Bearer '):
+                access_token = auth_header.split(' ')[1]
                 
-#                 try:
-#                     # Sign out from Supabase
-#                     supabase.auth.sign_out(access_token)
-#                     logger.info("User signed out successfully")
-#                 except Exception as logout_error:
-#                     logger.warning(f"Supabase logout error: {str(logout_error)}")
+                try:
+                    # Sign out from Supabase
+                    supabase.auth.sign_out(access_token)
+                    logger.info("User signed out successfully")
+                except Exception as logout_error:
+                    logger.warning(f"Supabase logout error: {str(logout_error)}")
             
-#             return Response({
-#                 'message': 'Logout successful'
-#             }, status=status.HTTP_200_OK)
+            return Response({
+                'message': 'Logout successful'
+            }, status=status.HTTP_200_OK)
             
-#         except Exception as e:
-#             logger.error(f"Logout error: {str(e)}", exc_info=True)
-#             # Return success even if there's an error, as logout should always succeed from client perspective
-#             return Response({
-#                 'message': 'Logout completed'
-#             }, status=status.HTTP_200_OK)
-
-
-class SendOTP(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        logger.info("SendOTP called")
-
-        try:
-            phone_number = request.data.get('phone_number')
-            logger.info(f"Received phone number: {phone_number}")
-            if not phone_number:
-                return Response(
-                    {'error': 'Phone number is required'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            if not phone_number.startswith("63"):
-                phone_number = f"63{phone_number.lstrip('0')}"
-
-            payload = {
-                "apikey": settings.SEMAPHORE_API_KEY,
-                "number": phone_number,
-                "message": "Your OTP code is: %otp_code%", 
-                "code": "numeric",
-                "length": 6
-            }
-            logger.info(f"OTP SENT! Payload: {payload}")
-            try:
-                response = requests.post(
-                    "https://api.semaphore.co/api/v4/otp",
-                    data=payload
-                )
-                response.raise_for_status()
-                data = response.json()
-                logger.info(f"Semaphore OTP Response: {data}")
-            except requests.RequestException as e:
-                logger.error(f"Failed to send OTP via Semaphore: {str(e)}", exc_info=True)
-                return Response(
-                    {'error': 'Failed to send OTP'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-            return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
-
         except Exception as e:
-            logger.error(f"Unexpected OTP send error: {str(e)}", exc_info=True)
-            return Response({'error': 'Failed to send OTP'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Logout error: {str(e)}", exc_info=True)
+            # Return success even if there's an error, as logout should always succeed from client perspective
+            return Response({
+                'message': 'Logout completed'
+            }, status=status.HTTP_200_OK)
 
 
-class VerifyOTP(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        phone_number = request.data.get('phone_number')
-        otp_input = request.data.get('otp')
-
-        if not phone_number or not otp_input:
-            return Response(
-                {'error': 'Phone number and OTP are required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if not phone_number.startswith("63"):
-            phone_number = f"63{phone_number.lstrip('0')}"
-
-        payload = {
-            "apikey": settings.SEMAPHORE_API_KEY,
-            "number": phone_number,
-            "code": otp_input
-        }
-
-        try:
-            response = requests.post(
-                "https://api.semaphore.co/api/v4/otp/validate",
-                data=payload
-            )
-            response.raise_for_status()
-            data = response.json()
-            logger.info(f"Semaphore OTP Verify Response: {data}")
-
-            if data.get("status") == "success":
-                return Response({'message': 'OTP verified successfully'}, status=status.HTTP_200_OK)
-            else:
-                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
-
-        except requests.RequestException as e:
-            logger.error(f"Failed to verify OTP via Semaphore: {str(e)}", exc_info=True)
-            return Response({'error': 'Failed to verify OTP'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

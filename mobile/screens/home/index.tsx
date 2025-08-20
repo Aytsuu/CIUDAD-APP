@@ -11,14 +11,18 @@ import { features } from "./features";
 import { useRouter } from "expo-router";
 import ScreenLayout from "../_ScreenLayout";
 import { LoadingModal } from "@/components/ui/loading-modal";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "@/redux";
 
 const { width: screenWidth } = Dimensions.get("window");
 const cardWidth = screenWidth * 0.75;
 
 export default function HomeScreen() {
   const router = useRouter();
-  const {user, isLoading} = useAuth()
+  const dispatch = useDispatch<AppDispatch>();
+  const { user, isLoading } = useSelector(
+    (state: RootState) => state.auth
+  );
   if (isLoading) {
     return <LoadingModal visible={true} />;
   }

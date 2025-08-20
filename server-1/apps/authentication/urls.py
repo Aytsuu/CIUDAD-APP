@@ -9,6 +9,7 @@ urlpatterns = [
     path('web/login/', WebLoginView.as_view(), name='web-login'),
     path('web/user/', WebUserView.as_view(), name='current-web-user'),
     path('refresh/', RefreshSessionView.as_view(), name='refresh-session'),
+    path('google/', GoogleLoginView.as_view(), name='google-login'),
     path('upload-image/', UploadImageView.as_view(), name='upload-image'),
     
     # Mobile authentication endpoints
@@ -17,13 +18,15 @@ urlpatterns = [
     path('mobile/refresh-token/', MobileRefreshTokenView.as_view(), name='mobile-refresh-token'),
     path('mobile/refresh/', MobileValidateTokenView.as_view(), name='mobile-refresh-session'),
     
-    # OTP endpoints
-    path('mobile/send-otp/', SendOTP.as_view(), name='mobile-send-otp'),
-    path('mobile/verify-otp/', VerifyOTP.as_view(), name='mobile-verify-otp'),
-    
     # Mobile and Web shared endpoints
     path('signup/', SignupView.as_view(), name='signup'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    
+    # OTP endpoints
+    path('send-otp/', SendOTP.as_view(), name='send-otp'),
+    path('verify-otp/', VerifyOTP.as_view(), name='verify-otp'),
+    path('email/sendOtp/', SendOTPEmail.as_view(), name='email-send-otp'),
+    path('email/verifyOtp/', VerifyOTPEmail.as_view(), name='email-verify-otp'),
 ]
 
 
