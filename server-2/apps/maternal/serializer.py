@@ -1121,6 +1121,3 @@ class PregnancyDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f'Error getting prenatal care: {str(e)}')
             return []
-
-
-

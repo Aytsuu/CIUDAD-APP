@@ -1,222 +1,240 @@
-import { useState, useEffect } from "react"
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from "react-native"
+// request-page.tsx
+import { useState, useEffect, useMemo } from "react"
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from "react-native"
 import { router } from "expo-router"
 import { ArrowLeft, Search, ShoppingBag, ChevronDown, Pill, Filter, X } from "lucide-react-native"
-import { globalCartState } from "./cart-state"
+import { useGlobalCartState, Medicine as CartMedicineType } from "./cart-state" // Import useGlobalCartState and Medicine type from cart-state
+import { useMedicines } from "../admin/admin-inventory/queries/medicine/MedicineFetchQueries" // Ensure this path is correct
 
-export type Medicine = {
-  id: number
-  name: string
-  category: string
-  description?: string
-  inStock?: boolean
-  dosage?: string
-}
+// Type definition for medicines displayed on this page (matches backend response from MedicineInventorySerializer)
+export type MedicineDisplay = {
+  minv_id: number;
+  med_detail: {
+    med_name: string;
+    catlist: string;
+    med_type: string;
+  };
+  minv_dsg: number;
+  minv_dsg_unit: string;
+  minv_form: string;
+  minv_qty_avail: number; // Included but won't be displayed
+  description?: string; // Optional, as it’s not in the provided data but was in your original type
+};
+
 
 export default function MedicineRequestScreen() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [showCategories, setShowCategories] = useState(false)
-  const [medicines, setMedicines] = useState<Medicine[]>([])
-  const [filteredMedicines, setFilteredMedicines] = useState<Medicine[]>([])
-  const [cartItems, setCartItems] = useState<Medicine[]>([])
 
-  // Enhanced mock data for medicines
-  const mockMedicines: Medicine[] = [
-    { id: 1, name: "Biogesic", category: "Paracetamol", description: "Relieves mild pain and fever.", inStock: true, dosage: "500mg" },
-    { id: 2, name: "Panadol", category: "Paracetamol", description: "Pain reliever and fever reducer.", inStock: true, dosage: "500mg" },
-    { id: 3, name: "Calpol", category: "Paracetamol", description: "Pain relief for children and infants.", inStock: false, dosage: "250mg" },
-    { id: 4, name: "Neozep", category: "Paracetamol", description: "Treats cold and flu symptoms.", inStock: true, dosage: "500mg" },
-    { id: 5, name: "Amoxicillin", category: "Antibiotics", description: "Treats bacterial infections.", inStock: true, dosage: "250mg" },
-    { id: 6, name: "Cefalexin", category: "Antibiotics", description: "Used to treat bacterial infections.", inStock: true, dosage: "500mg" },
-    { id: 7, name: "Vitamin C", category: "Vitamins", description: "Boosts immune system.", inStock: true, dosage: "500mg" },
-    { id: 8, name: "Multivitamins", category: "Vitamins", description: "Daily nutritional supplement.", inStock: true, dosage: "1 tablet" },
-  ]
+  // Use the global cart state hook
+  const { cartItems } = useGlobalCartState();
 
-  const categories = ["All", "Paracetamol", "Antibiotics", "Vitamins"]
+  // Fetch medicines using react-query
+  const { data: fetchedMedicines, isLoading, isError, error } = useMedicines();
 
-  // Initialize medicines
-  useEffect(() => {
-    setMedicines(mockMedicines)
-    setFilteredMedicines(mockMedicines)
-  }, [])
+  // Process and filter medicines
+  const medicines = useMemo(() => {
+    if (!fetchedMedicines) return [];
 
-  // Filter medicines based on search query and category
-  useEffect(() => {
-    let filtered = medicines
+    const inStockMedicines = fetchedMedicines.filter(
+      (item: MedicineDisplay) => item.minv_qty_avail > 0
+    );
 
-    if (searchQuery) {
-      filtered = filtered.filter((medicine) =>
-        medicine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        medicine.category.toLowerCase().includes(searchQuery.toLowerCase())
+    const lowercasedQuery = searchQuery.toLowerCase();
+    return inStockMedicines.filter((medicine: MedicineDisplay) => {
+      const matchesSearch =
+        (medicine.med_detail?.med_name && typeof medicine.med_detail.med_name === "string" && medicine.med_detail.med_name.toLowerCase().includes(lowercasedQuery)) ||
+        (medicine.med_detail?.catlist && typeof medicine.med_detail.catlist === "string" && medicine.med_detail.catlist.toLowerCase().includes(lowercasedQuery)) ||
+        (medicine.med_detail?.med_type && typeof medicine.med_detail.med_type === "string" && medicine.med_detail.med_type.toLowerCase().includes(lowercasedQuery)) ||
+        (medicine.minv_dsg_unit && typeof medicine.minv_dsg_unit === "string" && medicine.minv_dsg != null &&
+          `${medicine.minv_dsg} ${medicine.minv_dsg_unit}`.toLowerCase().includes(lowercasedQuery)) ||
+        (medicine.description && typeof medicine.description === "string" && medicine.description.toLowerCase().includes(lowercasedQuery));
+
+      const matchesCategory =
+        selectedCategory === "All" || (medicine.med_detail?.catlist && medicine.med_detail.catlist === selectedCategory);
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [fetchedMedicines, searchQuery, selectedCategory]);
+
+
+  // Extract unique categories for filter dropdown
+  const categories = useMemo(() => {
+    if (!fetchedMedicines) return ["All"];
+    const uniqueCategories = Array.from(
+      new Set(
+        fetchedMedicines
+          .filter((med: MedicineDisplay) => med.med_detail?.catlist && typeof med.med_detail.catlist === "string")
+          .map((med: MedicineDisplay) => med.med_detail.catlist)
       )
-    }
+    );
+    return ["All", ...uniqueCategories];
+  }, [fetchedMedicines]);
 
-    if (selectedCategory !== "All") {
-      filtered = filtered.filter((medicine) => medicine.category === selectedCategory)
-    }
+  // Handle press on a medicine item
+  const handleMedicinePress = (medicine: MedicineDisplay) => {
+    // Encode the entire medicine object as a JSON string to pass it as a parameter
+    const medicineString = JSON.stringify({
+      id: medicine.minv_id,
+      name: medicine.med_detail?.med_name,
+      category: medicine.category_name,
+      medicine_type: medicine.medicine_type,
+      dosage: `${medicine.minv_dsg} ${medicine.minv_dsg_unit}`.trim(),
+      description: medicine.description,
+      minv_qty_avail: medicine.minv_qty_avail,
+    });
+    router.push({
+      pathname: "/medicine-request/details", // Ensure this path matches your details.tsx route
+      params: { medicineData: medicineString },
+    });
+  };
 
-    setFilteredMedicines(filtered)
-  }, [searchQuery, selectedCategory, medicines])
-
-  // Update cart items from global state
-  useEffect(() => {
-    const updateCartState = () => setCartItems([...globalCartState.items])
-    const interval = setInterval(updateCartState, 500)
-
-    updateCartState()
-    return () => clearInterval(interval)
-  }, [])
-
-  const clearSearch = () => {
-    setSearchQuery("")
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#0000ff" />
+          <Text className="mt-4 text-gray-700">Loading medicines...</Text>
+        </View>
+      </SafeAreaView>
+    )
   }
 
-
+  if (isError) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-1 items-center justify-center p-4">
+          <Text className="text-red-600 text-lg font-semibold">Error loading medicines</Text>
+          <Text className="text-gray-500 text-center mt-2">
+            Failed to fetch medicine data. Please try again later.
+          </Text>
+          {error && <Text className="text-sm text-gray-500 mt-1">Error: {error.message}</Text>}
+        </View>
+      </SafeAreaView>
+    )
+  }
 
   return (
-    <SafeAreaView className="flex-1  bg-gray-100">
-      <View className="flex-1">
-        {/* Header with gradient background */}
-        <View className="bg-blue-900 px-4 pt-4 pb-6 rounded-b-3xl ">
-          <View className="flex-row justify-between items-center mt-5 mb-4">
-            <TouchableOpacity
-              onPress={() => router.back()}
-              className="bg-white/20 p-2 rounded-full"
-            >
-              <ArrowLeft size={24} color="#fff" />
-            </TouchableOpacity>
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="flex-1 p-3">
+        {/* Header */}
+        <View className="flex-row items-center justify-between mt-10 p-3 border-b border-gray-200 bg-white">
+          <TouchableOpacity onPress={() => router.back()} className="p-2">
+            <ArrowLeft size={24} color="#333" />
+          </TouchableOpacity>
+          <Text className="text-xl font-semibold text-gray-800">Request Medicine</Text>
+          <TouchableOpacity onPress={() => router.push("/medicine-request/cart")} className="p-2 relative">
+            <ShoppingBag size={24} color="blue" />
+            {cartItems.length > 0 && (
+              <View className="absolute -top-1 -right-1 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
+                <Text className="text-white text-xs font-bold">{cartItems.length}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
 
-            <TouchableOpacity
-              onPress={() => router.push("/medicine-request/cart")}
-              className="relative bg-white/20 p-2 rounded-full"
-            >
-              <ShoppingBag size={24} color="#fff" />
-              {cartItems.length > 0 && (
-                <View className="absolute -top-1 -right-1 bg-red-500 rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
-                  <Text className="text-white text-xs font-bold">{cartItems.length}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {/* Title */}
-          <View className="mb-4">
-            <Text className="text-3xl font-bold text-white">Request Medicine</Text>
-            <Text className="text-blue-100 text-base mt-1">Get the medicines you need with ease</Text>
-          </View>
-
-          {/* Search Bar */}
-          <View className="flex-row items-center bg-white rounded-full px-4 py-3 ">
-            <Search size={20} color="#6B7280" />
+        {/* Search and Filter */}
+        <View className="p-4 bg-white shadow-sm">
+          <View className="flex-row items-center border border-gray-300 rounded-lg px-3 py-2 bg-gray-50">
+            <Search size={20} color="#9CA3AF" />
             <TextInput
-              placeholder="Search medicines"
-              className="flex-1 ml-3 text-gray-700"
+              className="flex-1 ml-2 text-gray-800"
+              placeholder="Search medicines..."
+              placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholderTextColor="#9CA3AF"
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={clearSearch} className="ml-2">
-                <X size={18} color="#6B7280" />
+              <TouchableOpacity onPress={() => setSearchQuery("")} className="ml-2">
+                <X size={20} color="blue" />
               </TouchableOpacity>
             )}
           </View>
-        </View>
 
-        <View className="flex-1 px-4 pt-6">
-          {/* Categories Filter */}
-          <View className="mb-6 relative z-20">
-            <TouchableOpacity
-              className="flex-row justify-between items-center bg-white rounded-xl px-4 py-4 shadow-sm border border-gray-100"
-              onPress={() => setShowCategories(!showCategories)}
-            >
-              <View className="flex-row items-center">
-                <Filter size={18} color="#4F46E5" />
-                <Text className="text-gray-700 font-medium ml-2">
-                  {selectedCategory === "All" ? "All Categories" : selectedCategory}
-                </Text>
-              </View>
-              <ChevronDown
-                size={20}
-                color="#4F46E5"
-                style={{ transform: [{ rotate: showCategories ? "180deg" : "0deg" }] }}
-              />
-            </TouchableOpacity>
+          {/* Category Filter */}
+          <TouchableOpacity
+            onPress={() => setShowCategories(!showCategories)}
+            className="flex-row items-center justify-between mt-3 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+          >
+            <Text className="text-gray-800">
+              Category: <Text className="font-semibold">{selectedCategory}</Text>
+            </Text>
+            <Filter size={20} color="#9CA3AF" />
+          </TouchableOpacity>
 
-            {showCategories && (
-              <View className="absolute top-16 left-0 right-0 bg-white rounded-xl shadow-lg border border-gray-100 z-30">
-                {categories.map((category, index) => (
+          {showCategories && (
+            <View className="mt-2 border border-gray-200 rounded-lg bg-white max-h-48 overflow-hidden">
+              <ScrollView>
+                {categories.map((category) => (
                   <TouchableOpacity
-                    key={category}
-                    className={`px-4 py-4 ${index !== categories.length - 1 ? 'border-b border-gray-50' : ''}`}
+                    key={category as string}
                     onPress={() => {
-                      setSelectedCategory(category)
+                      setSelectedCategory(category as string)
                       setShowCategories(false)
                     }}
+                    className={`py-3 px-4 ${selectedCategory === category ? "bg-blue-50" : "bg-white"
+                      } border-b border-gray-100 last:border-b-0`}
                   >
-                    <Text className={`${selectedCategory === category ? "text-indigo-600 font-semibold" : "text-gray-700"}`}>
-                      {category === "All" ? "All Categories" : category}
+                    <Text
+                      className={`text-gray-800 ${selectedCategory === category ? "font-semibold text-blue-600" : ""
+                        }`}
+                    >
+                      {category as string}
                     </Text>
                   </TouchableOpacity>
                 ))}
-              </View>
-            )}
-          </View>
+              </ScrollView>
+            </View>
+          )}
+        </View>
 
-          {/* Results Summary */}
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-gray-600 font-medium">
-              {filteredMedicines.length} medicine{filteredMedicines.length !== 1 ? 's' : ''} found
-            </Text>
-
-          </View>
-
-          {/* Medicine List */}
-          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-            {filteredMedicines.length > 0 ? (
-              <View className="pb-6">
-                {filteredMedicines.map((medicine, index) => (
+        {/* Medicine List */}
+        <View className="flex-1 bg-white ">
+          <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+            {medicines.length > 0 ? (
+              <View className="px-4 py-3 gap-2">
+                {medicines.map((medicine: MedicineDisplay) => (
                   <TouchableOpacity
-                    key={medicine.id}
-                    className="bg-white p-5 mb-4 rounded-2xl shadow-sm border border-gray-100"
-                    onPress={() =>
-                      router.push({
-                        pathname: "/medicine-request/details",
-                        params: { id: medicine.id.toString() },
-                      })
-                    }
+                    key={medicine.minv_id}
+                    onPress={() => handleMedicinePress(medicine)}
+                    className="flex-row items-center justify-between p-4 mb-3 bg-white rounded-lg shadow-sm border border-gray-300"
                   >
-                    <View className="flex-row justify-between items-start">
-                      <View className="flex-1">
-                        <View className="flex-row items-center mb-2">
-                          <View className="bg-indigo-100 p-2 rounded-full mr-3">
-                            <Pill size={20} color="#4F46E5" />
-                          </View>
-                          <View className="flex-1">
-                            <Text className="text-lg font-bold text-gray-800">{medicine.name}</Text>
-                            <Text className="text-gray-500 text-sm">{medicine.dosage}</Text>
-                          </View>
-                        </View>
-
-                        <View className="flex-row items-center justify-between mt-2">
-
-                          <Text className="text-xs font-medium">{medicine.category}</Text>
-
-                        </View>
-
-                        {medicine.description && (
-                          <Text className="text-gray-600 text-sm mt-2 leading-5">{medicine.description}</Text>
-                        )}
+                    <Pill size={24} color="blue" />
+                    <View className="flex-1 ml-4">
+                      <Text className="text-lg font-semibold text-gray-900">
+                        {medicine.med_detail?.med_name || "Unknown Medicine"}
+                      </Text>
+                      <View className="flex-row items-center justify-between mt-1">
+                        <Text className="text-sm font-medium text-gray-700">
+                          {medicine.med_detail?.catlist || "Unknown Category"}
+                        </Text>
+                        <Text className="text-sm text-gray-600 ml-2">
+                          Type: {medicine.med_detail?.med_type || "Unknown Type"}
+                        </Text>
                       </View>
-
-                      <View className="ml-4">
-                        <ChevronDown
-                          size={20}
-                          color="#9CA3AF"
-                          style={{ transform: [{ rotate: "-90deg" }] }}
-                        />
-                      </View>
+                      {medicine.minv_dsg && medicine.minv_dsg_unit && (
+                        <Text className="text-gray-600 text-sm mt-1">
+                          Dosage: {medicine.minv_dsg} {medicine.minv_dsg_unit}
+                        </Text>
+                      )}
+                      {medicine.minv_form && (
+                        <Text className="text-gray-600 text-sm mt-1">
+                          Form: {medicine.minv_form}
+                        </Text>
+                      )}
+                      {medicine.description && (
+                        <Text className="text-gray-600 text-sm mt-1 leading-5">
+                          {medicine.description}
+                        </Text>
+                      )}
+                    </View>
+                    <View className="ml-4">
+                      <ChevronDown
+                        size={20}
+                        color="#9CA3AF"
+                        style={{ transform: [{ rotate: "270deg" }] }}
+                      />
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -228,9 +246,8 @@ export default function MedicineRequestScreen() {
                 </View>
                 <Text className="text-xl font-semibold text-gray-700 mb-2">No medicines found</Text>
                 <Text className="text-gray-500 text-center px-8">
-                  Try adjusting your search terms to find what medicine you're looking for.
+                  Try adjusting your search terms or checking the available categories.
                 </Text>
-
               </View>
             )}
           </ScrollView>

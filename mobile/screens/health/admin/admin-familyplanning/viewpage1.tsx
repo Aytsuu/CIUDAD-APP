@@ -1,0 +1,947 @@
+import React from "react";
+import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
+import { useQuery } from "@tanstack/react-query";
+import { useLocalSearchParams, router } from "expo-router";
+import { getFPCompleteRecord } from "./GetRequest";
+import {
+  User,
+  Calendar,
+  MapPin,
+  Heart,
+  Activity,
+  Stethoscope,
+  FileText,
+  ArrowRight,
+  GraduationCap,
+  CreditCard,
+  Home,
+  Baby,
+  TrendingUp,
+  Scale,
+  Ruler,
+  Droplets,
+  UserCheck,
+  Clock,
+  Loader2,
+  AlertCircle,
+} from "lucide-react-native";
+
+interface FPRecordData {
+  client_id?: string;
+ 
+  occupation?: string;
+  philhealthNo?: string;
+ 
+  nhts_status?: boolean;
+  typeOfClient?: string;
+  reasonForFP?: string;
+  methodCurrentlyUsed?: string;
+  avg_monthly_income?: number;
+  plan_more_children?: boolean;
+  fourps?: boolean;
+  obstetricalHistory?: {
+    menstrualFlow?: string;
+    lastDeliveryDate?: string;
+    typeOfLastDelivery?: string;
+    previousMenstrualPeriod?: string;
+    dysmenorrhea?: boolean;
+    hydatidiformMole?: boolean;
+    ectopicPregnancyHistory?: boolean;
+    g_pregnancies?: number;
+    p_pregnancies?: number;
+    livingChildren?: number;
+    fullTerm?: number;
+    premature?: number;
+    abortion?: number;
+    pain?: boolean;
+    history?: boolean;
+    hiv?: boolean;
+  };
+  medical_history_records?: { medhist_id: string; illname: string; ill_id: string }[];
+  selectedIllnessIds?: string[];
+  risk_sti?: {
+    abnormalDischarge?: boolean;
+    dischargeFrom?: string;
+    sores?: boolean;
+  };
+  risk_vaw?: {
+    unpleasant_relationship?: boolean;
+    partner_disapproval?: boolean;
+    domestic_violence?: boolean;
+    referredTo?: string;
+  };
+  fp_pelvic_exam?: {
+    pelvicExamination?: string;
+    cervicalTenderness?: boolean;
+    cervicalAdnexal?: boolean;
+    cervicalConsistency?: string;
+    uterinePosition?: string;
+    uterineDepth?: string;
+  };
+  pregnancyCheck?: {
+    breastfeeding?: boolean;
+    abstained?: boolean;
+    recent_baby?: boolean;
+    recent_period?: boolean;
+    recent_abortion?: boolean;
+    using_contraceptive?: boolean;
+  };
+  skinExamination?: string;
+  conjunctivaExamination?: string;
+  neckExamination?: string;
+  breastExamination?: string;
+  abdomenExamination?: string;
+  extremitiesExamination?: string;
+  weight?: number;
+  height?: number;
+  bloodPressure?: string;
+  pulseRate?: string;
+  acknowledgement?: {
+    selectedMethod?: string;
+    clientName?: string;
+    clientSignature?: string;
+    clientSignatureDate?: string;
+    guardianSignature?: string;
+    guardianSignatureDate?: string;
+  };
+  serviceProvisionRecords?: {
+    dateOfVisit: string;
+    methodAccepted?: string;
+    nameOfServiceProvider: string;
+    dateOfFollowUp: string;
+    medicalFindings: string;
+  }[];
+}
+
+export default function FpRecordViewPage1() {
+  const { fprecordId } = useLocalSearchParams();
+
+  const { data: recordData, isLoading, isError, error } = useQuery<FPRecordData | null>({
+    queryKey: ["fpCompleteRecordView", fprecordId],
+    queryFn: () => getFPCompleteRecord(Number(fprecordId)),
+    enabled: !!fprecordId,
+  });
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-gray-50 items-center justify-center p-6">
+        <Loader2 size={32} color="#3B82F6" />
+        <Text className="text-lg text-gray-600 mt-4">Loading record...</Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View className="flex-1 bg-gray-50 items-center justify-center p-6">
+        <AlertCircle size={32} color="#EF4444" />
+        <Text className="text-lg text-red-600 mt-4">Failed to load record</Text>
+        <Text className="text-sm text-gray-500 mt-2 text-center">{error?.message}</Text>
+      </View>
+    );
+  }
+
+  if (!recordData) {
+    return (
+      <View className="flex-1 bg-gray-50 items-center justify-center p-6">
+        <FileText size={32} color="#6B7280" />
+        <Text className="text-lg text-gray-600 mt-4">Record not found</Text>
+        <Text className="text-sm text-gray-400 mt-1">ID: {fprecordId}</Text>
+      </View>
+    );
+  }
+
+ const fullName = `${recordData.lastName ?? "N/A"}, ${recordData.givenName ?? "N/A"} ${recordData.middleInitial ?? ""}`.trim();
+ const isIUD = recordData.acknowledgement?.selectedMethod?.toLowerCase() === "iud";
+
+  return (
+    <ScrollView className="flex-1 bg-gray-50">
+      {/* Header Section */}
+      <View className="bg-blue-600 px-6 pt-16 pb-8">
+        <View className="items-center">
+          <Heart size={32} color="white" />
+          <Text className="text-2xl font-bold text-white mt-2">Family Planning Record</Text>
+          <Text className="text-blue-100 mt-1">Complete Medical Profile</Text>
+        </View>
+      </View>
+
+      <View className="px-4 -mt-4">
+        {/* Client Information Card */}
+        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+          <View className="p-6 pb-4">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-blue-100">
+                <User size={20} color="#3B82F6" />
+              </View>
+              <Text className="text-lg font-semibold text-gray-800">Client Information</Text>
+            </View>
+          </View>
+          <View className="px-6 pb-6">
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <CreditCard size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Client ID</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.client_id ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <User size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Full Name</Text>
+                <Text className="text-sm font-medium text-gray-900">{fullName}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <Calendar size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Birth Date & Age</Text>
+                <Text className="text-sm font-medium text-gray-900">
+                  {`${recordData.dateOfBirth ?? "N/A"} (${recordData.age ?? "N/A"} years old)`}
+                </Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <GraduationCap size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Education</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.educationalAttainment ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <GraduationCap size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Occupation</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.occupation ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <CreditCard size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Philhealth ID</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.philhealthNo ?? "Not provided"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <MapPin size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Complete Address</Text>
+                <Text className="text-sm font-medium text-gray-900">
+                  {`${recordData.address?.houseNumber ?? "N/A"} ${recordData.address?.street ?? ""}, ${recordData.address?.barangay ?? "N/A"}, ${recordData.address?.municipality ?? "N/A"}, ${recordData.address?.province ?? "N/A"}`.trim()}
+                </Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between pt-2">
+              <Text className="text-sm text-gray-500">NHTS:</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.nhts_status ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.nhts_status ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Family Planning Details Card */}
+        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+          <View className="p-6 pb-4">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-red-100">
+                <Heart size={20} color="#EF4444" />
+              </View>
+              <Text className="text-lg font-semibold text-gray-800">Family Planning Details</Text>
+            </View>
+          </View>
+          <View className="px-6 pb-6">
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <User size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Client Type</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.typeOfClient ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <Heart size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Reason for Family Planning</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.reasonForFP ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <Activity size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Current Method Used</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.methodCurrentlyUsed ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <TrendingUp size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Average Monthly Income</Text>
+                <Text className="text-sm font-medium text-gray-900">
+                  {recordData.avg_monthly_income?.toLocaleString() ?? "Not specified"}
+                </Text>
+              </View>
+            </View>
+            <View className="border-t border-gray-100 pt-4 mt-2">
+              <View className="flex-row items-center justify-between mb-3">
+                <Text className="text-sm text-gray-500">Plans to have more children:</Text>
+                <View className={`px-3 py-1 rounded-full ${recordData.plan_more_children ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-700"}`}>
+                  <Text className="text-xs font-medium">{recordData.plan_more_children ? "Yes" : "No"}</Text>
+                </View>
+              </View>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-sm text-gray-500">4Ps Beneficiary:</Text>
+                <View className={`px-3 py-1 rounded-full ${recordData.fourps ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-700"}`}>
+                  <Text className="text-xs font-medium">{recordData.fourps ? "Yes" : "No"}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Obstetrical History Card */}
+        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+          <View className="p-6 pb-4">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-green-100">
+                <Baby size={20} color="#10B981" />
+              </View>
+              <Text className="text-lg font-semibold text-gray-800">Obstetrical History</Text>
+            </View>
+          </View>
+          <View className="px-6 pb-6">
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <Droplets size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Menstrual Flow</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.obstetricalHistory?.menstrualFlow ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <Droplets size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Last Delivery Date</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.obstetricalHistory?.lastDeliveryDate ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <Droplets size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Type of Last Delivery</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.obstetricalHistory?.typeOfLastDelivery ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <Droplets size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Previous Menstrual Period</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.obstetricalHistory?.previousMenstrualPeriod ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Dysmenorrhea:</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.obstetricalHistory?.dysmenorrhea ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.obstetricalHistory?.dysmenorrhea ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Hydatidiform Mole:</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.obstetricalHistory?.hydatidiformMole ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.obstetricalHistory?.hydatidiformMole ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Ectopic Pregnancy History:</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.obstetricalHistory?.ectopicPregnancyHistory ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.obstetricalHistory?.ectopicPregnancyHistory ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="border-t border-gray-100 pt-4">
+              <Text className="text-sm font-medium text-gray-800 mb-3">Pregnancy Statistics</Text>
+              <View className="flex-row mb-3">
+                <View className="bg-gray-50 rounded-lg p-4 items-center flex-1 mx-1">
+                  <Baby size={20} color="#3B82F6" />
+                  <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.g_pregnancies ?? "0"}</Text>
+                  <Text className="text-sm text-gray-500 text-center mt-1">Gravida</Text>
+                </View>
+                <View className="bg-gray-50 rounded-lg p-4 items-center flex-1 mx-1">
+                  <Baby size={20} color="#3B82F6" />
+                   <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.p_pregnancies ?? "0"}</Text>
+                  <Text className="text-sm text-gray-500 text-center mt-1">Para</Text>
+                </View>
+                <View className="bg-gray-50 rounded-lg p-4 items-center flex-1 mx-1">
+                  <Heart size={20} color="#3B82F6" />
+                  <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.livingChildren ?? "0"}</Text>
+                  <Text className="text-sm text-gray-500 text-center mt-1">Living Children</Text>
+                </View>
+              </View>
+              <View className="flex-row">
+                <View className="bg-gray-50 rounded-lg p-4 items-center flex-1 mx-1">
+                  <Calendar size={20} color="#3B82F6" />
+                   <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.fullTerm ?? "0"}</Text>
+                  <Text className="text-sm text-gray-500 text-center mt-1">Full Term</Text>
+                </View>
+                <View className="bg-gray-50 rounded-lg p-4 items-center flex-1 mx-1">
+                  <Clock size={20} color="#3B82F6" />
+                  <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.premature ?? "0"}</Text>
+                  <Text className="text-sm text-gray-500 text-center mt-1">Premature</Text>
+                </View>
+                <View className="bg-gray-50 rounded-lg p-4 items-center flex-1 mx-1">
+                  <AlertCircle size={20} color="#3B82F6" />
+                  <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.abortion ?? "0"}</Text>
+                  <Text className="text-sm text-gray-500 text-center mt-1">Abortion</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Medical History Card */}
+        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+          <View className="p-6 pb-4">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-purple-100">
+                <Stethoscope size={20} color="#8B5CF6" />
+              </View>
+              <Text className="text-lg font-semibold text-gray-800">Medical History</Text>
+            </View>
+          </View>
+          <View className="px-6 pb-6">
+            {(recordData.medical_history_records ?? []).map((record) => (
+              <View key={record.medhist_id} className="flex-row items-center justify-between py-3 border-b border-gray-100">
+                <Text className="text-sm text-gray-800 flex-1">{record.illname ?? "N/A"}</Text>
+                <View className={`px-3 py-1 rounded-full ${recordData.selectedIllnessIds?.includes(record.ill_id) ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                  <Text className="text-xs font-medium">{recordData.selectedIllnessIds?.includes(record.ill_id) ? "Yes" : "No"}</Text>
+                </View>
+              </View>
+            ))}
+            {(!recordData.medical_history_records || recordData.medical_history_records.length === 0) && (
+              <Text className="text-sm text-gray-500 text-center">No medical history available</Text>
+            )}
+          </View>
+        </View>
+
+        {/* Risk STI Card */}
+        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+          <View className="p-6 pb-4">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-purple-100">
+                <Stethoscope size={20} color="#8B5CF6" />
+              </View>
+              <Text className="text-lg font-semibold text-gray-800">Risk STI</Text>
+            </View>
+          </View>
+          <View className="px-6 pb-6">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Abnormal Discharge:</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.risk_sti?.abnormalDischarge ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.risk_sti?.abnormalDischarge ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            {recordData.risk_sti?.abnormalDischarge && (
+              <View className="flex-row items-center justify-between mb-4">
+                <Text className="text-sm text-gray-500">Discharge from:</Text>
+                <View className="px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                  <Text className="text-xs font-medium">{recordData.risk_sti?.dischargeFrom ?? "N/A"}</Text>
+                </View>
+              </View>
+            )}
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Sores:</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.risk_sti?.sores ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.risk_sti?.sores ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Pain:</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.obstetricalHistory?.pain ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.obstetricalHistory?.pain ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">History:</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.obstetricalHistory?.history ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.obstetricalHistory?.history ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">HIV:</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.obstetricalHistory?.hiv ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.obstetricalHistory?.hiv ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Risk VAW Card */}
+        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+          <View className="p-6 pb-4">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-purple-100">
+                <Stethoscope size={20} color="#8B5CF6" />
+              </View>
+              <Text className="text-lg font-semibold text-gray-800">Risk VAW</Text>
+            </View>
+          </View>
+          <View className="px-6 pb-6">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Unpleasant Relationship:</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.risk_vaw?.unpleasant_relationship ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.risk_vaw?.unpleasant_relationship ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Partner Disapproval:</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.risk_vaw?.partner_disapproval ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.risk_vaw?.partner_disapproval ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Domestic Violence:</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.risk_vaw?.domestic_violence ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.risk_vaw?.domestic_violence ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Referred To:</Text>
+              <View className="px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                <Text className="text-xs font-medium">{recordData.risk_vaw?.referredTo ?? "N/A"}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Pelvic Examination Card */}
+        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+          <View className="p-6 pb-4">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-purple-100">
+                <Stethoscope size={20} color="#8B5CF6" />
+              </View>
+              <Text className="text-lg font-semibold text-gray-800">Pelvic Examination</Text>
+            </View>
+          </View>
+          <View className="px-6 pb-6">
+            {isIUD && recordData.fp_pelvic_exam ? (
+              <>
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-sm text-gray-500">Pelvic Exam:</Text>
+                  <View className="px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <Text className="text-xs font-medium">{recordData.fp_pelvic_exam.pelvicExamination ?? "N/A"}</Text>
+                  </View>
+                </View>
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-sm text-gray-500">Cervical Tenderness:</Text>
+                  <View className={`px-3 py-1 rounded-full ${recordData.fp_pelvic_exam.cervicalTenderness ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                    <Text className="text-xs font-medium">{recordData.fp_pelvic_exam.cervicalTenderness ? "Yes" : "No"}</Text>
+                  </View>
+                </View>
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-sm text-gray-500">Cervical Adnexal:</Text>
+                  <View className={`px-3 py-1 rounded-full ${recordData.fp_pelvic_exam.cervicalAdnexal ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                    <Text className="text-xs font-medium">{recordData.fp_pelvic_exam.cervicalAdnexal ? "Yes" : "No"}</Text>
+                  </View>
+                </View>
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-sm text-gray-500">Cervical Consistency:</Text>
+                  <View className="px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <Text className="text-xs font-medium">{recordData.fp_pelvic_exam.cervicalConsistency ?? "N/A"}</Text>
+                  </View>
+                </View>
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-sm text-gray-500">Uterine Position:</Text>
+                  <View className="px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <Text className="text-xs font-medium">{recordData.fp_pelvic_exam.uterinePosition ?? "N/A"}</Text>
+                  </View>
+                </View>
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-sm text-gray-500">Uterine Depth:</Text>
+                  <View className="px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <Text className="text-xs font-medium">{recordData.fp_pelvic_exam.uterineDepth ?? "N/A"}</Text>
+                  </View>
+                </View>
+              </>
+            ) : (
+              <Text className="text-sm text-gray-500 text-center">No pelvic exam data available (Method: {recordData.acknowledgement?.selectedMethod ?? "N/A"})</Text>
+            )}
+          </View>
+        </View>
+
+        {/* Physical Examination Card */}
+        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+          <View className="p-6 pb-4">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-yellow-100">
+                <Activity size={20} color="#F59E0B" />
+              </View>
+              <Text className="text-lg font-semibold text-gray-800">Physical Examination</Text>
+            </View>
+          </View>
+          <View className="px-6 pb-6">
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <User size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Skin Examination</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.skinExamination ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <User size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Conjunctiva Examination</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.conjunctivaExamination ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <User size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Neck Examination</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.neckExamination ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <User size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Breast Examination</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.breastExamination ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <User size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Abdomen Examination</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.abdomenExamination ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <User size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Extremities Examination</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.extremitiesExamination ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="border-t border-gray-100 pt-4 mt-2">
+              <Text className="text-sm font-medium text-gray-800 mb-3">Vital Signs</Text>
+              <View className="flex-row flex-wrap">
+                <View className="bg-gray-50 rounded-lg p-3 items-center flex-1 mx-1 mb-2">
+                  <Scale size={20} color="#3B82F6" />
+                  <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.weight ?? "N/A"}</Text>
+                  <Text className="text-xs text-gray-500 text-center mt-1">Weight (kg)</Text>
+                </View>
+                <View className="bg-gray-50 rounded-lg p-3 items-center flex-1 mx-1 mb-2">
+                  <Ruler size={20} color="#10B981" />
+                  <Text className="text-sm font-bold mt-2 text-green-600">{recordData.height ?? "N/A"}</Text>
+                  <Text className="text-xs text-gray-500 text-center mt-1">Height (cm)</Text>
+                </View>
+                <View className="bg-gray-50 rounded-lg p-3 items-center flex-1 mx-1 mb-2">
+                  <Heart size={20} color="#EF4444" />
+                  <Text className="text-sm font-bold mt-2 text-red-600">{recordData.bloodPressure ?? "N/A"}</Text>
+                  <Text className="text-xs text-gray-500 text-center mt-1">Blood Pressure</Text>
+                </View>
+                <View className="bg-gray-50 rounded-lg p-3 items-center flex-1 mx-1 mb-2">
+                  <Heart size={20} color="#EF4444" />
+                  <Text className="text-sm font-bold mt-2 text-red-600">{recordData.pulseRate ?? "N/A"}</Text>
+                  <Text className="text-xs text-gray-500 text-center mt-1">Pulse Rate</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Client Acknowledgement Card */}
+        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+          <View className="p-6 pb-4">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-cyan-100">
+                <UserCheck size={20} color="#06B6D4" />
+              </View>
+              <Text className="text-lg font-semibold text-gray-800">Acknowledgement</Text>
+            </View>
+          </View>
+          <View className="px-6 pb-6">
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <User size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Method Selected</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.acknowledgement?.selectedMethod ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <User size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Client Name</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.acknowledgement?.clientName ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <Calendar size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Signature Date</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.acknowledgement?.clientSignatureDate ?? "N/A"}</Text>
+              </View>
+            </View>
+            <View className="mt-4">
+              <Text className="text-sm text-gray-500 mb-3">Client Signature:</Text>
+              {recordData.acknowledgement?.clientSignature ? (
+                <View className="rounded-lg p-4 items-center">
+                  <Image
+                    source={{
+                      uri: `data:image/png;base64,${recordData.acknowledgement.clientSignature.startsWith("data:image")
+                        ? recordData.acknowledgement.clientSignature.split(",")[1]
+                        : recordData.acknowledgement.clientSignature}`,
+                    }}
+                    className="w-48 h-24 rounded-md"
+                    resizeMode="contain"
+                    onError={(e) => console.log("Failed to load signature:", e.nativeEvent.error)}
+                  />
+                </View>
+              ) : (
+                <View className="bg-gray-50 rounded-lg p-6 items-center">
+                  <FileText size={24} color="#9CA3AF" />
+                  <Text className="text-sm text-gray-500 mt-2">No signature available</Text>
+                </View>
+              )}
+            </View>
+            {recordData.acknowledgement?.guardianSignature && (
+              <>
+                <View className="mt-4">
+                  <Text className="text-sm text-gray-500 mb-3">Guardian Signature:</Text>
+                  <View className="rounded-lg p-4 items-center">
+                    <Image
+                      source={{
+                        uri: `data:image/png;base64,${recordData.acknowledgement.guardianSignature.startsWith("data:image")
+                          ? recordData.acknowledgement.guardianSignature.split(",")[1]
+                          : recordData.acknowledgement.guardianSignature}`,
+                      }}
+                      className="w-48 h-24 rounded-md"
+                      resizeMode="contain"
+                    />
+                  </View>
+                </View>
+                <View className="flex-row items-start space-x-3 mb-4">
+                  <View className="w-5 h-5 mt-1">
+                    <Calendar size={18} color="#6B7280" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm text-gray-500 mb-1">Guardian Signature Date</Text>
+                    <Text className="text-sm font-medium text-gray-900">
+                      {recordData.acknowledgement?.guardianSignatureDate ?? "N/A"}
+                    </Text>
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+
+        {/* Service Provision Card */}
+        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+          <View className="p-6 pb-4">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-green-100">
+                <Clock size={20} color="#10B981" />
+              </View>
+              <Text className="text-lg font-semibold text-gray-800">Service Provision</Text>
+            </View>
+          </View>
+          <View className="px-6 pb-6">
+            {(recordData.serviceProvisionRecords ?? []).map((service, index) => (
+              <View key={index} className="bg-gray-50 rounded-lg p-4 mb-3">
+                <View className="flex-row items-center mb-3">
+                  <View className="px-3 py-1 rounded-full bg-gray-100 text-gray-700">
+                    <Text className="text-xs font-medium">{`Visit ${index + 1}`}</Text>
+                  </View>
+                </View>
+                <View className="flex-row items-start space-x-3 mb-4">
+                  <View className="w-5 h-5 mt-1">
+                    <Calendar size={18} color="#6B7280" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm text-gray-500 mb-1">Visit Date</Text>
+                    <Text className="text-sm font-medium text-gray-900">{service.dateOfVisit ?? "N/A"}</Text>
+                  </View>
+                </View>
+                <View className="flex-row items-start space-x-3 mb-4">
+                  <View className="w-5 h-5 mt-1">
+                    <Heart size={18} color="#6B7280" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm text-gray-500 mb-1">Method Accepted</Text>
+                    <Text className="text-sm font-medium text-gray-900">{recordData.methodCurrentlyUsed ?? "Not specified"}</Text>
+                  </View>
+                </View>
+                <View className="flex-row items-start space-x-3 mb-4">
+                  <View className="w-5 h-5 mt-1">
+                    <User size={18} color="#6B7280" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm text-gray-500 mb-1">Service Provider</Text>
+                    <Text className="text-sm font-medium text-gray-900">{service.nameOfServiceProvider ?? "N/A"}</Text>
+                  </View>
+                </View>
+                <View className="flex-row items-start space-x-3 mb-4">
+                  <View className="w-5 h-5 mt-1">
+                    <Calendar size={18} color="#6B7280" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm text-gray-500 mb-1">Follow-up Date</Text>
+                    <Text className="text-sm font-medium text-gray-900">{service.dateOfFollowUp ?? "N/A"}</Text>
+                  </View>
+                </View>
+                <View className="flex-row items-start space-x-3 mb-4">
+                  <View className="w-5 h-5 mt-1">
+                    <FileText size={18} color="#6B7280" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm text-gray-500 mb-1">Medical Findings</Text>
+                    <Text className="text-sm font-medium text-gray-900">{service.medicalFindings ?? "N/A"}</Text>
+                  </View>
+                </View>
+                <View className="mt-4">
+              <Text className="text-sm text-gray-500 mb-3">Service Provider Signature:</Text>
+              {recordData.fp_assessment?.as_provider_signature ? (
+                <View className="rounded-lg p-4 items-center">
+                  <Image
+                    source={{
+                      uri: `data:image/png;base64,${recordData.fp_assessment.as_provider_signature.startsWith("data:image")
+                        ? recordData.fp_assessment.as_provider_signature.split(",")[1]
+                        : recordData.fp_assessment.as_provider_signature}`,
+                    }}
+                    className="w-48 h-24 rounded-md"
+                    resizeMode="contain"
+                    onError={(e) => console.log("Failed to load signature:", e.nativeEvent.error)}
+                  />
+                </View>
+              ) : (
+                <View className="bg-gray-50 rounded-lg p-6 items-center">
+                  <FileText size={24} color="#9CA3AF" />
+                  <Text className="text-sm text-gray-500 mt-2">No signature available</Text>
+                </View>
+              )}
+            </View>
+              </View>
+            ))}
+            {(!recordData.serviceProvisionRecords || recordData.serviceProvisionRecords.length === 0) && (
+              <Text className="text-sm text-gray-500 text-center">No service provision records available</Text>
+            )}
+          </View>
+        </View>
+
+        {/* Pregnancy Check Card */}
+        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+          <View className="p-6 pb-4">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-purple-100">
+                <Stethoscope size={20} color="#8B5CF6" />
+              </View>
+              <Text className="text-lg font-semibold text-gray-800">Pregnancy Check</Text>
+            </View>
+          </View>
+          <View className="px-6 pb-6">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Breastfeeding?</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.breastfeeding ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.pregnancyCheck?.breastfeeding ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Abstained?</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.abstained ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.pregnancyCheck?.abstained ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Recent Baby?</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.recent_baby ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.pregnancyCheck?.recent_baby ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Recent Period?</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.recent_period ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.pregnancyCheck?.recent_period ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Recent Abortion?</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.recent_abortion ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.pregnancyCheck?.recent_abortion ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-sm text-gray-500">Using Contraceptive?</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.using_contraceptive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.pregnancyCheck?.using_contraceptive ? "Yes" : "No"}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Navigation Button */}
+        {/* <View className="pb-6">
+          <TouchableOpacity
+            className="bg-blue-600 rounded-xl py-4 px-6 items-center justify-center"
+            onPress={() =>
+              router.push({
+                pathname: "/admin/familyplanning/viewpage2",
+                params: { fprecordId: fprecordId?.toString() },
+              })
+            }
+            accessibilityLabel="Continue to page 2"
+          >
+            <View className="flex-row items-center">
+              <Text className="text-white text-base font-semibold mr-2">Continue to Page 2</Text>
+              <ArrowRight size={20} color="white" />
+            </View>
+          </TouchableOpacity>
+        </View> */}
+      </View>
+    </ScrollView>
+  );
+}

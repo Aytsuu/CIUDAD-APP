@@ -2,63 +2,52 @@ import axios from "axios";
 import { supabase } from "@/lib/supabase";
 
 export const api = axios.create({
-  baseURL: "https://ciudad-app-server-1.onrender.com",
+  baseURL: "http://192.168.1.8:8000", 
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
-    "Accept": "application/json",
   },
+  timeout: 10000, // 10 second timeout
 });
 
-// export const api = axios.create({
-//   baseURL: "http://172.16.82.205:8000",
-//   timeout: 10000,
-// });
-
 export const api2 = axios.create({
-  baseURL: "http://192.168.1.52:8001",
+  baseURL: "http://192.168.1.8:8001",
   timeout: 10000,
 });
 
-
 // Request interceptor to add auth token
 api.interceptors.request.use(async (config) => {
-  // Define unprotected paths
-  const unprotectedPaths = [
-    "/authentication/mobile/login/",
-    "/authentication/signup/",
-    "/profiling/kyc/match-document/"
-  ];
-
-  const requestPath = new URL(config.url!, api.defaults.baseURL).pathname;
-
-  if (unprotectedPaths.includes(requestPath)) {
-    console.log("Skipping token for:", requestPath);
-    return config;
+  // Skip auth for login and signup endpoints
+  if (
+    config.url?.includes("authentication/login/") ||
+    config.url?.includes("authentication/signup/")
+  ) {
+    return config;  
   }
 
   try {
+    // Get current session
     const { data: { session }, error } = await supabase.auth.getSession();
-
+    
     if (error) {
       console.error("Error getting session:", error);
       return config;
     }
-
+    
     if (session?.access_token) {
       config.headers.Authorization = `Bearer ${session.access_token}`;
-      console.log("✅ Added auth token to request:", requestPath);
+      console.log("Added auth token to request:", config.url);
     } else {
-      console.warn("⚠️ No access token found in session for:", requestPath);
+      console.warn("No access token found in session for:", config.url);
     }
-  } catch (err) {
-    console.error("Error in request interceptor:", err);
+  } catch (error) {
+    console.error("Error in request interceptor:", error);
   }
   
   return config;
 });
 
-// // Response interceptor to handle auth errors
+// Response interceptor to handle auth errors
 api.interceptors.response.use(
   (response) => {
     console.log("API Response:", response.config.url, response.status);

@@ -45,47 +45,52 @@ export default function AccountDetails({ submit } : {
   }
 
   return (
-    <View className="flex-1 px-5">
-      {/* Header Section */}
-      <View>
-        <Text className="text-xl font-PoppinsMedium text-gray-900 mb-2">Create Your Account</Text>
-        <Text className="text-sm font-PoppinsRegular text-gray-600 leading-6 mb-4">
-          Please fill in your account details to continue with the registration process.
-        </Text>
-      </View>
-
-      {/* Form Section */}
-      <View className="space-y-6">
-        <View className="space-y-4">
-          <FormInput control={control} name="accountFormSchema.username" label="Username"/>
-          <FormInput control={control} name="accountFormSchema.email" label="Email Address" keyboardType="email-address"/>
-          <FormInput control={control} name="accountFormSchema.password" label="Password" secureTextEntry/>
-          <FormInput control={control} name="accountFormSchema.confirmPassword" label="Confirm Password" secureTextEntry/>
+    <ScrollView className="flex-1"
+      showsHorizontalScrollIndicator={false}
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="flex-1 px-5">
+        {/* Header Section */}
+        <View>
+          <Text className="text-xl font-PoppinsMedium text-gray-900 mb-2">Create Your Account</Text>
+          <Text className="text-sm font-PoppinsRegular text-gray-600 leading-6 mb-4">
+            Please fill in your account details to continue with the registration process.
+          </Text>
         </View>
 
-        {/* Password Requirements */}
-        <View className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-          <Text className="text-sm font-PoppinsMedium text-blue-900 mb-2">Password Requirements:</Text>
-          <View className="space-y-1">
-            <Text className="text-xs font-PoppinsRegular text-blue-700">• At least 6 characters long</Text>
-            <Text className="text-xs font-PoppinsRegular text-blue-700">
-              • Contains uppercase and lowercase letters
-            </Text>
-            <Text className="text-xs font-PoppinsRegular text-blue-700">• Includes at least one number</Text>
+        {/* Form Section */}
+        <View className="space-y-6">
+          <View className="space-y-4">
+            <FormInput control={control} name="accountFormSchema.username" label="Username"/>
+            <FormInput control={control} name="accountFormSchema.email" label="Email Address" keyboardType="email-address"/>
+            <FormInput control={control} name="accountFormSchema.password" label="Password" secureTextEntry/>
+            <FormInput control={control} name="accountFormSchema.confirmPassword" label="Confirm Password" secureTextEntry/>
+          </View>
+
+          {/* Password Requirements */}
+          <View className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+            <Text className="text-sm font-PoppinsMedium text-blue-900 mb-2">Password Requirements:</Text>
+            <View className="space-y-1">
+              <Text className="text-xs font-PoppinsRegular text-blue-700">• At least 6 characters long</Text>
+              <Text className="text-xs font-PoppinsRegular text-blue-700">
+                • Contains uppercase and lowercase letters
+              </Text>
+              <Text className="text-xs font-PoppinsRegular text-blue-700">• Includes at least one number</Text>
+            </View>
           </View>
         </View>
-      </View>
-      <View className="py-6 bg-white border-t border-gray-100">
-        <Button onPress={handleSubmit} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
-          <Text className="text-white font-PoppinsSemiBold text-[16px]">Continue</Text>
-        </Button>
+        <View className="py-6 bg-white border-t border-gray-100">
+          <Button onPress={handleSubmit} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
+            <Text className="text-white font-PoppinsSemiBold text-[16px]">Continue</Text>
+          </Button>
 
-        {/* Terms and Privacy */}
-        <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-4 leading-4">
-          By continuing, you agree to our <Text className="text-primaryBlue font-PoppinsMedium">Terms of Service</Text>{" "}
-          and <Text className="text-primaryBlue font-PoppinsMedium">Privacy Policy</Text>
-        </Text>
+          {/* Terms and Privacy */}
+          <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-4 leading-4">
+            By continuing, you agree to our <Text className="text-primaryBlue font-PoppinsMedium">Terms of Service</Text>{" "}
+            and <Text className="text-primaryBlue font-PoppinsMedium">Privacy Policy</Text>
+          </Text>
+        </View>
       </View>
-    </View>
+    </ScrollView>
   )
 }

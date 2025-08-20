@@ -1,106 +1,141 @@
-"use client"
-
+// cart.tsx
 import { useState, useEffect } from "react"
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert } from "react-native"
 import { router } from "expo-router"
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag } from "lucide-react-native"
-import { globalCartState, clearCart, updateQuantity, removeFromCart } from "./cart-state"
+import { ArrowLeft, Trash2, ShoppingBag, Pill } from "lucide-react-native"
+import { useGlobalCartState, removeFromCart, clearCart } from "./cart-state"
 
 export default function CartScreen() {
-  const [cartItems, setCartItems] = useState([...globalCartState.items])
-
-  // Update local cart state when global cart changes
-  useEffect(() => {
-    const updateCartState = () => {
-      setCartItems([...globalCartState.items])
-    }
-
-    const interval = setInterval(updateCartState, 500)
-    updateCartState() // Initial update
-
-    return () => clearInterval(interval)
-  }, [])
+  // Use the global cart state hook to get cart items
+  const { cartItems } = useGlobalCartState();
 
   const handleConfirm = () => {
     if (cartItems.length === 0) {
-      Alert.alert("Empty Cart", "Please add medicines to your bag before confirming")
-      return
+      Alert.alert("Empty Cart", "Please add medicines to your bag before confirming.");
+      return;
     }
 
-    // Here you would typically send the order to your backend
+    // Prepare items for confirmation screen (remove unnecessary fields if needed)
+    const orderItems = cartItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      unit: "pc/s", // Or map from your medicine's unit if available
+      reason: item.reason,
+      // You might want to pass a summary of uploaded files if confirmation needs them
+      hasPrescription: item.uploadedFiles && item.uploadedFiles.length > 0
+    }));
+
+    // Here you would typically send the order to your backend API
+    console.log("Confirming order:", JSON.stringify(orderItems, null, 2));
+
     Alert.alert("Order Confirmed", "Your medicine request has been submitted successfully!", [
       {
         text: "OK",
         onPress: () => {
-          clearCart()
-          router.push("/medicine-request/confirmation")
+          clearCart(); // Clear cart after successful submission
+          router.push({
+            pathname: "/medicine-request/confirmation", // Ensure this path matches your confirmation.tsx route
+            params: { orderItems: JSON.stringify(orderItems) }, // Pass confirmed items
+          });
         },
       },
-    ])
-  }
+    ]);
+  };
+
+  // const handleUpdateQuantity = (id: number, currentQuantity: number, action: 'increase' | 'decrease', availableStock: number) => {
+  //   let newQuantity = currentQuantity;
+  //   if (action === 'increase') {
+  //     newQuantity = currentQuantity + 1;
+  //     if (newQuantity > availableStock) {
+  //       Alert.alert("Stock Limit", `Cannot request more than available stock (${availableStock}).`);
+  //       return;
+  //     }
+  //   } else { // 'decrease'
+  //     newQuantity = currentQuantity - 1;
+  //     if (newQuantity < 1) {
+  //       Alert.alert("Quantity Error", "Quantity cannot be less than 1. Remove item if not needed.");
+  //       return;
+  //     }
+  //   }
+  //   updateQuantity(id, newQuantity);
+  // };
+
 
   return (
-    <SafeAreaView className="flex-1 bg-[#ECF8FF]">
+    <SafeAreaView className="flex-1 bg-gray-50">
       <View className="flex-1 p-4">
         {/* Header */}
-        <View className="flex-row items-center mb-6">
-          <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#000" />
+        <View className="flex-row items-center mb-6 mt-10 border-b  border-gray-200 pb-4">
+          <TouchableOpacity onPress={() => router.back()} className="p-2">
+            <ArrowLeft size={24} color="#333" />
           </TouchableOpacity>
-          <Text className="ml-4 text-lg font-medium">Back</Text>
-        </View>
-
-        {/* Title */}
-        <View className="mb-6">
-          <Text className="text-3xl font-bold text-[#263D67]">Your bag</Text>
-          <Text className="text-sm text-gray-600">Get the medicines you need with ease.</Text>
+          <Text className="ml-4 text-xl font-semibold text-gray-800">Your Request Bag</Text>
         </View>
 
         {/* Cart Items */}
         {cartItems.length > 0 ? (
           <>
-            {/* Table Header */}
-            <View className="flex-row justify-between mb-2 px-2">
-              <Text className="text-[#263D67] font-semibold w-1/3">Medicine</Text>
-              <Text className="text-[#263D67] font-semibold w-1/3 text-center">Quantity</Text>
-              <Text className="text-[#263D67] font-semibold w-1/3 text-right">Unit</Text>
-            </View>
-
             {/* Items List */}
-            <ScrollView className="flex-1">
-              {cartItems.map((item) => (
-                <View key={item.id} className="bg-white rounded-lg p-4 mb-3 shadow-sm">
-                  <View className="flex-row justify-between items-center">
-                    <Text className="text-[#263D67] font-medium w-1/3">{item.name}</Text>
-                    <View className="flex-row items-center justify-center w-1/3">
-                      <TouchableOpacity
-                        onPress={() => updateQuantity(item.id, Math.max(1, (item.quantity || 1) - 1))}
-                        className="bg-[#E2EEFF] w-8 h-8 rounded-md items-center justify-center"
-                      >
-                        <Minus size={16} color="#263D67" />
-                      </TouchableOpacity>
-
-                      <Text className="mx-2 text-[#263D67] font-medium">{item.quantity || 1}</Text>
-
-                      <TouchableOpacity
-                        onPress={() => updateQuantity(item.id, (item.quantity || 1) + 1)}
-                        className="bg-[#E2EEFF] w-8 h-8 rounded-md items-center justify-center"
-                      >
-                        <Plus size={16} color="#263D67" />
-                      </TouchableOpacity>
+            <ScrollView className="flex-1 bg-white">
+              {cartItems.map((item, index) => (
+                <View key={item.id} className="bg-white rounded-lg p-6 mb-3 shadow-sm border border-gray-300">
+                  <View className="flex-row items-center mb-3">
+                    <Pill size={20} color="#3B82F6" />
+                    <View className="flex-1 ml-3">
+                      <Text className="text-lg font-semibold text-gray-900">{item.name}</Text>
+                      <Text className="text-sm text-gray-600">{item.category} ({item.medicine_type})</Text>
+                      {item.dosage && <Text className="text-xs text-gray-500">Dosage: {item.dosage}</Text>}
                     </View>
-
-                    <Text className="text-[#263D67] w-1/3 text-right">pc/s</Text>
                   </View>
 
-                  {item.reason && <Text className="text-gray-600 mt-2 italic">Reason: {item.reason}</Text>}
+                  {/* Quantity controls */}
+                  <View className="flex-row items-center justify-between border-t border-gray-100 pt-3 mt-3">
+                    {/* <View className="flex-row items-center bg-gray-50 rounded-lg px-2 py-1">
+                      <TouchableOpacity
+                        onPress={() => handleUpdateQuantity(item.id, item.requestedQuantity, 'decrease', item.minv_qty_avail)}
+                        className="p-1 rounded-full"
+                      >
+                        <Minus size={18} color="#263D67" />
+                      </TouchableOpacity>
+
+                      <Text className="mx-3 text-lg font-bold text-gray-800">{item.requestedQuantity}</Text>
+
+                      <TouchableOpacity
+                        onPress={() => handleUpdateQuantity(item.id, item.requestedQuantity, 'increase', item.minv_qty_avail)}
+                        className="p-1 rounded-full"
+                      >
+                        <Plus size={18} color="#263D67" />
+                      </TouchableOpacity>
+                    </View> */}
+                    
+                    {/* Unit and stock info
+                    <View className="flex-row items-center">
+                        <Text className="text-base text-gray-700 mr-2">pc/s</Text>
+                        <Text className="text-sm text-gray-500">
+                            (Max: {item.minv_qty_avail})
+                        </Text>
+                    </View> */}
+                  </View>
+
+                  {item.reason && (
+                    <View className="mt-2 p-2 bg-blue-50 rounded-md">
+                        <Text className="text-gray-700 italic text-sm">Reason: {item.reason}</Text>
+                    </View>
+                  )}
+
+                  {item.uploadedFiles && item.uploadedFiles.length > 0 && (
+                    <View className="mt-2 p-2 bg-green-50 rounded-md">
+                        <Text className="text-green-800 text-sm">Prescription Uploaded ({item.uploadedFiles.length} files)</Text>
+                    </View>
+                  )}
+
 
                   <TouchableOpacity
                     onPress={() => removeFromCart(item.id)}
-                    className="self-end mt-2 flex-row items-center"
+                    className="self-end mt-4 flex-row items-center px-3 py-1 bg-red-50 rounded-full"
                   >
-                    <Trash2 size={16} color="#FF4D4F" />
-                    <Text className="text-red-500 ml-1">Delete</Text>
+                    <Trash2 size={16} color="#EF4444" />
+                    <Text className="text-red-500 ml-1 font-medium">Remove</Text>
                   </TouchableOpacity>
                 </View>
               ))}
@@ -108,32 +143,31 @@ export default function CartScreen() {
 
             {/* Action Buttons */}
             <View className="mt-4">
-              <TouchableOpacity className="bg-[#263D67] py-3 rounded-lg items-center mb-3" onPress={handleConfirm}>
-                <Text className="text-white font-bold">Confirm</Text>
+              <TouchableOpacity className="bg-blue-600 py-3 rounded-lg items-center mb-3 shadow" onPress={handleConfirm}>
+                <Text className="text-white font-bold text-base">Confirm Request</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="border border-[#263D67] py-3 rounded-lg items-center"
+                className="border border-blue-600 py-3 rounded-lg items-center"
                 onPress={() => router.back()}
               >
-                <Text className="text-[#263D67] font-medium">Cancel</Text>
+                <Text className="text-blue-600 font-medium text-base">Continue Browsing</Text>
               </TouchableOpacity>
             </View>
           </>
         ) : (
           <View className="flex-1 justify-center items-center">
-            <ShoppingBag size={64} color="#263D67" className="mb-4 opacity-50" />
-            <Text className="text-[#263D67] font-medium text-lg mb-4">Your bag is empty</Text>
+            <ShoppingBag size={64} color="#9CA3AF" className="mb-4 opacity-50" />
+            <Text className="text-gray-600 font-semibold text-lg mb-4">Your bag is empty</Text>
             <TouchableOpacity
-              className="bg-[#263D67] px-6 py-3 rounded-lg"
+              className="bg-blue-600 px-6 py-3 rounded-lg shadow"
               onPress={() => router.back()}
             >
-              <Text className="text-white font-medium">Browse Medicines</Text>
+              <Text className="text-white font-medium text-base">Browse Medicines</Text>
             </TouchableOpacity>
           </View>
         )}
       </View>
     </SafeAreaView>
-  )
+  );
 }
-

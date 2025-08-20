@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchGADBudgets } from "@/pages/record/gad/budget-tracker/requestAPI/BTGetRequest";
+import type { GADBudgetEntryUI } from "@/pages/record/gad/budget-tracker/queries/BTFetchQueries";
+import { GADBudgetEntry, fetchGADBudgets } from "@/pages/record/gad/budget-tracker/requestAPI/BTGetRequest";
 import { getbudgetyearreq } from "@/pages/record/gad/budget-tracker/requestAPI/BTYearReq";
-import type { GADBudgetEntryUI } from "@/pages/record/gad/budget-tracker/budget-tracker-types";
-import { GADBudgetEntry } from "@/pages/record/gad/budget-tracker/budget-tracker-types";
 
 const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
   return {

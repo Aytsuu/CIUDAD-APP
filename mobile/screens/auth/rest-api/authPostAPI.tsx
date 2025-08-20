@@ -4,7 +4,7 @@ import { formatDate } from "@/helpers/dateHelpers";
 export const addAddress =  async (data: Record<string, any>[]) => {
   try {
     const res = await api.post("profiling/address/create/", data);
-    await api2.post("health-profiling/address/create/", data);
+    // await api2.post("health-profiling/address/create/", data);
     return res.data;
   } catch (err) {
     throw err;
@@ -13,8 +13,13 @@ export const addAddress =  async (data: Record<string, any>[]) => {
 
 export const addPersonalAddress = async (data: Record<string, any>[], staff_id?: string, history_id?: string) => {
   try {
-    const res = await api.post("profiling/per_address/create/", data);
-    await api2.post("health-profiling/per_address/create/", data)
+    const values = {
+      per_add: data,
+      staff_id: staff_id,
+      history_id: history_id
+    }
+    const res = await api.post("profiling/per_address/create/", values);
+    // await api2.post("health-profiling/per_address/create/", values)
     return res.data;
   } catch (err) {
     throw err;
@@ -37,7 +42,7 @@ export const addPersonal = async (data: Record<string, any>) => {
       per_contact: data.per_contact,
     }
     const res = await api.post("profiling/personal/create/", new_data);
-    await api2.post("health-profiling/personal/create/", new_data);
+    // await api2.post("health-profiling/personal/create/", new_data);
 
     return res.data;
   } catch (err) {

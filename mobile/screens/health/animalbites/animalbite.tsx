@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TouchableWithoutFeedback, Image, ImageBackground } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 
@@ -14,18 +13,18 @@ export default function AnimalBites() {
           resizeMode="cover"
           style={{ width: '100%', height: 250 }}
         />
-        <View className="absolute inset-0 bg-black opacity-50" />
+        <View className="absolute inset-0 bg-black opacity-60" />
 
         <TouchableOpacity
           onPress={() => router.back()}
-          className="absolute top-12 left-4 bg-white/20 p-2 rounded-full z-10"
+          className="absolute top-12 left-4 mt-2 p-2 rounded-full z-10"
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
 
         <View className="absolute bottom-0 left-0 right-0 p-6">
           <Text className="text-white text-2xl font-bold italic">
-            Animal Bites: First Aid & Prevention
+            Animal Bites: <Text className='text-2xl font-normal italic'>First Aid & Prevention</Text>
           </Text>
         </View>
       </View>

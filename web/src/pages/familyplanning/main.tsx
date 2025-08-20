@@ -112,6 +112,7 @@ const initialFormData: FormData = {
     guardianSignatureDate: new Date().toISOString().split("T")[0],
   },
   serviceProvisionRecords: [],
+  
   pregnancyCheck: {
     breastfeeding: false,
     abstained: false,

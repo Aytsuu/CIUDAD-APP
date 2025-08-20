@@ -93,7 +93,7 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({ visible, appointment,
   if (!appointment) return null
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
+    <Modal visible={visible}  transparent={true} onRequestClose={onClose}>
       <View className="flex-1 bg-black/50 justify-end">
         <View className="bg-white rounded-t-3xl p-6 max-h-[80%]">
           {/* Header */}
@@ -144,7 +144,7 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({ visible, appointment,
           </View>
 
           {/* Action Buttons */}
-          <View className="flex-row space-x-3">
+          <View className="flex-row gap-4">
             <TouchableOpacity onPress={onClose} className="flex-1 bg-[#263D67]/10 rounded-xl py-4">
               <Text className="text-[#263D67] text-center font-PoppinsMedium">Cancel</Text>
             </TouchableOpacity>
@@ -233,7 +233,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onResche
             <View className="flex-row justify-between items-start mb-4">
               <View className="flex-1">
                 <View className="flex-row items-center mb-2">
-                  <View className="bg-[#ECF8FF] rounded-full p-2 mr-3">
+                  <View className="bg-white rounded-full p-2 mr-3">
                     <Calendar size={18} color="#263D67" />
                   </View>
                   <View className="flex-1">
@@ -372,10 +372,10 @@ export default function Schedules() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#ECF8FF" />
-      <View className="flex-1 bg-[#ECF8FF]">
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <View className="flex-1 bg-[#ffffff]">
         {/* Header */}
-        <View className="flex-row justify-between items-center px-4 pt-12 pb-4">
+        <View className="flex-row justify-between items-center px-4 pt-12 ">
           <TouchableOpacity onPress={() => router.back()} className="flex-row items-center rounded-full px-2 py-2">
             <ChevronLeft size={18} color="#263D67" />
             <Text className="text-[#263D67] text-[15px] font-PoppinsMedium ml-1">Back</Text>

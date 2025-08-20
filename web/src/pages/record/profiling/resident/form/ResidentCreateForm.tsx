@@ -185,7 +185,6 @@ export default function ResidentCreateForm({
 
     try {
       const personalInfo = capitalizeAllFields(form.getValues());
-
       // Safely get staff_id with proper type checking
       const staffId = user?.staff?.staff_id;
 

@@ -1,5 +1,5 @@
-import { api } from "@/api/api";
-import { formatDate } from "@/helpers/dateHelper";
+import api from '@/pages/api/api';
+import { formatDate } from '@/helpers/dateHelper';
 
 export const postdonationreq = async (donationInfo: Record<string, any>) => {
   try {

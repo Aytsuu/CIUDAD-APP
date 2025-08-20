@@ -144,7 +144,14 @@ const items: BaseMenuItem[] = [
     title: "Services",
     url: "/",
     items: [
-      { title: "Administration", url: "/health-administration" },
+      { title: "Administrations", url: "/health-administration" },
+      { title: "Doctor", url: "/mainMedicalForm" },
+      { title: "Animal Bites", url: "/Animalbite_viewing" },
+      { title: "Child Services", url: "/allChildHRTable" },
+      { title: "Maternal Services", url: "/maternalrecords" },
+      { title: "Family Planning", url: "/FamPlanning_table" },
+      { title: "Medical Consultation", url: "/allMedRecords" },
+      { title: "Vaccination", url: "/allRecordsForVaccine" },
       { title: "Patients Record", url: "/patients-record-main" },
       {
         title: "Forwarded Records",

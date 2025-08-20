@@ -1,17 +1,28 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import { ArrowLeft } from 'lucide-react-native';
-import { router } from 'expo-router';
+import React from "react"
+import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from "react-native"
+import { FontAwesome } from "@expo/vector-icons"
+import { ArrowLeft, Package, AlertCircle } from "lucide-react-native"
+import { router } from "expo-router"
+import { useCommodities } from "./useInventory"
+
 
 export default function FamilyPlanning() {
+  const { commodities, isLoading, error, refetch } = useCommodities()
+  const [refreshing, setRefreshing] = React.useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
+
   return (
-    <ScrollView className="bg-white">
-      <View >
+    <ScrollView className="bg-white" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+      <View>
         <Image
-          source={require('@/assets/images/Health/Home/family.jpg')}
+          source={require("@/assets/images/Health/Home/family.jpg")}
           resizeMode="cover"
-          style={{ width: '100%', height: 250, justifyContent: 'flex-end' }}
+          style={{ width: "100%", height: 250, justifyContent: "flex-end" }}
         />
         <View className="absolute inset-0 bg-black opacity-50" />
 
@@ -23,19 +34,17 @@ export default function FamilyPlanning() {
         </TouchableOpacity>
 
         <View className="absolute bottom-0 left-0 right-0 p-6">
-          <Text className="text-white text-2xl font-bold italic">
-            Your Family, Your Future
-          </Text>
-          <Text className="text-white text-l italic">
-            Plan It Right
-          </Text>
+          <Text className="text-white text-2xl font-bold italic">Your Family, Your Future</Text>
+          <Text className="text-white text-l italic">Plan It Right</Text>
         </View>
       </View>
 
       {/* Information Section */}
       <View className="p-6">
         <Text className="text-gray-700 text-base text-justify">
-          Family planning allows individuals and couples to decide freely and responsibly the number and spacing of their children. By practicing family planning, families can lead healthier and more prosperous lives, benefiting both parents and children.
+          Family planning allows individuals and couples to decide freely and responsibly the number and spacing of
+          their children. By practicing family planning, families can lead healthier and more prosperous lives,
+          benefiting both parents and children.
         </Text>
       </View>
 
@@ -86,43 +95,60 @@ export default function FamilyPlanning() {
         </View>
       </View>
 
-      {/* Free Supplies Section */}
+      {/* Free Supplies Section - Now Dynamic */}
       <View className="mx-6 mb-6">
-        <View className="bg-blue-500 rounded-t-xl p-4">
-          <Text className="text-lg font-bold text-white">Available free supplies</Text>
+        <View className="bg-blue-500 rounded-t-xl p-4 flex-row items-center justify-between">
+          <Text className="text-lg font-bold text-white">Available Free Supplies</Text>
+          {isLoading && <ActivityIndicator size="small" color="#fff" />}
         </View>
+
         <View className="bg-blue-50 p-4 rounded-b-xl shadow-sm">
-          <View className="flex-row items-center mb-2">
-            <View className="w-2 h-2 rounded-full bg-blue-600 mr-2" />
-            <Text className="text-gray-700">Condoms</Text>
-          </View>
-          <View className="flex-row items-center mb-2">
-            <View className="w-2 h-2 rounded-full bg-blue-600 mr-2" />
-            <Text className="text-gray-700">Contraceptive pills</Text>
-          </View>
-          <View className="flex-row items-center mb-2">
-            <View className="w-2 h-2 rounded-full bg-blue-600 mr-2" />
-            <Text className="text-gray-700">Lubricants</Text>
-          </View>
-          <View className="flex-row items-center">
-            <View className="w-2 h-2 rounded-full bg-blue-600 mr-2" />
-            <Text className="text-gray-700">Implants</Text>
-          </View>
+          {error ? (
+            <View className="flex-row items-center justify-center py-4">
+              <AlertCircle size={20} color="#EF4444" />
+              <Text className="text-red-500 ml-2">Failed to load supplies</Text>
+            </View>
+          ) : isLoading ? (
+            <View className="flex-row items-center justify-center py-4">
+              <ActivityIndicator size="small" color="#3B82F6" />
+              <Text className="text-gray-600 ml-2">Loading available supplies...</Text>
+            </View>
+          ) : commodities.length === 0 ? (
+            <View className="flex-row items-center justify-center py-4">
+              <Package size={20} color="#6B7280" />
+              <Text className="text-gray-600 ml-2">No supplies currently available</Text>
+            </View>
+          ) : (
+            commodities.map((commodity) => (
+              <View key={commodity.id} className="flex-row items-center mb-2 last:mb-0">
+                <View className="w-2 h-2 rounded-full bg-blue-600 mr-3" />
+                <View className="flex-1">
+                  <Text className="text-gray-700 font-medium">{commodity.name}</Text>
+                  
+                  {/* <Text className="text-gray-500 text-xs">
+                    {commodity.stock} available • For {commodity.userType}
+                  </Text> */}
+                </View>
+              </View>
+            ))
+          )}
         </View>
       </View>
 
       {/* Visit Us Section */}
       <View className="mx-6 mb-8">
         <View className="bg-green-500 rounded-t-xl p-4 flex-row items-center">
-          <Text className="text-lg font-bold text-white ">VISIT US TODAY!</Text>
+          <Text className="text-lg font-bold text-white">VISIT US TODAY!</Text>
         </View>
 
         <View className="bg-green-50 p-4 rounded-b-xl shadow-sm">
           <Text className="text-gray-700 text-center">
-            Services and consultations are available <Text className="font-bold">every day</Text> at the barangay hall — visit us for guidance and support!
+            Services and consultations are available <Text className="font-bold">every day</Text> at the barangay hall —
+            visit us for guidance and support!
           </Text>
         </View>
       </View>
     </ScrollView>
-  );
+  )
 }
+  

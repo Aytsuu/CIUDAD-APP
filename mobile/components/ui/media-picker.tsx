@@ -386,5 +386,5 @@ export default function MediaPicker({
         </View>
       </Modal>
     </View>
-  )
-}
+  );
+};

@@ -97,7 +97,7 @@ const ReferralSlip: React.FC<{ record: PatientRecordDetail }> = ({ record }) => 
                     <p>Date of Exposure: <UnderlinedText value={new Date(record.referral_date).toLocaleDateString()} /></p>
                     <p>Site of Exposure: <UnderlinedText value={record.exposure_site} /></p>
                     <p>Biting Animal: <UnderlinedText value={record.biting_animal} /></p>
-                    {/* <p>Laboratory Exam. (if any): <UnderlinedText value="N/A" /></p> */}
+                    <p>Laboratory Exam. (if any): <UnderlinedText value="N/A" /></p>
                     <p>ACTION DESIRED: <UnderlinedText value={record.actions_taken} /></p>
                     <p className="pt-8">Referred By: <UnderlinedText value={record.referredby} /></p>
                 </div>
@@ -133,7 +133,7 @@ const IndividualPatientHistory: React.FC = () => {
     
     const firstRecord = patientRecords[0];
     return {
-      pat_id: firstRecord.patient_id,
+      pat_id: Number(firstRecord.patient_id),
       pat_type: "Animal Bite Patient",
       personal_info: {
         per_fname: firstRecord.patient_fname || "",

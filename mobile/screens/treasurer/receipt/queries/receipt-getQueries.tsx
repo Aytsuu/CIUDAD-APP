@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { getInvoice } from "../request/receipt-get-request";
 
+
+
+
 export type Receipt = {
     inv_num: number;
     inv_serial_num: string;

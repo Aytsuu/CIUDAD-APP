@@ -1,6 +1,21 @@
-import { api } from "@/api/api";
+import api from '@/pages/api/api';
 import { MediaUploadType } from '@/components/ui/media-upload';
-import { GADBudgetUpdatePayload } from "../budget-tracker-types";
+import { GADBudgetFile } from './BTPostRequest';
+
+export type GADBudgetUpdatePayload = {
+  gbud_type: 'Income' | 'Expense';
+  gbud_datetime: string;
+  gbud_add_notes?: string | null;
+  gbud_inc_particulars?: string | null;
+  gbud_inc_amt?: number | null;
+  gbud_exp_particulars?: string | null;
+  gbud_proposed_budget?: number | null;
+  gbud_actual_expense?: number | null;
+  gbud_remaining_bal?: number | null;
+  gbud_reference_num?: string | null;
+  gbudy: number;
+  gdb_id?: number | null;
+};
 
 export const updateGADBudget = async (gbud_num: number, payload: GADBudgetUpdatePayload) => {
   try {

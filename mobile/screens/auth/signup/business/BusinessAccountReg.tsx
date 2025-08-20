@@ -1,67 +1,55 @@
 import React from "react";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import {  useRouter } from "expo-router";
 import AccountDetails from "../AccountDetails";
-import { useAddAccount } from "../../queries/authPostQueries";
+import PageLayout from "@/screens/_PageLayout";
+import { TouchableOpacity, Text} from "react-native";
+import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+import { ConfirmationModal } from "@/components/ui/confirmationModal";
+import { X } from "@/lib/icons/X";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
-import { FeedbackScreen } from "@/components/ui/feedback-screen";
-import { LoadingModal } from "@/components/ui/loading-modal";
 
 export default function BusinessAccountReg() {
   const router = useRouter();
-  const { getValues, reset } = useRegistrationFormContext();
-  const { br_id } = useLocalSearchParams();
-  const { mutateAsync: addAccount } = useAddAccount();
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
-  const [status, setStatus] = React.useState<"success" | "failure">("success");
-
+  const { reset } = useRegistrationFormContext();
   const submit = () => {
-    setIsSubmitting(true);
-    const values = getValues('accountFormSchema')
-
-    try {
-      addAccount({
-        username: values.username,
-        email: values.email,
-        password: values.password,
-        br: br_id 
-      }, {
-        onSuccess: () => {
-          setIsSubmitting(false);
-          setShowFeedback(true);
-          setStatus("success")
-        }
-      });
-    } catch (err) {
-      setIsSubmitting(false);
-    }
+    router.push('/registration/business/respondent-information');
   }
 
-  if (showFeedback) {
-    return (
-      <FeedbackScreen
-        status={status}
-        onRetry={() => {
-          // Simulate a retry that might succeed
-          const willSucceed = Math.random() > 0.5;
-          setTimeout(() => {
-            setStatus(willSucceed ? "success" : "failure");
-          }, 1500);
-        }}
-        onOk={() => { 
-          reset();
-          router.replace('/(auth)')
-        }}
-      />
-    );
-  }
-  
+  const handleClose = () => {
+    reset();
+    router.replace("/(auth)");
+  };
+
   return (
-    <>
+    <PageLayout
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          accessibilityLabel="Go back"
+        >
+          <ChevronLeft size={24} className="text-gray-700" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-gray-900 text-[13px]">Account Details</Text>}
+      rightAction={
+        <ConfirmationModal
+          title="Exit Registration"
+          description="Are you sure you want to exit? Your progress will be lost."
+          trigger={
+            <TouchableOpacity
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+              accessibilityLabel="Exit registration"
+            >
+              <X size={20} className="text-gray-700" />
+            </TouchableOpacity>
+          }
+          variant="destructive"
+          onPress={handleClose}
+        />
+      }
+    >
       <AccountDetails submit={submit}/>
-      <LoadingModal
-        visible={isSubmitting}
-      />
-    </>
+    </PageLayout>
   )
 }

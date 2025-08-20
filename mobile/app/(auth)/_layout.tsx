@@ -4,7 +4,6 @@ import { RegistrationFormSchema } from '@/form-schema/registration-schema';
 import { z } from 'zod';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { FormProvider } from "@/contexts/RegistrationFormContext";
 import { RegistationFormProvider } from "@/contexts/RegistrationFormContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProgressProvider } from "@/contexts/ProgressContext";
@@ -27,24 +26,24 @@ export default () => {
         <RegistrationTypeProvider>
           <RegistationFormProvider methods={methods}>
             <Stack>
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/family/register-new" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/family/account-reg-new" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/family/respondent" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/family/father" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/family/mother" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/family/guardian" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/family/dependent" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/family/scan" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/link/verification" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/link/account-registration" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/individual/information" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/individual/scan" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/individual/account-reg" options={{ headerShown: false }} />
+              <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/family/register-new" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/family/account-reg-new" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/family/respondent" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/family/father" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/family/mother" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/family/guardian" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/family/dependent" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/family/scan" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/link/verification" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/link/account-registration" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/individual/information" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/individual/scan" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/individual/account-reg" options={{ headerShown: false, animation: 'fade' }}/>
 
               {/* STACKS THAT ARE NOT BEING USED, MIGHT REMOVE THEM LATER. */}
-              <Stack.Screen name="registration/business/respondent-information" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/business/account-registration" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/business/respondent-information" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/business/account-registration" options={{ headerShown: false, animation: 'fade' }}/>
             </Stack>
           </RegistationFormProvider>
         </RegistrationTypeProvider>

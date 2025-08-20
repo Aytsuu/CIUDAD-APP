@@ -132,6 +132,7 @@ class FP_Pelvic_Exam(models.Model):
     uterineDepth = models.CharField(max_length=10, null=True, blank=True)
 
     fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
+    fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
     
     class Meta:
         db_table = "famplan_pelvic_exam"
@@ -171,7 +172,44 @@ class FP_Obstetrical_History(models.Model):
     fpob_dysme = models.BooleanField(default=False)
     fpob_hydatidiform = models.BooleanField(default=False)
     fpob_ectopic_pregnancy = models.BooleanField(default=False)
+    class Meta:
+        db_table = "famplan_acknowledgement"
+        verbose_name_plural = 'FP Acknowledgements'
+
+    def __str__(self):
+        return f"Acknowledgement for FP Record {self.fprecord_id}"
+
+class FP_Obstetrical_History(models.Model):
+    fpob_id = models.AutoField(primary_key=True)
+    fpob_last_delivery = models.DateField(null=True, blank=True)
+    fpob_type_last_delivery = models.CharField(max_length=30, null=True, blank=True)
+    fpob_last_period = models.DateField(null=True, blank=True)
+    fpob_previous_period = models.DateField(null=True, blank=True)
+    fpob_mens_flow = models.CharField(max_length=20)
+    fpob_dysme = models.BooleanField(default=False)
+    fpob_hydatidiform = models.BooleanField(default=False)
+    fpob_ectopic_pregnancy = models.BooleanField(default=False)
     
+    fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
+    obs = models.ForeignKey(Obstetrical_History, on_delete=models.CASCADE, null=True, blank=True)
+    
+    class Meta:
+        db_table = "famplan_obs_history"
+        verbose_name_plural = 'FP Obstetrical Histories'
+
+    def __str__(self):
+        return f"Obstetrical History for FP Record {self.fprecord_id}"
+    
+class FP_pregnancy_check(models.Model):
+    fp_pc_id = models.AutoField(primary_key=True)
+    breastfeeding = models.BooleanField(default=False)
+    abstained = models.BooleanField(default=False)
+    recent_baby = models.BooleanField(default=False)
+    recent_period = models.BooleanField(default=False)
+    recent_abortion = models.BooleanField(default=False)
+    using_contraceptive = models.BooleanField(default=False)
+    
+    fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
     fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
     obs = models.ForeignKey(Obstetrical_History, on_delete=models.CASCADE, null=True, blank=True)
     
