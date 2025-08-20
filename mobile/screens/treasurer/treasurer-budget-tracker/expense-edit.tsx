@@ -109,6 +109,7 @@ function ExpenseEdit() {
     let totalBudget = 0.00;
     let totalExpense = 0.00;
     let proposedBud = 0.00;
+    let returnAmount = 0.00;    
 
     // Current Expenses and Total Budget
     const totEXP = Number(totExp);
@@ -186,26 +187,40 @@ function ExpenseEdit() {
       if (actualAmount) {
         if(actualAmount == prevActualAmount)
         {
-            totalBudget = totBUDGET;      
-            totalExpense = totEXP;   
-            proposedBud = propBudget;                              
+          if(amount != prevAmount){
+              totalBudget = totBUDGET;      
+              totalExpense = totEXP;   
+              proposedBud = propBudget;  
+
+              returnAmount = Math.abs(amount - actualAmount);  
+          }else{
+              totalBudget = totBUDGET;      
+              totalExpense = totEXP;   
+              proposedBud = propBudget;   
+          }                                
         }
         else{
             if(actualAmount != prevActualAmount && prevActualAmount != 0){ // if the user updates the actual amount
                 totalBudget = (totBUDGET + prevActualAmount) - actualAmount;
                 totalExpense = (totEXP - prevActualAmount) + actualAmount; 
-                proposedBud = (propBudget + prevActualAmount) - actualAmount;                        
+                proposedBud = (propBudget + prevActualAmount) - actualAmount;    
+                
+                returnAmount = Math.abs(amount - actualAmount);
             }
             else{// if new added actual amount
                 if(amount != prevAmount){  // if theres changes in the amount value
                     totalBudget = (totBUDGET + prevAmount) - actualAmount;
                     totalExpense = (totEXP - prevAmount) + actualAmount; 
                     proposedBud = (propBudget + prevAmount) - actualAmount;   
+
+                    returnAmount = Math.abs(amount - actualAmount);                   
                 }
                 else{ // if no changes in amount value
                     totalBudget = (totBUDGET + amount) - actualAmount;
                     totalExpense = (totEXP - amount) + actualAmount; 
                     proposedBud = (propBudget + amount) - actualAmount;
+
+                    returnAmount = Math.abs(amount - actualAmount);                    
                 }
             }                           
         }          
@@ -214,6 +229,8 @@ function ExpenseEdit() {
           totalBudget = (totBUDGET + prevActualAmount) - actualAmount;
           totalExpense = (totEXP - prevActualAmount) + actualAmount;
           proposedBud = (propBudget + prevActualAmount) - actualAmount;
+
+          returnAmount = Math.abs(amount - actualAmount);          
         } else {
           if (amount != prevAmount) {
             totalBudget = (totBUDGET + prevAmount) - amount;
@@ -235,6 +252,7 @@ function ExpenseEdit() {
       totalBudget,
       totalExpense,
       proposedBud,
+      returnAmount,
       particularId
     });
   };

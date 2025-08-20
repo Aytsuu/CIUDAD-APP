@@ -97,14 +97,15 @@ export type ExpenseLog = {
     el_proposed_budget: number;
     el_actual_expense: number;
     el_return_amount: number;
+    el_is_archive: boolean;
     staff_name: string;
 };
 
 
-export const useExpenseLog = () => {
+export const useExpenseLog = (year?: number) => {
     return useQuery<ExpenseLog[]>({
-        queryKey: ["expense_log"],
-        queryFn: getExpenseLog,
+        queryKey: ["expense_log", year],
+        queryFn: () => getExpenseLog(year),
         staleTime: 1000 * 60 * 30, // 30 minutes stale time
     });
 };

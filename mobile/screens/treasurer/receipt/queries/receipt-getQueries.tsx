@@ -12,7 +12,7 @@ export type Receipt = {
     inv_change: number;
     inv_nat_of_collection: string;
     inv_payor: string; // Added this field
-    // Keeping incase needed separate sila
+    // Keep these if you need them separately
     payor_lname?: string;
     payor_fname?: string;
 };
