@@ -443,11 +443,7 @@ function ReceiptPage() {
     {
       accessorKey: "inv_payor",
       header: "Payor",
-    },
-    {
-      accessorKey: "inv_pay_method",
-      header: "Payment Method",
-    },       
+    },  
     {
       accessorKey: "inv_nat_of_collection",
       header: "Nature of Collection",
@@ -455,7 +451,17 @@ function ReceiptPage() {
     {
       accessorKey: "inv_amount",
       header: "Amount",
+      cell: ({row}) => (
+          <div>₱{row.getValue("inv_amount")}</div>
+      )      
     },
+    {
+      accessorKey: "inv_change",
+      header: "Change",    
+      cell: ({row}) => (
+          <div>₱{row.getValue("inv_change")}</div>
+      )              
+    }
   ];
 
   const filterOptions = useMemo(() => {
