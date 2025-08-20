@@ -180,6 +180,9 @@ class Invoice(models.Model):
     inv_date=models.DateTimeField(default=date.today)
     inv_amount=models.DecimalField(max_digits=10, decimal_places=2)
     inv_nat_of_collection=models.CharField(max_length=250)
+    inv_status=models.CharField(max_length=50, default='Pending')  # Added missing field
+    inv_change=models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)   
+     
     cr_id = models.ForeignKey(
         'clerk.ClerkCertificate', 
         on_delete=models.CASCADE, 
