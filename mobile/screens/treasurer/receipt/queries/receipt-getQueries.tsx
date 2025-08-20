@@ -8,9 +8,9 @@ export type Receipt = {
     inv_num: number;
     inv_serial_num: string;
     inv_date: string;
-    inv_amount: string;
+    inv_amount: number;
+    inv_change: number;
     inv_nat_of_collection: string;
-    inv_pay_method: string;
     inv_payor: string; // Added this field
     // Keeping incase needed separate sila
     payor_lname?: string;
