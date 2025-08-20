@@ -49,18 +49,18 @@ export default function Announcements() {
                 <div
                   key={announcement.ann_id}
                   onClick={() => openModal(announcement)}
-                  className="cursor-pointer bg-white/95 backdrop-blur-sm text-[#17294A] rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300 border border-white/20 hover:scale-[1.01] overflow-hidden h-auto min-h-[12rem] md:min-h-[14rem]"
+                  className="cursor-pointer bg-white text-[#17294A] rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 overflow-hidden"
                 >
-                  <div className="flex h-full">
+                  <div className="flex flex-col md:flex-row">
                     {/* LEFT CONTENT */}
-                    <div className="flex-1 p-5 flex flex-col justify-between min-w-0">
-                      <div className="space-y-2">
-                        <h3 className="text-3xl font-extrabold leading-tight text-[#17294A] hover:text-blue-700 transition-colors">
+                    <div className="flex-1 min-w-0 p-6 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-xl md:text-2xl font-bold flex items-center gap-2 mb-2 break-words">
                           {announcement.ann_title}
                         </h3>
 
                         {announcement.ann_created_at && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 mb-4">
                             Posted on{" "}
                             {new Date(announcement.ann_created_at).toLocaleDateString("en-US", {
                               month: "long",
@@ -70,51 +70,45 @@ export default function Announcements() {
                           </p>
                         )}
 
-                        <p
-                          className="text-gray-700 text-base leading-relaxed overflow-hidden"
-                          style={{
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                          }}
-                        >
+                        <p className="text-gray-700 leading-relaxed mb-4 break-words whitespace-pre-wrap">
                           {announcement.ann_details}
                         </p>
                       </div>
 
-                      {/* Start / End Date */}
-                      <div className="flex flex-col gap-2 pt-2">
+                      {/* Start / End Dates */}
+                      <div className="flex items-center gap-4 mt-4 flex-wrap">
                         {announcement.ann_start_at && (
-                          <div className="flex items-center gap-2 p-1.5 bg-green-50 rounded border-l-2 border-green-400">
-                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                            <div className="min-w-0">
-                              <span className="text-xs font-semibold text-green-700 uppercase tracking-wide block">
-                                Start
-                              </span>
-                              <span className="text-xs font-medium text-green-800">
+                          <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg border border-green-200">
+                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <div className="text-sm">
+                              <p className="text-green-700 font-semibold uppercase text-xs">
+                                Start Date
+                              </p>
+                              <p className="text-green-800 font-medium">
                                 {new Date(announcement.ann_start_at).toLocaleDateString("en-US", {
                                   month: "short",
                                   day: "numeric",
-                                  year: "2-digit",
+                                  year: "numeric",
                                 })}
-                              </span>
+                              </p>
                             </div>
                           </div>
                         )}
+
                         {announcement.ann_end_at && (
-                          <div className="flex items-center gap-2 p-1.5 bg-red-50 rounded border-l-2 border-red-400">
-                            <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                            <div className="min-w-0">
-                              <span className="text-xs font-semibold text-red-700 uppercase tracking-wide block">
-                                End
-                              </span>
-                              <span className="text-xs font-medium text-red-800">
+                          <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-lg border border-red-200">
+                            <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                            <div className="text-sm">
+                              <p className="text-red-700 font-semibold uppercase text-xs">
+                                End Date
+                              </p>
+                              <p className="text-red-800 font-medium">
                                 {new Date(announcement.ann_end_at).toLocaleDateString("en-US", {
                                   month: "short",
                                   day: "numeric",
-                                  year: "2-digit",
+                                  year: "numeric",
                                 })}
-                              </span>
+                              </p>
                             </div>
                           </div>
                         )}
@@ -123,20 +117,15 @@ export default function Announcements() {
 
                     {/* RIGHT IMAGE */}
                     {announcement.files && announcement.files.length > 0 && (
-                      <div className="w-56 flex-shrink-0 relative">
-                        <div className="relative h-full overflow-hidden rounded-r-lg">
-                          <img
-                            src={announcement.files[0].af_url || "/placeholder.svg"}
-                            alt={announcement.files[0].af_name}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                          />
-                          <div className="absolute top-2 right-2">
-                            <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg">
-                              Active
-                            </span>
-                          </div>
-                          <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-transparent to-transparent pointer-events-none"></div>
-                        </div>
+                      <div className="md:w-64 relative shrink-0">
+                        <img
+                          src={announcement.files[0].af_url}
+                          alt={announcement.files[0].af_name}
+                          className="w-full h-full object-cover"
+                        />
+                        <span className="absolute top-3 right-3 bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-semibold shadow">
+                          ● Active
+                        </span>
                       </div>
                     )}
                   </div>
@@ -159,63 +148,74 @@ export default function Announcements() {
 
       {/* Modal */}
       {isModalOpen && selectedAnnouncement && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4 py-8">
-          <div className="relative bg-white text-[#17294A] rounded-xl shadow-2xl w-full max-w-6xl h-[80vh] flex flex-col md:flex-row overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="relative bg-white text-[#17294A] rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden">
             {/* Close Button */}
             <button
               onClick={closeModal}
-              className="absolute top-4 right-5 text-gray-500 hover:text-red-500 text-3xl font-bold z-10"
+              className="absolute top-4 right-5 text-gray-400 hover:text-gray-600 text-2xl font-bold"
             >
               &times;
             </button>
 
-            {/* DETAILS SECTION */}
-            <div className={`p-8 overflow-y-auto h-full flex flex-col justify-between ${(selectedAnnouncement.files && selectedAnnouncement.files.length > 0) ? "md:w-1/2" : "w-full"}`}>
-              <div>
-                <h2 className="text-4xl font-bold mb-2">{selectedAnnouncement.ann_title}</h2>
+            <div className="p-8">
+              {/* Title */}
+              <h2 className="text-3xl md:text-4xl font-extrabold flex items-center gap-2 mb-2 break-words">
+                {selectedAnnouncement.ann_title}
+              </h2>
 
-                {selectedAnnouncement.ann_created_at && (
-                  <p className="text-sm text-gray-500 mb-4">
-                    Posted on{" "}
-                    {new Date(selectedAnnouncement.ann_created_at).toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </p>
-                )}
-
-                <p className="text-base text-gray-800 leading-relaxed whitespace-pre-line">
-                  {selectedAnnouncement.ann_details}
+              {/* Posted Date */}
+              {selectedAnnouncement.ann_created_at && (
+                <p className="text-sm text-gray-500 mb-6">
+                  Posted on{" "}
+                  {new Date(selectedAnnouncement.ann_created_at).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
                 </p>
-              </div>
+              )}
 
-              <div className="pt-6 space-y-2 text-sm">
+              {/* Details */}
+              <p className="text-gray-700 leading-relaxed mb-8 whitespace-pre-wrap break-words">
+                {selectedAnnouncement.ann_details}
+              </p>
+
+              {/* Start / End Dates */}
+              <div className="flex items-center gap-4 mt-6 flex-wrap border-t pt-6">
                 {selectedAnnouncement.ann_start_at && (
-                  <p className="text-green-700 font-medium">
-                    <strong>Start:</strong>{" "}
-                    {new Date(selectedAnnouncement.ann_start_at).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg border border-green-200">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <div className="text-sm">
+                      <p className="text-green-700 font-semibold uppercase text-xs">Start Date</p>
+                      <p className="text-green-800 font-medium">
+                        {new Date(selectedAnnouncement.ann_start_at).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
                 )}
+
                 {selectedAnnouncement.ann_end_at && (
-                  <p className="text-red-700 font-medium">
-                    <strong>End:</strong>{" "}
-                    {new Date(selectedAnnouncement.ann_end_at).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-lg border border-red-200">
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                    <div className="text-sm">
+                      <p className="text-red-700 font-semibold uppercase text-xs">End Date</p>
+                      <p className="text-red-800 font-medium">
+                        {new Date(selectedAnnouncement.ann_end_at).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
-
-            {/* IMAGE SECTION */}
-            {selectedAnnouncement.files && selectedAnnouncement.files.length > 0 && (
-              <div className="hidden md:block md:w-1/2 h-full">
-                <img
-                  src={selectedAnnouncement.files[0].af_url}
-                  alt={selectedAnnouncement.files[0].af_name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
           </div>
         </div>
       )}
