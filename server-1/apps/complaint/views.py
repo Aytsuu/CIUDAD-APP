@@ -157,7 +157,7 @@ class ComplaintCreateView(APIView):
             ComplaintAccused.objects.create(comp=complaint, acsd=accused)
 
 class ComplaintListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     serializer_class = ComplaintSerializer
 
     def get_queryset(self):
