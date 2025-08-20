@@ -337,7 +337,7 @@ export const ARDocTemplate = ({
                     variant="modal"
                     customTrigger={<Pen size={16} className="absolute right-0 top-0 cursor-pointer"/>}
                     value=""
-                    onChange={(value) => changePreparedBy(value)}
+                    onChange={(value) => changePreparedBy(value as string)}
                     options={formattedStaffs}
                     emptyMessage="No staff available"
                   />
@@ -352,7 +352,7 @@ export const ARDocTemplate = ({
                     variant="modal"
                     customTrigger={<Pen size={16} className="absolute right-0 top-0 cursor-pointer"/>}
                     value=""
-                    onChange={(value) => changeRecommendedBy(value)}
+                    onChange={(value) => changeRecommendedBy(value as string)}
                     options={formattedStaffs}
                     emptyMessage="No staff available"
                   />
@@ -367,7 +367,7 @@ export const ARDocTemplate = ({
                     variant="modal"
                     customTrigger={<Pen size={16} className="absolute right-0 top-0 cursor-pointer"/>}
                     value=""
-                    onChange={(value) => changeApprovedBy(value)}
+                    onChange={(value) => changeApprovedBy(value as string)}
                     options={formattedStaffs}
                     emptyMessage="No staff available"
                   />

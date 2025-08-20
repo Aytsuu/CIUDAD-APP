@@ -92,7 +92,7 @@ export default function AddMemberForm({
           <Combobox
             options={formattedResidents}
             value={form.watch("id")}
-            onChange={(value) => form.setValue("id", value)}
+            onChange={(value) => form.setValue("id", value as string)}
             placeholder="Select a resident" 
             emptyMessage={
               <div className="flex gap-2 justify-center items-center">

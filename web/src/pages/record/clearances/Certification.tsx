@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Loader2 } from 'lucide-react';
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -80,7 +80,7 @@ export const columns: ColumnDef<Certificate>[] = [
 ];
 
 function CertificatePage() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   // const { id } = useParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [_isModalOpen, _setIsModalOpen] = useState(false);

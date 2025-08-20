@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { useUpdateFamily } from "../queries/profilingUpdateQueries";
+import { useUpdateFamilyHealth } from "../../health-family-profiling/family-profling/queries/profilingUpdateQueries";
 import { formatHouseholds } from "../ProfilingFormats";
 import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
@@ -38,6 +39,7 @@ export default function EditGeneralDetails({
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false);
   const [isSaving, setIsSaving] = React.useState<boolean>(false);
   const { mutateAsync: updateFamily } = useUpdateFamily(); 
+  const { mutateAsync: updateFamilyHealth } = useUpdateFamilyHealth();
   const formattedHouseholds = React.useMemo(() => 
     formatHouseholds(households), [households]
   );
@@ -88,27 +90,36 @@ export default function EditGeneralDetails({
       fam_indigenous: capitalize(values.indigenous)
     }
 
-    updateFamily({
-      data: data,
-      familyId: familyData.fam_id,
-      oldHouseholdId: familyData.household_no
-    }, {
-      onSuccess: () => {
-        setIsSaving(false);
-        setIsOpenDialog(false);
-
-        setFamily((prev: any) => ({
-          ...prev,
-          fam_building: capitalize(values.building),
-          fam_indigenous: capitalize(values.indigenous),
-          household_no: values.householdNo
-        }));
-        
-        toast("Record updated successfully", {
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
-        });
-      }
-    });
+    try {
+      await Promise.all([
+        updateFamily({
+          data: data,
+          familyId: familyData.fam_id,
+          oldHouseholdId: familyData.household_no
+        }),
+        updateFamilyHealth({
+          data: data,
+          familyId: familyData.fam_id,
+          oldHouseholdId: familyData.household_no
+        })
+      ]);
+      setIsSaving(false);
+      setIsOpenDialog(false);
+      setFamily((prev: any) => ({
+        ...prev,
+        fam_building: capitalize(values.building),
+        fam_indigenous: capitalize(values.indigenous),
+        household_no: values.householdNo
+      }));
+      toast("Record updated successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+      });
+    } catch (error) {
+      setIsSaving(false);
+      toast("Failed to update record", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+      });
+    }
   }
 
   return (
@@ -127,7 +138,7 @@ export default function EditGeneralDetails({
           <Combobox
             options={formattedHouseholds}
             value={form.watch("householdNo")}
-            onChange={(value) => form.setValue("householdNo", value)}
+            onChange={(value) => form.setValue("householdNo", value as string)}
             placeholder="Select a household"
             triggerClassName="font-normal"
             emptyMessage={

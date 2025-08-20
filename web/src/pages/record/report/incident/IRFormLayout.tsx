@@ -23,7 +23,6 @@ export default function IRFormLayout() {
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params, [location.state]);
   const data = React.useMemo(() => params?.data, [params]);
-  console.log(data)
   return (
     <LayoutWithBack 
       title="Incident Report Details" 

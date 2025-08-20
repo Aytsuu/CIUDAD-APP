@@ -265,6 +265,26 @@ export const useBusinessInfo = (busId: number) => {
   });
 }
 
+export const useBusinessHistory = (busId: string) => {
+  return useQuery({
+    queryKey: ['businessHistory', busId],
+    queryFn: async () => {
+      try {
+        const res = await api.get('profiling/business/history/', {
+          params: {
+            bus_id: busId
+          }
+        });
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}
+
 export const useOwnedBusinesses = (data: Record<string, any>) => {
   return useQuery({
     queryKey: ['ownedBusinesses', data],
@@ -292,6 +312,22 @@ export const useRespondentInfo = (respondentId: string) => {
         return res.data;
       } catch (err) {
         throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}
+
+export const useModificationRequests = () => {
+  return useQuery({
+    queryKey: ['modificationRequests'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('profiling/business/modification/request-list/');
+        return res.data
+      } catch (err) {
+        console.error(err);
+        throw(err);
       }
     },
     staleTime: 5000

@@ -58,28 +58,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Listen to Supabase auth changes
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Supabase auth state changed:", event, session?.user?.email);
+  // useEffect(() => {
+  //   const { data: { subscription } } = supabase.auth.onAuthStateChange(
+  //     async (event, session) => {
+  //       console.log("Supabase auth state changed:", event, session?.user?.email);
         
-        if (event === 'SIGNED_OUT' || !session) {
-          setUser(null);
-          setIsAuthenticated(false);
-          setIsLoading(false);
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // It does not automatically set as authenticated it waits for backend verification
-          if (event === 'TOKEN_REFRESHED') {
-            checkAuthStatus();
-          }
-        }
-      }
-    );
+  //       if (event === 'SIGNED_OUT' || !session) {
+  //         setUser(null);
+  //         setIsAuthenticated(false);
+  //         setIsLoading(false);
+  //       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+  //         // It does not automatically set as authenticated it waits for backend verification
+  //         if (event === 'TOKEN_REFRESHED') {
+  //           checkAuthStatus();
+  //         }
+  //       }
+  //     }
+  //   );
 
-    checkAuthStatus();
+  //   checkAuthStatus();
 
-    return () => subscription.unsubscribe();
-  }, [checkAuthStatus]);
+  //   return () => subscription.unsubscribe();
+  // }, [checkAuthStatus]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);

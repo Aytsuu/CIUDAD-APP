@@ -1,6 +1,15 @@
 import axios from "axios";
 import supabase from "@/supabase/supabase";
 
+// export const api = axios.create({
+//   baseURL: "http://localhost:8000",
+ 
+// });
+// export const api2 = axios.create({
+//   baseURL: "http://localhost:8001",
+  
+// });
+
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,

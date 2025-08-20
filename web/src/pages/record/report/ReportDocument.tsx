@@ -51,7 +51,6 @@ export default function ReportDocument() {
   const currentInfo = type === "AR" ? ARInfo : WARInfo; 
   const currentDocs = type === "AR" ? arDocs : warDocs; 
   const signed = currentInfo?.status === 'Signed' || currentDocs?.length > 0
-  console.log(currentInfo?.status)
   const formatDocs = React.useMemo(() => currentDocs?.map((doc: any) => ({
     id: doc.warf_id || doc.arf_id,
     name: doc.warf_name || doc.arf_name,

@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { Form } from "@/components/ui/form/form";
 import PersonalInfoForm from "./PersonalInfoForm";
@@ -18,11 +16,6 @@ import {
   useResidentsList,
   useSitioList,
 } from "../../queries/profilingFetchQueries";
-import {
-  useResidentsListHealth,
-  useSitioListHealth,
-} from "../../../health-family-profiling/family-profling/queries/profilingFetchQueries";
-import { formatResidents, formatSitio } from "../../ProfilingFormats";
 import { useLoading } from "@/context/LoadingContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
@@ -34,10 +27,20 @@ import {
   UserRoundPlus,
 } from "lucide-react";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { formatResidents, formatSitio } from "../../ProfilingFormats";
 
-export default function ResidentCreateForm({
-  params,
-}: {
+const DEFAULT_ADDRESS = [
+  {
+    add_province: "",
+    add_city: "",
+    add_barangay: "",
+    sitio: "",
+    add_external_sitio: "",
+    add_street: "",
+  },
+]
+
+export default function ResidentCreateForm({ params }: {
   params: Record<string, any>;
 }) {
   // ============= STATE INITIALIZATION ===============
@@ -51,16 +54,7 @@ export default function ResidentCreateForm({
     checkDefaultValues,
   } = useResidentForm("", params?.origin);
 
-  const [addresses, setAddresses] = React.useState<any[]>([
-    {
-      add_province: "",
-      add_city: "",
-      add_barangay: "",
-      sitio: "",
-      add_external_sitio: "",
-      add_street: "",
-    },
-  ]);
+  const [addresses, setAddresses] = React.useState<any[]>(DEFAULT_ADDRESS);
 
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const { mutateAsync: addAddress } = useAddAddress();
@@ -74,31 +68,23 @@ export default function ResidentCreateForm({
 
   const { data: residentsList, isLoading: isLoadingResidents } =
     useResidentsList(params?.origin === Origin.Administration);
-  const { data: residentsListHealth, isLoading: isLoadingResidentsHealth } =
-    useResidentsListHealth();
+
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
-  const { data: sitioListHealth, isLoading: isLoadingSitioHealth } =
-    useSitioListHealth();
 
   // Formatted data - prioritize main database but fallback to health database
   const formattedSitio = React.useMemo(
-    () => formatSitio(sitioList) || formatSitio(sitioListHealth) || [],
-    [sitioList, sitioListHealth]
+    () => formatSitio(sitioList) || [],
+    [sitioList]
   );
 
   const formattedResidents = React.useMemo(
     () =>
-      formatResidents(residentsList) ||
-      formatResidents(residentsListHealth) ||
-      [],
-    [residentsList, residentsListHealth]
+      formatResidents(residentsList) || [],
+    [residentsList]
   );
 
-  const isLoading =
-    isLoadingResidents ||
-    isLoadingSitio ||
-    isLoadingResidentsHealth ||
-    isLoadingSitioHealth;
+  const isLoading = isLoadingResidents || isLoadingSitio
+  const isValid = form.formState.isValid  
 
   // ================== SIDE EFFECTS ==================
   React.useEffect(() => {
@@ -110,11 +96,11 @@ export default function ResidentCreateForm({
   }, [isLoading, showLoading, hideLoading]);
 
   React.useEffect(() => {
-    const subscription = form.watch((value) => {
+    const subscription = form.watch(async (value) => {
       setIsAllowSubmit(!checkDefaultValues(value, defaultValues));
     });
     return () => subscription.unsubscribe();
-  }, [form, checkDefaultValues, defaultValues]);
+  }, [form, defaultValues]);
 
   // ==================== HANDLERS ====================
   const validateAddresses = React.useCallback(
@@ -137,61 +123,44 @@ export default function ResidentCreateForm({
 
   const handleComboboxChange = React.useCallback(() => {
     const selectedId = form.watch("per_id")?.split(" ")[0];
-    if (!selectedId) {
-      form.reset();
+    if (!selectedId || selectedId == "undefined") {
+      form.reset(defaultValues);
+      setAddresses(DEFAULT_ADDRESS)
       return;
     }
 
-    // Try to find data in main database first, then health database
-    const mainData = residentsList?.find(
-      (resident: any) => resident.rp_id === selectedId
-    );
-    const healthData = residentsListHealth?.find(
+    const data = residentsList?.find(
       (resident: any) => resident.rp_id === selectedId
     );
 
-    // Use main database data if available, otherwise use health database data
-    const dataToUse = mainData || healthData;
-
-    if (dataToUse?.personal_info) {
-      populateFields(dataToUse.personal_info);
-      setAddresses(dataToUse.personal_info.per_addresses || addresses);
+    if (data?.personal_info) {
+      populateFields(data.personal_info);
+      setAddresses(data.personal_info.per_addresses || addresses);
     }
-  }, [form, residentsList, residentsListHealth, populateFields, addresses]);
+  }, [form, residentsList, populateFields, addresses]);
 
 
   const submit = async () => {
-    setIsSubmitting(true);
-
-    if(params?.origin === Origin.Administration){
-      if(!form.getValues('per_id')) {
-        setIsSubmitting(false);
-        showErrorToast('Please select a resident for the assignment');
-        return;
-      }
-    }
-
     if (!(await form.trigger())) {
-      setIsSubmitting(false);
       showErrorToast("Please fill out all required fields");
       return;
     }
 
     if (!validateAddresses(addresses)) {
-      setIsSubmitting(false);
       showErrorToast("Please fill out all required fields");
       return;
     }
 
     try {
+
       const personalInfo = capitalizeAllFields(form.getValues());
-
-      // Safely get staff_id with proper type checking
       const staffId = user?.staff?.staff_id;
-
       if (!staffId) {
-        throw new Error("Staff information not available");
+        showErrorToast("Staff information not available");
+        return
       }
+
+      setIsSubmitting(true);
 
       const resident = await addResidentAndPersonal({
         personalInfo: personalInfo,
@@ -200,11 +169,14 @@ export default function ResidentCreateForm({
 
       const new_addresses = await addAddress(addresses)
 
+      const personalAddressData = new_addresses?.map((address: any) => ({
+        add: address.add_id,
+        per: resident.per.per_id,
+      }));
+
       await addPersonalAddress({
-        data: new_addresses?.map((address: any) => ({
-          add: address.add_id,
-          per: resident.per.per_id,
-        })),
+        data: personalAddressData,
+        staff_id: user?.staff?.staff_id,
         history_id: resident.per.history
       })
       
@@ -212,7 +184,7 @@ export default function ResidentCreateForm({
       if (params?.isRegistrationTab) {
         params.setResidentId(resident.rp_id);
         params.setAddresses(new_addresses);
-        params?.next();
+        params?.next(true);
       }
       setIsSubmitting(false);
       form.reset(defaultValues);
@@ -245,7 +217,7 @@ export default function ResidentCreateForm({
           isSubmitting={isSubmitting}
           submit={submit}
           origin={params?.origin ? params.origin : ""}
-          isReadOnly={params?.origin == Origin.Administration}
+          isReadOnly={false}
           isAllowSubmit={isAllowSubmit}
           setAddresses={setAddresses}
           setValidAddresses={setValidAddresses}
@@ -259,15 +231,15 @@ export default function ResidentCreateForm({
 
   const residentRegistrationForm = () => (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full shadow-lg border-0 bg-gradient-to-br from-white to-blue-50/30">
+      <Card className="w-full shadow-none max-h-[700px] overflow-y-auto">
         <CardHeader className="text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <UserRoundPlus className="w-8 h-8 text-blue-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">
+          <h2 className="text-xl font-semibold mb-2">
             Resident Registration
           </h2>
-          <p className="max-w-2xl mx-auto leading-relaxed">
+          <p className="mx-auto leading-relaxed">
             Create a comprehensive profile for a new resident. This includes
             personal information, contact details, and address information.
           </p>
@@ -275,29 +247,25 @@ export default function ResidentCreateForm({
 
         <CardContent className="space-y-6">
           {/* Info Alert */}
-          <Alert className="border-blue-200 bg-blue-50">
+          {/* <Alert className="border-blue-200 bg-blue-50">
             <AlertDescription className="text-blue-800 flex items-center gap-2">
               <strong>Resident Registration:</strong> Please ensure all
               information is accurate as this will be used for official records
               and identification purposes.
             </AlertDescription>
           </Alert>
-          <Separator />
+          <Separator /> */}
 
           {/* Form Content */}
           <div className="p-6">{MainContent}</div>
 
-          {/* Database Info */}
-          <Alert className="border-green-200 bg-green-50">
-            <AlertDescription className="text-green-800 flex items-center gap-2">
-              <strong>Data Security:</strong> All resident information is
-              securely stored and encrypted. Access is restricted to authorized
-              personnel only.
-            </AlertDescription>
-          </Alert>
-
           {/* Help Section */}
           <div className="text-center pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-500 mb-2">
+              All resident information is
+              securely stored and encrypted. Access is restricted to authorized
+              personnel only.
+            </p>
             <p className="text-xs text-gray-500 mb-2">
               Need assistance with resident registration? Contact your system
               administrator for help.

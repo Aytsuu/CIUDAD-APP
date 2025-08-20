@@ -2,7 +2,7 @@ import React from "react";
 import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import TbSurveilanceForm from "./TbSurveilanceForm";
-import { familyFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { Separator } from "@/components/ui/separator";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -32,11 +32,29 @@ export default function TbSurveilanceInfoLayout({
   setSelectedResidentId
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
-  residents: any;
+  residents: any[]; // Family members array
   selectedResidentId: string;
   setSelectedResidentId: React.Dispatch<React.SetStateAction<string>>;
 }) {
   const tbRecords = form.watch("tbRecords.list");
+  
+  // Ensure residents is always an array
+  const safeResidents = residents || [];
+  
+  // Debug logging
+  React.useEffect(() => {
+    console.log('TbSurveilanceInfoLayout - residents:', safeResidents);
+  }, [safeResidents]);
+  
+  // Structure residents data for the form
+  const structuredResidents = {
+    default: safeResidents,
+    formatted: safeResidents.map(member => ({
+      ...member,
+      // Use rp_id as the ID and format name properly
+      id: `${member.rp_id} - ${member.per?.per_fname || member.firstName || ''} ${member.per?.per_lname || member.lastName || ''}`
+    }))
+  };
   
   const columns: ColumnDef<PersonInfo>[] = [
     { 
@@ -89,7 +107,7 @@ export default function TbSurveilanceInfoLayout({
       <div className="space-y-6">
         {/* TB Surveillance Information */}
         <TbSurveilanceForm
-          residents={residents}
+          residents={structuredResidents}
           form={form}
           selectedResidentId={selectedResidentId}
           onSelect={setSelectedResidentId}
@@ -101,7 +119,7 @@ export default function TbSurveilanceInfoLayout({
 
         <div className="mb-4">
           <h3 className="font-semibold text-lg">TB Patient Records</h3>
-          <p className="text-xs text-black/50">Manage TB patient records</p>
+          <p className="text-xs text-black/50">Manage TB Surveilance Records</p>
         </div>
 
         <DataTable
