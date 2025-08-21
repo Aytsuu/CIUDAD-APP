@@ -17,11 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   useGetIncomeImages,
-  useGetDisbursementImages,
-  IncomeImage,
-  DisbursementImage,
-  Album,
-  ImageItem,
+  useGetDisbursementImages
 } from "./queries/fetchqueries";
 import {
   useArchiveIncomeImage,
@@ -31,11 +27,10 @@ import {
   useRestoreDisbursementImage,
   usePermanentDeleteDisbursementImage,
   usePermanentDeleteIncomeFolder,
-  useRestoreIncomeFolder,
   usePermanentDeleteDisbursementFolder,
-  useRestoreDisbursementFolder,
 } from "./queries/delqueries";
 import { formatDate } from "@/helpers/dateHelper";
+import { ImageItem, Album, IncomeImage, DisbursementImage } from "./inc-disb-types";
 
 function IncomeandDisbursementView() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,9 +57,7 @@ function IncomeandDisbursementView() {
   const restoreDisbursementImage = useRestoreDisbursementImage();
   const permanentDeleteDisbursementImage = usePermanentDeleteDisbursementImage();
   const permanentDeleteIncomeFolder = usePermanentDeleteIncomeFolder();
-  const restoreIncomeFolder = useRestoreIncomeFolder();
   const permanentDeleteDisbursementFolder = usePermanentDeleteDisbursementFolder();
-  const restoreDisbursementFolder = useRestoreDisbursementFolder();
 
   const albums: Album[] = useMemo(() => {
     const albumMap: { [key: string]: Album } = {};
@@ -112,7 +105,6 @@ function IncomeandDisbursementView() {
     });
 
     const albums = Object.values(albumMap);
-    console.log("Albums:", albums);
     return albums;
   }, [incomeImages, disbursementImages]);
 
@@ -241,7 +233,7 @@ const getDeleteAllDescription = (album: Album) => {
     (img.type === 'disbursement' && (img as DisbursementImage).disf_is_archive)
   );
   return allArchived 
-    ? "This will permanently delete the entire folder and all its images. This action cannot be undone."
+    ? "This will permanently delete the selected images. This action cannot be undone."
     : "This will permanently delete only the archived images in this folder. Active images will remain.";
 };
 

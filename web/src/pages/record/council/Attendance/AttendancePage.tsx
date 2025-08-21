@@ -15,13 +15,8 @@ import {
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import Attendees from "./Attendees";
-import {
-  useGetCouncilEvents,
-  useGetAttendanceSheets,
-  type CouncilEvent,
-  type AttendanceSheet,
-  type AttendanceRecord
-} from "../Calendar/queries/fetchqueries";
+import {useGetCouncilEvents, useGetAttendanceSheets} from "../Calendar/queries/fetchqueries";
+import { CouncilEvent, AttendanceSheet, AttendanceRecord } from "../Calendar/ce-att-types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { HistoryTable } from "@/components/ui/table/history-table";
 
@@ -186,11 +181,6 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
       const archiveSheet = useArchiveAttendanceSheet();
       const [isAttendeesDialogOpen, setIsAttendeesDialogOpen] = useState(false);
       const [isEditMode, setIsEditMode] = useState(false);
-
-      const handleDialogClose = () => {
-        setIsAttendeesDialogOpen(false);
-        setIsEditMode(false);
-      };
 
       const handleSaveSuccess = () => {
         setIsEditMode(false);

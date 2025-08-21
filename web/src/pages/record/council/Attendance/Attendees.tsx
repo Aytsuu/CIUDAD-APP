@@ -9,15 +9,9 @@ import { z } from "zod";
 import MarkAttendeesSchema from "@/form-schema/council/markAttendees";
 import { useGetAttendees } from "../Calendar/queries/fetchqueries";
 import { useAddAttendee } from "../Calendar/queries/addqueries";
-import { Attendee } from "../Calendar/queries/fetchqueries";
 import { useUpdateAttendee } from "../Calendar/queries/updatequeries";
-
-interface AttendeesProps {
-  isEditMode: boolean;
-  onEditToggle: (value: boolean) => void;
-  onSave: () => void;
-  ceId: number;
-}
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { AttendeesProps } from "../Calendar/ce-att-types";
 
 function Attendees({ isEditMode, onEditToggle, onSave, ceId }: AttendeesProps) {
   if (!ceId) {
@@ -27,9 +21,7 @@ function Attendees({ isEditMode, onEditToggle, onSave, ceId }: AttendeesProps) {
   const { data: eventAttendees = [], isLoading, error } = useGetAttendees(ceId);
   const addAttendee = useAddAttendee();
   const updateAttendee = useUpdateAttendee();
-
-  console.log("Event Attendees:", eventAttendees);
-  console.log("ceId:", ceId);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (error) {
     return <div className="w-full h-full p-4 text-center text-red-500">Error loading attendees: {error.message}</div>;
@@ -49,48 +41,11 @@ function Attendees({ isEditMode, onEditToggle, onSave, ceId }: AttendeesProps) {
         .filter((attendee) => attendee.atn_present_or_absent === "Present")
         .map((attendee) => attendee.atn_name);
       form.reset({ attendees: presentAttendees });
-      console.log("Initial form attendees set to:", presentAttendees);
     }
   }, [eventAttendees, form, isLoading]);
 
-  // async function onSubmit(values: z.infer<typeof MarkAttendeesSchema>) {
-  //   try {
-  //     console.log("Form submitted with values:", values);
-  //     const attendees = values.attendees || [];
-  //     await Promise.all(
-  //       eventAttendees.map(async (attendee) => {
-  //         const isPresent = attendees.includes(attendee.atn_name);
-  //         const status = isPresent ? "Present" : "Absent";
-          
-  //         if (attendee.atn_id) {
-  //           console.log(`Updating attendee ${attendee.atn_id} with status: ${status}`);
-  //           await updateAttendee.mutateAsync({
-  //             atn_id: attendee.atn_id,
-  //             attendeeInfo: {
-  //               atn_present_or_absent: status,
-  //             },
-  //           });
-  //         } else {
-  //           console.log(`Adding new attendee ${attendee.atn_name} with status: ${status}`);
-  //           await addAttendee.mutateAsync({
-  //             atn_name: attendee.atn_name,
-  //             atn_designation: attendee.atn_designation || "No Designation",
-  //             atn_present_or_absent: status,
-  //             ce_id: ceId,
-  //             staff_id: attendee.staff_id || null,
-  //           });
-  //         }
-  //       })
-  //     );
-  //     onSave();
-  //   } catch (error) {
-  //     console.error("Error saving attendance:", error);
-  //   }
-  // }
-
 async function onSubmit(values: z.infer<typeof MarkAttendeesSchema>) {
     try {
-      console.log("Form submitted with values:", values);
       const attendees = values.attendees || [];
       
       // Create an array of promises for all mutations
@@ -122,8 +77,6 @@ async function onSubmit(values: z.infer<typeof MarkAttendeesSchema>) {
       // Only call onSave if all mutations were successful
       onSave();
     } catch (error) {
-      console.error("Error saving attendance:", error);
-      // You might want to add error handling here
     }
   }
 
@@ -184,7 +137,6 @@ async function onSubmit(values: z.infer<typeof MarkAttendeesSchema>) {
                                   ? [...selectedAttendees, attendee.atn_name]
                                   : selectedAttendees.filter((name: string) => name !== attendee.atn_name);
                                 field.onChange(newValue);
-                                console.log(`Checkbox ${attendee.atn_name} updated, new value:`, newValue);
                               }}
                               disabled={!isEditMode}
                             />
@@ -218,12 +170,17 @@ async function onSubmit(values: z.infer<typeof MarkAttendeesSchema>) {
         {eventAttendees.length > 0 && (
           <div className="flex justify-end pt-10">
             {isEditMode ? (
-              <Button
-                onClick={form.handleSubmit(onSubmit)}
-                className="w-full sm:w-20"
-              >
-                Save
-              </Button>
+               <ConfirmationModal
+              trigger={
+                <Button className="w-full sm:w-20" disabled={isSubmitting}>
+                  {isSubmitting ? "Saving..." : "Save"}
+                </Button>
+              }
+              title="Confirm Attendance"
+              description="Are you sure you want to save these attendance changes?"
+              actionLabel="Confirm"
+              onClick={form.handleSubmit(onSubmit)}
+            />
             ) : (
               <Button
                 type="button"
@@ -231,7 +188,6 @@ async function onSubmit(values: z.infer<typeof MarkAttendeesSchema>) {
                 onClick={(e) => {
                   e.preventDefault();
                   onEditToggle(true);
-                  console.log("Edit button clicked, isEditMode:", true);
                 }}
               >
                 Edit

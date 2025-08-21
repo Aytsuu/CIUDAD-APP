@@ -58,11 +58,14 @@ const GADAddEntrySchema = z.object({
         message: "Income particulars required",
       });
     }
-    if (data.gbud_inc_amt === undefined || data.gbud_inc_amt === null) {
+    if (data.gbud_inc_amt === undefined || 
+        data.gbud_inc_amt === null || 
+        isNaN(data.gbud_inc_amt) || 
+        data.gbud_inc_amt <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["gbud_inc_amt"],
-        message: "Income amount required",
+        message: "Income amount must be greater than 0",
       });
     }
   }

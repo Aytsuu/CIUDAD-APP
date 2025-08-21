@@ -4,21 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button/button";
 import sanroque_logo from "@/assets/images/sanroque_logo.jpg";
-
-interface AttendanceSheetViewProps {
-  selectedAttendees?: { name: string; designation: string }[];
-  activity?: string;
-  date?: string;
-  time?: string;
-  place?: string;
-  ce_id?: number;
-  category?: string;
-  description?: string;
-  onLoad?: () => void;
-  onError?: () => void;
-  onClose?: () => void;
-  onConfirm?: () => void;
-}
+import { AttendanceSheetViewProps } from "./ce-att-types";
 
 function formatTimeTo12Hour(time: string | undefined) {
   if (!time) return "N/A";
@@ -49,7 +35,7 @@ async function generatePDF(
   doc = new jsPDF({
     orientation: "portrait",
     unit: "pt",
-    format: [612, 936], 
+    format: [612, 936],
   });
 
   doc.setFont("times", "normal");
@@ -58,38 +44,6 @@ async function generatePDF(
   const margin = 62;
   let yPos = margin;
   const pageWidth = 612;
-  const pageHeight = 792 - margin * 2;
-  const lineHeight = 14;
-  const sectionGap = 20;
-
-  const addTextWithPageBreak = (
-    text: string,
-    x: number,
-    y: number,
-    maxWidth: number,
-    options: { bold?: boolean; italic?: boolean; fontSize?: number } = {}
-  ) => {
-    const displayText = text || "N/A";
-    if (options.bold) doc.setFont("times", "bold");
-    if (options.italic) doc.setFont("times", "italic");
-    if (options.fontSize) doc.setFontSize(options.fontSize);
-    const splitText = doc.splitTextToSize(displayText, maxWidth);
-    for (let i = 0; i < splitText.length; i++) {
-      if (y + lineHeight > pageHeight + margin) {
-        doc.addPage();
-        y = margin;
-      }
-      doc.text(splitText[i], x, y);
-      y += lineHeight;
-    }
-    doc.setFont("times", "normal");
-    doc.setFontSize(12);
-    return y;
-  };
-
-  const addSectionTitle = (title: string, y: number) => {
-    return addTextWithPageBreak(title, margin, y, pageWidth - margin * 2, { bold: true });
-  };
 
   // Header Section
   if (logoBase64) {
@@ -102,48 +56,64 @@ async function generatePDF(
       const scaleFactor = Math.min(1, maxHeight / imgHeight);
       const finalHeight = imgHeight * scaleFactor;
       const xPos = (pageWidth - logoWidth) / 2;
-      
+
       doc.addImage(logoBase64, "JPEG", xPos, margin, logoWidth, finalHeight);
       yPos += finalHeight + 30;
     } catch (error) {
-      console.error("Failed to add image to PDF:", error);
       yPos += 10;
     }
   } else {
-    console.warn("No logoBase64 provided, skipping image.");
     yPos += 10;
   }
 
   function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
 
   doc.setFontSize(14);
-  doc.text("Republic of the Philippines", pageWidth / 2, yPos, { align: "center" });
+  doc.text("Republic of the Philippines", pageWidth / 2, yPos, {
+    align: "center",
+  });
   yPos += 20;
 
   doc.setFont("times", "bold");
-  doc.text("Cebu City | Barangay San Roque Ciudad", pageWidth / 2, yPos, { align: "center" });
+  doc.text("Cebu City | Barangay San Roque Ciudad", pageWidth / 2, yPos, {
+    align: "center",
+  });
   doc.setFont("times", "normal");
   yPos += 10;
 
-  doc.text("_____________________________________________________", pageWidth / 2, yPos, { align: "center" });
+  doc.text(
+    "_____________________________________________________",
+    pageWidth / 2,
+    yPos,
+    { align: "center" }
+  );
   yPos += 30;
 
   doc.setFont("times", "bold");
-  doc.text("Office of the Barangay Captain", pageWidth / 2, yPos, { align: "center" });
+  doc.text("Office of the Barangay Captain", pageWidth / 2, yPos, {
+    align: "center",
+  });
   doc.setFont("times", "normal");
   yPos += 20;
 
   doc.setFontSize(11);
-  doc.text("Arellano Boulevard, San Roque, Cebu City", pageWidth / 2, yPos, { align: "center" });
+  doc.text("Arellano Boulevard, San Roque, Cebu City", pageWidth / 2, yPos, {
+    align: "center",
+  });
   yPos += 15;
-  doc.text("Barangaysanroquecebu@gmail.com | (032) 231 - 3699", pageWidth / 2, yPos, { align: "center" });
+  doc.text(
+    "Barangaysanroquecebu@gmail.com | (032) 231 - 3699",
+    pageWidth / 2,
+    yPos,
+    { align: "center" }
+  );
   yPos += 50;
 
   // Activity Details
@@ -190,41 +160,42 @@ async function generatePDF(
     autoTable(doc, {
       startY: yPos,
       head: [["No.", "Name", "Designation / Organization", "Signature"]],
-      body: chunk.length > 0
-        ? chunk.map((row, i) => [
-            (index * 10 + i + 1).toString(),
-            row.nameOfAttendee || "N/A",
-            row.designation || "N/A",
-            ""
-          ])
-        : [["1", "No attendees available", "", ""]],
+      body:
+        chunk.length > 0
+          ? chunk.map((row, i) => [
+              (index * 10 + i + 1).toString(),
+              row.nameOfAttendee || "N/A",
+              row.designation || "N/A",
+              "",
+            ])
+          : [["1", "No attendees available", "", ""]],
       theme: "grid",
       styles: {
         font: "times",
         fontSize: 12,
         cellPadding: 5,
-        textColor: [50, 50, 50]
+        textColor: [50, 50, 50],
       },
       headStyles: {
         fillColor: [220, 220, 220],
         textColor: [0, 0, 0],
         fontStyle: "bold",
-        halign: "center"
+        halign: "center",
       },
       margin: { left: margin, right: margin },
       columnStyles: {
         0: { cellWidth: 50, halign: "center" },
         1: { cellWidth: 150 },
         2: { cellWidth: 200 },
-        3: { cellWidth: 100, halign: "center" }
+        3: { cellWidth: 100, halign: "center" },
       },
       bodyStyles: {
         halign: "center",
-        valign: "middle"
+        valign: "middle",
       },
       alternateRowStyles: {
-        fillColor: [245, 245, 245]
-      }
+        fillColor: [245, 245, 245],
+      },
     });
   });
 
@@ -244,7 +215,9 @@ const AttendanceSheetView: React.FC<AttendanceSheetViewProps> = ({
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(true);
   const [generationError, setGenerationError] = useState(false);
-  const [sanRoqueLogoBase64, setSanRoqueLogoBase64] = useState<string | null>(null);
+  const [sanRoqueLogoBase64, setSanRoqueLogoBase64] = useState<string | null>(
+    null
+  );
   const isMounted = useRef(true);
 
   const formattedTime = formatTimeTo12Hour(time);
@@ -260,13 +233,11 @@ const AttendanceSheetView: React.FC<AttendanceSheetViewProps> = ({
 
   // Convert image to base64 with debugging
   useEffect(() => {
-    console.log("Imported logo URL:", sanroque_logo);
     const convertImageToBase64 = () => {
       const img = new Image();
       img.crossOrigin = "Anonymous";
       img.src = sanroque_logo;
       img.onload = () => {
-        console.log("Image loaded, dimensions:", { width: img.width, height: img.height });
         const canvas = document.createElement("canvas");
         canvas.width = img.width;
         canvas.height = img.height;
@@ -274,14 +245,8 @@ const AttendanceSheetView: React.FC<AttendanceSheetViewProps> = ({
         if (ctx) {
           ctx.drawImage(img, 0, 0);
           const base64 = canvas.toDataURL("image/jpeg");
-          console.log("Generated base64 length:", base64.length);
           setSanRoqueLogoBase64(base64);
-        } else {
-          console.error("Canvas context unavailable");
         }
-      };
-      img.onerror = () => {
-        console.error("Failed to load image. Check path or file:", sanroque_logo);
       };
     };
     convertImageToBase64();
@@ -311,8 +276,9 @@ const AttendanceSheetView: React.FC<AttendanceSheetViewProps> = ({
           sanRoqueLogoBase64
         );
 
-        const url = URL.createObjectURL(new Blob([pdfBlob], { type: "application/pdf" }));
-        console.log("PDF URL generated:", url);
+        const url = URL.createObjectURL(
+          new Blob([pdfBlob], { type: "application/pdf" })
+        );
 
         if (isMounted.current) {
           setPdfUrl(url);
@@ -320,7 +286,6 @@ const AttendanceSheetView: React.FC<AttendanceSheetViewProps> = ({
           onLoad?.();
         }
       } catch (error) {
-        console.error("PDF generation failed:", error);
         if (isMounted.current) {
           setGenerationError(true);
           setIsGenerating(false);
@@ -331,10 +296,16 @@ const AttendanceSheetView: React.FC<AttendanceSheetViewProps> = ({
 
     if (sanRoqueLogoBase64) {
       generateAndSetPDF();
-    } else {
-      console.warn("Waiting for logoBase64 to be generated before PDF creation.");
     }
-  }, [activity, date, time, place, selectedAttendees, formattedTime, sanRoqueLogoBase64]);
+  }, [
+    activity,
+    date,
+    time,
+    place,
+    selectedAttendees,
+    formattedTime,
+    sanRoqueLogoBase64,
+  ]);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -342,7 +313,11 @@ const AttendanceSheetView: React.FC<AttendanceSheetViewProps> = ({
         <div className="flex flex-col items-center justify-center h-full text-red-500 gap-2">
           <span className="text-lg font-medium">Failed to generate PDF</span>
           <span className="text-sm">Please try again later</span>
-          <Button variant="outline" onClick={() => onClose?.()} className="mt-4">
+          <Button
+            variant="outline"
+            onClick={() => onClose?.()}
+            className="mt-4"
+          >
             Close
           </Button>
         </div>
@@ -373,7 +348,6 @@ const AttendanceSheetView: React.FC<AttendanceSheetViewProps> = ({
           style={{ minHeight: "100%", maxWidth: "100%", objectFit: "contain" }}
           title="Attendance PDF Preview"
           onLoad={() => {
-            console.log("Iframe loaded, checking PDF content");
             onLoad?.();
           }}
           onError={() => {
