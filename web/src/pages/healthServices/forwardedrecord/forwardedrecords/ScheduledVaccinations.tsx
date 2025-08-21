@@ -295,19 +295,7 @@ export default function ScheduledVaccinations() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <SelectLayout
-              placeholder="Filter status"
-              label=""
-              className="bg-white w-full sm:w-48"
-              options={[
-                { id: "all", name: "All Status" },
-                { id: "scheduled", name: "Scheduled" },
-                { id: "completed", name: "Completed" },
-                { id: "cancelled", name: "Cancelled" },
-              ]}
-              value={statusFilter}
-              onChange={(value) => setStatusFilter(value)}
-            />
+           
           </div>
         </div>
 

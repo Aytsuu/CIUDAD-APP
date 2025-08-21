@@ -17,14 +17,17 @@ from django.utils.timezone import now
 from apps.childhealthservices.models import ChildHealthSupplements,ChildHealth_History
 from apps.reports.models import *
 from apps.reports.serializers import *
+from pagination import *
+from django.db.models import Q, Prefetch
+
 class PatientMedicineRecordsView(generics.ListAPIView):
     serializer_class = PatientMedicineRecordSerializer
     
     def get_queryset(self):
-        pat_id = self.kwargs.get('pat_id')
         return Patient.objects.filter(
             Q(patient_records__medicine_records__patrec_id__isnull=False) 
         ).distinct()
+
 
 class IndividualMedicineRecordView(generics.ListCreateAPIView):
     serializer_class = MedicineRecordSerialzer
@@ -32,15 +35,13 @@ class IndividualMedicineRecordView(generics.ListCreateAPIView):
         pat_id = self.kwargs['pat_id']
         return MedicineRecord.objects.filter(
             patrec_id__pat_id=pat_id
-        ).order_by('-fulfilled_at')  # Optional: latest first
+        ).order_by('-fulfilled_at')  
 
 class CreateMedicineRecordView(generics.CreateAPIView):
     serializer_class = MedicineRecordSerialzer
     queryset = MedicineRecord.objects.all()
     
     
-    
-
 
 class GetMedRecordCountView(APIView):
     

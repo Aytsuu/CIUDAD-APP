@@ -22,7 +22,7 @@ class YearlyOPTChildHealthSummariesAPIView(APIView):
     API View to get yearly summaries of child health records
     Returns years with record counts for semi-annual tracking
     Only counts the LATEST records per child in each semi-annual period
-    Filters automatically to children aged 24–71 months
+    Filters automatically to children aged 0–71 months
     """
     pagination_class = StandardResultsPagination
 
@@ -138,7 +138,7 @@ class YearlyOPTChildHealthSummariesAPIView(APIView):
                 age_months = self._calculate_age_in_months(
                     dob, record.bm.created_at if record.bm else None
                 )
-                if 24 <= age_months <= 71:
+                if 0 <= age_months <= 71:
                     ids.add(pat_id)
             return ids
 
@@ -156,24 +156,39 @@ class YearlyOPTChildHealthSummariesAPIView(APIView):
 class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
     """
     API View to get semi-annual child health report for a specific year
-    Automatically filters to children aged 24–71 months
+    Automatically filters to children aged 0–71 months
     """
     serializer_class = OPTTrackingSerializer
     pagination_class = StandardResultsPagination
 
     def _calculate_age_in_months(self, dob, reference_date):
+        """
+        Calculate age in months based on date of birth and reference date (bm.created_at)
+        Similar to how it's done in the supplements report
+        """
         try:
             if not dob or not reference_date:
                 return 0
+            
+            # Convert reference_date to date if it's datetime
             if hasattr(reference_date, 'date'):
                 reference_date = reference_date.date()
+            
+            # Convert dob to date if it's datetime
             if hasattr(dob, 'date'):
                 dob = dob.date()
+                
+            # Calculate age in months
             age_months = (reference_date.year - dob.year) * 12 + (reference_date.month - dob.month)
+            
+            # Adjust if the day hasn't been reached yet in the current month
             if reference_date.day < dob.day:
                 age_months -= 1
-            return max(0, age_months)
-        except:
+                
+            return max(0, age_months)  # Ensure non-negative age
+            
+        except (AttributeError, TypeError, ValueError) as e:
+            print(f"Error calculating age: {e}")
             return 0
 
     def get_queryset(self):
@@ -201,6 +216,7 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
             bm__created_at__lte=end_date
         ).order_by('-bm__created_at').values('vital_id')[:1]
 
+        # Get all records first, then filter by age
         latest_records = ChildHealthVitalSigns.objects.filter(
             Q(vital_id__in=Subquery(first_semi_latest)) |
             Q(vital_id__in=Subquery(second_semi_latest))
@@ -222,25 +238,30 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
             )
         ).order_by('chhist__chrec__patrec__pat_id', '-bm__created_at')
 
-        annotated_records = []
-        seen_children = set()  # Track unique children
+        # Filter by age 0-71 months using BMI created_at date
+        filtered_records = []
+        seen_children = set()
         
         for record in latest_records:
             if record.bm and record.bm.created_at:
-                month = record.bm.created_at.month
-                record.semi_period = '1st' if month <= 7 else '2nd'
-                record.semi_label = 'First Semi (Jan-Jul)' if month <= 7 else 'Second Semi (Aug-Dec)'
-
-                # Filter to only 24–71 months old
+                # Get patient's date of birth
                 pat_id = record.chhist.chrec.patrec.pat_id
                 dob = None
-                if pat_id.pat_type == 'Resident' and getattr(pat_id, 'rp_id', None):
+                
+                if pat_id.pat_type == 'Resident' and hasattr(pat_id, 'rp_id') and pat_id.rp_id:
                     dob = pat_id.rp_id.per.per_dob
-                elif pat_id.pat_type == 'Transient' and getattr(pat_id, 'trans_id', None):
+                elif pat_id.pat_type == 'Transient' and hasattr(pat_id, 'trans_id') and pat_id.trans_id:
                     dob = pat_id.trans_id.tran_dob
-
+                
+                # Calculate age in months using BMI created_at date
                 age_months = self._calculate_age_in_months(dob, record.bm.created_at)
-                if 24 <= age_months <= 71:
+                
+                # Filter to only 0–71 months old
+                if 0 <= age_months <= 71:
+                    month = record.bm.created_at.month
+                    record.semi_period = '1st' if month <= 7 else '2nd'
+                    record.semi_label = 'First Semi (Jan-Jul)' if month <= 7 else 'Second Semi (Aug-Dec)'
+
                     child_id = pat_id.pat_id
                     
                     # Only add if we haven't seen this child yet (to avoid duplicates in pagination count)
@@ -248,13 +269,13 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
                         seen_children.add(child_id)
                         # Add a marker to indicate this is the "primary" record for this child
                         record.is_primary_record = True
-                        annotated_records.append(record)
+                        filtered_records.append(record)
                     else:
                         # Still add the record but mark it as secondary (for data collection)
                         record.is_primary_record = False
-                        annotated_records.append(record)
+                        filtered_records.append(record)
 
-        return self._apply_filters(annotated_records)
+        return self._apply_filters(filtered_records)
 
     def _apply_filters(self, records):
         # Track if any filter is applied
@@ -290,7 +311,42 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
         if semi_period and semi_period in ['1st', '2nd']:
             records = [r for r in records if getattr(r, 'semi_period', None) == semi_period]
 
+        # Add age range filter similar to monthly report
+        age_range = self.request.query_params.get('age_range', '').strip()
+        if age_range:
+            filters_applied = True
+            records = self._apply_age_filter(records, age_range)
+            if len(records) == 0 and original_count > 0:
+                return []
+
         return records
+
+    def _apply_age_filter(self, records, age_range):
+        """Apply age range filter to records list"""
+        try:
+            min_age, max_age = map(int, age_range.split('-'))
+            filtered_records = []
+            for record in records:
+                # Get patient's date of birth
+                pat_id = record.chhist.chrec.patrec.pat_id
+                dob = None
+                
+                if pat_id.pat_type == 'Resident' and hasattr(pat_id, 'rp_id') and pat_id.rp_id:
+                    dob = pat_id.rp_id.per.per_dob
+                elif pat_id.pat_type == 'Transient' and hasattr(pat_id, 'trans_id') and pat_id.trans_id:
+                    dob = pat_id.trans_id.tran_dob
+                
+                # Get BM created_at date
+                bm_created_at = record.bm.created_at if record.bm else None
+                
+                # Calculate age in months
+                age_months = self._calculate_age_in_months(dob, bm_created_at)
+                
+                if min_age <= age_months <= max_age:
+                    filtered_records.append(record)
+            return filtered_records
+        except ValueError:
+            return records
 
     def _apply_search_filter(self, records, search_query):
         """Search by child/patient name, family number, and sitio"""
@@ -385,7 +441,7 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
                     # Get BM created_at date
                     bm_created_at = vs_obj.bm.created_at if vs_obj.bm else None
                     
-                    # Calculate age in months
+                    # Calculate age in months using the consistent method
                     age_in_months = self._calculate_age_in_months(dob, bm_created_at)
 
                     # Format parents information
@@ -417,7 +473,7 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
                     # Create weighing data for this semi-annual period
                     weighing_data = {
                         'date_of_weighing': vs['bm_details']['created_at'][:10] if vs.get('bm_details') else None,
-                        'age_at_weighing': vs['bm_details']['age'] if vs.get('bm_details') else None,
+                        'age_at_weighing': age_in_months,  # Use calculated age instead of vs['bm_details']['age']
                         'weight': vs['bm_details']['weight'] if vs.get('bm_details') else None,
                         'height': vs['bm_details']['height'] if vs.get('bm_details') else None,
                         'nutritional_status': nutritional_status,

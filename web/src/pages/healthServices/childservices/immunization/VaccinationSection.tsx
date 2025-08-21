@@ -1,11 +1,5 @@
 import { Button } from "@/components/ui/button/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card/card";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Combobox } from "@/components/ui/combobox";
@@ -23,11 +17,7 @@ interface VaccinationSectionProps {
   selectedVaccineListId: string;
   handleExistingVaccineChange: (value: string) => void;
   setSelectedVaccineListId: (value: string) => void;
-  existingVaccineErrors: {
-    vaccine?: string;
-    dose?: string;
-    date?: string;
-  };
+  existingVaccineErrors: { vaccine?: string; dose?: string; date?: string;};
   form: any; // Replace with proper form type
   existingVaccineTotalDoses: number;
   addExistingVac: () => void;
@@ -39,8 +29,7 @@ interface VaccinationSectionProps {
   handleVaccineChange: (value: string) => void;
   setSelectedVaccineId: (value: string) => void;
   isLoading: boolean;
-  newVaccineErrors: {
-    vaccine?: string;
+  newVaccineErrors: {vaccine?: string;
     dose?: string;
     date?: string;
   };
@@ -57,7 +46,6 @@ interface VaccinationSectionProps {
 }
 
 export function VaccinationSection({
-  
   vaccineListOptions,
   selectedVaccineListId,
   handleExistingVaccineChange,
@@ -78,7 +66,7 @@ export function VaccinationSection({
   existingVaccines,
   existingVaccineColumns,
   vaccines,
-  vaccineColumns,
+  vaccineColumns
 }: VaccinationSectionProps) {
   return (
     <div className="space-y-6 mt-6">
@@ -86,9 +74,7 @@ export function VaccinationSection({
         <CardHeader className="pb-3">
           <div>
             <CardTitle className="text-lg">Previous Vaccinations</CardTitle>
-            <CardDescription>
-              Record any vaccines this child has received before
-            </CardDescription>
+            <CardDescription>Record any vaccines this child has received before</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -103,53 +89,23 @@ export function VaccinationSection({
                   setSelectedVaccineListId(value);
                 }}
                 placeholder="Select vaccine"
-                triggerClassName={`w-full ${
-                  existingVaccineErrors.vaccine ? "border-red-500" : ""
-                }`}
+                triggerClassName={`w-full ${existingVaccineErrors.vaccine ? "border-red-500" : ""}`}
                 emptyMessage="No vaccines found"
               />
-              {existingVaccineErrors.vaccine && (
-                <p className="text-red-500 text-sm">
-                  {existingVaccineErrors.vaccine}
-                </p>
-              )}
+              {existingVaccineErrors.vaccine && <p className="text-red-500 text-sm">{existingVaccineErrors.vaccine}</p>}
             </div>
             <div className="space-y-2">
-              <FormInput
-                control={form.control}
-                name="existingVaccines.0.dose"
-                label="Dose Number"
-                type="number"
-                min={1}
-                placeholder="enter dose number"
-              />
+              <FormInput control={form.control} name="existingVaccines.0.dose" label="Dose Number" type="number" min={1} placeholder="enter dose number" />
             </div>
             <div className="space-y-2">
-              <FormInput
-                control={form.control}
-                name="existingVaccines.0.totalDoses"
-                label="Total Doses"
-                type="number"
-                min={1}
-                placeholder="enter total dose"
-              />
+              <FormInput control={form.control} name="existingVaccines.0.totalDoses" label="Total Doses" type="number" min={1} placeholder="enter total dose" />
             </div>
             <div className="space-y-2">
-              <FormDateTimeInput
-                control={form.control}
-                name="existingVaccines.0.date"
-                label="Date Administered"
-                type="date"
-              />
+              <FormDateTimeInput control={form.control} name="existingVaccines.0.date" label="Date Administered" type="date" />
             </div>
           </div>
           <div className="flex justify-end pt-4">
-            <Button
-              type="button"
-              onClick={addExistingVac}
-              className=" bg-amber-600 hover:bg-amber-700"
-              disabled={!selectedVaccineListId || isVaccineCompleted}
-            >
+            <Button type="button" onClick={addExistingVac} className=" bg-amber-600 hover:bg-amber-700" disabled={!selectedVaccineListId || isVaccineCompleted}>
               <Plus className="h-4 w-4 mr-2" />
               Add Previous Vaccine
             </Button>
@@ -165,10 +121,7 @@ export function VaccinationSection({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <DataTable
-                    columns={existingVaccineColumns}
-                    data={existingVaccines}
-                  />
+                  <DataTable columns={existingVaccineColumns} data={existingVaccines} />
                 </CardContent>
               </Card>
             )}
@@ -180,13 +133,8 @@ export function VaccinationSection({
                 <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                   <Plus className="h-6 w-6 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No vaccines recorded yet
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Start by adding previous vaccinations or new vaccines to be
-                  administered
-                </p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No vaccines recorded yet</h3>
+                <p className="text-gray-600 mb-4">Start by adding previous vaccinations or new vaccines to be administered</p>
               </CardContent>
             </Card>
           )}
@@ -199,9 +147,7 @@ export function VaccinationSection({
             <Plus className="h-5 w-5 text-blue-600" />
             New Vaccination
           </CardTitle>
-          <CardDescription>
-            Add vaccines to be administered today
-          </CardDescription>
+          <CardDescription>Add vaccines to be administered today</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -214,74 +160,32 @@ export function VaccinationSection({
                   handleVaccineChange(value);
                   setSelectedVaccineId(value);
                 }}
-                placeholder={
-                  isLoading
-                    ? "Loading vaccines..."
-                    : "Search and select a vaccine"
-                }
+                placeholder={isLoading ? "Loading vaccines..." : "Search and select a vaccine"}
                 triggerClassName="font-normal w-full"
                 emptyMessage={
                   <div className="flex gap-2 justify-center items-center">
-                    <Label className="font-normal text-xs">
-                      {isLoading
-                        ? "Loading..."
-                        : "No available vaccines in stock."}
-                    </Label>
+                    <Label className="font-normal text-xs">{isLoading ? "Loading..." : "No available vaccines in stock."}</Label>
                   </div>
                 }
               />
-              {newVaccineErrors.vaccine && (
-                <p className="text-red-500 text-sm">
-                  {newVaccineErrors.vaccine}
-                </p>
-              )}
+              {newVaccineErrors.vaccine && <p className="text-red-500 text-sm">{newVaccineErrors.vaccine}</p>}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <FormInput
-                  control={form.control}
-                  name="vaccines.0.dose"
-                  label="Dose Number"
-                  type="number"
-                  min={1}
-                  placeholder="enter dose number"
-                />
+                <FormInput control={form.control} name="vaccines.0.dose" label="Dose Number" type="number" min={1} placeholder="enter dose number" />
               </div>
               <div className="space-y-2">
-                <FormInput
-                  control={form.control}
-                  name="vaccines.0.totalDoses"
-                  label="Total Doses"
-                  type="number"
-                  min={1}
-                  max={10}
-                  placeholder="enter total dose"
-                />
+                <FormInput control={form.control} name="vaccines.0.totalDoses" label="Total Doses" type="number" min={1} max={10} placeholder="enter total dose" />
               </div>
               <div className="space-y-2">
-                <FormDateTimeInput
-                  control={form.control}
-                  name="vaccines.0.date"
-                  label="Date Administered"
-                  type="date"
-                />
+                <FormDateTimeInput control={form.control} name="vaccines.0.date" label="Date Administered" type="date" />
               </div>
-              <FormDateTimeInput
-                control={form.control}
-                name="vaccines.0.nextFollowUpDate"
-                label="Next Follow-up Visit Date"
-                type="date"
-              />
+              <FormDateTimeInput control={form.control} name="vaccines.0.nextFollowUpDate" label="Next Follow-up Visit Date" type="date" />
             </div>
           </div>
 
           <div className="flex justify-end">
-            <Button
-              type="button"
-              onClick={addVac}
-              className="bg-blue-600 hover:bg-blue-700"
-              disabled={!selectedVaccineId || isVaccineCompleted}
-            >
+            <Button type="button" onClick={addVac} className="bg-blue-600 hover:bg-blue-700" disabled={!selectedVaccineId || isVaccineCompleted}>
               <Plus className="h-4 w-4 mr-2" />
               Add New Vaccine
             </Button>
@@ -307,13 +211,8 @@ export function VaccinationSection({
                 <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                   <Plus className="h-6 w-6 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No vaccines recorded yet
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Start by adding previous vaccinations or new vaccines to be
-                  administered
-                </p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No vaccines recorded yet</h3>
+                <p className="text-gray-600 mb-4">Start by adding previous vaccinations or new vaccines to be administered</p>
               </CardContent>
             </Card>
           )}

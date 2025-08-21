@@ -163,8 +163,7 @@ class ChildHealthSupplementsMasterReport(generics.ListAPIView):
             '12-23': []
         }
         
-        
-
+    
         try:
             if child.patrec.pat_id.pat_type == 'Resident':
                 dob = child.patrec.pat_id.rp_id.per.per_dob

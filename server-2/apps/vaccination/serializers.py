@@ -8,13 +8,7 @@ from apps.patientrecords.serializers.vitalsigns_serializers import VitalSignsSer
 from apps.patientrecords.serializers.followvisits_serializers import FollowUpVisitSerializer
 # serializers. py
 
-class PartialUpdateMixin:
-    def to_internal_value(self, data):
-        if self.instance:
-            for field in self.fields:
-                if field not in data:
-                    self.fields[field].required = False
-        return super().to_internal_value(data)
+
 
 
 class BaseVaccinationRecordSerializer(serializers.ModelSerializer):
@@ -23,7 +17,7 @@ class BaseVaccinationRecordSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class VaccinationHistorySerializerBase(PartialUpdateMixin,serializers.ModelSerializer):
+class VaccinationHistorySerializerBase(serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)
     vaccine_stock = VaccineStockSerializer(source='vacStck_id', read_only=True)
     follow_up_visit = FollowUpVisitSerializer(source='followv', read_only=True)
@@ -35,7 +29,7 @@ class VaccinationHistorySerializerBase(PartialUpdateMixin,serializers.ModelSeria
         fields = '__all__'
         
     
-class VaccinationHistorySerializer(PartialUpdateMixin,serializers.ModelSerializer):
+class VaccinationHistorySerializer(serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)
     vaccine_stock = VaccineStockSerializer(source='vacStck_id', read_only=True)
     follow_up_visit = FollowUpVisitSerializer(source='followv', read_only=True)
@@ -53,10 +47,9 @@ class VaccinationHistorySerializer(PartialUpdateMixin,serializers.ModelSerialize
         except Exception:
             return None
         
-        
+    
 
-
-class VaccinationRecordSerializer(PartialUpdateMixin,serializers.ModelSerializer):
+class VaccinationRecordSerializer(serializers.ModelSerializer):
     vaccination_histories = VaccinationHistorySerializer(many=True, read_only=True)
     patient_record = PatientRecordSerializer(source='patrec_id', read_only=True)
 
@@ -65,7 +58,7 @@ class VaccinationRecordSerializer(PartialUpdateMixin,serializers.ModelSerializer
         fields = '__all__'
         
         
-class VaccinationRecordSerializerBase(PartialUpdateMixin,serializers.ModelSerializer):
+class VaccinationRecordSerializerBase(serializers.ModelSerializer):
     vaccination_histories = VaccinationHistorySerializerBase(many=True, read_only=True)
     class Meta:
         model = VaccinationRecord

@@ -11,15 +11,35 @@ export const getMedicineRecords = async () => {
   }
 };
 
-// export const getMedicatedCount = async () => {
+
+
+// export const getMedicineRecords = async (
+//   search?: string,
+//   page?: number,
+//   pageSize?: number,
+//   exportAll?: boolean
+// ): Promise<any> => {
 //   try {
-//     const response = await api.get("/medicine/medicine-records/medicated-count/");
+//     const response = await api2.get<any>(
+//       "/medicine/all-medicine-records/",
+//       { 
+//         params: { 
+//           search: search || undefined,
+//           page: exportAll ? undefined : page,
+//           page_size: exportAll ? undefined : pageSize,
+//           export: exportAll ? 'true' : undefined
+//         } 
+//       }
+//     );
 //     return response.data;
 //   } catch (error) {
-//     console.error("Error fetching medicated count:", error);
+//     console.error("Error fetching medicine records:", error);
 //     throw error;
 //   }
 // };
+
+
+
 
 export const getMedicineStocks = async () => {
   try {

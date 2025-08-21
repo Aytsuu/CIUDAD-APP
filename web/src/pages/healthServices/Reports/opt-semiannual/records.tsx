@@ -1,86 +1,81 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { useLocation } from "react-router-dom"
-import { Button } from "@/components/ui/button/button"
-import { Printer, Search, Loader2 } from "lucide-react"
-import { exportToCSV, exportToExcel, exportToPDF } from "../firstaid-report/export-report"
-import { ExportDropdown } from "../firstaid-report/export-dropdown"
-import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { Input } from "@/components/ui/input"
+import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button/button";
+import { Printer, Search, Loader2 } from "lucide-react";
+import { exportToCSV, exportToExcel, exportToPDF } from "../firstaid-report/export-report";
+import { ExportDropdown } from "../firstaid-report/export-dropdown";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Input } from "@/components/ui/input";
 
-import { useLoading } from "@/context/LoadingContext"
-import { toast } from "sonner"
-import { useSemiAnnualOPTRecords } from "./queries/fetch"
-import type { SemiAnnualChildRecord } from "./types"
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
+import { useLoading } from "@/context/LoadingContext";
+import { toast } from "sonner";
+import { useSemiAnnualOPTRecords } from "./queries/fetch";
+import type { SemiAnnualChildRecord } from "./types";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value)
+  const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
+      setDebouncedValue(value);
+    }, delay);
 
     return () => {
-      clearTimeout(handler)
-    }
-  }, [value, delay])
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
 
-  return debouncedValue
+  return debouncedValue;
 }
 
 const periodOptions = [
   { value: "both", label: "Both Periods" },
   { value: "first", label: "First Semi-Annual Only" },
-  { value: "second", label: "Second Semi-Annual Only" },
-]
+  { value: "second", label: "Second Semi-Annual Only" }
+];
 
 export default function SemiAnnualOPTDetails() {
-  const location = useLocation()
-  const state = location.state as { year: string; yearName: string }
-  const { year, yearName } = state || {}
-  const { showLoading, hideLoading } = useLoading()
+  const location = useLocation();
+  const state = location.state as { year: string; yearName: string };
+  const { year, yearName } = state || {};
+  const { showLoading, hideLoading } = useLoading();
 
-  const [sitioSearch, setSitioSearch] = useState("")
-  const [nutritionalStatus, setNutritionalStatus] = useState("")
-  const [pageSize, setPageSize] = useState(10)
-  const [currentPage, setCurrentPage] = useState(1)
-  
+  const [sitioSearch, setSitioSearch] = useState("");
+  const [nutritionalStatus, setNutritionalStatus] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const debouncedSitioSearch = useDebounce(sitioSearch, 500)
-  const debouncedNutritionalStatus = useDebounce(nutritionalStatus, 500)
-
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [debouncedSitioSearch, debouncedNutritionalStatus])
-
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-  } = useSemiAnnualOPTRecords(year, currentPage, pageSize, debouncedSitioSearch, debouncedNutritionalStatus)
-
-  const records: SemiAnnualChildRecord[] = apiResponse?.results?.children_data || []
-  const summary = apiResponse?.results?.summary
-  const totalEntries : number =apiResponse?.count|| 0
-  const totalPages = Math.ceil(totalEntries / pageSize)
+  const debouncedSitioSearch = useDebounce(sitioSearch, 500);
+  const debouncedNutritionalStatus = useDebounce(nutritionalStatus, 500);
 
   useEffect(() => {
-    if (isLoading) showLoading()
-    else hideLoading()
-  }, [isLoading, showLoading, hideLoading])
+    setCurrentPage(1);
+  }, [debouncedSitioSearch, debouncedNutritionalStatus]);
+
+  const { data: apiResponse, isLoading, error } = useSemiAnnualOPTRecords(year, currentPage, pageSize, debouncedSitioSearch, debouncedNutritionalStatus);
+
+  const records: SemiAnnualChildRecord[] = apiResponse?.results?.children_data || [];
+  const summary = apiResponse?.results?.summary;
+  const totalEntries: number = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalEntries / pageSize);
+
+  useEffect(() => {
+    if (isLoading) showLoading();
+    else hideLoading();
+  }, [isLoading, showLoading, hideLoading]);
 
   useEffect(() => {
     if (error) {
-      toast.error("Failed to fetch semi-annual OPT records")
-      console.error("API Error:", error)
+      toast.error("Failed to fetch semi-annual OPT records");
+      console.error("API Error:", error);
     }
-  }, [error])
+  }, [error]);
 
-  const startIndex = totalEntries === 0 ? 0 : (currentPage - 1) * pageSize + 1
-  const endIndex = Math.min(currentPage * pageSize, totalEntries)
+  const startIndex = totalEntries === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, totalEntries);
 
   const prepareExportData = useCallback(() => {
     return records.map((item) => ({
@@ -112,35 +107,31 @@ export default function SemiAnnualOPTDetails() {
       "2nd Semi LHFA Status": item.second_semi_annual?.nutritional_status?.lhfa || "N/A",
       "2nd Semi WFL Status": item.second_semi_annual?.nutritional_status?.wfl || "N/A",
       "2nd Semi MUAC (mm)": item.second_semi_annual?.nutritional_status?.muac || "N/A",
-      "2nd Semi Feeding Type": item.second_semi_annual?.type_of_feeding || "N/A",
-    }))
-  }, [records])
+      "2nd Semi Feeding Type": item.second_semi_annual?.type_of_feeding || "N/A"
+    }));
+  }, [records]);
 
-  const handleExportCSV = () =>
-    exportToCSV(prepareExportData(), `opt_semi_annual_records_${yearName.replace(" ", "_")}`)
+  const handleExportCSV = () => exportToCSV(prepareExportData(), `opt_semi_annual_records_${yearName.replace(" ", "_")}`);
 
-  const handleExportExcel = () =>
-    exportToExcel(prepareExportData(), `opt_semi_annual_records_${yearName.replace(" ", "_")}`)
+  const handleExportExcel = () => exportToExcel(prepareExportData(), `opt_semi_annual_records_${yearName.replace(" ", "_")}`);
 
-  const handleExportPDF = () =>
-    exportToPDF(prepareExportData(), `opt_semi_annual_records_${yearName.replace(" ", "_")}`)
+  const handleExportPDF = () => exportToPDF(prepareExportData(), `opt_semi_annual_records_${yearName.replace(" ", "_")}`);
 
   const handlePrint = () => {
-    const printContent = document.getElementById("printable-area")
-    if (!printContent) return
-    const originalContents = document.body.innerHTML
-    document.body.innerHTML = printContent.innerHTML
-    window.print()
-    document.body.innerHTML = originalContents
-    window.location.reload()
-  }
+    const printContent = document.getElementById("printable-area");
+    if (!printContent) return;
+    const originalContents = document.body.innerHTML;
+    document.body.innerHTML = printContent.innerHTML;
+    window.print();
+    document.body.innerHTML = originalContents;
+    window.location.reload();
+  };
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A"
-    const date = new Date(dateString)
-    return date.toLocaleDateString("en-CA") // Returns YYYY-MM-DD format
-  }
-
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-CA"); // Returns YYYY-MM-DD format
+  };
 
   return (
     <LayoutWithBack title={`Semi-Annual OPT Tracking`} description={`${yearName} Child Health Records`}>
@@ -148,32 +139,17 @@ export default function SemiAnnualOPTDetails() {
         <div className="flex-1 flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search by sitio..."
-              className="pl-10 w-full"
-              value={sitioSearch}
-              onChange={(e) => setSitioSearch(e.target.value)}
-            />
+            <Input placeholder="Search by sitio..." className="pl-10 w-full" value={sitioSearch} onChange={(e) => setSitioSearch(e.target.value)} />
           </div>
 
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search by nutritional status..."
-              className="pl-10 w-full"
-              value={nutritionalStatus}
-              onChange={(e) => setNutritionalStatus(e.target.value)}
-            />
+            <Input placeholder="Search by nutritional status..." className="pl-10 w-full" value={nutritionalStatus} onChange={(e) => setNutritionalStatus(e.target.value)} />
           </div>
         </div>
 
         <div className="flex gap-2 items-center">
-          <ExportDropdown
-            onExportCSV={handleExportCSV}
-            onExportExcel={handleExportExcel}
-            onExportPDF={handleExportPDF}
-            className="border-gray-200 hover:bg-gray-50"
-          />
+          <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
           <Button onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
             <Printer className="h-4 w-4 " />
             <span>Print</span>
@@ -185,16 +161,16 @@ export default function SemiAnnualOPTDetails() {
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-700">Show</span>
           <Input
-              type="number"
-              className="w-[70px] h-8"
-              value={pageSize}
-              onChange={(e) => {
-                const value = parseInt(e.target.value);
-                setPageSize(value > 0 ? value : 1);
-                setCurrentPage(1);
-              }}
-              min={1}
-            />
+            type="number"
+            className="w-[70px] h-8"
+            value={pageSize}
+            onChange={(e) => {
+              const value = parseInt(e.target.value);
+              setPageSize(value > 0 ? value : 1);
+              setCurrentPage(1);
+            }}
+            min={1}
+          />
           <span className="text-sm text-gray-700">entries</span>
         </div>
 
@@ -209,14 +185,7 @@ export default function SemiAnnualOPTDetails() {
               `Showing ${startIndex} - ${endIndex} of ${totalEntries} records`
             )}
           </span>
-          {!isLoading && (
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              className="text-sm"
-            />
-          )}
+          {!isLoading && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />}
         </div>
       </div>
 
@@ -228,7 +197,7 @@ export default function SemiAnnualOPTDetails() {
             minHeight: "13in",
             margin: "0 auto",
             fontSize: "10px",
-            lineHeight: "1.2",
+            lineHeight: "1.2"
           }}
         >
           <div className="w-full">
@@ -257,11 +226,7 @@ export default function SemiAnnualOPTDetails() {
               <div className="w-full h-[200px] flex items-center justify-center">
                 <div className="text-center">
                   <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600">
-                    {sitioSearch || nutritionalStatus 
-                      ? "No records found matching your filters"
-                      : "No records found for this year"}
-                  </p>
+                  <p className="text-gray-600">{sitioSearch || nutritionalStatus ? "No records found matching your filters" : "No records found for this year"}</p>
                 </div>
               </div>
             ) : (
@@ -280,12 +245,8 @@ export default function SemiAnnualOPTDetails() {
                       <th rowSpan={2} className="border border-black p-1 w-[6%] font-bold">
                         Sex
                       </th>
-                      <th rowSpan={2} className="border border-black p-1 w-[8%] font-bold">
-                        Age in
-                        <br />
-                        Mos.
-                      </th>
-                      <th colSpan={3} className="border border-black p-1 font-bold">
+
+                      <th colSpan={4} className="border border-black p-1 font-bold">
                         1st Weighing
                       </th>
                       <th colSpan={4} className="border border-black p-1 font-bold">
@@ -293,6 +254,11 @@ export default function SemiAnnualOPTDetails() {
                       </th>
                     </tr>
                     <tr>
+                      <th rowSpan={2} className="border border-black p-1 w-[8%] font-bold">
+                        Age in
+                        <br />
+                        Mos.
+                      </th>
                       <th className="border border-black p-1 w-[6%] font-bold">
                         Wt. in
                         <br />
@@ -335,8 +301,10 @@ export default function SemiAnnualOPTDetails() {
                           <td rowSpan={4} className="border border-black p-1 text-center align-middle">
                             {item.sex === "Male" ? "M" : item.sex === "Female" ? "F" : ""}
                           </td>
+
+                          {/* 1st Weighing Age - from backend */}
                           <td rowSpan={4} className="border border-black p-1 text-center align-middle">
-                            {item.age_in_months || ""}
+                            {item.first_semi_annual ? item.age_in_months || "" : ""}
                           </td>
 
                           {/* 1st Weighing data */}
@@ -348,15 +316,14 @@ export default function SemiAnnualOPTDetails() {
                           </td>
                           <td className="border border-black p-1 text-left">
                             WFA:
-                            <span className="ml-1 font-bold">
-                              {item.first_semi_annual?.nutritional_status?.wfa || ""}
-                            </span>
+                            <span className="ml-1 font-bold">{item.first_semi_annual?.nutritional_status?.wfa || ""}</span>
                           </td>
 
                           {/* 2nd Weighing data */}
                           <td rowSpan={4} className="border border-black p-1 text-center align-middle bg-green-25">
-                            {item.second_semi_annual ? (item.age_in_months || 0) + 6 : ""}
+                            {item.second_semi_annual ? item.age_in_months || "" : ""}
                           </td>
+                          {/* 2nd Weighing data */}
                           <td rowSpan={4} className="border border-black p-1 text-center align-middle bg-green-25">
                             {item.second_semi_annual?.weight ? Number(item.second_semi_annual.weight).toFixed(1) : ""}
                           </td>
@@ -365,42 +332,31 @@ export default function SemiAnnualOPTDetails() {
                           </td>
                           <td className="border border-black p-1 text-left bg-green-25">
                             WFA:
-                            <span className="ml-1 font-bold">
-                              {item.second_semi_annual?.nutritional_status?.wfa || ""}
-                            </span>
+                            <span className="ml-1 font-bold">{item.second_semi_annual?.nutritional_status?.wfa || ""}</span>
                           </td>
                         </tr>
 
+                        {/* Rest of the rows remain the same */}
                         <tr key={`${index}-lhfa`} className="hover:bg-gray-50">
                           <td className="border border-black p-1 text-left">
                             L/HFA:
-                            <span className="ml-1 font-bold">
-                              {item.first_semi_annual?.nutritional_status?.lhfa || ""}
-                            </span>
+                            <span className="ml-1 font-bold">{item.first_semi_annual?.nutritional_status?.lhfa || ""}</span>
                           </td>
                           <td className="border border-black p-1 text-left bg-green-25">
                             L/HFA:
-                            <span className="ml-1 font-bold">
-                              {item.second_semi_annual?.nutritional_status?.lhfa || ""}
-                            </span>
+                            <span className="ml-1 font-bold">{item.second_semi_annual?.nutritional_status?.lhfa || ""}</span>
                           </td>
                         </tr>
-
                         <tr key={`${index}-wfl`} className="hover:bg-gray-50">
                           <td className="border border-black p-1 text-left">
                             WFL/Ht:
-                            <span className="ml-1 font-bold">
-                              {item.first_semi_annual?.nutritional_status?.wfl || ""}
-                            </span>
+                            <span className="ml-1 font-bold">{item.first_semi_annual?.nutritional_status?.wfl || ""}</span>
                           </td>
                           <td className="border border-black p-1 text-left bg-green-25">
                             WFL/Ht:
-                            <span className="ml-1 font-bold">
-                              {item.second_semi_annual?.nutritional_status?.wfl || ""}
-                            </span>
+                            <span className="ml-1 font-bold">{item.second_semi_annual?.nutritional_status?.wfl || ""}</span>
                           </td>
                         </tr>
-
                         <tr key={`${index}-remarks`} className="hover:bg-gray-50">
                           <td className="border border-black p-1 text-left">Remarks:</td>
                           <td className="border border-black p-1 text-left bg-green-25">Remarks:</td>
@@ -415,5 +371,5 @@ export default function SemiAnnualOPTDetails() {
         </div>
       </div>
     </LayoutWithBack>
-  )
+  );
 }

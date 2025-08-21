@@ -31,12 +31,7 @@ export default function AddCommodityStock() {
     }
   });
 
-  const commodity: Array<{
-    id: string;
-    name: string;
-    category: string;
-    user_type?: string;
-  }> = fetchCommodity();
+  const commodity: Array<{ id: string; name: string; category: string; user_type?: string }> = fetchCommodity();
   const { mutate: submit, isPending } = useSubmitCommodityStock();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<CommodityStockType | null>(null);
@@ -71,7 +66,7 @@ export default function AddCommodityStock() {
   };
 
   return (
-    <div className="w-full flex items-center justify-center p-4 sm:p-4">
+    <div className="w-full flex items-center justify-center">
       <Form {...form}>
         <form onSubmit={(e) => e.preventDefault()} className="bg-white p-5 w-full max-w-[600px] rounded-sm space-y-5">
           <Label className="flex justify-center text-lg font-bold text-darkBlue2 text-center ">Add Stocks</Label>
@@ -131,11 +126,11 @@ export default function AddCommodityStock() {
           )}
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-            <Button variant="outline" className="w-[150px]"  onClick={() => navigate(-1)}>
+            <Button variant="outline" className="w-[150px]" onClick={() => navigate(-1)}>
               Cancel{" "}
             </Button>
 
-            <Button type="submit" className="w-[150px]"  disabled={isPending} onClick={form.handleSubmit(onSubmit)}>
+            <Button type="submit" className="w-[150px]" disabled={isPending} onClick={form.handleSubmit(onSubmit)}>
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

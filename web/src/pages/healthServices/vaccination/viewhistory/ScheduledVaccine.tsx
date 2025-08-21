@@ -1,4 +1,4 @@
-import {  Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
@@ -8,11 +8,7 @@ import { VaccinationHistoryRecord } from "@/components/ui/vaccination-history";
 import { VaccinationRecord } from "../tables/columns/types";
 import { useLocation } from "react-router-dom";
 import CardLayout from "@/components/ui/card/card-layout";
-import {
-  useIndivPatientVaccinationRecords,
-  useUnvaccinatedVaccines,
-  useFollowupVaccines,
-} from "../queries/fetch";
+import { useIndivPatientVaccinationRecords, useUnvaccinatedVaccines, useFollowupVaccines } from "../queries/fetch";
 import { updateVaccinationHistory } from "../restful-api/update";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,61 +28,35 @@ export default function ScheduledVaccine() {
   const patientId = patientData?.pat_id;
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } = useUnvaccinatedVaccines(patientId, patientData.personal_info.per_dob);
   const { data: followupVaccines = [], isLoading: isFollowVaccineLoading } = useFollowupVaccines(patientId);
-  const { data: vaccinationHistory = [],  isLoading: isVachistLoading,  error,} = useIndivPatientVaccinationRecords(patientId);
-  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } =usePatientVaccinationDetails(patientId);
-  const isLoading =
-    isUnvaccinatedLoading ||
-    isFollowVaccineLoading ||
-    isVachistLoading ||
-    isCompleteVaccineLoading;
-
+  const { data: vaccinationHistory = [], isLoading: isVachistLoading, error } = useIndivPatientVaccinationRecords(patientId);
+  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } = usePatientVaccinationDetails(patientId);
+  const isLoading = isUnvaccinatedLoading || isFollowVaccineLoading || isVachistLoading || isCompleteVaccineLoading;
   const [currentVaccination, setCurrentVaccination] = useState<VaccinationRecord | null>(null);
 
   useEffect(() => {
     if (vaccinationHistory.length && Vaccination?.vachist_id) {
-      const foundVaccination = vaccinationHistory.find(
-        (history: VaccinationRecord) =>
-          history.vachist_id === Vaccination.vachist_id
-      );
+      const foundVaccination = vaccinationHistory.find((history: VaccinationRecord) => history.vachist_id === Vaccination.vachist_id);
       setCurrentVaccination(foundVaccination || null);
     }
   }, [vaccinationHistory, Vaccination?.vachist_id]);
 
   const previousVaccination = useMemo(() => {
     if (!vaccinationHistory.length || !Vaccination?.created_at) return null;
-
     // For routine vaccinations, just get the most recent vaccination
     if (Vaccination.vaccination_type?.toLowerCase() === "routine") {
-      const sortedHistory = [...vaccinationHistory].sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      const sortedHistory = [...vaccinationHistory].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       // Return the most recent one that's not the current vaccination
-      return (
-        sortedHistory.find(
-          (history) => history.vachist_id !== Vaccination.vachist_id
-        ) || null
-      );
+      return sortedHistory.find((history) => history.vachist_id !== Vaccination.vachist_id) || null;
     }
     // Original logic for non-routine vaccinations
-    const sortedHistory = [...vaccinationHistory].sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-
-    const currentIndex = sortedHistory.findIndex(
-      (history) => history.vachist_id === Vaccination.vachist_id
-    );
-
+    const sortedHistory = [...vaccinationHistory].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const currentIndex = sortedHistory.findIndex((history) => history.vachist_id === Vaccination.vachist_id);
     return currentIndex > 0 ? sortedHistory[currentIndex - 1] : null;
   }, [vaccinationHistory, Vaccination]);
 
   const relevantHistory = useMemo(() => {
     if (!Vaccination?.created_at) return [];
-    return vaccinationHistory.filter(
-      (history: VaccinationRecord) =>
-        new Date(history.created_at) <= new Date(Vaccination.created_at)
-    );
+    return vaccinationHistory.filter((history: VaccinationRecord) => new Date(history.created_at) <= new Date(Vaccination.created_at));
   }, [vaccinationHistory, Vaccination]);
 
   if (!patientData || !Vaccination) {
@@ -100,19 +70,20 @@ export default function ScheduledVaccine() {
   const submit = async () => {
     setIsSubmitting(true);
     try {
+      console.log("Submitting vaccination completion for:", Vaccination);
       if (previousVaccination?.follow_up_visit) {
         await updateFollowUpVisit({
           followv_id: String(previousVaccination.follow_up_visit.followv_id),
           followv_status: "completed",
-          completed_at: new Date().toISOString().split("T")[0], // Format to YYYY-MM-DD
+          completed_at: new Date().toISOString().split("T")[0] // Format to YYYY-MM-DD
         });
       }
       await updateVaccinationHistory({
         vachist_id: Vaccination.vachist_id,
-        vachist_status: "completed",
+        vachist_status: "completed"
       });
       queryClient.invalidateQueries({
-        queryKey: ["patientVaccinationRecords", patientId],
+        queryKey: ["patientVaccinationRecords", patientId]
       });
       queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
 
@@ -127,10 +98,7 @@ export default function ScheduledVaccine() {
 
   return (
     <>
-      <LayoutWithBack
-        title={`Vaccination History for ${patientData.personal_info.per_fname} ${patientData.personal_info.per_lname}`}
-        description="View the vaccination history and administer patient."
-      >
+      <LayoutWithBack title={`Vaccination History for ${patientData.personal_info.per_fname} ${patientData.personal_info.per_lname}`} description="View the vaccination history and administer patient.">
         <div className="mb-4">
           <PatientInfoCard patient={patientData} />
         </div>
@@ -146,10 +114,7 @@ export default function ScheduledVaccine() {
               content={
                 <div className="flex flex-col lg:flex-row gap-6">
                   <div className="w-full">
-                    <VaccinationStatusCards
-                      unvaccinatedVaccines={unvaccinatedVaccines}
-                      vaccinations={vaccinations}
-                    />
+                    <VaccinationStatusCards unvaccinatedVaccines={unvaccinatedVaccines} vaccinations={vaccinations} />
                   </div>
 
                   <div className="w-full">
@@ -163,23 +128,12 @@ export default function ScheduledVaccine() {
               content={
                 <>
                   <div>
-                    <CurrentVaccination
-                      currentVaccination={currentVaccination || Vaccination}
-                    />
-                    <VaccinationHistoryRecord
-                      relevantHistory={relevantHistory}
-                      currentVaccinationId={Vaccination?.vachist_id}
-                      loading={isLoading}
-                      error={error?.message}
-                    />
+                    <CurrentVaccination currentVaccination={currentVaccination || Vaccination} />
+                    <VaccinationHistoryRecord relevantHistory={relevantHistory} currentVaccinationId={Vaccination?.vachist_id} loading={isLoading} error={error?.message} />
                   </div>
 
                   <div className="flex justify-end mt-6">
-                    <Button
-                      type="submit"
-                      onClick={submit}
-                      disabled={isSubmitting}
-                    >
+                    <Button type="submit" onClick={submit} disabled={isSubmitting}>
                       {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

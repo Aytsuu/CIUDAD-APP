@@ -1,12 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { 
   getChildHealthSupplementsReport,
-  getFullChildHealthSupplementsReport 
 } from "../restful-api/fetch";
 import { 
   ChildHealthSupplementsReportResponse,
-  ChildHealthSupplementsExportResponse,
-  ChildHealthSupplementsAlternativeResponse 
+
 } from "../types";
 
 export const useChildHealthSupplementsReport = (
@@ -39,7 +37,7 @@ export const useChildHealthSupplementsReport = (
           results: data.results
         };
       }
-      // Fallback
+    
       return data as ChildHealthSupplementsReportResponse;
     }
   });

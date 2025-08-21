@@ -3,10 +3,7 @@ import { Button } from "@/components/ui/button/button";
 import { Form, FormItem, FormLabel } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  FirstAidStockSchema,
-  FirstAidStockType,
-} from "@/form-schema/inventory/stocks/inventoryStocksSchema";
+import { FirstAidStockSchema, FirstAidStockType } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { fetchFirstAid } from "../REQUEST/FirstAid/restful-api/FirstAidFetchAPI";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Loader2 } from "lucide-react";
@@ -16,12 +13,13 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useSubmitFirstAidStock } from "../REQUEST/FirstAid/queries/FirstAidPostQueries";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
-export default function () {
-  const {user}=useAuth()
-  const staff_id = user?.staff?.staff_id
+export default function FirstAidStockModal() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const staff_id = user?.staff?.staff_id;
   const form = useForm<FirstAidStockType>({
     resolver: zodResolver(FirstAidStockSchema),
     defaultValues: {
@@ -30,8 +28,8 @@ export default function () {
       finv_qty_unit: "boxes",
       finv_qty: undefined,
       finv_pcs: undefined,
-      expiryDate: new Date().toISOString().split("T")[0],
-    },
+      expiryDate: new Date().toISOString().split("T")[0]
+    }
   });
   const firstaid = fetchFirstAid();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
@@ -64,52 +62,27 @@ export default function () {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
     submit({ data: formData, staff_id });
-    
   };
 
   return (
-    <div className="w-full flex items-center justify-center p-4 sm:p-4">
+    <div className="w-full flex items-center justify-center">
       <Form {...form}>
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="bg-white p-5 w-full max-w-[500px] rounded-sm space-y-5"
-        >
-           <Label className="flex justify-center text-lg font-bold text-darkBlue2 text-center ">Add Stocks</Label>
+        <form onSubmit={(e) => e.preventDefault()} className="bg-white p-5 w-full max-w-[500px] rounded-sm space-y-5">
+          <Label className="flex justify-center text-lg font-bold text-darkBlue2 text-center ">Add Stocks</Label>
           <hr className="mb-2" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormSelect
-              control={form.control}
-              name="fa_id"
-              label="First Aid Item"
-              options={firstaid}
-            />
+            <FormSelect control={form.control} name="fa_id" label="First Aid Item" options={firstaid} />
 
-            <FormInput
-              control={form.control}
-              name="category"
-              label="Category"
-              readOnly
-            />
+            <FormInput control={form.control} name="category" label="Category" readOnly />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateTimeInput
-              control={form.control}
-              name="expiryDate"
-              label="Expiry Date"
-              type="date"
-            />
+            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormInput
-              control={form.control}
-              name="finv_qty"
-              label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
-              type="number"
-              placeholder="Quantity"
-            />
+            <FormInput control={form.control} name="finv_qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"} type="number" placeholder="Quantity" />
             <FormSelect
               control={form.control}
               name="finv_qty_unit"
@@ -118,19 +91,15 @@ export default function () {
                 { id: "boxes", name: "Boxes" },
                 { id: "bottles", name: "Bottles" },
                 { id: "packs", name: "Packs" },
+                { id: "pcs", name: "Pc/s" }
+
               ]}
             />
           </div>
 
           {currentUnit === "boxes" && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <FormInput
-                control={form.control}
-                name="finv_pcs"
-                label="Pieces per Box"
-                type="number"
-                placeholder="Pieces per box"
-              />
+              <FormInput control={form.control} name="finv_pcs" label="Pieces per Box" type="number" placeholder="Pieces per box" />
 
               <FormItem className="sm:col-span-2 w-full">
                 <FormLabel>Total Pieces</FormLabel>
@@ -145,16 +114,11 @@ export default function () {
           )}
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-            <Button variant="outline" className="w-[150px]" >
-              <Link to="/mainInventoryStocks">Cancel</Link>
+            <Button variant="outline" className="w-[150px]" onClick={() => navigate(-1)}>
+              Cancel
             </Button>
 
-            <Button
-              type="submit"
-              className="w-[150px]" 
-              disabled={isPending}
-              onClick={form.handleSubmit(onSubmit)}
-            >
+            <Button type="submit" className="w-[150px]" disabled={isPending} onClick={form.handleSubmit(onSubmit)}>
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -169,13 +133,7 @@ export default function () {
       </Form>
 
       {/* First Aid Add Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={isAddConfirmationOpen}
-        onOpenChange={setIsAddConfirmationOpen}
-        onConfirm={confirmAdd}
-        title="Add First Aid Item"
-        description={`Are you sure you want to add this first aid item?`}
-      />
+      <ConfirmationDialog isOpen={isAddConfirmationOpen} onOpenChange={setIsAddConfirmationOpen} onConfirm={confirmAdd} title="Add First Aid Item" description={`Are you sure you want to add this first aid item?`} />
     </div>
   );
 }

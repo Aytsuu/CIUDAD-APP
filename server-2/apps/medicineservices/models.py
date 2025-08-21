@@ -5,11 +5,6 @@ from apps.inventory.models import *
 from apps.healthProfiling.models import *
 from apps.administration.models import Staff
 
-       
-       
-       
-       
-
         
 class MedicineRequest(models.Model):
     medreq_id = models.BigAutoField(primary_key=True)
