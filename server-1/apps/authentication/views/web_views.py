@@ -231,36 +231,11 @@ class WebLoginView(APIView):
             # Check staff privileges
             staff_data = serializer.data.get('staff')
             if not staff_data:
-                # Staff data is None, now check why specifically
-                rp = getattr(account, 'rp', None)
-                if rp:
-                    staff_record = Staff.objects.filter(staff_id=rp.rp_id).first()
-                    if staff_record:
-                        # Staff record exists, check what's missing
-                        has_assignments = Assignment.objects.filter(staff=staff_record).exists()
-                        has_position = staff_record.pos is not None
-                        
-                        if not has_assignments and not has_position:
-                            return Response(
-                                {'error': "No position and assignments assigned. Contact administrator."},
-                                status=status.HTTP_403_FORBIDDEN
-                            )
-                        elif not has_assignments:
-                            return Response(
-                                {'error': "No assignments assigned. Contact administrator."},
-                                status=status.HTTP_403_FORBIDDEN
-                            )
-                        elif not has_position:
-                            return Response(
-                                {'error': "Position is none. Contact administrator."},
-                                status=status.HTTP_403_FORBIDDEN
-                            )
-                else:
-                    # No staff record found
-                    return Response(
-                        {'error': "Staff Privileges Required"},
-                        status=status.HTTP_403_FORBIDDEN
-                    )
+                return Response(
+                    {'error': "Staff Privileges Required. Contact administrator."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
 
             # Create successful response
             response_data = {

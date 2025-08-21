@@ -3,7 +3,8 @@ from apps.account.models import Account
 from apps.profiling.serializers.resident_profile_serializers import ResidentProfileFullSerializer
 from apps.administration.serializers.staff_serializers import StaffFullSerializer
 from apps.administration.serializers.assignment_serializers import AssignmentBaseSerializer
-from apps.administration.models import Staff, Assignment
+from apps.administration.serializers.feature_serializers import FeatureBaseSerializer
+from apps.administration.models import Staff, Assignment, Feature, Position
 
 
 class UserAccountSerializer(serializers.ModelSerializer):
@@ -26,7 +27,6 @@ class UserAccountSerializer(serializers.ModelSerializer):
         read_only_fields = ['acc_id', 'supabase_id']
 
     def get_staff(self, obj):
-        # Check if account has a resident profile
         rp = getattr(obj, 'rp', None)
         if not rp:
             return None
@@ -36,15 +36,17 @@ class UserAccountSerializer(serializers.ModelSerializer):
         if not staff_record:
             return None
 
-        # Check if staff has assignments
-        has_assignments = Assignment.objects.filter(staff=staff_record).exists()
-        # Check if staff has a position
-        has_position = staff_record.pos is not None
-
-        if has_assignments and has_position:
-            return StaffFullSerializer(staff_record).data
-
-        return None
+        # Check if the staff is an admin
+        if staff_record.pos and staff_record.pos.pos_title == 'Admin':
+            features = Feature.objects.all()
+        
+        else:
+            assignments = Assignment.objects.filter(staff=staff_record)
+            features = Feature.objects.filter(feat_id__in=assignments.values('feat_id'))
+            
+        staff_data = StaffFullSerializer(staff_record).data
+        staff_data['features'] = FeatureBaseSerializer(features, many=True).data
+        return staff_data
 
         
 class AuthResponseSerializer(serializers.Serializer):

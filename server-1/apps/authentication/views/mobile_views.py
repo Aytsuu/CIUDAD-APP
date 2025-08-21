@@ -73,7 +73,7 @@ class MobileLoginView(APIView):
             })
 
         except Exception as e:
-            logger.error(f"Login error: {str(e)}", exc_info=True)
+            # logger.error(f"Login error: {str(e)}", exc_info=True)
             return Response(
                 {'error': 'Authentication failed'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

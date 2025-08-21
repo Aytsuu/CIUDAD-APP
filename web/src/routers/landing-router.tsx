@@ -49,10 +49,10 @@ export const landing_router: RouteObject[] = [
         path: "mobile-app",
         element: <MobileApp />
       },
-      // {
-      //   path: "sign-in",
-      //   element: <SignIn />
-      // },
+      {
+        path: "sign-in",
+        element: <SignIn />
+      },
       {
         path: "forgot-password",
         element: <ForgotPassword />
