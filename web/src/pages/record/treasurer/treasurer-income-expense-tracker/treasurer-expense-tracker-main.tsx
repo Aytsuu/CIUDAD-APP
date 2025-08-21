@@ -66,6 +66,8 @@ function IncomeandExpenseTracking() {
 
     const {  data: fetchIncData = [] } = useIncomeExpenseMainCard();
 
+    console.log("AMBOT: ", fetchedData)
+
     const matchedYearData = fetchIncData.find(item => Number(item.ie_main_year) === Number(year));
     const totBud = matchedYearData?.ie_remaining_bal ?? 0;
     const totExp = matchedYearData?.ie_main_exp ?? 0;  

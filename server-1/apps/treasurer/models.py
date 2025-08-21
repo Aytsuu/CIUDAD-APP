@@ -182,7 +182,7 @@ class Invoice(models.Model):
     inv_nat_of_collection=models.CharField(max_length=250)
     inv_status=models.CharField(max_length=50, default='Pending')  # Added missing field
     inv_change=models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)   
-     
+
     cr_id = models.ForeignKey(
         'clerk.ClerkCertificate', 
         on_delete=models.CASCADE, 
@@ -226,6 +226,25 @@ class Income_Expense_Tracking(models.Model):
 
     class Meta:
         db_table = "income_expense_tracking"
+
+
+class Expense_Log(models.Model):
+    el_id = models.BigAutoField(primary_key = True)
+    el_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2)
+    el_actual_expense = models.DecimalField(max_digits=10, decimal_places=2)
+    el_return_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    el_datetime = models.DateTimeField(null=True)
+
+    iet_num = models.ForeignKey(
+        Income_Expense_Tracking,
+        on_delete=models.CASCADE,
+        null=True, 
+        blank=True,
+        db_column='iet_num'
+    )
+
+    class Meta: 
+        db_table = 'expense_log'    
 
 
 class Income_Particular(models.Model):

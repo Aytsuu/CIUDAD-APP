@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getIncomeExpenseMainCard } from "../request/income-expense-GetRequest";
 import { getIncomeExpense } from "../request/income-expense-GetRequest";
 import { getExpenseParticulars } from "../request/particular-GetRequest";
+import { getExpenseLog } from "../request/income-expense-GetRequest";
 import { getIncomeData } from "../request/income-expense-GetRequest";
 import { getIncomeParticulars } from "../request/particular-GetRequest";
 
@@ -84,6 +85,28 @@ export const useBudgetItems = (year?: number) => {
             }));
         },
         staleTime: 1000 * 60 * 30,
+    });
+};
+
+
+// EXPENSE LOG
+export type ExpenseLog = {
+    el_id: number;
+    el_datetime: string;
+    el_particular: string;
+    el_proposed_budget: number;
+    el_actual_expense: number;
+    el_return_amount: number;
+    el_is_archive: boolean;
+    staff_name: string;
+};
+
+
+export const useExpenseLog = (year?: number) => {
+    return useQuery<ExpenseLog[]>({
+        queryKey: ["expense_log", year],
+        queryFn: () => getExpenseLog(year),
+        staleTime: 1000 * 60 * 30, // 30 minutes stale time
     });
 };
 

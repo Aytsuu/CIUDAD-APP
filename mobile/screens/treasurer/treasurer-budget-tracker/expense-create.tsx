@@ -73,6 +73,7 @@ function ExpenseCreateForm() {
     let totalBudget = 0.00;
     let totalExpense = 0.00;
     let proposedBud = 0.00;
+    let returnAmount = 0.00;
 
     const dateStr = values.iet_datetime?.replace(' ', 'T').replace('+00', 'Z');
     const inputDate = new Date(dateStr);
@@ -117,6 +118,7 @@ function ExpenseCreateForm() {
         totalBudget = totBUDGET - actualAmount;
         totalExpense = totEXP + actualAmount;
         proposedBud = propBudget - actualAmount;
+        returnAmount = Math.abs(amount - actualAmount);        
     }
     else{
         if(amount){
@@ -135,6 +137,7 @@ function ExpenseCreateForm() {
     const allValues = {
       ...values,
       years,
+      returnAmount,
       totalBudget,
       totalExpense,
       proposedBud,
