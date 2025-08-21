@@ -61,7 +61,12 @@ export default function SignInScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const defaultValues = useMemo(() => generateDefaultValues(signInSchema), []);
-  const { control, trigger, getValues, formState: { errors } } = useForm<SignInForm>({
+  const {
+    control,
+    trigger,
+    getValues,
+    formState: { errors },
+  } = useForm<SignInForm>({
     resolver: zodResolver(signInSchema),
     defaultValues,
   });
@@ -78,78 +83,103 @@ export default function SignInScreen() {
     }
   }, [isAuthenticated, user]);
 
-  const handleEmailLogin = useMemo(() => async () => {
-    try {
-      setEmailLoading(true);
-      const isValid = await trigger();
+  const handleEmailLogin = useMemo(
+    () => async () => {
+      try {
+        setEmailLoading(true);
+        const isValid = await trigger();
 
-      if (!isValid) {
-        if (errors.email) toast.error(errors.email.message ?? "Invalid email");
-        if (errors.password) toast.error(errors.password.message ?? "Invalid password");
+        if (!isValid) {
+          if (errors.email)
+            toast.error(errors.email.message ?? "Invalid email");
+          if (errors.password)
+            toast.error(errors.password.message ?? "Invalid password");
+          return;
+        }
+
+        const { email, password } = getValues();
+        const resultAction = await dispatch(login({ email, password }));
+
+        if (login.fulfilled.match(resultAction)) {
+          console.log("Login successful");
+          setShowSignupOptions(false); // Hide signup options after successful login
+        } else {
+          console.error("Login failed:", resultAction.payload);
+        }
+      } catch (err) {
+        toast.error("An unexpected error occurred. Please try again.");
+      } finally {
+        setEmailLoading(false);
+      }
+    },
+    [trigger, errors, getValues, dispatch, toast]
+  );
+
+  const handlePhoneContinue = useMemo(
+    () => async () => {
+      const phoneRegex = /^9\d{9}$/;
+      if (!phoneRegex.test(phone.trim())) {
+        toast.error(
+          "Please enter a valid mobile number starting with 9 and 10 digits long"
+        );
         return;
       }
 
-      const { email, password } = getValues();
-      const resultAction = await dispatch(login({ email, password }));
+      try {
+        setPhoneLoading(true);
+        const fullPhoneNumber = `63${phone}`;
+        const resultAction = await dispatch(sendOtp(fullPhoneNumber));
 
-      if (login.fulfilled.match(resultAction)) {
-        console.log("Login successful");
-        setShowSignupOptions(false); // Hide signup options after successful login
-      } else {
-        console.error("Login failed:", resultAction.payload);
+        if (sendOtp.fulfilled.match(resultAction)) {
+          toast.success(`OTP sent to +${fullPhoneNumber}`);
+          router.push({
+            pathname: "/(auth)/PhoneOTP",
+            params: { phoneNumber: fullPhoneNumber },
+          });
+        } else {
+          console.error("Send OTP failed:", resultAction.payload);
+        }
+      } catch (err) {
+        toast.error("An unexpected error occurred. Please try again.");
+      } finally {
+        setPhoneLoading(false);
       }
-    } catch (err) {
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setEmailLoading(false);
-    }
-  }, [trigger, errors, getValues, dispatch, toast]);
+    },
+    [phone, dispatch, toast, router]
+  );
 
-  const handlePhoneContinue = useMemo(() => async () => {
-    const phoneRegex = /^9\d{9}$/;
-    if (!phoneRegex.test(phone.trim())) {
-      toast.error("Please enter a valid mobile number starting with 9 and 10 digits long");
-      return;
-    }
-
-    try {
-      setPhoneLoading(true);
-      const fullPhoneNumber = `63${phone}`;
-      const resultAction = await dispatch(sendOtp(fullPhoneNumber));
-
-      if (sendOtp.fulfilled.match(resultAction)) {
-        toast.success(`OTP sent to +${fullPhoneNumber}`);
-        router.push({
-          pathname: "/(auth)/PhoneOTP",
-          params: { phoneNumber: fullPhoneNumber },
-        });
-      } else {
-        console.error("Send OTP failed:", resultAction.payload);
+  const handleGoogleLogin = useMemo(
+    () => async () => {
+      setGoogleLoading(true);
+      try {
+        toast.info("Google login coming soon!");
+      } catch (err) {
+        console.error("Google login failed:", err);
+        toast.error("Google login failed");
+      } finally {
+        setGoogleLoading(false);
       }
-    } catch (err) {
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setPhoneLoading(false);
-    }
-  }, [phone, dispatch, toast, router]);
-
-  const handleGoogleLogin = useMemo(() => async () => {
-    setGoogleLoading(true);
-    try {
-      toast.info("Google login coming soon!");
-    } catch (err) {
-      console.error("Google login failed:", err);
-      toast.error("Google login failed");
-    } finally {
-      setGoogleLoading(false);
-    }
-  }, [toast]);
+    },
+    [toast]
+  );
 
   const dismissKeyboard = useMemo(() => () => Keyboard.dismiss(), []);
-  const toggleShowPassword = useMemo(() => () => setShowPassword(!showPassword), [showPassword]);
-  const togglePhoneLogin = useMemo(() => () => setShowPhoneLogin(!showPhoneLogin), [showPhoneLogin]);
-  const handleShowSignupOptions = useMemo(() => () => setShowSignupOptions(true), []);
-  const handleCloseSignupOptions = useMemo(() => () => setShowSignupOptions(false), []);
+  const toggleShowPassword = useMemo(
+    () => () => setShowPassword(!showPassword),
+    [showPassword]
+  );
+  const togglePhoneLogin = useMemo(
+    () => () => setShowPhoneLogin(!showPhoneLogin),
+    [showPhoneLogin]
+  );
+  const handleShowSignupOptions = useMemo(
+    () => () => setShowSignupOptions(true),
+    []
+  );
+  const handleCloseSignupOptions = useMemo(
+    () => () => setShowSignupOptions(false),
+    []
+  );
 
   if (isLoading && !emailLoading && !phoneLoading) {
     return (
@@ -216,11 +246,15 @@ export default function SignInScreen() {
                     >
                       {showPassword ? (
                         <Eye
-                          className={isAnyLoading ? "text-gray-400" : "text-gray-700"}
+                          className={
+                            isAnyLoading ? "text-gray-400" : "text-gray-700"
+                          }
                         />
                       ) : (
                         <EyeOff
-                          className={isAnyLoading ? "text-gray-400" : "text-gray-700"}
+                          className={
+                            isAnyLoading ? "text-gray-400" : "text-gray-700"
+                          }
                         />
                       )}
                     </TouchableOpacity>
@@ -228,7 +262,11 @@ export default function SignInScreen() {
                 </View>
 
                 <Button
-                  className={emailLoading || isLoading ? "bg-gray-400 mt-4" : "bg-primaryBlue mt-4"}
+                  className={
+                    emailLoading || isLoading
+                      ? "bg-gray-400 mt-4"
+                      : "bg-primaryBlue mt-4"
+                  }
                   size="lg"
                   onPress={handleEmailLogin}
                   disabled={isAnyLoading}
@@ -273,7 +311,11 @@ export default function SignInScreen() {
                 </View>
 
                 <Button
-                  className={phoneLoading || isLoading ? "bg-gray-400 mt-4" : "bg-primaryBlue mt-4"}
+                  className={
+                    phoneLoading || isLoading
+                      ? "bg-gray-400 mt-4"
+                      : "bg-primaryBlue mt-4"
+                  }
                   size="lg"
                   onPress={handlePhoneContinue}
                   disabled={isAnyLoading}
@@ -314,7 +356,9 @@ export default function SignInScreen() {
                   isAnyLoading ? "text-gray-400" : "text-primaryBlue"
                 }`}
               >
-                {showPhoneLogin ? "Login with Email instead" : "Login via Phone Number"}
+                {showPhoneLogin
+                  ? "Login with Email instead"
+                  : "Login via Phone Number"}
               </Text>
             </TouchableOpacity>
 
@@ -345,13 +389,15 @@ export default function SignInScreen() {
                     isAnyLoading ? "text-gray-400" : "text-gray-800"
                   }`}
                 >
-                  {googleLoading ? "Signing in with Google..." : "Login with Google"}
+                  {googleLoading
+                    ? "Signing in with Google..."
+                    : "Login with Google"}
                 </Text>
               </View>
             </TouchableOpacity>
 
             {/* Signup Option */}
-            {!isAuthenticated && (
+            {!isLoading && !isAuthenticated && (
               <View className="flex-row justify-center items-center gap-2 mt-6">
                 <Text className="text-gray-400 font-PoppinsRegular text-[12px]">
                   Don't have an account?
