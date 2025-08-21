@@ -17,11 +17,11 @@ export default function RegistrationLayout() {
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params, [location.state]);
 
-  const [currentStep, setCurrentStep] = React.useState<number>(4);
+  const [currentStep, setCurrentStep] = React.useState<number>(1);
   const [residentId, setResidentId] = React.useState<string>('');
   const [hasFamily, setHasFamily] = React.useState<boolean>(false);
   const [addresses, setAddresses] = React.useState<Record<string, any>[]>();
-  const [completed, setCompleted] = React.useState<any[]>([1,2,3])
+  const [completed, setCompleted] = React.useState<any[]>([])
 
   const registrationSteps = [
     { id: 1, label: "Resident", minProgress: 20, icon: UserRoundPlus, onClick: (id: number) => handleProgressSelection(id) },

@@ -29,11 +29,11 @@ export const features: FeatureType[] = [
     icon: <Blotter width={30} height={30}/>,
     route: "/(complaint)"
   },
-  { 
-    name: "Profiling",
-    icon: <Profiling width={30} height={30}/>,
-    route: "/(profiling)"
-  },
+  // { 
+  //   name: "Profiling",
+  //   icon: <Profiling width={30} height={30}/>,
+  //   route: "/(profiling)"
+  // },
   {
     name: "Business",
     icon: <Business width={30} height={30}/>,

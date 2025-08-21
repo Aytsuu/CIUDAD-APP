@@ -116,6 +116,7 @@ class ResidentProfileListWithOptions(generics.ListAPIView):
         return ResidentProfile.objects.all()
     
 class ResidentProfileFamSpecificListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentProfileListSerializer
     
     def get_queryset(self):
