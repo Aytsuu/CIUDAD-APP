@@ -16,7 +16,6 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useNavigate } from "react-router";
 import SignInSchema from "@/form-schema/sign-in-schema";
 import { useAuth } from "@/context/AuthContext";
 import SanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
@@ -26,7 +25,6 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof SignInSchema>>({
     resolver: zodResolver(SignInSchema),

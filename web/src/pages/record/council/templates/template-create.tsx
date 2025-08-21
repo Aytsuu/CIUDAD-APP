@@ -1503,15 +1503,13 @@
 
 
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Textarea } from '@/components/ui/textarea';
 import { TextareaTab } from "@/components/ui/textarea-tab";
 import { FormInput } from "@/components/ui/form/form-input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
 import { FormSelect } from "@/components/ui/form/form-select";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -1527,7 +1525,7 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import documentTemplateFormSchema from "@/form-schema/council/documentTemlateSchema";
+import documentTemplateFormSchema from "@/form-schema/council/documentTemplateSchema";
 import TemplatePreview from "./template-preview";
 import { useTemplateRecord } from "./queries/template-AddQueries";
 import { useGetPurposeRates } from "./queries/template-FetchQueries";
@@ -1572,13 +1570,13 @@ function TemplateCreateForm({ onSuccess }: { onSuccess?: () => void }) {
 
   const isSummonChecked = form.watch('temp_w_summon');
 
-  useEffect(() => {
-    if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
-      form.setValue('temp_header', mediaFiles[0].publicUrl);
-    } else {
-      form.setValue('temp_header', 'no-image-url-fetched');
-    }
-  }, [mediaFiles, form]);
+  // useEffect(() => {
+  //   if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+  //     form.setValue('temp_header', mediaFiles[0].publicUrl);
+  //   } else {
+  //     form.setValue('temp_header', 'no-image-url-fetched');
+  //   }
+  // }, [mediaFiles, form]);
 
 
   function onSubmit(values: z.infer<typeof documentTemplateFormSchema>) {

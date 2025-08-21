@@ -1,6 +1,4 @@
-"use client"
-
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState, useImperativeHandle, forwardRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
@@ -16,14 +14,80 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { cn } from "@/lib/utils"
 import { surveyFormSchema } from "@/form-schema/family-profiling-schema"
 import type { SurveyFormData } from "@/form-schema/health-data-types"
+import { useAuth } from "@/context/AuthContext"
 
 interface SurveyIdentificationFormProps {
-  onSubmit: (data: SurveyFormData) => void
   initialData?: Partial<SurveyFormData>
+  respondentInfo?: {
+    rp_id: string
+    personal_info: {
+      per_fname: string
+      per_lname: string
+      per_mname?: string
+    }
+  }
+  familyMembers?: any[] // Add family members for manual selection
 }
 
-export default function SurveyIdentificationForm({ onSubmit, initialData }: SurveyIdentificationFormProps) {
+export interface SurveyIdentificationFormHandle {
+  getFormData: () => SurveyFormData
+  isFormValid: () => boolean
+}
+
+const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, SurveyIdentificationFormProps>(
+  ({ initialData, respondentInfo, familyMembers }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [lastPos, setLastPos] = useState({ x: 0, y: 0 })
+
+  const { user } = useAuth()
+
+  // Debug logging
+  useEffect(() => {
+    console.log('SurveyIdentificationForm - User:', user);
+    console.log('SurveyIdentificationForm - Staff:', user?.staff);
+    console.log('SurveyIdentificationForm - Respondent Info:', respondentInfo);
+    console.log('SurveyIdentificationForm - Family Members:', familyMembers);
+  }, [user, respondentInfo, familyMembers])
+
+  // Format staff display name
+  const getStaffDisplayName = () => {
+    if (!user?.staff) return ""
+    
+    // Try multiple possible data structures for staff
+    const staff = user.staff
+    
+    // Pattern 1: staff.staff_fname and staff.staff_lname (direct)
+    if (staff.staff_fname && staff.staff_lname) {
+      return `${staff.staff_id} - ${staff.staff_fname} ${staff.staff_lname}`
+    }
+    
+    // Pattern 2: staff.profile.personal.fname and staff.profile.personal.lname
+    if (staff.profile?.personal?.fname && staff.profile?.personal?.lname) {
+      return `${staff.staff_id || staff.id || ''} - ${staff.profile.personal.fname} ${staff.profile.personal.lname}`
+    }
+    
+    // Pattern 3: staff.per_fname and staff.per_lname
+    if (staff.per_fname && staff.per_lname) {
+      return `${staff.staff_id || staff.id || ''} - ${staff.per_fname} ${staff.per_lname}`
+    }
+    
+    // Pattern 4: staff.fname and staff.lname
+    if (staff.fname && staff.lname) {
+      return `${staff.staff_id || staff.id || ''} - ${staff.fname} ${staff.lname}`
+    }
+    
+    // Fallback - return just the ID if available
+    return staff.staff_id || staff.id || "Unknown Staff"
+  }
+
+  // Format respondent display name
+  const getRespondentDisplayName = () => {
+    if (!respondentInfo) return ""
+    const { rp_id, personal_info } = respondentInfo
+    const fullName = `${personal_info.per_fname} ${personal_info.per_lname}`
+    return `${rp_id} - ${fullName}`
+  }
 
   const form = useForm<SurveyFormData>({
     resolver: zodResolver(surveyFormSchema),
@@ -35,6 +99,27 @@ export default function SurveyIdentificationForm({ onSubmit, initialData }: Surv
       signature: "",
     },
   })
+
+  // Expose form data and validation to parent component
+  useImperativeHandle(ref, () => ({
+    getFormData: () => form.getValues(),
+    isFormValid: () => form.formState.isValid
+  }), [form])
+
+  // Auto-populate staff and respondent information when component mounts or data changes
+  useEffect(() => {
+    // Auto-populate filled by with current staff
+    const staffDisplayName = getStaffDisplayName()
+    if (staffDisplayName && !form.getValues("filledBy")) {
+      form.setValue("filledBy", staffDisplayName)
+    }
+
+    // Auto-populate informant with respondent info
+    const respondentDisplayName = getRespondentDisplayName()
+    if (respondentDisplayName && !form.getValues("informant")) {
+      form.setValue("informant", respondentDisplayName)
+    }
+  }, [user, respondentInfo, form])
 
   useEffect(() => {
     const signatureValue = form.getValues("signature")
@@ -52,15 +137,6 @@ export default function SurveyIdentificationForm({ onSubmit, initialData }: Surv
     }
   }, [form])
 
-  const handleFormSubmit = (data: SurveyFormData) => {
-    onSubmit(data)
-  }
-
-  const handleReset = () => {
-    form.reset()
-    clearSignature()
-  }
-
   const clearSignature = () => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -76,6 +152,129 @@ export default function SurveyIdentificationForm({ onSubmit, initialData }: Surv
     })
   }
 
+  // Get mouse/touch position relative to canvas
+  const getPos = (e: MouseEvent | TouchEvent): { x: number; y: number } => {
+    const canvas = canvasRef.current
+    if (!canvas) return { x: 0, y: 0 }
+
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+
+    if (e.type.includes('touch')) {
+      const touch = (e as TouchEvent).touches[0] || (e as TouchEvent).changedTouches[0]
+      return {
+        x: (touch.clientX - rect.left) * scaleX,
+        y: (touch.clientY - rect.top) * scaleY,
+      }
+    } else {
+      const mouse = e as MouseEvent
+      return {
+        x: (mouse.clientX - rect.left) * scaleX,
+        y: (mouse.clientY - rect.top) * scaleY,
+      }
+    }
+  }
+
+  // Start drawing
+  const startDrawing = (e: MouseEvent | TouchEvent) => {
+    e.preventDefault()
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    setIsDrawing(true)
+    const pos = getPos(e)
+    setLastPos(pos)
+
+    ctx.beginPath()
+    ctx.moveTo(pos.x, pos.y)
+  }
+
+  // Draw on canvas
+  const draw = (e: MouseEvent | TouchEvent) => {
+    e.preventDefault()
+    if (!isDrawing) return
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    const pos = getPos(e)
+
+    ctx.lineWidth = 2
+    ctx.lineCap = "round"
+    ctx.strokeStyle = "#000000"
+
+    ctx.beginPath()
+    ctx.moveTo(lastPos.x, lastPos.y)
+    ctx.lineTo(pos.x, pos.y)
+    ctx.stroke()
+
+    setLastPos(pos)
+  }
+
+  // Stop drawing and save signature
+  const endDrawing = (e: MouseEvent | TouchEvent) => {
+    e.preventDefault()
+    if (!isDrawing) return
+
+    setIsDrawing(false)
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    // Convert canvas to base64 and save to form
+    const dataURL = canvas.toDataURL("image/png")
+    form.setValue("signature", dataURL, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true,
+    })
+  }
+
+  // Add event listeners to canvas
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    // Mouse events
+    const handleMouseDown = (e: MouseEvent) => startDrawing(e)
+    const handleMouseMove = (e: MouseEvent) => draw(e)
+    const handleMouseUp = (e: MouseEvent) => endDrawing(e)
+    const handleMouseLeave = (e: MouseEvent) => endDrawing(e)
+
+    // Touch events
+    const handleTouchStart = (e: TouchEvent) => startDrawing(e)
+    const handleTouchMove = (e: TouchEvent) => draw(e)
+    const handleTouchEnd = (e: TouchEvent) => endDrawing(e)
+
+    // Add event listeners
+    canvas.addEventListener("mousedown", handleMouseDown)
+    canvas.addEventListener("mousemove", handleMouseMove)
+    canvas.addEventListener("mouseup", handleMouseUp)
+    canvas.addEventListener("mouseleave", handleMouseLeave)
+
+    canvas.addEventListener("touchstart", handleTouchStart)
+    canvas.addEventListener("touchmove", handleTouchMove)
+    canvas.addEventListener("touchend", handleTouchEnd)
+
+    // Cleanup function
+    return () => {
+      canvas.removeEventListener("mousedown", handleMouseDown)
+      canvas.removeEventListener("mousemove", handleMouseMove)
+      canvas.removeEventListener("mouseup", handleMouseUp)
+      canvas.removeEventListener("mouseleave", handleMouseLeave)
+
+      canvas.removeEventListener("touchstart", handleTouchStart)
+      canvas.removeEventListener("touchmove", handleTouchMove)
+      canvas.removeEventListener("touchend", handleTouchEnd)
+    }
+  }, [isDrawing, lastPos])
+
   // Signature pad functions (startDrawing, draw, endDrawing) remain the same
 
   return (
@@ -84,7 +283,7 @@ export default function SurveyIdentificationForm({ onSubmit, initialData }: Surv
       <Separator className="mb-6" />
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+        <form className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left column */}
             <div className="space-y-4">
@@ -248,5 +447,9 @@ export default function SurveyIdentificationForm({ onSubmit, initialData }: Surv
       </Form>
     </div>
   )
-}
+})
+
+SurveyIdentificationForm.displayName = "SurveyIdentificationForm"
+
+export default SurveyIdentificationForm
 

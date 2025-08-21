@@ -1,5 +1,5 @@
 import { useLocation } from "react-router";
-import { Type } from "../../profilingEnums";
+import { Type } from "../../ProfilingEnums";
 import ResidentCreateForm from "./ResidentCreateForm";
 import ResidentViewForm from "./ResidentViewForm";
 import ResidentRequestForm from "./ResidentRequestForm";
@@ -10,6 +10,7 @@ export default function ResidentFormLayout() {
   const { type = Type.Create } = state?.params || {};
 
   // ==================== RENDER ====================
+  console.log(type)
   switch (type) {
     case Type.Viewing:
       return <ResidentViewForm params={state?.params} />;

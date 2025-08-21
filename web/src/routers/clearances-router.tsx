@@ -1,18 +1,23 @@
 import BusinessDocumentPage from "@/pages/record/clearances/BusinessPermits";
 import CertificatePage from "@/pages/record/clearances/Certification";
-import PermitPage from "@/pages/record/clearances/SummonPermit";
+import IssuedCertificates from "@/pages/record/clearances/IssuedCertificates";
 
 export const clearances_router = [
-    {
-        path: 'businesspermit',
-        element: <BusinessDocumentPage/>
-    },
-    {
-        path: 'certifications',
-        element: <CertificatePage/>
-    },
-    {
-        path: 'summonpermit',
-        element: <PermitPage/>
-    }
+  {
+    path: "record/clearances",
+    children: [
+      {
+        path: "businesspermit",
+        element: <BusinessDocumentPage />,
+      },
+      {
+        path: "certification", 
+        element: <CertificatePage />,
+      },
+      {
+        path: "issuedcertificates",
+        element: <IssuedCertificates />,
+      }
+    ]
+  }
 ];

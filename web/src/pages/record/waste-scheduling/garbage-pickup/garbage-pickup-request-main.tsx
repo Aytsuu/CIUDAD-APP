@@ -7,7 +7,7 @@ import RejectedTable from "./tables/rejected-table";
 
 
 function GarbagePickupRequestMain() {
-  const [activeTab, setActiveTab] = useState<"pending" | "accepted" | "completed" | "rejected">("pending");
+  const [_activeTab, setActiveTab] = useState<"pending" | "accepted" | "completed" | "rejected">("pending");
 
   return (
     <div className="w-full h-full">

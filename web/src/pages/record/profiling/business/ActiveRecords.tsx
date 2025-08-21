@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Plus, Download, Building2, FileDown, Loader2 } from "lucide-react"
+import { Search, Plus, Building2, FileDown, Loader2, Clock } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { Link } from "react-router"
@@ -7,11 +7,13 @@ import { DataTable } from "@/components/ui/table/data-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { activeColumns } from "./BusinessColumns"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card } from "@/components/ui/card/card"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
-import { useActiveBusinesses } from "../queries/profilingFetchQueries"
+import { useActiveBusinesses, useModificationRequests } from "../queries/profilingFetchQueries"
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
+import { Combobox } from "@/components/ui/combobox"
+import { formatModificationRequests } from "../ProfilingFormats"
 
 export default function ActiveRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -21,7 +23,8 @@ export default function ActiveRecords() {
   const [currentPage, setCurrentPage] = React.useState<number>(1)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
-  const { data: businesses, isLoading} = useActiveBusinesses(
+  const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests()
+;  const { data: businesses, isLoading: isLoadingBusinesses} = useActiveBusinesses(
     currentPage, 
     debouncedPageSize,
     debouncedSearchQuery,
@@ -30,14 +33,27 @@ export default function ActiveRecords() {
   const businessList = businesses?.results || [];
   const totalCount = businesses?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  const formattedRequest = React.useMemo(() => 
+    formatModificationRequests(modificationRequests),
+  [modificationRequests])
   
+  console.log(modificationRequests)
   // ----------------- SIDE EFFECTS --------------------
   React.useEffect(() => {
-    if(isLoading) showLoading();
+    if(isLoadingBusinesses || isLoadingRequests) showLoading();
     else hideLoading();
-  }, [isLoading])
+  }, [isLoadingBusinesses, isLoadingRequests])
 
   // ----------------- HANDLERS --------------------
+  const handleRequest = (value: string | undefined) => {
+    const request = modificationRequests.find((req: any) => 
+      req.bm_id == value?.split(' ')[0]
+    )
+
+    console.log(request)
+  }
+
   const handleExport = (type: "csv" | "excel" | "pdf") => {
     switch (type) {
       case "csv":
@@ -70,31 +86,36 @@ export default function ActiveRecords() {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex-1 sm:flex-none">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleExport("csv")}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Export as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport("excel")}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Export as Excel
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport("pdf")}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Export as PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Combobox 
+              options={formattedRequest}
+              value={""}
+              customTrigger={<Clock className="cursor-pointer"/>}
+              onChange={handleRequest}
+              staticVal={true}
+              variant="modal"
+              placeholder="Search request by business id, name..."
+              modalTitle="Business Modification Requests"
+              emptyMessage={"No modification requests."}
+            />
+            <div className="flex items-center gap-2">
+              <DropdownLayout
+                trigger={
+                  <Button variant="outline" className="gap-2 border">
+                    <FileDown className="h-4 w-4" />
+                    Export
+                  </Button>
+                }
+                options={[
+                  { id: "csv", name: "Export as CSV" },
+                  { id: "excel", name: "Export as Excel" },
+                  { id: "pdf", name: "Export as PDF" },
+                ]}
+                onSelect={(type: any) => handleExport(type)}
+              />
+            </div>  
 
             <Link
-              to="/business/form"
+              to="/profiling/business/form"
               state={{
                 params: {
                   type: "create",
@@ -132,7 +153,7 @@ export default function ActiveRecords() {
       </div>
 
       {/* Loading State */}
-      {isLoading && (
+      {isLoadingBusinesses && (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
           <span className="ml-2 text-gray-600">Loading businesses...</span>
@@ -140,7 +161,7 @@ export default function ActiveRecords() {
       )}
 
       {/* Empty State */}
-      {!isLoading && businessList.length === 0 && (
+      {!isLoadingBusinesses && businessList.length === 0 && (
         <div className="text-center py-12">
           <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -153,7 +174,7 @@ export default function ActiveRecords() {
           </p>
           {!searchQuery && (
             <Link
-              to="/business/form"
+              to="/profling/business/form"
               state={{
                 params: {
                   type: "create",
@@ -170,12 +191,12 @@ export default function ActiveRecords() {
       )}
 
       {/* Data Table */}
-      {!isLoading && businessList.length > 0 && (
+      {!isLoadingBusinesses && businessList.length > 0 && (
         <DataTable columns={activeColumns} data={businessList} />
       )}
 
       {/* Pagination */}
-        {!isLoading && businessList.length > 0 && (
+        {!isLoadingBusinesses && businessList.length > 0 && (
           <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
             <p className="text-sm text-gray-600 mb-2 sm:mb-0">
               Showing <span className="font-medium">{totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0}</span> -{" "}

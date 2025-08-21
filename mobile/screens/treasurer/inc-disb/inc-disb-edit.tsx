@@ -2,13 +2,12 @@ import "@/global.css";
 import { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, ChevronLeft } from "lucide-react-native";
+import {  ChevronLeft } from "lucide-react-native";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import ScreenLayout from "@/screens/_ScreenLayout";
 import { CreateFolderSchema } from "@/form-schema/treasurer-inc-disbursement";
 import {
   useCreateFolder,
@@ -29,7 +28,7 @@ import {
   IncomeImage,
   DisbursementImage,
   CreateFolderFormValues,
-} from "./queries";
+} from "./inc-disc-types";
 import PageLayout from "@/screens/_PageLayout";
 
 const EditFolderForm = () => {
@@ -43,7 +42,6 @@ const EditFolderForm = () => {
   const {
     control,
     handleSubmit,
-    formState: { errors },
     reset,
   } = useForm<CreateFolderFormValues>({
     resolver: zodResolver(CreateFolderSchema),
@@ -56,7 +54,6 @@ const EditFolderForm = () => {
     mode: "onBlur",
   });
 
-  const selectedType = useWatch({ control, name: "type" });
   const updateFolderMutation = useUpdateFolder();
   const updateImageMutation = useUpdateImage();
   const createFolderMutation = useCreateFolder();
@@ -254,9 +251,7 @@ const EditFolderForm = () => {
       }
       headerTitle={<Text>Edit Folder and Manage Images</Text>}
       rightAction={
-        <TouchableOpacity>
-          <ChevronLeft size={30} color="black" className="text-white" />
-        </TouchableOpacity>
+        <View></View>
       }
     >
       <View className="flex-1 p-5">

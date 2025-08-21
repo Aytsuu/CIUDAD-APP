@@ -63,7 +63,7 @@ class KYCVerificationProcessor:
                 .execute()
             
             return {
-                'name': f'{user_data['lname'].upper(), user_data['fname'].upper()}',
+                'name': f"{user_data['lname'].upper()}, {user_data['fname'].upper()}",
                 'id_has_face': True if id_face is not None else False,
                 'info_match': info_match['match'],
             }
@@ -145,31 +145,6 @@ class KYCVerificationProcessor:
         # Clean the text (remove special characters, normalize spaces)
         text = re.sub(r'[^\w\s,:.-]', '', text)
         text = ' '.join(text.split())  # Collapse multiple spaces
-
-        # # looks for all-caps last name followed by title-case first/middle
-        # name_match = re.search(
-        #     r'([A-Z]{2,}),\s+([A-Z]{2,}(?:\s+[A-Z]{2,})*)',  # Matches "ARANETA, ALVIN LOCSON"
-        #     text
-        # )
-        
-        # if name_match:
-        #     lname = name_match.group(1).strip()
-        #     fname_mname = name_match.group(2).strip().split()
-        #     fname = fname_mname[0] if len(fname_mname) > 0 else None
-        #     mname = ' '.join(fname_mname[1:]) if len(fname_mname) > 1 else None
-        # else:
-        #     # Fallback if comma format not found
-        #     name_match = re.search(
-        #         r'(?:Last Name|Name)[^\w]*([A-Z]{2,})\s+([A-Z]{2,})',
-        #         text,
-        #         re.IGNORECASE
-        #     )
-        #     if name_match:
-        #         lname = name_match.group(1).strip()
-        #         fname = name_match.group(2).strip()
-        #         mname = None
-        #     else:
-        #         lname, fname, mname = None, None, None
         
         # Extract date of birth (flexible date parsing)
         dob = None
@@ -210,7 +185,9 @@ class KYCVerificationProcessor:
         print('dob:',extracted_info['dob'])
         
         # Name comparison (case insensitive, allow partial matches)
-        name_match = user_data['lname'] in text and user_data['fname'] in text
+        first_name_match = set(user_data['fname'].split(' ')).issubset(text)
+        last_name_match = set(user_data['lname'].split(' ')).issubset(text)
+        name_match = first_name_match and last_name_match
         print(name_match)
 
         if not name_match:

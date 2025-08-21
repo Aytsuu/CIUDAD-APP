@@ -17,6 +17,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "@/screens/_PageLayout";
 import { Calendar } from "@/lib/icons/Calendar";
 import { Building } from "@/lib/icons/Building";
+import { formatCurrency } from "@/helpers/currencyFormat";
 
 export default function BusinessRecords() {
   const router = useRouter();
@@ -47,28 +48,6 @@ export default function BusinessRecords() {
     setSearchQuery(searchInputVal);
     setCurrentPage(1);
   }, [searchInputVal]);
-
-
-  // Helper function to format currency
-  const formatCurrency = (amount: number) => {
-    if (!amount) return 'Not specified';
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
-
-  // Helper function to format date
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Not specified';
-    return new Date(dateString).toLocaleDateString('en-PH', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
 
   // Helper function to get business initial
   const getBusinessInitial = (businessName: string) => {
@@ -291,10 +270,12 @@ export default function BusinessRecords() {
                     <RefreshControl
                       refreshing={isRefreshing}
                       onRefresh={handleRefresh}
-                      colors={['#3B82F6']}
+                      colors={['#00a8f0']}
                     />
                   }
                   contentContainerStyle={{ paddingBottom: 20 }}
+                  windowSize={5}
+                  removeClippedSubviews={true} 
                 />
                 {renderPagination()}
               </>

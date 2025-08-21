@@ -60,7 +60,7 @@ function WasteHotspotMain() {
     };
 
     // Active data
-    const { filtered: filteredActive, paginated: paginatedActive, total: totalActive} = filterAndPaginate(
+    const { filtered: _filteredActive, paginated: paginatedActive, total: totalActive} = filterAndPaginate(
         fetchedData.filter(row => !row.wh_is_archive), 
         searchQueryActive, 
         currentPageActive, 
@@ -68,7 +68,7 @@ function WasteHotspotMain() {
     );
 
     // History data
-    const { filtered: filteredHistory, paginated: paginatedHistory, total: totalHistory } = filterAndPaginate(
+    const { filtered: _filteredHistory, paginated: paginatedHistory, total: totalHistory } = filterAndPaginate(
         fetchedData.filter(row => row.wh_is_archive), 
         searchQueryHistory, 
         currentPageHistory, 

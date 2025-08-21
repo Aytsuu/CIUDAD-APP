@@ -1,5 +1,4 @@
 import React from "react"
-import { type MediaUploadType } from "@/components/ui/media-upload"
 import { ImageModal } from "@/components/ui/image-modal"
 import {
   ExternalLink,
@@ -9,8 +8,8 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 // Media Gallery Component
-export const MediaGallery = ({ mediaFiles } : { mediaFiles: MediaUploadType}) => {
-  const [selectedImage, setSelectedImage] = React.useState<MediaUploadType[number] | null>();
+export const MediaGallery = ({ mediaFiles } : { mediaFiles: any}) => {
+  const [selectedImage, setSelectedImage] = React.useState<any>();
 
   const handleOpenDocument = (url: string) => { 
     // Open document in new tab
@@ -35,7 +34,7 @@ export const MediaGallery = ({ mediaFiles } : { mediaFiles: MediaUploadType}) =>
             <div
               className="relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
               onClick={() => {
-                if(media.type === 'document') handleOpenDocument(media.publicUrl)
+                if(media.type === 'document') handleOpenDocument(media.url)
                 else setSelectedImage(media as any)
               }}
             >
@@ -46,16 +45,11 @@ export const MediaGallery = ({ mediaFiles } : { mediaFiles: MediaUploadType}) =>
                   <span className="text-xs text-gray-600 text-center px-2">
                     {media.name || `Document ${index + 1}`}
                   </span>
-                  {media.fileExtension && (
-                    <span className="text-xs text-gray-500 uppercase mt-1">
-                      {media.fileExtension}
-                    </span>
-                  )}
                 </div>
               ) : (
                 // Image preview
                 <img
-                  src={media.publicUrl}
+                  src={media.url}
                   alt={`Supporting document ${index + 1}`}
                   className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-200"
                   onError={(e) => {
@@ -89,7 +83,7 @@ export const MediaGallery = ({ mediaFiles } : { mediaFiles: MediaUploadType}) =>
       </div>
 
       <ImageModal
-        src={selectedImage?.publicUrl || ""}
+        src={selectedImage?.url || ""}
         alt="Supporting document"
         isOpen={!!selectedImage}
         onClose={() => setSelectedImage(null)}

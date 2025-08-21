@@ -379,18 +379,14 @@
 
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Button } from "@/components/ui/button/button";
 import { Search } from "lucide-react";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useInvoiceQuery, type Receipt } from "./queries/receipt-getQueries";
-// import { useInvoiceQuery, type Receipt } from "./queries/receipt-getQueries";
+import { useInvoiceQuery, Receipt } from "../queries/receipt-getQueries";
 
 function ReceiptPage() {
   const { data: fetchedData = [], isLoading } = useInvoiceQuery();
@@ -467,7 +463,7 @@ function ReceiptPage() {
   const [selectedFilterId, setSelectedFilterId] = useState("all");
 
   // Filter data based on selected filter and search query
-  const filteredData = fetchedData.filter(item => {
+  const filteredData = fetchedData.filter((item: Receipt) => {
     const matchesFilter = selectedFilterId === "all" || 
       item.inv_nat_of_collection?.toLowerCase() === selectedFilterId.toLowerCase();
     

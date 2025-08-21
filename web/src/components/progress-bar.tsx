@@ -50,7 +50,7 @@ export const ProgressBar = ({
 
         {/* Step Circles and Labels */}
         <div className="flex justify-between relative z-20">
-          {steps.map((stepItem, index) => {
+          {steps.map((stepItem) => {
             const isCompleted = currentStep > stepItem.number;
             const isCurrent = currentStep === stepItem.number;
             const IconComponent = stepItem.icon;

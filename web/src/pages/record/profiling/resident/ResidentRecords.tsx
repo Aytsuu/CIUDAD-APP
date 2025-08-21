@@ -3,13 +3,11 @@ import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, ClockArrowUp, FileDown, Search, Users, Loader2, Download, CircleUserRound, House, UsersRound, Building } from "lucide-react"
+import { Plus, ClockArrowUp, FileDown, Search, Users, Loader2, CircleUserRound, House, UsersRound, Building } from "lucide-react"
 import { Link } from "react-router"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DataTable } from "@/components/ui/table/data-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions"
 import { residentColumns } from "./ResidentColumns"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
 import { useRequestCount, useResidentsTable } from "../queries/profilingFetchQueries"
@@ -93,20 +91,20 @@ export default function ResidentRecords() {
 
               <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                 <DropdownLayout
-                    trigger={
-                      <Button variant="outline" className="gap-2">
-                        <FileDown className="h-4 w-4" />
-                        Export
-                      </Button>
-                    }
-                    options={[
-                      { id: "csv", name: "Export as CSV" },
-                      { id: "excel", name: "Export as Excel" },
-                      { id: "pdf", name: "Export as PDF" },
-                    ]}
-                  />
+                  trigger={
+                    <Button variant="outline" className="gap-2">
+                      <FileDown className="h-4 w-4" />
+                      Export
+                    </Button>
+                  }
+                  options={[
+                    { id: "csv", name: "Export as CSV" },
+                    { id: "excel", name: "Export as Excel" },
+                    { id: "pdf", name: "Export as PDF" },
+                  ]}
+                />
 
-                <Link to="/request/pending/individual" className="flex-1 sm:flex-none">
+                <Link to="/profiling/request/pending/individual" className="flex-1 sm:flex-none">
                   <Button variant="outline" className="w-full sm:w-auto">
                     <ClockArrowUp className="h-4 w-4 mr-2" />
                     Pending
@@ -121,11 +119,11 @@ export default function ResidentRecords() {
                 </Link>
 
                 <Link
-                  to="/resident/registration"
+                  to="/profiling/resident/registration"
                   state={{
                     params: {
                       origin: "create",
-                      title: "Resident Registration",
+                      title: "Complete Resident Profiling",
                       description: "Provide the necessary details, and complete the registration.",
                     },
                   }}
@@ -159,7 +157,7 @@ export default function ResidentRecords() {
                 </Select>
                 <span>entries</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-blue-700">
                 <div className="flex item-center justify-between gap-12">
                   {profiles.map((profile: any, idx: number) => (
                     <div key={idx} className="flex gap-2">
@@ -221,7 +219,7 @@ export default function ResidentRecords() {
 
             {/* Pagination */}
             {!isLoading && residents.length > 0 && (
-              <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
+              <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t rounded-b-lg bg-gray-50">
                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
                   Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
                   <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}

@@ -1,7 +1,9 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from django.db import transaction
+from django.utils import timezone
 from ..serializers.address_serializers import *
+from apps.administration.models import Staff
 
 class AddressBulkCreateView(generics.CreateAPIView):
   serializer_class = AddressBulkCreateSerializer
@@ -63,24 +65,44 @@ class PerAddressBulkCreateView(generics.CreateAPIView):
 
   @transaction.atomic
   def create(self, request, *args, **kwargs):
-    serializer = self.get_serializer(data=request.data, many=True)
-    serializer.is_valid(raise_exception=True)
+    staff_id = request.data.get('staff_id', None)
+    history_id = request.data.get('history_id', None)
+    per_add = request.data.get('per_add')
+    print(history_id)
+    per_id = per_add[0].get('per') if per_add else None
+    if per_id:
+      personal = Personal.objects.filter(per_id=per_id).first()
 
-    #prepare model instances
-    instances = [
-      PersonalAddress(**item)
-      for item in serializer.validated_data
-    ]
-    
-    created_instances = PersonalAddress.objects.bulk_create(instances)
+    if not history_id:
+      staff = Staff.objects.filter(staff_id=staff_id).first()
+      personal._history_user = staff
+      personal.save()
 
-    if len(created_instances) > 0 and created_instances[0].pk is not None:
-      response_serializer = self.get_serializer(created_instances, many=True)
-      return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-    
-    return Response({"detail": "Bulk create successful", "count": len(instances)},
-      status=status.HTTP_201_CREATED
-    )
+      try:
+        latest_history = personal.history.latest()
+        history_id = latest_history.history_id
+      except personal.history.model.DoesNotExist:
+        history_id = None  
+
+    for item in per_add:
+      address = Address.objects.filter(add_id=item['add']).first()
+      item['per'] = personal
+      item['add'] = address
+
+      if not 'initial' in item:
+        instance = PersonalAddress(**item)
+        instance.save()
+      else:
+        item.pop('initial', None)
+
+      history = PersonalAddressHistory(**item)
+      history.history_id = history_id
+      history.save()
+
+    response_data = {
+        "detail": "Bulk create successful",
+    }
+    return Response(response_data, status=status.HTTP_201_CREATED)
   
 class PerAddressListView(generics.ListAPIView):
   serializer_class = PerAddressListSerializer

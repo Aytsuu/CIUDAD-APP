@@ -10,10 +10,23 @@ class StaffBaseSerializer(serializers.ModelSerializer):
     model = Staff
     fields = '__all__'
 
+class StaffMinimalSerializer(serializers.ModelSerializer):
+    rp = serializers.SerializerMethodField()
+    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source="rp")
+
+    class Meta:
+        model = Staff
+        fields = '__all__'
+
+    def get_rp(self, obj):
+        from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer 
+        return ResidentPersonalInfoSerializer(obj.rp).data
+
 class StaffTableSerializer(serializers.ModelSerializer):
   lname = serializers.CharField(source='rp.per.per_lname')
   fname = serializers.CharField(source='rp.per.per_fname')
   mname = serializers.CharField(source='rp.per.per_mname')
+  sex = serializers.CharField(source='rp.per.per_sex')
   dob = serializers.CharField(source='rp.per.per_dob')
   contact = serializers.CharField(source='rp.per.per_contact')
   position = serializers.CharField(source='pos.pos_title')
@@ -23,7 +36,8 @@ class StaffTableSerializer(serializers.ModelSerializer):
   class Meta:
     model = Staff
     fields = ['staff_id', 'lname', 'fname', 'mname', 'dob', 
-              'contact', 'position', 'group', 'staff_assign_date', 'fam']
+              'contact', 'position', 'group', 'staff_assign_date', 
+              'staff_type', 'fam', 'sex']
   
   def get_fam(self, obj):
     family_comp = FamilyComposition.objects.filter(rp=obj.staff_id).select_related('fam').first()
@@ -77,7 +91,7 @@ class StaffLandingPageSerializer(serializers.ModelSerializer):
   def get_name(self, obj):
     info = obj.rp.per
     return f'{info.per_lname.upper()}, {info.per_fname.upper()}' \
-            f' {info.per_mname.upper() if info.per_mname else ''}'
+            f' {info.per_mname.upper() if info.per_mname else ""}'
 
   def get_photo_url(self, obj):
     rp = obj.rp

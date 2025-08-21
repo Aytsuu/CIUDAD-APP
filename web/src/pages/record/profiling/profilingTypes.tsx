@@ -1,4 +1,16 @@
 
+export type AllRecordCombined = {
+  id: string;
+  lname: string;
+  fname: string;
+  mname: string;
+  suffix: string;
+  sex: string;
+  date_registered: string;
+  family_no: string;
+  type: string;
+}
+
 export type ResidentRecord = {
   rp_id: string;
   household_no: string;
@@ -9,6 +21,7 @@ export type ResidentRecord = {
   fname: string;
   mname: string;
   suffix: string;
+  sex: string;
   rp_date_registered: string;
   registered_by: string;
   has_account: boolean;
@@ -51,10 +64,16 @@ export type FamilyRecord = {
   father: string;
   guardian: string;
   fam_date_registered: string;
+  registered_by: string;
 }
 
 export type MemberRecord = {
-  data: Record<string, any>;
+  dob: string
+  fc_role: string
+  name: string
+  rp_id: string
+  sex: string
+  status: string
 }
 
 export type HouseholdRecord = {
@@ -70,7 +89,12 @@ export type HouseholdRecord = {
 }
 
 export type HouseholdFamRecord = {
-  data: React.ReactNode
+  fam_id: string
+  fam_building: string
+  total_members: string
+  fam_indigenous: string
+  fam_date_registered: string
+  registered_by: string
 }
 
 export type SitioRecord = {
@@ -119,6 +143,8 @@ export type BusinessRespondent = {
   lname: string;
   fname: string;
   mname: string;
+  suffix: string;
+  sex: string;
   br_date_registered: string;
   businesses: Record<string, any>[];
 }

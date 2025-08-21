@@ -1,9 +1,5 @@
 "use client"
-import { useState } from 'react';
-import {Input} from '@/components/ui/input.tsx';
-import {Label} from '@/components/ui/label.tsx';
 import { CardTitle } from '@/components/ui/card/card.tsx';
-import {DatePicker} from '@/components/ui/datepicker.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import {Textarea} from '@/components/ui/textarea.tsx';
 import {Button} from '@/components/ui/button/button';
@@ -17,7 +13,6 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ArrowLeft } from 'lucide-react';
 
 import { Link } from 'react-router';
 
@@ -45,7 +40,7 @@ function UpdateOrdinance() {
     });
 
 
-    let ordAreaOfFocus = [
+    const ordAreaOfFocus = [
         "Council", "GAD", 
         "Waste Committee", "Finance"
     ];

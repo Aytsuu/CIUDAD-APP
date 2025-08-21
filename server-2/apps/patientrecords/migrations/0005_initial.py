@@ -9,8 +9,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('healthProfiling', '0003_delete_patient'),
-        ('patientrecords', '0004_remove_patients_per_id_delete_patientrecord_and_more'),
+        # ('healthProfiling', '0003_delete_patient'),
+        # ('patientrecords', '0004_remove_patients_per_id_delete_patientrecord_and_more'),
     ]
 
     operations = [

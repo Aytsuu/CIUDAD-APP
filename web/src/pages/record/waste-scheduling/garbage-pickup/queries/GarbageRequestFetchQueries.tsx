@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getTrucks, getDrivers, getCollectors, getGarbageAcceptedRequest, getGarbageCompletedRequest, getGarbagePendingRequest, getGarbageRejectedRequest } from "../restful-api/GarbageRequestGetAPI";
 
-// Retrieve Drivers
 export type Drivers = {
     id: string;
     firstname: string;

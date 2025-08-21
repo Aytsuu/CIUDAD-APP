@@ -1,95 +1,95 @@
-from .models import *
-from rest_framework import serializers
+# from .models import *
+# from rest_framework import serializers
 
-class FP_RecordSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FP_Record
-        fields = '__all__'
+# class FP_RecordSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FP_Record
+#         fields = '__all__'
         
         
-class FP_TypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FP_type
-        fields = '__all__'
+# class FP_TypeSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FP_type
+#         fields = '__all__'
         
-class Illness_Serializer(serializers.ModelSerializer):
-    class Meta:
-        model = Illness
-        fields = '__all__'
+# class Illness_Serializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Illness
+#         fields = '__all__'
 
-class MedicalHistorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FP_Medical_history
-        fields = '__all__'
+# class MedicalHistorySerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FP_Medical_history
+#         fields = '__all__'
 
-class RiskStiSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FP_RiskSti
-        fields = '__all__'
+# class RiskStiSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FP_RiskSti
+#         fields = '__all__'
 
-    # def validate(self, data):
-    #     # If abnormalDischarge is True, ensure dischargeFrom is provided
-    #     if data.get('abnormalDischarge') and not data.get('dischargeFrom'):
-    #         raise serializers.ValidationError({"dischargeFrom": "This field is required when abnormal discharge is present."})
+#     # def validate(self, data):
+#     #     # If abnormalDischarge is True, ensure dischargeFrom is provided
+#     #     if data.get('abnormalDischarge') and not data.get('dischargeFrom'):
+#     #         raise serializers.ValidationError({"dischargeFrom": "This field is required when abnormal discharge is present."})
         
-    #     # If abnormalDischarge is False, dischargeFrom should be null or empty
-    #     if not data.get('abnormalDischarge') and data.get('dischargeFrom'):
-    #         raise serializers.ValidationError({"dischargeFrom": "This field should be empty when there is no abnormal discharge."})
+#     #     # If abnormalDischarge is False, dischargeFrom should be null or empty
+#     #     if not data.get('abnormalDischarge') and data.get('dischargeFrom'):
+#     #         raise serializers.ValidationError({"dischargeFrom": "This field should be empty when there is no abnormal discharge."})
 
-    #     return data
+#     #     return data
         
-class RiskVawSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FP_RiskVaw
-        fields = '__all__'
+# class RiskVawSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FP_RiskVaw
+#         fields = '__all__'
     
-class PhysicalExamSerializer(serializers.ModelSerializer):
-       class Meta:
-        model = FP_Physical_Exam
-        fields = '__all__'
+# class PhysicalExamSerializer(serializers.ModelSerializer):
+#        class Meta:
+#         model = FP_Physical_Exam
+#         fields = '__all__'
 
-    # def validate(self, data):
-    #     # Get the method from the request data
-    #     method = data.get('method', None)
+#     # def validate(self, data):
+#     #     # Get the method from the request data
+#     #     method = data.get('method', None)
         
-    #     # If method is IUD, validate IUD-specific fields
-    #     if method == 'IUD':
-    #         if not data.get('pelvicExamination'):
-    #             raise serializers.ValidationError({"pelvicExamination": "Pelvic examination is required for IUD method."})
-    #         if not data.get('cervicalConsistency'):
-    #             raise serializers.ValidationError({"cervicalConsistency": "Cervical consistency is required for IUD method."})
-    #         if not data.get('uterinePosition'):
-    #             raise serializers.ValidationError({"uterinePosition": "Uterine position is required for IUD method."})
+#     #     # If method is IUD, validate IUD-specific fields
+#     #     if method == 'IUD':
+#     #         if not data.get('pelvicExamination'):
+#     #             raise serializers.ValidationError({"pelvicExamination": "Pelvic examination is required for IUD method."})
+#     #         if not data.get('cervicalConsistency'):
+#     #             raise serializers.ValidationError({"cervicalConsistency": "Cervical consistency is required for IUD method."})
+#     #         if not data.get('uterinePosition'):
+#     #             raise serializers.ValidationError({"uterinePosition": "Uterine position is required for IUD method."})
         
-    #     return data
+#     #     return data
 
-class PelvicExamSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FP_Pelvic_Exam
-        fields = '__all__'
+# class PelvicExamSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FP_Pelvic_Exam
+#         fields = '__all__'
         
-class AcknowledgementSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FP_Acknowledgement
-        fields = '__all__'
+# class AcknowledgementSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FP_Acknowledgement
+#         fields = '__all__'
        
-class FP_ObstetricalSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FP_Obstetrical_History
-        fields = '__all__'
+# class FP_ObstetricalSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FP_Obstetrical_History
+#         fields = '__all__'
         
-class AssessmentSerializer(serializers.ModelSerializer): 
-    class Meta:
-        model = FP_Assessment_Record
-        fields = '__all__'
+# class AssessmentSerializer(serializers.ModelSerializer): 
+#     class Meta:
+#         model = FP_Assessment_Record
+#         fields = '__all__'
         
 
-class ObstetricalSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FP_Obstetrical_History
-        fields = '__all__'     
+# class ObstetricalSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FP_Obstetrical_History
+#         fields = '__all__'     
 
-class FP_PregnancyCheckSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FP_pregnancy_check
-        fields = '__all__'
+# class FP_PregnancyCheckSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FP_pregnancy_check
+#         fields = '__all__'

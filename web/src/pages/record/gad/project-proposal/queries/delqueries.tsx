@@ -4,7 +4,7 @@ import { CircleCheck, CircleX } from "lucide-react";
 import { archiveProjectProposal, 
   restoreProjectProposal,
   permanentDeleteProjectProposal, deleteSupportDocument, archiveSupportDocument, restoreSupportDocument } from "../api/delreq";
-import { ProjectProposal } from "./fetchqueries";
+import { ProjectProposal } from "../projprop-types";
 
 
 export const useArchiveProjectProposal = () => {
@@ -26,7 +26,7 @@ export const useArchiveProjectProposal = () => {
       
       return { previousProposals };
     },
-    onError: (error: Error, gprId, context) => {
+    onError: (error: Error, _gprId, context) => {
       if (context?.previousProposals) {
         queryClient.setQueryData(["projectProposals"], context.previousProposals);
       }
@@ -65,7 +65,7 @@ export const useRestoreProjectProposal = () => {
       
       return { previousProposals };
     },
-    onError: (error: Error, gprId, context) => {
+    onError: (error: Error, _gprId, context) => {
       if (context?.previousProposals) {
         queryClient.setQueryData(["projectProposals"], context.previousProposals);
       }
@@ -100,7 +100,7 @@ export const usePermanentDeleteProjectProposal = () => {
       
       return { previousProposals };
     },
-    onError: (error: Error, gprId, context) => {
+    onError: (error: Error, _gprId, context) => {
       if (context?.previousProposals) {
         queryClient.setQueryData(["projectProposals"], context.previousProposals);
       }
@@ -120,61 +120,6 @@ export const usePermanentDeleteProjectProposal = () => {
   });
 };
 
-// export const useDeleteProjectProposal = () => {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: (gprId: number) => delProjectProposal(gprId),
-//     onMutate: async (gprId) => {
-//       await queryClient.cancelQueries({ queryKey: ["projectProposals"] });
-//       const previousProposals = queryClient.getQueryData<ProjectProposal[]>(["projectProposals"]);
-//       queryClient.setQueryData<ProjectProposal[]>(["projectProposals"], (old = []) =>
-//         old.filter((proposal) => proposal.gprId !== gprId)
-//       );
-//       return { previousProposals };
-//     },
-//     onError: (error: Error, gprId, context) => {
-//       if (context?.previousProposals) {
-//         queryClient.setQueryData(["projectProposals"], context.previousProposals);
-//       }
-//       toast.error("Failed to delete project proposal", {
-//         description: error.message,
-//         duration: 2000,
-//       });
-//     },
-//     onSuccess: () => {
-//       toast.success("Project proposal deleted successfully", {
-//         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-//         duration: 2000,
-//       });
-//     },
-//     onSettled: () => {
-//       queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
-//     },
-//   });
-// };
-
-// export const useDeleteSupportDocument = () => {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: (psdId: number) => deleteSupportDocument(psdId),
-//     onSuccess: (data, psdId) => {
-//       queryClient.invalidateQueries({ queryKey: ["supportDocs"] });
-//       // toast.success("Support document deleted successfully", {
-//       //   icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-//       //   duration: 2000,
-//       // });
-//     },
-//     onError: (error: Error) => {
-//       // toast.error("Failed to delete support document", {
-//       //   description: error.message,
-//       //   duration: 2000,
-//       // });
-//     },
-//   });
-// };
-
  export const useDeleteSupportDocument = () => {
   const queryClient = useQueryClient();
 
@@ -182,7 +127,7 @@ export const usePermanentDeleteProjectProposal = () => {
     mutationFn: async ({ gprId, psdId }: { gprId: number; psdId: number }) => {
       return deleteSupportDocument(gprId, psdId);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
       toast.success("Support document deleted successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -205,7 +150,7 @@ export const useArchiveSupportDocument = () => {
     mutationFn: async ({ gprId, psdId }: { gprId: number; psdId: number }) => {
       return archiveSupportDocument(gprId, psdId);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
       toast.success("Support document archived successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -228,7 +173,7 @@ export const useRestoreSupportDocument = () => {
     mutationFn: async ({ gprId, psdId }: { gprId: number; psdId: number }) => {
       return restoreSupportDocument(gprId, psdId);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
       toast.success("Support document restored successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,

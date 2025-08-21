@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from ..serializers.resident_profile_serializers import *
 from django.db.models import Prefetch, Q
@@ -7,6 +8,7 @@ from apps.pagination import *
 from apps.account.models import *
 
 class ResidentProfileTableView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentProfileTableSerializer
     pagination_class = StandardResultsPagination
 
@@ -36,6 +38,7 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
           'per__per_fname',
           'per__per_mname',
           'per__per_sex',
+          'per__per_suffix',
           'per__per_dob'
         )
 
@@ -54,7 +57,9 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
                     name_q &= (
                         Q(per__per_lname__icontains=part) |
                         Q(per__per_fname__icontains=part) |
-                        Q(per__per_mname__icontains=part)
+                        Q(per__per_mname__icontains=part) |
+                        Q(per__per_suffix__icontains=part) 
+
                     )
                 
                 queryset = queryset.filter(
@@ -65,15 +70,18 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
         return queryset.order_by('rp_id')
     
 class ResidentPersonalCreateView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentPersonalCreateSerializer
     queryset = ResidentProfile.objects.all()
 
 class ResidentPersonalInfoView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentPersonalInfoSerializer
     queryset=ResidentProfile.objects.all()
     lookup_field='rp_id'
 
 class ResidentProfileListWithOptions(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentProfileListSerializer
     
     def get_queryset(self):
@@ -116,6 +124,7 @@ class ResidentProfileFamSpecificListView(generics.ListAPIView):
 
 # For verification in link registration
 class LinkRegVerificationView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
         rp_id = request.data.get('rp_id', None)
         personal_info = request.data.get('personal_info', None)

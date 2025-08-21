@@ -15,7 +15,6 @@ function GADBudgetTrackerMain() {
     data: years = [], 
     isLoading, 
     isError, 
-    refetch 
   } = useGetGADYearBudgets();
   
   // Filter years based on search query

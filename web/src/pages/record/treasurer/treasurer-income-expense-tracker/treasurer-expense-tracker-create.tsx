@@ -256,7 +256,6 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -267,8 +266,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { MediaUpload } from "@/components/ui/media-upload";
-import { SetStateAction } from "react";
-import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useBudgetItems } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useCreateIncomeExpense } from "./queries/treasurerIncomeExpenseAddQueries";
 import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 
@@ -419,7 +417,11 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
                 message: `Date must be in the year ${years}`
             });
             return; 
-        }        
+        }
+        
+        if(!values.iet_additional_notes){
+            values.iet_additional_notes = "None";
+        }
 
         if(amount && actualAmount){
             totalBudget = totBUDGET - actualAmount;

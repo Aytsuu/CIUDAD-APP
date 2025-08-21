@@ -38,15 +38,32 @@ export default function DropdownLayout({
 }: DropdownProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const handleItemSelect = (optionId: string) => {
+    // Close dropdown first, then handle the action
+    setDropdownOpen(false);
+    
+    // Use setTimeout to ensure dropdown closes before handling action
+    setTimeout(() => {
+      if (onSelect) {
+        onSelect(optionId);
+      }
+    }, 0);  
+  };
+
   const handleDeleteAction = (optionId: string) => {
-    if (onSelect) {
-      onSelect(optionId);
-    }
+    // For delete actions, we want to keep dropdown closed
+    setDropdownOpen(false);
+    
+    setTimeout(() => {
+      if (onSelect) {
+        onSelect(optionId);
+      }
+    }, 0);
   };
 
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-      <DropdownMenuTrigger asChild className={cn("border-white focus:outline-none", className)}>
+      <DropdownMenuTrigger asChild className={cn("focus:outline-none", className)}>
         {trigger}
       </DropdownMenuTrigger>
       <DropdownMenuContent className={cn("", contentClassName)}>
@@ -59,6 +76,7 @@ export default function DropdownLayout({
                   className={cn("cursor-pointer flex items-center gap-x-2", variant[option.variant ?? ""])}
                   onSelect={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                   }}
                 >
                   {option.icon}
@@ -69,16 +87,16 @@ export default function DropdownLayout({
               description="Are you sure you want to remove this staff?"
               actionLabel="Confirm"
               variant="destructive"
-              onClick={() => {
-                setDropdownOpen(false);
-                handleDeleteAction(option.id);
-              }}
+              onClick={() => handleDeleteAction(option.id)}
             />
           ) : (
             <DropdownMenuItem
               className={cn("cursor-pointer flex items-center gap-x-2", variant[option.variant ?? ""])}
               key={option.id || index}
-              onSelect={() => option.id && onSelect && onSelect(option.id)}
+              onSelect={(e) => {
+                e.preventDefault();
+                handleItemSelect(option.id);
+              }}
             >
               {option.icon}
               {option.name}

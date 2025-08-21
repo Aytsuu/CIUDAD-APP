@@ -1,11 +1,14 @@
 
-import NonPHMedicalForm from "@/pages/Doctor/MedicalConNoPH";
+// import PendingDisplayMedicalConsultation from "@/pages/healthServices/doctor/medical-con/medcon-form";
+// import SoapForm from "@/pages/healthServices/doctor/medical-con/soap-form";
 
+import MedicalConsultationFlow from "@/pages/healthServices/doctor/medical-con/multi-step-form/Main";
 export const doctorRouting = [
-  // 
-  {
-    path: "/mainMedicalForm",
-    element : <NonPHMedicalForm/>
-  }
-  
+
+
+{
+  path:"/medical-consultation-flow",
+  element:<MedicalConsultationFlow/>
+}
+
 ];

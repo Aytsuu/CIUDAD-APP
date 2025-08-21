@@ -20,26 +20,30 @@
 # # ========================
 # SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
 
-# # DEBUG = config('DEBUG', default=False, cast=bool)
-# DEBUG=False
+# DEBUG = config('DEBUG', default=True, cast=bool)
+# # DEBUG=False
 
 # # ========================
 # # SUPABASE CONFIGURATION
 # # ========================
 # SUPABASE_CONFIG = {
-#     'SUPABASE_URL': config('SUPABASE_URL'),
-#     'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY'),
-#     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY'),
-#     'JWT_SECRET': config('SUPABASE_JWT_SECRET'),
-#     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID'),
+#     'SUPABASE_URL': config('SUPABASE_URL', default='http://localhost:54321'),
+#     'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY', default='anon-dev-key'),
+#     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY', default='service-role-dev-key'),
+#     'JWT_SECRET': config('SUPABASE_JWT_SECRET', default='dev-jwt-secret'),
+#     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID', default='local-dev-project'),
 #     'JWT_ALGORITHM': 'HS256',
 #     'JWT_AUDIENCE': 'authenticated',
 # }
 
-# SUPABASE_URL = config('SUPABASE_URL')
-# SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY')
-# SUPABASE_KEY = config('SUPABASE_ANON_KEY')
-# SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET')
+# SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
+# SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+# SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+# SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
+# SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
+# SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+# SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+# SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 
 # # ========================
 # # FIREBASE CONFIGURATION
@@ -82,6 +86,7 @@
 #     'apps.gad',
 #     'apps.clerk',
 #     'backend.firebase.notifications',
+#     'apps.act_log',
 # ]
 
 # MIDDLEWARE = [
@@ -130,8 +135,8 @@
 # EMAIL_HOST = 'smtp.gmail.com'
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-# EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+# EMAIL_HOST_USER = config("EMAIL_HOST_USER", default='my_default_email')
+# EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default='my_default_password')
 # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # # ========================
@@ -144,11 +149,11 @@
 #             'connect_timeout': 5,
 #             'sslmode': 'require',
 #         },
-#         'NAME': config('DB_NAME'),
-#         'USER': config('DB_USER'),
-#         'PASSWORD': config('DB_PASSWORD'),
-#         'HOST': config('DB_HOST'),
-#         'PORT': config('DB_PORT')
+#         'NAME': config('DB_NAME', default='my_default_db'),
+#         'USER': config('DB_USER', default='my_default_user'),
+#         'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
+#         'HOST': config('DB_HOST', default='localhost'),
+#         'PORT': config('DB_PORT', default='5432'),
 #     }
 # }
 
@@ -172,9 +177,10 @@
 # # INTERNATIONALIZATION
 # # ========================
 # LANGUAGE_CODE = 'en-us'
-# TIME_ZONE = 'UTC'
+# TIME_ZONE = 'Asia/Manila'
 # USE_I18N = True
-# USE_TZ = True
+# USE_L10N = True
+# USE_TZ = True 
 
 # # ========================
 # # STATIC FILES
@@ -214,12 +220,12 @@
 # CORS_ALLOWED_ORIGINS = [
 #     "http://localhost:3000",
 #     "http://localhost:5173",
-#     "https://ciudad-app.onrender.com",
+#     "https://ciudad-app-server-1.onrender.com",
 #     "http://127.0.0.1:5173",  # Add this for Vite sometimes
 # ]
 
 # ALLOWED_HOSTS = [
-#     'ciudad-app.onrender.com',
+#     'ciudad-app-server-1.onrender.com',
 #     'localhost',
 #     '127.0.0.1'
 # ]
@@ -293,6 +299,10 @@
 # SCHEDULER_AUTOSTART = True
 # # SCHEDULER_AUTOSTART = not DEBUG # for production
 
+# # ========================
+# # PAYMONGO
+# # ========================
+# PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 
 
 
@@ -323,29 +333,24 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-f
 
 # DEBUG = config('DEBUG', default=False, cast=bool)
 DEBUG=True
-# ALLOWED_HOSTS = config(
-#     'ALLOWED_HOSTS',
-#     default='localhost,127.0.0.1',
-#     cast=lambda v: [s.strip() for s in v.split(',')]
-# )
 
 # ========================
 # SUPABASE CONFIGURATION
 # ========================
 SUPABASE_CONFIG = {
-    'SUPABASE_URL': config('SUPABASE_URL'),
-    'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY'),
-    'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY'),
-    'JWT_SECRET': config('SUPABASE_JWT_SECRET'),
-    'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID'),
+    'SUPABASE_URL': config('SUPABASE_URL', default='http://localhost:54321'),
+    'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY', default='anon-dev-key'),
+    'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY', default='service-role-dev-key'),
+    'JWT_SECRET': config('SUPABASE_JWT_SECRET', default='dev-jwt-secret'),
+    'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID', default='local-dev-project'),
     'JWT_ALGORITHM': 'HS256',
     'JWT_AUDIENCE': 'authenticated',
 }
 
-SUPABASE_URL = config('SUPABASE_URL')
-SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY')
-SUPABASE_KEY = config('SUPABASE_ANON_KEY')
-SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET')
+SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
+SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 
 # ========================
 # FIREBASE CONFIGURATION
@@ -390,6 +395,7 @@ INSTALLED_APPS = [
     'apps.gad',
     'apps.clerk',
     'backend.firebase.notifications',
+    'apps.act_log',
     
 ]
 
@@ -448,8 +454,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default='my_default_email')
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default='my_default_password')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # ========================
@@ -464,11 +470,11 @@ SEMAPHORE_API_KEY = config('SEMAPHORE_API_KEY', default=None)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT')
+        'NAME': config('DB_NAME', default='my_default_db'),
+        'USER': config('DB_USER', default='my_default_user'),
+        'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
     }
 }
 
@@ -608,3 +614,10 @@ CACHES = {
         "LOCATION": "unique-snowflake",  
     }
 }
+
+
+
+# ========================
+# PAYMONGO
+# ========================
+PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')

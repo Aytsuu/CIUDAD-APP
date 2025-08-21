@@ -2,14 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { AuthProvider } from "./context/AuthContext";
 import { AnimatePresence } from "framer-motion";
-
 import { main_router } from "./routers/main-router";
 import { landing_router } from "./routers/landing-router";
 import { LoadingProvider } from "./context/LoadingContext";
 import { LinearLoader } from "./components/ui/linear-loader";
-
 import { NotFound } from "./not-found";
-
 import { NotificationProvider } from "./context/NotificationContext";
 
 const router = createBrowserRouter([
@@ -34,7 +31,7 @@ function App() {
         </NotificationProvider>
       </AuthProvider>
     </QueryClientProvider>
-  );
+  )
 }
 
 export default App;

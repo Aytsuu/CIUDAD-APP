@@ -13,15 +13,15 @@ import { CircleAlert, CircleCheck, Plus, Users, Trash2, Badge as Position } from
 import { useLocation } from "react-router"
 import { useAuth } from "@/context/AuthContext"
 import { useAddPositionBulk } from "./queries/administrationAddQueries"
-import { useAddPositionBulkHealth } from "../health/administration/queries/administrationAddQueries"
-import { renderActionButton } from "./administrationActionConfig"
+import { renderActionButton } from "./AdministrationActionConfig"
 import type { z } from "zod"
 import { Button } from "@/components/ui/button/button"
+import { capitalizeAllFields } from "@/helpers/capitalize"
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 
 export default function GroupPositionForm() {
   const { user } = useAuth()
   const { mutateAsync: addPositionBulk } = useAddPositionBulk()
-  const { mutateAsync: addPositionBulkHealth } = useAddPositionBulkHealth()
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [positions, setPositions] = React.useState<Record<string, any>[]>([])
   const location = useLocation()
@@ -80,9 +80,7 @@ export default function GroupPositionForm() {
     const duplicate = positions.some((pos: any) => pos.pos_title.toLowerCase() === values.pos_title.toLowerCase())
 
     if (duplicate) {
-      toast("Position has already been added.", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      })
+      showErrorToast("Position has already been added.")
       return
     }
 
@@ -97,41 +95,36 @@ export default function GroupPositionForm() {
     const formIsValid = await form.trigger("pos_group")
 
     if (!formIsValid) {
-      toast("Please fill out all required fields", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      })
+      showErrorToast("Please fill out all required fields")
       setIsSubmitting(false)
       return
     }
 
     if (positions.length === 0) {
-      toast("Please add at least one (1) position", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      })
+      showSuccessToast("Please add at least one (1) position")
       setIsSubmitting(false)
       return
     }
 
     const values = form.getValues()
-    const data = positions.map((pos: any) => ({
-      ...pos,
-      pos_group: values.pos_group.toUpperCase(),
+    const data = positions.map((pos: any) => capitalizeAllFields({
+      pos_title: pos.pos_title,
+      pos_max: parseInt(pos.pos_max),
+      pos_group: values.pos_group,
+      pos_category: user?.staff?.staff_type == "Barangay Staff" ? "Barangay Position" : "Health Position",
       staff: user?.staff?.staff_id,
     }))
 
     try {
+      console.log('Sending bulk position data:', data);
 
+      // Add positions (API handles dual database insertion)
       await addPositionBulk(data)
-      await addPositionBulkHealth(data)
-      
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      })
+      form.reset()
+      showSuccessToast("Group position added successfully")
       setIsSubmitting(false)
     } catch (error) {
-      toast("Failed to create group position", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      })
+      showErrorToast("Failed to create group position")
       setIsSubmitting(false)
     }
   }

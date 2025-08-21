@@ -10,8 +10,12 @@ from .views.request_registration_views import *
 from .views.business_views import *
 from .views.analytics_views import *
 from .views.kyc_views import *
+from .views.all_record_views import *
 
 urlpatterns = [
+    # All record (combined record of resident and business respondents)
+    path("all/", AllRecordTableView.as_view(), name="all-record"),
+
     # Sitio Urls
     path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
 
@@ -42,7 +46,7 @@ urlpatterns = [
     # Househould Urls
     path("household/list/", HouseholdListView.as_view(), name="household-list"),
     path("household/list/table/", HouseholdTableView.as_view(), name="household-table"),
-    path("household/<str:hh_id>/data/", HouseholdListView.as_view(), name="household-details"),
+    path("household/<str:hh_id>/data/", HouseholdDataView.as_view(), name="household-details"),
     path("household/create/", HouseholdCreateView.as_view(), name="create-household"),
     path("household/update/<str:hh_id>/", HouseholdUpdateView.as_view(), name="upadate-household"),
 
@@ -73,6 +77,11 @@ urlpatterns = [
     path("business/specific/ownership/", SpecificOwnerView.as_view(), name="business-for-specific-owner"),
     path("business/file/create/", BusinessFileCreateView.as_view(), name="business-file-create"),
     path("business/verify/account-creation/", VerifyBusinessRespondent.as_view(), name="respondent-account-creation"),
+    path("business/modification/create/", BusinessModificationCreateView.as_view(), name='modify-business'),
+    path("business/modification/delete/", BusinessModificationDeleteView.as_view(), name='modification-request-result'),
+    path("business/modification/<int:bm_id>/result/", BusinessModificationUpdateView.as_view(), name='update-modification'),
+    path("business/modification/request-list/", BusinessModificationListView.as_view(), name="request-list"),
+    path("business/history/", BusinessHistoryView.as_view(), name="business-history"),
     
     # Analytics Urls,
     path("card/analytics/data/", CardAnalyticsView.as_view(), name='card-analytics'),

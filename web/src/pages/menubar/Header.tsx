@@ -1,4 +1,4 @@
-import sanRoqueLogo  from "@/assets/images/sanRoqueLogo.svg"
+import ciudadLogo from "@/assets/images/ciudad_logo.svg"
 import AccountProfile from "./navItems/user/accountProfile";
 import { NotificationBell } from "./navItems/notification/notification_bell";
 
@@ -7,15 +7,13 @@ export function Header() {
     <>
       <header className="w-full h-14 bg-white text-[#263D67] flex items-center justify-between px-6 drop-shadow-md">
         <div className="flex items-center space-x-4 text-lg font-semibold cursor-pointer">
-          <div className="h-[30px] w-[30px] rounded-full">
-            <img
-              src={sanRoqueLogo}
-              alt="Barangay Logo"
-              className="rounded-full"
-            />
-          </div>
-          <p>CIUDAD</p>
+          <img
+            src={ciudadLogo}
+            alt="Barangay Logo"
+            className="w-[70px]"
+          />
         </div>
+        
 
         <div className="flex items-center space-x-4">
           <NotificationBell />

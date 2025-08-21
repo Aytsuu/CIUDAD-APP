@@ -1,50 +1,46 @@
-import React from "react";
+import { useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, FileInput } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import MedicineModal from "../addListModal/MedicineModal";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getMedicines } from "../requests/get/getMedicines";
-import { handleDeleteMedicineList } from "../requests/delete/DeleteMedicine";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+// import { useQueryClient } from "@tanstack/react-query";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { MedicineRecords } from "../tables/columns/MedicineCol";
 import { Medcolumns } from "../tables/columns/MedicineCol";
-
+import { useMedicines } from "../queries/medicine/MedicineFetchQueries";
+import { Link } from "react-router";
+import { useDeleteMedicine } from "../queries/medicine/MedicineDeleteQueries";
 export default function MedicineList() {
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [pageSize, setPageSize] = React.useState(10);
-  const [currentPage, setCurrentPage] = React.useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    React.useState(false);
-  const [medToDelete, setMedToDelete] = React.useState<number | null>(null);
-  const [isDialog, setIsDialog] = React.useState(false);
-  const queryClient = useQueryClient();
+    useState(false);
+  const [medToDelete, setMedToDelete] = useState<string | null>(null);
+  // const [isDialog, setIsDialog] = useState(false);
+  // const queryClient = useQueryClient();
+  const columns = Medcolumns(
+    setMedToDelete,
+    setIsDeleteConfirmationOpen
+  );
+  // 
+  const { data: medicines, isLoading: isLoadingMedicines } = useMedicines();
 
-  // Pass the necessary functions to Medcolumns
-  const columns = Medcolumns(setIsDialog, setMedToDelete, setIsDeleteConfirmationOpen);
-
-  // Fetch medicines using useQuery
-  const { data: medicines, isLoading: isLoadingMedicines } = useQuery({
-    queryKey: ["medicines"],
-    queryFn: getMedicines,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  const formatMedicineData = React.useCallback((): MedicineRecords[] => {
+  const formatMedicineData = useCallback((): MedicineRecords[] => {
     if (!medicines) return [];
     return medicines.map((medicine: any) => ({
       id: medicine.med_id,
       medicineName: medicine.med_name,
+      cat_id: medicine.cat,
+      cat_name: medicine.catlist,
+      med_type: medicine.med_type || "N/A",
     }));
   }, [medicines]);
 
-  const filteredMedicines = React.useMemo(() => {
+  const filteredMedicines = useMemo(() => {
     return formatMedicineData().filter((record) =>
       Object.values(record)
         .join(" ")
@@ -53,20 +49,14 @@ export default function MedicineList() {
     );
   }, [searchQuery, formatMedicineData]);
 
-  const totalPages = Math.ceil(filteredMedicines.length / pageSize);
-  const paginatedMedicines = filteredMedicines.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const deleteMutation = useDeleteMedicine();
 
   const handleDelete = () => {
-    if (medToDelete !== null) {
-      handleDeleteMedicineList(medToDelete, () => {
-        queryClient.invalidateQueries({ queryKey: ["medicines"] });
-      });
-      setIsDeleteConfirmationOpen(false);
-      setMedToDelete(null);
-    }
+    if (medToDelete === null) return;
+    
+    deleteMutation.mutate(medToDelete);
+    setIsDeleteConfirmationOpen(false);
+    setMedToDelete(null);
   };
 
   if (isLoadingMedicines) {
@@ -79,6 +69,12 @@ export default function MedicineList() {
       </div>
     );
   }
+
+  const totalPages = Math.ceil(filteredMedicines.length / pageSize);
+  const paginatedMedicines = filteredMedicines.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <div>
@@ -97,19 +93,17 @@ export default function MedicineList() {
             />
           </div>
         </div>
-        <div className="flex gap-2">
-          <DialogLayout
-            trigger={
-              <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90">
-                <Plus size={15} /> New
-              </Button>
-            }
-            title="Add New Medicine"
-            mainContent={<MedicineModal setIsDialog={setIsDialog} />}
-            isOpen={isDialog}
-            onOpenChange={setIsDialog}
-          />
-        </div>
+        <Button>
+          <Link
+            to="/addMedicineList"
+            className="flex justify-center items-center gap-2 px-2"
+          >
+            <Plus size={15} /> New
+          </Link>
+        </Button>
+        
+
+       
       </div>
 
       <div className="bg-white rounded-md">

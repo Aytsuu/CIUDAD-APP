@@ -385,7 +385,6 @@ import { useIncomeData, type Income } from "./queries/treasurerIncomeExpenseFetc
 import { useDeleteIncome, useArchiveOrRestoreIncome } from "./queries/treasurerIncomeExpenseDeleteQueries";
 import { Link } from "react-router-dom";
 import { NavLink } from "react-router-dom";
-import { useParams } from 'react-router-dom';
 import { useLocation } from "react-router-dom";
 import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 
@@ -521,8 +520,14 @@ function IncomeTracking() {
                     <ArrowUpDown size={14}/>
                 </div>
             ),
-            cell: ({row}) => (
-                <div className="text-center">{new Date(row.getValue("inc_datetime")).toLocaleString()}</div>
+            cell: ({ row }) => (
+                <div className="text-center">
+                    {new Date(row.getValue("inc_datetime")).toLocaleString("en-US", {
+                        timeZone: "UTC",
+                        dateStyle: "medium",
+                        timeStyle: "short"
+                    })}
+                </div>
             )
         },
         { 

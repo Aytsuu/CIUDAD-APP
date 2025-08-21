@@ -48,7 +48,7 @@ export default function LivingSoloForm({
               emptyMessage={
                 <div className="flex gap-2 justify-center items-center">
                   <Label className="font-normal text-[13px]">No resident found.</Label>
-                  <Link to="/resident/form">
+                  <Link to="/profiling/resident/form">
                     <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
                       Register
                     </Label>
@@ -68,7 +68,7 @@ export default function LivingSoloForm({
           <Combobox
             options={households}
             value={form.watch("householdNo")}
-            onChange={(value) => form.setValue("householdNo", value)}
+            onChange={(value) => form.setValue("householdNo", value as string)}
             placeholder="Select a household"
             triggerClassName="font-normal"
             emptyMessage={
@@ -89,7 +89,7 @@ export default function LivingSoloForm({
         <FormSelect
           control={form.control}
           name="building"
-          label="Building"
+          label="Household Occupancy"
           options={[
             { id: "owner", name: "Owner" },
             { id: "renter", name: "Renter" },

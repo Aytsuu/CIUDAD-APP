@@ -175,18 +175,15 @@
 
 
 import { Input } from "@/components/ui/input";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
-import { Combobox } from "@/components/ui/combobox";
-import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpenseFetchQueries";
-import { useIncomeParticular, type IncomeParticular } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useState } from "react";
+import { MediaUploadType } from "@/components/ui/media-upload";
+import { useIncomeParticular } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useCreateIncome } from "./queries/treasurerIncomeExpenseAddQueries";
 import IncomeFormSchema from "@/form-schema/treasurer/income-tracker-schema";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
@@ -202,8 +199,8 @@ interface IncomeCreateFormProps {
 }
 
 function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
-    const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
-    const [activeVideoId, setActiveVideoId] = useState<string>("");
+    const [_mediaFiles, _setMediaFiles] = useState<MediaUploadType>([]);
+    const [_activeVideoId, _setActiveVideoId] = useState<string>("");
     const inputcss = "mt-[12px] w-full p-1.5 shadow-sm sm:text-sm";
     const inputCss = "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
     
@@ -244,8 +241,8 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
 
         console.log("YEAR NUMBERRRR: ", typeof inputYear)
 
-        let totIncome = Number(totInc);
-        let inc_amount = Number(values.inc_amount)
+        const totIncome = Number(totInc);
+        const inc_amount = Number(values.inc_amount)
 
         totalIncome = totIncome + inc_amount;
 
@@ -255,6 +252,10 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
                 message: `Date must be in the year ${year}`
             });
             return; 
+        }
+
+        if(!values.inc_additional_notes){
+            values.inc_additional_notes = "None";
         }
         
         const AllValues = {

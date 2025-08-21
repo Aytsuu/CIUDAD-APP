@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
 import { archiveBudgetEntry, restoreBudgetEntry, permanentDeleteBudgetEntry } from "../request/delete";
-import type { GADBudgetEntry } from "../request/get";
 
 export const useArchiveGADBudget = () => {
     const queryClient = useQueryClient();

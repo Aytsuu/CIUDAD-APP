@@ -3,10 +3,6 @@ import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import HealthInfoForm from "./HealthInfoForm";
 import { familyFormSchema } from "@/form-schema/family-form-schema";
-import { DependentRecord } from "../../profilingTypes";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import { CircleAlert } from "lucide-react";
 
 export default function HealthInfoLayout({
   form,

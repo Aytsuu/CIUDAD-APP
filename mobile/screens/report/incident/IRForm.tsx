@@ -10,14 +10,14 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { Button } from "@/components/ui/button"
-import MediaPicker from "@/components/ui/media-picker"
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker"
 import { useGetSitio } from "@/screens/_global_queries/Retrieve"
 import { formatSitio } from "@/helpers/formatSitio"
 import { Input } from "@/components/ui/input"
 import { useAddIncidentReport } from "../queries/reportAdd"
 import { useGetReportType } from "../queries/reportFetch"
 import { formatReportType } from "@/helpers/formatReportType"
-import { capitalizeAllFields } from "@/helpers/capitalize"
+import { capitalize, capitalizeAllFields } from "@/helpers/capitalize"
 import { useRouter } from "expo-router"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { X } from "@/lib/icons/X"
@@ -33,7 +33,7 @@ export default function IRForm() {
   const defaultValues = generateDefaultValues(IncidentReportSchema)
   
   // Form state
-  const [selectedImage, setSelectedImage] = React.useState<Record<string, any>>({})
+  const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
   const [addReportType, setAddReportType] = React.useState<string>('')
   const [isOtherType, setIsOtherType] = React.useState<boolean>(false)
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
@@ -64,10 +64,10 @@ export default function IRForm() {
 
   // Clear media error when image is selected
   React.useEffect(() => {
-    if (selectedImage && Object.keys(selectedImage).length > 0) {
+    if (selectedImages.length > 0) {
       setFormErrors(prev => ({ ...prev, media: '' }))
     }
-  }, [selectedImage])
+  }, [selectedImages])
 
   const validateForm = async () => {
     const errors: Record<string, string> = {}
@@ -81,7 +81,7 @@ export default function IRForm() {
     ])
 
     // Validate media
-    if (!selectedImage || Object.keys(selectedImage).length === 0) {
+    if (selectedImages.length === 0) {
       errors.media = "Please attach an image to support your report"
     }
 
@@ -95,36 +95,40 @@ export default function IRForm() {
   }
 
   const submit = async () => {
-    setIsSubmitting(true)
+    const isFormValid = await validateForm()
+
+    if (!isFormValid) {
+      return
+    }
     
     try {
-      const isFormValid = await validateForm()
-      
-      if (!isFormValid) {
-        setIsSubmitting(false)
-        return
-      }
-
+      setIsSubmitting(true)
       const values = getValues()
-      
-      addIncidentReport(capitalizeAllFields({
-        ...values,
-        'ir_other_type': addReportType,
-        'rp': user?.staff?.staff_id,
-      }))
 
+      const files = selectedImages.map((media: any) => ({
+        name: media.name,
+        type: media.type,
+        file: media.file
+      }))
       
-    } catch (error) {
-      console.error('Submission error:', error)
-    } finally {
+      await addIncidentReport({
+        ...capitalizeAllFields(values),
+        'ir_other_type': capitalize(addReportType),
+        'rp': user?.staff?.staff_id,
+        'files': files
+      })
+
       setIsSubmitting(false)
+    } catch (error) {
+      setIsSubmitting(false)
+      console.error('Submission error:', error)
     }
   }
 
   const handleGoBack = () => {
     const hasUnsavedChanges = Object.values(getValues()).some(value => 
       value !== '' && value !== undefined && value !== null
-    ) || Object.keys(selectedImage).length > 0
+    ) || selectedImages.length > 0
 
     if (hasUnsavedChanges) {
       Alert.alert(
@@ -186,14 +190,7 @@ export default function IRForm() {
         </TouchableOpacity>
       }
       headerBetweenAction={<Text className="text-[13px]">Incident Report</Text>}
-      customRightAction={
-        <TouchableOpacity
-          onPress={() => router.replace("/(tabs)")}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <X size={20} className="text-gray-700" />
-        </TouchableOpacity>
-      }
+      customRightAction={<View className="w-10 h-10"/>}
     >
       <View className="flex-1 px-5 py-4">
         <View>
@@ -257,8 +254,8 @@ export default function IRForm() {
                   Please attach a photo to support your report
                 </Text>
                 <MediaPicker
-                  selectedImage={selectedImage}
-                  setSelectedImage={setSelectedImage}
+                  selectedImages={selectedImages}
+                  setSelectedImages={setSelectedImages}
                 />
                 {formErrors.media && (
                   <View className="flex-row items-center mt-2">

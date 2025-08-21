@@ -18,7 +18,7 @@ import { Card } from "@/components/ui/card/card"
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 
 function MinutesOfMeetingPage() {
-  const [filter, setFilter] = useState<string>("all")
+  const [filter, _setFilter] = useState<string>("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingRowId, setEditingRowId] = useState<number | null>(null)
   const { data: momRecords = [], isLoading } = useGetMinutesOfMeetingRecords()

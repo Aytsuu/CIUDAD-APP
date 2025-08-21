@@ -1,5 +1,4 @@
 import {api} from "@/api/api";
-import { formatDate } from '@/helpers/dateFormatter';
 import { parseFloatSafe } from '@/helpers/floatformatter';
 import { capitalize } from "@/helpers/capitalize";
 
@@ -8,7 +7,7 @@ export const updateIncomeExpense = async (iet_num: number, incomeExpenseInfo: Re
 
     try{
 
-        let entry = incomeExpenseInfo.iet_entryType == "0" ? "Income" : "Expense";
+        // const entry = incomeExpenseInfo.iet_entryType == "0" ? "Income" : "Expense";
 
 
         const res = await api.put(`treasurer/update-income-expense-tracking/${iet_num}/`,{

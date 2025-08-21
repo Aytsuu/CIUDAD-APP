@@ -1,5 +1,5 @@
 import React from "react"
-import { ScrollView, TouchableOpacity, View, Text } from "react-native"
+import { TouchableOpacity, View, Text, ActivityIndicator, FlatList, RefreshControl } from "react-native"
 import PageLayout from "../_PageLayout"
 import { router } from "expo-router"
 import { Building } from "@/lib/icons/Building"
@@ -8,20 +8,82 @@ import { ChevronRight } from "@/lib/icons/ChevronRight"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { Button } from "@/components/ui/button"
 import { FileText } from "@/lib/icons/FileText"
-
+import { useModificationRequests, useOwnedBusinesses } from "./queries/businessGetQueries"
+import { useAuth } from "@/contexts/AuthContext"
+import { MapPin } from "@/lib/icons/MapPin"
+import { FeedbackScreen } from "@/components/ui/feedback-screen"
 
 export default () => {
-  // Replace with your actual state management
-  const [businesses, setBusinesses] = React.useState([])
-  const hasBusinesses = businesses.length > 0
+  // ---------------- STATE INITIALIZATION -------------------
+  const { user } = useAuth();
+  const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
+  const [selectedBusiness, setSelectedBusiness] = React.useState<Record<string, any> | null>(null);
+  const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
+  const [status, setStatus] = React.useState<"success" | "failure" | "waiting" | "message">('success');
+  const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests();
+  const { data: ownedBusinesses, isLoading: isLoadingBusinesses, refetch } = useOwnedBusinesses({
+    br: 5
+  })
+
+
+  const businessList = ownedBusinesses?.results || []
+  const hasBusinesses = (ownedBusinesses?.count || 0) > 0
+
+  // ---------------- SIDE EFFECTS -------------------  
+
+  // ---------------- HANDLERS -------------------  
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  }
 
   const handleAddBusiness = () => {
-
+    router.push('/(business)/add-business')
   }
 
-  const handleBusinessPress = (businessId: number) => {
-
+  const handleBusinessPress = (business: Record<string, any>) => {
+    if(business.bus_status === 'Pending'){
+      setStatus('waiting');
+      setShowFeedback(true);
+    }
+    setSelectedBusiness(business);
   }
+
+  // ---------------- RENDER -------------------
+  const feedbackContents: any = {
+    waiting: {
+      title: (
+        <View className="flex">
+          <Text className={`text-[18px] text-gray-800 font-PoppinsSemiBold text-center`}>
+            Awaiting Verification
+          </Text>
+          <Text className={`text-[15px] text-gray-800 font-PoppinsRegular text-center`}>
+            Your request is still under review
+          </Text>
+          <Text className={`text-[15px] text-gray-800 font-PoppinsRegular text-center`}>
+            please wait patiently...
+          </Text>
+        </View>
+      ),
+      content: (
+        <View className="flex-1 justify-end">
+          <Text className={`text-sm text-gray-800 text-center`}>
+            Processing period takes 2-3 business days.
+          </Text>
+        </View>
+      )
+    }
+  }
+  
+  const LoadingScreen = () => (
+    <View className="flex-1 items-center justify-center px-6">
+      <ActivityIndicator size="large" color="#3B82F6" />
+      <Text className="text-gray-600 text-base mt-4 text-center">
+        Loading your businesses...
+      </Text>
+    </View>
+  )
 
   const EmptyState = () => (
     <View className="flex-1 items-center justify-center px-6 py-12">
@@ -59,79 +121,109 @@ export default () => {
     </View>
   )
 
-  const BusinessCard = ({ business } : { business: Record<string, any>}) => (
+  const RenderDataCard = React.memo(({ business, index } : { business: Record<string, any>, index: number}) => (
     <TouchableOpacity
-      onPress={() => handleBusinessPress(business.id)}
-      className="bg-white rounded-xl p-4 mb-3 border border-gray-100 shadow-sm"
+      key={index}
+      onPress={() => router.push({
+        pathname: '/(business)/details',
+        params: {
+          business: JSON.stringify(business)
+        }
+      })}
+      className="bg-white p-5 border-b border-gray-100"
     >
-      <View className="flex-row items-center justify-between">
-        <View className="flex-1">
-          <View className="flex-row items-center mb-2">
-            <View className="w-10 h-10 rounded-lg bg-blue-50 items-center justify-center mr-3">
-              <Building size={20} className="text-blue-500" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-gray-900 font-semibold text-base">
-                {business.name}
-              </Text>
-              <Text className="text-gray-500 text-sm">
-                {business.type}
-              </Text>
-            </View>
-          </View>
-          
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center">
-              <View className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-              <Text className="text-gray-600 text-sm">
-                {business.status}
-              </Text>
-            </View>
-            <Text className="text-gray-900 font-medium text-sm">
-              {business.revenue}
+      <View className="flex-1 justify-between">
+        <View className="flex-row items-center mb-2">
+          <View className="flex-1">
+            <Text className="text-gray-800 font-PoppinsMedium text-xs">
+              # {business.bus_id}
+            </Text>
+            <Text className="text-gray-900 font-PoppinsMedium text-xl">
+              {business.bus_name}
             </Text>
           </View>
+          <View className="w-10 h-10 rounded-lg bg-blue-50 items-center justify-center mr-3">
+            
+          </View>
         </View>
-        
-        <ChevronRight size={20} className="text-gray-400 ml-3" />
+        <View className="flex-row items-end justify-between">
+          <View className="flex-1">
+            <Text className="text-sm text-gray-600">Gross Sales: ₱ {business.bus_gross_sales?.toLocaleString() || '0'}</Text>
+            <View className="flex-row items-center gap-1">
+              <MapPin size={16} className="text-gray-500"/>
+              <Text className="text-sm text-gray-600">{business.bus_street}, Sitio {business.sitio}</Text>
+            </View>
+          </View>
+          <ChevronRight size={20} className="text-gray-500"/>
+        </View>
       </View>
     </TouchableOpacity>
-  )
+  ))
 
   const BusinessList = () => (
     <View className="flex-1">
-      <View className="px-5">
-        <Text className="text-gray-900 font-semibold text-lg mb-1">
-          Your Businesses
-        </Text>
-        <Text className="text-gray-500 text-sm">
-          Manage and track your business records
-        </Text>
-      </View>
-      
-      <View className="px-5">
-        {businesses.map((business, index) => (
-          <BusinessCard key={index} business={business} />
-        ))}
+      <View className="flex-1 border-t border-gray-100">
+        <FlatList
+          maxToRenderPerBatch={1}
+          overScrollMode="never"
+          data={businessList}
+          renderItem={({item, index}) => <RenderDataCard business={item} index={index} />}
+          keyExtractor={(item) => item.bus_id}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={['#00a8f0']}
+            />
+          }
+          contentContainerStyle={{ paddingBottom: 20 }}
+          windowSize={5}
+          removeClippedSubviews={true} 
+        />
       </View>
     </View>
   )
+
+  const renderContent = () => {
+    if (isLoadingBusinesses || isLoadingRequests) {
+      return <LoadingScreen />
+    }
+
+    if(showFeedback){
+      return (
+        <FeedbackScreen 
+          status={status}
+          title={feedbackContents[status].title}
+          content={feedbackContents[status].content}
+          animationDuration={200}
+        />
+      )
+    }
+    
+    return hasBusinesses ? <BusinessList /> : <EmptyState />
+  }
 
   return (
     <PageLayout
       leftAction={
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            selectedBusiness ? setSelectedBusiness(null) : router.back()
+            showFeedback && setShowFeedback(!showFeedback)
+          }}
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
         >
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">My Business</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">{
+        selectedBusiness ? selectedBusiness.bus_name : "My Business"}
+      </Text>}
       rightAction={
-        hasBusinesses ? (
+        hasBusinesses && !isLoadingBusinesses && !selectedBusiness ? (
           <TouchableOpacity
-            onPress={() => router.push('/(business)/add-business')}
+            onPress={handleAddBusiness}
             className="w-10 h-10 rounded-full bg-primaryBlue items-center justify-center"
           >
             <Plus size={24} className="text-white" />
@@ -141,9 +233,9 @@ export default () => {
         )
       }
     >
-      <ScrollView className="flex-1">
-        {hasBusinesses ? <BusinessList /> : <EmptyState />}
-      </ScrollView>
+      <View className="flex-1">
+        {renderContent()}
+      </View>
     </PageLayout>
   )
 }

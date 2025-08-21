@@ -1,5 +1,11 @@
 from rest_framework import serializers
 from .models import *
+from apps.clerk.models import ClerkCertificate, Invoice
+from django.utils import timezone
+from django.db import transaction
+from utils.supabase_client import upload_to_storage
+from apps.profiling.serializers.business_serializers import FileInputSerializer
+
 
 class Budget_Plan_DetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,50 +28,63 @@ class BudgetPlanSerializer(serializers.ModelSerializer):
         return Budget_Plan_DetailSerializer(obj.budget_detail.all(), many=True).data
     
 
-class BudgetPlanFileSerializer(serializers.ModelSerializer):
+class BudgetPlanFileCreateSerializer(serializers.ModelSerializer):
+    files = FileInputSerializer(write_only=True, required=False, many=True)
+
     class Meta:
         model = BudgetPlan_File
         fields = '__all__'
+        extra_kwargs={
+            'bpf_upload_date': {'read_only': True},
+            'bpf_url': {'read_only': True}
+        }
+
+    @transaction.atomic
+    def create(self, validated_data):   
+        files_data = validated_data.pop('files', [])
+        if not files_data:
+            raise serializers.ValidationError({"files": "At least one file must be provided"})
+            
+        bpf_description = validated_data.pop('bpf_description', '')
+        plan_id = validated_data.pop('plan_id')
+        created_files = self._upload_files(bpf_description, files_data, plan_id)
+
+        if not created_files:
+            raise serializers.ValidationError("Failed to upload files")
+
+        return created_files[0]
+
+    def _upload_files(self, bpf_description, files_data, plan_id):
+        bpf_files = []
+        for file_data in files_data:
+            bpf_file = BudgetPlan_File(
+                bpf_name = file_data['name'],
+                bpf_type = file_data['type'],
+                bpf_path = file_data['name'],
+                bpf_description =bpf_description,
+                bpf_upload_date =timezone.now(),
+                plan_id= plan_id
+            )
+
+            url = upload_to_storage(file_data, 'image-bucket', 'uploads')
+            bpf_file.bpf_url = url
+            bpf_files.append(bpf_file)
+
+        if bpf_files:
+            return BudgetPlan_File.objects.bulk_create(bpf_files)
+        return []
     
-class BudgetPlanDetailHistorySerializer(serializers.ModelSerializer):
+
+class BudgetPlanFileViewSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Budget_Plan_Detail_History
-        fields = [
-            'bpdh_id',
-            'bpdh_budget_item',
-            'bpdh_proposed_budget',
-            'bpdh_budget_category',
-            'bpdh_is_changed',
-            'bph'
-        ]
+        model = BudgetPlan_File
+        fields='__all__'
+
 
 class BudgetPlanHistorySerializer(serializers.ModelSerializer):
-    detail_history = BudgetPlanDetailHistorySerializer(source='history', many=True, read_only = True)
-
-    class Meta:
+    class Meta: 
         model = Budget_Plan_History
-        fields = [
-            'bph_id',
-            'plan',
-            'bph_year',
-            'bph_change_date',
-            'bph_actual_income',
-            'bph_rpt_income',
-            'bph_balance',
-            'bph_tax_share',
-            'bph_tax_allotment',
-            'bph_cert_fees',
-            'bph_other_income',
-            'bph_budgetaryObligations',
-            'bph_balUnappropriated',
-            'bph_personalService_limit',
-            'bph_miscExpense_limit',
-            'bph_localDev_limit',
-            'bph_skFund_limit',
-            'bph_calamityFund_limit',
-            'detail_history',
-        ]
-
+        fields = '__all__'
 
 class Income_Folder_Serializer(serializers.ModelSerializer):
     class Meta:
@@ -74,38 +93,24 @@ class Income_Folder_Serializer(serializers.ModelSerializer):
         read_only_fields = ['inf_is_archive']
 
 class Income_ImageSerializers(serializers.ModelSerializer):
-    # file_url = serializers.CharField(source='file.file_url', read_only=True)
+    file_url = serializers.CharField(source='file.file_url', read_only=True)
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
     inf_year = serializers.CharField(source='inf_num.inf_year', read_only=True)
     inf_name = serializers.CharField(source='inf_num.inf_name', read_only=True)
     inf_desc = serializers.CharField(source='inf_num.inf_desc', read_only=True)
     class Meta:
         model = Income_Image
-        fields = ['infi_num', 'infi_upload_date', 'infi_is_archive', 'infi_type', 'infi_name', 'infi_path', 'infi_url', 'inf_num', 'staff_name', 'inf_year', 'inf_name','inf_desc']
-        extra_kwargs = {
-            'inf_num': {'required': True},
-            'infi_name': {'required': True},
-            'infi_type': {'required': True},
-            'infi_url': {'required': True},
-            'infi_path': {'required': True},
-        }
+        fields = ['infi_num', 'infi_upload_date', 'infi_is_archive', 'file_url', 'inf_num', 'staff_name', 'inf_year', 'inf_name']
 
 class Disbursement_ImageSerializers(serializers.ModelSerializer):
-    # file_url = serializers.CharField(source='file.file_url', read_only=True)
+    file_url = serializers.CharField(source='file.file_url', read_only=True)
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
     dis_year = serializers.CharField(source='dis_num.dis_year', read_only=True)
     dis_name = serializers.CharField(source='dis_num.dis_name', read_only=True)
     dis_desc = serializers.CharField(source='dis_num.dis_desc', read_only=True)
     class Meta:
         model = Disbursement_Image
-        fields = ['disf_num', 'disf_upload_date', 'disf_is_archive', 'disf_type', 'disf_name', 'disf_path', 'disf_url', 'dis_num', 'staff_name', 'dis_year', 'dis_name','dis_desc']
-        extra_kwargs = {
-            'dis_num': {'required': True},
-            'disf_name': {'required': True},
-            'disf_type': {'required': True},
-            'disf_url': {'required': True},
-            'disf_path': {'required': True},
-        }
+        fields = ['disf_num', 'disf_upload_date', 'disf_is_archive', 'file_url', 'dis_num', 'staff_name', 'dis_year', 'dis_name']
         
 class Disbursement_Folder_Serializer(serializers.ModelSerializer):
     class Meta:
@@ -142,13 +147,6 @@ class Income_Expense_FileSimpleSerializer(serializers.ModelSerializer):
 
 
 # --------- INCOME_EXPENSE
-
-# class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
-#     dtl_budget_item = serializers.CharField(source='dtl_id.dtl_budget_item', read_only=True)
-    
-#     class Meta:
-#         model = Income_Expense_Tracking
-#         fields = '__all__'
 
 class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
     exp_budget_item = serializers.CharField(source='exp_id.exp_budget_item', read_only=True)
@@ -195,24 +193,7 @@ class Purpose_And_RatesSerializers(serializers.ModelSerializer):
         fields= '__all__'
 
 
-# class InvoiceSerializers(serializers.ModelSerializer):
-#     class Meta:
-#         model = Invoice
-#         fields= '__all__'
-
-
-
-# class InvoiceSerializers(serializers.ModelSerializer):
-#     inv_payor = serializers.SerializerMethodField()  # Changed field name
-    
-#     class Meta:
-#         model = Invoice
-#         fields = '__all__'
-    
-#     def get_inv_payor(self, obj):  # Renamed method
-#         return f"{obj.cr_id.rp_id.per.per_lname}, {obj.cr_id.rp_id.per.per_fname}"
-
-
+#=============================================================================
 class InvoiceSerializers(serializers.ModelSerializer):
     inv_payor = serializers.SerializerMethodField()
     inv_pay_method = serializers.CharField(source='cr_id.req_pay_method') 
@@ -227,3 +208,133 @@ class InvoiceSerializers(serializers.ModelSerializer):
             return f"{obj.cr_id.rp_id.per.per_lname}, {obj.cr_id.rp_id.per.per_fname}"
         except:
             return "Unknown"
+
+
+# Clearance Request Serializers
+class ClearanceRequestSerializer(serializers.ModelSerializer):
+    resident_details = serializers.SerializerMethodField()
+    invoice = serializers.SerializerMethodField()
+    payment_details = serializers.SerializerMethodField()
+    req_amount = serializers.SerializerMethodField()
+    req_purpose = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ClerkCertificate
+        fields = [
+            'cr_id', 'resident_details', 'req_pay_method', 'req_request_date',
+            'req_claim_date', 'req_type', 'req_status', 'req_payment_status',
+            'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details'
+        ]
+
+    def get_resident_details(self, obj):
+        return {
+            'per_fname': obj.rp.per_fname,
+            'per_lname': obj.rp.per_lname,
+            'per_contact': obj.rp.per_contact,
+            'per_email': obj.rp.per_email
+        }
+
+    def get_invoice(self, obj):
+        try:
+            invoice = obj.clerk_invoices.first()
+            if invoice:
+                return {
+                    'inv_num': invoice.inv_num,
+                    'inv_serial_num': invoice.inv_serial_num,
+                    'inv_date': invoice.inv_date.strftime('%Y-%m-%d') if invoice.inv_date else None,
+                    'inv_amount': str(invoice.inv_amount),
+                    'inv_nat_of_collection': invoice.inv_nat_of_collection,
+                    'inv_status': invoice.inv_status
+                }
+        except:
+            pass
+        return None
+
+    def get_payment_details(self, obj):
+        # This would need to be implemented based on your payment model
+        return None
+
+    def get_req_amount(self, obj):
+        try:
+            invoice = obj.clerk_invoices.first()
+            return str(invoice.inv_amount) if invoice else "0"
+        except:
+            return "0"
+
+    def get_req_purpose(self, obj):
+        return obj.req_type
+
+
+class ClearanceRequestDetailSerializer(serializers.ModelSerializer):
+    resident_details = serializers.SerializerMethodField()
+    invoice = serializers.SerializerMethodField()
+    payment_details = serializers.SerializerMethodField()
+    req_amount = serializers.SerializerMethodField()
+    req_purpose = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ClerkCertificate
+        fields = [
+            'cr_id', 'resident_details', 'req_pay_method', 'req_request_date',
+            'req_claim_date', 'req_type', 'req_status', 'req_payment_status',
+            'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details'
+        ]
+
+    def get_resident_details(self, obj):
+        try:
+            return {
+                'per_fname': obj.rp.per.per_fname if hasattr(obj.rp, 'per') and obj.rp.per else '',
+                'per_lname': obj.rp.per.per_lname if hasattr(obj.rp, 'per') and obj.rp.per else '',
+                'per_contact': obj.rp.per.per_contact if hasattr(obj.rp, 'per') and obj.rp.per else '',
+                'per_email': ''  # Personal model doesn't have email field
+            }
+        except:
+            return {
+                'per_fname': '',
+                'per_lname': '',
+                'per_contact': '',
+                'per_email': ''
+            }
+
+    def get_invoice(self, obj):
+        try:
+            invoice = obj.clerk_invoices.first()
+            if invoice:
+                return {
+                    'inv_num': invoice.inv_num,
+                    'inv_serial_num': invoice.inv_serial_num,
+                    'inv_date': invoice.inv_date.strftime('%Y-%m-%d') if invoice.inv_date else None,
+                    'inv_amount': str(invoice.inv_amount),
+                    'inv_nat_of_collection': invoice.inv_nat_of_collection,
+                    'inv_status': invoice.inv_status
+                }
+        except:
+            pass
+        return None
+
+    def get_payment_details(self, obj):
+        # This would need to be implemented based on your payment model
+        return None
+
+    def get_req_amount(self, obj):
+        try:
+            invoice = obj.clerk_invoices.first()
+            return str(invoice.inv_amount) if invoice else "0"
+        except:
+            return "0"
+
+    def get_req_purpose(self, obj):
+        return obj.req_type
+
+
+class PaymentStatusUpdateSerializer(serializers.ModelSerializer):
+    payment_status = serializers.ChoiceField(choices=[
+        ('Paid', 'Paid'),
+        ('Unpaid', 'Unpaid'),
+        ('Partial', 'Partial'),
+        ('Overdue', 'Overdue')
+    ])
+
+    class Meta:
+        model = ClerkCertificate
+        fields = ['payment_status']

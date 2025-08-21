@@ -9,14 +9,14 @@ export const LayoutWithBack = ({
   description,
   children,
 }: {
-  title: string;
+  title: React.ReactNode;
   description: string;
   children: React.ReactNode;
 }) => {
   const navigate = useNavigate();
   const { hideLoading } = useLoading();
   return (
-    <div className="w-full">
+    <div className="w-full over">
       <div className="flex gap-2 justify-between pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           {/* Header - Stacks vertically on mobile */}
@@ -40,6 +40,7 @@ export const LayoutWithBack = ({
       </div>
 
       <hr className="border-gray mb-6 sm:mb-8" />
+      
       {children}
     </div>
   );

@@ -1,9 +1,7 @@
 from django.urls import path
 from .views import *
 
-
 urlpatterns=[
-
     # Budget Plan and Budget Details URL
     path('budget-plan/', BudgetPlanView.as_view(), name = 'treasurer-budget-plan'),
     path('budget-plan-detail/', BudgetPlanDetailView.as_view(), name='treasurer-budget-plan-details'),
@@ -14,29 +12,24 @@ urlpatterns=[
     path('budget-plan-file/<int:plan_id>/', BudgetPlanFileRetrieveView.as_view(), name = 'budget-plan-file-records'),
     path('delete-budget-plan-file/<int:bpf_id>/', DeleteBudgetPlanFile.as_view(), name = 'delete-budget-plan-file'),
     path('budget-plan-history/', BudgetPlanHistoryView.as_view(), name='budget-plan-history'),
-    path('budget-plan-detail-history/', BudgetPlanDetailHistoryView.as_view(), name= 'budget-plan-detail-history'),
-    path('budget-plan-history/<int:plan_id>/', BudgetPlanHistoryRetrieveView.as_view(), name='budget-plan-history-records'),
-    path('budget-plan-and-detail-history/<int:bph_id>/', BudgetPlanAndDetailHistoryView.as_view(), name='budget-plan-and-detail-history'),
+    path('budget-plan-history/<int:plan_id>/', BudgetPlanHistoryView.as_view(), name='budget-plan-history-record'),
     path('previous-budget-plan/', PreviousYearBudgetPlanView.as_view(), name='previous-budget-plan'),
     path('previous-budget-plan-details/', PreviousYearBudgetPlanDetailsView.as_view(), name='previous-budget-plan-details'),
 
-
-
     #Income and Disbursement URL
-    # Income Folder URLs
+        # Income Folder URLs
     path('income-tab/folders/', IncomeFolderListView.as_view()),
     path('income-tab/folders/<int:inf_num>/', IncomeFolderDetailView.as_view()),
-    path('income-tab/folders/<int:pk>/permanent-delete/', PermanentDeleteFolder.as_view()),
-    # Disbursement Folder URLs
+    path('income-tab/folders/<int:inf_num>/restore/', RestoreIncomeFolderView.as_view()),
+        # Disbursement Folder URLs
     path('disbursement-tab/folders/', DisbursementFolderListView.as_view()),
     path('disbursement-tab/folders/<int:dis_num>/', DisbursementFolderDetailView.as_view()),
-    path('disbursement-tab/folders/<int:pk>/permanent-delete/', PermanentDeleteFolder.as_view()),
-    # Image URLs (shared for both archive/delete via query params)
+    path('disbursement-tab/folders/<int:dis_num>/restore/', RestoreDisbursementFolderView.as_view()),
+        # Image URLs (shared for both archive/delete via query params)
     path('income-tab/images/', Income_ImageListView.as_view()),
     path('income-tab/images/<int:infi_num>/', Income_ImageView.as_view()),
     path('disbursement-tab/images/', Disbursement_ImageListView.as_view()),
     path('disbursement-tab/images/<int:disf_num>/', Disbursement_ImageView.as_view()),
-
     
     #EXPENSE URL
     path('income-expense-tracking/', Income_Expense_TrackingView.as_view(), name = 'treasurer-income-expense-tracking'),
@@ -47,7 +40,6 @@ urlpatterns=[
     path('update-expense-particular/<int:year>/<int:exp_id>/', UpdateExpenseParticularView.as_view(), name = 'treasurer-update-expense-particular'),
 
     path('get-particular/', GetParticularsView.as_view(), name='current-year-budget-items'),
-    path('update-budget-detail/<int:year>/<int:dtl_id>/', UpdateBudgetPlanDetailView.as_view(), name = 'treasurer-update-budget-plan-detail'),
 
     #INCOME URL
     path('income-tracking/', Income_TrackingView.as_view(), name = 'treasurer-income-tracking'),
@@ -59,7 +51,6 @@ urlpatterns=[
     #INCOME EXPENSE MAIN
     path('income-expense-main/', Income_Expense_MainView.as_view(), name='income-expense-main-card'),
     path('update-income-expense-main/<int:ie_main_year>/', UpdateIncome_Expense_MainView.as_view(), name='income-expense-file-detail'),
-
 
     #INCOME EXPENSE FILE FOLDER
     path('inc-exp-file/', Income_Expense_FileView.as_view(), name='income-expense-main-file'),
@@ -75,7 +66,12 @@ urlpatterns=[
     path('update-annual-gross-sales/<int:ags_id>/', DeleteUpdate_Annual_Gross_SalesView.as_view(), name = 'annual-gross-sales-update'),
     path('update-purpose-and-rate/<int:pr_id>/', DeleteUpdate_Purpose_And_RatesView.as_view(), name='update-purpose-and-rate'),
 
-
     #RECEIPTS
     path('invoice/', InvoiceView.as_view(), name='invoice_tracking'),
+
+    #CLEARANCE REQUESTS
+    path('clearance-request/', ClearanceRequestListView.as_view(), name='clearance-request-list'),
+    path('clearance-request/<str:cr_id>/', ClearanceRequestDetailView.as_view(), name='clearance-request-detail'),
+    path('clearance-request/<str:cr_id>/payment-status/', UpdatePaymentStatusView.as_view(), name='update-payment-status'),
+    path('clearance-request/payment-statistics/', PaymentStatisticsView.as_view(), name='payment-statistics'),
 ]

@@ -1,36 +1,90 @@
+
 import React from "react";
-import { useGetUpcomingHotspots } from "./waste-sidebar-analytics-query";
+import { useGetUpcomingHotspots, type UpcomingHotspots } from "./waste-sidebar-analytics-query";
+// import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from "./your-waste-collection-query-path";
+import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from "@/pages/record/waste-scheduling/waste-collection/queries/wasteColFetchQueries";
 import { Card } from "@/components/ui/card/card";
-import { Clock, ChevronRight, Calendar } from "lucide-react";
+import { Clock, ChevronRight, Calendar, Info } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
-import { format } from "date-fns";
+import { format, isSameDay, isWithinInterval, addDays } from "date-fns";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Label } from "@/components/ui/label";
+
+type ActivityItem = {
+  type: 'hotspot' | 'collection';
+  data: UpcomingHotspots | WasteCollectionSchedFull;
+  date: Date;
+};
 
 export const WasteActivitySidebar = () => {
   const [period, setPeriod] = React.useState<string>("today");
-  const { data: upcomingHotspots, isLoading } = useGetUpcomingHotspots();
+  const [_, setSelectedActivity] = React.useState<ActivityItem | null>(null);
+  const { data: upcomingHotspots, isLoading: isLoadingHotspots } = useGetUpcomingHotspots();
+  const { data: wasteCollections, isLoading: isLoadingCollections } = useGetWasteCollectionSchedFull();
   const navigate = useNavigate();
 
-  // Filter hotspots based on selected period
-  const filteredHotspots = React.useMemo(() => {
-    if (!upcomingHotspots) return [];
-    
+  // Combine and filter activities based on selected period
+  const filteredActivities = React.useMemo(() => {
+    const activities: ActivityItem[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    return upcomingHotspots.filter((hotspot) => {
-      const hotspotDate = new Date(hotspot.wh_date);
-      hotspotDate.setHours(0, 0, 0, 0);
-      
-      if (period === "today") {
-        return hotspotDate.getTime() === today.getTime();
-      } else { // this_week
-        const endOfWeek = new Date(today);
-        endOfWeek.setDate(today.getDate() + 7);
-        return hotspotDate >= today && hotspotDate <= endOfWeek;
-      }
-    });
-  }, [upcomingHotspots, period]);
+    // Add hotspots
+    if (upcomingHotspots) {
+      upcomingHotspots.forEach((hotspot) => {
+        const hotspotDate = new Date(hotspot.wh_date);
+        hotspotDate.setHours(0, 0, 0, 0);
+        
+        if (period === "today" && isSameDay(hotspotDate, today)) {
+          activities.push({
+            type: 'hotspot',
+            data: hotspot,
+            date: hotspotDate
+          });
+        } else if (period === "this_week" && isWithinInterval(hotspotDate, {
+          start: today,
+          end: addDays(today, 7)
+        })) {
+          activities.push({
+            type: 'hotspot',
+            data: hotspot,
+            date: hotspotDate
+          });
+        }
+      });
+    }
+    
+    // Add waste collections
+    if (wasteCollections) {
+      wasteCollections.forEach((collection) => {
+        const collectionDate = new Date(collection.wc_date);
+        collectionDate.setHours(0, 0, 0, 0);
+        
+        if (period === "today" && isSameDay(collectionDate, today)) {
+          activities.push({
+            type: 'collection',
+            data: collection,
+            date: collectionDate
+          });
+        } else if (period === "this_week" && isWithinInterval(collectionDate, {
+          start: today,
+          end: addDays(today, 7)
+        })) {
+          activities.push({
+            type: 'collection',
+            data: collection,
+            date: collectionDate
+          });
+        }
+      });
+    }
+    
+    // Sort activities by date
+    return activities.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [upcomingHotspots, wasteCollections, period]);
+
+  const isLoading = isLoadingHotspots || isLoadingCollections;
 
   return (
     <Card className="w-80 bg-white h-full flex flex-col">
@@ -80,42 +134,62 @@ export const WasteActivitySidebar = () => {
               </div>
             ))}
           </div>
-        ) : filteredHotspots.length > 0 ? (
+        ) : filteredActivities.length > 0 ? (
           <div className="p-4 space-y-3">
-            {filteredHotspots.map((hotspot) => (
-              <Card 
-                key={hotspot.wh_num}
-                className="p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200"
-                onClick={() => navigate(`/waste-hotspots/${hotspot.wh_num}`)}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                      <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                        Scheduled
-                      </span>
-                    </div>
-                    
-                    <h3 className="font-medium text-gray-900 truncate mb-1">
-                      {hotspot.sitio || "Unspecified Location"}
-                    </h3>
-                    
-                    <div className="flex flex-col gap-1 text-xs text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>{new Date(hotspot.wh_date).toLocaleDateString()}</span>
+            {filteredActivities.map((activity) => (
+              <DialogLayout
+                key={activity.type === 'hotspot' 
+                  ? `hotspot-${(activity.data as UpcomingHotspots).wh_num}` 
+                  : `collection-${(activity.data as WasteCollectionSchedFull).wc_num}`}
+                trigger={
+                  <Card 
+                    className="p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200"
+                    onClick={() => setSelectedActivity(activity)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 truncate mb-1">
+                          {activity.type === 'hotspot' ? 'Hotspot Assignment' : 'Waste Collection'}
+                        </h3>
+                        <div className="flex flex-col gap-1 text-xs text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            <span>{activity.date.toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {activity.type === 'hotspot' ? (
+                              <>
+                                <Clock className="w-3 h-3" />
+                                <span>
+                                  {format(new Date(`2000-01-01T${(activity.data as UpcomingHotspots).wh_start_time}`), "h:mm a")} - 
+                                  {format(new Date(`2000-01-01T${(activity.data as UpcomingHotspots).wh_end_time}`), "h:mm a")}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="w-3 h-3" />
+                                <span>
+                                  {format(new Date(`2000-01-01T${(activity.data as WasteCollectionSchedFull).wc_time}`), "h:mm a")}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        {format(new Date(`2000-01-01T${hotspot.wh_start_time}`), "h:mm a")} - 
-                        {format(new Date(`2000-01-01T${hotspot.wh_end_time}`), "h:mm a")}
-                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
                     </div>
-                  </div>
-                  
-                  <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
-                </div>
-              </Card>
+                  </Card>
+                }
+                title={activity.type === 'hotspot' ? "Hotspot Assignment Details" : "Waste Collection Details"}
+                description=""
+                mainContent={
+                  activity.type === 'hotspot' ? (
+                    <HotspotDetails hotspot={activity.data as UpcomingHotspots} />
+                  ) : (
+                    <CollectionDetails collection={activity.data as WasteCollectionSchedFull} />
+                  )
+                }
+              />
             ))}
           </div>
         ) : (
@@ -136,9 +210,9 @@ export const WasteActivitySidebar = () => {
       </div>
 
       {/* Footer */}
-      {filteredHotspots.length > 0 && (
+      {filteredActivities.length > 0 && (
         <div className="p-4 border-t border-gray-100">
-          <Button onClick={() => '/waste-calendar-scheduling'}>
+          <Button onClick={() => navigate("/waste-calendar-scheduling")}>
             View Calendar
           </Button>
         </div>
@@ -146,3 +220,75 @@ export const WasteActivitySidebar = () => {
     </Card>
   );
 };
+
+// Helper component for hotspot details
+const HotspotDetails = ({ hotspot }: { hotspot: UpcomingHotspots }) => (
+  <div className="space-y-4">
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <Label>Date</Label>
+        <p>{new Date(hotspot.wh_date).toLocaleDateString()}</p>
+      </div>
+      <div>
+        <Label>Time</Label>
+        <p>
+          {format(new Date(`2000-01-01T${hotspot.wh_start_time}`), "h:mm a")} - 
+          {format(new Date(`2000-01-01T${hotspot.wh_end_time}`), "h:mm a")}
+        </p>
+      </div>
+      <div>
+        <Label className="flex items-center gap-1">
+          Watchman
+        </Label>
+        <p>{hotspot.watchman || "Not assigned"}</p>
+      </div>
+      <div>
+        <Label className="flex items-center gap-1">
+          Sitio
+        </Label>
+        <p>{hotspot.sitio || "Not specified"}</p>
+      </div>
+    </div>
+    {hotspot.wh_add_info && (
+      <div>
+        <Label className="flex items-center gap-1">
+          <Info className="w-4 h-4" />
+          Additional Information
+        </Label>
+        <p className="whitespace-pre-wrap mt-1 p-2 bg-gray-50 rounded-md">
+          {hotspot.wh_add_info}
+        </p>
+      </div>
+    )}
+  </div>
+);
+
+// Helper component for collection details
+const CollectionDetails = ({ collection }: { collection: WasteCollectionSchedFull }) => (
+  <div className="space-y-4">
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <Label>Date</Label>
+        <p>{new Date(collection.wc_date).toLocaleDateString()}</p>
+      </div>
+      <div>
+        <Label>Time</Label>
+        <p>
+          {format(new Date(`2000-01-01T${collection.wc_time}`), "h:mm a")}
+        </p>
+      </div>
+      <div>
+        <Label>Sitio</Label>
+        <p>{collection.sitio_name || "Not specified"}</p>
+      </div>
+      <div>
+        <Label>Driver</Label>
+        <p>{collection.driver_name || "Not assigned"}</p>
+      </div>
+    </div>
+    <div>
+      <Label>Waste Collector(s)</Label>
+      <p>{collection.collectors_names || "Not assigned"}</p>
+    </div>
+  </div>
+);

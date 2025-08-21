@@ -1,10 +1,9 @@
 // src/services/inventory/firstAidStockService.ts
-import api from "@/pages/api/api";
 import axios from "axios";
-import { FirstAidStocksRecord } from "../../tables/FirstAidStocks";
-import {getFirstAidInventoryList} from "./restful-api/FirstAidGet";
-import { updateFirstAidStock ,updateInventoryTimestamp} from "./restful-api/FirstAidPut";
-import {addFirstAidTransaction} from "./restful-api/FirstAidPost";
+import { FirstAidStocksRecord } from "../../tables/type";
+import {getFirstAidInventoryList} from "./restful-api/FirstAidGetAPI";
+import { updateFirstAidStock ,updateInventoryTimestamp} from "./restful-api/FirstAidPutAPI";
+import {addFirstAidTransaction} from "./restful-api/FirstAidPostAPI";
 
 export const deductFirstAidStock = async (
   data: FirstAidStocksRecord,
@@ -54,13 +53,12 @@ export const deductFirstAidStock = async (
     }
     
     // TRANSACTION
-    const staffId = 1; 
     const string_qty = `${values.usedItem} ${displayUnit}`;
     await addFirstAidTransaction(
-      data.finv_id,
-      string_qty,
-      "Deducted",
-      staffId
+     { finv_id:data.finv_id,
+      fat_qty:string_qty,
+      fat_action: "Deducted",
+      staff:data.staff_id}
     )
     
     
@@ -74,3 +72,4 @@ export const deductFirstAidStock = async (
     throw error instanceof Error ? error : new Error("An error occurred");
   }
 };
+

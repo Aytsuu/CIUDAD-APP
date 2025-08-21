@@ -1,9 +1,9 @@
 import type { Hotspot } from "../../waste-scheduling/waste-hotspot/queries/hotspotFetchQueries"
 import type { EventDetailColumn } from "@/components/ui/calendar/EventCalendar"
-import { type WasteCollectionSchedFull } from "../../waste-scheduling/waste-colllection/queries/wasteColFetchQueries"
+import { type WasteCollectionSchedFull } from "../../waste-scheduling/waste-collection/queries/wasteColFetchQueries"
 import { formatTime } from "@/helpers/timeFormatter"
 import { format } from "date-fns";
-import { CouncilEvent } from "./queries/fetchqueries";
+import { CouncilEvent } from "./ce-att-types";
 
 export const hotspotColumns: EventDetailColumn<Hotspot>[] = [
   { accessorKey: "watchman", header: "Watchman" },

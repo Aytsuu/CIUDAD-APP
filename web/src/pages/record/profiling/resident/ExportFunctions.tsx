@@ -1,4 +1,3 @@
-import { ResidentRecord } from '../profilingTypes';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import {autoTable} from 'jspdf-autotable';
@@ -10,7 +9,7 @@ const formatDate = (dateString: string) => {
 };
 
 // Export to CSV
-export const exportToCSV = (data: ResidentRecord[]) => {
+export const exportToCSV = (data: any[]) => {
   // Create CSV content
   const headers = ["Resident No.", "Household No.", "Family No.", "Sitio", "Last Name", "First Name", "M.I", "Suffix", "Date Registered"];
   
@@ -43,7 +42,7 @@ export const exportToCSV = (data: ResidentRecord[]) => {
 };
 
 // Export to Excel
-export const exportToExcel = (data: ResidentRecord[]) => {
+export const exportToExcel = (data: any[]) => {
   // Format data for Excel
   const worksheet = XLSX.utils.json_to_sheet(data.map(row => ({
     'Resident No.': row.id,
@@ -80,7 +79,7 @@ export const exportToExcel = (data: ResidentRecord[]) => {
 };
 
 // Export to PDF - Fixed version
-export const exportToPDF = (data: ResidentRecord[]) => {
+export const exportToPDF = (data: any[]) => {
   // Create new document
   const doc = new jsPDF('landscape');
   

@@ -2,7 +2,6 @@ from django.urls import path
 from .views.position_views import *
 from .views.feature_views import *
 from .views.assignment_views import *
-from .views.permission_views import *
 from .views.staff_views import *
 from .views.analytics_views import *
 
@@ -27,11 +26,10 @@ urlpatterns = [
     # Assignment Urls
     path('assignment/list/', AssignmentView.as_view(), name='role-assignment'),
     path('assignment/create/', AssignmentCreateView.as_view(), name='assignment-create'),
+    path('assignment/<int:assi_id>/update/', AssignmentUpdateView.as_view(), name="assignment-update"),
     path('assignment/<int:pos>/', AssignmentFilteredView.as_view(), name='assigned-feature'),
     path('assignment/delete/<int:feat>/<int:pos>/', AssignmentDeleteView.as_view(), name='delete-assignment'),
 
-    # Permission Urls 
-    # path('permission/', PermissionView.as_view(), name='permissions-list'),
-    # path('permission/update/<int:assi>/', PermissionUpdateView.as_view(), name='permission-update'),
+    # Analytics url
     path('card/analytics/data/', CardAnalyticsView.as_view(), name='card-analytics'),
 ]   

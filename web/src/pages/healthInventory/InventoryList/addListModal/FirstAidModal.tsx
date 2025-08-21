@@ -1,98 +1,171 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import {
-  FormField,
-  FormItem,
-  FormMessage,
-  FormControl,
-  FormLabel,
   Form,
 } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { Button } from "@/components/ui/button/button";
 import {
   FirstAidType,
   FirstAidSchema,
-} from "@/form-schema/inventory/inventoryListSchema";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { addFirstAid } from "../requests/post/firstaid";
-import { getFirstAid } from "../requests/get/getFirstAid";
+} from "@/form-schema/inventory/lists/inventoryListSchema";
+import { useAddFirstAid } from "../queries/firstAid/FirstAidPostQueries";
+import { getFirstAid } from "../restful-api/firstAid/FirstAidFetchAPI";
 import { FormInput } from "@/components/ui/form/form-input";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+import { useCategoriesFirstAid } from "@/pages/healthInventory/inventoryStocks/REQUEST/Category/FirstAidCategory";
+import { toast } from "sonner";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import { Button } from "@/components/ui/button/button";
+import { Link } from "react-router-dom";
+import { Label } from "@/components/ui/label";
+import { Plus } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+export default function FirstAidModal() {
 
-interface FirstAidProps {
-  setIsDialog: (isOpen: boolean) => void;
-}
-
-export default function FirstAidModal({ setIsDialog }: FirstAidProps) {
+  const { user } = useAuth();
+  const staff_id = user?.staff?.staff_id;
   const form = useForm<FirstAidType>({
     resolver: zodResolver(FirstAidSchema),
     defaultValues: {
-      firstAidName: "",
+      fa_name: "",
+      cat_id: "",
     },
   });
 
-  // State for add confirmation dialog
-  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
-  const [newFirstAidName, setnewFirstAidName] = useState<string>("");
-  const queryClient = useQueryClient();
-  const confirmAdd = async () => {
-    if (newFirstAidName.trim()) {
-      try {
-        if (await addFirstAid(newFirstAidName)) {
-          console.log("✅ Medicine added successfully");
-        } else {
-          console.error("Failed to add medicine.");
-        }
-      } catch (err) {
-        console.error(err);
-      }
-      queryClient.invalidateQueries({ queryKey: ["firstAid"] });
-      setIsAddConfirmationOpen(false);
-      setIsDialog(false);
+  const {
+    categories,
+    handleDeleteConfirmation,
+    categoryHandleAdd,
+    ConfirmationDialogs,
+  } = useCategoriesFirstAid();
 
-      setnewFirstAidName("");
-    }
+  const { mutate: addFirstAidMutation, isPending } = useAddFirstAid();
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const [newFirstAidName, setNewFirstAidName] = useState<string>("");
+
+  const getCurrentCategoryName = () => {
+    const currentId = form.watch("cat_id");
+    if (!currentId) return "Select category";
+    const foundCategory = categories.find((cat) => cat.id === currentId);
+    return foundCategory?.name ?? "Select category";
   };
 
-  const isDuplicateFirstAid = (firstaid: any[], newFirstAid: string) => {
-    return firstaid.some(
-      (fa) => fa.fa_name.toLowerCase() === newFirstAid.toLowerCase()
+  const confirmAdd = async () => {
+    const formData = form.getValues();
+    setIsAddConfirmationOpen(false);
+    addFirstAidMutation({ data: formData, staff_id });
+  };
+
+  const isDuplicateFirstAid = (
+    firstAidItems: any[],
+    newFirstAid: string,
+    catId: string
+  ) => {
+    return firstAidItems.some(
+      (item) =>
+        item.fa_name.trim().toLowerCase() ===
+          newFirstAid.trim().toLowerCase() &&
+        String(item.cat_id) === String(catId)
     );
   };
 
   const onSubmit = async (data: FirstAidType) => {
     try {
       const existingFirstAid = await getFirstAid();
-      if (!Array.isArray(existingFirstAid))
-        throw new Error("Invalid API response");
 
-      if (isDuplicateFirstAid(existingFirstAid, data.firstAidName)) {
-        form.setError("firstAidName", {
+      if (!Array.isArray(existingFirstAid)) {
+        throw new Error("Invalid API response - expected an array");
+      }
+
+      if (!data.cat_id) {
+        toast.error("Please select a category");
+        form.setError("cat_id", {
           type: "manual",
-          message: "Fa already eixst",
+          message: "Category is required",
         });
         return;
       }
-      setnewFirstAidName(data.firstAidName);
+
+      if (isDuplicateFirstAid(existingFirstAid, data.fa_name, data.cat_id)) {
+        form.setError("fa_name", {
+          type: "manual",
+          message: "First Aid item already exists in this category",
+        });
+        return;
+      }
+      setNewFirstAidName(data.fa_name);
       setIsAddConfirmationOpen(true);
+      
     } catch (err) {
-      console.log(err);
+      console.error("Error checking for duplicates:", err);
     }
   };
 
   return (
-    <div>
+    <div className="w-full flex items-center justify-center p-2 sm:p-4">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form
+          onSubmit={(e) => e.preventDefault()}
+          className="bg-white p-4 w-full max-w-[500px] rounded-sm"
+        >
           <div className="flex flex-col gap-3">
-            <FormInput control={form.control} name="firstAidName" label="Item Name" placeholder="Enter first aid item name"/>
+            <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
+              <Plus className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+              Add First Aid Item
+            </Label>
+
+            <FormInput
+              control={form.control}
+              name="fa_name"
+              label="First Aid Item Name"
+              placeholder="Enter first aid item name"
+            />
+
+            <FormField
+              control={form.control}
+              name="cat_id"
+              render={({ field }) => {
+                return (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <SelectLayoutWithAdd
+                        className="w-full text-darkGray"
+                        placeholder={getCurrentCategoryName()}
+                        label="Select a Category"
+                        options={
+                          categories.length > 0
+                            ? categories
+                            : [{ id: "loading", name: "Loading..." }]
+                        }
+                        value={field.value}
+                        onChange={(value) => field.onChange(value)}
+                        onAdd={(newCategoryName) => {
+                          categoryHandleAdd(newCategoryName, (newId) => {
+                            field.onChange(newId);
+                          });
+                        }}
+                        onDelete={(id) => handleDeleteConfirmation(Number(id))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
           </div>
 
-          <div className="w-full flex justify-end mt-8">
-            <Button type="submit">Submit</Button>
+          <div className="w-full flex justify-end mt-8 gap-2">
+            <Button variant="outline" className="w-full sm:w-auto">
+              <Link to="/mainInventoryList">Cancel</Link>
+            </Button>
+            <Button
+              className="bg-blue text-white px-4 py-2 rounded w-full sm:w-auto"
+              disabled={isPending}
+              onClick={form.handleSubmit(onSubmit)}
+            >
+              {isPending ? "Adding..." : "Submit"}
+            </Button>
           </div>
         </form>
       </Form>
@@ -100,10 +173,12 @@ export default function FirstAidModal({ setIsDialog }: FirstAidProps) {
       <ConfirmationDialog
         isOpen={isAddConfirmationOpen}
         onOpenChange={setIsAddConfirmationOpen}
+        title="Add First Aid Item"
+        description={`Are you sure you want to add the first aid item "${newFirstAidName}"?`}
         onConfirm={confirmAdd}
-        title="Add Medicine"
-        description={`Are you sure you want to add the medicine "${newFirstAidName}"?`}
       />
+
+      <ConfirmationDialogs />
     </div>
   );
 }

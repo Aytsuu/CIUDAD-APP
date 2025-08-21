@@ -2,7 +2,7 @@
 // import { FamilyProfileForm } from "@/pages/health-profiling/form-pages/FamilyProfileForm"
 // import  FamilyProfileView from "@/pages/health-profiling/FamilyProfileView"
 import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm"
-import { DemographicData } from "@/pages/health-profiling/form-pages/DemographicData"
+// import FamilyHouseholdInfo from "@/pages/record/health-family-profiling/family-profling/householdInfo/FamilyHouseholdInfo"
 
 export const familyProfilingRoute = [
 
@@ -22,6 +22,12 @@ export const familyProfilingRoute = [
         path: 'family/family-profile-form',
         element: <HealthFamilyForm />,
     },
+    // {
+    //     path: 'family/family-profile-form/household-info',
+    //     element: <FamilyHouseholdInfo form={null} residentsList={[]} formattedResidents={[]} />,
+    // },
+    
+
     // {
     //     path: 'family/dependents-information',
     //     element: <FamilyProfileForm />,

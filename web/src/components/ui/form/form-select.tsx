@@ -19,12 +19,14 @@ export const FormSelect = React.memo(({
     options, 
     readOnly,
     isLoading = false,
+    placeholder,
     emptyMessage = "No options available"
 }: { 
     control: any; 
     name: string; 
     label?: string; 
     options: { id: string; name: string }[]; 
+    placeholder?: string
     readOnly?: boolean;
     isLoading?: boolean;
     emptyMessage?: string;
@@ -40,9 +42,6 @@ export const FormSelect = React.memo(({
         return options;
     }, [options, isLoading, emptyMessage]);
 
-    // Determine if the select should be disabled
-    const isDisabled = readOnly || isLoading || options.length === 0;
-
     return (
         <FormField
             control={control}
@@ -53,7 +52,7 @@ export const FormSelect = React.memo(({
                     <FormControl>
                         {!readOnly ? (
                             <SelectLayout
-                                placeholder="Select "
+                                placeholder="Select"
                                 className="w-full"
                                 options={selectOptions}
                                 value={field.value}
@@ -65,7 +64,7 @@ export const FormSelect = React.memo(({
                                 }}
                             />
                         ) : (
-                            <Input {...field} readOnly />
+                            <Input {...field} placeholder={placeholder} readOnly />
                         )}
                     </FormControl>
                     <FormMessage />

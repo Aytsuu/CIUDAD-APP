@@ -117,7 +117,7 @@ export default function FamilyRegisterNew() {
   const router = useRouter();
   const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
   const [feedbackMessage, setFeedbackMessage] = React.useState<string>('');
-  const [status, setStatus] = React.useState<"success" | "failure" | "loading" | "message">("success");
+  const [status, setStatus] = React.useState<"success" | "failure" | "waiting" | "message">("success");
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { toast } = useToastContext();
   const { getValues, reset } = useRegistrationFormContext();
@@ -207,7 +207,7 @@ export default function FamilyRegisterNew() {
     if (!canSubmit) return;
     
     setIsSubmitting(true);
-    setStatus('loading');
+    setStatus('waiting');
     setShowFeedback(true);
 
     try {

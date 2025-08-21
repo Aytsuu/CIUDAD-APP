@@ -43,8 +43,8 @@ export default () => {
               <Stack.Screen name="registration/individual/account-reg" options={{ headerShown: false }} />
 
               {/* STACKS THAT ARE NOT BEING USED, MIGHT REMOVE THEM LATER. */}
-              <Stack.Screen name="registration/business/respondent-information" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/business/account-registration" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/business/respondent-information" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/business/account-registration" options={{ headerShown: false, animation: 'fade' }}/>
             </Stack>
           </RegistationFormProvider>
         </RegistrationTypeProvider>

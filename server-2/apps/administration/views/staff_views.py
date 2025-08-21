@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.db.models import Q
 from ..serializers.staff_serializers import *
 from pagination import *
@@ -13,12 +14,14 @@ class StaffTableView(generics.ListCreateAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = Staff.objects.select_related(
+    staff_type = self.request.query_params.get('staff_type', None)
+    queryset = Staff.objects.filter(staff_type=staff_type).select_related(
       'rp',
       'pos',
     ).only(
       'staff_id',
       'staff_assign_date',
+      'staff_type',
       'rp__per__per_lname',
       'rp__per__per_fname',
       'rp__per__per_mname',
@@ -34,7 +37,8 @@ class StaffTableView(generics.ListCreateAPIView):
         Q(rp__per__per_fname__icontains=search_query) |
         Q(rp__per__per_mname__icontains=search_query) |
         Q(rp__per__per_contact__icontains=search_query) |
-        Q(pos__pos_title__icontains=search_query) 
+        Q(pos__pos_title__icontains=search_query) |
+        Q(staff_type__icontains=search_query)
       ).distinct()
 
     return queryset
@@ -63,3 +67,26 @@ class StaffDeleteView(generics.DestroyAPIView):
   serializer_class = StaffBaseSerializer
   queryset = Staff.objects.all()
   lookup_field = "staff_id"
+
+class HealthStaffListView(generics.ListAPIView):
+  serializer_class = StaffFullSerializer
+
+  def get_queryset(self):
+    return Staff.objects.filter(staff_type="Health Staff")
+
+
+class StaffDataByTitleView(APIView):
+  def get(self, request, *args, **kwargs):
+    title = request.query_params.get('pos_title', None)
+
+    if title == "all":
+      staff = Staff.objects.all()
+      return Response(StaffTableSerializer(staff, many=True).data)
+    
+    req_position = Position.objects.get(pos_title=title)
+    staff = Staff.objects.filter(pos=req_position.pos_id)
+    return Response(StaffTableSerializer(staff, many=True).data)
+
+class StaffLandingPageView(generics.ListAPIView):
+  serializer_class = StaffLandingPageSerializer
+  queryset = Staff.objects.filter(~Q(pos__pos_title='Admin') & Q(staff_type='Health Staff'))

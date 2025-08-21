@@ -2,16 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { putWasteTruck } from "../request/truckPutReq";
-import { WasteTruck } from "./truckDelQueries";
-
-export type Truck = {
-  truck_id: number;
-  truck_plate_num: string;
-  truck_model: string;
-  truck_capacity: string;
-  truck_status: string;
-  truck_last_maint: string;
-};
+import { WasteTruck, Truck } from "../waste-personnel-types";
 
 export const useUpdateWasteTruck = () => {
   const queryClient = useQueryClient();
@@ -41,7 +32,7 @@ export const useUpdateWasteTruck = () => {
       return { previousTrucks };
     },
 
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, _variables, context) => {
       if (context?.previousTrucks) {
         queryClient.setQueryData(["wasteTrucks"], context.previousTrucks);
       }
@@ -50,7 +41,7 @@ export const useUpdateWasteTruck = () => {
         duration: 2000,
       });
     },
-    onSuccess: (updatedData, variables) => {
+    onSuccess: (_updatedData, _variables) => {
       toast.success("Truck updated successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000,

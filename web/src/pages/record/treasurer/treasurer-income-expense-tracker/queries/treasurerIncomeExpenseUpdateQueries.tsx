@@ -6,7 +6,6 @@ import { CircleCheck } from "lucide-react";
 import { updateIncomeExpenseMain } from "../request/income-ExpenseTrackingPostRequest";
 import { updateIncomeMain } from "../request/income-ExpenseTrackingPostRequest";
 import { updateExpenseParticular } from "../request/income-ExpenseTrackingPostRequest";
-import { updateBudgetPlanDetail } from "../request/income-ExpenseTrackingPostRequest";
 import IncomeExpenseEditFormSchema from "@/form-schema/treasurer/expense-tracker-edit-schema";
 import IncomeEditFormSchema from "@/form-schema/treasurer/income-tracker-edit-schema";
 import { z } from "zod";

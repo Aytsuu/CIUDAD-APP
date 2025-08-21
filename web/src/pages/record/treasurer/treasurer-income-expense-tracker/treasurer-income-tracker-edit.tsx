@@ -229,18 +229,13 @@
 
 
 import { Input } from "@/components/ui/input";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
-import { Combobox } from "@/components/ui/combobox";
-import { MediaUpload } from "@/components/ui/media-upload";
-import { SetStateAction } from "react";
-import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useState } from "react";
 import { useUpdateIncome } from "./queries/treasurerIncomeExpenseUpdateQueries";
 import IncomeEditFormSchema from "@/form-schema/treasurer/income-tracker-edit-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
@@ -267,12 +262,12 @@ interface IncomeEditFormProps {
     onSuccess?: () => void;
 }
 
-function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num, incp_id, inc_particulars, inc_amount, inc_additional_notes, inc_receipt_image, year, onSuccess }: IncomeEditFormProps) {
-    const [mediaFiles, setMediaFiles] = useState<any[]>([]);
-    const [activeVideoId, setActiveVideoId] = useState<string>("");
+function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num, incp_id, inc_amount, inc_additional_notes, year, onSuccess }: IncomeEditFormProps) {
+    const [_mediaFiles, _setMediaFiles] = useState<any[]>([]);
+    const [_activeVideoId, _setActiveVideoId] = useState<string>("");
     const [isEditing, setIsEditing] = useState(false);
-    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-    const [formValues, setFormValues] = useState<z.infer<typeof IncomeEditFormSchema>>();
+    const [_isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [_formValues, setFormValues] = useState<z.infer<typeof IncomeEditFormSchema>>();
 
     const inputCss = "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
     const inputcss = "mt-[12px] w-full p-1.5 shadow-sm sm:text-sm";
@@ -323,9 +318,9 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
         const inputYear = inputDate.getFullYear();
         let totalIncome = 0.0
 
-        let totIncome = Number(totInc);
-        let prev_amount = Number(inc_amount);
-        let current_amount = Number(values.inc_amount);
+        const totIncome = Number(totInc);
+        const prev_amount = Number(inc_amount);
+        const current_amount = Number(values.inc_amount);
 
         if (inputYear !== Number(year)) {
             form.setError('inc_datetime', {
@@ -528,4 +523,4 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
     );
 }
 
-export default IncomeEditForm;
+export default IncomeEditForm; 

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { delCouncilEvent, restoreCouncilEvent, delAttendee, delAttendanceSheet, restoreAttendanceSheet } from "../api/delreq";
-import { CouncilEvent, Attendee, AttendanceSheet } from "./fetchqueries";
+import { CouncilEvent, Attendee, AttendanceSheet } from "../ce-att-types";
 
 export const useDeleteCouncilEvent = () => {
   const queryClient = useQueryClient();
@@ -10,7 +10,7 @@ export const useDeleteCouncilEvent = () => {
   return useMutation({
     mutationFn: ({ ce_id, permanent = false }: { ce_id: number; permanent?: boolean }) => 
       delCouncilEvent(ce_id, permanent),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       const { ce_id, permanent } = variables;
       if (permanent) {
         // Permanent delete
