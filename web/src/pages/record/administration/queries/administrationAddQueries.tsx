@@ -1,7 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addPosition, addStaff, assignFeature, setPermission } from "../restful-api/administrationPostAPI";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { api } from "@/api/api";
 import { api2 } from "@/api/api";
@@ -66,11 +64,6 @@ export const useAddStaff = () => {
       ]);
 
       queryClient.invalidateQueries({queryKey: ['staffs']})
-
-      // Deliver feedback
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
 
       navigate(-1)
     }

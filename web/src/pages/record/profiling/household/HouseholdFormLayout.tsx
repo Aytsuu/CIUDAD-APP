@@ -88,7 +88,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
         console.log('Looking for per_id:', resident.personal_info.per_id)
         
         setAddresses(filteredAddresses)
-        setShowAddressField(filteredAddresses.length > 0)
+        setShowAddressField(filteredAddresses?.length > 0)
         
         // Debug the formatted addresses
         console.log('Formatted addresses:', formatAddresses(filteredAddresses))
@@ -212,14 +212,14 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-gray-500" />
                   <label className="text-sm font-medium text-gray-700">Household Address</label>
-                  {formattedAddresses.length > 0 && (
+                  {formattedAddresses?.length > 0 && (
                     <Badge variant="secondary" className="text-xs">
                       Required
                     </Badge>
                   )}
                 </div>
 
-                {formattedAddresses.length > 0 ? (
+                {formattedAddresses?.length > 0 ? (
                   <>
                     <FormSelect
                       control={form.control}
@@ -256,7 +256,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
                   trigger={
                     <Button
                       className="flex-1 h-11 bg-blue-600 hover:bg-blue-700"
-                      disabled={isSubmitting || formattedAddresses.length === 0}
+                      disabled={isSubmitting || formattedAddresses?.length === 0}
                     >
                       {isSubmitting ? (
                         <>
