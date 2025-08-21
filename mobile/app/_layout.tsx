@@ -56,8 +56,9 @@ export default function RootLayout() {
             <Stack.Screen name="(request)" options = {{headerShown: false}}/>
             <Stack.Screen name="gad" options = {{headerShown: false}}/>
             <Stack.Screen name="(council)" options={{ headerShown: false }} />
+            <Stack.Screen name="(complaint)" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
-          </Stack>
+          </Stack> 
         </ToastProvider>
       </QueryClientProvider>
       <PortalHost />
