@@ -344,6 +344,21 @@ export const useHouseholdsList = () => {
   });
 };
 
+export const useHouseholdData = (hh_id: string) => {
+  return useQuery({
+    queryKey: ["householdData", hh_id],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`profiling/household/${hh_id}/data/`)
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    }
+  })
+}
+
 export const useHouseholdTable = (
   page: number,
   pageSize: number,

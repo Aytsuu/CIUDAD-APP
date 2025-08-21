@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Card } from "@/components/ui/card/card"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function HouseholdRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -127,8 +128,8 @@ export default function HouseholdRecords() {
           {/* Loading State */}
           {isLoading && (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-              <span className="ml-2 text-gray-600">Loading households...</span>
+              <Spinner size="lg" />
+              <span className="ml-4 text-gray-600">Loading households...</span>
             </div>
           )}
 

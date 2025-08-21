@@ -50,7 +50,7 @@ export const formatHouseholds = (households: any) => {
         </span>
         <div className="flex items-center gap-2">
           <Label>Head:</Label>
-          {household.head}
+          {household.head.split("-")[1]}
         </div>
       </div>
     ),

@@ -96,9 +96,7 @@ class FamilyDataView(generics.RetrieveAPIView):
   
 class FamilyCreateView(generics.CreateAPIView):
   serializer_class = FamilyCreateSerializer
-  
-  def create(self, request, *args, **kwargs):
-    return super().create(request, *args, **kwargs)
+  queryset = Family.objects.all()
 
 class FamilyFilteredByHouseholdView(generics.ListAPIView):
   serializer_class = FamilyListSerializer

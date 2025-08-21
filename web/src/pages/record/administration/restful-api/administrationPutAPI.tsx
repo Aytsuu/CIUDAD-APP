@@ -9,7 +9,7 @@ export const updatePosition = async (
     const body = capitalizeAllFields(values);
     const path = `administration/position/update/${positionId}/`;
     const res = await api.put(path, body);
-    await api2.put(path, body);
+    // await api2.put(path, body);
     return res.data;
   } catch (err) {
     console.error(err);

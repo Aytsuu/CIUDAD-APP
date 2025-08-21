@@ -69,13 +69,10 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
 
         created_instances = FamilyComposition.objects.bulk_create(instances)
 
-        if len(created_instances) > 0 and created_instances[0].pk is not None:
+        if len(created_instances) > 0:
             response_serializer = FamilyCompositionExtendedSerializer(created_instances, many=True)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-        
-        return Response({"detail": "Bulk create successful", "count": len(instances)},
-            status=status.HTTP_201_CREATED
-        )
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 class FamilyMemberDeleteView(generics.DestroyAPIView):
     serializer_class = FamilyCompositionBaseSerializer

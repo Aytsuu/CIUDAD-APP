@@ -573,7 +573,9 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
       title={getFormTitle()}
       description={getFormDescription()}
     >
-      {MainContent}
+      <div className="max-h-[750px] overflow-y-auto">
+        {MainContent}
+      </div>
     </LayoutWithBack>
   )
 

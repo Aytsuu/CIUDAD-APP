@@ -50,6 +50,20 @@ export const profiling_router = [
   {
     path: "profiling/resident/view",
     element: <ResidentFormLayout />,
+    children: [
+      {
+        path: "personal",
+        element: <ResidentFormLayout />,
+      },
+      {
+        path: "family",
+        element: <ResidentFormLayout />,
+      },
+      {
+        path: "business",
+        element: <ResidentFormLayout />,
+      },
+    ]
   },
   {
     path: "profiling/resident/history/view",
@@ -97,6 +111,10 @@ export const profiling_router = [
   },
   {
     path: "profiling/family/view",
+    element: <FamilyRecordView />,
+  },
+  {
+    path: "profiling/family/edit",
     element: <FamilyRecordView />,
   },
 

@@ -89,7 +89,7 @@ export default function LivingSoloForm({
         <FormSelect
           control={form.control}
           name="building"
-          label="Building"
+          label="Household Occupancy"
           options={[
             { id: "owner", name: "Owner" },
             { id: "renter", name: "Renter" },
