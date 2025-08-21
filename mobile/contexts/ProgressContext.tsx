@@ -6,7 +6,7 @@ export const ProgressProvider = ({ children } : {
   children: React.ReactNode
 }) => {
   const [currentStep, setCurrentStep] = React.useState(1);
-  const [completedSteps, setCompletedSteps] = React.useState<number[]>([1,2,3,4,5,6,7]);
+  const [completedSteps, setCompletedSteps] = React.useState<number[]>([]);
   const [isRespondentLinked, setIsRespondentLinked] = React.useState<boolean>(false)
   const [linkedTo, setLinkedTo] = React.useState<number>(0);
 
