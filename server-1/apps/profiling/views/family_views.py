@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django.db.models import Prefetch, Q, Count, Value, CharField, Subquery, OuterRef, F
 from django.db.models.functions import Coalesce, Concat
 from ..serializers.family_serializers import *
@@ -95,6 +96,7 @@ class FamilyDataView(generics.RetrieveAPIView):
     return Family.objects.filter(fam_id=fam_id)
   
 class FamilyCreateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = FamilyCreateSerializer
   queryset = Family.objects.all()
 

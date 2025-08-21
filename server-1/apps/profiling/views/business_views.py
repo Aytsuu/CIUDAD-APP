@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django.db.models import Q, Count
 from ..models import Business, BusinessFile
 from apps.account.models import Account
@@ -8,14 +9,17 @@ from ..serializers.business_serializers import *
 from apps.pagination import StandardResultsPagination
 
 class BusRespondentCreateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessRespondentBaseSerializer
   queryset = BusinessRespondent.objects.all()
 
 class BusinessCreateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessCreateUpdateSerializer
   queryset = Business.objects.all()
 
 class ActiveBusinessTableView(generics.ListAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessTableSerializer
   pagination_class = StandardResultsPagination
 
@@ -51,6 +55,7 @@ class ActiveBusinessTableView(generics.ListAPIView):
     return queryset.order_by('bus_id')
   
 class PendingBusinessTableView(generics.ListAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessTableSerializer
   pagination_class = StandardResultsPagination
 
@@ -60,6 +65,7 @@ class PendingBusinessTableView(generics.ListAPIView):
     return queryset
   
 class BusinessRespondentTableView(generics.ListAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessRespondentTableSerializer
   pagination_class = StandardResultsPagination
 
@@ -72,6 +78,7 @@ class BusinessRespondentTableView(generics.ListAPIView):
 
 
 class BusinessFileCreateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessFileBaseSerializer
   queryset = BusinessFile.objects.all()
 
@@ -89,16 +96,19 @@ class BusinessFileCreateView(generics.CreateAPIView):
     return Response(status=status.HTTP_201_CREATED, data=created_instances)
   
 class BusinessInfoView(generics.RetrieveAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessInfoSerializer
   queryset = Business.objects.all()
   lookup_field = 'bus_id'
 
 class BusinessRespondentInfoView(generics.RetrieveAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessRespondentInfoSerializer
   queryset = BusinessRespondent.objects.all()
   lookup_field = 'br_id'
 
 class BusinessUpdateView(generics.UpdateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessCreateUpdateSerializer
   queryset = Business.objects.all()
   lookup_field = 'bus_id'
@@ -109,6 +119,7 @@ class BusinessUpdateView(generics.UpdateAPIView):
     return Response(BusinessInfoSerializer(instance).data)
 
 class VerifyBusinessRespondent(APIView):
+  permission_classes = [AllowAny]
   def post(self, request, *args, **kwargs):
     br_id = request.data.get('br_id',None)
     personal_info = request.data.get('personal_info', None)
@@ -142,6 +153,7 @@ class VerifyBusinessRespondent(APIView):
     return Response(status=status.HTTP_404_NOT_FOUND)
 
 class SpecificOwnerView(generics.ListAPIView):
+  permission_classes = [AllowAny]
   serializer_class = ForSpecificOwnerSerializer
   pagination_class = StandardResultsPagination
 
@@ -157,6 +169,7 @@ class SpecificOwnerView(generics.ListAPIView):
           return Business.objects.none()
 
 class BusinessModificationCreateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessModificationCreateSerializer
   queryset = BusinessModification.objects.all()
 
@@ -172,14 +185,17 @@ class BusinessModificationCreateView(generics.CreateAPIView):
 
 
 class BusinessModificationListView(generics.ListAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessModificationListSerializer
   queryset = BusinessModification.objects.filter(bm_status=None)
 
 class BusinessModificationDeleteView(generics.DestroyAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessModificationBaseSerializer
   queryset = BusinessModification.objects.all()
 
 class BusinessModificationUpdateView(generics.UpdateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = BusinessModificationBaseSerializer
   queryset = BusinessModification.objects.all()
   lookup_field = 'bm_id'
@@ -194,6 +210,7 @@ class BusinessModificationUpdateView(generics.UpdateAPIView):
     return Response(status=status.HTTP_400_BAD_REQUEST)
   
 class BusinessHistoryView(APIView):
+  permission_classes = [AllowAny]
   def get(self, request, *args, **kwargs):
     bus_id = request.query_params.get('bus_id', None)
 

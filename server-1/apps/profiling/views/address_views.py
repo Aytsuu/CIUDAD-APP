@@ -1,11 +1,13 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django.db import transaction
 from django.utils import timezone
 from ..serializers.address_serializers import *
 from apps.administration.models import Staff
 
 class AddressBulkCreateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = AddressBulkCreateSerializer
   queryset = Address.objects.all()
 
@@ -60,6 +62,7 @@ class AddressBulkCreateView(generics.CreateAPIView):
     return Response(response_data, status=status.HTTP_201_CREATED)
     
 class PerAddressBulkCreateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = PerAddressBulkSerializer
   queryset = PersonalAddress.objects.all()
 
@@ -105,5 +108,6 @@ class PerAddressBulkCreateView(generics.CreateAPIView):
     return Response(response_data, status=status.HTTP_201_CREATED)
   
 class PerAddressListView(generics.ListAPIView):
+  permission_classes = [AllowAny]
   serializer_class = PerAddressListSerializer
   queryset = PersonalAddress.objects.all()

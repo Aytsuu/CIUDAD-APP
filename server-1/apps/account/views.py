@@ -1,6 +1,8 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from .serializers import UserAccountSerializer
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -8,10 +10,12 @@ import json
 from .models import Account
 
 class UserAccountListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     queryset = Account.objects.all()
     serializer_class = UserAccountSerializer
 
 class UserAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [AllowAny]
     queryset = Account.objects.all()
     serializer_class = UserAccountSerializer
 
@@ -24,6 +28,7 @@ class UserAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class ListOfExistingEmail(APIView):
+    permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
         accounts = Account.objects.all()
         return  Response([acc.email for acc in accounts])

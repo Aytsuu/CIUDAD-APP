@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django.db.models import Q
 from pagination import StandardResultsPagination
 from apps.profiling.serializers.all_record_serializers import *
@@ -7,6 +8,7 @@ from apps.profiling.models import ResidentProfile, BusinessRespondent
 from ..models import FamilyComposition
 
 class AllRecordTableView(generics.GenericAPIView):
+  permission_classes = [AllowAny]
   serializer_class = AllRecordTableSerializer
   pagination_class = StandardResultsPagination
 

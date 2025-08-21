@@ -1,6 +1,5 @@
 import ciudadLogo from "@/assets/images/ciudad_logo.svg"
 import AccountProfile from "./navItems/user/accountProfile";
-// import { NotificationDropdown } from "@/pages/menubar/sidebar/notification-dropdown";
 import { NotificationBell } from "./navItems/notification/notification_bell";
 
 export function Header() {

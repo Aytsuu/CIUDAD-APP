@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, ControllerRenderProps } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail, ArrowLeft, Shield, Lock, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,387 +12,277 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form/form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { api } from "@/api/api";
+import {
+  EmailSchema,
+  ResetPasswordSchema,
+  EmailFormData,
+  ResetPasswordFormData,
+} from "@/form-schema/forgot-password-schema";
+import { useAuth } from "@/context/AuthContext";
 
-// Schemas for each step
-const EmailSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-});
+type ForgotPasswordStep =
+  | "forgot-email"
+  | "forgot-verification"
+  | "forgot-reset"
+  | "forgot-success";
 
-const VerificationSchema = z.object({
-  code: z.string().min(6, "Code must be at least 6 characters").max(6, "Code must be exactly 6 characters"),
-});
-
-const ResetPasswordSchema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string().min(8, "Password must be at least 8 characters"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type Step = 'email' | 'verification' | 'reset' | 'success';
-
-interface ForgotPasswordProps {
-  onBackToSignIn?: () => void;
-}
-
-export default function ForgotPassword({ onBackToSignIn }: ForgotPasswordProps) {
-  const [currentStep, setCurrentStep] = useState<Step>('email');
+export default function ForgotPassword() {
+  const [currentStep, setCurrentStep] = useState<ForgotPasswordStep>("forgot-email");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [email, setEmail] = useState("");
-  const [resetToken, setResetToken] = useState("");
-  // Forms for each step
-  const emailForm = useForm<z.infer<typeof EmailSchema>>({
+  const [verificationCode, setVerificationCode] = useState("");
+
+  const { sendEmailOTP, verifyEmailOTPAndLogin } = useAuth();
+
+  const emailForm = useForm<EmailFormData>({
     resolver: zodResolver(EmailSchema),
     defaultValues: { email: "" },
   });
 
-  const verificationForm = useForm<z.infer<typeof VerificationSchema>>({
-    resolver: zodResolver(VerificationSchema),
-    defaultValues: { code: "" },
-  });
-
-  const resetForm = useForm<z.infer<typeof ResetPasswordSchema>>({
+  const resetForm = useForm<ResetPasswordFormData>({
     resolver: zodResolver(ResetPasswordSchema),
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-const handleSendCode = async (data: any) => {
-  setLoading(true);
-  setErrorMessage("");
+  // reset errors/forms when switching steps
+  useEffect(() => {
+    setErrorMessage("");
+    if (currentStep === "forgot-verification") {
+      setVerificationCode("");
+    } else if (currentStep === "forgot-reset") {
+      resetForm.reset({ password: "", confirmPassword: "" });
+    }
+  }, [currentStep, resetForm]);
 
-  try {
-    const result = await api.post('authentication/forgot-password/send-code/', {
-      email: data.email
-    });
-    
-    setEmail(data.email);
-    setCurrentStep('verification');
-  } catch (error) {
-    console.error("Send code error:", error);
-    setErrorMessage(error.message || "Failed to send reset code. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+  // helper for API errors
+  const getErrorMessage = (error: any): string => {
+    if (typeof error === "string") return error;
+    if (error?.response?.data?.message) return error.response.data.message;
+    if (error?.response?.data?.error) return error.response.data.error;
+    if (error?.message) return error.message;
+    return "An unexpected error occurred. Please try again.";
+  };
 
-const handleVerifyCode = async (data) => {
-  setLoading(true);
-  setErrorMessage("");
+  // handlers
+  const handleSendCode = async (data: EmailFormData) => {
+    setLoading(true);
+    setErrorMessage("");
+    try {
+      const result = await sendEmailOTP(data.email);
+      if (result) {
+        setEmail(data.email);
+        setCurrentStep("forgot-verification");
+      } else {
+        setErrorMessage("Failed to send OTP. Please try again.");
+      }
+    } catch (error: any) {
+      setErrorMessage(getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  try {
-    const result = await api.post('authentication/forgot-password/verify-code/', {
-      email: email,
-      code: data.code
-    });
-    
-    // Store the reset token for the next step
-    setResetToken(result.reset_token);
-    setCurrentStep('reset');
-  } catch (error : any) {
-    console.error("Verify code error:", error);
-    setErrorMessage(error.message || "Invalid or expired code. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleVerifyCode = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      setErrorMessage("Please enter a 6-digit verification code.");
+      return;
+    }
+    setLoading(true);
+    setErrorMessage("");
+    try {
+      const user = await verifyEmailOTPAndLogin(verificationCode, email);
+      if (user) {
+        setCurrentStep("forgot-reset");
+      } else {
+        setErrorMessage("Account does not exist");
+      }
+    } catch (error: any) {
+      setErrorMessage(getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const handleResetPassword = async (data: any) => {
-  setLoading(true);
-  setErrorMessage("");
+  const handleResetPassword = async (data: ResetPasswordFormData) => {
+    setLoading(true);
+    setErrorMessage("");
+    try {
+      console.log("Reset password for:", email);
+      // call your reset password API here
+      setCurrentStep("forgot-success");
+    } catch (error: any) {
+      setErrorMessage(getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  try {
-    const result = await api.post('authentication/forgot-password/reset/', {
-      email: email,
-      reset_token: resetToken, // You'll need to add this state
-      new_password: data.password
-    });
-    
-    setCurrentStep('success');
-  } catch (error: any) {
-    console.error("Reset password error:", error);
-    setErrorMessage(error.message || "Failed to reset password. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleResendCode = async () => {
+    if (!email) {
+      setErrorMessage("Email not found. Please start over.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const success = await sendEmailOTP(email);
+      if (success) {
+        setVerificationCode("");
+        alert("OTP resent successfully!");
+      } else {
+        setErrorMessage("Failed to resend OTP. Please try again.");
+      }
+    } catch (error: any) {
+      setErrorMessage(getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const handleResendCode = async () => {
-  setLoading(true);
-  setErrorMessage("");
+  const handleBackToEmail = () => {
+    setEmail("");
+    setVerificationCode("");
+    emailForm.reset({ email: "" });
+    setCurrentStep("forgot-email");
+  };
 
-  try {
-    const result = await api.post('authentication/forgot-password/resend-code/', {
-      email: email
-    });
-    
-    // Show success message
-    alert("Code resent successfully!");
-  } catch (error: any) {
-    console.error("Resend code error:", error);
-    setErrorMessage(error.message || "Failed to resend code. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleVerificationCodeChange = (value: string) => {
+    const numericValue = value.replace(/\D/g, "").slice(0, 6);
+    setVerificationCode(numericValue);
+  };
 
+  // render steps without Card
   const renderStepContent = () => {
     switch (currentStep) {
-      case 'email':
+      case "forgot-email":
         return (
-          <>
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center">Reset Password</CardTitle>
-              <CardDescription className="text-center">
-                Enter your email address and we'll send you a verification code.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Form {...emailForm}>
-                <form onSubmit={emailForm.handleSubmit(handleSendCode)} className="space-y-4">
-                  <FormField
-                    control={emailForm.control}
-                    name="email"
-                    render={({ field }: { field: ControllerRenderProps<any, any> }) => (
-                      <FormItem>
-                        <FormLabel>Email address</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="Enter your email address"
-                            {...field}
-                            disabled={loading}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {errorMessage && (
-                    <Alert variant="destructive">
-                      <AlertDescription>{errorMessage}</AlertDescription>
-                    </Alert>
+          <div className="space-y-6 w-full max-w-md bg-white p-6 rounded-2xl shadow">
+            <div className="text-center space-y-2">
+              <h1 className="text-3xl font-bold">Reset Password</h1>
+              <p className="text-gray-600">
+                Enter your email and we'll send you a 6-digit code.
+              </p>
+            </div>
+            <Form {...emailForm}>
+              <form onSubmit={emailForm.handleSubmit(handleSendCode)} className="space-y-4">
+                <FormField
+                  control={emailForm.control}
+                  name="email"
+                  render={({ field }: { field: ControllerRenderProps<any, any> }) => (
+                    <FormItem>
+                      <FormLabel>Email address</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="Enter your email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Sending Code...
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="mr-2 h-4 w-4" />
-                        Send Verification Code
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </>
+                />
+                {errorMessage && <Alert variant="destructive"><AlertDescription>{errorMessage}</AlertDescription></Alert>}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Sending..." : "Send OTP"}
+                </Button>
+              </form>
+            </Form>
+          </div>
         );
 
-      case 'verification':
+      case "forgot-verification":
         return (
-          <>
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center">Enter Verification Code</CardTitle>
-              <CardDescription className="text-center">
-                We've sent a 6-digit code to {email}. Enter it below to continue.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Form {...verificationForm}>
-                <form onSubmit={verificationForm.handleSubmit(handleVerifyCode)} className="space-y-4">
-                  <FormField
-                    control={verificationForm.control}
-                    name="code"
-                    render={({ field }: { field: ControllerRenderProps<any, any> }) => (
-                      <FormItem>
-                        <FormLabel>Verification Code</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="text"
-                            placeholder="Enter 6-digit code"
-                            maxLength={6}
-                            {...field}
-                            disabled={loading}
-                            className="text-center text-lg tracking-wider"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {errorMessage && (
-                    <Alert variant="destructive">
-                      <AlertDescription>{errorMessage}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Verifying...
-                      </>
-                    ) : (
-                      <>
-                        <Shield className="mr-2 h-4 w-4" />
-                        Verify Code
-                      </>
-                    )}
-                  </Button>
-
-                  <div className="text-center">
-                    <Button 
-                      type="button"
-                      variant="link" 
-                      className="text-sm"
-                      onClick={handleResendCode}
-                      disabled={loading}
-                    >
-                      Didn't receive the code? Resend
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </>
-        );
-
-      case 'reset':
-        return (
-          <>
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center">Create New Password</CardTitle>
-              <CardDescription className="text-center">
-                Enter your new password below.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Form {...resetForm}>
-                <form onSubmit={resetForm.handleSubmit(handleResetPassword)} className="space-y-4">
-                  <FormField
-                    control={resetForm.control}
-                    name="password"
-                    render={({ field }: { field: ControllerRenderProps<any, any> }) => (
-                      <FormItem>
-                        <FormLabel>New Password</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Enter new password"
-                            {...field}
-                            disabled={loading}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={resetForm.control}
-                    name="confirmPassword"
-                    render={({ field }: { field: ControllerRenderProps<any, any> }) => (
-                      <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Confirm new password"
-                            {...field}
-                            disabled={loading}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {errorMessage && (
-                    <Alert variant="destructive">
-                      <AlertDescription>{errorMessage}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Updating Password...
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="mr-2 h-4 w-4" />
-                        Update Password
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </>
-        );
-
-      case 'success':
-        return (
-          <>
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center text-green-600">
-                <Check className="mx-auto h-12 w-12 mb-2" />
-                Password Reset Successful!
-              </CardTitle>
-              <CardDescription className="text-center">
-                Your password has been successfully updated. You can now sign in with your new password.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button onClick={onBackToSignIn} className="w-full">
-                Continue to Sign In
+          <div className="space-y-6 w-full max-w-md bg-white p-6 rounded-2xl shadow">
+            <div className="text-center space-y-2">
+              <h1 className="text-3xl font-bold">Enter Verification Code</h1>
+              <p className="text-gray-600">
+                We sent a code to <strong>{email}</strong>
+              </p>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleVerifyCode();
+              }}
+              className="space-y-4"
+            >
+              <Input
+                type="text"
+                placeholder="000000"
+                maxLength={6}
+                value={verificationCode}
+                onChange={(e) => handleVerificationCodeChange(e.target.value)}
+                className="text-center text-lg tracking-wider"
+              />
+              {errorMessage && <Alert variant="destructive"><AlertDescription>{errorMessage}</AlertDescription></Alert>}
+              <Button type="submit" className="w-full" disabled={loading || verificationCode.length !== 6}>
+                {loading ? "Verifying..." : "Verify Code"}
               </Button>
-            </CardContent>
-          </>
+              <div className="flex flex-col items-center">
+                <Button type="button" variant="link" onClick={handleResendCode}>Resend</Button>
+                <Button type="button" variant="link" onClick={handleBackToEmail}>Change email</Button>
+              </div>
+            </form>
+          </div>
         );
 
-      default:
-        return null;
+      case "forgot-reset":
+        return (
+          <div className="space-y-6 w-full max-w-md bg-white p-6 rounded-2xl shadow">
+            <div className="text-center space-y-2">
+              <h1 className="text-3xl font-bold">Create New Password</h1>
+            </div>
+            <Form {...resetForm}>
+              <form onSubmit={resetForm.handleSubmit(handleResetPassword)} className="space-y-4">
+                <FormField
+                  control={resetForm.control}
+                  name="password"
+                  render={({ field }: { field: ControllerRenderProps<any, any> }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={resetForm.control}
+                  name="confirmPassword"
+                  render={({ field }: { field: ControllerRenderProps<any, any> }) => (
+                    <FormItem>
+                      <FormLabel>Confirm Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {errorMessage && <Alert variant="destructive"><AlertDescription>{errorMessage}</AlertDescription></Alert>}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Updating..." : "Update Password"}
+                </Button>
+              </form>
+            </Form>
+          </div>
+        );
+
+      case "forgot-success":
+        return (
+          <div className="space-y-6 w-full max-w-md bg-white p-6 rounded-2xl shadow text-center">
+            <Check className="mx-auto h-12 w-12 text-green-600" />
+            <h1 className="text-2xl font-bold text-green-600">Password Reset Successful!</h1>
+            <Button onClick={() => setCurrentStep("forgot-email")} className="w-full">
+              Back to Sign In
+            </Button>
+          </div>
+        );
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
-        {renderStepContent()}
-        
-        {/* Back to Sign In - Only show on first step */}
-        {currentStep === 'email' && (
-          <div className="text-center pb-4">
-            <Button 
-              variant="link" 
-              className="text-sm"
-              onClick={onBackToSignIn}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Sign In
-            </Button>
-          </div>
-        )}
-      </Card>
+    <div className="w-full h-full flex flex-col justify-center items-center bg-gray-50 px-4">
+      {renderStepContent()}
     </div>
   );
 }

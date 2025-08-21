@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import {
   Sidebar,
   SidebarContent,

@@ -374,7 +374,8 @@ INSTALLED_APPS = [
     
     # Third-party apps
     'rest_framework',
-    'simple_history',
+    'simple_history', # --- NEW
+    'debug_toolbar', # --- NEW
     
     # Local apps
     'apps.administration',
@@ -401,20 +402,28 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
+    'django_ratelimit.middleware.RatelimitMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.authentication.middleware.AuthCheckingMiddleware',
-    # 'simple_history.middleware.HistoryRequestMiddleware',
+    'apps.authentication.middleware.request_logging.RequestLoggingMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware', 
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
+# Debug toolbar - only in DEBUG mode (shows the Debug Toolbar if the request is coming from these IP addresses)
+# Remove Debug Toolbar in production (DEBUG=False)
+INTERNAL_IPS = ['127.0.0.1']
+
+# ========================
+# AUTHENTICATION BACKENDS
+# ========================
+# Django's global authentication backend    
 AUTHENTICATION_BACKENDS = [
-    'apps.authentication.backends.SupabaseAuthBackend',
-    'django.contrib.auth.backends.ModelBackend',
+    'apps.authentication.SupabaseAuth.SupabaseAuthentication',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -448,6 +457,12 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default='my_default_email')
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default='my_default_password')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# ========================
+# SMS CONFIGURATION
+# ========================
+SEMAPHORE_API_KEY = config('SEMAPHORE_API_KEY', default=None)
+
 
 # ========================
 # DATABASE CONFIGURATION
@@ -498,12 +513,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ========================
 # REST FRAMEWORK
 # ========================
+# used when DRF is used in handling API requests
+# API endpoints (views that extend APIView or ViewSet).
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'apps.authentication.backends.SupabaseAuthBackend',
+        'apps.authentication.SupabaseAuth.SupabaseAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAuthenticated',
     ],
 }
 
@@ -562,6 +579,11 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
+    
+
+SECURE_COOKIE_HTTPONLY = True  # Prevent JavaScript access to cookies
+SECURE_COOKIE_SECURE = True    # Only send cookies over HTTPS (set False in dev if not using HTTPS)
+SECURE_COOKIE_SAMESITE = 'Lax'
 
 # ========================
 # LOGGING
@@ -580,12 +602,19 @@ LOGGING = {
     },
 }
 
-
 # ========================
 # SCHEDULER
 # ========================
 SCHEDULER_AUTOSTART = True
 # SCHEDULER_AUTOSTART = not DEBUG # for production
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",  
+    }
+}
+
 
 
 # ========================

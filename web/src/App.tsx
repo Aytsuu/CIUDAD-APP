@@ -4,7 +4,6 @@ import { AuthProvider } from "./context/AuthContext";
 import { AnimatePresence } from "framer-motion";
 import { main_router } from "./routers/main-router";
 import { landing_router } from "./routers/landing-router";
-import { user_account } from "./routers/profile-router";
 import { LoadingProvider } from "./context/LoadingContext";
 import { LinearLoader } from "./components/ui/linear-loader";
 import { NotFound } from "./not-found";
@@ -13,7 +12,6 @@ import { NotificationProvider } from "./context/NotificationContext";
 const router = createBrowserRouter([
   ...main_router,
   ...landing_router,
-  ...user_account,
   { path: "*", element: <NotFound /> },
 ]);
 

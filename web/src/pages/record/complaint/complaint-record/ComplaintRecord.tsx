@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useGetComplaint } from "../complaint-hooks";
+import { useGetComplaint } from "../api-operations/queries/complaintGetQueries";
 import { complaintColumns } from "./ComplaintColumn";
 import { Complaint } from "../complaint-type";
 import { filterComplaints } from "./FilterComplaint";
@@ -21,7 +21,7 @@ export default function ComplaintRecord() {
   }, [complaints]);
 
   const filteredData = useMemo(() => {
-    return filterComplaints(nonArchivedComplaints, searchQuery, timeFilter);
+    return filterComplaints(nonArchivedComplaints, searchQuery);
   }, [nonArchivedComplaints, searchQuery, timeFilter]);
 
   const paginatedData = useMemo(() => {
@@ -41,7 +41,7 @@ export default function ComplaintRecord() {
     <div className="w-full h-full flex flex-col">
       <div className="flex flex-col justify-center mb-4">
         <h1 className="flex flex-row font-semibold text-xl sm:text-2xl text-darkBlue2 items-center">
-          Complaint Records
+          Barangay Blotter
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
           Manage and view complaint information
@@ -53,8 +53,6 @@ export default function ComplaintRecord() {
         setSearchQuery={setSearchQuery}
         timeFilter={timeFilter}
         setTimeFilter={setTimeFilter}
-        pageSize={pageSize}
-        setPageSize={setPageSize}
       />
 
       <ComplaintTable data={paginatedData} columns={columns} isLoading={isLoading} />
@@ -68,7 +66,3 @@ export default function ComplaintRecord() {
     </div>
   );
 }
-
-
-
-
