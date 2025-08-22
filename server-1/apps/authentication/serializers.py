@@ -37,12 +37,12 @@ class UserAccountSerializer(serializers.ModelSerializer):
             return None
 
         # Check if the staff is an admin
-        if staff_record.pos and staff_record.pos.pos_title == 'Admin':
-            features = Feature.objects.all()
+        # if staff_record.pos and staff_record.pos.pos_title == 'Admin':
+        #     features = Feature.objects.all()
         
-        else:
-            assignments = Assignment.objects.filter(staff=staff_record)
-            features = Feature.objects.filter(feat_id__in=assignments.values('feat_id'))
+        # else:
+        assignments = Assignment.objects.filter(staff=staff_record)
+        features = Feature.objects.filter(feat_id__in=assignments.values('feat_id'))
             
         staff_data = StaffFullSerializer(staff_record).data
         staff_data['features'] = FeatureBaseSerializer(features, many=True).data

@@ -19,8 +19,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import SignInSchema from "@/form-schema/sign-in-schema";
 import { useAuth } from "@/context/AuthContext";
 import SanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
+import { toast } from "sonner";
+import { useNavigate } from "react-router";
 
 export default function SignIn() {
+  const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,6 +43,8 @@ export default function SignIn() {
 
     try {
       await login(credentials.email, credentials.password);
+      toast.success("Successfully Logged in!")
+      form.reset()
     } catch (error) {
       console.error("Login error:", error);
       setErrorMessage(

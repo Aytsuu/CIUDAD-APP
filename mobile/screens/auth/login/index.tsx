@@ -341,10 +341,8 @@ import CiudadLogo from "@/assets/images/CIUDADLogo.svg";
 
 type SignInForm = z.infer<typeof signInSchema>;
 
-// Memoize SignupOptions component
 const SignupOptionsMemo = memo(SignupOptions);
 
-// Extract style objects to prevent re-creation
 const contentContainerStyle = {
   flexGrow: 1,
   paddingTop: 60,
@@ -355,14 +353,9 @@ const keyboardAvoidingViewStyle = { flex: 1 };
 
 export default function SignInScreen() {
   const dispatch = useDispatch<AppDispatch>();
-  
-  // Use shallowEqual to prevent unnecessary re-renders
-  const authState = useSelector(
-    (state: RootState) => state.auth,
-    shallowEqual
-  );
+  const authState = useSelector((state: RootState) => state.auth, shallowEqual);
   const { user, isAuthenticated, isLoading, error } = authState;
-  
+
   const { toast } = useToastContext();
   const router = useRouter();
 
@@ -375,12 +368,7 @@ export default function SignInScreen() {
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Memoize default values
-  const defaultValues = useMemo(() => 
-    generateDefaultValues(signInSchema), 
-    []
-  );
-
+  const defaultValues = useMemo(() => generateDefaultValues(signInSchema), []);
   const {
     control,
     trigger,
@@ -391,21 +379,11 @@ export default function SignInScreen() {
     defaultValues,
   });
 
-  // Memoize computed values
-  const isAnyLoading = useMemo(() => 
-    emailLoading || phoneLoading || googleLoading || isLoading,
+  const isAnyLoading = useMemo(
+    () => emailLoading || phoneLoading || googleLoading || isLoading,
     [emailLoading, phoneLoading, googleLoading, isLoading]
   );
 
-  // Show errors from Redux - optimized dependencies
-  useEffect(() => {
-    if (error) {
-      // toast.error(error);
-      dispatch(clearError());
-    }
-  }, [error, dispatch]);
-
-  // Auto-redirect if logged in - optimized dependencies
   useEffect(() => {
     if (isAuthenticated && user) {
       toast.success("Welcome!");
@@ -413,93 +391,104 @@ export default function SignInScreen() {
     }
   }, [isAuthenticated, user]);
 
-  // Memoize handlers to prevent re-creation
-  const handleEmailLogin = useMemo(() => async () => {
-    try {
-      setEmailLoading(true);
-      const isValid = await trigger();
+  const handleEmailLogin = useMemo(
+    () => async () => {
+      try {
+        setEmailLoading(true);
+        const isValid = await trigger();
 
-      if (!isValid) {
-        if (errors.email) toast.error(errors.email.message ?? "Invalid email");
-        if (errors.password)
-          toast.error(errors.password.message ?? "Invalid password");
+        if (!isValid) {
+          if (errors.email)
+            toast.error(errors.email.message ?? "Invalid email");
+          if (errors.password)
+            toast.error(errors.password.message ?? "Invalid password");
+          return;
+        }
+
+        const { email, password } = getValues();
+        const resultAction = await dispatch(login({ email, password }));
+
+        if (login.fulfilled.match(resultAction)) {
+          console.log("Login successful");
+          setShowSignupOptions(false); // Hide signup options after successful login
+        } else {
+          console.error("Login failed:", resultAction.payload);
+        }
+      } catch (err) {
+        toast.error("An unexpected error occurred. Please try again.");
+      } finally {
+        setEmailLoading(false);
+      }
+    },
+    [trigger, errors, getValues, dispatch, toast]
+  );
+
+  const handlePhoneContinue = useMemo(
+    () => async () => {
+      const phoneRegex = /^9\d{9}$/;
+      if (!phoneRegex.test(phone.trim())) {
+        toast.error(
+          "Please enter a valid mobile number starting with 9 and 10 digits long"
+        );
         return;
       }
 
-      const { email, password } = getValues();
-      const resultAction = await dispatch(login({ email, password }));
+      try {
+        setPhoneLoading(true);
+        const fullPhoneNumber = `63${phone}`;
+        const resultAction = await dispatch(sendOtp(fullPhoneNumber));
 
-      // Check if login was successful
-      if (login.fulfilled.match(resultAction)) {
-        // Success will be handled by the useEffect above
-        console.log("Login successful");
-      } else {
-        // Error will be handled by the error useEffect
-        console.error("Login failed:", resultAction.payload);
+        if (sendOtp.fulfilled.match(resultAction)) {
+          toast.success(`OTP sent to +${fullPhoneNumber}`);
+          router.push({
+            pathname: "/(auth)/PhoneOTP",
+            params: { phoneNumber: fullPhoneNumber },
+          });
+        } else {
+          console.error("Send OTP failed:", resultAction.payload);
+        }
+      } catch (err) {
+        toast.error("An unexpected error occurred. Please try again.");
+      } finally {
+        setPhoneLoading(false);
       }
-    } catch (err) {
-      // console.error("Login error:", err);
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setEmailLoading(false);
-    }
-  }, [trigger, errors, getValues, dispatch, toast]);
+    },
+    [phone, dispatch, toast, router]
+  );
 
-  const handlePhoneContinue = useMemo(() => async () => {
-    const phoneRegex = /^9\d{9}$/;
-    if (!phoneRegex.test(phone.trim())) {
-      toast.error(
-        "Please enter a valid mobile number starting with 9 and 10 digits long"
-      );
-      return;
-    }
-
-    try {
-      setPhoneLoading(true);
-      const fullPhoneNumber = `63${phone}`;
-      const resultAction = await dispatch(sendOtp(fullPhoneNumber));
-
-      if (sendOtp.fulfilled.match(resultAction)) {
-        toast.success(`OTP sent to +${fullPhoneNumber}`);
-        // Navigate to OTP screen with phone number
-        router.push({
-          pathname: "/(auth)/PhoneOTP",
-          params: { phoneNumber: fullPhoneNumber },
-        });
-      } else {
-        // Error will be handled by the error useEffect
-        console.error("Send OTP failed:", resultAction.payload);
+  const handleGoogleLogin = useMemo(
+    () => async () => {
+      setGoogleLoading(true);
+      try {
+        toast.info("Google login coming soon!");
+      } catch (err) {
+        console.error("Google login failed:", err);
+        toast.error("Google login failed");
+      } finally {
+        setGoogleLoading(false);
       }
-    } catch (err) {
-      // console.error("Failed to send OTP:", err);
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setPhoneLoading(false);
-    }
-  }, [phone, dispatch, toast, router]);
-
-  const handleGoogleLogin = useMemo(() => async () => {
-    setGoogleLoading(true);
-    try {
-      // TODO: Implement Google login
-      // const resultAction = await dispatch(googleLogin());
-      toast.info("Google login coming soon!");
-    } catch (err) {
-      console.error("Google login failed:", err);
-      toast.error("Google login failed");
-    } finally {
-      setGoogleLoading(false);
-    }
-  }, [toast]);
+    },
+    [toast]
+  );
 
   const dismissKeyboard = useMemo(() => () => Keyboard.dismiss(), []);
+  const toggleShowPassword = useMemo(
+    () => () => setShowPassword(!showPassword),
+    [showPassword]
+  );
+  const togglePhoneLogin = useMemo(
+    () => () => setShowPhoneLogin(!showPhoneLogin),
+    [showPhoneLogin]
+  );
+  const handleShowSignupOptions = useMemo(
+    () => () => setShowSignupOptions(true),
+    []
+  );
+  const handleCloseSignupOptions = useMemo(
+    () => () => setShowSignupOptions(false),
+    []
+  );
 
-  const toggleShowPassword = useMemo(() => () => setShowPassword(!showPassword), [showPassword]);
-  const togglePhoneLogin = useMemo(() => () => setShowPhoneLogin(!showPhoneLogin), [showPhoneLogin]);
-  const handleShowSignupOptions = useMemo(() => () => setShowSignupOptions(true), []);
-  const handleCloseSignupOptions = useMemo(() => () => setShowSignupOptions(false), []);
-
-  // Show loading screen only for initial auth checks or login process
   if (isLoading && !emailLoading && !phoneLoading) {
     return (
       <View className="flex-1 bg-white items-center justify-center">
@@ -510,6 +499,8 @@ export default function SignInScreen() {
       </View>
     );
   }
+
+  const passwordValue = getValues("password");
 
   return (
     <KeyboardAvoidingView
@@ -555,25 +546,27 @@ export default function SignInScreen() {
                     secureTextEntry={!showPassword}
                     editable={!isAnyLoading}
                   />
-                  <TouchableOpacity
-                    onPress={toggleShowPassword}
-                    disabled={isAnyLoading}
-                    className="absolute right-5 top-1/2 -translate-y-1/4"
-                  >
-                    {showPassword ? (
-                      <Eye
-                        className={
-                          isAnyLoading ? "text-gray-400" : "text-gray-700"
-                        }
-                      />
-                    ) : (
-                      <EyeOff
-                        className={
-                          isAnyLoading ? "text-gray-400" : "text-gray-700"
-                        }
-                      />
-                    )}
-                  </TouchableOpacity>
+                  {passwordValue ? (
+                    <TouchableOpacity
+                      onPress={toggleShowPassword}
+                      disabled={isAnyLoading}
+                      className="absolute right-5 top-1/2 -translate-y-1/4"
+                    >
+                      {showPassword ? (
+                        <Eye
+                          className={
+                            isAnyLoading ? "text-gray-400" : "text-gray-700"
+                          }
+                        />
+                      ) : (
+                        <EyeOff
+                          className={
+                            isAnyLoading ? "text-gray-400" : "text-gray-700"
+                          }
+                        />
+                      )}
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
 
                 <Button
@@ -651,7 +644,7 @@ export default function SignInScreen() {
               </View>
             )}
 
-            {/* Divider - moved to top */}
+            {/* Divider */}
             <View className="flex-row items-center my-8 mt-12">
               <View className="flex-1 h-[1px] bg-gray-300" />
               <Text className="mx-3 text-gray-500 font-PoppinsRegular text-[12px]">
@@ -660,7 +653,7 @@ export default function SignInScreen() {
               <View className="flex-1 h-[1px] bg-gray-300" />
             </View>
 
-            {/* Toggle between Email & Phone login - moved up */}
+            {/* Toggle between Email & Phone login */}
             <TouchableOpacity
               onPress={togglePhoneLogin}
               disabled={isAnyLoading}
@@ -712,24 +705,26 @@ export default function SignInScreen() {
             </TouchableOpacity>
 
             {/* Signup Option */}
-            <View className="flex-row justify-center items-center gap-2 mt-6">
-              <Text className="text-gray-400 font-PoppinsRegular text-[12px]">
-                Don't have an account?
-              </Text>
-              <TouchableOpacity
-                onPress={handleShowSignupOptions}
-                disabled={isAnyLoading}
-                activeOpacity={0.6}
-              >
-                <Text
-                  className={`font-PoppinsMedium text-[12px] ${
-                    isAnyLoading ? "text-gray-400" : "text-primaryBlue"
-                  }`}
-                >
-                  Sign up
+            {!isLoading && !isAuthenticated && (
+              <View className="flex-row justify-center items-center gap-2 mt-6">
+                <Text className="text-gray-400 font-PoppinsRegular text-[12px]">
+                  Don't have an account?
                 </Text>
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity
+                  onPress={handleShowSignupOptions}
+                  disabled={isAnyLoading}
+                  activeOpacity={0.6}
+                >
+                  <Text
+                    className={`font-PoppinsMedium text-[12px] ${
+                      isAnyLoading ? "text-gray-400" : "text-primaryBlue"
+                    }`}
+                  >
+                    Sign up
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
             <SignupOptionsMemo
               visible={showSignupOptions}
