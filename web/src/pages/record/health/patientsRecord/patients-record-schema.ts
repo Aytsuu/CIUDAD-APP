@@ -9,7 +9,7 @@ export const patientRecordSchema = z.object({
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   patientType: z.string().min(1, "Patient type is required"),
   houseNo: z.string().min(1, "House number is required"),
-  philhealthId: z.string().optional(),
+  philhealthId: z.string().optional().default(""),
   address: z.object({
     street: z.string().min(1, 'Street is required'),
     sitio: z.string().min(1, 'Sitio is required'),

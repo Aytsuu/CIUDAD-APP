@@ -252,6 +252,7 @@ export default function CreatePatientRecord() {
           tran_status: "Active",
           tran_ed_attainment: "Not Specified",
           tran_religion: "Not Specified",
+          philhealth_id: formData.philhealthId || "",
           // address: {
           //   tradd_street: formData.address?.street || "",
           //   tradd_sitio: formData.address?.sitio || "",

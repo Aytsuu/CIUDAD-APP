@@ -12,6 +12,7 @@ import { UseFormReturn } from "react-hook-form";
 import { TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 
+
 interface PatientData {
   lastName: string;
   firstName: string;
@@ -33,6 +34,7 @@ interface PatientData {
   chronicConditions: string;
   lastVisit: string;
   visits: Array<{ date: string; reason: string; doctor: string }>;
+  philhealthId?: string;
 }
 
 interface PersonalInfoTabProps {
@@ -51,6 +53,8 @@ export default function PersonalInfoTab({
   handleSaveEdit,
   handleCancelEdit,
 }: PersonalInfoTabProps) {
+
+  form.setValue("philhealthId", form.getValues("philhealthId") || "");
   return (
     <TabsContent value="personal" className="mt-0">
       <CardLayout
@@ -62,7 +66,7 @@ export default function PersonalInfoTab({
                 <div className="pt-4">
                   <Form {...form}>
                     <form className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <FormField
                           control={form.control}
                           name="lastName"
@@ -117,6 +121,25 @@ export default function PersonalInfoTab({
                             </FormItem>
                           )}
                         />
+                        <FormField
+                          control={form.control}
+                          name="philhealthId"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">
+                                PhilHealth ID
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  disabled={!isEditable}
+                                  className={!isEditable ? "bg-muted/30" : ""}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

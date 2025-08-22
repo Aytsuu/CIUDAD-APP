@@ -99,6 +99,7 @@ export default function ViewPatientRecord() {
         city: currentPatient.address?.add_city || "",
         province: currentPatient.address?.add_province || "",
       },
+      philhealthId: currentPatient.personal_info.philhealth_id || "",
       bloodType: currentPatient.bloodType ?? "N/A",
       allergies: currentPatient.allergies ?? "N/A",
       chronicConditions: currentPatient.chronicConditions ?? "N/A",
@@ -175,6 +176,7 @@ export default function ViewPatientRecord() {
         per_lname: currentPatient?.personal_info.per_lname ?? patientData?.lastName ?? "",
         per_dob: currentPatient?.personal_info.per_dob ?? patientData?.dateOfBirth ?? "",
         per_sex: currentPatient?.personal_info.per_sex ?? patientData?.sex ?? "",
+        philhealth_id: currentPatient?.personal_info.philhealth_id ?? patientData?.philhealthId ?? "",
       },
     }
 
