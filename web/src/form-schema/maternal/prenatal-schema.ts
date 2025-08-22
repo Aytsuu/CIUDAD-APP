@@ -57,7 +57,14 @@ export const positiveNumberSchema = z
   })
   
   
-const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD.");
+const dateSchema = z.preprocess((val) => {
+    if (val == "" || val === null || val === undefined) {
+      return undefined
+    }
+    return val
+  },
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD.").optional()
+);
 
 export const optionalDateSchema = z.preprocess(
   (val) => (val === "" ? undefined : val), 
@@ -122,6 +129,7 @@ export const PrenatalFormSchema = z.object({
         noOfAbortion: positiveNumberSchema.optional(),
         noOfStillBirths: positiveNumberSchema.optional(),
         historyOfLBabies: positiveNumberSchema.optional(),
+        historyOfLBabiesString: z.string().optional(),
         historyOfDiabetes: z.string().optional(),
     }).optional(),
 
@@ -135,6 +143,7 @@ export const PrenatalFormSchema = z.object({
         prevIllnessData: z.array(z.object({
             prevIllness: z.string().default(''),
             prevIllnessYr: positiveNumberSchema.optional(),
+            ill_id: z.number().optional()
         })).optional(),
         prevHospitalizationData: z.array(z.object({
             prevHospitalization: z.string().default(''),
@@ -144,7 +153,7 @@ export const PrenatalFormSchema = z.object({
 
     // previous pregnancy
     previousPregnancy: z.object({
-        dateOfDelivery: dateSchema.optional(),
+        dateOfDelivery: dateSchema,
         outcome: z.string().optional(),
         typeOfDelivery: z.string().optional(),
         babysWt: positiveNumberSchema.default(0),
@@ -174,8 +183,8 @@ export const PrenatalFormSchema = z.object({
         para: positiveNumberSchema.optional(),
         fullterm: positiveNumberSchema.optional(),
         preterm: positiveNumberSchema.optional(),
-        pf_lmp: dateSchema.optional(),
-        pf_edc: dateSchema.optional(),
+        pf_lmp: dateSchema,
+        pf_edc: dateSchema,
     }),
 
   
@@ -196,7 +205,7 @@ export const PrenatalFormSchema = z.object({
           "ogct_100gms",
         ])
         .optional(),
-      resultDate: dateSchema.optional(),
+      resultDate: dateSchema,
       toBeFollowed: z.boolean().optional(),
       documentPath: z.string().optional(),
       labRemarks: z.string().optional(),
@@ -217,7 +226,7 @@ export const PrenatalFormSchema = z.object({
               "ogct_50gms",
               "ogct_100gms",
             ]),
-            resultDate: optionalDateSchema.optional(),
+            resultDate: dateSchema,
             toBeFollowed: z.boolean().optional(),
             documentPath: z.string().optional(),
             labRemarks: z.string().optional(),
@@ -238,17 +247,17 @@ export const PrenatalFormSchema = z.object({
 
     // follow-up schedule
     followUpSchedule: z.object({
-        followUpDate: dateSchema.optional(),
+        followUpDate: dateSchema,
         aogWeeks: positiveNumberSchema.optional(),
         aogDays: positiveNumberSchema.optional(),
     }),
 
     // guide for 4anc visits
     ancVisits: z.object({
-        firstTri: dateSchema.optional(),
-        secondTri: dateSchema.optional(),
-        thirdTriOne: dateSchema.optional(),
-        thirdTriTwo: dateSchema.optional()
+        firstTri: dateSchema,
+        secondTri: dateSchema,
+        thirdTriOne: dateSchema,
+        thirdTriTwo: dateSchema
     }),
 
     // checklist

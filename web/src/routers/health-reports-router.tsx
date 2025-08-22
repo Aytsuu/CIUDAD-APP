@@ -1,4 +1,6 @@
-import BHWMonthlyReport from "@/pages/bhw/bhw-monthly-report";
+import BHWReportsMainTable from "@/pages/healthServices/Reports/bhw-report/bhw-main-table";
+import BHWReportsForm from "@/pages/healthServices/Reports/bhw-report/bhw-m-accmplshmnt-form";
+
 import HealthcareReports from "@/pages/healthServices/Reports/MainReports";
 import MonthlyMedicineRecords from "@/pages/healthServices/Reports/medicine-report/monthly";
 import MonthlyMedicineDetails from "@/pages/healthServices/Reports/medicine-report/records";
@@ -28,13 +30,16 @@ import SemiAnnualOPTDetails from "@/pages/healthServices/Reports/opt-semiannual/
 import YearlyJanDecOPTRecords from "@/pages/healthServices/Reports/opt-tracking-023mos.tsx/yearly";
 import YearlyJanDecOPTDetails from "@/pages/healthServices/Reports/opt-tracking-023mos.tsx/records";
 
-import path from "path";
 
 
 export const reports_router = [
   {
-    path: "/bhwmonthlyreport",
-    element: <BHWMonthlyReport />,
+    path: "/bhw-monthly-reports",
+    element: <BHWReportsMainTable />,
+  },
+  {
+    path:"/bhw-accomplishment-reports",
+    element: <BHWReportsForm />,
   },
   {
     path: "/healthcare-reports",

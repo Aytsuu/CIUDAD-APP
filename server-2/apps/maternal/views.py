@@ -4,13 +4,14 @@ from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from django.db.models import OuterRef, Exists, Prefetch
 from rest_framework.response import Response
-from .serializer import *
-from .serializer import (
-    MedicalHistorySerializer, ObstetricalHistorySerializer, PostpartumCompleteSerializer,
-    PrenatalCompleteSerializer, PregnancyDetailSerializer,BodyMeasurementReadSerializer,
-    PreviousPregnancyCreateSerializer, ObstetricRiskCodeCreateSerializer, PrenatalCareCreateSerializer,
-    PrenatalDetailSerializer, PrenatalCareDetailSerializer, PrenatalFormCompleteViewSerializer
-) 
+from apps.maternal.serializer import *
+# from apps.maternal.serializer import (
+#     MedicalHistorySerializer, ObstetricalHistorySerializer, PostpartumCompleteSerializer,
+#     PrenatalCompleteSerializer, PregnancyDetailSerializer,BodyMeasurementReadSerializer,
+#     PreviousPregnancyCreateSerializer, ObstetricRiskCodeCreateSerializer, PrenatalCareCreateSerializer,
+#     PrenatalDetailSerializer, PrenatalCareDetailSerializer, PrenatalFormCompleteViewSerializer,
+#     SpouseCreateSerializer
+# ) 
 from apps.patientrecords.serializers.patients_serializers import *
 from .models import *
 from .utils import calculate_missed_visits
@@ -151,6 +152,41 @@ class PrenatalRecordCreateView(generics.CreateAPIView):
                 {'error': f'Failed to create prenatal record: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class IllnessCreateView(generics.CreateAPIView):
+    serializer_class = IllnessCreateSerializer
+    queryset = Illness.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        logger.info(f"Creating illness record with data: {request.data}")
+
+        try:
+            serializer = self.get_serializer(data=request.data)
+
+            if not serializer.is_valid():
+                logger.error(f"Serializer validation errors: {serializer.errors}")
+                return Response(
+                    {
+                        'error': 'Validation failed',
+                        'details': serializer.errors
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            illness_record = serializer.save()
+            logger.info(f"Successfully created illness: {illness_record.ill_id}")
+
+            return Response({
+                'message': 'Illness record created successfully',
+                'ill_id': illness_record.ill_id,
+                'data': serializer.data
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({
+                'error': f'Failed to create illness record: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 logger = logging.getLogger(__name__)
@@ -813,3 +849,21 @@ def calculate_missed_visits_by_pregnancy(request, pregnancy_id):
             {'error': f'Error calculating missed visits: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['GET'])
+def get_illness_list(request):
+    """Get list of illnesses for prenatal form"""
+    try:
+        illnesses = Illness.objects.all().order_by('created_at')
+        serializer = IllnessCreateSerializer(illnesses, many=True)
+        
+        return Response({
+            'illnesses': serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        logger.error(f'Error fetching illness list: {str(e)}')
+        return Response({
+            'error': f'Failed to fetch illness list: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -4,8 +4,7 @@ from datetime import date, timedelta, datetime
 from django.utils import timezone
 from django.db.models import Max
 
-# Import models from patientrecords and maternal apps
-from apps.patientrecords.models import Spouse, VitalSigns, FollowUpVisit, PatientRecord, Patient, BodyMeasurement, MedicalHistory, Obstetrical_History
+from apps.patientrecords.models import *
 from apps.maternal.models import (
     Pregnancy, Prenatal_Form, Previous_Hospitalization, Previous_Pregnancy, TT_Status, 
     LaboratoryResult, LaboratoryResultImg, LabRemarks, Guide4ANCVisit, Checklist, BirthPlan,
@@ -25,6 +24,15 @@ class MedicalHistorySerializer(serializers.ModelSerializer):
         model = MedicalHistory
         fields = ['medhist_id', 'year', 'ill', 'illness_name'] 
 
+class MedicalHistoryCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicalHistory
+        fields = ['year', 'ill']
+    
+    def create(self, validated_data):
+        cleaned_data = {k: v for k, v in validated_data.items() if v is not None}
+        return super().create(cleaned_data)
+
 
 class ObstetricalHistorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,7 +43,18 @@ class ObstetricalHistorySerializer(serializers.ModelSerializer):
 class BodyMeasurementReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = BodyMeasurement
-        fields = ['age', 'weight', 'height', 'created_at']
+        fields = ['weight', 'height', 'created_at']
+
+
+class IllnessCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Illness
+        fields = ['ill_id', 'illname', 'created_at']
+    
+    def create(self, validated_data):
+        return Illness.objects.create(
+            illname=validated_data['illname'],
+        )
 
 
 class SpouseCreateSerializer(serializers.ModelSerializer):
@@ -54,7 +73,7 @@ class VitalSignsCreateSerializer(serializers.ModelSerializer):
 class BodyMeasurementCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = BodyMeasurement
-        fields = ['age', 'weight', 'height'] 
+        fields = ['weight', 'height'] 
 
 class ObstetricalHistoryCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -71,6 +90,7 @@ class PreviousPregnancyCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Previous_Pregnancy
         fields = ['date_of_delivery', 'outcome', 'type_of_delivery', 'babys_wt', 'gender', 'ballard_score', 'apgar_score']
+        extra_kwargs = { 'date_of_delivery': {'required': False, 'allow_null': True} }
 
 class TTStatusCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -315,7 +335,6 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
                 'staff_id': obj.staff_id.staff_id,
                 'staff_fname': getattr(obj.staff_id, 'staff_fname', 'Unknown'),
                 'staff_lname': getattr(obj.staff_id, 'staff_lname', 'Unknown'),
-                # Add other staff fields as needed
             }
         return None
 
@@ -608,7 +627,7 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
             return {
                 'weight': obj.bm_id.weight,
                 'height': obj.bm_id.height,
-                'age': obj.bm_id.age,
+                # 'age': obj.bm_id.age,
             }
         return None
     
@@ -729,6 +748,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
     body_measurement = BodyMeasurementCreateSerializer(required=False, write_only=True)
     
     # Nested lists for multiple entries
+    medical_history = MedicalHistoryCreateSerializer(many=True, required=False, write_only=True)
     previous_hospitalizations = PreviousHospitalizationCreateSerializer(many=True, required=False, write_only=True)
     previous_pregnancy_data = PreviousPregnancyCreateSerializer(required=False, write_only=True) # Assuming single for now based on schema
     tt_statuses = TTStatusCreateSerializer(many=True, required=False, write_only=True)
@@ -757,7 +777,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         fields = [
             'pat_id', 'patrec_type', 'pf_lmp', 'pf_edc', 'pf_occupation',
             'spouse_data', 'body_measurement', 'obstetrical_history', 'previous_hospitalizations',
-            'previous_pregnancy_data', 'tt_statuses', 'lab_results_data', 
+            'medical_history', 'previous_pregnancy_data', 'tt_statuses', 'lab_results_data', 
             'anc_visit_data', 'checklist_data', 'birth_plan_data',
             'obstetric_risk_code_data', 'prenatal_care_data', 'vital_bp_systolic', 
             'vital_bp_diastolic', 'followup_date', 'followup_description', 'assessed_by'
@@ -873,6 +893,49 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             print(f'Error creating hospitalization records: {str(e)}')
             raise
 
+    def create_medical_history_logic(self, medical_history_data, patient_record):
+        if not medical_history_data:
+            return
+
+        try:
+            created_count = 0
+            
+            with transaction.atomic():
+                for med_history_data_item in medical_history_data:
+                    ill = med_history_data_item.get('ill')
+                    year = med_history_data_item.get('year')
+                    
+                    if not ill:
+                        continue
+                    
+                    # Check if this illness already exists for this patient (across all their records)
+                    existing_record = MedicalHistory.objects.filter(
+                        patrec__pat_id=patient_record.pat_id,
+                        ill=ill,
+                        year=year
+                    ).first()
+                    
+                    if existing_record:
+                        print(f'Medical history record already exists for patient {patient_record.pat_id} - skipping')
+                        continue
+                    
+                    # Create the new record
+                    MedicalHistory.objects.create(
+                        patrec=patient_record,
+                        ill=ill,
+                        year=year
+                    )
+                    
+                    created_count += 1
+                    print(f'Created medical history record for patient {patient_record.pat_id}')
+            
+            print(f'Total created: {created_count} medical history record/s')
+            
+        except Exception as e:
+            print(f'Error creating medical history records: {str(e)}')
+            raise
+
+
     # creation of all records logic
     def create(self, validated_data):
         print(f"Creating prenatal record with validated data: {validated_data}")
@@ -883,11 +946,11 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         spouse_data = validated_data.pop('spouse_data', None)
         body_measurement_data = validated_data.pop('body_measurement', None)
         obstetrical_history_data = validated_data.pop('obstetrical_history', None)
+        medical_history_data = validated_data.pop('medical_history', [])
         previous_hospitalizations_data = validated_data.pop('previous_hospitalizations', [])
         previous_pregnancy_data = validated_data.pop('previous_pregnancy_data', None)
         tt_statuses_data = validated_data.pop('tt_statuses', [])
         lab_results_data = validated_data.pop('lab_results_data', [])
-        # lab_remarks_data = validated_data.pop('lab_remarks_data', None)
         anc_visit_data = validated_data.pop('anc_visit_data', None)
         checklist_data = validated_data.pop('checklist_data', None)
         birth_plan_data = validated_data.pop('birth_plan_data', None)
@@ -960,6 +1023,11 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                 )
                 print(f"Created obstetrical history: {obstetrical_history.obs_id}")
 
+                # create Medical History
+                if medical_history_data:
+                    self.create_medical_history_logic(medical_history_data, patient_record)
+                    print(f'Created medical history records for patient: {patient_record.patrec_id}')
+
                 # create VitalSigns (always create, even with default values)
                 vital_signs = VitalSigns.objects.create(
                     vital_bp_systolic=str(vital_bp_systolic),
@@ -1027,15 +1095,11 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                 print(f"Created prenatal form: {prenatal_form.pf_id}")
 
                 # create Previous_Hospitalization records
-                # for hosp_data in previous_hospitalizations_data:
-                #     Previous_Hospitalization.objects.create(pf_id=prenatal_form, **hosp_data)
                 if previous_hospitalizations_data:
                     self.create_previous_hospitalization_logic(prenatal_form, previous_hospitalizations_data, patient)
                     print(f"Created {len(previous_hospitalizations_data)} previous hospitalization records.")
 
                 # create TT_Status records
-                # for tt_data in tt_statuses_data:
-                #     TT_Status.objects.create(pf_id=prenatal_form, **tt_data)
                 if tt_statuses_data:
                     self.create_tt_status_logic(prenatal_form, tt_statuses_data, patient)
                     print(f"Created {len(tt_statuses_data)} TT status records.")

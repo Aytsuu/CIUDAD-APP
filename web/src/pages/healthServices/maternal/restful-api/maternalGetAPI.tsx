@@ -25,7 +25,7 @@ export const getMaternalRecords = async () => {
 // prenatal record count
 export const getPatientPrenatalCount = async (patientId: string): Promise<number> => {
   try {
-    const res = await api2.get(`maternal/patient/${patientId}/prenatal_count`)
+    const res = await api2.get(`maternal/patient/${patientId}/prenatal_count/`)
 
     return res.data.prenatal_count || 0
 
@@ -112,7 +112,7 @@ export const getLatestPatientPrenatalRecord = async (patientId: string) => {
 // medical history for prenatal form
 export const getPrenatalPatientMedHistory = async (patientId: string) => {
   try { 
-    const res = await api2.get(`maternal/patient/${patientId}/medicalhistory`)
+    const res = await api2.get(`maternal/patient/${patientId}/medicalhistory/`)
     return res.data || [];
   } catch (error) {
     console.error("Error fetching prenatal patient medical history: ", error);
@@ -123,7 +123,7 @@ export const getPrenatalPatientMedHistory = async (patientId: string) => {
 // obstetric history for prenatal form
 export const getPrenatalPatientObsHistory = async (patientId: string) => {
   try {
-    const res = await api2.get(`maternal/patient/${patientId}/obstetricalhistory`)
+    const res = await api2.get(`maternal/patient/${patientId}/obstetricalhistory/`)
     return res.data || []
   } catch (error) {
     console.error("Error fetching prenatal patient obstetrical history: ", error);
@@ -134,7 +134,7 @@ export const getPrenatalPatientObsHistory = async (patientId: string) => {
 // body measurement for prenatal and postpartum form
 export const getPrenatalPatientBodyMeasurement = async (patientId: string) => {
   try {
-    const res = await api2.get(`maternal/patient/${patientId}/bodymeasurement`)
+    const res = await api2.get(`maternal/patient/${patientId}/bodymeasurement/`)
     return res.data || [];
   } catch (error) {
     console.error("Error fetching prenatal patient body measurement: ", error);
@@ -145,7 +145,7 @@ export const getPrenatalPatientBodyMeasurement = async (patientId: string) => {
 // follow-up visits for prenatal
 export const getPrenatalPatientFollowUpVisits = async (patientId: string) => {
   try {
-    const res = await api2.get(`maternal/patient/${patientId}/followupvisits`)
+    const res = await api2.get(`maternal/patient/${patientId}/followupvisits/`)
     return res.data || [];
   } catch (error) {
     console.error("Error fetching prenatal patient follow-up visits: ", error);
@@ -227,7 +227,19 @@ export const getCalculatedMissedVisits = async (pregnancyId: string, aogWks?: nu
 }
 
 
-// postpartum
+export const getIllnessList = async () => {
+  try {
+    const res = await api2.get("maternal/prenatal/illnesses/")
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching illness list: ", error);
+    throw error;
+  }
+}
+
+
+
+{/* *********** postpartum *********** */}
 
 // latest postpartum
 export const getLatestPatientPostpartumRecord = async (patientId: string) => {

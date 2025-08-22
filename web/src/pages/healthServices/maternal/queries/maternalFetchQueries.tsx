@@ -19,6 +19,7 @@ import { getPatients,
 			getPatientTTStatus,
 			getCalculatedMissedVisits,
 			getLatestPatientPostpartumRecord,
+			getIllnessList,
 } from "../restful-api/maternalGetAPI";
 
 
@@ -83,7 +84,7 @@ export const usePregnancyDetails = (patientId: string) => {
 		queryFn: () => getPregnancyDetails(patientId),
 		enabled: !!patientId,
 		staleTime: 30 * 1,
-		retry: 3,
+		retry: 2,
 		// refetchOnWindowFocus: true,
 	})
 }
@@ -95,7 +96,7 @@ export const useLatestPatientPrenatalRecord = (patientId: string) => {
 		queryFn: () => getLatestPatientPrenatalRecord(patientId),
 		enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
 		staleTime: 30 * 1,
-		retry: 3,
+		retry: 2,
 	})
 }
 
@@ -106,7 +107,7 @@ export const usePrenatalPatientMedHistory = (patientId: string) => {
 		queryFn: () => getPrenatalPatientMedHistory(patientId),
 		enabled: !!patientId,
 		staleTime: 30 * 1,
-		retry: 3,
+		retry: 2,
 		// refetchOnWindowFocus: true,
 	})
 }
@@ -118,7 +119,7 @@ export const usePrenatalPatientObsHistory = (patientId: string) => {
 		queryFn: () => getPrenatalPatientObsHistory(patientId),
 		enabled: !!patientId,
 		staleTime: 30 * 1,
-		retry: 3,
+		retry: 2,
 		// refetchOnWindowFocus: true,
 	})
 }
@@ -130,7 +131,7 @@ export const usePrenatalPatientBodyMeasurement = (patientId: string) => {
 		queryFn: () => getPrenatalPatientBodyMeasurement(patientId),
 		enabled: !!patientId,
 		staleTime: 30 * 1,
-		retry: 3,
+		retry: 2,
 	})
 }
 
@@ -141,7 +142,7 @@ export const  usePrenatalPatientFollowUpVisits = (patientId: string) => {
 		queryFn: () => getPrenatalPatientFollowUpVisits(patientId),
 		enabled: !!patientId,
 		staleTime: 30 * 1,
-		retry: 3
+		retry: 2
 	})
 }
 
@@ -152,7 +153,7 @@ export const usePrenatalPatientPrevHospitalization = (patientid: string) => {
 		queryFn: () => getPrenatalPatientPrevHospitalization(patientid),
 		enabled: !!patientid,
 		staleTime: 30 * 1,
-		retry: 3
+		retry: 2
 	})
 }
 
@@ -163,7 +164,7 @@ export const usePrenatalPatientPrevPregnancy = (patientId: string) => {
 		queryFn: () => getPrenatalPatientPrevPregnancy(patientId),
 		enabled: !!patientId,
 		staleTime: 30 * 1,
-		retry: 3
+		retry: 2
 	})
 }
 
@@ -174,7 +175,7 @@ export const usePrenatalPatientPrenatalCare = (patientId: string, pregnancyId: s
 		queryFn: () => getPrenatalPatientPrenatalCare(patientId, pregnancyId),
 		enabled: !!patientId && !!pregnancyId,
 		staleTime: 30 * 1,
-		retry: 3
+		retry: 2
 	})
 }
 
@@ -185,7 +186,7 @@ export const usePrenatalRecordComplete = (patientId: string) => {
 		queryFn: () => getPrenatalRecordComplete(patientId),
 		enabled: !!patientId,
 		staleTime: 30 * 1,
-		retry: 3
+		retry: 2
 	})
 }
 
@@ -196,7 +197,7 @@ export const usePatientTTStatus = (patientId: string) => {
 		queryFn: () => getPatientTTStatus(patientId),
 		enabled: !!patientId,
 		staleTime: 30 * 1,
-		retry: 3
+		retry: 2
 	})
 }
 
@@ -219,6 +220,17 @@ export const useLatestPatientPostpartumRecord = (patientId: string) => {
 		queryFn: () => getLatestPatientPostpartumRecord(patientId),
 		enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
 		staleTime: 30 * 1,
-		retry: 3,
+		retry: 2,
+	})
+}
+
+// for getIllnessList
+export const useIllnessList = () => {
+	return useQuery({
+		queryKey: ["illnessList"],
+		queryFn: getIllnessList,
+		enabled: true,
+		staleTime: 30 * 1,
+		retry: 2,
 	})
 }

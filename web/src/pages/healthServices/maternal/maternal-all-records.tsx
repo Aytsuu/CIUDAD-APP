@@ -96,7 +96,6 @@ export default function MaternalAllRecords() {
       }
 
       const address = record.address;
-      console.log("Pat type:", record.pat_type);
 
       return {
         pat_id: record.pat_id,
@@ -115,7 +114,7 @@ export default function MaternalAllRecords() {
           add_city: address?.add_city,
           add_province: address?.add_province,
           add_external_sitio: address?.add_external_sitio,
-          add_sitio: address?.add_sitio || "N/A",
+          add_sitio: address?.add_sitio || "Not Provided",
         },
         pat_type: record.pat_type || "N/A",
       };
@@ -182,8 +181,8 @@ export default function MaternalAllRecords() {
               addressObj.add_province,
             ]
               .filter(Boolean)
-              .join(", ") || "N/A"
-          : "N/A";
+              .join(", ") || "Unknown"
+          : "Unknown";
         return (
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="w-full truncate">{fullAddress}</div>

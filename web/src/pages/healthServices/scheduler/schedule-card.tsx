@@ -59,7 +59,7 @@ export default function ScheduleCard({ day, dailySchedule, services }: ScheduleC
                 </Badge>
               </div>
               
-              <div className="space-y-1 max-h-20 overflow-y-auto">
+              <div className="space-y-1 max-h-50 overflow-y-auto">
                 {amServices.length === 0 ? (
                   <p className="text-xs text-amber-600 italic">No morning services</p>
                 ) : (
@@ -86,7 +86,7 @@ export default function ScheduleCard({ day, dailySchedule, services }: ScheduleC
                 </Badge>
               </div>
               
-              <div className="space-y-1 max-h-20 overflow-y-auto">
+              <div className="space-y-1 max-h-50 overflow-y-auto">
                 {pmServices.length === 0 ? (
                   <p className="text-xs text-blue-600 italic">No afternoon services</p>
                 ) : (

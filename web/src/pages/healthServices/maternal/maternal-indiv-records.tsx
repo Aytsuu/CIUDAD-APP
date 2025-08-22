@@ -109,7 +109,7 @@ interface PregnancyDataDetails{
   }[];
   postpartum_record?: {
     ppr_id:string;
-    delivery_date: string | "N/A";
+    delivery_date: string | "Unknown";
     created_at: string;
     updated_at: string;
     postpartum_assessment?: {
@@ -187,8 +187,8 @@ export default function MaternalIndivRecords() {
           id: pf.pf_id,
           pregnancyId: pregnancy.pregnancy_id,
           dateCreated: pf.created_at.split("T")[0],
-          address: addressParts.length > 0 ? addressParts.join(", ") : "N/A",
-          sitio: patientAddress?.add_external_sitio || patientAddress?.add_sitio || "N/A",
+          address: addressParts.length > 0 ? addressParts.join(", ") : "Not Provided",
+          sitio: patientAddress?.add_external_sitio || patientAddress?.add_sitio || "Not Provided",
           type: patientType as "Transient" | "Resident",
           recordType: "Prenatal",
           status: normalizeStatus(pregnancy.status),
@@ -216,8 +216,8 @@ export default function MaternalIndivRecords() {
           id: ppr.ppr_id,
           pregnancyId: pregnancy.pregnancy_id,
           dateCreated: ppr.created_at.split("T")[0],
-          address: addressParts.length > 0 ? addressParts.join(", ") : "N/A",
-          sitio: patientAddress?.add_sitio || "N/A",
+          address: addressParts.length > 0 ? addressParts.join(", ") : "Not Provided",
+          sitio: patientAddress?.add_sitio || "Not Provided",
           type: patientType as "Transient" | "Resident",
           recordType: "Postpartum Care",
           status: normalizeStatus(pregnancy.status),

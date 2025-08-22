@@ -35,7 +35,8 @@ class Transient(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     tradd_id = models.ForeignKey(TransientAddress, on_delete=models.CASCADE, related_name='transients', db_column='tradd_id', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    philhealth_id = models.CharField(max_length=12, null=True, blank=True)
+
     # MOTHER fields
     mother_fname = models.CharField(max_length=100, null=True, blank=True)
     mother_lname = models.CharField(max_length=100, null=True, blank=True)
@@ -213,7 +214,7 @@ class Spouse(models.Model):
     
 class BodyMeasurement(models.Model):
     bm_id = models.BigAutoField(primary_key=True)  
-    age = models.CharField(max_length=100 ,default="")
+    # age = models.CharField(max_length=100 ,default="")
     height = models.DecimalField(max_digits=5, decimal_places=2,default=Decimal('0.00'))
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
     # bmi = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))

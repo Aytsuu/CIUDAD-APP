@@ -1,6 +1,6 @@
-# ---------------------------------------------------
-# PRODUCTION SERVER
-# ---------------------------------------------------
+# # ---------------------------------------------------
+# # PRODUCTION SERVER
+# # ---------------------------------------------------
 
 # from pathlib import Path
 # from datetime import timedelta
@@ -23,8 +23,6 @@
 
 # # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = False
-# # ALLOWED_HOSTS = ['localhost', '*']
-# # ALLOWED_HOSTS = ['localhost', '*']
 
 # # ========================
 # # SUPABASE CONFIGURATION
@@ -60,41 +58,25 @@
 #     'django.contrib.sessions',
 #     'django.contrib.messages',
 #     'django.contrib.staticfiles',
-
 #     'rest_framework',
 #     'corsheaders',
-    
 #     'rest_framework_simplejwt',
 #     'rest_framework.authtoken',
-
 #     'apps.healthProfiling',
 #     'apps.inventory',
 #     'apps.maternal',
 #     'apps.vaccination',
-#     # 'apps.profiling',
 #     'apps.administration',
-#     # 'apps.account',
-#     # 'apps.waste',
-#     # 'apps.profiling',
 #     'apps.familyplanning',
 #     'apps.animalbites',
-#     # 'apps.account',
-#     'apps.authentication',
 #     'apps.patientrecords',
-
 #     'backend.firebase.notifications',
-#     'detection',
-#     # 'apps.gad'
-#     'apps.account',
 #     'apps.medicalConsultation',
 #     'apps.medicineservices',
 #     'apps.firstaid',
 #     'apps.childhealthservices',
 #     'apps.servicescheduler',
-
 #     'apps.reports',
-#     'apps.file',
-
 # ]
 
 # # REST_FRAMEWORK = {
@@ -113,13 +95,7 @@
 #     'django.contrib.auth.middleware.AuthenticationMiddleware',
 #     'django.contrib.messages.middleware.MessageMiddleware',
 #     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-#     'apps.authentication.middleware.AccountMiddleware',
 #     "django.middleware.gzip.GZipMiddleware",  
-# ]
-
-# AUTHENTICATION_BACKENDS = [
-#     'apps.authentication.backends.SupabaseAuthBackend',
-#     'django.contrib.auth.backends.ModelBackend',
 # ]
 
 # ROOT_URLCONF = 'backend.urls'
@@ -140,7 +116,6 @@
 #     },
 # ]
 
-# WSGI_APPLICATION = 'backend.wsgi.application'
 # ASGI_APPLICATION = 'backend.asgi.application'
 
 # # Database
@@ -188,9 +163,10 @@
 # # INTERNATIONALIZATION
 # # ========================
 # LANGUAGE_CODE = 'en-us'
-# TIME_ZONE = 'UTC'
+# TIME_ZONE = 'Asia/Manila'
 # USE_I18N = True
-# USE_TZ = True
+# USE_L10N = True
+# USE_TZ = True 
 
 
 # # ========================
@@ -206,18 +182,6 @@
 #     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# # ========================
-# # REST FRAMEWORK
-# # ========================
-# REST_FRAMEWORK = {
-#     'DEFAULT_AUTHENTICATION_CLASSES': [
-#         'apps.authentication.backends.SupabaseAuthBackend',
-#     ],
-#     'DEFAULT_PERMISSION_CLASSES': [
-#         # 'rest_framework.permissions.IsAuthenticated',
-#     ],
-# }
 
 # # ========================
 # # CORS SETTINGS
@@ -326,13 +290,13 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
-# SECRET_KEY = 'django-insecure-5h=(s6a5on^k)(ul!y7kh)mnhm26vuq93r1ix#!kw^zkt0cte2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-# ALLOWED_HOSTS = ['localhost', '*']
-# ALLOWED_HOSTS = ['localhost', '*']
 
+# ========================
+# SUPABASE CONFIGURATION
+# ========================
 SUPABASE_CONFIG = {
     'URL': config('SUPABASE_URL'),
     'ANON_KEY': config('SUPABASE_ANON_KEY'),
@@ -343,11 +307,6 @@ SUPABASE_CONFIG = {
     'JWT_AUDIENCE': 'authenticated',
 }
 
-
-
-
-# Application definition
-
 # ========================
 # FIREBASE CONFIGURATION
 # ========================
@@ -357,6 +316,9 @@ if not firebase_admin._apps and os.path.exists(FIREBASE_CREDENTIAL_PATH):
     cred = credentials.Certificate(FIREBASE_CREDENTIAL_PATH)
     firebase_admin.initialize_app(cred)
 
+# ========================
+# APPLICATION DEFINITION
+# ========================
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -364,63 +326,40 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'rest_framework',
     'corsheaders',
-    
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
-
     'apps.healthProfiling',
     'apps.inventory',
     'apps.maternal',
     'apps.vaccination',
-    # 'apps.profiling',
     'apps.administration',
-    # 'apps.account',
-    # 'apps.waste',
-    # 'apps.profiling',
     'apps.familyplanning',
     'apps.animalbites',
-    # 'apps.account',
-    'apps.authentication',
     'apps.patientrecords',
-
     'backend.firebase.notifications',
-    'detection',
-    # 'apps.gad'
-    'apps.account',
     'apps.medicalConsultation',
     'apps.medicineservices',
     'apps.firstaid',
     'apps.childhealthservices',
     'apps.servicescheduler',
     'apps.reports',
-    'apps.file',
-
 ]
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-#     'PAGE_SIZE': 10,  # default page size
-# }
+
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.common.CommonMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.authentication.middleware.AccountMiddleware',
     "django.middleware.gzip.GZipMiddleware",  
-]
-
-AUTHENTICATION_BACKENDS = [
-    'apps.authentication.backends.SupabaseAuthBackend',
-    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -441,7 +380,6 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'backend.wsgi.application'
 ASGI_APPLICATION = 'backend.asgi.application'
 
 # Database
@@ -476,68 +414,58 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-
+# ========================
+# INTERNATIONALIZATION
+# ========================
 LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
+TIME_ZONE = 'Asia/Manila'
 USE_I18N = True
+USE_L10N = True
+USE_TZ = True 
 
-USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
+# ========================
+# STATIC FILES
+# ========================
 STATIC_URL = 'static/'
+if not DEBUG:
+    # Tell Django to copy static assets into a path called `staticfiles` (this is specific to Render)
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# DATABASE_ROUTERS = ['healthProfiling.db_router.DbRouter',]
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+    # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
+    # and renames the files with unique names for each version to support long-term caching
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ========================
-# REST FRAMEWORK
+# CORS SETTINGS
 # ========================
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'apps.authentication.backends.SupabaseAuthBackend',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.IsAuthenticated',
-    ],
-}
-
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
-    config('FRONTEND_URL', default='http://localhost:3000'),
+    "https://ciudad-app-server-2.onrender.com",
+    "http://127.0.0.1:5173",  # Add this for Vite sometimes
 ]
+
 ALLOWED_HOSTS = ['*'] 
-CORS_ALLOW_ALL_ORIGINS= True
-CORS_ALLOW_CREDENTIALS= True
+CORS_ALLOW_ALL_ORIGINS = True # disable in production
+CORS_ALLOW_CREDENTIALS = True # false in production
 
-
-
-# JWT Authentication Settings
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-}
-
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    'content-type',
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
     'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
     'x-csrftoken',
+    'x-requested-with',
+    'cache-control',
+    'pragma',
 ]
+
 CORS_EXPOSE_HEADERS = ['Authorization']
 
 CORS_ALLOW_METHODS = [
@@ -548,8 +476,6 @@ CORS_ALLOW_METHODS = [
     'POST',
     'PUT',
 ]
-CORS_ALLOW_HEADERS = ["*"]
-
 
 CORS_PREFLIGHT_MAX_AGE = 86400
 

@@ -39,7 +39,7 @@ export default function HealthcareReports() {
       bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
       description:
         "Monthly report of Barangay Health Workers activities and achievements",
-      link: "#",
+      link: "/bhw-monthly-reports",
     },
   ];
 

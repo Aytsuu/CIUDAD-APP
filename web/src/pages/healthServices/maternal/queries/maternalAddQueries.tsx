@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addPrenatalRecord, addPostpartumRecord } from "../restful-api/maternalPOST";
+import { addPrenatalRecord, addPostpartumRecord, addIllnessData } from "../restful-api/maternalPOST";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 
@@ -55,5 +55,24 @@ export const useAddPostpartumRecord = () => {
     onError: () => {
       showErrorToast("Failed to create postpartum record")
     },
+  })
+}
+
+
+export const useAddIllnessData = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: addIllnessData,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["illnessRecords"],
+      })
+
+      showSuccessToast("Illness added successfully")
+    },
+    onError: () => {
+      showErrorToast("Failed to add illness. Please try again.")
+    }
   })
 }

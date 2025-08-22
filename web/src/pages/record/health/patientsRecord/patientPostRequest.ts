@@ -1,5 +1,5 @@
-import { toast } from "@/hooks/use-toast"
 import type { PatientRecordFormValues } from "@/pages/record/health/patientsRecord/patients-record-schema"
+import { showErrorToast } from "@/components/ui/toast";
 
 /**
  * Sends patient record data to the server
@@ -26,11 +26,7 @@ export const personal = async (data: PatientRecordFormValues) => {
     return { success: true };
   } catch (error) {
     console.error("Error submitting patient data:", error);
-    toast({
-      title: "Error",
-      description: "Failed to submit patient data. Please try again.",
-      variant: "destructive",
-    });
+    showErrorToast("Failed to submit patient data. Please try again.");
     return { success: false };
   }
 }

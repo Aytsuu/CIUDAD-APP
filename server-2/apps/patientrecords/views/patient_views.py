@@ -107,6 +107,10 @@ class PatientView(generics.ListCreateAPIView):
                             status=status.HTTP_400_BAD_REQUEST
                         )
                     
+                philhealth_id = transient_data.get('philhealth_id', '')
+                if philhealth_id is None:
+                    philhealth_id = ''
+
                 try:    
                     dob_str = transient_data['tran_dob']
                     if isinstance(dob_str, str):
@@ -196,6 +200,7 @@ class PatientView(generics.ListCreateAPIView):
                             ('tran_status', transient_data['tran_status']),
                             ('tran_ed_attainment', transient_data['tran_ed_attainment']),
                             ('tran_religion', transient_data['tran_religion']),
+                            ('philhealth_id', philhealth_id),
                         ]
 
                         has_changes = False
@@ -254,6 +259,7 @@ class PatientView(generics.ListCreateAPIView):
                         tran_ed_attainment=transient_data['tran_ed_attainment'],
                         tran_religion=transient_data['tran_religion'],
                         tran_contact=transient_data['tran_contact'],
+                        philhealth_id=philhealth_id,
                         tradd_id=transient_address
                     )
                 

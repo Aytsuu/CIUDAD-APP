@@ -179,6 +179,14 @@ export default function PrenatalForm() {
         obs_preterm: data.presentPregnancy.preterm || null,
         obs_record_from: "Prenatal", 
       },
+      
+      medical_history:
+      data.medicalHistory.prevIllnessData?.map((item) => ({
+        year: item.prevIllnessYr || null,
+        ill: typeof item.ill_id === "number"
+          ? item.ill_id
+          : (typeof item.prevIllness === "number" ? item.prevIllness : null)
+      })),
 
       previous_hospitalizations:
         data.medicalHistory.prevHospitalizationData?.map((item) => ({
@@ -233,7 +241,7 @@ export default function PrenatalForm() {
 
       prenatal_care_data:
         data.prenatalCare?.map((item) => ({
-          pfpc_date: item.date,
+          pfpc_date: item.date ?? "",
           pfpc_aog_wks: item.aog.aogWeeks != null && !isNaN(Number(item.aog.aogWeeks)) ? Number(item.aog.aogWeeks) : null,
           pfpc_aog_days: item.aog.aogDays != null && !isNaN(Number(item.aog.aogDays)) ? Number(item.aog.aogDays) : null,
           pfpc_fundal_ht: item.leopoldsFindings.fundalHeight || null,

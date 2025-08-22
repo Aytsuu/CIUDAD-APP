@@ -9,29 +9,34 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button/button"
 import { DataTable } from "@/components/ui/table/data-table"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import DialogLayout from "@/components/ui/dialog/dialog-layout"
+// import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { PatientSearch, type Patient } from "@/components/ui/patientSearch"
 import { Form } from "@/components/ui/form/form" 
+import { IllnessCombobox } from "../../maternal-components/illness-combobox"
 
 // icons import
-import { Trash } from "lucide-react"
+// import { Trash } from "lucide-react"
 import { MdOutlineSick } from "react-icons/md"
 import { FaRegHospital } from "react-icons/fa"
 
 // schema import
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
-// queries
+// fetch queries
 import { usePrenatalPatientMedHistory, 
         usePrenatalPatientObsHistory, 
         usePrenatalPatientPrevHospitalization,
         usePrenatalPatientBodyMeasurement,
         useLatestPatientPrenatalRecord,
-        usePatientTTStatus
+        usePatientTTStatus,
+        useIllnessList,
 } from "../../queries/maternalFetchQueries"
 
+// create queries
+import { useAddIllnessData } from "../../queries/maternalAddQueries"
+import { showErrorToast } from "@/components/ui/toast"
 
 // age calculation for dob
 const calculateAge = (dob: string): number => {
@@ -64,6 +69,7 @@ export default function PrenatalFormFirstPg({
   type previousIllness = {
     prevIllness: string
     prevIllnessYr?: number
+    ill_id?: number
   }
 
   type previousHospitalization = {
@@ -74,18 +80,22 @@ export default function PrenatalFormFirstPg({
   const { control, trigger, setValue, getValues, watch } = useFormContext<z.infer<typeof PrenatalFormSchema>>()
   const [prevIllnessData, setPrevIllnessData] = useState<previousIllness[]>([])
   const [prevHospitalizationData, setPrevHospitalizationData] = useState<previousHospitalization[]>([])
-  const [openRowId, setOpenRowId] = useState<string | null>(null)
+  // const [openRowId, setOpenRowId] = useState<string | null>(null)
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
   const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("")
+  const [selectedIllnessId, setSelectedIllnessId] = useState<string>("")
 
    // patient data fetching
+  const { data: illnessesData, refetch: illnessesRefetch } = useIllnessList() // illness list
   const { data: medHistoryData, isLoading, error } = usePrenatalPatientMedHistory(selectedPatientId) //medical history
   const { data: prevHospData, isLoading: prevHospLoading, error: prevHospError } = usePrenatalPatientPrevHospitalization(selectedPatientId) //previous hospitalization
   const { data: obsHistoryData, isLoading: obsLoading } = usePrenatalPatientObsHistory(selectedPatientId) //obstetric history
   const { data: bodyMeasurementData, isLoading: bmLoading } = usePrenatalPatientBodyMeasurement(selectedPatientId) //body measurement
   const { data: ttStatusData, isLoading: ttStatusLoading } = usePatientTTStatus(selectedPatientId) //tt status
   const { data: latestPrenatalData, isLoading: latestPrenatalLoading } = useLatestPatientPrenatalRecord(isFromIndividualRecord ?  selectedPatientId : "") //latest prenatal record
- 
+  
+  // add mutation hook
+  const addIllnessMutation = useAddIllnessData()
 
   // This function will only be called by form.handleSubmit if validation passes
   const handleNext = async () => {
@@ -143,6 +153,7 @@ export default function PrenatalFormFirstPg({
     }
   }, [isFromIndividualRecord, preselectedPatient, activePregnancyId])
 
+
   // use to populate form with latest prenatal data if available 
   useEffect(() => { 
     const latestPF = latestPrenatalData?.latest_prenatal_form
@@ -156,7 +167,6 @@ export default function PrenatalFormFirstPg({
         setValue("motherPersonalInfo.husbandMName", latestPF.spouse_details.spouse_mname || "")
         setValue("motherPersonalInfo.husbandDob", latestPF.spouse_details.spouse_dob || "")
         setValue("motherPersonalInfo.occupation", latestPF.spouse_details.spouse_occupation || "")
-        console.log("Latest Prenatal Form Data:", latestPF)
       }
 
       if (latestPF && activePregnancyId) {
@@ -164,6 +174,12 @@ export default function PrenatalFormFirstPg({
         setValue("presentPregnancy.pf_edc", latestPF.pf_edc || "")
         setValue("followUpSchedule.aogWeeks", latestPF.prenatal_care_entries[0]?.pfpc_aog_wks || "")
         setValue("followUpSchedule.aogDays", latestPF.prenatal_care_entries[0]?.pfpc_aog_days || "")
+
+        if (latestPF.body_measurement_details) {
+          const bodyMeasurement = latestPF.body_measurement_details
+          setValue("motherPersonalInfo.motherWt", bodyMeasurement.weight || "")
+          setValue("motherPersonalInfo.motherHt", bodyMeasurement.height || "")
+        }
 
         if (latestPF.previous_pregnancy) {
           const prevPregnancy = latestPF.previous_pregnancy
@@ -218,12 +234,11 @@ export default function PrenatalFormFirstPg({
         }
       }
     }
-  })
+  }, [latestPrenatalData, latestPrenatalLoading, isFromIndividualRecord, activePregnancyId, setValue])
 
 
   const handlePatientSelection = (patient: Patient | null, patientId: string) => {
     setSelectedPatIdDisplay(patientId)
-    console.log("Selected Patient ID:", patientId)
 
     if (!patient) {
       setSelectedPatientId("")
@@ -379,11 +394,11 @@ export default function PrenatalFormFirstPg({
         setValue("motherPersonalInfo.address.city", address.add_city || "None")
         setValue("motherPersonalInfo.address.province", address.add_province || "None")
       } else {
-        setValue("motherPersonalInfo.address.street", "")
-        setValue("motherPersonalInfo.address.sitio", "")
-        setValue("motherPersonalInfo.address.barangay", "")
-        setValue("motherPersonalInfo.address.city", "")
-        setValue("motherPersonalInfo.address.province", "")
+        setValue("motherPersonalInfo.address.street", "Unknown")
+        setValue("motherPersonalInfo.address.sitio", "Unknown")
+        setValue("motherPersonalInfo.address.barangay", "Unknown")
+        setValue("motherPersonalInfo.address.city", "Unknown")
+        setValue("motherPersonalInfo.address.province", "Unknown")
       }
 
       if (patientRole === "Mother") {
@@ -419,6 +434,24 @@ export default function PrenatalFormFirstPg({
           setValue("motherPersonalInfo.occupation", "")
         }
       }
+    }
+  }
+
+  const handleAddNewIllness = async (newIllness: string) => {
+    try {
+      const IllnessData = {
+        illname: newIllness,
+      }
+
+      await addIllnessMutation.mutateAsync(IllnessData)
+
+      await illnessesRefetch()
+
+      setValue("medicalHistory.prevIllness", newIllness)
+      setSelectedIllnessId("")
+
+    } catch (error) {
+      console.error("Failed to add new illness: ", error)
     }
   }
 
@@ -458,6 +491,7 @@ export default function PrenatalFormFirstPg({
     }
   }, [bodyMeasurementData, bmLoading, setValue])
 
+  const isBodyMeasurementAvailable = !!bodyMeasurementData?.body_measurement
 
   // ph date and ph time //
   const created_at = bodyMeasurementData?.body_measurement?.created_at
@@ -466,18 +500,9 @@ export default function PrenatalFormFirstPg({
   const phDate = date.toLocaleDateString("en-PH", {
     timeZone: "Asia/Manila",
     year: "numeric",
-    month: "2-digit",
+    month: "long",
     day: "2-digit"
   })
-  // const phTime = date.toLocaleTimeString("en-PH", {
-  //   timeZone: "Asia/Manila",
-  //   hour: "2-digit",
-  //   minute: "2-digit",
-  //   second: "2-digit",
-  //   hour12: true,
-  // })
-  // end of ph date and ph time //
-
 
   // obstetric history fetching
   useEffect(() => {
@@ -508,11 +533,27 @@ export default function PrenatalFormFirstPg({
   }, [obsHistoryData, obsLoading, setValue])
 
 
+  // illness fetching
+  const getIllnessOptions = () => {
+    if(!illnessesData?.illnesses) return []
+
+    return illnessesData.illnesses.map((illness: any) => ({
+      id: illness.ill_id?.toString() || "",
+      name: illness.illname || "None"
+    }))
+  }
+
   // medical history fetching
   useEffect(() => {
     const existingFormData = form.getValues("medicalHistory.prevIllnessData") || []
     if(existingFormData.length > 0 && prevIllnessData.length === 0){
-      setPrevIllnessData(existingFormData)
+      // Ensure ill_id is never null
+      setPrevIllnessData(
+        existingFormData.map((item: any) => ({
+          ...item,
+          ill_id: item.ill_id === null ? undefined : item.ill_id,
+        }))
+      )
       return
     }
 
@@ -524,6 +565,7 @@ export default function PrenatalFormFirstPg({
         const mappedData = historyList.map((history: any) => ({
           prevIllness: history.illness_name || history.ill?.illname || "N/A",
           prevIllnessYr: history.year ? history.year : undefined,
+          ill_id: history.ill || null,
         }))
 
         // update only if the data has changed
@@ -619,56 +661,56 @@ export default function PrenatalFormFirstPg({
         </div>
       ),
     },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => {
-        const isDialogOpen = openRowId === row.original.prevIllness // check if this row's dialog is open
+    // {
+    //   accessorKey: "action",
+    //   header: "Action",
+    //   cell: ({ row }) => {
+    //     const isDialogOpen = openRowId === row.original.prevIllness // check if this row's dialog is open
 
-        return (
-          <div className="flex justify-center">
-            <DialogLayout
-              isOpen={isDialogOpen}
-              onOpenChange={(open) => setOpenRowId(open ? row.original.prevIllness : null)}
-              trigger={
-                <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                  <Trash className="w-4 h-4" />
-                </div>
-              }
-              className=""
-              title="Delete Record"
-              description={`Are you sure you want to delete "${row.original.prevIllness}" record?`}
-              mainContent={
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    onClick={() => setOpenRowId(null)} 
-                    variant={"outline"}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant={"destructive"}
-                    onClick={() => {
-                      const newData = prevIllnessData.filter(
-                        (item) =>
-                          item.prevIllness !== row.original.prevIllness ||
-                          item.prevIllnessYr !== row.original.prevIllnessYr,
-                      )
-                      setPrevIllnessData(newData) // Update data
-                      setValue("medicalHistory.prevIllnessData", newData)
-                      setValue("medicalHistory.prevIllness", "")
-                      setOpenRowId(null) // Close dialog
-                    }}
-                  >
-                    Confirm
-                  </Button>
-                </div>
-              }
-            />
-          </div>
-        )
-      },
-    },
+    //     return (
+    //       <div className="flex justify-center">
+    //         <DialogLayout
+    //           isOpen={isDialogOpen}
+    //           onOpenChange={(open) => setOpenRowId(open ? row.original.prevIllness : null)}
+    //           trigger={
+    //             <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+    //               <Trash className="w-4 h-4" />
+    //             </div>
+    //           }
+    //           className=""
+    //           title="Delete Record"
+    //           description={`Are you sure you want to delete "${row.original.prevIllness}" record?`}
+    //           mainContent={
+    //             <div className="flex gap-2 justify-end">
+    //               <Button
+    //                 onClick={() => setOpenRowId(null)} 
+    //                 variant={"outline"}
+    //               >
+    //                 Cancel
+    //               </Button>
+    //               <Button
+    //                 variant={"destructive"}
+    //                 onClick={() => {
+    //                   const newData = prevIllnessData.filter(
+    //                     (item) =>
+    //                       item.prevIllness !== row.original.prevIllness ||
+    //                       item.prevIllnessYr !== row.original.prevIllnessYr,
+    //                   )
+    //                   setPrevIllnessData(newData) // Update data
+    //                   setValue("medicalHistory.prevIllnessData", newData)
+    //                   setValue("medicalHistory.prevIllness", "")
+    //                   setOpenRowId(null) // Close dialog
+    //                 }}
+    //               >
+    //                 Confirm
+    //               </Button>
+    //             </div>
+    //           }
+    //         />
+    //       </div>
+    //     )
+    //   },
+    // },
   ]
 
   const hospitalizationColumn: ColumnDef<previousHospitalization>[] = [
@@ -690,85 +732,122 @@ export default function PrenatalFormFirstPg({
         </div>
       ),
     },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => {
-        const isDialogOpen = openRowId === row.original.prevHospitalization
+    // {
+    //   accessorKey: "action",
+    //   header: "Action",
+    //   cell: ({ row }) => {
+    //     const isDialogOpen = openRowId === row.original.prevHospitalization
 
-        return (
-          <div className="flex justify-center gap-2">
-            <DialogLayout
-              isOpen={isDialogOpen}
-              onOpenChange={(open) => setOpenRowId(open ? row.original.prevHospitalization : null)}
-              trigger={
-                <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                  {" "}
-                  <Trash size={16} />
-                </div>
-              }
-              className=""
-              title="Delete Record"
-              description={`Are you sure you want to delete "${row.original.prevHospitalization}" record?`}
-              mainContent={
-                <div className="flex gap-2 justify-end">
-                  <Button variant={"outline"}>Cancel</Button>
-                  <Button
-                    variant={"destructive"}
-                    onClick={() => {
-                      const newData = prevHospitalizationData.filter(
-                        (item) =>
-                          item.prevHospitalization !== row.original.prevHospitalization ||
-                          item.prevHospitalizationYr !== row.original.prevHospitalizationYr,
-                      )
-                      setPrevHospitalizationData(newData)
-                      setValue("medicalHistory.prevHospitalizationData", newData)
-                      setOpenRowId(null)
-                    }}
-                  >
-                    Confirm
-                  </Button>
-                </div>
-              }
-            />
-          </div>
-        )
-      },
-    },
+    //     return (
+    //       <div className="flex justify-center gap-2">
+    //         <DialogLayout
+    //           isOpen={isDialogOpen}
+    //           onOpenChange={(open) => setOpenRowId(open ? row.original.prevHospitalization : null)}
+    //           trigger={
+    //             <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+    //               {" "}
+    //               <Trash size={16} />
+    //             </div>
+    //           }
+    //           className=""
+    //           title="Delete Record"
+    //           description={`Are you sure you want to delete "${row.original.prevHospitalization}" record?`}
+    //           mainContent={
+    //             <div className="flex gap-2 justify-end">
+    //               <Button variant={"outline"}>Cancel</Button>
+    //               <Button
+    //                 variant={"destructive"}
+    //                 onClick={() => {
+    //                   const newData = prevHospitalizationData.filter(
+    //                     (item) =>
+    //                       item.prevHospitalization !== row.original.prevHospitalization ||
+    //                       item.prevHospitalizationYr !== row.original.prevHospitalizationYr,
+    //                   )
+    //                   setPrevHospitalizationData(newData)
+    //                   setValue("medicalHistory.prevHospitalizationData", newData)
+    //                   setOpenRowId(null)
+    //                 }}
+    //               >
+    //                 Confirm
+    //               </Button>
+    //             </div>
+    //           }
+    //         />
+    //       </div>
+    //     )
+    //   },
+    // },
   ]
 
   // functionality to handle adding of previous illness
   const addPrevIllness = () => {
     const illness = getValues("medicalHistory.prevIllness")
-    const illnessYr = getValues("medicalHistory.prevIllnessYr")
+    const year = getValues("medicalHistory.prevIllnessYr")
 
-    console.log("Previous Illness: ", illness, "Year: ", illnessYr)
-
-    if (illness) {
-      const newData = [...prevIllnessData, { prevIllness: illness, prevIllnessYr: illnessYr }]
-      setPrevIllnessData(newData)
-      setValue("medicalHistory.prevIllnessData", newData)
-      setValue("medicalHistory.prevIllness", "")
-      setValue("medicalHistory.prevIllnessYr", undefined)
+    if (!illness.trim()) {
+      showErrorToast("Please enter an illness.")
+      return
     }
-  }
 
+    // Check for duplicates
+    const isDuplicateIllness = prevIllnessData.some(existingIllness => 
+      existingIllness.prevIllness.toLowerCase().trim() === illness.toLowerCase().trim() && 
+      existingIllness.prevIllnessYr === year
+    )
+
+    if (isDuplicateIllness) {
+      showErrorToast("This illness record already exists.")
+      return
+    }
+
+    const selectedillnessData = illnessesData?.illnesses?.find((ill:any) => ill.illname === illness)
+
+    const newIllness: previousIllness = {
+      prevIllness: illness,
+      prevIllnessYr: year || undefined,
+      ill_id: selectedillnessData?.ill_id || null
+    }
+
+    const updatedData = [...prevIllnessData, newIllness]
+    setPrevIllnessData(updatedData)
+
+    setValue("medicalHistory.prevIllnessData", updatedData)
+    
+    // clear form fields
+    setValue("medicalHistory.prevIllness", "")
+    setValue("medicalHistory.prevIllnessYr", undefined)
+    setSelectedIllnessId("")
+  }
 
   // functionality to handle adding of previous hopsitalization to table
   const addPrevHospitalization = () => {
     const hospitalization = getValues("medicalHistory.prevHospitalization")
     const hospitalizationYr = getValues("medicalHistory.prevHospitalizationYr")
 
-    if (hospitalization) {
-      const newData = [
-        ...prevHospitalizationData,
-        { prevHospitalization: hospitalization, prevHospitalizationYr: hospitalizationYr },
-      ]
-      setPrevHospitalizationData(newData)
-      setValue("medicalHistory.prevHospitalizationData", newData)
-      setValue("medicalHistory.prevHospitalization", "")
-      setValue("medicalHistory.prevHospitalizationYr", undefined)
+    if (!hospitalization?.trim()) {
+      showErrorToast("Please enter a hospitalization record.")
+      return
     }
+
+    // Check for duplicates
+    const isDuplicateHospitalization = prevHospitalizationData.some(existingHosp => 
+      existingHosp.prevHospitalization.toLowerCase().trim() === hospitalization.toLowerCase().trim() && 
+      existingHosp.prevHospitalizationYr === hospitalizationYr
+    )
+
+    if (isDuplicateHospitalization) {
+      showErrorToast("This hospitalization record already exists.")
+      return
+    }
+
+    const newData = [
+      ...prevHospitalizationData,
+      { prevHospitalization: hospitalization, prevHospitalizationYr: hospitalizationYr },
+    ]
+    setPrevHospitalizationData(newData)
+    setValue("medicalHistory.prevHospitalizationData", newData)
+    setValue("medicalHistory.prevHospitalization", "")
+    setValue("medicalHistory.prevHospitalizationYr", undefined)
   }
 
 
@@ -944,14 +1023,14 @@ export default function PrenatalFormFirstPg({
                 <FormInput
                   control={control}
                   name="motherPersonalInfo.motherWt"
-                  label={`Weight (as of ${phDate})`}  
+                  label="Weight"
                   placeholder="Wt in kg"
                   type="number"
                 />
                 <FormInput
                   control={control}
                   name="motherPersonalInfo.motherHt"
-                  label={`Height (as of ${phDate})`}
+                  label="Height"
                   placeholder="Ht in cm"
                   type="number"
                 />
@@ -970,6 +1049,15 @@ export default function PrenatalFormFirstPg({
                   placeholder="BMI Category"
                   readOnly
                 />
+                
+              </div>
+
+              <div className="flex mt-5">
+                {isBodyMeasurementAvailable && (
+                  <span className="text-sm italic text-yellow-600">
+                    *Note: Previous measurements recorded on {phDate}
+                  </span>
+                )}
               </div>
 
               {/* obstetric history */}
@@ -1006,20 +1094,35 @@ export default function PrenatalFormFirstPg({
                       type="number"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormInput
-                      control={control}
-                      name="obstetricHistory.historyOfLBabies"
-                      label="History of Large Babies"
-                      placeholder="Enter history of large babies"
-                      type="number"
-                    />
-                    <FormInput
-                      control={control}
-                      name="obstetricHistory.historyOfDiabetes"
-                      label="History of Diabetes"
-                      placeholder="Enter history of diabetes"
-                    />
+                  <div className="grid grid-cols-2 gap-3 ">
+                    <div className="grid grid-rows-2 gap-3">
+                      <p className="text-sm font-semibold text-black/70 mt-5">History of Large Babies</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormInput
+                          control={control}
+                          name="obstetricHistory.historyOfLBabiesString"
+                          label=""
+                          placeholder="Enter yes or no"
+                          type="text"
+                        />
+
+                        <FormInput
+                          control={control}
+                          name="obstetricHistory.historyOfLBabies"
+                          label=""
+                          placeholder="Enter count of large babies"
+                          type="number"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-5">
+                      <FormInput
+                        control={control}
+                        name="obstetricHistory.historyOfDiabetes"
+                        label="History of Diabetes"
+                        placeholder="Enter history of diabetes"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1036,11 +1139,24 @@ export default function PrenatalFormFirstPg({
                       </div>
                       <div className="flex gap-4 items-center">
                         <div className="flex-1">
-                          <FormInput
-                            control={control}
-                            name="medicalHistory.prevIllness"
-                            label=""
-                            placeholder="Enter Previous Illness"
+                          <IllnessCombobox
+                            options={getIllnessOptions()}
+                            value={selectedIllnessId}
+                            onChange={(value) => {
+                              setSelectedIllnessId(value)
+
+                              const selectedIllnessData = illnessesData?.illnesses?.find((illness:any) => (
+                                illness.ill_id?.toString() === value
+                              ))
+
+                              const illnessName = selectedIllnessData?.illname || value || ""
+                              setValue("medicalHistory.prevIllness", illnessName)
+                            }}
+                            placeholder="Select or add previous illness"
+                            emptyMessage="No illnesses found"
+                            allowAddNew={true}
+                            onAddNew={handleAddNewIllness}
+                            triggerClassName="w-full"
                           />
                         </div>
                         <div className="flex-1">

@@ -35,6 +35,10 @@ export interface PrenatalRecord {
     obs_preterm: number | null
     obs_record_from: string | "Prenatal"
   }
+  medical_history?: Array<{
+    year: number | null
+    ill: number | null
+  }>
   previous_hospitalizations: Array<{
     prev_hospitalization: string
     prev_hospitalization_year: number | null
@@ -126,6 +130,25 @@ export const addPrenatalRecord = async (data: PrenatalRecord) => {
     throw error
   }
 }
+
+// illness post method in prenatal
+export interface IllnessData {
+  illname: string
+}
+
+export const addIllnessData = async (data: IllnessData) => {
+  try {
+    const res = await api2.post("maternal/prenatal/illness/create/", data)
+    return res.data
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("Add Illness Data Error: ", error.response?.data || error.message)
+    } else {
+      console.error("Unexpected Error: ", error)
+    }
+    throw error
+  }
+} 
 
 export interface PostpartumCompleteData {
   pat_id: string

@@ -347,7 +347,7 @@ export default function PrenatalFormFourthPq({
             <h3 className="text-md font-semibold mt-2 mb-4">PRENATAL CARE</h3>
             <Card className="border rounded-md border-gray p-5">
               <CardContent>
-                <div className="flex mb-3">
+                <div className="flex mb-7">
                   <FormDateTimeInput
                     control={control}
                     name="prenatalCare.date"

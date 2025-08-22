@@ -14,10 +14,12 @@ from apps.pagination import StandardResultsPagination
 from apps.healthProfiling.models import PersonalAddress
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentProfileListSerializer
-from ..utils import *
-from ..models import FollowUpVisit
+from apps.patientrecords.utils import get_completed_followup_visits, get_pending_followup_visits
 
-from ..serializers.followvisits_serializers import FollowUpVisitSerializer, PatientSerializer, FollowUpVisitWithPatientSerializer
+from apps.patientrecords.models import FollowUpVisit
+
+from apps.patientrecords.serializers.followvisits_serializers import FollowUpVisitSerializer, PatientSerializer, FollowUpVisitWithPatientSerializer
+
       
       
       

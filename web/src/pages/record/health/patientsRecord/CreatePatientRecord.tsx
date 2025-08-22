@@ -45,6 +45,7 @@ interface ResidentProfile {
       add_province: string
       sitio?: string
     }>
+    philhealth_id?: string
   }
 }
 
@@ -69,6 +70,7 @@ interface PatientCreationData {
       tradd_city?: string
       tradd_province?: string
     }
+    philhealth_id?: string
   }
 }
 
@@ -155,6 +157,7 @@ export default function CreatePatientRecord() {
       form.setValue("contact", personalInfo.per_contact || "")
       form.setValue("dateOfBirth", personalInfo.per_dob || "")
       form.setValue("patientType", "resident")
+      form.setValue("philhealthId", personalInfo.philhealth_id || "")
 
       if (selectedPatient.personal_info.per_addresses && selectedPatient.personal_info.per_addresses.length > 0) {
         const address = selectedPatient.personal_info.per_addresses[0] // Get first address
@@ -319,135 +322,109 @@ export default function CreatePatientRecord() {
         </div>
       </div>
       <Separator className="bg-gray mb-2 sm:mb-4" />
-
-      
-          <div className="w-full mx-auto border-none">
-            <div>
-              <Form {...form}>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    handleFormSubmit()
-                  }}
-                  className="space-y-4"
-                >
-                  <div className="grid grid-cols-3 gap-4 rounded-lg bg-white p-4">
-                    <div className="flex-1">
-                      <Label className="text-black/70"> </Label>
-                      <FormSelect
-                        control={form.control}
-                        name="patientType"
-                        label="Patient Type"
-                        options={[
-                          { id: "resident", name: "Resident" },
-                          { id: "transient", name: "Transient" },
-                        ]}
-                        readOnly={false}
-                      />
-                    </div>
-
-                    {patientType === "resident" && (
-                      <div>
-                        <Label className="text-black/70">Resident Selection</Label>
-                        <div className="relative mt-[6.5px]">
-                          <Combobox
-                            options={persons.formatted}
-                            value={selectedResidentId}
-                            onChange={handlePatientSelection}
-                            placeholder={residentLoading ? "Loading residents..." : "Select a resident"}
-                            triggerClassName="font-normal w-full"
-                            emptyMessage={
-                              <div className="flex flex-col gap-2 justify-center items-center">
-                                <Label className="font-normal text-[13px]">
-                                  {residentLoading
-                                    ? "Loading..."
-                                    : "No residents were found without an assigned Patient ID."}
-                                </Label>
-                                <Link to="/residents/new">
-                                  <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                                    Register New Resident
-                                  </Label>
-                                </Link>
-                              </div>
-                            }
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {patientType === 'transient' && (
-                      <div className="flex w-full items-end">
-                        <label className="flex items-center text-xs font-poppins p-[9px] w-full gap-1"> <CircleAlert size={15}/> For <i>TRANSIENT</i> please fill in the needed details below.</label>
-                      </div>
-                    )}
+        <div className="w-full mx-auto border-none">
+          <div>
+            <Form {...form}>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  handleFormSubmit()
+                }}
+                className="space-y-4"
+              >
+                <div className="grid grid-cols-3 gap-4 rounded-lg bg-white p-4">
+                  <div className="flex-1">
+                    <Label className="text-black/70"> </Label>
+                    <FormSelect
+                      control={form.control}
+                      name="patientType"
+                      label="Patient Type"
+                      options={[
+                        { id: "resident", name: "Resident" },
+                        { id: "transient", name: "Transient" },
+                      ]}
+                      readOnly={false}
+                    />
                   </div>
 
-                  <CardLayout
-                    title=""
-                    description=""
-                    content={
-                    <>
-                      <div className="mb-8">
-                        <Label className="text-xl text-black">Patient Information</Label>
-                        <p className="text-sm text-black/70 mb-2">Review the patient information before saving.</p>
-                        <Separator className="w-full bg-gray" />
-                      </div>
-
-                      {/* personal information section - read Only if RESIDENT */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <FormInput
-                          control={form.control}
-                          name="lastName"
-                          label="Last Name"
-                          placeholder="Enter last name"
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="firstName"
-                          label="First Name"
-                          placeholder="Enter first name"
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="middleName"
-                          label="Middle Name"
-                          placeholder="Enter middle name"
-                          readOnly={isResident() ? true : false}
+                  {patientType === "resident" && (
+                    <div>
+                      <Label className="text-black/70">Resident Selection</Label>
+                      <div className="relative mt-[6.5px]">
+                        <Combobox
+                          options={persons.formatted}
+                          value={selectedResidentId}
+                          onChange={handlePatientSelection}
+                          placeholder={residentLoading ? "Loading residents..." : "Select a resident"}
+                          triggerClassName="font-normal w-full"
+                          emptyMessage={
+                            <div className="flex flex-col gap-2 justify-center items-center">
+                              <Label className="font-normal text-[13px]">
+                                {residentLoading
+                                  ? "Loading..."
+                                  : "No residents were found without an assigned Patient ID."}
+                              </Label>
+                              <Link to="/residents/new">
+                                <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                                  Register New Resident
+                                </Label>
+                              </Link>
+                            </div>
+                          }
                         />
                       </div>
+                    </div>
+                  )}
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                        <FormSelect
-                          control={form.control}
-                          name="sex"
-                          label="Sex"
-                          options={[
-                            { id: "female", name: "Female" },
-                            { id: "male", name: "Male" },
-                          ]}
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="contact"
-                          label="Contact"
-                          placeholder="Enter contact"
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormDateTimeInput
-                          control={form.control}
-                          name="dateOfBirth"
-                          label="Date of Birth"
-                          type="date"
-                          readOnly={isResident() ? true : false}
-                        />
-                      </div>
+                  {patientType === 'transient' && (
+                    <div className="flex w-full items-end">
+                      <label className="flex items-center text-xs font-poppins p-[9px] w-full gap-1"> <CircleAlert size={15}/> For <i>TRANSIENT</i> please fill in the needed details below.</label>
+                    </div>
+                  )}
+                </div>
 
-                      {/* address section - read Only if RESIDENT */}
-                      {patientType === 'transient' && (
-                        <>
+                <CardLayout
+                  title=""
+                  description=""
+                  content={
+                  <>
+                    <div className="mb-8">
+                      <Label className="text-xl text-black">Patient Information</Label>
+                      <p className="text-sm text-black/70 mb-2">Review the patient information before saving.</p>
+                      <Separator className="w-full bg-gray" />
+                    </div>
+
+                    {/* personal information section - read Only if RESIDENT */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                      <FormInput control={form.control} name="lastName" label="Last Name" placeholder="Enter last name" readOnly={isResident() ? true : false} />
+                      
+                      <FormInput control={form.control} name="firstName" label="First Name" placeholder="Enter first name" readOnly={isResident() ? true : false} />
+                      
+                      <FormInput control={form.control} name="middleName" label="Middle Name" placeholder="Enter middle name" readOnly={isResident() ? true : false} />
+                      
+                      <FormInput control={form.control} name="philhealthId" label="PhilHealth ID" placeholder="Enter PhilHealth ID (optional)" readOnly={isResident() ? true : false} />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                      <FormSelect
+                        control={form.control}
+                        name="sex"
+                        label="Sex"
+                        options={[
+                          { id: "female", name: "Female" },
+                          { id: "male", name: "Male" },
+                        ]}
+                        readOnly={isResident() ? true : false}
+                      />
+
+                      <FormInput control={form.control} name="contact" label="Contact" placeholder="Enter contact" readOnly={isResident() ? true : false} />
+                      
+                      <FormDateTimeInput control={form.control} name="dateOfBirth" label="Date of Birth" type="date" readOnly={isResident() ? true : false} />
+                    </div>
+
+                    {/* address section - read Only if RESIDENT */}
+                    {patientType === 'transient' && (
+                      <>
                         <Label className="flex text-black/70">Address Selection <p className="text-xs italic text-black/50 ml-2">[Applicable for Transient Only]</p></Label>
                         <div className="relative mb-4 mt-2">
                           <Combobox
@@ -470,84 +447,47 @@ export default function CreatePatientRecord() {
                       </>
                     )}
 
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-                        <FormInput
-                          control={form.control}
-                          name="address.street"
-                          label="Street"
-                          placeholder="Enter street "
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="address.sitio"
-                          label="Sitio"
-                          placeholder="Enter sitio "
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="address.barangay"
-                          label="Barangay"
-                          placeholder="Enter barangay "
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="address.city"
-                          label="City"
-                          placeholder="Enter city "
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="address.province"
-                          label="Province"
-                          placeholder="Enter province "
-                          readOnly={isResident() ? true : false}
-                        />
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+                      <FormInput control={form.control} name="address.street" label="Street" placeholder="Enter street" readOnly={isResident() ? true : false} />
+                      
+                      <FormInput control={form.control} name="address.sitio" label="Sitio" placeholder="Enter sitio " readOnly={isResident() ? true : false} />
 
-                      {/* Form Actions */}
-                      <div className="flex justify-end space-x-4 pt-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => window.history.back()}
-                          disabled={isSubmitting}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="submit"
-                          className="bg-buttonBlue hover:bg-buttonBlue/90 text-white"
-                          disabled={isSubmitting}
-                        >
-                          {isSubmitting ? (
-                            <div className="flex items-center">
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                              Creating Patient Record...
-                            </div>
-                          ) : (
-                            <div className="flex items-center">
-                              <Save className="mr-2 h-4 w-4" />
-                              Save Patient
-                            </div>
-                          )}
-                        </Button>
-                      </div>
-                    </>
-                    }
-                    cardClassName="border-none pb-2 p-3 rounded-lg"
-                    headerClassName="pb-2 bt-2 text-xl"
-                    contentClassName="pt-0"
-                  />
-                </form>
-              </Form>
-            </div>
+                      <FormInput control={form.control} name="address.barangay" label="Barangay" placeholder="Enter barangay " readOnly={isResident() ? true : false} />
+
+                      <FormInput control={form.control} name="address.city" label="City" placeholder="Enter city " readOnly={isResident() ? true : false} />
+
+                      <FormInput control={form.control} name="address.province" label="Province" placeholder="Enter province " readOnly={isResident() ? true : false} />
+                    </div>
+
+                    {/* Form Actions */}
+                    <div className="flex justify-end space-x-4 pt-4">
+                      <Button type="button" variant="outline" onClick={() => window.history.back()} disabled={isSubmitting}>Cancel</Button>
+                      
+                      <Button type="submit" className="bg-buttonBlue hover:bg-buttonBlue/90 text-white" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Creating Patient Record...
+                          </div>
+                        ) : (
+                          <div className="flex items-center">
+                            <Save className="mr-2 h-4 w-4" />
+                            Save Patient
+                          </div>
+                        )}
+                      </Button>
+                    </div>
+                  </>
+                  }
+                  cardClassName="border-none pb-2 p-3 rounded-lg"
+                  headerClassName="pb-2 bt-2 text-xl"
+                  contentClassName="pt-0"
+                />
+              </form>
+            </Form>
           </div>
+        </div>
         
-
       {/* Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={isDialogOpen}

@@ -39,7 +39,6 @@ class PatientSerializer(serializers.ModelSerializer):
     family = serializers.SerializerMethodField()
     family_head_info = serializers.SerializerMethodField()
     spouse_info = serializers.SerializerMethodField()
-    # mother_tt_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Patient
@@ -65,6 +64,7 @@ class PatientSerializer(serializers.ModelSerializer):
                 'per_edAttainment': trans.tran_ed_attainment,
                 'per_religion': trans.tran_religion,
                 'per_contact': trans.tran_contact,
+                'philhealth_id': trans.philhealth_id,
             }
         return None
 

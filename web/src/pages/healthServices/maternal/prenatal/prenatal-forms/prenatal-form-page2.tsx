@@ -117,8 +117,6 @@ export default function PrenatalFormSecPg({
   }, [labResults, form])
 
   const handleNext = async () => {
-    // e.preventDefault() 
-
     window.scrollTo(0, 0) 
 
     // Validate lab results first
@@ -141,7 +139,7 @@ export default function PrenatalFormSecPg({
     console.log("Laboratory Results Summary: ", labSummary)
 
     // Trigger form validation for other fields on this page
-    const isValid = await form.trigger(["previousPregnancy", "prenatalVaccineInfo", "presentPregnancy"]) // Removed "labResults" from here as it's handled above
+    const isValid = await form.trigger(["previousPregnancy", "prenatalVaccineInfo", "presentPregnancy"])
     console.log("Page 2 RHF validation result:", isValid, "Errors:", form.formState.errors)
 
     if (isValid) {
