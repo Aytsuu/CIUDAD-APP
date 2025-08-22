@@ -283,7 +283,6 @@ type Template = {
   temp_belowHeaderContent?: string;
   temp_barangayLogo: string;
   temp_cityLogo: string;
-  temp_LogoStyle: number;
   temp_email?: string;
   temp_telNum: string;
   temp_paperSize: string;
@@ -314,60 +313,479 @@ function TemplateMainPage() {
   console.log("TEMPLATES: ", templates)
 
   const TemplateRecords: Template[] = [
+    // {
+    //   temp_id: 1,
+    //   temp_title: "BARANGAY CLEARANCE",
+    //   temp_barangayLogo: barangayLogo,
+    //   temp_cityLogo: cityLogo,
+    //   temp_email: templates[0]?.temp_email,  
+    //   temp_telNum: templates[0]?.temp_contact_num,
+    //   temp_paperSize: "letter",
+    //   temp_margin: "normal",
+    //   temp_filename: "Barangay Clearance",
+    //   temp_w_sign_right: false,
+    //   temp_w_sign_left: false,
+    //   temp_w_sign_applicant: true,
+    //   temp_w_seal: true,
+    //   temp_body: "/*TO WHOM IT MAY CONCERN:*/\n\nThis is to certify that [ BUSINESS NAME ] with business address located at [ LOCATION ]" +
+    //   ", after complying with the requirements prescribed by this offic, is hereby issued a Barangay Clearance for the purpose of " +
+    //   "securing/obtaining /*WORK PERMIT*/ and be able to work within the barangay jurisdiction. However, this Barangay Clearance may be " +
+    //   "cancelled or revoked anytime the public safety and interest so required.\n\nIssued this [9th] day of [AUGUST] [2022] at Barangay " +
+    //   "San Roque (Ciudad), Cebu City"
+    // },
     {
       temp_id: 1,
-      temp_title: "BARANGAY CLEARANCE",
+      temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
-      temp_LogoStyle: 1,  
       temp_email: templates[0]?.temp_email,  
       temp_telNum: templates[0]?.temp_contact_num,
       temp_paperSize: "letter",
       temp_margin: "normal",
-      temp_filename: "Barangay Clearance",
-      temp_w_sign_right: false,
-      temp_w_sign_left: true,
-      temp_w_sign_applicant: false,
-      temp_w_seal: false,
-      temp_body: "/*TO WHOM IT MAY CONCERN:*/\n\nThis is to certify that [ BUSINESS NAME ] with business address located at [ LOCATION ]" +
-      ", after complying with the requirements prescribed by this offic, is hereby issued a Barangay Clearance for the purpose of " +
-      "securing/obtaining /*WORK PERMIT*/ and be able to work within the barangay jurisdiction. However, this Barangay Clearance may be " +
-      "cancelled or revoked anytime the public safety and interest so required.\n\nIssued this [9th] day of [AUGUST] [2022] at Barangay " +
-      "San Roque (Ciudad), Cebu City"
-    },
-    {
-      temp_id: 2,
-      temp_title: "CERTIFICATION",
-      temp_LogoStyle: 1,
-      temp_barangayLogo: barangayLogo,
-      temp_cityLogo: cityLogo,
-      temp_telNum: templates[0]?.temp_contact_num,
-      temp_paperSize: "letter",
-      temp_margin: "normal",
-      temp_filename: "Business Permit",
+      temp_filename: "Identification",
       temp_w_sign_right: false,
       temp_w_sign_left: false,
       temp_w_sign_applicant: true,
       temp_w_seal: true,
-      temp_body: "secret"
-    },
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*IDENTIFICATION (ID) PURPOSES ONLY.*/   " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },     
+    {
+      temp_id: 2,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Loan",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*LOAN PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },    
     {
       temp_id: 3,
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
-      temp_LogoStyle: 2,
       temp_email: templates[0]?.temp_email,  
       temp_telNum: templates[0]?.temp_contact_num,
       temp_paperSize: "letter",
       temp_margin: "normal",
-      temp_filename: "Cedula",
+      temp_filename: "Social Security System (SSS)",
       temp_w_sign_right: false,
       temp_w_sign_left: false,
       temp_w_sign_applicant: true,
-      temp_w_seal: false,
-      temp_body: "secret"
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*SOCIAL SECURITY SYSTEM (SSS) PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },    
+    {
+      temp_id: 4,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "BIR",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*BUREAU OF INTERNAL REVENUE (BIR) PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },  
+    {
+      temp_id: 5,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Bank Requirement",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*BANK REQUIREMENTS PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },     
+    {
+      temp_id: 6,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Employment",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*EMPLOYMENT PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },   
+    {
+      temp_id: 7,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Electrical Connection",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*ELECTRICAL CONNECTION PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },   
+    {
+      temp_id: 8,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "MCWD",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*MCWD PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    }, 
+    {
+      temp_id: 9,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Scholarship",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*SCHOLARSHIP PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },        
+    {
+      temp_id: 10,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Postal ID",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*POSTAL ID PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },    
+    {
+      temp_id: 11,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "NBI",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*NATIONAL BUREAU OF INVESTIGATION (NBI) PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },     
+    {
+      temp_id: 12,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "NBI",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*NATIONAL BUREAU OF INVESTIGATION (NBI) PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },     
+    {
+      temp_id: 12,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Board Examination",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*BOARD EXAMINATION PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },          
+    {
+      temp_id: 13,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Tesda Requirement",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*TESDA REQUIREMENTS PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },  
+    {
+      temp_id: 14,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "School Requirement",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*SCHOOL REQUIREMENTS PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
     },      
+    {
+      temp_id: 15,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "PWD Application",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*PWD APPLICATION PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },        
+    {
+      temp_id: 15,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Señior Citizen Application",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*SEÑIOR CITIZEN APPLICATION PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },    
+    {
+      temp_id: 16,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Bail Bond",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*BAIL BOND PURPOSES ONLY.*/  " +
+      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },  
+    {
+      temp_id: 17,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Fire Victim",
+      temp_w_sign_right: false,
+      temp_w_sign_left: true,
+      temp_w_sign_applicant: false,
+      temp_w_seal: false,
+      temp_body: "TO WHOM IT MAY CONCERN:\n\nThis is to CERTIFY that [ NAME ] of legal age, is a resident of [ ADDRESS ], Barangay San Roque (Ciudad) Cebu City.\n\n" +
+      "This is to CERTIFY further that the above-mentioned person has been affected by Conflagration/Fire which occured on [NOVEMBER 03, 2020] at [12:30] in the [afternoon]. " +
+      "That his/her house/property including her important documents in the said area were totally damaged.\n\n" +
+      "This CERTIFICATION issued upon the request of the interested party as a supporting document for /*ALS PURPOSES ONLY.*/" 
+    },    
+    {
+      temp_id: 18,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Building Permit",
+      temp_w_sign_right: false,
+      temp_w_sign_left: true,
+      temp_w_sign_applicant: false,
+      temp_w_seal: false,
+      temp_body: "/*TO WHOM IT MAY CONCERN:*/\n\nThis is to certify that [ NAME OF BUILDING ], located at [ LOCATION ] , Barangay San Roque Ciudad Cebu City.\n\n" +
+      "That upon inspection and verification we found such application to be in order. Therefore, I grant the issuance of this /*BUILDING PERMIT*/ in " +
+      "compliance of the government requirements for whatever purpose this may serve.\n\nBarangay Certification is hereby issued upon the requirements " +
+      "of the above mentioned-name. However this clearance may be cancelled or revoked anytime the public safety and interest so required.\n\n" +
+      "Given this [ 15TH ] day of [ AUGUST ] [2025] at Barangay San Roque (Ciudad) Cebu City."
+    },        
   ];  
 
   if (isLoading) {
@@ -496,7 +914,6 @@ function TemplateMainPage() {
           mainContent={
             <div className="w-full h-full">
               <TemplatePreview
-                logoStyle={previewTemplate.temp_LogoStyle}
                 barangayLogo={previewTemplate.temp_barangayLogo}
                 cityLogo={previewTemplate.temp_cityLogo}
                 email={previewTemplate.temp_email}

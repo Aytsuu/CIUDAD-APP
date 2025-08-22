@@ -5,7 +5,6 @@ import { veraMonoNormal } from "@/assets/fonts/VeraMono-normal";
 import { veraMonoBold } from "@/assets/fonts/VeraMono-Bold-bold";
 
 interface TemplatePreviewProps {
-  logoStyle: number;
   barangayLogo: string;
   cityLogo: string
   email?: string;
@@ -23,7 +22,6 @@ interface TemplatePreviewProps {
 }
 
 function TemplatePreview({
-  logoStyle,
   barangayLogo,
   cityLogo,
   email,
@@ -50,7 +48,7 @@ function TemplatePreview({
 
   useEffect(() => {
     generatePDF();
-  }, [logoStyle, barangayLogo, cityLogo, email, telNum, belowHeaderContent, title, body, withSeal, withSignRight, withSignLeft, withSignatureApplicant, withSummon, paperSize, margin]);
+  }, [barangayLogo, cityLogo, email, telNum, belowHeaderContent, title, body, withSeal, withSignRight, withSignLeft, withSignatureApplicant, withSummon, paperSize, margin]);
 
   const generatePDF = () => {
     // Convert paper size to jsPDF format
@@ -92,113 +90,65 @@ function TemplatePreview({
     doc.setFontSize(12);
 
 
-    if (logoStyle === 1) {
-      // Logo dimensions
-      const logoWidth = 90;
-      const logoHeight = 90;
 
-      // Style 1: Original layout with logos on sides
-      const leftLogoX = marginValue;
-      const rightLogoX = pageWidth - marginValue - logoWidth;
+    // Logo dimensions
+    const logoWidth = 90;
+    const logoHeight = 90;
 
-      if (barangayLogo && barangayLogo !== "no-image-url-fetched") {
-        try {
-          doc.addImage(barangayLogo, "PNG", leftLogoX, yPos, logoWidth, logoHeight);
-        } catch (e) {
-          console.error("Error adding barangay logo:", e);
-        }
+    // Style 1: Original layout with logos on sides
+    const leftLogoX = marginValue;
+    const rightLogoX = pageWidth - marginValue - logoWidth;
+
+    if (barangayLogo && barangayLogo !== "no-image-url-fetched") {
+      try {
+        doc.addImage(barangayLogo, "PNG", leftLogoX, yPos, logoWidth, logoHeight);
+      } catch (e) {
+        console.error("Error adding barangay logo:", e);
       }
-
-      if (cityLogo && cityLogo !== "no-image-url-fetched") {
-        try {
-          doc.addImage(cityLogo, "PNG", rightLogoX, yPos, logoWidth, logoHeight);
-        } catch (e) {
-          console.error("Error adding city logo:", e);
-        }
-      }
-
-      // Header text configuration
-      const headerText = [
-        { text: "REPUBLIC OF THE PHILIPPINES", bold: false, size: 12 },
-        { text: "City of Cebu", bold: false, size: 11 },
-        { text: "", bold: false, size: 10 },
-        { text: "BARANGAY SAN ROQUE (CIUDAD)", bold: true, size: 14 },
-        { text: "OFFICE OF THE BARANGAY CAPTAIN", bold: false, size: 11 },
-        { text: "Arellano Blvd, Cebu City", bold: false, size: 11 },
-        { text: `Tel No. ${telNum}`, bold: false, size: 11 }
-      ];
-
-      const centerX = pageWidth / 2;
-      let headerY = yPos + 15;
-
-      headerText.forEach((line) => {
-        if (line.text === "") {
-          headerY += 10;
-          return;
-        }
-        
-        setCurrentFont(line.bold ? 'bold' : 'normal');
-        doc.setFontSize(line.size);
-        
-        const textWidth = doc.getTextWidth(line.text);
-        doc.text(line.text, centerX - (textWidth / 2), headerY);
-        headerY += lineHeight;
-        
-        if (line.bold) {
-          headerY += 5;
-        }
-      });
-
-      yPos = headerY + 40;
-    } else if (logoStyle === 2) {
-
-      // Style 2: Single centered logo with details below
-
-      // Logo dimensions
-      const logoWidth = 100;
-      const logoHeight = 100;
-
-      if (barangayLogo && barangayLogo !== "no-image-url-fetched") {
-        try {
-          // Center the barangay logo
-          const logoX = (pageWidth - logoWidth) / 2;
-          doc.addImage(barangayLogo, "PNG", logoX, yPos, logoWidth, logoHeight);
-          yPos += logoHeight + 20; // Space after logo
-        } catch (e) {
-          console.error("Error adding barangay logo:", e);
-        }
-      }
-
-      // Header text configuration for style 2
-      const headerText = [
-        { text: "REPUBLIC OF THE PHILIPPINES", bold: false, size: 12 },
-        { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
-        { text: "-".repeat(65), bold: false, size: 9 },
-        { text: "Office of the Barangay Captain", bold: false, size: 11 },
-        { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
-        { text: `${email}`, bold: false, size: 11 },
-        { text: `(032) ${telNum}`, bold: false, size: 11 }
-      ];
-
-      const centerX = pageWidth / 2;
-      let headerY = yPos;
-
-      headerText.forEach((line) => {
-        if (line.text === "") {
-          headerY += 10;
-          return;
-        }
-        
-        setCurrentFont(line.bold ? 'bold' : 'normal');
-        doc.setFontSize(line.size);
-        
-        const textWidth = doc.getTextWidth(line.text);
-        doc.text(line.text, centerX - (textWidth / 2), headerY);
-        headerY += lineHeight;
-      });
-
-      yPos = headerY + 40;
     }
+
+    if (cityLogo && cityLogo !== "no-image-url-fetched") {
+      try {
+        doc.addImage(cityLogo, "PNG", rightLogoX, yPos, logoWidth, logoHeight);
+      } catch (e) {
+        console.error("Error adding city logo:", e);
+      }
+    }
+
+    // Header text configuration
+    const headerText = [
+      { text: "Republic of the Philippines", bold: true, size: 12 },
+      { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
+      { text: "", bold: false, size: 10 },
+      { text: "BARANGAY SAN ROQUE (CIUDAD)", bold: true, size: 14 },
+      { text: "Office of the Barangay Captain", bold: false, size: 13 },
+      { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
+      { text: `${telNum}`, bold: false, size: 11 }
+    ];
+
+    const centerX = pageWidth / 2;
+    let headerY = yPos + 15;
+
+    headerText.forEach((line) => {
+      if (line.text === "") {
+        headerY += 10;
+        return;
+      }
+      
+      setCurrentFont(line.bold ? 'bold' : 'normal');
+      doc.setFontSize(line.size);
+      
+      const textWidth = doc.getTextWidth(line.text);
+      doc.text(line.text, centerX - (textWidth / 2), headerY);
+      headerY += lineHeight;
+      
+      if (line.bold) {
+        headerY += 5;
+      }
+    });
+
+    yPos = headerY + 40;
+
 
 
     //Below Header Content
@@ -304,30 +254,37 @@ function TemplatePreview({
  
       if (withSignatureApplicant) {
         setCurrentFont('normal');
-        doc.text("Name and signature of Applicant", signatureX, currentY);
-        doc.text("Certified true and correct:", signatureX, currentY + 20);
+        
+        doc.text("[ NAME OF THE APPLICANT ]", signatureX, currentY);
+        currentY += 15; // Move down for the next line
+        
+        setCurrentFont('bold');
+        doc.text("NAME AND SIGNATURE OF APPLICANT", signatureX, currentY);
+        
+        setCurrentFont('normal');
+        doc.setFontSize(9);
+        doc.text("CERTIFIED TRUE AND CORRECT:", signatureX, currentY + 15);
         currentY += 60;
 
         setCurrentFont('bold');
+        doc.setFontSize(10);
         doc.text("HON. VIRGINIA N. ABENOJA", signatureX, currentY);
         setCurrentFont('normal');
-        doc.text("Punong Barangay, San Roque Ciudad", signatureX, currentY + 20);
+        doc.text("Punong Barangay, San Roque Ciudad", signatureX, currentY + 13);
       }
 
       if (withSeal && sealBase64) {
-        const sealY = footerY - 40;
+        const sealY = footerY - 18;
         doc.addImage(sealBase64, "PNG", sealX, sealY, sealSize, sealSize);
 
-        doc.setTextColor(255, 0, 0);
         setCurrentFont('bold');
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         
         const text = "NOT VALID WITHOUT SEAL";
         const textWidth = doc.getTextWidth(text);
         const finalX = sealX + (sealSize - textWidth) / 2;
         
         doc.text(text, finalX, sealY + sealSize + textBelowSealOffset);
-        doc.setTextColor(0, 0, 0);
       }
 
       const url = URL.createObjectURL(new Blob([doc.output("blob")], { type: "application/pdf" }));
