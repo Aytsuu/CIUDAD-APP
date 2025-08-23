@@ -133,7 +133,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       setSelectedBudgetItems(parsedParticulars);
       setRecordedBudgetItems(parsedParticulars);
     }
-  }, [budgetEntry, yearBudgets, year, form]);
+  }, [budgetEntry, yearBudgets, year]);
 
   const handleConfirmSave = (values: FormValues) => {
     const inputDate = new Date(values.gbud_datetime);
