@@ -6,13 +6,11 @@ import { FormField } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
-import { FormSelect } from "@/components/ui/form/form-select";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import {
   useGADBudgetEntry,
-  useIncomeParticulars,
   useProjectProposalsAvailability,
 } from "./queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "./queries/BTYearQueries";
@@ -21,6 +19,7 @@ import GADAddEntrySchema, {
   FormValues,
 } from "@/form-schema/gad-budget-track-create-form-schema";
 import { GADEditEntryFormProps } from "./budget-tracker-types";
+import { DateTimePicker } from "@/components/ui/form/form-datetime-picker";
 
 function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
   const { year } = useParams<{ year: string }>();
@@ -38,8 +37,6 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
     useGetGADYearBudgets();
   const { data: budgetEntry, isLoading: entryLoading } =
     useGADBudgetEntry(gbud_num);
-  const { data: incomeParticulars, isLoading: incomeParticularsLoading } =
-    useIncomeParticulars(year);
   const { data: projectProposals } = useProjectProposalsAvailability(year);
   const { mutate: updateBudget, isPending } = useUpdateGADBudget(
     yearBudgets || []
@@ -57,11 +54,8 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(GADAddEntrySchema),
     defaultValues: {
-      gbud_type: "Expense",
       gbud_datetime: new Date().toISOString().slice(0, 16),
       gbud_add_notes: "",
-      gbud_inc_particulars: "",
-      gbud_inc_amt: 0,
       gbud_exp_project: "",
       gbud_exp_particulars: [],
       gbud_actual_expense: 0,
@@ -72,27 +66,40 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
     },
     context: { calculateRemainingBalance },
   });
-
-  const typeWatch = form.watch("gbud_type");
   const projectWatch = form.watch("gbud_exp_project");
   const remainingBalance = calculateRemainingBalance();
 
+  // Update the useEffect where you set form values
   useEffect(() => {
     if (budgetEntry) {
       const formattedDate = budgetEntry.gbud_datetime
         ? new Date(budgetEntry.gbud_datetime).toISOString().slice(0, 16)
         : new Date().toISOString().slice(0, 16);
 
+      // Parse gbud_exp_particulars if it's a string
+      let parsedParticulars: { name: string; pax: string; amount: number }[] =
+        [];
+      if (budgetEntry.gbud_exp_particulars) {
+        if (typeof budgetEntry.gbud_exp_particulars === "string") {
+          try {
+            parsedParticulars = JSON.parse(budgetEntry.gbud_exp_particulars);
+          } catch (e) {
+            console.error(
+              "Failed to parse gbud_exp_particulars:",
+              budgetEntry.gbud_exp_particulars
+            );
+            parsedParticulars = [];
+          }
+        } else if (Array.isArray(budgetEntry.gbud_exp_particulars)) {
+          parsedParticulars = budgetEntry.gbud_exp_particulars;
+        }
+      }
+
       const formValues: FormValues = {
-        gbud_type: budgetEntry.gbud_type as "Income" | "Expense",
         gbud_datetime: formattedDate,
         gbud_add_notes: budgetEntry.gbud_add_notes || "",
-        gbud_inc_particulars: budgetEntry.gbud_inc_particulars || "",
-        gbud_inc_amt: budgetEntry.gbud_inc_amt
-          ? Number(budgetEntry.gbud_inc_amt)
-          : 0,
         gbud_exp_project: budgetEntry.gbud_exp_project || "",
-        gbud_exp_particulars: budgetEntry.gbud_exp_particulars || [],
+        gbud_exp_particulars: parsedParticulars, // Use parsed array
         gbud_proposed_budget: budgetEntry.gbud_proposed_budget
           ? Number(budgetEntry.gbud_proposed_budget)
           : 0,
@@ -116,22 +123,17 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       if (budgetEntry.files?.length) {
         const files = budgetEntry.files.map((file) => ({
           id: `existing-${file.gbf_id}`,
-          name: `file-${file.gbf_id}`, // Simple name like expense form
-          type: "image/jpeg", // Default type
+          name: file.gbf_name || `file-${file.gbf_id}`,
+          type: file.gbf_type || "image/jpeg",
           url: file.gbf_url,
         }));
         setMediaFiles(files);
       }
 
-      if (
-        budgetEntry.gbud_type === "Expense" &&
-        budgetEntry.gbud_exp_particulars
-      ) {
-        setSelectedBudgetItems(budgetEntry.gbud_exp_particulars);
-        setRecordedBudgetItems(budgetEntry.gbud_exp_particulars);
-      }
+      setSelectedBudgetItems(parsedParticulars);
+      setRecordedBudgetItems(parsedParticulars);
     }
-  }, [budgetEntry, yearBudgets, year, form]);
+  }, [budgetEntry, yearBudgets, year]);
 
   const handleConfirmSave = (values: FormValues) => {
     const inputDate = new Date(values.gbud_datetime);
@@ -146,7 +148,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
     }
 
     // Validate actual expense against remaining balance
-    if (values.gbud_type === "Expense" && values.gbud_actual_expense) {
+    if (values.gbud_actual_expense) {
       const actualExpense = Number(values.gbud_actual_expense);
       if (actualExpense > remainingBalance) {
         form.setError("gbud_actual_expense", {
@@ -165,14 +167,9 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
     }
 
     const budgetData = {
-      gbud_type: values.gbud_type,
       gbud_datetime: new Date(values.gbud_datetime).toISOString(),
       gbud_add_notes: values.gbud_add_notes || null,
-      ...(values.gbud_type === "Income" && {
-        gbud_inc_particulars: values.gbud_inc_particulars,
-        gbud_inc_amt: values.gbud_inc_amt,
-      }),
-      ...(values.gbud_type === "Expense" && {
+      ...{
         gbud_exp_project: values.gbud_exp_project,
         gbud_exp_particulars: values.gbud_exp_particulars,
         gbud_proposed_budget: values.gbud_proposed_budget,
@@ -181,18 +178,18 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         gbud_remaining_bal:
           remainingBalance - (values.gbud_actual_expense || 0),
         gpr: values.gpr,
-      }),
+      },
       gbudy: values.gbudy,
     };
 
-// Map removed files to gbf_id
-  const initialFiles = budgetEntry?.files || [];
-  const currentFileIds = mediaFiles
-    .filter((file) => file.id.startsWith("existing-"))
-    .map((file) => file.id.replace("existing-", ""));
-  const filesToDelete = initialFiles
-    .filter((file) => !currentFileIds.includes(file.gbf_id.toString()))
-    .map((file) => file.gbf_id.toString());
+    // Map removed files to gbf_id
+    const initialFiles = budgetEntry?.files || [];
+    const currentFileIds = mediaFiles
+      .filter((file) => file.id.startsWith("existing-"))
+      .map((file) => file.id.replace("existing-", ""));
+    const filesToDelete = initialFiles
+      .filter((file) => !currentFileIds.includes(file.gbf_id.toString()))
+      .map((file) => file.gbf_id.toString());
 
     const newFiles = mediaFiles
       .filter((file) => !file.id.startsWith("existing-") && file.file)
@@ -238,85 +235,43 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
             onSubmit={form.handleSubmit(handleConfirmSave)}
             className="flex flex-col gap-4"
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <FormSelect
-                  control={form.control}
-                  name="gbud_type"
-                  label="Type of Entry"
-                  options={[
-                    { id: "Income", name: "Income" },
-                    { id: "Expense", name: "Expense" },
-                  ]}
-                  readOnly
-                />
-              </div>
-              <div>
-                <FormInput
+                <DateTimePicker
                   control={form.control}
                   name="gbud_datetime"
                   label={`Date (${year} only)`}
-                  type="datetime-local"
                   readOnly={!isEditing}
                 />
               </div>
               <div>
-                {typeWatch === "Income" ? (
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium">
-                      Income Particulars
-                    </label>
-                    {!isEditing ? (
-                      <div className="p-2 border rounded">
-                        {budgetEntry.gbud_inc_particulars || "N/A"}
-                      </div>
-                    ) : (
-                      <FormField
-                        control={form.control}
-                        name="gbud_inc_particulars"
-                        render={({ field }) => (
-                          <ComboboxInput
-                            value={field.value || ""}
-                            options={incomeParticulars || []}
-                            isLoading={incomeParticularsLoading}
-                            label=""
-                            placeholder="Select particulars..."
-                            emptyText="No particulars found. Enter new value."
-                            onSelect={(value) => field.onChange(value)}
-                            disabled={incomeParticularsLoading}
-                          />
-                        )}
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <FormField
-                    control={form.control}
-                    name="gbud_exp_project"
-                    render={({ field }) => (
-                      <ComboboxInput
-                        value={field.value || ""}
-                        options={projectProposals || []}
-                        label="Project Title"
-                        placeholder="Select project..."
-                        onSelect={(value, item) => {
-                          field.onChange(value);
-                          form.setValue("gpr", item?.gpr_id ?? null);
-                        }}
-                        readOnly={true}
-                      />
-                    )}
-                  />
-                )}
+                <FormField
+                  control={form.control}
+                  name="gbud_exp_project"
+                  render={({ field }) => (
+                    <ComboboxInput
+                      value={field.value || ""}
+                      options={projectProposals || []}
+                      label="Project Title"
+                      placeholder="Select project..."
+                      onSelect={(value, item) => {
+                        field.onChange(value);
+                        form.setValue("gpr", item?.gpr_id ?? null);
+                      }}
+                      readOnly={true}
+                    />
+                  )}
+                />
               </div>
             </div>
 
-            {typeWatch === "Expense" && selectedProject && (
+            {selectedProject && (
               <>
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium">Budget Items</label>
                   <div className="border rounded p-4">
-                    {selectedBudgetItems.map((item) => (
+                    {/* Show recorded items from the project */}
+                    {selectedProject.gpr_budget_items.map((item) => (
                       <div
                         key={item.name}
                         className="flex justify-between items-center py-2 border-b last:border-b-0"
@@ -326,12 +281,46 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                           <span className="text-sm text-gray-500 ml-2">
                             {item.pax}
                           </span>
+                          {selectedProject.recorded_items.includes(
+                            item.name
+                          ) && (
+                            <span className="text-xs text-gray-400 ml-2">
+                              (Recorded)
+                            </span>
+                          )}
                         </div>
                         <span>₱{item.amount.toLocaleString()}</span>
                       </div>
                     ))}
+
+                    {/* Also show any additional selected budget items */}
+                    {selectedBudgetItems
+                      .filter(
+                        (item) =>
+                          !selectedProject.gpr_budget_items.some(
+                            (projectItem) => projectItem.name === item.name
+                          )
+                      )
+                      .map((item) => (
+                        <div
+                          key={item.name}
+                          className="flex justify-between items-center py-2 border-b last:border-b-0"
+                        >
+                          <div>
+                            <span className="font-medium">{item.name}</span>
+                            <span className="text-sm text-gray-500 ml-2">
+                              {item.pax}
+                            </span>
+                            <span className="text-xs text-blue-400 ml-2">
+                              (Added)
+                            </span>
+                          </div>
+                          <span>₱{item.amount.toLocaleString()}</span>
+                        </div>
+                      ))}
                   </div>
                 </div>
+
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium text-black/70">
                     Proposed Budget
@@ -354,80 +343,57 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                 readOnly={!isEditing}
               />
 
-              {typeWatch === "Income" ? (
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Income Amount</label>
-                  {!isEditing ? (
-                    <div className="p-2 border rounded">
-                      {budgetEntry.gbud_inc_amt
-                        ? `₱${Number(
-                            budgetEntry.gbud_inc_amt
-                          ).toLocaleString()}`
-                        : "N/A"}
-                    </div>
-                  ) : (
-                    <FormInput
-                      control={form.control}
-                      name="gbud_inc_amt"
-                      type="number"
-                      placeholder="Enter amount"
-                      label=""
-                    />
-                  )}
-                </div>
-              ) : (
-                <>
-                  <FormInput
-                    control={form.control}
-                    name="gbud_actual_expense"
-                    label="Actual Expense"
-                    type="number"
-                    readOnly={!isEditing}
+              <>
+                <FormInput
+                  control={form.control}
+                  name="gbud_actual_expense"
+                  label="Actual Expense"
+                  type="number"
+                  readOnly={!isEditing}
+                />
+                <FormInput
+                  control={form.control}
+                  name="gbud_reference_num"
+                  label="Reference Number"
+                  placeholder="Enter reference number"
+                  readOnly={!isEditing}
+                />
+                {isEditing ? (
+                  <MediaUpload
+                    title="Supporting Documents"
+                    description="Upload proof of transaction"
+                    mediaFiles={mediaFiles}
+                    setMediaFiles={setMediaFiles}
+                    activeVideoId={activeVideoId}
+                    setActiveVideoId={setActiveVideoId}
                   />
-                  <FormInput
-                    control={form.control}
-                    name="gbud_reference_num"
-                    label="Reference Number"
-                    placeholder="Enter reference number"
-                    readOnly={!isEditing}
-                  />
-                  {isEditing ? (
-                    <MediaUpload
-                      title="Supporting Documents"
-                      description="Upload proof of transaction"
-                      mediaFiles={mediaFiles}
-                      setMediaFiles={setMediaFiles}
-                      activeVideoId={activeVideoId}
-                      setActiveVideoId={setActiveVideoId}
-                    />
-                  ) : mediaFiles.length > 0 ? (
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium">
-                        Supporting Doc(s)
-                      </label>
-                      {mediaFiles.map((file) => (
-                        <div key={file.id} className="border rounded-md p-2">
-                          <img
-                            src={file.url}
-                            onError={(e) => {
-                              console.error("Failed to load image:", {
-                                url: file.url,
-                                encoded: encodeURI(file.url || ""),
-                                decoded: decodeURI(file.url || ""),
-                              });
-                              e.currentTarget.src = "/placeholder.jpg";
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-2 border rounded text-sm text-gray-500">
-                      No supporting docs uploaded
-                    </div>
-                  )}
-                </>
-              )}
+                ) : mediaFiles.length > 0 ? (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium">
+                      Supporting Doc(s)
+                    </label>
+                    {mediaFiles.map((file) => (
+                      <div key={file.id} className="border rounded-md p-2">
+                        <img
+                          src={file.url}
+                          onError={(e) => {
+                            console.error("Failed to load image:", {
+                              url: file.url,
+                              encoded: encodeURI(file.url || ""),
+                              decoded: decodeURI(file.url || ""),
+                            });
+                            e.currentTarget.src = "/placeholder.jpg";
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-2 border rounded text-sm text-gray-500">
+                    No supporting docs uploaded
+                  </div>
+                )}
+              </>
             </div>
 
             {currentYearBudget && (
@@ -442,12 +408,6 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                   <span className="font-medium">Total Expenses:</span>
                   <span>
                     ₱{(currentYearBudget.gbudy_expenses || 0).toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Total Income:</span>
-                  <span>
-                    ₱{(currentYearBudget.gbudy_income || 0).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between font-bold">
@@ -478,7 +438,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                     type="button"
                     onClick={() => {
                       form.reset();
-                      setIsEditing(false);                     
+                      setIsEditing(false);
                     }}
                     variant="outline"
                   >

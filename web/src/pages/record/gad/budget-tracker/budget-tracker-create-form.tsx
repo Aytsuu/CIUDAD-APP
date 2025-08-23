@@ -7,12 +7,10 @@ import { FormField } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
-import { FormSelect } from "@/components/ui/form/form-select";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import {
   useGADBudgets,
   useProjectProposalsAvailability,
-  useIncomeParticulars,
 } from "./queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "./queries/BTYearQueries";
 import { useCreateGADBudget } from "./queries/BTAddQueries";
@@ -22,20 +20,25 @@ import GADAddEntrySchema, {
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import { removeLeadingZeros } from "@/helpers/removeLeadingZeros";
+import { DateTimePicker } from "@/components/ui/form/form-datetime-picker";
+import { useAuth } from "@/context/AuthContext";
 
 function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
+  const { user } = useAuth();
   const { year } = useParams<{ year: string }>();
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
-  const [selectedBudgetItems, setSelectedBudgetItems] = useState<{ name: string; pax: string; amount: number }[]>([]);
-  const [recordedBudgetItems, setRecordedBudgetItems] = useState<{ name: string; pax: string; amount: number }[]>([]);
+  const [selectedBudgetItems, setSelectedBudgetItems] = useState<
+    { name: string; pax: string; amount: number }[]
+  >([]);
+  const [recordedBudgetItems, setRecordedBudgetItems] = useState<
+    { name: string; pax: string; amount: number }[]
+  >([]);
   const {
     data: yearBudgets,
     isLoading: yearBudgetsLoading,
     refetch: refetchYearBudgets,
   } = useGetGADYearBudgets();
   const { data: budgetEntries = [] } = useGADBudgets(year || "");
-  const { data: incomeParticulars, isLoading: incomeParticularsLoading } =
-    useIncomeParticulars(year);
   const { data: projectProposals, isLoading: projectProposalsLoading } =
     useProjectProposalsAvailability(year);
   const {
@@ -55,24 +58,11 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
     return initialBudget - totalExpenses;
   };
 
-  const proposedBudget = removeLeadingZeros(
-    selectedBudgetItems
-      .filter((item) => !recordedBudgetItems.some((r) => r.name === item.name))
-      .reduce((sum, item) => {
-        const pax = parseInt(item.pax) || 1; // Default to 1 if pax is not a number
-        return sum + item.amount * pax;
-      }, 0)
-  );
-
-  // Form setup
   const form = useForm<FormValues>({
     resolver: zodResolver(GADAddEntrySchema),
     defaultValues: {
-      gbud_type: "Expense",
       gbud_datetime: new Date().toISOString().slice(0, 16),
       gbud_add_notes: "",
-      gbud_inc_particulars: "",
-      gbud_inc_amt: 0,
       gbud_exp_project: "",
       gbud_exp_particulars: [],
       gbud_actual_expense: 0,
@@ -81,24 +71,31 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
       gbud_remaining_bal: 0,
       gbudy: 0,
       gpr: 0,
+      staff: "00002250821",
+      // staff: user?.staff?.staff_id || null
     },
     context: { calculateRemainingBalance },
   });
 
   // Watch form values
-  const typeWatch = form.watch("gbud_type");
   const actualExpenseWatch = form.watch("gbud_actual_expense");
   const projectWatch = form.watch("gbud_exp_project");
   const remainingBalance = calculateRemainingBalance();
 
-  // Update proposed_budget in form
   useEffect(() => {
-    if (typeWatch === "Expense") {
-      form.setValue("gbud_proposed_budget", proposedBudget);
-    } else {
-      form.setValue("gbud_proposed_budget", 0);
-    }
-  }, [proposedBudget, typeWatch, form]);
+    const calculatedProposedBudget = removeLeadingZeros(
+      selectedBudgetItems
+        .filter(
+          (item) => !recordedBudgetItems.some((r) => r.name === item.name)
+        )
+        .reduce((sum, item) => {
+          const pax = parseInt(item.pax) || 1;
+          return sum + item.amount * pax;
+        }, 0)
+    );
+
+    form.setValue("gbud_proposed_budget", calculatedProposedBudget);
+  }, [selectedBudgetItems, recordedBudgetItems, form]);
 
   // Set year budget
   useEffect(() => {
@@ -113,6 +110,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
           message: "No budget found for the selected year",
         });
       }
+      form.setValue("staff", "00002250821");
       form.trigger();
     }
   }, [yearBudgets, yearBudgetsLoading, year, form]);
@@ -203,27 +201,25 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
       return;
     }
 
-    if (values.gbud_type === "Expense") {
-      if (
-        values.gbud_actual_expense &&
-        values.gbud_actual_expense > remainingBalance
-      ) {
-        form.setError("gbud_actual_expense", {
-          type: "manual",
-          message: `Actual expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`,
-        });
-        return;
-      }
-      if (
-        !values.gbud_exp_particulars ||
-        values.gbud_exp_particulars.length === 0
-      ) {
-        form.setError("gbud_exp_particulars", {
-          type: "manual",
-          message: "At least one budget item is required for expense entries",
-        });
-        return;
-      }
+    if (
+      values.gbud_actual_expense &&
+      values.gbud_actual_expense > remainingBalance
+    ) {
+      form.setError("gbud_actual_expense", {
+        type: "manual",
+        message: `Actual expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`,
+      });
+      return;
+    }
+    if (
+      !values.gbud_exp_particulars ||
+      values.gbud_exp_particulars.length === 0
+    ) {
+      form.setError("gbud_exp_particulars", {
+        type: "manual",
+        message: "At least one budget item is required for expense entries",
+      });
+      return;
     }
 
     const files = mediaFiles.map((media) => ({
@@ -242,14 +238,9 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
     }
 
     const budgetData = {
-      gbud_type: values.gbud_type,
       gbud_datetime: new Date(values.gbud_datetime).toISOString(),
       gbud_add_notes: values.gbud_add_notes || null,
-      ...(values.gbud_type === "Income" && {
-        gbud_inc_particulars: values.gbud_inc_particulars,
-        gbud_inc_amt: values.gbud_inc_amt,
-      }),
-      ...(values.gbud_type === "Expense" && {
+      ...{
         gbud_exp_project: values.gbud_exp_project,
         gbud_exp_particulars: values.gbud_exp_particulars,
         gbud_actual_expense: values.gbud_actual_expense,
@@ -258,8 +249,9 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
         gbud_remaining_bal:
           remainingBalance - (values.gbud_actual_expense || 0),
         gpr: values.gpr,
-      }),
+      },
       gbudy: values.gbudy,
+      staff: values.staff,
     };
 
     try {
@@ -297,94 +289,54 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex flex-col gap-4"
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <FormSelect
-                  control={form.control}
-                  name="gbud_type"
-                  label="Type of Entry"
-                  options={[
-                    { id: "Income", name: "Income" },
-                    { id: "Expense", name: "Expense" },
-                  ]}
-                />
-              </div>
-              <div>
-                <FormInput
+                <DateTimePicker
                   control={form.control}
                   name="gbud_datetime"
                   label={`Date (${year} only)`}
-                  type="datetime-local"
+                  year={year}
                 />
               </div>
               <div>
-                {typeWatch === "Income" ? (
-                  <FormField
-                    control={form.control}
-                    name="gbud_inc_particulars"
-                    render={({ field }) => (
-                      <ComboboxInput
-                        value={field.value || ""}
-                        options={incomeParticulars || []}
-                        isLoading={incomeParticularsLoading}
-                        label="Income Particulars"
-                        placeholder="Select particulars..."
-                        emptyText="No particulars found. Enter new value."
-                        onSelect={(value) => {
-                          field.onChange(value);
-                        }}
-                        onCustomInput={(value) => {
-                          field.onChange(value);
-                        }}
-                        disabled={incomeParticularsLoading}
-                      />
-                    )}
-                  />
-                ) : (
-                  <FormField
-                    control={form.control}
-                    name="gbud_exp_project"
-                    render={({ field }) => (
-                      <ComboboxInput
-                        value={field.value || ""}
-                        options={projectProposals || []}
-                        isLoading={projectProposalsLoading}
-                        label="Project Title"
-                        placeholder="Select project..."
-                        emptyText="No projects found."
-                        onSelect={(value, item) => {
-                          field.onChange(value);
-                          if (item) {
-                            form.setValue("gpr", item.gpr_id);
-                            const recordedItems = item.recorded_items
-                              .map((name) =>
-                                item.gpr_budget_items.find(
-                                  (b) => b.name === name
-                                )
-                              )
-                              .filter(Boolean) as {
-                              name: string;
-                              pax: string;
-                              amount: number;
-                            }[];
-                            form.setValue(
-                              "gbud_exp_particulars",
-                              recordedItems
-                            );
-                            setSelectedBudgetItems(recordedItems);
-                            setRecordedBudgetItems(recordedItems);
-                            form.clearErrors("gbud_exp_particulars");
-                            form.clearErrors("gbud_exp_project");
-                            form.clearErrors("gpr");
-                          }
-                        }}
-                        displayKey="gpr_title"
-                        valueKey="gpr_id"
-                        disabled={projectProposalsLoading}
-                      />
-                    )}
-                  />
-                )}
+                <FormField
+                  control={form.control}
+                  name="gbud_exp_project"
+                  render={({ field }) => (
+                    <ComboboxInput
+                      value={field.value || ""}
+                      options={projectProposals || []}
+                      isLoading={projectProposalsLoading}
+                      label="Project Title"
+                      placeholder="Select project..."
+                      emptyText="No projects found."
+                      onSelect={(value, item) => {
+                        field.onChange(value);
+                        if (item) {
+                          form.setValue("gpr", item.gpr_id);
+                          const recordedItems = item.recorded_items
+                            .map((name) =>
+                              item.gpr_budget_items.find((b) => b.name === name)
+                            )
+                            .filter(Boolean) as {
+                            name: string;
+                            pax: string;
+                            amount: number;
+                          }[];
+                          form.setValue("gbud_exp_particulars", recordedItems);
+                          setSelectedBudgetItems(recordedItems);
+                          setRecordedBudgetItems(recordedItems);
+                          form.clearErrors("gbud_exp_particulars");
+                          form.clearErrors("gbud_exp_project");
+                          form.clearErrors("gpr");
+                        }
+                      }}
+                      displayKey="gpr_title"
+                      valueKey="gpr_id"
+                      disabled={projectProposalsLoading}
+                    />
+                  )}
+                />
               </div>
             </div>
 
@@ -395,7 +347,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
               placeholder="Enter related information (if any)"
             />
 
-            {typeWatch === "Expense" && selectedProject && (
+            {selectedProject && (
               <>
                 <FormField
                   control={form.control}
@@ -488,98 +440,75 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
               </>
             )}
 
-            <div className="flex flex-col gap-4">
-              {typeWatch === "Income" ? (
-                <FormInput
-                  control={form.control}
-                  name="gbud_inc_amt"
-                  label="Income Amount"
-                  type="number"
-                />
-              ) : (
-                <>
-                  <FormInput
-                    control={form.control}
-                    name="gbud_actual_expense"
-                    label="Actual Expense"
-                    type="number"
-                  />
-                  <FormInput
-                    control={form.control}
-                    name="gbud_reference_num"
-                    label="Reference Number"
-                    placeholder="Enter reference number"
-                  />
-                  <MediaUpload
-                    title="Supporting Documents"
-                    description="Upload proof of transaction"
-                    mediaFiles={mediaFiles}
-                    setMediaFiles={(newFiles) => {
-                      setMediaFiles(newFiles);
-                    }}
-                    activeVideoId={activeVideoId}
-                    setActiveVideoId={setActiveVideoId}
-                    acceptableFiles="all"
-                    maxFiles={5}
-                  />
-                  {currentYearBudget && (
-                    <div className="p-4 border rounded bg-gray-50">
-                      <div className="flex justify-between">
-                        <span className="font-medium">Current Budget:</span>
-                        <span>
-                          ₱{currentYearBudget.gbudy_budget?.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Total Expenses:</span>
-                        <span>
-                          ₱
-                          {(
-                            currentYearBudget.gbudy_expenses || 0
-                          ).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Total Income:</span>
-                        <span>
-                          ₱
-                          {(
-                            currentYearBudget.gbudy_income || 0
-                          ).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between font-bold">
-                        <span>Remaining Balance:</span>
-                        <span>₱{remainingBalance.toLocaleString()}</span>
-                      </div>
-                      {actualExpenseWatch && (
-                        <div className="flex justify-between mt-2">
-                          <span className="font-medium">After This Entry:</span>
-                          <span
-                            className={
-                              (actualExpenseWatch || 0) > remainingBalance
-                                ? "text-red-500"
-                                : ""
-                            }
-                          >
-                            ₱
-                            {(
-                              remainingBalance - (actualExpenseWatch || 0)
-                            ).toLocaleString()}
-                          </span>
-                        </div>
-                      )}
-                      {(actualExpenseWatch || 0) > remainingBalance && (
-                        <div className="mt-2 text-red-500 font-medium">
-                          Warning: This expense will exceed your remaining
-                          budget!
-                        </div>
-                      )}
+            <>
+              <FormInput
+                control={form.control}
+                name="gbud_actual_expense"
+                label="Actual Expense"
+                type="number"
+              />
+              <FormInput
+                control={form.control}
+                name="gbud_reference_num"
+                label="Reference Number"
+                placeholder="Enter reference number"
+              />
+              <MediaUpload
+                title="Supporting Documents"
+                description="Upload proof of transaction"
+                mediaFiles={mediaFiles}
+                setMediaFiles={(newFiles) => {
+                  setMediaFiles(newFiles);
+                }}
+                activeVideoId={activeVideoId}
+                setActiveVideoId={setActiveVideoId}
+                acceptableFiles="all"
+                maxFiles={5}
+              />
+              {currentYearBudget && (
+                <div className="p-4 border rounded bg-gray-50">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Current Budget:</span>
+                    <span>
+                      ₱{currentYearBudget.gbudy_budget?.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Total Expenses:</span>
+                    <span>
+                      ₱
+                      {(currentYearBudget.gbudy_expenses || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between font-bold">
+                    <span>Remaining Balance:</span>
+                    <span>₱{remainingBalance.toLocaleString()}</span>
+                  </div>
+                  {actualExpenseWatch && (
+                    <div className="flex justify-between mt-2">
+                      <span className="font-medium">After This Entry:</span>
+                      <span
+                        className={
+                          (actualExpenseWatch || 0) > remainingBalance
+                            ? "text-red-500"
+                            : ""
+                        }
+                      >
+                        ₱
+                        {(
+                          remainingBalance - (actualExpenseWatch || 0)
+                        ).toLocaleString()}
+                      </span>
                     </div>
                   )}
-                </>
+                  {(actualExpenseWatch || 0) > remainingBalance && (
+                    <div className="mt-2 text-red-500 font-medium">
+                      Warning: This expense will exceed your remaining budget!
+                    </div>
+                  )}
+                </div>
               )}
-            </div>
+            </>
 
             <div className="mt-4 flex justify-end gap-3">
               {Object.keys(form.formState.errors).length > 0 && (
@@ -587,13 +516,11 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                   Please double check your input
                 </div>
               )}
-              {typeWatch === "Expense" &&
-                selectedBudgetItems.length > 0 &&
-                !hasUnrecordedItems() && (
-                  <p className="text-sm text-red-500 mb-2">
-                    Note: Add at least one new budget item to save
-                  </p>
-                )}
+              {selectedBudgetItems.length > 0 && !hasUnrecordedItems() && (
+                <p className="text-sm text-red-500 mb-2">
+                  Note: Add at least one new budget item to save
+                </p>
+              )}
 
               <ConfirmationModal
                 trigger={
@@ -603,7 +530,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                     disabled={
                       isPending ||
                       Object.keys(form.formState.errors).length > 0 ||
-                      (typeWatch === "Expense" && !hasUnrecordedItems())
+                      !hasUnrecordedItems()
                     }
                   >
                     {isPending ? "Saving..." : "Save"}

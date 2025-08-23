@@ -292,7 +292,6 @@ const items: MenuItem[] = [
     items: [
       { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
       { title: "Project Proposal", url: "/gad-project-proposal"},
-      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
       { title: "Annual Development Plan", url: "/gad-annual-development-plan"},
     ],
   },
@@ -335,6 +334,7 @@ const items: MenuItem[] = [
         ],
       },
       { title: "Receipts", url: "/treasurer-receipts" },
+      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
     ],
   },
   {

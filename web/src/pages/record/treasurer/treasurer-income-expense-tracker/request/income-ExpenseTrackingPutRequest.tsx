@@ -20,7 +20,7 @@ export const updateIncomeExpense = async (iet_num: number, incomeExpenseInfo: Re
             iet_receipt_image: 'nothing',
             inv_num: "None",
             exp_id:  parseInt(incomeExpenseInfo.iet_particulars),
-            staff_id: "00001250820"
+            staff_id: "00002250821"
 
         })
 

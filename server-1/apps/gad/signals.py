@@ -14,18 +14,11 @@ def update_budget_year_totals(sender, instance, **kwargs):
 
             expense_total = (
                 GAD_Budget_Tracker.objects
-                .filter(gbudy=budget_year, gbud_type='Expense', gbud_is_archive=False)
+                .filter(gbudy=budget_year, gbud_is_archive=False)
                 .aggregate(total=Sum('gbud_actual_expense'))['total'] or 0
             )
 
-            income_total = (
-                GAD_Budget_Tracker.objects
-                .filter(gbudy=budget_year, gbud_type='Income', gbud_is_archive=False)
-                .aggregate(total=Sum('gbud_inc_amt'))['total'] or 0
-            )
-
             budget_year.gbudy_expenses = expense_total
-            budget_year.gbudy_income = income_total
             budget_year.save()
     except Exception as e:
         print(f"Error updating budget year totals: {e}")

@@ -5,13 +5,13 @@ import { veraMonoNormal } from "@/assets/fonts/VeraMono-normal";
 import { veraMonoBold } from "@/assets/fonts/VeraMono-Bold-bold";
 
 interface TemplatePreviewProps {
-  logoStyle: number;
   barangayLogo: string;
   cityLogo: string
   email?: string;
   telNum: string;
   belowHeaderContent?: string;
   title: string;
+  subtitle?: string;
   body: string;
   withSeal: boolean;
   withSignRight: boolean;
@@ -23,19 +23,19 @@ interface TemplatePreviewProps {
 }
 
 function TemplatePreview({
-  logoStyle,
   barangayLogo,
   cityLogo,
   email,
   telNum,
   belowHeaderContent,
   title,
+  subtitle,
   body,
   withSeal,
   withSignRight,
   withSignLeft,
   withSignatureApplicant,
-  withSummon = false,
+  withSummon,
   paperSize = "letter",
   margin = "normal"
 }: TemplatePreviewProps) {
@@ -50,7 +50,7 @@ function TemplatePreview({
 
   useEffect(() => {
     generatePDF();
-  }, [logoStyle, barangayLogo, cityLogo, email, telNum, belowHeaderContent, title, body, withSeal, withSignRight, withSignLeft, withSignatureApplicant, withSummon, paperSize, margin]);
+  }, [barangayLogo, cityLogo, email, telNum, belowHeaderContent, title, subtitle, body, withSeal, withSummon, withSignRight, withSignLeft, withSignatureApplicant, withSummon, paperSize, margin]);
 
   const generatePDF = () => {
     // Convert paper size to jsPDF format
@@ -77,7 +77,7 @@ function TemplatePreview({
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const lineHeight = 14;
-    const sectionGap = 20;
+    // const sectionGap = 20;
 
     // Set initial font
     const setCurrentFont = (style: 'normal' | 'bold' = 'normal') => {
@@ -92,113 +92,95 @@ function TemplatePreview({
     doc.setFontSize(12);
 
 
-    if (logoStyle === 1) {
-      // Logo dimensions
-      const logoWidth = 90;
-      const logoHeight = 90;
-
-      // Style 1: Original layout with logos on sides
-      const leftLogoX = marginValue;
-      const rightLogoX = pageWidth - marginValue - logoWidth;
-
-      if (barangayLogo && barangayLogo !== "no-image-url-fetched") {
-        try {
-          doc.addImage(barangayLogo, "PNG", leftLogoX, yPos, logoWidth, logoHeight);
-        } catch (e) {
-          console.error("Error adding barangay logo:", e);
+    // WATERMARK
+    if (barangayLogo && barangayLogo !== "no-image-url-fetched") {
+      try {
+        if (doc.setGState) {
+          // @ts-ignore
+          const gState = doc.GState({ opacity: 0.15 });
+          // @ts-ignore
+          doc.setGState(gState);
         }
+
+        // Place background image in center
+        const bgWidth = 400;   
+        const bgHeight = 400;  
+        const bgX = (pageWidth - bgWidth) / 2;
+        const bgY = (pageHeight - bgHeight) / 2;
+
+        doc.addImage(barangayLogo, "PNG", bgX, bgY, bgWidth, bgHeight);
+
+        // Reset opacity back to normal
+        if (doc.setGState) {
+          // @ts-ignore
+          const gStateReset = doc.GState({ opacity: 1 });
+          // @ts-ignore
+          doc.setGState(gStateReset);
+        }
+      } catch (e) {
+        console.error("Error adding faded background logo:", e);
       }
-
-      if (cityLogo && cityLogo !== "no-image-url-fetched") {
-        try {
-          doc.addImage(cityLogo, "PNG", rightLogoX, yPos, logoWidth, logoHeight);
-        } catch (e) {
-          console.error("Error adding city logo:", e);
-        }
-      }
-
-      // Header text configuration
-      const headerText = [
-        { text: "REPUBLIC OF THE PHILIPPINES", bold: false, size: 12 },
-        { text: "City of Cebu", bold: false, size: 11 },
-        { text: "", bold: false, size: 10 },
-        { text: "BARANGAY SAN ROQUE (CIUDAD)", bold: true, size: 14 },
-        { text: "OFFICE OF THE BARANGAY CAPTAIN", bold: false, size: 11 },
-        { text: "Arellano Blvd, Cebu City", bold: false, size: 11 },
-        { text: `Tel No. ${telNum}`, bold: false, size: 11 }
-      ];
-
-      const centerX = pageWidth / 2;
-      let headerY = yPos + 15;
-
-      headerText.forEach((line) => {
-        if (line.text === "") {
-          headerY += 10;
-          return;
-        }
-        
-        setCurrentFont(line.bold ? 'bold' : 'normal');
-        doc.setFontSize(line.size);
-        
-        const textWidth = doc.getTextWidth(line.text);
-        doc.text(line.text, centerX - (textWidth / 2), headerY);
-        headerY += lineHeight;
-        
-        if (line.bold) {
-          headerY += 5;
-        }
-      });
-
-      yPos = headerY + 40;
-    } else if (logoStyle === 2) {
-
-      // Style 2: Single centered logo with details below
-
-      // Logo dimensions
-      const logoWidth = 100;
-      const logoHeight = 100;
-
-      if (barangayLogo && barangayLogo !== "no-image-url-fetched") {
-        try {
-          // Center the barangay logo
-          const logoX = (pageWidth - logoWidth) / 2;
-          doc.addImage(barangayLogo, "PNG", logoX, yPos, logoWidth, logoHeight);
-          yPos += logoHeight + 20; // Space after logo
-        } catch (e) {
-          console.error("Error adding barangay logo:", e);
-        }
-      }
-
-      // Header text configuration for style 2
-      const headerText = [
-        { text: "REPUBLIC OF THE PHILIPPINES", bold: false, size: 12 },
-        { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
-        { text: "-".repeat(65), bold: false, size: 9 },
-        { text: "Office of the Barangay Captain", bold: false, size: 11 },
-        { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
-        { text: `${email}`, bold: false, size: 11 },
-        { text: `(032) ${telNum}`, bold: false, size: 11 }
-      ];
-
-      const centerX = pageWidth / 2;
-      let headerY = yPos;
-
-      headerText.forEach((line) => {
-        if (line.text === "") {
-          headerY += 10;
-          return;
-        }
-        
-        setCurrentFont(line.bold ? 'bold' : 'normal');
-        doc.setFontSize(line.size);
-        
-        const textWidth = doc.getTextWidth(line.text);
-        doc.text(line.text, centerX - (textWidth / 2), headerY);
-        headerY += lineHeight;
-      });
-
-      yPos = headerY + 40;
     }
+
+
+    // Logo dimensions
+    const logoWidth = 90;
+    const logoHeight = 90;
+
+    // Style 1: Original layout with logos on sides
+    const leftLogoX = marginValue;
+    const rightLogoX = pageWidth - marginValue - logoWidth;
+
+    if (barangayLogo && barangayLogo !== "no-image-url-fetched") {
+      try {
+        doc.addImage(barangayLogo, "PNG", leftLogoX, yPos, logoWidth, logoHeight);
+      } catch (e) {
+        console.error("Error adding barangay logo:", e);
+      }
+    }
+
+    if (cityLogo && cityLogo !== "no-image-url-fetched") {
+      try {
+        doc.addImage(cityLogo, "PNG", rightLogoX, yPos, logoWidth, logoHeight);
+      } catch (e) {
+        console.error("Error adding city logo:", e);
+      }
+    }
+
+    // Header text configuration
+    const headerText = [
+      { text: "Republic of the Philippines", bold: true, size: 12 },
+      { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
+      { text: "", bold: false, size: 10 },
+      { text: "BARANGAY SAN ROQUE (CIUDAD)", bold: true, size: 14 },
+      { text: "Office of the Barangay Captain", bold: false, size: 13 },
+      { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
+      { text: `${telNum}`, bold: false, size: 11 }
+    ];
+
+    const centerX = pageWidth / 2;
+    let headerY = yPos + 15;
+
+    headerText.forEach((line) => {
+      if (line.text === "") {
+        headerY += 10;
+        return;
+      }
+      
+      doc.setFont("times", line.bold ? 'bold' : 'normal');
+      doc.setFontSize(line.size);
+      
+      const textWidth = doc.getTextWidth(line.text);
+      doc.text(line.text, centerX - (textWidth / 2), headerY);
+      headerY += lineHeight;
+      
+      if (line.bold) {
+        headerY += 5;
+      }
+    });
+
+    yPos = headerY + 40;
+
 
 
     //Below Header Content
@@ -216,18 +198,64 @@ function TemplatePreview({
         yPos += lineHeight;
       }
       yPos += 30; // Add some space after the content
-    }    
+    }   
+    
+    
+    if (barangayLogo && barangayLogo !== "no-image-url-fetched") {
+      try {
+        // Create a faded version of the logo (synchronous)
+        const img = new Image();
+        img.src = barangayLogo;
+        
+        // Create canvas and adjust opacity
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        
+        if (ctx) {
+          ctx.globalAlpha = 0.2; // Adjust opacity here
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+          
+          // Get the faded image
+          const fadedLogo = canvas.toDataURL("image/png");
+          
+          // Calculate position and size
+          const bgWidth = pageWidth * 0.6;
+          const bgHeight = (img.height / img.width) * bgWidth;
+          const bgX = (pageWidth - bgWidth) / 2;
+          const bgY = (pageHeight - bgHeight) / 2;
+          
+          // Add to PDF
+          doc.addImage(fadedLogo, "PNG", bgX, bgY, bgWidth, bgHeight);
+        }
+      } catch (e) {
+        console.error("Error adding background logo:", e);
+      }
+    }
 
     // Title
     doc.setFont("times", "bold");
     doc.setFontSize(20);
     const titleWidth = doc.getTextWidth(title); 
     doc.text(title, (pageWidth - titleWidth) / 2, yPos);
-    yPos += lineHeight + sectionGap + 20;
+    yPos += lineHeight + 10; // Fixed space after title
+
+    //Subtitle Content
+    if (subtitle) {
+      yPos -= 10;
+      doc.setFont("times", "bold");
+      doc.setFontSize(11);
+      const subtitleWidth = doc.getTextWidth(subtitle);
+      doc.text(subtitle, (pageWidth - subtitleWidth) / 2, yPos);
+      yPos += lineHeight + 10; // Space after subtitle
+    }
+
+    yPos += 10;
 
     // Body content
     setCurrentFont('normal');
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     
     const contentWidth = pageWidth - marginValue * 2;
     const splitText = doc.splitTextToSize(body, contentWidth);
@@ -274,6 +302,32 @@ function TemplatePreview({
     const addFooter = (sealBase64?: string) => {
       let currentY = footerY;
 
+      if (withSummon) {
+        // Barangay captain info on the right side
+        const captainX = pageWidth - marginValue - 170;
+        setCurrentFont('bold');
+        doc.text("HON. VIRGINIA N. ABENOJA", captainX, currentY);
+        setCurrentFont('normal');;
+        doc.text("Punong Barangay", captainX + 34, currentY + 20);
+
+        //adds a space after the Punong Barangay na word
+        currentY += 70;
+
+        // Summon signature fields - new format
+        setCurrentFont('normal');
+        
+        // Calculate positions
+        const fieldSpacing = 30;
+        const lineLength = 200; // Length of each field line
+        
+        // COMPLAINANT and RESPONDENT on same line
+        doc.text("COMPLAINANT ____________________", signatureX, currentY);
+        doc.text("RESPONDENT ____________________", signatureX + lineLength + 20, currentY);
+        
+        // SERVER aligned to right below RESPONDENT
+        doc.text("SERVER ____________________", signatureX + lineLength + 20, currentY + fieldSpacing);
+      }       
+
       if(withSignRight){
         const captainX = pageWidth - marginValue - 200; 
 
@@ -304,30 +358,37 @@ function TemplatePreview({
  
       if (withSignatureApplicant) {
         setCurrentFont('normal');
-        doc.text("Name and signature of Applicant", signatureX, currentY);
-        doc.text("Certified true and correct:", signatureX, currentY + 20);
+        
+        doc.text("[ NAME OF THE APPLICANT ]", signatureX, currentY);
+        currentY += 15; // Move down for the next line
+        
+        setCurrentFont('bold');
+        doc.text("NAME AND SIGNATURE OF APPLICANT", signatureX, currentY);
+        
+        setCurrentFont('normal');
+        doc.setFontSize(9);
+        doc.text("CERTIFIED TRUE AND CORRECT:", signatureX, currentY + 15);
         currentY += 60;
 
         setCurrentFont('bold');
+        doc.setFontSize(10);
         doc.text("HON. VIRGINIA N. ABENOJA", signatureX, currentY);
         setCurrentFont('normal');
-        doc.text("Punong Barangay, San Roque Ciudad", signatureX, currentY + 20);
+        doc.text("Punong Barangay, San Roque Ciudad", signatureX, currentY + 13);
       }
 
       if (withSeal && sealBase64) {
-        const sealY = footerY - 40;
+        const sealY = footerY - 18;
         doc.addImage(sealBase64, "PNG", sealX, sealY, sealSize, sealSize);
 
-        doc.setTextColor(255, 0, 0);
         setCurrentFont('bold');
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         
         const text = "NOT VALID WITHOUT SEAL";
         const textWidth = doc.getTextWidth(text);
         const finalX = sealX + (sealSize - textWidth) / 2;
         
         doc.text(text, finalX, sealY + sealSize + textBelowSealOffset);
-        doc.setTextColor(0, 0, 0);
       }
 
       const url = URL.createObjectURL(new Blob([doc.output("blob")], { type: "application/pdf" }));

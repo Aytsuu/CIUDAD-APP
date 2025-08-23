@@ -43,10 +43,9 @@ function GADBudgetLogTable() {
       !year || new Date(log.gbudl_created_at).getFullYear().toString() === year;
     const searchString = `${log.gbudl_id} ${log.gbud_exp_project || ""} ${
       log.gbud_exp_particulars?.map((item) => item.name).join(" ") || ""
-    } ${log.gbud_type}`.toLowerCase();
+    }`.toLowerCase();
     const matchesSearch = searchString.includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === "all" || log.gbud_type === typeFilter;
-    return matchesSearch && matchesType && matchesYear;
+    return matchesSearch && matchesYear;
   });
 
   const totalPages = Math.ceil(filteredData.length / pageSize);

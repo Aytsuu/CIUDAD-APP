@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
     fetchGADBudgets,
     fetchGADBudgetEntry,
-    fetchIncomeParticulars,
     fetchGADBudgetFile, fetchBudgetLog,
     fetchGADBudgetFiles, fetchProjectProposalsAvailability
 } from "../requestAPI/BTGetRequest";
@@ -12,13 +11,9 @@ import { GADBudgetEntryUI, GADBudgetEntry, GADBudgetFile, ProjectProposal, Budge
 const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
   return {
     ...entry,
-    gbud_particulars: entry.gbud_type === 'Income' 
-      ? entry.gbud_inc_particulars || undefined
-      : entry.gbud_exp_particulars || undefined,
-    gbud_amount: entry.gbud_type === 'Income'
-      ? entry.gbud_inc_amt ? Number(entry.gbud_inc_amt) : null
-      : entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null,
-    gbud_exp_particulars: entry.gbud_type === 'Expense' && entry.gbud_exp_particulars
+    gbud_particulars:  entry.gbud_exp_particulars || undefined,
+    gbud_amount: entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null,
+    gbud_exp_particulars: entry.gbud_exp_particulars
       ? Array.isArray(entry.gbud_exp_particulars) 
         ? entry.gbud_exp_particulars 
         : undefined
@@ -44,15 +39,6 @@ export const useGADBudgetEntry = (gbud_num?: number) => {
         enabled: !!gbud_num,
         select: transformBudgetEntry,
         staleTime: 1000 * 60 * 5,
-    });
-};
-
-export const useIncomeParticulars = (year?: string) => {
-    return useQuery({
-        queryKey: ['income-particulars', year],
-        queryFn: () => fetchIncomeParticulars(year || ''),
-        enabled: !!year,
-        staleTime: 1000 * 60 * 30,
     });
 };
 

@@ -39,7 +39,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
   const currentYearBudget = yearBudgets?.find((budget) => budget.gbudy_year === currentYear)?.gbudy_budget;
 
   const latestExpenseWithBalance = budgetEntries
-    .filter((entry) => entry.gbud_type === "Expense" && !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
+    .filter((entry) => !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
     .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
 
   const availableBudget = latestExpenseWithBalance
@@ -65,7 +65,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
       monitoringEvaluation: "",
       signatories: [
         { name: "", position: "", type: "prepared" },
-        { name: "", position: "Barangay Captain", type: "approved" },
+        { name: "", position: "Treasurer", type: "approved" },
       ],
       paperSize: "letter",
       headerImage: [],
@@ -81,8 +81,8 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
       ? `${userStaff.rp.per.per_fname} ${userStaff.rp.per.per_lname}`.trim()
       : user?.username || "";
     const userPosition = userStaff?.pos?.pos_title || "Staff";
-    const captain = staffList.find((s) => s.position === "Barangay Captain");
-    const captainName = captain?.full_name || "";
+    const treasurer = staffList.find((s) => s.position === "Treasurer");
+    const treasurerName = treasurer?.full_name || "";
 
     if (!isStaffLoading && staffList.length > 0) {
       form.reset({
@@ -102,7 +102,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
           ? existingProposal.signatories
           : [
               { name: userFullName, position: userPosition, type: "prepared" },
-              { name: captainName, position: "Barangay Captain", type: "approved" },
+              { name: treasurerName, position: "Treasurer", type: "approved" },
             ],
         paperSize: existingProposal?.paperSize || "letter",
         headerImage: existingProposal?.headerImage ? [existingProposal.headerImage] : [],
@@ -257,27 +257,20 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
 
   try {
     setErrorMessage(null);
-
-    // Handle header image properly
-    let gpr_header_img: string | null = null;
-    
+    let gpr_header_img: string | null = null;    
     if (mediaFiles.length > 0 && mediaFiles[0].file) {
-      // If this is a new file upload (base64 string)
       if (mediaFiles[0].file.startsWith('data:')) {
-        gpr_header_img = mediaFiles[0].file; // Send the base64 string
+        gpr_header_img = mediaFiles[0].file; 
       }
-      // If this is an existing image URL
       else {
-        gpr_header_img = mediaFiles[0].file; // Keep the existing URL
+        gpr_header_img = mediaFiles[0].file; 
       }
     }
-    // If updating and there was an existing image but now it's removed
     else if (existingProposal?.headerImage && mediaFiles.length === 0) {
-      gpr_header_img = null; // Explicitly remove the image
+      gpr_header_img = null; 
     }
-    // If updating and keeping the existing image
     else if (existingProposal?.headerImage) {
-      gpr_header_img = existingProposal.headerImage; // Keep existing
+      gpr_header_img = existingProposal.headerImage;
     }
 
     const proposalData: ProjectProposalInput = {

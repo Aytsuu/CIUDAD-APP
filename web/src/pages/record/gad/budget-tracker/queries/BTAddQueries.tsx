@@ -15,8 +15,7 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], _budgetEntries: Bu
       budgetData: GADBudgetCreatePayload;
       files: MediaUploadType;
     }) => {
-      // Validate remaining balance for Expense
-      if (data.budgetData.gbud_type === "Expense" && data.budgetData.gbud_actual_expense) {
+
         const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === new Date(data.budgetData.gbud_datetime).getFullYear().toString());
         if (!currentYearBudget) {
           throw new Error("No budget found for the selected year");
@@ -24,11 +23,10 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], _budgetEntries: Bu
         const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
         const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
         const remainingBalance = initialBudget - totalExpenses;
-        if (data.budgetData.gbud_actual_expense > remainingBalance) {
+        if (data.budgetData.gbud_actual_expense != null && data.budgetData.gbud_actual_expense > remainingBalance) {
           throw new Error(
             `Expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`
           );
-        }
       }
 
       // Create budget entry

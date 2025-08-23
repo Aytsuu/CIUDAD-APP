@@ -20,15 +20,12 @@ export const createGADBudgetFile = async (gbud_num: number, files: Array<{ id: s
     };
 
     if (files.length === 0) {
-      console.warn('No files provided. Skipping file upload.');
       return { status: 'No files uploaded' };
     }
 
     const response = await api.post('/gad/gad-budget-files/', payload);
-    console.log('File upload response:', response.data);
     return response.data;
   } catch (error: any) {
-    console.error(`Failed to create file ${files[0]?.name || 'unknown'}:`, error);
     throw error;
   }
 };
