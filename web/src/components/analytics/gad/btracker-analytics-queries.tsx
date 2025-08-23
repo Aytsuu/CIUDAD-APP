@@ -1,20 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import type { GADBudgetEntry, GADBudgetEntryUI } from "@/pages/record/gad/budget-tracker/budget-tracker-types";
+import type { GADBudgetEntry, GADBudgetEntryUI, GADBudgetYearEntry } from "@/pages/record/gad/budget-tracker/budget-tracker-types";
 import {  fetchGADBudgets } from "@/pages/record/gad/budget-tracker/requestAPI/BTGetRequest";
 import { getbudgetyearreq } from "@/pages/record/gad/budget-tracker/requestAPI/BTYearReq";
 
 const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
   return {
     ...entry,
-    gbud_particulars: entry.gbud_type === 'Income' 
-      ? entry.gbud_inc_particulars || undefined
-      : entry.gbud_exp_particulars || undefined,
-    gbud_amount: entry.gbud_type === 'Income'
-      ? entry.gbud_inc_amt ? Number(entry.gbud_inc_amt) : null
-    //   : entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null
-    : entry.gbud_actual_expense != null && entry.gbud_actual_expense !== 0
+    gbud_particulars: entry.gbud_exp_particulars || undefined,
+    gbud_amount: entry.gbud_actual_expense != null && entry.gbud_actual_expense !== 0
         ? Number(entry.gbud_actual_expense)
-        : entry.gbud_proposed_budget ? Number(entry.gbud_proposed_budget) : null
+        : entry.gbud_proposed_budget ? Number(entry.gbud_proposed_budget) : null,
+    gbud_exp_particulars: entry.gbud_exp_particulars,
+    files: entry.files || undefined
   };
 };
 
@@ -23,20 +20,6 @@ export const useLatestExpenses = (year: string) => {
     queryKey: ['latest-expenses', year],
     queryFn: () => fetchGADBudgets(year),
     select: (data) => data
-      .filter((entry): entry is GADBudgetEntry => entry.gbud_type === 'Expense')
-      .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())
-      .slice(0, 5)
-      .map(transformBudgetEntry),
-    staleTime: 1000 * 60 * 5 // 5 minutes
-  });
-};
-
-export const useLatestIncomes = (year: string) => {
-  return useQuery<GADBudgetEntry[], Error, GADBudgetEntryUI[]>({
-    queryKey: ['latest-incomes', year],
-    queryFn: () => fetchGADBudgets(year),
-    select: (data) => data
-      .filter((entry): entry is GADBudgetEntry => entry.gbud_type === 'Income')
       .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())
       .slice(0, 5)
       .map(transformBudgetEntry),
@@ -54,7 +37,6 @@ const QUARTERS = [
 interface QuarterlyBudgetData {
   name: string;
   expense: number;
-  income: number;
   net: number;
 }
 
@@ -66,16 +48,12 @@ export const useQuarterlyBudget = (year: string) => {
       // Debug raw amounts
       console.log("Raw Amount Verification:", data.map(entry => ({
         id: entry.gbud_num,
-        type: entry.gbud_type,
-        amount: entry.gbud_type === 'Income' 
-          ? entry.gbud_inc_amt 
-          : entry.gbud_actual_expense
+        amount: entry.gbud_actual_expense
       })));
 
       return QUARTERS.map((quarter) => {
         const result = {
           name: quarter.name,
-          income: 0,
           expense: 0,
           net: 0
         };
@@ -83,32 +61,19 @@ export const useQuarterlyBudget = (year: string) => {
         data.forEach(entry => {
           const month = new Date(entry.gbud_datetime).toLocaleString('default', { month: 'short' });
           if (quarter.months.includes(month)) {
-            if (entry.gbud_type === 'Income') {
-              result.income += Number(entry.gbud_inc_amt) || 0;
-            } else {
+
               const amount = entry.gbud_actual_expense !== null 
                 ? Number(entry.gbud_actual_expense)
                 : 0;
               result.expense += amount;
-            }
-          }
+            }       
         });
-
-        result.net = result.income - result.expense;
         return result;
       });
     },
     staleTime: 1000 * 60 * 5
   });
 };
-
-export type GADBudgetYearEntry = {
-    gbudy_num: number;
-    gbudy_year: string;
-    gbudy_budget: number;
-    gbudy_expenses: number;
-    gbudy_income: number;
-  };
 
 export const useGetGADYearBudgets = () => {
   return useQuery<GADBudgetYearEntry[], Error>({

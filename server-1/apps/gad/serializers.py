@@ -2,9 +2,6 @@ from rest_framework import serializers
 from .models import *
 from django.apps import apps
 from decimal import Decimal
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-import base64
 from utils.supabase_client import upload_to_storage, remove_from_storage
 
 Staff = apps.get_model('administration', 'Staff')
@@ -116,82 +113,69 @@ class GADBudgetFileReadSerializer(serializers.ModelSerializer):
             
 class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
     gbudy = serializers.PrimaryKeyRelatedField(queryset=GAD_Budget_Year.objects.all())
-    staff = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), allow_null=True, default=None)
+    staff = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), allow_null=True, required=False)
     gpr = serializers.PrimaryKeyRelatedField(queryset=ProjectProposal.objects.all(), allow_null=True, default=None)
     files = serializers.SerializerMethodField()
     
     class Meta:
         model = GAD_Budget_Tracker
         fields = [
-            'gbud_num', 'gbud_datetime', 'gbud_type', 'gbud_add_notes', 'gbud_inc_particulars',
-            'gbud_inc_amt', 'gbud_exp_particulars', 'gbud_exp_project', 'gbud_actual_expense',
+            'gbud_num', 'gbud_datetime', 'gbud_add_notes', 'gbud_exp_particulars', 'gbud_exp_project', 'gbud_actual_expense',
             'gbud_remaining_bal', 'gbud_reference_num', 'gbud_is_archive',
             'gbudy', 'staff', 'gpr', "gbud_proposed_budget", 'files'
         ]
         extra_kwargs = {
             'gbud_num': {'read_only': True},
-            'gbud_inc_particulars': {'required': False, 'allow_null': True},
-            'gbud_inc_amt': {'required': False, 'allow_null': True},
             'gbud_exp_particulars': {'required': False, 'allow_null': True},
             'gbud_exp_project': {'required': False, 'allow_null': True},
             'gbud_proposed_budget': {'required': False, 'allow_null': True},
             'gbud_actual_expense': {'required': False, 'allow_null': True},
             'gbud_reference_num': {'required': False, 'allow_null': True},
             'gbud_remaining_bal': {'required': False, 'allow_null': True},
-            'gbud_type': {'required': True},
             'gpr': {'required': False}
         }
 
     def validate(self, data):
-        # Preserve existing proposed budget for updates
         if self.instance and self.instance.gbud_proposed_budget:
             data['gbud_proposed_budget'] = self.instance.gbud_proposed_budget
 
-        if data["gbud_type"] == "Expense":
-            if not data.get("gbud_exp_project"):
-                raise serializers.ValidationError({"gbud_exp_project": "Project title is required for expense entries"})
-            if not data.get("gbud_exp_particulars") or not isinstance(data["gbud_exp_particulars"], list):
-                raise serializers.ValidationError({"gbud_exp_particulars": "At least one budget item is required for expense entries"})
+        if not data.get("gbud_exp_project"):
+            raise serializers.ValidationError({"gbud_exp_project": "Project title is required for expense entries"})
+        if not data.get("gbud_exp_particulars") or not isinstance(data["gbud_exp_particulars"], list):
+            raise serializers.ValidationError({"gbud_exp_particulars": "At least one budget item is required for expense entries"})
+        
+        # Only calculate proposed budget for new entries
+        if not self.instance:
+            recorded_items = GAD_Budget_Tracker.objects.filter(
+                gbud_exp_project=data.get("gbud_exp_project"),
+                gpr=data["gpr"],
+                gbudy__gbudy_year=data["gbudy"].gbudy_year
+            ).values_list("gbud_exp_particulars", flat=True)
+            recorded_item_names = {item["name"] for entry in recorded_items if entry for item in entry}
+
+            submitted_item_names = {item["name"] for item in data["gbud_exp_particulars"]}
+            if not recorded_item_names.issubset(submitted_item_names):
+                raise serializers.ValidationError({
+                    "gbud_exp_particulars": "Must include all previously recorded budget items for this project"
+                })
+
+            unrecorded_items = [
+                item for item in data["gbud_exp_particulars"]
+                if item["name"] not in recorded_item_names
+            ]
             
-            # Only calculate proposed budget for new entries
-            if not self.instance:
-                recorded_items = GAD_Budget_Tracker.objects.filter(
-                    gbud_type="Expense",
-                    gpr=data["gpr"],
-                    gbudy__gbudy_year=data["gbudy"].gbudy_year
-                ).values_list("gbud_exp_particulars", flat=True)
-                recorded_item_names = {item["name"] for entry in recorded_items if entry for item in entry}
+            proposed_budget = Decimal(0)
+            for item in unrecorded_items:
+                try:
+                    pax_str = str(item.get("pax", "1")).split()[0]
+                    pax = Decimal(pax_str) if pax_str.replace('.', '', 1).isdigit() else Decimal(1)
+                except:
+                    pax = Decimal(1)
+                    
+                amount = Decimal(str(item["amount"]))
+                proposed_budget += amount * pax
 
-                submitted_item_names = {item["name"] for item in data["gbud_exp_particulars"]}
-                if not recorded_item_names.issubset(submitted_item_names):
-                    raise serializers.ValidationError({
-                        "gbud_exp_particulars": "Must include all previously recorded budget items for this project"
-                    })
-
-                unrecorded_items = [
-                    item for item in data["gbud_exp_particulars"]
-                    if item["name"] not in recorded_item_names
-                ]
-                
-                proposed_budget = Decimal(0)
-                for item in unrecorded_items:
-                    try:
-                        pax_str = str(item.get("pax", "1")).split()[0]
-                        pax = Decimal(pax_str) if pax_str.replace('.', '', 1).isdigit() else Decimal(1)
-                    except:
-                        pax = Decimal(1)
-                        
-                    amount = Decimal(str(item["amount"]))
-                    proposed_budget += amount * pax
-
-                data["gbud_proposed_budget"] = proposed_budget
-
-        elif data["gbud_type"] == "Income":
-            if not data.get("gbud_inc_particulars"):
-                raise serializers.ValidationError({"gbud_inc_particulars": "Income particulars are required"})
-            if data.get("gbud_inc_amt") is None:
-                raise serializers.ValidationError({"gbud_inc_amt": "Income amount is required"})
-            data["gbud_proposed_budget"] = None
+            data["gbud_proposed_budget"] = proposed_budget
 
         return data
 
@@ -228,7 +212,7 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
 class GADBudgetYearSerializer(serializers.ModelSerializer):
     class Meta:
         model = GAD_Budget_Year
-        fields = ['gbudy_num', 'gbudy_budget', 'gbudy_year', 'gbudy_expenses', 'gbudy_income', 'gbudy_is_archive']
+        fields = ['gbudy_num', 'gbudy_budget', 'gbudy_year', 'gbudy_expenses', 'gbudy_is_archive']
         
 class GADBudgetLogSerializer(serializers.ModelSerializer):
     gbud_exp_project = serializers.CharField(source='gbudl_budget_entry.gbud_exp_project', read_only=True)
@@ -245,7 +229,6 @@ class GADBudgetLogSerializer(serializers.ModelSerializer):
         decimal_places=2,
         read_only=True
     )
-    gbud_type = serializers.CharField(source='gbudl_budget_entry.gbud_type', read_only=True)
     current_actual = serializers.SerializerMethodField()
 
     class Meta:
@@ -259,7 +242,6 @@ class GADBudgetLogSerializer(serializers.ModelSerializer):
             'current_actual',
             'gbudl_amount_returned',
             'gbudl_created_at',
-            'gbud_type',
             'gbudl_prev_amount',
         ]
     

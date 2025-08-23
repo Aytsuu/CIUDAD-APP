@@ -23,10 +23,14 @@ class GAD_Budget_TrackerView(generics.ListCreateAPIView):
         ).select_related('gbudy', 'gpr', 'staff').prefetch_related('files')
     
     def perform_create(self, serializer):
-        serializer.save(
-            # gbud_datetime=timezone.now(),
-            staff=getattr(self.request.user, 'staff', None)  # Safely get staff or None
-        )
+        validated_data = serializer.validated_data
+        staff_provided = 'staff' in validated_data and validated_data['staff'] is not None      
+        save_kwargs = {}
+        
+        if not staff_provided:
+            save_kwargs['staff'] = getattr(self.request.user, 'staff', None)
+        
+        serializer.save(**save_kwargs)
     
 class GAD_Budget_TrackerDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = GAD_Budget_Tracker.objects.all()
@@ -97,7 +101,6 @@ class GADBudgetLogListView(generics.ListCreateAPIView):
     def get(self, request, year):
         logs = GADBudgetLog.objects.filter(
             gbudl_budget_entry__gbudy__gbudy_year=year,
-            gbudl_budget_entry__gbud_type="Expense"
         ).select_related(
             'gbudl_budget_entry'
         ).order_by("-gbudl_created_at")

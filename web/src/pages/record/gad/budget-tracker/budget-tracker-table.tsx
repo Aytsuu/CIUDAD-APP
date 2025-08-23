@@ -40,7 +40,7 @@ function BudgetTracker() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState("All");
-  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [selectedFilter] = useState("All");
   const [activeTab, setActiveTab] = useState("active");
   const { year: gbudy_year } = useParams<{ year: string }>();
   const { data: yearBudgets } = useGetGADYearBudgets();
@@ -113,19 +113,10 @@ function BudgetTracker() {
     const month = entry.gbud_datetime?.slice(5, 7);
     const matchesMonth = selectedMonth === "All" || month === selectedMonth;
     const matchesFilter =
-      selectedFilter === "All" || entry.gbud_type === selectedFilter;
+      selectedFilter === "All";
 
-    const matchesSearch = `${entry.gbud_inc_particulars} ${
-      entry.gbud_exp_particulars
-    } ${entry.gbud_type} ${
-      entry.gbud_inc_amt ||
-      entry.gbud_proposed_budget ||
-      entry.gbud_actual_expense
-    } ${entry.gbud_add_notes}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
 
-    return matchesMonth && matchesFilter && matchesSearch;
+    return matchesMonth && matchesFilter;
   });
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -139,7 +130,7 @@ function BudgetTracker() {
 
     return budgetEntries.reduce((total, entry) => {
       // Skip archived or non-expense entries
-      if (entry.gbud_is_archive || entry.gbud_type !== "Expense") return total;
+      if (entry.gbud_is_archive) return total;
 
       // Convert all values to numbers safely (handles strings like "0.00")
       const toNum = (val: any) => {
@@ -183,7 +174,7 @@ function BudgetTracker() {
     let balance = currentYearBudget ? Number(currentYearBudget) : 0;
 
     activeEntries.forEach((entry) => {
-      if (entry.gbud_type === "Expense" && entry.gbud_actual_expense !== null) {
+      if ( entry.gbud_actual_expense !== null) {
         const amount = Number(entry.gbud_actual_expense) || 0;
         balance -= amount;
       }
@@ -211,30 +202,33 @@ function BudgetTracker() {
       ),
     },
     {
-      accessorKey: "gbud_type",
-      header: "Type",
-    },
-    {
       id: "particulars",
       header: "Particular",
       cell: ({ row }) => {
-        const { gbud_inc_particulars, gbud_exp_particulars, gbud_type } =
-          row.original;
+        const { gbud_exp_particulars } = row.original;
         let displayParticulars = "";
-        if (gbud_type === "Income") {
-          displayParticulars = gbud_inc_particulars || "N/A";
-        } else if (
-          gbud_type === "Expense" &&
-          Array.isArray(gbud_exp_particulars)
-        ) {
-          displayParticulars =
-            gbud_exp_particulars
-              .map(
-                (item: { name: string; pax: string; amount: number }) =>
-                  item.name
-              )
-              .join(", ") || "No items";
+
+        if (gbud_exp_particulars && typeof gbud_exp_particulars === 'string') {
+          try {
+            const parsed = JSON.parse(gbud_exp_particulars);
+            if (Array.isArray(parsed)) {
+              displayParticulars = parsed
+                .map((item: { name: string; pax: string; amount: number }) => item.name)
+                .join(", ") || "No items";
+            } else {
+              displayParticulars = gbud_exp_particulars;
+            }
+          } catch (e) {
+            displayParticulars = gbud_exp_particulars;
+          }
+        } else if (Array.isArray(gbud_exp_particulars)) {
+          displayParticulars = gbud_exp_particulars
+            .map((item: { name: string; pax: string; amount: number }) => item.name)
+            .join(", ") || "No items";
+        } else {
+          displayParticulars = "No particulars";
         }
+
         return <div>{displayParticulars}</div>;
       },
     },
@@ -243,8 +237,6 @@ function BudgetTracker() {
       header: "Amount",
       cell: ({ row }) => {
         const {
-          gbud_type,
-          gbud_inc_amt,
           gbud_actual_expense,
           gbud_proposed_budget,
         } = row.original;
@@ -252,14 +244,9 @@ function BudgetTracker() {
           val !== undefined && val !== null ? +val : undefined;
 
         let amount: number = 0;
-
-        if (gbud_type === "Income") {
-          amount = num(gbud_inc_amt) ?? 0;
-        } else {
           const actual = num(gbud_actual_expense);
           const proposed = num(gbud_proposed_budget);
           amount = actual && actual > 0 ? actual : proposed ?? 0;
-        }
         return <div>Php {amount.toFixed(2)}</div>;
       },
     },
@@ -274,7 +261,7 @@ function BudgetTracker() {
 
         return (
           <div className="flex justify-center gap-2">
-            {entry.gbud_type === "Expense" &&
+            {
             (!hasReferenceNum || !hasFiles) ? (
               <span className="text-red-500">
                 Missing
@@ -430,7 +417,7 @@ function BudgetTracker() {
           <div className="ml-2">{gbudy_year || "N/A"}</div>
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
-          Manage and view income and expense records for year {gbudy_year}.
+          Manage and view expense records for year {gbudy_year}.
         </p>
       </div>
       <hr className="border-gray mb-6 sm:mb-6" />
@@ -453,41 +440,6 @@ function BudgetTracker() {
           <Label className="text-red-500 text-md font-bold">
             Php {calculateTotalProposedWithoutActual()}
           </Label>
-        </div>
-      </div>
-
-      <div className="flex justify-center mb-9">
-        <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
-          <button
-            onClick={() => setSelectedFilter("All")}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-              selectedFilter === "All"
-                ? "bg-primary text-white shadow"
-                : "text-gray-700 hover:bg-white"
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setSelectedFilter("Income")}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-              selectedFilter === "Income"
-                ? "bg-primary text-white shadow"
-                : "text-gray-700 hover:bg-white"
-            }`}
-          >
-            Income
-          </button>
-          <button
-            onClick={() => setSelectedFilter("Expense")}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-              selectedFilter === "Expense"
-                ? "bg-primary text-white shadow"
-                : "text-gray-700 hover:bg-white"
-            }`}
-          >
-            Expense
-          </button>
         </div>
       </div>
 

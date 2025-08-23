@@ -6,7 +6,6 @@ class GAD_Budget_Year(models.Model):
     gbudy_budget = models.DecimalField(max_digits=10, decimal_places=2)
     gbudy_year = models.CharField(max_length=4, unique=True)
     gbudy_expenses = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    gbudy_income = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     gbudy_is_archive = models.BooleanField(default=False)
 
     class Meta:
@@ -15,22 +14,13 @@ class GAD_Budget_Year(models.Model):
 class GAD_Budget_Tracker(models.Model):
     gbud_num = models.BigAutoField(primary_key=True)
     gbud_datetime = models.DateTimeField(null=True)
-    gbud_type = models.CharField(max_length=100, null=True) #income or expense
     gbud_add_notes = models.CharField(max_length=500, null=True)
-
-    #if type is income
-    gbud_inc_particulars = models.CharField(max_length=200, null=True)
-    gbud_inc_amt = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
-    #if type is expense
     gbud_exp_project = models.CharField(max_length=200, null=True)
     gbud_exp_particulars = models.JSONField(default=list, null=True)
     gbud_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_actual_expense = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_remaining_bal = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_reference_num = models.CharField(max_length=200, null=True)
-
-    #for soft delete
     gbud_is_archive = models.BooleanField(default = False)
     
     gbudy = models.ForeignKey(

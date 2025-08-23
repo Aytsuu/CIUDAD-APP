@@ -2,11 +2,9 @@ export type BudgetYear = {
   gbudy_year: string;
   gbudy_budget: number;
   gbudy_expenses: number;
-  gbudy_income: number;
 };
 
 export type BudgetEntry = {
-  gbud_type: string;
   gbud_actual_expense?: number;
 };
 
@@ -14,7 +12,7 @@ export type GADBudgetEntryUI = GADBudgetEntry & {
   gbud_particulars?: string | { name: string; pax: string; amount: number }[];
   gbud_amount?: number | null;
   gbud_exp_project?: string | null;
-  gbud_exp_particulars?: { name: string; pax: string; amount: number }[] | null;
+  gbud_exp_particulars?: string | { name: string; pax: string; amount: number }[] | null;
   files?: GADBudgetFile[];
 };
 
@@ -23,18 +21,12 @@ export type GADBudgetYearEntry = {
   gbudy_year: string;
   gbudy_budget: number;
   gbudy_expenses: number;
-  gbudy_income: number;
 };
 
 export type GADBudgetEntry = {
   gbud_num?: number;
   gbud_datetime: string;
-  gbud_type: string;
   gbud_add_notes?: string;
-
-  // Income fields
-  gbud_inc_particulars?: string;
-  gbud_inc_amt?: number;
 
   // Expense fields
   gbud_exp_particulars?: string;
@@ -65,11 +57,8 @@ export type GADBudgetFile = {
 };
 
 export type GADBudgetCreatePayload = {
-  gbud_type: "Income" | "Expense";
   gbud_datetime: string;
   gbud_add_notes?: string | null;
-  gbud_inc_particulars?: string | null;
-  gbud_inc_amt?: number | null;
   gbud_exp_project?: string | null;
   gbud_exp_particulars?: { name: string; pax: string; amount: number }[] | null;
   gbud_actual_expense?: number | null;
@@ -77,14 +66,12 @@ export type GADBudgetCreatePayload = {
   gbud_remaining_bal?: number | null;
   gbudy: number;
   gpr_id?: number | null;
+  staff?: string | null;
 };
 
 export type GADBudgetUpdatePayload = {
-  gbud_type: "Income" | "Expense";
   gbud_datetime: string;
   gbud_add_notes?: string | null;
-  gbud_inc_particulars?: string | null;
-  gbud_inc_amt?: number | null;
   gbud_exp_project?: string | null;
   gbud_exp_particulars?: { name: string; pax: string; amount: number }[] | null;
   gbud_actual_expense?: number | null;
@@ -92,6 +79,7 @@ export type GADBudgetUpdatePayload = {
   gbud_remaining_bal?: number | null;
   gbudy: number;
   gpr?: number | null; 
+  staff?: string | null;
 };
 
 export type GADEditEntryFormProps = {
@@ -117,5 +105,4 @@ export interface BudgetLogTable {
   gbudl_prev_amount: number | null;
   gbudl_amount_returned: number | null;
   gbudl_created_at: string;
-  gbud_type: "Income" | "Expense";
 }
