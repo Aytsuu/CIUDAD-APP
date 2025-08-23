@@ -835,6 +835,50 @@ function TemplateMainPage() {
       "4. Therefore, the corresponding complaint for the dispute may now be filed in the court/government office.\n\n" +
       "This [12TH] day of [NOVEMBER] [2025] in Barangay San Roque Ciudad Cebu City." 
     },       
+    {
+      temp_id: 22,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Marriage",
+      temp_summon: false,
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad.\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This is to certify further that they are living together in one household live-in partners for more than [ YEARS ] years in Barangay " +
+      "San Roque Ciudad Cebu City\n\n." +
+      "This certification is being issued upon the request of the above mentioned name to support the application for /*MARRIAGE LICENCSE PURPOSES ONLY.*/\n\n" +
+      "Issued this [DAYTH] day of [MONTH] [YEAR] at Barangay San Roque Ciudad, Cebu City, Cebu Philippines." 
+    },  
+    {
+      temp_id: 23,
+      temp_title: "CERTIFICATION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "DWUP",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "\nTO WHOM IT MAY CONCERN:\n\nThis is to certify that [PLACE] located at [ADDRESS], Barangay SAn Roque (Ciudad) Cebu City.\n\n" +
+      "This is to CERTIFY further that the above-mentioned person has been affected by demolished which occured on year [YEAR DEMOLISHED]\n\n" +
+      "This certication issued of the interested party as supporting document for /*DWUP Requirement*/ /*Purposes Only.*/\n\n" +
+      "Issued this [DAYTH] day of [MONTH] [YEAR] at Barangay San Roque (Ciudad) Cebu City."
+    },          
   ];  
 
   if (isLoading) {
