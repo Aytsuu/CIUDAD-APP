@@ -22,7 +22,7 @@ import { useLoading } from "@/context/LoadingContext";
 import { VaccinationRecord } from "../../vaccination/tables/columns/types";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
-export default function ScheduledVaccinations() {
+export default function ForwardedScheduledVaccinationsTables() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);

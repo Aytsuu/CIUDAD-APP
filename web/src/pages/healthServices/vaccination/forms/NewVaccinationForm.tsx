@@ -13,7 +13,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { ChevronLeft, Loader2 } from "lucide-react";
-import { fetchVaccinesWithStock } from "../restful-api/fetch";
+import { fetchVaccinesWithStock } from "../queries/fetch";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useSubmitStep2 } from "../queries/AddVacrecord";

@@ -10,11 +10,11 @@ import { VitalSignType, VaccineRecord, ExistingVaccineRecord } from "../../../..
 import { useVaccinesListImmunization } from "./queries/fetchQueries";
 import { getVaccinationRecordById } from "../../vaccination/restful-api/get";
 import { useChildHealthHistory } from "../forms/queries/fetchQueries";
-import { fetchVaccinesWithStock } from "./queries/fetchQueries";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useUnvaccinatedVaccines, usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
 import { useFollowupChildHealthandVaccines } from "../../vaccination/queries/fetch";
 import { useLoading } from "@/context/LoadingContext";
+import { fetchVaccinesWithStock } from "../../vaccination/queries/fetch";
 
 export default function ChildImmunization() {
   const location = useLocation();
@@ -32,7 +32,7 @@ export default function ChildImmunization() {
   const [vaccineHistory, setVaccineHistory] = useState<any[]>([]);
 
   // Data fetching hooks
-  const { data: vaccinesData, isLoading: isVaccinesLoading } = fetchVaccinesWithStock();
+  const { data: vaccinesData, isLoading: isVaccinesLoading } = fetchVaccinesWithStock(pat_dob);
   const { data: vaccinesListData, isLoading: isVaccinesListLoading } = useVaccinesListImmunization();
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } = useUnvaccinatedVaccines(pat_id, pat_dob);
   const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } = usePatientVaccinationDetails(pat_id);

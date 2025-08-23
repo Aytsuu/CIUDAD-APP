@@ -11,20 +11,49 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from django.db.models.functions import TruncMonth
-from pagination import StandardResultsPagination
+from pagination import *
 import re
 
 
-class MedicineListView(generics.ListCreateAPIView):
+
+
+# For listing with pagination and search
+class MedicineListTable(generics.ListAPIView):
+    serializer_class = MedicineListSerializers
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        queryset = Medicinelist.objects.all().order_by('med_id')
+        search_query = self.request.GET.get('search', '').strip()
+        
+        if search_query:
+            queryset = queryset.filter(med_name__icontains=search_query)
+        
+        return queryset
+
+# For creating new medicines
+class MedicineCreateView(generics.ListCreateAPIView):
     serializer_class=MedicineListSerializers
     queryset= Medicinelist.objects.all()
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-
+    
+class MedicineCountView(APIView):
+    def get(self, request):
+        try:
+            count = Medicinelist.objects.count()
+            return Response({'count': count}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to get medicine count: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR 
+            )
+    
+    
 class DeleteMedicineListView(generics.DestroyAPIView):
     serializer_class = MedicineListSerializers
     queryset = Medicinelist.objects.all()
-    lookup_field = 'med_id'  # 🔴 This tells DRF to look for `med_id` in the URL
+    lookup_field = 'med_id' 
 
     def destroy(self, request, *args, **kwargs):
         """Override destroy method to handle ProtectedError properly"""

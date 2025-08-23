@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleCheck } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -11,13 +10,13 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { ImmunizationSchema, ImmunizationType } from "@/form-schema/inventory/lists/inventoryListSchema";
 import { useAddImzSupplies } from "../queries/Antigen/ImzPostQueries";
 import { useUpdateImzSupply } from "../queries/Antigen/ImzPutQueries";
-import { getImzSup } from "../restful-api/Antigen/fetchAPI";
 import { Loader2 } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useImzSupList } from "../queries/Antigen/ImzFetchQueries";
 
 interface ImmunizationData {
   id: number;
-  vaccineName: string;
+  supplyName: string;
 }
 
 interface ImmunizationModalProps {
@@ -38,11 +37,12 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
 
   const { mutateAsync: addImzSuppliesMutation } = useAddImzSupplies();
   const { mutateAsync: updateImzSupplyMutation } = useUpdateImzSupply();
+  const { data: immunizationSupplies } = useImzSupList(); // Get existing supplies for duplicate check
 
   const form = useForm<ImmunizationType>({
     resolver: zodResolver(ImmunizationSchema),
     defaultValues: {
-      imz_name: ""
+      imz_name: effectiveInitialData?.supplyName || ""
     }
   });
 
@@ -50,7 +50,7 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
   useEffect(() => {
     if (mode === "edit" && effectiveInitialData) {
       form.reset({
-        imz_name: effectiveInitialData.vaccineName || ""
+        imz_name: effectiveInitialData.supplyName || ""
       });
     } else if (mode === "add") {
       form.reset({
@@ -61,13 +61,18 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
 
   const hasChanges = (data: ImmunizationType) => {
     if (mode === "add") return true;
-    if (!effectiveInitialData) return false;
+    if (!effectiveInitialData || !effectiveInitialData.supplyName) return false;
 
-    return data.imz_name.trim().toLowerCase() !== effectiveInitialData.vaccineName.trim().toLowerCase();
+    const currentName = data.imz_name?.trim()?.toLowerCase() || "";
+    const originalName = effectiveInitialData.supplyName?.trim()?.toLowerCase() || "";
+    
+    return currentName !== originalName;
   };
 
-  const isDuplicateSupply = (supplies: any[], newSupply: string, currentId?: number) => {
-    return supplies.some((supply) => supply.id !== currentId && supply.imz_name?.trim()?.toLowerCase() === newSupply?.trim()?.toLowerCase());
+  const isDuplicateSupply = (supplies: any[], newSupply: string) => {
+    return supplies.some((supply) => {
+      return supply.imz_name?.trim()?.toLowerCase() === newSupply?.trim()?.toLowerCase();
+    });
   };
 
   const handleConfirmAction = async () => {
@@ -76,21 +81,19 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
 
     try {
       // Check for duplicates if name changed
-      if (mode === "add" || (mode === "edit" && formData.imz_name !== effectiveInitialData?.vaccineName)) {
-        const existingSupplies = await getImzSup();
+      const existingSupplies = immunizationSupplies || [];
 
-        if (!Array.isArray(existingSupplies)) {
-          throw new Error("Invalid API response - expected an array");
-        }
+      if (!Array.isArray(existingSupplies)) {
+        throw new Error("Invalid API response - expected an array");
+      }
 
-        if (isDuplicateSupply(existingSupplies, formData.imz_name, mode === "edit" ? effectiveInitialData?.id : undefined)) {
-          form.setError("imz_name", {
-            type: "manual",
-            message: "Item already exists"
-          });
-          setIsSubmitting(false);
-          return;
-        }
+      if (isDuplicateSupply(existingSupplies, formData.imz_name)) {
+        form.setError("imz_name", {
+          type: "manual",
+          message: "Item already exists"
+        });
+        setIsSubmitting(false);
+        return;
       }
 
       if (mode === "edit" && effectiveInitialData) {
@@ -98,14 +101,8 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
           imz_id: effectiveInitialData.id,
           imz_name: formData.imz_name
         });
-        toast.success("Immunization supply updated successfully", {
-          icon: <CircleCheck className="w-5 h-5 text-green-500" />
-        });
       } else {
         await addImzSuppliesMutation(formData);
-        toast.success("Immunization supply added successfully", {
-          icon: <CircleCheck className="w-5 h-5 text-green-500" />
-        });
       }
 
       // Handle navigation/closure
@@ -165,7 +162,11 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
             </Button>
             <ConfirmationModal
               trigger={
-                <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting || (mode === "edit" && !hasChanges(form.watch()))}>
+                <Button 
+                  type="submit" 
+                  className="w-full sm:w-auto" 
+                  disabled={isSubmitting || (mode === "edit" && effectiveInitialData && !hasChanges(form.watch()))}
+                >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -285,6 +285,12 @@ class VaccineList(models.Model):
         db_table = 'vaccines'
         ordering = ['-created_at']
         
+    def save(self, *args, **kwargs):
+        # Convert vac_name to uppercase before saving
+        if self.vac_name:
+            self.vac_name = self.vac_name.title()
+        super().save(*args, **kwargs)
+        
     
         
 
@@ -357,6 +363,12 @@ class ImmunizationSupplies(models.Model):
     class Meta:
         db_table = 'immunization_supplies'
         ordering = ['-created_at']
+        
+    def save(self, *args, **kwargs):
+        # Convert vac_name to uppercase before saving
+        if self.imz_name:
+            self.imz_name = self.imz_name.title()
+        super().save(*args, **kwargs)
         
         
 class ImmunizationStock(models.Model):

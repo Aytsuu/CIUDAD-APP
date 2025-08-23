@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {api2} from "@/api/api";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { CircleCheck, CircleX } from "lucide-react";
@@ -13,8 +13,6 @@ interface Option {
 
 export const useCategoriesFirstAid = () => {
   const [categories, setCategories] = useState<Option[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   // State for delete confirmation dialog
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
@@ -43,11 +41,10 @@ export const useCategoriesFirstAid = () => {
   };
 
   // GET CATEGORIES with react-query
-  const { refetch: getCategories } = useQuery({
+  const { data, isLoading: loading, error, refetch } = useQuery({
     queryKey: ['firstAidCategories'],
     queryFn: async () => {
       try {
-        setLoading(true);
         const { data } = await api2.get("inventory/category/", {
           params: { cat_type: "FirstAid" },
         });
@@ -60,27 +57,25 @@ export const useCategoriesFirstAid = () => {
               name: cat.cat_name || "Unnamed Category",
             }));
 
-          setCategories(transformedCategories);
           return transformedCategories;
         } else {
           console.error("Unexpected data format:", data);
-          setError("Unexpected data format from server");
-          return [];
+          throw new Error("Unexpected data format from server");
         }
       } catch (err) {
         console.error(err);
-        setError("Failed to fetch categories");
-        return [];
-      } finally {
-        setLoading(false);
+        throw new Error("Failed to fetch categories");
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes stale time
   });
 
+  // Update categories when data changes
   useEffect(() => {
-    getCategories();
-  }, [getCategories]);
+    if (data) {
+      setCategories(data);
+    }
+  }, [data]);
 
   const handleAddCategory = async (
     newCategoryName: string,
@@ -94,7 +89,6 @@ export const useCategoriesFirstAid = () => {
     );
 
     if (categoryExists) {
-      setError("Category already exists.");
       showErrorToast("Category already exists")
       setIsProcessing(false);
       return;
@@ -107,16 +101,15 @@ export const useCategoriesFirstAid = () => {
       });
 
       if (newCategory && newCategory.cat_id) {
-        const newCategoryOption = {
-          id: String(newCategory.cat_id),
-          name: newCategory.cat_name,
-        };
-
-        setCategories((prev) => [...prev, newCategoryOption]);
-        onCategoryAdded(newCategoryOption.id);
+        // Invalidate the query to refetch data
         queryClient.invalidateQueries({ queryKey: ['firstAidCategories'] });
         
-      showSuccessToast("Category added successfully")
+        // Call the callback if provided
+        if (onCategoryAdded) {
+          onCategoryAdded(String(newCategory.cat_id));
+        }
+        
+        showSuccessToast("Category added successfully")
       }
     } catch (error) {
       console.error("❌ Failed to add category:", error);
@@ -161,9 +154,7 @@ export const useCategoriesFirstAid = () => {
       const response = await api2.delete(`inventory/category/${categoryId}/`);
 
       if (response.status === 200 || response.status === 204) {
-        setCategories((prev) =>
-          prev.filter((category) => category.id !== String(categoryId))
-        );
+        // Invalidate the query to refetch data
         queryClient.invalidateQueries({ queryKey: ['firstAidCategories'] });
         
         showSuccessToast("Category deleted successfully")
@@ -213,7 +204,7 @@ export const useCategoriesFirstAid = () => {
   );
 
   return {
-    categories,
+    categories: loading ? [] : categories, // Return empty array when loading
     loading,
     error,
     handleAddCategory,
@@ -221,5 +212,6 @@ export const useCategoriesFirstAid = () => {
     handleDeleteConfirmation,
     categoryHandleAdd,
     ConfirmationDialogs,
+    refetch,
   };
 };

@@ -332,8 +332,8 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
                     emptyMessage={
                       <div className="text-center">
                         <p className="text-sm text-gray-600"> No age groups found.</p>
-                        <Link to={`/age-group-management`} state={{ mode: "add" }} className="text-sm text-teal-600 hover:underline">
-                          Add New Age Group
+                        <Link to="/age-group" className="text-sm text-teal-600 hover:underline">
+                           Manage Group
                         </Link>
                       </div>
                     }

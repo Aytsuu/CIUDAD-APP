@@ -40,7 +40,6 @@ interface CommodityModalProps {
 }
 
 export function CommodityModal({ mode, initialData, onClose }: CommodityModalProps) {
-  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [commodityName, setCommodityName] = useState("");
   const { data: commodities } = useCommodities();
@@ -48,24 +47,16 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
   const form = useForm<CommodityType>({
     resolver: zodResolver(CommodityListSchema),
     defaultValues: {
-      com_name: "",
-      user_type: "",
-      gender_type: ""
+      com_name: initialData?.com_name || "",
+      user_type:  initialData?.user_type || "",
+      gender_type: initialData?.gender_type || ""
     }
   });
 
   const { mutateAsync: addCommodityMutation } = useAddCommodity();
   const { mutateAsync: updateCommodityMutation } = useUpdateCommodity();
 
-  useEffect(() => {
-    if (mode === "edit" && initialData) {
-      form.reset({
-        com_name: initialData.com_name || "",
-        user_type: initialData.user_type || "",
-        gender_type: initialData.gender_type || ""
-      });
-    }
-  }, [mode, initialData, form]);
+ 
 
   const isDuplicateCommodity = (commodities: any[], newCommodity: string, currentId?: string) => {
     return commodities.some((com) => com.id !== currentId && com?.com_name?.trim()?.toLowerCase() === newCommodity?.trim()?.toLowerCase());
@@ -105,10 +96,8 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
           com_id: initialData.id,
           data: formData
         });
-        showSuccessToast("Commodity updated successfully");
       } else {
         await addCommodityMutation(formData);
-        showSuccessToast("Commodity added successfully");
       }
 
       onClose();

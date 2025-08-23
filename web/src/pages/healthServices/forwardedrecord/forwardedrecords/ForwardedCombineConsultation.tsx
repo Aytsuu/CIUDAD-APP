@@ -79,7 +79,7 @@ export type CombinedRecord = {
     }
 );
 
-export default function CombinedHealthRecordsTable() {
+export default function ForwardedCombinedHealthRecordsTable() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);

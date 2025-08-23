@@ -9,7 +9,6 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { useCategoriesFirstAid } from "@/pages/healthInventory/inventoryStocks/REQUEST/Category/FirstAidCategory";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
@@ -31,8 +30,6 @@ interface FirstAidModalProps {
 }
 
 export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidModalProps) {
-  const queryClient = useQueryClient();
-  const [isInitialized, setIsInitialized] = useState(false);
   const [firstAidName, setFirstAidName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs } = useCategoriesFirstAid();
@@ -43,26 +40,12 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
   const form = useForm<FirstAidType>({
     resolver: zodResolver(FirstAidSchema),
     defaultValues: {
-      fa_name: "",
-      cat_id: ""
+      fa_name:  initialData?.fa_name || "",
+      cat_id: String(initialData?.cat_id) || ""
     }
   });
 
-  useEffect(() => {
-    if (mode === "edit" && initialData) {
-      form.reset({
-        fa_name: initialData.fa_name || "",
-        cat_id: String(initialData.cat_id)
-      });
-      setIsInitialized(true);
-    } else if (mode === "add") {
-      form.reset({
-        fa_name: "",
-        cat_id: ""
-      });
-      setIsInitialized(true);
-    }
-  }, [mode, initialData, form]);
+  
 
   useEffect(() => {
     if (mode === "edit" && initialData && categories.length > 0 && initialData.cat_id) {
@@ -196,7 +179,7 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
                               id: String(cat.id),
                               name: cat.name
                             }))
-                          : [{ id: "loading", name: "Loading categories..." }]
+                          : [] // Empty array when no data
                       }
                       value={field.value || ""}
                       onChange={(value) => {

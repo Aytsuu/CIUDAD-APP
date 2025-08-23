@@ -36,7 +36,7 @@ export const getChildHealthHistoryRecordRecords = async (): Promise<
   }
 };
 
-export default function ForwardedCHimmunization() {
+export default function ForwardedCHimmunizationTable() {
   const { data: immunizationRecords, isLoading } = useQuery<
     ChildHealthHistoryRecord[]
   >({

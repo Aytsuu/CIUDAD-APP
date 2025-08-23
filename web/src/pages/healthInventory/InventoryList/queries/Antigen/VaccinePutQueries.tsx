@@ -45,8 +45,7 @@ export const useUpdateVaccine = () => {
         await updateVaccineIntervals(vaccineData.id, formData);
       
       }
-      queryClient.invalidateQueries({ queryKey: ["immunizationsupplies"] });
-      queryClient.invalidateQueries({ queryKey: ["Antigen"] });
+      queryClient.invalidateQueries({ queryKey: ["VaccineListCombine"] });
 
       return;
     },

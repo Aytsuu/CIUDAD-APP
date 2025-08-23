@@ -8,6 +8,6 @@ export const isDuplicateVaccine = (vaccineList: any[], vaccineName: string, curr
   );
 };
 
-export const isDuplicateMedicine = (medicines: any[], newMedicine: string, currentId?: string) => {
-    return medicines.some((med) => med.id !== currentId && med?.med_name?.trim()?.toLowerCase() === newMedicine?.trim()?.toLowerCase());
+export const isDuplicateMedicine = (medicines: any[], newMedicine: string) => {
+    return medicines.some((med) => med?.med_name?.trim()?.toLowerCase() === newMedicine?.trim()?.toLowerCase());
   };

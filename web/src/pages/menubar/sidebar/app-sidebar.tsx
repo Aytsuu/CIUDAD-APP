@@ -141,22 +141,23 @@ const items: MenuItem[] = [
       { title: "Administration", url: "/health-administration" },
 
       { title: "Patients Record", url: "/patients-record-main" },
-      {
-        title: "Forwarded Records",
-        url: "/",
-        anotherItems: [
-          {
-            title: "Child Immunization",
-            url: "/forwarded-child-health-immunization",
-          },
-          { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
-          { title: "Step 2: Vitals Queue  ", url: "/forwarded-vitals-queue" },
-          {
-            title: "Medical Consultaion",
-            url: "/forwarded-medical-consultation",
-          },
-        ],
-      },
+      {title: "Forwarded Records", url: "/forwarded-records"},
+      // {
+      //   title: "Forwarded Records",
+      //   url: "/",
+      //   anotherItems: [
+      //     {
+      //       title: "Child Immunization",
+      //       url: "/forwarded-child-health-immunization",
+      //     },
+      //     { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
+      //     { title: "Step 2: Vitals Queue  ", url: "/forwarded-vitals-queue" },
+      //     {
+      //       title: "Medical Consultaion",
+      //       url: "/forwarded-medical-consultation",
+      //     },
+      //   ],
+      // },
       {
         title: "Manage Request",
         url: "/",

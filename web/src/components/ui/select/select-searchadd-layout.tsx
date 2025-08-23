@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Trash2, ChevronDown } from "lucide-react";
+import { Trash2, ChevronDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Option {
@@ -38,6 +38,9 @@ export function SelectLayoutWithAdd({
 
   // Check if we're in a loading state
   const isLoading = options.some(option => option.id === "loading");
+  
+  // Check if we have no data (excluding loading state)
+  const hasNoData = !isLoading && options.length === 0;
 
   // Initialize search term with selected option name only when dropdown is closed
   useEffect(() => {
@@ -59,17 +62,6 @@ export function SelectLayoutWithAdd({
       setSearchTerm("");
     }
   }, [isOpen]);
-
-  // Debug logging
-  useEffect(() => {
-    console.log('SelectLayoutWithAdd Debug:', {
-      value,
-      options: options.map(o => ({ id: o.id, name: o.name })),
-      isLoading,
-      searchTerm,
-      isOpen
-    });
-  }, [value, options, isLoading, searchTerm, isOpen]);
 
   const filteredOptions = isOpen && searchTerm.trim() 
     ? options.filter((option) => {
@@ -124,20 +116,13 @@ export function SelectLayoutWithAdd({
     switch (e.key) {
       case "Enter":
         e.preventDefault();
-        if (highlightedIndex >= 0) {
+        if (highlightedIndex >= 0 && filteredOptions.length > 0) {
           const option = filteredOptions[highlightedIndex];
           handleSelect(option.id);
         } else if (searchTerm.trim() && onAdd) {
-          const exactMatch = options.find(
-            (opt) => opt.name.toLowerCase() === searchTerm.toLowerCase().trim()
-          );
-          if (exactMatch) {
-            handleSelect(exactMatch.id);
-          } else {
-            onAdd(searchTerm.trim());
-            setSearchTerm("");
-            setIsOpen(false);
-          }
+          onAdd(searchTerm.trim());
+          setSearchTerm("");
+          setIsOpen(false);
         }
         break;
       case "ArrowDown":
@@ -251,53 +236,83 @@ export function SelectLayoutWithAdd({
               </div>
             )}
             
-            {filteredOptions.length > 0 && (
-              <>
-                {filteredOptions.map((option, index) => (
-                  <div
-                    key={option.id}
+            {hasNoData ? (
+              <div className="px-2 py-3 text-sm text-center text-muted-foreground">
+                <div className="mb-2">No categories found</div>
+                {onAdd && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (searchTerm.trim()) {
+                        onAdd(searchTerm.trim());
+                        setSearchTerm("");
+                        setIsOpen(false);
+                      }
+                    }}
+                    disabled={!searchTerm.trim()}
                     className={cn(
-                      "flex items-center justify-between rounded-sm px-2 py-1.5 text-sm cursor-pointer",
-                      highlightedIndex === index && "bg-accent text-accent-foreground",
-                      option.id === value && "bg-blue-100 dark:bg-blue-900", // Highlight selected option
-                      "hover:bg-accent hover:text-accent-foreground"
+                      "flex items-center justify-center w-full px-3 py-2 text-sm border border-dashed rounded-md",
+                      searchTerm.trim() 
+                        ? "text-blue-600 border-blue-300 hover:bg-blue-50 cursor-pointer"
+                        : "text-muted-foreground border-gray-300 cursor-not-allowed"
                     )}
-                    onClick={() => handleSelect(option.id)}
-                    onMouseEnter={() => setHighlightedIndex(index)}
                   >
-                    <span className="flex-1">{option.name}</span>
-                    {/* Hide delete button for loading states and show only for valid options */}
-                    {onDelete && !isLoading && option.id !== "loading" && !option.name.toLowerCase().includes('loading') && (
-                      <button
-                        onClick={(e) => handleDelete(option.id, e)}
-                        className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded opacity-70 hover:opacity-100"
-                        type="button"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </>
-            )}
-            
-            {shouldShowAddOption && (
-              <div
-                className={cn(
-                  "rounded-sm px-2 py-1.5 text-sm cursor-pointer italic text-blue-600",
-                  highlightedIndex === filteredOptions.length && "bg-accent text-accent-foreground"
+                    <Plus size={14} className="mr-1" />
+                    Add "{searchTerm.trim() || 'new category'}"
+                  </button>
                 )}
-                onClick={() => handleSelect(searchTerm.trim())}
-                onMouseEnter={() => setHighlightedIndex(filteredOptions.length)}
-              >
-                Add "{searchTerm.trim()}"
               </div>
-            )}
-            
-            {filteredOptions.length === 0 && !shouldShowAddOption && (
-              <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                {searchTerm.trim() ? "No matching options found" : "No options available"}
-              </div>
+            ) : (
+              <>
+                {filteredOptions.length > 0 && (
+                  <>
+                    {filteredOptions.map((option, index) => (
+                      <div
+                        key={option.id}
+                        className={cn(
+                          "flex items-center justify-between rounded-sm px-2 py-1.5 text-sm cursor-pointer",
+                          highlightedIndex === index && "bg-accent text-accent-foreground",
+                          option.id === value && "bg-blue-100 dark:bg-blue-900",
+                          "hover:bg-accent hover:text-accent-foreground"
+                        )}
+                        onClick={() => handleSelect(option.id)}
+                        onMouseEnter={() => setHighlightedIndex(index)}
+                      >
+                        <span className="flex-1">{option.name}</span>
+                        {onDelete && option.id !== "loading" && !option.name.toLowerCase().includes('loading') && (
+                          <button
+                            onClick={(e) => handleDelete(option.id, e)}
+                            className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded opacity-70 hover:opacity-100"
+                            type="button"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </>
+                )}
+                
+                {shouldShowAddOption && (
+                  <div
+                    className={cn(
+                      "flex items-center rounded-sm px-2 py-1.5 text-sm cursor-pointer italic text-blue-600",
+                      highlightedIndex === filteredOptions.length && "bg-accent text-accent-foreground"
+                    )}
+                    onClick={() => handleSelect(searchTerm.trim())}
+                    onMouseEnter={() => setHighlightedIndex(filteredOptions.length)}
+                  >
+                    <Plus size={14} className="mr-1" />
+                    Add "{searchTerm.trim()}"
+                  </div>
+                )}
+                
+                {filteredOptions.length === 0 && !shouldShowAddOption && !hasNoData && (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    {searchTerm.trim() ? "No matching options found" : "No options available"}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

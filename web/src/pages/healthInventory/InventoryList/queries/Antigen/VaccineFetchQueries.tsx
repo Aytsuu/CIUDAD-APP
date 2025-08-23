@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAntigen } from "../../restful-api/Antigen/fetchAPI";
+import { getVaccineListCombine } from "../../restful-api/Antigen/fetchAPI";
 
-export const useAntigen = () => {
-    return useQuery({
-      queryKey: ["antigen"],
-      queryFn: getAntigen,
-      refetchOnMount: true,
-      staleTime: 0,
-    });
-  };
+export const useAntigen = (page:number , pageSize: number , search?: string) => {
+  return useQuery({
+    queryKey: ["VaccineListCombine", page, pageSize, search],
+    queryFn: () => getVaccineListCombine(page, pageSize, search),
+    refetchOnMount: true,
+    staleTime: 0,
+  });
+};
+

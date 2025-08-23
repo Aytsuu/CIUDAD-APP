@@ -13,6 +13,9 @@ export const useAddCommodity = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["commodities"] });
+      queryClient.invalidateQueries({ queryKey: ["commoditylistcount"] });
+      showSuccessToast("Commodity added successfully!");
+
     },
     onError: (error: any) => {
       console.error("Error adding commodity:", error);

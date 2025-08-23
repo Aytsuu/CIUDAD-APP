@@ -1,22 +1,10 @@
-import {
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-import {
-  addVaccine,
-  addVaccineIntervals,
-  addRoutineFrequency,
-  addconvaccine,
-} from "../../restful-api/Antigen/postAPI";
-import { toast } from "sonner";
-import { CircleCheck, CircleX } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { addVaccine, addVaccineIntervals, addRoutineFrequency, addconvaccine } from "../../restful-api/Antigen/postAPI";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
-
 
 export const useSubmitVaccine = () => {
   const queryClient = useQueryClient();
- 
+
   return useMutation({
     mutationFn: async (formData: any) => {
       if (!formData.vaccineName || !formData.ageGroup) {
@@ -30,7 +18,7 @@ export const useSubmitVaccine = () => {
         vac_type_choices: formData.type,
         vac_name: formData.vaccineName,
         no_of_doses: Number(formData.noOfDoses) || 0,
-        ageGroup: Number(ageGroupToUse),
+        ageGroup: Number(ageGroupToUse)
       });
 
       if (!vaccineResponse?.vac_id) {
@@ -49,12 +37,12 @@ export const useSubmitVaccine = () => {
       // Handle intervals based on vaccine type
       else if (formData.type === "primary") {
         await Promise.all(
-          (formData.intervals || []).map((interval:any, i:any) =>
+          (formData.intervals || []).map((interval: any, i: any) =>
             addVaccineIntervals({
               vac_id: vaccineId,
               dose_number: i + 2,
               interval: Number(interval),
-              time_unit: formData.timeUnits?.[i] || "months",
+              time_unit: formData.timeUnits?.[i] || "months"
             })
           )
         );
@@ -63,11 +51,10 @@ export const useSubmitVaccine = () => {
           vac_id: vaccineId,
           dose_number: 1,
           interval: Number(formData.routineFrequency.interval),
-          time_unit: formData.routineFrequency.unit,
+          time_unit: formData.routineFrequency.unit
         });
       }
-      queryClient.invalidateQueries({ queryKey: ["immunizationsupplies"] });
-      queryClient.invalidateQueries({ queryKey: ["Antigen"] });
+      queryClient.invalidateQueries({ queryKey: ["VaccineListCombine"] });
 
       return vaccineResponse;
     },
@@ -76,6 +63,6 @@ export const useSubmitVaccine = () => {
     },
     onError: () => {
       showErrorToast("Failed to save ");
-    },
+    }
   });
 };

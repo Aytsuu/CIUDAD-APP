@@ -1,27 +1,31 @@
-import ForwardedCHimmunization from "@/pages/healthServices/forwardedrecord/forwardedrecords/ChildImmunization";
-import CombinedHealthRecordsTable from "@/pages/healthServices/forwardedrecord/forwardedrecords/CombineConsultation";
-import ScheduledVaccinations from "@/pages/healthServices/forwardedrecord/forwardedrecords/ScheduledVaccinations";
-import ForwardedVaccinationRecords from "@/pages/healthServices/forwardedrecord/forwardedrecords/ForwardedVaccination";
-
+import ForwardedCHimmunizationTable from "@/pages/healthServices/forwardedrecord/forwardedrecords/ForwardedChildImmunization";
+import ForwardedCombinedHealthRecordsTable from "@/pages/healthServices/forwardedrecord/forwardedrecords/ForwardedCombineConsultation";
+import ForwardedScheduledVaccinationsTables from "@/pages/healthServices/forwardedrecord/forwardedrecords/ForwardedScheduledVaccinations";
+import ForwardedVaccinationRecordsTable from "@/pages/healthServices/forwardedrecord/forwardedrecords/ForwardedVaccination";
+import MainForwardedRecord from "@/pages/healthServices/forwardedrecord/Main";
 export const forwardedhealthrecord_router = [
-
   {
-    path: "/forwarded-child-health-immunization",
-    element: <ForwardedCHimmunization />,
+    path:"/forwarded-records",
+    element: <MainForwardedRecord />
+  },
+  {
+    path: "/forwarded-records/child-health-immunization",
+    element: <ForwardedCHimmunizationTable />,
   },
  
   {
-    path: "/forwarded-medical-consultation",
-    element: <CombinedHealthRecordsTable />,
+    path: "/forwarded-records/medical-consultation",
+    element: <ForwardedCombinedHealthRecordsTable />,
   },
   {
-    path: "/forwarded-vaccine-waitlist",
-    element: <ScheduledVaccinations />,
+    path: "/forwarded-records/vaccine-waitlist",
+    element: <ForwardedScheduledVaccinationsTables />,
   },
   {
-    path: "/forwarded-vitals-queue",
-    element: <ForwardedVaccinationRecords />
+    path: "/forwarded-records/vitalsigns-queue",
+    element: <ForwardedVaccinationRecordsTable />
   },
+ 
 
 
 ];

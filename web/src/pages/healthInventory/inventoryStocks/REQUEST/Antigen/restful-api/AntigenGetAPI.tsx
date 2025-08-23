@@ -7,7 +7,7 @@ export const getCombinedStock = async () => {
         api2.get("inventory/vaccine_stocks/"),
         api2.get("inventory/immunization_stock/"),
         api2.get("inventory/vac_list/"),
-        api2.get("inventory/imz_supplies/"),
+        api2.get("inventory/imz_supplieslist-createview/"),
         api2.get("inventory/inventorylist/"),
       ]);
 
