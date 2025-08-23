@@ -289,6 +289,7 @@ type Template = {
   temp_paperSize: string;
   temp_margin: string;
   temp_filename: string;
+  temp_summon?: boolean;
   temp_w_sign_right: boolean;
   temp_w_sign_left: boolean;
   temp_w_sign_applicant: boolean;
@@ -805,7 +806,35 @@ function TemplateMainPage() {
       "\t\tThis clearance is issued upon the request of the subject person / establishment for\n\n" +
       "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t/*BARANGAY BUSINESS PERMIT*/\n\n" +
       "\tIssued this [6TH] day [NOVEMBER] [2024] at Barangay San Roque (Ciudad), Cebu City"
-    },         
+    },      
+    {
+      temp_id: 21,
+      temp_belowHeaderContent: "                                            Barangay Case No.[ Case No. ]\n" +
+      "Brgy, San Roque Ciudad Cebu City            For: [ Reason ]\n" +
+      "[ Name of Complainant ]\n\n" +
+      "      - AGAINTS -\n\n" +
+      "Brgy, San Roque Ciudad Cebu City\n" +
+      "[ Name of Respondent ]\n\n",
+      temp_title: "CERTIFICATION TO FILE ACTION",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "legal",
+      temp_margin: "narrow",
+      temp_filename: "File Action",
+      temp_summon: true,
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: false,
+      temp_w_seal: false,
+      temp_body: "\nThis is to certify that:\n\n" +
+      "1. There was a complaint filled in this Office on [SEPTEMBER] [10], [2025];\n\n" +
+      "2. There has been a personal confrontation between the parties before the Punong Barangay but mediation failed;\n\n" +
+      "3. The Pangkat ng Tagapangkasundo was constituted but the personal confrontation before the Pangkat likewise did not result into settlement;\n\n" +
+      "4. Therefore, the corresponding complaint for the dispute may now be filed in the court/government office.\n\n" +
+      "This [12TH] day of [NOVEMBER] [2025] in Barangay San Roque Ciudad Cebu City." 
+    },       
   ];  
 
   if (isLoading) {
@@ -942,6 +971,7 @@ function TemplateMainPage() {
                 title={previewTemplate.temp_title}
                 subtitle={previewTemplate.temp_subtitle}
                 body={previewTemplate.temp_body}
+                withSummon={previewTemplate.temp_summon}
                 withSeal={previewTemplate.temp_w_seal}
                 withSignRight={previewTemplate.temp_w_sign_right}
                 withSignLeft={previewTemplate.temp_w_sign_left}

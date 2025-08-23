@@ -35,7 +35,7 @@ function TemplatePreview({
   withSignRight,
   withSignLeft,
   withSignatureApplicant,
-  withSummon = false,
+  withSummon,
   paperSize = "letter",
   margin = "normal"
 }: TemplatePreviewProps) {
@@ -50,7 +50,7 @@ function TemplatePreview({
 
   useEffect(() => {
     generatePDF();
-  }, [barangayLogo, cityLogo, email, telNum, belowHeaderContent, title, subtitle, body, withSeal, withSignRight, withSignLeft, withSignatureApplicant, withSummon, paperSize, margin]);
+  }, [barangayLogo, cityLogo, email, telNum, belowHeaderContent, title, subtitle, body, withSeal, withSummon, withSignRight, withSignLeft, withSignatureApplicant, withSummon, paperSize, margin]);
 
   const generatePDF = () => {
     // Convert paper size to jsPDF format
@@ -167,7 +167,7 @@ function TemplatePreview({
         return;
       }
       
-      setCurrentFont(line.bold ? 'bold' : 'normal');
+      doc.setFont("times", line.bold ? 'bold' : 'normal');
       doc.setFontSize(line.size);
       
       const textWidth = doc.getTextWidth(line.text);
@@ -301,6 +301,32 @@ function TemplatePreview({
 
     const addFooter = (sealBase64?: string) => {
       let currentY = footerY;
+
+      if (withSummon) {
+        // Barangay captain info on the right side
+        const captainX = pageWidth - marginValue - 170;
+        setCurrentFont('bold');
+        doc.text("HON. VIRGINIA N. ABENOJA", captainX, currentY);
+        setCurrentFont('normal');;
+        doc.text("Punong Barangay", captainX + 34, currentY + 20);
+
+        //adds a space after the Punong Barangay na word
+        currentY += 70;
+
+        // Summon signature fields - new format
+        setCurrentFont('normal');
+        
+        // Calculate positions
+        const fieldSpacing = 30;
+        const lineLength = 200; // Length of each field line
+        
+        // COMPLAINANT and RESPONDENT on same line
+        doc.text("COMPLAINANT ____________________", signatureX, currentY);
+        doc.text("RESPONDENT ____________________", signatureX + lineLength + 20, currentY);
+        
+        // SERVER aligned to right below RESPONDENT
+        doc.text("SERVER ____________________", signatureX + lineLength + 20, currentY + fieldSpacing);
+      }       
 
       if(withSignRight){
         const captainX = pageWidth - marginValue - 200; 
