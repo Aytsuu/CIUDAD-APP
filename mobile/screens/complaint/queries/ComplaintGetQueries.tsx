@@ -16,7 +16,7 @@ export const getComplaintLists = () => {
   });
 };
 
-const id = "00001250820"
+// const id = "00001250820"
 export const useGetComplaintById = (id: string) => {
   return useQuery({
     queryKey: ["complaint", id],
@@ -31,3 +31,7 @@ export const useGetComplaintById = (id: string) => {
     staleTime: 5000,
   });
 };
+
+
+
+

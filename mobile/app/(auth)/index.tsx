@@ -19,5 +19,5 @@ import MinutesOfMeetingMain from "../../screens/council/minutesOfmeeting/minutes
 import Complaint from "../(complaint)";
 
 export default () => {
-    return <GarbagePickupTasksMain/>
+    return <Complaint/>
 }
