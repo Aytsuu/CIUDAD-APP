@@ -280,6 +280,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 type Template = {
   temp_title: string;
+  temp_subtitle?: string;
   temp_belowHeaderContent?: string;
   temp_barangayLogo: string;
   temp_cityLogo: string;
@@ -585,30 +586,7 @@ function TemplateMainPage() {
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*NATIONAL BUREAU OF INVESTIGATION (NBI) PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
       "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
-    },     
-    {
-      temp_id: 12,
-      temp_title: "CERTIFICATION",
-      temp_barangayLogo: barangayLogo,
-      temp_cityLogo: cityLogo,
-      temp_email: templates[0]?.temp_email,  
-      temp_telNum: templates[0]?.temp_contact_num,
-      temp_paperSize: "letter",
-      temp_margin: "normal",
-      temp_filename: "NBI",
-      temp_w_sign_right: false,
-      temp_w_sign_left: false,
-      temp_w_sign_applicant: true,
-      temp_w_seal: true,
-      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
-      "NAME                     :           [ NAME ]\n" +
-      "AGE                        :            [ AGE ]\n" +
-      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
-      "ADDRESS              :            [ ADDRESS ]\n\n" +
-      "This certification is being issued upon the request of the above mentioned name to support the application for the /*NATIONAL BUREAU OF INVESTIGATION (NBI) PURPOSES ONLY.*/  " +
-      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [19th] day of [AUGUST] [2025] of Barangay San Roque Ciudad, Cebu City, Philippines."
-    },     
+    },        
     {
       temp_id: 12,
       temp_title: "CERTIFICATION",
@@ -785,7 +763,49 @@ function TemplateMainPage() {
       "compliance of the government requirements for whatever purpose this may serve.\n\nBarangay Certification is hereby issued upon the requirements " +
       "of the above mentioned-name. However this clearance may be cancelled or revoked anytime the public safety and interest so required.\n\n" +
       "Given this [ 15TH ] day of [ AUGUST ] [2025] at Barangay San Roque (Ciudad) Cebu City."
-    },        
+    },   
+    {
+      temp_id: 19,
+      temp_title: "CERTIFICATION",
+      temp_subtitle: "(Cohabitation)",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Cohabitation",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Cidudad:\n\nThis is to certify that " +
+      "[ NAME OF PERSON ] and [ NAME OF PERSON ], legal age and resident of R. Palma St., Barangay San Roque Ciudad Cebu City.\n\n" +
+      "This is to certify further that the above mentioned name are common-law partner and living together under the same roof for 2 years.\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application [ PURPOSE ] /*PURPOSES ONLY*/.  " +
+      "Affixed below is the name and signature of the above mentioned name.\n\nIssued this [ 11TH ] day of [ OCTOBER ] [ 2024 ] at Barangay San Roque (Ciudad) " +
+      "Cebu City, Cebu Philippines." 
+    },     
+    {
+      temp_id: 20,
+      temp_title: "BARANGAY BUSINESS CLEARANCE",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Business Clearance",
+      temp_w_sign_right: true,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: false,
+      temp_w_seal: false,
+      temp_body: "\nTO WHOM IT MAY CONCERN:\n\nThis is to certify that [ NAME OF BUSINESS ] residence / office address at [ ADDRESS OF THE BUSINESS],  /*Barangay San Roque (Ciudad), Cebu City*/. Which " +
+      "is within the Territorial Jurisdiction of the Barangay in accordance with Section # 152 of Republic Act No. 7160, otherwise known as Local Government Code 1991.\n\n\n" +
+      "\t\tThis clearance is issued upon the request of the subject person / establishment for\n\n" +
+      "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t/*BARANGAY BUSINESS PERMIT*/\n\n" +
+      "\tIssued this [6TH] day [NOVEMBER] [2024] at Barangay San Roque (Ciudad), Cebu City"
+    },         
   ];  
 
   if (isLoading) {
@@ -920,6 +940,7 @@ function TemplateMainPage() {
                 telNum={previewTemplate.temp_telNum}
                 belowHeaderContent={previewTemplate.temp_belowHeaderContent}
                 title={previewTemplate.temp_title}
+                subtitle={previewTemplate.temp_subtitle}
                 body={previewTemplate.temp_body}
                 withSeal={previewTemplate.temp_w_seal}
                 withSignRight={previewTemplate.temp_w_sign_right}

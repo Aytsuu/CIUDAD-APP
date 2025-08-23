@@ -11,6 +11,7 @@ interface TemplatePreviewProps {
   telNum: string;
   belowHeaderContent?: string;
   title: string;
+  subtitle?: string;
   body: string;
   withSeal: boolean;
   withSignRight: boolean;
@@ -28,6 +29,7 @@ function TemplatePreview({
   telNum,
   belowHeaderContent,
   title,
+  subtitle,
   body,
   withSeal,
   withSignRight,
@@ -48,7 +50,7 @@ function TemplatePreview({
 
   useEffect(() => {
     generatePDF();
-  }, [barangayLogo, cityLogo, email, telNum, belowHeaderContent, title, body, withSeal, withSignRight, withSignLeft, withSignatureApplicant, withSummon, paperSize, margin]);
+  }, [barangayLogo, cityLogo, email, telNum, belowHeaderContent, title, subtitle, body, withSeal, withSignRight, withSignLeft, withSignatureApplicant, withSummon, paperSize, margin]);
 
   const generatePDF = () => {
     // Convert paper size to jsPDF format
@@ -75,7 +77,7 @@ function TemplatePreview({
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const lineHeight = 14;
-    const sectionGap = 20;
+    // const sectionGap = 20;
 
     // Set initial font
     const setCurrentFont = (style: 'normal' | 'bold' = 'normal') => {
@@ -89,6 +91,36 @@ function TemplatePreview({
     setCurrentFont('normal');
     doc.setFontSize(12);
 
+
+    // WATERMARK
+    if (barangayLogo && barangayLogo !== "no-image-url-fetched") {
+      try {
+        if (doc.setGState) {
+          // @ts-ignore
+          const gState = doc.GState({ opacity: 0.15 });
+          // @ts-ignore
+          doc.setGState(gState);
+        }
+
+        // Place background image in center
+        const bgWidth = 400;   
+        const bgHeight = 400;  
+        const bgX = (pageWidth - bgWidth) / 2;
+        const bgY = (pageHeight - bgHeight) / 2;
+
+        doc.addImage(barangayLogo, "PNG", bgX, bgY, bgWidth, bgHeight);
+
+        // Reset opacity back to normal
+        if (doc.setGState) {
+          // @ts-ignore
+          const gStateReset = doc.GState({ opacity: 1 });
+          // @ts-ignore
+          doc.setGState(gStateReset);
+        }
+      } catch (e) {
+        console.error("Error adding faded background logo:", e);
+      }
+    }
 
 
     // Logo dimensions
@@ -166,18 +198,64 @@ function TemplatePreview({
         yPos += lineHeight;
       }
       yPos += 30; // Add some space after the content
-    }    
+    }   
+    
+    
+    if (barangayLogo && barangayLogo !== "no-image-url-fetched") {
+      try {
+        // Create a faded version of the logo (synchronous)
+        const img = new Image();
+        img.src = barangayLogo;
+        
+        // Create canvas and adjust opacity
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        
+        if (ctx) {
+          ctx.globalAlpha = 0.2; // Adjust opacity here
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+          
+          // Get the faded image
+          const fadedLogo = canvas.toDataURL("image/png");
+          
+          // Calculate position and size
+          const bgWidth = pageWidth * 0.6;
+          const bgHeight = (img.height / img.width) * bgWidth;
+          const bgX = (pageWidth - bgWidth) / 2;
+          const bgY = (pageHeight - bgHeight) / 2;
+          
+          // Add to PDF
+          doc.addImage(fadedLogo, "PNG", bgX, bgY, bgWidth, bgHeight);
+        }
+      } catch (e) {
+        console.error("Error adding background logo:", e);
+      }
+    }
 
     // Title
     doc.setFont("times", "bold");
     doc.setFontSize(20);
     const titleWidth = doc.getTextWidth(title); 
     doc.text(title, (pageWidth - titleWidth) / 2, yPos);
-    yPos += lineHeight + sectionGap + 20;
+    yPos += lineHeight + 10; // Fixed space after title
+
+    //Subtitle Content
+    if (subtitle) {
+      yPos -= 10;
+      doc.setFont("times", "bold");
+      doc.setFontSize(11);
+      const subtitleWidth = doc.getTextWidth(subtitle);
+      doc.text(subtitle, (pageWidth - subtitleWidth) / 2, yPos);
+      yPos += lineHeight + 10; // Space after subtitle
+    }
+
+    yPos += 10;
 
     // Body content
     setCurrentFont('normal');
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     
     const contentWidth = pageWidth - marginValue * 2;
     const splitText = doc.splitTextToSize(body, contentWidth);
