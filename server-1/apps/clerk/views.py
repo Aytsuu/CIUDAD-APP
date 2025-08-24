@@ -180,11 +180,12 @@ class SummonTimeAvailabilityByDateView(generics.ListAPIView):
     serializer_class = SummonTimeAvailabilitySerializer
 
     def get_queryset(self):
-        sd_id = self.request.query_params.get('sd_id')
+        sd_id = self.kwargs.get('sd_id')  # get from URL path
         queryset = SummonTimeAvailability.objects.all()
         if sd_id is not None:
             queryset = queryset.filter(sd_id=sd_id)
         return queryset
+
 
 class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
     queryset = SummonTimeAvailability.objects.all()

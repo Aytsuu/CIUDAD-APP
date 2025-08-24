@@ -17,7 +17,8 @@ import ResolutionPage from "@/screens/council/resolution/resolution-main";
 import ExpenseLogMain from "@/screens/treasurer/treasurer-budget-tracker/expense-income-log/expense-log-main";
 import MinutesOfMeetingMain from "../../screens/council/minutesOfmeeting/minutes-of-meeting-main";
 import Complaint from "../(complaint)";
+import Summon from "@/screens/complaint/Summon/Summon";
 
 export default () => {
-    return <Complaint/>
+    return <Summon/>
 }
