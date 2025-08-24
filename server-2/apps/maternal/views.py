@@ -77,7 +77,7 @@ class PrenatalPatientObsHistoryView(generics.RetrieveAPIView):
             return Response({
                 'patient': patient.pat_id,
                 'obstetrical_history': obs_data
-            })
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             print(f"Error fetching obstetrical history: {e}")

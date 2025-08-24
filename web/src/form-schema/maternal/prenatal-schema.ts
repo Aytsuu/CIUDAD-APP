@@ -129,7 +129,7 @@ export const PrenatalFormSchema = z.object({
         noOfAbortion: positiveNumberSchema.optional(),
         noOfStillBirths: positiveNumberSchema.optional(),
         historyOfLBabies: positiveNumberSchema.optional(),
-        historyOfLBabiesString: z.string().optional(),
+        historyOfLBabiesStr: z.string().optional(),
         historyOfDiabetes: z.string().optional(),
     }).optional(),
 

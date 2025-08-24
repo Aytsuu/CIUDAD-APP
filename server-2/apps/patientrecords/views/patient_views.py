@@ -200,7 +200,7 @@ class PatientView(generics.ListCreateAPIView):
                             ('tran_status', transient_data['tran_status']),
                             ('tran_ed_attainment', transient_data['tran_ed_attainment']),
                             ('tran_religion', transient_data['tran_religion']),
-                            ('philhealth_id', philhealth_id),
+                            ('philhealth_id', transient_data.get('philhealth_id', '')),
                         ]
 
                         has_changes = False
@@ -335,6 +335,41 @@ class PatientDetailView(generics.RetrieveAPIView):
             return super().get_object()
         except Patient.DoesNotExist:
             raise Http404("Patient not found")
+
+class PatientUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class = PatientSerializer
+    queryset = Patient.objects.all()
+    lookup_field = 'pat_id'
+
+    def patch(self, request, *args, **kwargs):
+        try: 
+            patient = self.get_object()
+
+            if patient.pat_type == 'Transient' and patient.trans_id:
+                transient_data = request.data.get('transient_data', {})
+                transient = patient.trans_id
+
+                update_fields = {
+                    'tran_lname': transient_data.get('tran_lname'),
+                    'tran_fname': transient_data.get('tran_fname'),
+                    'tran_mname': transient_data.get('tran_mname'),
+                    'tran_suffix': transient_data.get('tran_suffix'),
+                    'tran_dob': transient_data.get('tran_dob'),
+                    'tran_sex': transient_data.get('tran_sex'),
+                    'tran_contact': transient_data.get('tran_contact'),
+                    'philhealth_id': transient_data.get('philhealth_id', ''),
+                }
+
+                for field, value in update_fields.items():
+                    setattr(transient, field, value)
+        
+        except Exception as e:
+            print(f"Error updating transient patient: {str(e)}")
+            return Response(
+                {'error': f'Failed to update transient patient: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class PatientRecordView(generics.ListCreateAPIView):
     serializer_class = PatientRecordSerializer

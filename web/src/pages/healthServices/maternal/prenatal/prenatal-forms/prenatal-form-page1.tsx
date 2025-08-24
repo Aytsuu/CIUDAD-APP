@@ -17,7 +17,6 @@ import { Form } from "@/components/ui/form/form"
 import { IllnessCombobox } from "../../maternal-components/illness-combobox"
 
 // icons import
-// import { Trash } from "lucide-react"
 import { MdOutlineSick } from "react-icons/md"
 import { FaRegHospital } from "react-icons/fa"
 
@@ -491,7 +490,6 @@ export default function PrenatalFormFirstPg({
     }
   }, [bodyMeasurementData, bmLoading, setValue])
 
-  const isBodyMeasurementAvailable = !!bodyMeasurementData?.body_measurement
 
   // ph date and ph time //
   const created_at = bodyMeasurementData?.body_measurement?.created_at
@@ -1053,7 +1051,7 @@ export default function PrenatalFormFirstPg({
               </div>
 
               <div className="flex mt-5">
-                {isBodyMeasurementAvailable && (
+                {bodyMeasurementData?.body_measurement.weight !== null && (selectedPatientId) && !bmLoading && (
                   <span className="text-sm italic text-yellow-600">
                     *Note: Previous measurements recorded on {phDate}
                   </span>
@@ -1100,7 +1098,7 @@ export default function PrenatalFormFirstPg({
                       <div className="grid grid-cols-2 gap-3">
                         <FormInput
                           control={control}
-                          name="obstetricHistory.historyOfLBabiesString"
+                          name="obstetricHistory.historyOfLBabiesStr"
                           label=""
                           placeholder="Enter yes or no"
                           type="text"

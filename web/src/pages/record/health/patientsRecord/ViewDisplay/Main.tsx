@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useMemo, useEffect } from "react"
 import React from "react"
 import { ChevronLeft, Edit, AlertCircle } from "lucide-react"
@@ -6,20 +7,25 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useLocation } from "react-router"
 import { toast } from "sonner"
+import { showSuccessToast } from "@/components/ui/toast"
+import { showErrorToast } from "@/components/ui/toast"
 
-import { Separator } from "@/components/ui/separator"
+import CardLayout from "@/components/ui/card/card-layout"
 import { Button } from "@/components/ui/button/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import CardLayout from "@/components/ui/card/card-layout"
 import { calculateAge } from "@/helpers/ageCalculator"
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
+
 import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
 import {PatientData,ChildHealthRecord} from "./types"
 import PersonalInfoTab from "./PersonalInfoTab"
 import Records from "./Records"
 import VisitHistoryTab from "./VisitHistoryTab"
+
+// fetch queries
 import { useUpdatePatient } from "../queries/update"
 import { usePatientDetails } from "../queries/fetch"
 import { useChildHealthRecords } from "../queries/fetch"
@@ -264,7 +270,7 @@ export default function ViewPatientRecord() {
     try {
       const formData = form.getValues()
       if (!currentPatient?.trans_id) {
-        toast.error("Cannot update: Missing transient ID.")
+        showErrorToast("Cannot update: Missing transient ID.")
         return
       }
       const updatedData = {
@@ -280,6 +286,7 @@ export default function ViewPatientRecord() {
           tran_status: "Active",
           tran_ed_attainment: "N/A",
           tran_religion: "N/A",
+          philhealth_id: formData.philhealthId,
           address: {
             tradd_street: formData.address.street,
             tradd_sitio: formData.address.sitio,
@@ -291,10 +298,10 @@ export default function ViewPatientRecord() {
       }
       await updatePatientData.mutateAsync(updatedData)
       setIsEditable(false)
-      toast.success("Patient data updated successfully!")
+      showSuccessToast("Patient data updated successfully!")
     } catch (error) {
       console.error("Error saving patient data: ", error)
-      toast.error("Failed to update patient data. Please try again.")
+      showErrorToast("Failed to update patient data. Please try again.")
     }
   }
 
@@ -325,36 +332,15 @@ export default function ViewPatientRecord() {
     )
   }
 
-  // if (!patientData) {
-  //   return (
-  //     <div className="flex justify-center items-center h-64">
-  //       <p className="text-lg text-gray-500">No patient data available</p>
-  //     </div>
-  //   )
-  // }
-
   const isTransient = patientData?.patientType?.toLowerCase() === "transient"
 
+  
   return (
+    <LayoutWithBack
+      title="Patient Information and Records"
+      description="View patient information, medical records, and follow-up visits  "
+    >
     <div className="w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-        <Button variant="outline" onClick={() => window.history.back()}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex flex-col">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Patient Record</h1>
-          <p className="text-xs sm:text-sm text-darkGray">View patient information</p>
-        </div>
-        <div className="flex gap-2 sm:ml-auto">
-          {isTransient && activeTab === "personal" && (
-            <Button onClick={handleEdit} className="gap-1 bg-buttonBlue hover:bg-buttonBlue/90">
-              <Edit className="h-4 w-4" />
-              <span className="hidden sm:inline">Edit</span>
-            </Button>
-          )}
-        </div>
-      </div>
-      <Separator className="bg-gray mb-4 sm:mb-6" />
       <div className="mb-6">
         <CardLayout
           title=""
@@ -385,7 +371,16 @@ export default function ViewPatientRecord() {
                   </Badge>
                 </div>
               </div>
+              <div className="flex gap-2 sm:ml-auto">
+                {isTransient && activeTab === "personal" && (
+                  <Button onClick={handleEdit} className="gap-1 bg-buttonBlue hover:bg-buttonBlue/90">
+                    <Edit className="h-4 w-4" />
+                    <span className="hidden sm:inline">Edit</span>
+                  </Button>
+                )}
+              </div>
             </div>
+            
           }
           cardClassName="border shadow-sm rounded-lg"
           headerClassName="hidden"
@@ -449,5 +444,6 @@ export default function ViewPatientRecord() {
         )}
       </Tabs>
     </div>
+    </LayoutWithBack>
   )
 }

@@ -63,7 +63,7 @@ urlpatterns = [
    
     path('medical-history/<int:patrec>/', DeleteMedicalHistoryByPatrecView.as_view(), name='updel-medical-history'),
 
-    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view,name='delete-peresults'),
+    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view(), name='delete-peresults'),
 
     #DISABLITY
     

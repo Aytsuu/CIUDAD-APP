@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom"
 
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button/button"
-import { ChevronLeft, Save, CircleAlert } from "lucide-react"
+import { Save, CircleAlert } from "lucide-react"
 import { toast } from "sonner"
 import CardLayout from "@/components/ui/card/card-layout"
 import { useForm } from "react-hook-form"
@@ -22,9 +22,11 @@ import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { Combobox } from "@/components/ui/combobox"
 import { Label } from "@/components/ui/label"
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 
 import { useResidents, useAllTransientAddresses } from "./queries/fetch"
 import { useAddPatient } from "./queries/add"
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 
 interface ResidentProfile {
   rp_id: string
@@ -183,7 +185,7 @@ export default function CreatePatientRecord() {
       const result = await createNewPatient.mutateAsync(patientData)
 
       if (result) {
-        toast("Patient record has been created successfully")
+        showSuccessToast("Patient record has been created successfully")
         return true
       } else {
         toast("Patient record may have been created. Please refresh to verify.")
@@ -191,9 +193,7 @@ export default function CreatePatientRecord() {
       }
     } catch (error) {
       console.error("Error creating patient record:", error)
-      toast("Failed to create patient record.", {
-        description: "An error occurred while creating the patient record. Please check the details and try again.",
-      })
+      showErrorToast("An error occurred while creating the patient record. Please check the details and try again.")
       return false
     }
   }
@@ -253,13 +253,6 @@ export default function CreatePatientRecord() {
           tran_ed_attainment: "Not Specified",
           tran_religion: "Not Specified",
           philhealth_id: formData.philhealthId || "",
-          // address: {
-          //   tradd_street: formData.address?.street || "",
-          //   tradd_sitio: formData.address?.sitio || "",
-          //   tradd_barangay: formData.address?.barangay || "",
-          //   tradd_city: formData.address?.city || "",
-          //   tradd_province: formData.address?.province || "",
-          // },
         }
         if(selectedTrAddtId !== 0) {
           trPatientData.tradd_id = selectedTrAddtId
@@ -306,23 +299,11 @@ export default function CreatePatientRecord() {
   }
 
   return (
+    <LayoutWithBack
+      title='Create Patient Record'
+      description="Create a new patient record by filling out the form below."
+    >
     <div className="w-full">
-      <div className="w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-          <Button
-            className="bg-white text-black p-2 self-start"
-            variant="outline"
-            onClick={() => window.history.back()}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex flex-col">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Patient Registration</h1>
-            <p className="text-xs sm:text-sm text-darkGray">Add a Patient</p>
-          </div>
-        </div>
-      </div>
-      <Separator className="bg-gray mb-2 sm:mb-4" />
         <div className="w-full mx-auto border-none">
           <div>
             <Form {...form}>
@@ -379,7 +360,7 @@ export default function CreatePatientRecord() {
 
                   {patientType === 'transient' && (
                     <div className="flex w-full items-end">
-                      <label className="flex items-center text-xs font-poppins p-[9px] w-full gap-1"> <CircleAlert size={15}/> For <i>TRANSIENT</i> please fill in the needed details below.</label>
+                      <label className="flex items-center text-[15px] font-poppins p-[9px] w-full gap-1"> <CircleAlert size={15}/> For <b>TRANSIENT</b> please fill in the needed details below.</label>
                     </div>
                   )}
                 </div>
@@ -488,14 +469,15 @@ export default function CreatePatientRecord() {
             </Form>
           </div>
         </div>
-        
-      {/* Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={isDialogOpen}
-        onOpenChange={handleDialogClose}
-        onConfirm={confirmSubmit}
-        title="Confirm Patient Registration"
-      />
-    </div>
+          
+        {/* Confirmation Dialog */}
+        <ConfirmationDialog
+          isOpen={isDialogOpen}
+          onOpenChange={handleDialogClose}
+          onConfirm={confirmSubmit}
+          title="Confirm Patient Registration"
+        />
+      </div>
+    </LayoutWithBack>
   )
 }
