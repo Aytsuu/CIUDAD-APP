@@ -3,7 +3,7 @@ import { TouchableOpacity, View, Text, ScrollView, Alert, ActivityIndicator, Sta
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import { ChevronLeft, Calendar as CalendarIcon, Clock, Info, CheckCircle, AlertCircle, Scale, Send, Phone, Mail, MapPin, X,} from "lucide-react-native";
 import { router } from "expo-router";
-import { useGetSummonDates, useGetSummonTimeSlots } from "../queries/summonFetchQueries";
+import { useGetSummonDates, useGetSummonTimeSlots, type SummonTimeSlots } from "../queries/summonFetchQueries";
 
 // Configure calendar locale
 LocaleConfig.locales['en'] = {
@@ -19,19 +19,6 @@ LocaleConfig.locales['en'] = {
   dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
 };
 LocaleConfig.defaultLocale = 'en';
-
-type TimeSlot = {
-  id: string;
-  display: string;
-};
-
-export type SummonTimeSlots = {
-    st_id?: number;
-    st_start_time: string;
-    st_end_time: string;
-    sd_id?: number;
-    st_is_booked?: boolean;
-}
 
 type BarangayAvailability = {
   office_hours: string;
@@ -119,46 +106,72 @@ export const Summon = () => {
   // Generate marked dates for calendar - disable all dates by default, only enable fetched ones
   const markedDates = useMemo(() => {
     const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
     const marked: any = {};
-    
-    // First, mark ALL dates as disabled by default
-    const current = new Date(today.getFullYear(), 0, 1); // Start from Jan 1 of current year
-    
-    // Disable all dates for the entire year
+
+    // Start from Jan 1 of current year
+    const current = new Date(today.getFullYear(), 0, 1);
+
     for (let i = 0; i < 365; i++) {
       const date = new Date(current);
       date.setDate(current.getDate() + i);
+      const dateStr = date.toISOString().split("T")[0];
+
       
-      const dateStr = date.toISOString().split('T')[0];
-      
-      // Only enable dates that are in the availableDatesMap
+
+      // Disable all past dates and today
+      if (dateStr === todayStr) {
+        marked[dateStr] = {
+          disableTouchEvent: true,
+          customStyles: {
+            text: {
+              color: "#10B981",
+              fontWeight: "bold",
+            },
+          },
+        };
+        continue;
+      }
+
+      // Disable all past dates
+      if (dateStr < todayStr) {
+        marked[dateStr] = {
+          disabled: true,
+          disableTouchEvent: true,
+          dotColor: "#D1D5DB",
+          selected: false,
+        };
+        continue;
+      }
+
+      // Enable only future dates from fetched availableDatesMap
       if (availableDatesMap.has(dateStr)) {
         marked[dateStr] = {
           disabled: false,
-          dotColor: '#10B981',
-          selected: dateStr === selectedDate
+          dotColor: "#10B981",
+          selected: dateStr === selectedDate,
         };
       } else {
         marked[dateStr] = {
           disabled: true,
           disableTouchEvent: true,
-          dotColor: '#EF4444',
-          selected: false
+          selected: false,
         };
       }
     }
-    
-    // Mark selected date
-    if (selectedDate && availableDatesMap.has(selectedDate)) {
+
+    // Ensure selected date is styled correctly if valid
+    if (selectedDate && availableDatesMap.has(selectedDate) && selectedDate > todayStr) {
       marked[selectedDate] = {
         ...marked[selectedDate],
         selected: true,
-        selectedColor: '#10B981'
+        selectedColor: "#10B981",
       };
     }
-    
+
     return marked;
   }, [selectedDate, availableDatesMap]);
+
 
   const handleDateSelect = useCallback((day: any) => {
     console.log("Day pressed:", day); // Debug log
@@ -171,9 +184,8 @@ export const Summon = () => {
       if (sd_id !== undefined) {
         setSelectedDate(dateStr);
         setSelectedTimeSlot("");
-        setDateId(sd_id); // This will trigger the time slots fetch
+        setDateId(sd_id); 
       } else {
-        console.log("Date ID is undefined for date:", dateStr);
         setSelectedDate("");
         setSelectedTimeSlot("");
         setDateId(null);
@@ -182,7 +194,7 @@ export const Summon = () => {
       console.log("Date not available:", dateStr);
       setSelectedDate("");
       setSelectedTimeSlot("");
-      setDateId(null); // Reset dateId when selecting an unavailable date
+      setDateId(null); 
     }
   }, [availableDatesMap]);
 
@@ -279,7 +291,7 @@ export const Summon = () => {
           {!isLoading && (
             <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200">
               <Calendar
-                current={new Date().toISOString()}
+                current={new Date().toISOString().split("T")[0]}
                 minDate={summonDates.length > 0 ? summonDates[0].sd_date : new Date().toISOString()}
                 onDayPress={handleDateSelect}
                 markedDates={markedDates}
@@ -309,21 +321,22 @@ export const Summon = () => {
               />
               
               {/* Legend */}
-              <View className="flex-row justify-center mt-6 space-x-6">
+              <View className="flex-row justify-center mt-6 space-x-6 gap-2">
                 <View className="flex-row items-center">
-                  <View className="w-3 h-3 bg-green-600 rounded-full mr-2" />
+                  <View className="w-3 h-3 bg-green-600 rounded-full" />
                   <Text className="text-xs text-gray-600">Selected</Text>
                 </View>
                 <View className="flex-row items-center">
-                  <View className="w-3 h-3 bg-green-500 rounded-full mr-2" />
-                  <Text className="text-xs text-gray-600">Available</Text>
+                  <View className="w-3 h-3 border-2 border-green-500 rounded-full" />
+                  <Text className="text-xs text-gray-600">Today</Text>
                 </View>
                 <View className="flex-row items-center">
-                  <View className="w-3 h-3 bg-red-500 rounded-full mr-2" />
-                  <Text className="text-xs text-gray-600">Unavailable</Text>
+                  <View className="w-3 h-3 bg-gray-100 border border-gray-200 rounded-full" />
+                  <Text className="text-xs text-gray-600">Available</Text>
                 </View>
               </View>
-            </View>
+          </View>
+
           )}
 
           {/* Selected Date Info Card */}
@@ -569,39 +582,7 @@ const BarangayAvailabilityModal: React.FC<BarangayAvailabilityModalProps> = memo
           <Text className="text-gray-700 text-base leading-6">
             {availability.office_hours}
           </Text>
-        </View>
-
-        {/* Mediation Schedule Card */}
-        <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200">
-          <View className="flex-row items-center mb-4">
-            <View className="bg-green-100 p-2 rounded-full mr-3">
-              <Scale size={20} color="#10B981" />
-            </View>
-            <Text className="text-lg font-bold text-gray-900">
-              Mediation Sessions
-            </Text>
-          </View>
-          <View className="space-y-4">
-            <View className="flex-row">
-              <Text className="text-sm font-medium text-gray-500 w-24">Days:</Text>
-              <Text className="text-gray-700 text-sm flex-1">
-                {availability.mediation_schedule.days.join(", ")}
-              </Text>
-            </View>
-            <View className="flex-row">
-              <Text className="text-sm font-medium text-gray-500 w-24">Hours:</Text>
-              <Text className="text-gray-700 text-sm flex-1">
-                {availability.mediation_schedule.hours}
-              </Text>
-            </View>
-            <View className="flex-row">
-              <Text className="text-sm font-medium text-gray-500 w-24">Break:</Text>
-              <Text className="text-gray-700 text-sm flex-1">
-                {availability.mediation_schedule.break}
-              </Text>
-            </View>
-          </View>
-        </View>
+        </View>      
 
         {/* Contact Information Card */}
         <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200">
