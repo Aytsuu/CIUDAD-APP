@@ -11,22 +11,37 @@ import { RegisterToExistingFam } from "../family/RegisterToExistingFam";
 import RegistrationCompletion from "./RegistrationCompletion";
 import { useLocation } from "react-router";
 import ResidentRequestForm from "./form/ResidentRequestForm";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { CompleteResidentProfilingSchema } from "@/form-schema/profiling-schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import { useAddAllProfile } from "../queries/profilingAddQueries";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { useAuth } from "@/context/AuthContext";
+import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
 export default function RegistrationLayout() {
   // --------------- STATE INITIALIZATION ------------------
+  const { user } = useAuth();
+  const { safeNavigate } = useSafeNavigate()
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params, [location.state]);
-
+  const { mutateAsync: addAllProfile } = useAddAllProfile();
   const [currentStep, setCurrentStep] = React.useState<number>(1);
-  const [residentId, setResidentId] = React.useState<string>('');
   const [hasFamily, setHasFamily] = React.useState<boolean>(false);
-  const [addresses, setAddresses] = React.useState<Record<string, any>[]>();
-  const [completed, setCompleted] = React.useState<any[]>([])
+  const [completed, setCompleted] = React.useState<Set<number>>(new Set())
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+
+  const registrationForm = useForm<z.infer<typeof CompleteResidentProfilingSchema>>({
+    resolver: zodResolver(CompleteResidentProfilingSchema),
+    defaultValues: generateDefaultValues(CompleteResidentProfilingSchema)
+  })
 
   const registrationSteps = [
-    { id: 1, label: "Resident", minProgress: 20, icon: UserRoundPlus, onClick: (id: number) => handleProgressSelection(id) },
-    { id: 2, label: "Account", minProgress: 40, icon: CircleUserRound, onClick: (id: number) => handleProgressSelection(id) },
-    { id: 3, label: "Household", minProgress: 60, icon: HousePlus, onClick: (id: number) => handleProgressSelection(id) },
+    { id: 1, label: "Account", minProgress: 20, icon: CircleUserRound, onClick: (id: number) => handleProgressSelection(id) },
+    { id: 2, label: "Resident", minProgress: 40, icon: UserRoundPlus, onClick: (id: number) => handleProgressSelection(id) },
+    { id: 3, label: "House", minProgress: 60, icon: HousePlus, onClick: (id: number) => handleProgressSelection(id) },
     { id: 4, label: "Family", minProgress: 80, icon: UsersRound, onClick: (id: number) => handleProgressSelection(id) },
     { id: 5, label: "Business", minProgress: 100, icon: Store, onClick: (id: number) => handleProgressSelection(id) }
   ];
@@ -39,7 +54,8 @@ export default function RegistrationLayout() {
   ]
 
   // --------------- HANDLERS ------------------
-  const handleProgressSelection = React.useCallback((id: number) => {
+  const handleProgressSelection = React.useCallback((id: number) => { 
+    if(id > currentStep && ![...completed].includes(id)) return;
     if(!id) return;
     setCurrentStep(id)
   }, [])
@@ -56,10 +72,9 @@ export default function RegistrationLayout() {
 
   const setProgress = () => {
     let stepCounter = 1;
-    const newList = completed.sort((a, b) => a - b).filter((step: number) => step > currentStep)
+    const newList = ([...completed]).sort((a, b) => a - b).filter((step: number) => step > currentStep)
     for(const step of newList) {
       const nextStep = currentStep + stepCounter
-      console.log(nextStep !== step)
       if(nextStep !== step) {
         setCurrentStep(nextStep)
         return;
@@ -70,51 +85,108 @@ export default function RegistrationLayout() {
     setCurrentStep((prev) => prev + stepCounter);
   }
 
+  // Check for empty states
+  const isEmpty = (obj: Record<string, any>) =>
+    Object.values(obj).every(val => val === "" || val.length == 0);
+
+  const handleCreate = async () => {
+    try {
+      setIsSubmitting(true);
+      const values = registrationForm.getValues()
+      const { 
+        personalSchema,
+        accountSchema,
+        houseSchema,
+        livingSoloSchema,
+        familySchema,
+        businessSchema
+      } = values;
+
+      // Exclude incomplete profile
+      const noAccount   = ![...completed].includes(1);
+      const notLivingSolo = isEmpty(livingSoloSchema);
+      const noFamily    = isEmpty(familySchema);
+      const noHouse     = ![...completed].includes(3);
+      const noBusiness  = ![...completed].includes(5);
+
+      const {per_id, ...personal} = personalSchema
+      const {files, ...business} = businessSchema
+      
+      const newFiles = files?.map((media: any) => ({
+        name: media.name,
+        type: media.type,
+        file: media.file
+      }))
+
+      // Insertion Query
+      await addAllProfile({
+        personal: personal,
+        ...(!noAccount && {account: accountSchema}),
+        ...(!noHouse && {houses: houseSchema.list}),
+        ...(!notLivingSolo && {livingSolo: livingSoloSchema}),
+        ...(!noFamily && {family: familySchema}),
+        ...(!noBusiness && {business: {...business, files: newFiles}}),
+        staff: user?.staff?.staff_id
+      })
+      
+      // Success feedback
+      showSuccessToast("Successfully added all profile.")
+      registrationForm.reset();
+      safeNavigate.back();
+
+    } catch (err) {
+      showErrorToast("Failed to register all profile. Please try again.")
+    } finally {
+      setIsSubmitting(false);
+    }
+    
+  }
+
   const create = (
     <>
       {currentStep !== 6 && (
         <ProgressWithIcon
           progress={calculateProgress()}
           steps={registrationSteps}
-          completed={completed}
+          completed={[...completed]}
         />
       )}
       <div className="mt-6">
         {currentStep === 1 && (
-          <ResidentCreateForm 
-            params={{
+          <AccountRegistrationLayout 
+            tab_params={{
               isRegistrationTab: true,
-              setResidentId: (rp_id: string) => setResidentId(rp_id),
-              setAddresses: (addresses: Record<string, any>[]) => setAddresses(addresses),
               next: (compeleteness: boolean) => {
-                if(compeleteness) setCompleted((prev) => [...prev, 1]);
+                if(compeleteness) setCompleted((prev) => new Set([...prev, 1]));
+                else setCompleted((prev) => new Set([...prev].filter((id) => id !== 1)))
                 setProgress()
-              }
+              },
+              form: registrationForm
             }}
           />
         )}
         {currentStep === 2 && (
-          <AccountRegistrationLayout 
-            tab_params={{
-              residentId: residentId,
+          <ResidentCreateForm 
+            params={{
               isRegistrationTab: true,
               next: (compeleteness: boolean) => {
-                if(compeleteness) setCompleted((prev) => [...prev, 2]);
+                if(compeleteness) setCompleted((prev) => new Set([...prev, 2]));
                 setProgress()
-              }
+              },  
+              form: registrationForm
             }}
           />
         )}
         {currentStep === 3 && (
           <HouseholdFormLayout 
             tab_params={{
-              residentId: residentId,
-              addresses: addresses,
               isRegistrationTab: true,
               next: (compeleteness: boolean) => {
-                if(compeleteness) setCompleted((prev) => [...prev, 3]);
+                if(compeleteness) setCompleted((prev) => new Set([...prev, 3]));
+                else setCompleted((prev) => new Set([...prev].filter((id) => id !== 3)))
                 setProgress()
-              }
+              },
+              form: registrationForm
             }}
           />
         )}
@@ -123,24 +195,30 @@ export default function RegistrationLayout() {
               {!hasFamily ? (
                 <SoloFormLayout 
                   tab_params={{
-                    residentId: residentId,
                     isRegistrationTab: true,
                     next: (compeleteness: boolean) => {
-                      if(compeleteness) setCompleted((prev) => [...prev, 4]);
+                      if(compeleteness) setCompleted((prev) => new Set([...prev, 4]));
                       setProgress()
                     },
-                    setHasFamily: (value: boolean) => setHasFamily(value)
+                    setHasFamily: (value: boolean) => {
+                      registrationForm.resetField("livingSoloSchema")
+                      setHasFamily(value)
+                    },
+                    form: registrationForm
                   }}
                 />
               ) : (
                 <RegisterToExistingFam 
                   tab_params={{
-                    residentId: residentId,
                     next: (compeleteness: boolean) => {
-                      if(compeleteness) setCompleted((prev) => [...prev, 4]);
+                      if(compeleteness) setCompleted((prev) => new Set([...prev, 4]));
                       setProgress()
                     },
-                    setHasFamily: (value: boolean) => setHasFamily(value)
+                    setHasFamily: (value: boolean) => {
+                      registrationForm.resetField("familySchema")
+                      setHasFamily(value)
+                    },
+                    form: registrationForm
                   }}
                 />
               )}
@@ -149,20 +227,25 @@ export default function RegistrationLayout() {
         {currentStep === 5 && (
           <BusinessFormLayout 
             tab_params={{
-              residentId: residentId,
               isRegistrationTab: true,
               type: "create",
               next: (compeleteness: boolean) => {
-                if(compeleteness) setCompleted((prev) => [...prev, 5]);
+                if(compeleteness) setCompleted((prev) => new Set([...prev, 5]));
+                else setCompleted((prev) => new Set([...prev].filter((id) => id !== 5)))
                 setProgress()
-              }
+              },
+              form: registrationForm  
             }}
           />
         )}
         {currentStep === 6 && ( // Completion page with animation
           <RegistrationCompletion 
-            steps={registrationSteps}
-            completed={completed}
+            params={{
+              steps: registrationSteps,
+              completed: [...completed],
+              register: handleCreate,
+              isSubmitting: isSubmitting
+            }}
           />
         )}
       </div>
@@ -175,17 +258,15 @@ export default function RegistrationLayout() {
         <ProgressWithIcon
           progress={calculateProgress()}
           steps={requestSteps}
-          completed={completed}
+          completed={[...completed]}
         />
       )}
       {currentStep === 1 && (
         <ResidentRequestForm 
           params={{
             data: params?.data,
-            setResidentId: (rp_id: string) => setResidentId(rp_id),
-            setAddresses: (addresses: Record<string, any>[]) => setAddresses(addresses),
             nnext: (compeleteness: boolean) => {
-              if(compeleteness) setCompleted((prev) => [...prev, 1]);
+              if(compeleteness) setCompleted((prev) => new Set([...prev, 1]));
               setProgress()
             }
           }}
@@ -194,11 +275,9 @@ export default function RegistrationLayout() {
       {currentStep === 2 && (
         <HouseholdFormLayout 
           tab_params={{
-            residentId: residentId,
-            addresses: addresses,
             isRegistrationTab: true,
             next: (compeleteness: boolean) => {
-              if(compeleteness) setCompleted((prev) => [...prev, 2]);
+              if(compeleteness) setCompleted((prev) => new Set([...prev, 2]));
               setProgress()
             }
           }}
@@ -209,10 +288,9 @@ export default function RegistrationLayout() {
             {!hasFamily ? (
               <SoloFormLayout 
                 tab_params={{
-                  residentId: residentId,
                   isRegistrationTab: true,
                   next: (compeleteness: boolean) => {
-                    if(compeleteness) setCompleted((prev) => [...prev, 3]);
+                    if(compeleteness) setCompleted((prev) => new Set([...prev, 3]));
                     setProgress()
                   },
                   setHasFamily: (value: boolean) => setHasFamily(value)
@@ -221,9 +299,8 @@ export default function RegistrationLayout() {
             ) : (
               <RegisterToExistingFam 
                 tab_params={{
-                  residentId: residentId,
                   next: (compeleteness: boolean) => {
-                    if(compeleteness) setCompleted((prev) => [...prev, 3]);
+                    if(compeleteness) setCompleted((prev) => new Set([...prev, 3]));
                     setProgress()
                   },
                   setHasFamily: (value: boolean) => setHasFamily(value)
@@ -235,10 +312,9 @@ export default function RegistrationLayout() {
       {currentStep === 4 && (
         <BusinessFormLayout 
           tab_params={{
-            residentId: residentId,
             isRegistrationTab: true,
             next: (compeleteness: boolean) => {
-              if(compeleteness) setCompleted((prev) => [...prev, 4]);
+              if(compeleteness) setCompleted((prev) => new Set([...prev, 4]));
               setProgress()
             }
           }}
@@ -246,8 +322,11 @@ export default function RegistrationLayout() {
       )}
       {currentStep === 5 && (
         <RegistrationCompletion 
-          steps={requestSteps}
-          completed={completed}
+          params={{
+            steps: requestSteps,
+            completed: [...completed],
+            form: registrationForm,
+          }}
         />
       )}
     </>

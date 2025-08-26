@@ -1,11 +1,8 @@
 import React from "react"
-import type { z } from "zod"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { Label } from "@/components/ui/label"
-import type { UseFormReturn } from "react-hook-form"
-import type { businessFormSchema } from "@/form-schema/profiling-schema"
 import { MediaUpload, type MediaUploadType } from "@/components/ui/media-upload"
 import { renderActionButton } from "../ProfilingActionConfig"
 import { Type } from "../ProfilingEnums"
@@ -30,6 +27,7 @@ export default function BusinessProfileForm({
   addresses,
   validAddresses,
   isRegistrationTab,
+  prefix = "",
   isModificationRequest,
   formattedResidents,
   formType,
@@ -45,16 +43,16 @@ export default function BusinessProfileForm({
   setMediaFiles,
   setActiveVideoId,
   submit,
-  handleSkip
 }: {
   addresses?: any[];
   validAddresses?: boolean[];
   isRegistrationTab: boolean
+  prefix?: string
   isModificationRequest: boolean
   formattedResidents: any
   formType: Type
   sitio: any
-  form: UseFormReturn<z.infer<typeof businessFormSchema>>
+  form: any
   isSubmitting: boolean
   isReadOnly: boolean
   mediaFiles: MediaUploadType
@@ -66,7 +64,6 @@ export default function BusinessProfileForm({
   setMediaFiles: React.Dispatch<React.SetStateAction<MediaUploadType>>
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>
   submit: () => void,
-  handleSkip: () => void
 }) {
   const watchedValues = form.watch()
   const residentSelected = watchedValues?.rp_id ? true : false;
@@ -389,7 +386,7 @@ export default function BusinessProfileForm({
             <div className="lg:col-span-2">
               <FormInput
                 control={form.control}
-                name="bus_name"
+                name={`${prefix}bus_name`}
                 label="Business Name"
                 placeholder="Enter the official business name"
                 readOnly={isReadOnly}
@@ -406,10 +403,11 @@ export default function BusinessProfileForm({
                   <div>
                     <FormInput
                       control={form.control}
-                      name="bus_gross_sales"
+                      name={`${prefix}bus_gross_sales`}
                       label="Annual Gross Sales (₱)"
                       placeholder="0.00"
                       readOnly={isReadOnly}
+                      type="number"
                     />
                   </div>
                 }
@@ -428,7 +426,7 @@ export default function BusinessProfileForm({
             <div>
               <FormSelect
                 control={form.control}
-                name="sitio"
+                name={`${prefix}sitio`}
                 label="Sitio/Location"
                 options={sitio}
                 readOnly={isReadOnly}
@@ -443,7 +441,7 @@ export default function BusinessProfileForm({
             <div>
               <FormInput
                 control={form.control}
-                name="bus_street"
+                name={`${prefix}bus_street`}
                 label="Business Street Address"
                 placeholder="Building name/number, street name, landmarks"
                 readOnly={isReadOnly}
@@ -500,24 +498,13 @@ export default function BusinessProfileForm({
       </div>
       <Separator />
       {/* Action Buttons */}
-      {!isModificationRequest && 
+      {!isModificationRequest && !isRegistrationTab &&
         <div className="p-10">
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-600">
               {!isReadOnly && <p>Make sure all required information is complete before submitting.</p>}
             </div>
             <div className="flex gap-3">
-              {isRegistrationTab && 
-                <Button
-                  variant="ghost"
-                  className="flex-1 h-11"
-                  type="button"
-                  onClick={handleSkip}
-                  disabled={isSubmitting}
-                >
-                  Skip for Now
-                </Button>
-              }
               {renderActionButton({
                 formType,
                 origin: "defaultOrigin",

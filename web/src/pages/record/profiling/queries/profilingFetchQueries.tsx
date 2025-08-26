@@ -82,7 +82,8 @@ export const usePersonalHistory = (per_id: string) => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 5000,
+    enabled: !!per_id
   })
 }
 
@@ -97,7 +98,7 @@ export const useResidentsList = (
       if(disable) return [];
       return getResidentsList(is_staff, exclude_independent)
     },
-    staleTime: 5000,
+    staleTime: 5000,  
   });
 };
 
@@ -262,6 +263,7 @@ export const useBusinessInfo = (busId: number) => {
       }
     },
     staleTime: 5000,
+    enabled: !!busId
   });
 }
 
@@ -281,7 +283,8 @@ export const useBusinessHistory = (busId: string) => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 5000,
+    enabled: !!busId
   })
 }
 

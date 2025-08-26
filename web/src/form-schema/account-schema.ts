@@ -38,7 +38,16 @@ export const AccountUpdateSchema = z.object({
 
 export const accountFormSchema = z.object({
   username: z.string().min(1, "Username is required"),
-  email: z.string().email("Invalid email address"),
+  email: z.string(),
+  phone: z.string()
+    .min(1, "Contact is required")
+    .regex(
+      /^09\d{9}$/,
+      "Must be a valid mobile number (e.g., 09171234567)"
+    )
+    .refine((val) => val.length === 11, {
+      message: "Must be 11 digits (e.g., 09171234567)",
+    }),
   password: z.string().min(6, "Password must be at least 6 characters long"),
 });
 

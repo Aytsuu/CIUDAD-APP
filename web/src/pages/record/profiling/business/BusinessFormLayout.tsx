@@ -9,7 +9,7 @@ import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { businessFormSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { FileText, MapPin, User, Database, Store, Loader2, Clock, History } from "lucide-react"
+import { FileText, MapPin, User, Database, Store, Loader2, Clock, History, Check } from "lucide-react"
 import { Form } from "@/components/ui/form/form"
 import { Type } from "../ProfilingEnums"
 import { useAuth } from "@/context/AuthContext"
@@ -118,6 +118,13 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
       setMediaFiles(businessInfo?.files)
     }
   }, [businessInfo, formType])
+
+  React.useEffect(() => {
+    const files = tab_params?.form.getValues().businessSchema.files;
+    if(files?.length > 0) {
+      setMediaFiles(files)
+    }
+  }, [tab_params?.files])
   
   // --------------------- HANDLERS -----------------------
   const getFormTitle = () => {
@@ -294,6 +301,22 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     }
   }
 
+  const handleFinish = async () => {
+    if(!(await tab_params?.form.trigger(["businessSchema"]))) {
+      showErrorToast("Please fill out all required fields.");
+      return;
+    }
+
+    if (mediaFiles.length == 0) {
+      showErrorToast("Please upload supporting documents")
+      return
+    }
+
+    tab_params?.form.setValue("businessSchema.files", mediaFiles)
+    console.log(tab_params?.form.getValues().businessSchema)
+    tab_params?.next(true)
+  }
+
   // Function to handle form submission
   const submit = async () => {
     const validateRespondent = form.watch("rp_id") ? "rp_id" : "respondent";
@@ -445,6 +468,54 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     </Card>
   )
 
+  const MainContent = (
+    <>
+      {isBusinessInfoLoading ? (<BusinessInfoLoading />) : (
+        <div className="flex gap-4">
+          <div className="w-full">
+            {formType !== Type.Create && !tab_params?.isRegistrationTab && respondentView()}
+            <Card className="w-full rounded-t-none border-t-0">
+              <Form {...(tab_params?.isRegistrationTab ? tab_params?.form : form)}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    submit()
+                  }}
+                  className="space-y-6"
+                >
+                  <BusinessProfileForm
+                    addresses={addresses}
+                    validAddresses={validAddresses}
+                    isRegistrationTab={tab_params?.isRegistrationTab}
+                    prefix={tab_params?.isRegistrationTab ? "businessSchema." : ""}
+                    isModificationRequest = {!!modRequest}
+                    formattedResidents={formattedResidents}
+                    formType={formType}
+                    sitio={formattedSitio}
+                    form={tab_params?.isRegistrationTab ? tab_params?.form : form}
+                    isSubmitting={isSubmitting}
+                    isReadOnly={isReadOnly}
+                    mediaFiles={mediaFiles}
+                    activeVideoId={activeVideoId}
+                    url={params.business?.bus_doc_url}
+                    setAddresses={setAddresses}
+                    setValidAddresses={setValidAddresses}
+                    setFormType={setFormType}
+                    setMediaFiles={setMediaFiles}
+                    setActiveVideoId={setActiveVideoId}
+                    submit={submit}
+                  />
+                </form>
+              </Form>
+            </Card>
+          </div>
+          {modRequest && (
+            <ModificationRequest data={modRequest}/>
+          )}
+        </div>
+      )}
+    </>
+  )
 
   const residentRegistrationForm = () => (
     <div className="w-full flex justify-center px-4">
@@ -478,6 +549,21 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
           {/* Form Content */}
           <div className="p-6">
             {MainContent}
+            <div className="flex justify-end mt-8">
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  className="flex-1"  
+                  onClick={handleSkip}
+                  disabled={isSubmitting}
+                >
+                  Skip for Now
+                </Button>
+                <Button onClick={handleFinish}>
+                  <Check/> Finish
+                </Button>
+              </div>
+            </div>
           </div>
 
           {/* Help Section */}
@@ -517,55 +603,6 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
         </CardContent>
       </Card>
     </div>
-  )
-
-  const MainContent = (
-    <>
-      {isBusinessInfoLoading ? (<BusinessInfoLoading />) : (
-        <div className="flex gap-4">
-          <div className="w-full">
-            {formType !== Type.Create && !tab_params?.isRegistrationTab && respondentView()}
-            <Card className="w-full rounded-t-none border-t-0">
-              <Form {...form}>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    submit()
-                  }}
-                  className="space-y-6"
-                >
-                  <BusinessProfileForm
-                    addresses={addresses}
-                    validAddresses={validAddresses}
-                    isRegistrationTab={tab_params?.isRegistrationTab}
-                    isModificationRequest = {!!modRequest}
-                    formattedResidents={formattedResidents}
-                    formType={formType}
-                    sitio={formattedSitio}
-                    form={form}
-                    isSubmitting={isSubmitting}
-                    isReadOnly={isReadOnly}
-                    mediaFiles={mediaFiles}
-                    activeVideoId={activeVideoId}
-                    url={params.business?.bus_doc_url}
-                    setAddresses={setAddresses}
-                    setValidAddresses={setValidAddresses}
-                    setFormType={setFormType}
-                    setMediaFiles={setMediaFiles}
-                    setActiveVideoId={setActiveVideoId}
-                    submit={submit}
-                    handleSkip={handleSkip}
-                  />
-                </form>
-              </Form>
-            </Card>
-          </div>
-          {modRequest && (
-            <ModificationRequest data={modRequest}/>
-          )}
-        </div>
-      )}
-    </>
   )
 
   const standardForm = () => (
