@@ -4,7 +4,7 @@ from ..models import *
 from ..serializers.medicine_serializers import *
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, Q
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
@@ -82,17 +82,341 @@ class MedicineListUpdateView(generics.RetrieveUpdateAPIView):
        return obj
        
        
-class MedicineInventoryView(generics.ListCreateAPIView):
-    serializer_class=MedicineInventorySerializer
-    queryset=MedicineInventory.objects.all()
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+class MedicineStockTableView(APIView):
+    """
+    API view for medicine stocks with pagination, search, and filtering
+    """
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        try:
+            self.auto_archive_expired_medicines()
+            
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            stock_filter = request.GET.get('filter', 'all').lower()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            # Get medicine stocks with related data (not archived)
+            medicine_stocks = MedicineInventory.objects.select_related(
+                'med_id', 'inv_id'
+            ).filter(inv_id__is_Archived=False)
+            
+            # Apply search filter if provided
+            if search_query:
+                medicine_stocks = medicine_stocks.filter(
+                    Q(med_id__med_name__icontains=search_query) |
+                    Q(inv_id__inv_id__icontains=search_query) |
+                    Q(minv_dsg_unit__icontains=search_query)
+                )
+            
+            # Calculate today's date for expiry comparisons
+            today = timezone.now().date()
+            
+            combined_data = []
+            filter_counts = {
+                'out_of_stock': 0,
+                'low_stock': 0,
+                'near_expiry': 0,
+                'expired': 0,
+                'total': 0
+            }
+            
+            # Process medicine stocks
+            for stock in medicine_stocks:
+                # Calculate total pieces
+                if stock.minv_qty_unit.lower() == "boxes":
+                    total_pcs = stock.minv_qty * stock.minv_pcs
+                else:
+                    total_pcs = stock.minv_qty
+                
+                # Calculate available stock
+                available_stock = stock.minv_qty_avail
+                
+                # Check expiry status
+                expiry_date = stock.inv_id.expiry_date if stock.inv_id else None
+                is_expired = expiry_date and expiry_date < today if expiry_date else False
+                
+                # Check near expiry (within 30 days)
+                is_near_expiry = False
+                if expiry_date and not is_expired:
+                    days_until_expiry = (expiry_date - today).days
+                    is_near_expiry = 0 < days_until_expiry <= 30
+                
+                # Check low stock based on unit type
+                if stock.minv_qty_unit.lower() == "boxes":
+                    # For boxes, low stock threshold is 2 boxes
+                    is_low_stock = available_stock <= 2
+                else:
+                    # For pieces, low stock threshold is 20 pcs
+                    is_low_stock = available_stock <= 20
+                
+                # Check out of stock
+                is_out_of_stock = available_stock <= 0
+                
+                # Update filter counts (only count non-archived items)
+                if not stock.inv_id.is_Archived if stock.inv_id else False:
+                    filter_counts['total'] += 1
+                    if is_out_of_stock:
+                        filter_counts['out_of_stock'] += 1
+                    if is_low_stock and not is_expired:
+                        filter_counts['low_stock'] += 1
+                    if is_near_expiry:
+                        filter_counts['near_expiry'] += 1
+                    if is_expired:
+                        filter_counts['expired'] += 1
+                
+                # Apply filter
+                if stock_filter != 'all':
+                    if stock_filter == 'expired' and not is_expired:
+                        continue
+                    elif stock_filter == 'near_expiry' and not is_near_expiry:
+                        continue
+                    elif stock_filter == 'low_stock' and not is_low_stock:
+                        continue
+                    elif stock_filter == 'out_of_stock' and not is_out_of_stock:
+                        continue
+                
+                # Calculate used quantity
+                if stock.minv_qty_unit.lower() == "boxes":
+                    used_qty = total_pcs - available_stock
+                    used_display = f"{used_qty} pcs"
+                else:
+                    used_qty = stock.minv_qty - available_stock
+                    used_display = f"{used_qty} {stock.minv_qty_unit}"
+                
+                item_data = {
+                    'type': 'medicine',
+                    'id': stock.minv_id,
+                    'batchNumber': stock.inv_id.inv_id if stock.inv_id else "N/A",
+                    'category': stock.med_id.cat.cat_name if stock.med_id and stock.med_id.cat else "N/A",
+                    'item': {
+                        'medicineName': stock.med_id.med_name if stock.med_id else "Unknown Medicine",
+                        'dosage': stock.minv_dsg,
+                        'dsgUnit': stock.minv_dsg_unit,
+                        'form': stock.minv_form,
+                    },
+                    'qty': {
+                        'qty': stock.minv_qty,
+                        'pcs': stock.minv_pcs,
+                    },
+                    'minv_qty_unit': stock.minv_qty_unit,
+                    'administered': used_display,
+                    'wasted': "0",  # Add if you have wasted medicine tracking
+                    'availableStock': available_stock,
+                    'expiryDate': expiry_date.isoformat() if expiry_date else None,
+                    'inv_id': stock.inv_id.inv_id if stock.inv_id else None,
+                    'med_id': stock.med_id.med_id if stock.med_id else None,
+                    'minv_id': stock.minv_id,
+                    'qty_number': stock.minv_qty,
+                    'isArchived': stock.inv_id.is_Archived if stock.inv_id else False,
+                    'created_at': stock.created_at.isoformat() if stock.created_at else None,
+                    'isExpired': is_expired,
+                    'isNearExpiry': is_near_expiry,
+                    'isLowStock': is_low_stock,
+                    'isOutOfStock': is_out_of_stock
+                }
+                
+                combined_data.append(item_data)
+            
+            # Sort by ID descending
+            combined_data.sort(key=lambda x: x['id'], reverse=True)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginated_data = paginator.paginate_queryset(combined_data, request)
+            
+            if paginated_data is not None:
+                # Create custom response with both paginated data and filter counts
+                response = paginator.get_paginated_response(paginated_data)
+                # Add filter_counts to the response data
+                response_data = response.data
+                response_data['filter_counts'] = filter_counts
+                return Response(response_data)
+            
+            return Response({
+                'success': True,
+                'data': combined_data,
+                'count': len(combined_data),
+                'filter_counts': filter_counts
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching medicine stock data: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def auto_archive_expired_medicines(self):
+        """Auto-archive medicines that expired more than 10 days ago"""
+        from datetime import timedelta
+        
+        today = timezone.now().date()
+        archive_date = today - timedelta(days=10)
+        
+        print(f"Auto-archiving medicine items expired before: {archive_date}")
+        
+        # Archive expired medicine stocks
+        medicine_stocks = MedicineInventory.objects.select_related('inv_id').filter(
+            inv_id__expiry_date__lte=archive_date,
+            inv_id__is_Archived=False
+        )
+        
+        archived_medicine_count = 0
+        for stock in medicine_stocks:
+            stock.inv_id.is_Archived = True
+            stock.inv_id.save()
+            archived_medicine_count += 1
+            print(f"Archived medicine stock: {stock.minv_id}, Expiry: {stock.inv_id.expiry_date}")
+        
+        print(f"Auto-archived {archived_medicine_count} medicine items")  
+
+class MedicineInventoryView(generics.ListAPIView):
+    serializer_class = MedicineInventorySerializer
+    queryset = MedicineInventory.objects.all()
     def get_queryset(self):
         # Filter out MedicineInventory entries where the related Inventory is archived
         queryset = MedicineInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
         return queryset
-    
 
+class MedicineStockCreate(APIView):
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            
+            # Step 1: Create Inventory
+            inventory_data = self._prepare_inventory_data(data)
+            inventory_serializer = InventorySerializers(data=inventory_data)
+            
+            if not inventory_serializer.is_valid():
+                return Response({
+                    'error': 'Inventory validation failed',
+                    'details': inventory_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            inventory = inventory_serializer.save()
+            inv_id = inventory.inv_id
+            
+            # Step 2: Create MedicineInventory
+            medicine_inventory_data = self._prepare_medicine_inventory_data(data, inv_id)
+            medicine_inventory_serializer = MedicineInventorySerializer(data=medicine_inventory_data)
+            
+            if not medicine_inventory_serializer.is_valid():
+                return Response({
+                    'error': 'MedicineInventory validation failed',
+                    'details': medicine_inventory_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            medicine_inventory = medicine_inventory_serializer.save()
+            minv_id = medicine_inventory.minv_id
+            
+            # Step 3: Create MedicineTransaction
+            medicine_transaction_data = self._prepare_medicine_transaction_data(data, minv_id)
+            medicine_transaction_serializer = MedicineTransactionSerializers(data=medicine_transaction_data)
+            
+            if not medicine_transaction_serializer.is_valid():
+                return Response({
+                    'error': 'MedicineTransaction validation failed',
+                    'details': medicine_transaction_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            medicine_transaction = medicine_transaction_serializer.save()
+            
+            # Return success response with all created IDs
+            return Response({
+                'success': True,
+                'message': 'Medicine stock created successfully',
+                'data': {
+                    'inv_id': inv_id,
+                    'minv_id': minv_id,
+                    'mdt_id': medicine_transaction.mdt_id
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            # Transaction will be automatically rolled back due to @transaction.atomic
+            return Response({
+                'error': 'Failed to create medicine stock',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _prepare_inventory_data(self, data):
+        """Prepare inventory data from request"""
+        return {
+            'expiry_date': data.get('expiry_date'),
+            'inv_type': data.get('inv_type', 'medicine'),  # default type
+            'is_Archived': False
+        }
+    
+    def _prepare_medicine_inventory_data(self, data, inv_id):
+        """Prepare medicine inventory data from request"""
+        # Handle nested data structure if present
+        if 'data' in data:
+            nested_data = data.get('data', {})
+            medicine_data = {
+                **nested_data,
+                'medicineID': data.get('medicineID'),
+                'inv_id': inv_id
+            }
+        else:
+            medicine_data = data.copy()
+            medicine_data['inv_id'] = inv_id
+        
+        # Validate medicineID
+        medicine_id = medicine_data.get('medicineID')
+        if not medicine_id:
+            raise ValueError("Medicine ID is required and cannot be empty.")
+
+        medicine_data['med_id'] = medicine_id  # Calculate quantities based on unit
+        is_boxes = medicine_data.get('unit') == 'boxes'
+        qty = int(medicine_data.get('qty', 0))
+        pcs_per_box = int(medicine_data.get('pcs', 0)) if is_boxes else 0
+        
+        # Map frontend fields to backend fields and set calculated fields
+        medicine_data.update({
+            'minv_dsg': int(medicine_data.get('dosage', 0)),
+            'minv_dsg_unit': medicine_data.get('dsgUnit', 'N/A'),
+            'minv_form': medicine_data.get('form', 'N/A'),
+            'minv_qty': qty,
+            'minv_qty_unit': medicine_data.get('unit', 'N/A'),
+            'minv_pcs': pcs_per_box
+        })
+        
+        # Calculate total available quantity
+        if is_boxes:
+            medicine_data['minv_qty_avail'] = qty * pcs_per_box
+        else:
+            medicine_data['minv_qty_avail'] = qty
+        
+        # Handle staff field
+        staff = medicine_data.get('staff')
+        if staff:
+            medicine_data['staff'] = int(staff)
+        else:
+            medicine_data['staff'] = None
+        
+        return medicine_data
+    
+    def _prepare_medicine_transaction_data(self, data, minv_id):
+        """Prepare medicine transaction data from request"""
+        qty_unit = data.get('unit')
+        qty = data.get('qty', 0)
+        pcs = data.get('pcs', 0)
+        
+        # Format quantity string based on unit
+        if qty_unit == 'boxes':
+            mdt_qty = f"{qty} boxes ({pcs} pcs per box)"
+        else:
+            mdt_qty = f"{qty} {qty_unit}"
+        
+        return {
+            'mdt_qty': mdt_qty,
+            'mdt_action': 'Added',
+            'minv_id': minv_id,
+            'staff': data.get('staff')  # Include staff if provided
+        }
 class MedicineInvRetrieveView(generics.RetrieveUpdateAPIView):
     serializer_class=MedicineInventorySerializer
     queryset = MedicineInventory.objects.all()

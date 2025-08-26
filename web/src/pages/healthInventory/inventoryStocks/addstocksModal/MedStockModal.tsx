@@ -21,7 +21,7 @@ import { fetchMedicines } from "../REQUEST/Medicine/restful-api/MedicineFetchAPI
 
 export default function AddMedicineStock() {
   const { user } = useAuth();
-  const staff_id = user?.staff?.staff_id;
+  const staff = user?.staff?.staff_id || "";
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
     defaultValues: {
@@ -33,7 +33,9 @@ export default function AddMedicineStock() {
       qty: undefined,
       unit: "boxes",
       pcs: undefined,
-      expiryDate: new Date().toISOString().split("T")[0]
+      expiry_date:"",
+      staff:staff,
+      inv_type:"Medicine"
     }
   });
 
@@ -55,7 +57,7 @@ export default function AddMedicineStock() {
   const confirmAdd = async () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit({ data: formData, staff_id });
+    submit({ data: formData });
   };
 
   return (
@@ -90,7 +92,7 @@ export default function AddMedicineStock() {
 
             <FormInput control={form.control} name="category" label="Category" readOnly />
 
-            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date" />
+            <FormDateTimeInput control={form.control} name="expiry_date" label="Expiry Date" type="date" />
 
           </div>
 

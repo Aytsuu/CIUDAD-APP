@@ -39,6 +39,10 @@ class Medicinelist(models.Model):
                 last_num = 1
                 
             self.med_id = f"{prefix}{last_num:03d}"
+            
+        if self.med_name:
+            self.med_name = self.med_name.title()
+        
         
         super().save(*args, **kwargs)
             
@@ -80,6 +84,10 @@ class CommodityList(models.Model):
                 last_num = 1
                 
             self.com_id = f"{prefix}{last_num:03d}"
+            
+        if self.com_name:
+            self.com_name = self.com_name.title()
+        
         
         super().save(*args, **kwargs)
             
@@ -109,8 +117,13 @@ class FirstAidList(models.Model):
                 last_num = 1
                 
             self.fa_id = f"{prefix}{last_num:03d}"
-        
+            
+        if self.fa_name:
+            self.fa_name = self.fa_name.title()
+            
         super().save(*args, **kwargs)
+        
+        
 
 class Inventory(models.Model):
     inv_id = models.CharField(max_length=20, primary_key=True)
@@ -181,7 +194,6 @@ class MedicineTransactions(models.Model):
     mdt_id =models.BigAutoField(primary_key=True)
     mdt_qty = models.CharField(max_length=100)
     mdt_action = models.CharField(max_length=100)
-    staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_transaction', null=True, blank=True)  
     minv_id = models.ForeignKey('MedicineInventory', on_delete=models.PROTECT,related_name='medicine_transaction',  db_column='minv_id')
@@ -213,7 +225,6 @@ class CommodityTransaction(models.Model):
     comt_id =models.BigAutoField(primary_key=True)
     comt_qty = models.CharField(max_length=100)
     comt_action = models.CharField(max_length=100)
-    staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     cinv_id = models.ForeignKey('CommodityInventory', on_delete=models.PROTECT,related_name='commodity_transaction',  db_column='cinv_id')
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='commodity_transaction', null=True, blank=True)  
@@ -244,7 +255,6 @@ class FirstAidTransactions(models.Model):
     fat_id =models.BigAutoField(primary_key=True)
     fat_qty = models.CharField(max_length=100)
     fat_action = models.CharField(max_length=100)
-    staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     finv_id = models.ForeignKey('FirstAidInventory', on_delete=models.PROTECT,  db_column='finv_id')
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='firstaid_transaction', null=True, blank=True)  
@@ -392,17 +402,6 @@ class ImmunizationStock(models.Model):
         ordering = ['-created_at']
         
   
-class ImmunizationTransaction(models.Model):
-    imzt_id =models.BigAutoField(primary_key=True)
-    imzt_qty = models.CharField(max_length=100)
-    imzt_action = models.CharField(max_length=100)
-    staff = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)  
-    imzStck_id = models.ForeignKey('ImmunizationStock', on_delete=models.PROTECT, db_column='imzStck_id')
-
-    class Meta:
-        db_table = 'immunization_transaction'
-        
 
 class AntigenTransaction(models.Model):
     antt_id =models.BigAutoField(primary_key=True)

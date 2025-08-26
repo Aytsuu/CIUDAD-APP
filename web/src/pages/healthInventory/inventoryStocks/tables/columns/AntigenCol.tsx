@@ -1,19 +1,15 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { StockRecords } from "../type";
-import { Minus } from "lucide-react";
+import { Minus, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import { Archive } from "lucide-react";
-import { Link } from "react-router";
-import { isNearExpiry, isExpired, isLowStock } from "../../../../../helpers/StocksAlert"; // Import the alert functions
+import { Link } from "react-router-dom";
 
 export const getStockColumns = (
   handleArchiveInventory: (inv_id: string) => void
-): ColumnDef<StockRecords>[] => [
+): ColumnDef<any>[] => [
   {
     accessorKey: "created_at",
     header: "Date",
     cell: ({ row }) => {
-      console.log("Row data:", row.original); // Debugging
       const dateString = row.original.created_at;
       
       if (!dateString) {
@@ -28,7 +24,6 @@ export const getStockColumns = (
               year: 'numeric',
               month: 'short',
               day: 'numeric',
-            
             })}
           </div>
         );
@@ -43,20 +38,25 @@ export const getStockColumns = (
     header: "ID",
     cell: ({ row }) => (
       <div className="text-center bg-snow p-2 rounded-md text-gray-700">
-        {row.original.inv_id}
+        {row.original.inv_id || "N/A"}
       </div>
     )
   },
   {
     accessorKey: "batchNumber",
     header: "Batch Number",
+    cell: ({ row }) => (
+      <div className="text-center">
+        {row.original.batchNumber || "N/A"}
+      </div>
+    )
   },
   {
     accessorKey: "item",
     header: "Item Details",
     cell: ({ row }) => {
       const item = row.original.item;
-      const expired = isExpired(row.original.expiryDate);
+      const expired = row.original.isExpired;
       return (
         <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
           <div
@@ -64,7 +64,7 @@ export const getStockColumns = (
               expired ? "line-through" : ""
             }`}
           >
-            {item.antigen}
+            {item?.antigen || "Unknown Item"}
             {expired && " (Expired)"}
           </div>
           {row.original.type === "vaccine" && (
@@ -73,7 +73,7 @@ export const getStockColumns = (
                 expired ? "text-red-500" : "text-gray-600"
               }`}
             >
-              {item.dosage} {item.unit}
+              {item?.dosage || 0} {item?.unit || ""}
             </div>
           )}
         </div>
@@ -84,36 +84,30 @@ export const getStockColumns = (
     accessorKey: "qty",
     header: "Total Qty",
     cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
+      const expired = row.original.isExpired;
       return (
         <div
           className={`text-center ${
             expired ? "text-red-600 line-through" : ""
           }`}
         >
-          {row.original.qty}
+          {row.original.qty || "0"}
           {expired && " (Expired)"}
         </div>
       );
     },
   },
-
   {
     accessorKey: "availableStock",
     header: "Available Stock",
     cell: ({ row }) => {
       const record = row.original;
-      const expired = isExpired(record.expiryDate);
-      const isLow =
-        !expired &&
-        isLowStock(
-          record.availableStock,
-          record.type === "vaccine" ? "vials" : record.imzStck_unit,
-          record.dose_ml || record.imzStck_pcs
-        );
+      const expired = record.isExpired;
+      const isLow = record.isLowStock;
+      const isOutOfStock = record.isOutOfStock;
 
       if (record.type === "vaccine") {
-        if (record.solvent === "diluent") {
+        if (record.solvent?.toLowerCase() === "diluent") {
           return (
             <div
               className={`text-center ${
@@ -127,14 +121,14 @@ export const getStockColumns = (
               {record.availableStock} containers
               {expired && " (Expired)"}
               {isLow && " (Low Stock)"}
+              {isOutOfStock && !expired && " (Out of Stock)"}
             </div>
           );
         }
 
-        const dosesPerVial = record.dose_ml;
+        const dosesPerVial = record.dose_ml || 1;
         const availableDoses = record.availableStock;
         const fullVials = Math.ceil(availableDoses / dosesPerVial);
-        const leftoverDoses = availableDoses % dosesPerVial;
 
         return (
           <div
@@ -154,20 +148,19 @@ export const getStockColumns = (
               {fullVials} vial{fullVials !== 1 ? "s" : ""}
               {expired && " (Expired)"}
               {isLow && " (Low Stock)"}
+              {isOutOfStock && !expired && " (Out of Stock)"}
             </span>
             <span className={expired ? "text-red-500" : "text-blue-500"}>
-              ({availableDoses} dose/s)
+              ({availableDoses} dose{availableDoses !== 1 ? "s" : ""})
             </span>
           </div>
         );
       }
 
       if (record.type === "supply") {
-        const availablePcs = record.availableStock;
-        const isOutOfStock = availablePcs <= 0;
-
         if (record.imzStck_unit === "boxes") {
-          const pcsPerBox = record.imzStck_pcs;
+          const pcsPerBox = record.imzStck_pcs || 1;
+          const availablePcs = record.availableStock;
           const fullBoxes = Math.floor(availablePcs / pcsPerBox);
           const remainingPcs = availablePcs % pcsPerBox;
 
@@ -188,13 +181,13 @@ export const getStockColumns = (
                     : "text-black"
                 }
               >
-                {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box/es
+                {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box{fullBoxes !== 1 ? "es" : ""}
                 {expired && " (Expired)"}
                 {isOutOfStock && !expired && " (Out of Stock)"}
                 {isLow && " (Low Stock)"}
               </span>
               <span className={expired ? "text-red-500" : "text-blue-500"}>
-                ({availablePcs} total pc/s)
+                ({availablePcs} total pc{availablePcs !== 1 ? "s" : ""})
               </span>
             </div>
           );
@@ -212,7 +205,7 @@ export const getStockColumns = (
                 : "text-green-600"
             }`}
           >
-            {availablePcs} pc/s
+            {record.availableStock} pc{record.availableStock !== 1 ? "s" : ""}
             {expired && " (Expired)"}
             {isOutOfStock && !expired && " (Out of Stock)"}
             {isLow && " (Low Stock)"}
@@ -233,16 +226,16 @@ export const getStockColumns = (
           {record.availableStock}
           {expired && " (Expired)"}
           {isLow && " (Low Stock)"}
+          {isOutOfStock && !expired && " (Out of Stock)"}
         </div>
       );
     },
   },
-
   {
     accessorKey: "administered",
     header: "Qty Used",
     cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
+      const expired = row.original.isExpired;
       const record = row.original;
       let total_stocks = 0;
       let unit = "";
@@ -259,7 +252,6 @@ export const getStockColumns = (
         }
       } else if (record.type === "supply") {
         if (record.imzStck_unit === "boxes") {
-          // Convert boxes to pieces by multiplying with pcs per box
           total_stocks =
             Number(record.qty_number) * Number(record.imzStck_pcs) - availQty;
           unit = "pcs";
@@ -284,7 +276,7 @@ export const getStockColumns = (
     accessorKey: "wastedDose",
     header: "Wasted Units",
     cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
+      const expired = row.original.isExpired;
       return (
         <div className="flex items-center justify-center gap-2">
           <span
@@ -298,14 +290,13 @@ export const getStockColumns = (
       );
     },
   },
-
   {
     accessorKey: "expiryDate",
     header: "Expiry Date",
     cell: ({ row }) => {
       const expiryDate = row.original.expiryDate;
-      const isNear = isNearExpiry(expiryDate);
-      const expired = isExpired(expiryDate);
+      const isNear = row.original.isNearExpiry;
+      const expired = row.original.isExpired;
 
       return (
         <div
@@ -336,15 +327,16 @@ export const getStockColumns = (
       const vaccine = row.original;
       const category = String(vaccine.category).toLowerCase().trim();
       const isVaccine = category === "vaccine";
-      const expired = isExpired(vaccine.expiryDate);
+      const expired = vaccine.isExpired;
+      const outOfStock = vaccine.isOutOfStock;
 
       return (
         <div className="flex gap-2">
           <Button
             variant="outline"
             className={`${
-              expired || row.original.availableStock <= 0
-                ? " bg-red-100  border border-red-300 pointer-events-none opacity-50"
+              expired || outOfStock
+                ? "bg-red-100 border border-red-300 pointer-events-none opacity-50"
                 : "bg-red-100 border border-red-300 hover:bg-red-200"
             }`}
             asChild
@@ -356,15 +348,6 @@ export const getStockColumns = (
               <Minus size={15} />
             </Link>
           </Button>
-{/* 
-          <Button variant="outline" disabled={expired} asChild>
-            <Link
-              to={isVaccine ? "/editVaccineStock" : "/editImzSupplyStock"}
-              state={{ initialData: vaccine }}
-            >
-              <Plus size={16} />
-            </Link>
-          </Button> */}
 
           <Button
             variant="destructive"

@@ -64,9 +64,7 @@ class ChildHealthNotes(models.Model):
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_notes')
     followv = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='child_health_notes', null=True, blank=True)
     staff =models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_notes', null=True, blank=True) 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True) 
-    
+   
     
     class Meta:
         db_table = 'child_health_notes'
@@ -94,8 +92,6 @@ class ChildHealthSupplements(models.Model):
         
 class ChildHealthSupplementsStatus(models.Model):
     chssupplementstat_id = models.BigAutoField(primary_key=True)
-    # chsupplement = models.ForeignKey(ChildHealthSupplements, on_delete=models.CASCADE, related_name='statuses')
-    # status = models.CharField(max_length=100, blank=True, null=True)
     date_completed = models.DateField(blank=True, null=True)  # Date when the status was completed
     birthwt = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     status_type = models.CharField(choices=[('birthwt', 'Birth Weight'), ('anemic', 'Anemic')])

@@ -5,7 +5,7 @@ from ..serializers.commodity_serializers import *
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, Q
 from rest_framework.views import APIView
 from django.db.models.functions import TruncMonth
 from calendar import monthrange
@@ -61,15 +61,353 @@ class DeleteCommodityView(generics.DestroyAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
-class CommodityInventoryVIew(generics.ListCreateAPIView):
-    serializer_class=CommodityInventorySerializer
-    queryset=CommodityInventory.objects.all()
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+class CommodityInventoryView(generics.ListAPIView):
+    serializer_class = CommodityInventorySerializer
+    queryset = CommodityInventory.objects.all()
     def get_queryset(self):
         queryset = CommodityInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
         return queryset
+
+
+
+
+class CommodityStockTableView(APIView):
+    """
+    API view for commodity stocks with pagination, search, and filtering
+    """
+    pagination_class = StandardResultsPagination
     
+    def get(self, request):
+        try:
+            self.auto_archive_expired_commodities()
+            
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            stock_filter = request.GET.get('filter', 'all').lower()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            # Get commodity stocks with related data (not archived)
+            commodity_stocks = CommodityInventory.objects.select_related(
+                'com_id', 'inv_id'
+            ).filter(inv_id__is_Archived=False)
+            
+            # Apply search filter if provided
+            if search_query:
+                commodity_stocks = commodity_stocks.filter(
+                    Q(com_id__com_name__icontains=search_query) |
+                    Q(inv_id__inv_id__icontains=search_query) |
+                    Q(cinv_recevFrom__icontains=search_query)
+                )
+            
+            # Calculate today's date for expiry comparisons
+            today = timezone.now().date()
+            
+            combined_data = []
+            filter_counts = {
+                'out_of_stock': 0,
+                'low_stock': 0,
+                'near_expiry': 0,
+                'expired': 0,
+                'total': 0
+            }
+            
+            # Process commodity stocks
+            for stock in commodity_stocks:
+                # Convert quantities to integers to avoid string operations
+                cinv_qty = int(stock.cinv_qty) if stock.cinv_qty else 0
+                cinv_pcs = int(stock.cinv_pcs) if stock.cinv_pcs else 1
+                cinv_qty_avail = int(stock.cinv_qty_avail) if stock.cinv_qty_avail else 0
+                
+                # Calculate total pieces
+                if stock.cinv_qty_unit and stock.cinv_qty_unit.lower() == "boxes":
+                    total_pcs = cinv_qty * cinv_pcs
+                else:
+                    total_pcs = cinv_qty
+                
+                # Calculate available stock
+                available_stock = cinv_qty_avail
+                
+                # Check expiry status
+                expiry_date = stock.inv_id.expiry_date if stock.inv_id else None
+                is_expired = expiry_date and expiry_date < today if expiry_date else False
+                
+                # Check near expiry (within 30 days)
+                is_near_expiry = False
+                if expiry_date and not is_expired:
+                    days_until_expiry = (expiry_date - today).days
+                    is_near_expiry = 0 < days_until_expiry <= 30
+                
+                # Check low stock based on unit type
+                if stock.cinv_qty_unit and stock.cinv_qty_unit.lower() == "boxes":
+                    # For boxes, low stock threshold is 2 boxes
+                    is_low_stock = available_stock <= 2
+                else:
+                    # For pieces, low stock threshold is 20 pcs
+                    is_low_stock = available_stock <= 20
+                
+                # Check out of stock
+                is_out_of_stock = available_stock <= 0
+                
+                # Update filter counts (only count non-archived items)
+                if not stock.inv_id.is_Archived if stock.inv_id else False:
+                    filter_counts['total'] += 1
+                    if is_out_of_stock:
+                        filter_counts['out_of_stock'] += 1
+                    if is_low_stock and not is_expired:
+                        filter_counts['low_stock'] += 1
+                    if is_near_expiry:
+                        filter_counts['near_expiry'] += 1
+                    if is_expired:
+                        filter_counts['expired'] += 1
+                
+                # Apply filter
+                if stock_filter != 'all':
+                    if stock_filter == 'expired' and not is_expired:
+                        continue
+                    elif stock_filter == 'near_expiry' and not is_near_expiry:
+                        continue
+                    elif stock_filter == 'low_stock' and not is_low_stock:
+                        continue
+                    elif stock_filter == 'out_of_stock' and not is_out_of_stock:
+                        continue
+                
+                # Calculate dispensed quantity
+                if stock.cinv_qty_unit and stock.cinv_qty_unit.lower() == "boxes":
+                    dispensed_qty = total_pcs - available_stock
+                    dispensed_display = f"{dispensed_qty} pcs"
+                else:
+                    dispensed_qty = cinv_qty - available_stock
+                    dispensed_display = f"{dispensed_qty} {stock.cinv_qty_unit}"
+                
+                # Get category - since CommodityList doesn't have cat field, we'll use a default or check if it exists
+                category = "N/A"
+                # If you have a category field in CommodityList, adjust this line accordingly
+                # For example: category = stock.com_id.category.cat_name if stock.com_id and stock.com_id.category else "N/A"
+                
+                item_data = {
+                    'type': 'commodity',
+                    'id': stock.cinv_id,
+                    'batchNumber': stock.inv_id.inv_id if stock.inv_id else "N/A",
+                    'category': category,  # Using the default category
+                    'item': {
+                        'com_name': stock.com_id.com_name if stock.com_id else "Unknown Commodity",
+                    },
+                    'qty': {
+                        'cinv_qty': cinv_qty,
+                        'cinv_pcs': cinv_pcs,
+                    },
+                    'cinv_qty_unit': stock.cinv_qty_unit,
+                    'recevFrom': stock.cinv_recevFrom or "OTHERS",
+                    'administered': dispensed_display,
+                    'wastedDose': "0",  # Add if you have wasted commodity tracking
+                    'availableStock': available_stock,
+                    'expiryDate': expiry_date.isoformat() if expiry_date else None,
+                    'inv_id': stock.inv_id.inv_id if stock.inv_id else None,
+                    'com_id': stock.com_id.com_id if stock.com_id else None,
+                    'cinv_id': stock.cinv_id,
+                    'qty_number': cinv_qty,
+                    'isArchived': stock.inv_id.is_Archived if stock.inv_id else False,
+                    'created_at': stock.created_at.isoformat() if stock.created_at else None,
+                    'isExpired': is_expired,
+                    'isNearExpiry': is_near_expiry,
+                    'isLowStock': is_low_stock,
+                    'isOutOfStock': is_out_of_stock
+                }
+                
+                combined_data.append(item_data)
+            
+            # Sort by ID descending
+            combined_data.sort(key=lambda x: x['id'], reverse=True)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginated_data = paginator.paginate_queryset(combined_data, request)
+            
+            if paginated_data is not None:
+                # Create custom response with both paginated data and filter counts
+                response = paginator.get_paginated_response(paginated_data)
+                # Add filter_counts to the response data
+                response_data = response.data
+                response_data['filter_counts'] = filter_counts
+                return Response(response_data)
+            
+            return Response({
+                'success': True,
+                'data': combined_data,
+                'count': len(combined_data),
+                'filter_counts': filter_counts
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching commodity stock data: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def auto_archive_expired_commodities(self):
+        """Auto-archive commodities that expired more than 10 days ago"""
+        from datetime import timedelta
+        
+        today = timezone.now().date()
+        archive_date = today - timedelta(days=10)
+        
+        print(f"Auto-archiving commodity items expired before: {archive_date}")
+        
+        # Archive expired commodity stocks
+        commodity_stocks = CommodityInventory.objects.select_related('inv_id').filter(
+            inv_id__expiry_date__lte=archive_date,
+            inv_id__is_Archived=False
+        )
+        
+        archived_commodity_count = 0
+        for stock in commodity_stocks:
+            stock.inv_id.is_Archived = True
+            stock.inv_id.save()
+            archived_commodity_count += 1
+            print(f"Archived commodity stock: {stock.cinv_id}, Expiry: {stock.inv_id.expiry_date}")
+        
+        print(f"Auto-archived {archived_commodity_count} commodity items")
+class CommodityStockCreate(APIView):
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            
+            # Step 1: Create Inventory
+            inventory_data = self._prepare_inventory_data(data)
+            inventory_serializer = InventorySerializers(data=inventory_data)
+            
+            if not inventory_serializer.is_valid():
+                return Response({
+                    'error': 'Inventory validation failed',
+                    'details': inventory_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            inventory = inventory_serializer.save()
+            inv_id = inventory.inv_id
+            
+            # Step 2: Create CommodityInventory
+            commodity_inventory_data = self._prepare_commodity_inventory_data(data, inv_id)
+            commodity_inventory_serializer = CommodityInventorySerializer(data=commodity_inventory_data)
+            
+            if not commodity_inventory_serializer.is_valid():
+                return Response({
+                    'error': 'CommodityInventory validation failed',
+                    'details': commodity_inventory_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            commodity_inventory = commodity_inventory_serializer.save()
+            cinv_id = commodity_inventory.cinv_id
+            
+            # Step 3: Create CommodityTransaction
+            commodity_transaction_data = self._prepare_commodity_transaction_data(data, cinv_id)
+            commodity_transaction_serializer = CommodityTransactionSerializer(data=commodity_transaction_data)
+            
+            if not commodity_transaction_serializer.is_valid():
+                return Response({
+                    'error': 'CommodityTransaction validation failed',
+                    'details': commodity_transaction_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            commodity_transaction = commodity_transaction_serializer.save()
+            
+            # Return success response with all created IDs
+            return Response({
+                'success': True,
+                'message': 'Commodity stock created successfully',
+                'data': {
+                    'inv_id': inv_id,
+                    'cinv_id': cinv_id,
+                    'comt_id': commodity_transaction.comt_id
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            # Transaction will be automatically rolled back due to @transaction.atomic
+            return Response({
+                'error': 'Failed to create commodity stock',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _prepare_inventory_data(self, data):
+        """Prepare inventory data from request"""
+        return {
+            'expiry_date': data.get('expiry_date'),
+            'inv_type': data.get('inv_type', 'Commodity'),  # default type
+            'is_Archived': False
+        }
+    
+    def _prepare_commodity_inventory_data(self, data, inv_id):
+        """Prepare commodity inventory data from request"""
+        # Handle nested data structure if present
+        if 'data' in data:
+            nested_data = data.get('data', {})
+            commodity_data = {
+                **nested_data,
+                'com_id': data.get('com_id'),
+                'inv_id': inv_id
+            }
+        else:
+            commodity_data = data.copy()
+            commodity_data['inv_id'] = inv_id
+        
+        # Get com_id directly
+        commodity_data['com_id'] = commodity_data.get('com_id')
+        # Calculate quantities based on unit
+        is_boxes = commodity_data.get('cinv_qty_unit') == 'boxes'
+        qty = int(commodity_data.get('cinv_qty', 0))
+        pcs_per_box = int(commodity_data.get('cinv_pcs', 0)) if is_boxes else 0
+        
+        # Set calculated fields
+        commodity_data.update({
+            'cinv_qty': qty,
+            'cinv_pcs': pcs_per_box,
+            'cinv_dispensed': commodity_data.get('cinv_dispensed', 0)
+        })
+        
+        # Calculate total available quantity
+        if is_boxes:
+            commodity_data['cinv_qty_avail'] = qty * pcs_per_box
+        else:
+            commodity_data['cinv_qty_avail'] = qty
+        
+        # Handle received from field
+        received_from = commodity_data.get('cinv_recevFrom', 'OTHERS')
+        commodity_data['cinv_recevFrom'] = received_from
+        
+        # Handle category ID if present
+        cat_id = commodity_data.get('cat_id')
+        if cat_id:
+            commodity_data['cat_id'] = int(cat_id)
+            
+        # Handle staff field
+        staff = commodity_data.get('staff')
+        if staff:
+            commodity_data['staff'] = int(staff)
+        else:
+            commodity_data['staff'] = None
+        
+        return commodity_data
+    
+    def _prepare_commodity_transaction_data(self, data, cinv_id):
+        """Prepare commodity transaction data from request"""
+        qty_unit = data.get('cinv_qty_unit')
+        qty = data.get('cinv_qty', 0)
+        pcs = data.get('cinv_pcs', 0)
+        
+        # Format quantity string based on unit
+        if qty_unit == 'boxes':
+            comt_qty = f"{qty} boxes ({pcs} pcs per box)"
+        else:
+            comt_qty = f"{qty} {qty_unit}"
+        
+        return {
+            'comt_qty': comt_qty,
+            'comt_action': 'Added',
+            'cinv_id': cinv_id,
+            'staff': data.get('staff')  # Include staff if provided
+        }
     
 class CommodityInvRetrieveView(generics.RetrieveUpdateAPIView):
     serializer_class=CommodityInventorySerializer

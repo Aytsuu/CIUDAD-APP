@@ -11,7 +11,6 @@ class MedicineRequest(models.Model):
     requested_at = models.DateTimeField(auto_now_add=True)
     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, db_column='rp_id', related_name='medicine_requests',blank=True,null=True)
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='medicine_requests',blank=True,null=True)
-    fullfilled_at = models.DateTimeField(null=True, blank=True) 
     status = models.CharField(max_length=20, default='pending')
    
     def __str__(self):

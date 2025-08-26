@@ -4,7 +4,7 @@ import { Form, FormItem, FormLabel } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FirstAidStockSchema, FirstAidStockType } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
-import { fetchFirstAid } from "../REQUEST/FirstAid/restful-api/FirstAidFetchAPI";
+import { getFirstAidList } from "../REQUEST/FirstAid/restful-api/FirstAidGetAPI";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Loader2 } from "lucide-react";
 import { FormInput } from "@/components/ui/form/form-input";
@@ -12,8 +12,7 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useSubmitFirstAidStock } from "../REQUEST/FirstAid/queries/FirstAidPostQueries";
 import { Label } from "@/components/ui/label";
-import { Pill } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import {  useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function FirstAidStockModal() {
@@ -28,10 +27,12 @@ export default function FirstAidStockModal() {
       finv_qty_unit: "boxes",
       finv_qty: undefined,
       finv_pcs: undefined,
-      expiryDate: new Date().toISOString().split("T")[0]
+      expiry_date: new Date().toISOString().split("T")[0],
+      staff: staff_id,
+      inv_type: "First Aid"
     }
   });
-  const firstaid = fetchFirstAid();
+  const firstaid = getFirstAidList();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setformData] = useState<FirstAidStockType | null>(null);
   const { mutate: submit, isPending } = useSubmitFirstAidStock();
@@ -44,7 +45,7 @@ export default function FirstAidStockModal() {
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === "fa_id" && value.fa_id) {
-        const selectedFirstAid = firstaid.find((fa) => fa.id === value.fa_id);
+        const selectedFirstAid = firstaid.find((fa:any) => fa.id === value.fa_id);
         if (selectedFirstAid) {
           form.setValue("category", selectedFirstAid.category);
         }
@@ -61,7 +62,7 @@ export default function FirstAidStockModal() {
   const confirmAdd = () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit({ data: formData, staff_id });
+    submit({ data: formData });
   };
 
   return (
@@ -78,7 +79,7 @@ export default function FirstAidStockModal() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date" />
+            <FormDateTimeInput control={form.control} name="expiry_date" label="Expiry Date" type="date" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

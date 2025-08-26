@@ -64,10 +64,6 @@ class ImmnunizationStockSuppliesSerializer(serializers.ModelSerializer):
         
     
         
-class ImmunizationSuppliesTransactionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ImmunizationTransaction
-        fields = '__all__'
 
 
 class AntigenTransactionSerializer(serializers.ModelSerializer):

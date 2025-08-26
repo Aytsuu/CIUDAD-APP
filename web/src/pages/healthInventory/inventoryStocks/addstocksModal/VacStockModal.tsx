@@ -20,7 +20,7 @@ import { useBatchNumbers } from "../REQUEST/Antigen/restful-api/VaccineFetchAPI"
 
 export default function AddVaccineStock() {
   const { user } = useAuth();
-  const staff_id = user?.staff?.staff_id;
+  const staff_id = user?.staff?.staff_id|| "";
   const form = useForm<VaccineStockType>({
     resolver: zodResolver(VaccineStocksSchema),
     defaultValues: {
@@ -28,8 +28,10 @@ export default function AddVaccineStock() {
       batchNumber: "",
       volume: undefined,
       qty: undefined,
-      expiryDate: "",
-      solvent: "doses"
+      expiry_date: "",
+      solvent: "doses",
+      inv_type: "Antigen",
+      staff: staff_id
     }
   });
 
@@ -74,7 +76,7 @@ export default function AddVaccineStock() {
   const confirmAdd = async () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit({ data: formData, staff_id });
+    submit({ data: formData });
   };
 
   return (
@@ -98,7 +100,7 @@ export default function AddVaccineStock() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date" />
+              <FormDateTimeInput control={form.control} name="expiry_date" label="Expiry Date" type="date" />
               <FormSelect
                 control={form.control}
                 name="solvent"

@@ -12,13 +12,12 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useSubmitCommodityStock } from "../REQUEST/Commodity/queries/CommodityPostQueries";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { Pill } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AddCommodityStock() {
   const { user } = useAuth();
-  const staff_id = user?.staff?.staff_id;
+  const staff= user?.staff?.staff_id || "";
   const form = useForm<CommodityStockType>({
     resolver: zodResolver(CommodityStocksSchema),
     defaultValues: {
@@ -27,7 +26,9 @@ export default function AddCommodityStock() {
       cinv_qty: undefined,
       cinv_pcs: undefined,
       cinv_recevFrom: "",
-      expiryDate: new Date().toISOString().split("T")[0]
+      expiry_date: "",
+      staff:staff,
+      inv_type:"Commodity"
     }
   });
 
@@ -62,7 +63,7 @@ export default function AddCommodityStock() {
   const confirmAdd = async () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit({ data: formData, staff: staff_id });
+    submit({ data: formData });
   };
 
   return (
@@ -82,7 +83,7 @@ export default function AddCommodityStock() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date" />
+            <FormDateTimeInput control={form.control} name="expiry_date" label="Expiry Date" type="date" />
             <FormSelect
               control={form.control}
               name="cinv_recevFrom"

@@ -3,12 +3,18 @@ import { getCombinedStock } from "../restful-api/AntigenGetAPI";
 import { getVaccine, getVaccineStocks } from "../restful-api/VaccineGetAPI";
 import { showErrorToast } from "@/components/ui/toast";
 
-export const useAntigenCombineStocks = () => {
+
+// Updated useQuery hook following your pattern
+export const useAntigenCombineStocks = (
+  page: number, 
+  pageSize: number, 
+  search?: string,
+  filter?: any
+) => {
   return useQuery({
-    queryKey: ["combinedStocks"],
-    queryFn: getCombinedStock,
-    refetchOnMount: true,
-    staleTime: 0
+    queryKey: ["combinedStocks", page, pageSize, search, filter],
+    queryFn: () => getCombinedStock(page, pageSize, search, filter),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
 
