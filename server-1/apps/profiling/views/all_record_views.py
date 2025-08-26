@@ -1,14 +1,22 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from django.db.models import Q
+from django.db import transaction
 from pagination import StandardResultsPagination
 from apps.profiling.serializers.all_record_serializers import *
 from apps.profiling.models import ResidentProfile, BusinessRespondent
+from apps.profiling.serializers.all_record_serializers import *
+from apps.administration.models import Staff
 from ..models import FamilyComposition
+from datetime import datetime
+from ..utils import *
+from utils.supabase_client import upload_to_storage
+from ..utils import *
 
 class AllRecordTableView(generics.GenericAPIView):
-  permission_classes = [AllowAny]
   serializer_class = AllRecordTableSerializer
   pagination_class = StandardResultsPagination
 
@@ -57,4 +65,190 @@ class AllRecordTableView(generics.GenericAPIView):
     page = self.paginate_queryset(unified_data)
     serializer = self.get_serializer(page, many=True)
     return self.get_paginated_response(serializer.data)
+
+class CompleteRegistrationView(APIView):
+  permission_classes = [AllowAny]
+
+  @transaction.atomic
+  def post(self, request, *args, **kwargs):
+    personal = request.data.get("personal", None)
+    account = request.data.get("account", None)
+    houses = request.data.get("houses", None)
+    livingSolo = request.data.get("livingSolo", None)
+    family = request.data.get("family", None)
+    business = request.data.get("business", None)
+    staff = request.data.get("staff", None)
+
+    if staff:
+      staff=Staff.objects.filter(staff_id=staff).first()
+
+    results = {}
+
+    if personal:
+        rp = self.create_resident_profile(personal, staff)
+        if rp:
+          results["rp_id"] = rp.pk
+
+    if account:
+        self.create_account(account, staff)
+
+    if houses:
+        hh = self.create_household(houses, rp, staff)
+
+    if livingSolo:
+        new_fam = self.create_family(livingSolo, rp, staff)
+        if new_fam:
+          results["fam_id"] = new_fam.pk
+
+    if family:
+        self.join_family(family, rp)
+
+    if business:
+        bus = self.create_business(business, rp, staff)
+        if bus:
+          results["bus_id"] = bus.pk
+
+    return Response(results, status=status.HTTP_200_OK)
+  
+  def create_resident_profile(self, personal, staff):
+    addresses = personal.pop("per_addresses", None)
+    add_instances = [
+      Address.objects.get_or_create(
+        add_province=add["add_province"],
+        add_city=add["add_city"],
+        add_barangay = add["add_barangay"],
+        sitio=Sitio.objects.filter(sitio_id=add["sitio"]).first(),
+        add_external_sitio=add["add_external_sitio"],
+        add_street=add["add_street"]
+      )[0]
+      for add in addresses
+    ]
+
+    # Create Personal record
+    per_instance = Personal(**personal)
+    per_instance._history_user = staff
+    per_instance.save()
+
+    try:
+      latest_history = per_instance.history.latest()
+      history_id = latest_history.history_id
+    except per_instance.history.model.DoesNotExist:
+      history_id = None  
+
+    for add in add_instances:
+      PersonalAddress.objects.create(add=add, per=per_instance) 
+      history = PersonalAddressHistory(add=add, per=per_instance)
+      history.history_id=history_id
+      history.save()
+      
+
+    # Create ResidentProfile record
+    resident_profile = ResidentProfile.objects.create(
+      rp_id = generate_resident_no(),
+      per = per_instance,
+      staff = staff
+    )
+
+    return resident_profile
+
+  def create_account(self, account, staff):
+    return
+  
+  def create_household(self, houses, rp, staff):
+    # data = [undefined, sitio, street]
+    house_instances = []
+    for house in houses:
+      data = house["address"].split("-") 
+      house_instances.append(Household(
+        hh_id = generate_hh_no(),
+        hh_nhts = house['nhts'],
+        add = Address.objects.get_or_create(
+          add_province="Cebu",
+          add_city="Cebu City",
+          add_barangay="San Roque (ciudad)",
+          sitio=Sitio.objects.filter(sitio_id=data[1]).first(),
+          add_street=data[2]
+        )[0],
+        rp = rp,
+        staff = staff
+      ))
+    
+    if len(house_instances) > 0:
+      created_instances = Household.objects.bulk_create(house_instances)
+    
+    return created_instances
+
+    
+  
+  def create_family(self, livingSolo, rp, staff):
+    fam = Family.objects.create(
+      fam_id=generate_fam_no(livingSolo["building"]),
+      fam_indigenous=livingSolo["indigenous"],
+      fam_building=livingSolo["building"],
+      hh=Household.objects.get(hh_id=livingSolo["householdNo"]),
+      staff=staff
+    )
+
+    FamilyComposition.objects.create(
+      fc_role="Independent",
+      fam=fam,
+      rp=rp
+    )
+
+    return fam
+  
+  def join_family(self, family, rp):
+    return FamilyComposition.objects.create(
+      fam=Family.objects.filter(fam_id=family["familyId"]).first(),
+      fc_role=family["role"],
+      rp=rp
+    )
+  
+  def create_business(self, business, rp, staff):
+    sitio = business.get("sitio", None)
+    street = business.get("bus_street", None)
+    files = business.get("files", [])
+
+    if sitio and street:
+      add,_ = Address.objects.get_or_create(
+        add_province="Cebu",
+        add_city="Cebu City",
+        add_barangay="San Roque (ciudad)",
+        sitio=Sitio.objects.filter(sitio_id=sitio).first(),
+        add_street=street
+      )
+    
+    business = Business(
+      bus_name=business["bus_name"],
+      bus_gross_sales=business["bus_gross_sales"],
+      bus_status="Active",
+      bus_date_verified=datetime.today(),
+      rp=rp,
+      add=add,
+      staff=staff
+    )
+    business._history_user=staff
+    business.save()
+
+    if len(files) > 0:
+      business_files = []
+      for file_data in files:
+        folder = "images" if file_data['type'].split("/")[0] == "image" else "documents"
+
+        business_file = BusinessFile(
+          bus=business,
+          bf_name=file_data['name'],
+          bf_type=file_data['type'],
+          bf_path=f"{folder}/{file_data['name']}",
+        )
+        
+        url = upload_to_storage(file_data, 'business-bucket', folder)
+        business_file.bf_url=url
+        business_files.append(business_file)
+
+      if len(business_files) > 0:
+          BusinessFile.objects.bulk_create(business_files)
+
+    return business
+
   
