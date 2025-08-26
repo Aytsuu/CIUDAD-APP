@@ -151,11 +151,10 @@ function TemplatePreview({
     const headerText = [
       { text: "Republic of the Philippines", bold: true, size: 12 },
       { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
-      { text: "", bold: false, size: 10 },
-      { text: "BARANGAY SAN ROQUE (CIUDAD)", bold: true, size: 14 },
+      { text: "____________________________________", bold: true, size: 14 },
       { text: "Office of the Barangay Captain", bold: false, size: 13 },
       { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
-      { text: `${telNum}`, bold: false, size: 11 }
+      { text: `${email} | ${telNum}`, bold: false, size: 11 }
     ];
 
     const centerX = pageWidth / 2;

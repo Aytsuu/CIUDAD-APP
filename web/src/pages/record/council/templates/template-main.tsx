@@ -734,6 +734,46 @@ function TemplateMainPage() {
       "Signed this [ DAY [st/nd/rd/th] ] day of [MONTH] [YEAR] in Barangay San Roque (Ciudad) Cebu City,\n\n" +
       "This certification is valid only one (1) year from the issuance."
     },   
+    {
+      temp_id: 31,
+      temp_title: "BARANGAY CLEARANCE", 
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Barangay Clearance",
+      temp_w_sign_right: true,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: false,
+      temp_w_seal: false,
+      temp_body: "\n/*TO WHOM IT MAY CONCERN:*/\n\n" +
+      "This is to certify that [NAME] with business located at [ADRESS], after complying with the requirements prescribed by this office, is hereby issues a Barangay Clearnce for the purpose of " +
+      "securing/obtaining /*WORK PERMIT*/ and be able to work within the barangay jusrisdiction. However, this Barangay Clearance may be cancelled or revoked anytime the public safety and interest so required.\n\n" +
+      "Issued this [ DAY [st/nd/rd/th] ] day of [MONTH] [YEAR] at Barangay San Roque (Ciudad), Cebu City"
+    },      
+    {
+      temp_id: 32,
+      temp_title: "CERTIFICATION", 
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Proof of Custody",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "TO WHOM IT MAY CONCERN:\n\n" +
+      "This is to certify that [NAME] of legal age, [GENDER], is a resident of [ADDRESS], Barangay San Roque Ciudad, Cebu City.\n\n" +
+      "This is to certify that [his/her] [Number in words] [(No.)] grandchild listed below are minors and are under her care and custody and supported them financially, morally and spiritually.\n\n" +
+      "[No.] [Name]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for /*PSA PURPOSES ONLY*/. Affixed below is the name and signature of the above-mentioned name.\n\n" +
+      "Issued this [ DAY [st/nd/rd/th] ] day of [MONTH] [YEAR] at Barangay San Roque (Ciudad), Cebu City, Cebu Philippines."
+    },       
   ];  
 
 
