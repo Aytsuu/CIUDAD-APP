@@ -20,25 +20,25 @@ class RequestTableSerializer(serializers.ModelSerializer):
     compositions = obj.request_composition.all()
     result = []
     for comp in compositions:
-        if comp.per:  # Check if personal info exists
-            instance = PersonalBaseSerializer(comp.per).data
-            person_data = {
-                'role': comp.rrc_fam_role,
-                'acc': comp.acc_id if comp.acc else None,
-                'per_id': instance['per_id'],
-                'per_lname': instance['per_lname'],
-                'per_fname': instance['per_fname'],
-                'per_mname': instance['per_mname'],
-                'per_suffix': instance['per_suffix'],
-                'per_dob': instance['per_dob'],
-                'per_sex': instance['per_sex'],
-                'per_status': instance['per_status'],
-                'per_edAttainment': instance['per_edAttainment'],
-                'per_religion': instance['per_religion'],
-                'per_contact': instance['per_contact'],
-                'addresses': instance['addresses']
-            }
-            result.append(person_data)
+      if comp.per:  # Check if personal info exists
+        instance = PersonalBaseSerializer(comp.per).data
+        person_data = {
+          'role': comp.rrc_fam_role,
+          'acc': comp.acc_id if comp.acc else None,
+          'per_id': instance['per_id'],
+          'per_lname': instance['per_lname'],
+          'per_fname': instance['per_fname'],
+          'per_mname': instance['per_mname'],
+          'per_suffix': instance['per_suffix'],
+          'per_dob': instance['per_dob'],
+          'per_sex': instance['per_sex'],
+          'per_status': instance['per_status'],
+          'per_edAttainment': instance['per_edAttainment'],
+          'per_religion': instance['per_religion'],
+          'per_contact': instance['per_contact'],
+          'per_addresses': instance['per_addresses']
+        }
+        result.append(person_data)
     return result
   
 class FamilyRequestTableSerializer(serializers.ModelSerializer):

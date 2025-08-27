@@ -61,6 +61,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   }, [isLoading, showLoading, hideLoading])
 
   React.useEffect(() => {
+    if(tab_params?.isRegistrationTab) return;
     const head = form.watch("householdHead")
     console.log('Selected household head:', head)
     console.log('Residents list:', residentsList)
@@ -91,7 +92,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
     if(per_addresses?.length > 0) {
       setAddresses(per_addresses)
     }
-  }, [tab_params?.form])
+  }, [tab_params?.form.watch("personalSchema.per_addresses")])
 
   // ==================== HANDLERS ========================
   const handleContinue = () => {

@@ -85,7 +85,15 @@ class CompleteRegistrationView(APIView):
     results = {}
 
     if personal:
-        rp = self.create_resident_profile(personal, staff)
+        per_id = personal.get("per_id", None)
+
+        # Create ResidentProfile record
+        rp = ResidentProfile.objects.create(
+          rp_id = generate_resident_no(),
+          per = Personal.objects.get(per_id=per_id),
+          staff = staff
+        ) if per_id else self.create_resident_profile(personal, staff)
+
         if rp:
           results["rp_id"] = rp.pk
 

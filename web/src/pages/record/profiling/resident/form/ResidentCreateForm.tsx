@@ -117,8 +117,7 @@ export default function ResidentCreateForm({ params }: {
       setValidAddresses(validity);
       const isValidAll = validity.every((valid: any) => valid === true);
       return isValidAll;
-    },
-    [setValidAddresses]
+    }, [setValidAddresses]
   );
 
   const handleComboboxChange = React.useCallback(() => {

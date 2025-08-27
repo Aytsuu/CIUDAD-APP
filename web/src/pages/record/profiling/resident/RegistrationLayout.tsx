@@ -48,7 +48,7 @@ export default function RegistrationLayout() {
 
   const requestSteps = [
     { id: 1, label: "Resident", minProgress: 25, icon: UserRoundPlus, onClick: (id: number) => handleProgressSelection(id) },
-    { id: 2, label: "Household", minProgress: 50, icon: HousePlus, onClick: (id: number) => handleProgressSelection(id) },
+    { id: 2, label: "House", minProgress: 50, icon: HousePlus, onClick: (id: number) => handleProgressSelection(id) },
     { id: 3, label: "Family", minProgress: 75, icon: UsersRound, onClick: (id: number) => handleProgressSelection(id) },
     { id: 4, label: "Business", minProgress: 100, icon: Store, onClick: (id: number) => handleProgressSelection(id) }
   ]
@@ -89,35 +89,21 @@ export default function RegistrationLayout() {
   const isEmpty = (obj: Record<string, any>) =>
     Object.values(obj).every(val => val === "" || val.length == 0);
 
-  const handleCreate = async () => {
+  const handleCreate = async (
+    noAccount:  boolean,
+    noHouse: boolean,
+    notLivingSolo: boolean,
+    noFamily: boolean,
+    noBusiness: boolean,
+    personal: Record<string, any>,
+    accountSchema: Record<string, any>,
+    houseSchema: Record<string, any>,
+    livingSoloSchema: Record<string, any>,
+    familySchema: Record<string, any>,
+    business: Record<string, any>,
+    files: Record<string, any>[]
+  ) => {
     try {
-      setIsSubmitting(true);
-      const values = registrationForm.getValues()
-      const { 
-        personalSchema,
-        accountSchema,
-        houseSchema,
-        livingSoloSchema,
-        familySchema,
-        businessSchema
-      } = values;
-
-      // Exclude incomplete profile
-      const noAccount   = ![...completed].includes(1);
-      const notLivingSolo = isEmpty(livingSoloSchema);
-      const noFamily    = isEmpty(familySchema);
-      const noHouse     = ![...completed].includes(3);
-      const noBusiness  = ![...completed].includes(5);
-
-      const {per_id, ...personal} = personalSchema
-      const {files, ...business} = businessSchema
-      
-      const newFiles = files?.map((media: any) => ({
-        name: media.name,
-        type: media.type,
-        file: media.file
-      }))
-
       // Insertion Query
       await addAllProfile({
         personal: personal,
@@ -125,7 +111,7 @@ export default function RegistrationLayout() {
         ...(!noHouse && {houses: houseSchema.list}),
         ...(!notLivingSolo && {livingSolo: livingSoloSchema}),
         ...(!noFamily && {family: familySchema}),
-        ...(!noBusiness && {business: {...business, files: newFiles}}),
+        ...(!noBusiness && {business: {...business, files: files}}),
         staff: user?.staff?.staff_id
       })
       
@@ -141,6 +127,98 @@ export default function RegistrationLayout() {
     }
     
   }
+
+  const handleApprove = async (
+    noHouse: boolean,
+    notLivingSolo: boolean,
+    noFamily: boolean,
+    noBusiness: boolean,
+    personalSchema: Record<string, any>,
+    houseSchema: Record<string, any>,
+    livingSoloSchema: Record<string, any>,
+    familySchema: Record<string, any>,
+    business: Record<string, any>,
+    files: Record<string, any>[]
+  ) => {
+    try {
+      await addAllProfile({
+        personal: personalSchema,
+        ...(!noHouse && {houses: houseSchema.list}),
+        ...(!notLivingSolo && {livingSolo: livingSoloSchema}),
+        ...(!noFamily && {family: familySchema}),
+        ...(!noBusiness && {business: {...business, files: files}}),
+        staff: user?.staff?.staff_id
+      })
+      showSuccessToast("Registration has been approved. New record added.")
+    } catch (err) {
+      showErrorToast("Failed to process registration approval. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    } 
+  }
+
+  const handleSubmit = async (type: string) => {
+    setIsSubmitting(true);
+    const values = registrationForm.getValues()
+    const { 
+      personalSchema,
+      accountSchema,
+      houseSchema,
+      livingSoloSchema,
+      familySchema,
+      businessSchema
+    } = values;
+
+    // Exclude incomplete profile
+    const noAccount   = ![...completed].includes(1);
+    const notLivingSolo = isEmpty(livingSoloSchema);
+    const noFamily    = isEmpty(familySchema);
+    const noHouse     = ![...completed].includes(3);
+    const noBusiness  = ![...completed].includes(5);
+
+    const {per_id, ...personal} = personalSchema
+    const {files, ...business} = businessSchema
+    
+    const newFiles = files?.map((media: any) => ({
+      name: media.name,
+      type: media.type,
+      file: media.file
+    }))
+
+    switch(type) {
+      case "create":
+        handleCreate(
+          noAccount,
+          noHouse,
+          notLivingSolo,
+          noFamily,
+          noBusiness,
+          personal,
+          accountSchema,
+          houseSchema,
+          livingSoloSchema,
+          familySchema,
+          business,
+          newFiles
+        )
+        break;
+      case "approve":
+        handleApprove(
+          noHouse,
+          notLivingSolo,
+          noFamily,
+          noBusiness,
+          personalSchema,
+          houseSchema,
+          livingSoloSchema,
+          familySchema,
+          business,
+          newFiles
+        )
+        break;
+    }
+  }
+
 
   const create = (
     <>
@@ -243,7 +321,7 @@ export default function RegistrationLayout() {
             params={{
               steps: registrationSteps,
               completed: [...completed],
-              register: handleCreate,
+              register: () => handleSubmit("create"),
               isSubmitting: isSubmitting
             }}
           />
@@ -261,71 +339,80 @@ export default function RegistrationLayout() {
           completed={[...completed]}
         />
       )}
-      {currentStep === 1 && (
-        <ResidentRequestForm 
-          params={{
-            data: params?.data,
-            nnext: (compeleteness: boolean) => {
-              if(compeleteness) setCompleted((prev) => new Set([...prev, 1]));
-              setProgress()
-            }
-          }}
-        />
-      )}
-      {currentStep === 2 && (
-        <HouseholdFormLayout 
-          tab_params={{
-            isRegistrationTab: true,
-            next: (compeleteness: boolean) => {
-              if(compeleteness) setCompleted((prev) => new Set([...prev, 2]));
-              setProgress()
-            }
-          }}
-        />
-      )}
-      {currentStep === 3 && (
-        <div className="flex justify-center">
-            {!hasFamily ? (
-              <SoloFormLayout 
-                tab_params={{
-                  isRegistrationTab: true,
-                  next: (compeleteness: boolean) => {
-                    if(compeleteness) setCompleted((prev) => new Set([...prev, 3]));
-                    setProgress()
-                  },
-                  setHasFamily: (value: boolean) => setHasFamily(value)
-                }}
-              />
-            ) : (
-              <RegisterToExistingFam 
-                tab_params={{
-                  next: (compeleteness: boolean) => {
-                    if(compeleteness) setCompleted((prev) => new Set([...prev, 3]));
-                    setProgress()
-                  },
-                  setHasFamily: (value: boolean) => setHasFamily(value)
-                }}
-              />
-            )}
-        </div>
-      )}
-      {currentStep === 4 && (
-        <BusinessFormLayout 
-          tab_params={{
-            isRegistrationTab: true,
-            next: (compeleteness: boolean) => {
-              if(compeleteness) setCompleted((prev) => new Set([...prev, 4]));
-              setProgress()
-            }
-          }}
-        />
-      )}
+      <div className="mt-6">
+        {currentStep === 1 && (
+          <ResidentRequestForm 
+            params={{
+              data: params?.data,
+              next: (compeleteness: boolean) => {
+                if(compeleteness) setCompleted((prev) => new Set([...prev, 1]));
+                setProgress()
+              },
+              form: registrationForm,
+            }}
+          />
+        )}
+        {currentStep === 2 && (
+          <HouseholdFormLayout 
+            tab_params={{
+              isRegistrationTab: true,
+              next: (compeleteness: boolean) => {
+                if(compeleteness) setCompleted((prev) => new Set([...prev, 2]));
+                setProgress()
+              },
+              form: registrationForm,
+            }}
+          />
+        )}
+        {currentStep === 3 && (
+          <div className="flex justify-center">
+              {!hasFamily ? (
+                <SoloFormLayout 
+                  tab_params={{
+                    isRegistrationTab: true,
+                    next: (compeleteness: boolean) => {
+                      if(compeleteness) setCompleted((prev) => new Set([...prev, 3]));
+                      setProgress()
+                    },
+                    setHasFamily: (value: boolean) => setHasFamily(value),
+                    form: registrationForm,
+                  }}
+                />
+              ) : (
+                <RegisterToExistingFam 
+                  tab_params={{
+                    next: (compeleteness: boolean) => {
+                      if(compeleteness) setCompleted((prev) => new Set([...prev, 3]));
+                      setProgress()
+                    },
+                    setHasFamily: (value: boolean) => setHasFamily(value),
+                    form: registrationForm,
+                  }}
+                />
+              )}
+          </div>
+        )}
+        {currentStep === 4 && (
+          <BusinessFormLayout 
+            tab_params={{
+              isRegistrationTab: true,
+              next: (compeleteness: boolean) => {
+                if(compeleteness) setCompleted((prev) => new Set([...prev, 4]));
+                setProgress()
+              },
+              form: registrationForm,
+            }}
+          />
+        )}
+      </div>
       {currentStep === 5 && (
         <RegistrationCompletion 
           params={{
             steps: requestSteps,
             completed: [...completed],
             form: registrationForm,
+            register: () => handleSubmit("approve"),
+            isSubmitting: isSubmitting
           }}
         />
       )}

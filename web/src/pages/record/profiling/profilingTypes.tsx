@@ -115,8 +115,7 @@ export type IndividualRequestRecord = {
   per_contact: string;
   per_edAttainment: string;
   per_religion: string;
-  addresses: Record<string, any>[];
-  files: Record<string, any>[]
+  per_addresses: Record<string, any>[];
   req_date: string;
 }
 

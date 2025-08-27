@@ -162,7 +162,7 @@ export default function RequestFamilyReg() {
           <div className="flex gap-4 mb-6">
             <div className="border-r border-gray-400 pr-3 ">
               <p className="text-sm text-blue-600 font-medium">Submission Date</p>
-              <p className="text-sm font-medium">{formatDate(registrationData.req_date, true)}</p>
+              <p className="text-sm font-medium">{formatDate(registrationData.req_date, "long")}</p>
             </div>
             <div>
               <p className="text-sm text-blue-600 font-medium">Family Members <span className="ml-1 text-xs text-gray-500 italic">(see the members below)</span></p>
