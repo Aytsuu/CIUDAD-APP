@@ -114,7 +114,7 @@ function MinutesOfMeetingPage() {
               <TooltipLayout
                 trigger={
                   <a
-                    href={record.momf_url}
+                    href={record.mom_file.momf_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 p-2.5 rounded-lg cursor-pointer flex items-center justify-center transition-colors"
@@ -143,8 +143,8 @@ function MinutesOfMeetingPage() {
                               mom_agenda={record.mom_agenda}
                               mom_date={record.mom_date}
                               mom_id={Number(record.mom_id)}
-                              momf_id={Number(record.momf_id)}
-                              momf_url={record.momf_url}
+                              momf_id={Number(record.mom_file.momf_id)}
+                              momf_url={record.mom_file.momf_url}
                               areas_of_focus={record.areas_of_focus}
                               onSuccess={() => setEditingRowId(null)}
                             />
@@ -262,17 +262,18 @@ function MinutesOfMeetingPage() {
                 title="Supporting Documents"
                 description="These are files attached to this meeting record"
                 mainContent={
-                  <div className="flex flex-col gap-4 p-5">
+                  <div className="flex flex-col gap-4">
                     {record.supporting_docs.map((file) => (
-                      <div key={file.momsp_id} className="border p-3 rounded-md">
+                      <div key={file.momsp_id} className="border p-2 rounded-md">
                         <a 
                           href={file.momsp_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+                          className="text-primary hover:text-blue-800 flex items-center gap-2"
                         >
-                          <FileInput size={16} />
-                          Image {file.momsp_name}
+                          <span className="truncate max-w-[500px] block" title={file.momsp_name}>
+                            Image {file.momsp_name}
+                          </span>
                         </a>
                       </div>
                     ))}

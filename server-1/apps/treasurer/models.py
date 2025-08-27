@@ -33,7 +33,7 @@ class Budget_Plan_Detail(models.Model):
 class BudgetPlan_File(models.Model):
     bpf_id = models.BigAutoField(primary_key=True)
     bpf_upload_date = models.DateTimeField(auto_now_add=True)
-    bpf_description = models.CharField(max_length=500   )
+    bpf_description = models.CharField(max_length=500)
     bpf_type = models.CharField(max_length=100, null=True)
     bpf_name = models.CharField(max_length=255, null=True)
     bpf_path = models.CharField(max_length=500, null=True)

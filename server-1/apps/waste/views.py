@@ -513,7 +513,7 @@ class GarbagePickupAcceptedRequestDetailView(generics.RetrieveAPIView):
     def get_object(self):
         obj = super().get_object()
         return obj
-    
+
 
 class GarbagePickupRequestsByDriverView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestAcceptedSerializer
@@ -532,7 +532,7 @@ class GarbagePickupRequestsByDriverView(generics.ListAPIView):
             garb_id__in=assigned_garb_ids,
             garb_req_status__iexact='accepted'  # Filter only accepted requests
         )
-    
+
     
 class GarbagePickupRequestCompletedView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestCompletedSerializer
@@ -554,7 +554,6 @@ class GarbagePickupCompletedRequestDetailView(generics.RetrieveAPIView):
         obj = super().get_object()
         return obj
     
-
 class GarbagePickupCompletedByDriverView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestCompletedSerializer
 
@@ -574,7 +573,7 @@ class GarbagePickupCompletedByDriverView(generics.ListAPIView):
         ).values_list('garb_id', flat=True)
 
         return Garbage_Pickup_Request.objects.filter(garb_id__in=confirmed_garb_ids)
-    
+
 
 class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):
     serializer_class = GarbagePickupRequestPendingSerializer

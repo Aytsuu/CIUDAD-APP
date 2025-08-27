@@ -347,7 +347,7 @@ class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
         return decision.dec_rejection_reason if decision else ""
 
     def get_file_url(self, obj):
-        return obj.file.file_url if obj.file else ""
+        return obj.gprf.gprf_url if obj.gprf else ""
     
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
@@ -490,7 +490,7 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
             return []
 
     def get_file_url(self, obj):
-        return obj.file.file_url if obj.file else ""
+        return obj.gprf.gprf_url if obj.gprf else ""
     
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
@@ -585,7 +585,7 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
             return "Truck info unavailable"
         
     def get_file_url(self, obj):
-        return obj.file.file_url if obj.file else ""
+        return obj.gprf.gprf_url if obj.gprf else ""
     
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
