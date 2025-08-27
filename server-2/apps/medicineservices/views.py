@@ -3,6 +3,7 @@ from rest_framework import generics
 from django.db.models import Q, Count
 from datetime import timedelta
 from django.utils.timezone import now
+import json
 from dateutil.relativedelta import relativedelta
 from django.db.models.functions import TruncMonth
 from rest_framework.response import Response
@@ -16,14 +17,17 @@ from django.utils.timezone import now
 from apps.childhealthservices.models import ChildHealthSupplements,ChildHealth_History
 from apps.reports.models import *
 from apps.reports.serializers import *
+from pagination import *
+from django.db.models import Q, Prefetch
+
 class PatientMedicineRecordsView(generics.ListAPIView):
     serializer_class = PatientMedicineRecordSerializer
     
     def get_queryset(self):
-        pat_id = self.kwargs.get('pat_id')
         return Patient.objects.filter(
             Q(patient_records__medicine_records__patrec_id__isnull=False) 
         ).distinct()
+
 
 class IndividualMedicineRecordView(generics.ListCreateAPIView):
     serializer_class = MedicineRecordSerialzer
@@ -31,15 +35,13 @@ class IndividualMedicineRecordView(generics.ListCreateAPIView):
         pat_id = self.kwargs['pat_id']
         return MedicineRecord.objects.filter(
             patrec_id__pat_id=pat_id
-        ).order_by('-fulfilled_at')  # Optional: latest first
+        ).order_by('-fulfilled_at')  
 
 class CreateMedicineRecordView(generics.CreateAPIView):
     serializer_class = MedicineRecordSerialzer
     queryset = MedicineRecord.objects.all()
     
     
-    
-
 
 class GetMedRecordCountView(APIView):
     
@@ -165,7 +167,6 @@ class DeleteUpdateMedicineRequestView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MedicineRequest.objects.all()
     lookup_field = "medreq_id"
     
-   
 
  
 class MedicineRequestItemDelete(generics.DestroyAPIView):
@@ -233,89 +234,107 @@ class FindingPlanTreatmentView(generics.CreateAPIView):
     queryset = FindingsPlanTreatment.objects.all()
     
     
-# class MonthlyMedicineRecordsAPIView(APIView):
-#     def get(self, request):
-#         try:
-#             queryset = MedicineRecord.objects.select_related(
-#                 'minv_id', 
-#                 'minv_id__inv_id', 
-#                 'minv_id__med_id',  
-#                 'patrec_id'
-#             ).order_by('-fulfilled_at')
-            
 
-#             year_param = request.GET.get('year')  # Supports '2025' or '2025-07'
+class MedicineFileView(generics.ListCreateAPIView):
+    serializer_class = MedicineFileCreateSerializer
+    queryset = Medicine_File.objects.all()
+    
+    
+class ProcessMedicineRequestView(APIView):
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        staff_id = data.get("staff_id")
+        pat_id = data.get("pat_id")
+        signature = data.get("signature")
 
-#             if year_param and year_param != 'all':
-#                 try:
-#                     if '-' in year_param:
-#                         year, month = map(int, year_param.split('-'))
-#                         queryset = queryset.filter(
-#                             fulfilled_at__year=year,
-#                             fulfilled_at__month=month
-#                         )
-#                     else:
-#                         year = int(year_param)
-#                         queryset = queryset.filter(
-#                             fulfilled_at__year=year
-#                         )
-#                 except ValueError:
-#                     return Response({
-#                         'success': False,
-#                         'error': 'Invalid format for year. Use YYYY or YYYY-MM.'
-#                     }, status=status.HTTP_400_BAD_REQUEST)
+        # Medicines may come in as JSON string if multipart/form-data
+        medicines_raw = data.get("medicines", "[]")
+        if isinstance(medicines_raw, str):
+            try:
+                medicines = json.loads(medicines_raw)
+            except Exception:
+                return Response({"error": "Invalid medicines format"}, status=400)
+        else:
+            medicines = medicines_raw
 
-#             # Annotate and count records by month
-#             monthly_data = queryset.annotate(
-#                 month=TruncMonth('fulfilled_at')
-#             ).values('month').annotate(
-#                 record_count=Count('medrec_id')
-#             ).order_by('-month')
+        # Files must come from request.FILES
+        files = request.FILES.getlist("files")
 
-#             formatted_data = []
+        results = []
 
-#             for item in monthly_data:
-#                 month_str = item['month'].strftime('%Y-%m')
+        try:
+            patient = Patient.objects.get(pk=pat_id)
+        except Patient.DoesNotExist:
+            return Response({"error": f"Patient {pat_id} not found"}, status=404)
 
-#                 # Get or create monthly report for this month
-#                 report_obj, created = MonthlyRecipientListReport.objects.get_or_create(
-#                     month_year=month_str,
-#                     rcp_type='Medicine'
+        staff = Staff.objects.filter(pk=staff_id).first()
 
-#                 )
-#                 report_data = MonthlyRCPReportSerializer(report_obj).data
+        patient_record = PatientRecord.objects.create(
+            pat_id=patient,
+            patrec_type="Medicine Record",
+        )
 
-#                 # Get all records for that month
-#                 month_records = queryset.filter(
-#                     fulfilled_at__year=item['month'].year,
-#                     fulfilled_at__month=item['month'].month
-#                 )
+        for med in medicines:
+            try:
+                minv_id = int(med.get("minv_id"))
+                qty_requested = int(med.get("medrec_qty"))
 
-#                 serialized_records = [
-#                     MedicineRecordSerialzer(record).data for record in month_records
-#                 ]
+                # Inventory
+                medicine_inv = MedicineInventory.objects.select_for_update().get(minv_id=minv_id)
+                if medicine_inv.minv_qty_avail < qty_requested:
+                    raise serializers.ValidationError(f"Insufficient stock for medicine {minv_id}")
 
-#                 formatted_data.append({
-#                     'month': month_str,
-#                     'record_count': item['record_count'],
-#                     'monthlyrcplist_id': report_obj.monthlyrcplist_id,
-#                     'report': report_data,
-#                     'records': serialized_records
-#                 })
+                medicine_inv.minv_qty_avail -= qty_requested
+                medicine_inv.staff = staff
+                medicine_inv.save(update_fields=["minv_qty_avail", "staff", "created_at"])
 
-#             return Response({
-#                 'success': True,
-#                 'data': formatted_data,
-#                 'total_records': len(formatted_data)
-#             }, status=status.HTTP_200_OK)
+                # Transaction
+                MedicineTransactions.objects.create(
+                    mdt_qty=f"{qty_requested} {medicine_inv.minv_qty_unit}",
+                    mdt_action="Deducted (Medicine Request)",
+                    staff=staff,
+                    minv_id=medicine_inv
+                )
 
-#         except Exception as e:
-#             return Response({
-#                 'success': False,
-#                 'error': str(e)
-#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                # Medicine record
+                med_record = MedicineRecord.objects.create(
+                    patrec_id=patient_record,
+                    minv_id=medicine_inv,
+                    medrec_qty=qty_requested,
+                    reason=med.get("reason"),
+                    signature=signature,
+                    requested_at=timezone.now(),
+                    fulfilled_at=timezone.now(),
+                    staff=staff
+                )
 
+                # Files upload
+                if files:
+                    file_data = [{"name": f.name, "type": f.content_type, "file": f} for f in files]
+                    file_serializer = MedicineFileCreateSerializer(
+                        data={"files": file_data, "medrec": med_record.pk}
+                    )
+                    file_serializer.is_valid(raise_exception=True)
+                    file_serializer.save()
 
+                results.append({"success": True, "medicine_id": minv_id, "medrec_id": med_record.pk})
+
+            except Exception as e:
+                transaction.set_rollback(True)
+                return Response({"results": [{"success": False, "error": str(e)}]}, status=400)
+
+        return Response({"results": results, "patrec_id": patient_record.patrec_id}, status=201)
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
  
 class MonthlyMedicineSummariesAPIView(APIView):
     def get(self, request):

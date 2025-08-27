@@ -293,19 +293,44 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-f
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+# ALLOWED_HOSTS = ['localhost', '*']
+# ALLOWED_HOSTS = ['localhost', '*']
+
+
 
 # ========================
 # SUPABASE CONFIGURATION
 # ========================
 SUPABASE_CONFIG = {
-    'URL': config('SUPABASE_URL'),
-    'ANON_KEY': config('SUPABASE_ANON_KEY'),
-    'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY'),
-    'JWT_SECRET': config('SUPABASE_JWT_SECRET'),
-    'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID'),
+    'SUPABASE_URL': config('SUPABASE_URL', default='http://localhost:54321'),
+    'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY', default='anon-dev-key'),
+    'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY', default='service-role-dev-key'),
+    'JWT_SECRET': config('SUPABASE_JWT_SECRET', default='dev-jwt-secret'),
+    'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID', default='local-dev-project'),
     'JWT_ALGORITHM': 'HS256',
     'JWT_AUDIENCE': 'authenticated',
 }
+
+SUPABASE_URL = SUPABASE_CONFIG['SUPABASE_URL']
+SUPABASE_ANON_KEY = SUPABASE_CONFIG['SUPABASE_ANON_KEY']
+SUPABASE_SERVICE_ROLE_KEY = SUPABASE_CONFIG['SERVICE_ROLE_KEY']
+SUPABASE_JWT_SECRET = SUPABASE_CONFIG['JWT_SECRET']
+
+SUPABASE_PROJECT_ID = SUPABASE_CONFIG['SUPABASE_PROJECT_ID']
+if not DEBUG:
+    required_keys = {
+        'SUPABASE_URL': SUPABASE_URL,
+        'SUPABASE_ANON_KEY': SUPABASE_ANON_KEY,
+        'SUPABASE_SERVICE_ROLE_KEY': SUPABASE_SERVICE_ROLE_KEY,
+        'SUPABASE_JWT_SECRET': SUPABASE_JWT_SECRET,
+    }
+
+    for key, value in required_keys.items():
+        if not value or value in ['http://localhost:54321', 'anon-dev-key', 'service-role-dev-key', 'dev-jwt-secret']:
+            raise ValueError(f"[Supabase config error] {key} is missing or using a fallback value in production.")
+
+
+# Application definition
 
 # ========================
 # FIREBASE CONFIGURATION

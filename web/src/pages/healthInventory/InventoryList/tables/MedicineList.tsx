@@ -1,5 +1,4 @@
-import React from "react";
-import { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +10,10 @@ import { MedicineRecords } from "../tables/columns/MedicineCol";
 import { Medcolumns } from "../tables/columns/MedicineCol";
 import { useMedicines } from "../queries/medicine/MedicineFetchQueries";
 import { useDeleteMedicine } from "../queries/medicine/MedicineDeleteQueries";
-import { MedicineModal } from "../addListModal/MedicineModal";
+import MedicineModal from "../Modal/MedicineModal";
 
 export default function MedicineList() {
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,6 +23,18 @@ export default function MedicineList() {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [selectedMedicine, setSelectedMedicine] = useState<MedicineRecords | null>(null);
   
+ 
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const columns = Medcolumns(
     setMedToDelete, 
     setIsDeleteConfirmationOpen, 
@@ -31,28 +43,47 @@ export default function MedicineList() {
     setShowMedicineModal
   );
   
-  const { data: medicines, isLoading: isLoadingMedicines } = useMedicines();
+  const { data: medicineData, isLoading: isLoadingMedicines, error } = useMedicines(
+    currentPage, 
+    pageSize, 
+    searchQuery.trim() ? searchQuery.trim() : undefined
+  );
+  
+  // Debug: Log API response
+  useEffect(() => {
+    console.log("Medicine Data Response:", medicineData);
+    console.log("API Error:", error);
+  }, [medicineData, error]);
+
   const deleteMutation = useDeleteMedicine();
 
   const formatMedicineData = useCallback((): MedicineRecords[] => {
-    if (!medicines) return [];
-    return medicines.map((medicine: any) => ({
+    console.log("Formatting medicine data:", medicineData);
+    
+    // Handle different response formats
+    let medicineResults = [];
+    
+    if (medicineData?.results) {
+      // Standard Django REST framework format
+      medicineResults = medicineData.results;
+    } else if (Array.isArray(medicineData)) {
+      // Old array format (fallback)
+      medicineResults = medicineData;
+    } else if (medicineData?.results?.results) {
+      // Handle the nested format you're currently getting
+      medicineResults = medicineData.results.results;
+    }
+    
+    return medicineResults.map((medicine: any) => ({
       id: medicine.med_id,
       medicineName: medicine.med_name,
       cat_id: medicine.cat,
-      cat_name: medicine.catlist,
+      cat_name: medicine.catlist || "N/A",
       med_type: medicine.med_type || "N/A",
     }));
-  }, [medicines]);
+  }, [medicineData]);
 
-  const filteredMedicines = useMemo(() => {
-    return formatMedicineData().filter((record) =>
-      Object.values(record)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery, formatMedicineData]);
+  const displayData = useMemo(() => formatMedicineData(), [formatMedicineData]);
 
   const handleDelete = () => {
     if (medToDelete === null) return;
@@ -61,16 +92,45 @@ export default function MedicineList() {
     setMedToDelete(null);
   };
 
-  const totalPages = Math.ceil(filteredMedicines.length / pageSize);
-  const paginatedMedicines = filteredMedicines.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Get pagination info from API response
+  const paginationInfo = useMemo(() => {
+    if (medicineData) {
+      // Handle the nested format you're currently getting
+      if (medicineData.results?.count) {
+        return {
+          totalCount: medicineData.results.count,
+          totalPages: medicineData.results.total_pages || Math.ceil(medicineData.results.count / pageSize),
+          currentPage: medicineData.results.current_page || currentPage,
+        };
+      }
+      
+      // Standard Django REST framework format
+      return {
+        totalCount: medicineData.count || 0,
+        totalPages: Math.ceil((medicineData.count || 0) / pageSize),
+        currentPage: currentPage,
+      };
+    }
+    return {
+      totalCount: 0,
+      totalPages: 0,
+      currentPage: 1,
+    };
+  }, [medicineData, pageSize, currentPage]);
 
   const handleAddNew = () => {
     setModalMode('add');
     setSelectedMedicine(null);
     setShowMedicineModal(true);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -83,10 +143,10 @@ export default function MedicineList() {
               size={17}
             />
             <Input
-              placeholder="Search..."
+              placeholder="Search medicine name..."
               className="pl-10 bg-white w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
         </div>
@@ -107,11 +167,7 @@ export default function MedicineList() {
               value={pageSize}
               onChange={(e) => {
                 const value = +e.target.value;
-                if (value >= 1) {
-                  setPageSize(value);
-                } else {
-                  setPageSize(1);
-                }
+                handlePageSizeChange(value >= 1 ? value : 1);
               }}
               min="1"
             />
@@ -135,26 +191,37 @@ export default function MedicineList() {
           {isLoadingMedicines ? (
             <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">loading....</span>
+              <span className="ml-2">Loading medicines...</span>
+            </div>
+          ) : error ? (
+            <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
+              <span className="ml-2">Error loading medicines. Please check console.</span>
+            </div>
+          ) : displayData.length === 0 ? (
+            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+              <span className="ml-2">No medicines found</span>
             </div>
           ) : (
-            <DataTable columns={columns} data={paginatedMedicines} />
+            <DataTable columns={columns} data={displayData} />
           )}
         </div>
-        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
-          <p className="text-xs sm:text-sm text-darkGray">
-            Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredMedicines.length)} of{" "}
-            {filteredMedicines.length} rows
-          </p>
-          {paginatedMedicines.length > 0 && (
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          )}
-        </div>
+        
+        {displayData.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
+            <p className="text-xs sm:text-sm text-darkGray">
+              Showing {((currentPage - 1) * pageSize) + 1}-
+              {Math.min(currentPage * pageSize, paginationInfo.totalCount)} of{" "}
+              {paginationInfo.totalCount} rows
+            </p>
+            {paginationInfo.totalPages > 1 && (
+              <PaginationLayout
+                currentPage={currentPage}
+                totalPages={paginationInfo.totalPages}
+                onPageChange={handlePageChange}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       <ConfirmationDialog

@@ -21,6 +21,17 @@ class CommodityListView(generics.ListCreateAPIView):
     queryset=CommodityList.objects.all()
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+class CommodityCountView(APIView):
+  
+    def get(self, request):
+        try:
+            count = CommodityList.objects.count()
+            return Response({'count': count}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to get commodity count: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class CommodityListUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class=CommodityListSerializers

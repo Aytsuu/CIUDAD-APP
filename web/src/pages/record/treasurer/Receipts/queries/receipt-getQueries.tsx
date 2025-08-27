@@ -20,4 +20,4 @@ export const useInvoiceQuery = () => {
         queryFn: getInvoice,
         staleTime: 1000 * 60 * 30,
     });
-};
+}

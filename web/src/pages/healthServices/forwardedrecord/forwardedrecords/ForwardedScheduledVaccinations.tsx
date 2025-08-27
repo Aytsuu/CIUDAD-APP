@@ -22,7 +22,7 @@ import { useLoading } from "@/context/LoadingContext";
 import { VaccinationRecord } from "../../vaccination/tables/columns/types";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
-export default function ScheduledVaccinations() {
+export default function ForwardedScheduledVaccinationsTables() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -295,19 +295,7 @@ export default function ScheduledVaccinations() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <SelectLayout
-              placeholder="Filter status"
-              label=""
-              className="bg-white w-full sm:w-48"
-              options={[
-                { id: "all", name: "All Status" },
-                { id: "scheduled", name: "Scheduled" },
-                { id: "completed", name: "Completed" },
-                { id: "cancelled", name: "Cancelled" },
-              ]}
-              value={statusFilter}
-              onChange={(value) => setStatusFilter(value)}
-            />
+           
           </div>
         </div>
 

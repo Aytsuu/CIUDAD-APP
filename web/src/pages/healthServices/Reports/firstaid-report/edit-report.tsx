@@ -46,6 +46,8 @@ export default function EditMonthlyRecipientList() {
     }
   }, [passedStaffId, staffOptions]);
 
+  
+
   useEffect(() => {
     if (signatureBase64 && signatureRef.current) {
       signatureRef.current.setSignature(signatureBase64);

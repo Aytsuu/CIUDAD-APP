@@ -171,10 +171,6 @@ class MedicineInventory(models.Model):
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_inventories', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
 
-    # APP NA END
-    # min_qty_to_display = models.PositiveIntegerField(default=0)
-    # set_low_stock = models.PositiveBigIntegerField(default=0)
-    # set_near_expiry =models.PositiveBigIntegerField(default=0)
     class Meta: 
         db_table = 'medicine_inventory'
         ordering = ['-created_at']
@@ -289,6 +285,12 @@ class VaccineList(models.Model):
         db_table = 'vaccines'
         ordering = ['-created_at']
         
+    def save(self, *args, **kwargs):
+        # Convert vac_name to uppercase before saving
+        if self.vac_name:
+            self.vac_name = self.vac_name.title()
+        super().save(*args, **kwargs)
+        
     
         
 
@@ -361,6 +363,12 @@ class ImmunizationSupplies(models.Model):
     class Meta:
         db_table = 'immunization_supplies'
         ordering = ['-created_at']
+        
+    def save(self, *args, **kwargs):
+        # Convert vac_name to uppercase before saving
+        if self.imz_name:
+            self.imz_name = self.imz_name.title()
+        super().save(*args, **kwargs)
         
         
 class ImmunizationStock(models.Model):

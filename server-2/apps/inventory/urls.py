@@ -13,8 +13,12 @@ urlpatterns = [
     path("category/<int:cat_id>/", DeleteCategoryView.as_view(), name="delete_category"),
 
 
-    path("medicinelist/", MedicineListView.as_view(), name="medicinelist"),
+    path("medicinecreateview/", MedicineCreateView.as_view(), name="medicinecreateview"),
+    path("medicinetable/", MedicineListTable.as_view(), name="medicinetable"),
+    path("medicinelistcount/", MedicineCountView.as_view(), name="medicinelistcount"),
+
     path("commoditylist/", CommodityListView.as_view(), name="commoditylist"),
+    path("commoditylistcount/", CommodityCountView.as_view(), name="commoditylistcount"),
     path("firstaidlist/", FirstAidListView.as_view(), name="firstaidlist"),
   
     
@@ -49,7 +53,9 @@ urlpatterns = [
     path("vac_list/", VaccineListView.as_view(), name="vaccination-list"),
     path("vac_intervals/", VaccineIntervalView.as_view(), name="vaccination-interval"), 
     path("routine_freq/", RoutineFrequencyView.as_view(), name="RoutineFrequency"),
-    path("imz_supplies/", ImmunizationSuppliesView.as_view(), name="imz_supplies"),
+    
+    path("imz_supplieslist-table/", ImmunizationSuppliesListTable.as_view(), name="imz_supplies-list"),
+    path("imz_supplieslist-createview/", ImmunizationSuppliesListCreateView.as_view(), name="imz_supplies-list-createview"),
     
      # Vaccination 
     path("vac_list/<int:vac_id>/", VaccineListRetrieveUpdateDestroyView.as_view(), name="vaccination-detail"),
@@ -66,6 +72,8 @@ urlpatterns = [
     path("vaccine_stocks/<int:vacStck_id>/", VaccineStockRetrieveUpdateDestroyView.as_view(), name="vaccine_stocks-detail"),
     path("immunization_stock/<int:imzStck_id>/", ImmunizationSuppliesStockRetrieveUpdateDestroyView.as_view(), name="immunization_stocks-detail"),
    
+       path("combined_vaccine_data/", CombinedVaccineDataView.as_view(), name="combined-vaccine-data"),
+
    
     # TRANSACTION
     path("medicinetransaction/", MedicineTransactionView.as_view(), name="medicine-transaction"),

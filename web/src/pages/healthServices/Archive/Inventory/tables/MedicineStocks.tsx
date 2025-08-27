@@ -37,7 +37,7 @@ export default function MedicineStocks() {
     useMedicineStocks();
 
   const formatMedicineStocksData = useCallback((): MedicineStocksRecord[] => {
-    if (!medicineStocks) return [];
+    if (!medicineStocks || !Array.isArray(medicineStocks)) return [];
     return medicineStocks.map((medicineStock: any) => {
       const availQty = medicineStock.minv_qty_avail;
       let unit = medicineStock.minv_qty_unit;

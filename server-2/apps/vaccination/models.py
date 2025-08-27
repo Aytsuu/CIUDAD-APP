@@ -18,7 +18,6 @@ class VaccinationRecord(models.Model):
 class VaccinationHistory(models.Model):
     vachist_id = models.BigAutoField(primary_key=True)
     vachist_doseNo = models.PositiveIntegerField(default="0")
-    vachist_age = models.CharField(default="", max_length=100)
     vachist_status = models.CharField(max_length=100, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
     date_administered=models.DateField()

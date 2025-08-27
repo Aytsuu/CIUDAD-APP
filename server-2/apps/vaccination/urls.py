@@ -16,8 +16,6 @@ urlpatterns = [
     path('vaccination-record/<int:vacrec_id>/', DeleteUpdateVaccinationRecordView.as_view(), name='vaccination-record-detail'),
     
     
-    
-    
     # path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
     path('vaccination-history/<int:vachist_id>/', DeleteUpdateVaccinationHistoryView.as_view(), name='vaccination-history-detail'),
     path('unvaccinated-vaccines/<str:pat_id>/', UnvaccinatedVaccinesView.as_view(), name='unvaccinated-vaccines'),
@@ -45,7 +43,8 @@ urlpatterns = [
 
     
     
-    
+    # =============================BACKEND=================================
+    path('submit-vaccination-records/', VaccinationSubmissionView.as_view(), name='vaccination-records-list'),
 
 
 ]

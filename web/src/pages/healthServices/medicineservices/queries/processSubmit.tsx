@@ -68,7 +68,6 @@ export const processMedicineRequest = async (
       await addMedicineTransaction(transactionPayload);
 
       // 5. Create medicine record
-
       const response = await createMedicineRecord({
         patrec_id: patientRecord.patrec_id,
         minv_id: med.minv_id,

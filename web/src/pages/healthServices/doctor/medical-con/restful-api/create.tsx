@@ -1,5 +1,22 @@
 import { api2 } from "@/api/api";
 
+
+
+// SOAPFORM
+export const createMedicalConsultationSoapForm = async (data: Record<string, any>) => {
+  try {
+    const response = await api2.post("medical-consultation/create-soap-form/", data);
+   
+    console.log("Medical consultation SOAP form created successfully:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating medical consultation SOAP form:", error);
+    throw error;
+  }
+}
+
+
+
 // Findings API
 export const createFindings = async (data: Record<string, any>) => {
   try {

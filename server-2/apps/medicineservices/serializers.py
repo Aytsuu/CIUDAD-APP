@@ -7,6 +7,8 @@ from apps.patientrecords.serializers.patients_serializers import PatientSerializ
 from apps.healthProfiling.serializers.base import PersonalSerializer
 from apps.healthProfiling.models import *
 from apps.inventory.serializers.medicine_serializers import *
+from apps.reports.serializers import FileInputSerializer
+from utils.supabase_client import upload_to_storage
 
 
 # ALL  medicine RECORD 
@@ -37,6 +39,7 @@ class MedicineRecordSerializerMinimal(serializers.ModelSerializer):
     class Meta:
         model = MedicineRecord
         fields = '__all__'
+        
 class MedicineRequestSerializer(serializers.ModelSerializer):
     address = serializers.SerializerMethodField()
     personal_info = serializers.SerializerMethodField()
@@ -139,3 +142,55 @@ class FindingPlanTreatmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = FindingsPlanTreatment
         fields = '__all__'
+        
+class MedicineFileSerializer(serializers.ModelSerializer):
+    medrec_details = MedicineRecordSerialzer(source='medrec', read_only=True)
+
+    class Meta:
+        model = Medicine_File
+        fields = '__all__'
+        read_only_fields = ('medf_id', 'created_at', 'medf_url')
+        
+class MedicineFileCreateSerializer(serializers.ModelSerializer):
+    files = FileInputSerializer(write_only=True, required=False, many=True)
+
+    class Meta:
+        model = Medicine_File
+        fields = '__all__'
+        
+    @transaction.atomic
+    def create(self, validated_data):
+        files_data = validated_data.pop('files', [])
+        if not files_data:
+            raise serializers.ValidationError({"files": "At least one file must be provided"})
+            
+        medrec_id = validated_data.pop('medrec', None)
+        
+        if not medrec_id :
+            raise serializers.ValidationError("Either medrec or medreq must be provided")
+            
+        created_files = self._upload_files(files_data, medrec_id)
+
+        if not created_files:
+            raise serializers.ValidationError("Failed to upload files")
+
+        return created_files[0]
+
+    def _upload_files(self, files_data, medrec_id):
+        med_files = []
+        for file_data in files_data:
+            med_file = Medicine_File(
+                medf_name=file_data['name'],
+                medf_type=file_data['type'],
+                medf_path=file_data['name'],
+                created_at=timezone.now(),
+                medrec_id=medrec_id,
+            )
+
+            url = upload_to_storage(file_data['file'], 'medicine-bucket')
+            med_file.ief_url = url
+            med_files.append(med_file)
+
+        if med_files:
+            return Medicine_File.objects.bulk_create(med_files)
+        return []

@@ -14,16 +14,14 @@ class MedicalConsultation_Record(models.Model):
      updated_at = models.DateTimeField(auto_now=True)
 #      bhw_assignment = models.IntegerField()
 #      doc_id = models.IntegerField()
-     medrec_age = models.CharField(max_length=100,default="")
      patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_consultation_record')
      vital = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='medical_consultation_record')
      bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='medical_consultation_record')
      find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='medical_consultation_record',null=True)
      medreq =models.ForeignKey(MedicineRequest,on_delete=models.CASCADE,related_name='medical_consultation_record',null=True )
-     followv = models.ForeignKey(FollowUpVisit,on_delete=models.CASCADE,related_name='medical_consultation_record',null=True)
      staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medical_consultation_record',null=True)
      
-     
+    
      class Meta:
            db_table = 'medical_consultation_record'
            

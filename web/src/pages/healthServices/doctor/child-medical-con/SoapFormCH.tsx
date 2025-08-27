@@ -3,14 +3,11 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useCallback, useEffect } from "react";
-
 import SoapFormFields from "@/components/ui/soap-form";
-
 import { useAuth } from "@/context/AuthContext";
 import { usePhysicalExamQueries } from "../medical-con/queries.tsx/fetch";
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI";
 import { useSubmitSoapForm } from "./queries.tsx/soap-submission";
-
 import { soapSchema, SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { ExamSection } from "../types";
 
@@ -259,8 +256,6 @@ export default function SoapForm({
         onPageChange={handlePageChange}
         onIllnessSelectionChange={handleIllnessSelectionChange}
         onAssessmentUpdate={handleAssessmentUpdate}
-        hasInvalidQuantities={hasInvalidQuantities}
-        hasExceededStock={hasExceededStock}
         onBack={handleBack}
         isSubmitting={isSubmitting}
         onSubmit={form.handleSubmit(onSubmit)}

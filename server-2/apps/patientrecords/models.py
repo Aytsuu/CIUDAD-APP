@@ -214,7 +214,6 @@ class Spouse(models.Model):
     
 class BodyMeasurement(models.Model):
     bm_id = models.BigAutoField(primary_key=True)  
-    # age = models.CharField(max_length=100 ,default="")
     height = models.DecimalField(max_digits=5, decimal_places=2,default=Decimal('0.00'))
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
     # bmi = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))

@@ -86,7 +86,7 @@ interface FormattedForwardedRecord {
   vacrec_details: any;
 }
 
-export default function ForwardedVaccinationRecords() {
+export default function ForwardedVaccinationRecordsTable() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);

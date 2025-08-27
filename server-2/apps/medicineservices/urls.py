@@ -20,5 +20,16 @@ urlpatterns=[
         path('medicine-records/monthly/', MonthlyMedicineSummariesAPIView.as_view(), name='monthly_medicine_records'),
         path('medicine-reports/<str:month>/', MonthlyMedicineRecordsDetailAPIView.as_view(), name='medicine-reports'),
         path('medicines-request/monthly/chart/<str:month>/', MonthlyMedicineChart.as_view(), name='medicines_list'),
+        
+        path('medicine-file/', MedicineFileView.as_view(), name='medicine_file_create'),
+        
+        
+        #REVISE (BACKEND)
+        path('process-medicine-request/', ProcessMedicineRequestView.as_view(), name='process_medicine_request'),       
+        
+        
+        
+        
+        
 
    ]

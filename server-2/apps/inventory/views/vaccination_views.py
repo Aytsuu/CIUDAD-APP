@@ -13,14 +13,15 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
 import re
 from django.db.models import Q
+from pagination import *
 
 
+# =======================AGE GROUP================================#
 
 class AgeGroupView(generics.ListCreateAPIView):
     serializer_class = AgegroupSerializer
     queryset = Agegroup.objects.all()
-    
-    
+      
 class DeleteUpdateAgeGroupView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AgegroupSerializer
     queryset = Agegroup.objects.all()
@@ -29,17 +30,75 @@ class DeleteUpdateAgeGroupView(generics.RetrieveUpdateDestroyAPIView):
         agegrp_id = self.kwargs.get('agegrp_id')
         return get_object_or_404(Agegroup, agegrp_id=agegrp_id)
     
+# =======================SUPPLY================================#
+class ImmunizationSuppliesListTable(generics.ListAPIView):
+    serializer_class = ImmunizationSuppliesSerializer
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        queryset = ImmunizationSupplies.objects.all()
+        search_query = self.request.GET.get('search', '').strip()
+        
+        if search_query:
+            queryset = queryset.filter(imz_name__icontains=search_query)
+        return queryset
+    
+class ImmunizationSuppliesListCreateView(generics.ListCreateAPIView):
+    serializer_class = ImmunizationSuppliesSerializer
+    queryset = ImmunizationSupplies.objects.all()
 
-
-
-class ImmunizationSuppliesView(generics.ListCreateAPIView):
-    serializer_class=ImmunizationSuppliesSerializer
-    queryset=ImmunizationSupplies.objects.all()
+class ImmunizationSuppliesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ImmunizationSuppliesSerializer
+    queryset = ImmunizationSupplies.objects.all()
+    lookup_field = 'imz_id'
+    
+    def perform_destroy(self, instance):
+        try:
+            instance.delete()
+        except ProtectedError:
+            raise ValidationError("Cannot delete medicine. It is still in use by other records.")
+        
+        
+class ImmunizationStockSuppliesView(generics.ListCreateAPIView):
+    serializer_class=ImmnunizationStockSuppliesSerializer
+    queryset=ImmunizationStock.objects.all()
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    def get_queryset(self):
+        queryset = ImmunizationStock.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
+        return queryset
+    
+class ImmunizationTransactionView(generics.ListCreateAPIView):
+    serializer_class=ImmunizationSuppliesTransactionSerializer
+    # queryset=ImmunizationTransaction.objects.all() 
+    pagination_class = StandardResultsPagination
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
-# views.py
+
+class ImmunizationSuppliesStockRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ImmnunizationStockSuppliesSerializer
+    queryset = ImmunizationStock.objects.all()
+    lookup_field = 'imzStck_id'
+    
+    def get_object(self):
+        imzStck_id = self.kwargs.get('imzStck_id')
+        obj = get_object_or_404(ImmunizationStock, imzStck_id=imzStck_id)
+        return obj
+    
+class ArchiveImmunizationSuppliesStockListView(generics.ListAPIView):
+    serializer_class = ImmnunizationStockSuppliesSerializer
+    queryset = ImmunizationStock.objects.all()
+    
+    def get_queryset(self):
+        # Filter to only include records where inv_id__is_Archived is True
+        return ImmunizationStock.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
+
+
+
+    
+# =======================VACCINES================================#
 class VaccineListView(generics.ListCreateAPIView):
     serializer_class = VacccinationListSerializer
     queryset = VaccineList.objects.all()
@@ -72,19 +131,6 @@ class RoutineFrequencyView(generics.ListCreateAPIView):
      
      
     
-# Immunization Supplies Views
-class ImmunizationSuppliesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = ImmunizationSuppliesSerializer
-    queryset = ImmunizationSupplies.objects.all()
-    lookup_field = 'imz_id'
-    
-    def perform_destroy(self, instance):
-        try:
-            instance.delete()
-        except ProtectedError:
-            raise ValidationError("Cannot delete medicine. It is still in use by other records.")
-        
-        
 # Vaccine List Views
 class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VacccinationListSerializer
@@ -160,25 +206,9 @@ class VaccineStockRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVie
         obj = get_object_or_404(VaccineStock, vacStck_id=vacStck_id)
         return obj
     
-# class VaccineStockVacRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-#     serializer_class = VaccineStockSerializer
-#     queryset = VaccineStock.objects.all()
-#     lookup_field = 'vac_id'
-#     def get_object(self):
-#         vac_id = self.kwargs.get('vac_id')
-#         obj = get_object_or_404(VaccineStock, vac_id=vac_id)
-#         return obj
+
     
-    
-    
-class ImmunizationStockSuppliesView(generics.ListCreateAPIView):
-    serializer_class=ImmnunizationStockSuppliesSerializer
-    queryset=ImmunizationStock.objects.all()
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-    def get_queryset(self):
-        queryset = ImmunizationStock.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
-        return queryset
+
     
 class AntigenTransactionView(generics.ListCreateAPIView):
     serializer_class = AntigenTransactionSerializer
@@ -191,35 +221,6 @@ class AntigenTransactionView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
 
     
-class ImmunizationTransactionView(generics.ListCreateAPIView):
-    serializer_class=ImmunizationSuppliesTransactionSerializer
-    # queryset=ImmunizationTransaction.objects.all() 
-    pagination_class = StandardResultsPagination
-    
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-
-
-# Immunization Supplies Views
-class ImmunizationSuppliesStockRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = ImmnunizationStockSuppliesSerializer
-    queryset = ImmunizationStock.objects.all()
-    lookup_field = 'imzStck_id'
-    
-    def get_object(self):
-        imzStck_id = self.kwargs.get('imzStck_id')
-        obj = get_object_or_404(ImmunizationStock, imzStck_id=imzStck_id)
-        return obj
-    
-
-# Immunization Supplies Views
-class ArchiveImmunizationSuppliesStockListView(generics.ListAPIView):
-    serializer_class = ImmnunizationStockSuppliesSerializer
-    queryset = ImmunizationStock.objects.all()
-    
-    def get_queryset(self):
-        # Filter to only include records where inv_id__is_Archived is True
-        return ImmunizationStock.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
 
 class ArchiveVaccineStocksView(generics.ListAPIView):
     serializer_class=VaccineStockSerializer
@@ -231,6 +232,46 @@ class ArchiveVaccineStocksView(generics.ListAPIView):
         return queryset 
     
     
+class CombinedVaccineDataView(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        # Get search query parameter for vaccine name only
+        search_query = request.GET.get('search', '').strip()
+        
+        # Filter vaccines based on search query (vaccine name only)
+        vaccines = VaccineList.objects.all()
+        
+        if search_query:
+            vaccines = vaccines.filter(vac_name__icontains=search_query)
+        
+        # Apply pagination to vaccines
+        paginator = self.pagination_class()
+        paginated_vaccines = paginator.paginate_queryset(vaccines, request)
+        
+        # Get all intervals and frequencies (no pagination for these)
+        intervals = VaccineInterval.objects.all()
+        frequencies = RoutineFrequency.objects.all()
+        
+        # Serialize the data
+        vaccine_serializer = VacccinationListSerializer(paginated_vaccines, many=True)
+        interval_serializer = VaccineIntervalSerializer(intervals, many=True)
+        frequency_serializer = RoutineFrequencySerializer(frequencies, many=True)
+        
+        # Return combined response with pagination info
+        return paginator.get_paginated_response({
+            'vaccines': vaccine_serializer.data,
+            'intervals': interval_serializer.data,
+            'frequencies': frequency_serializer.data,
+            'pagination': {
+                'total_count': paginator.page.paginator.count,
+                'total_pages': paginator.page.paginator.num_pages,
+                'current_page': paginator.page.number,
+                'page_size': paginator.page_size,
+            }
+        })
+        
+        
 
 # ==================VACCINATION/IMMUNIZATION REPORT=======================
 
