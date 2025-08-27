@@ -547,12 +547,14 @@ function TemplateMainPage() {
     },      
     {
       temp_id: 23,
-      temp_belowHeaderContent: "                                            Barangay Case No.[ Case No. ]\n" +
-      "Brgy, San Roque Ciudad Cebu City            For: [ Reason ]\n" +
-      "[ Name of Complainant ]\n\n" +
+      temp_belowHeaderContent: "\t\t\t\t\t\t\t\t\t\t\t\t\t\tBarangay Case No.[ Case No. ]\n" +
+      "[ Name of Complainant ]\n" +
+      "[ Address ], Brgy. San Roque Ciudad Cebu City\n" +
+      "Complainant/s\n\n" +
       "      - AGAINTS -\n\n" +
-      "Brgy, San Roque Ciudad Cebu City\n" +
-      "[ Name of Respondent ]\n\n",
+      "[ Name of Respondent ]\n" +
+      "[ Address ], Brgy. San Roque Ciudad Cebu City\n" +
+      "Respondent/s\n",
       temp_title: "CERTIFICATION TO FILE ACTION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -566,7 +568,7 @@ function TemplateMainPage() {
       temp_w_sign_left: false,
       temp_w_sign_applicant: false,
       temp_w_seal: false,
-      temp_body: "\nThis is to certify that:\n\n" +
+      temp_body: "This is to certify that:\n\n" +
       "1. There was a complaint filled in this Office on [SEPTEMBER] [10], [2025];\n\n" +
       "2. There has been a personal confrontation between the parties before the Punong Barangay but mediation failed;\n\n" +
       "3. The Pangkat ng Tagapangkasundo was constituted but the personal confrontation before the Pangkat likewise did not result into settlement;\n\n" +

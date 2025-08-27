@@ -80,13 +80,16 @@ function TemplatePreview({
     // const sectionGap = 20;
 
     // Set initial font
+    // const setCurrentFont = (style: 'normal' | 'bold' = 'normal') => {
+    //   if (withSummon) {
+    //     doc.setFont("times", style);
+    //   } else {
+    //     doc.setFont("times", style);
+    //   }
+    // };
     const setCurrentFont = (style: 'normal' | 'bold' = 'normal') => {
-      if (withSummon) {
-        doc.setFont("VeraMono", style);
-      } else {
-        doc.setFont("times", style);
-      }
-    };
+      doc.setFont("times", style);
+    };    
 
     setCurrentFont('normal');
     doc.setFontSize(12);
@@ -196,7 +199,7 @@ function TemplatePreview({
         doc.text(belowHeaderLines[i], marginValue, yPos);
         yPos += lineHeight;
       }
-      yPos += 30; // Add some space after the content
+      yPos += 10; // Add some space after the content
     }   
     
     
@@ -304,28 +307,28 @@ function TemplatePreview({
       if (withSummon) {
         // Barangay captain info on the right side
         const captainX = pageWidth - marginValue - 170;
-        setCurrentFont('bold');
+        doc.setFont("times", "bold");
         doc.text("HON. VIRGINIA N. ABENOJA", captainX, currentY);
-        setCurrentFont('normal');;
-        doc.text("Punong Barangay", captainX + 34, currentY + 20);
+        doc.setFont("times", "normal");
+        doc.text("Punong Barangay", captainX + 34, currentY + 15);
 
-        //adds a space after the Punong Barangay na word
-        currentY += 70;
+        // Add space after the Punong Barangay
+        currentY += 60;
 
-        // Summon signature fields - new format
-        setCurrentFont('normal');
+        // Attested section on the left side
+        doc.setFont("times", "normal");
+        doc.text("Attested:", signatureX, currentY);
         
-        // Calculate positions
-        const fieldSpacing = 30;
-        const lineLength = 200; // Length of each field line
+        // Add some space for the name line
+        currentY += 20;
+        doc.setFont("times", "bold");
+        doc.text("FLORANTE T. NAVARRO III", signatureX, currentY);
         
-        // COMPLAINANT and RESPONDENT on same line
-        doc.text("COMPLAINANT ____________________", signatureX, currentY);
-        doc.text("RESPONDENT ____________________", signatureX + lineLength + 20, currentY);
-        
-        // SERVER aligned to right below RESPONDENT
-        doc.text("SERVER ____________________", signatureX + lineLength + 20, currentY + fieldSpacing);
-      }       
+        // Add space for the title
+        currentY += 15;
+        doc.setFont("times", "normal");
+        doc.text("Pangkat Chairman", signatureX + 25, currentY);
+      }    
 
       if(withSignRight){
         const captainX = pageWidth - marginValue - 200; 
