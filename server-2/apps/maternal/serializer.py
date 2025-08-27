@@ -7,7 +7,7 @@ from django.db.models import Max
 from apps.patientrecords.models import *
 from apps.maternal.models import (
     Pregnancy, Prenatal_Form, Previous_Hospitalization, Previous_Pregnancy, TT_Status, 
-    LaboratoryResult, LaboratoryResultImg, LabRemarks, Guide4ANCVisit, Checklist, BirthPlan,
+    LaboratoryResult, LaboratoryResultImg, Guide4ANCVisit, Checklist, BirthPlan,
     PostpartumRecord, PostpartumDeliveryRecord, PostpartumAssessment,
     ObstetricRiskCode, PrenatalCare
 )
@@ -124,10 +124,10 @@ class LaboratoryResultCreateSerializer(serializers.ModelSerializer):
             LaboratoryResultImg.objects.create(lab_id=lab_result, **img_data)
         return lab_result
 
-class LabRemarksCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LabRemarks
-        fields = ['remarks']
+# class LabRemarksCreateSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = LabRemarks
+#         fields = ['remarks']
 
 class Guide4ANCVisitCreateSerializer(serializers.ModelSerializer):
     class Meta:
