@@ -112,7 +112,7 @@ export default function MediaPicker({
       if (matchingAsset) {
         preSelectedItems.add(matchingAsset.id)
       }
-    })
+    }) 
     
     setSelectedGalleryItems(preSelectedItems)
     setGalleryVisible(true)
