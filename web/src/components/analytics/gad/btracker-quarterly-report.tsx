@@ -121,11 +121,11 @@ export function GADQuarterlyBudgetChart() {
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center">
                     <h3 className="font-medium">{quarter.name} Quarter</h3>
-                    <span className={`text-sm font-medium ${
+                    {/* <span className={`text-sm font-medium ${
                       quarter.net >= 0 ? 'text-green-500' : 'text-red-500'
                     }`}>
                       {quarter.net >= 0 ? '+' : ''}₱{Math.abs(quarter.net).toLocaleString()}
-                    </span>
+                    </span> */}
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                     <div className="flex items-center text-red-500">
