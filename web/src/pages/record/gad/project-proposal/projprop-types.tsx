@@ -83,7 +83,7 @@ export type ProjectProposalInput = {
     type: "prepared" | "approved";
   }[];
   gpr_header_img: string | null;
-  staffId?: number | null;
+  staffId?: number | null | string;
   gprIsArchive?: boolean;
   supportDocs?: SupportDoc[];
   status: ProposalStatus;

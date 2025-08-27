@@ -126,7 +126,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
           id: `doc-${doc.psd_id}`,
           name: doc.psd_name,
           type: doc.psd_type,
-          file: doc.psd_url, // Map SupportDoc to MediaUploadType
+          file: doc.psd_url,
           url: doc.psd_url,
         })) || []
       );
@@ -286,6 +286,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
       signatories: data.signatories.filter((s: Signatory) => s.name.trim() !== ""),
       gpr_header_img,
       staffId: user?.staff?.staff_id || null,
+      // staffId: "00002250821",
       gprIsArchive: existingProposal?.gprIsArchive || false,
       supportDocs: existingProposal?.supportDocs || [],
       status: data.status || "Pending",
