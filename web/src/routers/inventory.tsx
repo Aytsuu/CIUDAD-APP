@@ -1,14 +1,7 @@
 import MainInventoryList from "@/pages/healthInventory/InventoryList/tables/MainInventoryList";
 import MainInventoryStocks from "@/pages/healthInventory/inventoryStocks/tables/StocksMain";
 import TransactionMainInventoryList from "@/pages/healthInventory/transaction/tables/TransactionMainInventoryList";
-// import MedicineModal from "@/pages/healthInventory/InventoryList/addListModal/MedicineModal";
-// import MedicineListEdit from "@/pages/healthInventory/InventoryList/editListModal/EditMedicineModal";
-// import CommodityModal from "@/pages/healthInventory/InventoryList/addListModal/CommodityModal";
-// import CommodityEditModal from "@/pages/healthInventory/InventoryList/editListModal/EditCommodityModal";
-import AddVaccinationList from "@/pages/healthInventory/InventoryList/addListModal/VaccineModal";
-import AddImmunizationSupplies from "@/pages/healthInventory/InventoryList/addListModal/ImmunizationSupplies";
-import EditVaccineModal from "@/pages/healthInventory/InventoryList/editListModal/EditVaccineModal";
-import EditImmunizationSupplies from "@/pages/healthInventory/InventoryList/editListModal/EditImmunizationSuppies";
+import AddImmunizationSupplies from "@/pages/healthInventory/InventoryList/Modal/ImmunizationSupplies";
 import AddMedicineStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/MedStockModal";
 import AddCommodityStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/ComStockModal";
 import AddFirstAidStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/FirstAidStockModal";
@@ -24,14 +17,7 @@ export const healthinventory = [
 {path: "/main-inventory",element: <MainInventory />,},
 {path: "/main-inventory-stocks",element: <MainInventoryStocks />},
 {path: "/transactionMainInventoryList",element: <TransactionMainInventoryList />,},
-// {path: "/addMedicineList",element: <MedicineModal />,},
-// {path: "/addCommodityList", element: <CommodityModal />,},
-{path: "/addVaccinationList", element:<AddVaccinationList/> },
 {path: "/addImmunizationSupplies", element: <AddImmunizationSupplies />}, 
-{path: "/editVaccineModal", element: <EditVaccineModal />}, 
-{path: "/editImmunizationSupplies", element: <EditImmunizationSupplies />}, 
-// {path: "/editCommodityList",element: <CommodityEditModal />,},
-// {path: "/editMedicineList", element: <MedicineListEdit />,},
 
 
 
