@@ -323,7 +323,7 @@ const items: MenuItem[] = [
         url: "/treasurer-income-and-disbursement",
       },
       {
-        title: "Clearance Requests",
+        title: "Payment Request",
         url: "/",
         anotherItems: [
           { title: "Personal & Others", url: "/treasurer-personal-and-others" },
@@ -335,6 +335,16 @@ const items: MenuItem[] = [
       },
       { title: "Receipts", url: "/treasurer-receipts" },
       { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
+    ],
+  },
+  {
+    title: "Certificate and Clearances",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Certifications", url: "record/clearances/certification" },
+      { title: "Business Permits", url: "record/clearances/businesspermit" },
+      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
     ],
   },
   {
@@ -352,6 +362,11 @@ const items: MenuItem[] = [
   {
     title: "Waste Personnel & Collection Vehicle",
     url: "/waste-personnel"
+  },
+  {
+    title: "Activity Log",
+    url: "/record/activity-log",
+
   },
   {
     title: "Announcement",

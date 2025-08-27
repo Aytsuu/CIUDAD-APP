@@ -1,10 +1,35 @@
 from rest_framework import generics
-from .models import ServiceChargeRequest
-from .serializers import *
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Prefetch
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view
+from django.db.models import Prefetch, F
+from django.core.exceptions import FieldError
+from django.utils import timezone
+import uuid
+import logging
+import traceback
+
+from .serializers import *
+from apps.complaint.models import Complainant, Accused, ComplaintAccused
+from apps.treasurer.models import Invoice
+from apps.act_log.utils import create_activity_log
+from .models import (
+    ServiceChargeRequest,
+    CaseActivity,
+    CaseSuppDoc,
+    ServiceChargeRequestFile,
+    SummonDateAvailability,
+    SummonTimeAvailability,
+    ClerkCertificate,
+    IssuedCertificate,
+    BusinessPermitRequest,
+    IssuedBusinessPermit,
+    Business,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class ServiceChargeRequestView(generics.ListCreateAPIView):
@@ -191,3 +216,528 @@ class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
     queryset = SummonTimeAvailability.objects.all()
     serializer_class = SummonTimeAvailabilitySerializer
     lookup_field = 'st_id'
+
+
+# Certificate Views
+class CertificateListView(generics.ListCreateAPIView):
+    serializer_class = ClerkCertificateSerializer
+
+    def get_queryset(self):
+        return (
+            ClerkCertificate.objects.filter(
+                cr_req_payment_status="Paid"
+            )
+            .exclude(
+                issuedcertificate__isnull=False
+            )
+            .select_related(
+                'rp_id__per'
+            )
+            .prefetch_related(
+                Prefetch(
+                    'issuedcertificate_set',
+                    queryset=IssuedCertificate.objects.select_related('certificate', 'staff')
+                )
+            )
+            .only(
+                'cr_id',
+                'cr_req_request_date',
+                'cr_req_claim_date',
+                'cr_req_status',
+                'rp_id__per__per_fname',
+                'rp_id__per__per_lname'
+            )
+        )
+
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            certificate = serializer.save()
+
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+
+                staff_id = request.data.get('ra_id') or '00005250821'
+                staff = Staff.objects.filter(staff_id=staff_id).first()
+
+                if staff:
+                    create_activity_log(
+                        act_type="Personal Clearance Request Created",
+                        act_description=f"Personal clearance request {certificate.cr_id} created for {certificate.pr_id.pr_purpose if certificate.pr_id else 'N/A'}",
+                        staff=staff,
+                        record_id=certificate.cr_id,
+                        feat_name="Personal Clearance Management"
+                    )
+                    logger.info(f"Activity logged for certificate creation: {certificate.cr_id}")
+                else:
+                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for certificate creation: {str(log_error)}")
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.error(f"Error creating certificate: {str(e)}")
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            logger.info(f"Found {queryset.count()} certificates")
+
+            for cert in queryset:
+                logger.info(f"Certificate {cert.cr_id}:")
+                logger.info(f"- RP ID: {cert.rp_id if cert.rp_id else 'None'}")
+                try:
+                    if cert.rp_id and cert.rp_id.per:
+                        logger.info(f"- Person: {cert.rp_id.per.per_fname} {cert.rp_id.per.per_lname}")
+                    issued_cert = cert.issuedcertificate_set.first()
+                    if issued_cert:
+                        logger.info(f"- Issued Certificate: {issued_cert.ic_id}")
+                        logger.info(f"- Certificate ID: {issued_cert.certificate.cr_id if issued_cert.certificate else 'No certificate'}")
+                except (AttributeError, FieldError) as e:
+                    logger.warning(f"Could not access details for certificate {cert.cr_id}: {str(e)}")
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in CertificateListView: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response(
+                {"error": str(e), "traceback": traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+
+class CertificateDetailView(generics.RetrieveAPIView):
+    queryset = ClerkCertificate.objects.all()
+    serializer_class = ClerkCertificateSerializer
+    lookup_field = 'cr_id'
+
+class IssuedCertificateListView(generics.ListAPIView):
+    serializer_class = IssuedCertificateSerializer
+
+    def get_queryset(self):
+        try:
+            queryset = (
+                IssuedCertificate.objects.filter(
+                    staff__staff_id="00005250821"
+                )
+                .select_related(
+                    'certificate__rp_id__per',
+                    'staff'
+                )
+            )
+
+            logger.info(f"Found {queryset.count()} issued certificates")
+            return queryset
+        except Exception as e:
+            logger.error(f"Error in get_queryset: {str(e)}")
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            raise
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            for cert in queryset:
+                logger.info(f"Processing certificate: {cert.ic_id}")
+                logger.info(f"- Certificate: {cert.certificate.cr_id if cert.certificate else 'No certificate'}")
+                logger.info(f"- Staff: {cert.staff.staff_id if cert.staff else 'No staff'}")
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in IssuedCertificateListView: {str(e)}")
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            return Response(
+                {"error": str(e), "detail": "An error occurred while retrieving issued certificates"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class MarkCertificateAsIssuedView(generics.CreateAPIView):
+    serializer_class = IssuedCertificateSerializer
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            cr_id = request.data.get('cr_id')
+            staff_id = request.data.get('staff_id', '00005250821')
+            
+            if not cr_id:
+                return Response(
+                    {"error": "Certificate ID (cr_id) is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get the certificate
+            try:
+                certificate = ClerkCertificate.objects.get(cr_id=cr_id)
+            except ClerkCertificate.DoesNotExist:
+                return Response(
+                    {"error": f"Certificate with ID {cr_id} not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Check if already issued
+            if IssuedCertificate.objects.filter(certificate=certificate).exists():
+                return Response(
+                    {"error": f"Certificate {cr_id} is already issued"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get or create staff
+            from apps.administration.models import Staff
+            staff, created = Staff.objects.get_or_create(staff_id="00005250821")
+            
+        
+            issued_certificate = IssuedCertificate.objects.create(
+                ic_date_of_issuance=timezone.now().date(),
+                certificate=certificate,
+                staff=staff
+            )
+            
+            # Log the activity
+            try:
+                from apps.act_log.utils import create_activity_log
+                
+                if staff:
+                    # Create activity log
+                    create_activity_log(
+                        act_type="Certificate Issued",
+                        act_description=f"Certificate {cr_id} marked as issued/printed",
+                        staff=staff,
+                        record_id=str(issued_certificate.ic_id),
+                        feat_name="Certificate Management"
+                    )
+                    logger.info(f"Activity logged for certificate issuance: {issued_certificate.ic_id}")
+                else:
+                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for certificate issuance: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
+            serializer = self.get_serializer(issued_certificate)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f"Error marking certificate as issued: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response(
+                {
+                    "error": str(e),
+                    "detail": "An error occurred while marking certificate as issued"
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+# Business Permit Views
+class BusinessPermitListView(generics.ListCreateAPIView):
+    serializer_class = BusinessPermitSerializer
+
+    def get_queryset(self):
+        return BusinessPermitRequest.objects.filter(
+            req_payment_status="Paid"
+        ).exclude(
+            # Exclude business permits that are already issued
+            issuedbusinesspermit__isnull=False
+        ).select_related('bus_id').all()
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            logger.info(f"Found {queryset.count()} business permits")
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in BusinessPermitListView: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response(
+                {
+                    "error": str(e),
+                    "traceback": traceback.format_exc()
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class PermitClearanceView(generics.ListCreateAPIView):
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return BusinessPermitCreateSerializer
+        return BusinessPermitSerializer
+    
+    def get_queryset(self):
+        return BusinessPermitRequest.objects.select_related('bus_id').all()
+    
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in PermitClearanceView.list: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response(
+                {
+                    "error": str(e),
+                    "detail": "An error occurred while retrieving permit clearances"
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():
+                permit_clearance = serializer.save()
+                
+                # Log the activity
+                try:
+                    from apps.act_log.utils import create_activity_log
+                    from apps.administration.models import Staff
+                    
+                    # Get staff member
+                    staff_id = request.data.get('staff_id') or '00005250821'  # Default staff ID
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                    
+                    if staff:
+                        # Create activity log
+                        create_activity_log(
+                            act_type="Business Permit Request Created",
+                            act_description=f"Business permit request {permit_clearance.bpr_id} created",
+                            staff=staff,
+                            record_id=permit_clearance.bpr_id,
+                            feat_name="Business Permit Management"
+                        )
+                        logger.info(f"Activity logged for business permit creation: {permit_clearance.bpr_id}")
+                    else:
+                        logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                        
+                except Exception as log_error:
+                    logger.error(f"Failed to log activity for business permit creation: {str(log_error)}")
+                    # Don't fail the request if logging fails
+                
+                return Response(
+                    {
+                        "message": "Permit clearance created successfully",
+                        "data": BusinessPermitSerializer(permit_clearance).data
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+            else:
+                return Response(
+                    {
+                        "error": "Invalid data",
+                        "details": serializer.errors
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as e:
+            logger.error(f"Error in PermitClearanceView.create: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response(
+                {
+                    "error": str(e),
+                    "detail": "An error occurred while creating permit clearance"
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class IssuedBusinessPermitListView(generics.ListAPIView):
+    serializer_class = IssuedBusinessPermitSerializer
+
+    def get_queryset(self):
+        try:
+            queryset = IssuedBusinessPermit.objects.select_related(
+                'permit_request__business',
+                'staff'
+            ).all()
+            
+            logger.info(f"Found {queryset.count()} issued business permits")
+            return queryset
+        except Exception as e:
+            logger.error(f"Error in get_queryset: {str(e)}")
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            raise
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in IssuedBusinessPermitListView: {str(e)}")
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            return Response(
+                {
+                    "error": str(e),
+                    "detail": "An error occurred while retrieving issued business permits"
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class MarkBusinessPermitAsIssuedView(generics.CreateAPIView):
+    serializer_class = IssuedBusinessPermitSerializer
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            bpr_id = request.data.get('bpr_id')
+            staff_id = request.data.get('staff_id', '00005250821')
+            
+            if not bpr_id:
+                return Response(
+                    {"error": "Business Permit Request ID (bpr_id) is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get the business permit request
+            try:
+                permit_request = BusinessPermitRequest.objects.get(bpr_id=bpr_id)
+            except BusinessPermitRequest.DoesNotExist:
+                return Response(
+                    {"error": f"Business permit request with ID {bpr_id} not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Check if already issued
+            if IssuedBusinessPermit.objects.filter(permit_request=permit_request).exists():
+                return Response(
+                    {"error": f"Business permit {bpr_id} is already issued"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get or create staff
+            from apps.administration.models import Staff
+            staff, created = Staff.objects.get_or_create(staff_id=staff_id)
+            
+            # Generate unique ibp_id
+            import uuid
+            ibp_id = f"IBP{uuid.uuid4().hex[:8].upper()}"
+            
+            # Create issued business permit (no file field needed)
+            issued_permit = IssuedBusinessPermit.objects.create(
+                ibp_id=ibp_id,
+                ibp_date_of_issuance=timezone.now().date(),
+                permit_request=permit_request,
+                staff=staff
+            )
+            
+            # Log the activity
+            try:
+                from apps.act_log.utils import create_activity_log
+                
+                if staff:
+                    # Create activity log
+                    create_activity_log(
+                        act_type="Business Permit Issued",
+                        act_description=f"Business permit {bpr_id} marked as issued/printed",
+                        staff=staff,
+                        record_id=issued_permit.ibp_id,
+                        feat_name="Business Permit Management"
+                    )
+                    logger.info(f"Activity logged for business permit issuance: {issued_permit.ibp_id}")
+                else:
+                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for business permit issuance: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
+            serializer = self.get_serializer(issued_permit)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f"Error marking business permit as issued: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response(
+                {
+                    "error": str(e),
+                    "detail": "An error occurred while marking business permit as issued"
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+# ---------------------- Personal Clearances and Payment APIs ----------------------
+@api_view(['GET'])
+def get_personal_clearances(request):
+    try:
+        clearances = ClerkCertificate.objects.select_related(
+            'rp_id__per',
+            'pr_id'
+        ).prefetch_related(
+            Prefetch('treasurer_invoices', queryset=Invoice.objects.all())
+        ).only(
+            'cr_id',
+            'cr_req_request_date',
+            'cr_req_claim_date',
+            'cr_req_payment_status',
+            'cr_req_status',
+            'rp_id__per__per_fname',
+            'rp_id__per__per_lname',
+            'pr_id__pr_purpose',
+            'pr_id__pr_rate'
+        ).all()
+
+        serializer = ClerkCertificateSerializer(clearances, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        logger.error(f"Error in get_personal_clearances: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return Response(
+            {"error": str(e), "detail": "An error occurred while retrieving personal clearances"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+def create_payment_intent(request, cr_id):
+    try:
+        certificate = ClerkCertificate.objects.get(cr_id=cr_id)
+
+        amount = certificate.pr_id.pr_rate if certificate.pr_id else 0
+
+        # TODO: integrate real gateway, this is a placeholder
+        payment_intent = {
+            'id': f'dummy_{cr_id}',
+            'amount': amount,
+            'status': 'awaiting_payment'
+        }
+
+        invoice = Invoice.objects.create(
+            inv_num=f"INV-{cr_id}",
+            inv_serial_num=f"SER-{cr_id}",
+            inv_date=timezone.now().date(),
+            inv_amount=amount,
+            inv_nat_of_collection='Personal Clearance'
+        )
+
+        return Response({
+            'invoice_id': invoice.inv_num,
+            'payment_intent_id': payment_intent['id'],
+            'amount': amount
+        })
+    except ClerkCertificate.DoesNotExist:
+        return Response({"error": "Certificate request not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error in create_payment_intent: {str(e)}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def webhook_payment_status(request):
+    try:
+        payment_intent_id = request.data.get('data', {}).get('id')
+        payment_status = request.data.get('data', {}).get('attributes', {}).get('status')
+
+        if payment_intent_id:
+            # Lookup your invoice by stored payment_intent_id if you persist it
+            # Update related certificate status if needed
+            return Response({'status': 'success'})
+        return Response({'error': 'invalid payload'}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error in webhook_payment_status: {str(e)}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

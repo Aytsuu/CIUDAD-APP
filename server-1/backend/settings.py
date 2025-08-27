@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     'apps.clerk',
     'apps.council',
     'backend.firebase.notifications',
+    'apps.act_log',
 ]
 
 MIDDLEWARE = [

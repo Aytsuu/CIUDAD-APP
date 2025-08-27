@@ -1,0 +1,117 @@
+import { AxiosError } from "axios";
+import { 
+  getBusinessPermits as getBusinessPermitsAPI, 
+  getIssuedBusinessPermits as getIssuedBusinessPermitsAPI,
+  BusinessPermit as APIBusinessPermit,
+  IssuedBusinessPermit as APIIssuedBusinessPermit
+} from "../restful-api/businessGetAPI";
+
+
+export interface BusinessPermit {
+  bp_id: string;
+  business_name: string;
+  business_type: string;
+  owner_name: string;
+  business_address: string;
+  req_pay_method: string;
+  req_request_date: string;
+  req_claim_date: string;
+  req_status: string;
+  req_payment_status: string;
+  req_transac_id: string;
+  pr_id?: string;
+  ra_id?: string;
+  staff_id?: string;
+  rp?: string;
+}
+
+export interface IssuedBusinessPermit {
+  ibp_id: string;
+  business_name: string;
+  dateIssued: string;
+  purpose: string;
+  original_permit?: {
+    bpr_id: string;
+    req_purpose: string;
+    req_type: string;
+    req_request_date: string;
+    req_claim_date: string;
+    req_pay_method: string;
+    req_payment_status: string;
+    req_transac_id: string;
+  };
+}
+
+
+export const getBusinessPermits = async (): Promise<BusinessPermit[]> => {
+  try {
+   
+    const rawData = await getBusinessPermitsAPI();
+    
+    
+    const mapped: BusinessPermit[] = (rawData || []).map((item: any) => {
+      return {
+        bp_id: item.bp_id,
+        business_name: item.business_name,
+        business_type: item.business_type,
+        owner_name: item.owner_name,
+        business_address: item.business_address,
+        req_pay_method: item.req_pay_method,
+        req_request_date: item.req_request_date,
+        req_claim_date: item.req_claim_date,
+        req_status: item.req_status,
+        req_payment_status: item.req_payment_status,
+        req_transac_id: item.req_transac_id,
+        pr_id: item.pr_id,
+        ra_id: item.ra_id,
+        staff_id: item.staff_id,
+        rp: item.rp,
+      } as BusinessPermit;
+    });
+    
+    console.log('Web backend mapped business permits:', mapped);
+    return mapped;
+  } catch (err) {
+    const error = err as AxiosError;
+    console.error('Error in business permit queries:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+export const getIssuedBusinessPermits = async (): Promise<IssuedBusinessPermit[]> => {
+  try {
+    console.log('Fetching issued business permits with web backend mapping...');
+    const rawData = await getIssuedBusinessPermitsAPI();
+    
+    
+    const mapped: IssuedBusinessPermit[] = (rawData || []).map((item: any) => {
+      return {
+        ibp_id: item.ibp_id,
+        business_name: item.business_name,
+        dateIssued: item.dateIssued,
+        purpose: item.purpose,
+        
+        original_permit: item.original_permit || undefined,
+      } as IssuedBusinessPermit;
+    });
+    
+    console.log('Web backend mapped issued business permits:', mapped);
+    return mapped;
+  } catch (err) {
+    const error = err as AxiosError;
+    console.error('Error in issued business permit queries:', error.response?.data || error.message);
+    if (error.response?.status === 500) {
+      console.log('No issued business permits found, returning empty array');
+      return [];
+    }
+    throw error;
+  }
+};
+
+
+export { 
+  getBusinessPermitById, 
+  searchBusinessPermits, 
+  getPermitClearances 
+} from '../restful-api/businessGetAPI';
