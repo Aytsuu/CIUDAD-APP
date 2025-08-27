@@ -1,10 +1,10 @@
-import React, { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, FileInput } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
@@ -20,7 +20,7 @@ export default function CommodityList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [comToDelete, setComToDelete] = useState<string | null>(null);
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const { data: commodities, isLoading: isLoadingCommodities } = useCommodities();
 
   const formatCommodityData = useCallback((): CommodityRecords[] => {

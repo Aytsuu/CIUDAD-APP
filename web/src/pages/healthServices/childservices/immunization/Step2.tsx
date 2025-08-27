@@ -590,10 +590,10 @@ export default function Immunization({
 
   const handleSaveNotes = async (data: VitalSignType) => {
     try {
-      const notesData = {
-        ...data,
-        chrec: ChildHealthRecord.chrec,
-      };
+      // const notesData = {
+      //   ...data,
+      //   chrec: ChildHealthRecord.chrec,
+      // };
 
       if (editingRowIndex !== null) {
         handleUpdateVitalSign(editingRowIndex, {

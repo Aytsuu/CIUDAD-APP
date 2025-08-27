@@ -107,13 +107,14 @@ export const getFamilyID = async (residentId: string) => {
 }
 
 export const getFamilyMembersHealth = async (familyId: string) => {
-  if(!familyId) return;
+  if(!familyId) return [];
 
   try { 
     const res = await api2.get(`health-profiling/family/${familyId}/members/`)
-    return res.data
+    return res.data || [];
   } catch (err) {
-    throw err;
+    console.error('Error fetching family members:', err);
+    return [];
   }
 }
 
@@ -185,6 +186,135 @@ export const getSitioListHealth = async () => {
 export const getRequests = async () => {
   try {
     const res = await api2.get("health-profiling/request/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// ==================== WATER SUPPLY / ENVIRONMENTAL ==================== 
+export const getWaterSupplyOptions = async () => {
+  try {
+    const res = await api2.get("health-profiling/water-supply/options/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getWaterSupplyTypes = async () => {
+  try {
+    const res = await api2.get("health-profiling/water-supply/types/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getWaterSupplyList = async () => {
+  try {
+    const res = await api2.get("health-profiling/water-supply/list/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getWaterSupplyByHousehold = async (householdId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/water-supply/household/${householdId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getEnvironmentalData = async (householdId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/environmental-data/${householdId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSanitaryFacilityList = async () => {
+  try {
+    const res = await api2.get("health-profiling/sanitary-facility/list/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSanitaryFacilityByHousehold = async (householdId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/sanitary-facility/household/${householdId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Solid waste management
+export const getSolidWasteList = async () => {
+  try {
+    const res = await api2.get("health-profiling/solid-waste/list/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSolidWasteByHousehold = async (householdId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/solid-waste/household/${householdId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// ==================== FETCH SURVEY IDENTIFICATION ==================== (Status: Completed)
+export const getSurveyIdentificationList = async () => {
+  try {
+    const res = await api2.get("health-profiling/survey-identification/list/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSurveyIdentificationDetail = async (siId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/survey-identification/${siId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSurveyIdentificationByFamily = async (famId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/survey-identification/family/${famId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSurveyIdentificationFormData = async (famId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/survey-identification/form/submit/?fam_id=${famId}`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSurveyIdentificationDataByHousehold = async (hhId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/survey-identification/household/${hhId}/data/`);
     return res.data;
   } catch (err) {
     throw err;

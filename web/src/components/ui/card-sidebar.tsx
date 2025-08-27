@@ -48,7 +48,7 @@ export const CardSidebar = ({
                       : "bg-gray-100 text-gray-500 group-hover:bg-gray-200",
                   )}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className={cn("h-4 w-4", isSelected && item.iconColor)} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div

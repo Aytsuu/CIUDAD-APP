@@ -1,11 +1,12 @@
 import "@/global.css";
 import React from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, Animated } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, Animated, Dimensions } from "react-native";
 import { CAVIDCamHandle, CaptureAndVerifyID } from "./CaptureAndVerifyID";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { RefreshCcw } from "@/lib/icons/RefreshCcw";
+import LottieView from 'lottie-react-native';
 
 export default function ScanID({ params }: { params: Record<string, any> }) {
+  // const [isLandscape, setIsLandscape] = React.useState<boolean>(false); 
 
   // State management
   const [isScanning, setIsScanning] = React.useState<boolean>(false);
@@ -17,6 +18,21 @@ export default function ScanID({ params }: { params: Record<string, any> }) {
   const cameraRef = React.useRef<CAVIDCamHandle>(null);
   const instructionsAnim = React.useRef(new Animated.Value(1)).current;
   const landscapePromptAnim = React.useRef(new Animated.Value(1)).current;
+
+  // React.useEffect(() => {
+  //   const upadteLayout = (dims: any) => {
+  //     setIsLandscape(dims.window.width > dims.window.height);
+  //   }
+
+  //   const subscription = Dimensions.addEventListener('change', upadteLayout);
+
+  //   const { width, height } = Dimensions.get('window');
+  //   setIsLandscape(width > height)
+
+  //   return () => subscription?.remove()
+  // }, [])
+
+  // console.log(isLandscape)
 
   // Auto-hide instructions after first capture attempt
   React.useEffect(() => {
@@ -92,14 +108,6 @@ export default function ScanID({ params }: { params: Record<string, any> }) {
     return "bg-blue-600";
   };
 
-  const dismissLandscapePrompt = () => {
-    Animated.timing(landscapePromptAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => setShowLandscapePrompt(false));
-  };
-
   return (
     <SafeAreaView className="flex-1">
       <View className="flex-1">
@@ -111,18 +119,29 @@ export default function ScanID({ params }: { params: Record<string, any> }) {
           {showLandscapePrompt && (
             <Animated.View 
               style={{ opacity: landscapePromptAnim }}
-              className="absolute top-20 left-0 right-0 items-center z-10"
+              className="absolute left-0 right-0 items-center z-10 bg-black/80 h-screen"
             >
               <View className="px-4 py-3">
-                <View className="flex-row items-center justify-center mb-1 gap-2">
-                  <RefreshCcw size={16} className="text-white"/>
-                  <Text className="text-white font-semibold text-sm">
-                    Turn to Landscape
-                  </Text>
+                
+                <View className="flex-1 justify-center items-center">
+                  <LottieView
+                    source={require('@/assets/animated/rotate_phone.json')}
+                    autoPlay
+                    loop
+                    style={{
+                      width: 200,
+                      height: 200
+                    }}
+                  />
+                  <View className="flex items-center justify-center mb-2 gap-2">
+                    <Text className="text-white font-PoppinsMedium text-sm">
+                      Turn to Landscape
+                    </Text>
+                    <Text className="text-white font-PoppinsRegular text-center text-xs">
+                      For best results, rotate your phone horizontally
+                    </Text>
+                  </View>
                 </View>
-                <Text className="text-white text-center text-xs">
-                  For best results, rotate your phone horizontally
-                </Text>
               </View>
             </Animated.View>
           )}

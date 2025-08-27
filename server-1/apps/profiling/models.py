@@ -175,15 +175,32 @@ class Business(models.Model):
     bus_date_of_registration = models.DateField(default=date.today)
     bus_date_verified = models.DateField(null=True)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, null=True, related_name="owned_business")
-    br = models.ForeignKey(BusinessRespondent, on_delete=models.CASCADE, null=True)
+    br = models.ForeignKey(BusinessRespondent, on_delete=models.CASCADE, null=True, related_name="owned_business")
     add = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
     staff = models.ForeignKey('administration.Staff', null=True, on_delete=models.CASCADE, related_name='businesses')
+
+    history = HistoricalRecords(
+        table_name='business_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True
+    )
 
     class Meta:
         db_table = 'business'
 
-    def __str__(self):
-        return f"{self.bus_name} (Owner: {self.bus_respondentLname})"
+class BusinessModification(models.Model):
+    bm_id = models.BigAutoField(primary_key=True)
+    bm_updated_name = models.CharField(max_length=100, null=True)
+    bm_updated_gs = models.FloatField(null=True)
+    bm_submitted_at = models.DateTimeField(auto_now_add=True)
+    bm_status = models.CharField(max_length=50, null=True)
+    bm_rejection_reason = models.TextField(null=True)
+    add = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
+    bus = models.ForeignKey(Business, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'business_modification'
 
 class BusinessFile(models.Model):
     bf_id = models.BigAutoField(primary_key=True)
@@ -192,7 +209,8 @@ class BusinessFile(models.Model):
     bf_path = models.CharField(max_length=500)
     bf_url = models.URLField()
     bf_created_at = models.DateTimeField(auto_now_add=True)
-    bus = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='business_files')
+    bus = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='business_files', null=True)
+    bm = models.ForeignKey(BusinessModification, on_delete=models.CASCADE, related_name='business_files', null=True)
 
     class Meta:
         db_table = 'business_file'
@@ -211,3 +229,5 @@ class KYCRecord(models.Model):
 
     class Meta:
         db_table = 'kyc_record'
+
+    

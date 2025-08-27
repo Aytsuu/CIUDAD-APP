@@ -49,7 +49,7 @@ export default function HealthInfoForm({
   }, [selectedMethods])
 
   return (
-    <div className="bg-white rounded-lg p-4">
+    <div className="bg-white rounded-lg">
       <div className="mb-4">
         <h2 className="font-semibold text-lg">{title}</h2>
         <p className="text-xs text-black/50">Review all fields before proceeding</p>

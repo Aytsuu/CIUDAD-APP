@@ -1,28 +1,44 @@
 import { api } from "@/api/api";
 
-// Fetch staffs
-export const getStaffs = async (page: number, pageSize: number, searchQuery: string) => {
+// Fetch staffs with optional staff type filtering
+export const getStaffs = async (
+  page: number, 
+  pageSize: number, 
+  searchQuery: string, 
+  staffTypeFilter?: 'Barangay Staff' | 'Health Staff'
+) => {
   try {
-    const res = await api.get("administration/staff/list/table/", {
-      params: { 
-        page, 
-        page_size: pageSize,
-        search: searchQuery
+    const params: any = { 
+      page, 
+      page_size: pageSize,
+      search: searchQuery
+    };
+    
+    // Add staff type filter if provided
+    if (staffTypeFilter) {
+      params.staff_type = staffTypeFilter;
+    }
+    
+    const res = await api.get("administration/staff/list/table/", { params });
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+// Fetch positions with optional filtering for staff type
+export const getPositions = async (staff_type: string) => {
+  try {
+    const res = await api.get("administration/position/", {
+      params: {
+        staff_type
       }
     });
     return res.data;
   } catch (err) {
     console.error(err);
-  }
-};
-
-// Fetch positions
-export const getPositions = async () => {
-  try {
-    const res = await api.get("administration/position/");
-    return res.data;
-  } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
 
@@ -32,15 +48,18 @@ export const getFeatures = async () => {
     return res.data;
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
 
 export const getAssignedFeatures = async (selectedPosition: string) => {
   try {
-    const res = await api.get(`administration/assignment/${selectedPosition}/`);
+    const path = `administration/assignment/${selectedPosition}/`;
+    const res = await api.get(path);
     return res.data;
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
 
@@ -50,5 +69,6 @@ export const getAllAssignedFeatures = async () => {
     return res.data;
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
