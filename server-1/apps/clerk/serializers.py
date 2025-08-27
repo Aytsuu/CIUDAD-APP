@@ -31,41 +31,41 @@ class AddressDetailsSerializer(serializers.ModelSerializer):
         ]
         return ', '.join(filter(None, parts))
         
-class CaseSuppDocSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CaseSuppDoc
-        fields = '__all__'
+# class CaseSuppDocSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = CaseSuppDoc
+#         fields = '__all__'
 
-class ServiceChargeRequestFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ServiceChargeRequestFile
-        fields = '__all__'
+# class ServiceChargeRequestFileSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = ServiceChargeRequestFile
+#         fields = '__all__'
 
-class CaseActivitySerializer(serializers.ModelSerializer):
-    srf_detail = ServiceChargeRequestFileSerializer(source='srf', read_only=True)
-    supporting_documents = CaseSuppDocSerializer(
-        source='supporting_docs',
-        many=True,
-        read_only=True
-    )
-    formatted_hearing_datetime = serializers.SerializerMethodField()
+# class CaseActivitySerializer(serializers.ModelSerializer):
+#     srf_detail = ServiceChargeRequestFileSerializer(source='srf', read_only=True)
+#     supporting_documents = CaseSuppDocSerializer(
+#         source='supporting_docs',
+#         many=True,
+#         read_only=True
+#     )
+#     formatted_hearing_datetime = serializers.SerializerMethodField()
 
-    class Meta:
-        model = CaseActivity
-        fields = [
-            'ca_id',
-            'ca_reason',
-            'ca_hearing_date',
-            'ca_hearing_time',
-            'formatted_hearing_datetime',
-            'ca_mediation',
-            'ca_date_of_issuance',
-            'srf_detail',
-            'supporting_documents'
-        ]
+#     class Meta:
+#         model = CaseActivity
+#         fields = [
+#             'ca_id',
+#             'ca_reason',
+#             'ca_hearing_date',
+#             'ca_hearing_time',
+#             'formatted_hearing_datetime',
+#             'ca_mediation',
+#             'ca_date_of_issuance',
+#             'srf_detail',
+#             'supporting_documents'
+#         ]
     
-    def get_formatted_hearing_datetime(self, obj):
-        return datetime.combine(obj.ca_hearing_date, obj.ca_hearing_time).strftime("%B %d, %Y at %I:%M %p")
+#     def get_formatted_hearing_datetime(self, obj):
+#         return datetime.combine(obj.ca_hearing_date, obj.ca_hearing_time).strftime("%B %d, %Y at %I:%M %p")
 
 class AccusedDetailsSerializer(serializers.ModelSerializer):
     address = AddressDetailsSerializer(source='add')
@@ -175,8 +175,7 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
             'accused_names', 
             'incident_type', 
             'allegation',
-            'sr_status',
-            'sr_payment_status',
+            'sr_req_status',
             'sr_type',
             'formatted_decision_date',
             'formatted_request_date'
@@ -200,51 +199,51 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
     def get_formatted_request_date(self, obj):
         return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
 
-class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
-    complaint = ComplaintSerializer(source='comp', read_only=True)
-    case_activities = CaseActivitySerializer(source='case', many=True, read_only=True)
-    file_action_file = ServiceChargeRequestFileSerializer(read_only=True)
-    parent_summon = ServiceChargeRequestSerializer(read_only=True)
-    formatted_request_date = serializers.SerializerMethodField()
-    formatted_decision_date = serializers.SerializerMethodField()
+# class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
+#     complaint = ComplaintSerializer(source='comp', read_only=True)
+#     case_activities = CaseActivitySerializer(source='case', many=True, read_only=True)
+#     file_action_file = ServiceChargeRequestFileSerializer(read_only=True)
+#     parent_summon = ServiceChargeRequestSerializer(read_only=True)
+#     formatted_request_date = serializers.SerializerMethodField()
+#     formatted_decision_date = serializers.SerializerMethodField()
 
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id',
-            'sr_code',
-            'sr_status',
-            'sr_payment_status',
-            'sr_type',
-            'formatted_request_date',
-            'formatted_decision_date',
-            'sr_decision_date',
-            'complaint',
-            'case_activities',
-            'file_action_file',
-            'parent_summon'
-        ]
+#     class Meta:
+#         model = ServiceChargeRequest
+#         fields = [
+#             'sr_id',
+#             'sr_code',
+#             'sr_status',
+#             'sr_payment_status',
+#             'sr_type',
+#             'formatted_request_date',
+#             'formatted_decision_date',
+#             'sr_decision_date',
+#             'complaint',
+#             'case_activities',
+#             'file_action_file',
+#             'parent_summon'
+#         ]
     
-    def get_formatted_request_date(self, obj):
-        return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
+#     def get_formatted_request_date(self, obj):
+#         return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
     
-    def get_formatted_decision_date(self, obj):
-        if obj.sr_decision_date:
-            return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
-        return None
+#     def get_formatted_decision_date(self, obj):
+#         if obj.sr_decision_date:
+#             return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
+#         return None
 
-class FileActionRequestSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id',
-            'sr_code',
-            'sr_type',
-            'sr_payment_status',
-            'parent_summon',
-            'file_action_file',
-            'comp'
-        ]
+# class FileActionRequestSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = ServiceChargeRequest
+#         fields = [
+#             'sr_id',
+#             'sr_code',
+#             'sr_type',
+#             'sr_payment_status',
+#             'parent_summon',
+#             'file_action_file',
+#             'comp'
+#         ]
 
 class SummonDateAvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -256,3 +255,5 @@ class SummonTimeAvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
         model = SummonTimeAvailability
         fields = '__all__'
+
+
