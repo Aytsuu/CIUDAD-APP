@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from django.db import transaction
+from django.utils.timezone import now
+from utils.email import send_email
 from .models import Announcement, AnnouncementFile, AnnouncementRecipient
-from utils.supabase_client import supabase, upload_to_storage
+from utils.supabase_client import upload_to_storage
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,8 +16,7 @@ class AnnouncementFileSerializer(serializers.ModelSerializer):
 
 
 class AnnouncementRecipientSerializer(serializers.ModelSerializer):
-    ar_type = serializers.CharField()  # removed choices
-
+    ar_type = serializers.CharField()  
     class Meta:
         model = AnnouncementRecipient
         fields = ['ar_id', 'ann', 'ar_type']
@@ -32,7 +33,6 @@ class AnnouncementCreateSerializer(serializers.ModelSerializer):
     files = FileInputSerializer(write_only=True, many=True, required=False)
     recipients = AnnouncementRecipientSerializer(many=True, required=False)
 
-    # ✅ Add nested files (read-only)
     announcement_files = AnnouncementFileSerializer(
         source="announcementfile_set", many=True, read_only=True
     )
@@ -40,20 +40,52 @@ class AnnouncementCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
         fields = '__all__'
-        extra_fields = ['announcement_files']  # ensures it’s added in responses
+        extra_fields = ['announcement_files']
 
     @transaction.atomic
     def create(self, validated_data):
         files = validated_data.pop('files', [])
         recipients_data = validated_data.pop('recipients', [])
 
+        # Create the announcement
         announcement = Announcement.objects.create(**validated_data)
 
+        # Save recipients
         for recipient in recipients_data:
             AnnouncementRecipient.objects.create(ann=announcement, **recipient)
 
+        # Upload files
         if files:
             self._upload_files(announcement, files)
+
+        # === EMAIL SENDING LOGIC ===
+        if getattr(announcement, 'ann_to_email', False):
+            try:
+                context = {
+                    'ann_title': announcement.ann_title,
+                    'ann_details': announcement.ann_details,
+                    'ann_start_at': announcement.ann_start_at,
+                    'ann_end_at': announcement.ann_end_at,
+                    'ann_event_start': announcement.ann_event_start,
+                    'ann_event_end': announcement.ann_event_end,
+                    'ann_type': getattr(announcement, 'ann_type', None),
+                    'staff_id': getattr(announcement.staff, 'id', 'N/A'),
+                    'current_date': now(),
+                    'files': list(announcement.announcementfile_set.values(
+                        'af_name', 'af_type', 'af_url'
+                    ))
+                }
+
+                send_email(
+                    subject=f"New Announcement: {announcement.ann_title}",
+                    context=context,
+                    recipient_email="ganzoganzo188@gmail.com",  # receiver
+                    from_email="ganzoganzo188@gmail.com"         # sender
+                )
+                logger.info(f"Email sent for announcement {announcement.pk}")
+
+            except Exception as e:
+                logger.error(f"Failed to send email for announcement {announcement.pk}: {e}")
 
         return announcement
 
@@ -72,7 +104,6 @@ class AnnouncementCreateSerializer(serializers.ModelSerializer):
 
         if announcement_files:
             AnnouncementFile.objects.bulk_create(announcement_files)
-
 
 class BulkAnnouncementRecipientSerializer(serializers.Serializer):
     recipients = AnnouncementRecipientSerializer(many=True)
