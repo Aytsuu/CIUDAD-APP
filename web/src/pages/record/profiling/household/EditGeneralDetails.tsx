@@ -86,20 +86,27 @@ export default function EditGeneralDetails({
       });
       return;
     }
-    
-    updateHousehold({...values, hh_id: household.hh_id}, {
-        onSuccess: () => {
-          setIsSaving(false);
-          setIsOpenDialog(false);
-          setHousehold((prev) => ({
-            ...prev,
-            head_id: values.householdHead,
-            hh_nhts: values.nhts
-          }))
-        }
-      }
-    );
+
+    try {
+      // Double update: main and health database
+      await Promise.all([
+        updateHousehold({ ...values, hh_id: household.hh_id }),
+      ]);
+      setIsSaving(false);
+      setIsOpenDialog(false);
+      setHousehold((prev) => ({
+        ...prev,
+        head_id: values.householdHead,
+        hh_nhts: values.nhts
+      }));
+    } catch (error) {
+      setIsSaving(false);
+      toast("Error updating household", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+      });
+    }
   }
+
 
   return (
     <Form {...form}>
@@ -117,7 +124,7 @@ export default function EditGeneralDetails({
           <Combobox
             options={formattedResidents}
             value={form.watch("householdHead")}
-            onChange={(value) => form.setValue("householdHead", value)}
+            onChange={(value) => form.setValue("householdHead", value as string)}
             placeholder="Select a household"
             triggerClassName="font-normal"
             emptyMessage={

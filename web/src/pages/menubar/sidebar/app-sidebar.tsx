@@ -46,7 +46,13 @@ const items: BaseMenuItem[] = [
           { title: "Household", url: "/profiling/household" },
         ]
       },
-      { title: "Business", url: "/profiling/business/record/active" },
+      {
+        title: "Business", 
+        url: "/profiling/business/record",
+        items: [
+          { title: "Respondent", url: "/profiling/business/record/respondent"}
+        ]
+      },
     ],
   },
   {
@@ -207,7 +213,6 @@ const items: BaseMenuItem[] = [
   },
   {
     title: "Clerk",
-    subItems: true,
     url: "/",
     items: [
       { title: "Certifications", url: "record/clearances/certification" },

@@ -2,12 +2,23 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db import transaction
+from django.db.models import Count, F
 from ..models import Position, Staff
 from ..serializers.position_serializers import *
 
+
 class PositionView(generics.ListCreateAPIView):
-    serializer_class = PositionBaseSerializer
-    queryset = Position.objects.all()
+    serializer_class = PositionListSerializer
+
+    def get_queryset(self):
+        staff_type = self.request.query_params.get('staff_type', None)
+        
+        if staff_type:
+            pos_category = 'BARANGAY POSITION' if staff_type == 'Barangay Staff' \
+                            else 'HEALTH POSITION'
+            queryset = Position.objects.filter(pos_category=pos_category)
+            return queryset
+        return None
     
 class PositionDeleteView(generics.DestroyAPIView):
     serializer_class = PositionBaseSerializer
@@ -55,6 +66,10 @@ class PositionUpdateView(generics.RetrieveUpdateAPIView):
     
 class PositionGroupsListView(APIView):
     def get(self, request, *args, **kwargs):
-        queryset = Position.objects.values_list('pos_group', flat=True).distinct()
-        return Response(queryset)
-        
+        queryset = Position.objects.filter(pos_group__isnull=False) \
+                .exclude(pos_group__exact='') \
+                .values_list('pos_group', flat=True) \
+                .distinct()
+        if queryset:
+            return Response(queryset)
+        return None

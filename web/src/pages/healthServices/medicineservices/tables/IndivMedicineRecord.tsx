@@ -60,7 +60,7 @@ export default function IndivMedicineRecords() {
   const {
     data: medicineRecords,
     isLoading,
-    refetch,
+    // refetch,
   } = useQuery({
     queryKey: ["patientMedicineDetails", patientData.pat_id],
     queryFn: async () => {

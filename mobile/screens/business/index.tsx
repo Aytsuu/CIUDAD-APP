@@ -1,5 +1,5 @@
 import React from "react"
-import { ScrollView, TouchableOpacity, View, Text, ActivityIndicator, FlatList, RefreshControl } from "react-native"
+import { TouchableOpacity, View, Text, ActivityIndicator, FlatList, RefreshControl } from "react-native"
 import PageLayout from "../_PageLayout"
 import { router } from "expo-router"
 import { Building } from "@/lib/icons/Building"
@@ -8,10 +8,9 @@ import { ChevronRight } from "@/lib/icons/ChevronRight"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { Button } from "@/components/ui/button"
 import { FileText } from "@/lib/icons/FileText"
-import { useOwnedBusinesses } from "./queries/businessGetQueries"
+import { useModificationRequests, useOwnedBusinesses } from "./queries/businessGetQueries"
 import { useAuth } from "@/contexts/AuthContext"
 import { MapPin } from "@/lib/icons/MapPin"
-import { CheckCircle } from "@/lib/icons/CheckCircle"
 import { FeedbackScreen } from "@/components/ui/feedback-screen"
 
 export default () => {
@@ -21,7 +20,7 @@ export default () => {
   const [selectedBusiness, setSelectedBusiness] = React.useState<Record<string, any> | null>(null);
   const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
   const [status, setStatus] = React.useState<"success" | "failure" | "waiting" | "message">('success');
-  const [feedbackMessage, setFeedbackMessage] = React.useState<string>('');
+  const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests();
   const { data: ownedBusinesses, isLoading: isLoadingBusinesses, refetch } = useOwnedBusinesses({
     br: 5
   })
@@ -125,7 +124,12 @@ export default () => {
   const RenderDataCard = React.memo(({ business, index } : { business: Record<string, any>, index: number}) => (
     <TouchableOpacity
       key={index}
-      onPress={() => handleBusinessPress(business)}
+      onPress={() => router.push({
+        pathname: '/(business)/details',
+        params: {
+          business: JSON.stringify(business)
+        }
+      })}
       className="bg-white p-5 border-b border-gray-100"
     >
       <View className="flex-1 justify-between">
@@ -181,81 +185,8 @@ export default () => {
     </View>
   )
 
-  const BusinessCompleteDetails = React.memo(({ business } : { business: Record<string, any> }) => (
-    <ScrollView 
-      className="flex-1 bg-white"
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 20 }}
-    >
-      {/* Header Card */}
-      <View className="bg-primaryBlue p-5">
-        <View className="flex-row items-center mb-4">
-          <View className="flex-1">
-            <Text className="text-gray-50 text-xs font-medium">
-              Business ID: {business.bus_id}
-            </Text>
-            <Text className="text-white text-2xl font-bold mt-1">
-              {business.bus_name}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Business Information */}
-      <View className="bg-white rounded-xl p-6 shadow-sm">
-        <Text className="text-gray-900 text-lg font-semibold mb-4">
-          Business Information
-        </Text>
-
-        {/* Gross Sales */}
-        <View className="mb-4">
-          <Text className="text-gray-500 text-sm font-medium mb-2">Gross Sales</Text>
-          <Text className="text-gray-900 text-2xl font-bold">
-            ₱ {business.bus_gross_sales?.toLocaleString() || '0'}
-          </Text>
-        </View>
-
-        {/* Location */}
-        <View className="flex-row items-center gap-2 mb-2">
-          <MapPin size={18} className="fill-red-500" />
-          <Text className="text-gray-700 text-sm">
-            {business.bus_street}, Sitio {business.sitio}
-          </Text>
-        </View>
-
-        {/* Date Verified */}
-        {/* Verification Status */}
-        <View className="flex-row items-center gap-2">
-          <CheckCircle size={18} className="fill-green-600 stroke-white"/>
-          <Text className="text-green-600 text-sm">
-            Verified on {new Date(business.bus_date_verified).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
-          </Text>
-        </View>
-      </View>
-
-      {/* Action Buttons */}
-      <View className="mx-4 mt-4">
-        <Button className="bg-gray-100 p-4 rounded-xl mb-3">
-          <Text className="text-gray-700 font-semibold text-center">
-            Update Business Information
-          </Text>
-        </Button>
-        
-        <Button className="bg-gray-100 p-4 rounded-xl">
-          <Text className="text-gray-700 font-semibold text-center">
-            Request Document
-          </Text>
-        </Button>
-      </View>
-    </ScrollView>
-  ))
-
   const renderContent = () => {
-    if (isLoadingBusinesses) {
+    if (isLoadingBusinesses || isLoadingRequests) {
       return <LoadingScreen />
     }
 
@@ -265,17 +196,12 @@ export default () => {
           status={status}
           title={feedbackContents[status].title}
           content={feedbackContents[status].content}
-          animationType="slideRight"
           animationDuration={200}
         />
       )
     }
     
-    return hasBusinesses ? 
-            selectedBusiness ? 
-              <BusinessCompleteDetails business={selectedBusiness} /> 
-              : <BusinessList /> 
-            : <EmptyState />
+    return hasBusinesses ? <BusinessList /> : <EmptyState />
   }
 
   return (

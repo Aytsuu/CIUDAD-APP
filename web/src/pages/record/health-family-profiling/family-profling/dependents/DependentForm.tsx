@@ -47,7 +47,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
     const personalInfo = searchedResident?.personal_info;
 
     // Condition to populate the fields if true, otherwise empty
-    if (personalInfo && !selectedParents.includes(selectedResident.split(" ")[0])) {
+    if (personalInfo && !selectedParents.includes(selectedResident?.split(" ")[0] as string)) {
       form.setValue('dependentsInfo.new', {
         id: selectedResident || '',
         lastName: personalInfo.per_lname || '',
@@ -106,7 +106,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
         <form className='grid gap-4'>
           <Combobox 
             options={filteredResidents}
-            value={form.watch('dependentsInfo.new.id')}
+            value={form.watch('dependentsInfo.new.id') as string}
             onChange={(value) => form.setValue('dependentsInfo.new.id', value)}
             placeholder='Select a resident'
             triggerClassName='w-1/3'

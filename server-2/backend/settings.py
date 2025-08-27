@@ -23,8 +23,6 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-f
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-# ALLOWED_HOSTS = ['localhost', '*']
-# ALLOWED_HOSTS = ['localhost', '*']
 
 # ========================
 # SUPABASE CONFIGURATION
@@ -60,41 +58,25 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'rest_framework',
     'corsheaders',
-    
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
-
     'apps.healthProfiling',
     'apps.inventory',
     'apps.maternal',
     'apps.vaccination',
-    # 'apps.profiling',
     'apps.administration',
-    # 'apps.account',
-    # 'apps.waste',
-    # 'apps.profiling',
     'apps.familyplanning',
     'apps.animalbites',
-    # 'apps.account',
-    'apps.authentication',
     'apps.patientrecords',
-
     'backend.firebase.notifications',
-    'detection',
-    # 'apps.gad'
-    'apps.account',
     'apps.medicalConsultation',
     'apps.medicineservices',
     'apps.firstaid',
     'apps.childhealthservices',
     'apps.servicescheduler',
-
     'apps.reports',
-    'apps.file',
-
 ]
 
 # REST_FRAMEWORK = {
@@ -113,13 +95,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.authentication.middleware.AccountMiddleware',
     "django.middleware.gzip.GZipMiddleware",  
-]
-
-AUTHENTICATION_BACKENDS = [
-    'apps.authentication.backends.SupabaseAuthBackend',
-    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -140,7 +116,6 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'backend.wsgi.application'
 ASGI_APPLICATION = 'backend.asgi.application'
 
 # Database
@@ -188,9 +163,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # INTERNATIONALIZATION
 # ========================
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Manila'
 USE_I18N = True
-USE_TZ = True
+USE_L10N = True
+USE_TZ = True 
 
 
 # ========================
@@ -206,18 +182,6 @@ if not DEBUG:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# ========================
-# REST FRAMEWORK
-# ========================
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'apps.authentication.backends.SupabaseAuthBackend',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.IsAuthenticated',
-    ],
-}
 
 # ========================
 # CORS SETTINGS
@@ -303,9 +267,9 @@ LOGGING = {
 
 
 
-# ---------------------------------------------------
-# DEVELOPMENT SERVER
-# ------------------------------------------------
+# # ---------------------------------------------------
+# # DEVELOPMENT SERVER
+# # ------------------------------------------------
 
 
 # from pathlib import Path
@@ -328,9 +292,7 @@ LOGGING = {
 # SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
 
 # # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = False
-# # ALLOWED_HOSTS = ['localhost', '*']
-# # ALLOWED_HOSTS = ['localhost', '*']
+# DEBUG = True
 
 # # ========================
 # # SUPABASE CONFIGURATION
@@ -344,11 +306,6 @@ LOGGING = {
 #     'JWT_ALGORITHM': 'HS256',
 #     'JWT_AUDIENCE': 'authenticated',
 # }
-
-
-
-
-# # Application definition
 
 # # ========================
 # # FIREBASE CONFIGURATION
@@ -369,40 +326,25 @@ LOGGING = {
 #     'django.contrib.sessions',
 #     'django.contrib.messages',
 #     'django.contrib.staticfiles',
-
 #     'rest_framework',
 #     'corsheaders',
-    
 #     'rest_framework_simplejwt',
 #     'rest_framework.authtoken',
-
 #     'apps.healthProfiling',
 #     'apps.inventory',
 #     'apps.maternal',
 #     'apps.vaccination',
-#     # 'apps.profiling',
 #     'apps.administration',
-#     # 'apps.account',
-#     # 'apps.waste',
-#     # 'apps.profiling',
 #     'apps.familyplanning',
 #     'apps.animalbites',
-#     # 'apps.account',
-#     'apps.authentication',
 #     'apps.patientrecords',
-
 #     'backend.firebase.notifications',
-#     'detection',
-#     # 'apps.gad'
-#     'apps.account',
 #     'apps.medicalConsultation',
 #     'apps.medicineservices',
 #     'apps.firstaid',
 #     'apps.childhealthservices',
 #     'apps.servicescheduler',
 #     'apps.reports',
-#     'apps.file',
-
 # ]
 
 
@@ -418,13 +360,7 @@ LOGGING = {
 #     'django.contrib.auth.middleware.AuthenticationMiddleware',
 #     'django.contrib.messages.middleware.MessageMiddleware',
 #     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-#     'apps.authentication.middleware.AccountMiddleware',
 #     "django.middleware.gzip.GZipMiddleware",  
-# ]
-
-# AUTHENTICATION_BACKENDS = [
-#     'apps.authentication.backends.SupabaseAuthBackend',
-#     'django.contrib.auth.backends.ModelBackend',
 # ]
 
 # ROOT_URLCONF = 'backend.urls'
@@ -445,7 +381,6 @@ LOGGING = {
 #     },
 # ]
 
-# WSGI_APPLICATION = 'backend.wsgi.application'
 # ASGI_APPLICATION = 'backend.asgi.application'
 
 # # Database
@@ -484,9 +419,10 @@ LOGGING = {
 # # INTERNATIONALIZATION
 # # ========================
 # LANGUAGE_CODE = 'en-us'
-# TIME_ZONE = 'UTC'
+# TIME_ZONE = 'Asia/Manila'
 # USE_I18N = True
-# USE_TZ = True
+# USE_L10N = True
+# USE_TZ = True 
 
 
 # # ========================
@@ -504,18 +440,6 @@ LOGGING = {
 # DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # # ========================
-# # REST FRAMEWORK
-# # ========================
-# REST_FRAMEWORK = {
-#     'DEFAULT_AUTHENTICATION_CLASSES': [
-#         'apps.authentication.backends.SupabaseAuthBackend',
-#     ],
-#     'DEFAULT_PERMISSION_CLASSES': [
-#         # 'rest_framework.permissions.IsAuthenticated',
-#     ],
-# }
-
-# # ========================
 # # CORS SETTINGS
 # # ========================
 # CORS_ALLOWED_ORIGINS = [
@@ -525,14 +449,9 @@ LOGGING = {
 #     "http://127.0.0.1:5173",  # Add this for Vite sometimes
 # ]
 
-# ALLOWED_HOSTS = [
-#     'ciudad-app-server-2.onrender.com',
-#     'localhost',
-#     '127.0.0.1'
-# ]
-
-# CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ALLOW_CREDENTIALS = True
+# ALLOWED_HOSTS = ['*'] 
+# CORS_ALLOW_ALL_ORIGINS = True # disable in production
+# CORS_ALLOW_CREDENTIALS = True # false in production
 
 # CORS_ALLOW_HEADERS = [
 #     'accept',

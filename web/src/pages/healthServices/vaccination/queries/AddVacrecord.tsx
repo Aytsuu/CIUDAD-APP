@@ -31,11 +31,11 @@ export const useSubmitStep2 = () => {
       data,
       pat_id,
       form,
-      form2,
+      // form2,
       vacStck_id,
-      vac_id,
+      // vac_id,
       vac_name,
-      expiry_date,
+      // expiry_date, 
       followUpData, // Optional follow-up data
       staff_id, // Optional staff_id parameter
       vaccinationHistory, // Optional vaccination history data
@@ -79,9 +79,9 @@ export const useSubmitStep2 = () => {
 
         console.log("VACCCination ", vaccinationHistory);
         const old_vacrec_id = vaccinationHistory[0]?.vacrec || null;
-        const vacrec_totaldose = Number(
-          vaccinationHistory[0]?.vacrec_details?.vacrec_totaldose
-        );
+        // const vacrec_totaldose = Number(
+        //   vaccinationHistory[0]?.vacrec_details?.vacrec_totaldose
+        // );
         console.log("Old Vaccination Record ID:", old_vacrec_id);
 
         if (assignmentOption == "other") {

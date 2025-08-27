@@ -68,7 +68,7 @@ export default function LivingSoloForm({
           <Combobox
             options={households}
             value={form.watch("householdNo")}
-            onChange={(value) => form.setValue("householdNo", value)}
+            onChange={(value) => form.setValue("householdNo", value as string)}
             placeholder="Select a household"
             triggerClassName="font-normal"
             emptyMessage={
