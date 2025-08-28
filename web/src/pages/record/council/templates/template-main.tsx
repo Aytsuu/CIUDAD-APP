@@ -1210,7 +1210,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       `NAME                     :           /*${lname}, ${fname}*/\n` +
       `AGE                        :            /*${age}*/\n` +
       `BIRTHDATE\t  :                  /*${FormattedBirthdate}*/\n` +
-      `ADDRESS              :            /*${address}*/\n\n` +
+      `ADDRESS              :            /*${address}, Brgy. San Roque Ciudad Cebu City*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*EMPLOYMENT PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
       `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
