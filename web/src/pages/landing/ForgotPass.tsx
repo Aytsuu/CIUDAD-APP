@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check } from "lucide-react";
+import { Check, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,6 +20,7 @@ import {
   ResetPasswordFormData,
 } from "@/form-schema/forgot-password-schema";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router";
 
 type ForgotPasswordStep =
   | "forgot-email"
@@ -35,6 +36,7 @@ export default function ForgotPassword() {
   const [verificationCode, setVerificationCode] = useState("");
 
   const { sendEmailOTP, verifyEmailOTPAndLogin } = useAuth();
+  const navigate = useNavigate();
 
   const emailForm = useForm<EmailFormData>({
     resolver: zodResolver(EmailSchema),
@@ -46,7 +48,6 @@ export default function ForgotPassword() {
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  // reset errors/forms when switching steps
   useEffect(() => {
     setErrorMessage("");
     if (currentStep === "forgot-verification") {
@@ -56,7 +57,6 @@ export default function ForgotPassword() {
     }
   }, [currentStep, resetForm]);
 
-  // helper for API errors
   const getErrorMessage = (error: any): string => {
     if (typeof error === "string") return error;
     if (error?.response?.data?.message) return error.response.data.message;
@@ -65,7 +65,6 @@ export default function ForgotPassword() {
     return "An unexpected error occurred. Please try again.";
   };
 
-  // handlers
   const handleSendCode = async (data: EmailFormData) => {
     setLoading(true);
     setErrorMessage("");
@@ -152,17 +151,28 @@ export default function ForgotPassword() {
     setVerificationCode(numericValue);
   };
 
-  // render steps without Card
+  const StepWrapper = ({ children }: { children: React.ReactNode }) => (
+    <div className="relative w-full max-w-md bg-white p-8 rounded-2xl shadow-lg transition-all duration-300 animate-fadeIn">
+      <Button
+        type="button"
+        variant="ghost"
+        className="absolute -top-14 left-0 flex items-center text-sm text-gray-600 hover:text-darkBlue1"
+        onClick={() => navigate("/sign-in")}
+      >
+        <ArrowLeft className="h-4 w-4 mr-1" /> Back
+      </Button>
+      {children}
+    </div>
+  );
+
   const renderStepContent = () => {
     switch (currentStep) {
       case "forgot-email":
         return (
-          <div className="space-y-6 w-full max-w-md bg-white p-6 rounded-2xl shadow">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-bold">Reset Password</h1>
-              <p className="text-gray-600">
-                Enter your email and we'll send you a 6-digit code.
-              </p>
+          <StepWrapper>
+            <div className="text-center space-y-2 mb-6">
+              <h1 className="text-3xl font-bold text-darkBlue1">Reset Password</h1>
+              <p className="text-gray-600">Enter your email and we’ll send you a 6-digit code.</p>
             </div>
             <Form {...emailForm}>
               <form onSubmit={emailForm.handleSubmit(handleSendCode)} className="space-y-4">
@@ -180,22 +190,20 @@ export default function ForgotPassword() {
                   )}
                 />
                 {errorMessage && <Alert variant="destructive"><AlertDescription>{errorMessage}</AlertDescription></Alert>}
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full bg-darkBlue1 hover:bg-darkBlue2 text-white" disabled={loading}>
                   {loading ? "Sending..." : "Send OTP"}
                 </Button>
               </form>
             </Form>
-          </div>
+          </StepWrapper>
         );
 
       case "forgot-verification":
         return (
-          <div className="space-y-6 w-full max-w-md bg-white p-6 rounded-2xl shadow">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-bold">Enter Verification Code</h1>
-              <p className="text-gray-600">
-                We sent a code to <strong>{email}</strong>
-              </p>
+          <StepWrapper>
+            <div className="text-center space-y-2 mb-6">
+              <h1 className="text-3xl font-bold text-darkBlue1">Verify Code</h1>
+              <p className="text-gray-600">We sent a code to <strong>{email}</strong></p>
             </div>
             <form
               onSubmit={(e) => {
@@ -210,25 +218,25 @@ export default function ForgotPassword() {
                 maxLength={6}
                 value={verificationCode}
                 onChange={(e) => handleVerificationCodeChange(e.target.value)}
-                className="text-center text-lg tracking-wider"
+                className="text-center text-xl tracking-widest font-mono"
               />
               {errorMessage && <Alert variant="destructive"><AlertDescription>{errorMessage}</AlertDescription></Alert>}
-              <Button type="submit" className="w-full" disabled={loading || verificationCode.length !== 6}>
+              <Button type="submit" className="w-full bg-darkBlue1 hover:bg-darkBlue2 text-white" disabled={loading || verificationCode.length !== 6}>
                 {loading ? "Verifying..." : "Verify Code"}
               </Button>
-              <div className="flex flex-col items-center">
-                <Button type="button" variant="link" onClick={handleResendCode}>Resend</Button>
-                <Button type="button" variant="link" onClick={handleBackToEmail}>Change email</Button>
+              <div className="flex justify-between mt-2">
+                <Button type="button" variant="link" onClick={handleResendCode}>Resend Code</Button>
+                <Button type="button" variant="link" onClick={handleBackToEmail}>Change Email</Button>
               </div>
             </form>
-          </div>
+          </StepWrapper>
         );
 
       case "forgot-reset":
         return (
-          <div className="space-y-6 w-full max-w-md bg-white p-6 rounded-2xl shadow">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-bold">Create New Password</h1>
+          <StepWrapper>
+            <div className="text-center space-y-2 mb-6">
+              <h1 className="text-3xl font-bold text-darkBlue1">Create New Password</h1>
             </div>
             <Form {...resetForm}>
               <form onSubmit={resetForm.handleSubmit(handleResetPassword)} className="space-y-4">
@@ -259,29 +267,31 @@ export default function ForgotPassword() {
                   )}
                 />
                 {errorMessage && <Alert variant="destructive"><AlertDescription>{errorMessage}</AlertDescription></Alert>}
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full bg-darkBlue1 hover:bg-darkBlue2 text-white" disabled={loading}>
                   {loading ? "Updating..." : "Update Password"}
                 </Button>
               </form>
             </Form>
-          </div>
+          </StepWrapper>
         );
 
       case "forgot-success":
         return (
-          <div className="space-y-6 w-full max-w-md bg-white p-6 rounded-2xl shadow text-center">
-            <Check className="mx-auto h-12 w-12 text-green-600" />
-            <h1 className="text-2xl font-bold text-green-600">Password Reset Successful!</h1>
-            <Button onClick={() => setCurrentStep("forgot-email")} className="w-full">
-              Back to Sign In
-            </Button>
-          </div>
+          <StepWrapper>
+            <div className="text-center space-y-4">
+              <Check className="mx-auto h-14 w-14 text-green-600" />
+              <h1 className="text-2xl font-bold text-green-600">Password Reset Successful!</h1>
+              <Button onClick={() => navigate("/signin")} className="w-full bg-darkBlue1 hover:bg-darkBlue2 text-white">
+                Back to Sign In
+              </Button>
+            </div>
+          </StepWrapper>
         );
     }
   };
 
   return (
-    <div className="w-full h-full flex flex-col justify-center items-center bg-gray-50 px-4">
+    <div className="w-full h-full flex flex-col justify-center items-center bg-gray-100 px-4 py-10">
       {renderStepContent()}
     </div>
   );
