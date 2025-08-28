@@ -539,8 +539,7 @@ import { toast } from "sonner";
 import TemplateMainPage from "../council/templates/template-main";
 import { calculateAge } from '@/helpers/ageCalculator';
 import { useUpdateCertStatus, useUpdateNonCertStatus } from "./queries/certUpdateQueries";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { formatTimestamp } from "@/helpers/timestampformatter";
+import { localDateFormatter } from "@/helpers/localDateFormatter";
 
 function CertificatePage() {
   const navigate = useNavigate();
@@ -601,7 +600,7 @@ function CertificatePage() {
         else{
           await updateNonResStatus(Number(variables.nrc_id))
         }
-        
+
         setSelectedCertificate(null);
       } catch (error) {
         toast.error("First mutation succeeded but second failed");
@@ -691,7 +690,7 @@ function CertificatePage() {
     {
       accessorKey: "req_request_date",
       header: "Date Requested",
-      cell: ({ row }) => <div>{formatTimestamp(row.getValue("req_request_date"))}</div>,
+      cell: ({ row }) => <div>{localDateFormatter(row.getValue("req_request_date"))}</div>,
     },
     {
       accessorKey: "req_purpose",
