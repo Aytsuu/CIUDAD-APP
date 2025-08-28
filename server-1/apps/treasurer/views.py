@@ -13,10 +13,12 @@ from rest_framework.views import APIView
 
 
 class BudgetPlanView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = BudgetPlanSerializer
     queryset = Budget_Plan.objects.all()
 
 class BudgetPlanDetailView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Budget_Plan_DetailSerializer
     queryset = Budget_Plan_Detail.objects.all()
 
@@ -32,6 +34,7 @@ class BudgetPlanDetailView(generics.ListCreateAPIView):
         
 
 class BudgetPlanHistoryView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = BudgetPlanHistorySerializer
     queryset = Budget_Plan_History.objects.all()
 
@@ -60,10 +63,12 @@ class BudgetPlanHistoryView(generics.ListCreateAPIView):
 
         
 class BudgetPlanFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = BudgetPlanFileCreateSerializer
     queryset = BudgetPlan_File.objects.all()
 
 class BudgetPlanFileRetrieveView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = BudgetPlanFileViewSerializer
 
     def get_queryset(self):
@@ -75,6 +80,7 @@ class BudgetPlanFileRetrieveView(generics.ListCreateAPIView):
 
 
 class PreviousYearBudgetPlanView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
     serializer_class = BudgetPlanSerializer
     
     def get_object(self):
@@ -89,6 +95,7 @@ class PreviousYearBudgetPlanView(generics.RetrieveAPIView):
         return previous_year_plan
 
 class PreviousYearBudgetPlanDetailsView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Budget_Plan_DetailSerializer
     
     def get_queryset(self):
@@ -105,11 +112,13 @@ class PreviousYearBudgetPlanDetailsView(generics.ListAPIView):
         return Budget_Plan_Detail.objects.filter(plan_id=previous_year_plan.plan_id)
     
 class DeleteBudgetPlanFile(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]
     queryset = BudgetPlan_File.objects.all()
     serializer_class = BudgetPlanFileViewSerializer
     lookup_field = 'bpf_id'
 
 class DeleteRetrieveBudgetPlanAndDetails(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]
     queryset = Budget_Plan.objects.all()
     serializer_class = BudgetPlanSerializer
     lookup_field = 'plan_id'
@@ -739,10 +748,12 @@ class IncomeExpenseFileDetailView(generics.RetrieveDestroyAPIView):
 #---------------RATES
 
 class Annual_Gross_SalesView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Annual_Gross_SalesSerializers
     queryset = Annual_Gross_Sales.objects.all()
 
 class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Annual_Gross_SalesSerializers
     queryset = Annual_Gross_Sales.objects.all()
     lookup_field = 'ags_id'
@@ -757,11 +768,13 @@ class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
     
 
 class Purpose_And_RatesView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
     queryset = Purpose_And_Rates.objects.all()
 
 
 class DeleteUpdate_Purpose_And_RatesView(generics.UpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
     queryset = Purpose_And_Rates.objects.all()
     lookup_field = 'pr_id'
@@ -783,6 +796,7 @@ class DeleteUpdate_Purpose_And_RatesView(generics.UpdateAPIView):
 #     queryset = Invoice.objects.all()
 
 class InvoiceView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = InvoiceSerializers
     queryset = Invoice.objects.select_related(
         'cr_id__rp_id__per'  # This ensures efficient querying

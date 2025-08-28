@@ -8,24 +8,37 @@ class HouseholdBaseSerializer(serializers.ModelSerializer):
     fields = '__all__'
 
 class HouseholdListSerialzer(serializers.ModelSerializer):
-  head_id = serializers.CharField(source='rp.rp_id')
   head = serializers.SerializerMethodField()
+  sitio = serializers.CharField(source='add.sitio.sitio_name')
+  street = serializers.CharField(source='add.add_street')
   registered_by = serializers.SerializerMethodField()
 
   class Meta:
     model = Household
-    fields = ['hh_id','head_id', 'head', "hh_nhts", "add",
-              "hh_date_registered", "registered_by"]
+    fields = ['hh_id', 'head', "hh_nhts", "sitio",
+              "street", "hh_date_registered", "registered_by"]
 
   def get_head(self, obj):
-    name = obj.rp.per
-    return f"{name.per_lname}, {name.per_fname}" + \
-          (f" {name.per_mname[0]}." if name.per_mname else "")
-  
+    id = obj.rp.rp_id
+    fam = FamilyComposition.objects.filter(rp=id).first()
+    fam_id = fam.fam.fam_id if fam else ""
+    personal = obj.rp.per
+    name = f"{personal.per_lname}, {personal.per_fname}" + \
+          (f" {personal.per_mname[0]}." if personal.per_mname else "")
+    
+    return f'{id}-{name}-{fam_id}'
+    
   def get_registered_by(self, obj):
-    info = obj.staff.rp.per
-    return f"{info.per_lname}, {info.per_fname}" + \
-        (f" {info.per_mname[0]}." if info.per_mname else "")
+    staff = obj.staff
+    staff_type = staff.staff_type
+    staff_id = staff.staff_id
+    fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+    fam_id = fam.fam.fam_id if fam else ""
+    personal = staff.rp.per
+    staff_name = f'{personal.per_lname}, {personal.per_fname}' \
+                  f' {personal.per_mname[0]}.' if personal.per_mname else ''
+
+    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
 
 class HouseholdTableSerializer(serializers.ModelSerializer):
   total_families = serializers.SerializerMethodField()
@@ -35,13 +48,11 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
   head = serializers.SerializerMethodField()
   head_id = serializers.CharField(source='rp.rp_id')
   date_registered = serializers.DateField(source='hh_date_registered')
-  registered_by = serializers.SerializerMethodField()
-
 
   class Meta:
     model = Household
     fields = ['hh_id', 'sitio', 'total_families', 'street', 'nhts', 'head', 'head_id',
-              'date_registered', 'registered_by']
+              'date_registered']
     
   def get_total_families(self, obj):
     return Family.objects.filter(hh=obj).count()
@@ -50,11 +61,7 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
     info = obj.rp.per
     return f"{info.per_lname}, {info.per_fname}" + \
         (f" {info.per_mname[0]}." if info.per_mname else "")
-  
-  def get_registered_by(self, obj):
-    info = obj.staff.rp.per
-    return f"{info.per_lname}, {info.per_fname}" + \
-        (f" {info.per_mname[0]}." if info.per_mname else "")
+
   
 class HouseholdCreateSerializer(serializers.ModelSerializer):
   class Meta:

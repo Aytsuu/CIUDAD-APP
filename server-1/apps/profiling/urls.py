@@ -8,9 +8,14 @@ from .views.sitio_views import *
 from .views.address_views import *
 from .views.request_registration_views import *
 from .views.business_views import *
-# from .views_deprecated import * # To be removed
+from .views.analytics_views import *
+from .views.kyc_views import *
+from .views.all_record_views import *
 
 urlpatterns = [
+    # All record (combined record of resident and business respondents)
+    path("all/", AllRecordTableView.as_view(), name="all-record"),
+
     # Sitio Urls
     path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
 
@@ -20,12 +25,11 @@ urlpatterns = [
     path("per_address/list/", PerAddressListView.as_view(), name="per-address-list"),
 
     # Personal Urls
-    # path("personal/", PersonalView.as_view(), name="personal-details-list"),
-    path("personal/update/<int:per_id>/", PersonalUpdateView.as_view(), name="personal-update"),
+    path("personal/update/<int:pk>/", PersonalUpdateView.as_view(), name="personal-update"),
     path("personal/create/", PersonalCreateView.as_view(), name="create-personal"),
+    path("personal/history/", PersonalHistoryView.as_view(), name="personal-history"),
 
     # Family Urls
-    # path("family/", FamilyView.as_view(), name="family-details"),
     path("family/update/<str:fam_id>/", FamilyUpdateView.as_view(), name="update-family-details"),
     path("family/list/table/", FamilyTableView.as_view(), name="family-table"),
     path("family/list/filter/<str:hh>/", FamilyFilteredByHouseholdView.as_view(), name="filter-family-list"),
@@ -33,41 +37,57 @@ urlpatterns = [
     path("family/<str:fam_id>/members/", FamilyMembersListView.as_view(), name="family-members-list"),
     path("family/create/", FamilyCreateView.as_view(), name="family-create"),
     path("family/id/<str:rp>/", FamilyIDView.as_view(), name="retrieve-family-id"),
-    # path("family-composition/", FamilyCompositionView.as_view(), name="family-composition-details"),
-    # path("family/composition/delete/<str:fam>/<str:rp>/", FamilyCompositionDeleteView.as_view(), name="family-composition-delete"),
+    path("family/composition/delete/<str:fam>/<str:rp>/", FamilyMemberDeleteView.as_view(), name="member-deletion"),
     path("family/role/update/<str:fam>/<str:rp>/", FamilyRoleUpdateView.as_view(), name="family-composition-update"),
     path("family/composition/create/", FamilyCompositionCreateView.as_view(), name="create-family-member"),
     path("family/composition/bulk/create/", FamilyCompositionBulkCreateView.as_view(), name="family-composition-bulk-create"),
+    path("family/verify/account-create/", VerifyFamily.as_view(), name="join-existing-family"),
 
     # Househould Urls
-    # path("household/", HouseholdView.as_view(), name="household-details"),
     path("household/list/", HouseholdListView.as_view(), name="household-list"),
     path("household/list/table/", HouseholdTableView.as_view(), name="household-table"),
-    path("household/<str:hh_id>/data/", HouseholdListView.as_view(), name="household-details"),
+    path("household/<str:hh_id>/data/", HouseholdDataView.as_view(), name="household-details"),
     path("household/create/", HouseholdCreateView.as_view(), name="create-household"),
     path("household/update/<str:hh_id>/", HouseholdUpdateView.as_view(), name="upadate-household"),
 
     # Resident Urls
-    path("resident/", ResidentProfileListExcludeFamView.as_view(), name="resident-details"),
+    path("resident/", ResidentProfileListWithOptions.as_view(), name="resident-details"),
     path("resident/list/table/", ResidentProfileTableView.as_view(), name="residents-table"),
     path("resident/create/combined/", ResidentPersonalCreateView.as_view(), name="resident-combined-create"),
     path("resident/personal/<str:rp_id>/", ResidentPersonalInfoView.as_view(), name="resident-personal-info"),
-    path("resident/exclude/fam/<str:fam_id>/", ResidentProfileListExcludeFamView.as_view(), name="resident-list-with exclusions"),
+    path("resident/exclude/fam/<str:fam_id>/", ResidentProfileListWithOptions.as_view(), name="resident-list-with exclusions"),
     path("resident/fam/<str:fam>/list/", ResidentProfileFamSpecificListView.as_view(), name="resident-list-fam"),
 
     # Request Urls
     path("request/list/table/", RequestTableView.as_view(), name="request-list-table"),
     path("request/create/", RequestCreateView.as_view(), name="request-create"),
-    path("request/file/create/", RequestFileCreateView.as_view(), name="request-file-create"),
     path("request/link/registration/", LinkRegVerificationView.as_view(), name="link-registration-verification"),
     path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
-    # path("request/file/", RequestFileView.as_view(), name="request-files"),
+    path("request/count/", RequestCountView.as_view(), name="total-request"),
 
-    # # Business Urls
-    path("business/list/table/", BusinessTableView.as_view(), name="business-list-table"),
+    # Business Urls
+    path("business/active/list/table/", ActiveBusinessTableView.as_view(), name="business-active-list"),
+    path("business/pending/list/table/", PendingBusinessTableView.as_view(), name="business-pending-list"),
+    path("business/respondent/list/table/", BusinessRespondentTableView.as_view(), name="business-respondent-list"),
     path("business/create/", BusinessCreateView.as_view(), name="business-create"),
+    path("business/create-respondent/", BusRespondentCreateView.as_view(), name="business-create-respondent"),
+    path("business/<int:bus_id>/info/", BusinessInfoView.as_view(), name="business-data"),
+    path("business/respondent/<int:br_id>/info/", BusinessRespondentInfoView.as_view(), name="business-respondent-data"),
     path("business/<int:bus_id>/update/", BusinessUpdateView.as_view(), name="business-update"),
+    path("business/specific/ownership/", SpecificOwnerView.as_view(), name="business-for-specific-owner"),
     path("business/file/create/", BusinessFileCreateView.as_view(), name="business-file-create"),
-    # path("business/file/", BusinessFileView.as_view(), name="business-files"),
-
+    path("business/verify/account-creation/", VerifyBusinessRespondent.as_view(), name="respondent-account-creation"),
+    path("business/modification/create/", BusinessModificationCreateView.as_view(), name='modify-business'),
+    path("business/modification/delete/", BusinessModificationDeleteView.as_view(), name='modification-request-result'),
+    path("business/modification/<int:bm_id>/result/", BusinessModificationUpdateView.as_view(), name='update-modification'),
+    path("business/modification/request-list/", BusinessModificationListView.as_view(), name="request-list"),
+    path("business/history/", BusinessHistoryView.as_view(), name="business-history"),
+    
+    # Analytics Urls,
+    path("card/analytics/data/", CardAnalyticsView.as_view(), name='card-analytics'),
+    path("sidebar/analytics/data/", SidebarAnalyticsView.as_view(), name="sidebar-analytics"),
+    
+    # KYC
+    path("kyc/match-document/", KYCDocumentMatchingView.as_view(), name="document-matching"),
+    path("kyc/match-face/", KYCFaceMatchingView.as_view(), name="face-matching"),
 ]

@@ -218,7 +218,7 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
             inc_additional_notes: incomeInfo.inc_additional_notes,
             // inc_receipt_image: incomeInfo.inc_receipt_image || null,
             incp_id:  incomeInfo.inc_particulars,
-            staff_id: "00001250820"
+            staff_id: "00001250821"
         })
 
         const res = await api.post('treasurer/income-tracking/',{
@@ -231,7 +231,7 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
             // inc_transac_num: "100300",
             // inc_receipt_image: incomeInfo.inc_receipt_image || null,
             incp_id:  parseInt(incomeInfo.inc_particulars),
-            staff_id: "00001250820"
+            staff_id: "00001250821"
 
         })
 
