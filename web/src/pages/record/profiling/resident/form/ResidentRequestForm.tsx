@@ -24,6 +24,8 @@ export default function ResidentRequestForm({ params }: { params: any }) {
     [sitioList]
   );
 
+  console.log(params.data)
+
   // ==================== SIDE EFFECTS ======================
   React.useEffect(() => {
     const per_addresses = params?.form?.getValues().personalSchema.per_addresses
@@ -44,6 +46,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
         { key: "personalSchema.per_religion", value: resident?.per_religion || "" },
         { key: "personalSchema.per_edAttainment", value: resident?.per_edAttainment || "" },
         { key: "personalSchema.per_contact", value: resident?.per_contact || "" },  
+        { key: "personalSchema.per_disability", value: resident?.per_disability || "" },  
         { key: "personalSchema.per_addresses", value: resident?.per_addresses || [] },
       ];
   

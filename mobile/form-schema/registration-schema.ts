@@ -65,7 +65,7 @@ export const fileSchema = z.object({
 export const addressSchema = z.object({
   add_province: z.string().min(1).default("Cebu"),
   add_city: z.string().min(1).default("Cebu City"),
-  add_barangay: z.string().min(1).default("San Roque"),
+  add_barangay: z.string().min(1).default("San Roque (ciudad)"),
   add_external_sitio: z.string().min(1),
   sitio: z.string().min(1),
   add_street: z.string().min(1)
@@ -83,7 +83,7 @@ export const personalInfoSchema = z.object({
   per_edAttainment: z.string(),
   per_religion: z.string().min(1, "Religion is required"),
   per_contact: z.string().min(1, "Contact is required"),
-  per_disability: z.string().optional(),
+  per_disability: z.string(),
   per_occupation: z.string(),
   per_addresses: z.object({
     list: z.array(addressSchema).default([]),

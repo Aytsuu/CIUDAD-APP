@@ -45,7 +45,7 @@ export const personalInfoSchema = z.object({
     .refine((val) => val.length === 11, {
       message: "Must be 11 digits (e.g., 09171234567)",
     }),
-  per_disability: z.string().optional(),
+  per_disability: z.string(),
 });
 export const perAddDetails = z.object({
   bloodType: z.string().optional(),

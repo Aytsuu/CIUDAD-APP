@@ -48,7 +48,7 @@ class MobileLoginView(APIView):
             except Exception as supabase_error:
                 logger.error(f"Supabase authentication failed: {str(supabase_error)}")
                 return Response(
-                    {'error': 'Email not found in the system or invalid credentials'},
+                    {'error': 'Invalid credentials'},
                     status=status.HTTP_401_UNAUTHORIZED
                 )
 

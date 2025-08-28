@@ -86,6 +86,7 @@ export default function RegistrationRequests() {
           per_edAttainment: personal.per_edAttainment,
           per_religion: personal.per_religion,
           per_contact: personal.per_contact,
+          per_disability: personal.per_disability,
           per_addresses: personal.per_addresses
         }
       } else {
