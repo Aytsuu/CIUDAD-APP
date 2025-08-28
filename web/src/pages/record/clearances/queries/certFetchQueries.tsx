@@ -33,7 +33,6 @@ export const getCertificates = async (): Promise<Certificate[]> => {
         resident_details: item.resident_details || null,
         req_pay_method: item.req_pay_method || 'Walk-in',
         req_request_date: item.cr_req_request_date,
-        req_claim_date: item.cr_req_claim_date,
         req_type: item.purpose?.pr_purpose || item.req_type || '',
         req_purpose: item.purpose?.pr_purpose || '',
         req_payment_status: item.cr_req_payment_status,

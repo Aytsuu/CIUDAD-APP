@@ -1001,11 +1001,11 @@ import { useGetTemplateRecord } from './queries/template-FetchQueries';
 import TemplatePreview from './template-preview';
 import { Skeleton } from "@/components/ui/skeleton";
 import {formatTimestampToDate } from '@/helpers/summonTimestampFormatter';
+import { calculateAge } from '@/helpers/ageCalculator';
 
 interface RequestProps {
   fname?: string;
   lname?: string;
-  age?: string;
   birthdate?: string;
   address?: string;
   purpose?: string;
@@ -1033,10 +1033,12 @@ type Template = {
 }
 
 
-function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issuedDate} : RequestProps ) {
+function TemplateMainPage({fname, lname, birthdate, address, purpose, issuedDate} : RequestProps ) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  console.log("NISUDDDDD SAA TEMPLATE MAINNNNNNNNN")
 
   // Fetch data
   const { data: templates = [], isLoading } = useGetTemplateRecord();
@@ -1050,18 +1052,16 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
   //birthdate format
   const FormattedIssuanceDate =  issuedDate ? formatTimestampToDate(issuedDate) : "";
 
-  // Auto-select template based on purpose when component mounts or purpose changes
-  useEffect(() => {
-    if (purpose) {
-      const matchedTemplate = TemplateRecords.find(template => 
-        template.temp_id?.toLowerCase() === purpose.toLowerCase()
-      );
-      
-      if (matchedTemplate) {
-        setPreviewTemplate(matchedTemplate);
-      }
-    }
-  }, [purpose]);  
+  //age format
+  let FormattedAge = "";
+  try {
+    console.log("NI WORKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
+    FormattedAge = birthdate ? calculateAge(birthdate) : "";
+  } catch (error) {
+    console.error("Error calculating age:", error);
+    FormattedAge = ""; // Fall back to the provided age if calculation fails
+  }
+
 
   console.log("TEMPLATES: ", templates)
 
@@ -1082,7 +1082,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_w_seal: true,
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
       `NAME                     :           ${lname}, ${fname}\n` +
-      `AGE                        :            ${age}\n` +
+      `AGE                        :            ${FormattedAge}\n` +
       `BIRTHDATE\t  :           ${birthdate}\n` +
       `ADDRESS              :            ${address}\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*IDENTIFICATION (ID) PURPOSES ONLY.*/   " +
@@ -1105,7 +1105,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_w_seal: true,
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
       `NAME                     :           ${lname}, ${fname}\n` +
-      `AGE                        :            ${age}\n` +
+      `AGE                        :            ${lname}\n` +
       `BIRTHDATE\t  :           ${birthdate}\n` +
       `ADDRESS              :            ${address}\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*LOAN PURPOSES ONLY.*/   " +
@@ -1113,7 +1113,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       `Issued this ${FormattedIssuanceDate} of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },    
     {
-      temp_id: "sss",
+      temp_id: "SSS Application And Related Clearances",
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1128,7 +1128,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_w_seal: true,
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
       `NAME                     :           ${lname}, ${fname}\n` +
-      `AGE                        :            ${age}\n` +
+      `AGE                        :            ${lname}\n` +
       `BIRTHDATE\t  :           ${birthdate}\n` +
       `ADDRESS              :            ${address}\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*SOCIAL SECURITY SYSTEM (SSS) PURPOSES ONLY.*/  " +
@@ -1197,7 +1197,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_w_seal: true,
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
       `NAME                     :           ${lname}, ${fname}\n` +
-      `AGE                        :            ${age}\n` +
+      `AGE                        :            ${lname}\n` +
       `BIRTHDATE\t  :           ${birthdate}\n` +
       `ADDRESS              :            ${address}\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*EMPLOYMENT PURPOSES ONLY.*/  " +
@@ -1795,10 +1795,25 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
   ];  
 
 
-  const filteredTemplates = TemplateRecords.filter(template => 
-    template.temp_filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    template.temp_title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Auto-select template based on purpose when component mounts or purpose changes
+  useEffect(() => {
+    if (!purpose) {
+      setPreviewTemplate(null);
+      return;
+    }
+
+    const matchedTemplate = TemplateRecords.find(
+      template => template.temp_id?.toLowerCase() === purpose.toLowerCase()
+    );
+
+    setPreviewTemplate(matchedTemplate || null);
+  }, [purpose]);
+
+
+  // const filteredTemplates = TemplateRecords.filter(template => 
+  //   template.temp_filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //   template.temp_title.toLowerCase().includes(searchTerm.toLowerCase())
+  // );
 
   if (isLoading) {
     return (
@@ -1884,68 +1899,15 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
           />
         )}
       </div>
+    
 
-      <div className="rounded bg-white min-h-[200px] p-10 mb-40">
-        {filteredTemplates.length === 0 ? (
-          <p className="text-center text-gray-500">No template found.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-            {filteredTemplates
-              // Sort templates alphabetically by filename
-              .sort((a, b) => a.temp_filename.localeCompare(b.temp_filename))
-              .map((template) => (
-                <div 
-                  key={template.temp_id} 
-                  className={`relative group ${isTemplateEmpty(template) ? 'opacity-70' : ''}`}
-                >
-                  <div 
-                    onClick={() => !isTemplateEmpty(template) && setPreviewTemplate(template)} 
-                    className={`cursor-pointer ${isTemplateEmpty(template) ? 'cursor-not-allowed' : ''}`}
-                  >
-                    <CardLayout
-                      title=""
-                      description=""
-                      contentClassName="p-0"
-                      content={
-                        <div className="relative h-40 w-full flex items-center justify-center rounded-xl overflow-hidden">
-                          <div className="absolute inset-0 bg-gray-100" />
-                          <div className="z-10 text-gray-400 text-4xl">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                              <polyline points="14 2 14 8 20 8" />
-                            </svg>
-                          </div>
-                          <div className="absolute bottom-0 w-full bg-black bg-opacity-60 text-white text-xs sm:text-sm text-center py-1 px-2 z-20">
-                            {template.temp_filename}
-                            {isTemplateEmpty(template) && (
-                              <span className="block text-xs text-yellow-200">Please provide the necessary details first.</span>
-                            )}
-                          </div>
-                        </div>
-                      }
-                      cardClassName={`p-0 shadow hover:shadow-lg transition-shadow rounded-xl ${
-                        isTemplateEmpty(template) ? 'hover:shadow-none' : ''
-                      }`}
-                    />
-                  </div>
-                </div>
-              ))}
-          </div>
-        )}
-      </div>
-
-      {purpose && previewTemplate && (
+      {previewTemplate ? (
         <DialogLayout
           isOpen={!!previewTemplate}
-          onOpenChange={(open) => {
-            if (!open) {
-              setPreviewTemplate(null);
-              // Optional: You might want to navigate back or clear the purpose here
-            }
-          }}
+          onOpenChange={() => setPreviewTemplate(null)}
           className="max-w-full h-full flex flex-col overflow-auto scrollbar-custom"
-          title="Document Preview"
-          description={`Previewing: ${previewTemplate.temp_filename}`}
+          title=""
+          description=""
           mainContent={
             <div className="w-full h-full">
               <TemplatePreview
@@ -1962,13 +1924,20 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
                 withSignRight={previewTemplate.temp_w_sign_right}
                 withSignLeft={previewTemplate.temp_w_sign_left}
                 withSignatureApplicant={previewTemplate.temp_w_sign_applicant}
-                paperSize={previewTemplate.temp_paperSize} 
+                paperSize={previewTemplate.temp_paperSize}
                 margin={previewTemplate.temp_margin}
               />
             </div>
-          }          
+          }
         />
-      )}
+      ) : purpose ? (
+        <div className="rounded bg-white min-h-[200px] p-10 mb-40">
+          <p className="text-center text-gray-500">
+            No template found for the purpose: {purpose}
+          </p>
+        </div>
+      ) : null}
+
     </div>
   );
 }
