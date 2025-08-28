@@ -313,6 +313,24 @@ class CertificateListView(generics.ListCreateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             
+class CertificateStatusUpdateView(generics.UpdateAPIView):
+    permission_classes = [AllowAny]
+    queryset = ClerkCertificate.objects.all()
+    serializer_class = CertificateStatusUpdateSerializer
+    lookup_field = 'cr_id'
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        return Response({
+            'message': 'Status updated successfully',
+            'cr_id': instance.cr_id,
+            'new_status': instance.cr_req_status
+        }, status=status.HTTP_200_OK)
+    
 
 class CertificateDetailView(generics.RetrieveUpdateAPIView):  # Changed from RetrieveAPIView
     permission_classes = [AllowAny]

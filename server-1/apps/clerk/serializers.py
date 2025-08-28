@@ -95,6 +95,11 @@ class IssuedCertificateSerializer(serializers.ModelSerializer):
         fields = ['ic_id', 'dateIssued', 'requester', 'purpose']
 
 
+class CertificateStatusUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClerkCertificate
+        fields = ['cr_req_status'] 
+
 
 class ClerkCertificateSerializer(serializers.ModelSerializer):
     resident_details = serializers.SerializerMethodField()

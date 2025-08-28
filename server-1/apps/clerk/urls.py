@@ -20,7 +20,7 @@ urlpatterns = [
    
     # Certificate URLs
     path('certificate/', CertificateListView.as_view(), name='certificate_list'),
-    path('certificate-update-status/<str:cr_id>/', CertificateDetailView.as_view(), name='certificate_detail_update'),
+    path('certificate-update-status/<str:cr_id>/', CertificateStatusUpdateView.as_view(), name='certificate_status_update'),
     path('certificate/<str:pk>/', CertificateDetailView.as_view(), name='certificate_detail'),
     path('issued-certificates/', IssuedCertificateListView.as_view(), name='issued-certificate-list'),
     path('mark-certificate-issued/', MarkCertificateAsIssuedView.as_view(), name='mark-certificate-issued'),
