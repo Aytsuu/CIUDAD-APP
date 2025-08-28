@@ -137,7 +137,7 @@ class NonResidentCertReqSerializer(serializers.ModelSerializer):
 class NonResidentCertReqUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = NonResidentCertificateRequest
-        fields = ["nrc_req_status", "nrc_req_payment_status", "nrc_pay_date"]
+        fields = ["nrc_req_status", "nrc_req_payment_status", "nrc_pay_date", "nrc_date_completed"]
 
 
 class ClerkCertificateSerializer(serializers.ModelSerializer):
