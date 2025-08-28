@@ -10,6 +10,8 @@ class ClerkCertificate(models.Model):
     cr_req_request_date = models.DateField()
     cr_req_status = models.CharField(max_length=100, default='None')
     cr_req_payment_status = models.CharField(max_length=100, default='None')
+    cr_date_completed = models.CharField(max_length=100, default='None')  
+    
     pr_id = models.ForeignKey(
         'treasurer.Purpose_And_Rates', 
         on_delete=models.CASCADE, 
