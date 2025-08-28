@@ -32,7 +32,7 @@ export default function RegistrationLayout() {
   const { mutateAsync: addAllProfile } = useAddAllProfile();
   const { mutateAsync: deleteRequest } = useDeleteRequest();
   const { mutateAsync: updateAccount } = useUpdateAccount();
-  const [currentStep, setCurrentStep] = React.useState<number>(1);
+  const [currentStep, setCurrentStep] = React.useState<number>(4);
   const [hasFamily, setHasFamily] = React.useState<boolean>(false);
   const [completed, setCompleted] = React.useState<Set<number>>(new Set())
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);

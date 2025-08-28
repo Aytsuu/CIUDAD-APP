@@ -1,40 +1,23 @@
 import React from "react";
 import { Form } from "@/components/ui/form/form";
 import PersonalInfoForm from "./PersonalInfoForm";
-import { useResidentForm } from "./useResidentForm";
 import { Type } from "../../ProfilingEnums";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
+  CardHeader
 } from "@/components/ui/card/card";
-import { useAuth } from "@/context/AuthContext";
-import { useDeleteRequest } from "../../queries/profilingDeleteQueries";
-import { CircleAlert, FileText, MapPin, MoveRight, Shield, User, UserRoundPlus } from "lucide-react";
-import { useAddResidentAndPersonal } from "../../queries/profilingAddQueries";
-import { useUpdateAccount } from "../../queries/profilingUpdateQueries";
+import { FileText, MapPin, MoveRight, Shield, User, UserRoundPlus } from "lucide-react";
 import { useSitioList } from "../../queries/profilingFetchQueries";
 import { formatSitio } from "../../ProfilingFormats";
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useRequestExpiration } from "../useRequestExpiration";
+import { showErrorToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button/button";
 
 export default function ResidentRequestForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
-  const { user } = useAuth();
-  const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
-  const { mutateAsync: deleteRequest } = useDeleteRequest();
-  const { mutateAsync: updateAccount } = useUpdateAccount();
   const { data: sitioList } = useSitioList();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [addresses, setAddresses] = React.useState<any[]>([])
-  // const { 
-  //   getExpirationColor,
-  //   getExpirationMessage,
-  //   getStatusDisplay 
-  // } = useRequestExpiration(params.data?.req_date);
 
   const formattedSitio = React.useMemo(
     () => formatSitio(sitioList) || [], 
@@ -101,32 +84,6 @@ export default function ResidentRequestForm({ params }: { params: any }) {
         <CardContent className="space-y-6">
           {/* Form Content */}
           <div className="space-y-6">
-            {/* <div className={`${getExpirationColor.bg} border ${getExpirationColor.border} rounded-lg p-4`}>
-              <div className="flex items-start gap-3">
-                <CircleAlert
-                  size={20}
-                  className={`${getExpirationColor.icon} mt-0.5 flex-shrink-0`}
-                />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <p
-                      className={`text-sm font-medium ${getExpirationColor.title}`}
-                    >
-                      Request Expiration
-                      {getStatusDisplay && (
-                        <span className="ml-2 text-xs font-normal">
-                          ({getStatusDisplay})
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <p className={`text-sm ${getExpirationColor.text} mt-1`}>
-                    {getExpirationMessage}
-                  </p>
-                </div>
-              </div>
-            </div> */}
-
             {/* Personal Information Form */}
             <div className="p-6">
               <Form {...params?.form}>
@@ -151,15 +108,6 @@ export default function ResidentRequestForm({ params }: { params: any }) {
               </div>
             </div> 
           </div>
-
-          {/* Database Info */}
-          {/* <Alert className="border-green-200 bg-green-50">
-            <AlertDescription className="text-green-800 flex items-center gap-2">
-              By approving this request, you confirm that all information has been
-              reviewed and verified. This action will create a new resident record
-              and remove the request from the pending list.
-            </AlertDescription>
-          </Alert> */}
 
           {/* Help Section */}
           <div className="text-center pt-4 border-t border-gray-100">
