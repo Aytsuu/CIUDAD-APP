@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import SummonDateAvailability, SummonTimeAvailability
 from .models import *
+from .models import NonResidentCertificateRequest
 from apps.complaint.models import Complaint, ComplaintComplainant, ComplaintAccused, Complaint_File, Complainant, Accused
 from apps.complaint.serializers import ComplaintSerializer
 from apps.profiling.models import ResidentProfile, FamilyComposition
@@ -188,6 +189,7 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             'resident_details',
             'purpose',
             'cr_req_request_date',
+            'cr_date_completed',
             'cr_req_payment_status',
             'pr_id',
             'cr_req_status',
@@ -215,6 +217,7 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             'req_payment_status',
             'ags_id',
             'bus_id',
+            'rp_id',
             'business_name',
             'business_address',
             'business_gross_sales',
@@ -239,7 +242,12 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
         return ""
 
     def get_requestor(self, obj):
-        return getattr(obj, 'requestor', '')
+        try:
+            if obj.rp_id and getattr(obj.rp_id, 'per', None):
+                return f"{obj.rp_id.per.per_fname} {obj.rp_id.per.per_lname}"
+            return ''
+        except Exception:
+            return ''
 
     def get_purpose(self, obj):
         return obj.pr_id.pr_purpose if obj.pr_id else ""
@@ -258,6 +266,7 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             'ags_id',
             'bus_id',
             'pr_id',
+            'rp_id',
             'staff_id',
             'previous_permit_image',  # New image field
             'assessment_image',  # New image field
@@ -271,6 +280,7 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             'ra_id': {'required': False, 'allow_null': True},
             'staff_id': {'required': False, 'allow_null': True},
             'bus_id': {'required': False, 'allow_null': True},
+            'rp_id': {'required': False, 'allow_null': True},
             'previous_permit_image': {'required': False, 'allow_null': True},
             'assessment_image': {'required': False, 'allow_null': True},
         }

@@ -10,27 +10,14 @@ class ClerkCertificate(models.Model):
     cr_req_request_date = models.DateField()
     cr_req_status = models.CharField(max_length=100, default='None')
     cr_req_payment_status = models.CharField(max_length=100, default='None')
-    pr_id = models.ForeignKey(
-        'treasurer.Purpose_And_Rates', 
-        on_delete=models.CASCADE, 
-        db_column='pr_id', 
-        related_name='certificates', 
-        null=True
-    )
-    staff_id = models.ForeignKey(
-        'administration.Staff', 
-        on_delete=models.CASCADE, 
-        db_column='staff_id', 
-        null=True
-    )
-    rp_id = models.ForeignKey(
-        'profiling.ResidentProfile', 
-        on_delete=models.CASCADE, 
-        db_column='rp_id'
-    )
+    cr_date_completed = models.DateField(null=True, blank=True)
+    pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete=models.CASCADE, db_column='pr_id', related_name='certificates', null=True)
+    staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='staff_id', null=True)
+    rp_id = models.ForeignKey('profiling.ResidentProfile',  on_delete=models.CASCADE, db_column='rp_id')
 
     class Meta:
         db_table = 'certification_request'
+        managed = False
 
 
 class NonResidentCertificateRequest(models.Model):
@@ -77,24 +64,32 @@ class Business(models.Model):
 
 class BusinessPermitRequest(models.Model):
     bpr_id = models.CharField(max_length=10, primary_key=True)
-    req_pay_method = models.CharField(max_length=50)
     req_request_date = models.DateField()
     req_sales_proof = models.CharField(max_length=100)
     req_status = models.CharField(max_length=100, default='Pending')
     req_payment_status = models.CharField(max_length=100, default='Unpaid')
-    # req_purpose removed - will get from pr_id
-    # bus_address removed - will get from bus_id
     ags_id = models.ForeignKey('treasurer.annual_gross_sales', on_delete=models.CASCADE, db_column='ags_id', related_name='business_permits', null=True)
     bus_id = models.ForeignKey('Business', on_delete=models.CASCADE, db_column='bus_id', related_name='permit_requests')
     pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete=models.CASCADE, db_column='pr_id', related_name='business_permits', null=True)
-    # ra_id removed - duplicate of staff_id
     staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='staff_id', related_name='staff_business_permits', null=True)
-    # New image fields
+    # Optional Resident (requester) like certificate_request
+    rp_id = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, db_column='rp_id', null=True)
+
     # previous_permit_image = models.CharField(max_length=500, null=True, blank=True)
     # assessment_image = models.CharField(max_length=500, null=True, blank=True)
-    
     class Meta:
         db_table = 'business_permit_request'
+        managed = False
+
+class BusinessPermitFile(models.Model):
+    bpf_id = models.BigAutoField(primary_key=True)
+    bpf_name = models.CharField(max_length=255)
+    bpf_type = models.CharField(max_length=100, null=True, blank=True)
+    bpf_path = models.CharField(max_length=500, null=True, blank=True)
+    bpf_url = models.CharField(max_length=500)
+    bpr_id = models.ForeignKey('BusinessPermitRequest', on_delete=models.CASCADE, null=True, related_name='permit_files', db_column='bpr_id')
+    class Meta:
+        db_table = 'business_permit_file'
         managed = False
 
 class IssuedBusinessPermit(models.Model):
@@ -227,16 +222,7 @@ class ServiceChargeRequestFile(models.Model):
     class Meta:
         db_table = 'service_charge_request_file'
 
-class BusinessPermitFile(models.Model):
-    bpf_id = models.BigAutoField(primary_key=True)
-    bpf_name = models.CharField(max_length=255)
-    bpf_type = models.CharField(max_length=100, null=True, blank=True)
-    bpf_path = models.CharField(max_length=500, null=True, blank=True)
-    bpf_url = models.CharField(max_length=500)
-    
-    class Meta:
-        db_table = 'business_permit_file'
-        managed = False
+
 
 # Case Activity Models
 class CaseActivity(models.Model):

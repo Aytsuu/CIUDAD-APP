@@ -131,6 +131,7 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
                 req_status: 'Pending',
                 req_payment_status: 'Unpaid',
                 bus_id: requestInfo.business_id, // Business ID - renamed from business to bus_id
+                rp_id: await getValidResidentProfileId(),
                 ags_id: requestInfo.ags_id || null, // Annual gross sales ID (optional)
                 pr_id: requestInfo.pr_id || null, // Purpose and rate ID (optional)
                 // New image fields
