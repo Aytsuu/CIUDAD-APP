@@ -1,18 +1,10 @@
 import { api } from "@/api/api";
 
+
 // Function to get a valid resident profile ID
 const getValidResidentProfileId = async () => {
-    try {
-        // Try to get resident profiles from the profiling app
-        const response = await api.get('profiling/resident-profile/');
-        if (response.data && response.data.length > 0) {
-            return response.data[0].rp_id; // Return the first available resident profile ID
-        }
-        return 1; // Fallback to ID 1 if no profiles found
-    } catch (error) {
-        console.log("Could not fetch resident profiles, using fallback ID");
-        return 1; // Fallback to ID 1
-    }
+    // TODO: Replace with actual logged-in user's resident ID from auth context
+    return "00017250822"; // Temporary resident ID
 };
 
 // Test function to check server connectivity
@@ -104,17 +96,15 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
             const residentProfileId = await getValidResidentProfileId();
             
             const payload = {
-                cr_id: cr_id, // Generated unique ID
-                req_request_date: new Date().toISOString().split('T')[0], // Current date
-                req_claim_date: requestInfo.claim_date,
-                req_transac_id: 'None', // Default value
-                req_purpose: requestInfo.cert_category, // Multiple purposes joined with comma
-                req_status: 'Pending',
-                req_payment_status: 'Unpaid',
-                pr_id: null, // Will be set based on purpose selection
-                rp_id: residentProfileId, // Resident profile ID - dynamically fetched
-                // Note: No staff_id for mobile users (residents)
-                // Additional fields for mobile
+                cr_id: cr_id, 
+                cr_req_request_date: new Date().toISOString().split('T')[0], 
+                cr_req_claim_date: requestInfo.claim_date,
+                cr_req_transac_id: 'None', 
+                cr_req_purpose: requestInfo.cert_category, 
+                cr_req_status: 'Pending',
+                cr_req_payment_status: 'Paid',
+                pr_id: requestInfo.pr_id, 
+                rp_id: residentProfileId, 
                 serial_no: requestInfo.serialNo || null,
                 requester: requestInfo.requester || 'Mobile User'
             };
@@ -145,7 +135,6 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
                 bus_id: requestInfo.business_id, // Business ID - renamed from business to bus_id
                 ags_id: requestInfo.ags_id || null, // Annual gross sales ID (optional)
                 pr_id: requestInfo.pr_id || null, // Purpose and rate ID (optional)
-                staff_id: requestInfo.rp_id || '00002250821', // Staff ID (using rp_id for now)
                 // New image fields
                 previous_permit_image: requestInfo.previous_permit_image || null,
                 assessment_image: requestInfo.assessment_image || null

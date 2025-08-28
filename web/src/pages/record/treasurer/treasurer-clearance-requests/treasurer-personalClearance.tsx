@@ -1,7 +1,7 @@
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ReceiptText, ArrowUpDown, Search, FileInput } from 'lucide-react';
@@ -29,7 +29,6 @@ type PersonalClearance = {
         per_lname: string;
     };
     cr_req_request_date: string;
-    cr_req_claim_date: string;
     cr_req_payment_status: string;
     cr_req_status: string; 
     pr_id?: number;
@@ -74,201 +73,143 @@ function PersonalClearance() {
         filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize) : 
         [];
 
-    const columns: ColumnDef<PersonalClearance>[] = [
-        {
-            accessorKey: "resident_details.per_fname",
-            header: ({ column }) => (
-                <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Firstname
-                    <ArrowUpDown size={14}/>
-                </div>
-            ),
-            cell: ({ row }) => <div>{row.original.resident_details.per_fname}</div>,
+    const baseColumns: ColumnDef<PersonalClearance>[] = [
+    {
+        accessorKey: "resident_details.per_fname",
+        header: ({ column }) => (
+        <div
+            className="flex w-full justify-center items-center gap-2 cursor-pointer"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+            Firstname
+            <ArrowUpDown size={14} />
+        </div>
+        ),
+        cell: ({ row }) => <div>{row.original.resident_details.per_fname}</div>,
+    },
+    {
+        accessorKey: "resident_details.per_lname",
+        header: ({ column }) => (
+        <div
+            className="flex w-full justify-center items-center gap-2 cursor-pointer"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+            Lastname
+            <ArrowUpDown size={14} />
+        </div>
+        ),
+        cell: ({ row }) => <div>{row.original.resident_details.per_lname}</div>,
+    },
+    {
+        accessorKey: "purpose.pr_purpose",
+        header: ({ column }) => (
+        <div
+            className="flex w-full justify-center items-center gap-2 cursor-pointer"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+            Purpose
+            <ArrowUpDown size={14} />
+        </div>
+        ),
+        cell: ({ row }) => <div>{row.original.purpose?.pr_purpose || ""}</div>,
+    },
+    {
+        accessorKey: "purpose.pr_rate",
+        header: ({ column }) => (
+        <div
+            className="flex w-full justify-center items-center gap-2 cursor-pointer"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+            Amount
+            <ArrowUpDown size={14} />
+        </div>
+        ),
+        cell: ({ getValue }) => {
+        const value = Number(getValue());
+        return (
+            <span className="text-green-600 font-semibold">
+            ₱{value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+        );
         },
-        {
-            accessorKey: "resident_details.per_lname",
-            header: ({ column }) => (
-                <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Lastname
-                    <ArrowUpDown size={14}/>
-                </div>
-            ),
-            cell: ({ row }) => <div>{row.original.resident_details.per_lname}</div>,
-        },
-        {
-            accessorKey: "purpose.pr_purpose",
-            header: ({ column }) => (
-                <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Purpose
-                    <ArrowUpDown size={14}/>
-                </div>
-            ),
-            cell: ({ row }) => <div>{row.original.purpose?.pr_purpose || ""}</div>,
-        },
-        {
-            accessorKey: "purpose.pr_rate",
-            header: ({ column }) => (
-                <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Amount
-                    <ArrowUpDown size={14}/>
-                </div>
-            ),
-            cell: ({ getValue }) => {
-                const value = Number(getValue());
-                return (
-                    <span className="text-green-600 font-semibold">
-                        ₱{value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                );
-            },
-        },
-        { 
-            accessorKey: "cr_req_request_date",
-            header: ({ column }) => (
-                <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Date Requested
-                    <ArrowUpDown size={14}/>
-                </div>
-            ),
-            cell: ({row}) => (
-                <div className="text-center">
-                    {format(new Date(row.getValue("cr_req_request_date")), "MM-dd-yyyy")}
-                </div>
-            )
-        },
-        { 
-            accessorKey: "cr_req_claim_date",
-            header: ({ column }) => (
-                <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Date to Claim
-                    <ArrowUpDown size={14}/>
-                </div>
-            ),
-            cell: ({row}) => (
-                <div className="text-center">
-                    {format(new Date(row.getValue("cr_req_claim_date")), "MM-dd-yyyy")}
-                </div>
-            )
-        },
-        { 
-            accessorKey: "cr_req_payment_status",
-            header: ({ column }) => (
-                <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Payment Status
-                    <ArrowUpDown size={14}/>
-                </div>
-            ),
-            cell: ({row}) => {
-                const value = row.getValue("cr_req_payment_status") as string;
-                let bg = "bg-[#ffeaea]";
-                let text = "text-[#b91c1c]";
-                let border = "border border-[#f3dada]";
-                let label = value;
-
-                if (value === "Paid") {
-                    bg = "bg-[#eaffea]";
-                    text = "text-[#15803d]";
-                    border = "border border-[#b6e7c3]";
-                    label = "Paid";
-                } else if (value === "Pending") {
-                    bg = "bg-[#fffbe6]";
-                    text = "text-[#b59f00]";
-                    border = "border border-[#f7e7b6]";
-                    label = "Pending";
-                }
-
-                return (
-                    <div className="text-center">
-                        <span
-                            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-                            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-                        >
-                            {label}
-                        </span>
-                    </div>
-                );
-            }
-        },
-
-        
-        { 
-            accessorKey: "action", 
-            header: "Action",
-            cell: ({ row }) => {
-                const data = row.original;
-                
-                return (
-                    <div className="flex justify-center gap-1">
-                        <TooltipLayout
-                            trigger={
-                                <DialogLayout
-                                    trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
-                                    className="flex flex-col"
-                                    title="Create Receipt"
-                                    description="Enter the serial number to generate a receipt."
-                                    mainContent={
-                                        <ReceiptForm 
-                                            // certificateRequest={{
-                                            //     ...data,
-                                            //     // req_type: data.purpose?.pr_purpose || 0 // Use req_purpose as primary, fallback to 0
-                                            // }}
-                                            // onSuccess={() => {}}
-                                            // onCancel={() => {}}
-                                            cr_id = {row.original.cr_id}
-                                            purpose = {row.original.purpose?.pr_purpose}
-                                            rate = {row.original.purpose?.pr_rate}
-                                            firstname = {row.original.resident_details.per_fname}
-                                            lastname = {row.original.resident_details.per_lname}
-                                            pay_status = {row.original.cr_req_payment_status}
-                                            pr_id = {row.original.pr_id}
-                                            nat_col = "Certificate"
-                                            onSuccess={() => setIsDialogOpen(false)}
-                                        />
-                                    } 
-                                />
-                            } 
-                            content="Create Receipt"
-                        />
-                        <ConfirmationModal
-                            trigger={
-                                <Button variant="destructive" size="sm">
-                                    Decline
-                                </Button>
-                            }
-                            title="Decline Request"
-                            description={`Are you sure you want to decline the request from ${data.resident_details.per_fname} ${data.resident_details.per_lname}?`}
-                            actionLabel="Decline"
-                            onClick={() => {
-                                // Handle decline logic here
-                                console.log("Declining request:", data.cr_id);
-                            }}
-                        />
-                    </div>
-                );
-            }
-        }
+    },
+    {
+        accessorKey: "cr_req_request_date",
+        header: ({ column }) => (
+        <div
+            className="flex w-full justify-center items-center gap-2 cursor-pointer"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+            Date Requested
+            <ArrowUpDown size={14} />
+        </div>
+        ),
+        cell: ({ row }) => (
+        <div className="text-center">
+            {format(new Date(row.getValue("cr_req_request_date")), "MM-dd-yyyy")}
+        </div>
+        ),
+    },
     ];
+
+    // Only add the Action column if activeTab is "unpaid"
+    const columns: ColumnDef<PersonalClearance>[] = [
+    ...baseColumns,
+    ...(activeTab === "unpaid"
+        ? [
+            {
+            accessorKey: "action",
+                header: "Action",
+                cell: ({ row }: { row: Row<PersonalClearance> }) => (
+                    <div className="flex justify-center gap-1">
+                    <TooltipLayout
+                        trigger={
+                        <DialogLayout
+                            trigger={
+                            <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                                <ReceiptText size={16} />
+                            </div>
+                            }
+                            className="flex flex-col"
+                            title="Create Receipt"
+                            description="Enter the serial number to generate a receipt."
+                            mainContent={
+                            <ReceiptForm
+                                cr_id={row.original.cr_id}
+                                purpose={row.original.purpose?.pr_purpose}
+                                rate={row.original.purpose?.pr_rate}
+                                firstname={row.original.resident_details.per_fname}
+                                lastname={row.original.resident_details.per_lname}
+                                pay_status={row.original.cr_req_payment_status}
+                                pr_id={row.original.pr_id}
+                                nat_col="Certificate"
+                                onSuccess={() => setIsDialogOpen(false)}
+                            />
+                            }
+                        />
+                        }
+                        content="Create Receipt"
+                    />
+                    <ConfirmationModal
+                        trigger={
+                        <Button variant="destructive" size="sm">
+                            Decline
+                        </Button>
+                        }
+                        title="Decline Request"
+                        description={`Are you sure you want to decline the request from ${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}?`}
+                        actionLabel="Decline"
+                        onClick={() => {
+                        console.log("Declining request:", row.original.cr_id);
+                        }}
+                    />
+                    </div>
+                ),
+            }
+        ]
+        : []),
+    ];
+
 
     return (
         <div className="w-full h-full">

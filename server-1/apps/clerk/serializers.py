@@ -100,7 +100,7 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
     resident_details = serializers.SerializerMethodField()
     invoice = serializers.SerializerMethodField()
     purpose = serializers.SerializerMethodField()
-    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all())
+    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(),  required=False, allow_null=True)
 
     def get_resident_details(self, obj):
         try:
