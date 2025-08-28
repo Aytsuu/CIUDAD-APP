@@ -96,12 +96,6 @@ function CertificatePage() {
       cell: ({ row }) => <div>{row.getValue("req_request_date")}</div>,
     },
     {
-      accessorKey: "req_claim_date",
-      header: "Date to Claim",
-      cell: ({ row }) => <div>{row.getValue("req_claim_date")}</div>,
-    },
-
-    {
       accessorKey: "req_purpose",
       header: "Purpose",
       cell: ({ row }) => {

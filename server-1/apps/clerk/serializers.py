@@ -95,6 +95,44 @@ class IssuedCertificateSerializer(serializers.ModelSerializer):
         fields = ['ic_id', 'dateIssued', 'requester', 'purpose']
 
 
+# class NonResidentCertReqSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = NonResidentCertificateRequest
+#         fields= '__all__'
+
+class NonResidentCertReqSerializer(serializers.ModelSerializer):
+    purpose = serializers.SerializerMethodField()
+    amount = serializers.DecimalField(source="pr_id.pr_rate", max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = NonResidentCertificateRequest
+        fields = [
+            "nrc_id",
+            "nrc_req_date",
+            "nrc_req_status",
+            "nrc_req_payment_status",
+            "nrc_pay_date",
+            "nrc_requester",
+            "nrc_address",
+            "nrc_birthdate",
+            "pr_id",    
+            "purpose",   
+            "amount",   
+        ]
+
+    def get_purpose(self, obj):
+        if obj.pr_id:
+            return {
+                "pr_purpose": obj.pr_id.pr_purpose,
+                "pr_rate": str(obj.pr_id.pr_rate)  #
+            }
+        return None
+    
+class NonResidentCertReqUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NonResidentCertificateRequest
+        fields = ["nrc_req_status", "nrc_req_payment_status", "nrc_pay_date"]
+
 
 class ClerkCertificateSerializer(serializers.ModelSerializer):
     resident_details = serializers.SerializerMethodField()

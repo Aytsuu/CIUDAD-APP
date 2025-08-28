@@ -4,18 +4,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage} from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card";
+import { Card, CardContent } from "@/components/ui/card/card";
 import { useAddReceipt } from "@/pages/record/treasurer/Receipts/queries/receipts-insertQueries";
 import { createReceiptSchema } from "@/form-schema/receipt-schema";
 
 
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
-function ReceiptForm({cr_id, purpose, rate, firstname, lastname, pay_status, pr_id, nat_col, onSuccess}: {
-    cr_id: string;
+function ReceiptForm({nrc_id, purpose, rate, requester, pay_status, pr_id, nat_col, onSuccess}: {
+    nrc_id: string;
     purpose: string | undefined;
     rate: string | undefined;
-    firstname: string;
-    lastname: string;
+    requester: string;
     pay_status: string;
     pr_id: number | undefined;
     nat_col: string;
@@ -31,7 +30,7 @@ function ReceiptForm({cr_id, purpose, rate, firstname, lastname, pay_status, pr_
             inv_serial_num: "", // Generate a unique default serial number
             inv_amount: "",
             inv_nat_of_collection: nat_col,
-            cr_id: cr_id.toString(), 
+            nrc_id: nrc_id.toString(), 
         }
     });
 
@@ -101,7 +100,7 @@ function ReceiptForm({cr_id, purpose, rate, firstname, lastname, pay_status, pr_
                                 <div>
                                     <label className="text-sm font-medium text-gray-600">Resident Name</label>
                                     <p className="text-base text-gray-900 font-medium mt-1">
-                                        {firstname} {lastname}
+                                        {requester}
                                     </p>
                                 </div>
                                 <div>
@@ -120,7 +119,7 @@ function ReceiptForm({cr_id, purpose, rate, firstname, lastname, pay_status, pr_
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-gray-600">Amount</label>
-                                    <p className="text-base text-blue-600 font-semibold mt-1">
+                                    <p className="text-base text-primary font-semibold mt-1">
                                         {`₱${rate}`}
                                     </p>
                                 </div>

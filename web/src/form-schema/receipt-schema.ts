@@ -16,10 +16,9 @@ export const createReceiptSchema = (requiredRate?: string) => {
         inv_serial_num: z.string().nonempty('This field is required'),
         inv_amount: DataRequirement,
         inv_nat_of_collection: z.string().default(''),
-        cr_id: z.string().default('')
+        nrc_id: z.string().default('')
     }).refine((data) => {
-        if (!requiredRate) return true;
-
+        if (!requiredRate) return true
         const amount = parseFloat(data.inv_amount);
         const rate = parseFloat(requiredRate);
 
@@ -37,7 +36,7 @@ const ReceiptSchema = z.object({
     inv_serial_num: z.string().nonempty('This field is required'),
     inv_amount: DataRequirement,
     inv_nat_of_collection: z.string().default(''),
-    cr_id: z.string().default('')
+    nrc_id: z.string().default('')
 });
 
 export default ReceiptSchema

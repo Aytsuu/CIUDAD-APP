@@ -2,24 +2,57 @@ from django.db import models
 from django.core.validators import MaxValueValidator
 from django.utils import timezone
 from datetime import datetime, date
+from datetime import timedelta
 
-# Certificate Models
+
 class ClerkCertificate(models.Model):
     cr_id = models.BigAutoField(primary_key=True)
     cr_req_request_date = models.DateField()
     cr_req_status = models.CharField(max_length=100, default='None')
     cr_req_payment_status = models.CharField(max_length=100, default='None')
-    pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete=models.CASCADE, db_column='pr_id', related_name='certificates', null=True)
-    staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='staff_id', null=True)
-    rp_id = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, db_column='rp_id')
+    pr_id = models.ForeignKey(
+        'treasurer.Purpose_And_Rates', 
+        on_delete=models.CASCADE, 
+        db_column='pr_id', 
+        related_name='certificates', 
+        null=True
+    )
+    staff_id = models.ForeignKey(
+        'administration.Staff', 
+        on_delete=models.CASCADE, 
+        db_column='staff_id', 
+        null=True
+    )
+    rp_id = models.ForeignKey(
+        'profiling.ResidentProfile', 
+        on_delete=models.CASCADE, 
+        db_column='rp_id'
+    )
 
     class Meta:
         db_table = 'certification_request'
 
+
+class NonResidentCertificateRequest(models.Model):
+    nrc_id = models.BigAutoField(primary_key=True)  
+    nrc_req_date = models.DateField()
+    nrc_req_status = models.CharField(max_length=100, default = 'None')
+    nrc_req_payment_status = models.CharField(max_length=100, default='None')
+    nrc_pay_date = models.DateTimeField(null = True, blank = True)
+    nrc_requester = models.CharField(max_length=500)
+    nrc_address = models.CharField(max_length=500)
+    nrc_birthdate = models.DateField(default=date.today)
+    pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete=models.CASCADE, db_column='pr_id', related_name='nonresident_certificates', null=True)
+    staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='staff_id', null=True)
+
+    class Meta:
+        db_table = 'nonresident_cert_req'
+
 class IssuedCertificate(models.Model):
     ic_id = models.BigAutoField(primary_key=True)
     ic_date_of_issuance = models.DateField()
-    certificate = models.ForeignKey(ClerkCertificate, on_delete=models.CASCADE, db_column='cr_id')
+    certificate = models.ForeignKey(ClerkCertificate, on_delete=models.CASCADE, db_column='cr_id', null=True, blank = True)
+    nonresidentcert = models.ForeignKey(NonResidentCertificateRequest, on_delete=models.CASCADE, db_column='nrc_id', null = True, blank = True)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
     class Meta:

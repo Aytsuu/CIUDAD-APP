@@ -6,39 +6,14 @@ import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ReceiptText, ArrowUpDown, Search, FileInput } from 'lucide-react';
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import PersonalClearanceForm from "./treasurer-personalClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { format } from "date-fns";
-import { getPersonalClearances } from "@/pages/record/treasurer/treasurer-clearance-requests/restful-api/personalClearanceGetAPI";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-
 import { Skeleton } from "@/components/ui/skeleton";
-
-const styles = {
-    ViewFormLabelStyle: "font-semibold text-blue",
-    ViewFormDataStyle: "font-medium text-darkGray"
-};
-
-type PersonalClearance = {
-    cr_id: string;
-    resident_details: {
-        per_fname: string;
-        per_lname: string;
-    };
-    cr_req_request_date: string;
-    cr_req_payment_status: string;
-    cr_req_status: string; 
-    pr_id?: number;
-    purpose?: {
-        pr_purpose: string;
-        pr_rate: string;
-    };
-    amount?: string;
-};
-
+import { useGetNonResidentCertReq, type NonResidentReq } from "./queries/CertClearanceFetchQueries";
 
 
 function PersonalClearance() {
@@ -46,11 +21,9 @@ function PersonalClearance() {
     const [pageSize, setPageSize] = useState(10);
     const [activeTab, setActiveTab] = useState<"paid" | "unpaid">("unpaid");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const {data: clearanceRequests =  [] , isLoading, error} = useGetNonResidentCertReq()
 
-    const { data: clearanceRequests, isLoading, error } = useQuery({
-        queryKey: ["personalClearances", currentPage, pageSize],
-        queryFn: () => getPersonalClearances(currentPage, pageSize)
-    });
+    console.log('req', clearanceRequests)
 
     useEffect(() => {
         if (clearanceRequests) {
@@ -64,41 +37,30 @@ function PersonalClearance() {
         }
     }, [error]);
 
-    const filteredData = clearanceRequests?.results?.filter((item: PersonalClearance) => 
-        activeTab === "paid" ? item.cr_req_payment_status === "Paid" : item.cr_req_payment_status !== "Paid"
+    const filteredData = clearanceRequests?.filter((item: NonResidentReq) =>
+        activeTab === "paid" 
+            ? item.nrc_req_payment_status === "Paid" 
+            : item.nrc_req_payment_status !== "Paid"
     );
+
 
     // Apply pagination to filtered data
     const paginatedData = filteredData ? 
         filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize) : 
         [];
 
-    const baseColumns: ColumnDef<PersonalClearance>[] = [
+    const baseColumns: ColumnDef<NonResidentReq>[] = [
     {
-        accessorKey: "resident_details.per_fname",
+        accessorKey: "nrc_requester",
         header: ({ column }) => (
         <div
             className="flex w-full justify-center items-center gap-2 cursor-pointer"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-            Firstname
+            Requester
             <ArrowUpDown size={14} />
         </div>
         ),
-        cell: ({ row }) => <div>{row.original.resident_details.per_fname}</div>,
-    },
-    {
-        accessorKey: "resident_details.per_lname",
-        header: ({ column }) => (
-        <div
-            className="flex w-full justify-center items-center gap-2 cursor-pointer"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-            Lastname
-            <ArrowUpDown size={14} />
-        </div>
-        ),
-        cell: ({ row }) => <div>{row.original.resident_details.per_lname}</div>,
     },
     {
         accessorKey: "purpose.pr_purpose",
@@ -134,7 +96,7 @@ function PersonalClearance() {
         },
     },
     {
-        accessorKey: "cr_req_request_date",
+        accessorKey: "nrc_req_date",
         header: ({ column }) => (
         <div
             className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -146,21 +108,21 @@ function PersonalClearance() {
         ),
         cell: ({ row }) => (
         <div className="text-center">
-            {format(new Date(row.getValue("cr_req_request_date")), "MM-dd-yyyy")}
+            {format(new Date(row.getValue("nrc_req_date")), "MM-dd-yyyy")}
         </div>
         ),
     },
     ];
 
     // Only add the Action column if activeTab is "unpaid"
-    const columns: ColumnDef<PersonalClearance>[] = [
+    const columns: ColumnDef<NonResidentReq>[] = [
     ...baseColumns,
     ...(activeTab === "unpaid"
         ? [
             {
             accessorKey: "action",
                 header: "Action",
-                cell: ({ row }: { row: Row<PersonalClearance> }) => (
+                cell: ({ row }: { row: Row<NonResidentReq> }) => (
                     <div className="flex justify-center gap-1">
                     <TooltipLayout
                         trigger={
@@ -175,13 +137,12 @@ function PersonalClearance() {
                             description="Enter the serial number to generate a receipt."
                             mainContent={
                             <ReceiptForm
-                                cr_id={row.original.cr_id}
+                                nrc_id={row.original.nrc_id}
                                 purpose={row.original.purpose?.pr_purpose}
                                 rate={row.original.purpose?.pr_rate}
-                                firstname={row.original.resident_details.per_fname}
-                                lastname={row.original.resident_details.per_lname}
-                                pay_status={row.original.cr_req_payment_status}
-                                pr_id={row.original.pr_id}
+                                requester = {row.original.nrc_requester}
+                                pay_status={row.original.nrc_req_payment_status}
+                                pr_id={row.original.purpose?.pr_id}
                                 nat_col="Certificate"
                                 onSuccess={() => setIsDialogOpen(false)}
                             />
@@ -197,10 +158,10 @@ function PersonalClearance() {
                         </Button>
                         }
                         title="Decline Request"
-                        description={`Are you sure you want to decline the request from ${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}?`}
+                        description={`Are you sure you want to decline the request from ${row.original.nrc_requester}?`}
                         actionLabel="Decline"
                         onClick={() => {
-                        console.log("Declining request:", row.original.cr_id);
+                        console.log("Declining request:", row.original.nrc_id);
                         }}
                     />
                     </div>

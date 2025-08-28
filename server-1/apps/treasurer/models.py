@@ -186,6 +186,16 @@ class Invoice(models.Model):
         'clerk.ClerkCertificate', 
         on_delete=models.CASCADE, 
         db_column='cr_id',
+        null=True,
+        blank=True,
+        related_name='treasurer_invoices' 
+    )
+    nrc_id = models.ForeignKey(
+        'clerk.NonResidentCertificateRequest',
+        on_delete=models.CASCADE, 
+        db_column='nrc_id',
+        null=True,
+        blank=True,
         related_name='treasurer_invoices' 
     )
     # sr_id = FK sad siya
