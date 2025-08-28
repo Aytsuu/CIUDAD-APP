@@ -54,7 +54,6 @@ export const EditProjectProposalForm: React.FC<
   const latestExpenseWithBalance = budgetEntries
     .filter(
       (entry) =>
-        entry.gbud_type === "Expense" &&
         !entry.gbud_is_archive &&
         entry.gbud_remaining_bal != null
     )
