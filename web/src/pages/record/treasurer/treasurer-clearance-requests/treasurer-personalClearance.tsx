@@ -337,7 +337,7 @@ import { Input } from "@/components/ui/input";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { ReceiptText, ArrowUpDown, Search, FileInput, User, Users } from 'lucide-react';
+import { ReceiptText, ArrowUpDown, Search, FileInput, User, Users, CircleCheck } from 'lucide-react';
 import { useState, useEffect } from "react";
 import PersonalClearanceForm from "./treasurer-personalClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
@@ -355,8 +355,8 @@ function PersonalClearance() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [residentType, setResidentType] = useState<"resident" | "non-resident">("non-resident");
     
-    const {data: nonResidentClearanceRequests = [], isLoading: nonResidentLoading, error: nonResidentError} = useGetNonResidentCertReq();
-    const {data: residentClearanceRequests = [], isLoading: residentLoading, error: residentError} = usegetResidentCertReq();
+    const {data: nonResidentClearanceRequests = [], isLoading: nonResidentLoading, error: nonResidentError, refetch: nonResidentRefetch} = useGetNonResidentCertReq();
+    const {data: residentClearanceRequests = [], isLoading: residentLoading, error: residentError, refetch: residentRefetch} = usegetResidentCertReq();
 
     console.log('resident', residentClearanceRequests)
     
@@ -476,7 +476,7 @@ function PersonalClearance() {
                                     description="Enter the serial number to generate a receipt."
                                     mainContent={
                                         <ReceiptForm
-                                            nrc_id={row.original.nrc_id}
+                                            id={row.original.nrc_id}
                                             purpose={row.original.purpose?.pr_purpose}
                                             rate={row.original.purpose?.pr_rate}
                                             requester={row.original.nrc_requester}
@@ -588,15 +588,15 @@ function PersonalClearance() {
                                 <DialogLayout
                                     trigger={
                                         <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                                            <ReceiptText size={16} />
+                                            <CircleCheck size={16} color="green"/>
                                         </div>
                                     }
                                     className="flex flex-col"
-                                    title="Create Receipt"
-                                    description="Enter the serial number to generate a receipt."
+                                    title="Accept Request"
+                                    description="Click accept to approve this resident's request."
                                     mainContent={
                                         <ReceiptForm
-                                            nrc_id={row.original.cr_id}
+                                            id={row.original.cr_id}
                                             purpose={row.original.purpose?.pr_purpose}
                                             rate={row.original.purpose?.pr_rate}
                                             requester={`${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`}
@@ -609,7 +609,7 @@ function PersonalClearance() {
                                     }
                                 />
                             }
-                            content="Create Receipt"
+                            content="Accept Request"
                         />
                         <ConfirmationModal
                             trigger={
@@ -802,7 +802,7 @@ function PersonalClearance() {
                                  columns={columns} 
                                  data={paginatedData as any[]} 
                                  header={true} 
-                             />
+                             /> 
                          </div>
                      )}
                 </div>

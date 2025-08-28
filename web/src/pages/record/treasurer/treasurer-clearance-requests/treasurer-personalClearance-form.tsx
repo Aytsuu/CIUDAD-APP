@@ -261,7 +261,7 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
             toast.success("Personal clearance created successfully!");
             
             residentForm.reset();
-            await queryClient.invalidateQueries({ queryKey: ["personalClearances"] });
+            await queryClient.invalidateQueries({ queryKey: ["residentReq"] });
             
             if (onSuccess) onSuccess();
             
