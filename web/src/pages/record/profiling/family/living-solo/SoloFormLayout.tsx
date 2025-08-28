@@ -53,10 +53,8 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
   const [buildingReadOnly, setBuildingReadOnly] = React.useState<boolean>(false)
   const [selectOwnedHouses, setSelectOwnedHouses] = React.useState<boolean>(false);
-  const [ownedHouses, setOwnedHouses] = React.useState<any[]>([]);
-
-  const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList])
-  const formattedHouseholds = React.useMemo(() => formatHouseholds(householdsList), [householdsList])
+  const formattedResidents = formatResidents(residentsList)
+  const formattedHouseholds = formatHouseholds(householdsList)
 
   const isLoading = isLoadingHouseholds || isLoadingResidents
 
@@ -83,13 +81,18 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
     const householdNo = tab_params?.isRegistrationTab ? tab_params?.form.watch("livingSoloSchema.householdNo") : form.watch("householdNo")?.split(" ")[0]
     const residentId = form.watch("id")?.split(" ")[0]
     let building = ""
+    console.log(residentId)
+    console.log(householdNo)
+    console.log(householdsList)
 
     if (householdNo && residentId && householdsList) {
       const ownedHouseholds = householdsList.filter((household: any) => {
-        if (household.head_id === residentId) {
+        if (household.head.split("-")[0] == residentId) {
           return household.hh_id
         }
       })
+
+      console.log(ownedHouseholds)
 
       building = ownedHouseholds.some((household: any) => household.hh_id === householdNo) ? "owner" : ""
 

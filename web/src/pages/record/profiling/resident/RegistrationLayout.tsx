@@ -215,9 +215,9 @@ export default function RegistrationLayout() {
           noBusiness,
           capitalizeAllFields(personal),
           accountSchema,
-          capitalizeAllFields(houseSchema),
-          capitalizeAllFields(livingSoloSchema),
-          capitalizeAllFields(familySchema),
+          houseSchema,
+          livingSoloSchema,
+          familySchema,
           capitalizeAllFields(business),
           newFiles
         )
