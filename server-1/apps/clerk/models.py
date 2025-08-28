@@ -131,74 +131,12 @@ class ComplaintAccused(models.Model):
         db_table = 'complaint_accused'
         unique_together = ('comp', 'acsd')
 
-# class ServiceChargeRequest(models.Model):
-#     sr_id = models.BigAutoField(primary_key=True)
-#     sr_code = models.CharField(max_length=10, blank=True, null=True) 
-#     sr_req_date = models.DateTimeField(default=datetime.now)
-#     sr_status = models.CharField(null=True, blank=True)
-#     sr_payment_status = models.CharField(null=True, blank=True)
-#     sr_type = models.CharField(null=True, blank=True)
-#     sr_decision_date = models.DateTimeField(null=True, blank=True)
-#     comp = models.ForeignKey('clerk.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
-#     parent_summon = models.ForeignKey(
-#         'self',
-#         null=True, blank=True,
-#         on_delete=models.SET_NULL,
-#         related_name='escalated_file_actions'
-#     )
-#     file_action_file = models.OneToOneField(
-#         'ServiceChargeRequestFile', null=True, blank=True,
-#         on_delete=models.SET_NULL,
-#         related_name='file_action'
-#     )
-
-#     class Meta:
-#         db_table = 'service_charge_request'
-
-# class CaseActivity(models.Model):
-#     ca_id = models.BigAutoField(primary_key=True)
-#     ca_reason = models.CharField(max_length=100)
-#     ca_hearing_date = models.DateField(null=False)
-#     ca_hearing_time = models.TimeField(null=False)
-#     ca_mediation = models.CharField()
-#     ca_date_of_issuance = models.DateTimeField(default=datetime.now)
-#     sr = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, related_name='case')
-#     srf = models.ForeignKey('ServiceChargeRequestFile', on_delete=models.CASCADE, null=True, related_name='case_file')
-
-#     class Meta:
-#         db_table = 'case_activity'
-
-# class CaseSuppDoc(models.Model):
-#     csd_id = models.BigAutoField(primary_key=True)
-#     csd_name = models.CharField(max_length=255)
-#     csd_type = models.CharField(max_length=100)
-#     csd_path = models.CharField(max_length=500)
-#     csd_url = models.CharField(max_length=500)
-#     csd_description = models.TextField(null=False)
-#     csd_upload_date = models.DateTimeField(default=datetime.now)
-#     ca_id = models.ForeignKey('CaseActivity', on_delete=models.CASCADE, null=True, db_column="ca_id", related_name="supporting_docs")
-
-#     class Meta:
-#         db_table = 'case_activity_supp_doc'
-
-
-# class ServiceChargeRequestFile(models.Model):
-#     srf_id = models.BigAutoField(primary_key=True)
-#     srf_name = models.CharField(max_length=255)
-#     srf_type = models.CharField(max_length=100, null=True, blank=True)
-#     srf_path = models.CharField(max_length=500, null=True, blank=True)
-#     srf_url = models.CharField(max_length=500)
-    
-#     class Meta:
-#         db_table = 'service_charge_request_file'
-
 class SummonDateAvailability(models.Model):
     sd_id = models.BigAutoField(primary_key=True)
     sd_date = models.DateField(default=date.today)
     
     class Meta:
         db_table = 'summon_date_availability'
-
 
 class SummonTimeAvailability(models.Model):
     st_id = models.BigAutoField(primary_key=True)
@@ -212,106 +150,167 @@ class SummonTimeAvailability(models.Model):
 
 class ServiceChargeRequest(models.Model):
     sr_id = models.BigAutoField(primary_key=True)
-    sr_code = models.CharField(max_length=200)
-    sr_type = models.CharField(max_length=200, default = 'None')
-    sr_req_status = models.CharField(max_length=200, default='Pending')
-    sr_decision_date = models.DateTimeField(default = datetime.now)
-    sr_descision_reason = models.CharField(max_length=500, default = 'None')
-    staff_id = models.ForeignKey(
-        'administration.Staff', 
+    sr_code = models.CharField(max_length=10, blank=True, null=True) 
+    sr_req_date = models.DateTimeField(default=datetime.now)
+    sr_status = models.CharField(null=True, blank=True)
+    sr_payment_status = models.CharField(null=True, blank=True)
+    sr_type = models.CharField(null=True, blank=True)
+    sr_decision_date = models.DateTimeField(null=True, blank=True)
+    comp = models.ForeignKey('clerk.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
+    parent_summon = models.ForeignKey(
+        'self',
+        null=True, blank=True,
         on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='staff_id'
+        related_name='escalated_file_actions'
     )
-    comp_id = models.ForeignKey(
-        'clerk.Complaint', 
-        on_delete=models.SET_NULL, 
-        db_column='comp_id', 
-        null=True
+    file_action_file = models.OneToOneField(
+        'ServiceChargeRequestFile', null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='file_action'
     )
 
-    class Meta: 
+    class Meta:
         db_table = 'service_charge_request'
 
-class ServiceChargePaymentRequest(models.Model):
-    pay_id = models.BigAutoField(primary_key=True)
-    pay_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    pay_status = models.CharField(default = 'Unpaid')
-    pay_due_date = models.DateField(default=date.today)
-    pay_date_paid = models.DateTimeField(default = datetime.now)
-    sr_id = models.ForeignKey(
-        'ServiceChargeRequest',
-        on_delete=models.CASCADE,
-        null=True,
-        blank = True,
-        db_column='sr_id'
-    )
+class CaseActivity(models.Model):
+    ca_id = models.BigAutoField(primary_key=True)
+    ca_reason = models.CharField(max_length=100)
+    ca_hearing_date = models.DateField(null=False)
+    ca_hearing_time = models.TimeField(null=False)
+    ca_mediation = models.CharField()
+    ca_date_of_issuance = models.DateTimeField(default=datetime.now)
+    sr = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, related_name='case')
+    srf = models.ForeignKey('ServiceChargeRequestFile', on_delete=models.CASCADE, null=True, related_name='case_file')
 
     class Meta:
-        db_table = 'service_charge_payment_request'
+        db_table = 'case_activity'
 
-
-class Session(models.Model):
-    ses_id = models.BigAutoField(primary_key=True)
-    ses_case_status = models.CharField(default='Ongoing')
-    st_id = models.ForeignKey(
-        'SummonTimeAvailability',
-        on_delete=models.SET_NULL,
-        null = True,
-        blank = True,
-        db_column = 'st_id'
-    )
-    sd_id = models.ForeignKey(
-        'SummonDateAvailability',
-        on_delete=models.SET_NULL,
-        null = True,
-        blank = True,
-        db_column='sd_id'
-    )
-    sr_id = models.ForeignKey(
-        'ServiceChargeRequest',
-        on_delete=models.CASCADE,
-        null=True,
-        blank = True,
-        db_column='sr_id'
-    )
-
-
-    class Meta: 
-        db_table = 'session'
-
-
-class RescheduleLog(models.Model):
-    rsl_id = models.BigAutoField(primary_key=True)
-    rsl_prev_date = models.DateField(default=date.today)
-    rsl_prev_time = models.TimeField(default=current_time)
-    rsl_reason = models.CharField(default='None')
-    rsl_date_marked = models.DateTimeField(default=date.today)
-    ses_id = models.ForeignKey(
-        'Session',
-        db_column='ses_id',
-        on_delete=models.CASCADE
-    )
+class CaseSuppDoc(models.Model):
+    csd_id = models.BigAutoField(primary_key=True)
+    csd_name = models.CharField(max_length=255)
+    csd_type = models.CharField(max_length=100)
+    csd_path = models.CharField(max_length=500)
+    csd_url = models.CharField(max_length=500)
+    csd_description = models.TextField(null=False)
+    csd_upload_date = models.DateTimeField(default=datetime.now)
+    ca_id = models.ForeignKey('CaseActivity', on_delete=models.CASCADE, null=True, db_column="ca_id", related_name="supporting_docs")
 
     class Meta:
-        db_table = 'reschedule_log'
+        db_table = 'case_activity_supp_doc'
 
 
-class ReschedLogSuppDoc(models.Model):
-    rsd_id = models.BigAutoField(primary_key=True)
-    rsd_name = models.CharField(max_length=255)
-    rsd_type = models.CharField(max_length=100, null=True, blank=True)
-    rsd_path = models.CharField(max_length=500, null=True, blank=True)
-    rsd_url = models.CharField(max_length=500)
-    rsd_description = models.CharField(max_length=500, default='None')
-    rsd_upload_date = models.DateTimeField(default=date.today)
-    rsl_id = models.ForeignKey(
-        'RescheduleLog',
-        db_column = 'rsl_id',
-        on_delete=models.CASCADE
-    )
-
+class ServiceChargeRequestFile(models.Model):
+    srf_id = models.BigAutoField(primary_key=True)
+    srf_name = models.CharField(max_length=255)
+    srf_type = models.CharField(max_length=100, null=True, blank=True)
+    srf_path = models.CharField(max_length=500, null=True, blank=True)
+    srf_url = models.CharField(max_length=500)
+    
     class Meta:
-        db_table = 'reschedule_log_supp_doc'
+        db_table = 'service_charge_request_file'
+
+# class ServiceChargeRequest(models.Model):
+#     sr_id = models.BigAutoField(primary_key=True)
+#     sr_code = models.CharField(max_length=200)
+#     sr_type = models.CharField(max_length=200, default = 'None')
+#     sr_req_status = models.CharField(max_length=200, default='Pending')
+#     sr_decision_date = models.DateTimeField(default = datetime.now)
+#     sr_descision_reason = models.CharField(max_length=500, default = 'None')
+#     staff_id = models.ForeignKey(
+#         'administration.Staff', 
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         db_column='staff_id'
+#     )
+#     comp_id = models.ForeignKey(
+#         'clerk.Complaint', 
+#         on_delete=models.SET_NULL, 
+#         db_column='comp_id', 
+#         null=True
+#     )
+
+#     class Meta: 
+#         db_table = 'service_charge_request'
+
+# class ServiceChargePaymentRequest(models.Model):
+#     pay_id = models.BigAutoField(primary_key=True)
+#     pay_amount = models.DecimalField(max_digits=10, decimal_places=2)
+#     pay_status = models.CharField(default = 'Unpaid')
+#     pay_due_date = models.DateField(default=date.today)
+#     pay_date_paid = models.DateTimeField(default = datetime.now)
+#     sr_id = models.ForeignKey(
+#         'ServiceChargeRequest',
+#         on_delete=models.CASCADE,
+#         null=True,
+#         blank = True,
+#         db_column='sr_id'
+#     )
+
+#     class Meta:
+#         db_table = 'service_charge_payment_request'
+
+
+# class Session(models.Model):
+#     ses_id = models.BigAutoField(primary_key=True)
+#     ses_case_status = models.CharField(default='Ongoing')
+#     st_id = models.ForeignKey(
+#         'SummonTimeAvailability',
+#         on_delete=models.SET_NULL,
+#         null = True,
+#         blank = True,
+#         db_column = 'st_id'
+#     )
+#     sd_id = models.ForeignKey(
+#         'SummonDateAvailability',
+#         on_delete=models.SET_NULL,
+#         null = True,
+#         blank = True,
+#         db_column='sd_id'
+#     )
+#     sr_id = models.ForeignKey(
+#         'ServiceChargeRequest',
+#         on_delete=models.CASCADE,
+#         null=True,
+#         blank = True,
+#         db_column='sr_id'
+#     )
+
+
+#     class Meta: 
+#         db_table = 'session'
+
+
+# class RescheduleLog(models.Model):
+#     rsl_id = models.BigAutoField(primary_key=True)
+#     rsl_prev_date = models.DateField(default=date.today)
+#     rsl_prev_time = models.TimeField(default=current_time)
+#     rsl_reason = models.CharField(default='None')
+#     rsl_date_marked = models.DateTimeField(default=date.today)
+#     ses_id = models.ForeignKey(
+#         'Session',
+#         db_column='ses_id',
+#         on_delete=models.CASCADE
+#     )
+
+#     class Meta:
+#         db_table = 'reschedule_log'
+
+
+# class ReschedLogSuppDoc(models.Model):
+#     rsd_id = models.BigAutoField(primary_key=True)
+#     rsd_name = models.CharField(max_length=255)
+#     rsd_type = models.CharField(max_length=100, null=True, blank=True)
+#     rsd_path = models.CharField(max_length=500, null=True, blank=True)
+#     rsd_url = models.CharField(max_length=500)
+#     rsd_description = models.CharField(max_length=500, default='None')
+#     rsd_upload_date = models.DateTimeField(default=date.today)
+#     rsl_id = models.ForeignKey(
+#         'RescheduleLog',
+#         db_column = 'rsl_id',
+#         on_delete=models.CASCADE
+#     )
+
+#     class Meta:
+#         db_table = 'reschedule_log_supp_doc'
 

@@ -5,6 +5,7 @@ import { useToastContext } from "@/components/ui/toast";
 import { Ionicons } from "@expo/vector-icons";
 import { Drawer } from "@/components/ui/drawer";
 import { ScrollView } from "react-native";
+import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
 
 
 export const SignupOptions = ({
@@ -17,6 +18,7 @@ export const SignupOptions = ({
   const router = useRouter();
   const { height: screenHeight } = Dimensions.get("window");
   const { toast } = useToastContext();
+  const { setType } = useRegistrationTypeContext();
 
   const handleClose = () => {
     onClose();
@@ -24,31 +26,40 @@ export const SignupOptions = ({
 
   const signupOptions = [
     {
-      id: "independent",
-      title: "Independent Registration",
+      id: "individual",
+      title: "Individual",
       description: "Register as an individual resident",
       icon: "person-outline",
       color: "#3B82F6",
       bgColor: "#EFF6FF",
-      route: "/verify-age",
+      route: "/registration/individual/account-reg",
     },
     {
       id: "family",
-      title: "Family Registration",
+      title: "Family",
       description: "Register with family members",
       icon: "people-outline",
-      color: "#10B981",
-      bgColor: "#ECFDF5",
-      route: "/age-verification",
+      color: "#3B82F6",
+      bgColor: "#EFF6FF",
+      route: "/registration/family/register-new",
     },
     {
       id: "existing",
       title: "Link to Existing Profile",
       description: "Connect to an existing resident profile",
       icon: "link-outline",
-      color: "#F59E0B",
-      bgColor: "#FFFBEB",
-      route: "/validate-resident-id",
+      color: "#3B82F6",
+      bgColor: "#EFF6FF",
+      route: "/registration/link/verification",
+    },
+    {
+      id: "business",
+      title: "Business Account",
+      description: "For business owners not residing in Brgy. San Roque",
+      icon: "business-outline",
+      color: "#3B82F6",
+      bgColor: "#EFF6FF",
+      route: "/registration/individual/account-reg",
     },
   ];
 
@@ -70,6 +81,7 @@ export const SignupOptions = ({
               key={option.id}
               onPress={() => {
                 onClose();
+                setType(option.id)
                 router.push(option.route as any);
               }}
               className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm"
