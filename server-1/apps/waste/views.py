@@ -9,6 +9,7 @@ from .models import WasteTruck
 from apps.profiling.models import Sitio
 from rest_framework import generics
 from .signals import archive_completed_hotspots
+from rest_framework.permissions import AllowAny
 
 # Create your views here.
 #KANI 3RD
@@ -56,12 +57,6 @@ class WasteCollectorListView(generics.ListAPIView):
 class WasteCollectionSchedFullDataView(generics.ListAPIView):
     serializer_class = WasteCollectionSchedFullDataSerializer
     queryset = WasteCollectionSched.objects.all()
-
-# WASTE COLLECTION UPDATE
-class WasteCollectionSchedUpdateView(generics.RetrieveUpdateAPIView):
-    queryset = WasteCollectionSched.objects.all()
-    serializer_class = WasteCollectionSchedSerializer
-    lookup_field = 'wc_num'
 
 class WasteCollectorDeleteView(generics.DestroyAPIView):
     queryset = WasteCollector.objects.all()
@@ -117,6 +112,7 @@ class WasteCollectionSchedUpdateView(generics.RetrieveUpdateAPIView):
     queryset = WasteCollectionSched.objects.all()
     serializer_class = WasteCollectionSchedSerializer
     lookup_field = 'wc_num'
+    permission_classes = [AllowAny]
 
 class WasteCollectorDeleteView(generics.DestroyAPIView):
     queryset = WasteCollector.objects.all()
