@@ -1037,7 +1037,7 @@ type Template = {
 }
 
 
-function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issuedDate} : RequestProps ) {
+function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issuedDate, businessName} : RequestProps ) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1550,12 +1550,32 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_w_sign_left: false,
       temp_w_sign_applicant: false,
       temp_w_seal: false,
-      temp_body: "\nTO WHOM IT MAY CONCERN:\n\nThis is to certify that [ NAME OF BUSINESS ] residence / office address at [ ADDRESS OF THE BUSINESS],  /*Barangay San Roque (Ciudad), Cebu City*/. Which " +
+      temp_body: `\nTO WHOM IT MAY CONCERN:\n\nThis is to certify that ${businessName} residence / office address at ${address},  /*Barangay San Roque (Ciudad), Cebu City*/. Which ` +
       "is within the Territorial Jurisdiction of the Barangay in accordance with Section # 152 of Republic Act No. 7160, otherwise known as Local Government Code 1991.\n\n\n" +
       "\t\tThis clearance is issued upon the request of the subject person / establishment for\n\n" +
       "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t/*BARANGAY BUSINESS PERMIT*/\n\n" +
-      "\tIssued this [ DAY [st/nd/rd/th] ] day [MONTH] [YEAR] at Barangay San Roque (Ciudad), Cebu City"
-    },      
+      `\tIssued this ${FormattedIssuanceDate} at Barangay San Roque (Ciudad), Cebu City`
+    },
+    // {
+    //   temp_id: "bussClear",
+    //   temp_title: "BARANGAY BUSINESS CLEARANCE",
+    //   temp_barangayLogo: barangayLogo,
+    //   temp_cityLogo: cityLogo,
+    //   temp_email: templates[0]?.temp_email,  
+    //   temp_telNum: templates[0]?.temp_contact_num,
+    //   temp_paperSize: "letter",
+    //   temp_margin: "normal",
+    //   temp_filename: "Business Clearance",
+    //   temp_w_sign_right: true,
+    //   temp_w_sign_left: false,
+    //   temp_w_sign_applicant: false,
+    //   temp_w_seal: false,
+    //   temp_body: "\nTO WHOM IT MAY CONCERN:\n\nThis is to certify that [ NAME OF BUSINESS ] residence / office address at [ ADDRESS OF THE BUSINESS ],  /*Barangay San Roque (Ciudad), Cebu City*/. Which " +
+    //   "is within the Territorial Jurisdiction of the Barangay in accordance with Section # 152 of Republic Act No. 7160, otherwise known as Local Government Code 1991.\n\n\n" +
+    //   "\t\tThis clearance is issued upon the request of the subject person / establishment for\n\n" +
+    //   "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t/*BARANGAY BUSINESS PERMIT*/\n\n" +
+    //   "\tIssued this [ DAY [st/nd/rd/th] ] day [MONTH] [YEAR] at Barangay San Roque (Ciudad), Cebu City"
+    // },
     {
       temp_id: "fileAction",
       temp_belowHeaderContent: "\t\t\t\t\t\t\t\t\t\t\t\t\t\tBarangay Case No.[ Case No. ]\n" +

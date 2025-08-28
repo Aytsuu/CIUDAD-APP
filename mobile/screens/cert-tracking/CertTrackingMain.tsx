@@ -167,7 +167,7 @@ export default function CertTrackingMain() {
                           <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.ic_date_of_issuance)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_completed || item?.date_cancelled)}</Text>
+                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_rejected || item?.date_cancelled)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && (
                           <View className="mt-3">
@@ -203,7 +203,7 @@ export default function CertTrackingMain() {
                           <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.ibp_date_of_issuance)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_completed || item?.date_cancelled)}</Text>
+                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_rejected || item?.date_cancelled)}</Text>
                         )}
                         {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && (
                           <View className="mt-3">

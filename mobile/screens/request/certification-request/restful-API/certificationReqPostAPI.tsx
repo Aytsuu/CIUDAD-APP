@@ -4,7 +4,7 @@ import { api } from "@/api/api";
 // Function to get a valid resident profile ID
 const getValidResidentProfileId = async () => {
     // TODO: Replace with actual logged-in user's resident ID from auth context
-    return "00017250822"; // Temporary resident ID
+    return "00001250821"; // Temporary resident ID - match the one used in cert-permit.tsx
 };
 
 // Test function to check server connectivity
@@ -126,15 +126,14 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
             const payload = {
                 bpr_id: bpr_id, 
                 req_request_date: new Date().toISOString().split('T')[0], // Current date
-                req_transac_id: 'None', // Default value
-                req_sales_proof: grossSalesFileId ? String(grossSalesFileId) : '', 
+                req_sales_proof: requestInfo.gross_sales || '', // Use gross_sales from requestInfo
                 req_status: 'Pending',
                 req_payment_status: 'Unpaid',
-                bus_id: requestInfo.business_id, // Business ID - renamed from business to bus_id
+                bus_id: requestInfo.business_id, // Business ID from mobile app
                 rp_id: await getValidResidentProfileId(),
                 ags_id: requestInfo.ags_id || null, // Annual gross sales ID (optional)
                 pr_id: requestInfo.pr_id || null, // Purpose and rate ID (optional)
-                // New image fields
+                // Image fields for business_permit_file table (handled by backend)
                 previous_permit_image: requestInfo.previous_permit_image || null,
                 assessment_image: requestInfo.assessment_image || null
             };
@@ -166,14 +165,13 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
         });
         
         if (err.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
+            
             console.error("Server responded with error:", err.response.status, err.response.data);
         } else if (err.request) {
-            // The request was made but no response was received
+            
             console.error("No response received from server. Request details:", err.request);
         } else {
-            // Something happened in setting up the request that triggered an Error
+            
             console.error("Error setting up request:", err.message);
         }
         
@@ -181,90 +179,63 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
     }
 };
 
-// Helper function to create/update business record first
-export const createOrUpdateBusiness = async (businessInfo: Record<string, any>) => {
+export const addBusinessClearance = async (requestInfo: Record<string, any>, staffId?: string) => {
     try {
-        const businessPayload = {
-            bus_name: businessInfo.business_name,
-            bus_address: businessInfo.business_address,
-            bus_annual_gross_sales: businessInfo.gross_sales,
-            bus_existence_proof: businessInfo.business_existence_file_id || null,
-            // Add other business fields as needed
+        const payload = {
+            req_request_date: new Date().toISOString().split('T')[0], // Current date
+            req_sales_proof: requestInfo.gross_sales || '', // Use gross_sales from requestInfo
+            req_status: 'Pending',
+            req_payment_status: 'Unpaid',
+            bus_id: requestInfo.business_id, // Business ID from mobile app
+            rp_id: await getValidResidentProfileId(),
+            ags_id: requestInfo.ags_id || null, // Annual gross sales ID (optional)
+            pr_id: requestInfo.pr_id || null, // Purpose and rate ID (optional)
+            // Image fields for business_permit_file table (handled by backend)
+            previous_permit_image: requestInfo.previous_permit_image || null,
+            assessment_image: requestInfo.assessment_image || null
         };
 
-        console.log("Business Payload:", businessPayload);
+        console.log("Business Clearance Request Payload:", payload);
+        console.log("Making POST request to: clerk/business-clearance/");
+        console.log("Full URL:", api.defaults.baseURL + "/clerk/business-clearance/");
 
-        // If you have a business_id, update existing business
-        if (businessInfo.business_id) {
-            const res = await api.put(`clerk/business/${businessInfo.business_id}/`, businessPayload);
-            return res.data;
+        const res = await api.post('clerk/business-clearance/', payload);
+        console.log("Response received:", res.data);
+        return res.data;
+
+    } catch (err: any) {
+        console.error("Error submitting business clearance request:", err);
+        console.error("Error details:", {
+            message: err.message,
+            status: err.response?.status,
+            statusText: err.response?.statusText,
+            data: err.response?.data,
+            config: {
+                url: err.config?.url,
+                method: err.config?.method,
+                baseURL: err.config?.baseURL,
+                headers: err.config?.headers
+            }
+        });
+        
+        if (err.response) {
+            console.error("Server responded with error:", err.response.status, err.response.data);
+        } else if (err.request) {
+            console.error("No response received from server. Request details:", err.request);
         } else {
-            // Create new business
-            const res = await api.post('clerk/business/', businessPayload);
-            return res.data;
+            console.error("Error setting up request:", err.message);
         }
-    } catch (err) {
-        console.error("Error creating/updating business:", err);
+        
         throw err;
     }
 };
 
-// Helper function to format image data for upload
+
 export const formatImageForUpload = (imageUri: string, fileName: string) => {
     return {
         name: fileName,
-        type: 'image/jpeg', // You might want to detect this dynamically
+        type: 'image/jpeg', 
         path: imageUri,
         uri: imageUri
     };
-};
-
-// Function to validate certification request data
-export const validateCertificationRequest = (requestInfo: Record<string, any>) => {
-    const errors: string[] = [];
-
-    if (!requestInfo.cert_type) {
-        errors.push('Certification type is required');
-    }
-
-    if (requestInfo.cert_type === 'personal') {
-        if (!requestInfo.cert_category) {
-            errors.push('Certification category is required');
-        }
-    }
-
-    if (requestInfo.cert_type === 'permit') {
-        if (!requestInfo.business_name) {
-            errors.push('Business name is required');
-        }
-        if (!requestInfo.business_address) {
-            errors.push('Business address is required');
-        }
-        if (!requestInfo.gross_sales) {
-            errors.push('Annual gross sales is required');
-        }
-    }
-
-    // claim_date removed
-
-    return errors;
-};
-
-// Complete workflow for permit certification with business creation
-export const submitPermitCertificationWithBusiness = async (requestInfo: Record<string, any>, staffId?: string) => {
-    try {
-        // First, create or update business record
-        const businessResult = await createOrUpdateBusiness(requestInfo);
-        
-        // Then submit the permit request with the business ID
-        const permitRequest = {
-            ...requestInfo,
-            business_id: businessResult.bus_id || businessResult.id
-        };
-        
-        return await addCertificationRequest(permitRequest, staffId);
-    } catch (err) {
-        console.error("Error in complete permit certification workflow:", err);
-        throw err;
-    }
 };

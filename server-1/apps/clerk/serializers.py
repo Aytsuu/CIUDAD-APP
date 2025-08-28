@@ -99,7 +99,7 @@ class IssuedCertificateSerializer(serializers.ModelSerializer):
 class CertificateStatusUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClerkCertificate
-        fields = ['cr_req_status', 'cr_date_completed'] 
+        fields = ['cr_req_status', 'cr_date_completed', 'cr_date_rejected', 'cr_reason'] 
 
 # class NonResidentCertReqSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -190,6 +190,8 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             'purpose',
             'cr_req_request_date',
             'cr_date_completed',
+            'cr_date_rejected',
+            'cr_reason',
             'cr_req_payment_status',
             'pr_id',
             'cr_req_status',
@@ -205,41 +207,59 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
     business_gross_sales = serializers.SerializerMethodField()
     requestor = serializers.SerializerMethodField()
     purpose = serializers.SerializerMethodField()  # New field to get purpose from pr_id
+    amount_to_pay = serializers.SerializerMethodField()  # New field for amount to be paid
 
     class Meta:
         model = BusinessPermitRequest
         fields = [
             'bpr_id',
-            'req_pay_method',
             'req_request_date',
             'req_sales_proof',
             'req_status',
             'req_payment_status',
             'ags_id',
             'bus_id',
+            'pr_id',
             'rp_id',
+            'staff_id',
             'business_name',
             'business_address',
             'business_gross_sales',
             'requestor',
-            'purpose',  # New field
-            'pr_id',
-            'staff_id',
-            # 'previous_permit_image',  # New image field
-            # 'assessment_image',  # New image field
+            'purpose',
+            'amount_to_pay',
+            'req_amount',  # Add req_amount field
         ]
 
     def get_business_name(self, obj):
-        return obj.bus_id.bus_name if obj.bus_id else ""
+        try:
+            return obj.bus_id.bus_name if obj.bus_id and hasattr(obj.bus_id, 'bus_name') else ""
+        except Exception:
+            return ""
 
     def get_business_gross_sales(self, obj):
-        return obj.bus_id.bus_gross_sales if obj.bus_id else ""
+        try:
+            return obj.bus_id.bus_gross_sales if obj.bus_id and hasattr(obj.bus_id, 'bus_gross_sales') else ""
+        except Exception:
+            return ""
 
     def get_business_address(self, obj):
-        if obj.bus_id:
-            address_parts = [obj.bus_id.bus_street, obj.bus_id.sitio]
-            return ", ".join([part for part in address_parts if part])
-        return ""
+        try:
+            if obj.bus_id and hasattr(obj.bus_id, 'add_id') and obj.bus_id.add_id:
+                # Fetch the actual address using the Address model
+                try:
+                    address_obj = Address.objects.get(add_id=obj.bus_id.add_id)
+                    # Format the address similar to the Address model's __str__ method
+                    sitio = address_obj.sitio.sitio_name if address_obj.sitio else address_obj.add_external_sitio
+                    if sitio:
+                        return f"{sitio}, {address_obj.add_street}, Barangay {address_obj.add_barangay}, {address_obj.add_city}, {address_obj.add_province}"
+                    else:
+                        return f"{address_obj.add_street}, Barangay {address_obj.add_barangay}, {address_obj.add_city}, {address_obj.add_province}"
+                except Address.DoesNotExist:
+                    return "Address not found"
+            return "No address"
+        except Exception as e:
+            return f"Address error: {str(e)}"
 
     def get_requestor(self, obj):
         try:
@@ -251,6 +271,26 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
 
     def get_purpose(self, obj):
         return obj.pr_id.pr_purpose if obj.pr_id else ""
+
+    def get_amount_to_pay(self, obj):
+        try:
+            # First check if req_amount is already set (this is the stored amount)
+            if hasattr(obj, 'req_amount') and obj.req_amount:
+                return float(obj.req_amount)
+            
+            # If req_amount is not set, fetch from ags_id
+            if obj.ags_id:
+                # Import Annual_Gross_Sales model to fetch the actual object
+                from apps.treasurer.models import Annual_Gross_Sales
+                try:
+                    ags_obj = Annual_Gross_Sales.objects.get(ags_id=obj.ags_id)
+                    return float(ags_obj.ags_rate) if ags_obj.ags_rate else 0.0
+                except Annual_Gross_Sales.DoesNotExist:
+                    return 0.0
+            return 0.0
+        except Exception as e:
+            print(f"Error getting amount_to_pay: {str(e)}")
+            return 0.0
 
 class BusinessPermitCreateSerializer(serializers.ModelSerializer):
     # Removed business_name, business_address, business_gross_sales since they come from bus_id
@@ -268,8 +308,7 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             'pr_id',
             'rp_id',
             'staff_id',
-            'previous_permit_image',  # New image field
-            'assessment_image',  # New image field
+            'req_amount',  # Add req_amount field
         ]
         extra_kwargs = {
             'bpr_id': {'required': False},
@@ -277,19 +316,59 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             'req_payment_status': {'required': False, 'default': 'Unpaid'},
             'ags_id': {'required': False, 'allow_null': True},
             'pr_id': {'required': False, 'allow_null': True},
-            'ra_id': {'required': False, 'allow_null': True},
             'staff_id': {'required': False, 'allow_null': True},
             'bus_id': {'required': False, 'allow_null': True},
             'rp_id': {'required': False, 'allow_null': True},
-            'previous_permit_image': {'required': False, 'allow_null': True},
-            'assessment_image': {'required': False, 'allow_null': True},
+            'req_amount': {'required': False},  # Make req_amount optional
         }
 
     def create(self, validated_data):
         # Generate bpr_id if not provided
         if 'bpr_id' not in validated_data or not validated_data['bpr_id']:
-            import uuid
-            validated_data['bpr_id'] = str(uuid.uuid4())[:8].upper()
+            import time
+            # Generate a numeric ID using timestamp
+            validated_data['bpr_id'] = int(time.time() * 1000) % 100000000  # 8-digit number
+        
+        # Fetch ags_id from annual gross sales table based on gross_sales
+        if 'req_sales_proof' in validated_data and validated_data['req_sales_proof']:
+            try:
+                from apps.treasurer.models import Annual_Gross_Sales
+                gross_sales_range = validated_data['req_sales_proof']
+                print(f"Processing gross_sales_range: {gross_sales_range}")
+                
+                # Parse the range (e.g., "1000.00 - 2000.00")
+                if ' - ' in gross_sales_range:
+                    min_val, max_val = gross_sales_range.split(' - ')
+                    min_val = float(min_val.replace('₱', '').replace(',', ''))
+                    max_val = float(max_val.replace('₱', '').replace(',', ''))
+                    print(f"Parsed values - min: {min_val}, max: {max_val}")
+                    
+                    # Find matching annual gross sales record
+                    ags_record = Annual_Gross_Sales.objects.filter(
+                        ags_minimum=min_val,
+                        ags_maximum=max_val,
+                        ags_is_archive=False
+                    ).first()
+                    
+                    print(f"Query result: {ags_record}")
+                    
+                    if ags_record:
+                        validated_data['ags_id'] = ags_record  # Assign the instance, not the ID
+                        # Store the amount to be paid in req_amount field
+                        validated_data['req_amount'] = float(ags_record.ags_rate) if ags_record.ags_rate else 0.0
+                        print(f"Found ags_id: {ags_record.ags_id} for range {gross_sales_range}, amount: {validated_data['req_amount']}")
+                    else:
+                        print(f"No ags_id found for range {gross_sales_range}")
+                        # Let's also check what records exist in the table
+                        all_records = Annual_Gross_Sales.objects.filter(ags_is_archive=False)[:5]
+                        print(f"Sample records in table: {[(r.ags_minimum, r.ags_maximum, r.ags_id) for r in all_records]}")
+                else:
+                    print(f"Invalid gross sales format: {gross_sales_range}")
+            except Exception as e:
+                print(f"Error fetching ags_id: {str(e)}")
+                import traceback
+                print(f"Traceback: {traceback.format_exc()}")
+                # Continue without ags_id if there's an error
         
         # Create the BusinessPermitRequest
         permit_request = BusinessPermitRequest.objects.create(**validated_data)
@@ -464,3 +543,5 @@ class FileActionRequestSerializer(serializers.ModelSerializer):
             'file_action_file',
             'comp'
         ]
+
+

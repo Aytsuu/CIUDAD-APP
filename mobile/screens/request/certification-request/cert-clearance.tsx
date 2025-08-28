@@ -3,13 +3,12 @@ import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator,
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAddBusinessPermit } from "./queries/certificationReqInsertQueries";
+import { addBusinessClearance } from "./restful-API/certificationReqPostAPI";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
-import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
+import { useBusinessByResidentId, useAnnualGrossSales } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 
-const CertPermit: React.FC = () => {
+const CertClearance: React.FC = () => {
   const router = useRouter();
 
   // naay business
@@ -17,7 +16,6 @@ const CertPermit: React.FC = () => {
   // walay business
   // const RESIDENT_ID = "00038250827";
   
-  const [permitType, setPermitType] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [businessAddress, setBusinessAddress] = useState("");
   const [grossSales, setGrossSales] = useState("");
@@ -28,12 +26,52 @@ const CertPermit: React.FC = () => {
   const [previousPermitImage, setPreviousPermitImage] = useState<string | null>(null);
   const [assessmentImage, setAssessmentImage] = useState<string | null>(null);
   const [isBusinessOld, setIsBusinessOld] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const addBusinessPermit = useAddBusinessPermit();
-  const { data: purposeAndRates = [], isLoading: isLoadingPurposes } = usePurposeAndRates();
-  const { data: annualGrossSales = [], isLoading: isLoadingGrossSales } = useAnnualGrossSales();
   const { data: businessResponse = { results: [] }, isLoading: isLoadingBusiness, error: businessError } = useBusinessByResidentId(RESIDENT_ID);
+  const { data: annualGrossSales = [], isLoading: isLoadingGrossSales } = useAnnualGrossSales();
   const businessData = businessResponse?.results || [];
+
+  // Convert gross sales data to dropdown options
+  const grossSalesOptions: DropdownOption[] = annualGrossSales
+    .filter(sales => sales.ags_is_archive === false)
+    .map(sales => ({
+      label: `₱${sales.ags_minimum} - ₱${sales.ags_maximum}`,
+      value: `${sales.ags_minimum} - ${sales.ags_maximum}`
+    }));
+
+  // Handle successful submission
+  useEffect(() => {
+    if (submitSuccess) {
+      Alert.alert(
+        'Success!',
+        'Your business clearance request has been submitted successfully.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reset form
+              setPreviousPermitImage(null);
+              setAssessmentImage(null);
+              setError(null);
+              setSubmitSuccess(false);
+              // Navigate back or to a success page
+              router.back();
+            }
+          }
+        ]
+      );
+    }
+  }, [submitSuccess, router]);
+
+  // Handle submission errors
+  useEffect(() => {
+    if (submitError) {
+      setError(`Submission failed: ${submitError}`);
+    }
+  }, [submitError]);
 
   
     useEffect(() => {
@@ -84,86 +122,71 @@ const CertPermit: React.FC = () => {
     }
   };
 
-   
-
-
-  
-  const permitPurposes = purposeAndRates.filter(purpose => 
-    purpose.pr_category.toLowerCase().includes('permit') || 
-    purpose.pr_purpose.toLowerCase().includes('permit')
-  );
-
-  
-  const permitTypeOptions: DropdownOption[] = permitPurposes.map(purpose => ({
-    label: `${purpose.pr_purpose}`,
-    value: purpose.pr_purpose
-  }));
-
-  // Convert gross sales data to dropdown options like in web
-  const grossSalesOptions: DropdownOption[] = annualGrossSales
-    .filter(sales => sales.ags_is_archive === false)
-    .map(sales => ({
-      label: `₱${sales.ags_minimum} - ₱${sales.ags_maximum}`,
-      value: `${sales.ags_minimum} - ${sales.ags_maximum}`
-    }));
-
-  
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setError(null);
+    setSubmitError(null);
+    setIsSubmitting(true);
     
-    // Prevent submission if no business exists
-    if (businessData.length === 0) {
-      setError("Cannot submit request: No business registered under this resident");
-      return;
-    }
+    console.log("Starting submission...");
+    console.log("Business data:", businessData);
+    console.log("Gross sales:", grossSales);
+    console.log("Previous permit:", previousPermitImage);
+    console.log("Assessment image:", assessmentImage);
     
-    // Validate required images
-    if (isBusinessOld && !previousPermitImage) {
-      setError("Previous permit image is required for existing businesses");
-      return;
-    }
-    if (!assessmentImage) {
-      setError("Assessment image is required");
-      return;
-    }
-    
+    try {
+      // Prevent submission if no business exists
+      if (businessData.length === 0) {
+        setError("Cannot submit request: No business registered under this resident");
+        return;
+      }
+      
+      // Validate required images
+      if (isBusinessOld && !previousPermitImage) {
+        setError("Previous permit image is required for existing businesses");
+        return;
+      }
+      
+      // Validate gross sales input
+      if (!grossSales) {
+        setError("Please select annual gross sales range");
+        return;
+      }
 
-    
-    const result = CertificationRequestSchema.safeParse({
-      cert_type: "permit",
-      business_name: businessName,
-      business_address: businessAddress,
-      gross_sales: grossSales,
-      rp_id: RESIDENT_ID,
-      previous_permit_image: previousPermitImage,
-      assessment_image: assessmentImage,
-    });
-    
-    if (!result.success) {
-      setError(result.error.issues[0].message);
-      return;
+      const submissionData = {
+        cert_type: "permit" as const,
+        business_name: businessName,
+        business_address: businessAddress,
+        gross_sales: grossSales,
+        business_id: businessData[0]?.bus_id,
+        pr_id: undefined,
+        rp_id: RESIDENT_ID,
+        previous_permit_image: previousPermitImage || undefined,
+        assessment_image: assessmentImage || undefined,
+        cert_category: "business-clearance",
+        payment_mode: "not-specified",
+        requester: RESIDENT_ID
+      };
+
+      console.log("Submitting data:", submissionData);
+
+      // Submit the request
+      await addBusinessClearance(submissionData);
+      
+      // Success
+      setSubmitSuccess(true);
+      
+    } catch (error: any) {
+      console.error("Submission error:", error);
+      setSubmitError(error.message || 'Unknown error occurred');
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    // Find the selected purpose and rates ID
-    const selectedPurpose = purposeAndRates.find(p => p.pr_purpose === permitType);
-    
-    addBusinessPermit.mutate({
-      cert_type: "permit",
-      business_name: businessName,
-      business_address: businessAddress,
-      gross_sales: grossSales,
-      business_id: businessData[0]?.bus_id, // Add the business ID
-      pr_id: selectedPurpose?.pr_id, // Add the purpose and rates ID
-      rp_id: RESIDENT_ID,
-      previous_permit_image: previousPermitImage || undefined,
-      assessment_image: assessmentImage || undefined,
-    });
   };
 
   return (
     <View className="flex-1  px-4 pt-8">
       {/* Loading Overlay */}
-      {addBusinessPermit.status === 'pending' && (
+      {isSubmitting && (
         <View className="absolute inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
           <View className="bg-white rounded-xl p-6 items-center shadow-lg">
             <ActivityIndicator size="large" color="#00AFFF" />
@@ -185,16 +208,43 @@ const CertPermit: React.FC = () => {
           >
             <Ionicons name="chevron-back" size={20} color="#374151" />
           </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900 ml-3">Clearance for Permit</Text>
+          <Text className="text-lg font-semibold text-gray-900 ml-3">Clearance for Business</Text>
         </View>
         
         
         {error && (
-          <Text className="text-red-500 mb-2 text-sm">{error}</Text>
+          <View className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+            <View className="flex-row items-center mb-1">
+              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+              <Text className="text-red-800 text-sm font-semibold ml-2">Error</Text>
+            </View>
+            <Text className="text-red-700 text-sm">{error}</Text>
+          </View>
         )}
-                 {addBusinessPermit.status === 'error' && (
-           <Text className="text-red-500 mb-2 text-sm">Failed to submit request.</Text>
-         )}
+        
+        {submitError && (
+          <View className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+            <View className="flex-row items-center mb-1">
+              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+              <Text className="text-red-800 text-sm font-semibold ml-2">Submission Failed</Text>
+            </View>
+            <Text className="text-red-700 text-sm">
+              Failed to submit business clearance request. Please check your internet connection and try again.
+            </Text>
+          </View>
+        )}
+        
+        {submitSuccess && (
+          <View className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+            <View className="flex-row items-center mb-1">
+              <Ionicons name="checkmark-circle" size={16} color="#059669" />
+              <Text className="text-green-800 text-sm font-semibold ml-2">Success!</Text>
+            </View>
+            <Text className="text-green-700 text-sm">
+              Your business clearance request has been submitted successfully!
+            </Text>
+          </View>
+        )}
          
                    {/* No Business Message */}
          {!isLoadingBusiness && businessData.length === 0 && (
@@ -202,26 +252,17 @@ const CertPermit: React.FC = () => {
             <View className="flex-row items-center mb-2">
               <Ionicons name="alert-circle" size={20} color="#DC2626" />
               <Text className="text-red-800 text-base font-semibold ml-2">
-                Cannot Request Business Permit
+                Cannot Request Business Clearance
               </Text>
             </View>
             <Text className="text-red-700 text-sm leading-5">
-              You cannot request a business permit because no business is registered under your name. 
-              Please register a business first before applying for a permit.
+              You cannot request a business clearance because no business is registered under your name. 
+              Please register a business first before applying for a clearance.
             </Text>
           </View>
         )}
 
-        {/* Permit Type Dropdown */}
-        <SelectLayout
-          label="Type of Clearance"
-          options={permitTypeOptions}
-          selectedValue={permitType}
-          onSelect={(option) => setPermitType(option.value)}
-          placeholder={isLoadingPurposes ? "Loading..." : "Select clearance type"}
-          disabled={isLoadingPurposes}
-          className="mb-3"
-        />
+
 
       
         {/* Business Name */}
@@ -244,17 +285,20 @@ const CertPermit: React.FC = () => {
           editable={false}
         />
 
-        {/* Annual Gross Sales */}
-        <Text className="text-sm font-medium text-gray-700 mb-2">Annual Gross Sales</Text>
-        <TextInput
-          className="rounded-lg bg-gray-100 px-3 py-3 mb-3 border border-gray-200 text-base text-gray-600"
-          placeholder={isLoadingBusiness ? "Loading business details..." : "No business found"}
-          placeholderTextColor="#888"
-          value={grossSales ? `₱${parseFloat(grossSales).toLocaleString()}` : ""}
-          editable={false}
+        {/* Annual Gross Sales - Dropdown */}
+        <Text className="text-sm font-medium text-gray-700 mb-2">Annual Gross Sales <Text className="text-red-500">*</Text></Text>
+        <SelectLayout
+          label=""
+          options={grossSalesOptions}
+          selectedValue={grossSales}
+          onSelect={(option) => setGrossSales(option.value)}
+          placeholder={isLoadingGrossSales ? "Loading..." : "Select gross sales range"}
+          disabled={isLoadingGrossSales}
+          className="mb-3"
         />
-
-        {/* Claim Date removed */}
+        {!grossSales && (
+          <Text className="text-red-500 text-xs mb-2">Please select annual gross sales range</Text>
+        )}
 
         {/* Image Upload Section */}
         <View className="mb-4">
@@ -329,15 +373,16 @@ const CertPermit: React.FC = () => {
           </View>
         </View>
 
-
         {/* Amount to be Paid */}
-        {permitType && (
-          <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-3">
+        {grossSales && (
+          <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
             <Text className="text-green-800 text-sm font-medium mb-1">Amount to be Paid:</Text>
             <Text className="text-green-700 text-lg font-bold">
               {(() => {
-                const selectedPurpose = purposeAndRates.find(p => p.pr_purpose === permitType);
-                return selectedPurpose ? `₱${selectedPurpose.pr_rate.toLocaleString()}` : '₱0';
+                const selectedSales = annualGrossSales.find(sales => 
+                  `${sales.ags_minimum} - ${sales.ags_maximum}` === grossSales
+                );
+                return selectedSales ? `₱${selectedSales.ags_rate?.toLocaleString() || '0'}` : '₱0';
               })()}
             </Text>
           </View>
@@ -346,19 +391,36 @@ const CertPermit: React.FC = () => {
         {/* Submit Button */}
         {!isLoadingBusiness && businessData.length > 0 ? (
           <TouchableOpacity
-            className={`bg-[#00AFFF] rounded-xl py-4 items-center mt-2 mb-8 ${addBusinessPermit.status === 'pending' ? 'opacity-50' : ''}`}
+            className={`rounded-xl py-4 items-center mt-2 mb-8 ${
+              // Check if all required fields are filled
+              grossSales && 
+              (!isBusinessOld || (isBusinessOld && previousPermitImage)) && 
+              !isSubmitting
+                ? 'bg-[#00AFFF]' 
+                : 'bg-gray-300'
+            } ${isSubmitting ? 'opacity-50' : ''}`}
             activeOpacity={0.85}
             onPress={handleSubmit}
-            disabled={addBusinessPermit.status === 'pending'}
+            disabled={
+              isSubmitting || 
+              !grossSales ||
+              (isBusinessOld && !previousPermitImage)
+            }
           >
-            <Text className="text-white font-semibold text-base">
-              {addBusinessPermit.status === 'pending' ? 'Submitting...' : 'Submit'}
+            <Text className={`font-semibold text-base ${
+              grossSales && 
+              (!isBusinessOld || (isBusinessOld && previousPermitImage)) && 
+              !isSubmitting
+                ? 'text-white' 
+                : 'text-gray-500'
+            }`}>
+              {isSubmitting ? 'Submitting...' : 'Submit Business Clearance'}
             </Text>
           </TouchableOpacity>
         ) : (
           <View className="bg-gray-100 rounded-xl py-4 items-center mt-2 mb-8">
             <Text className="text-gray-500 font-semibold text-base">
-              Cannot Request Business Permit
+              Cannot Request Business Clearance
             </Text>
           </View>
         )}
@@ -367,4 +429,4 @@ const CertPermit: React.FC = () => {
   );
 };
 
-export default CertPermit;
+export default CertClearance;

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import {Search, ArrowUpDown, Loader2, CheckCircle } from "lucide-react";
+import {Search, ArrowUpDown, Loader2, CheckCircle, Eye } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table-click";
@@ -14,6 +14,8 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { getBusinessPermit, markBusinessPermitAsIssued, type BusinessPermit, type MarkBusinessPermitVariables } from "@/pages/record/clearances/queries/busFetchQueries";
 import { toast } from "sonner";
+import TemplateMainPage from "../council/templates/template-main";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
 // Type imported from queries
 
@@ -21,6 +23,7 @@ function BusinessDocumentPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedPermit, setSelectedPermit] = useState<BusinessPermit | null>(null);
 
   const { data: businessPermits, isLoading, error } = useQuery<BusinessPermit[]>({
     queryKey: ["businessPermits"],
@@ -45,6 +48,13 @@ function BusinessDocumentPage() {
       bpr_id: permit.bpr_id,
       staff_id: "00003250722", 
     });
+  };
+
+  const handleViewFile = (permit: BusinessPermit) => {
+    console.log("Eye button clicked for permit:", permit);
+    console.log("Setting selectedPermit to:", permit);
+    setSelectedPermit(permit); 
+    console.log("selectedPermit state should now be:", permit);
   };
 
   const handlePageChange = (page: number) => {
@@ -90,37 +100,26 @@ function BusinessDocumentPage() {
       cell: ({ row }) => <div className="capitalize">{row.getValue("business_name")}</div>,
     },
     {
-      accessorKey: "business_gross_sales",
+      accessorKey: "req_sales_proof",
       header: "Gross Sales",
-      cell: ({ row }) => <div>₱ {row.getValue("business_gross_sales")}</div>,
+      cell: ({ row }) => <div>₱ {row.getValue("req_sales_proof")}</div>,
     },
     {
       accessorKey: "req_pay_method",
       header: "Payment Method",
       cell: ({ row }) => {
-        const value = row.getValue("req_pay_method") as string;
-        const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
-        // Define walk-in payment methods
-        const walkInMethods = ["Walk-in", "Cash", "Over-the-counter"];
-        let bg = "bg-[#eaffea]"; 
-        let text = "text-[#15803d]"; 
-        let border = "border border-[#b6e7c3]";
-        if (capitalizedValue === "Cash") {
-          bg = "bg-[#eaffea]";
-          text = "text-[#15803d]";
-          border = "border border-[#b6e7c3]";
-        } else if (value && walkInMethods.includes(capitalizedValue)) {
-        } else {
-          bg = "bg-[#f3f2f2]";
-          text = "text-black";
-          border = "border border-[#e5e7eb]";
-        }
+        // Display "Walk-in" for all business permit requests
+        const value = "Walk-in";
+        const bg = "bg-[#eaffea]"; 
+        const text = "text-[#15803d]"; 
+        const border = "border border-[#b6e7c3]";
+        
         return (
           <span
             className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
             style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
           >
-            {capitalizedValue}
+            {value}
           </span>
         );
       },
@@ -130,11 +129,11 @@ function BusinessDocumentPage() {
       header: "Date Requested",
       cell: ({ row }) => <div>{row.getValue("req_request_date")}</div>,
     },
-    {
-      accessorKey: "req_claim_date",
-      header: "Date to Claim",
-      cell: ({ row }) => <div>{row.getValue("req_claim_date")}</div>,
-    },
+    // {
+    //   accessorKey: "req_claim_date",
+    //   header: "Date to Claim",
+    //   cell: ({ row }) => <div>{row.getValue("req_claim_date")}</div>,
+    // },
 
     {
       id: "actions",
@@ -146,7 +145,20 @@ function BusinessDocumentPage() {
       cell: ({ row }) => {
         const permit = row.original;
         return (
-          <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+          <div className="flex justify-center gap-3" onClick={(e) => e.stopPropagation()}>
+            <TooltipLayout
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewFile(permit)}
+                >
+                  <Eye size={16} />
+                </Button> 
+              }
+              content="View File"
+            />
+            
             <ConfirmationModal
               trigger={
                 <Button
@@ -240,6 +252,27 @@ function BusinessDocumentPage() {
           />
         </div>
       </div>
+
+      {/* Render Business Permit Template when a permit is selected */}
+      {selectedPermit && (
+        <DialogLayout
+          isOpen={!!selectedPermit}
+          onOpenChange={(open) => !open && setSelectedPermit(null)}
+          className="max-w-full h-full flex flex-col overflow-auto scrollbar-custom"
+          title=""
+          description=""
+          mainContent={
+            <div className="w-full h-full">
+              <TemplateMainPage
+                businessName={selectedPermit.business_name || "Business"}
+                address={selectedPermit.business_address || "Address not available"}
+                purpose="bussClear"
+                issuedDate={new Date().toISOString()}
+              />
+            </div>
+          }
+        />
+      )}
     </div>
   );
 }
