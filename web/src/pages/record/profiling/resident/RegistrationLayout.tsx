@@ -22,6 +22,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 import { useDeleteRequest } from "../queries/profilingDeleteQueries";
 import { useUpdateAccount } from "../queries/profilingUpdateQueries";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 
 export default function RegistrationLayout() {
   // --------------- STATE INITIALIZATION ------------------
@@ -212,12 +213,12 @@ export default function RegistrationLayout() {
           notLivingSolo,
           noFamily,
           noBusiness,
-          personal,
+          capitalizeAllFields(personal),
           accountSchema,
-          houseSchema,
-          livingSoloSchema,
-          familySchema,
-          business,
+          capitalizeAllFields(houseSchema),
+          capitalizeAllFields(livingSoloSchema),
+          capitalizeAllFields(familySchema),
+          capitalizeAllFields(business),
           newFiles
         )
         break;

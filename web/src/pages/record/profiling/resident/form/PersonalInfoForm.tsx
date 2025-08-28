@@ -68,6 +68,20 @@ const EDUCATIONAL_ATTAINMENT = [
   { id: "doctorate degree", name: "Doctorate Degree" }
 ];
 
+const PWD_OPTIONS = [
+  { id: "visual disability", name: "Visual Disability" },
+  { id: "hearing disability", name: "Hearing Disability" },
+  { id: "speech impairment", name: "Speech Impairment" },
+  { id: "learning disability", name: "Learning Disability" },
+  { id: "intellectual disability", name: "Intellectual Disability" },
+  { id: "mental disability", name: "Mental Disability" },
+  { id: "psychosocial disability", name: "Psychosocial Disability" },
+  { id: "physical disability", name: "Physical Disability" },
+  { id: "cancer", name: "Cancer" },
+  { id: "rare disease", name: "Rare Disease" },
+  { id: "multiple disabilities", name: "Multiple Disabilities" }
+]
+
 // ==================== COMPONENT ====================
 const PersonalInfoForm = ({
   prefix = "",
@@ -150,16 +164,17 @@ const PersonalInfoForm = ({
 
       {/* Sex, Status, DOB, Address */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <FormSelect control={control} name={`${prefix}per_sex`} label="Sex" placeholder="Enter sex" options={SEX_OPTIONS} readOnly={isReadOnly} />
+        <FormSelect control={control} name={`${prefix}per_sex`} label="Sex" options={SEX_OPTIONS} readOnly={isReadOnly} />
         <FormDateTimeInput control={control} name={`${prefix}per_dob`} label="Date of Birth" type="date" readOnly={isReadOnly} />
-        <FormSelect control={control} name={`${prefix}per_status`} label="Marital Status" placeholder="Enter marital status" options={MARITAL_STATUS_OPTIONS} readOnly={isReadOnly} />
+        <FormSelect control={control} name={`${prefix}per_status`} label="Marital Status" options={MARITAL_STATUS_OPTIONS} readOnly={isReadOnly} />
         <FormInput control={control} name={`${prefix}per_contact`} label="Contact" placeholder="Enter contact" readOnly={isReadOnly} type="number" />
       </div>
 
       {/* Education, Religion, Contact */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <FormSelect control={control} name={`${prefix}per_edAttainment`} label="Educational Attainment" placeholder="Enter educational attainment" readOnly={isReadOnly} options={EDUCATIONAL_ATTAINMENT}/>
+        <FormSelect control={control} name={`${prefix}per_edAttainment`} label="Educational Attainment" readOnly={isReadOnly} options={EDUCATIONAL_ATTAINMENT}/>
         <FormSelect control={control} name={`${prefix}per_religion`} label="Religion" options={RELIGION_OPTIONS} readOnly={isReadOnly} />
+        <FormSelect control={control} name={`${prefix}per_disability`} label="Person with Disability (Select if applicable)" options={PWD_OPTIONS} readOnly={isReadOnly} />
       </div>
       <div className="grid grid-cols-1 gap-4">
         {

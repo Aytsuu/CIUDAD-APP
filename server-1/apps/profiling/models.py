@@ -43,6 +43,7 @@ class Personal(models.Model):
     per_edAttainment = models.CharField(max_length=100, null=True)
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=20)  
+    per_disability = models.CharField(max_length=100, null=True)
 
     history = HistoricalRecords(
         table_name='personal_history',

@@ -8,6 +8,8 @@ import {
     SelectValue,
   } from "@/components/ui/select/select"
 import { cn } from "@/lib/utils"
+import { Button } from "../button/button"
+import { RotateCcw } from "lucide-react"
 
 interface Option{
   id: string,
@@ -32,7 +34,15 @@ export function SelectLayout({ placeholder, label, className, options, value, on
           </SelectTrigger>
           <SelectContent>
               <SelectGroup>
-                  <SelectLabel>{label}</SelectLabel>
+                  <SelectLabel className="flex justify-between">
+                    <p>{label}</p>
+                    <div className="flex items-center gap-1 text-gray-600 cursor-pointer hover:text-black/90"
+                      onClick={() => onChange("")}
+                    >
+                      <RotateCcw size={14}/>
+                      Reset
+                    </div>
+                  </SelectLabel>
                   {options.map((option) => {
                       return <SelectItem key={option?.id} value={option?.id} className="cursor-pointer">{option?.name}</SelectItem>
                   })}
