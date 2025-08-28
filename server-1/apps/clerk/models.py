@@ -10,10 +10,26 @@ class ClerkCertificate(models.Model):
     cr_req_request_date = models.DateField()
     cr_req_status = models.CharField(max_length=100, default='None')
     cr_req_payment_status = models.CharField(max_length=100, default='None')
-    cr_date_completed = models.DateField(null=True, blank=True)
-    pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete=models.CASCADE, db_column='pr_id', related_name='certificates', null=True)
-    staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='staff_id', null=True)
-    rp_id = models.ForeignKey('profiling.ResidentProfile',  on_delete=models.CASCADE, db_column='rp_id')
+    cr_date_completed = models.DateField(max_length=100, default='None')  
+    
+    pr_id = models.ForeignKey(
+        'treasurer.Purpose_And_Rates', 
+        on_delete=models.CASCADE, 
+        db_column='pr_id', 
+        related_name='certificates', 
+        null=True
+    )
+    staff_id = models.ForeignKey(
+        'administration.Staff', 
+        on_delete=models.CASCADE, 
+        db_column='staff_id', 
+        null=True
+    )
+    rp_id = models.ForeignKey(
+        'profiling.ResidentProfile', 
+        on_delete=models.CASCADE, 
+        db_column='rp_id'
+    )
 
     class Meta:
         db_table = 'certification_request'

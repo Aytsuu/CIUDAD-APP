@@ -1012,6 +1012,7 @@ interface RequestProps {
   address?: string;
   purpose?: string;
   issuedDate?: string;
+  isNonResident?: boolean;
 }
 
 type Template = {
@@ -1031,7 +1032,7 @@ type Template = {
   temp_w_sign_applicant: boolean;
   temp_w_seal: boolean;
   temp_body: string;
-  temp_id?: string; // Added optional temp_id for consistency
+  temp_id?: string; 
 }
 
 
@@ -1076,7 +1077,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
       `NAME                     :           /*${lname}, ${fname}*/\n` +
       `AGE                        :            /*${age}*/\n` +
-      `BIRTHDATE\t  :           /*${birthdate}*/\n` +
+      `BIRTHDATE\t  :                      /*${birthdate}*/\n` +
       `ADDRESS              :            /*${address}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*IDENTIFICATION (ID) PURPOSES ONLY.*/   " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
@@ -1191,7 +1192,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
       `NAME                     :           /*${lname}, ${fname}*/\n` +
       `AGE                        :            /*${age}*/\n` +
-      `BIRTHDATE\t  :           /*${birthdate}*/\n` +
+      `BIRTHDATE\t  :                  /*${birthdate}*/\n` +
       `ADDRESS              :            /*${address}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*EMPLOYMENT PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
