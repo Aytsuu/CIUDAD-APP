@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { getCertificates, markCertificateAsIssued, type Certificate, type MarkCertificateVariables } from "@/pages/record/clearances/queries/certFetchQueries";
 import { toast } from "sonner";
+import TemplateMainPage from "../council/templates/template-main";
+import TemplatePreview from "../council/templates/template-preview";
 
 // Type imported from queries
 
@@ -41,10 +43,17 @@ function CertificatePage() {
   });
 
   const handleMarkAsPrinted = (certificate: Certificate) => {
-    markAsIssuedMutation.mutate({
-      cr_id: certificate.cr_id,
-      staff_id: "00005250821", // staff ID
-    });
+    // markAsIssuedMutation.mutate({
+    //   cr_id: certificate.cr_id,
+    //   staff_id: "00005250821", // staff ID
+    // });
+    <TemplateMainPage
+      fname={certificate.resident_details.per_fname}
+      lname={certificate.resident_details.per_lname}
+      birthdate={"2003-09-04"}
+      address={"Sitio Palma"}
+      purpose={certificate.req_purpose}
+    />
   };
 
   const handlePageChange = (page: number) => {

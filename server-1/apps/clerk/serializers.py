@@ -145,7 +145,6 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             'resident_details',
             'purpose',
             'cr_req_request_date',
-            'cr_req_claim_date',
             'cr_req_payment_status',
             'pr_id',
             'cr_req_status',
