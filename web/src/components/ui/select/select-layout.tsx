@@ -31,7 +31,7 @@ export function SelectLayout({ placeholder, label, className, options, value, on
       <Select value={value} onValueChange={onChange}>
           <SelectTrigger className={cn("w-full", className)}>
               <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
+          </SelectTrigger> 
           <SelectContent>
               <SelectGroup>
                   <SelectLabel className="flex justify-between">

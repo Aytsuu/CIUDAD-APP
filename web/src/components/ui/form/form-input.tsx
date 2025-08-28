@@ -45,7 +45,7 @@ export const FormInput = React.memo(({
           <Input 
             className={className} 
             type={type} 
-            placeholder={placeholder} 
+            placeholder={readOnly ? "" : placeholder} 
             {...field}
             value={field.value ?? ''}
             readOnly={readOnly}

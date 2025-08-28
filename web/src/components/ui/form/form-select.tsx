@@ -64,7 +64,7 @@ export const FormSelect = React.memo(({
                                 }}
                             />
                         ) : (
-                            <Input {...field} placeholder={placeholder} readOnly />
+                            <Input {...field} readOnly />
                         )}
                     </FormControl>
                     <FormMessage />
