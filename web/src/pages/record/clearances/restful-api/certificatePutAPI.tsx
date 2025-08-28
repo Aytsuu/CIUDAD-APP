@@ -18,3 +18,24 @@ export const updateCertificationStatus = async (cr_id: string) => {
         console.error(err);
     }
 }
+
+
+
+export const updateNonResidentCertStatus = async (nrc_id: number) => {
+
+    try{
+        console.log({
+            nrc_req_status: "Completed",
+        })
+
+        const res = await api.put(`clerk/update-personal-req-status/${nrc_id}/`,{
+            nrc_req_status: "Completed",
+            nrc_date_completed: new Date().toISOString()
+        })
+
+        return res.data;
+    }
+    catch (err){
+        console.error(err);
+    }
+}
