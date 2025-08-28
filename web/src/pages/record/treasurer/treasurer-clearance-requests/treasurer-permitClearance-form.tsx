@@ -220,7 +220,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                             control={form.control}
                             name="grossSales"
                             options={annualGrossSalesOptions}
-                            isLoading={grossSalesLoading}
+                            // isLoading={grossSalesLoading}
                             label="Annual Gross Sales"
                         />
 

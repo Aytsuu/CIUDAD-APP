@@ -234,6 +234,7 @@ class StaffListView(generics.ListAPIView):
 
 #TEMPLATE
 class TemplateView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = TemplateSerializer
     queryset = Template.objects.all()
 

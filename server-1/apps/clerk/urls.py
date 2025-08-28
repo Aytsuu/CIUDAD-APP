@@ -1,24 +1,5 @@
 from django.urls import path
-from .views import (
-    ServiceChargeRequestView,
-    UpdateServiceChargeRequestView,
-    SummonDateAvailabilityView,
-    DeleteSummonDateAvailability,
-    SummonTimeAvailabilityView,
-    SummonTimeAvailabilityByDateView,
-    DeleteSummonTimeAvailabilityView,
-    CertificateListView,
-    CertificateDetailView,
-    IssuedCertificateListView,
-    MarkCertificateAsIssuedView,
-    BusinessPermitListView,
-    IssuedBusinessPermitListView,
-    MarkBusinessPermitAsIssuedView,
-    PermitClearanceView,
-    get_personal_clearances,
-    create_payment_intent,
-    webhook_payment_status,
-)
+from .views import *
 
 urlpatterns = [
     path('service-charge-request/', ServiceChargeRequestView.as_view(), name='service-charge-request'),
@@ -47,8 +28,8 @@ urlpatterns = [
     path('mark-business-permit-issued/', MarkBusinessPermitAsIssuedView.as_view(), name='mark-business-permit-issued'),
     
     # Personal Clearances and Payment URLs
-    path('personal-clearances/', get_personal_clearances, name='personal-clearances-list'),
+    path('personal-clearances/', PersonalClearancesView.as_view(), name='personal-clearances-list'),
     path('permit-clearances/', PermitClearanceView.as_view(), name='permit-clearances-list'),
-    path('payment/create/<str:cr_id>/', create_payment_intent, name='create-payment-intent'),
-    path('payment/webhook/', webhook_payment_status, name='payment-webhook'),
+    path('payment/create/<str:cr_id>/', CreatePaymentIntentView.as_view(), name='create-payment-intent'),
+    path('payment/webhook/', PaymentStatusView.as_view(), name='payment-webhook'),
 ]

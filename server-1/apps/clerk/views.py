@@ -7,6 +7,7 @@ from rest_framework.decorators import api_view
 from django.db.models import Prefetch, F
 from django.core.exceptions import FieldError
 from django.utils import timezone
+from rest_framework.permissions import AllowAny
 import uuid
 import logging
 import traceback
@@ -33,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 class ServiceChargeRequestView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ServiceChargeRequestSerializer
 
     def get_queryset(self):
@@ -220,6 +222,7 @@ class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
 
 # Certificate Views
 class CertificateListView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ClerkCertificateSerializer
 
     def get_queryset(self):
@@ -313,11 +316,13 @@ class CertificateListView(generics.ListCreateAPIView):
             
 
 class CertificateDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
     queryset = ClerkCertificate.objects.all()
     serializer_class = ClerkCertificateSerializer
     lookup_field = 'cr_id'
 
 class IssuedCertificateListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = IssuedCertificateSerializer
 
     def get_queryset(self):
@@ -358,6 +363,7 @@ class IssuedCertificateListView(generics.ListAPIView):
             )
 
 class MarkCertificateAsIssuedView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = IssuedCertificateSerializer
     
     def create(self, request, *args, **kwargs):
@@ -435,6 +441,7 @@ class MarkCertificateAsIssuedView(generics.CreateAPIView):
 
 # Business Permit Views
 class BusinessPermitListView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = BusinessPermitSerializer
 
     def get_queryset(self):
@@ -464,6 +471,7 @@ class BusinessPermitListView(generics.ListCreateAPIView):
             )
 
 class PermitClearanceView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return BusinessPermitCreateSerializer
@@ -547,6 +555,7 @@ class PermitClearanceView(generics.ListCreateAPIView):
             )
 
 class IssuedBusinessPermitListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = IssuedBusinessPermitSerializer
 
     def get_queryset(self):
@@ -662,82 +671,86 @@ class MarkBusinessPermitAsIssuedView(generics.CreateAPIView):
 
 
 # ---------------------- Personal Clearances and Payment APIs ----------------------
-@api_view(['GET'])
-def get_personal_clearances(request):
-    try:
-        clearances = ClerkCertificate.objects.select_related(
-            'rp_id__per',
-            'pr_id'
-        ).prefetch_related(
-            Prefetch('treasurer_invoices', queryset=Invoice.objects.all())
-        ).only(
-            'cr_id',
-            'cr_req_request_date',
-            'cr_req_claim_date',
-            'cr_req_payment_status',
-            'cr_req_status',
-            'rp_id__per__per_fname',
-            'rp_id__per__per_lname',
-            'pr_id__pr_purpose',
-            'pr_id__pr_rate'
-        ).all()
 
-        serializer = ClerkCertificateSerializer(clearances, many=True)
-        return Response(serializer.data)
-    except Exception as e:
-        logger.error(f"Error in get_personal_clearances: {str(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return Response(
-            {"error": str(e), "detail": "An error occurred while retrieving personal clearances"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+class PersonalClearancesView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        try:
+            clearances = ClerkCertificate.objects.select_related(
+                'rp_id__per',
+                'pr_id'
+            ).prefetch_related(
+                Prefetch('treasurer_invoices', queryset=Invoice.objects.all())
+            ).only(
+                'cr_id',
+                'cr_req_request_date',
+                'cr_req_claim_date',
+                'cr_req_payment_status',
+                'cr_req_status',
+                'rp_id__per__per_fname',
+                'rp_id__per__per_lname',
+                'pr_id__pr_purpose',
+                'pr_id__pr_rate'
+            ).all()
+
+            serializer = ClerkCertificateSerializer(clearances, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in get_personal_clearances: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response(
+                {"error": str(e), "detail": "An error occurred while retrieving personal clearances"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class CreatePaymentIntentView(APIView):
+    def post(self, request, cr_id):
+        try:
+            certificate = ClerkCertificate.objects.get(cr_id=cr_id)
+
+            amount = certificate.pr_id.pr_rate if certificate.pr_id else 0
+
+            # TODO: integrate real gateway, this is a placeholder
+            payment_intent = {
+                'id': f'dummy_{cr_id}',
+                'amount': amount,
+                'status': 'awaiting_payment'
+            }
+
+            invoice = Invoice.objects.create(
+                inv_num=f"INV-{cr_id}",
+                inv_serial_num=f"SER-{cr_id}",
+                inv_date=timezone.now().date(),
+                inv_amount=amount,
+                inv_nat_of_collection='Personal Clearance'
+            )
+
+            return Response({
+                'invoice_id': invoice.inv_num,
+                'payment_intent_id': payment_intent['id'],
+                'amount': amount
+            })
+        except ClerkCertificate.DoesNotExist:
+            return Response({"error": "Certificate request not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error in create_payment_intent: {str(e)}")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['POST'])
-def create_payment_intent(request, cr_id):
-    try:
-        certificate = ClerkCertificate.objects.get(cr_id=cr_id)
+class PaymentStatusView(APIView):
+    permission_classes = [AllowAny]  # Add this if the webhook should be publicly accessible
+    
+    def post(self, request):
+        try:
+            payment_intent_id = request.data.get('data', {}).get('id')
+            payment_status = request.data.get('data', {}).get('attributes', {}).get('status')
 
-        amount = certificate.pr_id.pr_rate if certificate.pr_id else 0
-
-        # TODO: integrate real gateway, this is a placeholder
-        payment_intent = {
-            'id': f'dummy_{cr_id}',
-            'amount': amount,
-            'status': 'awaiting_payment'
-        }
-
-        invoice = Invoice.objects.create(
-            inv_num=f"INV-{cr_id}",
-            inv_serial_num=f"SER-{cr_id}",
-            inv_date=timezone.now().date(),
-            inv_amount=amount,
-            inv_nat_of_collection='Personal Clearance'
-        )
-
-        return Response({
-            'invoice_id': invoice.inv_num,
-            'payment_intent_id': payment_intent['id'],
-            'amount': amount
-        })
-    except ClerkCertificate.DoesNotExist:
-        return Response({"error": "Certificate request not found"}, status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        logger.error(f"Error in create_payment_intent: {str(e)}")
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(['POST'])
-def webhook_payment_status(request):
-    try:
-        payment_intent_id = request.data.get('data', {}).get('id')
-        payment_status = request.data.get('data', {}).get('attributes', {}).get('status')
-
-        if payment_intent_id:
-            # Lookup your invoice by stored payment_intent_id if you persist it
-            # Update related certificate status if needed
-            return Response({'status': 'success'})
-        return Response({'error': 'invalid payload'}, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as e:
-        logger.error(f"Error in webhook_payment_status: {str(e)}")
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            if payment_intent_id:
+                # Lookup your invoice by stored payment_intent_id if you persist it
+                # Update related certificate status if needed
+                return Response({'status': 'success'})
+            return Response({'error': 'invalid payload'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error in webhook_payment_status: {str(e)}")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
