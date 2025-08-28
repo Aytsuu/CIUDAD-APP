@@ -15,7 +15,6 @@ interface CertFormProps {
 
 const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
   const [personalType, setPersonalType] = useState("");
-  const [certType, setCertType] = useState("");
   const [purpose, setPurpose] = useState("");
   const [claimDate, setClaimDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -28,7 +27,12 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
 
   
   const purposeOptions: DropdownOption[] = purposeData
-    .filter((purpose: PurposeAndRate) => !purpose.pr_is_archive)
+    .filter((purpose: PurposeAndRate) => {
+      return !purpose.pr_is_archive && 
+             (purpose.pr_category === "Personal and Others" || 
+              purpose.pr_category === "Personal" ||
+              purpose.pr_category.toLowerCase().includes("personal"));
+    })
     .map((purpose: PurposeAndRate) => ({
       label: `${purpose.pr_purpose}`,
       value: purpose.pr_purpose
@@ -38,12 +42,7 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
   const handleSubmit = () => {
     setError(null);
     
-    // Validate that both certType and purpose are selected
-    if (!certType) {
-      setError("Please select a certification type");
-      return;
-    }
-    
+    // Validate that purpose is selected
     if (!purpose) {
       setError("Please select a purpose");
       return;
@@ -57,18 +56,20 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
     const result = CertificationRequestSchema.safeParse({
       cert_type: "personal",
       requester: "user", // This should come from auth context
-      purposes: [purpose], // Convert single purpose to array
+      purposes: [purpose], 
       claimDate: claimDate ? claimDate.toISOString().split("T")[0] : "",
     });
     if (!result.success) {
       setError(result.error.issues[0].message);
       return;
     }
+    const selectedPurposeId = purposeData.find(p => p.pr_purpose === personalType)?.pr_id;
     addPersonalCert.mutate({
       cert_type: "personal",
-      requester: "user", // This should come from auth context
-      purposes: [purpose], // Convert single purpose to array
+      requester: "user", 
+      purposes: [purpose], 
       claimDate: claimDate ? claimDate.toISOString().split("T")[0] : "",
+      pr_id: selectedPurposeId, // Add the purpose ID
     });
   };
 
@@ -88,14 +89,20 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
       )}
 
       {/* Back Button */}
-      <TouchableOpacity onPress={() => navigation?.goBack?.()} className="mb-4">
-        <Ionicons name="arrow-back" size={24} color="#222" />
-      </TouchableOpacity>
+      <View className="flex-row items-center mb-6">
+        <TouchableOpacity 
+          onPress={() => navigation?.goBack?.()} 
+          className="bg-white rounded-full w-10 h-10 items-center justify-center shadow-sm border border-gray-100"
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chevron-back" size={20} color="#374151" />
+        </TouchableOpacity>
+        <Text className="text-lg font-semibold text-gray-900 ml-3">Submit Request</Text>
+      </View>
 
-      {/* Title */}
-      <Text className="text-xl font-bold text-gray-900 mb-6">Submit a Request</Text>
+      
 
-      {/* Error Message */}
+      
       {error && (
         <Text className="text-red-500 mb-2 text-sm">{error}</Text>
       )}
@@ -151,17 +158,18 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
         {/* Removed payment mode field */}
       </View>
 
+      {/* Amount Display - Moved below form fields */}
       {personalType && (
-          <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-3">
+        <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 mt-4">
             <Text className="text-green-800 text-sm font-medium mb-1">Amount to be Paid:</Text>
             <Text className="text-green-700 text-lg font-bold">
-              {(() => {
+            {(() => {
                 const selectedPurpose = purposeData.find(p => p.pr_purpose === personalType);
                 return selectedPurpose ? `₱${selectedPurpose.pr_rate.toLocaleString()}` : '₱0';
-              })()}
+            })()}
             </Text>
-          </View>
-        )}
+        </View>
+    )}
 
       {/* Submit Button */}
       <TouchableOpacity
