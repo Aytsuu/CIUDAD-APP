@@ -878,6 +878,7 @@ function CertificatePage() {
       {/* Render TemplateMainPage when a certificate is selected */}
       {selectedCertificate && (
         <TemplateMainPage
+          key={selectedCertificate.cr_id + Date.now()}
           fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_requester?.split(' ')[0] || ''}
           lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_requester?.split(' ').slice(1).join(' ') || ''}
           age={calculateAge(selectedCertificate.nrc_birthdate || "2003-09-04")}
