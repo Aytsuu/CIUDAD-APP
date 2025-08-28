@@ -44,11 +44,13 @@ class UpdateTemplateByPrIdView(generics.UpdateAPIView):
 class CouncilSchedulingView(generics.ListCreateAPIView):
     serializer_class = CouncilSchedulingSerializer
     queryset = CouncilScheduling.objects.all()
+    permission_classes = [AllowAny]
 
 class CouncilSchedulingDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilSchedulingSerializer
     queryset = CouncilScheduling.objects.all()
     lookup_field = 'ce_id'
+    permission_classes = [AllowAny]
 
     def get_object(self):
         # Use the lookup_field (ce_id) from URL kwargs
@@ -90,6 +92,7 @@ class CouncilSchedulingRestoreView(generics.UpdateAPIView):
     queryset = CouncilScheduling.objects.filter(ce_is_archive=True)
     serializer_class = CouncilSchedulingSerializer
     lookup_field = 'ce_id'
+    permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -100,15 +103,18 @@ class CouncilSchedulingRestoreView(generics.UpdateAPIView):
 class AttendeesView(generics.ListCreateAPIView):
     serializer_class = CouncilAttendeesSerializer
     queryset = CouncilAttendees.objects.all()
+    permission_classes = [AllowAny]
 
 class AttendeesDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilAttendeesSerializer
     queryset = CouncilAttendees.objects.all()
     lookup_field = 'atn_id'
+    permission_classes = [AllowAny]
 
 class AttendeesBulkView(generics.GenericAPIView):
     serializer_class = CouncilAttendeesSerializer
     queryset = CouncilAttendees.objects.all()
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         ce_id = request.data.get('ce_id')
@@ -137,6 +143,7 @@ class AttendeesBulkView(generics.GenericAPIView):
 class AttendanceSheetListView(generics.ListCreateAPIView):
     serializer_class = CouncilAttendanceSerializer
     queryset = CouncilAttendance.objects.all()
+    permission_classes = [AllowAny]
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -172,6 +179,7 @@ class AttendanceSheetDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilAttendanceSerializer
     queryset = CouncilAttendance.objects.all()
     lookup_field = 'att_id'
+    permission_classes = [AllowAny]
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -191,6 +199,7 @@ class RestoreAttendanceView(generics.UpdateAPIView):
     queryset = CouncilAttendance.objects.filter(att_is_archive=True)
     serializer_class = CouncilAttendanceSerializer
     lookup_field = 'att_id'
+    permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -201,6 +210,7 @@ class RestoreAttendanceView(generics.UpdateAPIView):
 
 class StaffAttendanceRankingView(generics.ListAPIView):
     serializer_class = StaffAttendanceRankingSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         # Aggregate present attendees by atn_name for non-archived events
@@ -224,6 +234,7 @@ class StaffAttendanceRankingView(generics.ListAPIView):
 
 Staff = apps.get_model('administration', 'Staff')
 class StaffListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     queryset = Staff.objects.select_related('pos', 'rp__per').only(
         'staff_id',
         'rp__per__per_fname',

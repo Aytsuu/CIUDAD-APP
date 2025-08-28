@@ -247,7 +247,8 @@ class DeleteWasteReportView(generics.DestroyAPIView):
         return get_object_or_404(WasteReport, rep_id=rep_id) 
 
 
-class WastePersonnelView(generics.ListAPIView):  # ONLY GET method allowed
+class WastePersonnelView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = WastePersonnelSerializer
     queryset = WastePersonnel.objects.all()
     filter_backends = [filters.SearchFilter]  
@@ -324,11 +325,7 @@ class WastePersonnelView(generics.ListAPIView):  # ONLY GET method allowed
 
 class WasteTruckView(APIView):
     serializer_class = WasteTruckSerializer
-
-    # def get(self, request):
-    #     trucks = WasteTruck.objects.all()
-    #     serializer = WasteTruckSerializer(trucks, many=True)
-    #     return Response(serializer.data)
+    permission_classes = [AllowAny]
 
     def get(self, request):
         is_archive = request.query_params.get('is_archive', None)
@@ -351,6 +348,7 @@ class WasteTruckDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = WasteTruckSerializer
     queryset = WasteTruck.objects.all()
     lookup_field = 'truck_id'
+    permission_classes = [AllowAny]
 
     def get_object(self, pk):
         try:
@@ -400,6 +398,7 @@ class WasteTruckRestoreView(generics.UpdateAPIView):
     queryset = WasteTruck.objects.filter(truck_is_archive=True)
     serializer_class = WasteTruckSerializer
     lookup_field = 'truck_id'
+    permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()

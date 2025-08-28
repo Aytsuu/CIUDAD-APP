@@ -8,9 +8,11 @@ from django.db.models import OuterRef, Subquery, Count, Q
 from django.apps import apps
 from django.utils import timezone
 from django.core.files.storage import default_storage
+from rest_framework.permissions import AllowAny
 
 class GAD_Budget_TrackerView(generics.ListCreateAPIView):
     serializer_class = GAD_Budget_TrackerSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         year = self.kwargs.get('year')
@@ -36,6 +38,7 @@ class GAD_Budget_TrackerDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = GAD_Budget_Tracker.objects.all()
     serializer_class = GAD_Budget_TrackerSerializer
     lookup_field = 'gbud_num'
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         return super().get_queryset().select_related('gbudy', 'gpr', 'staff').prefetch_related('files')
@@ -58,6 +61,7 @@ class GADBudgetRestoreView(generics.UpdateAPIView):
     queryset = GAD_Budget_Tracker.objects.filter(gbud_is_archive=True)
     serializer_class = GAD_Budget_TrackerSerializer
     lookup_field = 'gbud_num'
+    permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -68,10 +72,12 @@ class GADBudgetRestoreView(generics.UpdateAPIView):
 class GAD_Budget_YearView(generics.ListCreateAPIView):
     queryset = GAD_Budget_Year.objects.all()
     serializer_class = GADBudgetYearSerializer
+    permission_classes = [AllowAny]
 
 class GADBudgetFileView(generics.ListCreateAPIView):
     serializer_class = GADBudgetFileSerializer
     queryset = GAD_Budget_File.objects.all()
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         gbud_num = request.data.get('gbud_num')
@@ -96,8 +102,10 @@ class GADBudgetFileView(generics.ListCreateAPIView):
 class GADBudgetFileDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = GAD_Budget_File.objects.all()
     serializer_class = GADBudgetFileSerializer
+    permission_classes = [AllowAny]
     
 class GADBudgetLogListView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     def get(self, request, year):
         logs = GADBudgetLog.objects.filter(
             gbudl_budget_entry__gbudy__gbudy_year=year,
@@ -110,6 +118,7 @@ class GADBudgetLogListView(generics.ListCreateAPIView):
 
 class ProjectProposalView(generics.ListCreateAPIView):
     serializer_class = ProjectProposalSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         # Get the most recent log date for each proposal
@@ -168,6 +177,7 @@ class ProjectProposalDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ProjectProposal.objects.all().select_related('staff').prefetch_related('logs')
     serializer_class = ProjectProposalSerializer
     lookup_field = 'gpr_id'
+    permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -209,6 +219,7 @@ class ProjectProposalDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class ProjectProposalLogView(generics.ListCreateAPIView):
     serializer_class = ProjectProposalLogSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         gpr_id = self.kwargs.get('gpr_id')
@@ -217,12 +228,14 @@ class ProjectProposalLogView(generics.ListCreateAPIView):
 class AllProjectProposalLogView(generics.ListAPIView):
     serializer_class = ProjectProposalLogSerializer
     queryset = ProjectProposalLog.objects.all().order_by('-gprl_date_approved_rejected')
+    permission_classes = [AllowAny]
     
     def get_queryset(self):
         return super().get_queryset().select_related('staff', 'staff__rp__per', 'staff__pos' ,'gpr')
 
 class UpdateProposalStatusView(generics.GenericAPIView):
     serializer_class = ProjectProposalLogSerializer
+    permission_classes = [AllowAny]
 
     def patch(self, request, gpr_id):
         try:
@@ -253,6 +266,7 @@ class UpdateProposalStatusView(generics.GenericAPIView):
 class ProposalSuppDocCreateView(generics.ListCreateAPIView):
     serializer_class = ProposalSuppDocSerializer
     queryset = ProposalSuppDoc.objects.all()
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         return self.queryset.filter(gpr_id=self.kwargs['proposal_id'])
@@ -275,6 +289,7 @@ class ProposalSuppDocDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProposalSuppDocSerializer
     queryset = ProposalSuppDoc.objects.all()
     lookup_field = 'psd_id'
+    permission_classes = [AllowAny]
     
     def perform_destroy(self, instance):
         if not instance.psd_is_archive:
@@ -289,6 +304,7 @@ class ProposalSuppDocDetailView(generics.RetrieveUpdateDestroyAPIView):
 Staff = apps.get_model('administration', 'Staff')
 
 class StaffListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     queryset = Staff.objects.select_related('rp__per', 'pos').only(
         'staff_id',
         'rp__per__per_fname',
@@ -301,6 +317,7 @@ class ProjectProposalArchiveView(generics.UpdateAPIView):
     queryset = ProjectProposal.objects.filter(gpr_is_archive=False)
     serializer_class = ProjectProposalSerializer
     lookup_field = 'gpr_id'
+    permission_classes = [AllowAny]
 
     def perform_update(self, serializer):
         serializer.save(gpr_is_archive=True)
@@ -309,11 +326,13 @@ class ProjectProposalRestoreView(generics.UpdateAPIView):
     queryset = ProjectProposal.objects.filter(gpr_is_archive=True)
     serializer_class = ProjectProposalSerializer
     lookup_field = 'gpr_id'
+    permission_classes = [AllowAny]
  
     def perform_update(self, serializer):
         serializer.save(gpr_is_archive=False)
 
 class ProjectProposalStatusCountView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
         # Base queryset for ProjectProposal
         queryset = ProjectProposal.objects.filter(gpr_is_archive=False)
@@ -350,6 +369,7 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
         
 class ProjectProposalAvailabilityView(generics.ListAPIView):
     serializer_class = ProjectProposalSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         year = self.kwargs.get('year')

@@ -10,7 +10,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
 from .models import Budget_Plan_Detail, Budget_Plan
 from rest_framework.views import APIView
-
+from rest_framework.permissions import AllowAny
 
 class BudgetPlanView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
@@ -242,6 +242,7 @@ class Income_ImageListView(ImageBaseView, generics.ListCreateAPIView):
     model = Income_Image
     serializer_class = Income_ImageSerializers
     archive_field = 'infi_is_archive'
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         """Handle both single image and bulk image upload"""
@@ -288,11 +289,13 @@ class Income_ImageView(ImageBaseView, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = Income_ImageSerializers
     lookup_field = 'infi_num'
     archive_field = 'infi_is_archive'
+    permission_classes = [AllowAny]
 
 class Disbursement_ImageListView(ImageBaseView, generics.ListCreateAPIView):
     model = Disbursement_Image
     serializer_class = Disbursement_ImageSerializers
     archive_field = 'disf_is_archive'
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         """Handle both single image and bulk image upload"""
@@ -339,6 +342,7 @@ class Disbursement_ImageView(ImageBaseView, generics.RetrieveUpdateDestroyAPIVie
     serializer_class = Disbursement_ImageSerializers
     lookup_field = 'disf_num'
     archive_field = 'disf_is_archive'
+    permission_classes = [AllowAny]
 
 class IncomeFolderListView(generics.ListCreateAPIView):
     serializer_class = Income_Folder_Serializer

@@ -13,10 +13,12 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.db.models import Sum 
+from rest_framework.permissions import AllowAny
 
 Personal = apps.get_model('profiling', 'Personal')
 
 class DonationView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     queryset = Donation.objects.all()
     serializer_class = DonationSerializer
 
@@ -24,10 +26,12 @@ class DonationDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Donation.objects.all()
     serializer_class = DonationSerializer
     lookup_field = 'don_num'
+    permission_classes = [AllowAny]
 
 class PersonalListView(generics.ListAPIView):
     queryset = Personal.objects.only('per_id', 'per_fname', 'per_lname')
     serializer_class = PersonalSerializer
+    permission_classes = [AllowAny]
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +99,7 @@ logger = logging.getLogger(__name__)
 #             return Response({'error': str(e)}, status=400)
 
 class CreateDonationPayment(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         try:
             # Get and validate amount
@@ -196,6 +201,7 @@ def payment_webhook(request):
 class OnlineDonationListView(generics.ListAPIView):
     queryset = OnlineDonation.objects.all()
     serializer_class = OnlineDonationSerializer
+    permission_classes = [AllowAny]
 
 # class PaymentStatus(APIView):
 #    def get(self, request, payment_intent_id):
@@ -244,6 +250,7 @@ class OnlineDonationListView(generics.ListAPIView):
 #             return Response({'error': str(e)}, status=400)
 
 class PaymentStatus(APIView):
+    permission_classes = [AllowAny]
     def get(self, request, payment_intent_id):
         try:
             # 1. Check with PayMongo first
@@ -301,6 +308,7 @@ class PaymentStatus(APIView):
             return Response({'error': str(e)}, status=400)
 
 class MonetaryDonationTotalView(APIView):
+    permission_classes = [AllowAny]
     def get(self, request):
         # Sum all donations where category is "Monetary Donations"
         total = Donation.objects.filter(
