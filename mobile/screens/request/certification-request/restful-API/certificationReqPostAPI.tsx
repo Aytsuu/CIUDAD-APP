@@ -98,10 +98,9 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
             const payload = {
                 cr_id: cr_id, 
                 cr_req_request_date: new Date().toISOString().split('T')[0], 
-                cr_req_claim_date: requestInfo.claim_date,
                 cr_req_transac_id: 'None', 
                 cr_req_purpose: requestInfo.cert_category, 
-                cr_req_status: 'Pending',
+                cr_req_status: 'In Progress',
                 cr_req_payment_status: 'Paid',
                 pr_id: requestInfo.pr_id, 
                 rp_id: residentProfileId, 
@@ -127,7 +126,6 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
             const payload = {
                 bpr_id: bpr_id, 
                 req_request_date: new Date().toISOString().split('T')[0], // Current date
-                req_claim_date: requestInfo.claim_date,
                 req_transac_id: 'None', // Default value
                 req_sales_proof: grossSalesFileId ? String(grossSalesFileId) : '', 
                 req_status: 'Pending',
@@ -246,9 +244,7 @@ export const validateCertificationRequest = (requestInfo: Record<string, any>) =
         }
     }
 
-    if (!requestInfo.claim_date) {
-        errors.push('Claim date is required');
-    }
+    // claim_date removed
 
     return errors;
 };

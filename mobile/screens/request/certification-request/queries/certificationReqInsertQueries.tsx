@@ -24,7 +24,6 @@ export const useAddPersonalCertification = (onSuccess?: () => void) => {
             const apiPayload = {
                 cert_type: values.cert_type,
                 cert_category: values.purposes[0], 
-                claim_date: values.claimDate,
                 payment_mode: values.payment_mode || "not-specified", 
                 requester: values.requester,
                 pr_id: values.pr_id // Pass the purpose ID
