@@ -171,38 +171,7 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                                 
                             </div>
                         </CardContent>
-                    </Card>
-
-                    {/* Display purpose and rate details */}
-                    {/* {selectedPurposeRate && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Rate Information</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-600">Purpose</label>
-                                        <p className="text-sm text-gray-900">{selectedPurposeRate.pr_purpose}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-600">Category</label>
-                                        <p className="text-sm text-gray-900">{selectedPurposeRate.pr_category}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-600">Rate</label>
-                                        <p className="text-lg font-bold text-green-600">₱{parseFloat(selectedPurposeRate.pr_rate.toString()).toFixed(2)}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-600">Date Set</label>
-                                        <p className="text-sm text-gray-900">
-                                            {new Date(selectedPurposeRate.pr_date).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )} */}
+                    </Card>    
 
                     <FormField
                         control={form.control}

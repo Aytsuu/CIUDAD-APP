@@ -63,12 +63,13 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
             
             console.log(payload)
             await createPersonalClearance(payload);
+            if (onSuccess) onSuccess();
             toast.success("Personal clearance created successfully!");
             
             residentForm.reset();
             await queryClient.invalidateQueries({ queryKey: ["residentReq"] });
             
-            if (onSuccess) onSuccess();
+          
             
         } catch (error) {
             console.error('Error creating personal clearance:', error);
