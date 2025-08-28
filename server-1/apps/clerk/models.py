@@ -46,8 +46,6 @@ class BusinessPermitRequest(models.Model):
     bpr_id = models.CharField(max_length=10, primary_key=True)
     req_pay_method = models.CharField(max_length=50)
     req_request_date = models.DateField()
-    req_claim_date = models.DateField()
-    req_transac_id = models.CharField(max_length=100, default='None')
     req_sales_proof = models.CharField(max_length=100)
     req_status = models.CharField(max_length=100, default='Pending')
     req_payment_status = models.CharField(max_length=100, default='Unpaid')
@@ -59,8 +57,8 @@ class BusinessPermitRequest(models.Model):
     # ra_id removed - duplicate of staff_id
     staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='staff_id', related_name='staff_business_permits', null=True)
     # New image fields
-    previous_permit_image = models.CharField(max_length=500, null=True, blank=True)
-    assessment_image = models.CharField(max_length=500, null=True, blank=True)
+    # previous_permit_image = models.CharField(max_length=500, null=True, blank=True)
+    # assessment_image = models.CharField(max_length=500, null=True, blank=True)
     
     class Meta:
         db_table = 'business_permit_request'

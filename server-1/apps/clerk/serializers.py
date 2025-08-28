@@ -167,8 +167,6 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             'bpr_id',
             'req_pay_method',
             'req_request_date',
-            'req_claim_date',
-            'req_transac_id',
             'req_sales_proof',
             'req_status',
             'req_payment_status',
@@ -181,8 +179,8 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             'purpose',  # New field
             'pr_id',
             'staff_id',
-            'previous_permit_image',  # New image field
-            'assessment_image',  # New image field
+            # 'previous_permit_image',  # New image field
+            # 'assessment_image',  # New image field
         ]
 
     def get_business_name(self, obj):
@@ -211,8 +209,6 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
         fields = [
             'bpr_id',
             'req_request_date',
-            'req_claim_date',
-            'req_transac_id',
             'req_sales_proof',
             'req_status',
             'req_payment_status',
@@ -225,7 +221,6 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             'bpr_id': {'required': False},
-            'req_transac_id': {'required': False, 'default': 'None'},
             'req_status': {'required': False, 'default': 'Pending'},
             'req_payment_status': {'required': False, 'default': 'Unpaid'},
             'ags_id': {'required': False, 'allow_null': True},

@@ -5,7 +5,6 @@ export const PersonalCertificationSchema = z.object({
     cert_type: z.literal('personal'),
     requester: z.string().min(1, "Requester is required"),
     purposes: z.array(z.string()).min(1, "At least one purpose is required"),
-    claimDate: z.string().min(1, "Claim date is required"),
     payment_mode: z.string().optional(),
     pr_id: z.number().optional(), // Add purpose ID field
 });
@@ -16,7 +15,6 @@ export const BusinessPermitSchema = z.object({
     business_name: z.string().min(1, "Business name is required"),
     business_address: z.string().min(1, "Business address is required"),
     gross_sales: z.string().min(1, "Annual gross sales is required"),
-    claim_date: z.string().min(1, "Claim date is required"),
     // Image fields for the new backend
     previous_permit_image: z.string().optional(), // Previous permit image for existing businesses
     assessment_image: z.string().optional(), // Assessment document for all businesses
@@ -32,7 +30,6 @@ export const CertificationRequestSchema = z.discriminatedUnion('cert_type', [
 export const CertificateRequestSubmissionSchema = z.object({
     cr_id: z.string().min(1, "Certificate ID is required"),
     req_request_date: z.string().min(1, "Request date is required"),
-    req_claim_date: z.string().min(1, "Claim date is required"),
     req_transac_id: z.string().optional(),
     req_purpose: z.string().min(1, "Purpose is required"),
     req_status: z.enum(["Pending", "Approved", "Rejected", "Completed"]).default("Pending"),
@@ -48,7 +45,6 @@ export const CertificateRequestSubmissionSchema = z.object({
 export const BusinessPermitRequestSubmissionSchema = z.object({
     bpr_id: z.string().min(1, "Business Permit Request ID is required"),
     req_request_date: z.string().min(1, "Request date is required"),
-    req_claim_date: z.string().min(1, "Claim date is required"),
     req_transac_id: z.string().optional(),
     req_sales_proof: z.string().optional(),
     req_status: z.enum(["Pending", "Approved", "Rejected", "Completed"]).default("Pending"),
