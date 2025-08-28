@@ -1,10 +1,10 @@
-// MedicineStocks.tsx
+// MedicineStocks.tsx - Updated version
 "use client";
 import { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, CircleCheck, Loader2, XCircle, Clock, CalendarOff } from "lucide-react";
+import { Search, Plus, FileInput, Loader2, XCircle, Clock, CalendarOff } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -13,7 +13,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmMo
 import { getColumns } from "./columns/MedicineCol";
 import { useNavigate } from "react-router-dom";
 import { useMedicineStockTable } from "../REQUEST/Medicine/queries/MedicineFetchQueries";
-import { useArchiveInventory } from "../REQUEST/Archive/ArchivePutQueries";
+import { useArchiveMedicineStocks } from "../REQUEST/Archive/ArchivePutQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
@@ -27,8 +27,10 @@ export default function MedicineStocks() {
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
   const [medicineToArchive, setMedicineToArchive] = useState<string | null>(null);
+  const [archiveContext, setArchiveContext] = useState({ isExpired: false, hasAvailableStock: false });
+  
   const queryClient = useQueryClient();
-  const { mutate: archiveInventoryMutation } = useArchiveInventory();
+  const { mutate: archiveInventoryMutation } = useArchiveMedicineStocks(); // Updated hook
 
   // Updated to use pagination parameters with filter
   const { data: apiResponse, isLoading, error } = useMedicineStockTable(currentPage, pageSize, searchQuery, stockFilter);
@@ -45,8 +47,13 @@ export default function MedicineStocks() {
     setCurrentPage(1);
   }, [searchQuery, stockFilter]);
 
-  const handleArchiveInventory = (inv_id: string) => {
-    setMedicineToArchive(inv_id);
+  const handleArchiveInventory = (medicine: any) => {
+    // Check if the item is expired and has available stock
+    const isExpired = medicine.expiry_status === 'expired';
+    const hasAvailableStock = medicine.minv_qty_avail > 0;
+    
+    setMedicineToArchive(medicine.inv_id);
+    setArchiveContext({ isExpired, hasAvailableStock });
     setIsArchiveConfirmationOpen(true);
   };
 
@@ -54,7 +61,12 @@ export default function MedicineStocks() {
     if (medicineToArchive !== null) {
       setIsArchiveConfirmationOpen(false);
       try {
-        await archiveInventoryMutation(medicineToArchive);
+        // Pass the expiration and stock status to the mutation
+        await archiveInventoryMutation({ 
+          inv_id: medicineToArchive, 
+          isExpired: archiveContext.isExpired,
+          hasAvailableStock: archiveContext.hasAvailableStock
+        });
         queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
         showSuccessToast("Medicine archived successfully");
       } catch (error) {
@@ -62,6 +74,7 @@ export default function MedicineStocks() {
         showErrorToast("Failed to archive medicine.");
       } finally {
         setMedicineToArchive(null);
+        setArchiveContext({ isExpired: false, hasAvailableStock: false });
       }
     }
   };

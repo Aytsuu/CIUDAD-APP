@@ -249,7 +249,7 @@ class MedicineStockTableView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def auto_archive_expired_medicines(self):
-        """Auto-archive medicines that expired more than 10 days ago"""
+        """Auto-archive medicines that expired more than 10 days ago and log transactions"""
         from datetime import timedelta
         
         today = timezone.now().date()
@@ -265,13 +265,34 @@ class MedicineStockTableView(APIView):
         
         archived_medicine_count = 0
         for stock in medicine_stocks:
+            # Get the current available quantity before archiving
+            current_qty = stock.minv_qty_avail or 0
+            
+            # Determine the unit and format quantity with unit
+            if stock.minv_qty_unit and stock.minv_qty_unit.lower() == "boxes":
+                # For boxes, show quantity in pieces
+                qty_with_unit = f"{current_qty} pcs"
+            else:
+                # For other units, use the actual unit
+                unit = stock.minv_qty_unit if stock.minv_qty_unit else "pcs"
+                qty_with_unit = f"{current_qty} {unit}"
+            
+            # Archive the inventory
             stock.inv_id.is_Archived = True
             stock.inv_id.save()
+            
+            # Create transaction record for the archive action
+            MedicineTransactions.objects.create(
+                mdt_qty=qty_with_unit,  # Record the quantity with unit that was archived
+                mdt_action='Expired',  # Clear action indicating expiration-based archiving
+                minv_id=stock,  # Reference to the medicine inventory
+                staff=None  # System action, so no staff member
+            )
+            
             archived_medicine_count += 1
-            print(f"Archived medicine stock: {stock.minv_id}, Expiry: {stock.inv_id.expiry_date}")
+            print(f"Archived medicine stock: {stock.minv_id}, Expiry: {stock.inv_id.expiry_date}, Qty: {qty_with_unit}")
         
-        print(f"Auto-archived {archived_medicine_count} medicine items")  
-
+        print(f"Auto-archived {archived_medicine_count} medicine items with transaction records")
 class MedicineInventoryView(generics.ListAPIView):
     serializer_class = MedicineInventorySerializer
     queryset = MedicineInventory.objects.all()
@@ -428,16 +449,6 @@ class MedicineInvRetrieveView(generics.RetrieveUpdateAPIView):
        return obj
    
    
-class ArchiveMedicineInventoryView(generics.ListCreateAPIView):
-    serializer_class=MedicineInventorySerializer
-    queryset=MedicineInventory.objects.all()
-  
-    def get_queryset(self):
-        # Filter out MedicineInventory entries where the related Inventory is archived
-        queryset = MedicineInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
-        return queryset
-    
-    
 
 class MedicineTransactionView(generics.ListCreateAPIView):
     serializer_class=MedicineTransactionSerializers
@@ -447,7 +458,79 @@ class MedicineTransactionView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
     
     
+# ===========================MEDICINE ARCHIVE==============================
+class MedicineArchiveInventoryView(APIView):
     
+    def patch(self, request, inv_id):
+        """
+        Archive medicine inventory item and create expired transaction only if expired AND has available stock
+        """
+        try:
+            # Get inventory item
+            inventory = get_object_or_404(Inventory, inv_id=inv_id)
+            
+            # Archive the inventory
+            inventory.is_Archived = True
+            inventory.updated_at = timezone.now()
+            inventory.save()
+            
+            # Check if item is expired and has available stock to create transaction
+            is_expired = request.data.get('is_expired', False)
+            has_available_stock = request.data.get('has_available_stock', False)
+            
+            transaction_created = False
+            if is_expired and has_available_stock:
+                try:
+                    self._create_expired_transaction(inventory)
+                    transaction_created = True
+                except Exception as e:
+                    # Roll back the archive operation if transaction creation fails
+                    inventory.is_Archived = False
+                    inventory.save()
+                    return Response(
+                        {"error": f"Failed to create transaction for expired medicine: {str(e)}"}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            return Response(
+                {
+                    "message": "Medicine inventory archived successfully", 
+                    "inv_id": inv_id,
+                    "transaction_created": transaction_created
+                },
+                status=status.HTTP_200_OK
+            )
+            
+        except Exception as e:
+            return Response(
+                {"error": f"Error archiving medicine inventory: {str(e)}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    def _create_expired_transaction(self, inventory):
+        """
+        Create expired transaction for medicine items with available stock
+        """
+        if not hasattr(inventory, 'medicine_inventory'):
+            raise Exception("No medicine inventory found for this inventory item")
+        
+        medicine_inventory = inventory.medicine_inventory
+        current_qty = medicine_inventory.minv_qty_avail or 0
+        unit = medicine_inventory.minv_qty_unit or "pcs"
+        
+        if unit.lower() == "boxes":
+            qty_with_unit = f"{current_qty} pcs"
+        else:
+            qty_with_unit = f"{current_qty} {unit}"
+        
+        # Create the medicine transaction
+        MedicineTransactions.objects.create(
+            mdt_qty=qty_with_unit,
+            mdt_action="Expired",
+            minv_id=medicine_inventory,
+            staff=None  # None for system action
+        )
+           
 
 # ==================MEDICINE REPORT=======================
 

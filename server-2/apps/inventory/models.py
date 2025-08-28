@@ -132,6 +132,7 @@ class Inventory(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     is_Archived = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
+    
 
     def save(self, *args, **kwargs):
         if not self.inv_id:
@@ -183,6 +184,7 @@ class MedicineInventory(models.Model):
     med_id = models.ForeignKey('Medicinelist', on_delete=models.PROTECT, db_column='med_id')
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_inventories', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+    wasted = models.PositiveIntegerField(default=0)
 
     class Meta: 
         db_table = 'medicine_inventory'
@@ -214,6 +216,8 @@ class CommodityInventory(models.Model):
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE, db_column='inv_id')
     com_id = models.ForeignKey('CommodityList', on_delete=models.PROTECT,db_column ='com_id')
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+    wasted = models.PositiveIntegerField(default=0)
+
 
     # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     
@@ -341,6 +345,7 @@ class ConditionalVaccine(models.Model):
     vac_id = models.ForeignKey(VaccineList, on_delete=models.PROTECT, db_column='vac_id', related_name='conditional_vaccines')
     class Meta:
         db_table = 'conditional_vaccine'    
+       
           
 class VaccineStock(models.Model):
     vacStck_id =models.BigAutoField(primary_key=True)

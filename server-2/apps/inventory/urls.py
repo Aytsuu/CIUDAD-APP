@@ -27,7 +27,7 @@ urlpatterns = [
     path("medicineinventorylist/", MedicineInventoryView.as_view(), name="medicine-inventory"),
     path("update_medicinestocks/<int:minv_id>/", MedicineInvRetrieveView.as_view(), name="update_medicinestocks"),
     path("medicinetransaction/", MedicineTransactionView.as_view(), name="medicine-transaction"),
-    path('archive/medicine-inventory/', ArchiveMedicineInventoryView.as_view(), name='archive-medicine-inventory'),
+    path('archive/medicinestocks/<str:inv_id>/', MedicineArchiveInventoryView.as_view(), name='archive-medicine-inventory'),
     path("medicine_stock-create/", MedicineStockCreate.as_view(), name="medicine-stock-atomic"),
 
 
@@ -40,8 +40,9 @@ urlpatterns = [
     path("commodity-stock-table/",CommodityStockTableView.as_view(),name="commodity-stock-view"),
     path("update_commoditystocks/<int:cinv_id>/", CommodityInvRetrieveView.as_view(), name="update_commoditystocks"),
     path("commoditytransaction/", CommodityTransactionView.as_view(), name="commodity-transaction"),
-    path('archive/commodity-inventory/', ArhiveCommodityInventoryVIew.as_view(), name='archive-commodity-inventory'),
+    path('archive/commoditystocks/<str:inv_id>/', CommodityArchiveInventoryView.as_view(), name='archive-commodity-inventory'),
     path('commodity-create/', CommodityStockCreate.as_view(), name='commodity-create'),
+    path('archive/commoditystocks-table/', ArchivedCommodityTable.as_view(), name='archived-commodity-table'),
     
 
     path("firstaidlist/", FirstAidListView.as_view(), name="firstaidlist"),
@@ -50,11 +51,11 @@ urlpatterns = [
     path("first-aid-stock-table/",FirstAidStockTableView.as_view(),name="first-aid-stocks-table"),
     path("firstaidinventorylist/", FirstAidInventoryView.as_view(), name="firstaid-inventory"),
     path("update_firstaidstocks/<int:finv_id>/", FirstAidInvRetrieveView.as_view(), name="update_firstaidstocks"),
-    path('archive/first-aid-inventory/', ArchiveFirstAidInventoryVIew.as_view(), name='archive-first-aid-inventory'),
+    path('archive/firstaidstocks/<str:inv_id>/', FirstAidArchiveInventoryView.as_view(), name='archive-first-aid-inventory'),
     path("firstaidtransaction/", FirstAidTransactionView.as_view(), name="firstaid-transaction"),
     path("firstaidstock-create/", FirstAidStockCreate.as_view(), name="firstaidcreateview"),
      
-  
+   
 
     path("vac_list/", VaccineListView.as_view(), name="vaccination-list"),
     path("vac_intervals/", VaccineIntervalView.as_view(), name="vaccination-interval"), 
@@ -66,7 +67,7 @@ urlpatterns = [
     path('conditional_vaccine/<int:vac_id>/', ConditionRetrieveUpdateDestroyView.as_view(), name='conditional-vaccine-detail'),
     path("vaccine_stocks/", VaccineStocksView.as_view(), name="vaccine_stocks"),
     path("vaccine_stocks/<int:vacStck_id>/", VaccineStockRetrieveUpdateDestroyView.as_view(), name="vaccine_stocks-detail"),
-    path('archive/vaccine-stocks/', ArchiveVaccineStocksView.as_view(), name='archive-vaccine-stocks'),
+    # path('archive/vaccine-stocks/', ArchiveVaccineStocksView.as_view(), name='archive-vaccine-stocks'),
     path("vaccine_stock-create/", VaccineStockCreate.as_view(), name="vaccine_stock_atomic"),
 
 
@@ -74,14 +75,17 @@ urlpatterns = [
     path("imz_supplieslist-table/", ImmunizationSuppliesListTable.as_view(), name="imz_supplies-list"),
     path("imz_supplieslist-view/", ImmunizationSuppliesListCreateView.as_view(), name="imz_supplies-list-createview"),
     path("imz_supplies/<int:imz_id>/", ImmunizationSuppliesRetrieveUpdateDestroyView.as_view(), name="imz_supplies-detail"),
-    path("immunization_stock/", ImmunizationStockSuppliesView.as_view(), name="immunization_stocksn"),
     path("immunization_stock/<int:imzStck_id>/", ImmunizationSuppliesStockRetrieveUpdateDestroyView.as_view(), name="immunization_stocks-detail"),
-    path('archive/immunization-supplies/', ArchiveImmunizationSuppliesStockListView.as_view(), name='archive-immunization-supplies'),
+    # path('archive/immunization-supplies/', ArchiveImmunizationSuppliesStockListView.as_view(), name='archive-immunization-supplies'),
     path("immunization_stock-create/", ImmunizationStockCreate.as_view(), name="immunization_stock_atomic"),
+
+
 
     path("combined_vaccine_data/", CombinedVaccineDataView.as_view(), name="combined-vaccine-data"),
     path("combined-stock-table/", CombinedStockTable.as_view(), name="combined-stock"),
     path("antigens_stocks/transaction/", AntigenTransactionView.as_view(), name="antigens_stocks"), 
+    path('archive/antigen/<str:inv_id>/', AntigenArchiveInventoryView.as_view(), name='archive-antigen'),
+    path("archive/antigenstocks-table/", ArchivedAntigenTable.as_view(), name="age_group-list"),
 
     path("age_group/", AgeGroupView.as_view(), name="age_group-detail"),
     path("age_group/<int:agegrp_id>/", DeleteUpdateAgeGroupView.as_view(), name="age_group-detail"),

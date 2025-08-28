@@ -246,7 +246,7 @@ class CommodityStockTableView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def auto_archive_expired_commodities(self):
-        """Auto-archive commodities that expired more than 10 days ago"""
+        """Auto-archive commodities that expired more than 10 days ago and log transactions"""
         from datetime import timedelta
         
         today = timezone.now().date()
@@ -262,12 +262,34 @@ class CommodityStockTableView(APIView):
         
         archived_commodity_count = 0
         for stock in commodity_stocks:
+            # Get the current available quantity before archiving
+            current_qty = stock.cinv_qty_avail or 0
+            
+            # Determine the unit and format quantity with unit
+            if stock.cinv_qty_unit and stock.cinv_qty_unit.lower() == "boxes":
+                # For boxes, show quantity in pieces
+                qty_with_unit = f"{current_qty} pcs"
+            else:
+                # For other units, use the actual unit
+                unit = stock.cinv_qty_unit if stock.cinv_qty_unit else "pcs"
+                qty_with_unit = f"{current_qty} {unit}"
+            
+            # Archive the inventory
             stock.inv_id.is_Archived = True
             stock.inv_id.save()
+            
+            # Create transaction record for the archive action
+            CommodityTransaction.objects.create(
+                comt_qty=qty_with_unit,  # Record the quantity with unit that was archived
+                comt_action='Expired',  # Clear action indicating expiration-based archiving
+                cinv_id=stock,  # Reference to the commodity inventory
+                staff=None  # System action, so no staff member
+            )
+            
             archived_commodity_count += 1
-            print(f"Archived commodity stock: {stock.cinv_id}, Expiry: {stock.inv_id.expiry_date}")
+            print(f"Archived commodity stock: {stock.cinv_id}, Expiry: {stock.inv_id.expiry_date}, Qty: {current_qty}")
         
-        print(f"Auto-archived {archived_commodity_count} commodity items")
+        print(f"Auto-archived {archived_commodity_count} commodity items with transaction records")
 class CommodityStockCreate(APIView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -419,14 +441,6 @@ class CommodityInvRetrieveView(generics.RetrieveUpdateAPIView):
        obj = get_object_or_404(CommodityInventory, cinv_id = cinv_id)
        return obj
 
-
-class ArhiveCommodityInventoryVIew(generics.ListCreateAPIView):
-    serializer_class=CommodityInventorySerializer
-    queryset=CommodityInventory.objects.all()
-    
-    def get_queryset(self):
-        queryset = CommodityInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
-        return queryset
     
 class CommodityTransactionView(generics.ListCreateAPIView):
     serializer_class=CommodityTransactionSerializer
@@ -436,6 +450,228 @@ class CommodityTransactionView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
     
     
+     
+# ===========================COMMODITY ARCHIVE==============================
+class CommodityArchiveInventoryView(APIView):
+    
+    def patch(self, request, inv_id):
+        """
+        Archive commodity inventory item and create expired transaction only if expired AND has available stock
+        """
+        try:
+            # Get inventory item
+            inventory = get_object_or_404(Inventory, inv_id=inv_id)
+            
+            # Check if this is actually a commodity inventory
+            # Use the correct reverse relationship name
+            if not hasattr(inventory, 'commodityinventory'):
+                return Response(
+                    {"error": "This inventory item is not a commodity item"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Archive the inventory
+            inventory.is_Archived = True
+            inventory.updated_at = timezone.now()
+            inventory.save()
+            
+            # Check if item is expired and has available stock to create transaction
+            is_expired = request.data.get('is_expired', False)
+            has_available_stock = request.data.get('has_available_stock', False)
+            
+            # Convert string 'true'/'false' to boolean if needed
+            if isinstance(is_expired, str):
+                is_expired = is_expired.lower() == 'true'
+            if isinstance(has_available_stock, str):
+                has_available_stock = has_available_stock.lower() == 'true'
+            
+            transaction_created = False
+            if is_expired and has_available_stock:
+                try:
+                    self._create_expired_transaction(inventory)
+                    transaction_created = True
+                except Exception as e:
+                    # Roll back the archive operation if transaction creation fails
+                    inventory.is_Archived = False
+                    inventory.save()
+                    return Response(
+                        {"error": f"Failed to create transaction for expired commodity: {str(e)}"}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            return Response(
+                {
+                    "message": "Commodity inventory archived successfully", 
+                    "inv_id": inv_id,
+                    "transaction_created": transaction_created
+                },
+                status=status.HTTP_200_OK
+            )
+            
+        except Exception as e:
+            return Response(
+                {"error": f"Error archiving commodity inventory: {str(e)}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    def _create_expired_transaction(self, inventory):
+        """
+        Create expired transaction for commodity items with available stock
+        """
+        # Access the commodity inventory through the reverse relationship
+        commodity_inventory = inventory.commodityinventory
+        current_qty = commodity_inventory.cinv_qty_avail or 0
+        unit = commodity_inventory.cinv_qty_unit or "pcs"
+        
+        if unit.lower() == "boxes":
+            qty_with_unit = f"{current_qty} pcs"
+        else:
+            qty_with_unit = f"{current_qty} {unit}"
+        
+        # Create the commodity transaction
+        CommodityTransaction.objects.create(
+            comt_qty=qty_with_unit,
+            comt_action="Expired",
+            cinv_id=commodity_inventory,  # This should be the CommodityInventory instance
+            staff=None  # None for system action
+        )
+
+# ===========================COMMODITY ARCHIVED TABLE==============================
+class ArchivedCommodityTable(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        try:
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            filter_type = request.GET.get('filter', 'all')  # all, expired, out_of_stock
+            
+            # Get archived commodity stocks
+            commodity_stocks = CommodityInventory.objects.select_related(
+                'com_id', 'inv_id'
+            ).filter(inv_id__is_Archived=True)
+            
+            # Apply search filter if provided
+            if search_query:
+                commodity_stocks = commodity_stocks.filter(
+                    Q(com_id__com_name__icontains=search_query) |
+                    Q(inv_id__inv_id__icontains=search_query) |
+                    Q(cinv_recevFrom__icontains=search_query)
+                )
+            
+            # Calculate today's date for expiry comparisons
+            today = timezone.now().date()
+            
+            # Apply reason filter
+            if filter_type == 'expired':
+                commodity_stocks = commodity_stocks.filter(
+                    Q(inv_id__expiry_date__lt=today)
+                )
+            elif filter_type == 'out_of_stock':
+                commodity_stocks = commodity_stocks.filter(
+                    Q(cinv_qty_avail=0) & 
+                    (Q(inv_id__expiry_date__gte=today) | Q(inv_id__expiry_date__isnull=True))
+                )
+            
+            archived_data = []
+            
+            # Process archived commodity stocks
+            for stock in commodity_stocks:
+                # Get the inventory record
+                inventory = stock.inv_id
+                
+                # Safely handle None values with defaults
+                cinv_qty = stock.cinv_qty or 0
+                cinv_qty_avail = stock.cinv_qty_avail or 0
+                wasted = stock.wasted or 0
+                cinv_pcs = stock.cinv_pcs or 0
+                
+                # Calculate total pieces (for boxes)
+                total_pcs = cinv_qty * cinv_pcs if stock.cinv_qty_unit and stock.cinv_qty_unit.lower() == "boxes" else cinv_qty
+                
+                # Calculate total quantity display
+                if stock.cinv_qty_unit and stock.cinv_qty_unit.lower() == "boxes":
+                    total_qty_display = f"{cinv_qty} boxes ({total_pcs} pcs)"
+                else:
+                    total_qty_display = f"{cinv_qty} {stock.cinv_qty_unit or 'units'}"
+                
+                # Check expiry status
+                expiry_date = inventory.expiry_date if inventory else None
+                is_expired = expiry_date and expiry_date < today if expiry_date else False
+                
+                # Determine archive reason
+                archive_reason = 'Expired' if is_expired else 'Out of Stock'
+                
+                # Calculate actual used quantity
+                # If available stock is 0, then quantity used should be 0
+                if cinv_qty_avail == 0:
+                    actual_used = 0
+                else:
+                    # Otherwise, calculate as Total Qty - Available Stock - Wasted
+                    actual_used = total_pcs - cinv_qty_avail - wasted
+                
+                item_data = {
+                    'type': 'commodity',
+                    'id': stock.cinv_id,
+                    'category': 'Commodity',
+                    'item': {
+                        'com_name': stock.com_id.com_name if stock.com_id else "Unknown Commodity",
+                        'unit': stock.cinv_qty_unit or 'units',
+                    },
+                    'qty': {
+                        'cinv_qty': cinv_qty,
+                        'cinv_pcs': total_pcs  # Total pieces for boxes, otherwise same as cinv_qty
+                    },
+                    'administered': actual_used,
+                    'wasted': wasted,
+                    'availableStock': cinv_qty_avail,
+                    'recevFrom': stock.cinv_recevFrom or "OTHERS",
+                    'expiryDate': expiry_date.isoformat() if expiry_date else "N/A",
+                    'archivedDate': inventory.updated_at.isoformat() if inventory and inventory.updated_at else inventory.created_at.isoformat() if inventory else None,
+                    'reason': archive_reason,
+                    'inv_id': inventory.inv_id if inventory else None,
+                    'com_id': stock.com_id.com_id if stock.com_id else None,
+                    'cinv_id': stock.cinv_id,
+                    'cinv_qty_unit': stock.cinv_qty_unit or 'units',
+                    'cinv_pcs': cinv_pcs,
+                    'isArchived': inventory.is_Archived if inventory else False,
+                    'created_at': stock.created_at.isoformat() if stock.created_at else None,
+                }
+                
+                archived_data.append(item_data)
+            
+            # Sort by archived date descending (most recent first)
+            archived_data.sort(key=lambda x: x['archivedDate'] if x['archivedDate'] else '', reverse=True)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginator.page_size = page_size
+            page_data = paginator.paginate_queryset(archived_data, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response(response.data)
+            
+            return Response({
+                'success': True,
+                'results': archived_data,
+                'count': len(archived_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            print(f"Error traceback: {traceback.format_exc()}")
+            return Response({
+                'success': False,
+                'error': f'Error fetching archived commodities: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+            
+            
+            
 
 # ============================ COMMODITY REPORT =====================
 

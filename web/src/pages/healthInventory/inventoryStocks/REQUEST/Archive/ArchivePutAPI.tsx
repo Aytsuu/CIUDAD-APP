@@ -1,14 +1,16 @@
-import {api2} from "@/api/api";
+// // REQUEST/Archive/ArchivePutAPI.ts
+// import { api2 } from "@/api/api";
 
-// Add this to your REQUEST file (or create a new one)
-export const archiveInventory = async (inv_id: string) => {
-    try {
-      const response = await api2.put(`inventory/update_inventorylist/${inv_id}/`, {
-        is_Archived: true
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error archiving inventory:", error);
-      throw error;
-    }
-  };
+// export const archiveInventory = async (inv_id: string, isExpired: boolean = false, hasAvailableStock: boolean = false) => {
+//   try {
+//     const response = await api2.put(`inventory/antigen/${inv_id}/`, {
+//       is_expired: isExpired,
+//       has_available_stock: hasAvailableStock
+//     });
+
+//     return response.data;
+//   } catch (error) {
+//     console.error("Error archiving inventory:", error);
+//     throw error;
+//   }
+// };

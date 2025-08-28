@@ -5,7 +5,7 @@ import { Archive } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const CommodityStocksColumns = (
-  handleArchiveInventory: (inv_id: string) => void
+  handleArchiveInventory: (commodity: any) => void  // Changed to accept the entire commodity object
 ): ColumnDef<any>[] => [
   {
     accessorKey: "created_at",
@@ -43,15 +43,7 @@ export const CommodityStocksColumns = (
       </div>
     )
   },
-  {
-    accessorKey: "batchNumber",
-    header: "Batch Number",
-    cell: ({ row }) => (
-      <div className="text-center">
-        {row.original.batchNumber || "N/A"}
-      </div>
-    )
-  },
+  
   {
     accessorKey: "item",
     header: "Commodity Details",
@@ -274,6 +266,7 @@ export const CommodityStocksColumns = (
       const commodity = row.original;
       const expired = commodity.isExpired;
       const outOfStock = commodity.isOutOfStock;
+      const hasAvailableStock = commodity.availableStock > 0; // Check if there's available stock
 
       return (
         <div className="flex gap-2">
@@ -297,7 +290,13 @@ export const CommodityStocksColumns = (
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => handleArchiveInventory(commodity.inv_id)}
+            onClick={() => handleArchiveInventory(commodity)} // Pass the entire commodity object
+            disabled={hasAvailableStock && !expired} // Disable if has available stock and not expired
+            title={
+              hasAvailableStock && !expired 
+                ? "Cannot archive commodity with available stock" 
+                : "Archive commodity"
+            }
           >
             <Archive />
           </Button>

@@ -92,7 +92,23 @@ export default function AddVaccineStock() {
               <div className="mt-2">
                 <Label className="block mb-2  text-black/70">Vaccine Name</Label>
                 <div className="relative">
-                  <Combobox options={vaccineOptions?.formatted || []} value={form.watch("vac_id")} onChange={(value) => form.setValue("vac_id", value)} placeholder={isVaccinesLoading ? "Loading vaccines..." : "Select vaccine"} emptyMessage="No available vaccines" triggerClassName="w-full" />
+                  <Combobox 
+                    options={vaccineOptions?.formatted || []} 
+                    value={
+                      // Find the formatted option that matches the stored vac_id
+                      vaccineOptions?.formatted?.find((option: any) => 
+                        option.id.startsWith(form.watch("vac_id") + ',')
+                      )?.id || ''
+                    }
+                    onChange={(value) => {
+                      // Extract only the vac_id from the concatenated value
+                      const vacId = value.split(',')[0]; // Get the first part before the comma
+                      form.setValue("vac_id", vacId);
+                    }}
+                    placeholder={isVaccinesLoading ? "Loading vaccines..." : "Select vaccine"} 
+                    emptyMessage="No available vaccines" 
+                    triggerClassName="w-full" 
+                  />
                 </div>
               </div>
 

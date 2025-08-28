@@ -1,6 +1,9 @@
 import {api2} from "@/api/api";
-import {useState,useEffect} from "react"
 import {getFirstAid} from "@/pages/healthInventory/InventoryList/restful-api/firstAid/FirstAidGetAPI";  
+import { useQuery } from "@tanstack/react-query";
+import { showErrorToast } from "@/components/ui/toast";
+
+
 
 export const getFirstAidStocksList = async () => {
     try {
@@ -53,30 +56,33 @@ export const getFirstAidStocksTable= async (
 };
 
 
+export const FetchFirstAid = () => {
+  return useQuery({
+    queryKey: ["firstAid"],
+    queryFn: async () => {
+      try {
+        const firstAid = await getFirstAid();
 
+        if (!firstAid || !Array.isArray(firstAid)) {
+          return {
+            default: [],
+            formatted: []
+          };
+        }
 
-export const getFirstAidList = () => {
-  const [firstAid, setFirstAid] = useState<
-    { id: string; name: string; category: string }[]
-  >([]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const firstAid = await getFirstAid();
-      console.log("Raw Medicines Data:", firstAid); // Debugging log
-
-      if (Array.isArray(firstAid)) {
-        const transformedData = firstAid.map((firstAid: any) => ({
-          id: firstAid.fa_id, // Force id to be a string
-          name: firstAid.fa_name,
-          category: firstAid.catlist, // Assuming category is available in the response
-        }));
-        console.log("Transformed Data:", transformedData); // Debugging log
-        setFirstAid(transformedData); // No default option
+        return {
+          default: firstAid,
+          formatted: firstAid.map((fa: any) => ({
+            id:`${ String(fa.fa_id)},${fa.fa_name}`,
+            name: `${fa.fa_name}`,
+            rawName: fa.fa_name,
+            category: fa.catlist || "No Category"
+          }))
+        };
+      } catch (error) {
+        showErrorToast("Failed to fetch first aid data");
+        throw error;
       }
-    };
-    fetchData();
-  }, []);
-
-  return firstAid;
+    }
+  });
 };

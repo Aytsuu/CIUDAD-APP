@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormItem, FormLabel } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MedicineStocksSchema, MedicineStockType } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { Loader2, Edit } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useSubmitMedicineStock } from "../REQUEST/Medicine/restful-api/MedicineSubmit";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
@@ -15,8 +15,7 @@ import { useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { Label } from "@/components/ui/label";
 import { Combobox } from "@/components/ui/combobox";
-import { useQuery } from "@tanstack/react-query";
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+
 import { fetchMedicines } from "../REQUEST/Medicine/restful-api/MedicineFetchAPI";
 
 export default function AddMedicineStock() {
@@ -74,11 +73,19 @@ export default function AddMedicineStock() {
               <div className="relative">
                 <Combobox
                   options={medicineOptions?.formatted || []}
-                  value={form.watch("medicineID")}
+                  value={
+                    // Find the formatted option that matches the stored medicineID
+                    medicineOptions?.formatted?.find((option: any) => 
+                      option.id.startsWith(form.watch("medicineID") + ',')
+                    )?.id || ''
+                  }
                   onChange={(value) => {
-                    form.setValue("medicineID", value);
+                    // Extract only the medicineID from the concatenated value
+                    const medId = value.split(',')[0]; // Get the first part before the comma
+                    form.setValue("medicineID", medId);
+                    
                     // Update category when medicine is selected
-                    const selectedMedicine = medicineOptions?.default.find((med: any) => med.med_id === value);
+                    const selectedMedicine = medicineOptions?.default.find((med: any) => med.med_id === medId);
                     if (selectedMedicine) {
                       form.setValue("category", selectedMedicine.catlist || "");
                     }

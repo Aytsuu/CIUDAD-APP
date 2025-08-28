@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button/button";
 import { Archive, Minus } from "lucide-react";
 import { Link } from "react-router-dom";
 
-
 export const getColumns = (
-  handleArchiveInventory: (inv_id: string) => void
+  handleArchiveInventory: (firstAid: any) => void  // Changed to accept the entire first aid object
 ): ColumnDef<any>[] => [
   {
     accessorKey: "created_at",
@@ -41,15 +40,6 @@ export const getColumns = (
     cell: ({ row }) => (
       <div className="text-center bg-snow p-2 rounded-md text-gray-700">
         {row.original.inv_id || "N/A"}
-      </div>
-    )
-  },
-  {
-    accessorKey: "batchNumber",
-    header: "Batch Number",
-    cell: ({ row }) => (
-      <div className="text-center">
-        {row.original.batchNumber || "N/A"}
       </div>
     )
   },
@@ -263,6 +253,7 @@ export const getColumns = (
       const firstAid = row.original;
       const expired = firstAid.isExpired;
       const outOfStock = firstAid.isOutOfStock;
+      const hasAvailableStock = firstAid.availableStock > 0; // Check if there's available stock
 
       return (
         <div className="flex gap-2">
@@ -286,7 +277,13 @@ export const getColumns = (
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => handleArchiveInventory(firstAid.inv_id)}
+            onClick={() => handleArchiveInventory(firstAid)} // Pass the entire first aid object
+            disabled={hasAvailableStock && !expired} // Disable if has available stock and not expired
+            title={
+              hasAvailableStock && !expired 
+                ? "Cannot archive first aid item with available stock" 
+                : "Archive first aid item"
+            }
           >
             <Archive />
           </Button>

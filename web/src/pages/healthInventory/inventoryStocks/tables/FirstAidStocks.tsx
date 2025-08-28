@@ -13,7 +13,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmMo
 import { getColumns } from "./columns/FirstAidCol";
 import { useNavigate } from "react-router-dom";
 import { useFirstAidStocksTable } from "../REQUEST/FirstAid/queries/FirstAidFetchQueries";
-import { useArchiveInventory } from "../REQUEST/Archive/ArchivePutQueries";
+import { useArchiveFirstAidInventory } from "../REQUEST/Archive/ArchivePutQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
@@ -26,9 +26,12 @@ export default function FirstAidStocks() {
   const [currentPage, setCurrentPage] = useState(1);
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
-  const [firstAidToArchive, setFirstAidToArchive] = useState<string | null>(null);
-  const queryClient = useQueryClient();
-  const { mutate: archiveInventoryMutation } = useArchiveInventory();
+  const [firstAidToArchive, setFirstAidToArchive] = useState<{
+    inv_id: string;
+    isExpired: boolean;
+    hasAvailableStock: boolean;
+  } | null>(null);
+  const { mutate: archiveFirstAidMutation } = useArchiveFirstAidInventory();
 
   // Updated to use pagination parameters with filter
   const { data: apiResponse, isLoading, error } = useFirstAidStocksTable(currentPage, pageSize, searchQuery, stockFilter);
@@ -45,8 +48,15 @@ export default function FirstAidStocks() {
     setCurrentPage(1);
   }, [searchQuery, stockFilter]);
 
-  const handleArchiveInventory = (inv_id: string) => {
-    setFirstAidToArchive(inv_id);
+  const handleArchiveInventory = (firstAid: any) => {
+    const hasAvailableStock = firstAid.availableStock > 0;
+    const isExpired = firstAid.isExpired;
+
+    setFirstAidToArchive({
+      inv_id: firstAid.inv_id,
+      isExpired: isExpired,
+      hasAvailableStock: hasAvailableStock
+    });
     setIsArchiveConfirmationOpen(true);
   };
 
@@ -54,8 +64,11 @@ export default function FirstAidStocks() {
     if (firstAidToArchive !== null) {
       setIsArchiveConfirmationOpen(false);
       try {
-        await archiveInventoryMutation(firstAidToArchive);
-        queryClient.invalidateQueries({ queryKey: ["firstAidStocks"] });
+        archiveFirstAidMutation({
+          inv_id: firstAidToArchive.inv_id,
+          isExpired: firstAidToArchive.isExpired,
+          hasAvailableStock: firstAidToArchive.hasAvailableStock
+        });
         showSuccessToast("First aid item archived successfully");
       } catch (error) {
         console.error("Failed to archive first aid:", error);

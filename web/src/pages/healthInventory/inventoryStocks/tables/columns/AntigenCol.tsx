@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router-dom";
 
 export const getStockColumns = (
-  handleArchiveInventory: (inv_id: string) => void
+  handleArchiveInventory: (antigen: any) => void  // Changed to accept the entire antigen object
 ): ColumnDef<any>[] => [
   {
     accessorKey: "created_at",
@@ -329,6 +329,7 @@ export const getStockColumns = (
       const isVaccine = category === "vaccine";
       const expired = vaccine.isExpired;
       const outOfStock = vaccine.isOutOfStock;
+      const hasAvailableStock = vaccine.availableStock > 0; // Check if there's available stock
 
       return (
         <div className="flex gap-2">
@@ -352,7 +353,13 @@ export const getStockColumns = (
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => handleArchiveInventory(vaccine.inv_id)}
+            onClick={() => handleArchiveInventory(vaccine)} // Pass the entire vaccine object
+            disabled={hasAvailableStock && !expired} // Disable if has available stock and not expired
+            title={
+              hasAvailableStock && !expired 
+                ? "Cannot archive item with available stock" 
+                : "Archive item"
+            }
           >
             <Archive />
           </Button>

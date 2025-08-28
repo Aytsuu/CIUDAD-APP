@@ -10,7 +10,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { archiveInventory } from "../REQUEST/Archive/ArchivePutAPI";
+import { useArchiveAntigenStocks } from "../REQUEST/Archive/ArchivePutQueries";
 import { getStockColumns } from "./columns/AntigenCol";
 import { useNavigate } from "react-router-dom";
 import { useAntigenCombineStocks } from "../REQUEST/Antigen/queries/AntigenFetchQueries";
@@ -33,11 +33,16 @@ export default function CombinedStockTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [stockFilter, setStockFilter] = useState<any>("all");
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
-  const [inventoryToArchive, setInventoryToArchive] = useState<string | null>(null);
+  const [inventoryToArchive, setInventoryToArchive] = useState<{
+    inv_id: string;
+    isExpired: boolean;
+    hasAvailableStock: boolean;
+  } | null>(null);
   const queryClient = useQueryClient();
 
   // Updated to use pagination parameters with filter
   const { data: apiResponse, isLoading, error } = useAntigenCombineStocks(currentPage, pageSize, searchQuery, stockFilter);
+  const { mutate: archiveCommodityMutation } = useArchiveAntigenStocks();
 
   // Extract data from paginated response
   const stockData = apiResponse?.results || [];
@@ -50,30 +55,39 @@ export default function CombinedStockTable() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, stockFilter]);
+  const handleuseArchiveAntigenStocks = (antigen: any) => {
+    const hasAvailableStock = antigen.availableStock > 0;
+    const isExpired = antigen.isExpired;
 
-  const handleArchiveInventory = (inv_id: string) => {
-    setInventoryToArchive(inv_id);
+    setInventoryToArchive({
+      inv_id: antigen.inv_id,
+      isExpired: isExpired,
+      hasAvailableStock: hasAvailableStock
+    });
     setIsArchiveConfirmationOpen(true);
   };
 
-  const confirmArchiveInventory = async () => {
+  const confirmuseArchiveAntigenStocks = async () => {
     if (inventoryToArchive !== null) {
       setIsArchiveConfirmationOpen(false);
       try {
-        await archiveInventory(inventoryToArchive);
+        archiveCommodityMutation({
+          inv_id: inventoryToArchive.inv_id,
+          isExpired: inventoryToArchive.isExpired,
+          hasAvailableStock: inventoryToArchive.hasAvailableStock
+        });
         queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
         showSuccessToast("Archived successfully");
       } catch (error) {
         console.error("Failed to archive inventory:", error);
         showErrorToast("Failed to archive.");
-       
       } finally {
         setInventoryToArchive(null);
       }
     }
   };
 
-  const columns = getStockColumns(handleArchiveInventory);
+  const columns = getStockColumns(handleuseArchiveAntigenStocks);
 
   if (error) {
     return (
@@ -202,15 +216,15 @@ export default function CombinedStockTable() {
           {isLoading ? (
             <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading medicines...</span>
+              <span className="ml-2">Loading antigens...</span>
             </div>
           ) : error ? (
             <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
-              <span className="ml-2">Error loading medicines. Please check console.</span>
+              <span className="ml-2">Error loading antigens. Please check console.</span>
             </div>
           ) : stockData.length === 0 ? (
             <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <span className="ml-2">No medicines found</span>
+              <span className="ml-2">No antigens found</span>
             </div>
           ) : (
             <DataTable columns={columns} data={stockData} />
@@ -228,7 +242,7 @@ export default function CombinedStockTable() {
       <ConfirmationDialog
         isOpen={isArchiveConfirmationOpen}
         onOpenChange={setIsArchiveConfirmationOpen}
-        onConfirm={confirmArchiveInventory}
+        onConfirm={confirmuseArchiveAntigenStocks}
         title="Archive Inventory Item"
         description="Are you sure you want to archive this item? It will be preserved in the system but removed from active inventory."
       />

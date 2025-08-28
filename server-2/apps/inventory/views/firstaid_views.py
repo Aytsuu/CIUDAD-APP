@@ -231,8 +231,7 @@ class FirstAidStockTableView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def auto_archive_expired_first_aid(self):
-        """Auto-archive first aid items that expired more than 10 days ago"""
-        from datetime import timedelta
+        """Auto-archive first aid items that expired more than 10 days ago and log transactions"""
         
         today = timezone.now().date()
         archive_date = today - timedelta(days=10)
@@ -247,12 +246,34 @@ class FirstAidStockTableView(APIView):
         
         archived_first_aid_count = 0
         for stock in first_aid_stocks:
+            # Get the current available quantity before archiving
+            current_qty = stock.finv_qty_avail or 0
+            
+            # Determine the unit and format quantity with unit
+            if stock.finv_qty_unit and stock.finv_qty_unit.lower() == "boxes":
+                # For boxes, show quantity in pieces
+                qty_with_unit = f"{current_qty} pcs"
+            else:
+                # For other units, use the actual unit
+                unit = stock.finv_qty_unit if stock.finv_qty_unit else "pcs"
+                qty_with_unit = f"{current_qty} {unit}"
+            
+            # Archive the inventory
             stock.inv_id.is_Archived = True
             stock.inv_id.save()
+            
+            # Create transaction record for the archive action
+            FirstAidTransactions.objects.create(
+                fat_qty=qty_with_unit,  # Record the quantity with unit that was archived
+                fat_action='Expired',  # Clear action indicating expiration-based archiving
+                finv_id=stock,  # Reference to the first aid inventory
+                staff=None  # System action, so no staff member
+            )
+            
             archived_first_aid_count += 1
-            print(f"Archived first aid stock: {stock.finv_id}, Expiry: {stock.inv_id.expiry_date}")
+            print(f"Archived first aid stock: {stock.finv_id}, Expiry: {stock.inv_id.expiry_date}, Qty: {qty_with_unit}")
         
-        print(f"Auto-archived {archived_first_aid_count} first aid items")
+        print(f"Auto-archived {archived_first_aid_count} first aid items with transaction records")
         
         
 class FirstAidStockCreate(APIView):
@@ -401,15 +422,7 @@ class FirstAidInvRetrieveView(generics.RetrieveUpdateAPIView):
        obj = get_object_or_404(FirstAidInventory, finv_id = finv_id)
        return obj
     
-class ArchiveFirstAidInventoryVIew(generics.ListCreateAPIView):
-    serializer_class=FirstAidInventorySerializer
-    queryset=FirstAidInventory.objects.all()
-   
-    def get_queryset(self):
-        # Filter out MedicineInventory entries where the related Inventory is archived
-        queryset = FirstAidInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
-        return queryset
-    
+
 class FirstAidTransactionView(generics.ListCreateAPIView):
     serializer_class=FirstTransactionSerializer
     queryset=FirstAidTransactions.objects.all()
@@ -417,6 +430,80 @@ class FirstAidTransactionView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
      
+     
+     
+# ===========================FIRST AID ARCHIVE==============================
+class FirstAidArchiveInventoryView(APIView):
+    
+    def patch(self, request, inv_id):
+        """
+        Archive first aid inventory item and create expired transaction only if expired AND has available stock
+        """
+        try:
+            # Get inventory item
+            inventory = get_object_or_404(Inventory, inv_id=inv_id)
+            
+            # Archive the inventory
+            inventory.is_Archived = True
+            inventory.updated_at = timezone.now()
+            inventory.save()
+            
+            # Check if item is expired and has available stock to create transaction
+            is_expired = request.data.get('is_expired', False)
+            has_available_stock = request.data.get('has_available_stock', False)
+            
+            transaction_created = False
+            if is_expired and has_available_stock:
+                try:
+                    self._create_expired_transaction(inventory)
+                    transaction_created = True
+                except Exception as e:
+                    # Roll back the archive operation if transaction creation fails
+                    inventory.is_Archived = False
+                    inventory.save()
+                    return Response(
+                        {"error": f"Failed to create transaction for expired first aid: {str(e)}"}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            return Response(
+                {
+                    "message": "First aid inventory archived successfully", 
+                    "inv_id": inv_id,
+                    "transaction_created": transaction_created
+                },
+                status=status.HTTP_200_OK
+            )
+            
+        except Exception as e:
+            return Response(
+                {"error": f"Error archiving first aid inventory: {str(e)}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    def _create_expired_transaction(self, inventory):
+        """
+        Create expired transaction for first aid items with available stock
+        """
+        if not hasattr(inventory, 'inventory_firstaid'):
+            raise Exception("No first aid inventory found for this inventory item")
+        
+        first_aid_inventory = inventory.inventory_firstaid
+        current_qty = first_aid_inventory.finv_qty_avail or 0
+        unit = first_aid_inventory.finv_qty_unit or "pcs"
+        
+        if unit.lower() == "boxes":
+            qty_with_unit = f"{current_qty} pcs"
+        else:
+            qty_with_unit = f"{current_qty} {unit}"
+        
+        # Create the first aid transaction
+        FirstAidTransactions.objects.create(
+            fat_qty=qty_with_unit,
+            fat_action="Expired",
+            finv_id=first_aid_inventory,
+            staff=None  # None for system action
+        )
 
 # ==================FIRST AID REPORT=======================
 

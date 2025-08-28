@@ -13,7 +13,7 @@ import {
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useSubmitImmunizationStock } from "../REQUEST/Antigen/queries/ImzSupplyPostQueries";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
 import { Loader2 } from "lucide-react";
@@ -44,9 +44,8 @@ export default function AddImzSupplyStock() {
   >([]);
   const [loading, setLoading] = useState(true);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-  const [formData, setFormData] = useState<ImmunizationSuppliesType | null>(
-    null
-  );
+  const [formData, setFormData] = useState<ImmunizationSuppliesType | null>( null);
+  const navigate =useNavigate()
   
   const currentUnit = form.watch("imzStck_unit");
   const qty = form.watch("imzStck_qty");
@@ -191,9 +190,9 @@ export default function AddImzSupplyStock() {
               </div>
             </div>
             <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-              <Button variant="outline" className="w-full">
-                <Link to="/mainInventoryStocks">Cancel</Link>
-              </Button>
+                <Button variant="outline" onClick={() => navigate(-1)} className="w-full">
+                Cancel
+                </Button>
               <Button
                 type="submit"
                 className="w-full"

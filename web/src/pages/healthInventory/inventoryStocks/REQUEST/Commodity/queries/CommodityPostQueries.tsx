@@ -28,6 +28,7 @@ export const useSubmitCommodityStock = () => {
       queryClient.invalidateQueries({ queryKey: ["commodityinventorylist"] });
       queryClient.invalidateQueries({ queryKey: ["commoditytransactions"] });
       queryClient.invalidateQueries({ queryKey: ["inventorylist"] });
+      queryClient.invalidateQueries({ queryKey: ["commodityStocks"] });
       
       navigate(-1);
       showSuccessToast("Added successfully");

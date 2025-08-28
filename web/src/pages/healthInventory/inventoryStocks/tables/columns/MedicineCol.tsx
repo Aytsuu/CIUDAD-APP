@@ -43,15 +43,7 @@ export const getColumns = (
       </div>
     )
   },
-  {
-    accessorKey: "batchNumber",
-    header: "Batch Number",
-    cell: ({ row }) => (
-      <div className="text-center">
-        {row.original.batchNumber || "N/A"}
-      </div>
-    )
-  },
+ 
   {
     accessorKey: "item",
     header: "Medicine Details",
@@ -262,42 +254,49 @@ export const getColumns = (
       );
     },
   },
-  {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => {
-      const medicine = row.original;
-      const expired = medicine.isExpired;
-      const outOfStock = medicine.isOutOfStock;
+// columns/MedicineCol.tsx - Update the actions cell
+{
+  id: "actions",
+  header: "Actions",
+  cell: ({ row }) => {
+    const medicine = row.original;
+    const expired = medicine.isExpired;
+    const outOfStock = medicine.isOutOfStock;
+    const hasAvailableStock = medicine.availableStock > 0;
 
-      return (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className={`${
-              expired || outOfStock
-                ? "bg-red-100 border border-red-300 pointer-events-none opacity-50"
-                : "bg-red-100 border border-red-300 hover:bg-red-200"
-            }`}
-            asChild
+    return (
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          className={`${
+            expired || outOfStock
+              ? "bg-red-100 border border-red-300 pointer-events-none opacity-50"
+              : "bg-red-100 border border-red-300 hover:bg-red-200"
+          }`}
+          asChild
+        >
+          <Link
+            to="/wastedMedicine"
+            state={{ wasted: row.original.id, record: row.original }}
           >
-            <Link
-              to="/wastedMedicine"
-              state={{ wasted: row.original.id, record: row.original }}
-            >
-              <Minus size={15} />
-            </Link>
-          </Button>
+            <Minus size={15} />
+          </Link>
+        </Button>
 
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => handleArchiveInventory(medicine.inv_id)}
-          >
-            <Archive />
-          </Button>
-        </div>
-      );
-    },
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => handleArchiveInventory(medicine)}
+          disabled={hasAvailableStock && !expired}
+          title={
+            hasAvailableStock && !expired 
+              ? "Cannot archive medicine with available stock" 
+              : "Archive medicine"
+          }
+        >
+          <Archive />
+        </Button>
+      </div>
+    );
   },
-];
+}]

@@ -30,7 +30,7 @@ export const fetchVaccines = () => {
         return {
           default: vaccines,
           formatted: vaccines.map((vaccine: any) => ({
-            id: vaccine.vac_id.toString(),
+            id: `${vaccine.vac_id.toString()},${vaccine.vac_name}`,
             name: vaccine.vac_name,
             rawName: vaccine.vac_name,
             type: vaccine.vac_type_choices,

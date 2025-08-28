@@ -1,6 +1,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getCommodityStocks,getCommodityStocksTable } from "../restful-api/CommodityGetAPI";
+import { showErrorToast } from "@/components/ui/toast";
+import { getCommodity } from "@/pages/healthInventory/InventoryList/restful-api/commodity/CommodityFetchAPI";
 
  export const useCommodityStocks = () => {
     return useQuery({
@@ -26,3 +28,34 @@ import { getCommodityStocks,getCommodityStocksTable } from "../restful-api/Commo
     });
   };
   
+
+  export const fetchCommodity = () => {
+    return useQuery({
+      queryKey: ["commodities"],
+      queryFn: async () => {
+        try {
+          const commodities = await getCommodity();
+  
+          if (!commodities || !Array.isArray(commodities)) {
+            return {
+              default: [],
+              formatted: []
+            };
+          }
+  
+          return {
+            default: commodities,
+            formatted: commodities.map((commodity: any) => ({
+              id:`${ String(commodity.com_id)},${commodity.com_name}`,
+              name: String(commodity.com_name || ''), // Ensure it's a string and trimmed
+              rawName: commodity.com_name,
+              user_type: commodity.user_type || "No User Type"
+            })).filter(item => item.name) // Remove items with empty names
+          };
+        } catch (error) {
+          showErrorToast("Failed to fetch commodities data");
+          throw error;
+        }
+      }
+    });
+  };

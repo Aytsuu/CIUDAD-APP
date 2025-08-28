@@ -18,13 +18,10 @@ export const useSubmitImmunizationStock = () => {
       }
 
       const atomicData = { ...data, imz_id };
-
-      // Single API call handles all three operations atomically
       const result = await createImmunizationStock(atomicData);
       return result;
     },
     onSuccess: (data) => {
-      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["immunizationStockList"] });
       queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
       queryClient.invalidateQueries({ queryKey: ["antigen_transactions"] });

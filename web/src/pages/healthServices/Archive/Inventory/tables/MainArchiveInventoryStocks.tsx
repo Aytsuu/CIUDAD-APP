@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
 import { Pill, Syringe, Package, Bandage } from "lucide-react";
 import MedicineStocks from "./MedicineStocks";
-import VaccineStocks from "./VaccineStocks";
+import CombinedStockTable from "./VaccineStocks";
 import FirstAidStocks from "./FirstAidStocks";
 import CommodityStocks from "./CommodityStocks";
 
@@ -68,7 +68,7 @@ export default function ArchiveMainInventoryStocks() {
               <MedicineStocks />
             </TabsContent>
             <TabsContent value="vaccine" className="mt-0">
-              <VaccineStocks />
+              <CombinedStockTable />
             </TabsContent>
             <TabsContent value="commodity" className="mt-0">
               <CommodityStocks />

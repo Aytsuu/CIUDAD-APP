@@ -13,7 +13,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmMo
 import { CommodityStocksColumns } from "./columns/CommodityCol";
 import { useNavigate } from "react-router-dom";
 import { useCommodityStocksTable } from "../REQUEST/Commodity/queries/CommodityFetchQueries";
-import { useArchiveInventory } from "../REQUEST/Archive/ArchivePutQueries";
+import { useArchiveCommodityStocks } from "../REQUEST/Archive/ArchivePutQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
@@ -26,15 +26,22 @@ export default function CommodityStocks() {
   const [currentPage, setCurrentPage] = useState(1);
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
-  const [commodityToArchive, setCommodityToArchive] = useState<string | null>(null);
+  const [commodityToArchive, setCommodityToArchive] = useState<{
+    inv_id: string;
+    isExpired: boolean;
+    hasAvailableStock: boolean;
+  } | null>(null);
+
   const queryClient = useQueryClient();
-  const { mutate: archiveInventoryMutation } = useArchiveInventory();
+  const { mutate: archiveCommodityMutation } = useArchiveCommodityStocks();
 
   // Updated to use pagination parameters with filter
   const { data: apiResponse, isLoading, error } = useCommodityStocksTable(currentPage, pageSize, searchQuery, stockFilter);
 
   // Extract data from paginated response
-  const commodityData = apiResponse?.results || [];
+  const commodityData = Array.isArray(apiResponse?.results) 
+  ? apiResponse.results 
+  : [];
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -45,8 +52,15 @@ export default function CommodityStocks() {
     setCurrentPage(1);
   }, [searchQuery, stockFilter]);
 
-  const handleArchiveInventory = (inv_id: string) => {
-    setCommodityToArchive(inv_id);
+  const handleArchiveInventory = (commodity: any) => {
+    const hasAvailableStock = commodity.availableStock > 0;
+    const isExpired = commodity.isExpired;
+
+    setCommodityToArchive({
+      inv_id: commodity.inv_id,
+      isExpired: isExpired,
+      hasAvailableStock: hasAvailableStock
+    });
     setIsArchiveConfirmationOpen(true);
   };
 
@@ -54,12 +68,13 @@ export default function CommodityStocks() {
     if (commodityToArchive !== null) {
       setIsArchiveConfirmationOpen(false);
       try {
-        await archiveInventoryMutation(commodityToArchive);
-        queryClient.invalidateQueries({ queryKey: ["commodityStocks"] });
-        showSuccessToast("Commodity archived successfully");
+        archiveCommodityMutation({
+          inv_id: commodityToArchive.inv_id,
+          isExpired: commodityToArchive.isExpired,
+          hasAvailableStock: commodityToArchive.hasAvailableStock
+        });
       } catch (error) {
         console.error("Failed to archive commodity:", error);
-        showErrorToast("Failed to archive commodity.");
       } finally {
         setCommodityToArchive(null);
       }
