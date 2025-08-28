@@ -9,6 +9,7 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 // Configuration Object
 export const buttonConfig = (
   form: any,
+  addresses: any,
   isAssignmentOpen: boolean,
   isAllowSubmit: boolean,
   setIsAssignmentOpen: (value: boolean) => void,
@@ -29,6 +30,7 @@ export const buttonConfig = (
               setIsAssignmentOpen(false);
             }}
             personalInfoform={form}
+            addresses={addresses}
           />
         }
         isOpen={isAssignmentOpen}
@@ -107,6 +109,7 @@ type OriginKeys = keyof ReturnType<typeof buttonConfig>;
 
 export const renderActionButton = ({
   form,
+  addresses,
   isAssignmentOpen,
   formType,
   origin="defaultOrigin",
@@ -117,6 +120,7 @@ export const renderActionButton = ({
   submit,
 }: {
   form?: any;
+  addresses?: any;
   isAssignmentOpen?: boolean;
   formType: Type;
   origin?: OriginKeys;
@@ -128,6 +132,7 @@ export const renderActionButton = ({
 }) => {
   const config = buttonConfig(
     form,
+    addresses,
     isAssignmentOpen || false,
     isAllowSubmit || false,
     setIsAssignmentOpen || (() => {}),

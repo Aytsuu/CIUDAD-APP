@@ -9,6 +9,7 @@ from ..serializers.resident_profile_serializers import *
 from apps.pagination import *
 
 class FamilyTableView(generics.ListCreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = FamilyTableSerializer
   pagination_class = StandardResultsPagination
 
@@ -88,6 +89,7 @@ class FamilyTableView(generics.ListCreateAPIView):
         return queryset
   
 class FamilyDataView(generics.RetrieveAPIView):
+  permission_classes = [AllowAny]
   serializer_class = FamilyTableSerializer # To be modified
   lookup_field = 'fam_id'
   
@@ -101,6 +103,7 @@ class FamilyCreateView(generics.CreateAPIView):
   queryset = Family.objects.all()
 
 class FamilyFilteredByHouseholdView(generics.ListAPIView):
+  permission_classes = [AllowAny]
   serializer_class = FamilyListSerializer
   lookup_field = 'hh'
   
@@ -109,6 +112,7 @@ class FamilyFilteredByHouseholdView(generics.ListAPIView):
     return Family.objects.filter(hh=household_no)
   
 class FamilyUpdateView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = FamilyBaseSerializer
     queryset = Family.objects.all()
     lookup_field = 'fam_id'
@@ -122,6 +126,7 @@ class FamilyUpdateView(generics.RetrieveUpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyFamily(APIView):
+    permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
       fam_id = request.data.get('fam_id')
       exists = Family.objects.filter(fam_id=fam_id).first()

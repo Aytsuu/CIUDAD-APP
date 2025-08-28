@@ -18,6 +18,7 @@ import {
 } from "../../queries/profilingAddQueries";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { useSafeNavigate } from "@/hooks/use-safe-navigate";
+import { showErrorToast } from "@/components/ui/toast";
 
 export default function DependentsInfoLayout({
   form,
@@ -120,15 +121,7 @@ export default function DependentsInfoLayout({
 
     if(dependentsList.length === 0){
       setIsSubmitting(false);
-      toast('Must have atleast one dependent.', {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        style: {
-          border: '1px solid rgb(225, 193, 193)',
-          padding: '16px',
-          color: '#b91c1c',
-          background: '#fef2f2',
-        },
-      });
+      showErrorToast("Must have atleast one dependent")
       return;
     }
 

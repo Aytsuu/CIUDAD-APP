@@ -224,25 +224,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [clearAuthState]);
 
-  // Automatic token refresh
-  // useLayoutEffect(() => {
-  //   let refreshInterval: NodeJS.Timeout;
-
-  //   if (isAuthenticated && !isLoading) {
-  //     const refreshIntervalTime = 50 * 60 * 1000; // 50 minutes
-  //     console.log("Setting up auto-refresh every 50 minutes");
-
-  //     refreshInterval = setInterval(() => {
-  //       console.log("Auto-refreshing token...");
-  //       checkAuthStatus();
-  //     }, refreshIntervalTime);
-  //   }
-
-  //   return () => {
-  //     if (refreshInterval) clearInterval(refreshInterval);
-  //   };
-  // }, [isAuthenticated, isLoading, checkAuthStatus]);
-
   // Initial auth check on mount
   useLayoutEffect(() => {
     // Check for stored token first

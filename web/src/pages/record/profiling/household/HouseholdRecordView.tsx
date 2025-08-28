@@ -27,8 +27,6 @@ export default function HouseholdRecordView() {
   const { data: famFilteredByHouse, isLoading: isLoadingFamFilteredByHouse } = useFamFilteredByHouse(params?.hh_id)
   const { data: residentsList, isLoading } = useResidentsList()
 
-  console.log(householdData)
-
   // ================ SIDE EFFECTS ================
   React.useEffect(() => {
     if (isLoading || isLoadingFamFilteredByHouse || isLoadingHHData) {
@@ -81,22 +79,22 @@ export default function HouseholdRecordView() {
     )
   }
 
-  const formatHouseholdHead = () => {
+  const formatHouseholdOwner = () => {
     const dataList = householdData?.head?.split("-") || []
     if (dataList?.length == 0) return
 
-    const headId = dataList[0]
-    const headName = dataList[1]
-    const headFam = dataList[2]
+    const ownerId = dataList[0]
+    const ownerName = dataList[1]
+    const ownerFam = dataList[2]
 
     return (
       <>
-        <Label className="text-xs text-slate-500 uppercase tracking-wide">Household Head</Label>
+        <Label className="text-xs text-slate-500 uppercase tracking-wide">Household Owner</Label>
         <button
-          onClick={() => handleViewInfo(headId, headFam)}
+          onClick={() => handleViewInfo(ownerId, ownerFam)}
           className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline text-left mt-1"
         >
-          {headName || "N/A"}
+          {ownerName || "N/A"}
         </button>
       </>
     )
@@ -205,7 +203,7 @@ export default function HouseholdRecordView() {
                       </div>
                       <div className="space-y-3">
                         <div className="space-y-3">
-                          <div className="p-3 rounded-lg border flex flex-col">{formatHouseholdHead()}</div>
+                          <div className="p-3 rounded-lg border flex flex-col">{formatHouseholdOwner()}</div>
                         </div>
                         <div className="space-y-3">
                           <div className="p-3 rounded-lg border">

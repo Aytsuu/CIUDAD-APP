@@ -15,14 +15,16 @@ import { useAuth } from "@/context/AuthContext";
 import { usePositions } from "./queries/administrationFetchQueries";
 import { formatPositions } from "./AdministrationFormats";
 import { useAddStaff } from "./queries/administrationAddQueries";
-import { useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";
+import { useAddAllProfile, useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 export default function AssignPosition({
   personalInfoform,
+  addresses,
   close,
 }: {
   personalInfoform: UseFormReturn<z.infer<typeof personalInfoSchema>>;
+  addresses: any;
   close: () => void;
 }) {
   // ============= STATE INITIALIZATION ===============
@@ -34,11 +36,10 @@ export default function AssignPosition({
   );
   
   // Hooks for dual database operations (APIs handle both databases)
-  const {mutateAsync: addResidentAndPersonal} = useAddResidentAndPersonal();
+  const { mutateAsync: addAllProfile } = useAddAllProfile();
   const {mutateAsync: addStaff} = useAddStaff();
   
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const personalDefaults = generateDefaultValues(personalInfoSchema)
   const defaultValues = generateDefaultValues(positionAssignmentSchema)
   const form = useForm<z.infer<typeof positionAssignmentSchema>>({
     resolver: zodResolver(positionAssignmentSchema),
@@ -78,17 +79,19 @@ export default function AssignPosition({
 
       } else {
         // Register resident first, then assign position (APIs handle dual database operations)
+        personalInfoform.setValue("per_addresses", addresses)
         const personalInfo = personalInfoform.getValues();
+        const {per_id, ...personal} = personalInfo
 
-        if (!personalInfo) {
+        if (!personal) {
           setIsSubmitting(false);
           return;
         }
         
         // Register resident (API handles both databases)
-        const resident = await addResidentAndPersonal({
-          personalInfo: personalInfo,
-          staffId: user?.staff?.staff_id || ""
+        const resident = await addAllProfile({
+          personal: personal,
+          staff: user?.staff?.staff_id
         });
 
         // Then assign position (API handles both databases)
@@ -110,7 +113,7 @@ export default function AssignPosition({
   const deliverFeedback = () => {
     // Clear forms
     form.setValue("assignPosition", "");
-    personalInfoform.reset(personalDefaults);
+    personalInfoform.reset();
     close();
     setIsSubmitting(false);
     

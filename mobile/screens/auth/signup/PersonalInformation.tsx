@@ -11,6 +11,7 @@ import { X } from "@/lib/icons/X"
 import { Plus } from "@/lib/icons/Plus"
 import { AddressDrawer } from "./AddressDrawer"
 import { FormDateInput } from "@/components/ui/form/form-date-input"
+import { useToastContext } from "@/components/ui/toast"
 
 
 const sexOptions: { label: string; value: string }[] = [
@@ -33,6 +34,7 @@ const religionOptions: { label: string; value: string }[] = [
 
 const PersonalInformation = React.memo(({ params } : {params: Record<string, any>}) => {
   const router = useRouter();
+  const { toast } = useToastContext()
   const { control, trigger, watch, getValues, setValue,  reset } = useRegistrationFormContext();
   const [showAddressDrawer, setShowAddressDrawer] = React.useState(false);
   const [addresses, setAddresses] = React.useState<any[]>([]);
@@ -74,6 +76,7 @@ const PersonalInformation = React.memo(({ params } : {params: Record<string, any
 
     if (!formIsValid) {
       addresses.length === 0 && setAddressesError(true);
+      toast.error("Please fill out all required fields.")
       return;
     }
 

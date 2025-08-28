@@ -44,7 +44,7 @@ export default function App() {
   const dispatch = useDispatch<AppDispatch>();
   const authState = useSelector((state: RootState) => state.auth, shallowEqual);
   const { user, isAuthenticated, isLoading, error } = authState;
-  
+
   const { toast } = useToastContext();
   const router = useRouter();
   
@@ -96,6 +96,8 @@ export default function App() {
   if (showIntro) {
     return <IntroScreen onAnimationFinish={() => setShowIntro(false)} />;
   }
+
+  const passwordValue = getValues("password");
 
   return (
     <SafeAreaView className="flex-1 bg-gradient-to-br from-blue-500 to-blue-10">
@@ -182,4 +184,8 @@ export default function App() {
       </View>
     </SafeAreaView>
   );
+}
+
+function getValues(arg0: string) {
+  throw new Error("Function not implemented.");
 }

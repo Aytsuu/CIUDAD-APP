@@ -71,7 +71,7 @@ class PerAddressBulkCreateView(generics.CreateAPIView):
     staff_id = request.data.get('staff_id', None)
     history_id = request.data.get('history_id', None)
     per_add = request.data.get('per_add')
-    print(history_id)
+
     per_id = per_add[0].get('per') if per_add else None
     if per_id:
       personal = Personal.objects.filter(per_id=per_id).first()

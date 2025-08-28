@@ -88,7 +88,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
     accessorKey: "sex",
     header: "Sex",
     cell: ({row}) => (
-      row.original.sex[0]
+      row.original.sex[0]?.toUpperCase()
     ),
     size: 60
   },
@@ -164,7 +164,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
       };
 
       const handleView = async () => {
-        navigate("/profiling/resident/view", {
+        navigate("/profiling/resident/view/personal", {
           state: {
             params: {
               type: 'viewing',
