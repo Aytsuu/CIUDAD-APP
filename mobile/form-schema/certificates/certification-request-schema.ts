@@ -7,6 +7,7 @@ export const PersonalCertificationSchema = z.object({
     purposes: z.array(z.string()).min(1, "At least one purpose is required"),
     claimDate: z.string().min(1, "Claim date is required"),
     payment_mode: z.string().optional(),
+    pr_id: z.number().optional(), // Add purpose ID field
 });
 
 

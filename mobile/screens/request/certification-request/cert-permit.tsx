@@ -52,12 +52,12 @@ const CertPermit: React.FC<CertPermitProps> = ({ navigation }) => {
       
       setGrossSales(business.bus_gross_sales?.toString() || "");
       
-      // Determine if business is old (has verification date) or new
+      
       setIsBusinessOld(!!business.bus_date_verified);
     }
   }, [businessData]);
 
-  // Image picker functions
+ 
   const pickImage = async (type: 'permit' | 'assessment') => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -86,13 +86,13 @@ const CertPermit: React.FC<CertPermitProps> = ({ navigation }) => {
     }
   };
 
-  // Filter purpose and rates for permit clearances only
+  
   const permitPurposes = purposeAndRates.filter(purpose => 
     purpose.pr_category.toLowerCase().includes('permit') || 
     purpose.pr_purpose.toLowerCase().includes('permit')
   );
 
-  // Convert data to dropdown options
+  
   const permitTypeOptions: DropdownOption[] = permitPurposes.map(purpose => ({
     label: `${purpose.pr_purpose}`,
     value: purpose.pr_purpose
@@ -106,7 +106,7 @@ const CertPermit: React.FC<CertPermitProps> = ({ navigation }) => {
       value: `${sales.ags_minimum} - ${sales.ags_maximum}`
     }));
 
-  // --- Submit handler ---
+  
   const handleSubmit = () => {
     setError(null);
     
@@ -165,13 +165,18 @@ const CertPermit: React.FC<CertPermitProps> = ({ navigation }) => {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Back Button */}
-        <TouchableOpacity onPress={() => navigation?.goBack?.()} className="mb-4">
-          <Ionicons name="arrow-back" size={24} color="#222" />
-        </TouchableOpacity>
-        {/* Title */}
-        <Text className="text-xl font-bold text-gray-800 mb-6">Clearance for Permit</Text>
-
-        {/* Error Message */}
+        <View className="flex-row items-center mb-6">
+          <TouchableOpacity 
+            onPress={() => navigation?.goBack?.()} 
+            className="bg-white rounded-full w-10 h-10 items-center justify-center shadow-sm border border-gray-100"
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chevron-back" size={20} color="#374151" />
+          </TouchableOpacity>
+          <Text className="text-lg font-semibold text-gray-900 ml-3">Clearance for Permit</Text>
+        </View>
+        
+        
         {error && (
           <Text className="text-red-500 mb-2 text-sm">{error}</Text>
         )}

@@ -44,21 +44,23 @@ export default function RootLayout() {
       <StatusBar backgroundColor="transparent" style="dark" />
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <Stack initialRouteName='(auth)'>
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="(health)" options={{ headerShown: false }} />
-            <Stack.Screen name="animal-bites/[id]" options = {{headerShown: false}}/>
-            <Stack.Screen name="donation" options = {{headerShown: false}}/>
-            <Stack.Screen name="council" options={{ headerShown: false }} />
-            <Stack.Screen name="(treasurer)" options = {{headerShown: false}}/>
-            <Stack.Screen name="(waste)" options = {{headerShown: false}}/>
-            <Stack.Screen name="(request)" options = {{headerShown: false}}/>
-            <Stack.Screen name="gad" options = {{headerShown: false}}/>
-            <Stack.Screen name="(council)" options={{ headerShown: false }} />
-            <Stack.Screen name="(complaint)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack> 
+          <AuthProvider>
+            <Stack initialRouteName='(auth)'>
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="(health)" options={{ headerShown: false }} />
+              <Stack.Screen name="animal-bites/[id]" options = {{headerShown: false}}/>
+              <Stack.Screen name="donation" options = {{headerShown: false}}/>
+              <Stack.Screen name="council" options={{ headerShown: false }} />
+              <Stack.Screen name="(treasurer)" options = {{headerShown: false}}/>
+              <Stack.Screen name="(waste)" options = {{headerShown: false}}/>
+              <Stack.Screen name="(request)" options = {{headerShown: false}}/>
+              <Stack.Screen name="gad" options = {{headerShown: false}}/>
+              <Stack.Screen name="(council)" options={{ headerShown: false }} />
+              <Stack.Screen name="(complaint)" options = {{headerShown: false}} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+          </AuthProvider>
         </ToastProvider>
       </QueryClientProvider>
       <PortalHost />

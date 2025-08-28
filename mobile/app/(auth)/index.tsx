@@ -18,7 +18,11 @@ import ExpenseLogMain from "@/screens/treasurer/treasurer-budget-tracker/expense
 import MinutesOfMeetingMain from "../../screens/council/minutesOfmeeting/minutes-of-meeting-main";
 import Complaint from "../(complaint)";
 import Summon from "@/screens/complaint/Summon/Summon";
+import CertificatesMain from "@/screens/certificates/main";
+import ClearanceRequestList from "@/screens/treasurer/clearance-request";
+
 
 export default () => {
-    return <Summon/>
+    // return <Summon/>
+    return <Request/>
 }

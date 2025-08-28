@@ -1,7 +1,7 @@
 import { AxiosError } from "axios";
 import { getClearanceRequests as getClearanceRequestsAPI, ClearanceRequest as APIClearanceRequest } from "../restful-api/clearanceRequestGetAPI";
 
-
+// Enhanced types for web backend compatibility
 export interface ClearanceRequest {
     cr_id: string;
     resident_details: {
@@ -36,13 +36,13 @@ export interface ClearanceRequest {
     };
 }
 
-
+// Enhanced fetch clearance requests with web backend data mapping
 export const getClearanceRequests = async (): Promise<ClearanceRequest[]> => {
     try {
         console.log('Fetching clearance requests with web backend mapping...');
         const rawData = await getClearanceRequestsAPI();
         
-        
+        // Map the mobile API data to web backend format
         const mapped: ClearanceRequest[] = (rawData || []).map((item: any) => {
             return {
                 cr_id: item.cr_id,
@@ -70,7 +70,7 @@ export const getClearanceRequests = async (): Promise<ClearanceRequest[]> => {
     }
 };
 
-
+// Get payment statistics with enhanced calculation
 export const getPaymentStatistics = async (): Promise<any> => {
     try {
         console.log('Calculating payment statistics...');
@@ -94,7 +94,7 @@ export const getPaymentStatistics = async (): Promise<any> => {
     }
 };
 
-
+// Re-export other functions from API layer
 export { 
     getClearanceRequestById, 
     searchClearanceRequests, 
