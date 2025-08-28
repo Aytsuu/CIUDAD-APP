@@ -366,15 +366,15 @@ class CancelCertificateView(APIView):
         try:
             cert = ClerkCertificate.objects.get(cr_id=cr_id)
             cert.cr_req_status = 'Cancelled'
-            # set completion/cancel date
-            if not cert.cr_date_completed:
-                cert.cr_date_completed = timezone.now().date()
-            cert.save(update_fields=['cr_req_status', 'cr_date_completed'])
+            # set rejection date for cancelled requests
+            cert.cr_date_rejected = timezone.now()
+            cert.cr_reason = 'Cancelled by user'
+            cert.save(update_fields=['cr_req_status', 'cr_date_rejected', 'cr_reason'])
             return Response({
                 'message': 'Cancelled',
                 'cr_id': cert.cr_id,
                 'cr_req_status': cert.cr_req_status,
-                'cr_date_completed': cert.cr_date_completed
+                'cr_date_rejected': cert.cr_date_rejected
             }, status=status.HTTP_200_OK)
         except ClerkCertificate.DoesNotExist:
             return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -841,3 +841,152 @@ class PaymentStatusView(APIView):
         except Exception as e:
             logger.error(f"Error in webhook_payment_status: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ClearanceRequestView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = BusinessPermitCreateSerializer
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():
+                clearance_request = serializer.save()
+                # Create BusinessPermitFile rows if provided
+                try:
+                    from .models import BusinessPermitFile
+                    create_payload = []
+                    prev_url = request.data.get('previous_permit_image')
+                    assess_url = request.data.get('assessment_image')
+                    if prev_url:
+                        prev_name = str(prev_url).split('/')[-1] if isinstance(prev_url, str) else ''
+                        create_payload.append(BusinessPermitFile(
+                            bpf_name=prev_name or 'previous_permit',
+                            bpf_type='previous_permit',
+                            bpf_url=prev_url,
+                            bpr_id=clearance_request
+                        ))
+                    if assess_url:
+                        assess_name = str(assess_url).split('/')[-1] if isinstance(assess_url, str) else ''
+                        create_payload.append(BusinessPermitFile(
+                            bpf_name=assess_name or 'assessment',
+                            bpf_type='assessment',
+                            bpf_url=assess_url,
+                            bpr_id=clearance_request
+                        ))
+                    if create_payload:
+                        BusinessPermitFile.objects.bulk_create(create_payload)
+                except Exception as file_err:
+                    logger.error(f"Failed creating BusinessPermitFile entries: {str(file_err)}")
+                
+                # Log the activity
+                try:
+                    from apps.act_log.utils import create_activity_log
+                    from apps.administration.models import Staff
+                    
+                    # Get staff member
+                    staff_id = request.data.get('staff_id') or '00005250821'  # Default staff ID
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                    
+                    if staff:
+                        # Create activity log
+                        create_activity_log(
+                            act_type="Business Clearance Request Created",
+                            act_description=f"Business clearance request {clearance_request.bpr_id} created",
+                            staff=staff,
+                            record_id=clearance_request.bpr_id,
+                            feat_name="Business Clearance Management"
+                        )
+                        logger.info(f"Activity logged for business clearance creation: {clearance_request.bpr_id}")
+                    else:
+                        logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                        
+                except Exception as log_error:
+                    logger.error(f"Failed to log activity for business clearance creation: {str(log_error)}")
+                    # Don't fail the request if logging fails
+                
+                return Response(
+                    {
+                        "message": "Clearance request created successfully",
+                        "data": BusinessPermitSerializer(clearance_request).data
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+            else:
+                return Response(
+                    {
+                        "error": "Invalid data",
+                        "details": serializer.errors
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as e:
+            logger.error(f"Error in ClearanceRequestView.create: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response(
+                {
+                    "error": str(e),
+                    "detail": "An error occurred while creating clearance request"
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def put(self, request, *args, **kwargs):
+        """Update business permit request status"""
+        try:
+            bpr_id = request.data.get('bpr_id')
+            if not bpr_id:
+                return Response({
+                    'error': 'bpr_id is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Find the business permit request
+            try:
+                instance = BusinessPermitRequest.objects.get(bpr_id=bpr_id)
+            except BusinessPermitRequest.DoesNotExist:
+                return Response({
+                    'error': f'Business permit request with bpr_id {bpr_id} not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            print(f"Updating business permit request: {instance.bpr_id}")
+            print(f"Current payment status: {instance.req_payment_status}")
+            print(f"Request data: {request.data}")
+            
+            # Update payment status and completion date
+            instance.req_payment_status = request.data.get('req_payment_status', instance.req_payment_status)
+            
+            # Handle date conversion from ISO string to date format
+            if request.data.get('req_date_completed'):
+                try:
+                    from datetime import datetime
+                    # Convert ISO string to datetime then to date
+                    iso_date_string = request.data.get('req_date_completed')
+                    if isinstance(iso_date_string, str):
+                        # Parse ISO string and extract date part
+                        parsed_date = datetime.fromisoformat(iso_date_string.replace('Z', '+00:00'))
+                        instance.req_date_completed = parsed_date.date()
+                    else:
+                        instance.req_date_completed = request.data.get('req_date_completed')
+                except Exception as date_error:
+                    print(f"Date conversion error: {date_error}")
+                    # Fallback: use current date
+                    instance.req_date_completed = timezone.now().date()
+            
+            print(f"New payment status: {instance.req_payment_status}")
+            print(f"Completion date: {instance.req_date_completed}")
+            
+            instance.save(update_fields=['req_payment_status', 'req_date_completed'])
+            
+            return Response({
+                'message': 'Business permit request status updated successfully',
+                'bpr_id': instance.bpr_id,
+                'new_payment_status': instance.req_payment_status,
+                'completion_date': instance.req_date_completed
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error updating business permit request status: {str(e)}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while updating business permit request status'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

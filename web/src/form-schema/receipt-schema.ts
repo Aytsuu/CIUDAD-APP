@@ -16,7 +16,8 @@ export const createReceiptSchema = (requiredRate?: string) => {
         inv_serial_num: z.string().nonempty('This field is required'),
         inv_amount: DataRequirement,
         inv_nat_of_collection: z.string().default(''),
-        nrc_id: z.string().default('')
+        nrc_id: z.string().optional().default(''), // Make optional for business clearance
+        bpr_id: z.string().optional().default('') // Add business permit request ID
     }).refine((data) => {
         if (!requiredRate) return true
         const amount = parseFloat(data.inv_amount);
@@ -36,7 +37,8 @@ const ReceiptSchema = z.object({
     inv_serial_num: z.string().nonempty('This field is required'),
     inv_amount: DataRequirement,
     inv_nat_of_collection: z.string().default(''),
-    nrc_id: z.string().default('')
+    nrc_id: z.string().optional().default(''), // Make optional for business clearance
+    bpr_id: z.string().optional().default('') // Add business permit request ID
 });
 
 export default ReceiptSchema
