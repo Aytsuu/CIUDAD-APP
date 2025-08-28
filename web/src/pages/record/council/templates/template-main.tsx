@@ -1013,6 +1013,7 @@ interface RequestProps {
   purpose?: string;
   issuedDate?: string;
   isNonResident?: boolean;
+  businessName?: string;
 }
 
 type Template = {
