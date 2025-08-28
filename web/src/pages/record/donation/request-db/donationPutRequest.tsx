@@ -1,4 +1,4 @@
-import api from '@/pages/api/api';
+import { api } from "@/api/api";
 import { formatDate } from '@/helpers/dateHelper';
 
 export const putdonationreq = async (don_num: string, donationInfo: Record<string, any>) => {
@@ -16,6 +16,5 @@ export const putdonationreq = async (don_num: string, donationInfo: Record<strin
         return res.data;
     }
     catch (err){
-        console.error(err);
     }
 }

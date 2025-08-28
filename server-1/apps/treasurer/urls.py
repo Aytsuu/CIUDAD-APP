@@ -78,4 +78,11 @@ urlpatterns=[
 
     #RECEIPTS
     path('invoice/', InvoiceView.as_view(), name='invoice_tracking'),
+
+    #CLEARANCE REQUESTS
+    path('clearance-request/', ClearanceRequestListView.as_view(), name='clearance-request-list'),
+    path('clearance-request/<str:cr_id>/', ClearanceRequestDetailView.as_view(), name='clearance-request-detail'),
+    path('clearance-request/<str:cr_id>/payment-status/', UpdatePaymentStatusView.as_view(), name='update-payment-status'),
+    path('clearance-request/payment-statistics/', PaymentStatisticsView.as_view(), name='payment-statistics'),
+    path('resident-names/', ResidentNameListView.as_view(), name='resident-names')
 ]

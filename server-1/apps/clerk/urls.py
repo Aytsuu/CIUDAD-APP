@@ -1,5 +1,24 @@
 from django.urls import path
-from .views import *
+from .views import (
+    ServiceChargeRequestView,
+    UpdateServiceChargeRequestView,
+    SummonDateAvailabilityView,
+    DeleteSummonDateAvailability,
+    SummonTimeAvailabilityView,
+    SummonTimeAvailabilityByDateView,
+    DeleteSummonTimeAvailabilityView,
+    CertificateListView,
+    CertificateDetailView,
+    IssuedCertificateListView,
+    MarkCertificateAsIssuedView,
+    BusinessPermitListView,
+    IssuedBusinessPermitListView,
+    MarkBusinessPermitAsIssuedView,
+    PermitClearanceView,
+    get_personal_clearances,
+    create_payment_intent,
+    webhook_payment_status,
+)
 
 urlpatterns = [
     path('service-charge-request/', ServiceChargeRequestView.as_view(), name='service-charge-request'),
@@ -17,4 +36,19 @@ urlpatterns = [
     path('summon-time-availability/', SummonTimeAvailabilityView.as_view(), name='summon-time-availability'),
     path('summon-time-availability/<int:sd_id>/', SummonTimeAvailabilityByDateView.as_view(), name='summon-time-availability-by-date'),
     path('delete-summon-time-availability/<int:st_id>/', DeleteSummonTimeAvailabilityView.as_view(), name='delete-summon-time-availability'),
+   
+    # Certificate URLs
+    path('certificate/', CertificateListView.as_view(), name='certificate_list'),
+    path('certificate/<str:pk>/', CertificateDetailView.as_view(), name='certificate_detail'),
+    path('issued-certificates/', IssuedCertificateListView.as_view(), name='issued-certificate-list'),
+    path('mark-certificate-issued/', MarkCertificateAsIssuedView.as_view(), name='mark-certificate-issued'),
+    path('business-permit/', BusinessPermitListView.as_view(), name='business-permit-list'),
+    path('issued-business-permits/', IssuedBusinessPermitListView.as_view(), name='issued-business-permit-list'),
+    path('mark-business-permit-issued/', MarkBusinessPermitAsIssuedView.as_view(), name='mark-business-permit-issued'),
+    
+    # Personal Clearances and Payment URLs
+    path('personal-clearances/', get_personal_clearances, name='personal-clearances-list'),
+    path('permit-clearances/', PermitClearanceView.as_view(), name='permit-clearances-list'),
+    path('payment/create/<str:cr_id>/', create_payment_intent, name='create-payment-intent'),
+    path('payment/webhook/', webhook_payment_status, name='payment-webhook'),
 ]

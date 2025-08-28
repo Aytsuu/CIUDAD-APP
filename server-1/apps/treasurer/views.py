@@ -787,3 +787,147 @@ class InvoiceView(generics.ListCreateAPIView):
     queryset = Invoice.objects.select_related(
         'cr_id__rp_id__per'  # This ensures efficient querying
     ).all()
+
+
+# Clearance Request Views
+class ClearanceRequestListView(generics.ListAPIView):
+    serializer_class = ClearanceRequestSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        from apps.clerk.models import ClerkCertificate
+        queryset = ClerkCertificate.objects.select_related('rp_id').prefetch_related('treasurer_invoices').all()
+        
+        # Search functionality
+        search_query = self.request.query_params.get('search', None)
+        if search_query:
+            queryset = queryset.filter(
+                Q(cr_id__icontains=search_query) |
+                Q(rp_id__per__per_fname__icontains=search_query) |
+                Q(rp_id__per__per_lname__icontains=search_query) |
+                Q(req_type__icontains=search_query)
+            )
+        
+        return queryset
+
+
+class ClearanceRequestDetailView(generics.RetrieveAPIView):
+    serializer_class = ClearanceRequestDetailSerializer
+    lookup_field = 'cr_id'
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        from apps.clerk.models import ClerkCertificate
+        return ClerkCertificate.objects.select_related('rp_id').prefetch_related('treasurer_invoices').all()
+
+
+class UpdatePaymentStatusView(generics.UpdateAPIView):
+    serializer_class = PaymentStatusUpdateSerializer
+    lookup_field = 'cr_id'
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        from apps.clerk.models import ClerkCertificate
+        return ClerkCertificate.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            instance.req_payment_status = serializer.validated_data['payment_status']
+            instance.save()
+
+            # --- AUTO CREATE RECEIPT FOR ANY PAID ---
+            try:
+                if instance.req_payment_status == "Paid":
+                    from apps.treasurer.models import Invoice
+                    if not Invoice.objects.filter(cr_id=instance).exists():
+                        # Generate next available inv_num
+                        try:
+                            highest_num = Invoice.objects.aggregate(
+                                max_num=models.Max('inv_num')
+                            )['max_num'] or 0
+                            next_num = highest_num + 1
+                        except Exception as e:
+                            # Fallback: use current timestamp as ID
+                            import time
+                            next_num = int(time.time())
+                        
+                        Invoice.objects.create(
+                            inv_num=next_num,
+                            cr_id=instance,
+                            inv_serial_num=f"INV-{instance.cr_id}",  # You can improve this serial logic
+                            inv_amount=0,  # Set correct amount if available
+                            inv_nat_of_collection=instance.req_type or "",
+                            inv_status="Paid",  # Set status to Paid since payment is complete
+                        )
+                        
+                        # Log the auto-created invoice activity
+                        try:
+                            from apps.act_log.utils import create_activity_log
+                            from apps.administration.models import Staff
+                            
+                            # Get staff member from the clearance request
+                            staff_id = getattr(instance.ra_id, 'staff_id', '00003250722') if instance.ra_id else '00003250722'
+                            staff = Staff.objects.filter(staff_id=staff_id).first()
+                            
+                            if staff:
+                                # Create activity log
+                                create_activity_log(
+                                    act_type="Auto-Invoice Created",
+                                    act_description=f"Auto-generated invoice INV-{instance.cr_id} created for {instance.req_type} payment",
+                                    staff=staff,
+                                    record_id=f"INV-{instance.cr_id}",
+                                    feat_name="Payment Processing"
+                                )
+                                logger.info(f"Activity logged for auto-invoice creation: INV-{instance.cr_id}")
+                            else:
+                                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                                
+                        except Exception as log_error:
+                            logger.error(f"Failed to log activity for auto-invoice creation: {str(log_error)}")
+                            # Don't fail the request if logging fails
+            except Exception as e:
+                import logging
+                logging.error(f"Auto-create invoice failed: {e}")
+            # --- END AUTO CREATE RECEIPT ---
+            
+            # Return the updated clearance request
+            detail_serializer = ClearanceRequestDetailSerializer(instance)
+            return Response(detail_serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PaymentStatisticsView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    
+    def list(self, request, *args, **kwargs):
+        from apps.clerk.models import ClerkCertificate
+        total_requests = ClerkCertificate.objects.count()
+        paid_requests = ClerkCertificate.objects.filter(req_payment_status='Paid').count()
+        unpaid_requests = ClerkCertificate.objects.filter(req_payment_status='Unpaid').count()
+        partial_requests = ClerkCertificate.objects.filter(req_payment_status='Partial').count()
+        overdue_requests = ClerkCertificate.objects.filter(req_payment_status='Overdue').count()
+        pending_requests = ClerkCertificate.objects.filter(req_status='Pending').count()
+        
+        statistics = {
+            'total_requests': total_requests,
+            'paid_requests': paid_requests,
+            'unpaid_requests': unpaid_requests,
+            'partial_requests': partial_requests,
+            'overdue_requests': overdue_requests,
+            'pending_requests': pending_requests
+        }
+        
+        return Response(statistics, status=status.HTTP_200_OK)
+
+# Clearance Request Views
+class ResidentNameListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ResidentNameSerializer
+    
+    def get_queryset(self):
+        from apps.profiling.models import ResidentProfile
+        return ResidentProfile.objects.select_related('per').all()  

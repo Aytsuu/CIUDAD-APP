@@ -8,10 +8,11 @@ export type Receipt = {
     inv_num: number;
     inv_serial_num: string;
     inv_date: string;
-    inv_amount: number;
-    inv_change: number;
+    inv_amount: string;
     inv_nat_of_collection: string;
+    inv_pay_method: string;
     inv_payor: string; // Added this field
+    inv_change?: string | number;
     // Keep these if you need them separately
     payor_lname?: string;
     payor_fname?: string;

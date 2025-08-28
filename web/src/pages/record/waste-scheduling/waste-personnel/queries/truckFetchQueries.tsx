@@ -5,37 +5,8 @@ import {
   getAllPersonnel,
   getPersonnelByPosition,
   getPersonnelById,
-  Truck,
-  WastePersonnel
 } from "../request/truckGetReq";
-
-export type PersonnelCategory = "Watchman" | "Waste Driver" | "Waste Collector" | "Trucks";
-
-export interface PersonnelItem {
-  id: string;
-  name: string;
-  position: string;
-  contact?: string;
-}
-
-export interface PersonnelData {
-  Watchman: PersonnelItem[];
-  "Waste Driver": PersonnelItem[];
-  "Waste Collector": PersonnelItem[];
-  Trucks: TruckData[];
-}
-
-export type TruckStatus = "Operational" | "Maintenance";
-
-export interface TruckData {
-  truck_id: string;
-  truck_plate_num: string;
-  truck_model: string;
-  truck_capacity: string;
-  truck_status: TruckStatus;
-  truck_last_maint: string;
-  truck_is_archive?: boolean;
-}
+import { Truck, WastePersonnel } from "../waste-personnel-types";
 
 // Truck Queries
 export const useGetTrucks = (options = {}) => {

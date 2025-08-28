@@ -86,7 +86,7 @@ headerText.forEach((line) => {
     // Draw a horizontal line with normal weight
     const lineWidth = 220;
     const lineX = centerX - (lineWidth / 2);
-    doc.setLineWidth(1); // Changed from 1.5 to 1 for normal weight
+    doc.setLineWidth(1);
     doc.line(lineX, headerY, lineX + lineWidth, headerY);
     headerY += 20;
     return;

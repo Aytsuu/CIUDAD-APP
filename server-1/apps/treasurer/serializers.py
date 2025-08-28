@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import *
+from apps.profiling.models import *
+from apps.clerk.models import ClerkCertificate
 from utils.supabase_client import upload_to_storage
 from django.utils import timezone
 from django.db import transaction
@@ -385,6 +387,7 @@ class Purpose_And_RatesSerializers(serializers.ModelSerializer):
 #         return f"{obj.cr_id.rp_id.per.per_lname}, {obj.cr_id.rp_id.per.per_fname}"
 
 
+# invoice
 class InvoiceSerializers(serializers.ModelSerializer):
     inv_payor = serializers.SerializerMethodField()
     
@@ -398,3 +401,211 @@ class InvoiceSerializers(serializers.ModelSerializer):
             return f"{obj.cr_id.rp_id.per.per_lname}, {obj.cr_id.rp_id.per.per_fname}"
         except:
             return "Unknown"
+
+    def create(self, validated_data):
+        # Create the invoice
+        invoice = Invoice.objects.create(**validated_data)
+        
+       
+        try:
+           
+            if invoice.cr_id and hasattr(invoice.cr_id, 'pr_id') and invoice.cr_id.pr_id:
+                required_amount = float(invoice.cr_id.pr_id.pr_rate or 0)
+                paid_amount = float(invoice.inv_amount or 0)
+                
+                
+                change_amount = paid_amount - required_amount
+               
+                invoice.inv_change = change_amount if change_amount > 0 else 0
+                invoice.save()
+        except Exception as e:
+            print(f"Failed to calculate change amount: {e}")
+           
+            invoice.inv_change = 0
+            invoice.save()
+        
+      
+        if invoice.cr_id:
+            certificate = invoice.cr_id
+            certificate.cr_req_payment_status = "Paid"
+            certificate.save()
+            
+            
+            invoice.inv_status = "Paid"
+            invoice.save()
+            
+           
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # remove ni ang staffid ari temp
+                staff_id = getattr(certificate.staff_id, 'staff_id', '00003250722') if certificate.staff_id else '00003250722'
+                staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                if staff:
+                    create_activity_log(
+                        act_type="Receipt Created",
+                        act_description=f"Receipt {invoice.inv_serial_num} created for certificate {certificate.cr_id}. Payment status updated to Paid.",
+                        staff=staff,
+                        record_id=invoice.inv_serial_num,
+                        feat_name="Receipt Management"
+                    )
+            except Exception as e:
+                print(f"Failed to log activity: {e}")
+        
+        return invoice
+
+
+# Clearance Request Serializers
+class ClearanceRequestSerializer(serializers.ModelSerializer):
+    resident_details = serializers.SerializerMethodField()
+    invoice = serializers.SerializerMethodField()
+    payment_details = serializers.SerializerMethodField()
+    req_amount = serializers.SerializerMethodField()
+    req_purpose = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ClerkCertificate
+        fields = [
+            'cr_id', 'resident_details', 'req_pay_method', 'req_request_date',
+            'req_claim_date', 'req_type', 'req_status', 'req_payment_status',
+            'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details', 'pr_id'
+        ]
+
+    def get_resident_details(self, obj):
+        return {
+            'per_fname': obj.rp.per_fname,
+            'per_lname': obj.rp.per_lname,
+            'per_contact': obj.rp.per_contact,
+            'per_email': obj.rp.per_email
+        }
+
+    def get_invoice(self, obj):
+        try:
+            invoice = obj.treasurer_invoices.first()
+            if invoice:
+                return {
+                    'inv_num': invoice.inv_num,
+                    'inv_serial_num': invoice.inv_serial_num,
+                    'inv_date': invoice.inv_date.strftime('%Y-%m-%d') if invoice.inv_date else None,
+                    'inv_amount': str(invoice.inv_amount),
+                    'inv_nat_of_collection': invoice.inv_nat_of_collection,
+                    'inv_status': invoice.inv_status
+                }
+        except:
+            pass
+        return None
+
+    def get_payment_details(self, obj):
+        # This would need to be implemented based on your payment model
+        return None
+
+    def get_req_amount(self, obj):
+        try:
+            invoice = obj.treasurer_invoices.first()
+            return str(invoice.inv_amount) if invoice else "0"
+        except:
+            return "0"
+
+    def get_req_purpose(self, obj):
+        return obj.req_type
+
+
+class ClearanceRequestDetailSerializer(serializers.ModelSerializer):
+    resident_details = serializers.SerializerMethodField()
+    invoice = serializers.SerializerMethodField()
+    payment_details = serializers.SerializerMethodField()
+    req_amount = serializers.SerializerMethodField()
+    req_purpose = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ClerkCertificate
+        fields = [
+            'cr_id', 'resident_details', 'req_pay_method', 'req_request_date',
+            'req_claim_date', 'req_type', 'req_status', 'req_payment_status',
+            'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details', 'pr_id'
+        ]
+
+    def get_resident_details(self, obj):
+        try:
+            return {
+                'per_fname': obj.rp.per.per_fname if hasattr(obj.rp, 'per') and obj.rp.per else '',
+                'per_lname': obj.rp.per.per_lname if hasattr(obj.rp, 'per') and obj.rp.per else '',
+                'per_contact': obj.rp.per.per_contact if hasattr(obj.rp, 'per') and obj.rp.per else '',
+                'per_email': ''  # Personal model doesn't have email field
+            }
+        except:
+            return {
+                'per_fname': '',
+                'per_lname': '',
+                'per_contact': '',
+                'per_email': ''
+            }
+
+    def get_invoice(self, obj):
+        try:
+            invoice = obj.treasurer_invoices.first()
+            if invoice:
+                return {
+                    'inv_num': invoice.inv_num,
+                    'inv_serial_num': invoice.inv_serial_num,
+                    'inv_date': invoice.inv_date.strftime('%Y-%m-%d') if invoice.inv_date else None,
+                    'inv_amount': str(invoice.inv_amount),
+                    'inv_nat_of_collection': invoice.inv_nat_of_collection,
+                    'inv_status': invoice.inv_status
+                }
+        except:
+            pass
+        return None
+
+    def get_payment_details(self, obj):
+        # This would need to be implemented based on your payment model
+        return None
+
+    def get_req_amount(self, obj):
+        try:
+            invoice = obj.treasurer_invoices.first()
+            return str(invoice.inv_amount) if invoice else "0"
+        except:
+            return "0"
+
+    def get_req_purpose(self, obj):
+        return obj.req_type
+
+
+class PaymentStatusUpdateSerializer(serializers.ModelSerializer):
+    payment_status = serializers.ChoiceField(choices=[
+        ('Paid', 'Paid'),
+        ('Unpaid', 'Unpaid'),
+        ('Partial', 'Partial'),
+        ('Overdue', 'Overdue')
+    ])
+
+    class Meta:
+        model = ClerkCertificate
+        fields = ['payment_status']
+
+class ResidentNameSerializer(serializers.ModelSerializer):
+    per_id = serializers.IntegerField(source='per.per_id')
+    first_name = serializers.CharField(source='per.per_fname')
+    last_name = serializers.CharField(source='per.per_lname')
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ResidentProfile
+        fields = ['rp_id', 'per_id', 'first_name', 'last_name', 'full_name']
+    
+    def get_full_name(self, obj):
+        name_parts = [obj.per.per_lname, obj.per.per_fname]
+        if obj.per.per_mname:
+            name_parts.append(obj.per.per_mname)
+        if obj.per.per_suffix:
+            name_parts.append(obj.per.per_suffix)
+        return ', '.join(name_parts)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not instance.rp_id: 
+            return None
+        return data

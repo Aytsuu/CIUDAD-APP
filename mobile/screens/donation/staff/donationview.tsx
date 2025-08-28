@@ -3,8 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
 } from "react-native";
 import { DonorSelect } from "../personalizedCompo/search_input";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -16,13 +14,14 @@ import {
   useGetDonations,
   useUpdateDonation,
   useGetPersonalList,
-  type Donation,
 } from "./queries";
+import { Donation } from "../don-types";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
+import PageLayout from "@/screens/_PageLayout";
 
 const DonationView = () => {
   const router = useRouter();
@@ -30,10 +29,8 @@ const DonationView = () => {
   const { data: donations = [] } = useGetDonations();
   const { data: personalList = [] } = useGetPersonalList();
   const updateDonationMutation = useUpdateDonation();
-
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const donation = donations.find(
     (d: Donation) => d.don_num === don_num
   );
@@ -68,12 +65,6 @@ const DonationView = () => {
   const donCategory = watch("don_category");
   const isMonetary = donCategory === "Monetary Donations";
 
-  useEffect(() => {
-    if (isMonetary && isEditing) {
-      setValue("don_item_name", "");
-    }
-  }, [isMonetary, isEditing, setValue]);
-
   const handleSave = async (formData: any) => {
     if (!donation) return;
 
@@ -95,9 +86,7 @@ const DonationView = () => {
       });
 
       setIsEditing(false);
-    } catch (error: any) {
-      console.error("Error updating donation:", error);
-    } finally {
+    }  finally {
       setIsSubmitting(false);
     }
   };
@@ -113,7 +102,7 @@ const DonationView = () => {
             : donation.don_item_name === "cheque"
             ? "Cheque"
             : donation.don_item_name === "e-money"
-            ? "E-Money"
+            ? "E-money"
             : donation.don_item_name;
       }
 
@@ -129,6 +118,8 @@ const DonationView = () => {
     }
     setIsEditing(false);
   };
+
+  const moneyType = watch("don_item_name");
 
   if (!donation) {
     return (
@@ -146,26 +137,20 @@ const DonationView = () => {
   }
 
   return (
-    <ScreenLayout
-      customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
-        </TouchableOpacity>
-      }
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      headerBetweenAction={
-        <Text className="text-[13px]">
-          {isEditing ? "Edit Donation" : "View Donation"}
-        </Text>
-      }
-      showBackButton
-      onBackPress={() => router.back()}
-    >
-      <View className="space-y-4">
+    <PageLayout
+          leftAction={
+            <TouchableOpacity onPress={() => router.back()}>
+              <ChevronLeft size={30} color="black" className="text-black" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text>{isEditing ? "Edit Donation" : "View Donation"}</Text>}
+          rightAction={
+            <TouchableOpacity>
+              <ChevronLeft size={30} color="black" className="text-white" />
+            </TouchableOpacity>
+          }
+        >
+      <View className="space-y-4 p-4 flex-1">
         <View className="relative">
           <Text className="text-sm font-medium mb-1">Donor Name</Text>
           <DonorSelect
@@ -220,14 +205,8 @@ const DonationView = () => {
                 value: "Disaster Relief Supplies",
               },
             ]}
+            disabled={true}
           />
-          {!isEditing && (
-            <TouchableOpacity
-              className="absolute top-0 left-0 right-0 bottom-0"
-              style={{ backgroundColor: "transparent" }}
-              onPress={() => {}}
-            />
-          )}
         </View>
 
         <View className="relative">
@@ -248,7 +227,7 @@ const DonationView = () => {
                   options={[
                     { label: "Cash", value: "Cash" },
                     { label: "Cheque", value: "Cheque" },
-                    { label: "E-Money", value: "E-Money" },
+                    { label: "E-money", value: "E-money" },
                   ]}
                 />
               ) : (
@@ -314,23 +293,24 @@ const DonationView = () => {
           )}
         </View>
 
-        <View className="flex-row justify-end space-x-2 gap-3 mt-4">
+        <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
           {isEditing ? (
             <>
+            <View className="flex-row gap-2">
               <TouchableOpacity
-                className="px-6 py-3 bg-gray-200 rounded-lg flex-row items-center"
+                className="flex-1 bg-white border border-primaryBlue py-3 rounded-lg"
                 onPress={handleCancel}
               >
-                <Text>Cancel</Text>
+                <Text className="text-primaryBlue text-base font-semibold text-center">Cancel</Text>
               </TouchableOpacity>
 
               <ConfirmationModal
                 trigger={
                   <TouchableOpacity
-                    className="px-4 py-2 bg-blue-500 rounded-lg flex-row items-center"
+                    className="flex-1 bg-primaryBlue py-3 rounded-lg flex-row justify-center items-center"
                     disabled={isSubmitting}
                   >
-                    <Text className="text-white">
+                    <Text className="text-white text-base font-semibold text-center">
                       {isSubmitting ? "Saving" : "Save"}
                     </Text>
                     {isSubmitting && (
@@ -348,18 +328,21 @@ const DonationView = () => {
                 onPress={handleSubmit(handleSave)}
                 loading={isSubmitting}
               />
-            </>
+              </View>
+            </>    
           ) : (
+             moneyType !== "E-money" && (
             <TouchableOpacity
-              className="px-6 py-3 bg-blue-500 rounded-lg flex-row items-center"
+              className="bg-primaryBlue py-3 rounded-lg"
               onPress={() => setIsEditing(true)}
             >
-              <Text className="text-white text-lg font-medium">Edit</Text>
+              <Text className="text-white text-base font-semibold text-center">Edit</Text>
             </TouchableOpacity>
+             )
           )}
         </View>
       </View>
-    </ScreenLayout>
+    </PageLayout>
   );
 };
 
