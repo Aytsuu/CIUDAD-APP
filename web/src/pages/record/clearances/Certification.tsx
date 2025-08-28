@@ -266,12 +266,15 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { getCertificates, markCertificateAsIssued, type Certificate, type MarkCertificateVariables } from "@/pages/record/clearances/queries/certFetchQueries";
 import { toast } from "sonner";
 import TemplateMainPage from "../council/templates/template-main";
+import { calculateAge } from '@/helpers/ageCalculator';
+import { useUpdateCertStatus } from "./queries/certUpdateQueries";
 
 function CertificatePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null); // New state for preview
+  const {mutate: updateStatus} = useUpdateCertStatus()
 
   const { data: certificates, isLoading, error } = useQuery<Certificate[]>({
     queryKey: ["certificates"],
@@ -280,20 +283,28 @@ function CertificatePage() {
 
   const markAsIssuedMutation = useMutation<any, unknown, MarkCertificateVariables>({
     mutationFn: markCertificateAsIssued,
-    onSuccess: (_data, variables) => {
+    onSuccess: async (_data, variables) => {
       toast.success(`Certificate ${variables.cr_id} marked as printed successfully!`);
       queryClient.invalidateQueries({ queryKey: ["certificates"] });
-      setSelectedCertificate(null); // Close preview after marking as printed
+      
+      try {
+        // Call the second mutation
+        await updateStatus(variables.cr_id)
+        setSelectedCertificate(null);
+      } catch (error) {
+        toast.error("First mutation succeeded but second failed");
+      }
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || "Failed to mark certificate as printed");
     },
   });
 
+
   const handleMarkAsPrinted = (certificate: Certificate) => {
     markAsIssuedMutation.mutate({
       cr_id: certificate.cr_id,
-      staff_id: "00005250821", // staff ID
+      staff_id: "00005250821",
     });
   };
 
@@ -493,6 +504,7 @@ function CertificatePage() {
         <TemplateMainPage
           fname={selectedCertificate.resident_details.per_fname}
           lname={selectedCertificate.resident_details.per_lname}
+          age={calculateAge("2003-09-04")}
           birthdate={"2003-09-04"}
           address={"Sitio Palma"}
           purpose={selectedCertificate.req_purpose}

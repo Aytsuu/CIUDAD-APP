@@ -314,11 +314,12 @@ class CertificateListView(generics.ListCreateAPIView):
             )
             
 
-class CertificateDetailView(generics.RetrieveAPIView):
+class CertificateDetailView(generics.RetrieveUpdateAPIView):  # Changed from RetrieveAPIView
     permission_classes = [AllowAny]
     queryset = ClerkCertificate.objects.all()
     serializer_class = ClerkCertificateSerializer
     lookup_field = 'cr_id'
+
 
 class IssuedCertificateListView(generics.ListAPIView):
     permission_classes = [AllowAny]

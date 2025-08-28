@@ -1001,11 +1001,13 @@ import { useGetTemplateRecord } from './queries/template-FetchQueries';
 import TemplatePreview from './template-preview';
 import { Skeleton } from "@/components/ui/skeleton";
 import {formatTimestampToDate } from '@/helpers/summonTimestampFormatter';
-import { calculateAge } from '@/helpers/ageCalculator';
+  import { toast } from "sonner";
+
 
 interface RequestProps {
   fname?: string;
   lname?: string;
+  age?: string;
   birthdate?: string;
   address?: string;
   purpose?: string;
@@ -1033,7 +1035,7 @@ type Template = {
 }
 
 
-function TemplateMainPage({fname, lname, birthdate, address, purpose, issuedDate} : RequestProps ) {
+function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issuedDate} : RequestProps ) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1052,15 +1054,6 @@ function TemplateMainPage({fname, lname, birthdate, address, purpose, issuedDate
   //birthdate format
   const FormattedIssuanceDate =  issuedDate ? formatTimestampToDate(issuedDate) : "";
 
-  //age format
-  let FormattedAge = "";
-  try {
-    console.log("NI WORKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
-    FormattedAge = birthdate ? calculateAge(birthdate) : "";
-  } catch (error) {
-    console.error("Error calculating age:", error);
-    FormattedAge = ""; // Fall back to the provided age if calculation fails
-  }
 
 
   console.log("TEMPLATES: ", templates)
@@ -1081,13 +1074,13 @@ function TemplateMainPage({fname, lname, birthdate, address, purpose, issuedDate
       temp_w_sign_applicant: true,
       temp_w_seal: true,
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
-      `NAME                     :           ${lname}, ${fname}\n` +
-      `AGE                        :            ${FormattedAge}\n` +
-      `BIRTHDATE\t  :           ${birthdate}\n` +
-      `ADDRESS              :            ${address}\n\n` +
+      `NAME                     :           /*${lname}, ${fname}*/\n` +
+      `AGE                        :            /*${age}*/\n` +
+      `BIRTHDATE\t  :           /*${birthdate}*/\n` +
+      `ADDRESS              :            /*${address}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*IDENTIFICATION (ID) PURPOSES ONLY.*/   " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      `Issued this ${FormattedIssuanceDate} of Barangay San Roque Ciudad, Cebu City, Philippines.`
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },     
     {
       temp_id: "loan",
@@ -1104,13 +1097,13 @@ function TemplateMainPage({fname, lname, birthdate, address, purpose, issuedDate
       temp_w_sign_applicant: true,
       temp_w_seal: true,
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
-      `NAME                     :           ${lname}, ${fname}\n` +
-      `AGE                        :            ${lname}\n` +
-      `BIRTHDATE\t  :           ${birthdate}\n` +
-      `ADDRESS              :            ${address}\n\n` +
+      `NAME                     :           /*${lname}, ${fname}*/\n` +
+      `AGE                        :            /*${age}*/\n` +
+      `BIRTHDATE\t  :           /*${birthdate}*/\n` +
+      `ADDRESS              :            /*${address}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*LOAN PURPOSES ONLY.*/   " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      `Issued this ${FormattedIssuanceDate} of Barangay San Roque Ciudad, Cebu City, Philippines.`
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },    
     {
       temp_id: "SSS Application And Related Clearances",
@@ -1128,7 +1121,7 @@ function TemplateMainPage({fname, lname, birthdate, address, purpose, issuedDate
       temp_w_seal: true,
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
       `NAME                     :           ${lname}, ${fname}\n` +
-      `AGE                        :            ${lname}\n` +
+      `AGE                        :            ${age}\n` +
       `BIRTHDATE\t  :           ${birthdate}\n` +
       `ADDRESS              :            ${address}\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*SOCIAL SECURITY SYSTEM (SSS) PURPOSES ONLY.*/  " +
@@ -1173,10 +1166,10 @@ function TemplateMainPage({fname, lname, birthdate, address, purpose, issuedDate
       temp_w_sign_applicant: true,
       temp_w_seal: true,
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
-      "NAME                     :           [ NAME ]\n" +
-      "AGE                        :            [ AGE ]\n" +
-      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
-      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      `NAME                     :           /*${lname}, ${fname}*/\n` +
+      `AGE                        :            /*${age}*/\n` +
+      `BIRTHDATE\t  :           /*${birthdate}*/\n` +
+      `ADDRESS              :            /*${address}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*BANK REQUIREMENTS PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
@@ -1196,13 +1189,13 @@ function TemplateMainPage({fname, lname, birthdate, address, purpose, issuedDate
       temp_w_sign_applicant: true,
       temp_w_seal: true,
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
-      `NAME                     :           ${lname}, ${fname}\n` +
-      `AGE                        :            ${lname}\n` +
-      `BIRTHDATE\t  :           ${birthdate}\n` +
-      `ADDRESS              :            ${address}\n\n` +
+      `NAME                     :           /*${lname}, ${fname}*/\n` +
+      `AGE                        :            /*${age}*/\n` +
+      `BIRTHDATE\t  :           /*${birthdate}*/\n` +
+      `ADDRESS              :            /*${address}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*EMPLOYMENT PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      `Issued this ${FormattedIssuanceDate} of Barangay San Roque Ciudad, Cebu City, Philippines.`
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },   
     {
       temp_id: "electricConn",
@@ -1931,11 +1924,10 @@ function TemplateMainPage({fname, lname, birthdate, address, purpose, issuedDate
           }
         />
       ) : purpose ? (
-        <div className="rounded bg-white min-h-[200px] p-10 mb-40">
-          <p className="text-center text-gray-500">
-            No template found for the purpose: {purpose}
-          </p>
-        </div>
+        (() => {
+          toast.error(`No template for ${purpose}`, { duration: 2000 });
+          return null;
+        })()
       ) : null}
 
     </div>
