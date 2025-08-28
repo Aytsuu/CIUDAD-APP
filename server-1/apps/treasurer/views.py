@@ -487,6 +487,7 @@ class PermanentDeleteFolder(APIView):
 # -------------------------------- INCOME & EXPENSE ------------------------------------
 
 class ExpenseParticulartView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Expense_ParticularSerializers
     queryset = Expense_Particular.objects.all()
 
@@ -501,6 +502,7 @@ class ExpenseParticulartView(generics.ListCreateAPIView):
             return super().create(request, *args, **kwargs) 
         
 class UpdateExpenseParticularView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Expense_ParticularSerializers
     lookup_field = 'exp_id'
 
@@ -521,6 +523,7 @@ class UpdateExpenseParticularView(generics.RetrieveUpdateAPIView):
     
 
 class UpdateBudgetPlanDetailView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Budget_Plan_DetailSerializer
     lookup_field = 'dtl_id'
 
@@ -541,6 +544,7 @@ class UpdateBudgetPlanDetailView(generics.RetrieveUpdateAPIView):
 
 
 class Income_Expense_TrackingView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_Expense_TrackingSerializers
 
     def get_queryset(self):
@@ -552,6 +556,7 @@ class Income_Expense_TrackingView(generics.ListCreateAPIView):
 
 
 class DeleteIncomeExpenseView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_Expense_TrackingSerializers    
     queryset = Income_Expense_Tracking.objects.all()
 
@@ -560,6 +565,7 @@ class DeleteIncomeExpenseView(generics.DestroyAPIView):
         return get_object_or_404(Income_Expense_Tracking, iet_num=iet_num) 
 
 class UpdateIncomeExpenseView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_Expense_TrackingSerializers
     queryset = Income_Expense_Tracking.objects.all()
     lookup_field = 'iet_num'
@@ -588,6 +594,7 @@ class UpdateIncomeExpenseView(generics.RetrieveUpdateAPIView):
     
 
 class GetParticularsView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Budget_Plan_DetailSerializer
 
     def get_queryset(self):
@@ -605,6 +612,7 @@ class GetParticularsView(generics.ListAPIView):
 
 
 class GetExpenseParticularsView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Expense_ParticularSerializers
 
     def get_queryset(self):
@@ -622,6 +630,7 @@ class GetExpenseParticularsView(generics.ListAPIView):
     
 
 class Expense_LogView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Expense_LogSerializers
 
     def get_queryset(self):
@@ -641,6 +650,7 @@ class Expense_LogView(generics.ListCreateAPIView):
 
 
 class Income_TrackingView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_TrackingSerializers
     def get_queryset(self):
         # Get year from query params (default to current year if not provided)
@@ -651,6 +661,7 @@ class Income_TrackingView(generics.ListCreateAPIView):
 
 
 class UpdateIncomeTrackingView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_TrackingSerializers
     queryset = Income_Tracking.objects.all()
     lookup_field = 'inc_num'
@@ -665,6 +676,7 @@ class UpdateIncomeTrackingView(generics.RetrieveUpdateAPIView):
 
 
 class DeleteIncomeTrackingView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_TrackingSerializers    
     queryset = Income_Tracking.objects.all()
 
@@ -676,11 +688,13 @@ class DeleteIncomeTrackingView(generics.DestroyAPIView):
 # ------ INCOME PARTICULAR
 
 class Income_ParticularView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_ParticularSerializers
     queryset = Income_Particular.objects.all()
 
 
 class DeleteIncome_ParticularView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_ParticularSerializers
     queryset = Income_Particular.objects.all()   
 
@@ -692,12 +706,14 @@ class DeleteIncome_ParticularView(generics.DestroyAPIView):
 # ---------- INCOME EXPENSE MAIN
 
 class Income_Expense_MainView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_Expense_MainSerializers
     # queryset = Income_Expense_Main.objects.all()
     queryset = Income_Expense_Main.objects.filter(ie_is_archive=False)
 
 
 class UpdateIncome_Expense_MainView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_Expense_MainSerializers
     # queryset = Income_Expense_Main.objects.all()
     queryset = Income_Expense_Main.objects.filter(ie_is_archive=False)
@@ -717,6 +733,7 @@ class UpdateIncome_Expense_MainView(generics.RetrieveUpdateAPIView):
 # ------------- INCOME_EXPENSE FILE FOLDER
 
 class Income_Expense_FileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_Expense_FileSerializers
     queryset = Income_Expense_File.objects.all()
 
@@ -745,6 +762,7 @@ class Income_Expense_FileView(generics.ListCreateAPIView):
 
 
 class IncomeExpenseFileDetailView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]
     queryset = Income_Expense_File.objects.all()
     serializer_class = Income_Expense_FileSerializers
     lookup_field = 'ief_id' 
