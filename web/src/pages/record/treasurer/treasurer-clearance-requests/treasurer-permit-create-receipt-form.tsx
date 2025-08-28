@@ -24,6 +24,8 @@ type CertificateRequest = {
     req_payment_status: string;
     pr_id?: number; // Purpose and Rate ID
     business_name?: string; // Business name for permit clearances
+    req_amount?: number; // Add req_amount field for business clearance
+    req_sales_proof?: string; // Add gross sales range
 };
 
 
@@ -82,23 +84,37 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
     const form = useForm<z.infer<typeof ReceiptSchema>>({
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
-            inv_serial_num: "", // Generate a unique default serial number
-            inv_amount: selectedPurposeRate ? parseFloat(selectedPurposeRate.pr_rate.toString()).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00",
-            inv_nat_of_collection: capitalizeFirst(certificateRequest.req_type || ""),
-            nrc_id: certificateRequest.cr_id,
+            inv_serial_num: "", 
+            inv_amount: certificateRequest.req_amount ? certificateRequest.req_amount.toString() : "0.00",
+            inv_nat_of_collection: "Permit Clearance", 
         }
     });
 
     
     useEffect(() => {
-        if (selectedPurposeRate) {
-            form.setValue('inv_amount', parseFloat(selectedPurposeRate.pr_rate.toString()).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        if (certificateRequest.req_amount) {
+            form.setValue('inv_amount', certificateRequest.req_amount.toString());
         }
-    }, [selectedPurposeRate, form]);
+    }, [certificateRequest.req_amount, form]);
 
     const onSubmit = (values: z.infer<typeof ReceiptSchema>) => {
-        console.log('receipt:', values)
-        receipt(values)
+        console.log('=== RECEIPT FORM SUBMISSION ===');
+        console.log('Form values:', values);
+        console.log('certificateRequest:', certificateRequest);
+        console.log('certificateRequest.cr_id:', certificateRequest.cr_id);
+        console.log('certificateRequest.cr_id type:', typeof certificateRequest.cr_id);
+        console.log('================================');
+        
+        // Add additional fields needed for business clearance
+        const receiptData = {
+            ...values,
+            inv_nat_of_collection: "Permit Clearance", // Ensure this is set correctly
+            bpr_id: certificateRequest.cr_id, // Use cr_id as bpr_id for business clearance
+            nrc_id: "", // Set to empty string for business clearance (schema expects string)
+        };
+        
+        console.log('Receipt data with business clearance fields:', receiptData);
+        receipt(receiptData);
     };
 
     // Check if request is already paid
@@ -149,7 +165,7 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                                 <div>
                                     <label className="text-sm font-medium text-gray-600">Amount</label>
                                     <p className="text-base text-blue-600 font-semibold mt-1">
-                                        {selectedPurposeRate ? `₱${parseFloat(selectedPurposeRate.pr_rate.toString()).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "₱0.00"}
+                                        {certificateRequest.req_amount ? `₱${certificateRequest.req_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "₱0.00"}
                                     </p>
                                 </div>
                                 
@@ -212,6 +228,23 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                         )}
                     />
 
+                    {/* Hidden field for inv_nat_of_collection */}
+                    <FormField
+                        control={form.control}
+                        name="inv_nat_of_collection"
+                        render={({field})=>(
+                            <FormItem className="hidden">
+                                <FormControl>
+                                    <Input 
+                                        {...field} 
+                                        type="hidden"
+                                        value="Permit Clearance"
+                                    />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+
                      <FormField
                         control={form.control}
                         name="inv_amount"
@@ -238,12 +271,12 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                     />
 
                 {/* Display amount details (only when paid >= rate) */}
-                     {selectedPurposeRate && Number(form.watch("inv_amount")) >= parseFloat(selectedPurposeRate.pr_rate.toString()) && (
+                     {certificateRequest.req_amount && Number(form.watch("inv_amount")) >= certificateRequest.req_amount && (
                          <div className="space-y-2 p-3 bg-gray-50 rounded-md">
                              <div className="flex justify-between text-sm border-t pt-2">
                                  <span className="font-semibold">Change:</span>
-                                 <span className={`font-semibold ${(Number(form.watch("inv_amount")) || 0) - parseFloat(selectedPurposeRate.pr_rate.toString()) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                     ₱{((Number(form.watch("inv_amount")) || 0) - parseFloat(selectedPurposeRate.pr_rate.toString())).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                 <span className={`font-semibold ${(Number(form.watch("inv_amount")) || 0) - certificateRequest.req_amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                     ₱{((Number(form.watch("inv_amount")) || 0) - certificateRequest.req_amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                  </span>
                              </div>
                          </div>

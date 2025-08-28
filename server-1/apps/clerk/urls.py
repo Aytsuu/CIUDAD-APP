@@ -36,4 +36,7 @@ urlpatterns = [
     path('permit-clearances/', PermitClearanceView.as_view(), name='permit-clearances-list'),
     path('payment/create/<str:cr_id>/', CreatePaymentIntentView.as_view(), name='create-payment-intent'),
     path('payment/webhook/', PaymentStatusView.as_view(), name='payment-webhook'),
+
+    # Business Clearance endpoints
+    path('business-clearance/', ClearanceRequestView.as_view(), name='business-clearance-create'),
 ]

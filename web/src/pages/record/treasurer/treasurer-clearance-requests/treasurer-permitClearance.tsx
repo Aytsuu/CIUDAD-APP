@@ -36,7 +36,7 @@ const createColumns = (purposes: any[]): ColumnDef<PermitClearance>[] => [
     {
         accessorKey: "purpose",
         header: "Purpose",
-        cell: ({ row }) => row.original.req_purpose || ""
+        cell: ({ row }) => "Business Permit" 
     },
     {
         accessorKey: "amount",
@@ -50,28 +50,12 @@ const createColumns = (purposes: any[]): ColumnDef<PermitClearance>[] => [
             </div>
         ),
         cell: ({ row }) => {
-            
-            const purpose = row.original.req_purpose || row.original.purposes;
-            
-           
-            let purposeText = "";
-            if (typeof purpose === "string") {
-                purposeText = purpose;
-            } else if (Array.isArray(purpose)) {
-                purposeText = purpose[0] || ""; 
-            }
-            
-           
-            const matchingPurpose = purposes.find((p: any) => 
-                p.pr_purpose.toLowerCase() === purposeText.toLowerCase() ||
-                p.pr_category === 'Permit Clearance'
-            );
-            
-            const amount = matchingPurpose ? `₱${matchingPurpose.pr_rate}` : "₱0.00";
+            // Use the req_amount field from the backend
+            const amount = row.original.req_amount || 0;
             
             return (
                 <div className="text-center font-medium text-green-700">
-                    {amount}
+                    ₱{amount.toLocaleString()}
                 </div>
             );
         },
@@ -90,19 +74,19 @@ const createColumns = (purposes: any[]): ColumnDef<PermitClearance>[] => [
             <div className="">{row.getValue("reqDate")}</div>
         )
     },
-    {  accessorKey: "claimDate",
-        header: ({ column }) => (
-              <div
-                className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              >Date to Claim
-                <ArrowUpDown size={14}/>
-              </div>
-        ),
-        cell: ({row}) => (
-            <div className="">{row.getValue("claimDate")}</div>
-        )
-    },
+    // {  accessorKey: "claimDate",
+    //     header: ({ column }) => (
+    //           <div
+    //             className="flex w-full justify-center items-center gap-2 cursor-pointer"
+    //             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    //           >Date to Claim
+    //             <ArrowUpDown size={14}/>
+    //           </div>
+    //     ),
+    //     cell: ({row}) => (
+    //         <div className="">{row.getValue("claimDate")}</div>
+    //     )
+    // },
     { accessorKey: "paymentStat", 
       header: "Payment Status",
       cell: ({ row }) => {
@@ -148,16 +132,18 @@ const createColumns = (purposes: any[]): ColumnDef<PermitClearance>[] => [
                     mainContent={
                         <ReceiptForm 
                             certificateRequest={{
-                                cr_id: row.original.cr_id || "",
+                                cr_id: row.original.bpr_id || "", // Use bpr_id instead of cr_id
                                 req_type: "Permit Clearance",
-                                req_purpose: row.original.req_purpose || "Business Permit",
+                                req_purpose: "Business Permit", // Set fixed purpose for business clearance
                                 resident_details: {
                                     per_fname: row.original.requestor || "",
                                     per_lname: ""
                                 },
                                 req_payment_status: row.original.req_payment_status || "Pending",
                                 pr_id: row.original.pr_id,
-                                business_name: row.original.businessName || ""
+                                business_name: row.original.businessName || "",
+                                req_amount: row.original.req_amount || 0, // Pass the req_amount
+                                req_sales_proof: row.original.req_sales_proof || "" // Pass the gross sales range
                             }}
                             onSuccess={() => {}}
                         />
@@ -195,9 +181,12 @@ type PermitClearance = {
     req_sales_proof?: string,
     req_purpose?: string,
     cr_id?: string,
+    bpr_id?: string, // Add bpr_id field
     req_payment_status?: string,
     pr_id?: number,
-    amount?: string // Add amount field
+    amount?: string, // Add amount field
+    amount_to_pay?: number, // Add amount_to_pay field from backend
+    req_amount?: number // Add req_amount field from backend
 }
 
 export const PermitClearanceRecords: PermitClearance[] = [
@@ -233,18 +222,28 @@ function PermitClearance(){
     );
 
     // Map backend data to frontend columns
-    const mappedData = (filteredData || []).map((item: any) => ({
-        businessName: item.business_name || "",
-        address: item.business_address || "",
-        grossSales: item.business_gross_sales || "",
-        purposes: item.purposes || [],
-        requestor: item.requestor || "",
-        reqDate: item.req_request_date,
-        claimDate: item.req_claim_date,
-        paymentStat: item.req_payment_status,
-        req_sales_proof: item.req_sales_proof,
-        ...item
-    }));
+    const mappedData = (filteredData || []).map((item: any) => {
+        // Calculate date to claim (7 days from request date)
+        const requestDate = new Date(item.req_request_date);
+        const claimDate = new Date(requestDate);
+        claimDate.setDate(requestDate.getDate() + 7);
+        
+        return {
+            businessName: item.business_name || "",
+            address: item.business_address || "",
+            grossSales: item.req_sales_proof || "", // Use req_sales_proof instead of business_gross_sales
+            purposes: item.purposes || [],
+            requestor: item.requestor || "",
+            reqDate: item.req_request_date,
+            claimDate: claimDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+            paymentStat: item.req_payment_status,
+            req_sales_proof: item.req_sales_proof,
+            amount: item.amount_to_pay || 0, // Use amount_to_pay for amount column
+            req_amount: item.req_amount || 0, // Include req_amount field
+            bpr_id: item.bpr_id || "", // Include bpr_id field
+            ...item
+        };
+    });
 
     return(
         <div className="w-full h-full">

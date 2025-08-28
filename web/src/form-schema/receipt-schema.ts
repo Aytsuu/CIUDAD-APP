@@ -17,6 +17,7 @@ export const createReceiptSchema = (requiredRate?: string) => {
         inv_amount: DataRequirement,
         inv_nat_of_collection: z.string().default(''),
         id: z.string().default('')
+        bpr_id: z.string().optional().default('') // Add business permit request ID
     }).refine((data) => {
         if (!requiredRate) return true
         const amount = parseFloat(data.inv_amount);
@@ -37,6 +38,7 @@ const ReceiptSchema = z.object({
     inv_amount: DataRequirement,
     inv_nat_of_collection: z.string().default(''),
     id: z.string().default('')
+    bpr_id: z.string().optional().default('') // Add business permit request ID
 });
 
 export default ReceiptSchema

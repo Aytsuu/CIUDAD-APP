@@ -538,8 +538,8 @@ import { getCertificates, markCertificateAsIssued, type Certificate, type MarkCe
 import { toast } from "sonner";
 import TemplateMainPage from "../council/templates/template-main";
 import { calculateAge } from '@/helpers/ageCalculator';
-import { useUpdateCertStatus } from "./queries/certUpdateQueries";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { useUpdateCertStatus, useUpdateNonCertStatus } from "./queries/certUpdateQueries";
+import { localDateFormatter } from "@/helpers/localDateFormatter";
 
 function CertificatePage() {
   const navigate = useNavigate();
@@ -550,6 +550,7 @@ function CertificatePage() {
   const [filterPurpose, setFilterPurpose] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const {mutate: updateStatus} = useUpdateCertStatus()
+  const {mutate: updateNonResStatus} = useUpdateNonCertStatus()
 
   const { data: certificates, isLoading, error } = useQuery<Certificate[]>({
     queryKey: ["certificates"],
@@ -596,6 +597,10 @@ function CertificatePage() {
         if (!variables.is_nonresident) {
           await updateStatus(variables.cr_id);
         }
+        else{
+          await updateNonResStatus(Number(variables.nrc_id))
+        }
+
         setSelectedCertificate(null);
       } catch (error) {
         toast.error("First mutation succeeded but second failed");
@@ -685,7 +690,7 @@ function CertificatePage() {
     {
       accessorKey: "req_request_date",
       header: "Date Requested",
-      cell: ({ row }) => <div>{row.getValue("req_request_date")}</div>,
+      cell: ({ row }) => <div>{localDateFormatter(row.getValue("req_request_date"))}</div>,
     },
     {
       accessorKey: "req_purpose",
@@ -873,6 +878,7 @@ function CertificatePage() {
       {/* Render TemplateMainPage when a certificate is selected */}
       {selectedCertificate && (
         <TemplateMainPage
+          key={selectedCertificate.cr_id + Date.now()}
           fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_requester?.split(' ')[0] || ''}
           lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_requester?.split(' ').slice(1).join(' ') || ''}
           age={calculateAge(selectedCertificate.nrc_birthdate || "2003-09-04")}

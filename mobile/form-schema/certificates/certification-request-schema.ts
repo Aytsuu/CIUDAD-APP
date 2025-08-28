@@ -11,13 +11,14 @@ export const PersonalCertificationSchema = z.object({
 
 
 export const BusinessPermitSchema = z.object({
+    business_id: z.number().optional(),
     cert_type: z.literal('permit'),
     business_name: z.string().min(1, "Business name is required"),
     business_address: z.string().min(1, "Business address is required"),
     gross_sales: z.string().min(1, "Annual gross sales is required"),
-    // Image fields for the new backend
     previous_permit_image: z.string().optional(), // Previous permit image for existing businesses
     assessment_image: z.string().optional(), // Assessment document for all businesses
+    pr_id: z.number().optional(), // Purpose and rates ID
     rp_id: z.string().optional(), // Resident profile ID
 });
 

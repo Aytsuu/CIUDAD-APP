@@ -1013,6 +1013,7 @@ interface RequestProps {
   purpose?: string;
   issuedDate?: string;
   isNonResident?: boolean;
+  businessName?: string;
 }
 
 type Template = {
@@ -1026,6 +1027,7 @@ type Template = {
   temp_paperSize: string;
   temp_margin: string;
   temp_filename: string;
+  temp_applicantName?: string;
   temp_summon?: boolean;
   temp_w_sign_right: boolean;
   temp_w_sign_left: boolean;
@@ -1036,7 +1038,7 @@ type Template = {
 }
 
 
-function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issuedDate} : RequestProps ) {
+function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issuedDate, businessName} : RequestProps ) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1046,20 +1048,35 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
   // Fetch data
   const { data: templates = [], isLoading } = useGetTemplateRecord();
 
-  // Find the barangay logo directly
-  const barangayLogo = templates[0]?.template_files.find(file => file.tf_logoType === "barangayLogo")?.tf_url || "";
+  // // Find the barangay logo directly
+  // const barangayLogo = templates[0]?.template_files.find(file => file.tf_logoType === "barangayLogo")?.tf_url || "";
 
-  // Find the city logo directly  
-  const cityLogo = templates[0]?.template_files.find(file => file.tf_logoType === "cityLogo")?.tf_url || "";
+  // // Find the city logo directly  
+  // const cityLogo = templates[0]?.template_files.find(file => file.tf_logoType === "cityLogo")?.tf_url || "";
+  
+  // Extract data from API response
+  const templateData = templates[0] || {};
+  const barangayLogo = templateData.template_files?.find((file: any) => file.tf_logoType === "barangayLogo")?.tf_url || "";
+  const cityLogo = templateData.template_files?.find((file: any) => file.tf_logoType === "cityLogo")?.tf_url || "";
+  const email = templateData.temp_email || "";
+  const telNum = templateData.temp_contact_num || "";
+
+
+  //Issuance Date Format
+  const FormattedIssuanceDate =  issuedDate ? formatTimestampToDate(issuedDate) : "";
 
   //birthdate format
-  const FormattedIssuanceDate =  issuedDate ? formatTimestampToDate(issuedDate) : "";
+  const FormattedBirthdate = birthdate ? new Date(birthdate).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }) : "";
 
 
 
   console.log("TEMPLATES: ", templates)
 
-  const TemplateRecords: Template[] = [
+  const TemplateRecords = (): Template[] => [
     {
       temp_id: "identification",
       temp_title: "CERTIFICATION",
@@ -1180,8 +1197,9 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
-      temp_email: templates[0]?.temp_email,  
-      temp_telNum: templates[0]?.temp_contact_num,
+      temp_email: email,  
+      temp_telNum: telNum,
+      temp_applicantName: `${fname} ${lname}`,
       temp_paperSize: "letter",
       temp_margin: "normal",
       temp_filename: "Employment",
@@ -1192,8 +1210,8 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
       `NAME                     :           /*${lname}, ${fname}*/\n` +
       `AGE                        :            /*${age}*/\n` +
-      `BIRTHDATE\t  :                  /*${birthdate}*/\n` +
-      `ADDRESS              :            /*${address}*/\n\n` +
+      `BIRTHDATE\t  :                  /*${FormattedBirthdate}*/\n` +
+      `ADDRESS              :            /*${address}, Brgy. San Roque Ciudad Cebu City*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*EMPLOYMENT PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
       `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
@@ -1549,12 +1567,32 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_w_sign_left: false,
       temp_w_sign_applicant: false,
       temp_w_seal: false,
-      temp_body: "\nTO WHOM IT MAY CONCERN:\n\nThis is to certify that [ NAME OF BUSINESS ] residence / office address at [ ADDRESS OF THE BUSINESS],  /*Barangay San Roque (Ciudad), Cebu City*/. Which " +
+      temp_body: `\nTO WHOM IT MAY CONCERN:\n\nThis is to certify that ${businessName} residence / office address at ${address},  /*Barangay San Roque (Ciudad), Cebu City*/. Which ` +
       "is within the Territorial Jurisdiction of the Barangay in accordance with Section # 152 of Republic Act No. 7160, otherwise known as Local Government Code 1991.\n\n\n" +
       "\t\tThis clearance is issued upon the request of the subject person / establishment for\n\n" +
       "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t/*BARANGAY BUSINESS PERMIT*/\n\n" +
-      "\tIssued this [ DAY [st/nd/rd/th] ] day [MONTH] [YEAR] at Barangay San Roque (Ciudad), Cebu City"
-    },      
+      `\tIssued this ${FormattedIssuanceDate} at Barangay San Roque (Ciudad), Cebu City`
+    },
+    // {
+    //   temp_id: "bussClear",
+    //   temp_title: "BARANGAY BUSINESS CLEARANCE",
+    //   temp_barangayLogo: barangayLogo,
+    //   temp_cityLogo: cityLogo,
+    //   temp_email: templates[0]?.temp_email,  
+    //   temp_telNum: templates[0]?.temp_contact_num,
+    //   temp_paperSize: "letter",
+    //   temp_margin: "normal",
+    //   temp_filename: "Business Clearance",
+    //   temp_w_sign_right: true,
+    //   temp_w_sign_left: false,
+    //   temp_w_sign_applicant: false,
+    //   temp_w_seal: false,
+    //   temp_body: "\nTO WHOM IT MAY CONCERN:\n\nThis is to certify that [ NAME OF BUSINESS ] residence / office address at [ ADDRESS OF THE BUSINESS ],  /*Barangay San Roque (Ciudad), Cebu City*/. Which " +
+    //   "is within the Territorial Jurisdiction of the Barangay in accordance with Section # 152 of Republic Act No. 7160, otherwise known as Local Government Code 1991.\n\n\n" +
+    //   "\t\tThis clearance is issued upon the request of the subject person / establishment for\n\n" +
+    //   "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t/*BARANGAY BUSINESS PERMIT*/\n\n" +
+    //   "\tIssued this [ DAY [st/nd/rd/th] ] day [MONTH] [YEAR] at Barangay San Roque (Ciudad), Cebu City"
+    // },
     {
       temp_id: "fileAction",
       temp_belowHeaderContent: "\t\t\t\t\t\t\t\t\t\t\t\t\t\tBarangay Case No.[ Case No. ]\n" +
@@ -1790,18 +1828,31 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
 
 
   // Auto-select template based on purpose when component mounts or purpose changes
+  // useEffect(() => {
+  //   if (!purpose) {
+  //     setPreviewTemplate(null);
+  //     return;
+  //   }
+
+  //   const matchedTemplate = TemplateRecords.find(
+  //     template => template.temp_id?.toLowerCase() === purpose.toLowerCase()
+  //   );
+
+  //   setPreviewTemplate(matchedTemplate || null);
+  // }, [purpose]);
+
   useEffect(() => {
     if (!purpose) {
       setPreviewTemplate(null);
       return;
     }
 
-    const matchedTemplate = TemplateRecords.find(
+    const matchedTemplate = TemplateRecords().find(
       template => template.temp_id?.toLowerCase() === purpose.toLowerCase()
     );
 
     setPreviewTemplate(matchedTemplate || null);
-  }, [purpose]);
+  }, [purpose, templates]);
 
 
   // const filteredTemplates = TemplateRecords.filter(template => 
@@ -1913,6 +1964,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
                 title={previewTemplate.temp_title}
                 subtitle={previewTemplate.temp_subtitle}
                 body={previewTemplate.temp_body}
+                applicantName={previewTemplate.temp_applicantName?.toUpperCase()}
                 withSummon={previewTemplate.temp_summon}
                 withSeal={previewTemplate.temp_w_seal}
                 withSignRight={previewTemplate.temp_w_sign_right}

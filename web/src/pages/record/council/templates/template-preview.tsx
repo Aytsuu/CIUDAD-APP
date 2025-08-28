@@ -13,6 +13,7 @@ interface TemplatePreviewProps {
   title: string;
   subtitle?: string;
   body: string;
+  applicantName?: string;
   withSeal: boolean;
   withSignRight: boolean;
   withSignLeft: boolean;
@@ -31,6 +32,7 @@ function TemplatePreview({
   title,
   subtitle,
   body,
+  applicantName,
   withSeal,
   withSignRight,
   withSignLeft,
@@ -402,9 +404,16 @@ useEffect(() => {
 
  
       if (withSignatureApplicant) {
-        setCurrentFont('normal');
+        setCurrentFont('bold');
         
-        doc.text("[ NAME OF THE APPLICANT ]", signatureX, currentY);
+        doc.text(`${applicantName}`, signatureX, currentY);
+        
+        // Calculate underline position and draw manually
+        const textWidth = doc.getTextWidth(`${applicantName}`);
+        const underlineY = currentY + 2; // Position slightly below the text
+        doc.setLineWidth(0.5);
+        doc.line(signatureX, underlineY, signatureX + textWidth, underlineY);
+
         currentY += 15; // Move down for the next line
         
         setCurrentFont('bold');

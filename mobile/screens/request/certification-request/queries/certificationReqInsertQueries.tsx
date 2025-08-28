@@ -1,5 +1,5 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { addCertificationRequest, submitPermitCertificationWithBusiness } from "../restful-API/certificationReqPostAPI";
+import { addCertificationRequest } from "../restful-API/certificationReqPostAPI";
 import { useRouter } from "expo-router";
 import { useToastContext } from "@/components/ui/toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,7 +53,7 @@ export const useAddBusinessPermit = (onSuccess?: () => void) => {
 
     return useMutation({
         mutationFn: (values: BusinessPermitFormData) => 
-            submitPermitCertificationWithBusiness(values, "00003250722"),
+            addCertificationRequest(values, "00003250722"),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['personalCertifications'] });
             queryClient.invalidateQueries({ queryKey: ['businessPermitRequests'] });
@@ -78,11 +78,7 @@ export const useAddCertificationRequest = (onSuccess?: () => void) => {
 
     return useMutation({
         mutationFn: (values: CertificationRequestFormData) => {
-            if (values.cert_type === 'personal') {
-                return addCertificationRequest(values, "00003250722");
-            } else {
-                return submitPermitCertificationWithBusiness(values, "00003250722");
-            }
+            return addCertificationRequest(values, "00003250722");
         },
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['personalCertifications'] });
@@ -102,6 +98,19 @@ export const useAddCertificationRequest = (onSuccess?: () => void) => {
         }
     });
 };
+
+export const useAddBusinessClearance = () => {
+  return useMutation({
+    mutationFn: (data: BusinessPermitFormData) => addBusinessClearance(data),
+    onSuccess: (data) => {
+      console.log("Business clearance request submitted successfully:", data);
+    },
+    onError: (error) => {
+      console.error("Error submitting business clearance request:", error);
+    },
+  });
+};
+
 // Export schemas for use in components
 export { 
     PersonalCertificationSchema, 
