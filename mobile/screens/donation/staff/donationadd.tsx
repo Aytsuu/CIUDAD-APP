@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -6,17 +6,16 @@ import {
 } from 'react-native';
 import { DonorSelect } from '../personalizedCompo/search_input';
 import { useRouter } from 'expo-router';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Loader2, Check, ChevronLeft } from 'lucide-react-native';
+import {  ChevronLeft } from 'lucide-react-native';
 import ClerkDonateCreateSchema from '@/form-schema/donate-create-form-schema';
-import { useAddDonation, Personal, useGetPersonalList } from './queries';
+import { useAddDonation, useGetPersonalList } from './queries';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateInput } from '@/components/ui/form/form-date-input';
-import ScreenLayout from "@/screens/_ScreenLayout";
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
+import PageLayout from '@/screens/_PageLayout';
 
 const DonationAdd = () => {
   const router = useRouter();
@@ -46,38 +45,6 @@ const DonationAdd = () => {
     }
   }, [donCategory, setValue]);
 
-  // Convert personalList to options format
-  const donorOptions = personalList.map((person: Personal) => ({
-    id: person.per_id.toString(),
-    name: person.full_name,
-  }));
-
-  // Add Anonymous option
-  const allDonorOptions = [
-    { id: 'anonymous', name: 'Anonymous' },
-    ...donorOptions,
-  ];
-
-  const handleAddDonor = (newDonorName: string) => {
-    setValue('don_donor', newDonorName);
-    setValue('per_id', null);
-  };
-
-  const handleSelectDonor = (selectedId: string) => {
-    if (selectedId === 'anonymous') {
-      setValue('don_donor', 'Anonymous');
-      setValue('per_id', null);
-    } else {
-      const selectedPerson = personalList.find(
-        (person) => person.per_id.toString() === selectedId
-      );
-      if (selectedPerson) {
-        setValue('don_donor', selectedPerson.full_name);
-        setValue('per_id', selectedPerson.per_id);
-      }
-    }
-  };
-
   const onSubmit = async (formData: any) => {
     const isValid = await trigger();
     if (!isValid) {
@@ -101,22 +68,21 @@ const DonationAdd = () => {
     }
   };
 
-
   return (
-    <ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} color="black" className="text-black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Add Donation Entry</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
+      headerTitle={<Text>Add Donation</Text>}
+      rightAction={
+        <TouchableOpacity>
+          <ChevronLeft size={30} color="black" className="text-white" />
+        </TouchableOpacity>
+      }
     >
-      <View className="space-y-4">
+      <View className="space-y-4 p-4 flex-1">
         <View className="mb-4">
           <DonorSelect
             placeholder="Select donor or enter name"
@@ -156,7 +122,7 @@ const DonationAdd = () => {
             options={[
               { label: 'Cash', value: 'Cash' },
               { label: 'Cheque', value: 'Cheque' },
-              { label: 'E-Money', value: 'E-Money' },
+              { label: 'E-money', value: 'E-money' },
             ]}
           />
         ) : (
@@ -193,20 +159,19 @@ const DonationAdd = () => {
         />
 
         {/* Submit Button with Confirmation Modal */}
-        <View className="mt-6">
+        <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
           <ConfirmationModal
             trigger={
               <TouchableOpacity
-                className="bg-blue-500 py-3 rounded-lg flex-row justify-center items-center"
+                className="bg-primaryBlue py-3 rounded-lg"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 size={20} color="white" className="animate-spin mr-2" />
-                    <Text className="text-white text-lg font-medium">Saving...</Text>
+                    <Text className="text-white text-base font-semibold text-center">Saving...</Text>
                   </>
                 ) : (
-                  <Text className="text-white text-lg font-medium">Save</Text>
+                  <Text className="text-white text-base font-semibold text-center">Save</Text>
                 )}
               </TouchableOpacity>
             }
@@ -219,7 +184,7 @@ const DonationAdd = () => {
           />
         </View>
       </View>
-    </ScreenLayout>
+    </PageLayout>
   );
 };
 
