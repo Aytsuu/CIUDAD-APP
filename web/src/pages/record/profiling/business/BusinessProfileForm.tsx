@@ -8,8 +8,6 @@ import { renderActionButton } from "../ProfilingActionConfig"
 import { Type } from "../ProfilingEnums"
 import {
   CheckCircle2,
-  Plus,
-  X,
 } from "lucide-react"
 import { Combobox } from "@/components/ui/combobox"
 import { Link } from "react-router"
@@ -18,14 +16,14 @@ import { Badge } from "@/components/ui/badge"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { Separator } from "@/components/ui/separator"
 import { MediaGallery } from "@/components/ui/media-gallery"
-import { Button } from "@/components/ui/button/button"
-import { Input } from "@/components/ui/input"
-import { SelectLayout } from "@/components/ui/select/select-layout"
-import { capitalize } from "@/helpers/capitalize"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 export default function BusinessProfileForm({
-  addresses,
-  validAddresses,
   isRegistrationTab,
   prefix = "",
   isModificationRequest,
@@ -37,8 +35,6 @@ export default function BusinessProfileForm({
   isReadOnly,
   mediaFiles,
   activeVideoId,
-  setAddresses,
-  setValidAddresses,
   setFormType,
   setMediaFiles,
   setActiveVideoId,
@@ -58,8 +54,6 @@ export default function BusinessProfileForm({
   mediaFiles: MediaUploadType
   activeVideoId: string
   url: string
-  setAddresses?: React.Dispatch<React.SetStateAction<any[]>>;
-  setValidAddresses?: React.Dispatch<React.SetStateAction<boolean[]>>;
   setFormType: React.Dispatch<React.SetStateAction<Type>>
   setMediaFiles: React.Dispatch<React.SetStateAction<MediaUploadType>>
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>
@@ -67,21 +61,6 @@ export default function BusinessProfileForm({
 }) {
   const watchedValues = form.watch()
   const residentSelected = watchedValues?.rp_id ? true : false;
-
-  const handleSetAddress = (idx: number, field: string, value: string) => {
-    setAddresses && setAddresses(prev => 
-      prev.map((address, prevIdx) => {
-        return (prevIdx === idx ? 
-          {...address, [field]: field !== "sitio" ? capitalize(value) : value} 
-          : address)
-      })
-    )
-  }   
-
-  const handleRemoveAddress = (idx: number) => {
-    setValidAddresses && setValidAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
-    setAddresses && setAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
-  }
 
   const SectionHeader = ({
     title,
@@ -114,7 +93,6 @@ export default function BusinessProfileForm({
     </div>
   )
 
-
   const InfoAlert = ({ children }: { children: React.ReactNode }) => (
     <Alert className="mb-4 border-blue-200 bg-blue-50">
       <AlertDescription className="text-blue-800">{children}</AlertDescription>
@@ -124,250 +102,141 @@ export default function BusinessProfileForm({
   return (
     <div className="mx-auto">
       {!isRegistrationTab && formType == Type.Create && (
-        <div className="bg-blue-600 p-10 shadow-sm rounded-t-md">
-          <div className="mb-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <Label className="text-xl font-semibold text-white">Respondent Information</Label>
-                  <Badge variant="outline" className="text-xs text-white">
-                    Required
-                  </Badge>
-                </div>
-                <p className="text-sm text-white mt-1">Personal details of the person completing this business profile</p>
-              </div>
-            </div>
-          </div>
-
-          <InfoAlert>
-            You can either select an existing registered resident or manually enter the respondent's information
-            below for non-resident.
-          </InfoAlert>
-
-          <div className="space-y-6">
-            {/* Resident Selection */}
-            <div className="bg-white rounded-lg p-4 grid">
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Select Registered Resident (Optional)
-              </Label>
-              <Combobox
-                options={formattedResidents}
-                value={form.watch("rp_id") as string}
-                onChange={(value) => {
-                  setAddresses && setAddresses([{
-                    add_province: "",
-                    add_city: "",
-                    add_barangay: "",
-                    sitio: "",
-                    add_external_sitio: "",
-                    add_street: "",
-                  }])
-                  setValidAddresses && setValidAddresses([])
-                  form.clearErrors();
-                  form.setValue("rp_id", value)
-                }}
-                placeholder="Search and select a registered resident..."
-                emptyMessage={
-                  <div className="flex gap-2 justify-center items-center py-2">
-                    <Label className="font-normal text-[13px] text-gray-600">No resident found.</Label>
-                    <Link
-                      to="/resident/registration"
-                      state={{
-                        params: {
-                          origin: "create",
-                          title: "Resident Registration",
-                          description: "Provide the necessary details, and complete the registration.",
-                        },
-                      }}
-                      className="text-[13px] text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                    >
-                      Register New Resident
-                    </Link>
-                  </div>
-                }
-              />
-            </div>
-
-            {/* Personal Information Fields */}
-            <div className={`space-y-4 bg-white rounded-lg p-5 ${residentSelected ? 'opacity-95' : 'opacity-100'}`}>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Fill out all required fields for Non-Resident respondent
-              </Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="lg:col-span-1">
-                  <FormInput
-                    control={form.control}
-                    name="respondent.per_lname"
-                    label="Last Name"
-                    placeholder="Enter last name"
-                    readOnly={isReadOnly || residentSelected}
-                  />
-                </div>
-                <div className="lg:col-span-1">
-                  <FormInput
-                    control={form.control}
-                    name="respondent.per_fname"
-                    label="First Name"
-                    placeholder="Enter first name"
-                    readOnly={isReadOnly || residentSelected}
-                  />
-                </div>
-                <div className="lg:col-span-1">
-                  <FormInput
-                    control={form.control}
-                    name="respondent.per_mname"
-                    label="Middle Name"
-                    placeholder="Enter middle name (optional)"
-                    readOnly={isReadOnly || residentSelected}
-                  />
-                </div>
-                <div>
-                  <FormSelect
-                    control={form.control}
-                    name="respondent.per_sex"
-                    label="Sex"
-                    options={[
-                      { id: "female", name: "Female" },
-                      { id: "male", name: "Male" },
-                    ]}
-                    readOnly={isReadOnly || residentSelected}
-                  />
-                </div>
-                <div>
-                  <FormDateTimeInput
-                    control={form.control}
-                    name="respondent.per_dob"
-                    label="Date of Birth"
-                    type="date"
-                    readOnly={isReadOnly || residentSelected}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div className="md:col-span-1">
-                  <FormInput
-                    control={form.control}
-                    name="respondent.per_contact"
-                    label="Contact Number"
-                    placeholder="09XX-XXX-XXXX"
-                    readOnly={isReadOnly || residentSelected}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Include area code (e.g., 09XX-XXX-XXXX)</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                {
-                  addresses?.map((address, idx) => (
-                    <div className="grid gap-3" key={idx}>
-                      <Label className="text-black/70">Address {idx + 1}</Label>
-                      <div className="flex items-center gap-3">
-                        <div className="flex w-2/3 items-center justify-center border shadow-sm rounded-lg" >
-                          <Input
-                            placeholder="Province"
-                            value={address.add_province}
-                            onChange={(e) => handleSetAddress(idx, 'add_province', e.target.value)}
-                            className="border-none shadow-none focus-visible:ring-0"
-                            readOnly={isReadOnly}
-                          /> <p className="opacity-40">/</p>
-                          <Input
-                            placeholder="City"
-                            value={address.add_city}
-                            onChange={(e) => handleSetAddress(idx, 'add_city', e.target.value)}
-                            className="border-none shadow-none focus-visible:ring-0"
-                            readOnly={isReadOnly}
-                          /> <p className="opacity-40">/</p>
-                          <Input
-                            placeholder="Barangay"
-                            value={address.add_barangay}
-                            onChange={(e) => handleSetAddress(idx, 'add_barangay', e.target.value)}
-                            className="border-none shadow-none focus-visible:ring-0"
-                            readOnly={isReadOnly}
-                          /> <p className="opacity-40">/</p>
-        
-                          {address.add_barangay === "San Roque" ? ( !isReadOnly  ? 
-                            (<SelectLayout
-                              className="border-none w-full"
-                              placeholder="Sitio"
-                              options={sitio}
-                              value={address.sitio?.toLowerCase()}
-                              onChange={(value) => handleSetAddress(idx, 'sitio', value)}
-                              
-                            />) : (
-                              <Input 
-                                className="border-none shadow-none focus-visible:ring-0" 
-                                value={String(capitalize(address.sitio))} 
-                                readOnly
-                              />
-                            )) : (<Input
-                              placeholder="Sitio"
-                              value={address.add_external_sitio}
-                              onChange={(e) => handleSetAddress(idx, 'add_external_sitio', e.target.value)}
-                              className="border-none shadow-none focus-visible:ring-0"
-                              readOnly={isReadOnly}
-                            />)
-                          } 
-                          
-                          <p className="opacity-40">/</p>
-                          <Input
-                            placeholder="Street"
-                            value={address.add_street}
-                            onChange={(e) => handleSetAddress(idx, 'add_street', e.target.value)}
-                            className="border-none shadow-none focus-visible:ring-0"
-                            readOnly={isReadOnly}
-                          />
-                        </div>
-                        {idx + 1 > 1 &&
-                          <Button 
-                            type={"button"}
-                            variant={"outline"} 
-                            className="border-none shadow-none"
-                            onClick={() => handleRemoveAddress(idx)}
-                          >
-                            <X className="cursor-pointer  text-red-500"/>
-                          </Button>
-                        }
-                      </div>
-                      {
-                        validAddresses 
-                        && validAddresses.length > 0 
-                        && validAddresses[idx] === false && (
-                          <Label className="text-red-500 text-sm">
-                            Complete address is required
-                          </Label>
-                        )
-                      }
+        <div className="bg-blue-600 shadow-sm rounded-t-md">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="respondent-info" className="border-none">
+              <AccordionTrigger className="px-10 py-8 hover:no-underline [&[data-state=open]>div]:text-white [&>div]:text-white [&>svg]:text-white">
+                <div className="flex items-center gap-3 text-left">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xl font-semibold text-white pointer-events-none">Respondent Information</Label>
+                      <Badge variant="outline" className="text-xs text-white border-white/30 pointer-events-none">
+                        Optional
+                      </Badge>
                     </div>
-                  ))
-                }
-                <div>
-                  <Button 
-                    variant={"outline"} 
-                    type="button"
-                    className="bg-transparent border-none shadow-none text-black/60 hover:text-black/70"
-                    onClick={() => setAddresses && setAddresses((prev) => [
-                      ...prev, {
-                        add_province: '',
-                        add_city: '',
-                        add_barangay: '',
-                        sitio: '',
-                        add_external_sitio: '',
-                        add_street: ''
-                      }
-                    ])}
-                  >
-                    <Plus/> Add Address
-                  </Button>
+                    <p className="text-sm text-white mt-1 pointer-events-none">Personal details of the person completing this business profile</p>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-10 pb-10">
+                <InfoAlert>
+                  You can either select an existing registered resident or manually enter the respondent's information
+                  below for non-resident.
+                </InfoAlert>
+
+                <div className="space-y-6">
+                  {/* Resident Selection */}
+                  <div className="bg-white rounded-lg p-4 grid">
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                      Select Registered Resident (Optional)
+                    </Label>
+                    <Combobox
+                      options={formattedResidents}
+                      value={form.watch("rp_id") as string}
+                      onChange={(value) => {
+                        form.clearErrors();
+                        form.setValue("rp_id", value)
+                      }}
+                      placeholder="Search and select a registered resident..."
+                      emptyMessage={
+                        <div className="flex gap-2 justify-center items-center py-2">
+                          <Label className="font-normal text-[13px] text-gray-600">No resident found.</Label>
+                          <Link
+                            to="/resident/registration"
+                            state={{
+                              params: {
+                                origin: "create",
+                                title: "Resident Registration",
+                                description: "Provide the necessary details, and complete the registration.",
+                              },
+                            }}
+                            className="text-[13px] text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                          >
+                            Register New Resident
+                          </Link>
+                        </div>
+                      }
+                    />
+                  </div>
+
+                  {/* Personal Information Fields */}
+                  <div className={`space-y-4 bg-white rounded-lg p-5 ${residentSelected ? 'opacity-95' : 'opacity-100'}`}>
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                      Fill out all required fields for Non-Resident respondent
+                    </Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                      <div className="lg:col-span-1">
+                        <FormInput
+                          control={form.control}
+                          name="respondent.per_lname"
+                          label="Last Name"
+                          placeholder="Enter last name"
+                          readOnly={isReadOnly || residentSelected}
+                        />
+                      </div>
+                      <div className="lg:col-span-1">
+                        <FormInput
+                          control={form.control}
+                          name="respondent.per_fname"
+                          label="First Name"
+                          placeholder="Enter first name"
+                          readOnly={isReadOnly || residentSelected}
+                        />
+                      </div>
+                      <div className="lg:col-span-1">
+                        <FormInput
+                          control={form.control}
+                          name="respondent.per_mname"
+                          label="Middle Name"
+                          placeholder="Enter middle name (optional)"
+                          readOnly={isReadOnly || residentSelected}
+                        />
+                      </div>
+                      <div>
+                        <FormSelect
+                          control={form.control}
+                          name="respondent.per_sex"
+                          label="Sex"
+                          options={[
+                            { id: "female", name: "Female" },
+                            { id: "male", name: "Male" },
+                          ]}
+                          readOnly={isReadOnly || residentSelected}
+                        />
+                      </div>
+                      <div>
+                        <FormDateTimeInput
+                          control={form.control}
+                          name="respondent.per_dob"
+                          label="Date of Birth"
+                          type="date"
+                          readOnly={isReadOnly || residentSelected}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                      <div className="md:col-span-1">
+                        <FormInput
+                          control={form.control}
+                          name="respondent.per_contact"
+                          label="Contact Number"
+                          placeholder="09XX-XXX-XXXX"
+                          type="number"
+                          readOnly={isReadOnly || residentSelected}
+                        />
+                      </div>
+                    </div>    
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       )}
 
       {/* Business Information Section */}
-      <div className={`p-10 ${isRegistrationTab && "border-t"}`}>
+      <div className={`p-10 ${isRegistrationTab && "border-t"} bg-transparent`}>
         <SectionHeader
           title="Business Information"
           description="Essential details about the business being profiled"

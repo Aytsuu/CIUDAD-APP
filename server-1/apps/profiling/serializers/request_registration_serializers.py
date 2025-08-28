@@ -48,9 +48,9 @@ class FamilyRequestTableSerializer(serializers.ModelSerializer):
     fields = ['']
 
 class AccountInputSerializer(serializers.Serializer):
-  email = serializers.EmailField()
-  username = serializers.CharField()
-  password = serializers.CharField()
+  email = serializers.EmailField(write_only=True, required=False)
+  username = serializers.CharField(write_only=True)
+  password = serializers.CharField(write_only=True)
 
 class CompositionSerializer(serializers.Serializer):
   per = serializers.PrimaryKeyRelatedField(

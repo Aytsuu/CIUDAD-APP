@@ -134,6 +134,7 @@ export type BusinessRecord = {
   bus_gross_sales: string;
   sitio: string;
   bus_street: string;
+  respondent: string;
   bus_date_of_registration: string;
   bus_date_verified: string;
   rp: string;

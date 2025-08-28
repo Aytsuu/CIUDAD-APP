@@ -148,11 +148,11 @@ export const useAddBusiness = () => {
   return useMutation({
     mutationFn: (data: Record<string, any>) => addBusiness(data),
     onSuccess: (newData) => {
-      queryClient.setQueryData(["businesses"], (old: any[] = []) => [
+      queryClient.setQueryData(["activeBusinesses"], (old: any[] = []) => [
         ...old,
         newData
       ]);
-      queryClient.invalidateQueries({queryKey: ["businesses"]});
+      queryClient.invalidateQueries({queryKey: ["activeBusinesses"]});
     },
   });
 };

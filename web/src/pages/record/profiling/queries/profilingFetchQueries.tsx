@@ -44,7 +44,8 @@ export const useProfilingAllRecord = (
         console.error(err);
         throw err;
       }
-    }
+    },
+    staleTime: 5000
   })
 } 
  

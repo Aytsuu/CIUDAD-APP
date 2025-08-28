@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const passwordFormat = z.string()
-  .min(8, { message: "Password must be at least 6 characters long" })
+  .min(8, { message: "Password must be at least 8 characters long" })
   .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
   .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
   .regex(/[0-9]/, { message: "Password must contain at least one number" })
@@ -10,8 +10,16 @@ export const accountFormSchema = z.object({
   username: z.string()
     .min(1, "Username is required")
     .min(6, "Username must be atleast 6 letters"),
-  email: z.string()
-    .email("Invalid email address"),
+  email: z.string().optional(),
+  phone: z.string()
+    .min(1, "Contact is required")
+    .regex(
+      /^09\d{9}$/,
+      "Must be a valid mobile number (e.g., 09171234567)"
+    )
+    .refine((val) => val.length === 11, {
+      message: "Must be 11 digits (e.g., 09171234567)",
+    }),
   password: passwordFormat,
   confirmPassword: z.string()
     .min(1, "Confirm Password is required")
@@ -75,6 +83,7 @@ export const personalInfoSchema = z.object({
   per_edAttainment: z.string(),
   per_religion: z.string().min(1, "Religion is required"),
   per_contact: z.string().min(1, "Contact is required"),
+  per_disability: z.string().optional(),
   per_occupation: z.string(),
   per_addresses: z.object({
     list: z.array(addressSchema).default([]),

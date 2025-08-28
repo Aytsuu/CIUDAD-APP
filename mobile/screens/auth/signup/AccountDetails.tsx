@@ -3,52 +3,49 @@ import React from "react"
 import { View, Text, TouchableOpacity, ScrollView } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Button } from "@/components/ui/button"
-import _ScreenLayout from "@/screens/_ScreenLayout"
-import { ChevronLeft } from "@/lib/icons/ChevronLeft"
-import { X } from "@/lib/icons/X"
+import { Eye } from "@/lib/icons/Eye"
+import { EyeOff } from "@/lib/icons/EyeOff"
 import { FormInput } from "@/components/ui/form/form-input"
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext"
 import { useToast } from "@/hooks/use-toast"
 import { useAddAccount } from "../queries/authPostQueries"
 import { useGetAccountEmailList } from "../queries/authFetchQueries"
-import { ConfirmationModal } from "@/components/ui/confirmationModal"
 
-export default function AccountDetails({ submit } : {
+export default function AccountDetails({
+  submit,
+}: {
   submit: () => void
 }) {
   const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { registrationType, rp_id } = useLocalSearchParams();
-  const { toast } = useToast();
-  const { control, trigger, getValues, setError, reset } = useRegistrationFormContext();
-  const { mutateAsync: addAccount } = useAddAccount();
-  const { data: accEmailList, isLoading } = useGetAccountEmailList();
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
+  const [showPassword, setShowPassword] = React.useState<boolean>(false)
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState<boolean>(false)
+  const { registrationType, rp_id } = useLocalSearchParams()
+  const { toast } = useToast()
+  const { control, trigger, getValues, setError, reset } = useRegistrationFormContext()
+  const { mutateAsync: addAccount } = useAddAccount()
+  const { data: accEmailList, isLoading } = useGetAccountEmailList()
 
   const handleSubmit = async () => {
-    const formIsValid = await trigger([
-      'accountFormSchema'
-    ]);
+    const formIsValid = await trigger(["accountFormSchema"])
 
-    if(!formIsValid) {
-      return;
+    if (!formIsValid) {
+      return
     }
-
-    if (accEmailList?.includes(getValues('accountFormSchema.email'))) {
-      setError('accountFormSchema.email', { 
+    const email = getValues("accountFormSchema.email")
+    if (email !== "" && accEmailList?.includes(email)) {
+      setError("accountFormSchema.email", {
         type: "manual",
-        message: "Email is already in use" 
-      });
-      return;
+        message: "Email is already in use",
+      })
+      return
     }
 
-    submit();
+    submit()
   }
 
   return (
-    <ScrollView className="flex-1"
-      showsHorizontalScrollIndicator={false}
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView className="flex-1" showsHorizontalScrollIndicator={false} showsVerticalScrollIndicator={false}>
       <View className="flex-1 px-5">
         {/* Header Section */}
         <View>
@@ -61,17 +58,61 @@ export default function AccountDetails({ submit } : {
         {/* Form Section */}
         <View className="space-y-6">
           <View className="space-y-4">
-            <FormInput control={control} name="accountFormSchema.username" label="Username"/>
-            <FormInput control={control} name="accountFormSchema.email" label="Email Address" keyboardType="email-address"/>
-            <FormInput control={control} name="accountFormSchema.password" label="Password" secureTextEntry/>
-            <FormInput control={control} name="accountFormSchema.confirmPassword" label="Confirm Password" secureTextEntry/>
+            <FormInput control={control} name="accountFormSchema.username" label="Username" />
+            <FormInput
+              control={control}
+              name="accountFormSchema.email"
+              label="Email Address (Optional)"
+              keyboardType="email-address"
+            />
+            <FormInput control={control} name="accountFormSchema.phone" label="Phone Number" keyboardType="phone-pad" />
+
+            <View className="relative">
+              <FormInput
+                control={control}
+                name="accountFormSchema.password"
+                label="Password"
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-9 p-1"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <Eye className="w-5 h-5 text-gray-500" />
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <View className="relative">
+              <FormInput
+                control={control}
+                name="accountFormSchema.confirmPassword"
+                label="Confirm Password"
+                secureTextEntry={!showConfirmPassword}
+              />
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-9 p-1"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <Eye className="w-5 h-5 text-gray-500" />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Password Requirements */}
           <View className="bg-blue-50 border border-blue-100 rounded-xl p-4">
             <Text className="text-sm font-PoppinsMedium text-blue-900 mb-2">Password Requirements:</Text>
             <View className="space-y-1">
-              <Text className="text-xs font-PoppinsRegular text-blue-700">• At least 6 characters long</Text>
+              <Text className="text-xs font-PoppinsRegular text-blue-700">• At least 8 characters long</Text>
               <Text className="text-xs font-PoppinsRegular text-blue-700">
                 • Contains uppercase and lowercase letters
               </Text>
@@ -86,8 +127,9 @@ export default function AccountDetails({ submit } : {
 
           {/* Terms and Privacy */}
           <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-4 leading-4">
-            By continuing, you agree to our <Text className="text-primaryBlue font-PoppinsMedium">Terms of Service</Text>{" "}
-            and <Text className="text-primaryBlue font-PoppinsMedium">Privacy Policy</Text>
+            By continuing, you agree to our{" "}
+            <Text className="text-primaryBlue font-PoppinsMedium">Terms of Service</Text> and{" "}
+            <Text className="text-primaryBlue font-PoppinsMedium">Privacy Policy</Text>
           </Text>
         </View>
       </View>
