@@ -1,37 +1,44 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
 import ScreenLayout from "../_ScreenLayout";
 import { useRouter } from "expo-router";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
-import { useCertTracking } from "./queries/certTrackingQueries";
+import { useCertTracking, useCancelCertificate } from "./queries/certTrackingQueries";
 
 export default function CertTrackingMain() {
   const router = useRouter();
 
-  // Resident ID source of truth should come from auth context; hardcoded for now
-  const RESIDENT_ID = "00002250821";
+
+  const RESIDENT_ID = "00017250822";
 
   const { data, isLoading, isError } = useCertTracking(RESIDENT_ID);
+  const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(RESIDENT_ID);
   const [activeTab, setActiveTab] = React.useState<'personal' | 'business'>('personal');
-  const [statusFilter, setStatusFilter] = React.useState<'all' | 'pending' | 'in_progress' | 'completed'>('all');
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'in_progress' | 'completed' | 'cancelled'>('all');
 
   const getStatusBadge = (status?: string) => {
     const normalized = (status || "").toLowerCase();
+    if (normalized.includes("cancel")) {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Cancelled</Text>
+    }
     if (normalized.includes("progress") || normalized === "processing") {
       return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">In Progress</Text>
     }
     if (normalized.includes("complete") || normalized === "approved") {
       return <Text className="text-[10px] px-2 py-1 rounded-full bg-green-100 text-green-800">Completed</Text>
     }
-    return <Text className="text-[10px] px-2 py-1 rounded-full bg-gray-100 text-gray-700">Pending</Text>
+    return <Text className="text-[10px] px-2 py-1 rounded-full bg-gray-100 text-gray-700">In Progress</Text>
   }
 
-  const getNormalizedStatus = (status?: string): 'pending' | 'in_progress' | 'completed' => {
+  const getNormalizedStatus = (status?: string): 'pending' | 'in_progress' | 'completed' | 'cancelled' => {
     const normalized = (status || "").toLowerCase();
+    if (normalized.includes("cancel")) return 'cancelled';
     if (normalized.includes("progress") || normalized === "processing") return 'in_progress';
     if (normalized.includes("complete") || normalized === "approved") return 'completed';
     return 'pending';
   }
+
+  const extractStatus = (item: any) => (item?.cr_req_status ?? item?.req_status ?? '').toString().trim();
 
   const formatDate = (d?: string) => {
     if (!d) return '—';
@@ -50,6 +57,17 @@ export default function CertTrackingMain() {
     const breakIdx = text.lastIndexOf(' ', maxFirstLine);
     const idx = breakIdx > 0 ? breakIdx : maxFirstLine;
     return text.slice(0, idx) + "\n" + text.slice(idx).trimStart();
+  }
+
+  const handleCancel = (item: any) => {
+    Alert.alert(
+      'Cancel Request',
+      'Are you sure you want to cancel this request?',
+      [
+        { text: 'No', style: 'cancel' },
+        { text: 'Yes', style: 'destructive', onPress: () => cancelCert(String(item?.cr_id)) }
+      ]
+    );
   }
 
   return (
@@ -109,13 +127,6 @@ export default function CertTrackingMain() {
                 <Text className={`text-sm ${statusFilter === 'all' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>All</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'pending' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setStatusFilter('pending')}
-              >
-                <Text className={`text-sm ${statusFilter === 'pending' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Pending</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
                 className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'in_progress' ? 'bg-white' : ''}`}
                 activeOpacity={0.8}
                 onPress={() => setStatusFilter('in_progress')}
@@ -129,22 +140,47 @@ export default function CertTrackingMain() {
               >
                 <Text className={`text-sm ${statusFilter === 'completed' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Completed</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'cancelled' ? 'bg-white' : ''}`}
+                activeOpacity={0.8}
+                onPress={() => setStatusFilter('cancelled')}
+              >
+                <Text className={`text-sm ${statusFilter === 'cancelled' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Cancelled</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Tab Content */}
             <ScrollView showsVerticalScrollIndicator={false}>
               {activeTab === 'personal' ? (
                 <>
-                  {data?.personal?.filter((i: any) => statusFilter === 'all' || getNormalizedStatus(i?.req_status) === statusFilter).length ? (
+                  {data?.personal?.filter((i: any) => statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter).length ? (
                     data.personal
-                      .filter((i: any) => statusFilter === 'all' || getNormalizedStatus(i?.req_status) === statusFilter)
+                      .filter((i: any) => statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter)
                       .map((item: any, idx: number) => (
                       <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
                         <View className="flex-row justify-between items-center">
                           <Text className="text-gray-900 font-medium">{wrapPurpose(item?.purpose?.pr_purpose ?? item?.purpose ?? "Certification")}</Text>
-                          {getStatusBadge(item?.req_status)}
+                          {getStatusBadge(extractStatus(item))}
                         </View>
                         <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
+                        {getNormalizedStatus(extractStatus(item)) === 'completed' && (
+                          <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.ic_date_of_issuance)}</Text>
+                        )}
+                        {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
+                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_completed || item?.date_cancelled)}</Text>
+                        )}
+                        {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && (
+                          <View className="mt-3">
+                            <TouchableOpacity
+                              onPress={() => handleCancel(item)}
+                              disabled={isCancelling}
+                              className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
+                              activeOpacity={0.8}
+                            >
+                              <Text className="text-red-700 text-xs font-medium">{isCancelling ? 'Cancelling…' : 'Cancel Request'}</Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
                       </View>
                       ))
                   ) : (
@@ -153,16 +189,34 @@ export default function CertTrackingMain() {
                 </>
               ) : (
                 <>
-                  {data?.business?.filter((i: any) => statusFilter === 'all' || getNormalizedStatus(i?.req_status) === statusFilter).length ? (
+                  {data?.business?.filter((i: any) => statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter).length ? (
                     data.business
-                      .filter((i: any) => statusFilter === 'all' || getNormalizedStatus(i?.req_status) === statusFilter)
+                      .filter((i: any) => statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter)
                       .map((item: any, idx: number) => (
                       <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
                         <View className="flex-row justify-between items-center">
                           <Text className="text-gray-900 font-medium">{wrapPurpose(item?.purpose ?? "Business Permit")}</Text>
-                          {getStatusBadge(item?.req_status)}
+                          {getStatusBadge(extractStatus(item))}
                         </View>
                         <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
+                        {getNormalizedStatus(extractStatus(item)) === 'completed' && (
+                          <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.ibp_date_of_issuance)}</Text>
+                        )}
+                        {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
+                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_completed || item?.date_cancelled)}</Text>
+                        )}
+                        {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && (
+                          <View className="mt-3">
+                            <TouchableOpacity
+                              onPress={() => handleCancel(item)}
+                              disabled={isCancelling}
+                              className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
+                              activeOpacity={0.8}
+                            >
+                              <Text className="text-red-700 text-xs font-medium">{isCancelling ? 'Cancelling…' : 'Cancel Request'}</Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
                       </View>
                       ))
                   ) : (

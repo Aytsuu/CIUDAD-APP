@@ -1827,16 +1827,16 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
 
   return (
     <div className="w-full h-full">
-      <div className="flex flex-col mb-4">
+      {/* <div className="flex flex-col mb-4">
         <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Document Templates</h1>
         <p className="text-xs sm:text-sm text-darkGray">Manage and view document templates</p>
       </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
+      <hr className="border-gray mb-6 sm:mb-10" /> */}
 
       <div className="w-full flex flex-col sm:flex-row justify-between items-center pb-7 gap-4">
         {/* Search Input */}
         <div className="relative w-full">
-          <Search
+          {/* <Search
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
             size={17}
           />
@@ -1845,16 +1845,16 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
             className="pl-10 w-full bg-white text-sm" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          /> */}
         </div>
         
         {/* Edit/Add Details Button */}
         {templates.length > 0 ? (
           <DialogLayout
-            trigger={
-              <Button className="w-full sm:w-auto">
-                <SquarePen size={20} /> Edit Details
-              </Button>
+            trigger={''
+              // <Button className="w-full sm:w-auto">
+              //   <SquarePen size={20} /> Edit Details
+              // </Button>
             }
             className="max-w-[30%] max-h-[80%] flex flex-col overflow-auto scrollbar-custom"
             title="Template Common Details"
@@ -1926,7 +1926,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
         />
       ) : purpose ? (
         (() => {
-          toast.error(`No template for ${purpose}`, { duration: 2000 });
+          // toast.error(`No template for ${purpose}`, { duration: 2000 });
           return null;
         })()
       ) : null}

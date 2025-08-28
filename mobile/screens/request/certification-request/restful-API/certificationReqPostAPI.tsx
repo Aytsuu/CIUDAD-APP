@@ -100,8 +100,8 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
                 cr_req_request_date: new Date().toISOString().split('T')[0], 
                 cr_req_transac_id: 'None', 
                 cr_req_purpose: requestInfo.cert_category, 
-                cr_req_status: 'In Progress',
-                cr_req_payment_status: 'Paid',
+                cr_req_status: 'Pending',
+                cr_req_payment_status: 'Unpaid',
                 pr_id: requestInfo.pr_id, 
                 rp_id: residentProfileId, 
                 serial_no: requestInfo.serialNo || null,
@@ -131,6 +131,7 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
                 req_status: 'Pending',
                 req_payment_status: 'Unpaid',
                 bus_id: requestInfo.business_id, // Business ID - renamed from business to bus_id
+                rp_id: await getValidResidentProfileId(),
                 ags_id: requestInfo.ags_id || null, // Annual gross sales ID (optional)
                 pr_id: requestInfo.pr_id || null, // Purpose and rate ID (optional)
                 // New image fields

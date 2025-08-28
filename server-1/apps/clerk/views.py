@@ -253,7 +253,15 @@ class CertificateListView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
-            serializer = self.get_serializer(data=request.data)
+            payload = request.data.copy()
+            status_val = payload.get('cr_req_status')
+            if status_val and str(status_val).lower().strip() in ['completed', 'cancelled']:
+                payload['cr_date_completed'] = timezone.now().date()
+            else:
+                
+                payload.pop('cr_date_completed', None)
+
+            serializer = self.get_serializer(data=payload)
             serializer.is_valid(raise_exception=True)
             certificate = serializer.save()
 
@@ -350,6 +358,28 @@ class CertificateDetailView(generics.RetrieveUpdateAPIView):  # Changed from Ret
     queryset = ClerkCertificate.objects.all()
     serializer_class = ClerkCertificateSerializer
     lookup_field = 'cr_id'
+
+class CancelCertificateView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, cr_id):
+        try:
+            cert = ClerkCertificate.objects.get(cr_id=cr_id)
+            cert.cr_req_status = 'Cancelled'
+            # set completion/cancel date
+            if not cert.cr_date_completed:
+                cert.cr_date_completed = timezone.now().date()
+            cert.save(update_fields=['cr_req_status', 'cr_date_completed'])
+            return Response({
+                'message': 'Cancelled',
+                'cr_id': cert.cr_id,
+                'cr_req_status': cert.cr_req_status,
+                'cr_date_completed': cert.cr_date_completed
+            }, status=status.HTTP_200_OK)
+        except ClerkCertificate.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class IssuedCertificateListView(generics.ListAPIView):
@@ -532,6 +562,32 @@ class PermitClearanceView(generics.ListCreateAPIView):
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
                 permit_clearance = serializer.save()
+                # Create BusinessPermitFile rows if provided
+                try:
+                    from .models import BusinessPermitFile
+                    create_payload = []
+                    prev_url = request.data.get('previous_permit_image')
+                    assess_url = request.data.get('assessment_image')
+                    if prev_url:
+                        prev_name = str(prev_url).split('/')[-1] if isinstance(prev_url, str) else ''
+                        create_payload.append(BusinessPermitFile(
+                            bpf_name=prev_name or 'previous_permit',
+                            bpf_type='previous_permit',
+                            bpf_url=prev_url,
+                            bpr_id=permit_clearance
+                        ))
+                    if assess_url:
+                        assess_name = str(assess_url).split('/')[-1] if isinstance(assess_url, str) else ''
+                        create_payload.append(BusinessPermitFile(
+                            bpf_name=assess_name or 'assessment',
+                            bpf_type='assessment',
+                            bpf_url=assess_url,
+                            bpr_id=permit_clearance
+                        ))
+                    if create_payload:
+                        BusinessPermitFile.objects.bulk_create(create_payload)
+                except Exception as file_err:
+                    logger.error(f"Failed creating BusinessPermitFile entries: {str(file_err)}")
                 
                 # Log the activity
                 try:

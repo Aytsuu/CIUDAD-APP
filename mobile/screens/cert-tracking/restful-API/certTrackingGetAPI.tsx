@@ -18,4 +18,9 @@ export const getBusinessPermitRequests = async (residentId: string) => {
   return toList(res.data);
 };
 
+export const cancelCertificate = async (cr_id: string) => {
+  const res = await api.post(`clerk/certificate/${cr_id}/cancel/`, {});
+  return res.data;
+};
+
 

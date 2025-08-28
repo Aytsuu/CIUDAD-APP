@@ -13,7 +13,7 @@ const CertPermit: React.FC = () => {
   const router = useRouter();
 
   // naay business
-  const RESIDENT_ID = "00002250821"; 
+  const RESIDENT_ID = "00001250821"; 
   // walay business
   // const RESIDENT_ID = "00038250827";
   
@@ -349,9 +349,6 @@ const CertPermit: React.FC = () => {
           <View className="bg-gray-100 rounded-xl py-4 items-center mt-2 mb-8">
             <Text className="text-gray-500 font-semibold text-base">
               Cannot Request Business Permit
-            </Text>
-            <Text className="text-gray-400 text-sm mt-1">
-              No business registered under your name
             </Text>
           </View>
         )}
