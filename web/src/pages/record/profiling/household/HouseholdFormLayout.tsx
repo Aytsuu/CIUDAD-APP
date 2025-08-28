@@ -19,6 +19,7 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { Button } from "@/components/ui/button/button"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 import { capitalize } from "@mui/material"
+import { Badge } from "@/components/ui/badge"
 
 export default function HouseholdFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // =============== STATE INITIALIZATION ==================
@@ -244,6 +245,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
                         <div className="flex gap-4">
                           <div>House {index + 1}</div>
                           <p>Sitio {capitalize(sitio)}, {street}</p>
+                          <Badge>{house.nhts == "yes" ? "NHTS" : "Not an NHTS"}</Badge>
                         </div>
                         <X 
                           size={16} 

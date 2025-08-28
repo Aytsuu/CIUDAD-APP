@@ -79,32 +79,6 @@ export default function ResidentRequestForm({ params }: { params: any }) {
     }
 
     params?.next(true)
-
-    // try {
-    //   const resident = await addResidentAndPersonal({
-    //     personalInfo: {
-    //       per_id: params.data?.per_id,
-    //     },
-    //     staffId: user?.staff?.staff_id,
-    //   });
-
-    //   await updateAccount({
-    //     accNo: params.data.acc,
-    //     data: { rp: resident.rp_id },
-    //   }, {
-    //       onSuccess: () => {
-    //         deleteRequest(params.data.req_id);
-    //         showSuccessToast("Request Approved!");
-    //         params?.setResidentId(resident.rp_id);
-    //         params?.setAddresses(params?.data.addresses)
-    //         params?.next();
-    //       },
-    //     }
-    //   );
-    // } catch (error) {
-    //   showErrorToast("Failed to process request");
-    //   setIsSubmitting(false);
-    // }
   };
 
   return (

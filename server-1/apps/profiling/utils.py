@@ -27,6 +27,6 @@ def generate_fam_no(building_type):
   day = str(date.day).zfill(2)
   
   formatted = f"{next_val:04d}"
-  family_id = f"{year}{month}{day}00{formatted}-{type[building_type]}"
+  family_id = f"{year}{month}{day}00{formatted}-{type[building_type.lower()]}"
   
   return family_id

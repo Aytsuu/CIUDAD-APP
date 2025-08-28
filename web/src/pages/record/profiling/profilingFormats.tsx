@@ -49,7 +49,7 @@ export const formatHouseholds = (households: any) => {
           #{household.hh_id}
         </span>
         <div className="flex items-center gap-2">
-          <Label>Head:</Label>
+          <Label>Owner:</Label>
           {household.head.split("-")[1]}
         </div>
       </div>
@@ -148,4 +148,15 @@ export const formatModificationRequests = (requests: any) => {
         </div>
       )
     }))
+}
+
+export const formatOwnedHouses = (houses: any) => {
+  if(!houses) return;
+  return houses.map((house: any, index: number) => ({
+    id: String(index),
+    name: <div className="flex gap-2">
+      <p>{`House ${index + 1} - Sitio ${house.address.split("-")[1]}, ${house.address.split("-")[2]}`}</p>
+      <Badge>{house.nhts == "yes" ? "NHTS" : "Not an NHTS"}</Badge>
+    </div>
+  }))
 }

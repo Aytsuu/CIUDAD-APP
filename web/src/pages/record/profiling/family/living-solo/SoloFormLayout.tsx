@@ -4,7 +4,7 @@ import { demographicInfoSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { zodResolver } from "@hookform/resolvers/zod"
 import LivingSoloForm from "./LivingSoloForm"
-import { formatHouseholds, formatResidents } from "../../ProfilingFormats"
+import { formatHouseholds, formatOwnedHouses, formatResidents } from "../../ProfilingFormats"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import {
   User,
@@ -52,6 +52,8 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   const [invalidResident, setInvalidResident] = React.useState<boolean>(false)
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
   const [buildingReadOnly, setBuildingReadOnly] = React.useState<boolean>(false)
+  const [selectOwnedHouses, setSelectOwnedHouses] = React.useState<boolean>(false);
+  const [ownedHouses, setOwnedHouses] = React.useState<any[]>([]);
 
   const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList])
   const formattedHouseholds = React.useMemo(() => formatHouseholds(householdsList), [householdsList])
@@ -59,6 +61,16 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   const isLoading = isLoadingHouseholds || isLoadingResidents
 
   // ==================== SIDE EFFECTS ======================
+  React.useEffect(() => {
+    if(selectOwnedHouses) {
+      tab_params?.form.setValue("livingSoloSchema.building", "Owner")
+      setBuildingReadOnly(true);
+    } else {
+      tab_params?.form.resetField("livingSoloSchema.building")
+      setBuildingReadOnly(false);
+    }
+  }, [selectOwnedHouses])
+  
   React.useEffect(() => {
     if (isLoading) {
       showLoading()
@@ -195,6 +207,9 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
             invalidResident={invalidResident}
             invalidHousehold={invalidHousehold}
             form={tab_params?.isRegistrationTab ? tab_params?.form : form}
+            ownedHouses={formatOwnedHouses(tab_params?.form.getValues("houseSchema.list"))}
+            selectOwnedHouses={selectOwnedHouses}
+            setSelectOwnedHouses={setSelectOwnedHouses}
             onSubmit={submit}
           />
         )}
@@ -242,7 +257,7 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
           <Separator />
 
           {/* Form Content */}
-          <div className="bg-white rounded-lg p-6 border border-gray-100">
+          <div className="bg-white rounded-lg p-6">
             {MainContent}
             <div className="flex justify-end mt-8">
               <Button onClick={handleContinue}>
@@ -250,6 +265,8 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
               </Button>
             </div>
           </div>
+
+          <Separator />
 
           {/* Help Section */}
           <div className="text-center pt-4">

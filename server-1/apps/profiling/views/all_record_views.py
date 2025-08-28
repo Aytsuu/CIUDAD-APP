@@ -104,7 +104,7 @@ class CompleteRegistrationView(APIView):
         hh = self.create_household(houses, rp, staff)
 
     if livingSolo:
-        new_fam = self.create_family(livingSolo, rp, staff)
+        new_fam = self.create_family(livingSolo, rp, hh, staff)
         if new_fam:
           results["fam_id"] = new_fam.pk
 
@@ -185,15 +185,16 @@ class CompleteRegistrationView(APIView):
       created_instances = Household.objects.bulk_create(house_instances)
     
     return created_instances
-
-    
   
-  def create_family(self, livingSolo, rp, staff):
+  def create_family(self, livingSolo, rp, hh, staff):
+    household_no = livingSolo["householdNo"]
+    is_owned_selected = not household_no.split("-")[0] == "HH"
     fam = Family.objects.create(
       fam_id=generate_fam_no(livingSolo["building"]),
       fam_indigenous=livingSolo["indigenous"],
       fam_building=livingSolo["building"],
-      hh=Household.objects.get(hh_id=livingSolo["householdNo"]),
+      hh=hh[int(household_no)] if is_owned_selected else \
+        Household.objects.get(hh_id=livingSolo["householdNo"]),
       staff=staff
     )
 

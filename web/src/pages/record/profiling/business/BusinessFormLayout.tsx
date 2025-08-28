@@ -313,7 +313,6 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     }
 
     tab_params?.form.setValue("businessSchema.files", mediaFiles)
-    console.log(tab_params?.form.getValues().businessSchema)
     tab_params?.next(true)
   }
 

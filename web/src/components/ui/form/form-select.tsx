@@ -52,7 +52,7 @@ export const FormSelect = React.memo(({
                     <FormControl>
                         {!readOnly ? (
                             <SelectLayout
-                                placeholder="Select"
+                                placeholder={placeholder || "Select"}
                                 className="w-full"
                                 options={selectOptions}
                                 value={field.value}

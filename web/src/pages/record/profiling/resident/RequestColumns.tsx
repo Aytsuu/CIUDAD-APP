@@ -79,7 +79,6 @@ export const IndividualRequestColumns: ColumnDef<IndividualRequestRecord>[] = [
         to="/profiling/request/pending/individual/registration"
         state={{
           params: {
-            type: "request",
             title: "Registration Request",
             description:
               "This is a registration request submitted by the user. Please review the details and approve accordingly.",
