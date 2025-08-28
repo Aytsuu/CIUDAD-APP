@@ -1027,6 +1027,7 @@ type Template = {
   temp_paperSize: string;
   temp_margin: string;
   temp_filename: string;
+  temp_applicantName?: string;
   temp_summon?: boolean;
   temp_w_sign_right: boolean;
   temp_w_sign_left: boolean;
@@ -1047,20 +1048,35 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
   // Fetch data
   const { data: templates = [], isLoading } = useGetTemplateRecord();
 
-  // Find the barangay logo directly
-  const barangayLogo = templates[0]?.template_files.find(file => file.tf_logoType === "barangayLogo")?.tf_url || "";
+  // // Find the barangay logo directly
+  // const barangayLogo = templates[0]?.template_files.find(file => file.tf_logoType === "barangayLogo")?.tf_url || "";
 
-  // Find the city logo directly  
-  const cityLogo = templates[0]?.template_files.find(file => file.tf_logoType === "cityLogo")?.tf_url || "";
+  // // Find the city logo directly  
+  // const cityLogo = templates[0]?.template_files.find(file => file.tf_logoType === "cityLogo")?.tf_url || "";
+  
+  // Extract data from API response
+  const templateData = templates[0] || {};
+  const barangayLogo = templateData.template_files?.find((file: any) => file.tf_logoType === "barangayLogo")?.tf_url || "";
+  const cityLogo = templateData.template_files?.find((file: any) => file.tf_logoType === "cityLogo")?.tf_url || "";
+  const email = templateData.temp_email || "";
+  const telNum = templateData.temp_contact_num || "";
+
+
+  //Issuance Date Format
+  const FormattedIssuanceDate =  issuedDate ? formatTimestampToDate(issuedDate) : "";
 
   //birthdate format
-  const FormattedIssuanceDate =  issuedDate ? formatTimestampToDate(issuedDate) : "";
+  const FormattedBirthdate = birthdate ? new Date(birthdate).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }) : "";
 
 
 
   console.log("TEMPLATES: ", templates)
 
-  const TemplateRecords: Template[] = [
+  const TemplateRecords = (): Template[] => [
     {
       temp_id: "identification",
       temp_title: "CERTIFICATION",
@@ -1181,8 +1197,9 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
-      temp_email: templates[0]?.temp_email,  
-      temp_telNum: templates[0]?.temp_contact_num,
+      temp_email: email,  
+      temp_telNum: telNum,
+      temp_applicantName: `${fname} ${lname}`,
       temp_paperSize: "letter",
       temp_margin: "normal",
       temp_filename: "Employment",
@@ -1193,8 +1210,8 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
       `NAME                     :           /*${lname}, ${fname}*/\n` +
       `AGE                        :            /*${age}*/\n` +
-      `BIRTHDATE\t  :                  /*${birthdate}*/\n` +
-      `ADDRESS              :            /*${address}*/\n\n` +
+      `BIRTHDATE\t  :                  /*${FormattedBirthdate}*/\n` +
+      `ADDRESS              :            /*${address}, Brgy. San Roque Ciudad Cebu City*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*EMPLOYMENT PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
       `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
@@ -1811,18 +1828,31 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
 
 
   // Auto-select template based on purpose when component mounts or purpose changes
+  // useEffect(() => {
+  //   if (!purpose) {
+  //     setPreviewTemplate(null);
+  //     return;
+  //   }
+
+  //   const matchedTemplate = TemplateRecords.find(
+  //     template => template.temp_id?.toLowerCase() === purpose.toLowerCase()
+  //   );
+
+  //   setPreviewTemplate(matchedTemplate || null);
+  // }, [purpose]);
+
   useEffect(() => {
     if (!purpose) {
       setPreviewTemplate(null);
       return;
     }
 
-    const matchedTemplate = TemplateRecords.find(
+    const matchedTemplate = TemplateRecords().find(
       template => template.temp_id?.toLowerCase() === purpose.toLowerCase()
     );
 
     setPreviewTemplate(matchedTemplate || null);
-  }, [purpose]);
+  }, [purpose, templates]);
 
 
   // const filteredTemplates = TemplateRecords.filter(template => 
@@ -1934,6 +1964,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
                 title={previewTemplate.temp_title}
                 subtitle={previewTemplate.temp_subtitle}
                 body={previewTemplate.temp_body}
+                applicantName={previewTemplate.temp_applicantName?.toUpperCase()}
                 withSummon={previewTemplate.temp_summon}
                 withSeal={previewTemplate.temp_w_seal}
                 withSignRight={previewTemplate.temp_w_sign_right}

@@ -11,7 +11,7 @@ class ClerkCertificate(models.Model):
     cr_req_status = models.CharField(max_length=100, default='None')
     cr_req_payment_status = models.CharField(max_length=100, default='None')
     cr_date_completed = models.DateTimeField(null=True, blank=True)  
-    cr_date_rejected = models.DateTimeField(default = datetime.now)
+    cr_date_rejected = models.DateTimeField(null=True, blank = True)
     cr_reason = models.CharField(max_length = 500, default = 'None')
 
     pr_id = models.ForeignKey(
