@@ -45,7 +45,7 @@ export const updateIncomeTracking = async (inc_num: number, incomeInfo: Record<s
             inc_additional_notes: incomeInfo.inc_additional_notes,
             inc_receipt_image: incomeInfo.inc_receipt_image || null,
             incp_id:  parseInt(incomeInfo.inc_particulars),
-            staff_id: "00001250820"
+            staff_id: "00001250821"
 
         })
 
