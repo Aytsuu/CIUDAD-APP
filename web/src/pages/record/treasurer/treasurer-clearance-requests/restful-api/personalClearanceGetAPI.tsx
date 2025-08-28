@@ -1,17 +1,10 @@
 import { api } from "@/api/api";
 
 
-export const getPersonalClearances = async (page: number = 1, pageSize: number = 10) => {
+export const getPersonalClearances = async () => {
     try {
         const response = await api.get('/clerk/personal-clearances/');
-        const data = response.data;
-        
-        return {
-            count: data.length,
-            results: data,
-            next: null,
-            previous: null
-        };
+        return response.data
     } catch (error: any) {
         console.error("Failed to fetch personal clearances:", error);
         throw new Error(error.response?.data?.detail || "Failed to fetch personal clearances");

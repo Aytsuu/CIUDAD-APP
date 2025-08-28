@@ -6,8 +6,8 @@ export const createPersonalClearance = async (payload: any) => {
     const staffId = "00001250821";
     const clearancePayload = {
       cr_req_request_date: new Date().toISOString().split('T')[0],
-      cr_req_status: 'In Progress',
-      cr_req_payment_status: 'Paid',
+      cr_req_status: 'Pending',
+      cr_req_payment_status: 'Unpaid',
       pr_id: payload.purpose || null,
       rp_id: payload?.rp_id ,
       staff_id: staffId

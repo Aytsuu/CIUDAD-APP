@@ -193,7 +193,6 @@
 
 // export default PersonalClearanceForm;
 
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { ResidentFormSchema, NonResidentFormSchema } from "@/form-schema/personalClearance-schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
@@ -382,20 +381,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                 <Form {...nonResidentForm}>
                     <form onSubmit={nonResidentForm.handleSubmit(onSubmitNonResident)} className="flex flex-col gap-7">
                         <div className="flex flex-col gap-5">
-                            {/* <FormField
-                                control={nonResidentForm.control}
-                                name="serialNo"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Receipt Serial No.:</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g.(123456)" type="number" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            /> */}
-
                             <FormInput
                                 name="requester"
                                 label="Requester"
@@ -413,6 +398,7 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                                 control = {nonResidentForm.control}
                                 name="birthdate"
                                 label = "Birthdate"
+                                max={new Date().toISOString().split('T')[0]}
                             />
                         </div>
 

@@ -121,19 +121,6 @@ class ClerkBusinessPermit(models.Model):
     class Meta:
         db_table = 'clerk_business_permit'
 
-# Invoice Model
-# class Invoice(models.Model):
-#     inv_num = models.CharField(max_length=50, primary_key=True)
-#     inv_serial_num = models.CharField(max_length=100)
-#     inv_date = models.CharField(max_length=20, default='Pending')
-#     inv_amount = models.DecimalField(max_digits=10, decimal_places=2)
-#     inv_nat_of_collection = models.DateTimeField(auto_now_add=True)
-#     cr_id = models.ForeignKey(ClerkCertificate, on_delete=models.CASCADE, related_name='clerk_invoices', db_column='cr_id')
-    
-#     class Meta:
-#         db_table = 'invoice'
-#         managed = False
-
 # Document Models
 class DocumentsPDF(models.Model):
     pdf_url = models.URLField(blank=True, null=True)  

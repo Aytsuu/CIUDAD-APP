@@ -85,7 +85,7 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
             inv_serial_num: "", // Generate a unique default serial number
             inv_amount: selectedPurposeRate ? parseFloat(selectedPurposeRate.pr_rate.toString()).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00",
             inv_nat_of_collection: capitalizeFirst(certificateRequest.req_type || ""),
-            cr_id: certificateRequest.cr_id,
+            nrc_id: certificateRequest.cr_id,
         }
     });
 

@@ -10,7 +10,7 @@ import { createReceiptSchema } from "@/form-schema/receipt-schema";
 
 
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
-function ReceiptForm({nrc_id, purpose, rate, requester, pay_status, pr_id, nat_col, onSuccess}: {
+function ReceiptForm({nrc_id, purpose, rate, requester, pay_status, pr_id, nat_col, is_resident, onSuccess}: {
     nrc_id: string;
     purpose: string | undefined;
     rate: string | undefined;
@@ -18,16 +18,17 @@ function ReceiptForm({nrc_id, purpose, rate, requester, pay_status, pr_id, nat_c
     pay_status: string;
     pr_id: number | undefined;
     nat_col: string;
+    is_resident: boolean;
     onSuccess: () => void}){
     const { mutate: receipt, isPending} = useAddReceipt(onSuccess)
 
-   
+   console.log('stat', pay_status)
     const ReceiptSchema = createReceiptSchema(rate);
 
     const form = useForm<z.infer<typeof ReceiptSchema>>({
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
-            inv_serial_num: "", // Generate a unique default serial number
+            inv_serial_num: "", 
             inv_amount: "",
             inv_nat_of_collection: nat_col,
             nrc_id: nrc_id.toString(), 
@@ -69,149 +70,145 @@ function ReceiptForm({nrc_id, purpose, rate, requester, pay_status, pr_id, nat_c
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* Debug info */}
                 <div className="text-xs text-red-500">
-                    {Object.keys(form.formState.errors).length > 0 && (
-                        <div>
-                            <strong>Form Errors:</strong>
-                            {Object.entries(form.formState.errors).map(([field, error]) => (
-                                <div key={field}>{field}: {error?.message}</div>
-                            ))}
-                        </div>
-                    )}
+                {Object.keys(form.formState.errors).length > 0 && (
+                    <div>
+                    <strong>Form Errors:</strong>
+                    {Object.entries(form.formState.errors).map(([field, error]) => (
+                        <div key={field}>{field}: {error?.message}</div>
+                    ))}
+                    </div>
+                )}
                 </div>
 
                 {/* Warning message if already paid */}
-                    {isAlreadyPaid && (
-                        <Card className="border-orange-200 bg-orange-50">
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-2 text-orange-800">
-                                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                    <p className="font-medium">This request is already paid..</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Display certificate details */}
-                    <Card>
-                        {/* <CardHeader>
-                        </CardHeader> */}
-                        <CardContent className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-2">
-                                <div>
-                                    <label className="text-sm font-medium text-gray-600">Resident Name</label>
-                                    <p className="text-base text-gray-900 font-medium mt-1">
-                                        {requester}
-                                    </p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-600">Request Type</label>
-                                    <p className="text-base text-gray-900 font-medium mt-1">
-                                        {nat_col}
-                                    </p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-600">Purpose</label>
-                                    <p className="text-base text-gray-900 font-medium mt-1">{purpose}</p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-600">Payment Status</label>
-                                    <p className="text-base text-green-600 font-semibold mt-1">{pay_status}</p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-600">Amount</label>
-                                    <p className="text-base text-primary font-semibold mt-1">
-                                        {`₱${rate}`}
-                                    </p>
-                                </div>
-                                
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <FormField
-                        control={form.control}
-                        name="inv_serial_num"
-                        render={({field})=>(
-                            <FormItem>
-                                <FormLabel>Serial No. <span className="text-red-500">*</span></FormLabel>
-                                <FormControl>
-                                    <Input 
-                                        {...field} 
-                                        placeholder="Enter receipt serial number" 
-                                        onChange={(e) => field.onChange(e.target.value)}
-                                        disabled={isAlreadyPaid}
-                                        readOnly={isAlreadyPaid}
-                                        style={isAlreadyPaid ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
-                                    />
-                                </FormControl>
-                             
-                                <FormMessage/>
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="inv_amount"
-                        render={({field})=>(
-                            <FormItem>
-                                <FormLabel>Amount Paid (₱)</FormLabel>
-                                <FormControl>
-                                    <Input 
-                                        {...field} 
-                                        type="number"                                         
-                                        placeholder="Enter amount" 
-                                        className="w-full"
-                                        onChange={(e) => {
-                                            field.onChange(e.target.value);
-                                        }}
-                                    />
-                                </FormControl>
-                                <FormMessage/>
-                                
-                    
-                                {isAmountInsufficient() && (
-                                    <div className="text-sm text-red-600 mt-1">
-                                        Amount paid (₱{form.watch("inv_amount")}) is less than required amount (₱{rate})
-                                    </div>
-                                )}
-                            </FormItem>
-                        )}
-                    />
-
-                  {purpose && rate && Number(form.watch("inv_amount")) > 0 && 
-                   Number(form.watch("inv_amount")) > parseFloat(rate) && (
-                        <div className="space-y-2 p-3 bg-gray-50 rounded-md">
-                            <div className="flex justify-between text-sm border-t pt-2">
-                            <span className="font-semibold">Change:</span>
-                            <span className="text-green-600 font-semibold">
-                                ₱{(
-                                (Number(form.watch("inv_amount")) || 0) - 
-                                parseFloat(rate)
-                                ).toLocaleString('en-US', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                                })}
-                            </span>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="flex justify-end gap-3 mt-6">
-                        <Button 
-                             type="submit" 
-                             disabled={isPending || isAlreadyPaid || isAmountInsufficient()}
-                             className={isAlreadyPaid ? "opacity-50 cursor-not-allowed" : ""}
-                             onClick={() => {
-                                 console.log('Button clicked!');
-                                 console.log('Form errors:', form.formState.errors);
-                                 console.log('Form values:', form.watch());
-                             }}
-                         >
-                             {isPending ? "Creating..." : isAlreadyPaid ? "Cannot Create Receipt" : "Create Receipt"}
-                         </Button>
+                {isAlreadyPaid && (
+                <Card className="border-orange-200 bg-orange-50">
+                    <CardContent className="pt-6">
+                    <div className="flex items-center gap-2 text-orange-800">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        <p className="font-medium">This request is already paid..</p>
                     </div>
-                </form>
+                    </CardContent>
+                </Card>
+                )}
+
+                {/* Certificate details */}
+                <Card>
+                <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-2">
+                    <div>
+                        <label className="text-sm font-medium text-gray-600">Resident Name</label>
+                        <p className="text-base text-gray-900 font-medium mt-1">{requester}</p>
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-gray-600">Request Type</label>
+                        <p className="text-base text-gray-900 font-medium mt-1">{nat_col}</p>
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-gray-600">Purpose</label>
+                        <p className="text-base text-gray-900 font-medium mt-1">{purpose}</p>
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-gray-600">Payment Status</label>
+                        <p className="text-base text-green-600 font-semibold mt-1">{pay_status}</p>
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-gray-600">Amount</label>
+                        <p className="text-base text-primary font-semibold mt-1">{`₱${rate}`}</p>
+                    </div>
+                    </div>
+                </CardContent>
+                </Card>
+
+                {/* Only show these fields if NOT resident */}
+                {!is_resident && (
+                <>
+                    <FormField
+                    control={form.control}
+                    name="inv_serial_num"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Serial No. <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                            <Input 
+                            {...field} 
+                            placeholder="Enter receipt serial number" 
+                            onChange={(e) => field.onChange(e.target.value)}
+                            disabled={isAlreadyPaid}
+                            readOnly={isAlreadyPaid}
+                            style={isAlreadyPaid ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
+                            />
+                        </FormControl>
+                        <FormMessage/>
+                        </FormItem>
+                    )}
+                    />
+
+                    <FormField
+                    control={form.control}
+                    name="inv_amount"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Amount Paid (₱)</FormLabel>
+                        <FormControl>
+                            <Input 
+                            {...field} 
+                            type="number"                                         
+                            placeholder="Enter amount" 
+                            className="w-full"
+                            onChange={(e) => {
+                                field.onChange(e.target.value);
+                            }}
+                            />
+                        </FormControl>
+                        <FormMessage/>
+
+                        {isAmountInsufficient() && (
+                            <div className="text-sm text-red-600 mt-1">
+                            Amount paid (₱{form.watch("inv_amount")}) is less than required amount (₱{rate})
+                            </div>
+                        )}
+                        </FormItem>
+                    )}
+                    />
+
+                    {purpose && rate && Number(form.watch("inv_amount")) > 0 && 
+                    Number(form.watch("inv_amount")) > parseFloat(rate) && (
+                    <div className="space-y-2 p-3 bg-gray-50 rounded-md">
+                        <div className="flex justify-between text-sm border-t pt-2">
+                        <span className="font-semibold">Change:</span>
+                        <span className="text-green-600 font-semibold">
+                            ₱{(
+                            (Number(form.watch("inv_amount")) || 0) - 
+                            parseFloat(rate)
+                            ).toLocaleString('en-US', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                            })}
+                        </span>
+                        </div>
+                    </div>
+                    )}
+                </>
+                )}
+
+                {/* Button */}
+                <div className="flex justify-end gap-3 mt-6">
+                <Button 
+                    type="submit" 
+                    disabled={isPending || isAlreadyPaid || (!is_resident && isAmountInsufficient())}
+                    className={isAlreadyPaid ? "opacity-50 cursor-not-allowed" : ""}
+                >
+                    {isPending 
+                    ? "Processing..." 
+                    : isAlreadyPaid 
+                        ? "Cannot Proceed" 
+                        : is_resident 
+                        ? "Accept" 
+                        : "Create Receipt"}
+                </Button>
+                </div>
+            </form>
             </Form>
     )
 }

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getResidents } from "../restful-api/permitClearanceGetAPI";
 import { getNonResidentCertReq } from "../restful-api/personalClearanceGetAPI";
+import { getPersonalClearances } from "../restful-api/personalClearanceGetAPI";
 
 
 export type Residents = {
@@ -40,6 +41,32 @@ export const useGetNonResidentCertReq = () => {
     return useQuery<NonResidentReq[]>({
         queryKey: ["nonResidentReq"],  
         queryFn: getNonResidentCertReq,
+        staleTime: 1000 * 60 * 30, 
+    });
+}
+
+export type ResidentReq = {
+    cr_id: string;
+    resident_details: {
+        per_fname: string;
+        per_lname: string;
+    };
+    cr_req_request_date: string;
+    cr_req_payment_status: string;
+    cr_req_status: string; 
+    pr_id?: number;
+    purpose?: {
+        pr_purpose: string;
+        pr_rate: string;
+    };
+    amount?: string;
+}
+
+
+export const usegetResidentCertReq = () => {
+    return useQuery<ResidentReq[]>({
+        queryKey: ["residentReq"],  
+        queryFn: getPersonalClearances,
         staleTime: 1000 * 60 * 30, 
     });
 }

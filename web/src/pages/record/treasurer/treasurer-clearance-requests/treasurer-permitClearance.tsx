@@ -7,7 +7,6 @@ import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ArrowUpDown } from "lucide-react";
-
 import PermitClearanceForm from "./treasurer-permitClearance-form";
 import ReceiptForm from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permit-create-receipt-form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
@@ -16,8 +15,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useGetPurposeAndRate } from "../Rates/queries/RatesFetchQueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
-
-
 
 
 //table header
