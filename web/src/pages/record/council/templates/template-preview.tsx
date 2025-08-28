@@ -40,6 +40,10 @@ function TemplatePreview({
   margin = "normal"
 }: TemplatePreviewProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [barangayLogoData, setBarangayLogoData] = useState<string | null>(null);
+  const [cityLogoData, setCityLogoData] = useState<string | null>(null);
+  const [sealData, setSealData] = useState<string | null>(null);
 
   const registerFonts = (doc: jsPDF) => {
     doc.addFileToVFS('VeraMono-normal.ttf', veraMonoNormal);
@@ -48,10 +52,49 @@ function TemplatePreview({
     doc.addFont('VeraMono-Bold-bold.ttf', 'VeraMono', 'bold');
   };
 
-  useEffect(() => {
-    generatePDF();
-  }, [barangayLogo, cityLogo, email, telNum, belowHeaderContent, title, subtitle, body, withSeal, withSummon, withSignRight, withSignLeft, withSignatureApplicant, withSummon, paperSize, margin]);
+useEffect(() => {
+    const preloadImages = async () => {
+      try {
+        // Preload barangay logo
+        if (barangayLogo && barangayLogo !== "no-image-url-fetched") {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.src = barangayLogo;
+          await img.decode();
+          setBarangayLogoData(barangayLogo);
+        }
 
+        // Preload city logo
+        if (cityLogo && cityLogo !== "no-image-url-fetched") {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.src = cityLogo;
+          await img.decode();
+          setCityLogoData(cityLogo);
+        }
+
+        // Preload seal image
+        const sealImg = new Image();
+        sealImg.src = sealImage;
+        await sealImg.decode();
+        setSealData(sealImage);
+
+        setImagesLoaded(true);
+      } catch (error) {
+        console.error("Error preloading images:", error);
+        setImagesLoaded(true); // Continue even if images fail to load
+      }
+    };
+
+    preloadImages();
+  }, [barangayLogo, cityLogo]);
+
+  useEffect(() => {
+    if (imagesLoaded) {
+      generatePDF();
+    }
+  }, [imagesLoaded, barangayLogoData, cityLogoData, sealData, title, subtitle, body, withSeal, withSummon, withSignRight, withSignLeft, withSignatureApplicant, paperSize, margin]);
+  
   const generatePDF = () => {
     // Convert paper size to jsPDF format
     let pageFormat: [number, number] | string;

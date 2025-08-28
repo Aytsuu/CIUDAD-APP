@@ -539,6 +539,7 @@ import { toast } from "sonner";
 import TemplateMainPage from "../council/templates/template-main";
 import { calculateAge } from '@/helpers/ageCalculator';
 import { useUpdateCertStatus } from "./queries/certUpdateQueries";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
 function CertificatePage() {
   const navigate = useNavigate();
