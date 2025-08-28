@@ -54,23 +54,36 @@ export const addReceipt = async (data: Record<string, any>) => {
             console.log('Personal request status updated:', updateStatus.data);
         } else {
             console.warn('No valid ID provided for status update - skipping status update');
-        }
+        }   
+    }catch(err){
+        console.error(err)
+    }   
+}
+
+
+export const addPersonalReceipt = async (data: Record<string, any>) => {
+    try{
+        const updateStatus = await api.put(`/clerk/update-personal-req-status/${data.id}/`, {
+            nrc_req_status: "In Progress",
+            nrc_req_payment_status: "Paid",
+            nrc_pay_date: new Date().toISOString()
+        })
 
         const payload = {
-            inv_date: new Date().toISOString(),
-            inv_amount: parseFloat(data.inv_amount),
-            inv_nat_of_collection: data.inv_nat_of_collection,
-            inv_serial_num: data.inv_serial_num,
-            nrc_id: data.nrc_id || null, // Make optional for business clearance
-            bpr_id: data.bpr_id || null, // Add business permit request ID
-        };
-        
-        console.log('API Payload:', payload);
-        console.log('Making API call to: treasurer/invoice/');
-        
-        const res = await api.post('treasurer/invoice/', payload);
-        console.log('API Response:', res.data);
-        return res.data;
+                    inv_date: new Date().toISOString(),
+                    inv_amount: parseFloat(data.inv_amount),
+                    inv_nat_of_collection: data.inv_nat_of_collection,
+                    inv_serial_num: data.inv_serial_num,
+                    nrc_id: data.nrc_id || null, // Make optional for business clearance
+                    bpr_id: data.bpr_id || null, // Add business permit request ID
+                };
+                
+                console.log('API Payload:', payload);
+                console.log('Making API call to: treasurer/invoice/');
+                
+                const res = await api.post('treasurer/invoice/', payload);
+                console.log('API Response:', res.data);
+                return res.data;
     }catch(err: any){
         console.error('API Error:', err);
         console.error('Error Response:', err.response?.data);
