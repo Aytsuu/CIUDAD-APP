@@ -1,22 +1,17 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Platform, ActivityIndicator, Alert } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-// --- Added imports for mutation and schema ---
+import { useRouter } from "expo-router";
+
 import { useAddPersonalCertification } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
 import { usePurposeAndRates, type PurposeAndRate } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, type DropdownOption } from "@/components/ui/select-layout";
 
-interface CertFormProps {
-  navigation?: NativeStackNavigationProp<any>;
-}
-
-const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
+const CertForm: React.FC = () => {
+  const router = useRouter();
   const [personalType, setPersonalType] = useState("");
   const [purpose, setPurpose] = useState("");
-  const [claimDate, setClaimDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,16 +43,10 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
       return;
     }
     
-    if (!claimDate) {
-      setError("Please select a claim date");
-      return;
-    }
-    
     const result = CertificationRequestSchema.safeParse({
       cert_type: "personal",
       requester: "user", // This should come from auth context
       purposes: [purpose], 
-      claimDate: claimDate ? claimDate.toISOString().split("T")[0] : "",
     });
     if (!result.success) {
       setError(result.error.issues[0].message);
@@ -68,7 +57,6 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
       cert_type: "personal",
       requester: "user", 
       purposes: [purpose], 
-      claimDate: claimDate ? claimDate.toISOString().split("T")[0] : "",
       pr_id: selectedPurposeId, // Add the purpose ID
     });
   };
@@ -91,7 +79,7 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
       {/* Back Button */}
       <View className="flex-row items-center mb-6">
         <TouchableOpacity 
-          onPress={() => navigation?.goBack?.()} 
+          onPress={() => router.back()} 
           className="bg-white rounded-full w-10 h-10 items-center justify-center shadow-sm border border-gray-100"
           activeOpacity={0.7}
         >
@@ -125,34 +113,7 @@ const CertForm: React.FC<CertFormProps> = ({ navigation }) => {
           disabled={isLoadingPurposes}
         />
 
-        {/* Claim Date */}
-        <View>
-          <Text className="text-sm font-medium text-gray-700 mb-2">Claim Date</Text>
-          <TouchableOpacity
-            className="bg-white rounded-lg px-3 py-3 shadow-sm border border-gray-200"
-            onPress={() => setShowDatePicker(true)}
-            activeOpacity={0.8}
-          >
-            <View className="flex-row justify-between items-center">
-              <Text className={claimDate ? "text-gray-900 text-sm" : "text-gray-400 text-sm"}>
-                {claimDate ? claimDate.toLocaleDateString() : "Select claim date"}
-              </Text>
-              <Ionicons name="calendar-outline" size={18} color="#888" />
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={claimDate || new Date()}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(_, date) => {
-              setShowDatePicker(false);
-              if (date) setClaimDate(date);
-            }}
-          />
-        )}
+        {/* Claim Date removed */}
 
         {/* Payment Mode */}
         {/* Removed payment mode field */}

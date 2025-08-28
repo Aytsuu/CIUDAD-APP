@@ -72,14 +72,23 @@ export interface Business {
     bus_gross_sales: number;
     bus_street: string;
     sitio: string;
-    bus_date_verified: string;
+    bus_date_verified: string | null;
+    bus_status: string;
 }
 
-// Query hook for fetching business by resident ID
+
+export interface BusinessResponse {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: Business[];
+}
+
+
 export const useBusinessByResidentId = (rpId: string) => {
-    return useQuery<Business[]>({
+    return useQuery<BusinessResponse>({
         queryKey: ["business-by-resident", rpId],
         queryFn: () => getBusinessByResidentId(rpId),
-        enabled: !!rpId, // Only run query if rpId is provided
+        enabled: !!rpId, 
     });
 };
