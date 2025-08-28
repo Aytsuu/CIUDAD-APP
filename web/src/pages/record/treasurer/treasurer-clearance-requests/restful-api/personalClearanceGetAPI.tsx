@@ -98,3 +98,14 @@ export const createPaymentIntent = async (crId: string) => {
         throw new Error(error.response?.data?.detail || "Failed to create payment intent");
     }
 };
+
+
+export const getNonResidentCertReq = async () => {
+    try{
+        const res = await api.get('/clerk/nonresident-personal-clearance/')
+
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}

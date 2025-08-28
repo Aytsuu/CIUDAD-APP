@@ -1,10 +1,14 @@
 import z from "zod"
 
-const PersonalClearanceFormSchema = z.object({
-    serialNo: z.string().min(1, "Serial number is required"),
+export const NonResidentFormSchema = z.object({
+    requester: z.string().min(1, "Requester name is required"),
+    purpose: z.string().min(1, "Please select a purpose"),
+    address: z.string().min(1, "Address is required."),
+    birthdate: z.string().min(1, "Birthdate is required.")
+})
+
+export const ResidentFormSchema = z.object({
     requester: z.string().min(1, "Requester name is required"),
     purpose: z.string().min(1, "Please select a purpose"),
     rp_id: z.string().optional()
 })
-
-export default PersonalClearanceFormSchema

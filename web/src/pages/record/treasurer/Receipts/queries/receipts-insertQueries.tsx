@@ -15,7 +15,7 @@ export const useAddReceipt = (onSuccess?: () => void) => {
             onSuccess: () => {
                 // Refresh relevant data
                 queryClient.invalidateQueries({ queryKey: ['invoices'] });
-                queryClient.invalidateQueries({ queryKey: ['personalClearances'] });
+                queryClient.invalidateQueries({ queryKey: ['nonResidentReq'] });
                 queryClient.invalidateQueries({ queryKey: ['permitClearances'] });
 
                 // User feedback
@@ -26,12 +26,6 @@ export const useAddReceipt = (onSuccess?: () => void) => {
                     duration: 1500
                 });
 
-                // Close any open dialog (simulate Escape key)
-                try {
-                    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' } as KeyboardEventInit));
-                } catch (_) {}
-
-                // Allow parent to run its own success handler
                 onSuccess?.();
             },
             onError: (err) => {

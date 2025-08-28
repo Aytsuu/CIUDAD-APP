@@ -313,6 +313,19 @@ class CertificateListView(generics.ListCreateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             
+class NonResidentsCertReqView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = NonResidentCertReqSerializer
+    queryset = NonResidentCertificateRequest.objects.all()
+
+
+class UpdateNonResidentCertReqView(generics.UpdateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = NonResidentCertReqUpdateSerializer
+    queryset = NonResidentCertificateRequest.objects.all()
+    lookup_field = 'nrc_id'
+
+    
 class CertificateStatusUpdateView(generics.UpdateAPIView):
     permission_classes = [AllowAny]
     queryset = ClerkCertificate.objects.all()
@@ -720,6 +733,7 @@ class PersonalClearancesView(APIView):
                 {"error": str(e), "detail": "An error occurred while retrieving personal clearances"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 
 class CreatePaymentIntentView(APIView):
     def post(self, request, cr_id):
