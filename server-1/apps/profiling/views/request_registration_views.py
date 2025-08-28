@@ -16,7 +16,7 @@ class RequestTableView(generics.ListAPIView):
   def get_queryset(self):
     request_type = self.request.query_params.get('request_type', None) 
 
-    queryset = RequestRegistration.objects.prefetch_related(
+    queryset = RequestRegistration.objects.filter(~Q(req_is_archive=True)).prefetch_related(
       'request_composition__per__personal_addresses__add'
     ).only(
       'req_id',
@@ -58,4 +58,4 @@ class RequestDeleteView(generics.DestroyAPIView):
 class RequestCountView(APIView):
   permission_classes = [AllowAny]
   def get(self, request, *args, **kwargs):
-    return Response(RequestRegistration.objects.count())
+    return Response(RequestRegistration.objects.filter(~Q(req_is_archive=True)).count())
