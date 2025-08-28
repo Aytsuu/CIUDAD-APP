@@ -99,7 +99,9 @@ class IssuedCertificateSerializer(serializers.ModelSerializer):
 class CertificateStatusUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClerkCertificate
-        fields = ['cr_req_status', 'cr_date_completed', 'cr_req_payment_status'] 
+        fields = ['cr_req_status', 'cr_date_completed', 'cr_req_payment_status', 'cr_reason',
+                  'cr_date_rejected'
+            ] 
 
 # class NonResidentCertReqSerializer(serializers.ModelSerializer):
 #     class Meta:

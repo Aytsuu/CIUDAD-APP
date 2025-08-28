@@ -3,7 +3,7 @@ import { api } from "@/api/api";
 export const addReceipt = async (data: Record<string, any>) => {
     try{
 
-        const updateStatus = await api.put(`/clerk/update-personal-req-status/${data.nrc_id}/`, {
+        const updateStatus = await api.put(`/clerk/update-personal-req-status/${data.id}/`, {
             nrc_req_status: "In Progress",
             nrc_req_payment_status: "Paid",
             nrc_pay_date: new Date().toISOString()
