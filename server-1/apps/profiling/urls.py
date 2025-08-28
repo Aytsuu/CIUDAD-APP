@@ -15,6 +15,7 @@ from .views.all_record_views import *
 urlpatterns = [
     # All record (combined record of resident and business respondents)
     path("all/", AllRecordTableView.as_view(), name="all-record"),
+    path("complete/registration/", CompleteRegistrationView.as_view(), name="complete-registration"),
 
     # Sitio Urls
     path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
@@ -46,7 +47,7 @@ urlpatterns = [
     # Househould Urls
     path("household/list/", HouseholdListView.as_view(), name="household-list"),
     path("household/list/table/", HouseholdTableView.as_view(), name="household-table"),
-    path("household/<str:hh_id>/data/", HouseholdListView.as_view(), name="household-details"),
+    path("household/<str:hh_id>/data/", HouseholdDataView.as_view(), name="household-details"),
     path("household/create/", HouseholdCreateView.as_view(), name="create-household"),
     path("household/update/<str:hh_id>/", HouseholdUpdateView.as_view(), name="upadate-household"),
 

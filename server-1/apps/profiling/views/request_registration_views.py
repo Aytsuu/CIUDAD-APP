@@ -6,8 +6,10 @@ from django.db.models import Q, Count
 from apps.pagination import StandardResultsPagination
 from ..models import RequestRegistration
 from ..serializers.request_registration_serializers import *
+from rest_framework.permissions import AllowAny
 
 class RequestTableView(generics.ListAPIView):
+  permission_classes = [AllowAny]
   serializer_class = RequestTableSerializer
   pagination_class = StandardResultsPagination
 
@@ -43,14 +45,17 @@ class RequestTableView(generics.ListAPIView):
     return queryset.filter(req_is_archive=False)
 
 class RequestCreateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = RequestCreateSerializer
   queryset = RequestRegistration.objects.all()
 
 class RequestDeleteView(generics.DestroyAPIView):
+  permission_classes = [AllowAny]
   serializer_class = RequestBaseSerializer
   queryset = RequestRegistration.objects.all()
   lookup_field = 'req_id'
 
 class RequestCountView(APIView):
+  permission_classes = [AllowAny]
   def get(self, request, *args, **kwargs):
     return Response(RequestRegistration.objects.count())

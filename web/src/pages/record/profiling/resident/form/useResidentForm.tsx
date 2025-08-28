@@ -14,7 +14,7 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
   const defaultValues = generateDefaultValues(personalInfoSchema);
   const form = useForm<z.infer<typeof personalInfoSchema>>({
     resolver: zodResolver(personalInfoSchema),
-    // defaultValues,
+    defaultValues,
   });
 
   React.useEffect(() => {
@@ -40,6 +40,7 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
       { key: "per_religion", value: resident?.per_religion || "" },
       { key: "per_edAttainment", value: resident?.per_edAttainment || "" },
       { key: "per_contact", value: resident?.per_contact || "" },
+      { key: "per_addresses", value: resident?.per_addresses || [] },
     ];
 
     fields.map((f: any) => {

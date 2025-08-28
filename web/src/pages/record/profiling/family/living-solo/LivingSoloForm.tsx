@@ -12,6 +12,7 @@ import { Plus } from "lucide-react";
 
 export default function LivingSoloForm({
   isRegistrationTab = false,
+  prefix = "",
   residents,
   households,
   isSubmitting,
@@ -22,6 +23,7 @@ export default function LivingSoloForm({
   onSubmit
 }: {
   isRegistrationTab: boolean;
+  prefix?: string;
   residents: any[];
   households: any[];
   isSubmitting: boolean;
@@ -67,8 +69,8 @@ export default function LivingSoloForm({
           </div>
           <Combobox
             options={households}
-            value={form.watch("householdNo")}
-            onChange={(value) => form.setValue("householdNo", value)}
+            value={form.watch(`${prefix}householdNo` as any)}
+            onChange={(value) => form.setValue(`${prefix}householdNo` as any, value as string)}
             placeholder="Select a household"
             triggerClassName="font-normal"
             emptyMessage={
@@ -83,23 +85,23 @@ export default function LivingSoloForm({
             }
           />
           <Label className="text-[13px] text-red-500">
-            {invalidHousehold ? `Resident is required` : ""}
+            {invalidHousehold ? `Household is required` : ""}
           </Label>
         </div>
         <FormSelect
           control={form.control}
-          name="building"
-          label="Building"
+          name={`${prefix}building`}
+          label="Household Occupancy"
           options={[
             { id: "owner", name: "Owner" },
             { id: "renter", name: "Renter" },
-            { id: "other", name: "Other" },
+            { id: "sharer", name: "Sharer" },
           ]}
           readOnly={buildingReadOnly}
         />
         <FormSelect
           control={form.control}
-          name="indigenous"
+          name={`${prefix}indigenous`}
           label="Indigenous People"
           options={[
             { id: "no", name: "No" },
@@ -109,7 +111,7 @@ export default function LivingSoloForm({
         />
       </div>
       {/* Submit Button */}
-      <div className="flex justify-end">
+      {!isRegistrationTab && <div className="flex justify-end">
         {!isSubmitting ? (
           <ConfirmationModal 
             trigger={
@@ -126,7 +128,7 @@ export default function LivingSoloForm({
         ) : (
           <LoadButton>Registering...</LoadButton>
         )}
-      </div>
+      </div>}
     </>
   );
 }

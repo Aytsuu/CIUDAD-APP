@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from ..models import *
 from ..serializers.feature_serializers import FeatureBaseSerializer
+# from ..serializers.permission_serializers import PermissionBaseSerializer
 from ..serializers.position_serializers import PositionBaseSerializer
 
 class AssignmentBaseSerializer(serializers.ModelSerializer):

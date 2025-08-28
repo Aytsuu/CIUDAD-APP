@@ -21,7 +21,6 @@ import { useHouseholdsList, useResidentsList } from "../../queries/profilingFetc
 import { useLoading } from "@/context/LoadingContext"
 import { useSafeNavigate } from "@/hooks/use-safe-navigate"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button/button"
@@ -69,13 +68,7 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   }, [isLoading, showLoading, hideLoading])
 
   React.useEffect(() => {
-    if (tab_params?.residentId) {
-      form.setValue("id", tab_params?.residentId)
-    }
-  }, [tab_params, form])
-
-  React.useEffect(() => {
-    const householdNo = form.watch("householdNo")?.split(" ")[0]
+    const householdNo = tab_params?.isRegistrationTab ? tab_params?.form.watch("livingSoloSchema.householdNo") : form.watch("householdNo")?.split(" ")[0]
     const residentId = form.watch("id")?.split(" ")[0]
     let building = ""
 
@@ -98,6 +91,23 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   }, [form.watch("householdNo"), form.watch("id"), householdsList, form])
 
   // ==================== HANDLERS ======================
+  const handleContinue = async () => {
+    const householdId = tab_params?.form.getValues("livingSoloSchema.householdNo")
+    if (!(await tab_params?.form.trigger(["livingSoloSchema"]))) {
+      if (!householdId) setInvalidHousehold(true)
+      showErrorToast("Please fill out all required fields to continue.")
+      return
+    }
+
+    if (!householdId) {
+      showErrorToast("Please fill out all required fields to continue.")
+      setInvalidHousehold(true)
+      return
+    }
+
+    tab_params?.next(true)
+  }
+
   const submit = async () => {
     setIsSubmitting(true)
     setInvalidResident(false)
@@ -133,7 +143,7 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
 
       // Navigate based on context
       if (tab_params?.isRegistrationTab) {
-        tab_params.next?.()
+        tab_params.next?.(true)
       } else {
         safeNavigate.back()
       }
@@ -164,7 +174,7 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   )
 
   const MainContent = (
-    <Form {...form}>
+    <Form {...(tab_params?.isRegistrationTab ? tab_params?.form : form)}>
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -177,13 +187,14 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
         ) : (
           <LivingSoloForm
             isRegistrationTab={tab_params?.isRegistrationTab}
+            prefix={tab_params?.isRegistrationTab ? "livingSoloSchema." : ""}
             buildingReadOnly={buildingReadOnly}
             residents={formattedResidents}
             households={formattedHouseholds}
             isSubmitting={isSubmitting}
             invalidResident={invalidResident}
             invalidHousehold={invalidHousehold}
-            form={form}
+            form={tab_params?.isRegistrationTab ? tab_params?.form : form}
             onSubmit={submit}
           />
         )}
@@ -194,7 +205,7 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   // ==================== RENDER ======================
   const residentRegistrationForm = () => (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full max-w-4xl shadow-none">
+      <Card className="w-full max-w-4xl max-h-[700px] shadow-none overflow-y-auto">
         {/* Navigation Button */}
         <div className="flex justify-end p-4 pb-0">
           <Button
@@ -211,7 +222,7 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <UsersRound className="w-8 h-8 text-blue-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Independent Living Registration</h2>
+          <h2 className="text-xl font-semibold mb-2">Independent Living Registration</h2>
           <p className="max-w-2xl mx-auto leading-relaxed">
             Register individuals who live independently within a household. This creates a family record for residents
             who maintain their own living arrangements.
@@ -221,20 +232,27 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
         {/* Rest of the component remains the same */}
         <CardContent className="space-y-6">
           {/* Info Alert */}
-          <Alert className="border-blue-200 bg-blue-50">
+          {/* <Alert className="border-blue-200 bg-blue-50">
             <AlertDescription className="text-blue-800">
               <strong>Independent Living:</strong> This registration is for individuals who live separately within a
               household structure, maintaining their own family unit while sharing the same address.
             </AlertDescription>
-          </Alert>
+          </Alert> */}
 
           <Separator />
 
           {/* Form Content */}
-          <div className="bg-white rounded-lg p-6 border border-gray-100">{MainContent}</div>
+          <div className="bg-white rounded-lg p-6 border border-gray-100">
+            {MainContent}
+            <div className="flex justify-end mt-8">
+              <Button onClick={handleContinue}>
+                Next <MoveRight/>
+              </Button>
+            </div>
+          </div>
 
           {/* Help Section */}
-          <div className="text-center pt-4 border-t border-gray-100">
+          <div className="text-center pt-4">
             <p className="text-xs text-gray-500 mb-2">
               Need assistance with this form? Contact your administrator for help.
             </p>

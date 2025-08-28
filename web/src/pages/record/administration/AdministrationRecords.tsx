@@ -201,7 +201,7 @@ export default function AdministrationRecords() {
         )}
 
         {!isLoadingStaffs && staffList.length > 0 && (
-          <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+          <div className="bg-gray-50 px-6 py-4 border-t rounded-b-lg">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-600 mb-2 sm:mb-0">
                 Showing{" "}

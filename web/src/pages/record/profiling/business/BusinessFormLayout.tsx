@@ -9,7 +9,7 @@ import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { businessFormSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { FileText, MapPin, User, Database, Store, Loader2, Clock, History } from "lucide-react"
+import { FileText, MapPin, User, Database, Store, Loader2, Clock, History, Check } from "lucide-react"
 import { Form } from "@/components/ui/form/form"
 import { Type } from "../ProfilingEnums"
 import { useAuth } from "@/context/AuthContext"
@@ -32,7 +32,6 @@ import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { RenderHistory } from "../ProfilingHistory"
 import isEqual from 'lodash/isEqual';
-import { toast } from "sonner"
 
 export default function BusinessFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // --------------------- STATE INITIALIZATION -----------------------
@@ -100,6 +99,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   }, [isFormDataLoading, showLoading, hideLoading])
 
   React.useEffect(() => {
+    console.log(formType)
     if (formType !== Type.Create) {
       if(formType == Type.Editing) setIsReadOnly(false);
       else setIsReadOnly(true);
@@ -118,6 +118,13 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
       setMediaFiles(businessInfo?.files)
     }
   }, [businessInfo, formType])
+
+  React.useEffect(() => {
+    const files = tab_params?.form.getValues().businessSchema.files;
+    if(files?.length > 0) {
+      setMediaFiles(files)
+    }
+  }, [tab_params?.files])
   
   // --------------------- HANDLERS -----------------------
   const getFormTitle = () => {
@@ -232,6 +239,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
           ...((rp_id || tab_params?.residentId) && {
             rp: tab_params?.residentId || rp_id?.split(" ")[0],
           }),
+          bus_status: 'Active',
           staff: user?.staff?.staff_id,
           files: files,
         })
@@ -251,7 +259,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
       }])
       form.reset()
       if (tab_params?.isRegistrationTab) {
-        tab_params?.next?.()
+        tab_params?.next?.(true)
       }
     } catch (err) {
       setIsSubmitting(false);
@@ -293,26 +301,42 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     }
   }
 
+  const handleFinish = async () => {
+    if(!(await tab_params?.form.trigger(["businessSchema"]))) {
+      showErrorToast("Please fill out all required fields.");
+      return;
+    }
+
+    if (mediaFiles.length == 0) {
+      showErrorToast("Please upload supporting documents")
+      return
+    }
+
+    tab_params?.form.setValue("businessSchema.files", mediaFiles)
+    console.log(tab_params?.form.getValues().businessSchema)
+    tab_params?.next(true)
+  }
+
   // Function to handle form submission
   const submit = async () => {
     const validateRespondent = form.watch("rp_id") ? "rp_id" : "respondent";
     const formIsValid = await form.trigger([
-      ...(formType == Type.Create ? [validateRespondent] : []) as any,
+      ...(formType == Type.Create && !tab_params?.isRegistrationTab ? [validateRespondent] : []) as any,
       "bus_name", 
       "bus_gross_sales", 
       "bus_street", 
       "sitio"
     ])
 
-    if (validateRespondent !== "rp_id" && !validateAddresses(addresses) && formType == Type.Create) {
-      showErrorToast("Please fill out all required fields");
+    if (validateRespondent !== "rp_id" && !validateAddresses(addresses) && 
+        formType == Type.Create && !tab_params?.isRegistrationTab) {
+      showErrorToast("Please fill out all required fields 1");
       return;
     }
 
     // Validate form
     if (!formIsValid) {
-      console.log('invalid form')
-      showErrorToast("Please fill out all required fields")
+      showErrorToast("Please fill out all required fields 2")
       return
     }
 
@@ -322,7 +346,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     }
 
     const { rp_id, respondent, ...businessData } = form.getValues()
-    const initialFiles = businessInfo.files.map((media: any) => ({
+    const initialFiles = businessInfo?.files.map((media: any) => ({
         name: media.name,
         type: media.type,
         file: media.file
@@ -336,29 +360,33 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
       }
     })
 
-    if (isEqual(businessData, {
-      bus_name: businessInfo.bus_name,
-      bus_gross_sales: String(businessInfo.bus_gross_sales),
-      bus_street: businessInfo.bus_street,
-      sitio: businessInfo.sitio
-    }) && isEqual(initialFiles, files)) {
-      showPlainToast('No changes made')
-      return;
-    }
-
     setIsSubmitting(true)
 
     switch(formType) {
       case Type.Create:
-        create(respondent, businessData, rp_id as string, files);
+        create(respondent, businessData, rp_id as string || tab_params?.residentId, files);
         break;
       case Type.Editing:
+        if (isEqual(businessData, {
+          bus_name: businessInfo?.bus_name,
+          bus_gross_sales: String(businessInfo?.bus_gross_sales),
+          bus_street: businessInfo?.bus_street,
+          sitio: businessInfo?.sitio
+        }) && isEqual(initialFiles, files)) {
+          showPlainToast('No changes made')
+          return;
+        }
+
         update(businessData, files, initialFiles)
         break;
       case Type.Request:
         update(businessData, files);
         break;
     }
+  }
+
+  const handleSkip = () => {
+    tab_params?.next(false)
   }
 
   // --------------------- RENDER -----------------------
@@ -440,46 +468,107 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     </Card>
   )
 
+  const MainContent = (
+    <>
+      {isBusinessInfoLoading ? (<BusinessInfoLoading />) : (
+        <div className="flex gap-4">
+          <div className="w-full">
+            {formType !== Type.Create && !tab_params?.isRegistrationTab && respondentView()}
+            <Card className="w-full rounded-t-none border-t-0">
+              <Form {...(tab_params?.isRegistrationTab ? tab_params?.form : form)}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    submit()
+                  }}
+                  className="space-y-6"
+                >
+                  <BusinessProfileForm
+                    addresses={addresses}
+                    validAddresses={validAddresses}
+                    isRegistrationTab={tab_params?.isRegistrationTab}
+                    prefix={tab_params?.isRegistrationTab ? "businessSchema." : ""}
+                    isModificationRequest = {!!modRequest}
+                    formattedResidents={formattedResidents}
+                    formType={formType}
+                    sitio={formattedSitio}
+                    form={tab_params?.isRegistrationTab ? tab_params?.form : form}
+                    isSubmitting={isSubmitting}
+                    isReadOnly={isReadOnly}
+                    mediaFiles={mediaFiles}
+                    activeVideoId={activeVideoId}
+                    url={params.business?.bus_doc_url}
+                    setAddresses={setAddresses}
+                    setValidAddresses={setValidAddresses}
+                    setFormType={setFormType}
+                    setMediaFiles={setMediaFiles}
+                    setActiveVideoId={setActiveVideoId}
+                    submit={submit}
+                  />
+                </form>
+              </Form>
+            </Card>
+          </div>
+          {modRequest && (
+            <ModificationRequest data={modRequest}/>
+          )}
+        </div>
+      )}
+    </>
+  )
 
   const residentRegistrationForm = () => (
     <div className="w-full flex justify-center px-4">
-      <Card className="w-full shadow-none">
+      <Card className="w-full shadow-none max-h-[700px] overflow-y-auto">
         <CardHeader className="text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <Store className="w-8 h-8 text-blue-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">{getFormTitle()}</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">{getFormTitle()}</h2>
           <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">{getFormDescription()}</p>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Info Alert */}
-          <Alert className="border-blue-200 bg-blue-50">
+          {/* <Alert className="border-blue-200 bg-blue-50">
             <AlertDescription className="text-blue-800">
               <strong>Business Registration:</strong> Please ensure all business information is accurate and up-to-date.
               Supporting documents are required to complete the registration process.
             </AlertDescription>
-          </Alert>
+          </Alert> */}
 
           {/* Document Requirements Alert */}
-          {mediaFiles.length === 0 && formType !== Type.Viewing && !isBusinessInfoLoading && (
+          {/* {mediaFiles.length === 0 && formType !== Type.Viewing && !isBusinessInfoLoading && (
             <Alert className="border-orange-200 bg-orange-50">
               <AlertDescription className="text-orange-800">
                 <strong>Documents Required:</strong> Please upload supporting documents such as business permits,
                 licenses, or registration certificates to complete your submission.
               </AlertDescription>
             </Alert>
-          )}
-
-          <Separator />
+          )} */}
 
           {/* Form Content */}
           <div className="p-6">
             {MainContent}
+            <div className="flex justify-end mt-8">
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  className="flex-1"  
+                  onClick={handleSkip}
+                  disabled={isSubmitting}
+                >
+                  Skip for Now
+                </Button>
+                <Button onClick={handleFinish}>
+                  <Check/> Finish
+                </Button>
+              </div>
+            </div>
           </div>
 
           {/* Help Section */}
           {!isBusinessInfoLoading && (
-            <div className="text-center pt-4 border-t border-gray-100">
+            <div className="text-center pt-4">
               <p className="text-xs text-gray-500 mb-2">
                 All business information and documents are securely stored and
                 encrypted. Access is restricted to authorized personnel only.
@@ -516,60 +605,14 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     </div>
   )
 
-  const MainContent = (
-    <>
-      {isBusinessInfoLoading ? (<BusinessInfoLoading />) : (
-        <div className="flex gap-4">
-          <div className="w-full">
-            {formType !== Type.Create && respondentView()}
-            <Card className="w-full rounded-t-none border-t-0">
-              <Form {...form}>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    submit()
-                  }}
-                  className="space-y-6"
-                >
-                  <BusinessProfileForm
-                    addresses={addresses}
-                    validAddresses={validAddresses}
-                    isRegistrationTab={tab_params?.isRegistrationTab}
-                    isModificationRequest = {!!modRequest}
-                    formattedResidents={formattedResidents}
-                    formType={formType}
-                    sitio={formattedSitio}
-                    form={form}
-                    isSubmitting={isSubmitting}
-                    isReadOnly={isReadOnly}
-                    mediaFiles={mediaFiles}
-                    activeVideoId={activeVideoId}
-                    url={params.business?.bus_doc_url}
-                    setAddresses={setAddresses}
-                    setValidAddresses={setValidAddresses}
-                    setFormType={setFormType}
-                    setMediaFiles={setMediaFiles}
-                    setActiveVideoId={setActiveVideoId}
-                    submit={submit}
-                  />
-                </form>
-              </Form>
-            </Card>
-          </div>
-          {modRequest && (
-            <ModificationRequest data={modRequest}/>
-          )}
-        </div>
-      )}
-    </>
-  )
-
   const standardForm = () => (
     <LayoutWithBack
       title={getFormTitle()}
       description={getFormDescription()}
     >
-      {MainContent}
+      <div className="max-h-[750px] overflow-y-auto">
+        {MainContent}
+      </div>
     </LayoutWithBack>
   )
 

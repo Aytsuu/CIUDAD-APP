@@ -11,8 +11,9 @@ import {
 import { Card } from "@/components/ui/card";
 import { features } from "./features";
 import { useRouter } from "expo-router";
-import { useAuth } from "@/contexts/AuthContext";
 import { LoadingModal } from "@/components/ui/loading-modal";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "@/redux";
 import PageLayout from "../_PageLayout";
 import React from "react";
 import ShowMore from '@/assets/icons/features/showmore.svg'
@@ -39,32 +40,34 @@ const styles = StyleSheet.create({
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const dispatch = useDispatch<AppDispatch>();
+  const { user, isLoading } = useSelector(
+    (state: RootState) => state.auth
+  );
   const [showMoreFeatures, setShowMoreFeatures] = React.useState<boolean>(false);
    const [showSplash, setShowSplash] = React.useState(true);
   const videoRef = React.useRef(null);
 
-  if (true) {
-    return (
-      <SafeAreaView className="flex-1">
-        <Video 
-          source={require('@/assets/animated/splashscreen.mp4')}
-          ref={videoRef}
-          style={styles.video}
-          resizeMode="cover" // or 'contain', 'stretch'
-          repeat={true}
-          onError={(error) => {
-            console.log('Video error:', error);
+  // if (true) {
+  //   return (
+  //     <SafeAreaView className="flex-1">
+  //       <Video 
+  //         source={require('@/assets/animated/splashscreen.mp4')}
+  //         ref={videoRef}
+  //         style={styles.video}
+  //         resizeMode="cover" // or 'contain', 'stretch'
+  //         repeat={true}
+  //         onError={(error) => {
+  //           console.log('Video error:', error);
 
-          }}
-          muted={true} // Usually splash screens are silent
-          playInBackground={false}
-          playWhenInactive={false}
-        />
-      </SafeAreaView>
-    )
-  }
-
+  //         }}
+  //         muted={true} // Usually splash screens are silent
+  //         playInBackground={false}
+  //         playWhenInactive={false}
+  //       />
+  //     </SafeAreaView>
+  //   )
+  // }
   if (isLoading) {
     return <LoadingModal visible={true} />;
   }
@@ -111,7 +114,12 @@ export default function HomeScreen() {
 
   const renderFeatures = () => {
     const INITIAL_FEATURES_COUNT = 5;
-    
+
+    if (features.length <= 6) {
+      // Show all features, no Show More/Less button
+      return features.map((feature, index) => renderFeatureItem(feature, index));
+    }
+
     if (!showMoreFeatures) {
       // Show first 5 features + Show More button
       const visibleFeatures = features.slice(0, INITIAL_FEATURES_COUNT);
@@ -119,17 +127,14 @@ export default function HomeScreen() {
         ...visibleFeatures.map((feature, index) => renderFeatureItem(feature, index)),
         renderFeatureItem({}, INITIAL_FEATURES_COUNT, true) // Show More button
       ];
-      
       return items;
     } else {
       // Show all features + Show Less button
       const allFeatureItems = features.map((feature, index) => 
         renderFeatureItem(feature, index)
       );
-      
       // Add Show Less button
       allFeatureItems.push(renderFeatureItem({}, features.length, true));
-      
       return allFeatureItems;
     }
   };

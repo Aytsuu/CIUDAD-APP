@@ -15,7 +15,7 @@ import Preferences from "./navItems/account-preference";
 import Security from "./navItems/security"; 
 
 const AccountSettings = () => {
-  const [activeTab, setActiveTab] = useState("account");
+  const [activeTab, setActiveTab] = useState("personalInfo");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -59,11 +59,11 @@ const AccountSettings = () => {
 
             <nav className="flex-1 p-4 space-y-2">
               <Button
-                variant={activeTab === "account" ? "secondary" : "ghost"}
+                variant={activeTab === "personalInfo" ? "secondary" : "ghost"}
                 className="w-full justify-start font-normal"
-                onClick={() => setActiveTab("account")}
+                onClick={() => setActiveTab("personalInfo")}
               >
-                <User size={18} className="mr-2" /> Account
+                <User size={18} className="mr-2" /> Personal Info
               </Button>
 
               <Button
@@ -91,14 +91,14 @@ const AccountSettings = () => {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight">
-                  {activeTab === "account" 
-                    ? "Account Settings" 
+                  {activeTab === "personalInfo" 
+                    ? "Personal Information" 
                     : activeTab === "security"
                     ? "Security Settings"
                     : "Preferences"}
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                  {activeTab === "account"
+                  {activeTab === "personalInfo"
                     ? "Manage your personal information and preferences"
                     : activeTab === "security"
                     ? "Manage your security settings"
@@ -111,12 +111,12 @@ const AccountSettings = () => {
             <div className="md:hidden mb-6">
               <div className="inline-flex bg-muted/30 w-full">
                 <Button
-                  variant={activeTab === "account" ? "secondary" : "ghost"}
+                  variant={activeTab === "personalInfo" ? "secondary" : "ghost"}
                   className="flex-1"
-                  onClick={() => setActiveTab("account")}
+                  onClick={() => setActiveTab("personalInfo")}
                 >
                   <User size={16} className="mr-2" />
-                  <span>Account</span>
+                  <span>Personal Info</span>
                 </Button>
                 <Button
                   variant={activeTab === "security" ? "secondary" : "ghost"}
@@ -137,7 +137,7 @@ const AccountSettings = () => {
               </div>
             </div>
 
-            {activeTab === "account" && <Profile/>}
+            {activeTab === "personalInfo" && <Profile/>}
             {activeTab === "security" && <Security/>}
             {activeTab === "preference" && <Preferences/>}
           </div>

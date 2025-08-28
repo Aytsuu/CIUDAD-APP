@@ -81,7 +81,7 @@ export default function DemographicForm({
             <FormSelect
               control={form.control}
               name="demographicInfo.building"
-              label="Building"
+              label="Household Occupancy"
               options={[
                 { id: "owner", name: "Owner" },
                 { id: "renter", name: "Renter" },

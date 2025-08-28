@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Plus, Building2, FileDown, Loader2, Clock, ClockArrowUp, Paperclip } from "lucide-react"
+import { Search, Plus, Building2, FileDown, Loader2, ClockArrowUp, Paperclip } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { Link, useNavigate } from "react-router"
@@ -120,7 +120,7 @@ export default function BusinessRecords() {
                       state: {
                         params: {
                           type: "viewing",
-                          busId: value.split(' ')[0],
+                          busId: value?.split(' ')[0],
                         }
                       }
                     })
@@ -191,21 +191,6 @@ export default function BusinessRecords() {
                 ? `No businesses match "${searchQuery}". Try adjusting your search.`
                 : "Get started by registering your first business."}
             </p>
-            {!searchQuery && (
-              <Link
-                to="/profling/business/form"
-                state={{
-                  params: {
-                    type: "create",
-                  },
-                }}
-              >
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Register First Business
-                </Button>
-              </Link>
-            )}
           </div>
         )}
 

@@ -16,15 +16,14 @@ import { formatResidents } from "../ProfilingFormats";
 import { useAddFamilyComposition } from "../queries/profilingAddQueries";
 import { useResidentsWithFamExclusion } from "../queries/profilingFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 export default function AddMemberForm({ 
   familyId, 
   setIsOpenDialog,
-  setCompositions
 } : {
   familyId: string;
   setIsOpenDialog: React.Dispatch<React.SetStateAction<boolean>>
-  setCompositions: React.Dispatch<React.SetStateAction<any>>
 }) {
   // Initializing states
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -44,31 +43,30 @@ export default function AddMemberForm({
 
   // Submit function
   const submit = async () => {
-    setIsSubmitting(true);
     const formIsValid = await form.trigger();
     const residentId = form.watch("id").split(" ")[0];
 
     if(!formIsValid || !residentId) {
-      setIsSubmitting(false);
       if(!residentId) setInvalidResident(true);
       return;
     }
 
-    const values = form.getValues();
-    addFamilyComposition([{
-      "fam": familyId,
-      "fc_role": capitalize(values.role),
-      "rp": residentId
-    }], {
-      onSuccess: (newComposition) => {3
-        setIsOpenDialog(false);
-        setIsSubmitting(false);
-        setCompositions((prev: any) => [
-          ...prev,
-          newComposition[0]
-        ]);
-      }
-    });
+    try {
+      setIsSubmitting(true);
+      const values = form.getValues();
+      await addFamilyComposition([{
+        "fam": familyId,
+        "fc_role": capitalize(values.role),
+        "rp": residentId
+      }]);
+
+      showSuccessToast(`Successfully added a member!`)
+    } catch (err) {
+      showErrorToast("Failed to add member. Please try again.")
+    } finally {
+      setIsSubmitting(false);
+      setIsOpenDialog(false);
+    }
   };
 
   if(isLoadingResidents) {
@@ -92,8 +90,9 @@ export default function AddMemberForm({
           <Combobox
             options={formattedResidents}
             value={form.watch("id")}
-            onChange={(value) => form.setValue("id", value)}
+            onChange={(value) => form.setValue("id", value as string)}
             placeholder="Select a resident" 
+            variant="modal"
             emptyMessage={
               <div className="flex gap-2 justify-center items-center">
                 <Label className="font-normal text-[13px]">No resident found.</Label>

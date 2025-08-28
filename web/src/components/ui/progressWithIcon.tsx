@@ -5,6 +5,8 @@ import type { IconType } from "react-icons"
 interface ProgressProps {
   progress: number
   steps: Step[]
+  completed: any[]
+  skippedColor?: string
   completedColor?: string
   activeColor?: string
   inactiveColor?: string
@@ -12,14 +14,18 @@ interface ProgressProps {
 }
 
 interface Step {
+  id: number
   label: string
   minProgress: number
-  icon: IconType
+  icon: IconType,
+  onClick: (id: number) => void
 }
 
 interface StepIconProps {
   progress: number
   step: Step
+  completed: any[]
+  skippedColor?: string
   completedColor?: string
   activeColor?: string
   inactiveColor?: string
@@ -28,11 +34,12 @@ interface StepIconProps {
 const StepIcon: React.FC<StepIconProps> = ({
   progress,
   step,
+  completed,
   completedColor = "text-white",
   activeColor = "text-gray-500",
   inactiveColor = "text-gray-400",
 }) => {
-  if (progress > step.minProgress) {
+  if ((progress > step.minProgress && completed?.includes(step.id)) || completed?.includes(step.id)) {
     return <BsCheckLg className={completedColor} size={20} />
   }
 
@@ -43,6 +50,7 @@ const StepIcon: React.FC<StepIconProps> = ({
 export default function ProgressWithIcon({
   progress,
   steps,
+  completed,
   completedColor = "blue-500",
   activeColor = "blue-500",
   inactiveColor = "gray-300",
@@ -54,7 +62,7 @@ export default function ProgressWithIcon({
   }
 
   const getStepCircleClasses = (step: Step) => {
-    if (progress > step.minProgress) {
+    if (completed?.includes(step.id)) {
       return `bg-${completedColor} border-${completedColor}`
     } else if (progress === step.minProgress) {
       return `border-${activeColor} bg-white`
@@ -64,19 +72,27 @@ export default function ProgressWithIcon({
   }
 
   const getStepLabelClasses = (step: Step) => {
+    if(progress > step.minProgress && !completed?.includes(step.id)) {
+      return `text-${inactiveColor.replace("300", "500")}`
+    }
+
     return progress >= step.minProgress
       ? `text-${completedColor.replace("500", "600")} font-semibold`
       : `text-${inactiveColor.replace("300", "500")}`
   }
 
   const getStepNumberClasses = (step: Step) => {
+    if(progress > step.minProgress && !completed?.includes(step.id)) {
+      return `text-${inactiveColor.replace("300", "500")} font-medium`
+    }
+
     return progress >= step.minProgress
       ? `text-${completedColor.replace("500", "600")} font-bold`
       : `text-${inactiveColor.replace("300", "500")} font-medium`
   }
 
   return (
-    <div className="flex items-center justify-center w-full px-2 md:px-4 py-4 overflow-x-auto">
+    <div className="flex items-center justify-center w-full px-2 md:px-4 overflow-x-auto">
       <div className="flex items-center min-w-max">
         {steps.map((step, index) => (
           <div key={step.label} className="flex items-center">
@@ -84,7 +100,7 @@ export default function ProgressWithIcon({
               <div className="flex items-center">
                 <div
                   className={`
-                    w-16 sm:w-24 md:w-32 lg:w-44 h-1 rounded-full
+                    w-16 sm:w-24 md:w-32 lg:w-36 h-1 rounded-full
                     ${getProgressBarColor(index)}
                     transition-colors duration-500 ease-in-out
                   `}
@@ -92,7 +108,11 @@ export default function ProgressWithIcon({
               </div>
             )}
 
-            <div className="flex flex-col items-center space-y-2 p-4">
+            <div className="flex flex-col items-center space-y-2 px-4 cursor-pointer"
+              onClick={() => {
+                step.onClick && step.onClick(step.id)
+              }}
+            >
               {/* Step Number */}
               <div className="text-center">
                 <p
@@ -119,6 +139,7 @@ export default function ProgressWithIcon({
                 <StepIcon
                   progress={progress}
                   step={step}
+                  completed={completed}
                   completedColor="text-white"
                   activeColor="text-gray-600"
                   inactiveColor="text-gray-400"

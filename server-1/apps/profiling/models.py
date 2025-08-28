@@ -103,7 +103,7 @@ class ResidentProfile(models.Model):
 class Household(models.Model):
     hh_id = models.CharField(max_length=50, primary_key=True)
     hh_nhts = models.CharField(max_length=50)
-    hh_date_registered = models.DateField(default=date.today)
+    hh_date_registered = models.DateField(auto_now_add=True)
     add = models.ForeignKey(Address, on_delete=models.CASCADE)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="households")
@@ -118,7 +118,7 @@ class Family(models.Model):
     fam_id = models.CharField(max_length=50, primary_key=True)
     fam_indigenous = models.CharField(max_length=50)
     fam_building = models.CharField(max_length=50)
-    fam_date_registered = models.DateField(default=date.today)
+    fam_date_registered = models.DateField(auto_now_add=True)
     hh = models.ForeignKey(Household, on_delete=models.CASCADE, related_name="family_set")
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="families")
 

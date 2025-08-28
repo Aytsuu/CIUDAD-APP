@@ -6,7 +6,7 @@ class Position(models.Model):
     pos_id = models.BigAutoField(primary_key=True)    
     pos_title = models.CharField(max_length=100)
     pos_max = models.IntegerField(default=1)
-    pos_group = models.CharField(max_length=100, null=True, default="NON-GROUPED")
+    pos_group = models.CharField(max_length=100, null=True)
     pos_category = models.CharField(max_length=100)
     pos_is_predefined = models.BooleanField(default=False)
     staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='positions', null=True)
@@ -16,9 +16,10 @@ class Position(models.Model):
 
 class Feature(models.Model):
     feat_id = models.BigAutoField(primary_key=True)
-    feat_name = models.CharField(max_length=50)
-    feat_category = models.CharField(max_length=50)
-    feat_url = models.CharField(max_length=100)
+    feat_name = models.CharField(max_length=100)
+    feat_group = models.CharField(max_length=100)
+    feat_category = models.CharField(max_length=100)
+    feat_url = models.TextField()
 
     class Meta:
         db_table = 'feature'

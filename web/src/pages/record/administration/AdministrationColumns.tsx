@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { formatPositions } from "./AdministrationFormats";
 import { useAuth } from "@/context/AuthContext";
+import { Spinner } from "@/components/ui/spinner";
 
 export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
   {
@@ -87,7 +88,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
     accessorKey: "sex",
     header: "Sex",
     cell: ({row}) => (
-      row.original.sex[0]
+      row.original.sex[0]?.toUpperCase()
     ),
     size: 60
   },
@@ -279,7 +280,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
             trigger={
               <Button variant={"outline"} className="border">
                 {isDeletingAny ? (
-                  <Loader2 size={16} className="animate-spin" />
+                  <Spinner size="md" />
                 ) : (
                   <Ellipsis />
                 )}

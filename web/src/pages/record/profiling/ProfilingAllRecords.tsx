@@ -2,8 +2,7 @@ import React from "react"
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
-import { Badge } from "@/components/ui/badge"
-import { Plus, ClockArrowUp, FileDown, Search, Users, Loader2, CircleUserRound, House, UsersRound, Building } from "lucide-react"
+import { Plus, FileDown, Search, Users, Loader2 } from "lucide-react"
 import { Link } from "react-router"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DataTable } from "@/components/ui/table/data-table"
@@ -185,7 +184,7 @@ export default function ProfilingAllRecords() {
 
             {/* Pagination */}
             {!isLoading && recordList.length > 0 && (
-              <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
+              <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t rounded-b-lg bg-gray-50">
                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
                   Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
                   <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}

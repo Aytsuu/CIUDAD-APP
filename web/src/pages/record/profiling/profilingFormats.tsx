@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { capitalize } from "@/helpers/capitalize";
 import { formatCurrency } from "@/helpers/currencyFormat";
-import { useNavigate } from "react-router";
 
 // Format residents for searching
 export const formatResidents = (residents: any) => {
@@ -43,7 +42,7 @@ export const formatHouseholds = (households: any) => {
   if (!households) return [];
 
   return households.map((household: any) => ({
-    id: household.hh_id,
+    id: String(household.hh_id),
     name: (
       <div className="flex gap-4 items-center">
         <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
@@ -51,7 +50,7 @@ export const formatHouseholds = (households: any) => {
         </span>
         <div className="flex items-center gap-2">
           <Label>Head:</Label>
-          {household.head}
+          {household.head.split("-")[1]}
         </div>
       </div>
     ),
@@ -69,9 +68,9 @@ export const formatAddresses = (addresses: any) => {
     }, idx: number) => {
       if(item.sitio) {
         return {
-          per_id: item.per,
-          add_id: item.add_id,
-          id: `address ${idx+1} - ${item.sitio.toLowerCase()}, ${item.add_street.toLowerCase()}`,
+          // per_id: item.per,
+          // add_id: item.add_id,
+          id: `${item.add_id}-${item.sitio.toLowerCase()}-${item.add_street}`,
           name: `Address ${idx+1} - ${capitalize(item.sitio)}, ${item.add_street}`, 
         }
       }
@@ -82,7 +81,7 @@ export const formatFamiles = (families: any) => {
   if (!families) return [];
 
   return families.map((family: any, idx: number) => ({
-    id: family.fam_id,
+    id: String(family.fam_id),
     name: (
       <div className="flex gap-4 items-center">
         <span>

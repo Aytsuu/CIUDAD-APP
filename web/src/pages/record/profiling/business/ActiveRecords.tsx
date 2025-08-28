@@ -14,7 +14,6 @@ import { useActiveBusinesses, useModificationRequests } from "../queries/profili
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { Combobox } from "@/components/ui/combobox"
 import { formatModificationRequests } from "../ProfilingFormats"
-import { toast } from "sonner"
 
 export default function ActiveRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -47,9 +46,9 @@ export default function ActiveRecords() {
   }, [isLoadingBusinesses, isLoadingRequests])
 
   // ----------------- HANDLERS --------------------
-  const handleRequest = (value: string) => {
+  const handleRequest = (value: string | undefined) => {
     const request = modificationRequests.find((req: any) => 
-      req.bm_id == value.split(' ')[0]
+      req.bm_id == value?.split(' ')[0]
     )
 
     console.log(request)

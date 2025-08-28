@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import type { Assigned, Feature } from "./AdministrationTypes"
 import { formatDate } from "@/helpers/dateHelper"
 import { useAuth } from "@/context/AuthContext"
 import { useAssignFeature } from "./queries/administrationAddQueries"
@@ -21,6 +20,7 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { capitalize } from "@/helpers/capitalize"
 import { useUpdateAssignment } from "./queries/administrationUpdateQueries"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal"
+import { Assigned, Feature } from "./AdministrationTypes"
 
 interface FeatureSelectionProps {
   selectedPosition: string
