@@ -245,7 +245,6 @@ class CertificateListView(generics.ListCreateAPIView):
             .only(
                 'cr_id',
                 'cr_req_request_date',
-                'cr_req_claim_date',
                 'cr_req_status',
                 'rp_id__per__per_fname',
                 'rp_id__per__per_lname'
@@ -685,7 +684,6 @@ class PersonalClearancesView(APIView):
             ).only(
                 'cr_id',
                 'cr_req_request_date',
-                'cr_req_claim_date',
                 'cr_req_payment_status',
                 'cr_req_status',
                 'rp_id__per__per_fname',

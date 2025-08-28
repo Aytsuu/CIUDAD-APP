@@ -469,7 +469,7 @@ class ClearanceRequestSerializer(serializers.ModelSerializer):
         model = ClerkCertificate
         fields = [
             'cr_id', 'resident_details', 'req_pay_method', 'req_request_date',
-            'req_claim_date', 'req_type', 'req_status', 'req_payment_status',
+            'req_type', 'req_status', 'req_payment_status',
             'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details', 'pr_id'
         ]
 
@@ -523,7 +523,7 @@ class ClearanceRequestDetailSerializer(serializers.ModelSerializer):
         model = ClerkCertificate
         fields = [
             'cr_id', 'resident_details', 'req_pay_method', 'req_request_date',
-            'req_claim_date', 'req_type', 'req_status', 'req_payment_status',
+            'req_type', 'req_status', 'req_payment_status',
             'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details', 'pr_id'
         ]
 
