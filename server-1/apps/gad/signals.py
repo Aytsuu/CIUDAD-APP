@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.db.models import Sum
-from apps.gad.models import GAD_Budget_Tracker, GAD_Budget_Year
+from apps.gad.models import GAD_Budget_Tracker
 from django.db import transaction
 
 @receiver([post_save, post_delete], sender=GAD_Budget_Tracker)

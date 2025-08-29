@@ -36,7 +36,6 @@ def sync_gad_budget_year(sender, instance, **kwargs):
             defaults={
                 'gbudy_budget': instance.dtl_proposed_budget,
                 'gbudy_expenses': 0.00,
-                'gbudy_income': 0.00,
                 'gbudy_is_archive': is_archived
             }
         )

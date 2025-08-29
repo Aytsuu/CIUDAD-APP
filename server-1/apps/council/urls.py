@@ -19,7 +19,6 @@ urlpatterns=[
     path("template/", TemplateView.as_view(), name="document-template"),
     path("update-template/<int:temp_id>/", UpdateTemplateView.as_view(), name="update-document-template"),
     path('delete-template/<int:temp_id>/', DeleteTemplateView.as_view(), name='delete-document-template'), 
-    path('update-template-pr-id/', UpdateTemplateByPrIdView.as_view(), name='update-template-pr-id'),
     path('delete-template-with-pr-id/<int:pr_id>/', DeleteTemplateByPrIdView.as_view(), name='delete-template-pr-id'),
     path('summon-template/', SummonTemplateView.as_view(), name='summon-template'),
 
