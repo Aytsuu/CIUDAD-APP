@@ -820,8 +820,11 @@ class DeleteUpdate_Purpose_And_RatesView(generics.UpdateAPIView):
 class InvoiceView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = InvoiceSerializers
+    
+    # Use the correct field names that exist in your Invoice model
     queryset = Invoice.objects.select_related(
-        'cr_id__rp_id__per'  # This ensures efficient querying
+        'bpr_id__rp_id__per',  # For business permit requests
+        'nrc_id'  # For non-resident certificate requests
     ).all()
 
 

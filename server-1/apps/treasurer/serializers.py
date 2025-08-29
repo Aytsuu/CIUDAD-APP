@@ -419,53 +419,58 @@ class InvoiceSerializers(serializers.ModelSerializer):
         # Create the invoice
         invoice = Invoice.objects.create(**validated_data)
         
-       
         try:
-           
-            if invoice.cr_id and hasattr(invoice.cr_id, 'pr_id') and invoice.cr_id.pr_id:
-                required_amount = float(invoice.cr_id.pr_id.pr_rate or 0)
+            # Check if it's a business permit request and calculate change
+            if invoice.bpr_id and hasattr(invoice.bpr_id, 'pr_id') and invoice.bpr_id.pr_id:
+                required_amount = float(invoice.bpr_id.pr_id.pr_rate or 0)
                 paid_amount = float(invoice.inv_amount or 0)
                 
-                
                 change_amount = paid_amount - required_amount
-               
                 invoice.inv_change = change_amount if change_amount > 0 else 0
                 invoice.save()
+                
+                # Update payment status
+                business_permit = invoice.bpr_id
+                business_permit.req_payment_status = "Paid"
+                business_permit.save()
+                
+                invoice.inv_status = "Paid"
+                invoice.save()
+                
+                # Log activity
+                try:
+                    from apps.act_log.utils import create_activity_log
+                    from apps.administration.models import Staff
+                    
+                    staff_id = getattr(business_permit.staff_id, 'staff_id', '00003250722') if business_permit.staff_id else '00003250722'
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                    
+                    if staff:
+                        create_activity_log(
+                            act_type="Receipt Created",
+                            act_description=f"Receipt {invoice.inv_serial_num} created for business permit {business_permit.bpr_id}. Payment status updated to Paid.",
+                            staff=staff,
+                            record_id=invoice.inv_serial_num,
+                            feat_name="Receipt Management"
+                        )
+                except Exception as e:
+                    print(f"Failed to log activity: {e}")
+            
+            # Check if it's a non-resident certificate request
+            elif invoice.nrc_id:
+                # Add similar logic for non-resident certificates if needed
+                invoice.inv_status = "Paid"
+                invoice.save()
+                
+                # Update non-resident certificate payment status
+                non_resident_cert = invoice.nrc_id
+                non_resident_cert.nrc_req_payment_status = "Paid"
+                non_resident_cert.save()
+                
         except Exception as e:
-            print(f"Failed to calculate change amount: {e}")
-           
+            print(f"Failed to process invoice: {e}")
             invoice.inv_change = 0
             invoice.save()
-        
-      
-        if invoice.cr_id:
-            certificate = invoice.cr_id
-            certificate.cr_req_payment_status = "Paid"
-            certificate.save()
-            
-            
-            invoice.inv_status = "Paid"
-            invoice.save()
-            
-           
-            try:
-                from apps.act_log.utils import create_activity_log
-                from apps.administration.models import Staff
-                
-                # remove ni ang staffid ari temp
-                staff_id = getattr(certificate.staff_id, 'staff_id', '00003250722') if certificate.staff_id else '00003250722'
-                staff = Staff.objects.filter(staff_id=staff_id).first()
-                
-                if staff:
-                    create_activity_log(
-                        act_type="Receipt Created",
-                        act_description=f"Receipt {invoice.inv_serial_num} created for certificate {certificate.cr_id}. Payment status updated to Paid.",
-                        staff=staff,
-                        record_id=invoice.inv_serial_num,
-                        feat_name="Receipt Management"
-                    )
-            except Exception as e:
-                print(f"Failed to log activity: {e}")
         
         return invoice
 
