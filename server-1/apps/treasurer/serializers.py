@@ -394,15 +394,15 @@ class InvoiceSerializers(serializers.ModelSerializer):
     class Meta:
         model = Invoice
         fields = ['inv_num', 'inv_serial_num', 'inv_date', 'inv_amount', 
-                 'inv_nat_of_collection', 'cr_id', 'nrc_id', 'inv_payor', 'inv_change']
+                 'inv_nat_of_collection', 'nrc_id', 'bpr_id','inv_payor', 'inv_change']
     
     def get_inv_payor(self, obj):
         # If the invoice is linked to a resident certificate
-        if obj.cr_id is not None:
+        if obj.bpr_id is not None:
             try:
-                return f"{obj.cr_id.rp_id.per.per_lname}, {obj.cr_id.rp_id.per.per_fname}"
+                return f"{obj.bpr_id.rp_id.per.per_lname}, {obj.bpr_id.rp_id.per.per_fname}"
             except AttributeError:
-                return "Unknown Resident"
+                return "Unknown Business Owner"
 
         # If the invoice is linked to a non-resident certificate
         elif obj.nrc_id is not None:

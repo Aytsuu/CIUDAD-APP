@@ -438,6 +438,7 @@ class CollectorPersonnelAPIView(APIView):
     
 #get Sitio 
 class SitioListView(generics.ListCreateAPIView):
+    # permission_classes = [AllowAny]
     queryset = Sitio.objects.all()
     serializer_class = SitioSerializer
 
@@ -615,3 +616,13 @@ class AssignmentCollectorDeleteView(generics.DestroyAPIView):
     def get_object(self):
         acl_id = self.kwargs.get('acl_id')
         return get_object_or_404(Assignment_Collector, acl_id=acl_id)
+    
+class ResidentPendingRequestsView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestByResidentSerializer
+    
+    def get_queryset(self):
+        rp_id = self.kwargs.get('rp_id')
+        return Garbage_Pickup_Request.objects.filter(
+            rp_id=rp_id, 
+            garb_req_status='pending'  
+        )
