@@ -185,11 +185,11 @@ class Invoice(models.Model):
     
 
     bpr_id = models.ForeignKey(
-        'BusinessPermitRequest', 
+        'clerk.BusinessPermitRequest', 
         on_delete=models.CASCADE,
         blank=True,
         null=True, 
-        related_name='permit_files', 
+        related_name='bussinesspermit_files', 
         db_column='bpr_id'
     )
 
