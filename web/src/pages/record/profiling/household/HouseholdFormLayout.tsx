@@ -45,7 +45,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   const isLoading = isLoadingResidents || isLoadingPerAddress
   
   const { append } = useFieldArray({
-    control: tab_params?.form.control,
+    control: tab_params?.form?.control || form?.control,
     name: "houseSchema.list"
   })
 
