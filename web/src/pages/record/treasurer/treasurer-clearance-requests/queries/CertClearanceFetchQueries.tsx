@@ -26,6 +26,7 @@ export type NonResidentReq = {
     nrc_req_status: string;
     nrc_req_date: string;
     nrc_requester: string;
+    nrc_reason: string;
     nrc_address: string;
     nrc_birthdate: string;
     nrc_req_payment_status: string;
@@ -54,6 +55,7 @@ export type ResidentReq = {
     cr_req_request_date: string;
     cr_req_payment_status: string;
     cr_req_status: string; 
+    cr_reason: string;
     pr_id?: number;
     purpose?: {
         pr_purpose: string;

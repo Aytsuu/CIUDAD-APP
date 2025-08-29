@@ -36,7 +36,7 @@ export const useDeclineRequest = (onSuccess?: () => void) => {
 
         return useMutation({
             mutationFn: (values: {cr_id: string, reason: string}) => 
-            declineNonResReq(values.cr_id, values.reason),
+            declineReq(values.cr_id, values.reason),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['residentReq'] });
 
@@ -63,7 +63,7 @@ export const useDeclineNonReq = (onSuccess?: () => void) => {
 
         return useMutation({
             mutationFn: (values: {nrc_id: string, reason: string}) => 
-            declineReq(values.nrc_id, values.reason),
+            declineNonResReq(values.nrc_id, values.reason),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['nonResidentReq'] });
 

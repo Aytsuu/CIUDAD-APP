@@ -13,7 +13,9 @@ export const acceptReq = async (cr_id: string) => {
 }
 
 export const declineReq = async (cr_id: string, reason: string) => {
+
     try{
+        console.log("DECLINE RES ID: ", cr_id)
         const res = await api.put(`/clerk/certificate-update-status/${cr_id}/`, {
             cr_req_status: "Declined",
             cr_reason: reason,
@@ -27,6 +29,7 @@ export const declineReq = async (cr_id: string, reason: string) => {
 
 export const declineNonResReq = async (nrc_id: string, reason: string) => {
     try{
+        console.log("DECLINE RES ID: ", nrc_id)
         const res = await api.put(`/clerk/update-personal-req-status/${nrc_id}/`, {
             nrc_req_status: "Declined",
             nrc_reason: reason,
