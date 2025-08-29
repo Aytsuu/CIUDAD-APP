@@ -27,8 +27,6 @@ class ActiveBusinessTableView(generics.ListAPIView):
     queryset = Business.objects.filter(~Q(bus_status='Pending')).select_related(
       'add',
       'staff',
-      'br',
-      'rp'
     ).prefetch_related(
       'business_files'
     ).only(
