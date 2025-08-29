@@ -1,5 +1,5 @@
-import LinkAccountReg from "@/screens/auth/signup/link/LinkAccountReg";
+// import LinkAccountReg from "@/screens/auth/signup/link/LinkAccountReg";
 
-export default () => {
-  return <LinkAccountReg />
-}
+// export default () => {
+//   return <LinkAccountReg />
+// }
