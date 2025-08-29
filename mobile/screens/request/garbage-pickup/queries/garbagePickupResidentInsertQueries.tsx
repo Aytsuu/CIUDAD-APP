@@ -5,8 +5,6 @@ import { useToastContext } from "@/components/ui/toast";
 import { garbagePickupRequestCreateSchema } from "@/form-schema/waste/garbage-pickup-schema-resident";
 import z from "zod"
 
-
-
 export const useAddaGarbagePickupRequest = (onSuccess?: () => void) => {
         const queryClient = useQueryClient();
         const {toast} = useToastContext();
