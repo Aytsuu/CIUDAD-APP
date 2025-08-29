@@ -7,7 +7,8 @@ import MonthlyFirstAidDetails from "@/pages/healthServices/Reports/firstaid-repo
 import EditMonthlyRecipientList from "@/pages/healthServices/Reports/firstaid-report/edit-report";
 import MonthlyVaccineRecords from "@/pages/healthServices/Reports/vaccination-report/monthly";
 import MonthlyVaccinationDetails from "@/pages/healthServices/Reports/vaccination-report/records";
-export const reports_router = [
+import ReportsPage from "@/pages/healthServices/Reports/famplanning-report/test";
+export const  reports_router = [
   {
     path: "/bhwmonthlyreport",
     element: <BHWMonthlyReport />,
@@ -40,6 +41,11 @@ export const reports_router = [
    {
     path:"/monthly-vaccination-details",
     element: <MonthlyVaccinationDetails />
-   }
+   },
+  {
+    path:"/famplanning-reports",
+    element: <ReportsPage/>
+
+  }
 
 ];

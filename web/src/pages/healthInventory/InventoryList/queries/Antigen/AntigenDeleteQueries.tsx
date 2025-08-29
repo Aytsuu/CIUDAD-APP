@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CircleCheck, CircleX, Loader2 } from 'lucide-react';
-import { handleDeleteAntigen } from '../../restful-api/Antigen/AntigenDeleteAPI';
+import { handleDeleteAntigen } from '../../restful-api/Antigen/deleteAPI';
 
 export const useDeleteAntigen = () => {
   const queryClient = useQueryClient();

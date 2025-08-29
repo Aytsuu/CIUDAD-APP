@@ -1,33 +1,36 @@
-
 import type React from "react"
+import { useRef } from "react"; // Import useRef
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useNavigate, useLocation } from "react-router-dom" // Use react-router-dom for Link and useParams
+import { useNavigate, useLocation } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { getFPCompleteRecord } from "@/pages/familyplanning/request-db/GetRequest" // Adjust path if needed
-import type { FormData } from "@/form-schema/FamilyPlanningSchema" // Import your FormData type
+import { getFPCompleteRecord } from "@/pages/familyplanning/request-db/GetRequest"
+import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 import { ChevronLeft } from "lucide-react"
-
+import { useReactToPrint } from "react-to-print";
 interface InputLineProps {
   className?: string
-  value: string | number | boolean | undefined // Allow for different types
+  value: string | number | boolean | undefined
 }
 
 const InputLine: React.FC<InputLineProps> = ({ className, value }) => (
-  <Input
-    className={cn("border-0 border-b border-black rounded-none w-full px-2 py-1 h-6", className)}
-    readOnly
-    value={value !== undefined && value !== null ? String(value) : ""} // Ensure value is string
-  />
-)
+  <span
+    className={cn(
+      "inline-block border-b border-black text-xs px-1", // Use inline-block and remove fixed height
+      className
+    )}
+  >
+    {value !== undefined && value !== null ? String(value) : ""}
+  </span>
+);
 
 const YesNoCheckbox = ({ label, checked }: { label: string; checked: boolean | undefined }) => (
-  <div className="flex items-center gap-2 ">
-    <Checkbox checked={checked === true} disabled />
-    <Label className="text-sm font-semibold">{label}</Label>
+  <div className="flex items-center gap-1">
+    <Checkbox checked={checked === true} disabled className="h-3 w-3" />
+    <Label className="text-xs">{label}</Label>
   </div>
 )
 
@@ -42,17 +45,36 @@ const INCOME_OPTIONS = [
   { id: "higher", name: "Higher than 200,000" },
 ];
 
-// Utility function to map income ID to name
 const getIncomeName = (incomeId) => {
   const option = INCOME_OPTIONS.find((opt) => opt.id === incomeId);
-  return option ? option.name : incomeId || 'N/A'; // Fallback to ID or 'N/A' if not found
+  return option ? option.name : incomeId || 'N/A';
 };
 
 const FamilyPlanningView: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const { fprecordId } = location.state || {} 
- 
+  const { fprecordId } = location.state || {}
+
+  // Create a ref for the component to be printed
+  const componentRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef,
+    pageStyle: `
+      @page {
+        size: 8.5in 13in;
+        margin: 0.5in; /* Corrected from 2in to 0.5in */
+      }
+      @media print {
+        body {
+          -webkit-print-color-adjust: exact;
+        }
+        .no-print {
+          display: none !important;
+        }
+      }
+    `,
+  });
   const {
     data: recordData,
     isLoading,
@@ -63,6 +85,73 @@ const FamilyPlanningView: React.FC = () => {
     queryFn: () => getFPCompleteRecord(Number(fprecordId)),
     enabled: !!fprecordId,
   })
+
+
+ // More precise filtering with exact condition names
+const getCustomIllnesses = () => {
+  const illnesses = [];
+  
+  // Exact names of standard conditions (as they appear in the checklist)
+  const exactStandardConditions = [
+    "severe headaches / migraine",
+    "history of stroke / heart attack / hypertension",
+    "non-traumatic hematoma / frequent bruising or gum bleeding",
+    "current or history of breast cancer / breast mass",
+    "severe chest pain",
+    "cough for more than 14 days",
+    "jaundice",
+    "unexplained vaginal bleeding",
+    "abnormal vaginal discharge",
+    "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)",
+    "Is the client a SMOKER?",
+    "With Disability?"
+  ];
+
+  // Add disability details if available and not empty
+  if (recordData.medicalHistory?.disabilityDetails && recordData.medicalHistory.disabilityDetails.trim() !== "") {
+    const disabilityDetail = recordData.medicalHistory.disabilityDetails.trim();
+    // Check if it's not an exact standard condition
+    const isExactStandard = exactStandardConditions.some(condition => 
+      condition.toLowerCase() === disabilityDetail.toLowerCase()
+    );
+    if (!isExactStandard) {
+      illnesses.push(disabilityDetail);
+    }
+  }
+  
+  // Add medical history records (filter out exact standard conditions)
+  if (recordData?.medical_history_records) {
+    recordData?.medical_history_records.forEach(record => {
+      const isExactStandard = exactStandardConditions.some(condition => 
+        condition.toLowerCase() === record.illname.toLowerCase()
+      );
+      if (!isExactStandard) {
+        illnesses.push(record.illname);
+      }
+    });
+  }
+  
+  // Add historical medical records (filter out exact standard conditions)
+  if (recordData?.historical_medical_history) {
+    recordData?.historical_medical_history
+      .filter(record => record.is_current)
+      .forEach(record => {
+        const isExactStandard = exactStandardConditions.some(condition => 
+          condition.toLowerCase() === record.illname.toLowerCase()
+        );
+        if (!isExactStandard) {
+          illnesses.push(record.illname);
+        }
+      });
+  }
+  
+  return illnesses;
+};
+
+// Helper function to check if custom illnesses exist
+const hasCustomIllnesses = () => {
+  return getCustomIllnesses().length > 0;
+};
 
   if (isLoading) {
     return <div className="text-center py-8">Loading record details...</div>
@@ -76,411 +165,601 @@ const FamilyPlanningView: React.FC = () => {
     return <div className="text-center py-8">No record found for ID: {fprecordId}</div>
   }
 
-  // Helper to safely access nested properties
-  const getNestedValue = (obj: any, path: string) => {
-    return path.split(".").reduce((acc, part) => acc && acc[part], obj)
-  }
+  const SignatureDisplay = ({ signatureData }: { signatureData: string | undefined }) => {
+    if (!signatureData) return <div className="h-8 border-b border-black w-full"></div>;
+
+    return (
+      <div className="flex items-center">
+        <img
+          src={signatureData}
+          alt="Signature"
+          className="h-8 border-b border-black"
+        />
+      </div>
+    );
+  };
+
 
   return (
-    <div className="mx-auto p-4 bg-white">
-      <Button
-        className="text-black p-2 self-start mg-5 bg-transparent"
-        variant="outline"
-        onClick={() => navigate(-1)}
-        type="button"
-      >
-        <ChevronLeft />
-      </Button>
-      <div className="flex justify-between items-center mb-4">
-        <div className="text-sm font-bold">SIDE A</div>
-        <div className="text-center font-bold text-base md:text-lg">FAMILY PLANNING (FP) FORM 1</div>
-        <div className="text-sm font-bold">ver 3.0</div>
+    <div className="mx-auto p-4 bg-white max-w-3xl text-[10px]">
+      <div className="flex justify-between items-center mb-2 no-print"> {/* Add no-print class */}
+        <Button
+          className="text-black p-1 self-start"
+          variant="outline"
+          onClick={() => navigate(-1)}
+          type="button"
+        >
+          <ChevronLeft size={16} />
+        </Button>
+        <Button onClick={handlePrint} className="ml-auto">
+          Print Side A
+        </Button>
       </div>
 
-      <div className="border p-4">
-        {/* Top Section */}
-        <div>
-          <div className="flex bg-gray">
-            <div className="md:col-span-2 bg-gray p-2 border border-black">
-              <Label className="font-bold block mb-2">FAMILY PLANNING CLIENT ASSESSMENT RECORD</Label>
-              <p className="text-sm">
-                Instructions for Physicians, Nurses, and Midwives:{" "}
-                <strong>Make sure that the client is not pregnant by using the question listed in SIDE B.</strong>{" "}
-                Completely fill out or check the required information. Refer accordingly for any abnormal
-                history/findings for further medical evaluation.
+      {/* Wrap the content to be printed with the ref */}
+      <div ref={componentRef} className="print-content">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-2">
+          <div className="text-xs font-bold ">SIDE A</div>
+          <div className="text-center font-bold text-sm">FAMILY PLANNING (FP) FORM 1</div>
+          <div className="text-xs font-bold">ver 3.0</div>
+        </div>
+
+        <div className="border border-black">
+          {/* Top Section - Two Columns */}
+          <div className="flex">
+            {/* Left Column - Instructions */}
+            <div className="w-2/3 border-r bg-gray-200 border-black p-2">
+              <div className=" text-sm mb-1 font-bold">FAMILY PLANNING CLIENT ASSESSMENT RECORD</div>
+              <p className="text-xs italic">
+                Instructions for Physicians, Nurses, and Midwives: <strong>Make sure that the client is not pregnant by using the question listed in SIDE B. </strong>Completely fill out or check the required information. Refer accordingly for any abnormal history/findings for further medical evaluation.
               </p>
             </div>
-            {/* Right Section */}
-            <div className="border border-black flex-grow pl-3 pt-1 pr-3">
-              <div className="flex items-center mb-2 w-full">
-                <Label className="text-sm font-bold whitespace-nowrap mr-2">CLIENT ID.:</Label>
-                <div className="w-full">
-                  <InputLine className="w-full box-border" value={recordData.client_id} />
+
+            {/* Right Column - Client Info */}
+            <div className="w-1/3 p-2 bg-gray-200">
+              <div className="flex items-center mb-1">
+                <Label className="text-xs  mr-2 whitespace-nowrap">CLIENT ID.:</Label>
+                <InputLine className="flex-1 h-4" value={recordData.client_id} />
+              </div>
+              <div className="flex items-center mb-1">
+                <Label className="text-xs  mr-2 whitespace-nowrap">PHILHEALTH NO.:</Label>
+                <InputLine className="flex-1 h-4" value={recordData.philhealthNo} />
+              </div>
+              <div className="flex items-center gap-2 mb-1">
+                <Label className="text-xs ">NHTS?</Label>
+                <YesNoCheckbox label="Yes" checked={recordData.nhts_status === true} />
+                <YesNoCheckbox label="No" checked={recordData.nhts_status === false} />
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs ">4Ps:</Label>
+                <YesNoCheckbox label="Yes" checked={recordData.fourps === true} />
+                <YesNoCheckbox label="No" checked={recordData.fourps === false} />
+              </div>
+            </div>
+          </div>
+
+          {/* Client Details */}
+          <div className="border-t border-black border-b p-2">
+            <div className="mb-2 ">
+              <Label className=" text-xs">NAME OF CLIENT: </Label>
+              <div className="flex grid-cols-12 gap-1 mt-1">
+                <div className="col-span-2">
+                  <Label className="text-xs">Last Name </Label>
+                  <InputLine className="h-4" value={recordData.lastName} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Given Name</Label>
+                  <InputLine className="h-4" value={recordData.givenName} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">M.I.</Label>
+                  <InputLine className="h-4" value={recordData.middleInitial} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs align-center">Date of Birth</Label>
+                  <InputLine className="h-4" value={recordData.dateOfBirth} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Age</Label>
+                  <InputLine className="h-4" value={recordData.age} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Educ. Attain.</Label>
+                  <InputLine className="h-4" value={recordData.educationalAttainment} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Occupation</Label>
+                  <InputLine className="h-4" value={recordData.occupation} />
                 </div>
               </div>
-              <div className="flex items-center mb-2 w-full">
-                <Label className="text-sm font-bold whitespace-nowrap mr-2">PHILHEALTH NO.:</Label>
-                <div className="w-full">
-                  <InputLine className="w-full box-border" value={recordData.philhealthNo} />
+            </div>
+
+            {/* Address, Contact Number, Civil Status - Single Row */}
+            <div className="mb-2">
+              <Label className=" text-xs">ADDRESS</Label>
+              <div className="flex  grid-cols-12 gap-6 mt-1">
+                <div className="col-span-3">
+                  <Label className="text-xs">No. Street</Label>
+                  <InputLine className="h-4" value={recordData.address?.houseNumber} />
+                </div>
+                <div className="col-span-3">
+                  <Label className="text-xs">Barangay: </Label>
+                  <InputLine className="h-4" value={recordData.address?.barangay} />
+                </div>
+                <div className="col-span-3">
+                  <Label className="text-xs">Municipality/City: </Label>
+                  <InputLine className="h-4" value={recordData.address?.municipality} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Province: </Label>
+                  <InputLine className="h-4" value={recordData.address?.province} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Contact Number: </Label>
+                  <InputLine className="h-4" value={recordData.contact} />
+                </div>
+
+              </div>
+            </div>
+
+            {/* Name of Spouse - Single Row */}
+            <div className="mb-2">
+              <Label className=" text-xs">NAME OF SPOUSE:</Label>
+              <div className="flex grid-cols-12 gap-5 mt-1">
+                <div className="col-span-4">
+                  <Label className="text-xs">Last Name:</Label>
+                  <InputLine className="h-4" value={recordData.spouse?.s_lastName} />
+                </div>
+                <div className="col-span-4">
+                  <Label className="text-xs">Given Name: </Label>
+                  <InputLine className="h-4" value={recordData.spouse?.s_givenName} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">M.I.</Label>
+                  <InputLine className="h-4" value={recordData.spouse?.s_middleInitial} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Date of Birth: </Label>
+                  <InputLine className="h-4" value={recordData.spouse?.s_dateOfBirth} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Age: </Label>
+                  <InputLine className="h-4" value={recordData.spouse?.s_age} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Occupation: </Label>
+                  <InputLine className="h-4" value={recordData.spouse?.s_occupation} />
                 </div>
               </div>
-              <div className="flex gap-8">
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm font-bold whitespace-nowrap">NHTS?</Label>
-                  <div className="flex items-center gap-4">
-                    <YesNoCheckbox label="Yes" checked={recordData.nhts_status === true} />
-                    <YesNoCheckbox label="No" checked={recordData.nhts_status === false} />
+            </div>
+
+            <div className="flex grid-cols-4 gap-9 mb-2">
+              <div>
+                <Label className=" text-xs">NO. OF LIVING CHILDREN:</Label>
+                <InputLine className="h-4 mt-1" value={recordData.obstetricalHistory?.numOfLivingChildren} />
+              </div>
+              <div>
+                <Label className=" text-xs">PLAN TO HAVE MORE CHILDREN?</Label>
+                <div className="flex gap-2 mt-1">
+                  <YesNoCheckbox label="Yes" checked={recordData.plan_more_children === true} />
+                  <YesNoCheckbox label="No" checked={recordData.plan_more_children === false} />
+                </div>
+              </div>
+              <div className="">
+                <Label className=" text-xs">AVERAGE MONTHLY INCOME:</Label>
+                <InputLine className="h-4 mt-1" value={getIncomeName(recordData.avg_monthly_income)} />
+              </div>
+            </div>
+
+            {/* Client Type Section */}
+            <div className="pt-1 mt-2 grid grid-cols-12 gap-1">
+              {/* Type of Client */}
+              <Label className=" col-span-2">Type of Client:</Label>
+              <InputLine className="col-span-4" value={recordData.typeOfClient} />
+              {recordData.typeOfClient === "Current User" && (
+                <>
+                  <Label className=" col-span-2 mt-0">Sub Type of Client:</Label>
+                  <InputLine className="col-span-4" value={recordData.subTypeOfClient} />
+                </>
+              )}
+
+              {/* Reason for FP */}
+              <Label className=" col-span-2">Reason for FP:</Label>
+              <InputLine className="col-span-4" value={recordData.reasonForFP} />
+              {(recordData.reasonForFP === "fp_others" || recordData.reasonForFP === "sideeffects") && (
+                <>
+                  <Label className=" col-span-2 mt-0">
+                    {recordData.reasonForFP === "fp_others" ? "Other Reason for FP:" : "Side Effect:"}
+                  </Label>
+                  <InputLine className="col-span-4" value={recordData.otherReasonForFP} />
+                </>
+              )}
+
+              {/* Method Currently Used */}
+              <Label className=" col-span-2">Method Used:</Label>
+              <InputLine className="col-span-4" value={recordData.methodCurrentlyUsed} />
+              {recordData.methodCurrentlyUsed === "Others" && (
+                <>
+                  <Label className=" col-span-2 mt-0">Other Method:</Label>
+                  <InputLine className="col-span-4" value={recordData.otherMethod} />
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Main Content - Two Columns */}
+          <div className="flex border-t border-black">
+            {/* Left Column */}
+            <div className="w-1/2 border-r border-black">
+              {/* Medical History */}
+              <div className="p-2">
+  <Label className=" text-xs block mb-1">I. MEDICAL HISTORY</Label>
+  <div className="text-xs">
+    <div>Does the client have any of the following?</div>
+    {[
+      { label: "severe headaches / migraine", key: "severeHeadaches" },
+      { label: "history of stroke / heart attack / hypertension", key: "strokeHeartAttackHypertension" },
+      { label: "non-traumatic hematoma / frequent bruising or gum bleeding", key: "hematomaBruisingBleeding" },
+      { label: "current or history of breast cancer / breast mass", key: "breastCancerHistory" },
+      { label: "severe chest pain", key: "severeChestPain" },
+      { label: "cough for more than 14 days", key: "cough" },
+      { label: "jaundice", key: "jaundice" },
+      { label: "unexplained vaginal bleeding", key: "unexplainedVaginalBleeding" },
+      { label: "abnormal vaginal discharge", key: "abnormalVaginalDischarge" },
+      { label: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)", key: "phenobarbitalOrRifampicin" },
+      { label: "Is the client a SMOKER?", key: "smoker" },
+      { label: "With Disability?", key: "disability" },
+    ].map((item, index) => (
+      <div key={index} className="flex justify-between items-center py-0.5">
+        <span>• {item.label}</span>
+        <div className="flex gap-2">
+          <YesNoCheckbox
+            label="Yes"
+            checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === true}
+          />
+          <YesNoCheckbox
+            label="No"
+            checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === false}
+          />
+        </div>
+      </div>
+    ))}
+    
+    {/* Display custom illnesses in a single input line below the disability checkbox */}
+    {hasCustomIllnesses() && (
+      <div className=" mt-1">
+        <div className="flex items-center gap-1">
+          <p className="italic text-xs">Specify other illness/disability:</p>
+          <InputLine 
+            className="flex-1 h-4" 
+            value={getCustomIllnesses().join(', ')} 
+          />
+        </div>
+      </div>
+    )}
+  </div>
+</div>
+
+              {/* Obstetrical History */}
+              <div className="border-t border-black p-2">
+                <Label className=" text-xs block mb-1">II. OBSTETRICAL HISTORY</Label>
+                <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                  <div className="flex items-center gap-1">
+                    <span>Number of pregnancies:</span>
+                    <span>G</span>
+                    <InputLine className="w-8 h-4" value={recordData.obstetricalHistory?.g_pregnancies} />
+                    <span>P</span>
+                    <InputLine className="w-8 h-4" value={recordData.obstetricalHistory?.p_pregnancies} />
+                  </div>
+                  <div></div>
+                  <div className="flex items-center gap-1">
+                    <InputLine className="w-8 h-4" value={recordData.obstetricalHistory?.fullTerm} />
+                    <span>Full term</span>
+                    <InputLine className="w-8 h-4" value={recordData.obstetricalHistory?.premature} />
+                    <span>Premature</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <InputLine className="w-8 h-4" value={recordData.obstetricalHistory?.abortion} />
+                    <span>Abortion</span>
+                    <InputLine className="w-8 h-4" value={recordData.obstetricalHistory?.numOfLivingChildren} />
+                    <span>Living children</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm font-bold whitespace-nowrap">Pantawid Pamilya Pilipino (4Ps):</Label>
-                  <div className="flex items-center gap-4">
-                    <YesNoCheckbox label="Yes" checked={recordData.fourps === true} />
-                    <YesNoCheckbox label="No" checked={recordData.fourps === false} />
+                <div className="text-xs space-y-1">
+                  <div className="flex items-center gap-1">
+                    <span>Date of last delivery:</span>
+                    <InputLine className="inline-block w-24 h-4" value={recordData.obstetricalHistory?.lastDeliveryDate} />
                   </div>
+                  <div className="flex items-center gap-2">
+                    <span>Type of last delivery:</span>
+                    <div className="flex gap-2">
+                      <div className="flex items-center gap-1">
+                        <input type="checkbox" checked={recordData.obstetricalHistory?.typeOfLastDelivery === 'Vaginal'} disabled className="h-3 w-3" />
+                        <span>Vaginal</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input type="checkbox" checked={recordData.obstetricalHistory?.typeOfLastDelivery === 'Caesarean Section'} disabled className="h-3 w-3" />
+                        <span>Caesarean Section</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>Last menstrual period:</span>
+                    <InputLine className="inline-block w-24 h-4" value={recordData.obstetricalHistory?.lastMenstrualPeriod} />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>Previous menstrual period:</span>
+                    <InputLine className="inline-block w-24 h-4" value={recordData.obstetricalHistory?.previousMenstrualPeriod} />
+                  </div>
+                  <div>
+                    <div>Menstrual flow:</div>
+                    <div className="ml-4">
+                      <div className="flex items-center gap-1">
+                        <input type="checkbox" checked={recordData.obstetricalHistory?.menstrualFlow === 'Scanty'} disabled className="h-3 w-3" />
+                        <span>scanty (1-2 pads per day)</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input type="checkbox" checked={recordData.obstetricalHistory?.menstrualFlow === 'Moderate'} disabled className="h-3 w-3" />
+                        <span>moderate (3-5 pads per day)</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input type="checkbox" checked={recordData.obstetricalHistory?.menstrualFlow === 'Heavy'} disabled className="h-3 w-3" />
+                        <span>heavy (5/more pads per day)</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <input type="checkbox" checked={recordData.obstetricalHistory?.dysmenorrhea === true} disabled className="h-3 w-3" />
+                      <span>Dysmenorrhea</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <input type="checkbox" checked={recordData.obstetricalHistory?.hydatidiformMole === true} disabled className="h-3 w-3" />
+                      <span>Hydatidiform mole (within the last 12 months)</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <input type="checkbox" checked={recordData.obstetricalHistory?.ectopicPregnancyHistory === true} disabled className="h-3 w-3" />
+                      <span>History of ectopic pregnancy</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* STI */}
+              <div className="border-t border-black p-2">
+                <Label className=" text-xs block mb-1">III. RISKS FOR SEXUALLY TRANSMITTED INFECTIONS</Label>
+                <div className="text-xs">
+                  <div>Does the client or the client's partner have any of the following?</div>
+                  {[
+                    { label: "abnormal discharge", key: "abnormalDischarge" },
+                    { label: "sores or ulcers in the genital area", key: "sores" },
+                    { label: "pain or burning sensation in the genital area", key: "pain" },
+                    { label: "history of treatment for sexually transmitted infections", key: "history" }
+                  ].map((item, index) => (
+                    <div key={index} className="flex justify-between items-center py-0.5">
+                      <span>• {item.label}</span>
+                      <div className="flex gap-2">
+                        <YesNoCheckbox
+                          label="Yes"
+                          checked={recordData.sexuallyTransmittedInfections?.[item.key] === true}
+                        />
+                        <YesNoCheckbox
+                          label="No"
+                          checked={recordData.sexuallyTransmittedInfections?.[item.key] === false}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center py-0.5">
+                    <span>• HIV / AIDS / Pelvic inflammatory disease</span>
+                    <div className="flex gap-2">
+                      <YesNoCheckbox
+                        label="Yes"
+                        checked={recordData.sexuallyTransmittedInfections?.hiv === true}
+                      />
+                      <YesNoCheckbox
+                        label="No"
+                        checked={recordData.sexuallyTransmittedInfections?.hiv === false}
+                      />
+                    </div>
+                  </div>
+                  {recordData.sexuallyTransmittedInfections?.abnormalDischarge && (
+                    <div className="mt-1 ml-4">
+                      <span>Abnormal Discharge From: </span>
+                      <span className="font-semibold underline">
+                        {recordData.sexuallyTransmittedInfections.dischargeFrom}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="w-1/2">
+              {/* VAW Risk Assessment */}
+              <div className="p-2">
+                <Label className=" text-xs block mb-1">IV. RISKS FOR VIOLENCE AGAINST WOMEN (VAW)</Label>
+                <div className="text-xs">
+                  {[
+                    { label: "history of domestic violence or VAW", key: "domesticViolence" },
+                    { label: "unpleasant relationship with partner", key: "unpleasantRelationship" },
+                    { label: "partner does not approve of the visit to FP clinic", key: "partnerDisapproval" }
+                  ].map((item, index) => (
+                    <div key={index} className="flex justify-between items-center py-0.5">
+                      <span>• {item.label}</span>
+                      <div className="flex gap-2">
+                        <YesNoCheckbox
+                          label="Yes"
+                          checked={recordData.violenceAgainstWomen?.[item.key] === true}
+                        />
+                        <YesNoCheckbox
+                          label="No"
+                          checked={recordData.violenceAgainstWomen?.[item.key] === false}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <div className="mt-2">
+                    <span>Referred to: </span>
+                    <InputLine className="inline-block w-20 h-4 ml-1" value={recordData.violenceAgainstWomen?.referredTo} />
+
+                  </div>
+                </div>
+              </div>
+              {/* Physical Examination - Additional Details */}
+              <div className="border-t border-black p-2">
+                <Label className=" text-xs block mb-1">V. PHYSICAL EXAMINATION</Label>
+                <div className="text-xs space-y-2">
+                  {/* Vital Signs - 2 Columns */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center gap-1">
+                      <span>Weight:</span>
+                      <InputLine className="flex-1 h-4" value={recordData.weight} />
+                      <span>kg</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>Blood pressure:</span>
+                      <InputLine className="flex-1 h-4" value={recordData.bloodPressure} />
+                      <span>mmHg</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>Height:</span>
+                      <InputLine className="flex-1 h-4" value={recordData.height} />
+                      <span>cm</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>Pulse rate:</span>
+                      <InputLine className="flex-1 h-4" value={recordData.pulseRate} />
+                      <span>/min</span>
+                    </div>
+                  </div>
+
+                  {/* Body Examinations - 2 Columns */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div> SKIN: <InputLine className="h-4" value={recordData.skinExamination} /></div>
+                    <div> CONJUNCTIVA: <InputLine className="h-4" value={recordData.conjunctivaExamination} /> </div>
+                    <div> NECK:<InputLine className="h-4" value={recordData.neckExamination} /> </div>
+                    <div> BREAST: <InputLine className="h-4" value={recordData.breastExamination} /> </div>
+                    <div> ABDOMEN: <InputLine className="h-4" value={recordData.abdomenExamination} /> </div>
+                    <div> EXTREMITIES <InputLine className="h-4" value={recordData.extremitiesExamination} /> </div>
+                  </div>
+
+                  {/* Pelvic Examination - 2 Columns */}
+                  <div className="mt-2">
+                    <div className="font-semibold">PELVIC EXAMINATION (For IUD Acceptors):</div>
+                    <div className="ml-4 grid grid-cols-2 gap-2">
+                      <div className="flex items-center gap-1">
+                        <span>Pelvic Examination:</span>
+                        <InputLine className="flex-1 h-4" value={recordData.pelvicExamination} />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span>Cervical Consistency:</span>
+                        <InputLine className="flex-1 h-4" value={recordData.cervicalConsistency} />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span>Cervical Tenderness:</span>
+                        <div className="flex gap-2">
+                          <div className="flex items-center gap-1">
+                            <input type="checkbox" checked={recordData.cervicalTenderness === true} disabled className="h-3 w-3" />
+                            <span>Yes</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <input type="checkbox" checked={recordData.cervicalTenderness === false} disabled className="h-3 w-3" />
+                            <span>No</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span>Adnexal mass/tenderness:</span>
+                        <div className="flex gap-2">
+                          <div className="flex items-center gap-1">
+                            <input type="checkbox" checked={recordData.cervicalAdnexal === true} disabled className="h-3 w-3" />
+                            <span>Yes</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <input type="checkbox" checked={recordData.cervicalAdnexal === false} disabled className="h-3 w-3" />
+                            <span>No</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span>Uterine Position:</span>
+                        <InputLine className="flex-1 h-4" value={recordData.uterinePosition} />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span>Uterine depth:</span>
+                        <InputLine className="flex-1 h-4" value={recordData.uterineDepth} />
+                        <span>cm</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Acknowledgement */}
+              <div className="border-t border-black p-2">
+                <Label className=" text-xs block mb-1">ACKNOWLEDGEMENT:</Label>
+                <div className="text-xs">
+                  <p className="mb-2">
+                    This is to certify that the Physician/Nurse/Midwife of the clinic has fully explained to me the different methods available in family planning and I freely choose the <span className="font-semibold underline">{recordData.acknowledgement?.selectedMethod || '_______'}</span> method.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-4 mb-2">
+                    <div>
+                      <SignatureDisplay signatureData={recordData.acknowledgement?.clientSignature} />
+                      <div>Client Signature</div>
+                    </div>
+                    <div>
+                      <div>Date</div>
+                      <InputLine className="h-4" value={recordData.acknowledgement?.clientSignatureDate} />
+                    </div>
+                  </div>
+
+                  <p className="mb-2">
+                    For WRA below 18 yrs. old:<br />
+                    I hereby consent <span className="font-semibold underline">{recordData.acknowledgement?.clientName || '_______'}</span> to accept the Family Planning method
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div>Parent/Guardian Signature</div>
+                      <SignatureDisplay signatureData={recordData.acknowledgement?.guardianSignature} />
+                    </div>
+                    <div>
+                      <div>Date</div>
+                      <InputLine className="h-4" value={recordData.acknowledgement?.guardianSignatureDate} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-black p-2 text-xs">
+                <div className="justify-text italic gap-4">
+
+                  <div className="text-xs space-y-0.5">
+                    <small>Implant = Progestin subdermal implant; IUD = Intrauterine device; BTL = Bilateral tubal ligation; <br></br>NSV = No-scalpel vasectomy; COC = Combined Oral Contraceptive; POP = Progestin only pills
+                      <br></br>LAM = Lactational amenorrhea method; SDM = Standard days method; BBT = Basal body temperature; BOM = Billings ovulation method; CMM = Cervical mucus method; STM = Symptothermal method
+                    </small>
+                  </div>
+
                 </div>
               </div>
             </div>
           </div>
-          <div className="p-2"></div>
         </div>
+      </div> {/* End of print-content div */}
 
-        {/* Client Details Section */}
-        <div className="w-full border border-black p-3">
-          <div className="w-full">
-            <Label className="font-bold whitespace-nowrap">NAME OF CLIENT:</Label>
-            <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-2">
-              <div className="flex-1">
-                <InputLine value={recordData.lastName} />
-                <Label className="text-xs">Last Name</Label>
-              </div>
-              <div className="flex-1">
-                <InputLine value={recordData.givenName} />
-                <Label className="text-xs">Given Name</Label>
-              </div>
-              <div className="w-20">
-                <InputLine value={recordData.middleInitial} />
-                <Label className="text-xs">M.I.</Label>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-4">
-            <div className="flex-1">
-              <Label className="font-bold">Date of Birth:</Label>
-              <InputLine value={recordData.dateOfBirth} />
-            </div>
-            <div className="w-20">
-              <Label className="font-bold">Age:</Label>
-              <InputLine value={recordData.age} />
-            </div>
-            <div className="flex-1">
-              <Label className="font-bold">Educational Attainment:</Label>
-              <InputLine value={recordData.educationalAttainment} />
-            </div>
-            <div className="flex-1">
-              <Label className="font-bold">Occupation:</Label>
-              <InputLine value={recordData.occupation} />
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <Label className="font-bold">Address:</Label>
-            <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-2">
-              <div className="flex-1">
-                <InputLine value={recordData.address?.houseNumber} />
-                <Label className="text-xs">House No./Street</Label>
-              </div>
-              <div className="flex-1">
-                <InputLine value={recordData.address?.barangay} />
-                <Label className="text-xs">Barangay</Label>
-              </div>
-              <div className="flex-1">
-                <InputLine value={recordData.address?.municipality} />
-                <Label className="text-xs">City/Municipality</Label>
-              </div>
-              <div className="flex-1">
-                <InputLine value={recordData.address?.province} />
-                <Label className="text-xs">Province</Label>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <Label className="font-bold">NAME OF SPOUSE (if applicable):</Label>
-            <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-2">
-              <div className="flex-1">
-                <InputLine value={recordData.spouse?.s_lastName} />
-                <Label className="text-xs">Last Name</Label>
-              </div>
-              <div className="flex-1">
-                <InputLine value={recordData.spouse?.s_givenName} />
-                <Label className="text-xs">Given Name</Label>
-              </div>
-              <div className="w-20">
-                <InputLine value={recordData.spouse?.s_middleInitial} />
-                <Label className="text-xs">M.I.</Label>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-4">
-            <div className="flex-1">
-              <Label className="font-bold">Date of Birth:</Label>
-              <InputLine value={recordData.spouse?.s_dateOfBirth} />
-            </div>
-            <div className="w-20">
-              <Label className="font-bold">Age:</Label>
-              <InputLine value={recordData.spouse?.s_age} />
-            </div>
-            <div className="flex-1">
-              <Label className="font-bold">Occupation:</Label>
-              <InputLine value={recordData.spouse?.s_occupation} />
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-4 mt-4">
-            <div className="flex-1">
-              <Label className="font-bold">No. of Living Children:</Label>
-              <InputLine value={recordData.obstetricalHistory?.numOfLivingChildren} />
-            </div>
-            <div className="flex-1">
-              <Label className="font-bold">Plan to have more children?</Label>
-              <div className="flex items-center gap-4 mt-2">
-                <YesNoCheckbox label="Yes" checked={recordData.plan_more_children === true} />
-                <YesNoCheckbox label="No" checked={recordData.plan_more_children === false} />
-              </div>
-            </div>
-            <div className="flex-1">
-              <Label className="font-bold">Average Monthly Income:</Label>
-              <InputLine value={getIncomeName(recordData.avg_monthly_income)} />
-            </div>
-          </div>
-
-          {/* Client Type, Reason for FP, Method Currently Used */}
-          <div className="mt-4">
-            <Label className="font-bold">Type of Client:</Label>
-            <InputLine value={recordData.typeOfClient} />
-            {recordData.typeOfClient === "Current User" && (
-              <>
-                <Label className="font-bold mt-2">Sub Type of Client:</Label>
-                <InputLine value={recordData.subTypeOfClient} />
-              </>
-            )}
-
-            <Label className="font-bold mt-4">Reason for FP:</Label>
-            <InputLine value={recordData.reasonForFP} />
-            {(recordData.reasonForFP === "fp_others" || recordData.reasonForFP === "sideeffects") && (
-              <>
-                <Label className="font-bold mt-2">
-                  {recordData.reasonForFP === "fp_others" ? "Other Reason for FP:" : "Side Effects Detail:"}
-                </Label>
-                <InputLine value={recordData.otherReasonForFP} />
-              </>
-            )}
-            <Label className="font-bold mt-4">Method Currently Used:</Label>
-            <InputLine value={recordData.methodCurrentlyUsed} />
-            {recordData.methodCurrentlyUsed === "Others" && (
-              <>
-                <Label className="font-bold mt-2">Other Method:</Label>
-                <InputLine value={recordData.otherMethod} />
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Medical History */}
-        <div className="w-full border border-black p-3 mt-4">
-          <Label className="font-bold block mb-2">MEDICAL HISTORY:</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
-          {(
-            [
-              { label: "severe headaches / migraine", key: "severeHeadaches" },
-              { label: "history of stroke / heart attack / hypertension", key: "strokeHeartAttackHypertension" },
-              { label: "non-traumatic hematoma / frequent bruising or gum bleeding", key: "hematomaBruisingBleeding" },
-              { label: "current or history of breast cancer / breast mass", key: "breastCancerHistory" },
-              { label: "severe chest pain", key: "severeChestPain" },
-              { label: "cough for more than 14 days", key: "cough" },
-              { label: "jaundice", key: "jaundice" },
-              { label: "unexplained vaginal bleeding", key: "unexplainedVaginalBleeding" },
-              { label: "abnormal vaginal discharge", key: "abnormalVaginalDischarge" },
-              { label: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)", key: "phenobarbitalOrRifampicin" },
-              { label: "Is this client a SMOKER?", key: "smoker" },
-              { label: "With Disability/Others?", key: "disability" },
-            ] as const
-          ).map((item, index) => (
-            <div key={index} className="flex items-center justify-between">
-              <Label className="text-sm">{item.label}</Label>
-              {/* NEW: Wrap Yes/No checkboxes in a flex container */}
-              <div className="flex items-center gap-4">
-                <YesNoCheckbox
-                  label="Yes"
-                  checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === true}
-                />
-                <YesNoCheckbox
-                  label="No"
-                  checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === false}
-                />
-              </div>
-            </div>
-          ))}
-          {recordData.medicalHistory?.disability && (
-            <div className="md:col-span-2">
-              <Label className="text-sm">Specify Disability:</Label>
-              <InputLine value={recordData.medicalHistory.disabilityDetails} />
-            </div>
-          )}
-        </div>
-
-          {/* Debug: Show selected illness records */}
-          {/* {recordData.medical_history_records && recordData.medical_history_records.length > 0 && (
-            <div className="mt-4 p-2 bg-gray-100 rounded">
-              <Label className="text-sm font-bold">Selected Medical Conditions:</Label>
-              <div className="text-xs mt-1">
-                {recordData.medical_history_records.map((record: any, index: number) => (
-                  <span key={index} className="inline-block bg-blue-100 px-2 py-1 rounded mr-2 mb-1">
-                    {record.illname}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )} */}
-        </div>
-
-        {/* Obstetrical History */}
-        <div className="w-full border border-black p-3 mt-4">
-          <Label className="font-bold block mb-2">OBSTETRICAL HISTORY:</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm">G (Gravida):</Label>
-              <InputLine className="w-20" value={recordData.obstetricalHistory?.g_pregnancies} />
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-sm">P (Para):</Label>
-              <InputLine className="w-20" value={recordData.obstetricalHistory?.p_pregnancies} />
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-sm">Full Term:</Label>
-              <InputLine className="w-20" value={recordData.obstetricalHistory?.fullTerm} />
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-sm">Premature:</Label>
-              <InputLine className="w-20" value={recordData.obstetricalHistory?.premature} />
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-sm">Abortion:</Label>
-              <InputLine className="w-20" value={recordData.obstetricalHistory?.abortion} />
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-sm">Living Children:</Label>
-              <InputLine className="w-20" value={recordData.obstetricalHistory?.numOfLivingChildren} />
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
-            <div>
-              <Label className="text-sm">Last Delivery Date:</Label>
-              <InputLine value={recordData.obstetricalHistory?.lastDeliveryDate} />
-            </div>
-            <div>
-              <Label className="text-sm">Type of Last Delivery:</Label>
-              <InputLine value={recordData.obstetricalHistory?.typeOfLastDelivery} />
-            </div>
-            <div>
-              <Label className="text-sm">Last Menstrual Period:</Label>
-              <InputLine value={recordData.obstetricalHistory?.lastMenstrualPeriod} />
-            </div>
-            <div>
-              <Label className="text-sm">Previous Menstrual Period:</Label>
-              <InputLine value={recordData.obstetricalHistory?.previousMenstrualPeriod} />
-            </div>
-            <div>
-              <Label className="text-sm">Menstrual Flow:</Label>
-              <InputLine value={recordData.obstetricalHistory?.menstrualFlow} />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">Dysmenorrhea:</Label>
-              <YesNoCheckbox label="Yes" checked={recordData.obstetricalHistory?.dysmenorrhea === true} />
-              <YesNoCheckbox label="No" checked={recordData.obstetricalHistory?.dysmenorrhea === false} />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">Hydatidiform Mole (within the last 12 months):</Label>
-              <YesNoCheckbox label="Yes" checked={recordData.obstetricalHistory?.hydatidiformMole === true} />
-              <YesNoCheckbox label="No" checked={recordData.obstetricalHistory?.hydatidiformMole === false} />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">History of Ectopic Pregnancy:</Label>
-              <YesNoCheckbox label="Yes" checked={recordData.obstetricalHistory?.ectopicPregnancyHistory === true} />
-              <YesNoCheckbox label="No" checked={recordData.obstetricalHistory?.ectopicPregnancyHistory === false} />
-            </div>
-          </div>
-        </div>
-
-        {/* Sexually Transmitted Infections */}
-        <div className="w-full border border-black p-3 mt-4">
-          <Label className="font-bold block mb-2">SEXUALLY TRANSMITTED INFECTIONS (STIs):</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
-            {[
-              { label: "Abnormal discharge", key: "abnormalDischarge" },
-              { label: "Sores in genital area", key: "sores" },
-              { label: "Pain in lower abdomen", key: "pain" },
-              { label: "History of STI", key: "history" },
-              { label: "HIV", key: "hiv" },
-            ].map((item, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <Label className="text-sm">{item.label}</Label>
-                <YesNoCheckbox
-                  label="Yes"
-                  checked={getNestedValue(recordData, `sexuallyTransmittedInfections.${item.key}`) === true}
-                />
-                <YesNoCheckbox
-                  label="No"
-                  checked={getNestedValue(recordData, `sexuallyTransmittedInfections.${item.key}`) === false}
-                />
-              </div>
-            ))}
-            {recordData.sexuallyTransmittedInfections?.abnormalDischarge && (
-              <div className="md:col-span-2">
-                <Label className="text-sm">Abnormal Discharge From: </Label>
-                <span className="font-semibold underline">
-                  {recordData.sexuallyTransmittedInfections.dischargeFrom}{" "}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* VAW Risk Assessment */}
-        <div className="w-full border border-black p-3 mt-4">
-          <Label className="font-bold block mb-2">VAW RISK ASSESSMENT:</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
-            {[
-              { label: "Unpleasant relationship with partner", key: "unpleasantRelationship" },
-              { label: "Partner does not approve of the visit to FP clinic", key: "partnerDisapproval" },
-              { label: "History of domestic violence or VAW", key: "domesticViolence" },
-            ].map((item, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <Label className="text-sm">{item.label}</Label>
-                <YesNoCheckbox
-                  label="Yes"
-                  checked={getNestedValue(recordData, `violenceAgainstWomen.${item.key}`) === true}
-                />
-                <YesNoCheckbox
-                  label="No"
-                  checked={getNestedValue(recordData, `violenceAgainstWomen.${item.key}`) === false}
-                />
-              </div>
-            ))}
-            <div className="md:col-span-2">
-              <Label className="text-sm">Referred To:</Label>
-              <InputLine value={recordData.violenceAgainstWomen.referredTo || ""} />
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Button */}
-        <div className="flex justify-end mt-6">
-           <Button onClick={() => navigate("/familyplanning/view2", { state: { fprecordId: fprecordId } })}>Next</Button> 
-        </div>
+      {/* Navigation Button (outside print-content) */}
+      <div className="flex justify-end mt-4 no-print"> {/* Add no-print class */}
+        <Button onClick={() => navigate("/familyplanning/view2", { state: { fprecordId: fprecordId } })}>
+          Next (Side B)
+        </Button>
       </div>
     </div>
   )

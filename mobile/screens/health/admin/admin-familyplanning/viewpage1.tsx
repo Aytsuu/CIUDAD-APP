@@ -1,5 +1,6 @@
-import React from "react";
-import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
+// Modified viewpage1.tsx
+import React, { useState } from "react";
+import { View, Text, ScrollView, Image, TouchableOpacity, Dimensions } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, router } from "expo-router";
 import { getFPCompleteRecord } from "./GetRequest";
@@ -26,101 +27,33 @@ import {
   AlertCircle,
 } from "lucide-react-native";
 
-interface FPRecordData {
-  client_id?: string;
- 
-  occupation?: string;
-  philhealthNo?: string;
- 
-  nhts_status?: boolean;
-  typeOfClient?: string;
-  reasonForFP?: string;
-  methodCurrentlyUsed?: string;
-  avg_monthly_income?: number;
-  plan_more_children?: boolean;
-  fourps?: boolean;
-  obstetricalHistory?: {
-    menstrualFlow?: string;
-    lastDeliveryDate?: string;
-    typeOfLastDelivery?: string;
-    previousMenstrualPeriod?: string;
-    dysmenorrhea?: boolean;
-    hydatidiformMole?: boolean;
-    ectopicPregnancyHistory?: boolean;
-    g_pregnancies?: number;
-    p_pregnancies?: number;
-    livingChildren?: number;
-    fullTerm?: number;
-    premature?: number;
-    abortion?: number;
-    pain?: boolean;
-    history?: boolean;
-    hiv?: boolean;
-  };
-  medical_history_records?: { medhist_id: string; illname: string; ill_id: string }[];
-  selectedIllnessIds?: string[];
-  risk_sti?: {
-    abnormalDischarge?: boolean;
-    dischargeFrom?: string;
-    sores?: boolean;
-  };
-  risk_vaw?: {
-    unpleasant_relationship?: boolean;
-    partner_disapproval?: boolean;
-    domestic_violence?: boolean;
-    referredTo?: string;
-  };
-  fp_pelvic_exam?: {
-    pelvicExamination?: string;
-    cervicalTenderness?: boolean;
-    cervicalAdnexal?: boolean;
-    cervicalConsistency?: string;
-    uterinePosition?: string;
-    uterineDepth?: string;
-  };
-  pregnancyCheck?: {
-    breastfeeding?: boolean;
-    abstained?: boolean;
-    recent_baby?: boolean;
-    recent_period?: boolean;
-    recent_abortion?: boolean;
-    using_contraceptive?: boolean;
-  };
-  skinExamination?: string;
-  conjunctivaExamination?: string;
-  neckExamination?: string;
-  breastExamination?: string;
-  abdomenExamination?: string;
-  extremitiesExamination?: string;
-  weight?: number;
-  height?: number;
-  bloodPressure?: string;
-  pulseRate?: string;
-  acknowledgement?: {
-    selectedMethod?: string;
-    clientName?: string;
-    clientSignature?: string;
-    clientSignatureDate?: string;
-    guardianSignature?: string;
-    guardianSignatureDate?: string;
-  };
-  serviceProvisionRecords?: {
-    dateOfVisit: string;
-    methodAccepted?: string;
-    nameOfServiceProvider: string;
-    dateOfFollowUp: string;
-    medicalFindings: string;
-  }[];
-}
+import { FPRsecordData} from "./FPRecordData"
 
 export default function FpRecordViewPage1() {
   const { fprecordId } = useLocalSearchParams();
+  const windowWidth = Dimensions.get("window").width;
 
   const { data: recordData, isLoading, isError, error } = useQuery<FPRecordData | null>({
     queryKey: ["fpCompleteRecordView", fprecordId],
     queryFn: () => getFPCompleteRecord(Number(fprecordId)),
     enabled: !!fprecordId,
   });
+
+  const [selectedTab, setSelectedTab] = useState(0);
+
+  const tabs = [
+    "Client Information",
+    "FP Details",
+    "Obstetrical History",
+    "Medical History",
+    "Risk STI",
+    "Risk VAW",
+    "Pelvic Exam",
+    "Physical Exam",
+    "Acknowledgement",
+    "Service Provision",
+    "Pregnancy Check",
+  ];
 
   if (isLoading) {
     return (
@@ -151,32 +84,20 @@ export default function FpRecordViewPage1() {
     );
   }
 
- const fullName = `${recordData.lastName ?? "N/A"}, ${recordData.givenName ?? "N/A"} ${recordData.middleInitial ?? ""}`.trim();
- const isIUD = recordData.acknowledgement?.selectedMethod?.toLowerCase() === "iud";
+  const fullName = `${recordData.lastName ?? "N/A"}, ${recordData.givenName ?? "N/A"} ${recordData.middleInitial ?? ""}`.trim();
+  const isIUD = recordData.acknowledgement?.selectedMethod?.toLowerCase() === "iud";
 
-  return (
-    <ScrollView className="flex-1 bg-gray-50">
-      {/* Header Section */}
-      <View className="bg-blue-600 px-6 pt-16 pb-8">
-        <View className="items-center">
-          <Heart size={32} color="white" />
-          <Text className="text-2xl font-bold text-white mt-2">Family Planning Record</Text>
-          <Text className="text-blue-100 mt-1">Complete Medical Profile</Text>
-        </View>
-      </View>
-
-      <View className="px-4 -mt-4">
-        {/* Client Information Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-          <View className="p-6 pb-4">
+  const renderTabContent = () => {
+    switch (selectedTab) {
+      case 0: // Client Information
+        return (
+          <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <View className="flex-row items-center mb-4">
               <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-blue-100">
                 <User size={20} color="#3B82F6" />
               </View>
               <Text className="text-lg font-semibold text-gray-800">Client Information</Text>
             </View>
-          </View>
-          <View className="px-6 pb-6">
             <View className="flex-row items-start space-x-3 mb-4">
               <View className="w-5 h-5 mt-1">
                 <CreditCard size={18} color="#6B7280" />
@@ -240,7 +161,7 @@ export default function FpRecordViewPage1() {
               <View className="flex-1">
                 <Text className="text-sm text-gray-500 mb-1">Complete Address</Text>
                 <Text className="text-sm font-medium text-gray-900">
-                  {`${recordData.address?.houseNumber ?? "N/A"} ${recordData.address?.street ?? ""}, ${recordData.address?.barangay ?? "N/A"}, ${recordData.address?.municipality ?? "N/A"}, ${recordData.address?.province ?? "N/A"}`.trim()}
+                 {`${recordData.address?.houseNumber ?? "N/A"} ${recordData.address?.street ?? ""}, ${recordData.address?.barangay ?? "N/A"}, ${recordData.address?.municipality ?? "N/A"}, ${recordData.address?.province ?? "N/A"}`.trim()}
                 </Text>
               </View>
             </View>
@@ -251,19 +172,16 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
           </View>
-        </View>
-
-        {/* Family Planning Details Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-          <View className="p-6 pb-4">
+        );
+      case 1: // Family Planning Details
+        return (
+          <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <View className="flex-row items-center mb-4">
               <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-red-100">
                 <Heart size={20} color="#EF4444" />
               </View>
               <Text className="text-lg font-semibold text-gray-800">Family Planning Details</Text>
             </View>
-          </View>
-          <View className="px-6 pb-6">
             <View className="flex-row items-start space-x-3 mb-4">
               <View className="w-5 h-5 mt-1">
                 <User size={18} color="#6B7280" />
@@ -317,19 +235,16 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
           </View>
-        </View>
-
-        {/* Obstetrical History Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-          <View className="p-6 pb-4">
+        );
+      case 2: // Obstetrical History
+        return (
+          <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <View className="flex-row items-center mb-4">
               <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-green-100">
                 <Baby size={20} color="#10B981" />
               </View>
               <Text className="text-lg font-semibold text-gray-800">Obstetrical History</Text>
             </View>
-          </View>
-          <View className="px-6 pb-6">
             <View className="flex-row items-start space-x-3 mb-4">
               <View className="w-5 h-5 mt-1">
                 <Droplets size={18} color="#6B7280" />
@@ -394,7 +309,7 @@ export default function FpRecordViewPage1() {
                 </View>
                 <View className="bg-gray-50 rounded-lg p-4 items-center flex-1 mx-1">
                   <Baby size={20} color="#3B82F6" />
-                   <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.p_pregnancies ?? "0"}</Text>
+                  <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.p_pregnancies ?? "0"}</Text>
                   <Text className="text-sm text-gray-500 text-center mt-1">Para</Text>
                 </View>
                 <View className="bg-gray-50 rounded-lg p-4 items-center flex-1 mx-1">
@@ -406,7 +321,7 @@ export default function FpRecordViewPage1() {
               <View className="flex-row">
                 <View className="bg-gray-50 rounded-lg p-4 items-center flex-1 mx-1">
                   <Calendar size={20} color="#3B82F6" />
-                   <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.fullTerm ?? "0"}</Text>
+                  <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.fullTerm ?? "0"}</Text>
                   <Text className="text-sm text-gray-500 text-center mt-1">Full Term</Text>
                 </View>
                 <View className="bg-gray-50 rounded-lg p-4 items-center flex-1 mx-1">
@@ -422,19 +337,16 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
           </View>
-        </View>
-
-        {/* Medical History Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-          <View className="p-6 pb-4">
+        );
+      case 3: // Medical History
+        return (
+          <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <View className="flex-row items-center mb-4">
               <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-purple-100">
                 <Stethoscope size={20} color="#8B5CF6" />
               </View>
               <Text className="text-lg font-semibold text-gray-800">Medical History</Text>
             </View>
-          </View>
-          <View className="px-6 pb-6">
             {(recordData.medical_history_records ?? []).map((record) => (
               <View key={record.medhist_id} className="flex-row items-center justify-between py-3 border-b border-gray-100">
                 <Text className="text-sm text-gray-800 flex-1">{record.illname ?? "N/A"}</Text>
@@ -447,19 +359,16 @@ export default function FpRecordViewPage1() {
               <Text className="text-sm text-gray-500 text-center">No medical history available</Text>
             )}
           </View>
-        </View>
-
-        {/* Risk STI Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-          <View className="p-6 pb-4">
+        );
+      case 4: // Risk STI
+        return (
+          <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <View className="flex-row items-center mb-4">
               <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-purple-100">
                 <Stethoscope size={20} color="#8B5CF6" />
               </View>
               <Text className="text-lg font-semibold text-gray-800">Risk STI</Text>
             </View>
-          </View>
-          <View className="px-6 pb-6">
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">Abnormal Discharge:</Text>
               <View className={`px-3 py-1 rounded-full ${recordData.risk_sti?.abnormalDischarge ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
@@ -499,19 +408,16 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
           </View>
-        </View>
-
-        {/* Risk VAW Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-          <View className="p-6 pb-4">
+        );
+      case 5: // Risk VAW
+        return (
+          <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <View className="flex-row items-center mb-4">
               <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-purple-100">
                 <Stethoscope size={20} color="#8B5CF6" />
               </View>
               <Text className="text-lg font-semibold text-gray-800">Risk VAW</Text>
             </View>
-          </View>
-          <View className="px-6 pb-6">
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">Unpleasant Relationship:</Text>
               <View className={`px-3 py-1 rounded-full ${recordData.risk_vaw?.unpleasant_relationship ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
@@ -537,19 +443,16 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
           </View>
-        </View>
-
-        {/* Pelvic Examination Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-          <View className="p-6 pb-4">
+        );
+      case 6: // Pelvic Examination
+        return (
+          <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <View className="flex-row items-center mb-4">
               <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-purple-100">
                 <Stethoscope size={20} color="#8B5CF6" />
               </View>
               <Text className="text-lg font-semibold text-gray-800">Pelvic Examination</Text>
             </View>
-          </View>
-          <View className="px-6 pb-6">
             {isIUD && recordData.fp_pelvic_exam ? (
               <>
                 <View className="flex-row items-center justify-between mb-4">
@@ -593,19 +496,16 @@ export default function FpRecordViewPage1() {
               <Text className="text-sm text-gray-500 text-center">No pelvic exam data available (Method: {recordData.acknowledgement?.selectedMethod ?? "N/A"})</Text>
             )}
           </View>
-        </View>
-
-        {/* Physical Examination Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-          <View className="p-6 pb-4">
+        );
+      case 7: // Physical Examination
+        return (
+          <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <View className="flex-row items-center mb-4">
               <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-yellow-100">
                 <Activity size={20} color="#F59E0B" />
               </View>
               <Text className="text-lg font-semibold text-gray-800">Physical Examination</Text>
             </View>
-          </View>
-          <View className="px-6 pb-6">
             <View className="flex-row items-start space-x-3 mb-4">
               <View className="w-5 h-5 mt-1">
                 <User size={18} color="#6B7280" />
@@ -686,19 +586,16 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
           </View>
-        </View>
-
-        {/* Client Acknowledgement Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-          <View className="p-6 pb-4">
+        );
+      case 8: // Acknowledgement
+        return (
+          <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <View className="flex-row items-center mb-4">
               <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-cyan-100">
                 <UserCheck size={20} color="#06B6D4" />
               </View>
               <Text className="text-lg font-semibold text-gray-800">Acknowledgement</Text>
             </View>
-          </View>
-          <View className="px-6 pb-6">
             <View className="flex-row items-start space-x-3 mb-4">
               <View className="w-5 h-5 mt-1">
                 <User size={18} color="#6B7280" />
@@ -778,20 +675,17 @@ export default function FpRecordViewPage1() {
               </>
             )}
           </View>
-        </View>
-
-        {/* Service Provision Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-          <View className="p-6 pb-4">
+        );
+      case 9: // Service Provision
+        return (
+          <ScrollView className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <View className="flex-row items-center mb-4">
               <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-green-100">
                 <Clock size={20} color="#10B981" />
               </View>
               <Text className="text-lg font-semibold text-gray-800">Service Provision</Text>
             </View>
-          </View>
-          <View className="px-6 pb-6">
-            {(recordData.serviceProvisionRecords ?? []).map((service, index) => (
+            {(recordData.serviceProvisionRecords ?? []).map((service: any, index: any) => (
               <View key={index} className="bg-gray-50 rounded-lg p-4 mb-3">
                 <View className="flex-row items-center mb-3">
                   <View className="px-3 py-1 rounded-full bg-gray-100 text-gray-700">
@@ -844,46 +738,43 @@ export default function FpRecordViewPage1() {
                   </View>
                 </View>
                 <View className="mt-4">
-              <Text className="text-sm text-gray-500 mb-3">Service Provider Signature:</Text>
-              {recordData.fp_assessment?.as_provider_signature ? (
-                <View className="rounded-lg p-4 items-center">
-                  <Image
-                    source={{
-                      uri: `data:image/png;base64,${recordData.fp_assessment.as_provider_signature.startsWith("data:image")
-                        ? recordData.fp_assessment.as_provider_signature.split(",")[1]
-                        : recordData.fp_assessment.as_provider_signature}`,
-                    }}
-                    className="w-48 h-24 rounded-md"
-                    resizeMode="contain"
-                    onError={(e) => console.log("Failed to load signature:", e.nativeEvent.error)}
-                  />
+                  <Text className="text-sm text-gray-500 mb-3">Service Provider Signature:</Text>
+                  {recordData.fp_assessment?.as_provider_signature ? (
+                    <View className="rounded-lg p-4 items-center">
+                      <Image
+                        source={{
+                          uri: `data:image/png;base64,${recordData.fp_assessment.as_provider_signature.startsWith("data:image")
+                            ? recordData.fp_assessment.as_provider_signature.split(",")[1]
+                            : recordData.fp_assessment.as_provider_signature}`,
+                        }}
+                        className="w-48 h-24 rounded-md"
+                        resizeMode="contain"
+                        onError={(e) => console.log("Failed to load signature:", e.nativeEvent.error)}
+                      />
+                    </View>
+                  ) : (
+                    <View className="bg-gray-50 rounded-lg p-6 items-center">
+                      <FileText size={24} color="#9CA3AF" />
+                      <Text className="text-sm text-gray-500 mt-2">No signature available</Text>
+                    </View>
+                  )}
                 </View>
-              ) : (
-                <View className="bg-gray-50 rounded-lg p-6 items-center">
-                  <FileText size={24} color="#9CA3AF" />
-                  <Text className="text-sm text-gray-500 mt-2">No signature available</Text>
-                </View>
-              )}
-            </View>
               </View>
             ))}
             {(!recordData.serviceProvisionRecords || recordData.serviceProvisionRecords.length === 0) && (
               <Text className="text-sm text-gray-500 text-center">No service provision records available</Text>
             )}
-          </View>
-        </View>
-
-        {/* Pregnancy Check Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-          <View className="p-6 pb-4">
+          </ScrollView>
+        );
+      case 10: // Pregnancy Check
+        return (
+          <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <View className="flex-row items-center mb-4">
               <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-purple-100">
                 <Stethoscope size={20} color="#8B5CF6" />
               </View>
               <Text className="text-lg font-semibold text-gray-800">Pregnancy Check</Text>
             </View>
-          </View>
-          <View className="px-6 pb-6">
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">Breastfeeding?</Text>
               <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.breastfeeding ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
@@ -921,27 +812,56 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
           </View>
-        </View>
+        );
+      default:
+        return null;
+    }
+  };
 
-        {/* Navigation Button */}
-        {/* <View className="pb-6">
-          <TouchableOpacity
-            className="bg-blue-600 rounded-xl py-4 px-6 items-center justify-center"
-            onPress={() =>
-              router.push({
-                pathname: "/admin/familyplanning/viewpage2",
-                params: { fprecordId: fprecordId?.toString() },
-              })
-            }
-            accessibilityLabel="Continue to page 2"
-          >
-            <View className="flex-row items-center">
-              <Text className="text-white text-base font-semibold mr-2">Continue to Page 2</Text>
-              <ArrowRight size={20} color="white" />
-            </View>
-          </TouchableOpacity>
-        </View> */}
+  return (
+    <View className="flex-1 bg-gray-50">
+      {/* Header Section */}
+      <View className="bg-blue-600 px-6 pt-16 pb-8">
+        <View className="items-center">
+          <Heart size={32} color="white" />
+          <Text className="text-2xl font-bold text-white mt-2">Family Planning Record</Text>
+          <Text className="text-blue-100 mt-1">Complete Medical Profile</Text>
+        </View>
       </View>
-    </ScrollView>
+
+      {/* Horizontal Scrollable Tab Bar */}
+    <ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  className="bg-white border-b mt-2 border-gray-200"
+  contentContainerStyle={{ paddingHorizontal: 16 }}
+  style={{ maxHeight: 40 }} // Add this to limit height
+>
+  {tabs.map((tab, index) => (
+    <TouchableOpacity
+      key={index}
+      onPress={() => setSelectedTab(index)}
+      className={`px-3 py-2 mr-2 rounded-t-lg ${
+        selectedTab === index 
+          ? "bg-blue-50 border-b-2 border-blue-600" 
+          : "bg-transparent"
+      }`}
+      style={{ minHeight: 40 }} // Fixed height for consistency
+    >
+      <Text className={`text-sm font-medium ${
+        selectedTab === index ? "text-blue-600" : "text-gray-600"
+      }`}>
+        {tab}
+      </Text>
+    </TouchableOpacity>
+  ))}
+</ScrollView>
+
+
+      {/* Tab Content */}
+      <ScrollView className="flex-1 px-4 pt-4">
+        {renderTabContent()}
+      </ScrollView>
+    </View>
   );
 }

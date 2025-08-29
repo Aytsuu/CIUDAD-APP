@@ -32,7 +32,7 @@ interface InventoryScreenProps {
   onNavigateToTransactions?: () => void;
 }
 
-export default function InventoryScreen(InventoryScreenProps) {
+export default function InventoryScreen() {
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
   const [selectedStockFilter, setSelectedStockFilter] = React.useState<string>("all");
   const [searchQuery, setSearchQuery] = React.useState<string>("");

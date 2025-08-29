@@ -142,6 +142,7 @@ export interface PersonalInfo {
   }
   
   export interface FollowVDetails {
+    completed_at: any;
     followv_id: number;
     followv_date: string;
     followv_status: string;
@@ -256,6 +257,7 @@ export interface PersonalInfo {
   }
   
   export interface NutritionStatus {
+    edemaSeverity: string;
     nutstat_id: number;
     chvital_details: any;
     wfa: string;
@@ -293,6 +295,7 @@ export interface VaccineDetails {
   ageGroup: number;
 }
 export interface VaccinationHistoryDetails {
+  date_administered: string | number;
   vachist_id: number;
   vital_signs: VitalSigns;
   vaccine_stock: VaccineStock;

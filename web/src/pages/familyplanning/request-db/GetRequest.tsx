@@ -1,5 +1,4 @@
 import { api2 } from "@/api/api"
-import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 
 export interface IndividualFPRecordDetail {
@@ -12,6 +11,7 @@ export interface IndividualFPRecordDetail {
   patient_age: number
   sex: string
   client_type: string
+  subtype: string
   method_used: string
   created_at: string
   dateOfFollowUp?: string
@@ -61,6 +61,7 @@ export const getFPRecordsList = async () => {
         patient_type: record.patient_type || "N/A",
         client_type: record.client_type || "N/A",
         method_used: record.method_used || "N/A",
+        subtype: record.subTypeOfClient || "N/A",
         created_at: record.created_at || "N/A",
         sex: record.sex || "Unknown",
         record_count: record.record_count || 0, // Ensure record_count is mapped

@@ -18,7 +18,7 @@ export const ServiceProvisionRecordSchema = z.object({
   ])
 ),
 
-
+  bloodPressure: z.string().optional(),
   methodQuantity: z.string().optional(),
   serviceProviderSignature: z.string().nonempty("Please sign and save the signature first"),
   medicalFindings: z.string().nonempty("Findings are required"),
@@ -28,12 +28,12 @@ export const ServiceProvisionRecordSchema = z.object({
     .max(300, "Weight must be realistic (1-300kg)"),
   bp_systolic: z.coerce
     .number()
-    .min(60, "Systolic BP must be 60-250")
-    .max(250, "Systolic BP must be 60-250"),
+    .min(100, "Systolic BP must be 60-250")
+    .max(150, "Systolic BP must be 60-250"),
   bp_diastolic: z.coerce
     .number()
     .min(40, "Diastolic BP must be 40-150")
-    .max(150, "Diastolic BP must be 40-150"),
+    .max(110, "Diastolic BP must be 40-150"),
 });
 
 
@@ -63,7 +63,7 @@ const FamilyPlanningBaseSchema = z.object({
   educationalAttainment: z.string().optional(),
   occupation: z.string().optional(),
   gender: z.string().optional(),
-
+  contact: z.string().optional(),
   address: z.object({
     houseNumber: z.string().optional(),
     street: z.string().optional(),
@@ -96,6 +96,8 @@ const FamilyPlanningBaseSchema = z.object({
   otherReason: z.string().optional(),
   otherMethod: z.string().optional(),
   
+  previousMethod: z.string().optional(),
+
   methodCurrentlyUsed: z.string().nonempty(),
   methodCurrentlyUsedName: z.string().optional(),
 
@@ -113,7 +115,23 @@ const FamilyPlanningBaseSchema = z.object({
     smoker: z.boolean(),
     disability: z.boolean(),
     disabilityDetails: z.string().optional(),
-  }),
+  }
+),
+//  medical_history_records: Array<{
+//     medhist_id: number;
+//     ill_id: number;
+//     illname: string;
+//     ill_code: string;
+//     created_at: string;
+//   }>,
+//   historical_medical_history: Array<{
+//     medhist_id: number;
+//     ill_id: number;
+//     illname: string;
+//     ill_code: string;
+//     created_at: string;
+//     is_current: boolean;
+//   }>,
 
   obstetricalHistory: z.object({
     g_pregnancies: z.coerce.number().min(0).default(0),
@@ -201,16 +219,14 @@ const FamilyPlanningBaseSchema = z.object({
 
   bloodPressure: z.string().nonempty("Blood pressure is required (e.g., 120/80)"),
   pulseRate: z.coerce
-    .number({
-      invalid_type_error: "Pulse rate must be a number",
-    })
-    .min(30, {
+    .number({invalid_type_error: "Pulse rate must be a number",})
+    .min(80, {
       message: "Pulse rate is too low. Please verify."
     })
-    .max(200, {
+    .max(150, {
       message: "Pulse rate is too high. Please verify."
     })
-    .refine((val) => val >= 60 && val <= 100, {
+    .refine((val) => val >= 60 && val <= 140, {
       message: "A normal resting pulse rate is between 60-100 beats per minute. This reading is outside that range. Please verify."
     }),
   bodyMeasurementRecordedAt: z.string().optional(),
@@ -222,7 +238,7 @@ const FamilyPlanningBaseSchema = z.object({
   abdomenExamination: z.string().optional(),
   extremitiesExamination: z.string().optional(),
 
-
+selectedIllnessIds:z.string().optional(),
 
   pelvicExamination: z.enum([
   "normal",
@@ -283,6 +299,7 @@ export const page1Schema = FamilyPlanningBaseSchema.pick({
   pat_id: true,
   patrec_id: true,
   client_id: true,
+  
   philhealthNo: true,
   nhts_status: true,
   fourps: true,

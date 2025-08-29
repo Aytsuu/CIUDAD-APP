@@ -10,7 +10,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmMo
 import { useQueryClient } from "@tanstack/react-query"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getColumns } from "./columns/MedicineCol"
-import { toast } from "sonner"
+import { toast, Toaster } from "sonner"
 import { Link } from "react-router-dom" // Assuming react-router-dom for Link
 import { useMedicineStocks } from "../REQUEST/Medicine/queries/MedicineFetchQueries"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
@@ -196,16 +196,7 @@ export default function MedicineStocks() {
     })
   }, [medicineStocks, archiveInventoryMutation, formatMedicineStocksData])
 
-  if (isLoadingMedicines) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    )
-  }
+  
 
   const columns = getColumns(handleArchiveInventory)
   const totalPages = Math.ceil(filteredData.length / pageSize)

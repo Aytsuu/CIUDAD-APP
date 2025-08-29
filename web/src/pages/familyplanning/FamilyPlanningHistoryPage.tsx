@@ -27,8 +27,6 @@ const FamilyPlanningHistoryPage: React.FC = () => {
   const [selectedRecords, setSelectedRecords] = useState<FamilyPlanningRecordDetail[]>([]);
   const [comparisonModalOpen, setComparisonModalOpen] = useState(false);
 
-  // Fetch all family planning records for the patient
-  // Adjust this query to use your actual API endpoint for fetching FP records
   const {
     data: fpRecords = [],
     isLoading,

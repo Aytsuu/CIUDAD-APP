@@ -25,7 +25,7 @@ import { formatDate } from "@/helpers/dateFormatter"
 const methods = [
   "COC", "POP", "Injectable", "Implant", "Condom",
   "BOM/CMM", "BBT", "STM", "DMPA", "SDM", "Pills", "LAM", "IUD-Interval",
-  "Lactating Amenorrhea", "IUD-Post Partum", "Bilateral Tubal Ligation", "Vasectomy",
+  "Lactating Amenorrhea", "IUD-Post Partum", "Bilateral Tubal Ligation (BTL)", "Vasectomy",
 ];
 
 // Initial list of common medical findings (fallback if localStorage is empty)
@@ -41,8 +41,8 @@ const mapMethodFromPage1ToPage6 = (methodFromPage1: string, otherMethod?: string
     "iud-postpartum": "IUD-Post Partum",
     implant: "Implant",
     condom: "Condom",
-    lactating: "Lactating Amenorrhea",
-    bilateral: "Bilateral Tubal Ligation",
+    // lactating: "Lactating Amenorrhea",
+    bilateral: "Bilateral Tubal Ligation (BTL)",
     vasectomy: "Vasectomy",
     coc: "COC",
     pop: "POP",
@@ -113,7 +113,7 @@ export default function FamilyPlanningForm6({
   const [record, setRecord] = useState<ServiceProvisionRecord>({
     dateOfVisit: new Date().toISOString().split("T")[0],
     methodAccepted: getMethodFromPage1(),
-    nameOfServiceProvider: "",
+    nameOfServiceProvider: "Joylyn M. Magullado",
     dateOfFollowUp: null,
     methodQuantity: "",
     serviceProviderSignature: "",
@@ -319,7 +319,7 @@ export default function FamilyPlanningForm6({
                 <Select
                   value={record.methodAccepted}
                   onValueChange={(v) => handleChange("methodAccepted", v)}
-                  disabled={isReadOnly}
+                  disabled={true}
                 >
                   <SelectTrigger id="methodAccepted">
                     <SelectValue placeholder="Select method" />

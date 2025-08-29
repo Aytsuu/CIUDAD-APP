@@ -47,9 +47,17 @@ export default function FamilyPlanningForm({
 }: Page1Props) {
   const isReadOnly = mode === "view"
   const navigate = useNavigate()
+  const [originalClientType, setOriginalClientType] = useState<string | null>(null);
   const [originalMethod, setOriginalMethod] = useState<string | null>(null)
-  
-  const shouldShowSubtypeAndReason = mode !== "followup" && !(mode === "create" && isPatientPreSelected);
+  const form = useForm<FormData>({
+    resolver: zodResolver(page1Schema),
+    values: formData,
+    mode: "onBlur",
+  })
+
+
+  const typeOfClient = form.watch("typeOfClient")
+  const shouldShowSubtypeAndReason = mode !== "view" && mode !== "followup" && typeOfClient === "currentuser";
   const patientId = formData?.pat_id
   const { data: obstetricalData } = useObstetricalHistoryData(patientId)
 
@@ -69,17 +77,12 @@ export default function FamilyPlanningForm({
     }
   }, [obstetricalData, updateFormData])
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(page1Schema),
-    values: formData,
-    mode: "onBlur",
-  })
 
-    useEffect(() => {
-  if (patientGender && !isPatientPreSelected) {
-    form.setValue("gender", patientGender);
-  }
-}, [patientGender, isPatientPreSelected, form]);
+  useEffect(() => {
+    if (patientGender && !isPatientPreSelected) {
+      form.setValue("gender", patientGender);
+    }
+  }, [patientGender, isPatientPreSelected, form]);
 
   interface FormattedPatient {
     id: string
@@ -104,18 +107,23 @@ export default function FamilyPlanningForm({
   useEffect(() => {
     if (isPatientPreSelected && formData.pat_id) {
       setSelectedPatientId(formData.pat_id);
-      if (mode === "followup" && formData.methodCurrentlyUsed) {
-        setOriginalMethod(formData.methodCurrentlyUsed);
+      if (mode === "followup") {
+        if (formData.methodCurrentlyUsed) {
+          setOriginalMethod(formData.methodCurrentlyUsed);
+        }
+        if (formData.typeOfClient) {
+          setOriginalClientType(formData.typeOfClient);
+        }
       }
     }
-  }, [isPatientPreSelected, formData.pat_id, formData.methodCurrentlyUsed, mode]);
+  }, [isPatientPreSelected, formData.pat_id, formData.methodCurrentlyUsed, formData.typeOfClient, mode]);
 
   useEffect(() => {
     if (!isPatientPreSelected) {
       const fetchPatients = async () => {
         setLoadingPatients(true)
         try {
-          const response = await api2.get("patientrecords/patient/")
+          const response = await api2.get("patientrecords/patient/view/create/")
           const formattedPatients = response.data.map((patient: any) => ({
             id: patient.pat_id?.toString() || "",
             name: (
@@ -141,130 +149,145 @@ export default function FamilyPlanningForm({
   }, [isPatientPreSelected])
 
   const handlePatientSelection = async (id: string) => {
-  if (!id) {
-    toast.error("Please select a valid patient");
-    return;
-  }
+    if (!id) {
+      toast.error("Please select a valid patient");
+      return;
+    }
 
-  setSelectedPatientId(id);
-  try {
-    // Fetch basic patient data
-    const response = await api2.get(`patientrecords/patient/${id}/`);
-    const patientData = response.data;
-
-    // Initialize default spouse info
-    let spouseInfo = {
-      s_lastName: "",
-      s_givenName: "",
-      s_middleInitial: "",
-      s_dateOfBirth: "",
-      s_age: 0,
-      s_occupation: "",
-    };
-
-    // Process spouse info with multiple fallbacks
+    setSelectedPatientId(id);
     try {
-      const gender = patientData.personal_info?.per_sex?.toLowerCase();
-      const familyHeads = patientData.family_head_info?.family_heads;
+      // Fetch basic patient data
+      const response = await api2.get(`patientrecords/patient/${id}/`);
+      const patientData = response.data;
+
+      // Initialize default spouse info
+      let spouseInfo = {
+        s_lastName: "",
+        s_givenName: "",
+        s_middleInitial: "",
+        s_dateOfBirth: "",
+        s_age: 0,
+        s_occupation: "",
+      };
+
+      // Process spouse info with multiple fallbacks
+      try {
+        const spouseData = patientData.spouse_info?.spouse_info;
+
+        if (spouseData) {
+          spouseInfo = {
+            s_lastName: spouseData.spouse_lname || "",
+            s_givenName: spouseData.spouse_fname || "",
+            s_middleInitial: (spouseData.spouse_mname ? spouseData.spouse_mname[0] : "") || "",
+            s_dateOfBirth: spouseData.spouse_dob || "",
+            s_age: spouseData.spouse_dob ? calculateAge(spouseData.spouse_dob) : 0,
+            s_occupation: spouseData.spouse_occupation || "",
+          };
+        }
+      } catch (e) {
+        console.error("Error processing spouse info:", e);
+      }
+
+      // Process address information from the JSON structure
+      const addressInfo = {
+        houseNumber: "", // This field doesn't exist in your JSON, keeping empty
+        street: patientData.address?.add_street || "",
+        barangay: patientData.address?.add_barangay || "",
+        municipality: patientData.address?.add_city || "",
+        province: patientData.address?.add_province || "",
+        sitio: patientData.address?.add_sitio || "",
+        full_address: patientData.address?.full_address || "",
+      };
+
+      console.log("Address info extracted:", addressInfo); // Debug log
+
+      // Fetch additional data with error handling for each request
+      const requests = [
+        api2.get(`familyplanning/body-measurements/${id}`).catch(() => ({ data: {} })),
+        api2.get(`familyplanning/obstetrical-history/${id}/`).catch(() => ({ data: {} })),
+        api2.get(`familyplanning/last-previous-pregnancy/${id}/`).catch(() => ({ data: {} })),
+        api2.get(`familyplanning/patient-details/${id}`).catch(() => ({ data: {} }))
+      ];
+
+      const [
+        bodyMeasurementsResponse,
+        obsHistoryResponse,
+        lastPrevPregResponse,
+        personalResponse
+      ] = await Promise.all(requests);
+
+      const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
       const spouseData = patientData.spouse_info?.spouse_info;
 
-      if (spouseData) {
-        spouseInfo = {
-          s_lastName: spouseData.spouse_lname || "",
-          s_givenName: spouseData.spouse_fname || "",
-          s_middleInitial: (spouseData.spouse_mname ? spouseData.spouse_mname[0] : "") || "",
-          s_dateOfBirth: spouseData.spouse_dob || "",
-          s_age: spouseData.spouse_dob ? calculateAge(spouseData.spouse_dob) : 0,
-          s_occupation: spouseData.spouse_occupation || "",
-        };
+        if (spouseData) {
+          spouseInfo = {
+            s_lastName: spouseData.spouse_lname || "",
+            s_givenName: spouseData.spouse_fname || "",
+            s_middleInitial: (spouseData.spouse_mname ? spouseData.spouse_mname[0] : "") || "",
+            s_dateOfBirth: spouseData.spouse_dob || "",
+            s_age: spouseData.spouse_dob ? calculateAge(spouseData.spouse_dob) : 0,
+            s_occupation: spouseData.spouse_occupation || "",
+          };
+        }
+      
+      // Build the form data with proper fallbacks
+      const newFormData = {
+        ...formData,
+        ...patientData,
+        pat_id: patientData.pat_id || id,
+        lastName: patientData.personal_info?.per_lname || "",
+        givenName: patientData.personal_info?.per_fname || "",
+        client_id: patientData.client_id || "",
+        middleInitial: (patientData.personal_info?.per_mname ? patientData.personal_info.per_mname[0] : "") || "",
+        dateOfBirth: patientData.personal_info?.per_dob || "",
+        gender: patientData.personal_info?.per_sex || "",
+        obstetricalHistory: {
+          ...(obsHistoryResponse.data || {}),
+          livingChildren: obsHistoryResponse.data?.livingChildren || 0
+        },
+        height: bodyMeasurementsResponse.data?.height || 0,
+        weight: bodyMeasurementsResponse.data?.weight || 0,
+        bodyMeasurementRecordedAt: bodyMeasurementsResponse.data?.recorded_at || "",
+        philhealthNo: personalResponse.data?.philhealthNo || "",
+        nhts_status: personalResponse.data?.nhts_status || false,
+        fourps: personalResponse.data?.fourps || false,
+        educationalAttainment: personalResponse.data?.educationalAttainment || "",
+        occupation: personalResponse.data?.ocupation || "", // Note: there's a typo in the original (ocupation vs occupation)
+        acknowledgement: {
+          ...formData.acknowledgement,
+          clientName: fullName,
+        },
+        // Use the processed address info instead of the fallback
+        address: addressInfo,
+        spouse: spouseInfo,
+        lastDeliveryDate: lastPrevPregResponse.data?.last_delivery_date || "",
+        typeOfLastDelivery: lastPrevPregResponse.data?.last_delivery_type || "",
+      };
+      console.log("New form data:", newFormData); // Debug log
+      console.log("Final form data address:", newFormData.address); // Debug log
+
+      if (newFormData.methodCurrentlyUsed) {
+        setOriginalMethod(newFormData.methodCurrentlyUsed);
       }
-    } catch (e) {
-      console.error("Error processing spouse info:", e);
+
+      form.reset(newFormData);
+      updateFormData(newFormData);
+      toast.success("Patient data loaded successfully");
+    } catch (error) {
+      console.error("Error fetching patient details:", error);
+      toast.error("Failed to load patient details. Some information may be incomplete.");
     }
-
-    // Process address information from the JSON structure
-    const addressInfo = {
-      houseNumber: "", // This field doesn't exist in your JSON, keeping empty
-      street: patientData.address?.add_street || "",
-      barangay: patientData.address?.add_barangay || "",
-      municipality: patientData.address?.add_city || "",
-      province: patientData.address?.add_province || "",
-      sitio: patientData.address?.add_sitio || "",
-      full_address: patientData.address?.full_address || "",
-    };
-
-    console.log("Address info extracted:", addressInfo); // Debug log
-
-    // Fetch additional data with error handling for each request
-    const requests = [
-      api2.get(`familyplanning/body-measurements/${id}`).catch(() => ({ data: {} })),
-      api2.get(`familyplanning/obstetrical-history/${id}/`).catch(() => ({ data: {} })),
-      api2.get(`familyplanning/last-previous-pregnancy/${id}/`).catch(() => ({ data: {} })),
-      api2.get(`familyplanning/patient-details/${id}`).catch(() => ({ data: {} }))
-    ];
-
-    const [
-      bodyMeasurementsResponse,
-      obsHistoryResponse,
-      lastPrevPregResponse,
-      personalResponse
-    ] = await Promise.all(requests);
-
-    const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
-
-    // Build the form data with proper fallbacks
-    const newFormData = {
-      ...formData,
-      ...patientData,
-      pat_id: patientData.pat_id || id,
-      lastName: patientData.personal_info?.per_lname || "",
-      givenName: patientData.personal_info?.per_fname || "",
-      client_id: patientData.client_id || "",
-      middleInitial: (patientData.personal_info?.per_mname ? patientData.personal_info.per_mname[0] : "") || "",
-      dateOfBirth: patientData.personal_info?.per_dob || "",
-      gender: patientData.personal_info?.per_sex || "",
-      obstetricalHistory: {
-        ...(obsHistoryResponse.data || {}),
-        livingChildren: obsHistoryResponse.data?.livingChildren || 0
-      },
-      height: bodyMeasurementsResponse.data?.height || 0,
-      weight: bodyMeasurementsResponse.data?.weight || 0,
-      bodyMeasurementRecordedAt: bodyMeasurementsResponse.data?.recorded_at || "",
-      philhealthNo: personalResponse.data?.philhealthNo || "",
-      nhts_status: personalResponse.data?.nhts_status || false,
-      fourps: personalResponse.data?.fourps || false,
-      educationalAttainment: personalResponse.data?.educationalAttainment || "",
-      occupation: personalResponse.data?.ocupation || "", // Note: there's a typo in the original (ocupation vs occupation)
-      acknowledgement: {
-        ...formData.acknowledgement,
-        clientName: fullName,
-      },
-      // Use the processed address info instead of the fallback
-      address: addressInfo,
-      spouse: spouseInfo,
-      lastDeliveryDate: lastPrevPregResponse.data?.last_delivery_date || "",
-      typeOfLastDelivery: lastPrevPregResponse.data?.last_delivery_type || "",
-    };
-
-    console.log("Final form data address:", newFormData.address); // Debug log
-
-    if (newFormData.methodCurrentlyUsed) {
-      setOriginalMethod(newFormData.methodCurrentlyUsed);
-    }
-
-    form.reset(newFormData);
-    updateFormData(newFormData);
-    toast.success("Patient data loaded successfully");
-  } catch (error) {
-    console.error("Error fetching patient details:", error);
-    toast.error("Failed to load patient details. Some information may be incomplete.");
-  }
-};
+  };
 
   const dateOfBirth = form.watch("dateOfBirth")
   const spouseDOB = form.watch("spouse.s_dateOfBirth")
-  const typeOfClient = form.watch("typeOfClient")
-  const subTypeOfClient = form.watch("subTypeOfClient")
+  const methodCurrentlyUsed = form.watch("methodCurrentlyUsed");
+  const otherMethod = form.watch("otherMethod");
+  const subTypeOfClient = form.watch("subTypeOfClient");
+  const currentEffectiveMethod = methodCurrentlyUsed === "Others" ? otherMethod : methodCurrentlyUsed;
+
+  // Get previous effective method from formData (set during prefill)
+  const previousMethod = formData.previousMethod || "";
   const watchedGender = form.watch("gender")
   const isNewAcceptor = typeOfClient === "newacceptor"
   const isCurrentUser = typeOfClient === "currentuser"
@@ -294,13 +317,15 @@ export default function FamilyPlanningForm({
     if (typeOfClient === "newacceptor") {
       form.setValue("subTypeOfClient", "")
       form.setValue("reason", "")
+      form.setValue("otherReasonForFP", "")
       setOriginalMethod(null)
     } else if (typeOfClient === "currentuser") {
-      form.setValue("reasonForFP", "")
-      form.setValue("otherReasonForFP", "")
+      // form.setValue("reasonForFP", "")
+      // form.setValue("otherReasonForFP", "")
 
       if (subTypeOfClient === "changingclinic" || subTypeOfClient === "dropoutrestart") {
         form.setValue("reason", "")
+        form.setValue("otherReasonForFP", "")
         form.setValue("methodCurrentlyUsed", "")
         form.setValue("otherMethod", "")
       } else if (subTypeOfClient === "changingmethod") {
@@ -353,14 +378,14 @@ export default function FamilyPlanningForm({
         }
 
         // Format the commodities
-       const formattedCommodities = filteredCommodities.map((com: { com_id: any; com_name: any; user_type: any; gender_type: any }) => ({
-        id: com.com_name,  // Use name as the value that gets stored
-        name: com.com_name, // Display name
-        user_type: com.user_type,
-        gender_type: com.gender_type,
-        // Store the original ID for reference if needed
-        originalId: com.com_id
-      }));
+        const formattedCommodities = filteredCommodities.map((com: { com_id: any; com_name: any; user_type: any; gender_type: any }) => ({
+          id: com.com_name,  // Use name as the value that gets stored
+          name: com.com_name, // Display name
+          user_type: com.user_type,
+          gender_type: com.gender_type,
+          // Store the original ID for reference if needed
+          originalId: com.com_id
+        }));
 
         setCommodities(formattedCommodities);
       } catch (error) {
@@ -380,6 +405,11 @@ export default function FamilyPlanningForm({
     try {
       if (mode === "followup" && originalMethod && currentValues.methodCurrentlyUsed && currentValues.methodCurrentlyUsed !== originalMethod) {
         toast.error("You cannot change the contraceptive method in this follow-up record. Please create a new record to switch methods.");
+        return;
+      }
+
+      if (mode === "followup" && originalClientType && currentValues.typeOfClient && currentValues.typeOfClient !== originalClientType) {
+        toast.error("You cannot change the client type in a follow-up record. Please create a new record if you want to change client type.");
         return;
       }
 
@@ -422,6 +452,7 @@ export default function FamilyPlanningForm({
   const REASON_OPTIONS = [
     { id: "medicalcondition", name: "Medical Condition" },
     { id: "sideeffects", name: "Side Effects" },
+    { id: "fp_others", name: "Others" },
   ]
 
   const INCOME_OPTIONS = [
@@ -501,7 +532,7 @@ export default function FamilyPlanningForm({
                   <div className="ml-3">
                     <p className="text-sm text-green-700">
                       <strong>Patient Selected:</strong> {formData.lastName}, {formData.givenName}{" "}
-                      {formData.middleInitial} (ID: {formData.pat_id})
+                      {formData.middleInitial}
                     </p>
                   </div>
                 </div>
@@ -785,8 +816,12 @@ export default function FamilyPlanningForm({
                     Type of Client<span className="text-red-500 ml-1">*</span>
                   </h3>
                   <FormSelect control={form.control} name="typeOfClient" options={CLIENT_TYPES} {...inputProps} />
-
-                  {isCurrentUser && shouldShowSubtypeAndReason && (
+                  {mode === "followup" && originalClientType && form.watch("typeOfClient") && form.watch("typeOfClient") !== originalClientType && (
+                    <div className="mt-2 text-red-500 text-sm">
+                      Warning: Changing client type in a follow-up record is not allowed.
+                    </div>
+                  )}
+                  {mode !== "followup" && isCurrentUser && shouldShowSubtypeAndReason && (
                     <div className="mt-4">
                       <FormSelect
                         control={form.control}
@@ -798,9 +833,9 @@ export default function FamilyPlanningForm({
                     </div>
                   )}
                 </div>
-
                 <div className="col-span-4 space-y-6">
-                  {isNewAcceptor && (
+                  {/* Only show reason fields if not in followup mode */}
+                  {mode !== "followup" && isNewAcceptor && (
                     <FormSelect
                       control={form.control}
                       name="reasonForFP"
@@ -809,12 +844,11 @@ export default function FamilyPlanningForm({
                       {...inputProps}
                     />
                   )}
-
-                  {isNewAcceptor && form.watch("reasonForFP") === "fp_others" && (
+                  {mode !== "followup" && isNewAcceptor && form.watch("reasonForFP") === "fp_others" && (
                     <FormInput control={form.control} name="otherReasonForFP" label="Specify Reason:" {...inputProps} />
                   )}
 
-                  {isCurrentUser && shouldShowSubtypeAndReason && (
+                  {mode !== "followup" && isCurrentUser && shouldShowSubtypeAndReason && (
                     <FormSelect
                       control={form.control}
                       name="reasonForFP"
@@ -824,24 +858,26 @@ export default function FamilyPlanningForm({
                     />
                   )}
 
-                  {isCurrentUser && shouldShowSubtypeAndReason && form.watch("reasonForFP") === "sideeffects" && (
+
+
+                  {mode !== "followup" && isCurrentUser && shouldShowSubtypeAndReason && form.watch("reasonForFP") === "sideeffects" && (
                     <FormInput
                       control={form.control}
-                      name="otherReasonForFP"
+                      name="reason"
                       label="Specify Side Effects:"
                       {...inputProps}
                     />
                   )}
 
-
-                  {isCurrentUser && form.watch("reasonForFP") === "sideeffects" && (
+                  {mode !== "followup" && isCurrentUser && shouldShowSubtypeAndReason && form.watch("reasonForFP") === "fp_others" && (
                     <FormInput
                       control={form.control}
                       name="otherReasonForFP"
-                      label="Specify Side Effects:"
+                      label="Specify Other Reason:"
                       {...inputProps}
                     />
                   )}
+
                 </div>
 
                 <div className="col-span-5">
@@ -853,8 +889,8 @@ export default function FamilyPlanningForm({
                         <FormItem>
                           <FormLabel>
                             {isChangingMethod
-                              ? "Method currently used (for Changing Method):"
-                              : "Method currently used:"}
+                              ? "Method currently used"
+                              : "Method currently used"}
                           </FormLabel>
                           <Combobox
                             options={commodities}
@@ -940,6 +976,10 @@ export default function FamilyPlanningForm({
                     if (originalMethod && currentValues.methodCurrentlyUsed && currentValues.methodCurrentlyUsed !== originalMethod) {
                       toast.error("You cannot change the contraceptive method in this record. Please create a new record if you want to switch methods.")
                       return
+                    }
+                    if (currentValues.subTypeOfClient === "changingmethod" && currentEffectiveMethod === previousMethod && previousMethod) {
+                      toast.error("You cannot select the same method when changing methods. Please choose a different method.");
+                      return;
                     }
                     updateFormData(currentValues)
                     onNext2()

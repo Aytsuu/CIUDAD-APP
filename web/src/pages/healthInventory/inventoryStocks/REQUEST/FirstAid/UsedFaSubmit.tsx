@@ -53,13 +53,12 @@ export const deductFirstAidStock = async (
     }
     
     // TRANSACTION
-    const staffId = 1; 
     const string_qty = `${values.usedItem} ${displayUnit}`;
     await addFirstAidTransaction(
-      data.finv_id,
-      string_qty,
-      "Deducted",
-      staffId
+     { finv_id:data.finv_id,
+      fat_qty:string_qty,
+      fat_action: "Deducted",
+      staff:data.staff_id}
     )
     
     

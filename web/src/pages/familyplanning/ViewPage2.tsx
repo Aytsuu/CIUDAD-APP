@@ -1,13 +1,15 @@
 import React from "react";
+import { useRef } from "react"; // Import useRef
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getFPCompleteRecord } from "@/pages/familyplanning/request-db/GetRequest"; // Adjust path if needed
-import type { FormData } from "@/form-schema/FamilyPlanningSchema"; // Import your FormData type
+import { getFPCompleteRecord } from "@/pages/familyplanning/request-db/GetRequest";
+import type { FormData } from "@/form-schema/FamilyPlanningSchema";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useReactToPrint } from "react-to-print"; // Import ReactToPrint
 
 interface InputLineProps {
   className?: string;
@@ -16,39 +18,10 @@ interface InputLineProps {
 
 const InputLine: React.FC<InputLineProps> = ({ className, value }) => (
   <Input
-    className={cn("border-0 border-b border-black rounded-none w-full px-2 py-1 h-6", className)}
+    className={cn("border-0 border-b border-black rounded-none w-full px-2 py-1 h-4", className)}
     readOnly
     value={value !== undefined && value !== null ? String(value) : ""}
   />
-);
-
-// const YesNoRadioView = ({ name, value, checkedValue }: { name: string; value: string; checkedValue: string | undefined }) => (
-//   <div className="flex items-center space-x-1">
-//     <input
-//       type="radio"
-//       id={`${name}-${value}`}
-//       name={name}
-//       value={value}
-//       checked={checkedValue === value}
-//       readOnly
-//       className="h-4 w-4"
-//     />
-//     <Label htmlFor={`${name}-${value}`} className="text-sm">
-//       {value.charAt(0).toUpperCase() + value.slice(1)}
-//     </Label>
-//   </div>
-// );
-
-const YesNoCheckboxView = ({ label, checked }: { label: string; checked: boolean | undefined }) => (
-  <div className="flex items-center gap-2">
-    <input
-      type="checkbox"
-      checked={checked === true}
-      disabled
-      className="h-4 w-4"
-    />
-    <Label className="text-sm">{label}</Label>
-  </div>
 );
 
 const pregnancyQuestions = [
@@ -62,14 +35,36 @@ const pregnancyQuestions = [
 
 export default function FamilyPlanningView2() {
   const navigate = useNavigate();
-  const location = useLocation() // Get the location object
-  const { fprecordId } = location.state || {} // Get fprecordId from state
+  const location = useLocation();
+  const { fprecordId } = location.state || {};
+
+  // Create a ref for the component to be printed
+  const componentRef = useRef<HTMLDivElement>(null);
 
   const { data: recordData, isLoading, isError, error } = useQuery<FormData, Error>({
-    queryKey: ['fpCompleteRecordView', fprecordId], 
+    queryKey: ['fpCompleteRecordView', fprecordId],
     queryFn: () => getFPCompleteRecord(Number(fprecordId)),
     enabled: !!fprecordId,
   });
+
+   const handlePrint = useReactToPrint({
+    contentRef: componentRef, // Changed from 'content' to 'contentRef'
+    pageStyle: `
+      @page {
+        size: 8.5in 13in;
+        margin: 0.5in;
+      }
+      @media print {
+        body {
+          -webkit-print-color-adjust: exact;
+        }
+        .no-print {
+          display: none !important;
+        }
+      }
+    `,
+  });
+
 
   if (isLoading) {
     return <div className="text-center py-8">Loading record details...</div>;
@@ -83,258 +78,216 @@ export default function FamilyPlanningView2() {
     return <div className="text-center py-8">No record found for ID: {fprecordId}</div>;
   }
 
-  const SignatureDisplay = ({ signatureData }: { signatureData: string | undefined }) => {
-  if (!signatureData) return <InputLine value="" />;
-  
   return (
-    <div className="flex items-center">
-      <img 
-        src={signatureData} 
-        alt="Signature"
-        className="h-14 border-b border-black" // Match the height and border of InputLine
-      />
-    </div>
-  );
-};
-
-  return (
-    <div className="container bg-white mx-auto p-4 max-w">
-      <Button
-        className="text-black p-2 self-start"
-        variant={"outline"}
-         onClick={() => navigate(-1)} 
-      >
-        <ChevronLeft />
-      </Button>
-
-      {/* Form Title */}
-      <div className="mb-6">
-        <div className="text-right text-sm text-gray-600 mb-2">SIDE B</div>
-        <div className="text-right text-sm text-gray-600">FP FORM 1</div>
-        <h1 className="text-center text-xl font-semibold mb-6">FAMILY PLANNING CLIENT ASSESSMENT RECORD</h1>
+    <div className="mx-auto p-2 bg-white max-w-4xl text-xs">
+      <div className="flex justify-between items-center mb-2 no-print"> {/* Add no-print class */}
+        <Button
+          className="text-black p-1 self-start"
+          variant="outline"
+          onClick={() => navigate(-1)}
+        >
+          <ChevronLeft size={16} />
+        </Button>
+        <Button onClick={handlePrint} className="ml-auto">
+          Print Side B
+        </Button>
+        {/* Print Button for ViewPage2 */}
+        
       </div>
 
-      {/* Main Table */}
-      
-
-      {/* Physical Examination */}
-      <div className="border border-black p-3 mb-6">
-        <h2 className="font-bold text-lg mb-2">PHYSICAL EXAMINATION:</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label className="font-bold">Weight (kg):</Label>
-            <InputLine value={recordData.weight} />
-          </div>
-          <div>
-            <Label className="font-bold">Height (cm):</Label>
-            <InputLine value={recordData.height} />
-          </div>
-          <div>
-            <Label className="font-bold">Blood Pressure (mmHg):</Label>
-            <InputLine value={recordData.bloodPressure} />
-          </div>
-          <div>
-            <Label className="font-bold">Pulse Rate (bpm):</Label>
-            <InputLine value={recordData.pulseRate} />
-          </div>
+      {/* Wrap the content to be printed with the ref */}
+      <div ref={componentRef} className="print-content">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-2">
+          <div className="text-xs font-bold">SIDE B</div>
+          <div className="text-xs font-bold">FP FORM 1</div>
         </div>
-        <div className="mt-4">
-          <Label className="font-bold block mb-2">General Physical Examination:</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-2 gap-x-4">
-            {[
-              { label: "Skin:", value: recordData.skinExamination },
-              { label: "Conjunctiva:", value: recordData.conjunctivaExamination },
-              { label: "Neck:", value: recordData.neckExamination },
-              { label: "Breast:", value: recordData.breastExamination },
-              { label: "Abdomen:", value: recordData.abdomenExamination },
-              { label: "Extremities:", value: recordData.extremitiesExamination },
-            ].map((item, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Label className="text-sm font-bold">{item.label}</Label>
-                <InputLine className="flex-1" value={item.value} />
+
+        <div className="text-center font-bold text-base  border border-black bg-gray-200">FAMILY PLANNING CLIENT ASSESSMENT RECORD</div>
+
+        <div className="border border-black">
+          {/* Service Provision Records */}
+          <div className="p-2 mb-2">
+            {recordData.serviceProvisionRecords && recordData.serviceProvisionRecords.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-black text-xs">
+                  <thead>
+                    <tr className="bg-gray-200">
+                      <th className="border border-black p-1 text-left w-[12%]">
+                        <div className="font-bold">VITAL SIGNS</div>
+                      </th>
+                      <th className="border border-black p-1 text-left w-[12%]">
+                        <div className="font-bold">DATE OF VISIT</div>
+                        <div className="text-xs font-normal text-gray-600">(YYYY/MM/DD)</div>
+                      </th>
+                      <th className="border border-black p-1 text-left">
+                        <div className="font-bold">MEDICAL FINDINGS</div>
+                        <div className="text-xs font-normal text-gray-600 italic">
+                          Medical observation, complaints/complication, service rendered/
+                          procedures, laboratory examination, treatment and referrals
+                        </div>
+                      </th>
+                      <th className="border border-black p-1 text-left w-[15%]">
+                        <div className="font-bold">METHOD ACCEPTED</div>
+                      </th>
+                      <th className="border border-black p-1 text-left w-[20%]">
+                        <div className="font-bold">NAME AND SIGNATURE OF SERVICE PROVIDER</div>
+                      </th>
+                      <th className="border border-black p-1 text-left w-[15%]">
+                        <div className="font-bold">DATE OF FOLLOW-UP VISIT</div>
+                        <div className="text-xs font-normal text-gray-600">(YYYY/MM/DD)</div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recordData.serviceProvisionRecords.map((service, index) => (
+                      <tr key={index}>
+                        <td className="border border-black p-1">Weight: {service.weight || ""}kg BP: {service.bloodPressure || ""}</td>
+                        <td className="border border-black p-1">{service.dateOfVisit || ""}</td>
+                        <td className="border border-black p-1">{service.medicalFindings || ""}</td>
+                        <td className="border border-black p-1">{service.methodAccepted || ""}</td>
+                        <td className="border border-black p-1">
+                          {service.serviceProviderSignature ? (
+                            <div className="mb-1">
+                              <img
+                                src={service.serviceProviderSignature}
+                                alt="Provider Signature"
+                                className="h-6 w-auto"
+                              />
+                            </div>
+                          ) : null}
+                          <div className="text-xs">{service.nameOfServiceProvider || ""}</div>
+                        </td>
+                        <td className="border border-black p-1">{service.dateOfFollowUp || ""}</td>
+                      </tr>
+                    ))}
+                    {/* Empty rows to match form */}
+                    {Array.from({ length: Math.max(0, 8 - (recordData.serviceProvisionRecords?.length || 0)) }).map((_, index) => (
+                      <tr key={`empty-${index}`}>
+                        <td className="border border-black p-1 h-8">&nbsp;</td>
+                        <td className="border border-black p-1">&nbsp;</td>
+                        <td className="border border-black p-1">&nbsp;</td>
+                        <td className="border border-black p-1">&nbsp;</td>
+                        <td className="border border-black p-1">&nbsp;</td>
+                        <td className="border border-black p-1">&nbsp;</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
+            ) : (
+              <div className="border border-black">
+                <table className="w-full border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-gray-200">
+                      <th className="border border-black p-1 text-left w-[12%]">
+                        <div className="font-bold">DATE OF VISIT</div>
+                        <div className="text-xs font-normal text-gray-600">(MM/DD/YYYY)</div>
+                      </th>
+                      <th className="border border-black p-1 text-left w-[28%]">
+                        <div className="font-bold">MEDICAL FINDINGS</div>
+                        <div className="text-xs font-normal text-gray-600">
+                          Medical observation, complaints/complication, service rendered/
+                          procedures, laboratory examination, treatment and referrals
+                        </div>
+                      </th>
+                      <th className="border border-black p-1 text-left w-[15%]">
+                        <div className="font-bold">METHOD ACCEPTED</div>
+                      </th>
+                      <th className="border border-black p-1 text-left w-[20%]">
+                        <div className="font-bold">NAME AND SIGNATURE</div>
+                        <div className="text-xs font-normal text-gray-600">OF SERVICE PROVIDER</div>
+                      </th>
+                      <th className="border border-black p-1 text-left w-[15%]">
+                        <div className="font-bold">DATE OF FOLLOW-UP</div>
+                        <div className="text-xs font-normal text-gray-600">VISIT (MM/DD/YYYY)</div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 8 }).map((_, index) => (
+                      <tr key={index}>
+                        <td className="border border-black p-1 h-8">&nbsp;</td>
+                        <td className="border border-black p-1">&nbsp;</td>
+                        <td className="border border-black p-1">&nbsp;</td>
+                        <td className="border border-black p-1">&nbsp;</td>
+                        <td className="border border-black p-1">&nbsp;</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
 
-      {/* Pelvic Examination */}
-      <div className="border border-black p-3 mb-6">
-        <h2 className="font-bold text-lg mb-2">PELVIC EXAMINATION:</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label className="font-bold">Pelvic Examination:</Label>
-            <InputLine value={recordData.pelvicExamination} />
-          </div>
-          <div>
-            <Label className="font-bold">Cervical Consistency:</Label>
-            <InputLine value={recordData.cervicalConsistency} />
-          </div>
-          <div className="flex items-center gap-4">
-            <Label className="font-bold">Cervical Tenderness:</Label>
-            <YesNoCheckboxView label="Yes" checked={recordData.cervicalTenderness === true} />
-            <YesNoCheckboxView label="No" checked={recordData.cervicalTenderness === false} />
-          </div>
-          <div className="flex items-center gap-4">
-            <Label className="font-bold">Cervical Adnexal Mass Tenderness:</Label>
-            <YesNoCheckboxView label="Yes" checked={recordData.cervicalAdnexal === true} />
-            <YesNoCheckboxView label="No" checked={recordData.cervicalAdnexal === false} />
-          </div>
-          <div>
-            <Label className="font-bold">Uterine Position:</Label>
-            <InputLine value={recordData.uterinePosition} />
-          </div>
-          <div>
-            <Label className="font-bold">Uterine Depth (cm):</Label>
-            <InputLine value={recordData.uterineDepth} />
-          </div>
-        </div>
-      </div>
+          {/* Pregnancy Check Table */}
+          <div className="border-t border-black p-2">
+            <div className="font-bold text-sm mb-2">How to be Reasonably Sure a Client is Not Pregnant</div>
+            <table className="w-full border-collapse border border-black text-xs">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="border border-black p-2 text-left w-2/3 font-bold">Question</th>
+                  <th className="border border-black p-2 text-center w-1/6 font-bold">Yes</th>
+                  <th className="border border-black p-2 text-center w-1/6 font-bold">No</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pregnancyQuestions.map((q, index) => (
+                  <tr key={index}>
+                    <td className="border border-black p-2">{q.text}</td>
+                    <td className="border border-black p-2 text-center">
+                      <input
+                        type="radio"
+                        checked={recordData.pregnancyCheck?.[q.key as keyof typeof recordData.pregnancyCheck] === true}
+                        disabled
+                        className="h-3 w-3"
+                      />
+                    </td>
+                    <td className="border border-black p-2 text-center">
+                      <input
+                        type="radio"
+                        checked={recordData.pregnancyCheck?.[q.key as keyof typeof recordData.pregnancyCheck] === false}
+                        disabled
+                        className="h-3 w-3"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-      {/* Acknowledgement */}
-     <div className="border border-black p-4 mb-6">
-  <h2 className="font-bold text-lg mb-3">ACKNOWLEDGEMENT:</h2>
-  <p className="mb-4 text-md">
-    This is to certify that the Physician/Nurse/Midwife of the clinic has fully
-    explained to me the different methods available in family planning and I
-    freely choose the <span className="font-semibold underline">{recordData.acknowledgement?.selectedMethod}</span> method. 
-  </p>
-
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-    <div>
-      <Label className="font-bold">Client Signature:</Label>
-      <SignatureDisplay signatureData={recordData.acknowledgement?.clientSignature} />
-    </div>
-    <div>
-      <Label className="font-bold">Date:</Label>
-      <span className="font-semibold underline"> <br/>
-      {recordData.acknowledgement?.clientSignatureDate}</span>
-     
-    </div>
-  </div>
-
-  <p className="mb-4 text-md">
-  For WRA below 18 yrs. old:<br />
-  I hereby consent <span className="font-semibold underline">{recordData.acknowledgement?.clientName}</span> to accept the Family Planning method
-</p>
-
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div>
-      <Label className="font-bold">Parent/Guardian Signature:</Label>
-      <SignatureDisplay signatureData={recordData.acknowledgement?.guardianSignature} />
-    </div>
-    <div>
-      <Label className="font-bold">Date:</Label>
-      <span className="font-semibold underline"> <br/>
-      {recordData.acknowledgement?.guardianSignatureDate } </span>
-    </div>
-  </div>
-</div>
-
-
-      {/* Service Provision Records - Updated to match the image */}
-<div className="border border-black p-3 mb-6">
-  <h2 className="font-bold text-lg mb-2">SERVICE PROVISION RECORDS:</h2>
-  {recordData.serviceProvisionRecords && recordData.serviceProvisionRecords.length > 0 ? (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse border border-black">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-black p-2 text-left">Date of Visit</th>
-            <th className="border border-black p-2 text-left">Date of Follow Up</th>
-            <th className="border border-black p-2 text-left">Weight (kg)</th>
-            <th className="border border-black p-2 text-left">Blood Pressure (mmHg)</th>
-            <th className="border border-black p-2 text-left">Findings</th>
-            <th className="border border-black p-2 text-left">Method Accepted</th>
-            <th className="border border-black p-2 text-left">Quantity</th>
-            <th className="border border-black p-2 text-left">Signature of Service Provider</th>
-            <th className="border border-black p-2 text-left">Name of Service Provider</th>
-          </tr>
-        </thead>
-        <tbody>
-          {recordData.serviceProvisionRecords.map((service, index) => (
-            <tr key={index}>
-              <td className="border border-black p-2">{service.dateOfVisit || ""}</td>
-              <td className="border border-black p-2">{service.dateOfFollowUp || ""}</td>
-              <td className="border border-black p-2">{service.weight || ""}</td>
-              <td className="border border-black p-2">{service.bloodPressure || ""}</td>
-              <td className="border border-black p-2">{service.medicalFindings || ""}</td>
-              <td className="border border-black p-2">{service.methodAccepted || ""}</td>
-              <td className="border border-black p-2">{service.methodQuantity || ""}</td>
-              <td className="border border-black p-2">
-                {service.serviceProviderSignature ? (
-                  <img
-                    src={service.serviceProviderSignature}
-                    alt="Provider Signature"
-                    className="h-10 w-auto"
-                  />
-                ) : (
-                  ""
-                )}
-              </td>
-              <td className="border border-black p-2">{service.nameOfServiceProvider || ""}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  ) : (
-    <p>No service provision records found.</p>
-  )}
-</div>
-      
-      <div className="overflow-x-auto mb-8">
-        <table className="w-full border-collapse border border-black">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-black p-2 text-left w-2/3">How to be Reasonably Sure a Client is Not Pregnant</th>
-              <th className="border border-black p-2 text-center w-1/6">Yes</th>
-              <th className="border border-black p-2 text-center w-1/6">No</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pregnancyQuestions.map((q, index) => (
-              <tr key={index}>
-                <td className="border border-black p-2">{q.text}</td>
-                <td className="border border-black p-2 text-center">
-                  <input
-                    type="radio"
-                    checked={recordData.pregnancyCheck?.[q.key as keyof typeof recordData.pregnancyCheck] === true}
-                    disabled
-                  />
-                </td>
-                <td className="border border-black p-2 text-center">
-                  <input
-                    type="radio"
-                    checked={recordData.pregnancyCheck?.[q.key as keyof typeof recordData.pregnancyCheck] === false}
-                    disabled
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="p-4 rounded-md text-xs bg-gray-50">
-              <div className="font-medium mb-2">
-                ■ If the client answered YES to at least one of the questions and she is free of signs or symptoms of
+            {/* Instructions */}
+            <div className="mt-2 p-2 bg-gray-50 text-xs border border-gray-300">
+              <div className="mb-1">
+                <strong>▶</strong> If the client answered YES to at least one of the questions and she is free of signs or symptoms of
                 pregnancy, provide client with desired method.
               </div>
-              <div className="font-medium mb-2">
-                ■ If the client answered NO to all of the questions, pregnancy cannot be ruled out. The client should
+              <div>
+                <strong>▶</strong> If the client answered NO to all of the questions, pregnancy cannot be ruled out. The client should
                 await menses or use a pregnancy test.
               </div>
             </div>
-      </div>
-      {/* Navigation Buttons */}
-      <div className="flex justify-between mt-6">
+          </div>
+
+          {/* Bottom Section - Method Information */}
+
+        </div>
+      </div> {/* End of print-content div */}
+
+      {/* Navigation Buttons (outside print-content) */}
+      <div className="flex justify-between mt-4 no-print"> {/* Add no-print class */}
         <Button
           variant="outline"
-          onClick={() => navigate(-1)} // Back to ViewPage1
+          onClick={() => navigate(-1)}
+          className="text-xs px-3 py-1"
         >
-          Previous
+          Previous (Side A)
         </Button>
-        <Button onClick={() => navigate("/FamPlanning_table")}>
-          Back to Overall Records
+        <Button
+          onClick={() => navigate("/FamPlanning_table")}
+          className="text-xs px-3 py-1"
+        >
+          Back to Records
         </Button>
       </div>
     </div>

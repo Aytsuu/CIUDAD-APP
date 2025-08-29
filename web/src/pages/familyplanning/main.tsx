@@ -112,7 +112,7 @@ const initialFormData: FormData = {
     guardianSignatureDate: new Date().toISOString().split("T")[0],
   },
   serviceProvisionRecords: [],
-  
+
   pregnancyCheck: {
     breastfeeding: false,
     abstained: false,
@@ -182,18 +182,23 @@ export default function FamilyPlanningPage() {
       setFormData(fetchedRecord)
     }
   }, [fetchedRecord])
-   const location = useLocation();
-   const passedGender = (location.state as { gender?: string })?.gender || "";
+  const location = useLocation();
+  const passedGender = (location.state as { gender?: string })?.gender || "";
 
   // Effect to set formData when latestRecord changes ('create' mode with prefill)
   useEffect(() => {
     if (latestRecord && currentMode === "create" && prefillParam === "true") {
       setIsPrefillingData(true)
+
+      const prevEffectiveMethod = latestRecord.methodCurrentlyUsed === "Others" 
+      ? latestRecord.otherMethod 
+      : latestRecord.methodCurrentlyUsed;
+
       const prefillData = {
         ...latestRecord,
-        fprecord_id: undefined, 
-        fpt_id: "", 
-        gender: passedGender ||  "Unknown",
+        fprecord_id: undefined,
+        fpt_id: "",
+        gender: passedGender || "Unknown",
         acknowledgement: {
           ...latestRecord.acknowledgement,
           clientSignature: "",
@@ -206,7 +211,11 @@ export default function FamilyPlanningPage() {
         pat_id: actualPatientId || latestRecord.pat_id, // Ensure pat_id is set correctly
         patrec_id: "", // Ensure patrec_id is cleared for new record set (will be created by backend)
         typeOfClient: "currentuser",
-        subTypeOfClient: "",
+        subTypeOfClient: "changingmethod", // Preserve existing value
+        reasonForFP: latestRecord.reasonForFP || "",
+        reason: latestRecord.reason,
+        otherReasonForFP: latestRecord.otherReasonForFP || "", // Preserve existing value
+        previousMethod: prevEffectiveMethod || "",
       }
       setFormData(prefillData)
       setIsPrefillingData(false)
@@ -224,7 +233,7 @@ export default function FamilyPlanningPage() {
         fpt_id: "", // Clear fpt_id as it's a new FP type record
         acknowledgement: {
           ...followUpPrefillRecord.acknowledgement,
-          clientSignature: "",
+          clientSignature: followUpPrefillRecord.acknowledgement.clientSignature,
           clientSignatureDate: new Date().toISOString().split("T")[0],
           guardianSignature: "",
           guardianSignatureDate: new Date().toISOString().split("T")[0],
@@ -234,9 +243,11 @@ export default function FamilyPlanningPage() {
         pat_id: actualPatientId || followUpPrefillRecord.pat_id, // Ensure pat_id is set correctly
         patrec_id: patrecIdParam || followUpPrefillRecord.patrec_id, // Crucial: Use the patrecId from URL or fetched record
         typeOfClient: "currentuser",
-        gender: passedGender ||  "Unknown",
-        subTypeOfClient: "",
-        reasonForFP: "",
+        gender: passedGender || "Unknown",
+        subTypeOfClient: followUpPrefillRecord.subTypeOfClient || "", // Preserve existing value
+        reasonForFP: followUpPrefillRecord.reasonForFP || "", // Preserve existing value
+        otherReasonForFP: followUpPrefillRecord.otherReasonForFP || "", // Preserve existing value
+        reason: followUpPrefillRecord.reason || "", // Add this line
       }
       setFormData(prefillData)
       setIsPrefillingData(false)
@@ -316,10 +327,6 @@ export default function FamilyPlanningPage() {
   const handleSubmit = async () => {
     reviewFormData()
     try {
-      // Ensure pat_id is always set in formData before submission
-      // This is important because actualPatientId might be undefined initially
-      // but will be set by useEffects after data fetching.
-      // We need to ensure it's in the formData for the backend.
       const finalFormData = {
         ...formData,
         pat_id: actualPatientId || formData.pat_id, // Prioritize actualPatientId
@@ -332,7 +339,7 @@ export default function FamilyPlanningPage() {
         }
         await submitFollowUpRecord(finalFormData) // Use new mutation for follow-up
         toast.success("Family Planning follow-up record submitted successfully!")
-        
+
       } else {
         await submitNewRecordSet(finalFormData) // Use original mutation for new record set
         toast.success("Family Planning record submitted successfully!")
@@ -359,7 +366,7 @@ export default function FamilyPlanningPage() {
     )
   }
 
- 
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="w-full mx-auto bg-white p-8 rounded-lg shadow-md">

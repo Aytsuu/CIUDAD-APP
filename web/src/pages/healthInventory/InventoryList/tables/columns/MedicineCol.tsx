@@ -1,19 +1,21 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { Edit, Trash, ArrowUpDown } from "lucide-react";
-import { Link } from "react-router";
+
 export type MedicineRecords = {
   id: string;
   medicineName: string;
   cat_id: string;
-  cat_name: string; // Add this
+  cat_name: string;
   med_type: string;
 };
 
 export const Medcolumns = (
-  // setIsDialog: (isOpen: boolean) => void,
   setMedToDelete: (id: string) => void,
-  setIsDeleteConfirmationOpen: (isOpen: boolean) => void
+  setIsDeleteConfirmationOpen: (isOpen: boolean) => void,
+  setSelectedMedicine: (medicine: MedicineRecords) => void,
+  setModalMode: (mode: 'add' | 'edit') => void,
+  setShowMedicineModal: (show: boolean) => void
 ): ColumnDef<MedicineRecords>[] => [
   {
     accessorKey: "id",
@@ -39,34 +41,27 @@ export const Medcolumns = (
   },
   { accessorKey: "med_type", header: "Medicine type" },
   { accessorKey: "cat_name", header: "Category" },
-
   {
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
       <div className="flex justify-center gap-2">
-       
-
-        <Button variant="outline">
-          <Link
-            to="/editMedicineList"
-            state={{
-              params: {
-                initialData: row.original, // Pass entire row data
-              },
-            }}
-          >
-     
-            <Edit size={16} />
-          </Link>
+        <Button 
+          variant="outline"
+          onClick={() => {
+            setSelectedMedicine(row.original);
+            setModalMode('edit');
+            setShowMedicineModal(true);
+          }}
+        >
+          <Edit size={16} />
         </Button>
-
         <Button
           variant="destructive"
           size="sm"
           onClick={() => {
-            setMedToDelete(row.original.id); // Set the medicine ID to delete
-            setIsDeleteConfirmationOpen(true); // Open the confirmation dialog
+            setMedToDelete(row.original.id);
+            setIsDeleteConfirmationOpen(true);
           }}
         >
           <Trash />

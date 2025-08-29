@@ -1,40 +1,48 @@
-
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
-import { Edit, Trash } from "lucide-react";
-import { Link
-  
- } from "react-router";
+import { Edit, Trash, ArrowUpDown } from "lucide-react";
+
 export type CommodityRecords = {
   id: string;
   com_name: string;
   user_type: string;
+  gender_type: string;
 };
 
 export const CommodityColumns = (
   setComToDelete: (id: string) => void,
-  setIsDeleteConfirmationOpen: (isOpen: boolean) => void
+  setIsDeleteConfirmationOpen: (isOpen: boolean) => void,
+  setSelectedCommodity: (commodity: CommodityRecords) => void,
+  setModalMode: (mode: 'add' | 'edit') => void,
+  setShowCommodityModal: (show: boolean) => void
 ): ColumnDef<CommodityRecords>[] => [
   {
     accessorKey: "id",
-    header: "#",
-    cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
-          {row.original.id}
-        </div>
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Commodity ID <ArrowUpDown size={15} />
       </div>
     ),
   },
   {
     accessorKey: "com_name",
-    header: "Commodity Name",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Commodity Name <ArrowUpDown size={15} />
+      </div>
+    ),
   },
   {
     accessorKey: "user_type",
-    header: "User type",
+    header: "User Type",
   },
-    {
+  {
     accessorKey: "gender_type",
     header: "For Gender",
   },
@@ -43,25 +51,22 @@ export const CommodityColumns = (
     header: "Action",
     cell: ({ row }) => (
       <div className="flex justify-center gap-2">
-       <Button variant="outline">
-          <Link
-            to="/editCommodityList"
-            state={{
-              params: {
-                initialData: row.original, // Pass entire row data
-              },
-            }}
-          >
-     
-            <Edit size={16} />
-          </Link>
+        <Button 
+          variant="outline"
+          onClick={() => {
+            setSelectedCommodity(row.original);
+            setModalMode('edit');
+            setShowCommodityModal(true);
+          }}
+        >
+          <Edit size={16} />
         </Button>
         <Button
           variant="destructive"
           size="sm"
           onClick={() => {
-            setComToDelete(row.original.id); // Set the commodity ID to delete
-            setIsDeleteConfirmationOpen(true); // Open the confirmation dialog
+            setComToDelete(row.original.id);
+            setIsDeleteConfirmationOpen(true);
           }}
         >
           <Trash />
@@ -70,4 +75,3 @@ export const CommodityColumns = (
     ),
   },
 ];
-

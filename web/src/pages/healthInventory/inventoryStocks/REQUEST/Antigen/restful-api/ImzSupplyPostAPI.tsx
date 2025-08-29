@@ -9,7 +9,7 @@ export const addImmunizationStock = async (
   try {
     // Update the quantity calculation in useSubmitImmunizationStock:
     const isBoxes = data.imzStck_unit === "boxes";
-    // const isPcs = data.imzStck_unit === "pcs";
+    const isPcs = data.imzStck_unit === "pcs";
 
     const imzStck_qty = isBoxes ? data.imzStck_qty : data.imzStck_qty; // Store the quantity as is
     const imzStck_per_pcs = 0; // Always set to 0 as it will be removed

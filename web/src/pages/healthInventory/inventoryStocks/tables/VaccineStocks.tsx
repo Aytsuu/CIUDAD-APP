@@ -101,7 +101,7 @@ export default function CombinedStockTable() {
 
       const availableStock = record.availableStock
       const expiryDate = record.expiryDate
-      // const created_at=record.created_at
+      const created_at=record.created_at
 
       const isItemExpired = isExpired(expiryDate)
       const isItemLowStock = isLowStock(availableStock) // Using the component's isLowStock
@@ -205,16 +205,7 @@ export default function CombinedStockTable() {
 
   const columns = getStockColumns(handleArchiveInventory)
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    )
-  }
+  
   if (error) {
     return (
       <div className="w-full h-full flex items-center justify-center">

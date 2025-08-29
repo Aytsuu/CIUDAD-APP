@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -131,23 +130,24 @@ export default function AllChildHealthRecords() {
     return `${fname} ${mname ? mname + ' ' : ''}${lname}`.trim();
   };
 
- const getPatientTypeColor = (type: string) => {
-  const lowerType = type.toLowerCase();
-  return lowerType === 'resident' 
-    ? 'bg-green-100 text-green-800' 
-    : lowerType === 'transient'
-    ? 'bg-blue-100 text-blue-800'
-    : '';
-};
+  const getPatientTypeColor = (type: string) => {
+    const lowerType = type.toLowerCase();
+    return lowerType === 'resident' 
+      ? 'bg-emerald-100 text-emerald-800' 
+      : lowerType === 'transient'
+      ? 'bg-blue-100 text-blue-800'
+      : 'bg-gray-100 text-gray-800';
+  };
 
-const getSexColor = (sex: string) => {
-  const lowerSex = sex.toLowerCase();
-  return lowerSex === 'male'
-    ? 'bg-blue-50 text-blue-700'
-    : lowerSex === 'female'
-    ? 'bg-pink-50 text-pink-700'
-    : '';
-};
+  const getSexColor = (sex: string) => {
+    const lowerSex = sex.toLowerCase();
+    return lowerSex === 'male'
+      ? 'bg-blue-100 text-blue-800'
+      : lowerSex === 'female'
+      ? 'bg-rose-100 text-rose-800'
+      : 'bg-gray-100 text-gray-800';
+  };
+
   const ChildCard = ({ child }: { child: ChildHealthRecord }) => (
     <TouchableOpacity
       onPress={() => {
@@ -161,33 +161,29 @@ const getSexColor = (sex: string) => {
           return;
         }
         const params = { ChildHealthRecord: JSON.stringify(child) };
-        console.log('Navigating to individual record with params:', {
-          pathname: '/admin/childhealth/individual',
-          params,
-        });
         router.push({
           pathname: '/admin/childhealth/individual',
           params,
         });
       }}
-      className="mb-4"
+      className="mb-3"
     >
-      <Card className="bg-white shadow-sm border-0 rounded-xl overflow-hidden">
-        <CardHeader className="pb-3">
+      <Card className="bg-white border border-gray-200 rounded-lg shadow-sm">
+        <CardHeader className="pb-2 px-4 pt-3">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center flex-1">
-              <View className="w-12 h-12 bg-blue-500 rounded-full items-center justify-center mr-3">
-                <Baby size={30} color="white" />
+              <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center mr-3">
+                <Baby size={24} color="#6b7280" />
               </View>
               <View className="flex-1">
-                <Text className="text-lg font-bold text-gray-900" numberOfLines={1}>
+                <Text className="text-base font-semibold text-gray-900" numberOfLines={1}>
                   {formatFullName(child.fname, child.mname, child.lname)}
                 </Text>
-                <View className="flex-row items-center mt-1">
-                  <Badge className={`mr-2 ${getSexColor(child.sex)}`}>
+                <View className="flex-row items-center mt-1 gap-2">
+                  <Badge className={`px-2 py-1 ${getSexColor(child.sex)}`}>
                     <Text className="text-xs font-medium">{child.sex}</Text>
                   </Badge>
-                  <Badge className={getPatientTypeColor(child.pat_type)}>
+                  <Badge className={`px-2 py-1 ${getPatientTypeColor(child.pat_type)}`}>
                     <Text className="text-xs font-medium">{child.pat_type}</Text>
                   </Badge>
                 </View>
@@ -196,82 +192,82 @@ const getSexColor = (sex: string) => {
           </View>
         </CardHeader>
         
-        <CardContent className="pt-0 space-y-4">
+        <CardContent className="px-4 pb-4 pt-2 space-y-3">
           <View className="space-y-2">
             <View className="flex-row items-center">
-              <Calendar size={16} className="text-gray-500 mr-2" />
+              <Calendar size={16} className="text-gray-400 mr-2" />
               <Text className="text-sm text-gray-600 flex-1">
-                Age: <Text className="font-semibold text-gray-900">{child.age} years old</Text>
+                Age: <Text className="font-medium text-gray-900">{child.age} years</Text>
               </Text>
               <Text className="text-xs text-gray-500">
-                Born: {child.dob ? new Date(child.dob).toLocaleDateString() : 'N/A'}
+                {child.dob ? new Date(child.dob).toLocaleDateString() : 'N/A'}
               </Text>
             </View>
             
-            <View className="flex-row items-center">
-              <MapPin size={16} className="text-gray-500 mr-2" />
+            <View className="flex-row items-start">
+              <MapPin size={16} className="text-gray-400 mr-2 mt-0.5" />
               <Text className="text-sm text-gray-600 flex-1" numberOfLines={2}>
                 {child.address}
               </Text>
             </View>
 
             <View className="flex-row items-center">
-              <Heart size={16} className="text-gray-500 mr-2" />
+              <Heart size={16} className="text-gray-400 mr-2" />
               <Text className="text-sm text-gray-600">
-                Checkups: <Text className="font-semibold text-gray-900">{child.health_checkup_count}</Text>
+                Checkups: <Text className="font-medium text-gray-900">{child.health_checkup_count}</Text>
               </Text>
               <Text className="text-sm text-gray-600 ml-4">
-                Family #: <Text className="font-semibold text-gray-900">{child.family_no}</Text>
+                Family #: <Text className="font-medium text-gray-900">{child.family_no}</Text>
               </Text>
             </View>
           </View>
 
-          <View className="bg-gray-50 rounded-lg p-3 space-y-2">
-            <Text className="text-sm font-semibold text-gray-800 mb-2">Parents Information</Text>
+          <View className="bg-gray-50 rounded-md p-3 space-y-2">
+            <Text className="text-sm font-semibold text-gray-800">Parents</Text>
             
             <View className="flex-row items-center">
-              <User size={14} className="text-pink-500 mr-2" />
-              <Text className="text-xs text-gray-600 flex-1">
-                Mother: <Text className="font-medium text-gray-800">
+              <User size={14} className="text-rose-500 mr-2" />
+              <Text className="text-sm text-gray-600 flex-1">
+                <Text className="font-medium text-gray-800">
                   {formatFullName(child.mother_fname, child.mother_mname, child.mother_lname) || 'Not provided'}
                 </Text>
               </Text>
             </View>
             {child.mother_contact && (
               <View className="flex-row items-center ml-5">
-                <Phone size={12} className="text-gray-400 mr-2" />
-                <Text className="text-xs text-gray-500">{child.mother_contact}</Text>
+                <Phone size={14} className="text-gray-400 mr-2" />
+                <Text className="text-sm text-gray-500">{child.mother_contact}</Text>
               </View>
             )}
 
             <View className="flex-row items-center">
               <User size={14} className="text-blue-500 mr-2" />
-              <Text className="text-xs text-gray-600 flex-1">
-                Father: <Text className="font-medium text-gray-800">
+              <Text className="text-sm text-gray-600 flex-1">
+                <Text className="font-medium text-gray-800">
                   {formatFullName(child.father_fname, child.father_mname, child.father_lname) || 'Not provided'}
                 </Text>
               </Text>
             </View>
             {child.father_contact && (
               <View className="flex-row items-center ml-5">
-                <Phone size={12} className="text-gray-400 mr-2" />
-                <Text className="text-xs text-gray-500">{child.father_contact}</Text>
+                <Phone size={14} className="text-gray-400 mr-2" />
+                <Text className="text-sm text-gray-500">{child.father_contact}</Text>
               </View>
             )}
           </View>
 
-          <View className="flex-row justify-between bg-blue-50 rounded-lg p-3">
+          <View className="flex-row justify-between bg-gray-50 rounded-md p-3">
             <View className="items-center flex-1">
-              <Text className="text-xs text-gray-600">Birth Weight</Text>
-              <Text className="text-sm font-bold text-blue-700">{child.birth_weight || 'N/A'} kg</Text>
+              <Text className="text-xs text-gray-600">Weight</Text>
+              <Text className="text-sm font-semibold text-gray-900">{child.birth_weight || 'N/A'} kg</Text>
             </View>
-            <View className="items-center flex-1 border-l border-blue-200">
-              <Text className="text-xs text-gray-600">Birth Height</Text>
-              <Text className="text-sm font-bold text-blue-700">{child.birth_height || 'N/A'} cm</Text>
+            <View className="items-center flex-1 border-l border-gray-200">
+              <Text className="text-xs text-gray-600">Height</Text>
+              <Text className="text-sm font-semibold text-gray-900">{child.birth_height || 'N/A'} cm</Text>
             </View>
-            <View className="items-center flex-1 border-l border-blue-200">
+            <View className="items-center flex-1 border-l border-gray-200">
               <Text className="text-xs text-gray-600">Feeding</Text>
-              <Text className="text-sm font-bold text-blue-700" numberOfLines={1}>{child.type_of_feeding}</Text>
+              <Text className="text-sm font-semibold text-gray-900" numberOfLines={1}>{child.type_of_feeding}</Text>
             </View>
           </View>
         </CardContent>
@@ -287,75 +283,72 @@ const getSexColor = (sex: string) => {
         onPress={() => setCurrentPage(prev => prev + 1)}
         className="mt-4 mb-6"
       >
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="py-4 items-center">
-            <Text className="text-blue-700 font-medium">Load More Records</Text>
-            <Text className="text-xs text-blue-600 mt-1">
-              Showing {currentData.length} of {filteredData.length} records
-            </Text>
-          </CardContent>
-        </Card>
+        <Button
+          variant="outline"
+          className="border-gray-200 bg-white rounded-lg"
+        >
+          <Text className="text-gray-700 font-medium">Load More</Text>
+          <Text className="text-xs text-gray-500 mt-1">
+            Showing {currentData.length} of {filteredData.length} records
+          </Text>
+        </Button>
       </TouchableOpacity>
     );
   };
 
   return (
     <MainLayoutComponent title="Child Health Records" description="Manage and view children's health records">
-      <View className="space-y-4 mb-6 p-4">
-        <View className="flex-row gap-4 mt-4">
-          <View className="flex-1 relative">
-            <Search size={18} className="absolute left-3 top-3 text-gray-400 z-10" />
+      <View className="px-4 pt-4 pb-2 bg-white">
+        <View className="flex-row items-center gap-2 mb-4">
+          <View className="flex-1">
             <Input
-              placeholder="Search children, parents, or address..."
-              className="pl-10 bg-white border-gray-200"
+              placeholder="Search records..."
+              className="bg-gray-50 border-gray-200 rounded-lg pl-10 text-sm"
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
+            <Search size={18} className="absolute left-3 top-3 text-gray-400" />
           </View>
           <SelectLayout
             placeholder="Filter"
             label=""
-            className="bg-white border-gray-200  w-28"
+            className="bg-gray-50 border-gray-200 rounded-lg w-24 text-sm"
             options={filterOptions}
             value={selectedFilter}
             onChange={setSelectedFilter}
           />
         </View>
 
-   
-
         <View className="flex-row items-center justify-between">
-          <Text className="text-sm text-gray-600">
+          <Text className="text-sm text-gray-500">
             {filteredData.length} record{filteredData.length !== 1 ? 's' : ''} found
           </Text>
           {selectedFilter !== 'all' && (
-            <Badge className="bg-blue-100 text-blue-700">
-              <Text className="text-xs font-medium">
-                Filtered: {selectedFilter}
-              </Text>
+            <Badge className="bg-gray-100 text-gray-700 px-2 py-1">
+              <Text className="text-xs font-medium">{selectedFilter}</Text>
             </Badge>
           )}
         </View>
       </View>
 
       <ScrollView
-        className="flex-1"
+        className="flex-1 px-4"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         {isFetchingChildRecords ? (
           <View className="flex-1 items-center justify-center py-20">
-            <Loader2 size={32} className="text-blue-500 animate-spin mb-3" />
-            <Text className="text-gray-600">Loading health records...</Text>
+            <Loader2 size={24} className="text-gray-400 animate-spin mb-2" />
+            <Text className="text-sm text-gray-500">Loading records...</Text>
           </View>
         ) : currentData.length === 0 ? (
           <View className="flex-1 items-center justify-center py-20">
-            <Baby size={48} className="text-gray-300 mb-4" />
-            <Text className="text-lg font-semibold text-gray-600 mb-2">No Records Found</Text>
-            <Text className="text-gray-500 text-center px-8">
+            <Baby size={40} className="text-gray-300 mb-3" />
+            <Text className="text-base font-medium text-gray-600 mb-1">No Records Found</Text>
+            <Text className="text-sm text-gray-500 text-center px-8">
               {searchQuery || selectedFilter !== 'all' 
-                ? 'Try adjusting your search or filter criteria' 
-                : 'Start by adding your first child health record'
+                ? 'Adjust your search or filter criteria' 
+                : 'Add a new child health record to begin'
               }
             </Text>
           </View>

@@ -1,18 +1,15 @@
-import { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput } from "lucide-react";
+import { Search, Plus, FileInput, Loader2 } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-// import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { CommodityRecords, CommodityColumns } from "./columns/commodityCol";
 import { useCommodities } from "../queries/commodity/CommodityFetchQueries";
-import { Link } from "react-router";
 import { useDeleteCommodity } from "../queries/commodity/CommodityDeleteQueries";
-
+import { CommodityModal } from "../Modal/CommodityModal";
 
 export default function CommodityList() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,8 +17,20 @@ export default function CommodityList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [comToDelete, setComToDelete] = useState<string | null>(null);
-  // const queryClient = useQueryClient();
+  const [showCommodityModal, setShowCommodityModal] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [selectedCommodity, setSelectedCommodity] = useState<CommodityRecords | null>(null);
+  
+  const columns = CommodityColumns(
+    setComToDelete, 
+    setIsDeleteConfirmationOpen, 
+    setSelectedCommodity, 
+    setModalMode, 
+    setShowCommodityModal
+  );
+  
   const { data: commodities, isLoading: isLoadingCommodities } = useCommodities();
+  const deleteMutation = useDeleteCommodity();
 
   const formatCommodityData = useCallback((): CommodityRecords[] => {
     if (!commodities) return [];
@@ -42,26 +51,12 @@ export default function CommodityList() {
     );
   }, [searchQuery, formatCommodityData]);
 
-  const deleteCommodityMutation = useDeleteCommodity();
-
   const handleDelete = () => {
     if (comToDelete === null) return;
-    
-    deleteCommodityMutation.mutate(comToDelete);
+    deleteMutation.mutate(comToDelete);
     setIsDeleteConfirmationOpen(false);
     setComToDelete(null);
   };
-  if (isLoadingCommodities) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
 
   const totalPages = Math.ceil(filteredCommodities.length / pageSize);
   const paginatedCommodities = filteredCommodities.slice(
@@ -69,10 +64,14 @@ export default function CommodityList() {
     currentPage * pageSize
   );
 
-  const columns = CommodityColumns( setComToDelete, setIsDeleteConfirmationOpen);
+  const handleAddNew = () => {
+    setModalMode('add');
+    setSelectedCommodity(null);
+    setShowCommodityModal(true);
+  };
 
   return (
-    <div>
+    <div className="relative">
       <div className="hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative w-full">
@@ -88,17 +87,11 @@ export default function CommodityList() {
             />
           </div>
         </div>
-        <div className="flex gap-2">
-       
-            <Button>
-          <Link
-            to="/addCommodityList"
-            className="flex justify-center items-center gap-2 px-2"
-          >
+        <Button onClick={handleAddNew}>
+          <div className="flex justify-center items-center gap-2 px-2">
             <Plus size={15} /> New
-          </Link>
+          </div>
         </Button>
-        </div>
       </div>
 
       <div className="bg-white rounded-md">
@@ -134,8 +127,16 @@ export default function CommodityList() {
             ]}
           />
         </div>
-        <div className="overflow-x-auto">
-          <DataTable columns={columns} data={paginatedCommodities} />
+
+        <div className="bg-white w-full overflow-x-auto">
+          {isLoadingCommodities ? (
+            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">loading....</span>
+            </div>
+          ) : (
+            <DataTable columns={columns} data={paginatedCommodities} />
+          )}
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
@@ -160,6 +161,18 @@ export default function CommodityList() {
         title="Delete Commodity"
         description="Are you sure you want to delete this commodity? This action cannot be undone."
       />
+
+      {showCommodityModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <CommodityModal
+              mode={modalMode}
+              initialData={selectedCommodity ?? undefined}
+              onClose={() => setShowCommodityModal(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

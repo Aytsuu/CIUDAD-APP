@@ -9,14 +9,12 @@ urlpatterns = [
     path('familyplanning/illnesses/by_ids/', get_illnesses_by_ids, name='get_illnesses_by_ids'),
     path('last-previous-pregnancy/<str:patient_id>/', get_last_previous_pregnancy, name='last-pregnancy'),
     path('patient-details/<str:patient_id>/', get_patient_details_data, name='get_patient_details'),
-    
+    path('monthly-report/<int:year>/<int:month>/', get_detailed_monthly_fp_report, name='monthly-fp-report'),
     path('body-measurements/<str:pat_id>/', get_body_measurements, name='body-measurements'),
     path('obstetrical-history/<str:pat_id>/', get_obstetrical_history, name='obstetrical-history'),
     path('commodity-stock/<str:commodity_name>/', get_commodity_stock, name='get_commodity_stock'),
     path('complete-fp-record/<int:fprecord_id>/', get_complete_fp_record, name='get_complete_fp_record'),
     path('latest-fp-record-by-patient/<str:patient_id>/', get_latest_fp_record_for_patient, name='get_latest_fp_record_for_patient'),
-    # path('patient-spouse/<str:patient_id>/', get_patient_spouse, name='get_patient_spouse'),
-    # Endpoints for overall table and individual patient FP records
     path('overall-records/', PatientListForOverallTable.as_view(), name='fp-overall-list'), # Overall table with counts
     path('fp-records-by-patient/<str:patient_id>/', get_fp_records_for_patient, name='get_fp_records_by_patient'), # All records for one patient
     path('patient-counts/', get_fp_patient_counts, name='fp-patient-counts'),
@@ -67,8 +65,8 @@ urlpatterns = [
     path('fp_pregnancycheck/<int:fp_pc_id>/', FP_PregnancyCheckDetailView.as_view(), name='fp_pregnancycheck_detail'),
     
     path('illnesses/', get_illness_list, name='get_illness_list'),
-    path('medical-history/create/', create_medical_history_records, name='create_medical_history'),
-    path('medical-history/<int:patrec_id>/', get_patient_medical_history, name='get_patient_medical_history'),
+    # path('medical-history/create/', create_medical_history_records, name='create_medical_history'),
+    path('medical-history/<str:patrec_id>/', get_patient_medical_history, name='get_patient_medical_history'),
     
     path('submit-full-form/', submit_full_family_planning_form, name='submit_full_family_planning_form'),
     

@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getFPRecordsForPatient } from "@/pages/familyplanning/request-db/GetRequest";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft, FileText, LayoutList, Plus, Calendar, MessageCircleWarning } from "lucide-react";
+import { ArrowLeft, FileText, LayoutList, Plus, MessageCircleWarning } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
@@ -16,8 +16,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+// New components for statistics and timeline
+
 // Import the correct type from your API or shared types
 import type { IndividualFPRecordDetail } from "@/pages/familyplanning/request-db/GetRequest";
+// import { FollowUpTimeline } from "@/components/followup-timeline";
+import { PatientOverviewStats } from "@/components/patient-overviewStats";
 
 // Updated function to determine follow-up status based on backend status and date
 const getFollowUpDisplayStatus = (followv_status?: string, followUpDate?: string) => {
@@ -213,8 +217,8 @@ const IndividualFamPlanningTable: React.FC = () => {
     return `${date} (${method})`;
   };
 
-  const tableColumns = useMemo<ColumnDef<IndividualFPRecordDetail>[]>(
-    () => [
+  const tableColumns = useMemo<ColumnDef<IndividualFPRecordDetail>[]>
+    (() => [
       {
         id: "select",
         header: ({ table }) => (
@@ -248,6 +252,7 @@ const IndividualFamPlanningTable: React.FC = () => {
         header: "Client Type",
         cell: ({ row }) => row.original.client_type || "N/A",
       },
+      
       {
         accessorKey: "method_used",
         header: "Method Used",
@@ -257,6 +262,13 @@ const IndividualFamPlanningTable: React.FC = () => {
           return method === "Others" && otherMethod ? otherMethod : method || "N/A";
         },
       },
+{
+  accessorKey: "subtype",
+  header: "Subtype",
+  cell: ({ row }) => {
+    return row.original.subtype || "N/A";
+  },
+},
       {
         accessorKey: "dateOfFollowUp",
         header: "Date of Follow-Up",
@@ -336,7 +348,7 @@ const IndividualFamPlanningTable: React.FC = () => {
             disabled={selectedRecords.length < 2}
             className="text-white"
           >
-            <LayoutList className="h-5 w-5 mr-2" /> Compare Selected Records
+            <LayoutList className="h-5 w-5 mr-2" /> Compare Records
           </Button>
           <Button
             onClick={() => handleCreateNewRecord({ gender: patientInfoForCard?.personal_info.per_sex || "Unknown" })}
@@ -348,8 +360,10 @@ const IndividualFamPlanningTable: React.FC = () => {
       </div>
 
       {patientInfoForCard && <PatientInfoCard patient={patientInfoForCard} />}
+      <div className="mt-4"></div>
+      <PatientOverviewStats records={fpPatientRecords} />
 
-      {/* Updated warning banner to use the new logic */}
+
       {hasMissedFollowUps(fpPatientRecords) && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
           <div className="flex items-center">
@@ -387,16 +401,10 @@ const IndividualFamPlanningTable: React.FC = () => {
                   <AccordionTrigger className="hover:bg-gray-50 transition-colors">
                     <div className="flex items-center justify-between w-full pr-4">
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-blue-500" />
                         <span className="font-medium">{getGroupHeader(records)}</span>
                         <Badge variant="secondary" className="ml-2">
                           {records.length} Records
                         </Badge>
-                        {!isLatestGroup && (
-                          <Badge variant="outline" className="ml-2 text-gray-500">
-                            Historical
-                          </Badge>
-                        )}
                       </div>
                       {isLatestGroup ? (
                         <Button

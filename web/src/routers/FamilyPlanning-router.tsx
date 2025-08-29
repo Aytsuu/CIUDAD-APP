@@ -7,7 +7,8 @@ import FamilyPlanningPage from "@/pages/familyplanning/main"
 import FamilyPlanningHistoryPage from "@/pages/familyplanning/FamilyPlanningHistoryPage"
 import MultiRecordComparisonPage from "@/pages/familyplanning/ComparisonPage"
 import FamilyPlanningView2 from "@/pages/familyplanning/ViewPage2"
-import PrintableFPView from "@/pages/familyplanning/printablePdf"
+import ReportPage from "@/pages/healthServices/Reports/famplanning-report/test"
+
 
 export const famplanning_route = [
   {
@@ -15,14 +16,14 @@ export const famplanning_route = [
     element: <FamilyPlanningMain />,
   },
   {
+    path: "/familyplanning/monthlyreport",
+    element: <ReportPage/>
+  },
+  {
     path: "/FamPlanning_table",
     element: <FamPlanning_table />,
   },
-  {
-  path: "/familyplanning/printable-view",
-  element: <PrintableFPView/>
-},
-
+ 
   {
     path: "/familyplanning/new-record",
     element: <FamilyPlanningPage/>,
@@ -57,3 +58,4 @@ export const famplanning_route = [
     element: <FamilyPlanningView2 />,
   },
 ]
+

@@ -17,7 +17,7 @@ urlpatterns = [
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
     path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
-    path('patient/', PatientView.as_view(), name='patient'),
+    path('patient/view/create/', PatientView.as_view(), name='patient-create-view'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
 	 
     path('transient/address/', TransientAddressView.as_view(), name='transient-address'),
@@ -26,7 +26,8 @@ urlpatterns = [
 
 
     path('vital-signs/', VitalSignsView.as_view(), name='vital-signs'),
-
+    path('vital-signs/latest/<str:pat_id>/', GetLatestVitalSignsView.as_view(), name='latest-vital-signs'),
+    
     path("obstetrical_history/", ObstetricalHistoryView.as_view(), name="obstetricalhistory"),
     
     path("spouse/", SpouseListView.as_view(), name='spouse'),
@@ -41,7 +42,7 @@ urlpatterns = [
     path("findings/", FindingView.as_view(), name="findings"),
 
     path('followup-complete/<str:pat_id>/', GetCompletedFollowUpVisits.as_view(), name='followup-complete'),
-    path('followup-pending/<int:patrec_id>/', GetPendingFollowUpVisits.as_view(), name='physical-examination-list-detail'),
+    path('followup-pending/<str:pat_id>/', GetPendingFollowUpVisits.as_view(), name='followup-pending'),
     path('previous-measurement/<str:pat_id>/', GetPreviousHeightWeightAPIView.as_view(), name='previous-height-weight'),
    
     path('illness/', IllnessView.as_view(), name="illness"),
@@ -62,7 +63,7 @@ urlpatterns = [
    
     path('medical-history/<int:patrec>/', DeleteMedicalHistoryByPatrecView.as_view(), name='updel-medical-history'),
 
-    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view,name='delete-peresults'),
+    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view(), name='delete-peresults'),
 
     #DISABLITY
     
@@ -72,4 +73,3 @@ urlpatterns = [
     # HEALTH STAFF
 
 ]
-

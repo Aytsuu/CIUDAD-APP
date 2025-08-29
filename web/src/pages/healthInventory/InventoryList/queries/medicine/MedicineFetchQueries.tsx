@@ -5,7 +5,6 @@ export const useMedicines = () => {
     return useQuery({
       queryKey: ["medicines"],
       queryFn: getMedicines,
-      refetchOnMount: true,
-      staleTime: 0,
+      staleTime: 1000 * 60 * 5, // 5 minutes
     });
   };

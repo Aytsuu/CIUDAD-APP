@@ -1,31 +1,7 @@
-"use client"
-
 import { useState, useEffect } from "react"
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  TextInput,
-  SafeAreaView,
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-} from "react-native"
+import { View,Text,FlatList,TouchableOpacity,TextInput,SafeAreaView,ActivityIndicator,RefreshControl,ScrollView } from "react-native"
 import { useRouter } from "expo-router"
-import {
-  Search,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
-  Calendar,
-  MapPin,
-  Phone,
-  AlertCircle,
-  Clock,
-  CheckCircle,
-  User,
-} from "lucide-react-native"
+import { Search,Filter,ChevronLeft,ChevronRight,Calendar,MapPin,Phone,AlertCircle,Clock,CheckCircle,User} from "lucide-react-native"
 import ReferralForm from '@/screens/animal-bites/ReferralForm'
 
 

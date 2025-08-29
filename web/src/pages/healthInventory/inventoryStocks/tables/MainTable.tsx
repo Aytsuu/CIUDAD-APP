@@ -6,18 +6,27 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import TransactionMainInventoryList from "../../transaction/tables/TransactionMainInventoryList";
 
 export default function MainInventory() {
-  // Initialize state with value from localStorage or default to "medicine"
-  const [selectedView, setSelectedView] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("selectedInventoryView") || "medicine";
-    }
-    return "medicine";
-  });
+  const [selectedView, setSelectedView] = useState("stocks"); // Start with direct default
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Update localStorage whenever selectedView changes
   useEffect(() => {
-    localStorage.setItem("selectedInventoryView", selectedView);
-  }, [selectedView]);
+    setIsMounted(true);
+    // Only access localStorage after component mounts (client-side)
+    const savedView = localStorage.getItem("selectedInventoryView");
+    if (savedView && ["stocks", "archive", "transaction"].includes(savedView)) {
+      setSelectedView(savedView);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem("selectedInventoryView", selectedView);
+    }
+  }, [selectedView, isMounted]);
+
+  if (!isMounted) {
+    return null; // or a loading spinner
+  }
 
   return (
     <MainLayoutComponent
@@ -26,16 +35,14 @@ export default function MainInventory() {
     >
       <div className="bg-white p-4">
         <Tabs
-          defaultValue={selectedView}
+          value={selectedView} // Use value instead of defaultValue
           className="mb-4"
-          onValueChange={(value) =>
-            setSelectedView(value as "stocks" | "archive")
-          }
+          onValueChange={(value) => setSelectedView(value)}
         >
-          <TabsList className="grid grid-cols-3  w-full sm:w-[300px]">
+          <TabsList className="grid grid-cols-3 w-full sm:w-[300px]">
             <TabsTrigger
               value="stocks"
-              className=" text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+              className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
             >
               Stocks
             </TabsTrigger>
@@ -54,7 +61,6 @@ export default function MainInventory() {
           </TabsList>
         </Tabs>
 
-        {/* Render the appropriate component based on selectedView */}
         {selectedView === "stocks" && <MainInventoryStocks />}
         {selectedView === "archive" && <ArchiveMainInventoryStocks />}
         {selectedView === "transaction" && <TransactionMainInventoryList />}

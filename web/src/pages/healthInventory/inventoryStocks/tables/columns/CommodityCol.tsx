@@ -188,7 +188,7 @@ export const CommodityStocksColumns = (
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => {
-      // const expired = isExpired(row.original.expiryDate);
+      const expired = isExpired(row.original.expiryDate);
       return (
         <div className="flex gap-2">
           {/* <Button variant="outline" disabled={expired} >

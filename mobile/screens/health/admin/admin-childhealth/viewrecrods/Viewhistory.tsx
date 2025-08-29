@@ -26,6 +26,8 @@ interface Props {
   navigation: any;
 }
 
+type HistoryTab = 'tt' | 'ebf' | 'findings' | 'disabilities' | 'vitals' | 'nutrition' | 'immunization' | 'supplements';
+
 // TT Status Section
 const TTStatusSection = ({ records }: { records: ChildHealthHistoryRecord[] }) => {
   const hasData = (record: ChildHealthHistoryRecord) => record.tt_status && record.tt_status !== "N/A";
@@ -152,7 +154,7 @@ const DisabilitiesSection = ({ records }: { records: ChildHealthHistoryRecord[] 
               {new Date(item.created_at).toLocaleDateString()}
             </Text>
             {item.disabilities.map((disability, dIndex) => (
-              <Text key={`disability-${dIndex}`}>- {disability}</Text>
+              <Text key={`disability-${dIndex}`}>- {disability.disability_details?.disability_name || 'N/A'}</Text>
             ))}
           </View>
         )}
@@ -376,29 +378,183 @@ const SupplementsSection = ({ records }: { records: ChildHealthHistoryRecord[] }
   ) : null;
 };
 
-// Health History Sections component
-const HealthHistorySections = ({
-  recordsToDisplay,
-  chhistId,
-  supplementStatusesFields,
-}: {
-  recordsToDisplay: ChildHealthHistoryRecord[];
-  chhistId: string;
-  supplementStatusesFields: any;
-}) => {
+// Tabbed History View Component
+const TabbedHistoryView = ({ recordsToDisplay }: { recordsToDisplay: ChildHealthHistoryRecord[] }) => {
+  const [activeTab, setActiveTab] = useState<HistoryTab>('tt');
+  
+  // Check which tabs have data
+  const hasTTData = recordsToDisplay.some(record => record.tt_status && record.tt_status !== "N/A");
+  const hasEBFData = recordsToDisplay.some(record => 
+    record.exclusive_bf_checks && record.exclusive_bf_checks.some(ebf => ebf.ebf_date && ebf.ebf_date !== "N/A")
+  );
+  const hasFindingsData = recordsToDisplay.some(record => 
+    record.child_health_vital_signs.some(vital => vital.find_details && 
+      (vital.find_details.assessment_summary || vital.find_details.obj_summary || 
+       vital.find_details.subj_summary || vital.find_details.plantreatment_summary))
+  );
+  const hasDisabilitiesData = recordsToDisplay.some(record => record.disabilities && record.disabilities.length > 0);
+  const hasVitalsData = recordsToDisplay.some(record => 
+    (record.child_health_vital_signs.some(vital => vital.bm_details?.age || vital.bm_details?.weight || 
+      vital.bm_details?.height || vital.temp) || 
+     record.child_health_notes.some(note => note.chn_notes || note.followv_details))
+  );
+  const hasNutritionData = recordsToDisplay.some(record => 
+    record.nutrition_statuses.some(status => status.wfa || status.lhfa || status.muac || status.muac_status || status.edemaSeverity)
+  );
+  const hasImmunizationData = recordsToDisplay.some(record => 
+    record.immunization_tracking.some(imt => imt.vachist_details?.vaccine_stock?.vaccinelist?.vac_name || 
+      imt.vachist_details?.vachist_doseNo || imt.vachist_details?.date_administered || 
+      imt.vachist_details?.vachist_status || imt.vachist_details?.vachist_age || 
+      imt.vachist_details?.follow_up_visit)
+  );
+  const hasSupplementsData = recordsToDisplay.some(record => 
+    (record.child_health_supplements.some(sup => sup.medrec_details?.minv_details?.med_detail?.med_name) || 
+     record.supplements_statuses.some(status => status.status_type || status.birthwt || status.date_seen || 
+       status.date_given_iron || status.date_completed))
+  );
+
+  // Set initial tab to the first one with data
+  useEffect(() => {
+    if (hasTTData) setActiveTab('tt');
+    else if (hasEBFData) setActiveTab('ebf');
+    else if (hasFindingsData) setActiveTab('findings');
+    else if (hasDisabilitiesData) setActiveTab('disabilities');
+    else if (hasVitalsData) setActiveTab('vitals');
+    else if (hasNutritionData) setActiveTab('nutrition');
+    else if (hasImmunizationData) setActiveTab('immunization');
+    else if (hasSupplementsData) setActiveTab('supplements');
+  }, [recordsToDisplay]);
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'tt':
+        return hasTTData ? <TTStatusSection records={recordsToDisplay} /> : <NoDataMessage />;
+      case 'ebf':
+        return hasEBFData ? <ExclusiveBFSection records={recordsToDisplay} /> : <NoDataMessage />;
+      case 'findings':
+        return hasFindingsData ? <FindingsSection records={recordsToDisplay} /> : <NoDataMessage />;
+      case 'disabilities':
+        return hasDisabilitiesData ? <DisabilitiesSection records={recordsToDisplay} /> : <NoDataMessage />;
+      case 'vitals':
+        return hasVitalsData ? <VitalSignsNotesSection records={recordsToDisplay} /> : <NoDataMessage />;
+      case 'nutrition':
+        return hasNutritionData ? <NutritionalStatusSection records={recordsToDisplay} /> : <NoDataMessage />;
+      case 'immunization':
+        return hasImmunizationData ? <ImmunizationSection records={recordsToDisplay} /> : <NoDataMessage />;
+      case 'supplements':
+        return hasSupplementsData ? <SupplementsSection records={recordsToDisplay} /> : <NoDataMessage />;
+      default:
+        return <NoDataMessage />;
+    }
+  };
+
   return (
-    <>
-      <TTStatusSection records={recordsToDisplay} />
-      <ExclusiveBFSection records={recordsToDisplay} />
-      <FindingsSection records={recordsToDisplay} />
-      <DisabilitiesSection records={recordsToDisplay} />
-      <VitalSignsNotesSection records={recordsToDisplay} />
-      <NutritionalStatusSection records={recordsToDisplay} />
-      <ImmunizationSection records={recordsToDisplay} />
-      <SupplementsSection records={recordsToDisplay} />
-    </>
+    <View className="w-full">
+      {/* Tab Navigation */}
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        className="border-b bg-blue-50 border-gray-200 mb-4"
+      >
+        <View className="flex-row">
+          {hasTTData && (
+            <TouchableOpacity
+              className={`px-4 py-2 ${activeTab === 'tt' ? 'border-b-2 border-blue-500' : ''}`}
+              onPress={() => setActiveTab('tt')}
+            >
+              <Text className={`font-medium ${activeTab === 'tt' ? 'text-blue-600' : 'text-gray-500'}`}>
+                TT Status
+              </Text>
+            </TouchableOpacity>
+          )}
+          {hasEBFData && (
+            <TouchableOpacity
+              className={`px-4 py-2 ${activeTab === 'ebf' ? 'border-b-2 border-blue-500' : ''}`}
+              onPress={() => setActiveTab('ebf')}
+            >
+              <Text className={`font-medium ${activeTab === 'ebf' ? 'text-blue-600' : 'text-gray-500'}`}>
+                Breastfeeding
+              </Text>
+            </TouchableOpacity>
+          )}
+          {hasFindingsData && (
+            <TouchableOpacity
+              className={`px-4 py-2 ${activeTab === 'findings' ? 'border-b-2 border-blue-500' : ''}`}
+              onPress={() => setActiveTab('findings')}
+            >
+              <Text className={`font-medium ${activeTab === 'findings' ? 'text-blue-600' : 'text-gray-500'}`}>
+                Findings
+              </Text>
+            </TouchableOpacity>
+          )}
+          {hasDisabilitiesData && (
+            <TouchableOpacity
+              className={`px-4 py-2 ${activeTab === 'disabilities' ? 'border-b-2 border-blue-500' : ''}`}
+              onPress={() => setActiveTab('disabilities')}
+            >
+              <Text className={`font-medium ${activeTab === 'disabilities' ? 'text-blue-600' : 'text-gray-500'}`}>
+                Disabilities
+              </Text>
+            </TouchableOpacity>
+          )}
+          {hasVitalsData && (
+            <TouchableOpacity
+              className={`px-4 py-2 ${activeTab === 'vitals' ? 'border-b-2 border-blue-500' : ''}`}
+              onPress={() => setActiveTab('vitals')}
+            >
+              <Text className={`font-medium ${activeTab === 'vitals' ? 'text-blue-600' : 'text-gray-500'}`}>
+                Vitals & Notes
+              </Text>
+            </TouchableOpacity>
+          )}
+          {hasNutritionData && (
+            <TouchableOpacity
+              className={`px-4 py-2 ${activeTab === 'nutrition' ? 'border-b-2 border-blue-500' : ''}`}
+              onPress={() => setActiveTab('nutrition')}
+            >
+              <Text className={`font-medium ${activeTab === 'nutrition' ? 'text-blue-600' : 'text-gray-500'}`}>
+                Nutrition
+              </Text>
+            </TouchableOpacity>
+          )}
+          {hasImmunizationData && (
+            <TouchableOpacity
+              className={`px-4 py-2 ${activeTab === 'immunization' ? 'border-b-2 border-blue-500' : ''}`}
+              onPress={() => setActiveTab('immunization')}
+            >
+              <Text className={`font-medium ${activeTab === 'immunization' ? 'text-blue-600' : 'text-gray-500'}`}>
+                Immunization
+              </Text>
+            </TouchableOpacity>
+          )}
+          {hasSupplementsData && (
+            <TouchableOpacity
+              className={`px-4 py-2 ${activeTab === 'supplements' ? 'border-b-2 border-blue-500' : ''}`}
+              onPress={() => setActiveTab('supplements')}
+            >
+              <Text className={`font-medium ${activeTab === 'supplements' ? 'text-blue-600' : 'text-gray-500'}`}>
+                Supplements
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Tab Content */}
+      <View className="mt-4">
+        {renderTabContent()}
+      </View>
+    </View>
   );
 };
+
+const NoDataMessage = () => (
+  <View className="p-6 items-center">
+    <Text className="text-gray-600 text-center">
+      No data available for this section.
+    </Text>
+  </View>
+);
 
 export default function ChildHealthHistoryDetail({ route, navigation }: Props) {
   // Navigation and routing
@@ -541,14 +697,8 @@ export default function ChildHealthHistoryDetail({ route, navigation }: Props) {
               ) : (
                 <View className="border border-gray-200 rounded-lg bg-white">
                   <View className="p-6">
-                    {/* Accordion Sections with Horizontal Swipe */}
-                    <View className="space-y-4">
-                      <HealthHistorySections
-                        recordsToDisplay={recordsToDisplay}
-                        chhistId={chhistId}
-                        supplementStatusesFields={supplementStatusesFields}
-                      />
-                    </View>
+                    {/* Tabbed History View */}
+                    <TabbedHistoryView recordsToDisplay={recordsToDisplay} />
                   </View>
                 </View>
               )}

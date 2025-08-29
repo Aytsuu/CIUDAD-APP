@@ -253,7 +253,7 @@ interface FPRecord {
 
         <CardLayout
           title="Resident Patients"
-          description="Permanent residents who availed Family Planning"
+          description="Residents who availed Family Planning"
           content={
             <div className="flex items-center justify-between">
               <div className="flex flex-col">

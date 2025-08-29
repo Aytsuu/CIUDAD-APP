@@ -15,6 +15,7 @@ type Page3Props = {
   updateFormData: (data: Partial<FormData>) => void
   formData: FormData
   mode?: "create" | "edit" | "view"
+  patientGender?: string
 }
 
 const referralOptions = {
@@ -24,10 +25,10 @@ const referralOptions = {
   Others: "Others",
 }
 
-const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData, mode="create" }: Page3Props) => {
+const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }: Page3Props) => {
   // const isReadOnly = mode === "view"
   const form = useForm<FormData>({
-     resolver: zodResolver(page3Schema),
+    resolver: zodResolver(page3Schema),
     defaultValues: formData,
     values: formData,
   })
@@ -53,12 +54,17 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData, m
   }, [riskStiData])
 
   const abnormalDischarge = form.watch("sexuallyTransmittedInfections.abnormalDischarge")
+  const patientGender = formData.gender
 
   useEffect(() => {
     if (!abnormalDischarge) {
       form.setValue("sexuallyTransmittedInfections.dischargeFrom", undefined)
+    } else if (abnormalDischarge && patientGender) {
+      // Automatically set discharge location based on gender
+      const dischargeLocation = patientGender.toLowerCase() === "female" ? "Vagina" : "Penis"
+      form.setValue("sexuallyTransmittedInfections.dischargeFrom", dischargeLocation)
     }
-  }, [abnormalDischarge, form])
+  }, [abnormalDischarge, form, patientGender])
 
   const onSubmit = (data: FormData) => {
     if (!data.sexuallyTransmittedInfections.abnormalDischarge) {
@@ -111,7 +117,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData, m
                   )}
                 />
 
-                {abnormalDischarge && (
+                {/* {abnormalDischarge && (
                   <FormField
                     control={form.control}
                     name="sexuallyTransmittedInfections.dischargeFrom"
@@ -137,7 +143,43 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData, m
                       </FormItem>
                     )}
                   />
+                )} */}
+
+
+                {abnormalDischarge && (
+                  <FormField
+                    control={form.control}
+                    name="sexuallyTransmittedInfections.dischargeFrom"
+                    render={({ field }) => (
+                      <FormItem className="ml-4 mb-4">
+                        <p className="italic text-sm mb-2">If "YES" please indicate if from:</p>
+                        <FormControl>
+                          <div className="flex space-x-4">
+                            {["Vagina", "Penis"].map((location) => (
+                              <div key={location} className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  id={`discharge-${location.toLowerCase()}`}
+                                  value={location}
+                                  checked={field.value === location}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                  disabled={!!(abnormalDischarge && patientGender)}
+                                />
+                                <label htmlFor={`discharge-${location.toLowerCase()}`}>{location}</label>
+                              </div>
+                            ))}
+                          </div>
+                        </FormControl>
+                        {abnormalDischarge && patientGender && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            Automatically set based on patient's gender ({patientGender})
+                          </p>
+                        )}
+                      </FormItem>
+                    )}
+                  />
                 )}
+
 
                 {[
                   { key: "sores", label: "Sores or ulcers in the genital area" },

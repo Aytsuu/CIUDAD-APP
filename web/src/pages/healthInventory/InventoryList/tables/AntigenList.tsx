@@ -1,61 +1,45 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput } from "lucide-react";
+import { Search, Plus, FileInput, Loader2 } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { VaccineColumns } from "./columns/AntigenCol";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useAntigen } from "../queries/Antigen/VaccineFetchQueries";
 import { useDeleteAntigen } from "../queries/Antigen/AntigenDeleteQueries";
-export type VaccineRecords = {
-  id: number;
-  vaccineName: string;
-  vaccineType: string;
-  ageGroup: string;
-  doses: number | string;
-  schedule: string;
-  agegrp_id: string; // Optional field for age group ID
-  category: string;
-  noOfDoses?: number | string;
-  doseDetails: {
-    doseNumber: number;
-    interval?: number;
-    unit?: string;
-  }[];
-};
+import { VaccineModal } from "../Modal/VaccineModal";
+import { VaccineColumns } from "./columns/AntigenCol";
+import AddImmunizationSupplies from "../Modal/ImmunizationSupplies";
+import { VaccineRecords } from "../Modal/types";
 
 export default function AntigenList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    React.useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [vaccineToDelete, setVaccineToDelete] = useState<number | null>(null);
-  // const [isDialog, setIsDialog] = useState(false);
-  // const [selectedOption, setSelectedOption] = useState<"vaccine" | "supplies">(
-  //   "vaccine"
-  // );
-  const navigate = useNavigate();
+  const [showVaccineModal, setShowVaccineModal] = useState(false);
+  const [showSupplyModal, setShowSupplyModal] = useState(false);
+  const [modalMode, setModalMode] = useState<"add" | "edit">("add");
+  const [selectedVaccine, setSelectedVaccine] = useState<VaccineRecords | null>(null);
+  const [selectedSupply, setSelectedSupply] = useState<VaccineRecords | null>(null);
 
-  // Use the custom hook here
   const { data: vaccineData, isLoading: isLoadingVaccines } = useAntigen();
+  const deleteVaccineMutation = useDeleteAntigen();
 
-  const formatVaccineData = React.useCallback(() => {
-    if (!vaccineData) return [];
+  const formatVaccineData = useCallback(() => {
+    if (!Array.isArray(vaccineData)) return [];
 
     return vaccineData
       .map((item: any) => {
-        // Handle Vaccine items
         if (item.vac_name) {
           const ageGroupDisplay = item.age_group
             ? `${item.age_group.agegroup_name} (${item.age_group.min_age}-${item.age_group.max_age} ${item.age_group.time_unit})`
@@ -75,9 +59,9 @@ export default function AntigenList() {
                 ? "Primary Series"
                 : "Conditional",
             ageGroup: ageGroupDisplay || "N/A",
-            agegrp_id: ageGroupId || "N/A", // Use ageGroup ID if available
+            agegrp_id: ageGroupId || "N/A",
             doses: item.no_of_doses || "N/A",
-            category: item.category,
+            category: "vaccine", // Explicitly set to "vaccine"
             noOfDoses: item.no_of_doses || "N/A",
             schedule: item.schedule || "N/A",
             doseDetails: [],
@@ -105,16 +89,14 @@ export default function AntigenList() {
             });
           }
           return baseData;
-        }
-        // Handle Immunization Supplies items
-        else if (item.imz_name) {
+        } else if (item.imz_name) {
           return {
             id: item.imz_id,
             vaccineName: item.imz_name,
             vaccineType: "N/A",
             ageGroup: "N/A",
             doses: "N/A",
-            category: item.category,
+            category: "supply", // Explicitly set to "supply"
             noOfDoses: "N/A",
             schedule: "N/A",
             doseDetails: [],
@@ -125,9 +107,9 @@ export default function AntigenList() {
       .filter(Boolean);
   }, [vaccineData]);
 
-  const filteredVaccines = React.useMemo(() => {
+  const filteredVaccines = useMemo(() => {
     return formatVaccineData()
-      .filter((record): record is VaccineRecords => record !== null)
+      .filter((record: any): record is VaccineRecords => record !== null)
       .filter((record: VaccineRecords) =>
         Object.values(record)
           .join(" ")
@@ -135,14 +117,6 @@ export default function AntigenList() {
           .includes(searchQuery.toLowerCase())
       );
   }, [searchQuery, formatVaccineData]);
-
-  const totalPages = Math.ceil(filteredVaccines.length / pageSize);
-  const paginatedVaccines = filteredVaccines.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  const deleteVaccineMutation = useDeleteAntigen();
 
   const handleDelete = () => {
     if (vaccineToDelete === null) return;
@@ -161,24 +135,39 @@ export default function AntigenList() {
     setIsDeleteConfirmationOpen(false);
     setVaccineToDelete(null);
   };
-  const columns = VaccineColumns(
-    setVaccineToDelete,
-    setIsDeleteConfirmationOpen
+
+  const totalPages = Math.ceil(filteredVaccines.length / pageSize);
+  const paginatedVaccines = filteredVaccines.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
 
-  if (isLoadingVaccines) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
-  }
+  const handleAddVaccine = () => {
+    setModalMode("add");
+    setSelectedVaccine(null);
+    setShowVaccineModal(true);
+    setShowSupplyModal(false);
+  };
+
+  const handleAddSupply = () => {
+    setModalMode("add");
+    setSelectedSupply(null);
+    setShowSupplyModal(true);
+    setShowVaccineModal(false);
+  };
+
+  const columns = VaccineColumns(
+    setVaccineToDelete,
+    setIsDeleteConfirmationOpen,
+    setSelectedVaccine,
+    setModalMode,
+    setShowVaccineModal,
+    setSelectedSupply,
+    setShowSupplyModal
+  );
 
   return (
-    <div>
+    <div className="relative">
       <div className="hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative w-full">
@@ -198,20 +187,20 @@ export default function AntigenList() {
         <div className="flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className=" hover:bg-buttonBlue/90 group">
+              <Button className="hover:bg-buttonBlue/90 group">
                 <Plus size={15} /> New
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="min-w-[200px]" align="end">
               <DropdownMenuItem
-                onSelect={() => navigate("/addVaccinationList")}
                 className="cursor-pointer hover:bg-gray-100 px-4 py-2"
+                onClick={handleAddVaccine}
               >
                 Vaccine
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => navigate("/addImmunizationSupplies")}
                 className="cursor-pointer hover:bg-gray-100 px-4 py-2"
+                onClick={handleAddSupply}
               >
                 Immunization Supplies
               </DropdownMenuItem>
@@ -249,14 +238,22 @@ export default function AntigenList() {
             ]}
           />
         </div>
-        <div className="overflow-x-auto">
-          <DataTable columns={columns} data={paginatedVaccines} />
+
+        <div className="bg-white w-full overflow-x-auto">
+          {isLoadingVaccines ? (
+            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">loading....</span>
+            </div>
+          ) : (
+            <DataTable columns={columns} data={paginatedVaccines} />
+          )}
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
             Showing {(currentPage - 1) * pageSize + 1}-
             {Math.min(currentPage * pageSize, filteredVaccines.length)} of{" "}
-            {filteredVaccines.length} vaccines
+            {filteredVaccines.length} entries
           </p>
           {paginatedVaccines.length > 0 && (
             <PaginationLayout
@@ -267,6 +264,7 @@ export default function AntigenList() {
           )}
         </div>
       </div>
+
       <ConfirmationDialog
         isOpen={isDeleteConfirmationOpen}
         onOpenChange={setIsDeleteConfirmationOpen}
@@ -286,6 +284,30 @@ export default function AntigenList() {
             : "Are you sure you want to delete this immunization supply? This action cannot be undone."
         }
       />
+
+      {showVaccineModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-[50%] h-[600px] flex justify-center ">
+            <VaccineModal
+              mode={modalMode}
+              initialData={selectedVaccine ?? undefined}
+              onClose={() => setShowVaccineModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {showSupplyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <AddImmunizationSupplies
+              mode={modalMode}
+              initialData={selectedSupply ?? undefined}
+              onClose={() => setShowSupplyModal(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

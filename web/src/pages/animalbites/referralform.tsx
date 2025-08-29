@@ -74,7 +74,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       exposure_site: "",
       biting_animal: "",
       actions_taken: "",
-      referredby: "Midwife",
+      referredby: "Joylyn M. Magullado",
     },
   })
 

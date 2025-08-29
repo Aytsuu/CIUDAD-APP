@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Printer } from 'lucide-react-native';
 import { format, isValid } from 'date-fns';
@@ -17,12 +17,63 @@ interface PatientSummarySectionProps {
     chhistId: string;
 }
 
+type TableTab = 'immunization' | 'vital' | 'bf' | 'nutrition' | 'supplement';
+
 export function PatientSummarySection({
     recordsToDisplay,
     fullHistoryData,
     chhistId,
 }: PatientSummarySectionProps) {
     console.log('PatientSummarySection: recordsToDisplay:', recordsToDisplay);
+    const [activeTab, setActiveTab] = useState<TableTab>('immunization');
+    
+    const renderTable = () => {
+        switch (activeTab) {
+            case 'immunization':
+                return (
+                    <ImmunizationTable
+                        fullHistoryData={fullHistoryData}
+                        chhistId={chhistId}
+                    />
+                );
+            case 'vital':
+                return (
+                    <VitalSignsTable
+                        fullHistoryData={fullHistoryData}
+                        chhistId={chhistId}
+                    />
+                );
+            case 'bf':
+                return (
+                    <BFCheckTable
+                        fullHistoryData={fullHistoryData}
+                        chhistId={chhistId}
+                    />
+                );
+            case 'nutrition':
+                return (
+                    <NutritionStatusTable
+                        fullHistoryData={fullHistoryData}
+                        chhistId={chhistId}
+                    />
+                );
+            case 'supplement':
+                return (
+                    <SupplementStatusTable
+                        fullHistoryData={fullHistoryData}
+                        chhistId={chhistId}
+                    />
+                );
+            default:
+                return (
+                    <ImmunizationTable
+                        fullHistoryData={fullHistoryData}
+                        chhistId={chhistId}
+                    />
+                );
+        }
+    };
+
     return (
         <ScrollView>
             <View>
@@ -419,28 +470,63 @@ export function PatientSummarySection({
                     </View>
                 </View>
 
-                {/* Additional Tables */}
-                <View className="w-full">
-                    <View className="print-table-container print-section ">
-                        <BFCheckTable
-                            fullHistoryData={fullHistoryData}
-                            chhistId={chhistId}
-                        />
-                    </View>
+                {/* Tab Navigation for Tables */}
+                <View className="w-full mt-6">
+                    <ScrollView 
+                        horizontal 
+                        showsHorizontalScrollIndicator={false}
+                        className="border-b bg-blue-100  rounded-lg border-gray-200"
+                    >
+                        <View className="flex-row">
+                            <TouchableOpacity
+                                className={`px-4 py-2 ${activeTab === 'immunization' ? 'border-b-2 border-blue-500' : ''}`}
+                                onPress={() => setActiveTab('immunization')}
+                            >
+                                <Text className={`font-medium ${activeTab === 'immunization' ? 'text-blue-600' : 'text-gray-500'}`}>
+                                    Immunization
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className={`px-4 py-2 ${activeTab === 'vital' ? 'border-b-2 border-blue-500' : ''}`}
+                                onPress={() => setActiveTab('vital')}
+                            >
+                                <Text className={`font-medium ${activeTab === 'vital' ? 'text-blue-600' : 'text-gray-500'}`}>
+                                    Vital Signs
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className={`px-4 py-2 ${activeTab === 'bf' ? 'border-b-2 border-blue-500' : ''}`}
+                                onPress={() => setActiveTab('bf')}
+                            >
+                                <Text className={`font-medium ${activeTab === 'bf' ? 'text-blue-600' : 'text-gray-500'}`}>
+                                    BF Checks
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className={`px-4 py-2 ${activeTab === 'nutrition' ? 'border-b-2 border-blue-500' : ''}`}
+                                onPress={() => setActiveTab('nutrition')}
+                            >
+                                <Text className={`font-medium ${activeTab === 'nutrition' ? 'text-blue-600' : 'text-gray-500'}`}>
+                                    Nutrition Status
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className={`px-4 py-2 ${activeTab === 'supplement' ? 'border-b-2 border-blue-500' : ''}`}
+                                onPress={() => setActiveTab('supplement')}
+                            >
+                                <Text className={`font-medium ${activeTab === 'supplement' ? 'text-blue-600' : 'text-gray-500'}`}>
+                                    Supplement Status
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </ScrollView>
 
-                    <View className="print-table-container print-section mt-2">
-                        <VitalSignsTable
-                            fullHistoryData={fullHistoryData}
-                            chhistId={chhistId}
-                        />
+                    {/* Table Content */}
+                    <View className="mt-4">
+                        {renderTable()}
                     </View>
                 </View>
             </View>
-            <NutritionStatusTable
-                fullHistoryData={fullHistoryData}
-                chhistId={chhistId}
-            />
         </ScrollView>
-
     );
 }

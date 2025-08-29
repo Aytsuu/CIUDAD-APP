@@ -4,16 +4,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db import transaction
 from apps.patientrecords.models import Illness, MedicalHistory
-from .models import FP_Record, FP_OtherMedicalCondition
+from .models import FP_Record 
 
 @api_view(['GET'])
 def get_medical_history_illnesses(request):
-    """
-    Get all predefined medical history illnesses for the checkboxes
-    """
     try:
         illnesses = Illness.objects.filter(
-            ill_code__startswith='FP_MH_'
+            ill_code__startswith='FP'
         ).order_by('ill_code')
         
         illness_data = []
@@ -30,9 +27,6 @@ def get_medical_history_illnesses(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 def get_checkbox_name_from_illness(illness_name):
-    """
-    Map illness names to frontend checkbox names
-    """
     mapping = {
         'Severe headaches / migraine': 'severeHeadaches',
         'History of stroke / heart attack / hypertension': 'strokeHeartAttackHypertension',
@@ -44,20 +38,15 @@ def get_checkbox_name_from_illness(illness_name):
         'Unexplained vaginal bleeding': 'unexplainedVaginalBleeding',
         'Abnormal vaginal discharge': 'abnormalVaginalDischarge',
         'Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)': 'phenobarbitalOrRifampicin',
-        'Smoker': 'smoker',
+        'Is this client a SMOKER?': 'smoker',
         'With Disability/Others': 'disability'
     }
     return mapping.get(illness_name, illness_name.lower().replace(' ', '_'))
 
 def create_medical_history_for_fp(fp_record, medical_history_data, other_disability_text=None):
-    """
-    Create medical history record with selected illnesses for FP record
-    """
     try:
         with transaction.atomic():
-            # Create the main medical history record
             medical_history = MedicalHistory.objects.create(
-                # Link to medical consultation if needed, otherwise leave null
                 medrec=None
             )
             
@@ -81,12 +70,12 @@ def create_medical_history_for_fp(fp_record, medical_history_data, other_disabil
             fp_record.save()
             
             # Handle "Other" disability text if provided
-            if other_disability_text and medical_history_data.get('disability', False):
-                FP_OtherMedicalCondition.objects.create(
-                    condition_name=other_disability_text,
-                    condition_description=f"Other medical condition specified by patient: {other_disability_text}",
-                    fprecord=fp_record
-                )
+            # if other_disability_text and medical_history_data.get('disability', False):
+            #     FP_OtherMedicalCondition.objects.create(
+            #         condition_name=other_disability_text,
+            #         condition_description=f"Other medical condition specified by patient: {other_disability_text}",
+            #         fprecord=fp_record
+            #     )
             
             return medical_history
             
@@ -95,9 +84,6 @@ def create_medical_history_for_fp(fp_record, medical_history_data, other_disabil
         raise e
 
 def get_illness_by_checkbox_name(checkbox_name):
-    """
-    Get illness object by checkbox name
-    """
     name_mapping = {
         'severeHeadaches': 'Severe headaches / migraine',
         'strokeHeartAttackHypertension': 'History of stroke / heart attack / hypertension',
@@ -109,7 +95,7 @@ def get_illness_by_checkbox_name(checkbox_name):
         'unexplainedVaginalBleeding': 'Unexplained vaginal bleeding',
         'abnormalVaginalDischarge': 'Abnormal vaginal discharge',
         'phenobarbitalOrRifampicin': 'Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)',
-        'smoker': 'Smoker',
+        'smoker': 'Is this client a SMOKER?',
         'disability': 'With Disability/Others'
     }
     

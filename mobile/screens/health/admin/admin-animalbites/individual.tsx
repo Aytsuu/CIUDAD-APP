@@ -114,11 +114,12 @@ export default function AnimalBiteIndividualScreen() {
           <Text className="text-gray-700 text-center leading-6">
             Failed to load patient records. {error?.message || "Please try again later."}
           </Text>
-          <Link href="/admin/animalbites" asChild>
-            <TouchableOpacity className="mt-6 px-6 py-3 bg-red-500 rounded-xl">
-              <Text className="text-white font-semibold">Go Back</Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity
+          className="mt-6 px-6 py-3 bg-red-500 rounded-xl"
+          onPress={() => router.back()} // Use router.back() for navigation
+        >
+          <Text className="text-white font-semibold">Go Back</Text>
+        </TouchableOpacity>
         </View>
       </View>
     )
@@ -133,11 +134,12 @@ export default function AnimalBiteIndividualScreen() {
           <Text className="text-gray-500 text-center leading-6">
             The patient ID '{patientId || "N/A"}' did not yield any records, or is invalid.
           </Text>
-          <Link href="/admin/animalbites" asChild>
-            <TouchableOpacity className="mt-6 px-6 py-3 bg-blue-500 rounded-xl">
-              <Text className="text-white font-semibold">Go Back</Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity
+          className="mt-6 px-6 py-3 bg-blue-500 rounded-xl"
+          onPress={() => router.back()} // Use router.back() for navigation
+        >
+          <Text className="text-white font-semibold">Go Back</Text>
+        </TouchableOpacity>
         </View>
       </View>
     )
@@ -233,13 +235,13 @@ export default function AnimalBiteIndividualScreen() {
               </View>
               <View className="items-center">
                 <Text className="text-3xl font-bold text-green-600">
-                  {records?.filter((r) => r.exposure_type?.toLowerCase() === "bite").length || 0}
+                  {records?.filter((r: { exposure_type: string }) => r.exposure_type?.toLowerCase() === "bite").length || 0}
                 </Text>
                 <Text className="text-gray-600 text-sm">Bite Incidents</Text>
               </View>
               <View className="items-center">
                 <Text className="text-3xl font-bold text-orange-600">
-                  {records?.filter((r) => r.exposure_type?.toLowerCase() === "non-bite").length || 0}
+                  {records?.filter((r: { exposure_type: string }) => r.exposure_type?.toLowerCase() === "non-bite").length || 0}
                 </Text>
                 <Text className="text-gray-600 text-sm">Non-bite Incidents</Text>
               </View>
@@ -248,93 +250,98 @@ export default function AnimalBiteIndividualScreen() {
         </View>
 
         {/* Referral History */}
-        <View className="px-4 pb-6 ">
-          <View className="flex-row items-center mb-4 mt-5">
-            <FileText size={24} color="#374151" />
-            <Text className="text-xl font-bold text-gray-800 ml-3">Referral History</Text>
-          </View>
+<View className="px-4 pb-6">
+  <View className="flex-row items-center mb-4 mt-5">
+    <FileText size={24} color="#374151" />
+    <Text className="text-xl font-bold text-gray-800 ml-3">Referral History</Text>
+  </View>
 
-          {records && records.length > 0 ? (
-            <View className="space-y-4">
-              {records.map((record) => {
-                const exposureColors = getExposureTypeColor(record.exposure_type)
-                return (
-                  <View
-                    key={`record-${record.bite_id}-${record.referral_date}`}
-                    className="bg-white mb-4  rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-                  >
-                    {/* Compact Record Header */}
-                    <View className="flex-row  justify-between items-center p-4 border-b border-gray-100">
-                      <View className="flex-row items-center">
-                        <View className={`${exposureColors.bg} p-2 rounded-lg mr-3`}>
-                          <FileText size={18} className={exposureColors.text} />
-                        </View>
-                        <View>
-                          <Text className="font-bold text-gray-800">Record #{record.bite_id}</Text>
-                          <Text className="text-gray-500 text-sm">
-                            {formatDateSafely(record.referral_date)} • {formatTimeSafely(record.record_created_at)}
-                          </Text>
-                        </View>
-                      </View>
-                      <View className={`px-2 py-1 rounded-full ${exposureColors.bg} ${exposureColors.border}`}>
-                        <Text className={`text-md font-semibold ${exposureColors.text}`}>
-                          {record.exposure_type || "N/A"}
-                        </Text>
-                      </View>
-                    </View>
+  {records && records.length > 0 ? (
+    <ScrollView
+      horizontal={true}
+      showsHorizontalScrollIndicator={false} // Hide scroll bar for cleaner UI
+      className="flex-row"
+      contentContainerStyle={{ paddingHorizontal: 8 }} // Add padding to start/end
+    >
+      {records.map((record: { exposure_type: string; bite_id: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; referral_date: string; record_created_at: string; biting_animal: any; exposure_site: any; actions_taken: any; referral_sender: any; referral_receiver: any; referredby: any }) => {
+        const exposureColors = getExposureTypeColor(record.exposure_type);
+        return (
+          <View
+            key={`record-${record.bite_id}-${record.referral_date}`}
+            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mr-4 w-80" // Fixed width for cards, margin-right for spacing
+          >
+            {/* Compact Record Header */}
+            <View className="flex-row justify-between items-center p-4 border-b border-gray-100">
+              <View className="flex-row items-center">
+                <View className={`${exposureColors.bg} p-2 rounded-lg mr-3`}>
+                  <FileText size={18} className={exposureColors.text} />
+                </View>
+                <View>
+                  <Text className="font-bold text-gray-800">Record #{record.bite_id}</Text>
+                  <Text className="text-gray-500 text-sm">
+                    {formatDateSafely(record.referral_date)} • {formatTimeSafely(record.record_created_at)}
+                  </Text>
+                </View>
+              </View>
+              <View className={`px-2 py-1 rounded-full ${exposureColors.bg} ${exposureColors.border}`}>
+                <Text className={`text-md font-semibold ${exposureColors.text}`}>
+                  {record.exposure_type || "N/A"}
+                </Text>
+              </View>
+            </View>
 
-                    {/* Compact Record Details */}
-                    <View className="p-4">
-                      <View className="flex-row justify-between mb-3">
-                        <View className="flex-1 pr-2">
-                          <Text className="text-gray-600 text-sm mb-1">Biting Animal</Text>
-                          <Text className="text-gray-800 font-medium">{record.biting_animal || "Not specified"}</Text>
-                        </View>
-                        <View className="flex-1 pl-2">
-                          <Text className="text-gray-600 text-sm mb-1">Exposure Site</Text>
-                          <Text className="text-gray-800 font-medium">{record.exposure_site || "N/A"}</Text>
-                        </View>
-                      </View>
+            {/* Compact Record Details */}
+            <View className="p-4">
+              <View className="flex-row justify-between mb-3">
+                <View className="flex-1 pr-2">
+                  <Text className="text-gray-600 text-sm mb-1">Biting Animal</Text>
+                  <Text className="text-gray-800 font-medium">{record.biting_animal || "Not specified"}</Text>
+                </View>
+                <View className="flex-1 pl-2">
+                  <Text className="text-gray-600 text-sm mb-1">Exposure Site</Text>
+                  <Text className="text-gray-800 font-medium">{record.exposure_site || "N/A"}</Text>
+                </View>
+              </View>
 
-                      <View className="mb-3">
-                        <Text className="text-gray-600 text-sm mb-1">Actions Taken</Text>
-                        <Text className="text-gray-800 leading-5">
-                          {record.actions_taken || "No actions recorded"}
-                        </Text>
-                      </View>
+              <View className="mb-3">
+                <Text className="text-gray-600 text-sm mb-1">Actions Taken</Text>
+                <Text className="text-gray-800 leading-5">
+                  {record.actions_taken || "No actions recorded"}
+                </Text>
+              </View>
 
-                      <View className="bg-blue-50 rounded-lg p-3">
-                        <Text className="text-blue-700 font-semibold mb-2">Referral Details</Text>
-                        <View className="">
-                          <View>
-                            <Text className="text-blue-600 text-sm">From</Text>
-                            <Text className="text-blue-800 font-medium mb-2">{record.referral_sender || "N/A"}</Text>
-                          </View>
-                          <View>
-                            <Text className="text-blue-600 text-sm">To</Text>
-                            <Text className="text-blue-800 font-medium mb-2">{record.referral_receiver || "N/A"}</Text>
-                          </View>
-                          <View>
-                            <Text className="text-blue-600 text-sm">By</Text>
-                            <Text className="text-blue-800 font-medium mb-2">{record.referredby || "N/A"}</Text>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
+              <View className="bg-blue-50 rounded-lg p-3">
+                <Text className="text-blue-700 font-semibold mb-2">Referral Details</Text>
+                <View>
+                  <View>
+                    <Text className="text-blue-600 text-sm">From</Text>
+                    <Text className="text-blue-800 font-medium mb-2">{record.referral_sender || "N/A"}</Text>
                   </View>
-                )
-              })}
+                  <View>
+                    <Text className="text-blue-600 text-sm">To</Text>
+                    <Text className="text-blue-800 font-medium mb-2">{record.referral_receiver || "N/A"}</Text>
+                  </View>
+                  <View>
+                    <Text className="text-blue-600 text-sm">Referred by</Text>
+                    <Text className="text-blue-800 font-medium mb-2">{record.referredby || "N/A"}</Text>
+                  </View>
+                </View>
+              </View>
             </View>
-          ) : (
-            <View className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 items-center">
-              <Clock size={48} color="#D1D5DB" />
-              <Text className="text-gray-600 text-lg font-bold mb-2 mt-4">No Records Found</Text>
-              <Text className="text-gray-500 text-center leading-6">
-                This patient doesn't have any animal bite records yet.
-              </Text>
-            </View>
-          )}
-        </View>
+          </View>
+        );
+      })}
+    </ScrollView>
+  ) : (
+    <View className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 items-center">
+      <Clock size={48} color="#D1D5DB" />
+      <Text className="text-gray-600 text-lg font-bold mb-2 mt-4">No Records Found</Text>
+      <Text className="text-gray-500 text-center leading-6">
+        This patient doesn't have any animal bite records yet.
+      </Text>
+    </View>
+  )}
+</View>
       </ScrollView>
     </View>
   )

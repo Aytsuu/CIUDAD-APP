@@ -134,7 +134,7 @@ export const getStockColumns = (
         const dosesPerVial = record.dose_ml;
         const availableDoses = record.availableStock;
         const fullVials = Math.ceil(availableDoses / dosesPerVial);
-        // const leftoverDoses = availableDoses % dosesPerVial;
+        const leftoverDoses = availableDoses % dosesPerVial;
 
         return (
           <div
@@ -334,8 +334,8 @@ export const getStockColumns = (
     header: "Actions",
     cell: ({ row }) => {
       const vaccine = row.original;
-      // const category = String(vaccine.category).toLowerCase().trim();
-      // const isVaccine = category === "vaccine";
+      const category = String(vaccine.category).toLowerCase().trim();
+      const isVaccine = category === "vaccine";
       const expired = isExpired(vaccine.expiryDate);
 
       return (
