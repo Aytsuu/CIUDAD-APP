@@ -1,5 +1,5 @@
-import LinkVerification from "@/screens/auth/signup/link/LinkVerification";
+// import LinkVerification from "@/screens/auth/signup/link/LinkVerification";
 
-export default () => {
-  return <LinkVerification />
-}
+// export default () => {
+//   return <LinkVerification />
+// }

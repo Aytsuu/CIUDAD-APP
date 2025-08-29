@@ -38,7 +38,7 @@ const CertList = () => {
   }
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'approved':
         return 'bg-green-100 text-green-800'
       case 'pending':
@@ -53,9 +53,14 @@ const CertList = () => {
   }
 
   const filteredCertificates = certificates.filter(cert => {
-    const matchesSearch = cert.cr_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         cert.resident_details.per_fname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         cert.resident_details.per_lname.toLowerCase().includes(searchQuery.toLowerCase())
+    // Add null/undefined checks for all properties
+    const certId = cert.cr_id || ''
+    const firstName = cert.resident_details?.per_fname || ''
+    const lastName = cert.resident_details?.per_lname || ''
+    
+    const matchesSearch = certId.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         lastName.toLowerCase().includes(searchQuery.toLowerCase())
     
     return matchesSearch
   })
@@ -123,58 +128,58 @@ const CertList = () => {
                 <CardContent className="p-8 items-center">
                   <Ionicons name="document-outline" size={48} color="#9CA3AF" />
                   <Text className="text-gray-500 text-center mt-2">
-                    No certificates found
+                    {searchQuery ? 'No certificates match your search' : 'No certificates found'}
                   </Text>
                 </CardContent>
               </Card>
             ) : (
               filteredCertificates.map((certificate) => (
                 <Pressable
-                  key={certificate.cr_id}
+                  key={certificate.cr_id || Math.random().toString()}
                   onPress={() => handleCertificatePress(certificate)}
                   className="active:opacity-80"
                 >
-                                     <Card className="border-0 shadow-lg bg-white rounded-xl">
-                     <CardContent className="p-5">
-                       <View className="flex-row justify-between items-start mb-4">
+                  <Card className="border-0 shadow-lg bg-white rounded-xl">
+                    <CardContent className="p-5">
+                      <View className="flex-row justify-between items-start mb-4">
                         <View className="flex-1">
                           <Text className="text-lg font-semibold text-gray-900 mb-1">
-                            {certificate.cr_id}
+                            {certificate.cr_id || 'N/A'}
                           </Text>
                           <Text className="text-gray-600 text-sm">
-                            {certificate.resident_details.per_fname} {certificate.resident_details.per_lname}
+                            {certificate.resident_details?.per_fname || ''} {certificate.resident_details?.per_lname || ''}
                           </Text>
                         </View>
                         <View className={`px-2 py-1 rounded-full ${getStatusColor(certificate.req_status)}`}>
                           <Text className="text-xs font-medium">
-                            {certificate.req_status}
+                            {certificate.req_status || 'Unknown'}
                           </Text>
                         </View>
                       </View>
 
-                    <View className="space-y-3">
+                      <View className="space-y-3">
                         <View className="flex-row justify-between">
                           <Text className="text-gray-500 text-sm">Purpose:</Text>
                           <Text className="text-gray-900 text-sm font-medium">
-                            {certificate.req_type}
+                            {certificate.req_type || 'N/A'}
                           </Text>
                         </View>
 
                         <View className="flex-row justify-between">
                           <Text className="text-gray-500 text-sm">Request Date:</Text>
                           <Text className="text-gray-900 text-sm font-medium">
-                            {certificate.req_request_date}
+                            {certificate.req_request_date || 'N/A'}
                           </Text>
                         </View>
                         <View className="flex-row justify-between">
                           <Text className="text-gray-500 text-sm">Claim Date:</Text>
                           <Text className="text-gray-900 text-sm font-medium">
-                            {certificate.req_claim_date}
+                            {certificate.req_claim_date || 'N/A'}
                           </Text>
                         </View>
                       </View>
 
-                    <View className="flex-row justify-end mt-4 pt-4 border-t border-gray-100">
+                      <View className="flex-row justify-end mt-4 pt-4 border-t border-gray-100">
                       </View>
                     </CardContent>
                   </Card>

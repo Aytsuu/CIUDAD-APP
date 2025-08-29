@@ -1,5 +1,5 @@
-import BusinessAccountReg from "@/screens/auth/signup/business/BusinessAccountReg";
+// import BusinessAccountReg from "@/screens/auth/signup/business/BusinessAccountReg";
 
-export default () => {
-  return <BusinessAccountReg />
-}
+// export default () => {
+//   return <BusinessAccountReg />
+// }
