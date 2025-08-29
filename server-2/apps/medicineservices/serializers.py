@@ -151,46 +151,58 @@ class MedicineFileSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('medf_id', 'created_at', 'medf_url')
         
-class MedicineFileCreateSerializer(serializers.ModelSerializer):
-    files = FileInputSerializer(write_only=True, required=False, many=True)
 
+class MedicineRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicineRecord
+        fields = '__all__'
+      
+      
+      
+class Medicine_FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medicine_File
         fields = '__all__'
+        extra_kwargs = {
+            'medrec': {'required': False, 'default': None},
+            'medreqitem': {'required': False, 'default': None},
+            'medf_url': {'read_only': True},
+            'medf_path': {'read_only': True},
+        }
+    
+    def _upload_files(self, files, medrec_instance=None, medreqitem_instance=None):
+        """Upload multiple files for medicine record or request item"""
+        if not medrec_instance and not medreqitem_instance:
+            raise serializers.ValidationError({"error": "Either medrec_instance or medreqitem_instance is required"})
         
-    @transaction.atomic
-    def create(self, validated_data):
-        files_data = validated_data.pop('files', [])
-        if not files_data:
-            raise serializers.ValidationError({"files": "At least one file must be provided"})
-            
-        medrec_id = validated_data.pop('medrec', None)
-        
-        if not medrec_id :
-            raise serializers.ValidationError("Either medrec or medreq must be provided")
-            
-        created_files = self._upload_files(files_data, medrec_id)
-
-        if not created_files:
-            raise serializers.ValidationError("Failed to upload files")
-
-        return created_files[0]
-
-    def _upload_files(self, files_data, medrec_id):
         med_files = []
-        for file_data in files_data:
+        
+        for file_data in files:
+            # Validate file data (same as working version)
+            if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
+                print(f"Skipping invalid file data: {file_data.get('name', 'unknown')}")
+                continue
+            
+            # Create the Medicine_File instance FIRST (like the working version)
             med_file = Medicine_File(
                 medf_name=file_data['name'],
                 medf_type=file_data['type'],
-                medf_path=file_data['name'],
+                medf_path=f"medicine/{file_data['name']}",  # Fixed path format
+                medrec=medrec_instance,
+                medreqitem=medreqitem_instance,
                 created_at=timezone.now(),
-                medrec_id=medrec_id,
             )
-
-            url = upload_to_storage(file_data['file'], 'medicine-bucket')
-            med_file.ief_url = url
+            
+            # THEN upload to storage and assign the URL (like the working version)
+            med_file.medf_url = upload_to_storage(file_data, 'medicine-document', 'medicine')
+            
             med_files.append(med_file)
-
+        
+        # Save all files at once (like the working version)
         if med_files:
-            return Medicine_File.objects.bulk_create(med_files)
-        return []
+            Medicine_File.objects.bulk_create(med_files)
+            print(f"Successfully created {len(med_files)} file records")
+        else:
+            print("No valid files to upload")
+        
+        return med_files

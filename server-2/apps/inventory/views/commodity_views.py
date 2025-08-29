@@ -536,6 +536,89 @@ class CommodityArchiveInventoryView(APIView):
             staff=None  # None for system action
         )
 
+# ===========================TRANSACTION ==========================================
+
+class CommodityTransactionView(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        try:
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            # Get commodity transactions with related data
+            transactions = CommodityTransaction.objects.select_related(
+                'cinv_id__com_id', 
+                'cinv_id__inv_id',
+                'staff'
+            ).all()
+            
+            # Apply search filter if provided
+            if search_query:
+                transactions = transactions.filter(
+                    Q(cinv_id__com_id__com_name__icontains=search_query) |
+                    Q(cinv_id__inv_id__inv_id__icontains=search_query) |
+                    Q(comt_action__icontains=search_query) |
+                    Q(staff__first_name__icontains=search_query) |
+                    Q(staff__last_name__icontains=search_query)
+                )
+            
+            # Format the data for response
+            transaction_data = []
+            
+            for transaction in transactions:
+                # Get related inventory and commodity data
+                commodity_inventory = transaction.cinv_id
+                commodity = commodity_inventory.com_id if commodity_inventory else None
+                inventory = commodity_inventory.inv_id if commodity_inventory else None
+                staff = transaction.staff
+                
+                # Format staff name
+                staff_name = "Manage by System"
+                if staff:
+                    staff_name = f"{staff.first_name or ''} {staff.last_name or ''}".strip()
+                    if not staff_name:
+                        staff_name = staff.username
+                
+                item_data = {
+                    'comt_id': transaction.comt_id,
+                    'com_name': commodity.com_name if commodity else "Unknown Commodity",
+                    'comt_qty': transaction.comt_qty,
+                    'comt_action': transaction.comt_action,
+                    'staff': staff_name,
+                    'created_at': transaction.created_at.isoformat() if transaction.created_at else None,
+                }
+                
+                transaction_data.append(item_data)
+            
+            # Sort by created_at descending (most recent first)
+            transaction_data.sort(key=lambda x: x['created_at'] if x['created_at'] else '', reverse=True)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginator.page_size = page_size
+            page_data = paginator.paginate_queryset(transaction_data, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response(response.data)
+            
+            return Response({
+                'success': True,
+                'results': transaction_data,
+                'count': len(transaction_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            print(f"Error traceback: {traceback.format_exc()}")
+            return Response({
+                'success': False,
+                'error': f'Error fetching commodity transactions: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 # ===========================COMMODITY ARCHIVED TABLE==============================
 class ArchivedCommodityTable(APIView):
     pagination_class = StandardResultsPagination

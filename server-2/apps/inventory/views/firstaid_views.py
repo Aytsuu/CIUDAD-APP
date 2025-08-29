@@ -505,6 +505,227 @@ class FirstAidArchiveInventoryView(APIView):
             staff=None  # None for system action
         )
 
+
+# ===========================TRANSACTION===================================
+
+class FirstAidTransactionView(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        try:
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            # Get first aid transactions with related data
+            transactions = FirstAidTransactions.objects.select_related(
+                'finv_id__fa_id', 
+                'finv_id__inv_id',
+                'staff'
+            ).all()
+            
+            # Apply search filter if provided
+            if search_query:
+                transactions = transactions.filter(
+                    Q(finv_id__fa_id__fa_name__icontains=search_query) |
+                    Q(finv_id__inv_id__inv_id__icontains=search_query) |
+                    Q(fat_action__icontains=search_query) |
+                    Q(staff__first_name__icontains=search_query) |
+                    Q(staff__last_name__icontains=search_query)
+                )
+            
+            # Format the data for response
+            transaction_data = []
+            
+            for transaction in transactions:
+                # Get related inventory and first aid data
+                firstaid_inventory = transaction.finv_id
+                firstaid = firstaid_inventory.fa_id if firstaid_inventory else None
+                inventory = firstaid_inventory.inv_id if firstaid_inventory else None
+                staff = transaction.staff
+                
+                # Format staff name
+                staff_name = "Manage by System"
+                if staff:
+                    staff_name = f"{staff.first_name or ''} {staff.last_name or ''}".strip()
+                    if not staff_name:
+                        staff_name = staff.username
+                
+                item_data = {
+                    'fat_id': transaction.fat_id,
+                    'fa_name': firstaid.fa_name if firstaid else "Unknown First Aid Item",
+                    'fat_qty': transaction.fat_qty,
+                    'fat_action': transaction.fat_action,
+                    'staff': staff_name,
+                    'created_at': transaction.created_at.isoformat() if transaction.created_at else None,
+                }
+                
+                transaction_data.append(item_data)
+            
+            # Sort by created_at descending (most recent first)
+            transaction_data.sort(key=lambda x: x['created_at'] if x['created_at'] else '', reverse=True)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginator.page_size = page_size
+            page_data = paginator.paginate_queryset(transaction_data, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response(response.data)
+            
+            return Response({
+                'success': True,
+                'results': transaction_data,
+                'count': len(transaction_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            print(f"Error traceback: {traceback.format_exc()}")
+            return Response({
+                'success': False,
+                'error': f'Error fetching first aid transactions: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+            
+# ===========================FIRST AID ARCHIVED TABLE==============================
+class ArchivedFirstAidTable(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        try:
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            filter_type = request.GET.get('filter', 'all')  # all, expired, out_of_stock
+            
+            # Get archived first aid inventories
+            firstaid_inventories = FirstAidInventory.objects.select_related(
+                'fa_id', 'inv_id'
+            ).filter(inv_id__is_Archived=True)
+            
+            # Apply search filter if provided
+            if search_query:
+                firstaid_inventories = firstaid_inventories.filter(
+                    Q(fa_id__fa_name__icontains=search_query) |
+                    Q(inv_id__inv_id__icontains=search_query) |
+                    Q(finv_qty_unit__icontains=search_query)
+                )
+            
+            # Calculate today's date for expiry comparisons
+            today = timezone.now().date()
+            
+            # Apply reason filter
+            if filter_type == 'expired':
+                firstaid_inventories = firstaid_inventories.filter(
+                    Q(inv_id__expiry_date__lt=today)
+                )
+            elif filter_type == 'out_of_stock':
+                firstaid_inventories = firstaid_inventories.filter(
+                    Q(finv_qty_avail=0) & 
+                    (Q(inv_id__expiry_date__gte=today) | Q(inv_id__expiry_date__isnull=True))
+                )
+            
+            archived_data = []
+            
+            # Process archived first aid inventories
+            for inventory in firstaid_inventories:
+                # Get the inventory record
+                inv_record = inventory.inv_id
+                
+                # Safely handle None values with defaults
+                finv_qty = inventory.finv_qty or 0
+                finv_qty_avail = inventory.finv_qty_avail or 0
+                wasted = inventory.wasted or 0
+                finv_pcs = inventory.finv_pcs or 0
+                finv_used = inventory.finv_used or 0
+                
+                # Calculate total pieces (for boxes)
+                total_pcs = finv_qty * finv_pcs if inventory.finv_qty_unit and inventory.finv_qty_unit.lower() == "boxes" else finv_qty
+                
+                # Calculate total quantity display
+                if inventory.finv_qty_unit and inventory.finv_qty_unit.lower() == "boxes":
+                    total_qty_display = f"{finv_qty} boxes ({total_pcs} pcs)"
+                else:
+                    total_qty_display = f"{finv_qty} {inventory.finv_qty_unit or 'units'}"
+                
+                # Check expiry status
+                expiry_date = inv_record.expiry_date if inv_record else None
+                is_expired = expiry_date and expiry_date < today if expiry_date else False
+                
+                # Determine archive reason
+                archive_reason = 'Expired' if is_expired else 'Out of Stock'
+                
+                # Calculate actual used quantity
+                # If available stock is 0, then quantity used should be 0
+                if finv_qty_avail == 0:
+                    actual_used = 0
+                else:
+                    # Otherwise, calculate as Total Qty - Available Stock - Wasted
+                    actual_used = total_pcs - finv_qty_avail - wasted
+                
+                item_data = {
+                    'type': 'firstaid',
+                    'id': inventory.finv_id,
+                    'category': 'First Aid',
+                    'item': {
+                        'fa_name': inventory.fa_id.fa_name if inventory.fa_id else "Unknown First Aid Item",
+                        'unit': inventory.finv_qty_unit or 'units',
+                    },
+                    'qty': {
+                        'finv_qty': finv_qty,
+                        'finv_pcs': total_pcs  # Total pieces for boxes, otherwise same as finv_qty
+                    },
+                    'administered': actual_used,
+                    'wasted': wasted,
+                    'availableStock': finv_qty_avail,
+                    'expiryDate': expiry_date.isoformat() if expiry_date else "N/A",
+                    'archivedDate': inv_record.updated_at.isoformat() if inv_record and inv_record.updated_at else inv_record.created_at.isoformat() if inv_record else None,
+                    'reason': archive_reason,
+                    'inv_id': inv_record.inv_id if inv_record else None,
+                    'fa_id': inventory.fa_id.fa_id if inventory.fa_id else None,
+                    'finv_id': inventory.finv_id,
+                    'finv_qty_unit': inventory.finv_qty_unit or 'units',
+                    'finv_pcs': finv_pcs,
+                    'isArchived': inv_record.is_Archived if inv_record else False,
+                    'created_at': inventory.created_at.isoformat() if inventory.created_at else None,
+                }
+                
+                archived_data.append(item_data)
+            
+            # Sort by archived date descending (most recent first)
+            archived_data.sort(key=lambda x: x['archivedDate'] if x['archivedDate'] else '', reverse=True)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginator.page_size = page_size
+            page_data = paginator.paginate_queryset(archived_data, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response(response.data)
+            
+            return Response({
+                'success': True,
+                'results': archived_data,
+                'count': len(archived_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            print(f"Error traceback: {traceback.format_exc()}")
+            return Response({
+                'success': False,
+                'error': f'Error fetching archived first aid items: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
 # ==================FIRST AID REPORT=======================
 
 class FirstAidSummaryMonthsAPIView(APIView):

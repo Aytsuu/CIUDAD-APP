@@ -15,7 +15,7 @@ import { getArchiveCommodityStocks } from "./columns/CommodityCol"
 import { useNavigate } from "react-router-dom"
 import { useArchivedCommodityStocks } from "../queries/fetch"
 
-export default function CombinedStockTable() {
+export default function CommodityArchiveTable() {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
   const [pageSize, setPageSize] = useState(10)

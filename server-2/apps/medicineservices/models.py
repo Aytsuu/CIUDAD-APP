@@ -59,6 +59,7 @@ class Medicine_File(models.Model):
     medf_path = models.CharField(max_length=500)
     medf_url = models.CharField(max_length=500)
     medrec= models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='medicine_files', blank=True, null=True)
+    medreqitem= models.ForeignKey(MedicineRequestItem, on_delete=models.CASCADE, related_name='medicine_files', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

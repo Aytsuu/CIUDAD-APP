@@ -1,4 +1,3 @@
-// src/hooks/useMedicineRequestMutation.ts
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { processMedicineRequest } from "./processSubmit";
@@ -9,17 +8,16 @@ export const useMedicineRequestMutation = () => {
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: ({ data, staff_id }: { data: any; staff_id: string }) => {
+    mutationFn: ({ data, staff_id }: { data: any; staff_id: string | null }) => { // Allow null
       return processMedicineRequest(data, staff_id);
     },
-    onSuccess: () => {
-      showSuccessToast("Medicine request submitted successfully!");
+    onSuccess: (response) => {
+      showSuccessToast(`Medicine request submitted successfully! ${response.uploaded_files_count || 0} files uploaded.`);
       navigate(-1);
     },
-    onError: (error) => {
-      console.error("Submission failed completely:", error);
-      showErrorToast("Failed to submit medicine request. Please try again.");
-      
+    onError: (error: Error) => { // Add type annotation
+      console.error("Submission failed:", error);
+      showErrorToast(error.message || "Failed to submit medicine request. Please try again.");
     },
   });
 };

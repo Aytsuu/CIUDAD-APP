@@ -17,25 +17,21 @@ const TabConfig = [
     id: "medicine",
     icon: Pill,
     label: "Medicine",
-    color: "blue"
   },
   {
     id: "antigen",
     icon: Syringe,
     label: "Antigen",
-    color: "green"
   },
   {
     id: "commodity",
     icon: Package,
     label: "Commodity",
-    color: "amber"
   },
   {
     id: "firstaid",
     icon: Bandage,
     label: "First Aid",
-    color: "red"
   }
 ] as const;
 
@@ -84,46 +80,6 @@ export default function MainInventoryList() {
     return count.toString();
   };
 
-  // Get color classes for text and icons
-  const getTextColorClass = (tabId: TabType, isActive: boolean) => {
-    if (!isActive) return "text-gray-600";
-    
-    const colorMap = {
-      medicine: "text-blue-700",
-      antigen: "text-green-700", 
-      commodity: "text-amber-700",
-      firstaid: "text-red-700"
-    };
-    
-    return colorMap[tabId];
-  };
-
-  // Get color classes for badges
-  const getBadgeColorClass = (tabId: TabType, isActive: boolean) => {
-    if (!isActive) return "bg-primary/10 text-primary";
-    
-    const colorMap = {
-      medicine: "bg-blue-100 text-blue-700",
-      antigen: "bg-green-100 text-green-700", 
-      commodity: "bg-amber-100 text-amber-700",
-      firstaid: "bg-red-100 text-red-700"
-    };
-    
-    return colorMap[tabId];
-  };
-
-  // Get border color classes for active tabs
-  const getBorderColorClass = (tabId: TabType) => {
-    const colorMap = {
-      medicine: "data-[state=active]:border-blue-400",
-      antigen: "data-[state=active]:border-green-400", 
-      commodity: "data-[state=active]:border-amber-400",
-      firstaid: "data-[state=active]:border-red-400"
-    };
-    
-    return colorMap[tabId];
-  };
-
   return (
     <MainLayoutComponent title={getTitle()} description="Manage your health inventory efficiently">
       <Card>
@@ -136,19 +92,20 @@ export default function MainInventoryList() {
                   const isLoading = tab.id === "medicine" ? isLoadingMedicineCount : 
                                   tab.id === "commodity" ? isLoadingCommodityCount : false;
                   const isActive = selectedView === tab.id;
-                  const textColorClass = getTextColorClass(tab.id, isActive);
-                  const badgeColorClass = getBadgeColorClass(tab.id, isActive);
-                  const borderColorClass = getBorderColorClass(tab.id);
                   
                   return (
                     <TabsTrigger
                       key={tab.id}
                       value={tab.id}
-                      className={`flex items-center justify-center gap-2 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:rounded-md ${borderColorClass} border border-transparent transition-all ${textColorClass}`}
+                      className={`flex items-center justify-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:shadow-sm data-[state=active]:rounded-md border border-transparent transition-all ${
+                        isActive ? "text-primary" : "text-gray-600"
+                      }`}
                     >
-                      <Icon className={`h-4 w-4 ${textColorClass}`} />
-                      <span className={textColorClass}>{tab.label}</span>
-                      <span className={`ml-1 text-xs font-medium px-2 py-0.5 rounded-full ${badgeColorClass}`}>
+                      <Icon className={`h-4 w-4 ${isActive ? "text-primary" : "text-gray-600"}`} />
+                      <span className={isActive ? "text-primary" : "text-gray-600"}>{tab.label}</span>
+                      <span className={`ml-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                        isActive ? "bg-primary/20 text-primary" : "bg-gray-100 text-gray-600"
+                      }`}>
                         {getCountDisplay(count, isLoading)}
                       </span>
                     </TabsTrigger>

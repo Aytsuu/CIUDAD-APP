@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { getArchivedCommodityStocks,getMedicineInventory ,getAntigenStocks,getFirstAidInventoryList,getCombinedStock} from "../restful-api/getAPI";
+import { getArchivedCommodityStocks,getArchivedMedicineStocks ,getAntigenStocks,getArchivedFirstAidStocks} from "../restful-api/getAPI";
 export const useAntigenSocks = (
     page: number, 
     pageSize: number, 
@@ -30,30 +30,32 @@ export const useArchivedCommodityStocks = (
     });
   };
 
-  
- export const useMedicineStocks = () => {
+// API hook for fetching archived medicine stocks
+export const useArchivedMedicineStocks = (
+    page: number, 
+    pageSize: number, 
+    search?: string,
+  ) => {
     return useQuery({
-        queryKey: ["archivemedicineinventorylist"],
-        queryFn: getMedicineInventory,
-        refetchOnMount: true,
-        staleTime: 0,
-    });
-};
-
-export const useFirstAidList = () => {
-    return useQuery({
-      queryKey: ["archivefirstaidinventorylist"],
-      queryFn: getFirstAidInventoryList,
-      staleTime: 1000 * 60 * 30,
+      queryKey: ["archivemedicineinventorylist", page, pageSize, search],
+      queryFn: () => getArchivedMedicineStocks(page, pageSize, search),
+      refetchOnMount: true,
+      staleTime: 0,
     });
   };
-
   
-  export const useAntigenCombineStocks = () => {
-      return useQuery({
-          queryKey: ["combinedStocks"],
-          queryFn: getCombinedStock,
-          refetchOnMount: true,
-          staleTime: 0,
-      });
+
+// API hook for fetching archived first aid stocks
+export const useArchivedFirstAidStocks = (
+    page: number, 
+    pageSize: number, 
+    search?: string,
+  ) => {
+    return useQuery({
+      queryKey: ["archivefirstaidinventorylist", page, pageSize, search],
+      queryFn: () => getArchivedFirstAidStocks(page, pageSize, search),
+      refetchOnMount: true,
+      staleTime: 0,
+    });
   };
+  

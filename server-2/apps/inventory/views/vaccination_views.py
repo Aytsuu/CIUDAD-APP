@@ -873,6 +873,113 @@ class CombinedStockTable(APIView):
 
 
 
+# ==========================TRANSATION=========================
+from django.db.models import Q, Case, When, Value, CharField
+from django.db.models.functions import Coalesce
+
+class AntigenTransactionView(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        try:
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            # Get antigen transactions with related data
+            transactions = AntigenTransaction.objects.select_related(
+                'vacStck_id__vac_id',
+                'vacStck_id__inv_id',
+                'imzStck_id__imz_id',
+                'imzStck_id__inv_id',
+                'staff'
+            ).all()
+            
+            # Apply search filter if provided
+            if search_query:
+                transactions = transactions.filter(
+                    Q(vacStck_id__vac_id__vac_name__icontains=search_query) |
+                    Q(imzStck_id__imz_id__imz_name__icontains=search_query) |
+                    Q(vacStck_id__inv_id__inv_id__icontains=search_query) |
+                    Q(imzStck_id__inv_id__inv_id__icontains=search_query) |
+                    Q(antt_action__icontains=search_query) |
+                    Q(staff__first_name__icontains=search_query) |
+                    Q(staff__last_name__icontains=search_query)
+                )
+            
+            # Format the data for response
+            transaction_data = []
+            
+            for transaction in transactions:
+                staff = transaction.staff
+                vaccine_stock = transaction.vacStck_id
+                immunization_stock = transaction.imzStck_id
+                
+                # Determine item type and get details
+                item_name = "Manage by System"
+                item_type = "Unknown"
+                inv_id = "N/A"
+                
+                if vaccine_stock:
+                    vaccine = vaccine_stock.vac_id
+                    inventory = vaccine_stock.inv_id
+                    item_name = vaccine.vac_name if vaccine else "Unknown Vaccine"
+                    item_type = "Vaccine"
+                    inv_id = inventory.inv_id if inventory else "N/A"
+                elif immunization_stock:
+                    immunization = immunization_stock.imz_id
+                    inventory = immunization_stock.inv_id
+                    item_name = immunization.imz_name if immunization else "Unknown Supply"
+                    item_type = "Immunization Supply"
+                    inv_id = inventory.inv_id if inventory else "N/A"
+                
+                # Format staff name
+                staff_name = "Unknown"
+                if staff:
+                    staff_name = f"{staff.first_name or ''} {staff.last_name or ''}".strip()
+                    if not staff_name:
+                        staff_name = staff.username
+                
+                item_data = {
+                    'antt_id': transaction.antt_id,
+                    'item_name': item_name,
+                    'item_type': item_type,
+                    'inv_id': inv_id,
+                    'antt_qty': transaction.antt_qty,
+                    'antt_action': transaction.antt_action,
+                    'staff': staff_name,
+                    'created_at': transaction.created_at.isoformat() if transaction.created_at else None,
+                }
+                
+                transaction_data.append(item_data)
+            
+            # Sort by created_at descending (most recent first)
+            transaction_data.sort(key=lambda x: x['created_at'] if x['created_at'] else '', reverse=True)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginator.page_size = page_size
+            page_data = paginator.paginate_queryset(transaction_data, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response(response.data)
+            
+            return Response({
+                'success': True,
+                'results': transaction_data,
+                'count': len(transaction_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            print(f"Error traceback: {traceback.format_exc()}")
+            return Response({
+                'success': False,
+                'error': f'Error fetching antigen transactions: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 # ===========================ARCHIVE==============================
 class AntigenArchiveInventoryView(APIView):
     

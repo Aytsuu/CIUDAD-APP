@@ -458,6 +458,98 @@ class MedicineTransactionView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
     
     
+# ============================TRANSACTION=================================
+from django.db.models import F, Value, CharField
+from django.db.models.functions import Concat
+
+class MedicineTransactionView(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        try:
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            # Get medicine transactions with related data
+            transactions = MedicineTransactions.objects.select_related(
+                'minv_id__med_id', 
+                'minv_id__inv_id',
+                'staff'
+            ).all()
+            
+            # Apply search filter if provided
+            if search_query:
+                transactions = transactions.filter(
+                    Q(minv_id__med_id__med_name__icontains=search_query) |
+                    Q(minv_id__inv_id__inv_id__icontains=search_query) |
+                    Q(mdt_action__icontains=search_query) |
+                    Q(staff__first_name__icontains=search_query) |
+                    Q(staff__last_name__icontains=search_query)
+                )
+            
+            # Format the data for response
+            transaction_data = []
+            
+            for transaction in transactions:
+                # Get related inventory and medicine data
+                medicine_inventory = transaction.minv_id
+                medicine = medicine_inventory.med_id if medicine_inventory else None
+                inventory = medicine_inventory.inv_id if medicine_inventory else None
+                staff = transaction.staff
+                
+                # Format staff name
+                staff_name = "Managed by Sytem"
+                if staff:
+                    staff_name = f"{staff.first_name or ''} {staff.last_name or ''}".strip()
+                    if not staff_name:
+                        staff_name = staff.username
+                
+                item_data = {
+                    'mdt_id': transaction.mdt_id,
+                    'inv_id': inventory.inv_id if inventory else "N/A",
+                    'med_detail': {
+                        'med_name': medicine.med_name if medicine else "Unknown Medicine",
+                        'minv_dsg': medicine_inventory.minv_dsg if medicine_inventory else 0,
+                        'minv_dsg_unit': medicine_inventory.minv_dsg_unit if medicine_inventory else "N/A",
+                        'minv_form': medicine_inventory.minv_form if medicine_inventory else "N/A",
+                    },
+                    'mdt_qty': transaction.mdt_qty,
+                    'mdt_action': transaction.mdt_action,
+                    'staff': staff_name,
+                    'created_at': transaction.created_at.isoformat() if transaction.created_at else None,
+                }
+                
+                transaction_data.append(item_data)
+            
+            # Sort by created_at descending (most recent first)
+            transaction_data.sort(key=lambda x: x['created_at'] if x['created_at'] else '', reverse=True)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginator.page_size = page_size
+            page_data = paginator.paginate_queryset(transaction_data, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response(response.data)
+            
+            return Response({
+                'success': True,
+                'results': transaction_data,
+                'count': len(transaction_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            print(f"Error traceback: {traceback.format_exc()}")
+            return Response({
+                'success': False,
+                'error': f'Error fetching medicine transactions: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
 # ===========================MEDICINE ARCHIVE==============================
 class MedicineArchiveInventoryView(APIView):
     
@@ -531,7 +623,145 @@ class MedicineArchiveInventoryView(APIView):
             staff=None  # None for system action
         )
            
-
+# ===========================MEDICINE ARCHIVED TABLE==============================
+class ArchivedMedicineTable(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        try:
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            filter_type = request.GET.get('filter', 'all')  # all, expired, out_of_stock
+            
+            # Get archived medicine inventories
+            medicine_inventories = MedicineInventory.objects.select_related(
+                'med_id', 'inv_id'
+            ).filter(inv_id__is_Archived=True)
+            
+            # Apply search filter if provided
+            if search_query:
+                medicine_inventories = medicine_inventories.filter(
+                    Q(med_id__med_name__icontains=search_query) |
+                    Q(inv_id__inv_id__icontains=search_query) |
+                    Q(minv_form__icontains=search_query)
+                )
+            
+            # Calculate today's date for expiry comparisons
+            today = timezone.now().date()
+            
+            # Apply reason filter
+            if filter_type == 'expired':
+                medicine_inventories = medicine_inventories.filter(
+                    Q(inv_id__expiry_date__lt=today)
+                )
+            elif filter_type == 'out_of_stock':
+                medicine_inventories = medicine_inventories.filter(
+                    Q(minv_qty_avail=0) & 
+                    (Q(inv_id__expiry_date__gte=today) | Q(inv_id__expiry_date__isnull=True))
+                )
+            
+            archived_data = []
+            
+            # Process archived medicine inventories
+            for inventory in medicine_inventories:
+                # Get the inventory record
+                inv_record = inventory.inv_id
+                
+                # Safely handle None values with defaults
+                minv_qty = inventory.minv_qty or 0
+                minv_qty_avail = inventory.minv_qty_avail or 0
+                wasted = inventory.wasted or 0
+                minv_pcs = inventory.minv_pcs or 0
+                minv_dsg = inventory.minv_dsg or 0
+                
+                # Calculate total pieces (for boxes)
+                total_pcs = minv_qty * minv_pcs if inventory.minv_qty_unit and inventory.minv_qty_unit.lower() == "boxes" else minv_qty
+                
+                # Calculate total quantity display
+                if inventory.minv_qty_unit and inventory.minv_qty_unit.lower() == "boxes":
+                    total_qty_display = f"{minv_qty} boxes ({total_pcs} pcs)"
+                else:
+                    total_qty_display = f"{minv_qty} {inventory.minv_qty_unit or 'units'}"
+                
+                # Check expiry status
+                expiry_date = inv_record.expiry_date if inv_record else None
+                is_expired = expiry_date and expiry_date < today if expiry_date else False
+                
+                # Determine archive reason
+                archive_reason = 'Expired' if is_expired else 'Out of Stock'
+                
+                # Calculate actual used quantity
+                # If available stock is 0, then quantity used should be 0
+                if minv_qty_avail == 0:
+                    actual_used = 0
+                else:
+                    # Otherwise, calculate as Total Qty - Available Stock - Wasted
+                    actual_used = total_pcs - minv_qty_avail - wasted
+                
+                item_data = {
+                    'type': 'medicine',
+                    'id': inventory.minv_id,
+                    'category': 'Medicine',
+                    'item': {
+                        'med_name': inventory.med_id.med_name if inventory.med_id else "Unknown Medicine",
+                        'form': inventory.minv_form or 'N/A',
+                        'dosage': f"{minv_dsg} {inventory.minv_dsg_unit or 'N/A'}",
+                        'unit': inventory.minv_qty_unit or 'units',
+                    },
+                    'qty': {
+                        'minv_qty': minv_qty,
+                        'minv_pcs': total_pcs  # Total pieces for boxes, otherwise same as minv_qty
+                    },
+                    'administered': actual_used,
+                    'wasted': wasted,
+                    'availableStock': minv_qty_avail,
+                    'expiryDate': expiry_date.isoformat() if expiry_date else "N/A",
+                    'archivedDate': inv_record.updated_at.isoformat() if inv_record and inv_record.updated_at else inv_record.created_at.isoformat() if inv_record else None,
+                    'reason': archive_reason,
+                    'inv_id': inv_record.inv_id if inv_record else None,
+                    'med_id': inventory.med_id.med_id if inventory.med_id else None,
+                    'minv_id': inventory.minv_id,
+                    'minv_qty_unit': inventory.minv_qty_unit or 'units',
+                    'minv_pcs': minv_pcs,
+                    'isArchived': inv_record.is_Archived if inv_record else False,
+                    'created_at': inventory.created_at.isoformat() if inventory.created_at else None,
+                }
+                
+                archived_data.append(item_data)
+            
+            # Sort by archived date descending (most recent first)
+            archived_data.sort(key=lambda x: x['archivedDate'] if x['archivedDate'] else '', reverse=True)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginator.page_size = page_size
+            page_data = paginator.paginate_queryset(archived_data, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response(response.data)
+            
+            return Response({
+                'success': True,
+                'results': archived_data,
+                'count': len(archived_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            print(f"Error traceback: {traceback.format_exc()}")
+            return Response({
+                'success': False,
+                'error': f'Error fetching archived medicines: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+            
+            
+            
+            
 # ==================MEDICINE REPORT=======================
 
 class MedicineSummaryMonthsAPIView(APIView):

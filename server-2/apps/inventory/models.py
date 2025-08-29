@@ -127,7 +127,7 @@ class FirstAidList(models.Model):
 
 class Inventory(models.Model):
     inv_id = models.CharField(max_length=20, primary_key=True)
-    expiry_date = models.DateField()
+    expiry_date = models.DateField(null=True, blank=True)
     inv_type = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     is_Archived = models.BooleanField(default=False)
@@ -249,7 +249,7 @@ class FirstAidInventory(models.Model):
     finv_qty_avail = models.PositiveIntegerField(default=0)
     inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE,db_column='inv_id',related_name='inventory_firstaid')
     fa_id = models.ForeignKey(FirstAidList, on_delete=models.PROTECT, db_column='fa_id', related_name='firstaid_inventory')
-    # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
+    wasted = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     class Meta:
         db_table = 'firstaid_inventory'
@@ -409,7 +409,7 @@ class ImmunizationStock(models.Model):
   
 
 class AntigenTransaction(models.Model):
-    antt_id =models.BigAutoField(primary_key=True)
+    antt_id = models.CharField(primary_key=True, max_length=20, editable=False)
     antt_qty = models.CharField(max_length=100)
     antt_action = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)  
@@ -422,4 +422,34 @@ class AntigenTransaction(models.Model):
         db_table = 'antigen_transaction'
         ordering = ['-created_at']
 
+    def save(self, *args, **kwargs):
+        if not self.antt_id:
+            with transaction.atomic():
+                # Get current date
+                now = timezone.now()
+                
+                # Prefix: TRNSANT
+                prefix = "TRNSANT"
+                
+                # Format: TRNSANT + Year (2-digit) + Month + Day
+                date_part = f"{now.year % 100:02d}{now.month:02d}{now.day:02d}"
+                base_id = f"{prefix}{date_part}"
+                
+                # Get the maximum existing ID for today using database aggregation
+                max_id_today = AntigenTransaction.objects.filter(
+                    antt_id__startswith=base_id
+                ).aggregate(Max('antt_id'))['antt_id__max']
+                
+                if max_id_today:
+                    try:
+                        # Extract the numeric part from the max ID and increment
+                        last_num = int(max_id_today[len(base_id):]) + 1
+                    except (ValueError, IndexError):
+                        last_num = 1
+                else:
+                    last_num = 1
+                
+                # Generate unique antt_id with 6-digit number
+                self.antt_id = f"{base_id}{last_num:04d}"
         
+        super().save(*args, **kwargs)
