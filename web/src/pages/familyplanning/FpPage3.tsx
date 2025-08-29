@@ -4,7 +4,7 @@ import FamilyPlanningSchema, { type FormData } from "@/form-schema/FamilyPlannin
 import { Form, FormField, FormItem, FormControl, FormLabel } from "@/components/ui/form/form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button/button"
 import { useRiskStiData } from "./queries/fpFetchQuery"
 

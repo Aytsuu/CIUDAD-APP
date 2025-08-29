@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import React from "react";
 import { formatDate } from "@/helpers/dateHelper";
 import { ResidentRecord, ResidentFamilyRecord, ResidentBusinessRecord } from "../ProfilingTypes";
+import { calculateAge } from "@/helpers/ageCalculator";
 
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -83,11 +84,19 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     ),
     size: 60
   },
+    {
+    accessorKey: "age",
+    header: "Age",
+    cell: ({row}) => (
+      calculateAge(row.original.dob )
+    ),
+    size: 60
+  },
   {
     accessorKey: "rp_date_registered",
     header: "Date Registered",
     cell: ({row}) => (
-      formatDate(row.original.rp_date_registered, "long")
+      formatDate(row.original.rp_date_registered, "short")
     )
   },
   {

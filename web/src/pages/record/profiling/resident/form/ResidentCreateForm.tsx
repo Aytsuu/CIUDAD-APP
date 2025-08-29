@@ -4,7 +4,7 @@ import PersonalInfoForm from "./PersonalInfoForm";
 import { useResidentForm } from "./useResidentForm";
 import { Origin, Type } from "../../ProfilingEnums";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   useResidentsList,
   useSitioList,

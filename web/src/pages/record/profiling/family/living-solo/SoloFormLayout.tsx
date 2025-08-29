@@ -20,7 +20,7 @@ import { useAddFamily, useAddFamilyComposition } from "../../queries/profilingAd
 import { useHouseholdsList, useResidentsList } from "../../queries/profilingFetchQueries"
 import { useLoading } from "@/context/LoadingContext"
 import { useSafeNavigate } from "@/hooks/use-safe-navigate"
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button/button"

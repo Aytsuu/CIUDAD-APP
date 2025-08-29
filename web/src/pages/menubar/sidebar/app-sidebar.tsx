@@ -47,6 +47,7 @@ const items: BaseMenuItem[] = [
           { title: "Household", url: "/profiling/household" },
         ]
       },
+      { title: "Voters", url: "/profiling/voters" },
       {
         title: "Business", 
         url: "/profiling/business/record",

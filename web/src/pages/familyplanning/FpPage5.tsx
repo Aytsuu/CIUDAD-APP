@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useForm } from "react-hook-form"
 import SignatureCanvas from "react-signature-canvas"
 import { type FormData } from "@/form-schema/FamilyPlanningSchema"

@@ -1,43 +1,18 @@
-import React from "react"
-import { Button } from "@/components/ui/button/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Plus, ClockArrowUp, FileDown, Search, Users, Loader2, CircleUserRound, House, UsersRound, Building } from "lucide-react"
-import { Link } from "react-router"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { DataTable } from "@/components/ui/table/data-table"
-import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { residentColumns } from "./ResidentColumns"
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
-import { useRequestCount, useResidentsTable } from "../queries/profilingFetchQueries"
-import { useDebounce } from "@/hooks/use-debounce"
-import { useLoading } from "@/context/LoadingContext"
-import { Skeleton } from "@/components/ui/skeleton"
-import { capitalize } from "@/helpers/capitalize"
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { DataTable } from "@/components/ui/table/data-table";
+import { Button } from "@/components/ui/button/button";
+import React from "react";
+import { useLoading } from "@/context/LoadingContext";
+import { useDebounce } from "@/hooks/use-debounce";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+import { FileDown, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { voterColumns } from "./VoterColumns";
 
-const profiles = [
-  {
-    id: 'account', 
-    icon: CircleUserRound,
-  },
-  {
-    id: 'household', 
-    icon: House
-  },
-  {
-    id: 'family', 
-    icon: UsersRound
-  },
-  {
-    id: 'business', 
-    icon: Building
-  },
-]
-
-export default function ResidentRecords() {
-  // ----------------- STATE INITIALIZATION --------------------
+export default function VoterRecords() {
   const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
@@ -45,36 +20,12 @@ export default function ResidentRecords() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
 
-  const { data: requestCount, isLoading: isLoadingRequestCount } = useRequestCount(); 
-  const { data: residentsTableData, isLoading } = useResidentsTable(
-    currentPage,
-    debouncedPageSize,
-    debouncedSearchQuery,
-  )
-
-  const residents = residentsTableData?.results || [];
-  const totalCount = residentsTableData?.count || 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
-
-  // ----------------- SIDE EFFECTS --------------------
-  // Reset to page 1 when search changes
-  React.useEffect(() => {
-    setCurrentPage(1)
-  }, [debouncedSearchQuery])
-
-  React.useEffect(() => {
-    if(isLoading) showLoading();
-    else hideLoading();
-  }, [isLoading])
-
-  // ----------------- HANDLERS --------------------
-
   return (
-    // ----------------- RENDER --------------------
-    <MainLayoutComponent title="Resident" description="Manage and view all residents in your community">
-      <div className="space-y-6">
-        {/* Search and Actions */}
-        <Card>
+    <MainLayoutComponent
+      title="Voters"
+      description="List of registered voters"
+    >
+      <Card>
           <CardHeader className="pb-4">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div className="flex-1 w-full sm:max-w-md">
@@ -103,37 +54,6 @@ export default function ResidentRecords() {
                     { id: "pdf", name: "Export as PDF" },
                   ]}
                 />
-
-                <Link to="/profiling/request/pending/individual" className="flex-1 sm:flex-none">
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    <ClockArrowUp className="h-4 w-4 mr-2" />
-                    Pending
-                    {isLoadingRequestCount ? <Skeleton className="w-7 h-6"/> : (requestCount > 0 ?
-                      (<Badge variant="secondary" 
-                        className="ml-2 bg-orange-500/20 text-orange-600 hover:bg-orange-500/20"
-                      >
-                        {requestCount}
-                      </Badge>) : (<></>)
-                    )}
-                  </Button>
-                </Link>
-
-                <Link
-                  to="/profiling/resident/registration"
-                  state={{
-                    params: {
-                      origin: "create",
-                      title: "Complete Resident Profiling",
-                      description: "Provide the necessary details, and complete the registration.",
-                    },
-                  }}
-                  className="flex-1 sm:flex-none"
-                >
-                  <Button className="w-full sm:w-auto">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Register Resident
-                  </Button>
-                </Link>
               </div>
             </div>
           </CardHeader>
@@ -157,31 +77,18 @@ export default function ResidentRecords() {
                 </Select>
                 <span>entries</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-blue-700">
-                <div className="flex item-center justify-between gap-12">
-                  {profiles.map((profile: any, idx: number) => (
-                    <div key={idx} className="flex gap-2">
-                      <profile.icon size={18} 
-                        className=""
-                      />
-                      <p>-</p>
-                      <p>{capitalize(profile.id)}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Loading State */}
-            {isLoading && (
+            {/* {isLoading && (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
                 <span className="ml-2 text-gray-600">Loading residents...</span>
               </div>
-            )}
+            )} */}
 
             {/* Empty State */}
-            {!isLoading && residents.length === 0 && (
+            {/* {!isLoading && residents.length === 0 && (
               <div className="text-center py-12">
                 <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -210,15 +117,15 @@ export default function ResidentRecords() {
                   </Link>
                 )}
               </div>
-            )}
+            )} */}
 
             {/* Data Table */}
-            {!isLoading && residents.length > 0 && (
-              <DataTable columns={residentColumns} data={residents} isLoading={isLoading} />
-            )}
+            {/* {!isLoading && residents.length > 0 && ( */}
+              <DataTable columns={voterColumns} data={[]} isLoading={false} />
+            {/* )} */}
 
             {/* Pagination */}
-            {!isLoading && residents.length > 0 && (
+            {/* {!isLoading && residents.length > 0 && (
               <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t rounded-b-lg bg-gray-50">
                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
                   Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
@@ -230,10 +137,9 @@ export default function ResidentRecords() {
                   <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 )}
               </div>
-            )}
+            )} */}
           </CardContent>
         </Card>
-      </div>
     </MainLayoutComponent>
   )
 }

@@ -1,6 +1,6 @@
 import React from "react"
 import { useLocation } from "react-router"
-import { Card } from "@/components/ui/card/card"
+import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button/button"
 import { ArrowLeft, ArrowRight, User, MapPin, Calendar, Edit3 } from "lucide-react"

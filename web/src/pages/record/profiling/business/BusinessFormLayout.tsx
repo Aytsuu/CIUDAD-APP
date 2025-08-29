@@ -1,7 +1,7 @@
 import React from "react"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import BusinessProfileForm from "./BusinessProfileForm"
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { useLocation, useNavigate } from "react-router"
 import { formatResidents, formatSitio } from "../ProfilingFormats"
 import { useForm } from "react-hook-form"
@@ -85,7 +85,6 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   }, [isFormDataLoading, showLoading, hideLoading])
 
   React.useEffect(() => {
-    console.log(formType)
     if (formType !== Type.Create) {
       if(formType == Type.Editing) setIsReadOnly(false);
       else setIsReadOnly(true);
@@ -277,8 +276,11 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     tab_params?.next(true)
   }
 
-  const isEmpty = (obj: Record<string, any>) =>
-    Object.values(obj).every(val => val === "" || val.length == 0);
+  const isEmpty = (obj: Record<string, any>) => {
+    if(!obj) return true;
+    return Object.values(obj).every(val => val === "" || val?.length == 0 || val === null);
+  }
+    
 
   // Function to handle form submission
   const submit = async () => {
@@ -320,7 +322,8 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     switch(formType) {
       case Type.Create:
         create(capitalizeAllFields(respondent), 
-          capitalizeAllFields(businessData), rp_id as string || tab_params?.residentId, 
+          capitalizeAllFields(businessData), 
+          rp_id?.split(" ")[0] as string || tab_params?.residentId, 
           files
         );
         break;

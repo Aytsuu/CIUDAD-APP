@@ -1,5 +1,5 @@
 import React from "react";
-import { Card } from "./card/card"
+import { Card } from "./card"
 import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 

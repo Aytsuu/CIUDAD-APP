@@ -1,7 +1,7 @@
 "use client"
 
 import { format } from "date-fns"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Sun, Moon } from "lucide-react"
 import type { DailySchedule } from "./schedule-types"

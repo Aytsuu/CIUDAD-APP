@@ -4,7 +4,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card/card";
+} from "@/components/ui/card";
 import { getWeekNumber, getMonthName } from "@/helpers/dateHelper";
 import { Clock, FileText } from "lucide-react";
 

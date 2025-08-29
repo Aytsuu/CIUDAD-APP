@@ -17,7 +17,7 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { useArchiveInventory } from "../REQUEST/Archive/ArchivePutQueries"
 import type { MedicineStocksRecord } from "./type"
 import { isNearExpiry, isExpired, isLowStock } from "../../../../helpers/StocksAlert"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card" // Import Card components
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card" // Import Card components
 
 type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expired"
 

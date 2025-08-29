@@ -22,11 +22,22 @@ export type ResidentRecord = {
   mname: string;
   suffix: string;
   sex: string;
+  dob: string;
   pwd: string;
   rp_date_registered: string;
   registered_by: string;
   has_account: boolean;
 };
+
+export type voterRecord = {
+  voter_id: string;
+  lname: string;
+  fname: string;
+  mname: string;
+  suffix: string;
+  sex: string;
+  dob: string;
+}
 
 export type ResidentFamilyRecord = {
   rp_id: string;
