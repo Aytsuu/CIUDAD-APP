@@ -835,7 +835,7 @@ class ClearanceRequestListView(generics.ListAPIView):
 
     def get_queryset(self):
         from apps.clerk.models import ClerkCertificate
-        queryset = ClerkCertificate.objects.select_related('rp_id').prefetch_related('treasurer_invoices').all()
+        queryset = ClerkCertificate.objects.select_related('rp_id').all()
         
         # Search functionality
         search_query = self.request.query_params.get('search', None)
@@ -857,7 +857,7 @@ class ClearanceRequestDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         from apps.clerk.models import ClerkCertificate
-        return ClerkCertificate.objects.select_related('rp_id').prefetch_related('treasurer_invoices').all()
+        return ClerkCertificate.objects.select_related('rp_id').all()
 
 
 class UpdatePaymentStatusView(generics.UpdateAPIView):

@@ -767,8 +767,6 @@ class PersonalClearancesView(APIView):
             clearances = ClerkCertificate.objects.select_related(
                 'rp_id__per',
                 'pr_id'
-            ).prefetch_related(
-                Prefetch('treasurer_invoices', queryset=Invoice.objects.all())
             ).only(
                 'cr_id',
                 'cr_req_request_date',

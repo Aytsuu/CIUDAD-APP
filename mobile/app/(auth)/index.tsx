@@ -7,5 +7,5 @@ import Request from "../(request)";
 import GarbagePickupHome from "@/screens/request/garbage-pickup/garbage-pickup-home";
 
 export default () => {
-    return <GarbagePickupHome/>
+    return <Request/>
 }
