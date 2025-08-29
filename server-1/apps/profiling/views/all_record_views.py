@@ -73,7 +73,7 @@ class CompleteRegistrationView(APIView):
   def post(self, request, *args, **kwargs):
     personal = request.data.get("personal", None)
     account = request.data.get("account", None)
-    houses = request.data.get("houses", None)
+    houses = request.data.get("houses", [])
     livingSolo = request.data.get("livingSolo", None)
     family = request.data.get("family", None)
     business = request.data.get("business", None)
@@ -100,7 +100,7 @@ class CompleteRegistrationView(APIView):
     if account:
         self.create_account(account, staff)
 
-    if houses:
+    if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
 
     if livingSolo:
