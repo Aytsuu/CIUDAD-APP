@@ -182,14 +182,17 @@ class Invoice(models.Model):
     inv_nat_of_collection=models.CharField(max_length=250)
     inv_status=models.CharField(max_length=50, default='Pending')  # Added missing field
     inv_change=models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    cr_id = models.ForeignKey(
-        'clerk.ClerkCertificate', 
-        on_delete=models.CASCADE, 
-        db_column='cr_id',
-        null=True,
+    
+
+    bpr_id = models.ForeignKey(
+        'BusinessPermitRequest', 
+        on_delete=models.CASCADE,
         blank=True,
-        related_name='treasurer_invoices' 
+        null=True, 
+        related_name='permit_files', 
+        db_column='bpr_id'
     )
+
     nrc_id = models.ForeignKey(
         'clerk.NonResidentCertificateRequest',
         on_delete=models.CASCADE, 
