@@ -49,8 +49,7 @@ export const IllnessCombobox = React.memo(
     const [width, setWidth] = React.useState<number | null>(null)
     const [searchValue, setSearchValue] = React.useState("")
 
-    React.useEffect(() => {
-    }, [value])
+    React.useEffect(() => {}, [value])
 
     // Update width when popover opens or window resizes (only for popover variant)
     React.useEffect(() => {
@@ -73,11 +72,23 @@ export const IllnessCombobox = React.memo(
 
     const hasExactMatch = React.useMemo(() => {
       if (!searchValue.trim()) return true
-      return options.some(
-        (option) =>
-          option.id.toLowerCase() === searchValue.toLowerCase() ||
-          (typeof option.name === "string" && option.name.toLowerCase() === searchValue.toLowerCase()),
-      )
+      return options.some((option) => {
+        const nameStr = typeof option.name === "string" ? option.name : option.id
+        return (
+          option.id.toLowerCase() === searchValue.toLowerCase() || nameStr.toLowerCase() === searchValue.toLowerCase()
+        )
+      })
+    }, [searchValue, options])
+
+    const filteredOptions = React.useMemo(() => {
+      if (!searchValue.trim()) return options
+      return options.filter((option) => {
+        const nameStr = typeof option.name === "string" ? option.name : option.id
+        return (
+          option.id.toLowerCase().includes(searchValue.toLowerCase()) ||
+          nameStr.toLowerCase().includes(searchValue.toLowerCase())
+        )
+      })
     }, [searchValue, options])
 
     const handleAddNew = () => {
@@ -116,37 +127,27 @@ export const IllnessCombobox = React.memo(
 
     const commandContent = (
       <Command className="w-full">
-        <CommandInput placeholder={placeholder} className="w-full font-normal" value={searchValue} onValueChange={setSearchValue} />
+        <CommandInput
+          placeholder={placeholder}
+          className="w-full font-normal"
+          value={searchValue}
+          onValueChange={setSearchValue}
+        />
         <CommandList className={cn("max-h-[300px] overflow-auto", variant === "modal" && "max-h-[60vh]")}>
-          {allowAddNew && searchValue.trim() && !hasExactMatch ? (
-            <CommandGroup>
-              <CommandItem
-                value={`add-new-${searchValue}`}
-                onSelect={handleAddNew}
-                className="flex items-center text-primary"
-              >
-                <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
-                <span>Add "{searchValue}"</span>
-              </CommandItem>
-            </CommandGroup>
-          ) : (
-            <CommandEmpty>{emptyMessage}.</CommandEmpty>
-          )}
           <CommandGroup>
-            {options.map((option) => (
+            {filteredOptions.map((option) => (
               <CommandItem
                 key={option.id}
                 value={option.id}
                 onSelect={(currentValue) => {
                   console.log("[v0] Combobox onSelect - currentValue:", currentValue, "current value:", value)
-                  
-                  // Fixed logic: Only deselect if allowDeselect is true and the same item is clicked
+
                   if (allowDeselect && currentValue === value) {
                     onChange && onChange("")
                   } else {
                     onChange && onChange(currentValue)
                   }
-                  
+
                   setOpen(false)
                   setSearchValue("")
                 }}
@@ -167,7 +168,22 @@ export const IllnessCombobox = React.memo(
                 </div>
               </CommandItem>
             ))}
+
+            {allowAddNew && searchValue.trim() && !hasExactMatch && (
+              <CommandItem
+                value={`add-new-${searchValue}`}
+                onSelect={handleAddNew}
+                className="flex items-center text-primary border-t mt-1 pt-2"
+              >
+                <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span>Add "{searchValue}"</span>
+              </CommandItem>
+            )}
           </CommandGroup>
+
+          {filteredOptions.length === 0 && (!allowAddNew || !searchValue.trim() || hasExactMatch) && (
+            <CommandEmpty>{emptyMessage}.</CommandEmpty>
+          )}
         </CommandList>
       </Command>
     )

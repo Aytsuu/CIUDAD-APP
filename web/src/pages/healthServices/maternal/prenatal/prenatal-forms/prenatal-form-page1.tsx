@@ -1053,7 +1053,7 @@ export default function PrenatalFormFirstPg({
               <div className="flex mt-5">
                 {bodyMeasurementData?.body_measurement.weight !== null && (selectedPatientId) && !bmLoading && (
                   <span className="text-sm italic text-yellow-600">
-                    *Note: Previous measurements recorded on {phDate}
+                    *Note: Last measurements were recorded on {phDate}
                   </span>
                 )}
               </div>
@@ -1117,8 +1117,8 @@ export default function PrenatalFormFirstPg({
                       <FormInput
                         control={control}
                         name="obstetricHistory.historyOfDiabetes"
-                        label="History of Diabetes"
-                        placeholder="Enter history of diabetes"
+                        label="Diabetes"
+                        placeholder="Enter yes or no"
                       />
                     </div>
                   </div>

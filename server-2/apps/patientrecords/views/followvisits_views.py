@@ -114,7 +114,7 @@ class GetCompletedFollowUpVisits(APIView):
                 'status': visit.followv_status,
                 'patrec_id': visit.patrec_id,
                 'created_at': visit.created_at.isoformat() if visit.created_at else None,
-                'updated_at': visit.updated_at.isoformat() if visit.updated_at else None
+                'completed_at': visit.completed_at.isoformat() if visit.completed_at else None
             } for visit in visits]
             
             response_data = {

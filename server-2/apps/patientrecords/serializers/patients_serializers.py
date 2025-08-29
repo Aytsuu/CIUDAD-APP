@@ -520,22 +520,6 @@ class PatientSerializer(serializers.ModelSerializer):
                     'spouse_info': SpouseSerializer(prental_with_spouse.spouse_id, context=self.context).data
                 }
             
-            # Check prenatal records if no postpartum spouse found
-            # patient_records = PatientRecord.objects.filter(
-            #     pat_id=obj,
-            #     patrec_type__icontains='Prenatal'
-            # )
-            
-            # for pat_record in patient_records:
-            #     if hasattr(pat_record, 'prenatal_form') and pat_record.prenatal_form:
-            #         prenatal = pat_record.prenatal_form
-            #         if hasattr(prenatal, 'spouse_id') and prenatal.spouse_id:
-            #             return {
-            #                 'spouse_exists': True,
-            #                 'spouse_source': 'prenatal_record',
-            #                 'spouse_info': SpouseSerializer(prenatal.spouse_id, context=self.context).data
-            #             }
-            
             # No spouse found in medical records
             return {
                 'spouse_exists': False,
