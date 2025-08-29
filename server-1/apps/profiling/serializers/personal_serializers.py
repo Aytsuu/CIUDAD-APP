@@ -40,13 +40,13 @@ class PersonalHistoryBaseSerializer(serializers.ModelSerializer):
         ]
 
 class PersonalBaseSerializer(serializers.ModelSerializer):
-    addresses = serializers.SerializerMethodField()
+    per_addresses = serializers.SerializerMethodField()
 
     class Meta:
         model = Personal
         fields = ['per_id','per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_dob', 
                   'per_sex', 'per_status', 'per_edAttainment', 'per_religion', 
-                  'per_contact', 'addresses']
+                  'per_contact', 'per_disability', 'per_addresses']
         extra_kwargs = {
             'per_lname': {'required': False, 'allow_null': True},
             'per_fname': {'required': False, 'allow_null': True},
@@ -58,9 +58,10 @@ class PersonalBaseSerializer(serializers.ModelSerializer):
             'per_contact': {'required': False, 'allow_null': True},
             'per_edAttainment': {'required': False, 'allow_null': True},
             'per_religion': {'required': False, 'allow_null': True},
+            'per_disability': {'required': False, 'allow_null': True},
         }
         
-    def get_addresses(Self, obj):
+    def get_per_addresses(Self, obj):
         per_addresses = PersonalAddress.objects.filter(per=obj.per_id)
         addresses = [pa.add for pa in per_addresses.select_related('add')]
         return AddressBaseSerializer(addresses, many=True).data
@@ -88,6 +89,7 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
             'per_mname': {'required': False, 'allow_null': True},
             'per_suffix': {'required': False, 'allow_null': True},
             'per_edAttainment': {'required': False, 'allow_null': True},
+            'per_disability': {'required': False, 'allow_null': True},
         }
 
     def update(self, instance, validated_data): 

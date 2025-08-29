@@ -86,7 +86,8 @@ export default function RegistrationRequests() {
           per_edAttainment: personal.per_edAttainment,
           per_religion: personal.per_religion,
           per_contact: personal.per_contact,
-          addresses: personal.addresses
+          per_disability: personal.per_disability,
+          per_addresses: personal.per_addresses
         }
       } else {
         const respondent = request.compositions.filter((comp: any) => comp.acc !== null)[0]

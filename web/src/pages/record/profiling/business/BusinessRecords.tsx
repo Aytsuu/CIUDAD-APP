@@ -26,17 +26,20 @@ export default function BusinessRecords() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
   const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests()
-  const { data: businesses, isLoading: isLoadingBusinesses} = useActiveBusinesses(
+  const { data: activeBusinesses, isLoading: isLoadingBusinesses} = useActiveBusinesses(
     currentPage, 
     debouncedPageSize,
     debouncedSearchQuery,
   )
+  
 
-  const businessList = businesses?.results || [];
-  const totalCount = businesses?.count || 0;
+  const businessList = activeBusinesses?.results || [];
+  const totalCount = activeBusinesses?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const formattedRequest = formatModificationRequests(modificationRequests);
+
+  console.log(businessList)
 
   // ----------------- SIDE EFFECTS --------------------
   React.useEffect(() => {

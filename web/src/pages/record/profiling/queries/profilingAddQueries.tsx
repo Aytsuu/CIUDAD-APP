@@ -12,6 +12,20 @@ import {
 } from "../restful-api/profiingPostAPI";
 import { api } from "@/api/api";
 
+export const useAddAllProfile = () => {
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        const res = await api.post("profiling/complete/registration/", data);
+        return res.data;
+      } catch (err) {
+        console.error(err)
+        throw err;
+      }
+    }
+  })
+}
+
 export const useAddPersonal = () => {
   return useMutation({
     mutationFn: (data: Record<string, any>) => addPersonal(data),
@@ -134,11 +148,11 @@ export const useAddBusiness = () => {
   return useMutation({
     mutationFn: (data: Record<string, any>) => addBusiness(data),
     onSuccess: (newData) => {
-      queryClient.setQueryData(["businesses"], (old: any[] = []) => [
+      queryClient.setQueryData(["activeBusinesses"], (old: any[] = []) => [
         ...old,
         newData
       ]);
-      queryClient.invalidateQueries({queryKey: ["businesses"]});
+      queryClient.invalidateQueries({queryKey: ["activeBusinesses"]});
     },
   });
 };

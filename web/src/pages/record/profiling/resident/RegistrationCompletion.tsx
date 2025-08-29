@@ -2,24 +2,17 @@ import React from "react";
 import {
   CheckCircle,
   Check,
+  Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card/card";
 import { Button } from "@/components/ui/button/button";
-import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
-const RegistrationCompletion = ({
-  steps, 
-  completed: initialCompleted,
-  intervalDelay = 400
-} : {
-  steps: any[]
-  completed: any[]
-  intervalDelay?: number
-}) => {
-  const { safeNavigate } = useSafeNavigate();
+const RegistrationCompletion = ({ params } : {  params: Record<string, any> }) => {
+  // ====================== STATE INITIALIZATION ========================
   const [completedSteps, setCompletedSteps] = React.useState<any[]>([]);
   const [_currentStepIndex, setCurrentStepIndex] = React.useState(0);
 
+  // ====================== SIDE EFFECTS ========================
   React.useEffect(() => {
     // Start with empty completed steps for animation
     setCompletedSteps([]);
@@ -27,10 +20,10 @@ const RegistrationCompletion = ({
 
     const timer = setInterval(() => {
       setCurrentStepIndex((prevIndex) => {
-        if (prevIndex < initialCompleted.length) {
+        if (prevIndex < params?.completed.length) {
           setCompletedSteps((prevCompleted) => [
             ...prevCompleted,
-            initialCompleted[prevIndex]
+            params?.completed.sort((a: number,b: number) => a - b)[prevIndex]
           ]);
           return prevIndex + 1;
         } else {
@@ -39,11 +32,17 @@ const RegistrationCompletion = ({
           return prevIndex;
         }
       });
-    }, intervalDelay);
+    }, 400);
 
     return () => clearInterval(timer);
-  }, [initialCompleted, intervalDelay]);
+  }, [params?.completed]);
 
+  // ====================== HANDLERS ========================
+  const submit = async () => {
+    params?.register()
+  }
+
+  // ====================== RENDER ========================
   return (
     <div className="min-h-screen flex justify-center">
       <div className="w-full max-w-lg">
@@ -55,27 +54,28 @@ const RegistrationCompletion = ({
           </div>
           {/* Title */}
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-            Registration Complete
+            Complete Your Registration
           </h1>
           <p className="text-gray-600 mb-8">
-            Profile has been successfully created.
+            Ensure all information provided are accurate
           </p>
           <p className="text-gray-600 mb-8">
-            {completedSteps.length} of {steps.length} Completed
+            {completedSteps.length} of {params?.steps.length} Profile
           </p>
           {/* Steps List */}
           <div className="space-y-3 mb-8">
-            {steps.map((step, index) => {
+            {params?.steps.map((step: any, index: number) => {
               const Icon = step.icon;
-              const isCompleted = completedSteps.includes(step.id);
+              const isCompleted = completedSteps.sort((a,b) => a - b).includes(step.id);
               return (
                 <div
                   key={index}
-                  className={`flex items-center p-3 rounded-lg transition-all duration-500 ${
+                  className={`flex items-center p-3 rounded-lg transition-all duration-500 cursor-pointer ${
                     isCompleted
                       ? "bg-green-50 border border-green-100 scale-[1.02]"
                       : "bg-gray-50"
                   }`}
+                  onClick={() => step.onClick(step.id)}
                 >
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 transition-all duration-500 ${
@@ -101,14 +101,16 @@ const RegistrationCompletion = ({
           </div>
           {/* Action Buttons */}
           <Button 
-            onClick={() => safeNavigate.back()}
+            onClick={submit}
             className={`transition-all duration-300 ${
-              completedSteps.length === initialCompleted.length 
+              completedSteps.length === params?.completed.length 
                 ? "opacity-100" 
                 : "opacity-50 pointer-events-none"
             }`}
+            disabled={params?.isSubmitting}
           >
-            Done
+            {params?.isSubmitting && <Loader2 className="animate-spin"/>}
+            {params?.isSubmitting ? "Registering..." : "Register"}
             <Check className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
           </Button>
         </Card>

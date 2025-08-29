@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm, ControllerRenderProps } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Lock, Phone, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Phone, Mail, ArrowLeft, Shield, Users, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,8 +19,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import SignInSchema from "@/form-schema/sign-in-schema";
 import { useAuth } from "@/context/AuthContext";
 import SanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
+import { useNavigate } from "react-router";
 
 export default function SignIn() {
+  const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,6 +44,9 @@ export default function SignIn() {
 
     try {
       await login(credentials.email, credentials.password);
+      toast.success("Successfully Logged in!");
+      form.reset();
+      navigate("/home");
     } catch (error) {
       console.error("Login error:", error);
       setErrorMessage(
@@ -61,206 +68,291 @@ export default function SignIn() {
   };
 
   return (
-    <div className="w-full h-full flex">
-      {/* Left Side: Logo / Image / Video */}
-      <div className="hidden md:flex w-2/3 h-full relative bg-blue-900">
-        <img
-          src={SanRoqueLogo}
-          alt="Barangay Logo"
-          className="w-2/3 h-2/3 object-contain mx-auto my-auto opacity-20"
-        />
-        <div className="absolute top-10 left-10 text-white">
-          <h1 className="text-3xl font-bold">Barangay San Roque</h1>
-          <p className="text-sm mt-2 max-w-xs">
-            Authorized personnel only. Please sign in to continue.
+    <div className="w-full h-screen flex flex-col lg:flex-row overflow-hidden">
+      {/* Left Side - Hero Section */}
+      <div className="hidden lg:flex w-full lg:w-3/5 h-full relative bg-gradient-to-br from-darkBlue1 via-darkBlue2 to-[#0B1A37] overflow-hidden">
+        {/* Subtle darkBlue gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-darkBlue1/30 via-darkBlue2/20 to-[#0B1A37]/10"></div>
+
+        {/* Main overlay tint */}
+        <div className="absolute inset-0 bg-black/15"></div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center h-full px-8 sm:px-12 lg:px-16 text-white">
+          <div className="space-y-4 sm:space-y-6">
+            {/* Optional header badge */}
+            <div className="inline-flex items-center space-x-3 mb-4 sm:mb-6 p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
+              <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                <Shield className="w-4 sm:w-6 h-4 sm:h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold">Official Portal</h3>
+                <p className="text-blue-200 text-xs sm:text-sm">Authorized Access</p>
+              </div>
+            </div>
+
+            {/* Enhanced title */}
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-wide leading-tight drop-shadow-lg">
+              Barangay{" "}
+              <span className="bg-gradient-to-r from-lightBlue to-cyan-300 bg-clip-text text-transparent">
+                San Roque
+              </span>
+            </h1>
+            
+            <p className="mt-4 sm:mt-6 text-lg sm:text-xl max-w-lg opacity-90 leading-relaxed">
+              Empowering the community with accessible governance and health services. 
+              Authorized personnel, please sign in to continue.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="absolute bottom-4 sm:bottom-8 left-8 sm:left-12 lg:left-16 text-gray-300">
+          <div className="p-3 sm:p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
+            <p className="font-medium text-sm sm:text-base">Barangay San Roque</p>
+            <p className="text-xs sm:text-sm">Cebu City, Philippines • © {new Date().getFullYear()}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Hero Section */}
+      <div className="lg:hidden w-full h-28 sm:h-32 relative bg-gradient-to-br from-darkBlue1 via-darkBlue2 to-[#0B1A37] overflow-hidden flex-shrink-0">
+        <div className="absolute inset-0 bg-black/15"></div>
+        <div className="relative z-10 flex flex-col justify-center h-full px-6 text-white text-center">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-wide leading-tight drop-shadow-lg">
+            Barangay{" "}
+            <span className="bg-gradient-to-r from-lightBlue to-cyan-300 bg-clip-text text-transparent">
+              San Roque
+            </span>
+          </h1>
+          <p className="mt-2 text-sm sm:text-base opacity-90">
+            Official Portal Access
           </p>
         </div>
       </div>
 
-      <div className="flex w-full md:w-1/2 h-full justify-center items-center bg-gray-50 px-6">
-        <div className="w-full max-w-md space-y-8">
-
-          {/* Form */}
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSignIn)}
-              className="space-y-6"
+      {/* Right Side - Form Section */}
+      <div className="flex w-full lg:w-1/2 flex-1 bg-gray-50 p-3 sm:p-4 overflow-y-auto">
+        <div className="w-full max-w-md mx-auto flex flex-col justify-center space-y-4 sm:space-y-6 min-h-full py-2">
+          {/* Back Button - Now in normal flow */}
+          <div className="flex justify-start flex-shrink-0">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/home")}
+              className="flex items-center gap-2 text-gray-600 hover:text-darkBlue1 hover:bg-gray-100 rounded-lg px-3 py-2 transition-all duration-200 self-start"
             >
-              {/* Email */}
-              <FormField
-                control={form.control}
-                name="email"
-                render={({
-                  field,
-                }: {
-                  field: ControllerRenderProps<any, any>;
-                }) => (
-                  <FormItem>
-                    <FormLabel className="text-base font-medium text-gray-700">
-                      Email Address
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        {...field}
-                        disabled={loading}
-                        className="w-full text-lg py-3"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Password */}
-              <FormField
-                control={form.control}
-                name="password"
-                render={({
-                  field,
-                }: {
-                  field: ControllerRenderProps<any, any>;
-                }) => (
-                  <FormItem>
-                    <FormLabel className="text-base font-medium text-gray-700">
-                      Password
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          {...field}
-                          disabled={loading}
-                          className="w-full text-lg py-3 pr-12"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                          disabled={loading}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5 text-gray-500" />
-                          ) : (
-                            <Eye className="h-5 w-5 text-gray-500" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Error */}
-              {errorMessage && (
-                <Alert variant="destructive">
-                  <AlertDescription>{errorMessage}</AlertDescription>
-                </Alert>
-              )}
-
-              {/* Remember + Forgot */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="remember" />
-                  <Label htmlFor="remember" className="text-sm text-gray-600">
-                    Remember me
-                  </Label>
-                </div>
-                <Button
-                  type="button"
-                  variant="link"
-                  className="px-0 text-sm text-darkBlue1"
-                  onClick={() => navigate("/forgot-password")}
-                >
-                  Forgot password?
-                </Button>
-              </div>
-
-              {/* Submit */}
-              <Button
-                type="submit"
-                className="w-full bg-darkBlue1 hover:bg-darkBlue2 text-white text-lg py-3"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    <Lock className="mr-2 h-5 w-5" />
-                    Sign in
-                  </>
-                )}
-              </Button>
-            </form>
-          </Form>
-
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">
-                Or continue with
-              </span>
-            </div>
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Back</span>
+            </Button>
           </div>
 
-          {/* Alternative Sign In Options */}
-          <div className="flex space-x-3">
-            <button
-              type="button"
-              onClick={handlePhoneSignIn}
-              disabled={loading}
-              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium py-2 px-3 text-sm rounded-md transition-all duration-200 flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
-            >
-              <Phone className="h-4 w-4" />
-              <span>Sign in with Phone</span>
-            </button>
+          {/* Enhanced Card */}
+          <div className="bg-white/95 backdrop-blur-sm shadow-2xl rounded-2xl p-4 sm:p-6 border border-gray-200 relative overflow-hidden flex-1 max-w-md w-full">
+            {/* Subtle background accent */}
+            <div className="absolute top-0 right-0 w-16 sm:w-20 h-16 sm:h-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full -translate-y-8 sm:-translate-y-10 translate-x-8 sm:translate-x-10 opacity-50"></div>
+            
+            <div className="relative z-10">
+              {/* Header with Logo */}
+              <div className="text-center mb-4 sm:mb-6">
+                <div className="w-12 sm:w-16 h-12 sm:h-16 mx-auto mb-3">
+                  <img
+                    src={SanRoqueLogo}
+                    alt="Logo"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  Welcome Back
+                </h2>
+                <p className="text-gray-600 text-xs sm:text-sm">Sign in to your official account</p>
+              </div>
 
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="flex-1 bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-900 font-medium py-2 px-3 text-sm rounded-md border border-gray-300 transition-all duration-200 flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              <span>Sign in with Google</span>
-            </button>
+              {/* Form */}
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(handleSignIn)}
+                  className="space-y-3 sm:space-y-4"
+                >
+                  {/* Email */}
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({
+                      field,
+                    }: {
+                      field: ControllerRenderProps<any, any>;
+                    }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-700 font-medium text-sm sm:text-base">Email Address</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-gray-400" />
+                            <Input
+                              type="email"
+                              placeholder="Enter your email"
+                              {...field}
+                              disabled={loading}
+                              className="w-full text-sm py-2.5 pl-10 sm:pl-11 pr-4 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Password */}
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({
+                      field,
+                    }: {
+                      field: ControllerRenderProps<any, any>;
+                    }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-700 font-medium text-sm sm:text-base">Password</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-gray-400" />
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              placeholder="Enter your password"
+                              {...field}
+                              disabled={loading}
+                              className="w-full text-sm py-2.5 pl-10 sm:pl-11 pr-12 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100 rounded-lg"
+                              onClick={() => setShowPassword(!showPassword)}
+                              disabled={loading}
+                            >
+                              {showPassword ? (
+                                <EyeOff className="h-4 sm:h-5 w-4 sm:w-5 text-gray-500" />
+                              ) : (
+                                <Eye className="h-4 sm:h-5 w-4 sm:w-5 text-gray-500" />
+                              )}
+                            </Button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Error */}
+                  {errorMessage && (
+                    <Alert variant="destructive" className="rounded-xl">
+                      <AlertDescription className="text-sm">{errorMessage}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Remember + Forgot */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 text-xs">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="remember" />
+                      <Label htmlFor="remember" className="text-gray-600 font-medium">
+                        Remember me
+                      </Label>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="px-0 text-darkBlue1 font-medium text-xs self-start sm:self-auto"
+                      onClick={() => navigate("/forgot-password")}
+                    >
+                      Forgot password?
+                    </Button>
+                  </div>
+
+                  {/* Submit */}
+                  <Button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-darkBlue1 to-darkBlue2 hover:from-darkBlue2 hover:to-[#0B1A37] text-white text-sm font-semibold py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        <span className="text-sm">Signing in...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="mr-2 h-4 w-4" />
+                        <span>Sign in</span>
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </Form>
+
+              {/* Divider */}
+              <div className="flex items-center my-4">
+                <div className="flex-grow border-t border-gray-300"></div>
+                <span className="mx-4 text-gray-400 text-xs font-thin">
+                  or continue with
+                </span>
+                <div className="flex-grow border-t border-gray-300"></div>
+              </div>
+
+              {/* Social Sign-in */}
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={handlePhoneSignIn}
+                  disabled={loading}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-green-400 text-sm"
+                >
+                  <Phone className="h-4 w-4" />
+                  Phone
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={loading}
+                  className="flex-1 bg-white hover:bg-gray-50 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-medium py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-100 text-sm"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
+                  </svg>
+                  Google
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Footer */}
-          <div className="text-center text-sm text-gray-500 mt-6">
-            Barangay San Roque © {new Date().getFullYear()}
+          <div className="text-center text-gray-500 p-2 rounded-xl bg-white/60 backdrop-blur-sm flex-shrink-0">
+            <p className="font-medium text-xs">Barangay San Roque © {new Date().getFullYear()}</p>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+
 
 // Phone and Google Setup
 

@@ -6,16 +6,14 @@ import {
 import AppSidebar from "@/pages/menubar/sidebar/app-sidebar";
 import { Outlet } from "react-router";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import React, { useState, useRef } from "react";
+import React from "react";
 import { Toaster } from "@/components/ui/sonner";
-import { useAuth } from "@/context/AuthContext";
 import AccountSidebar from "@/pages/menubar/sidebar/account-sidebar";
 import { useLocation } from "react-router";
 
 export default function MainLayout() {
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
-  const { user } = useRef(useAuth()).current;
+  const [isOpen, setIsOpen] = React.useState(false);
 
   // Check if we are in Account Settings
   const isAccountSettings = location.pathname.startsWith("/manage");
@@ -41,7 +39,7 @@ export default function MainLayout() {
             </div>
           </SidebarProvider>
         </div>
-        <main className="py-10 pl-8 pr-14 flex-1 bg-[#F3F4F8]">
+        <main className="py-10 pl-8 pr-14 flex-1 bg-[#F3F4F8] overflow-y-auto ">
           <Outlet />
           <Toaster visibleToasts={5}/>
         </main>

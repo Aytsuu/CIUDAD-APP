@@ -6,11 +6,9 @@ from apps.administration.serializers.assignment_serializers import AssignmentBas
 from apps.administration.serializers.feature_serializers import FeatureBaseSerializer
 from apps.administration.models import Staff, Assignment, Feature, Position
 
-
 class UserAccountSerializer(serializers.ModelSerializer):
     resident = ResidentProfileFullSerializer(source='rp', read_only=True)
     staff = serializers.SerializerMethodField()
-    # assignment = serializers.SerializerMethodField()
     
     class Meta:
         model = Account
@@ -36,16 +34,40 @@ class UserAccountSerializer(serializers.ModelSerializer):
         if not staff_record:
             return None
 
-        # Check if the staff is an admin
-        if staff_record.pos and staff_record.pos.pos_title == 'Admin':
+        # Get staff position
+        staff_position = staff_record.pos
+        if not staff_position:
+            return None
+
+        # Check if the staff position is admin
+        if staff_position.pos_title == 'Admin':
+            # Admin gets all features
             features = Feature.objects.all()
-        
         else:
-            assignments = Assignment.objects.filter(staff=staff_record)
-            features = Feature.objects.filter(feat_id__in=assignments.values('feat_id'))
+            # For non-admin, check assignments based on position
+            # First, check if there are direct staff assignments
+            staff_assignments = Assignment.objects.filter(staff=staff_record)
             
+            if staff_assignments.exists():
+                # Use staff-specific assignments
+                feature_ids = staff_assignments.values_list('feat_id', flat=True)
+                features = Feature.objects.filter(feat_id__in=feature_ids)
+            else:
+                # Check position-based assignments
+                position_assignments = Assignment.objects.filter(pos=staff_position)
+                if position_assignments.exists():
+                    feature_ids = position_assignments.values_list('feat_id', flat=True)
+                    features = Feature.objects.filter(feat_id__in=feature_ids)
+                else:
+                    # No assignments found
+                    features = Feature.objects.none()
+
+        # Serialize staff data
         staff_data = StaffFullSerializer(staff_record).data
+        
+        # Add features to staff data
         staff_data['features'] = FeatureBaseSerializer(features, many=True).data
+        
         return staff_data
 
         

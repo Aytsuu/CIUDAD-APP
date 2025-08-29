@@ -2,6 +2,7 @@ from rest_framework import serializers
 from ..models import *
 from django.db import transaction
 from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
+from apps.profiling.serializers.personal_serializers import PersonalBaseSerializer
 from apps.profiling.serializers.address_serializers import AddressBaseSerializer
 from utils.supabase_client import supabase, upload_to_storage, remove_from_storage
 from datetime import datetime
@@ -64,17 +65,17 @@ class BusinessTableSerializer(serializers.ModelSerializer):
     model = Business
     fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'sitio', 'bus_street',
               'bus_date_of_registration', 'bus_date_verified', 'respondent', 
-              'rp']
+              'rp', 'br']
     
   def get_respondent(self, obj):
     if obj.br:
-      return f"{obj.br.per.per_lname}, {obj.br.per.per_fname} " \
-             f"{obj.br.per.per_mname}" if obj.br.per.per_mname else None
-    
+        per = obj.br.per
+        middle = f" {per.per_mname}" if per.per_mname else ""
+        return f"{per.per_lname}, {per.per_fname}{middle}"
     if obj.rp:
-      return f"{obj.rp.per.per_lname}, {obj.rp.per.per_fname} " \
-             f"{obj.rp.per.per_mname}" if obj.rp.per.per_mname else None
-    
+        per = obj.rp.per
+        middle = f" {per.per_mname}" if per.per_mname else ""
+        return f"{per.per_lname}, {per.per_fname}{middle}"
     return None
 
 class BusinessRespondentTableSerializer(serializers.ModelSerializer):
@@ -174,15 +175,6 @@ class FileInputSerializer(serializers.Serializer):
   type = serializers.CharField()
   file = serializers.CharField()
 
-class RespondentInputSerializer(serializers.Serializer):
-  br_lname = serializers.CharField()
-  br_fname = serializers.CharField()
-  br_mname = serializers.CharField()
-  br_sex = serializers.CharField() 
-  br_dob = serializers.DateField()
-  br_contact = serializers.CharField()
-  br_address = serializers.CharField()
-  
 class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   bus_street = serializers.CharField(write_only=True, required=False)
   sitio = serializers.SlugRelatedField(
@@ -193,39 +185,52 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   modification_files = FileInputSerializer(write_only=True, many=True, required=False)
   edit_files = FileInputSerializer(write_only=True, many=True, required=False)
   create_files = FileInputSerializer(write_only=True, many=True, required=False)
-  respondent = RespondentInputSerializer(write_only=True, required=False)
   rp = serializers.CharField(write_only=True, required=False)
-  br = serializers.CharField(write_only=True, required=False)
+  per = PersonalBaseSerializer(write_only=True, required=False)
   add = serializers.CharField(write_only=True, required=False)
 
   class Meta:
     model = Business
-    fields = ['bus_name', 'rp', 'br', 'respondent', 'bus_gross_sales', 
-              'bus_status', 'bus_date_verified','sitio', 'bus_street', 
-              'staff', 'modification_files', 'edit_files', 'create_files', 'add']
+    fields = ['bus_name', 'rp', 'per', 'bus_gross_sales', 'bus_status', 'bus_date_verified',
+              'sitio', 'bus_street', 'staff', 'modification_files', 'edit_files', 'create_files',
+              'add']
 
   @transaction.atomic
   def create(self, validated_data):
     try:
         sitio = validated_data.pop('sitio', None)
-        street = validated_data.pop('bus_street', '')
+        street = validated_data.pop('bus_street', None)
         create_files = validated_data.pop('create_files', [])
         rp = validated_data.pop('rp', None)
-        br = validated_data.pop('br', None)
+        per = validated_data.pop('per', None)
+        br = None
 
         # Validate address components
         if not sitio or not street:
             raise serializers.ValidationError("Both sitio and street are required")
 
-        address, _ = Address.objects.get_or_create(
-            sitio=sitio,
-            add_street=street,
-            defaults={
-                'add_province': 'Cebu',
-                'add_city': 'Cebu City',
-                'add_barangay': 'San Roque',
-            }
-        )
+        address = Address.objects.filter(
+          add_province='Cebu',
+          add_city='Cebu City',
+          add_barangay='San Roque (ciudad)',
+          sitio=sitio, 
+          add_street=street
+        ).first()
+
+        if not address:
+            address = Address.objects.create(
+                sitio=sitio,
+                add_street=street,
+                add_province='Cebu',
+                add_city='Cebu City',
+                add_barangay='San Roque (ciudad)',
+            )
+
+        if per:
+          personal = Personal(**per)
+          personal._history_user=validated_data["staff"]
+          personal.save()
+          br = BusinessRespondent.objects.create(per=personal)
 
         # Handle respondent/rp/br logic
         business_instance = self._create_business_instance(
@@ -243,12 +248,17 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         raise serializers.ValidationError(str(e))
 
   def _create_business_instance(self, validated_data, address, rp, br):
-      return Business.objects.create(
+      business = Business(
         rp=ResidentProfile.objects.get(rp_id=rp) if rp else None,
-        br=BusinessRespondent.objects.get(br_id=br) if br else None,
+        br=br,
         add=address,
+        bus_date_verified=date.today(),
         **validated_data
       )
+
+      business._history_user = validated_data['staff']
+      business.save()
+      return business
   
   def _upload_files(self, business_instance, files):
       business_files = []

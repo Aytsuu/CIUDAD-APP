@@ -28,6 +28,7 @@ export default () => {
             <Stack>
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="otp" options={{ headerShown: false }} />
+              <Stack.Screen name="loginscreen" options={{ headerShown: false }} />
               <Stack.Screen name="registration/family/register-new" options={{ headerShown: false }} />
               <Stack.Screen name="registration/family/account-reg-new" options={{ headerShown: false }} />
               <Stack.Screen name="registration/family/respondent" options={{ headerShown: false }} />

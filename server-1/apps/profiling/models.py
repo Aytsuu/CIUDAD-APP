@@ -35,14 +35,15 @@ class Personal(models.Model):
     per_id = models.BigAutoField(primary_key=True)
     per_lname = models.CharField(max_length=100)
     per_fname = models.CharField(max_length=100)
-    per_mname = models.CharField(max_length=100, null=True)
-    per_suffix = models.CharField(max_length=100, null=True)
+    per_mname = models.CharField(max_length=100, null=True, blank=True)
+    per_suffix = models.CharField(max_length=100, null=True, blank=True)
     per_dob = models.DateField()
     per_sex = models.CharField(max_length=100)
     per_status = models.CharField(max_length=100)
-    per_edAttainment = models.CharField(max_length=100, null=True)
+    per_edAttainment = models.CharField(max_length=100, null=True, blank=True)
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=20)  
+    per_disability = models.CharField(max_length=100, null=True, blank=True)
 
     history = HistoricalRecords(
         table_name='personal_history',
@@ -103,7 +104,7 @@ class ResidentProfile(models.Model):
 class Household(models.Model):
     hh_id = models.CharField(max_length=50, primary_key=True)
     hh_nhts = models.CharField(max_length=50)
-    hh_date_registered = models.DateField(default=date.today)
+    hh_date_registered = models.DateField(auto_now_add=True)
     add = models.ForeignKey(Address, on_delete=models.CASCADE)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="households")
@@ -118,7 +119,7 @@ class Family(models.Model):
     fam_id = models.CharField(max_length=50, primary_key=True)
     fam_indigenous = models.CharField(max_length=50)
     fam_building = models.CharField(max_length=50)
-    fam_date_registered = models.DateField(default=date.today)
+    fam_date_registered = models.DateField(auto_now_add=True)
     hh = models.ForeignKey(Household, on_delete=models.CASCADE, related_name="family_set")
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="families")
 

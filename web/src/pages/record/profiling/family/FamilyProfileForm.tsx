@@ -84,7 +84,7 @@ export default function FamilyProfileForm() {
           progress={calculateProgress()}
           steps={registrationSteps}
         />
-        <Card className="w-full">
+        <Card className="w-full mt-6">
           {currentStep === 1 && (
             <DemographicForm
               form={form}

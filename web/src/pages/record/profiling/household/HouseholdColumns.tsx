@@ -90,7 +90,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Head
+        Owner
         <ArrowUpDown size={14} />
       </div>
     ),
