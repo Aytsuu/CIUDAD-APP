@@ -23,7 +23,7 @@ export interface CHSSupplementStat {
     birthwt?: string | null
     status_type: string
     date_seen: string
-    date_given_iron?: string |null
+    date_given_iron?: string 
     created_at?: string
     updated_at?: string
     chsupplement?: number

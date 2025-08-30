@@ -3,65 +3,9 @@ import { api2 } from "@/api/api";
 import {
   getVaccintStocks,
 } from "./get";
-import { useQuery } from "@tanstack/react-query";
-import { toast
-
- } from "sonner";
 
 
 
-
-
-
-export const fetchVaccinesWithStock = () => {
-  return useQuery({
-    queryKey: ["vaccineStocks"],
-    queryFn: async () => {
-      try {
-        const stocks = await getVaccintStocks();
-        
-        if (!stocks || !Array.isArray(stocks)) {
-          return {
-            default: [],
-            formatted: []
-          };
-        }
-
-        const availableStocks = stocks.filter((stock) => {
-          const isExpired =
-            stock.inv_details?.expiry_date &&
-            new Date(stock.inv_details.expiry_date) < new Date();
-          return stock.vacStck_qty_avail > 0 && !isExpired;
-        });
-
-        return {
-          default: availableStocks,
-          formatted: availableStocks.map((stock: any) => ({
-            id: `${stock.vacStck_id},${stock.vac_id},${
-              stock.vaccinelist?.vac_name || "Unknown Vaccine"
-            },${stock.inv_details?.expiry_date || "No Expiry"}`,
-            name: (
-              <div className="flex  gap-3">
-                <span className="bg-blue-500 rounded text-white p-1 text-xs">
-                  {stock.inv_details?.inv_id}
-                </span>
-                {`${stock.vaccinelist?.vac_name || "Unknown Vaccine"} 
-                (Avail: ${stock.vacStck_qty_avail}) ${
-                  stock.inv_details?.expiry_date 
-                    ? `[Exp: ${new Date(stock.inv_details.expiry_date).toLocaleDateString()}]` 
-                    : ''
-                }`}
-              </div>
-            ),
-          })),
-        };
-      } catch (error) {
-        toast.error("Failed to fetch vaccine stocks");
-        throw error;
-      }
-    },
-  });
-};
 
 
 
@@ -166,3 +110,8 @@ export const checkVaccineStatus = async (pat_id: string, vac_id: number) => {
     console.error("Error checking vaccine status:", error);
   }
 };
+
+
+
+
+

@@ -1,12 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { getStaffList } from "../restful-api/getAPI";
+import { getFirstAidChart, getStaffList } from "../restful-api/getAPI";
 import { toast } from "sonner";
-import { getFirstaidRecords,getMonthCount,getFirstaidReports } from "../restful-api/getAPI";
-
+import { getFirstaidRecords, getFirstaidReports } from "../restful-api/getAPI";
 
 export const useFirstAidRecords = (
-  page: number, 
-  pageSize: number, 
+  page: number,
+  pageSize: number,
   searchQuery: string,
   yearFilter: string
 ) => {
@@ -14,8 +13,8 @@ export const useFirstAidRecords = (
     queryKey: ["firstAidRecords", page, pageSize, searchQuery, yearFilter],
     queryFn: () =>
       getFirstaidRecords(
-        page, 
-        pageSize, 
+        page,
+        pageSize,
         searchQuery,
         yearFilter === "all" ? undefined : yearFilter
       ),
@@ -34,14 +33,13 @@ export const useFirstAidReports = (
   });
 };
 
-export const FAuseMonthCount = () => {
+export const useFirstAidChart = (month: string) => {
   return useQuery({
-    queryKey: ["famonthCount"],
-    queryFn: getMonthCount,
-		retry: 3,
-    staleTime: 60 * 1000, // 1 minute
-	})
-}
+    queryKey: ["firstAidChart", month],
+    queryFn: async () => getFirstAidChart(month),
+  });
+};
+
 
 
 export const fetchStaffWithPositions = () => {
@@ -70,7 +68,7 @@ export const fetchStaffWithPositions = () => {
                 {`${staff.rp?.per?.per_fname || "Unknown"} ${
                   staff.rp?.per?.per_lname || "Staff"
                 }`}
-                 ( {staff.pos?.pos_title || "No Position"})
+                ( {staff.pos?.pos_title || "No Position"})
               </div>
             ),
             rawName: `${staff.rp?.per?.per_fname || "Unknown"} ${

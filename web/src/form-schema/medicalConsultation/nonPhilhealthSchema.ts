@@ -93,6 +93,7 @@ const respiratoryRateSchema = z.preprocess(
 );
 
 export const nonPhilHealthSchema = z.object({
+  staff: z.string().nullable().optional(),
   pat_id: z.string().min(1, "Patient ID is required").default(""),
   bhw_assignment: z.string().min(1, "BHW Assignment is Required").default(""),
   vital_pulse: heartRateSchema,

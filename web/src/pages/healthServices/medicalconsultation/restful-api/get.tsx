@@ -4,12 +4,9 @@
 import {api2} from "@/api/api";
 
 
-
-
-
-export const previousBMI = async (pat_id: string) => {
+export const getPreviousBMI = async (id: string) => {
   try {
-    const res = await api2.get(`/patientrecords/previous-measurement/${pat_id}/`);
+    const res = await api2.get(`/patientrecords/previous-measurement/${id}/`);
     return res.data;
   } catch (err) {
     console.error("Error fetching previous BMI:", err);

@@ -12,7 +12,6 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { Label } from "@/components/ui/label";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { AlertCircle, ChevronLeft, Loader2 } from "lucide-react";
-
 import { format } from "date-fns";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import CardLayout from "@/components/ui/card/card-layout";

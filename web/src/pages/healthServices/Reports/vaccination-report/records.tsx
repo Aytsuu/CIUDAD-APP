@@ -40,16 +40,17 @@ export default function MonthlyVaccinationDetails() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { month, monthName} = state || {};
+  const { month, monthName } = state || {};
 
   const { data: apiResponse, isLoading, error } = useVaccineReports(month);
-   const monthlyData = apiResponse?.data as { records: MonthlyVaccineRecord[]; report: any } | undefined;
- 
-   const records = monthlyData?.records || [];
+  const monthlyData = apiResponse?.data as
+    | { records: MonthlyVaccineRecord[]; report: any }
+    | undefined;
+
+  const records = monthlyData?.records || [];
   const report = monthlyData?.report;
 
   const signatureBase64 = report?.signature;
-  
 
   useEffect(() => {
     if (isLoading) {
@@ -57,12 +58,12 @@ export default function MonthlyVaccinationDetails() {
     } else {
       hideLoading();
     }
-  }, [isLoading]);
+  }, [isLoading, showLoading, hideLoading]);
 
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch report");
-      toast("Retrying to fetch  report...");
+      toast("Retrying to fetch report...");
       setTimeout(() => {
         window.location.reload();
       }, 2000);
@@ -103,13 +104,23 @@ export default function MonthlyVaccinationDetails() {
     });
   }, [records, searchTerm]);
 
-  const totalPages = Math.ceil(filteredRecords.length / pageSize);
+  // Total items count
+  const totalItems = report?.total_items
+    ? Number(report.total_items)
+    : filteredRecords.length;
+
+  const totalPages = Math.ceil(totalItems / pageSize);
+
   const paginatedRecords = useMemo(() => {
     return filteredRecords.slice(
       (currentPage - 1) * pageSize,
       currentPage * pageSize
     );
   }, [filteredRecords, currentPage, pageSize]);
+
+  // Pagination info indexes
+  const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, totalItems);
 
   const prepareExportData = () => {
     return filteredRecords.map((record: any) => {
@@ -124,19 +135,19 @@ export default function MonthlyVaccinationDetails() {
         .join(" ");
 
       return {
-        "Date": record.date_administered
+        Date: record.date_administered
           ? new Date(record.date_administered).toLocaleDateString()
           : "N/A",
-        "Name": fullName || "N/A",
-        "DOB": personalInfo?.per_dob
+        Name: fullName || "N/A",
+        DOB: personalInfo?.per_dob
           ? new Date(personalInfo.per_dob).toLocaleDateString()
           : "N/A",
         "Vaccine Name": record.vaccine_stock?.vaccinelist?.vac_name ?? "N/A",
-        "Dose Number":  record.vachist_doseNo
-        ? `${getOrdinalSuffix(Number(record.vachist_doseNo))} dose`
-        : "N/A",
+        "Dose Number": record.vachist_doseNo
+          ? `${getOrdinalSuffix(Number(record.vachist_doseNo))} dose`
+          : "N/A",
         "Age at Vaccination": record.vachist_age || "N/A",
-        "Status": record.vachist_status || "No status provided",
+        Status: record.vachist_status || "No status provided",
         "Follow-up Date": record.follow_up_visit?.followv_date
           ? new Date(record.follow_up_visit.followv_date).toLocaleDateString()
           : "N/A",
@@ -182,7 +193,10 @@ export default function MonthlyVaccinationDetails() {
     document.body.innerHTML = printContent.innerHTML;
     window.print();
     document.body.innerHTML = originalContents;
+    window.location.reload(); // <-- simplest but reloads entire page (loses app state)
+
   };
+
   const tableHeader = [
     "Date",
     "Name",
@@ -205,16 +219,16 @@ export default function MonthlyVaccinationDetails() {
 
     return [
       record.date_administered
-      ? new Date(record.date_administered).toLocaleDateString()
-      : "N/A",
+        ? new Date(record.date_administered).toLocaleDateString()
+        : "N/A",
       fullName || "N/A",
       personalInfo?.per_dob
-      ? new Date(personalInfo.per_dob).toLocaleDateString()
-      : "N/A",
+        ? new Date(personalInfo.per_dob).toLocaleDateString()
+        : "N/A",
       record.vaccine_stock?.vaccinelist?.vac_name ?? "N/A",
       record.vachist_doseNo
-      ? `${getOrdinalSuffix(Number(record.vachist_doseNo))} dose`
-      : "N/A",
+        ? `${getOrdinalSuffix(Number(record.vachist_doseNo))} dose`
+        : "N/A",
       record.vachist_age || "N/A",
     ];
   });
@@ -234,13 +248,11 @@ export default function MonthlyVaccinationDetails() {
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
               Monthly Vaccination Records
             </h1>
-          
           </div>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
 
         {/* Export Actions */}
-        {/* Action Bar */}
         <div className="bg-white p-4  border">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <div className="flex-1 max-w-md">
@@ -301,7 +313,7 @@ export default function MonthlyVaccinationDetails() {
 
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-700">
-              Page {currentPage} of {totalPages}
+              Showing {startIndex} - {endIndex} of {totalItems} records
             </span>
             <PaginationLayout
               currentPage={currentPage}
@@ -319,7 +331,7 @@ export default function MonthlyVaccinationDetails() {
           className=" py-4 px-4"
           id="printable-area"
           style={{
-            width: "11in", // Changed from 8.5in to 11in for landscape
+            width: "full", // Changed from 8.5in to 11in for landscape
             minHeight: "8.5in", // Changed from 14in to 8.5in for landscape
             position: "relative",
             margin: "0 auto",
@@ -373,30 +385,6 @@ export default function MonthlyVaccinationDetails() {
               headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2"
             />
           )}
-
-          <div
-            style={{
-              position: "absolute",
-              bottom: "40px",
-              left: 0,
-              right: 0,
-              padding: "0 32px",
-            }}
-          >
-            <div className="mt-6">
-              {signatureBase64 && (
-                <div className="flex justify-center relative">
-                  <div>
-                    <img
-                      src={`data:image/png;base64,${signatureBase64}`}
-                      alt="Authorized Signature"
-                      className="h-8 w-auto object-contain"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -40,32 +40,22 @@ interface CommodityModalProps {
 }
 
 export function CommodityModal({ mode, initialData, onClose }: CommodityModalProps) {
-  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [commodityName, setCommodityName] = useState("");
+  const [isFormValid, setIsFormValid] = useState(false);
   const { data: commodities } = useCommodities();
 
   const form = useForm<CommodityType>({
     resolver: zodResolver(CommodityListSchema),
     defaultValues: {
-      com_name: "",
-      user_type: "",
-      gender_type: ""
+      com_name: initialData?.com_name || "",
+      user_type: initialData?.user_type || "",
+      gender_type: initialData?.gender_type || ""
     }
   });
 
   const { mutateAsync: addCommodityMutation } = useAddCommodity();
   const { mutateAsync: updateCommodityMutation } = useUpdateCommodity();
-
-  useEffect(() => {
-    if (mode === "edit" && initialData) {
-      form.reset({
-        com_name: initialData.com_name || "",
-        user_type: initialData.user_type || "",
-        gender_type: initialData.gender_type || ""
-      });
-    }
-  }, [mode, initialData, form]);
 
   const isDuplicateCommodity = (commodities: any[], newCommodity: string, currentId?: string) => {
     return commodities.some((com) => com.id !== currentId && com?.com_name?.trim()?.toLowerCase() === newCommodity?.trim()?.toLowerCase());
@@ -77,6 +67,13 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
 
     return data.com_name.trim().toLowerCase() !== initialData.com_name.trim().toLowerCase() || data.user_type !== initialData.user_type || data.gender_type !== initialData.gender_type;
   };
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      const isValid = form.formState.isValid;
+      setIsFormValid(isValid);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const handleConfirmAction = async () => {
     setIsSubmitting(true);
@@ -105,10 +102,8 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
           com_id: initialData.id,
           data: formData
         });
-        showSuccessToast("Commodity updated successfully");
       } else {
         await addCommodityMutation(formData);
-        showSuccessToast("Commodity added successfully");
       }
 
       onClose();
@@ -127,6 +122,24 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
     }
 
     setCommodityName(data.com_name);
+  };
+
+  // Validate form before allowing confirmation modal to trigger
+  const handleTriggerClick = async () => {
+    const isValid = await form.trigger();
+    
+    if (!isValid) {
+      console.log("Form has validation errors, not showing confirmation");
+      return;
+    }
+
+    const formData = form.getValues();
+    if (mode === "edit" && !hasChanges(formData)) {
+      showErrorToast("No changes detected");
+      return;
+    }
+
+    setCommodityName(formData.com_name);
   };
 
   const formValues = form.watch();
@@ -150,7 +163,11 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
 
             <ConfirmationModal
               trigger={
-                <Button type="submit" disabled={isSubmitting || (isEditMode && !hasFormChanges)}>
+                <Button 
+                  type="button" 
+                  disabled={isSubmitting || (isEditMode && !hasFormChanges || !isFormValid)}
+                  onClick={handleTriggerClick}
+                >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

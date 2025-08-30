@@ -16,9 +16,7 @@ export default function EditMonthlyRecipientList() {
   const {
     reports,
     monthlyrcplist_id,
-    // recordCount,
-    // state_office,
-    // state_control,
+   
     year,
   } = location.state || {};
   const navigate = useNavigate();
@@ -47,6 +45,8 @@ export default function EditMonthlyRecipientList() {
       setcontrol_no(reports.control_no || "");
     }
   }, [passedStaffId, staffOptions]);
+
+  
 
   useEffect(() => {
     if (signatureBase64 && signatureRef.current) {

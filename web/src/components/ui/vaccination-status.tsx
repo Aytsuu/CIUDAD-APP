@@ -31,15 +31,31 @@ export function VaccinationStatusCards({
     return acc;
   }, {});
 
+  // For each vaccine, find the maximum dose number administered
+  const maxDoseNumbers = vaccinations.reduce((acc, record) => {
+    const vaccineId =
+      record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id;
+    if (!vaccineId) return acc;
+
+    if (!acc[vaccineId] || record.vachist_doseNo > acc[vaccineId]) {
+      acc[vaccineId] = record.vachist_doseNo;
+    }
+    return acc;
+  }, {});
+
   // Categorize the latest records
   const categorizedVaccines = {
     completed: Object.values(groupedVaccinations).filter(
       (record: any) =>
-        record.vachist_doseNo === record.vacrec_details?.vacrec_totaldose
+        maxDoseNumbers[
+          record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id
+        ] === record.vacrec_details?.vacrec_totaldose
     ),
     partial: Object.values(groupedVaccinations).filter(
       (record: any) =>
-        record.vachist_doseNo < record.vacrec_details?.vacrec_totaldose
+        maxDoseNumbers[
+          record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id
+        ] < record.vacrec_details?.vacrec_totaldose
     ),
     unvaccinated: unvaccinatedVaccines,
   };
@@ -179,7 +195,7 @@ export function VaccinationStatusCards({
                     <div className="flex gap-4 mt-1">
                       <span className="text-xs text-gray-500 flex items-center gap-1">
                         <span className="font-medium">Dose:</span>
-                        {record.vachist_doseNo} of{" "}
+                        {maxDoseNumbers[vaccineData.vac_id]} of{" "}
                         {record.vacrec_details?.vacrec_totaldose}
                       </span>
                       {ageGroup && (
@@ -238,7 +254,7 @@ export function VaccinationStatusCards({
       </div>
 
       {/* Content structure with scrollable area */}
-      <div >
+      <div>
         {activeTab === "unvaccinated" &&
           renderVaccineList(categorizedVaccines.unvaccinated)}
         {activeTab === "partial" &&

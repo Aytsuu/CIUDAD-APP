@@ -13,16 +13,17 @@ import {
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useSubmitImmunizationStock } from "../REQUEST/Antigen/queries/ImzSupplyPostQueries";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
 import { Loader2 } from "lucide-react";
-import { useBatchNumbers } from "../REQUEST/Antigen/restful-api/ImzFetchAPI";
+import { useBatchNumbers } from "../REQUEST/Antigen/restful-api/ImzGetAPI";
 import { useAuth } from "@/context/AuthContext";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function AddImzSupplyStock() {
-  const {user} =useAuth()
-  const staff_id=user?.staff?.staff_id
+  const { user } = useAuth();
+  const staff = user?.staff?.staff_id || "";
   
   const form = useForm<ImmunizationSuppliesType>({
     resolver: zodResolver(ImmunizationSuppliesSchema),
@@ -32,24 +33,27 @@ export default function AddImzSupplyStock() {
       imzStck_qty: 0,
       imzStck_pcs: 0,
       imzStck_unit: "boxes",
-      expiryDate: "",
+      expiry_date: "",
+      inv_type:"Antigen",
+      staff: staff ,
     },
   });
+
   const [supplyOptions, setSupplyOptions] = useState<
     { id: string; name: string }[]
   >([]);
   const [loading, setLoading] = useState(true);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-  const [formData, setFormData] = useState<ImmunizationSuppliesType | null>(
-    null
-  );
+  const [formData, setFormData] = useState<ImmunizationSuppliesType | null>( null);
+  const navigate =useNavigate()
+  
   const currentUnit = form.watch("imzStck_unit");
   const qty = form.watch("imzStck_qty");
   const pcs = form.watch("imzStck_pcs");
   const totalPieces = currentUnit === "boxes" ? qty * (pcs || 0) : qty;
-
+  
   const { mutate: submit, isPending } = useSubmitImmunizationStock();
-  const batchNumbers = useBatchNumbers();
+  const { batchNumbers, isLoading: isBatchNumbersLoading } = useBatchNumbers();
 
   useEffect(() => {
     const fetchSupplies = async () => {
@@ -65,8 +69,6 @@ export default function AddImzSupplyStock() {
     fetchSupplies();
   }, []);
 
-
-
   const isDuplicateBatchNumber = (
     stocks: { batchNumber: string }[],
     newBatchNumber: string
@@ -76,9 +78,7 @@ export default function AddImzSupplyStock() {
         stock.batchNumber.trim().toLowerCase() === newBatchNumber.trim().toLowerCase()
     );
   };
-  
 
-  
   const onSubmit = (data: ImmunizationSuppliesType) => {
     setFormData(data);
     if (isDuplicateBatchNumber(batchNumbers, data.batch_number)) {
@@ -94,7 +94,7 @@ export default function AddImzSupplyStock() {
   const handleConfirm = () => {
     if (!formData) return;
     setIsConfirmationOpen(false);
-    submit({ data: formData, staff_id });
+    submit({ data: formData });
   };
 
   return (
@@ -111,12 +111,20 @@ export default function AddImzSupplyStock() {
             </Label>
             <div className="space-y-6 p-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormSelect
-                  control={form.control}
-                  name="imz_id"
-                  label="Immunization Supply"
-                  options={supplyOptions}
-                />
+                {/* Immunization Supply Combobox */}
+                <div className="mt-2">
+                  <Label className="block mb-2 text-black/70">Immunization Supply</Label>
+                  <div className="relative">
+                    <Combobox
+                      options={supplyOptions || []}
+                      value={form.watch("imz_id")}
+                      onChange={(value) => form.setValue("imz_id", value)}
+                      placeholder={loading ? "Loading supplies..." : "Select immunization supply"}
+                      emptyMessage="No available supplies"
+                      triggerClassName="w-full"
+                    />
+                  </div>
+                </div>
                 <FormInput
                   control={form.control}
                   name="batch_number"
@@ -124,7 +132,6 @@ export default function AddImzSupplyStock() {
                   placeholder="Batch number"
                 />
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormInput
                   control={form.control}
@@ -147,7 +154,6 @@ export default function AddImzSupplyStock() {
                   ]}
                 />
               </div>
-
               {currentUnit === "boxes" && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormInput
@@ -174,41 +180,38 @@ export default function AddImzSupplyStock() {
                   </div>
                 </div>
               )}
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormDateTimeInput
                   control={form.control}
-                  name="expiryDate"
+                  name="expiry_date"
                   label="Expiry Date"
                   type="date"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-              <Button variant="outline" className="w-full">
-                <Link to="/mainInventoryStocks">Cancel</Link>
-              </Button>
-
+                <Button variant="outline" onClick={() => navigate(-1)} className="w-full">
+                Cancel
+                </Button>
               <Button
                 type="submit"
                 className="w-full"
                 disabled={isPending}
                 onClick={form.handleSubmit(onSubmit)}
               >
-                {isPending || loading? (
+                {isPending || loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Saving...
                   </>
                 ) : (
                   "Save"
-                )}{" "}
+                )}
               </Button>
             </div>
           </form>
         </Form>
       </div>
-
       <ConfirmationDialog
         isOpen={isConfirmationOpen}
         onOpenChange={setIsConfirmationOpen}

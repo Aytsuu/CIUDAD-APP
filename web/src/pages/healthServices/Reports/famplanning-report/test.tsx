@@ -5,21 +5,7 @@ import { SelectLayout } from '@/components/ui/select/select-layout';
 import { Button } from '@/components/ui/button/button';
 
 const methods = [
-    "BTL",
-    "NSV",
-    "Condom",
-    "POP",
-    "COC",
-    "DMPA",
-    "Implant",
-    "IUD-Interval",
-    "IUD-Post Partum",
-    "LAM",
-    "BBT",
-    "CMM",
-    "STM",
-    "SDM", 
-] as const;
+    "BTL","NSV","Condom","POP","COC","DMPA","Implant","IUD-Interval","IUD-Post Partum","LAM","BBT","CMM","STM","SDM", ] as const;
 
 type Method = typeof methods[number];
 

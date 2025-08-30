@@ -1,7 +1,11 @@
 
 import { api2 } from "@/api/api";
 import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
-
+import { addMedicineTransaction } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/restful-api/MedicinePostAPI";
+import { createMedicineRecord } from "@/pages/healthServices/medicineservices/restful-api/postAPI";
+import { updateMedicineStocks } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/restful-api/MedicinePutAPI";
+import { updateInventoryTimestamp } from "@/pages/healthInventory/inventoryStocks/REQUEST/InventoryAPIQueries";
+import { getMedicineInventory } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/restful-api/MedicineGetAPI";
 
 export async function createChildHealthHistory(  data: Record<string, any>) {
   try {
@@ -211,6 +215,7 @@ export const createChildMedicineRecord = async (
   }
 };
 
+
 export const processMedicineRequest = async (
   data: Record<string, any>,
   staffId: string | null,
@@ -223,9 +228,9 @@ export const processMedicineRequest = async (
     try {
       // 1. Create patient record
       const patientRecord = await createPatientRecord(
-        data.pat_id,
-        "Medicine Record",
-        staffId
+       { pat_id:data.pat_id,
+        patrec_type:"Medicine Record",
+        staff:staffId}
       );
       if (!patientRecord?.patrec_id) {
         throw new Error(

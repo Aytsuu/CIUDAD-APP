@@ -15,6 +15,7 @@ export interface Medicine {
   form: string
   avail: number
   unit: string
+  med_type: string
   expiry?: string | null
   pcs_per_box?: number
 }
@@ -234,6 +235,9 @@ export const MedicineDisplay = ({
                 Medicine Details
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Type
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Expiry
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -302,6 +306,9 @@ export const MedicineDisplay = ({
                         </div>
                       </div>
                     </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      <div className="text-sm text-gray-600">{medicine.med_type}</div>
+                      </td>
                     <td className="px-2 py-4 text-center">
                       <div>
                         <div className="text-sm text-gray-600">Expiry Date: {medicine.expiry || "N/A"}</div>

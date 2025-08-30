@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   Pill,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -22,16 +23,10 @@ import { useQuery } from "@tanstack/react-query";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { api2 } from "@/api/api";
-import { TableSkeleton } from "../../skeleton/table-skeleton";
 import { MedicineRecord } from "../types";
 import { medicineRecordColumns } from "./columns/inv-med-col";
 
-export interface Patient {
-  pat_id: string;
-  name: string;
-  pat_type: string;
-  [key: string]: any;
-}
+
 
 export default function IndivMedicineRecords() {
   const location = useLocation();
@@ -47,7 +42,7 @@ export default function IndivMedicineRecords() {
   }
 
   const [selectedPatientData, setSelectedPatientData] =
-    useState<Patient | null>(null);
+    useState<any | null>(null);
 
   useEffect(() => {
     if (location.state?.params?.patientData) {
@@ -60,7 +55,6 @@ export default function IndivMedicineRecords() {
   const {
     data: medicineRecords,
     isLoading,
-    // refetch,
   } = useQuery({
     queryKey: ["patientMedicineDetails", patientData.pat_id],
     queryFn: async () => {
@@ -230,7 +224,7 @@ export default function IndivMedicineRecords() {
 
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
-              <TableSkeleton columns={medicineRecordColumns} rowCount={3} />
+              <Loader2 className="h-6 w-6 animate-spin mx-auto my-4" />
             ) : (
               <DataTable columns={medicineRecordColumns} data={paginatedData} />
             )}

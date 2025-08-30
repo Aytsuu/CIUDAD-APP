@@ -4,7 +4,6 @@ import { Form, FormItem, FormLabel } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FirstAidStockSchema, FirstAidStockType } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
-import { fetchFirstAid } from "../REQUEST/FirstAid/restful-api/FirstAidFetchAPI";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Loader2 } from "lucide-react";
 import { FormInput } from "@/components/ui/form/form-input";
@@ -12,9 +11,10 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useSubmitFirstAidStock } from "../REQUEST/FirstAid/queries/FirstAidPostQueries";
 import { Label } from "@/components/ui/label";
-import { Pill } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { Combobox } from "@/components/ui/combobox";
+import { FetchFirstAid } from "../REQUEST/FirstAid/restful-api/FirstAidGetAPI";
 
 export default function FirstAidStockModal() {
   const navigate = useNavigate();
@@ -28,10 +28,12 @@ export default function FirstAidStockModal() {
       finv_qty_unit: "boxes",
       finv_qty: undefined,
       finv_pcs: undefined,
-      expiryDate: new Date().toISOString().split("T")[0]
+      expiry_date: new Date().toISOString().split("T")[0],
+      staff: staff_id,
+      inv_type: "First Aid"
     }
   });
-  const firstaid = fetchFirstAid();
+  
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setformData] = useState<FirstAidStockType | null>(null);
   const { mutate: submit, isPending } = useSubmitFirstAidStock();
@@ -39,19 +41,7 @@ export default function FirstAidStockModal() {
   const qty = form.watch("finv_qty") || 0;
   const pcs = form.watch("finv_pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * (pcs || 0) : qty;
-
-  // Watch for com_id changes and update category
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === "fa_id" && value.fa_id) {
-        const selectedFirstAid = firstaid.find((fa) => fa.id === value.fa_id);
-        if (selectedFirstAid) {
-          form.setValue("category", selectedFirstAid.category);
-        }
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, firstaid]);
+  const { data: firstAidOptions, isLoading: isFirstAidLoading } = FetchFirstAid();
 
   const onSubmit = (data: FirstAidStockType) => {
     setformData(data);
@@ -61,7 +51,7 @@ export default function FirstAidStockModal() {
   const confirmAdd = () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit({ data: formData, staff_id });
+    submit({ data: formData });
   };
 
   return (
@@ -72,13 +62,41 @@ export default function FirstAidStockModal() {
           <hr className="mb-2" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormSelect control={form.control} name="fa_id" label="First Aid Item" options={firstaid} />
+            {/* First Aid Selection Combobox */}
+            <div className="mt-2">
+              <Label className="block mb-2 text-black/70">First Aid Item</Label>
+              <div className="relative">
+                <Combobox
+                  options={firstAidOptions?.formatted || []}
+                  value={
+                    // Find the formatted option that matches the stored fa_id
+                    firstAidOptions?.formatted?.find((option: any) => 
+                      option.id.startsWith(form.watch("fa_id") + ',')
+                    )?.id || ''
+                  }
+                  onChange={(value) => {
+                    // Extract only the fa_id from the concatenated value
+                    const faId = value.split(',')[0]; // Get the first part before the comma
+                    form.setValue("fa_id", faId);
+                    
+                    // Update category when first aid item is selected
+                    const selectedFirstAid = firstAidOptions?.default.find((fa: any) => fa.fa_id === faId);
+                    if (selectedFirstAid) {
+                      form.setValue("category", selectedFirstAid.catlist || "");
+                    }
+                  }}
+                  placeholder={isFirstAidLoading ? "Loading first aid items..." : "Select first aid item"}
+                  emptyMessage="No available first aid items"
+                  triggerClassName="w-full"
+                />
+              </div>
+            </div>
 
             <FormInput control={form.control} name="category" label="Category" readOnly />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date" />
+            <FormDateTimeInput control={form.control} name="expiry_date" label="Expiry Date" type="date" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -92,7 +110,6 @@ export default function FirstAidStockModal() {
                 { id: "bottles", name: "Bottles" },
                 { id: "packs", name: "Packs" },
                 { id: "pcs", name: "Pc/s" }
-
               ]}
             />
           </div>

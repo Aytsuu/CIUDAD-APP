@@ -15,15 +15,24 @@
 // export type MedicineRequestType = z.infer<typeof MedicineRequestSchema>
 import { z } from "zod";
 
+const FileSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+  file: z.string().optional(),
+});
+
+
 export const MedicineRequestSchema = z.object({
-  minv_id: z.string().min(1, "Medicine ID is required"),
-  medrec_qty: z.number().min(1, "Quantity must be at least 1"),
+  minv_id: z.string().optional(),
+  medrec_qty: z.number().optional(),
   reason: z.string().optional()
 });
 
 export const MedicineRequestArraySchema = z.object({
-  pat_id: z.string().min(1, "Patient ID is required"),
-  medicines: z.array(MedicineRequestSchema).min(1, "At least one medicine is required"),
+  pat_id: z.string(),
+  medicines: z.array(MedicineRequestSchema),
+  files: z.array(FileSchema).optional(), // Add files field here
+
 });
 
 export type MedicineRequestArrayType = z.infer<typeof MedicineRequestArraySchema>;

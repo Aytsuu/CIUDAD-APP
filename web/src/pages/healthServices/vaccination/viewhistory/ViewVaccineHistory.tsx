@@ -17,12 +17,7 @@ export default function VaccinationView() {
   const { params } = location.state || {};
   const { patientData, Vaccination } = params || {};
   const patientId = useMemo(() => patientData?.pat_id, [patientData]);
-  // const queryClient =useQueryClient();
 
-            // queryClient.invalidateQueries({ queryKey: ['patientVaccinationRecords', patientId] });
-
-
-  
   // Use the query hook
   const { 
     data: vaccinationHistory = [], 

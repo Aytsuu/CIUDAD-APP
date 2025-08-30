@@ -84,4 +84,22 @@ export const medicineRecordColumns: ColumnDef<MedicineRecord>[] = [
       );
     },
   },
+  {
+    accessorKey: "signature",
+    header: "Signature",
+    cell: ({ row }) => (
+      <div className="flex justify-center px-2 w-full">
+        {row.original.signature && (
+          <div className="w-[200px]">
+            <img
+              src={`data:image/png;base64,${row.original.signature}`}
+              alt="Authorized Signature"
+              className="h-10 w-auto object-contain"
+            />
+          </div>
+        )}
+      </div>
+    ),
+  },
+ 
 ];

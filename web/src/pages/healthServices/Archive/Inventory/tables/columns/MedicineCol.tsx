@@ -1,182 +1,74 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { MedicineStocksRecord } from "../type";
-import { isNearExpiry, isExpired, isLowStock } from "./Alert";
+import { ColumnDef } from "@tanstack/react-table"
 
-export const getColumns = (
-): ColumnDef<MedicineStocksRecord>[] => [
-  {
-    accessorKey: "medicineInfo",
-    header: "Medicine",
-    cell: ({ row }) => {
-      const medicine = row.original.medicineInfo;
-      const expired = isExpired(row.original.expiryDate);
-      return (
-        <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
-          <span className={`font-medium`}>
-            {medicine.medicineName}
-            {expired && " (Expired)"}
-          </span>
-          <div
-            className={`text-sm ${expired ? "text-red-500" : "text-gray-600"}`}
-          >
-            {medicine.dosage} {medicine.dsgUnit},
-            <span className="capitalize italic text-darkGray">
-              {" "}
-              {medicine.form}
-            </span>
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
-      return (
-        <div
-          className={`flex justify-center min-w-[100px] px-2 ${
-            expired ? "text-red-600" : ""
-          }`}
-        >
-          <div className={`text-center w-full`}>
-            {row.original.category}
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "qty",
-    header: "Total Qty",
-    cell: ({ row }) => {
-      const { qty, pcs } = row.original.qty;
-      const unit = row.original.minv_qty_unit;
-      const expired = isExpired(row.original.expiryDate);
 
-      return (
-        <div className={`text-center ${expired ? "text-red-600" : ""}`}>
-          {unit.toLowerCase() === "boxes" && pcs > 0 ? (
-            <div className="flex flex-col">
-              <span>
-                {qty} box/es
-                {expired && " (Expired)"}
-              </span>
-              <span className={expired ? "text-red-500" : "text-blue-500"}>
-                ({qty * pcs} total pc/s)
-              </span>
+export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
+  return [
+    {
+      accessorKey: "item",
+      header: "Medicine Details",
+      cell: ({ row }) => {
+        const item = row.original.item;
+        return (
+          <div className="flex flex-col">
+            <div className="font-medium text-center">
+              {item?.med_name || "Unknown Medicine"}
             </div>
-          ) : (
-            <span>
-              {qty} {unit}
-              {expired && " (Expired)"}
-            </span>
-          )}
-        </div>
-      );
+            <div className="text-sm text-center text-gray-600">
+              {item?.dosage || 0} {item?.dsgUnit || ""}, {item?.form || ""}
+            </div>
+          </div>
+        );
+      },
     },
-  },
-  {
-    accessorKey: "distributed",
-    header: "Quantity used",
-    cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
-      return (
-        <div className={`${expired ? "text-red-600" : "text-red-700"}`}>
-          {row.original.distributed}
-        </div>
-      );
+    {
+      accessorKey: "qty.minv_qty",
+      header: "Quantity",
+      cell: ({ row }) => {
+        const data = row.original;
+        return `${data.qty.minv_qty} ${data.minv_qty_unit}`;
+      },
     },
-  },
-  {
-    accessorKey: "availQty",
-    header: "Available Qty",
-    cell: ({ row }) => {
-      const { pcs } = row.original.qty;
-      const unit = row.original.minv_qty_unit;
-      const availQty = parseInt(row.original.availQty);
-      const expired = isExpired(row.original.expiryDate);
-      const isLow = !expired && isLowStock(availQty, unit, pcs);
-      const isOutOfStock = availQty <= 0;
-
-      if (unit.toLowerCase() === "boxes" && pcs > 0) {
-        const boxCount = Math.ceil(availQty / pcs);
-        const remainingPieces = availQty;
-
+    {
+      accessorKey: "administered",
+      header: "Administered",
+    },
+    {
+      accessorKey: "wasted",
+      header: "Wasted",
+    },
+    {
+      accessorKey: "availableStock",
+      header: "Available Stock",
+    },
+    {
+      accessorKey: "expiryDate",
+      header: "Expiry Date",
+      cell: ({ row }) => {
+        const expiryDate = row.original.expiryDate;
+        return expiryDate === "N/A" ? "N/A" : new Date(expiryDate).toLocaleDateString();
+      },
+    },
+    {
+      accessorKey: "archivedDate",
+      header: "Archived Date",
+      cell: ({ row }) => {
+        const archivedDate = row.original.archivedDate;
+        return archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A";
+      },
+    },
+    {
+      accessorKey: "reason",
+      header: "Reason",
+      cell: ({ row }) => {
+        const reason = row.original.reason;
         return (
-          <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
-            <span
-              className={`${
-                expired
-                  ? ""
-                  : isOutOfStock
-                  ? "text-red-600 font-bold"
-                  : isLow
-                  ? "text-yellow-600 font-medium"
-                  : "text-blue"
-              }`}
-            >
-              {boxCount} box/es
-              {expired && " (Expired)"}
-              {isOutOfStock && !expired && " (Out of Stock)"}
-              {isLow && " (Low Stock)"}
-            </span>
-            <span className={expired ? "text-red-500" : "text-blue-500"}>
-              ({remainingPieces} total pc/s)
+          <div className="text-center">
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              {reason}
             </span>
           </div>
         );
-      } else {
-        return (
-          <div
-            className={`text-center ${
-              expired
-                ? "text-red-600"
-                : isOutOfStock
-                ? "text-red-600 font-bold"
-                : isLow
-                ? "text-yellow-600 font-medium"
-                : "text-green-700"
-            }`}
-          >
-            {availQty} {unit}
-            {expired && " (Expired)"}
-            {isOutOfStock && !expired && " (Out of Stock)"}
-            {isLow && " (Low Stock)"}
-          </div>
-        );
-      }
+      },
     },
-  },
-  {
-    accessorKey: "expiryDate",
-    header: "Expiry Date",
-    cell: ({ row }) => {
-      const expiryDate = row.original.expiryDate;
-      const isNear = isNearExpiry(expiryDate);
-      const expired = isExpired(expiryDate);
-
-      return (
-        <div
-          className={`flex justify-center min-w-[100px] px-2 ${
-            expired ? "text-red-600" : ""
-          }`}
-        >
-          <div
-            className={`text-center w-full ${
-              expired
-                ? "font-bold"
-                : isNear
-                ? "text-orange-500 font-medium"
-                : ""
-            }`}
-          >
-            {expiryDate}
-            {expired ? " (Expired)" : isNear ? " (Near Expiry)" : ""}
-          </div>
-        </div>
-      );
-    },
-  },
-];
+  ];
+}

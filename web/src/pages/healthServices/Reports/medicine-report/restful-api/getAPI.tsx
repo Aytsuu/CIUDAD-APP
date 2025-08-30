@@ -1,9 +1,9 @@
 // getAPI.ts
 import { api2 } from "@/api/api";
-import {MedicineRecordsResponse} from "../types";
+import {MedicineChartResponse, MedicineRecordsResponse} from "../types";
 
 
-export const getMedicineRecords = async (year?: string): Promise<MedicineRecordsResponse> => {
+export const getMedicineMonthly = async (year?: string): Promise<MedicineRecordsResponse> => {
   try {
     const url = year
       ? `/medicine/medicine-records/monthly/?year=${year}`
@@ -19,7 +19,7 @@ export const getMedicineRecords = async (year?: string): Promise<MedicineRecords
 
 
 
-export const getMedicineReports = async (month: string): Promise<MedicineRecordsResponse> => {
+export const getMedicineDetailedReports = async (month: string): Promise<MedicineRecordsResponse> => {
   try {
     const url = `/medicine/medicine-reports/${month}/`;
     const response = await api2.get<MedicineRecordsResponse>(url);
@@ -31,12 +31,19 @@ export const getMedicineReports = async (month: string): Promise<MedicineRecords
   }
 };
 
-export const getMedicineMonthCount =async()=>{
-  try {
-    const response = await api2.get("/medicine/month-count/");
+
+export  const getMedicineChart = async(month:string)=>{
+  try
+  {
+    const url = `/medicine/medicines-request/monthly/chart/${month}/`;
+    const response = await api2.get<MedicineChartResponse>(url);
+    console.log("Chart Response:", response.data);
     return response.data;
-  } catch (error) {
-    console.error("Error fetching  :", error);
+  }
+  catch (error) {
+    console.error("Error fetching Vaccination Chart:", error);
     throw error;
   }
+
+
 }

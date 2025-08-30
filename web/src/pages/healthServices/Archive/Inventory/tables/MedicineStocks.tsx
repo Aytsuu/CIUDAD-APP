@@ -1,140 +1,67 @@
-import { useState, useMemo, useCallback } from "react";
-import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput } from "lucide-react";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-// import { useQueryClient } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
-import { getColumns } from "./columns/MedicineCol";
-import { Link } from "react-router";
-import { useMedicineStocks } from "../queries/fetch";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { MedicineStocksRecord } from "./type";
-import { isNearExpiry, isExpired, isLowStock } from "./columns/Alert";
-type StockFilter =
-  | "all"
-  | "low_stock"
-  | "out_of_stock"
-  | "near_expiry"
-  | "expired";
+"use client"
+import { useState } from "react"
+import { DataTable } from "@/components/ui/table/data-table"
+import { Button } from "@/components/ui/button/button"
+import { Input } from "@/components/ui/input"
+import { Search, FileInput, Loader2 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu"
+import PaginationLayout from "@/components/ui/pagination/pagination-layout"
+import { getArchiveMedicineStocks } from "./columns/MedicineCol"
+import { useArchivedMedicineStocks } from "../queries/fetch"
 
-// Using your existing alert functions
-export default function MedicineStocks() {
-  // const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
-  //   useState(false);
-  // const [medicineToArchive, setMedicineToArchive] = useState<string | null>(
-  //   null
-  // );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [stockFilter, setStockFilter] = useState<StockFilter>("all");
-  // const queryClient = useQueryClient();
-  const { data: medicineStocks, isLoading: isLoadingMedicines } =
-    useMedicineStocks();
+export default function MedicineArchiveTable() {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [pageSize, setPageSize] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const formatMedicineStocksData = useCallback((): MedicineStocksRecord[] => {
-    if (!medicineStocks) return [];
-    return medicineStocks.map((medicineStock: any) => {
-      const availQty = medicineStock.minv_qty_avail;
-      let unit = medicineStock.minv_qty_unit;
-      let qty = medicineStock.minv_qty;
-      let pcs= medicineStock.minv_pcs * medicineStock.minv_qty;
-      let qty_use = 0
+  const { data: apiResponse, isLoading, error } = useArchivedMedicineStocks(
+    currentPage, 
+    pageSize, 
+    searchQuery, 
+  )
 
-      if (unit=== "boxes") {
-         pcs -= availQty;
-         unit = "pcs";
-        qty_use = pcs
-      } else {
-        qty -= availQty;
-        qty_use = qty
-      }
+  // Extract data from API response
+  const stockData = Array.isArray(apiResponse?.results) ? apiResponse.results : []
+  const totalCount = apiResponse?.count || 0
+  const totalPages = Math.ceil(totalCount / pageSize)
 
-      const total_qty_used = `${qty_use} ${unit}`;
+  const columns = getArchiveMedicineStocks()
 
-      return {
-        id: medicineStock.minv_id,
-        minv_id: medicineStock.minv_id,
-        medicineInfo: {
-          medicineName: medicineStock.med_detail?.med_name,
-          dosage: medicineStock.minv_dsg,
-          dsgUnit: medicineStock.minv_dsg_unit,
-          form: medicineStock.minv_form,
-        },
-        expiryDate: medicineStock.inv_detail?.expiry_date,
-        category: medicineStock.med_detail?.catlist,
-        qty: {
-          qty: medicineStock.minv_qty,
-          pcs: medicineStock.minv_pcs,
-        },
-        minv_qty_unit: medicineStock.minv_qty_unit,
-        availQty: medicineStock.minv_qty_avail,
-        distributed: total_qty_used,
-        inv_id: medicineStock.inv_id,
-      };
-    });
-  }, [medicineStocks]);
-
-  const filteredData = useMemo(() => {
-    const data = formatMedicineStocksData();
-
-    // First filter by search query
-    const searchFiltered = data.filter((record) =>
-      Object.values(record.medicineInfo)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    );
-
-    // Then apply stock status filter if not 'all'
-    if (stockFilter === "all") return searchFiltered;
-
-    return searchFiltered.filter((record) => {
-      const { availQty, expiryDate, minv_qty_unit, qty } = record;
-      const availableQty = parseInt(availQty);
-      const pcs = qty.pcs;
-
-      switch (stockFilter) {
-        case "low_stock":
-          return isLowStock(availableQty, minv_qty_unit, pcs);
-        case "out_of_stock":
-          return availableQty <= 0;
-        case "near_expiry":
-          return isNearExpiry(expiryDate);
-        case "expired":
-          return isExpired(expiryDate);
-        default:
-          return true;
-      }
-    });
-  }, [searchQuery, formatMedicineStocksData, stockFilter]);
-
-  
-
-  if (isLoadingMedicines) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </div>
-    );
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
   }
 
-  const columns = getColumns();
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Handle search with debounce (optional)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+    setCurrentPage(1) // Reset to first page when searching
+  }
+
+  
+  // Handle page size change
+  const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = +e.target.value
+    setPageSize(value >= 1 ? value : 1)
+    setCurrentPage(1) // Reset to first page when page size changes
+  }
+
+  if (error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-red-500">Error loading medicine archive data</div>
+      </div>
+    )
+  }
 
   return (
-    <div>
-      <div className="hidden lg:flex justify-between items-center mb-4">
+    <>
+      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative flex-1">
             <Search
@@ -142,86 +69,78 @@ export default function MedicineStocks() {
               size={17}
             />
             <Input
-              placeholder="Search..."
+              placeholder="Search medicine archive..."
               className="pl-10 bg-white w-full"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
             />
           </div>
-          <SelectLayout
-            placeholder="Filter by stock status"
-            label=""
-            className="bg-white w-48"
-            options={[
-              { id: "all", name: "All Items" },
-              { id: "low_stock", name: "Low Stock" },
-              { id: "out_of_stock", name: "Out of Stock" },
-              { id: "near_expiry", name: "Near Expiry" },
-              { id: "expired", name: "Expired" },
-            ]}
-            value={stockFilter}
-            onChange={(value) => setStockFilter(value as StockFilter)}
-          />
         </div>
-        <Button>
-          <Link
-            to="/addMedicineStock"
-            className="flex justify-center items-center gap-2 px-2"
-          >
-            <Plus size={15} /> New
-          </Link>
-        </Button>
       </div>
 
-      <div className="bg-white rounded-md">
-        <div className="flex justify-between p-3">
-          <div className="flex items-center gap-2">
+      <div className="h-full w-full rounded-md">
+        <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="flex gap-x-2 items-center">
             <p className="text-xs sm:text-sm">Show</p>
             <Input
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={(e) => {
-                const value = +e.target.value;
-                setPageSize(value >= 1 ? value : 1);
-              }}
+              onChange={handlePageSizeChange}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline" className="h-[2rem]">
-                <FileInput /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" },
-            ]}
-          />
+          <div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <FileInput />
+                  Export Data
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <div className="overflow-x-auto">
-          <DataTable columns={columns} data={paginatedData} />
-        </div>
-        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
-          <p className="text-xs sm:text-sm text-darkGray">
-            Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} rows
-          </p>
-          {paginatedData.length > 0 && (
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
+
+        <div className="bg-white w-full overflow-x-auto">
+          {isLoading ? (
+            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Loading ...</span>
+            </div>
+          ) : error ? (
+            <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
+              <span className="ml-2">Error loading medicine archive data. Please check console.</span>
+            </div>
+          ) : stockData.length === 0 ? (
+            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+              <span className="ml-2">No archived medicine items found</span>
+            </div>
+          ) : (
+            <DataTable columns={columns} data={stockData} />
           )}
         </div>
-      </div>
 
-    
-    </div>
-  );
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing{" "}
+            {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-
+            {Math.min(currentPage * pageSize, totalCount)} of{" "}
+            {totalCount} items
+          </p>
+          <PaginationLayout
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      </div>
+    </>
+  )
 }

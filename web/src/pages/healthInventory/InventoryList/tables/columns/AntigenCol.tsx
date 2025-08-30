@@ -1,7 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { Edit, Trash } from "lucide-react";
-import { Link } from "react-router-dom";
 
 export type VaccineRecords = {
   id: number;
@@ -20,6 +19,7 @@ export type VaccineRecords = {
   }[];
 };
 
+// Columns for Vaccines Tab
 export const VaccineColumns = (
   setVaccineToDelete: React.Dispatch<React.SetStateAction<number | null>>,
   setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>,
@@ -35,18 +35,6 @@ export const VaccineColumns = (
     cell: ({ row }) => (
       <div className="font-medium">{row.getValue("vaccineName")}</div>
     ),
-  },
-  {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => {
-      const category = row.getValue("category");
-      return (
-        <div className="capitalize">
-          {category === "supply" ? "Immunization Supply" : "Vaccine"}
-        </div>
-      );
-    },
   },
   {
     accessorKey: "vaccineType",
@@ -74,7 +62,7 @@ export const VaccineColumns = (
     accessorKey: "ageGroup",
     header: "Age Group",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("ageGroup") || "N/A"}</div>
+      <div className="text-sm">{row.getValue("ageGroup") || "N/A"}</div>
     ),
   },
   {
@@ -130,29 +118,20 @@ export const VaccineColumns = (
   },
   {
     accessorKey: "action",
-    header: "Action",
+    header: "Actions",
     cell: ({ row }) => {
       const record = row.original;
-      const isVaccine = record.category === "vaccine";
 
       return (
         <div className="flex justify-center gap-2">
           <Button 
             variant="outline" 
+            size="sm"
             onClick={() => {
-              if (isVaccine) {
-                // Handle vaccine edit
-                setSelectedVaccine(record);
-                setModalMode('edit');
-                setShowVaccineModal(true);
-                setShowSupplyModal(false);
-              } else {
-                // Handle supply edit
-                setSelectedSupply(record);
-                setModalMode('edit');
-                setShowSupplyModal(true);
-                setShowVaccineModal(false);
-              }
+              setSelectedVaccine(record);
+              setModalMode('edit');
+              setShowVaccineModal(true);
+              setShowSupplyModal(false);
             }}
           >
             <Edit size={16} />
@@ -166,7 +145,62 @@ export const VaccineColumns = (
               setIsDeleteConfirmationOpen(true);
             }}
           >
-            <Trash />
+            <Trash size={16} />
+          </Button>
+        </div>
+      );
+    },
+  },
+];
+
+// Columns for Supplies Tab
+export const SupplyColumns = (
+  setVaccineToDelete: React.Dispatch<React.SetStateAction<number | null>>,
+  setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>,
+  setSelectedVaccine: React.Dispatch<React.SetStateAction<VaccineRecords | null>>,
+  setModalMode: React.Dispatch<React.SetStateAction<'add' | 'edit'>>,
+  setShowVaccineModal: React.Dispatch<React.SetStateAction<boolean>>,
+  setSelectedSupply: React.Dispatch<React.SetStateAction<VaccineRecords | null>>,
+  setShowSupplyModal: React.Dispatch<React.SetStateAction<boolean>>
+): ColumnDef<VaccineRecords>[] => [
+  {
+    accessorKey: "vaccineName",
+    header: "Supply Name",
+    cell: ({ row }) => (
+      <div className="font-medium">{row.getValue("vaccineName")}</div>
+    ),
+  },
+ 
+  {
+    accessorKey: "action",
+    header: "Actions",
+    cell: ({ row }) => {
+      const record = row.original;
+
+      return (
+        <div className="flex justify-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              setSelectedSupply(record);
+              setModalMode('edit');
+              setShowSupplyModal(true);
+              setShowVaccineModal(false);
+            }}
+          >
+            <Edit size={16} />
+          </Button>
+
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              setVaccineToDelete(row.original.id);
+              setIsDeleteConfirmationOpen(true);
+            }}
+          >
+            <Trash size={16} />
           </Button>
         </div>
       );

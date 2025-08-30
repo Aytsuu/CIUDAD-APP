@@ -31,7 +31,9 @@ export const MedicineStocksSchema = withPiecesValidation(z.object({
   qty: positiveNumberSchema.pipe(z.number().min(1, "Quantity must be at least 1")),
   unit: z.string().min(1, "Unit is required").default(""),
   pcs: positiveNumberSchema.optional(), // Truly optional now
-  expiryDate: z.string().min(1, "Expiry date is required")
+  inv_type:z.string().min(1, "Inventory type is required").default("Medicine"),
+  staff: z.string().optional(),
+  expiry_date: z.string().min(1, "Expiry date is required")
     .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
 })
 
@@ -43,7 +45,9 @@ export const CommodityStocksSchema = withPiecesValidation(z.object({
   cinv_qty_unit: z.string().min(1, "Unit is required").default(""),
   cinv_pcs: positiveNumberSchema.optional(),
   cinv_recevFrom: z.string().min(1, "Received from is required"),
-  expiryDate: z.string().min(1, "Expiry date is required")
+  inv_type:z.string().min(1, "Inventory type is required").default("Commodity"),
+  staff: z.string().optional(),
+  expiry_date: z.string().min(1, "Expiry date is required")
     .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")}
 ));
 
@@ -53,7 +57,9 @@ export const FirstAidStockSchema = withPiecesValidation(z.object({
   finv_qty: positiveNumberSchema.pipe(z.number().min(1, "Quantity must be at least 1")),
   finv_qty_unit: z.string().min(1, "Unit is required").default(""),
   finv_pcs: positiveNumberSchema.optional(),
-  expiryDate: z.string().min(1, "Expiry date is required")
+  inv_type:z.string().min(1, "Inventory type is required").default("First Aid"),
+  staff: z.string().optional(),
+  expiry_date: z.string().min(1, "Expiry date is required")
     .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
 }));
 
@@ -63,7 +69,9 @@ export const ImmunizationSuppliesSchema = withPiecesValidation(z.object({
   imzStck_qty: positiveNumberSchema.pipe(z.number().min(1, "Quantity must be at least 1")),
   imzStck_pcs: positiveNumberSchema.optional(),
   imzStck_unit: z.string().min(1, "Unit is required").default(""),
-  expiryDate: z.string().min(1, "Expiry date is required")
+  inv_type:z.string().min(1, "Inventory type is required").default("Antigen"),
+  staff: z.string().optional(),
+  expiry_date: z.string().min(1, "Expiry date is required")
     .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
 }));
 
@@ -74,7 +82,9 @@ export const VaccineStocksSchema = z.object({
   batchNumber: z.string().min(1, "Batch number is required"),
   volume: positiveNumberSchema,
   qty: positiveNumberSchema,
-  expiryDate: z.string().min(1, "Expiry date is required")
+  inv_type:z.string().min(1, "Inventory type is required").default("Antigen"),
+  staff: z.string().optional(),
+  expiry_date: z.string().min(1, "Expiry date is required")
     .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
 });
  

@@ -3,12 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import {
-  ArrowUpDown,
-  Search,
-  ChevronLeft,
-  AlertCircle,
-} from "lucide-react";
+import { ArrowUpDown, Search, ChevronLeft, AlertCircle } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   DropdownMenu,
@@ -24,48 +19,8 @@ import { api2 } from "@/api/api";
 import { useFirstAidCount } from "../queries/FirstAidCountQueries";
 import { Heart } from "lucide-react";
 import { TableSkeleton } from "../../skeleton/table-skeleton";
-export interface FirstAidRecord {
-  farec_id: number;
-  qty: string;
-  created_at: string;
-  is_archived: boolean;
-  reason: string | null;
-  finv: number;
-  patrec: number;
-  finv_details: {
-    finv_id: number;
-    inv_detail: {
-      inv_id: number;
-      expiry_date: string;
-      inv_type: string;
-      created_at: string;
-      is_Archived: boolean;
-      updated_at: string;
-    };
-    fa_detail: {
-      fa_id: string;
-      catlist: string;
-      fa_name: string;
-      created_at: string;
-      updated_at: string;
-      cat: number;
-    };
-    inv_id: number;
-    fa_id: string;
-    finv_qty: number;
-    finv_qty_unit: string;
-    finv_pcs: number;
-    finv_used: number;
-    finv_qty_avail: number;
-  };
-}
-
-export interface Patient {
-  pat_id: string;
-  name: string;
-  pat_type: string;
-  [key: string]: any;
-}
+import { FirstAidRecord } from "../types";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function IndivFirstAidRecords() {
   const location = useLocation();
@@ -79,8 +34,9 @@ export default function IndivFirstAidRecords() {
   if (!patientData?.pat_id) {
     return <div>Error: Patient ID not provided</div>;
   }
-  const [selectedPatientData, setSelectedPatientData] =
-    useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] = useState<any | null>(
+    null
+  );
 
   useEffect(() => {
     if (location.state?.params?.patientData) {
@@ -92,10 +48,7 @@ export default function IndivFirstAidRecords() {
   const { data: firstAidCountData } = useFirstAidCount(patientData.pat_id);
   const firstAidCount = firstAidCountData?.firstaidrecord_count;
 
-  const {
-    data: firstAidRecords,
-    isLoading,
-  } = useQuery({
+  const { data: firstAidRecords, isLoading } = useQuery({
     queryKey: ["patientFirstAidDetails"],
     queryFn: async () => {
       const response = await api2.get(
@@ -114,7 +67,7 @@ export default function IndivFirstAidRecords() {
         farec_id: record.farec_id,
         qty: record.qty,
         created_at: record.created_at,
-        is_archived: record.is_archived,
+        signature: record.signature,
         reason: record.reason,
         finv: record.finv,
         patrec: record.patrec,
@@ -182,31 +135,31 @@ export default function IndivFirstAidRecords() {
         </div>
       ),
     },
+    {
+      accessorKey: "signature",
+      header: "Signature",
+      cell: ({ row }) => (
+        <div className="flex justify-center px-2 w-full">
+          {row.original.signature && (
+            <div className="w-[200px]">
+              <img
+                src={`data:image/png;base64,${row.original.signature}`}
+                alt="Authorized Signature"
+                className="h-10 w-auto object-contain"
+              />
+            </div>
+          )}
+        </div>
+      ),
+    },
   ];
-
 
   return (
     <>
-      <div className="w-full h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row gap-4 ">
-          <Button
-            className="text-black p-2 mb-2 self-start"
-            variant={"outline"}
-            onClick={() => navigate(-1)}
-          >
-            <ChevronLeft />
-          </Button>
-          <div className="flex-col items-center mb-4">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Individual First Aid Records
-            </h1>
-            <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patient's first aid records
-            </p>
-          </div>
-        </div>
-        <hr className="border-gray mb-5 sm:mb-8" />
-
+      <LayoutWithBack
+        title="Individual First Aid Records"
+        description="Manage and view patient's first aid records"
+      >
         {selectedPatientData ? (
           <div className="mb-4">
             <PatientInfoCard patient={selectedPatientData} />
@@ -305,15 +258,14 @@ export default function IndivFirstAidRecords() {
               </DropdownMenu>
             </div>
           </div>
-        
-          <div className="bg-white w-full overflow-x-auto">
-          {isLoading ? (
-                <TableSkeleton columns={columns} rowCount={3} />
 
-          ) : (
-            <DataTable columns={columns} data={paginatedData} />
-          )}
-        </div>
+          <div className="bg-white w-full overflow-x-auto">
+            {isLoading ? (
+              <TableSkeleton columns={columns} rowCount={3} />
+            ) : (
+              <DataTable columns={columns} data={paginatedData} />
+            )}
+          </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing{" "}
@@ -330,7 +282,7 @@ export default function IndivFirstAidRecords() {
             </div>
           </div>
         </div>
-      </div>
+      </LayoutWithBack>
     </>
   );
 }

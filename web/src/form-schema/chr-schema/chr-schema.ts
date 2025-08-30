@@ -98,11 +98,12 @@ export const HealthStatusSchema = z.object({
 })
 
 export const NutritionalStatusSchema = z.object({
-  wfa: z.enum(["N", "UW", "SUW", ""]).optional(), // Weight for Age
-  lhfa: z.enum(["N", "ST", "SST", "T", "OB", ""]).optional(), // Length/Height for Age
+  wfa: z.enum(["N", "UW", "SUW", "OW", ""]).optional(), // Weight for Age
+  lhfa: z.enum(["N", "ST", "SST", "T", ""]).optional(), // Length/Height for Age
   wfh: z.enum(["N", "W", "SW", "OW", ""]).optional(), // Weight for Height/Length
   muac: z.number().optional(), // Mid-Upper Arm Circumference (manual input)
   muac_status: z.enum(["N", "MAM", "SAM", ""]).optional(), // MUAC status
+  
   date: z.string().optional(), // Date of nutritional status assessment
   edemaSeverity:z.string().optional()
 })
@@ -113,13 +114,14 @@ export const NUTRITIONAL_STATUS_DESCRIPTIONS = {
     N: "Normal",
     UW: "Underweight",
     SUW: "Severely Underweight",
+    OW: "Overweight",
+
   },
   lhfa: {
     N: "Normal",
     ST: "Stunted",
     SST: "Severely Stunted",
     T: "Tall",
-    OB: "Obese",
   },
   wfh: {
     N: "Normal",

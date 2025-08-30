@@ -6,8 +6,9 @@ from apps.patientrecords.models import *
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer, PatientRecordSerializer
 from apps.healthProfiling.serializers.base import PersonalSerializer
 from apps.healthProfiling.models import *
-# serializers.py
-
+from apps.inventory.serializers.medicine_serializers import *
+from apps.reports.serializers import FileInputSerializer
+from utils.supabase_client import upload_to_storage
 
 
 # ALL  medicine RECORD 
@@ -38,6 +39,7 @@ class MedicineRecordSerializerMinimal(serializers.ModelSerializer):
     class Meta:
         model = MedicineRecord
         fields = '__all__'
+        
 class MedicineRequestSerializer(serializers.ModelSerializer):
     address = serializers.SerializerMethodField()
     personal_info = serializers.SerializerMethodField()
@@ -140,3 +142,67 @@ class FindingPlanTreatmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = FindingsPlanTreatment
         fields = '__all__'
+        
+class MedicineFileSerializer(serializers.ModelSerializer):
+    medrec_details = MedicineRecordSerialzer(source='medrec', read_only=True)
+
+    class Meta:
+        model = Medicine_File
+        fields = '__all__'
+        read_only_fields = ('medf_id', 'created_at', 'medf_url')
+        
+
+class MedicineRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicineRecord
+        fields = '__all__'
+      
+      
+      
+class Medicine_FileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Medicine_File
+        fields = '__all__'
+        extra_kwargs = {
+            'medrec': {'required': False, 'default': None},
+            'medreqitem': {'required': False, 'default': None},
+            'medf_url': {'read_only': True},
+            'medf_path': {'read_only': True},
+        }
+    
+    def _upload_files(self, files, medrec_instance=None, medreqitem_instance=None):
+        """Upload multiple files for medicine record or request item"""
+        if not medrec_instance and not medreqitem_instance:
+            raise serializers.ValidationError({"error": "Either medrec_instance or medreqitem_instance is required"})
+        
+        med_files = []
+        
+        for file_data in files:
+            # Validate file data (same as working version)
+            if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
+                print(f"Skipping invalid file data: {file_data.get('name', 'unknown')}")
+                continue
+            
+            # Create the Medicine_File instance FIRST (like the working version)
+            med_file = Medicine_File(
+                medf_name=file_data['name'],
+                medf_type=file_data['type'],
+                medf_path=f"medicine/{file_data['name']}",  # Fixed path format
+                medrec=medrec_instance,
+                medreqitem=medreqitem_instance,
+                created_at=timezone.now(),
+            )
+            
+            # THEN upload to storage and assign the URL (like the working version)
+            med_file.medf_url = upload_to_storage(file_data, 'medicine-document', 'medicine')
+            
+            med_files.append(med_file)
+        
+        # Save all files at once (like the working version)
+        if med_files:
+            Medicine_File.objects.bulk_create(med_files)
+            print(f"Successfully created {len(med_files)} file records")
+        else:
+            print("No valid files to upload")
+        
+        return med_files

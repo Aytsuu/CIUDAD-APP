@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback,useRef } from "react";
 import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import {  AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchFirstaidsWithStock } from "./restful-api/fetchAPI";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
@@ -16,14 +16,14 @@ import { useFirstRequestMutation } from "./queries/postQueries";
 import { PatientSearch } from "@/components/ui/patientSearch";
 import { useAuth } from "@/context/AuthContext";
 import { FirstAidRequestSkeleton } from "../skeleton/firstmed-skeleton";
-import {
-  FirstaidRequestArraySchema,
-  FirstaidRequestArrayType,
-} from "./firstaidschema";
+import {FirstaidRequestArraySchema,FirstaidRequestArrayType} from "./firstaidschema";
 import { Patient } from "@/components/ui/patientSearch";
 import CardLayout from "@/components/ui/card/card-layout";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { FirstAidRequestError } from "./firstaid-error";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { SignatureFieldRef,SignatureField} from "../Reports/firstaid-report/signature";
+import { showErrorToast } from "@/components/ui/toast";
 
 export default function FirstAidRequestForm() {
   const navigate = useNavigate();
@@ -32,22 +32,17 @@ export default function FirstAidRequestForm() {
   const staff_id = user?.staff?.staff_id;
   const mode = location.state?.params?.mode || "fromallrecordtable";
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [selectedPatientData, setSelectedPatientData] =
-    useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] =useState<Patient | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-
-  const { firstAidStocksOptions, isLoading: isFirstAidLoading } =
-    fetchFirstaidsWithStock();
-
-  const [selectedFirstAids, setSelectedFirstAids] = useState<
-    { finv_id: string; qty: number; reason: string }[]
-  >([]);
+  const { firstAidStocksOptions, isLoading: isFirstAidLoading } =fetchFirstaidsWithStock();
+  const [selectedFirstAids, setSelectedFirstAids] = useState< { finv_id: string; qty: number; reason: string }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-
-  const { mutateAsync: submitFirstaidRequest } =
-    useFirstRequestMutation();
+  const { mutateAsync: submitFirstaidRequest } = useFirstRequestMutation();
+  const signatureRef = useRef<SignatureFieldRef>(null);
+  const [signature, setSignature] = useState<string | null>(null);
+  
 
   // Initialize patient data based on mode
   useEffect(() => {
@@ -58,6 +53,10 @@ export default function FirstAidRequestForm() {
       form.setValue("pat_id", patientData.pat_id.toString());
     }
   }, [location.state, mode]);
+
+  const handleSignatureChange = useCallback((signature: string | null) => {
+    setSignature(signature);
+  }, []);
 
   const handlePatientSelect = (patient: Patient | null, patientId: string) => {
     setSelectedPatientId(patientId);
@@ -94,22 +93,25 @@ export default function FirstAidRequestForm() {
 
   const onSubmit = useCallback(
     async (data: FirstaidRequestArrayType) => {
+      const currentSignature = signatureRef.current?.getSignature();
+      console.log("Current Signature:", currentSignature);
+      if (!currentSignature) {
+        showErrorToast("Please provide a signature before submitting.");
+        return;
+      }
       setIsConfirming(true);
-
       const requestData = {
         pat_id: data.pat_id,
+        signature: currentSignature,
+        staff_id: staff_id || "",
         firstaid: data.firstaid.map((item) => ({
           finv_id: item.finv_id,
           qty: item.qty,
           reason: item.reason || "No reason provided",
         })),
       };
-
       try {
-        await submitFirstaidRequest({
-          data: requestData,
-          staff_id: staff_id,
-        });
+        await submitFirstaidRequest({data: requestData});
       } catch (error) {
         toast.error("Failed to submit first aid request");
       } finally {
@@ -122,42 +124,26 @@ export default function FirstAidRequestForm() {
   const handlePreview = useCallback(() => {
     const patientCheck =
       mode === "fromindivrecord" ? selectedPatientData : selectedPatientId;
-
     if (!patientCheck || selectedFirstAids.length === 0) {
-      toast.error("Please complete all required fields");
+      showErrorToast("Please complete all required fields");
       return;
     }
     setShowSummary(true);
   }, [selectedPatientData, selectedPatientId, selectedFirstAids, mode]);
 
-  const totalSelectedQuantity = selectedFirstAids.reduce(
-    (sum, fa) => sum + fa.qty,
-    0
-  );
+  const totalSelectedQuantity = selectedFirstAids.reduce((sum, fa) => sum + fa.qty, 0 );
+
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <Button
-          className="text-black p-2 mb-2 self-start"
-          variant={"outline"}
-          onClick={() => navigate(-1)}
-        >
-          <ChevronLeft />
-        </Button>
-        <div className="flex-col items-center">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            First Aid Request
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            {mode === "fromindivrecord"
-              ? "Request first aid items for a patient"
-              : "Manage and view patient's first aid records"}
-          </p>
-        </div>
-      </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
-
+      <LayoutWithBack
+        title="First Aid Request"
+        description={
+          mode === "fromindivrecord"
+            ? "Request first aid items for a patient"
+            : "Manage and view patient's first aid records"
+        }
+>   
       <CardLayout
         content={
           <>
@@ -207,6 +193,14 @@ export default function FirstAidRequestForm() {
                       firstAidStocksOptions={firstAidStocksOptions}
                       totalSelectedQuantity={totalSelectedQuantity}
                     />
+                     <div className="w-full px-4">
+                      <SignatureField
+                        ref={signatureRef}
+                        title="Signature"
+                        onSignatureChange={handleSignatureChange}
+                        required={true}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div className="w-full overflow-x-auto">
@@ -320,6 +314,7 @@ export default function FirstAidRequestForm() {
           </>
         }
       />
+      </LayoutWithBack>   
     </>
   );
 }

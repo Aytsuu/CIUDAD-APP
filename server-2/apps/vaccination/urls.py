@@ -16,8 +16,6 @@ urlpatterns = [
     path('vaccination-record/<int:vacrec_id>/', DeleteUpdateVaccinationRecordView.as_view(), name='vaccination-record-detail'),
     
     
-    
-    
     # path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
     path('vaccination-history/<int:vachist_id>/', DeleteUpdateVaccinationHistoryView.as_view(), name='vaccination-history-detail'),
     path('unvaccinated-vaccines/<str:pat_id>/', UnvaccinatedVaccinesView.as_view(), name='unvaccinated-vaccines'),
@@ -34,14 +32,19 @@ urlpatterns = [
     path('to-be-administered/', TobeAdministeredVaccinationView.as_view(), name='administered_vaccination'),
     
     path('count-scheduled-vaccinations/', CountScheduledVaccinationView.as_view(), name='count_scheduled_vaccinations'),
-    path('vaccination-records/monthly/', MonthlyVaccinationSummariesAPIView.as_view(), name='monthly_vaccination_records'),
-    path('vaccination-reports/<str:month>/', MonthlyVaccinationRecordsDetailAPIView.as_view(), name='vaccination-reports'),
-    path('month-count/', MonthlyVaccinationCountAPIView.as_view(), name='month-count'),
-  
+      
     path('child-vaccination/', BulkVaccinationCreateView.as_view(), name='child-vaccination'),
     
     
+    path('vaccination-records/monthly/', MonthlyVaccinationSummariesAPIView.as_view(), name='monthly_vaccination_records'),
+    path('vaccination-reports/<str:month>/', MonthlyVaccinationRecordsDetailAPIView.as_view(), name='vaccination-reports'),
+    path('vaccination-records/monthly/chart/<str:month>/', MonthlyVaccinationChart.as_view(), name='vaccination_records_list'),
+    path('vaccination-totalrecords/', VaccinationTotalCountAPIView.as_view(), name='vaccination_total_count'),
+
     
+    
+    # =============================BACKEND=================================
+    path('submit-vaccination-records/', VaccinationSubmissionView.as_view(), name='vaccination-records-list'),
 
 
 ]

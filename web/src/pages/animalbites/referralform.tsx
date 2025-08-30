@@ -277,14 +277,14 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       if (values.exposure_site.startsWith("custom-")) {
         // Find the name from the options array
         const option = exposureSites.find((site) => site.id === values.exposure_site)
-        submissionData.exposure_site_name = option?.name || customExposureSiteName
+        submissionData.exposure_site = option?.name || customExposureSiteName
       }
 
       // If biting_animal is a custom ID, add the actual name
       if (values.biting_animal.startsWith("custom-")) {
         // Find the name from the options array
         const option = bitingAnimals.find((animal) => animal.id === values.biting_animal)
-        submissionData.biting_animal_name = option?.name || customBitingAnimalName
+        submissionData.biting_animal = option?.name || customBitingAnimalName
       }
 
       const result = await submitAnimalBiteReferral(submissionData)

@@ -59,6 +59,7 @@ export const CommodityListSchema = z.object({
 export const FirstAidSchema = z.object({
   fa_name: z.string().min(1, "Item name is Required").default(""),
   cat_id: z.string().min(1, "Category is required"),
+  staff_id: z.string().optional(),
 
 });
 

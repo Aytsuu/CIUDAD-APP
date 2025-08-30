@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import {api2} from "@/api/api";
+import { api2 } from "@/api/api";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { toast } from "sonner";
-import { CircleCheck, CircleX } from "lucide-react";
 import { toTitleCase } from "@/helpers/ToTitleCase";
-import { useQuery,useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 interface Option {
   id: string;
@@ -13,8 +12,6 @@ interface Option {
 
 export const useCategoriesMedicine = () => {
   const [categories, setCategories] = useState<Option[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   // State for delete confirmation dialog
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
@@ -32,7 +29,7 @@ export const useCategoriesMedicine = () => {
     try {
       const res = await api2.post("inventory/category/", {
         cat_type: CategoryInfo.cat_type,
-        cat_name: toTitleCase(CategoryInfo.cat_name.trim()),
+        cat_name: toTitleCase(CategoryInfo.cat_name.trim())
       });
       console.log("Category added successfully:", res.data);
       return res.data;
@@ -43,13 +40,17 @@ export const useCategoriesMedicine = () => {
   };
 
   // GET CATEGORIES with react-query
-  const { refetch: getCategories } = useQuery({
-    queryKey: ['medicineCategories'],
+  const {
+    data,
+    isLoading: loading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ["medicineCategories"],
     queryFn: async () => {
       try {
-        setLoading(true);
         const { data } = await api2.get("inventory/category/", {
-          params: { cat_type: "Medicine" },
+          params: { cat_type: "Medicine" }
         });
 
         if (Array.isArray(data)) {
@@ -57,48 +58,38 @@ export const useCategoriesMedicine = () => {
             .filter((cat) => cat.cat_type === "Medicine")
             .map((cat) => ({
               id: String(cat.cat_id),
-              name: cat.cat_name,
+              name: cat.cat_name
             }));
 
           setCategories(transformedCategories);
           return transformedCategories;
         } else {
           console.error("Unexpected data format:", data);
-          setError("Unexpected data format from server");
-          return [];
+          throw new Error("Unexpected data format from server");
         }
       } catch (err) {
         console.error(err);
-        setError("Failed to fetch categories");
-        return [];
-      } finally {
-        setLoading(false);
+        throw new Error("Failed to fetch categories");
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes stale time
+    staleTime: 5 * 60 * 1000 // 5 minutes stale time
   });
 
+  // Update categories when data changes
   useEffect(() => {
-    getCategories();
-  }, [getCategories]);
+    if (data) {
+      setCategories(data);
+    }
+  }, [data]);
 
-  const handleAddCategory = async (
-    newCategoryName: string,
-    onCategoryAdded: (newId: string) => void
-  ) => {
+  const handleAddCategory = async (newCategoryName: string, onCategoryAdded: (newId: string) => void) => {
     if (!newCategoryName.trim() || isProcessing) return;
     setIsProcessing(true);
 
-    const categoryExists = categories.some(
-      (category) => category.name.toLowerCase() === newCategoryName.toLowerCase()
-    );
+    const categoryExists = categories.some((category) => category.name.toLowerCase() === newCategoryName.toLowerCase());
 
     if (categoryExists) {
-      setError("Category already exists.");
-      toast.error("Category already exists", {
-        icon: <CircleX size={18} className="fill-red-500 stroke-white" />,
-        duration: 2000,
-      });
+      showErrorToast("Category already exists");
       setIsProcessing(false);
       return;
     }
@@ -106,29 +97,28 @@ export const useCategoriesMedicine = () => {
     try {
       const newCategory = await addCategory({
         cat_type: "Medicine",
-        cat_name: toTitleCase(newCategoryName.trim()),
+        cat_name: toTitleCase(newCategoryName.trim())
       });
 
       if (newCategory && newCategory.cat_id) {
         const newCategoryOption = {
           id: String(newCategory.cat_id),
-          name: newCategory.cat_name,
+          name: newCategory.cat_name
         };
 
-        setCategories((prev) => [...prev, newCategoryOption]);
-        onCategoryAdded(newCategoryOption.id);
-        
-        toast.success("Category added successfully", {
-          icon: <CircleCheck size={18} className="fill-green-500 stroke-white" />,
-          duration: 2000,
-        });
+        // Invalidate the query to refetch data
+        queryClient.invalidateQueries({ queryKey: ["medicineCategories"] });
+
+        // Call the callback if provided
+        if (onCategoryAdded) {
+          onCategoryAdded(newCategoryOption.id);
+        }
+
+        showSuccessToast("Category added successfully");
       }
     } catch (error) {
       console.error("❌ Failed to add category:", error);
-      toast.error("Failed to add category", {
-        icon: <CircleX size={18} className="fill-red-500 stroke-white" />,
-        duration: 2000,
-      });
+      showErrorToast("Failed to add category");
     } finally {
       setIsProcessing(false);
     }
@@ -146,10 +136,10 @@ export const useCategoriesMedicine = () => {
 
   const handleConfirmAdd = async () => {
     if (isProcessing || !newCategoryName.trim()) return;
-    
+
     // Close modal immediately
     setIsAddConfirmationOpen(false);
-    
+
     try {
       await handleAddCategory(newCategoryName, (newId) => {
         if (onCategoryAddedCallback) {
@@ -169,27 +159,17 @@ export const useCategoriesMedicine = () => {
       const response = await api2.delete(`inventory/category/${categoryId}/`);
 
       if (response.status === 200 || response.status === 204) {
-        setCategories((prev) =>
-          prev.filter((category) => category.id !== String(categoryId))
-        );
-        
-        toast.success("Category deleted successfully", {
-          icon: <CircleCheck size={18} className="fill-green-500 stroke-white" />,
-          duration: 2000,
-        });
+        // Invalidate the query to refetch data
+        queryClient.invalidateQueries({ queryKey: ["medicineCategories"] });
+
+        showSuccessToast("Category deleted successfully");
       } else {
         console.error(response);
-        toast.error("Failed to delete category", {
-          icon: <CircleX size={18} className="fill-red-500 stroke-white" />,
-          duration: 2000,
-        });
+        showErrorToast("Failed to delete category. It may be in use.");
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to delete category. It may be in use.", {
-        icon: <CircleX size={18} className="fill-red-500 stroke-white" />,
-        duration: 2000,
-      });
+      showErrorToast("Failed to delete category. It may be in use.");
     }
   };
 
@@ -199,23 +179,10 @@ export const useCategoriesMedicine = () => {
     setIsDeleteConfirmationOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (categoryToDelete !== null) {
-      handleDeleteCategory(categoryToDelete);
-    }
-    setIsDeleteConfirmationOpen(false);
-  };
-
   const ConfirmationDialogs = () => (
     <>
       {/* Add Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={isAddConfirmationOpen}
-        onOpenChange={setIsAddConfirmationOpen}
-        onConfirm={handleConfirmAdd}
-        title="Add Category"
-        description={`Are you sure you want to add the category "${newCategoryName}"?`}
-      />
+      <ConfirmationDialog isOpen={isAddConfirmationOpen} onOpenChange={setIsAddConfirmationOpen} onConfirm={handleConfirmAdd} title="Add Category" description={`Are you sure you want to add the category "${newCategoryName}"?`} />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
@@ -232,8 +199,9 @@ export const useCategoriesMedicine = () => {
       />
     </>
   );
+
   return {
-    categories,
+    categories: loading ? [] : categories, // Return empty array when loading
     loading,
     error,
     handleAddCategory,
@@ -241,5 +209,6 @@ export const useCategoriesMedicine = () => {
     handleDeleteConfirmation,
     categoryHandleAdd,
     ConfirmationDialogs,
+    refetch
   };
 };

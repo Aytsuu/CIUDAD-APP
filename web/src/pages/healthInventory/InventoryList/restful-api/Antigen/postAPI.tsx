@@ -1,13 +1,8 @@
 import { api2 } from "@/api/api";
-import { toTitleCase } from "@/helpers/ToTitleCase";
 
 export const addImzSupplies = async (data: Record<string, string>) => {
   try {
-    const res = await api2.post("inventory/imz_supplies/", {
-      imz_name: toTitleCase(data.imz_name),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    });
+    const res = await api2.post("inventory/imz_supplieslist-createview/", data);
     return res.data;
   } catch (err) {
     console.log(err);
@@ -17,9 +12,6 @@ export const addImzSupplies = async (data: Record<string, string>) => {
 export const addVaccine = async (data: { vac_type_choices: string; vac_name: string; no_of_doses: number; ageGroup: number }): Promise<any> => {
   try {
     const res = await api2.post("inventory/vac_list/", data);
-    if (!res.data?.vac_id) {
-      throw new Error("Invalid vaccine response format");
-    }
     return res.data;
   } catch (err) {
     console.error("Error adding vaccine:", err);

@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import *
 
+
 urlpatterns = [
     
     path('records/', ChildHealthRecordsView.as_view(), name='child-health-records'),
@@ -29,5 +30,12 @@ urlpatterns = [
     path('child-health-records/by-patient/<str:pat_id>/', ChildHealthRecordByPatIDView.as_view(), name='pat_child_health_records'),
     path('child-immunization-status/',ChildHealthImmunizationStatusListView.as_view(), name='child-immunization-status'),
     path('child-immunization-count/', ChildHealthImmunizationCountView.as_view(), name='child-health-immunization-count'),
-]
+    
+ 
+    
+    path('childhealth-totalrecords/', ChildHealthTotalCountAPIView.as_view(), name='monthly_child_health_records'),   
 
+    
+    
+   
+  ]

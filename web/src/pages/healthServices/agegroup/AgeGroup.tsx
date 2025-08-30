@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { deleteAgeroup } from "./restful-api/api";
 import { useAgeGroups } from "./queries/fetch";
-import { Link } from "react-router";
+import { AgeGroupForm } from "./AgeGroupForm";
 
 export type AgeGroupRecord = {
   id: string;
@@ -25,6 +25,15 @@ export default function AgeGroup() {
     ageGroup: AgeGroupRecord | null;
   }>({ isOpen: false, ageGroup: null });
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [modalState, setModalState] = React.useState<{
+    isOpen: boolean;
+    mode: 'add' | 'edit';
+    ageGroup: AgeGroupRecord | null;
+  }>({
+    isOpen: false,
+    mode: 'add',
+    ageGroup: null
+  });
 
   const { data: ageGroups, isLoading, error } = useAgeGroups();
 
@@ -91,6 +100,30 @@ export default function AgeGroup() {
     setDeleteConfirmation({ isOpen: true, ageGroup });
   };
 
+  const openAddModal = () => {
+    setModalState({
+      isOpen: true,
+      mode: 'add',
+      ageGroup: null
+    });
+  };
+
+  const openEditModal = (ageGroup: AgeGroupRecord) => {
+    setModalState({
+      isOpen: true,
+      mode: 'edit',
+      ageGroup
+    });
+  };
+
+  const closeModal = () => {
+    setModalState({
+      isOpen: false,
+      mode: 'add',
+      ageGroup: null
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto p-6 text-center">
@@ -122,12 +155,14 @@ export default function AgeGroup() {
           </p>
         </div>
 
-        <Link to={`/age-group-management`} state={{ mode: "add" }}>
-          <Button className="flex items-center" aria-label="Add new age group">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Age Group
-          </Button>
-        </Link>
+        <Button 
+          className="flex items-center" 
+          aria-label="Add new age group"
+          onClick={openAddModal}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Age Group
+        </Button>
       </div>
 
       <div className="mb-6 relative">
@@ -188,16 +223,15 @@ export default function AgeGroup() {
                     </p>
                   </div>
                   <div className="flex space-x-2 ml-4">
-                    <Link to={`/age-group-management`} state={{ mode: "edit" }}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="p-2"
-                        aria-label={`Edit ${ageGroup.agegroup_name} age group`}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="p-2"
+                      onClick={() => openEditModal(ageGroup)}
+                      aria-label={`Edit ${ageGroup.agegroup_name} age group`}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
 
                     <Button
                       variant="outline"
@@ -224,6 +258,13 @@ export default function AgeGroup() {
         title="Delete Age Group"
         description={`Are you sure you want to delete "${deleteConfirmation.ageGroup?.agegroup_name}"? This action cannot be undone.`}
         onConfirm={handleDelete}
+      />
+
+      <AgeGroupForm
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        mode={modalState.mode}
+        ageGroupData={modalState.ageGroup}
       />
     </div>
   );

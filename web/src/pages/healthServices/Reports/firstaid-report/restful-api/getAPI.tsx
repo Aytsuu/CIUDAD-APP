@@ -1,6 +1,7 @@
 // getAPI.ts
 import { api2 } from "@/api/api";
-import { FirstAidRecordsResponse } from "../types";
+import { FirstAidChartResponse, FirstAidRecordsResponse } from "../types";
+import { MedicineChartResponse } from "../../medicine-report/types";
 
 export const getFirstaidRecords = async (
   page: number, 
@@ -51,14 +52,21 @@ export const getFirstaidReports = async (
 
 
 
-export const getMonthCount =async()=>{
-  try {
-    const response = await api2.get("/firstaid/month-count/");
+
+export  const getFirstAidChart = async(month:string)=>{
+  try
+  {
+    const url = `/firstaid/firstaid-records/monthly/chart/${month}/`;
+    const response = await api2.get<FirstAidChartResponse>(url);
+    console.log("Chart Response:", response.data);
     return response.data;
-  } catch (error) {
-    console.error("Error fetching  list:", error);
+  }
+  catch (error) {
+    console.error("Error fetching Vaccination Chart:", error);
     throw error;
   }
+
+
 }
 
 export const getStaffList =async()=>{

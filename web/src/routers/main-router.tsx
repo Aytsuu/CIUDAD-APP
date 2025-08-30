@@ -24,7 +24,6 @@ import { gad_router } from "./gad-router";
 import { bites_route } from "./AnimalBite-router";
 import { announcement_route } from "./Announcement-router";
 import { famplanning_route } from "./FamilyPlanning-router";
-import { medicalConsultation } from "./med-consultation";
 import { doctorRouting } from "./doctor-router";
 import { familyProfilingRoute } from "./family-profiling-route";
 import { patientsRecordRouter } from "./patients-record-router";
@@ -33,6 +32,7 @@ import { medicineRequest } from "./medicine-request";
 import { forwardedhealthrecord_router } from "./forwardedhealthrecords";
 import { firstaid_router } from "./firstaid-router";
 import { health_schedule_routes } from "./health-schedules-router";
+import { medicalConsultation } from "./med-consultation";
 import { summon_router } from "./summon-router";
 import { withTransition } from '@/helpers/withTransition';
 
@@ -93,6 +93,7 @@ export const main_router: RouteObject[] = [
       ...announcement_route,
       ...famplanning_route,
       ...healthinventory,
+      ...medicalConsultation,
       ...medicalConsultation,
       ...doctorRouting,
       ...summon_router,

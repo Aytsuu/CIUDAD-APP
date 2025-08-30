@@ -6,7 +6,7 @@ import ReportSectionCharts from "@/components/analytics/report/report-section-ch
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { DonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
-import { GADExpenseSidebar, GADIncomeSidebar } from "@/components/analytics/gad/btracker-sidebar";
+import {GADExpenseSidebar,GADIncomeSidebar} from "@/components/analytics/gad/btracker-sidebar";
 import { ProjPropPendingSectionCards } from "@/components/analytics/gad/projprop-section-cards";
 import { CouncilEventsSidebar } from "@/components/analytics/council/ce-event-sidebar";
 import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
@@ -16,8 +16,18 @@ import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/ex
 import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/icome-quartertly-report";
 import { GargbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { WasteActivitySidebar } from "@/components/analytics/waste/waste-activities-sidebar";
+import { VaccineDistributionChart } from "@/components/analytics/health/vaccine-chart";
+import { MedicineDistributionChart } from "@/components/analytics/health/medicine-chart";
+import { FirstAidDistributionChart } from "@/components/analytics/health/firstaid-chart";
+import { ServicesHealthRecordsSectionCards } from "@/components/analytics/health/services-count-cards";
+import { format } from "date-fns";
+
+// HEALTH
+import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
 
 export default function Dashboard() {
+  const currentMonth = format(new Date(), "yyyy-MM")
+
   return (
     <MainLayoutComponent
       title="Dashboard"
@@ -32,18 +42,29 @@ export default function Dashboard() {
             <DonationSectionCards />
             <ProjPropPendingSectionCards />
             <WastePersonnelCards />
-            <GargbagePickupSectionCards/>
+            <GargbagePickupSectionCards />
+            <ServicesHealthRecordsSectionCards />
+
+
           </div>
           <div className="grid">
             <ReportSectionCharts />
             <StaffAttendanceRankingChart />
             <GADQuarterlyBudgetChart />
+           
           </div>
           <div className="grid">
             <IncomeExpenseQuarterlyChart />
           </div>
           <div className="grid">
             <IncomeQuarterlyChart />
+          </div>
+
+          <div className="grid">
+            <OPTStatusChart initialMonth={currentMonth} />
+            <VaccineDistributionChart initialMonth={currentMonth} />
+            <MedicineDistributionChart initialMonth={currentMonth} />
+            <FirstAidDistributionChart initialMonth={currentMonth} />
           </div>
         </div>
         <div className="grid gap-2">
@@ -52,7 +73,7 @@ export default function Dashboard() {
           <GADExpenseSidebar />
           <GADIncomeSidebar />
           <CouncilEventsSidebar />
-          <WasteActivitySidebar/>
+          <WasteActivitySidebar />
         </div>
       </div>
     </MainLayoutComponent>

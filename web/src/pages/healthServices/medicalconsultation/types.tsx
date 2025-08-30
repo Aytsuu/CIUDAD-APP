@@ -37,14 +37,15 @@ export type MedicalConsultationHistory = {
           per_suffix?: string;
           per_dob?: string;
         };
-      };
+      } | null;
     } | null;
   };
 
 
 
   export interface MedicalRecord {
-    pat_id: number;
+    rp_id:string
+    pat_id: string;
     fname: string;
     lname: string;
     mname: string;
@@ -60,4 +61,10 @@ export type MedicalConsultationHistory = {
     address: string;
     medicalrec_count: number;
     dob: string;
+  }
+
+
+  export type previousIllness = {
+    prevIllness: string
+    prevIllnessYr?: string
   }

@@ -153,22 +153,23 @@ const items: BaseMenuItem[] = [
       { title: "Medical Consultation", url: "/allMedRecords" },
       { title: "Vaccination", url: "/allRecordsForVaccine" },
       { title: "Patients Record", url: "/patients-record-main" },
-      {
-        title: "Forwarded Records",
-        url: "/",
-        items: [
-          {
-            title: "Child Immunization",
-            url: "/forwarded-child-health-immunization",
-          },
-          { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
-          { title: "Step 2: Vitals Queue", url: "/forwarded-vitals-queue" },
-          {
-            title: "Medical Consultation",
-            url: "/forwarded-medical-consultation",
-          },
-        ],
-      },
+      {title: "Forwarded Records", url: "/forwarded-records"},
+      // {
+      //   title: "Forwarded Records",
+      //   url: "/",
+      //   anotherItems: [
+      //     {
+      //       title: "Child Immunization",
+      //       url: "/forwarded-child-health-immunization",
+      //     },
+      //     { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
+      //     { title: "Step 2: Vitals Queue  ", url: "/forwarded-vitals-queue" },
+      //     {
+      //       title: "Medical Consultaion",
+      //       url: "/forwarded-medical-consultation",
+      //     },
+      //   ],
+      // },
       {
         title: "Manage Request",
         url: "/",
@@ -198,8 +199,7 @@ const items: BaseMenuItem[] = [
         url: "/",
         items: [
           { title: "Inventory List", url: "/mainInventoryList" },
-          { title: "Inventory Stocks", url: "/mainInventoryStocks" },
-          { title: "Transactions List", url: "/transactionMainInventoryList" },
+          { title: "Inventory Stocks", url: "/main-inventory" },
         ],
       },
       {

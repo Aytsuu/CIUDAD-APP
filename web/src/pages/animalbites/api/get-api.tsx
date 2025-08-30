@@ -26,7 +26,7 @@ export const getAnimalbitePatients = async () => {
 }
 export const getAllPatients = async () => {
   try {
-    const res = await api2.get("patientrecords/patient/")
+    const res = await api2.get("patientrecords/patient/view/create/")
     console.log("✅ Patients fetched successfully:", res.data)
     return res.data
   } catch (error) {

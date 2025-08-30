@@ -8,7 +8,7 @@ from apps.administration.models import Staff
 class VaccinationRecord(models.Model):
     vacrec_id = models.BigAutoField(primary_key=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='vaccination_records',db_column='patrec_id')
-    vacrec_totaldose = models.PositiveIntegerField(default="0")
+    vacrec_totaldose = models.PositiveIntegerField(default="0",blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'vaccination_record'
@@ -18,7 +18,6 @@ class VaccinationRecord(models.Model):
 class VaccinationHistory(models.Model):
     vachist_id = models.BigAutoField(primary_key=True)
     vachist_doseNo = models.PositiveIntegerField(default="0")
-    vachist_age = models.CharField(default="", max_length=100)
     vachist_status = models.CharField(max_length=100, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
     date_administered=models.DateField()
@@ -29,6 +28,7 @@ class VaccinationHistory(models.Model):
     vacStck_id = models.ForeignKey( VaccineStock,  on_delete=models.CASCADE, related_name='vaccination_histories',db_column="vacStck_id",null=True)
     vac =models.ForeignKey( VaccineList,  on_delete=models.CASCADE, related_name='vaccination_histories', null=True, blank=True)
     followv = models.ForeignKey( FollowUpVisit,  on_delete=models.CASCADE, related_name='vaccination_histories', null=True, blank=True)
+    signature =models.TextField(default="", blank=True, null=True)
     class Meta:
         
         db_table = 'vaccination_history'

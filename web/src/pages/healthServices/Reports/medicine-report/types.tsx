@@ -90,22 +90,41 @@ export interface MedicineRecord {
   patrec_id: number | null;
   minv_id: number;
 }
-
 export interface MonthlyMedicineRecord {
   month: string;
   record_count: number;
-  records: MedicineRecord[];
+  monthlyrcplist_id: number;
   report: {
-    staff_details: StaffDetails;
-    signature: string;
-    control_no: string;
-    office: string;
+    monthlyrcplist_id: number;
+    staff_details: StaffDetails | null;
+    month_year: string;
+    signature: string | null;
+    office: string | null;
+    control_no: string | null;
+    total_records: number;
+    rcp_type: string;
+    logo: string | null;
+    contact_number: string;
+    location: string;
+    department: string;
+    staff: string | null;
   };
-  monthlyrcplist_id: string;
+  records: MedicineRecord[];
 }
 
 export interface MedicineRecordsResponse {
   success: boolean;
-  data: MonthlyMedicineRecord[];
+  data: MonthlyMedicineRecord;
+  total_records?: number;
+}
+
+
+export  type MedicineChartResponse ={
+  success: boolean;
+  month: string; // Could use template literal `${number}-${number}` if you want stricter month format
+  medicine_counts: {
+    [medname: string]: number; // Fully dynamic vaccine names with number counts
+  };
   total_records: number;
+
 }

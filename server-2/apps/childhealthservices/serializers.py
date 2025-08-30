@@ -17,10 +17,7 @@ class ChildHealthrecordSerializerBase(serializers.ModelSerializer):
         model = ChildHealthrecord
         fields = '__all__'
 class ChildHealthrecordSerializer(serializers.ModelSerializer):
-    # staff_details = StaffBaseSerializer(source='staff', read_only=True)
     patrec_details = PatientRecordSerializer(source='patrec', read_only=True)
-    # staff_details = StaffFullSerializer(source='staff', read_only=True)
-
     class Meta:
         model = ChildHealthrecord
         fields = '__all__'
@@ -93,10 +90,10 @@ class ChildHealthVitalSignsSerializerFull(serializers.ModelSerializer):
         if nutritional:
             return NutritionalStatusSerializerBase(nutritional).data
         return None
+    
 
 
 class ExclusiveBFCheckSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ExclusiveBFCheck
         fields = '__all__'
@@ -111,7 +108,6 @@ class ChildHealthImmunizationHistorySerializer(serializers.ModelSerializer):
 
 class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
     chrec_details = ChildHealthrecordSerializer(source='chrec', read_only=True)
-    
     child_health_notes = ChildHealthNotesSerializer(many=True, read_only=True)
     child_health_vital_signs = ChildHealthVitalSignsSerializer(many=True, read_only=True)
     child_health_supplements = ChildHealthSupplementsSerializer(many=True, read_only=True)
@@ -160,3 +156,13 @@ class ChildHealthrecordSerializerFull(serializers.ModelSerializer):
     class Meta:
         model = ChildHealthrecord
         fields = "__all__"
+        
+        
+class OPTTrackingSerializer(serializers.ModelSerializer):
+    vital_signs = ChildHealthVitalSignsSerializerFull(source='*', read_only=True)
+    chist_details = ChildHealthHistorySerializer(source='chhist', read_only=True)
+    
+    class Meta:
+        model = ChildHealthVitalSigns
+        fields = ['vital_signs', 'chist_details']  
+

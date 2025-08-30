@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { Loader2 } from "lucide-react";
-import { useMedicines } from "../queries/medicine/MedicineFetchQueries";
+import { useMedicinesList } from "../queries/medicine/MedicineFetchQueries";
 import { MedicineData, formOptions } from "./types";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { isDuplicateMedicine } from "./duplicateChecker";
@@ -26,40 +26,25 @@ interface MedicineModalProps {
 }
 
 export default function MedicineModal({ mode = "add", initialData, onClose }: MedicineModalProps) {
-  const [isInitialized, setIsInitialized] = useState(false);
   const [medicineName, setMedicineName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs } = useCategoriesMedicine();
   const { mutateAsync: addMedicineMutation } = useAddMedicine();
   const { mutateAsync: updateMedicineMutation } = useUpdateMedicine();
-  const { data: medicines } = useMedicines();
+  const { data: medicines } = useMedicinesList();
+  const [isFormValid, setIsFormValid] = useState(false);
+
 
   const form = useForm<MedicineType>({
     resolver: zodResolver(MedicineListSchema),
     defaultValues: {
-      medicineName: "",
-      cat_id: "",
-      med_type: ""
+      medicineName: initialData?.medicineName || "",
+      cat_id:  String(initialData?.cat_id)||"",
+      med_type: initialData?.med_type ||""
     }
   });
 
-  useEffect(() => {
-    if (mode === "edit" && initialData) {
-      form.reset({
-        medicineName: initialData.medicineName || "",
-        cat_id: String(initialData.cat_id),
-        med_type: initialData.med_type || ""
-      });
-      setIsInitialized(true);
-    } else if (mode === "add") {
-      form.reset({
-        medicineName: "",
-        cat_id: "",
-        med_type: ""
-      });
-      setIsInitialized(true);
-    }
-  }, [mode, initialData, form]);
+
 
   useEffect(() => {
     if (mode === "edit" && initialData && categories.length > 0 && initialData.cat_id) {
@@ -78,6 +63,14 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
     }
   }, [categories, mode, initialData, form]);
 
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      const isValid = form.formState.isValid;
+      setIsFormValid(isValid);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   const handleConfirmAction = async () => {
     setIsSubmitting(true);
     const formData = form.getValues();
@@ -91,7 +84,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
           throw new Error("Invalid API response - expected an array");
         }
 
-        if (isDuplicateMedicine(existingMedicines, formData.medicineName, mode === "edit" ? initialData?.id : undefined)) {
+        if (isDuplicateMedicine(existingMedicines, formData.medicineName)) {
           form.setError("medicineName", {
             type: "manual",
             message: "Medicine name already exists"
@@ -176,7 +169,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
                 <FormItem>
                   <FormLabel className="text-darkGray">Category</FormLabel>
                   <FormControl>
-                    <SelectLayoutWithAdd
+                  <SelectLayoutWithAdd
                       className="w-full"
                       placeholder={getCurrentCategoryName()}
                       label="Select a Category"
@@ -188,7 +181,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
                               id: String(cat.id),
                               name: cat.name
                             }))
-                          : [{ id: "loading", name: "Loading categories..." }]
+                          : [] // Empty array when no data
                       }
                       value={field.value || ""}
                       onChange={(value) => {
@@ -219,7 +212,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
             </Button>
             <ConfirmationModal
               trigger={
-                <Button type="submit" disabled={isSubmitting || (isEditMode && !hasFormChanges)}>
+                <Button type="submit" disabled={isSubmitting || (isEditMode && !hasFormChanges || !isFormValid)}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

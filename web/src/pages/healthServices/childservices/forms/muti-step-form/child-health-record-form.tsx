@@ -1,3 +1,4 @@
+// src/pages/childHealthRecordForm/index.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -105,7 +106,6 @@ export default function ChildHealthRecordForm() {
   const getLatestNoteForRecord = (notesArray: any[]) => {
     if (!notesArray || notesArray.length === 0) return null;
 
-    // Sort notes by created_at in descending order
     const sortedNotes = [...notesArray].sort(
       (a: any, b: any) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -237,13 +237,17 @@ export default function ChildHealthRecordForm() {
           throw new Error("Parent child health record (chrec) not found.");
         }
 
+        console.log("API Response - supplements_statuses:", 
+          chrecRecord.child_health_histories?.flatMap(
+            (h: any) => h.supplements_statuses
+          ));
+
         const allHistoricalVitalSigns: VitalSignType[] = [];
         const allHistoricalMedicines: Medicine[] = [];
         const allHistoricalNutritionalStatuses: any[] = [];
         const allHistoricalBFdates: string[] = [];
         const allHistoricalSupplementStatuses: CHSSupplementStat[] = [];
         const allImmunizationTracking: ImmunizationTracking[] = [];
-
         const allPatientHistoricalDisabilities: {
           id: number;
           pd_id: number;
@@ -256,7 +260,6 @@ export default function ChildHealthRecordForm() {
         }[] = [];
 
         chrecRecord.child_health_histories?.forEach((history: any) => {
-          // Get the latest note for this history record
           const latestNote = getLatestNoteForRecord(
             history.child_health_notes || []
           );
@@ -305,40 +308,38 @@ export default function ChildHealthRecordForm() {
             })) || [];
           allHistoricalMedicines.push(...medicinesFromHistory);
 
-        
-            // Process immunization tracking
-            if (history.immunization_tracking) {
-              const extractedImmunization: ImmunizationTracking[] =
-                history.immunization_tracking.map((track: any) => ({
-                  imt_id: track.imt_id?.toString() || "",
-                  vachist_id: track.vachist_details?.vachist_id?.toString() || "",
-                  vaccine_name:
-                    track.vachist_details?.vaccine_stock?.vaccinelist?.vac_name ||
-                    track.vachist_details?.vac_details?.vac_name ||
-                    "Unknown",
-                  dose_number:
-                    track.vachist_details?.vachist_doseNo?.toString() || "",
-                  date_administered:
-                    track.vachist_details?.date_administered ||
-                    track.vachist_details?.created_at?.split("T")[0] ||
-                    "",
-                  status: track.vachist_details?.vachist_status || "completed",
-                  hasExistingVaccination: track.hasExistingVaccination || false,
-                  follow_up_date:
-                    track.vachist_details?.follow_up_visit?.followv_date || "",
-                  follow_up_status:
-                    track.vachist_details?.follow_up_visit?.followv_status ||
-                    "pending",
-                  age_at_vaccination: track.vachist_details?.vachist_age || "",
-                  batch_number:
-                    track.vachist_details?.vaccine_stock?.batch_number || "",
-                  expiry_date:
-                    track.vachist_details?.vaccine_stock?.inv_details
-                      ?.expiry_date || "",
-                }));
-              allImmunizationTracking.push(...extractedImmunization);
-            }
-  
+          if (history.immunization_tracking) {
+            const extractedImmunization: ImmunizationTracking[] =
+              history.immunization_tracking.map((track: any) => ({
+                imt_id: track.imt_id?.toString() || "",
+                vachist_id: track.vachist_details?.vachist_id?.toString() || "",
+                vaccine_name:
+                  track.vachist_details?.vaccine_stock?.vaccinelist?.vac_name ||
+                  track.vachist_details?.vac_details?.vac_name ||
+                  "Unknown",
+                dose_number:
+                  track.vachist_details?.vachist_doseNo?.toString() || "",
+                date_administered:
+                  track.vachist_details?.date_administered ||
+                  track.vachist_details?.created_at?.split("T")[0] ||
+                  "",
+                status: track.vachist_details?.vachist_status || "completed",
+                hasExistingVaccination: track.hasExistingVaccination || false,
+                follow_up_date:
+                  track.vachist_details?.follow_up_visit?.followv_date || "",
+                follow_up_status:
+                  track.vachist_details?.follow_up_visit?.followv_status ||
+                  "pending",
+                age_at_vaccination: track.vachist_details?.vachist_age || "",
+                batch_number:
+                  track.vachist_details?.vaccine_stock?.batch_number || "",
+                expiry_date:
+                  track.vachist_details?.vaccine_stock?.inv_details
+                    ?.expiry_date || "",
+              }));
+            allImmunizationTracking.push(...extractedImmunization);
+          }
+
           // Process nutritional status
           const nutritionalStatusFromHistory = history.nutrition_statuses?.[0]
             ? {
@@ -370,15 +371,15 @@ export default function ChildHealthRecordForm() {
           // Process supplement statuses
           const supplementStatusesFromHistory: CHSSupplementStat[] =
             history.supplements_statuses?.map((status: any) => ({
-              chssupplementstat_id: status.chssupplementstat_id,
-              birthwt: status.birthwt,
-              status_type: status.status_type,
-              date_seen: status.date_seen,
-              date_given_iron: status.date_given_iron,
-              created_at: status.created_at,
-              updated_at: status.updated_at,
-              chsupplement: status.chsupplement,
-              date_completed: status.date_completed,
+              chssupplementstat_id: status.chssupplementstat_id || 0,
+              birthwt: status.birthwt || null,
+              status_type: status.status_type || "",
+              date_seen: status.date_seen || null,
+              date_given_iron: status.date_given_iron || null,
+              created_at: status.created_at || "",
+              updated_at: status.updated_at || "",
+              chsupplement: status.chsupplement || null,
+              date_completed: status.date_completed || null,
             })) || [];
           allHistoricalSupplementStatuses.push(
             ...supplementStatusesFromHistory
@@ -422,7 +423,6 @@ export default function ChildHealthRecordForm() {
           })) || [];
         setOriginalDisabilityRecords(disabilitiesForSelectedRecord);
 
-        // Get the latest note for the selected record
         const latestNote = getLatestNoteForRecord(
           selectedChhistRecord.child_health_notes || []
         );
@@ -437,7 +437,6 @@ export default function ChildHealthRecordForm() {
         const recordData = transformApiDataToFormData(selectedChhistRecord);
         setFormData(recordData);
 
-        // Initialize newVitalSigns with today's vital signs if they exist
         const todaysVitalSign = allHistoricalVitalSigns.find((vital) =>
           isToday(vital.date)
         );
@@ -495,22 +494,20 @@ export default function ChildHealthRecordForm() {
     });
 
     setHistoricalSupplementStatuses(mergedStatuses);
-    updateFormData({
-      historicalSupplementStatuses: mergedStatuses.map((status) => ({
-        ...status,
-        date_given_iron: status.date_given_iron ?? undefined,
-      })),
-    });
   };
 
   const handleSubmit = async (submittedData: FormData) => {
+    console.log("Form data:", submittedData);
+    console.log("Original record from main:", apiData);
+    console.log("Supplement statuses to submit:", historicalSupplementStatuses);
+    
     setIsSubmitting(true);
     setError(null);
     try {
-      // Merge new vital signs into the form data before submission
       const dataToSubmit = {
         ...submittedData,
         vitalSigns: newVitalSigns,
+        historicalSupplementStatuses: historicalSupplementStatuses,
       };
 
       if (isNewchildhealthrecord) {
@@ -534,8 +531,13 @@ export default function ChildHealthRecordForm() {
       setCurrentPage(1);
       setSelectedPatient(null);
       setSelectedPatientId("");
-    } catch (Error) {
-      console.error("Error submitting form:", Error);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setError(
+        `Failed to submit form: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     } finally {
       setIsSubmitting(false);
     }
