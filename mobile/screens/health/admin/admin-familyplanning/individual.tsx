@@ -171,7 +171,7 @@ const handleCompareRecords = async () => {
               </View>
               <View>
                 <Text className="text-lg font-bold text-gray-800">Record #{item.fprecord}</Text>
-                <Badge variant="secondary">{`Visit ${index + 1}`}</Badge>
+                {/* <Badge variant="secondary">{`Visit ${index + 1}`}</Badge> */}
               </View>
             </View>
             

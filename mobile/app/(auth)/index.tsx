@@ -3,6 +3,6 @@ import Business from "../(business)";
 import HomeScreen from "@/screens/home";
 
 export default () => {
-    return <HomeScreen/>
+    return <LoginScreen/>
 }
  

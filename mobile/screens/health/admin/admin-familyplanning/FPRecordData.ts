@@ -48,10 +48,10 @@ export interface FPRecordData {
     sores?: boolean;
   };
   risk_vaw?: {
-    unpleasant_relationship?: boolean;
-    partner_disapproval?: boolean;
-    domestic_violence?: boolean;
-    referredTo?: string;
+    vaw_unpleasant_rs?: boolean;
+    vaw_partner_disapproval?: boolean;
+    vaw_domestic_violence?: boolean;
+    vaw_referred_to?: string;
   };
   fp_pelvic_exam?: {
     pelvicExamination?: string;
@@ -88,10 +88,11 @@ export interface FPRecordData {
     guardianSignatureDate?: string;
   };
   serviceProvisionRecords?: {
-    dateOfVisit: string;
+    dateOfVisit?: string;
     methodAccepted?: string;
-    nameOfServiceProvider: string;
-    dateOfFollowUp: string;
-    medicalFindings: string;
+    nameOfServiceProvider?: string;
+    dateOfFollowUp?: string;
+    medicalFindings?: string;
+    serviceProviderSignature?: string;
   }[];
 }

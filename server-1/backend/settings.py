@@ -20,8 +20,8 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 # ========================
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
 
-# DEBUG = config('DEBUG', default=False, cast=bool)
-DEBUG=False
+DEBUG = config('DEBUG', default=True, cast=bool)
+# DEBUG=False
 
 # ========================
 # SUPABASE CONFIGURATION
@@ -177,9 +177,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # INTERNATIONALIZATION
 # ========================
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Manila'
 USE_I18N = True
-USE_TZ = True
+USE_L10N = True
+USE_TZ = True 
 
 # ========================
 # STATIC FILES
@@ -308,9 +309,9 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 
 
 
-# ---------------------------------------------------
-# DEVELOPMENT SERVER
-# ---------------------------------------------------
+# # ---------------------------------------------------
+# # DEVELOPMENT SERVER
+# # ---------------------------------------------------
 
 # from pathlib import Path
 # from decouple import config
@@ -332,11 +333,6 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 
 # # DEBUG = config('DEBUG', default=False, cast=bool)
 # DEBUG=True
-# # ALLOWED_HOSTS = config(
-# #     'ALLOWED_HOSTS',
-# #     default='localhost,127.0.0.1',
-# #     cast=lambda v: [s.strip() for s in v.split(',')]
-# # )
 
 # # ========================
 # # SUPABASE CONFIGURATION

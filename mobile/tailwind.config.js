@@ -3,7 +3,12 @@ const { hairlineWidth } = require('nativewind/theme');
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class',
-  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', "./screens/**/*.{ts,tsx}"],
+  content: [
+    './app/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}', 
+    "./hooks/**/*.{js,jsx,ts,tsx}",
+    "./screens/**/*.{ts,tsx}"
+  ],
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
@@ -48,11 +53,12 @@ module.exports = {
         },
 
         // Custom colors
-        primaryBlue: '#00A8F0',
+        primaryBlue: '#0084F0',
         lightBlue: {
           1: '#ECF8FF',
           2: '#E0F2FF'
-        }
+        },
+        buttonBlue: '#2563EB',
       },
       borderWidth: {
         hairline: hairlineWidth(),

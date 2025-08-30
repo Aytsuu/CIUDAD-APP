@@ -26,8 +26,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react-native";
-
-import { FPRsecordData} from "./FPRecordData"
+import { FPRecordData } from "./FPRecordData";
 
 export default function FpRecordViewPage1() {
   const { fprecordId } = useLocalSearchParams();
@@ -161,7 +160,7 @@ export default function FpRecordViewPage1() {
               <View className="flex-1">
                 <Text className="text-sm text-gray-500 mb-1">Complete Address</Text>
                 <Text className="text-sm font-medium text-gray-900">
-                 {`${recordData.address?.houseNumber ?? "N/A"} ${recordData.address?.street ?? ""}, ${recordData.address?.barangay ?? "N/A"}, ${recordData.address?.municipality ?? "N/A"}, ${recordData.address?.province ?? "N/A"}`.trim()}
+                  {`${recordData.address?.houseNumber ?? "N/A"} ${recordData.address?.street ?? ""}, ${recordData.address?.barangay ?? "N/A"}, ${recordData.address?.municipality ?? "N/A"}, ${recordData.address?.province ?? "N/A"}`.trim()}
                 </Text>
               </View>
             </View>
@@ -420,26 +419,26 @@ export default function FpRecordViewPage1() {
             </View>
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">Unpleasant Relationship:</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.risk_vaw?.unpleasant_relationship ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.risk_vaw?.unpleasant_relationship ? "Yes" : "No"}</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.risk_vaw?.vaw_unpleasant_rs ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.risk_vaw?.vaw_unpleasant_rs ? "Yes" : "No"}</Text>
               </View>
             </View>
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">Partner Disapproval:</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.risk_vaw?.partner_disapproval ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.risk_vaw?.partner_disapproval ? "Yes" : "No"}</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.risk_vaw?.vaw_partner_disapproval ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.risk_vaw?.vaw_partner_disapproval ? "Yes" : "No"}</Text>
               </View>
             </View>
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">Domestic Violence:</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.risk_vaw?.domestic_violence ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.risk_vaw?.domestic_violence ? "Yes" : "No"}</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.risk_vaw?.vaw_domestic_violence ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.risk_vaw?.vaw_domestic_violence ? "Yes" : "No"}</Text>
               </View>
             </View>
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">Referred To:</Text>
               <View className="px-3 py-1 rounded-full bg-blue-100 text-blue-800">
-                <Text className="text-xs font-medium">{recordData.risk_vaw?.referredTo ?? "N/A"}</Text>
+                <Text className="text-xs font-medium">{recordData.risk_vaw?.vaw_referred_to ?? "N/A"}</Text>
               </View>
             </View>
           </View>
@@ -739,13 +738,13 @@ export default function FpRecordViewPage1() {
                 </View>
                 <View className="mt-4">
                   <Text className="text-sm text-gray-500 mb-3">Service Provider Signature:</Text>
-                  {recordData.fp_assessment?.as_provider_signature ? (
+                  {service.serviceProviderSignature ? (
                     <View className="rounded-lg p-4 items-center">
                       <Image
                         source={{
-                          uri: `data:image/png;base64,${recordData.fp_assessment.as_provider_signature.startsWith("data:image")
-                            ? recordData.fp_assessment.as_provider_signature.split(",")[1]
-                            : recordData.fp_assessment.as_provider_signature}`,
+                          uri: `data:image/png;base64,${service.serviceProviderSignature.startsWith("data:image")
+                            ? service.serviceProviderSignature.split(",")[1]
+                            : service.serviceProviderSignature}`,
                         }}
                         className="w-48 h-24 rounded-md"
                         resizeMode="contain"
@@ -830,32 +829,30 @@ export default function FpRecordViewPage1() {
       </View>
 
       {/* Horizontal Scrollable Tab Bar */}
-    <ScrollView
-  horizontal
-  showsHorizontalScrollIndicator={false}
-  className="bg-white border-b mt-2 border-gray-200"
-  contentContainerStyle={{ paddingHorizontal: 16 }}
-  style={{ maxHeight: 40 }} // Add this to limit height
->
-  {tabs.map((tab, index) => (
-    <TouchableOpacity
-      key={index}
-      onPress={() => setSelectedTab(index)}
-      className={`px-3 py-2 mr-2 rounded-t-lg ${
-        selectedTab === index 
-          ? "bg-blue-50 border-b-2 border-blue-600" 
-          : "bg-transparent"
-      }`}
-      style={{ minHeight: 40 }} // Fixed height for consistency
-    >
-      <Text className={`text-sm font-medium ${
-        selectedTab === index ? "text-blue-600" : "text-gray-600"
-      }`}>
-        {tab}
-      </Text>
-    </TouchableOpacity>
-  ))}
-</ScrollView>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="bg-white border-b mt-2 border-gray-200"
+        contentContainerStyle={{ paddingHorizontal: 16 }}
+        style={{ maxHeight: 40 }} // Add this to limit height
+      >
+        {tabs.map((tab, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() => setSelectedTab(index)}
+            className={`px-3 py-2 mr-2 rounded-t-lg ${selectedTab === index
+                ? "bg-blue-50 border-b-2 border-blue-600"
+                : "bg-transparent"
+              }`}
+            style={{ minHeight: 40 }} // Fixed height for consistency
+          >
+            <Text className={`text-sm font-medium ${selectedTab === index ? "text-blue-600" : "text-gray-600"
+              }`}>
+              {tab}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
 
       {/* Tab Content */}
