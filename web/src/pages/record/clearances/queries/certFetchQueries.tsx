@@ -1,5 +1,7 @@
 import { api } from "@/api/api";
 import { AxiosError } from "axios";
+import { useQuery } from "@tanstack/react-query";
+import { getStaffList } from "../restful-api/certificateGetAPI";
 
 export type Certificate = {
   cr_id: string;
@@ -162,3 +164,18 @@ export const markCertificateAsIssued = async (certificateData: MarkCertificateVa
     throw error;
   }
 };
+
+
+export type Staff = {
+  staff_id: string;
+  full_name: string;
+  position_title: string;
+};
+
+export const useGetStaffList = () =>
+  useQuery<Staff[], Error>({
+    queryKey: ["staffList"],
+    queryFn: getStaffList,
+  });
+
+

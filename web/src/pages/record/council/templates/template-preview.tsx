@@ -21,6 +21,7 @@ interface TemplatePreviewProps {
   withSummon?: boolean;
   paperSize?: string;
   margin?: string;
+  signatory?: string | null;
 }
 
 function TemplatePreview({
@@ -39,7 +40,8 @@ function TemplatePreview({
   withSignatureApplicant,
   withSummon,
   paperSize = "letter",
-  margin = "normal"
+  margin = "normal",
+  signatory
 }: TemplatePreviewProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -375,31 +377,59 @@ useEffect(() => {
         doc.text("Pangkat Chairman", signatureX + 25, currentY);
       }    
 
-      if(withSignRight){
+      if (withSignRight) {
         const captainX = pageWidth - marginValue - 200; 
 
+        // Add the additional signatory above the existing one
         setCurrentFont('bold');
-        doc.setFontSize(12);
+        doc.setFontSize(10);
+        doc.text(`HON. ${signatory}`, captainX, currentY); // Use the signatory prop
+        
+        currentY += 12; // Space after name
+        
+        setCurrentFont('normal');
+        doc.setFontSize(11);
+        doc.text("Barangay Councilor", captainX, currentY);
+        
+        currentY += 18; // Space after title
+        
+        // Existing code for Virginia Abenoja
+        setCurrentFont('bold');
+        doc.setFontSize(10);
         doc.text("HON. VIRGINIA N. ABENOJA", captainX, currentY);
 
         setCurrentFont('normal');
-        doc.setFontSize(10);
-        const titleOffset = 6;
+        doc.setFontSize(11);
+        // const titleOffset = 6;
         doc.text(
           "Punong Barangay, San Roque Ciudad", 
-          captainX + titleOffset,
-          currentY + 20
+          captainX,// + titleOffset if need
+          currentY + 12
         );
       }
 
-      if(withSignLeft){
+      if (withSignLeft) {
+        // Add the additional signatory above the existing one
         setCurrentFont('bold');
-        doc.setFontSize(12);
+        doc.setFontSize(10);
+        doc.text(`HON. ${signatory}`, signatureX, currentY); // Use the signatory prop
+        
+        currentY += 12; // Space after name
+        
+        setCurrentFont('normal');
+        doc.setFontSize(11);
+        doc.text("Barangay Councilor", signatureX, currentY);
+        
+        currentY += 18; // Space after title
+        
+        // Existing code for Virginia Abenoja
+        setCurrentFont('bold');
+        doc.setFontSize(10);
         doc.text("HON. VIRGINIA N. ABENOJA", signatureX, currentY);
 
         setCurrentFont('normal');
-        doc.setFontSize(10);
-        doc.text("Punong Barangay, San Roque Ciudad", signatureX, currentY + 20);        
+        doc.setFontSize(11);
+        doc.text("Punong Barangay, San Roque Ciudad", signatureX, currentY + 12);        
       }
 
  
@@ -419,16 +449,35 @@ useEffect(() => {
         setCurrentFont('bold');
         doc.text("NAME AND SIGNATURE OF APPLICANT", signatureX, currentY);
         
+        currentY += 15; // Space after applicant signature line
+        
         setCurrentFont('normal');
         doc.setFontSize(9);
-        doc.text("CERTIFIED TRUE AND CORRECT:", signatureX, currentY + 15);
-        currentY += 60;
-
+        doc.text("CERTIFIED TRUE AND CORRECT:", signatureX, currentY);
+        
+        currentY += 50; // Space after certification text
+        
+        setCurrentFont('bold');
+        doc.setFontSize(10);
+        doc.text(`HON. ${signatory}`, signatureX, currentY);
+        
+        currentY += 12; // Space after name
+        
+        setCurrentFont('normal');
+        doc.setFontSize(11);
+        doc.text("Barangay Councilor", signatureX, currentY);
+        
+        currentY += 18; // Space after title
+        
         setCurrentFont('bold');
         doc.setFontSize(10);
         doc.text("HON. VIRGINIA N. ABENOJA", signatureX, currentY);
+        
+        currentY += 12; // Space after name
+        
         setCurrentFont('normal');
-        doc.text("Punong Barangay, San Roque Ciudad", signatureX, currentY + 13);
+        doc.setFontSize(11);
+        doc.text("Punong Barangay, San Roque Ciudad", signatureX, currentY);
       }
 
       if (withSeal && sealBase64) {

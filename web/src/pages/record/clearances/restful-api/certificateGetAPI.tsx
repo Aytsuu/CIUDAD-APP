@@ -34,3 +34,38 @@ export const markCertificateAsIssued = async (certificateData: {
         throw error;
     }
 };
+
+
+
+export type Staff = {
+  staff_id: string;
+  full_name: string;
+  position_title: string;
+};
+
+export const getStaffList = async (): Promise<Staff[]> => {
+  try {
+    const res = await api.get("council/api/staff");
+
+    return res.data
+      .map((item: any) => {
+        // Normalize ID to uppercase and ensure string type
+        const staffId = String(item.staff_id || "")
+          .toUpperCase()
+          .trim();
+
+        if (!staffId) {
+          return null;
+        }
+
+        return {
+          staff_id: staffId, // Store as uppercase
+          full_name: item.full_name?.trim() || `Staff ${staffId}`,
+          position_title: item.position_title?.trim() || "No Designation",
+        };
+      })
+      .filter(Boolean);
+  } catch (err) {
+    return [];
+  }
+};

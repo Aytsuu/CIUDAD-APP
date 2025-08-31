@@ -1001,7 +1001,7 @@ import { useGetTemplateRecord } from './queries/template-FetchQueries';
 import TemplatePreview from './template-preview';
 import { Skeleton } from "@/components/ui/skeleton";
 import {formatTimestampToDate } from '@/helpers/summonTimestampFormatter';
-  import { toast } from "sonner";
+import { toast } from "sonner";
 
 
 interface RequestProps {
@@ -1014,6 +1014,7 @@ interface RequestProps {
   issuedDate?: string;
   isNonResident?: boolean;
   businessName?: string;
+  Signatory?: string | null;
 }
 
 type Template = {
@@ -1038,7 +1039,7 @@ type Template = {
 }
 
 
-function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issuedDate, businessName} : RequestProps ) {
+function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issuedDate, businessName, Signatory} : RequestProps ) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1972,6 +1973,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
                 withSignatureApplicant={previewTemplate.temp_w_sign_applicant}
                 paperSize={previewTemplate.temp_paperSize}
                 margin={previewTemplate.temp_margin}
+                signatory={Signatory?.toUpperCase()}
               />
             </div>
           }
