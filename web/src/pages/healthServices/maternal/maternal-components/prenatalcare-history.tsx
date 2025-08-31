@@ -31,7 +31,7 @@ interface PrenatalVisit {
 }
 
 interface PrenatalHistoryTableProps {
-  data?: PrenatalVisit[]; // Make optional since we'll get real data from API
+  data?: PrenatalVisit[];
   className?: string;
 }
 
@@ -55,10 +55,9 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
     pregnancyId || ""
   )
 
-  // Get records up to the selected visit number
   const recordsToShow = prenatalCareData?.prenatal_records?.slice(0, visitNumber) || []
 
-  // Transform API data to match your existing PrenatalVisit interface
+  // transform api data to match PrenatalVisit interface
   const transformedData: PrenatalVisit[] = recordsToShow.flatMap((record: any) => 
     record.prenatal_care_entries.map((entry: any) => ({
       date: new Date(entry.pfpc_date).toLocaleDateString(),
@@ -80,21 +79,21 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
   // data from database 
   const finalData = transformedData.length > 0 ? transformedData : (data || [])
 
-  const detectChanges = (currentVisit: PrenatalVisit, previousVisit: PrenatalVisit | null): PrenatalVisit => {
-    if (!previousVisit) {
-      return { ...currentVisit, changes: {} };
-    }
+  // const detectChanges = (currentVisit: PrenatalVisit, previousVisit: PrenatalVisit | null): PrenatalVisit => {
+  //   if (!previousVisit) {
+  //     return { ...currentVisit, changes: {} };
+  //   }
 
-    const changes = {
-      weight: currentVisit.weight !== previousVisit.weight,
-      bloodPressure: currentVisit.bloodPressure !== previousVisit.bloodPressure,
-      fundalHeight: currentVisit.leopoldsFindings.fundalHeight !== previousVisit.leopoldsFindings.fundalHeight,
-      fetalHeartbeat: currentVisit.leopoldsFindings.fetalHeartbeat !== previousVisit.leopoldsFindings.fetalHeartbeat,
-      fetalPosition: currentVisit.leopoldsFindings.fetalPosition !== previousVisit.leopoldsFindings.fetalPosition,
-    };
+  //   const changes = {
+  //     weight: currentVisit.weight !== previousVisit.weight,
+  //     bloodPressure: currentVisit.bloodPressure !== previousVisit.bloodPressure,
+  //     fundalHeight: currentVisit.leopoldsFindings.fundalHeight !== previousVisit.leopoldsFindings.fundalHeight,
+  //     fetalHeartbeat: currentVisit.leopoldsFindings.fetalHeartbeat !== previousVisit.leopoldsFindings.fetalHeartbeat,
+  //     fetalPosition: currentVisit.leopoldsFindings.fetalPosition !== previousVisit.leopoldsFindings.fetalPosition,
+  //   };
 
-    return { ...currentVisit, changes };
-  };
+  //   return { ...currentVisit, changes };
+  // };
   
 
   // sorting data from most recent to oldest
@@ -104,10 +103,10 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
     return dateB.getTime() - dateA.getTime();
   });
 
-  const processedPrenatalData = sortedData.map((visit, index) => {
-    const previousVisit = index > 0 ? sortedData[index - 1] : null;
-    return detectChanges(visit, previousVisit);
-  });
+  // const processedPrenatalData = sortedData.map((visit, index) => {
+  //   const previousVisit = index > 0 ? sortedData[index - 1] : null;
+  //   return detectChanges(visit, previousVisit);
+  // });
     
   if (isLoading) {
     return (
@@ -236,15 +235,6 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
   return (
     <Card className={`border-slate-200 shadow-sm font-poppins ${className}`}>
       <CardContent className="p-0">
-        {/* Add context info above the table */}
-        {/* {pregnancyId && visitNumber && (
-          <div className="p-4 bg-blue-50 border-b border-slate-200">
-            <p className="text-blue-800 font-medium text-sm">
-              📊 Viewing prenatal history for {patientData?.personal_info?.per_fname} {patientData?.personal_info?.per_lname}
-            </p>
-          </div>
-        )} */}
-        
         <div className={hasMoreVisits ? "overflow-x-auto" : ""}>
           <Table className={hasMoreVisits ? "w-max" : "w-full"}>
             <TableHeader className="bg-slate-100">

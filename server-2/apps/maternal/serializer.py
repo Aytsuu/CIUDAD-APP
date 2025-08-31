@@ -22,7 +22,7 @@ class MedicalHistorySerializer(serializers.ModelSerializer):
     illness_name = serializers.CharField(source='ill.illname', read_only=True)
     class Meta:
         model = MedicalHistory
-        fields = ['medhist_id', 'year', 'ill', 'illness_name'] 
+        fields = ['medhist_id', 'year', 'ill', 'illness_name', 'created_at'] 
 
 class MedicalHistoryCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -123,11 +123,6 @@ class LaboratoryResultCreateSerializer(serializers.ModelSerializer):
         for img_data in images_data:
             LaboratoryResultImg.objects.create(lab_id=lab_result, **img_data)
         return lab_result
-
-# class LabRemarksCreateSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = LabRemarks
-#         fields = ['remarks']
 
 class Guide4ANCVisitCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -248,7 +243,7 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prenatal_Form
         fields = [
-            'pf_id', 'pf_lmp', 'pf_edc', 'pf_occupation', 'created_at', 'updated_at',
+            'pf_id', 'pf_lmp', 'pf_edc', 'pf_occupation', 'created_at',
             'pregnancy_details', 'patient_record_details', 'spouse_details', 
             'body_measurement_details', 'vital_signs_details', 'follow_up_visit_details',
             'staff_details', 'previous_hospitalizations', 'tt_statuses', 
@@ -288,7 +283,7 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
                 if not latest_prev_pregnancy:
                     return None
                 
-                return({
+                return{
                     'pfpp_id':latest_prev_pregnancy.pfpp_id,
                     'date_of_delivery': latest_prev_pregnancy.date_of_delivery,
                     'outcome': latest_prev_pregnancy.outcome,
@@ -297,7 +292,7 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
                     'gender': latest_prev_pregnancy.gender,
                     'ballard_score': latest_prev_pregnancy.ballard_score,
                     'apgar_score': latest_prev_pregnancy.apgar_score
-                })
+                }
             
             except Exception as e:
                 print(f"Error getting previous pregnancy: {e}")
@@ -446,7 +441,10 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
     spouse_details = serializers.SerializerMethodField()
     follow_up_visit_details = serializers.SerializerMethodField()
     staff_details = serializers.SerializerMethodField()
-    
+
+    previous_pregnancy = serializers.SerializerMethodField()
+    obstetric_history = serializers.SerializerMethodField()
+
     # Related data
     previous_hospitalizations = serializers.SerializerMethodField()
     laboratory_results = serializers.SerializerMethodField()
@@ -459,11 +457,11 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prenatal_Form
         fields = [
-            'pf_id', 'pf_lmp', 'pf_edc', 'pf_occupation', 'created_at', 'updated_at',
+            'pf_id', 'pf_lmp', 'pf_edc', 'pf_occupation', 'created_at',
             'patient_details', 'pregnancy_details', 'vital_signs_details', 
-            'body_measurement_details', 'spouse_details', 'follow_up_visit_details',
-            'staff_details', 'previous_hospitalizations', 'laboratory_results',
-            'anc_visit_guide', 'checklist_data', 'birth_plan_details',
+            'body_measurement_details', 'spouse_details', 'follow_up_visit_details', 'obstetric_history',
+            'staff_details', 'previous_hospitalizations','previous_pregnancy', 
+            'laboratory_results', 'anc_visit_guide', 'checklist_data', 'birth_plan_details',
             'obstetric_risk_codes', 'prenatal_care_entries'
         ]
     
@@ -611,7 +609,50 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
                 'created_at': obj.pregnancy_id.created_at,
             }
         return None
-    
+
+    def get_previous_pregnancy(self, obj):
+        try:
+            prev_pregnancy = Previous_Pregnancy.objects.filter(patrec_id=obj.patrec_id).first()
+            if prev_pregnancy:
+                return {
+                    'pfpp_id': prev_pregnancy.pfpp_id,
+                    'date_of_delivery': prev_pregnancy.date_of_delivery,
+                    'outcome': prev_pregnancy.outcome,
+                    'type_of_delivery': prev_pregnancy.type_of_delivery,
+                    'babys_wt': prev_pregnancy.babys_wt,
+                    'gender': prev_pregnancy.gender,
+                    'ballard_score': prev_pregnancy.ballard_score,
+                    'apgar_score': prev_pregnancy.apgar_score,
+                }
+            return None
+        
+        except Exception as e:
+            print(f'Error retrieving previous pregnancy details: {e}')
+            return None
+
+    def get_obstetric_history(self, obj):
+        try:
+            obs_history = Obstetrical_History.objects.filter(patrec_id=obj.patrec_id).order_by('obs_id').first()
+            if obs_history:
+                return {
+                    'obs_id': obs_history.obs_id,
+                    'obs_ch_born_alive': obs_history.obs_ch_born_alive,
+                    'obs_living_ch': obs_history.obs_living_ch,
+                    'obs_abortion': obs_history.obs_abortion,
+                    'obs_still_birth': obs_history.obs_still_birth,
+                    'obs_lg_babies': obs_history.obs_lg_babies,
+                    'obs_lg_babies_str': obs_history.obs_lg_babies_str,
+                    'obs_gravida': obs_history.obs_gravida,
+                    'obs_para': obs_history.obs_para,
+                    'obs_fullterm': obs_history.obs_fullterm,
+                    'obs_preterm': obs_history.obs_preterm,
+                }
+            return None
+
+        except Exception as e:
+            print(f'Error retrieving obstetrical history details: {e}')
+            return None
+
     def get_vital_signs_details(self, obj):
         if obj.vital_id:
             return {
@@ -621,7 +662,7 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
                 'vital_pulse_rate': obj.vital_id.vital_pulse,
             }
         return None
-    
+
     def get_body_measurement_details(self, obj):
         if obj.bm_id:
             return {
@@ -667,6 +708,7 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
             'prev_hospitalization': hosp.prev_hospitalization,
             'prev_hospitalization_year': hosp.prev_hospitalization_year,
         } for hosp in hospitalizations]
+
     
     def get_laboratory_results(self, obj):
         lab_results = obj.lab_result.all()
@@ -695,7 +737,18 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
         if checklist:
             return {
                 'pfc_id': checklist.pfc_id,
-                # Add other checklist fields as needed
+                'increased_bp': checklist.increased_bp,
+                'nausea': checklist.nausea,
+                'edema': checklist.edema,
+                'abno_vaginal_disch': checklist.abno_vaginal_disch,
+                'chills_fever': checklist.chills_fever,
+                'varicosities': checklist.varicosities,
+                'epigastric_pain': checklist.epigastric_pain,
+                'blurring_vision': checklist.blurring_vision,
+                'severe_headache': checklist.severe_headache,
+                'vaginal_bleeding': checklist.vaginal_bleeding,
+                'diff_in_breathing': checklist.diff_in_breathing,
+                'abdominal_pain': checklist.abdominal_pain
             }
         return None
     
@@ -736,7 +789,7 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
         } for care in prenatal_care]
 
 
-# Main Prenatal Form Serializer for complete creation
+# Main Prenatal Form Serializer for Complete Creation
 class PrenatalCompleteSerializer(serializers.ModelSerializer):
     # Fields from motherPersonalInfo
     pat_id = serializers.CharField(write_only=True, required=True)
@@ -776,7 +829,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prenatal_Form
         fields = [
-            'pat_id', 'patrec_type', 'pf_lmp', 'pf_edc', 'pf_occupation',
+            'pat_id', 'patrec_type', 'pf_lmp', 'pf_edc', 'pf_occupation', 'previous_complications',
             'spouse_data', 'body_measurement', 'obstetrical_history', 'previous_hospitalizations',
             'medical_history', 'previous_pregnancy_data', 'tt_statuses', 'lab_results_data', 
             'anc_visit_data', 'checklist_data', 'birth_plan_data',

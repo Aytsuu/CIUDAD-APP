@@ -90,7 +90,7 @@ export default function PrenatalForm() {
           spouse_mname: data.motherPersonalInfo.husbandMName || "",
           spouse_lname: data.motherPersonalInfo.husbandLName || "",
           spouse_dob: toNullIfEmpty(data.motherPersonalInfo.husbandDob) ?? null,
-          spouse_occupation: data.motherPersonalInfo.occupation || "N/A", // use mother's occupation if husband's is not available
+          spouse_occupation: data.motherPersonalInfo.occupation || "N/A", 
         }
       : undefined
 
@@ -157,6 +157,7 @@ export default function PrenatalForm() {
       pf_occupation: data.motherPersonalInfo.occupation || "",
       pf_lmp: toNullIfEmpty(data.presentPregnancy.pf_lmp) ?? null,
       pf_edc: toNullIfEmpty(data.presentPregnancy.pf_edc) ?? null,
+      previous_complications: data.medicalHistory.previousComplications || null,
 
       spouse_data: spouseData,
 
@@ -173,6 +174,7 @@ export default function PrenatalForm() {
         obs_abortion: data.obstetricHistory?.noOfAbortion  || null,
         obs_still_birth: data.obstetricHistory?.noOfStillBirths || null,
         obs_lg_babies: data.obstetricHistory?.historyOfLBabies || null,
+        obs_lg_babies_str: data.obstetricHistory?.historyOfLBabiesStr || null,
         obs_gravida: data.presentPregnancy.gravida || null,
         obs_para: data.presentPregnancy.para || null,
         obs_fullterm: data.presentPregnancy.fullterm || null,
@@ -317,7 +319,7 @@ export default function PrenatalForm() {
       isValid = await form.trigger("prenatalCare")
       console.log(`Page 4 validation result: ${isValid}`)
 
-      // if(isValid){
+      if(isValid){
         const formData = form.getValues()
         await handleFinalSubmit(formData)
         console.log("Page 4 validation passed, form submitted successfully.")
@@ -325,7 +327,7 @@ export default function PrenatalForm() {
         navigate(-1)
         
         return;
-      // }
+      }
     }
 
     if (!isValid) {

@@ -44,51 +44,58 @@ export const IllnessCombobox = React.memo(
     allowAddNew?: boolean
     allowDeselect?: boolean // New prop
   }) => {
-    const [open, setOpen] = React.useState(false)
-    const triggerRef = React.useRef<HTMLButtonElement>(null)
-    const [width, setWidth] = React.useState<number | null>(null)
-    const [searchValue, setSearchValue] = React.useState("")
+      const [open, setOpen] = React.useState(false)
+      const triggerRef = React.useRef<HTMLButtonElement>(null)
+      const [width, setWidth] = React.useState<number | null>(null)
+      const [searchValue, setSearchValue] = React.useState("")
 
-    React.useEffect(() => {}, [value])
+      React.useEffect(() => {}, [value])
 
-    // Update width when popover opens or window resizes (only for popover variant)
-    React.useEffect(() => {
-      if (variant !== "popover") return
+      // Update width when popover opens or window resizes (only for popover variant)
+      React.useEffect(() => {
+        if (variant !== "popover") return
 
-      const updateWidth = () => {
-        if (triggerRef.current) {
-          setWidth(triggerRef.current.getBoundingClientRect().width)
-          if (size) setWidth(size)
+        const updateWidth = () => {
+          if (triggerRef.current) {
+            setWidth(triggerRef.current.getBoundingClientRect().width)
+            if (size) setWidth(size)
+          }
         }
+
+        updateWidth()
+        window.addEventListener("resize", updateWidth)
+
+        return () => {
+          window.removeEventListener("resize", updateWidth)
+        }
+      }, [open, variant, size])
+
+      const hasAnyMatch = React.useMemo(() => {
+        if (!searchValue.trim()) return true
+        return options.some((option) => {
+          const nameStr = typeof option.name === "string" ? option.name : option.id
+          return (
+            nameStr.toLowerCase().includes(searchValue.toLowerCase()) ||
+            option.id.toLowerCase().includes(searchValue.toLowerCase())
+          )
+        })
+      }, [searchValue, options])
+
+      const filteredOptions = React.useMemo(() => {
+      
+      if (!searchValue.trim()) {
+        return options;
       }
-
-      updateWidth()
-      window.addEventListener("resize", updateWidth)
-
-      return () => {
-        window.removeEventListener("resize", updateWidth)
-      }
-    }, [open, variant, size])
-
-    const hasExactMatch = React.useMemo(() => {
-      if (!searchValue.trim()) return true
-      return options.some((option) => {
-        const nameStr = typeof option.name === "string" ? option.name : option.id
-        return (
-          option.id.toLowerCase() === searchValue.toLowerCase() || nameStr.toLowerCase() === searchValue.toLowerCase()
-        )
-      })
-    }, [searchValue, options])
-
-    const filteredOptions = React.useMemo(() => {
-      if (!searchValue.trim()) return options
-      return options.filter((option) => {
-        const nameStr = typeof option.name === "string" ? option.name : option.id
-        return (
-          option.id.toLowerCase().includes(searchValue.toLowerCase()) ||
-          nameStr.toLowerCase().includes(searchValue.toLowerCase())
-        )
-      })
+      
+      const filtered = options.filter((option) => {
+        const nameStr = typeof option.name === "string" ? option.name : option.id;
+        const idMatch = option.id.toLowerCase().includes(searchValue.toLowerCase());
+        const nameMatch = nameStr.toLowerCase().includes(searchValue.toLowerCase());
+        
+        return idMatch || nameMatch;
+      });
+      
+      return filtered;
     }, [searchValue, options])
 
     const handleAddNew = () => {
@@ -126,7 +133,7 @@ export const IllnessCombobox = React.memo(
     )
 
     const commandContent = (
-      <Command className="w-full">
+      <Command className="w-full" shouldFilter={false}>
         <CommandInput
           placeholder={placeholder}
           className="w-full font-normal"
@@ -169,7 +176,7 @@ export const IllnessCombobox = React.memo(
               </CommandItem>
             ))}
 
-            {allowAddNew && searchValue.trim() && !hasExactMatch && (
+            {allowAddNew && searchValue.trim() && !hasAnyMatch && (
               <CommandItem
                 value={`add-new-${searchValue}`}
                 onSelect={handleAddNew}
@@ -181,7 +188,7 @@ export const IllnessCombobox = React.memo(
             )}
           </CommandGroup>
 
-          {filteredOptions.length === 0 && (!allowAddNew || !searchValue.trim() || hasExactMatch) && (
+          {filteredOptions.length === 0 && (!allowAddNew || !searchValue.trim() || hasAnyMatch) && (
             <CommandEmpty>{emptyMessage}.</CommandEmpty>
           )}
         </CommandList>

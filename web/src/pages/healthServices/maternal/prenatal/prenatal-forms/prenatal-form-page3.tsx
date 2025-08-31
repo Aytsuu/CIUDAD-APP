@@ -150,66 +150,66 @@ export default function PrenatalFormThirdPg({
   }
 
   // AOG Analysis and Visit Tracking
-  const [aogAnalysis, setAogAnalysis] = useState<{
-    currentMonth: number
-    currentWeek: number
-    expectedVisits: number
-    missedVisits: number
-    visitFrequency: string
-    nextVisitRecommendation: string
-  } | null>(null)
+  // const [aogAnalysis, setAogAnalysis] = useState<{
+  //   currentMonth: number
+  //   currentWeek: number
+  //   expectedVisits: number
+  //   missedVisits: number
+  //   visitFrequency: string
+  //   nextVisitRecommendation: string
+  // } | null>(null)
 
-  const calculateAOGAnalysis = () => {
-    const weeks = Number(form.getValues("followUpSchedule.aogWeeks")) || 0
-    const days = Number(form.getValues("followUpSchedule.aogDays")) || 0
+  // const calculateAOGAnalysis = () => {
+  //   const weeks = Number(form.getValues("followUpSchedule.aogWeeks")) || 0
+  //   const days = Number(form.getValues("followUpSchedule.aogDays")) || 0
 
-    if (weeks === 0) return
+  //   if (weeks === 0) return
 
-    const totalWeeks = weeks + days / 7
-    const currentMonth = Math.ceil(totalWeeks / 4.33) // Average weeks per month
+  //   const totalWeeks = weeks + days / 7
+  //   const currentMonth = Math.ceil(totalWeeks / 4.33) // Average weeks per month
 
-    let expectedVisits = 0
-    let visitFrequency = ""
-    let nextVisitRecommendation = ""
+  //   let expectedVisits = 0
+  //   let visitFrequency = ""
+  //   let nextVisitRecommendation = ""
 
-    if (totalWeeks < 28) {
-      // monthly visits
-      expectedVisits = Math.floor(totalWeeks / 4)
-      visitFrequency = "Monthly (every 4 weeks)"
-      nextVisitRecommendation = "4 weeks"
-    } else if (totalWeeks < 36) {
-      // bi-weekly visits
-      const visitsBeforeWeek28 = 7 // total monthly visits
+  //   if (totalWeeks < 28) {
+  //     // monthly visits
+  //     expectedVisits = Math.floor(totalWeeks / 4)
+  //     visitFrequency = "Monthly (every 4 weeks)"
+  //     nextVisitRecommendation = "4 weeks"
+  //   } else if (totalWeeks < 36) {
+  //     // bi-weekly visits
+  //     const visitsBeforeWeek28 = 7 // total monthly visits
 
-      const weeksAfter28 = totalWeeks - 28
-      const biWeeklyVisits = Math.floor(weeksAfter28 / 2)
-      expectedVisits = visitsBeforeWeek28 + biWeeklyVisits
-      visitFrequency = "Bi-weekly (every 2 weeks)"
-      nextVisitRecommendation = "2 weeks"
-    } else {
-      // weekly visits
-      const visitsBeforeWeek28 = 7 // total monthly visits
-      const biWeeklyVisits = 4 // total bi-weekly visits
+  //     const weeksAfter28 = totalWeeks - 28
+  //     const biWeeklyVisits = Math.floor(weeksAfter28 / 2)
+  //     expectedVisits = visitsBeforeWeek28 + biWeeklyVisits
+  //     visitFrequency = "Bi-weekly (every 2 weeks)"
+  //     nextVisitRecommendation = "2 weeks"
+  //   } else {
+  //     // weekly visits
+  //     const visitsBeforeWeek28 = 7 // total monthly visits
+  //     const biWeeklyVisits = 4 // total bi-weekly visits
 
-      const weeksAfter36 = totalWeeks - 36
-      const weeklyVisits = Math.floor(weeksAfter36)
-      expectedVisits = visitsBeforeWeek28 + biWeeklyVisits + weeklyVisits
-      visitFrequency = "Weekly"
-      nextVisitRecommendation = "1 week"
-    }
+  //     const weeksAfter36 = totalWeeks - 36
+  //     const weeklyVisits = Math.floor(weeksAfter36)
+  //     expectedVisits = visitsBeforeWeek28 + biWeeklyVisits + weeklyVisits
+  //     visitFrequency = "Weekly"
+  //     nextVisitRecommendation = "1 week"
+  //   }
 
-    const actualVisits = 1 // example visit
-    const missedVisits = Math.max(0, expectedVisits - actualVisits)
+  //   const actualVisits = 1 // example visit
+  //   const missedVisits = Math.max(0, expectedVisits - actualVisits)
 
-    setAogAnalysis({
-      currentMonth,
-      currentWeek: Math.floor(totalWeeks),
-      expectedVisits,
-      missedVisits,
-      visitFrequency,
-      nextVisitRecommendation,
-    })
-  }
+  //   setAogAnalysis({
+  //     currentMonth,
+  //     currentWeek: Math.floor(totalWeeks),
+  //     expectedVisits,
+  //     missedVisits,
+  //     visitFrequency,
+  //     nextVisitRecommendation,
+  //   })
+  // }
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
@@ -291,7 +291,6 @@ export default function PrenatalFormThirdPg({
                           type="button"
                           variant="outline"
                           className="w-full mr-2 bg-transparent"
-                          onClick={calculateAOGAnalysis}
                         >
                           Check AOG
                         </Button>
@@ -459,13 +458,19 @@ export default function PrenatalFormThirdPg({
                       <FormDateTimeInput
                         control={form.control}
                         name="followUpSchedule.followUpDate"
-                        label={`Follow-up Date ${followupDayName}`}
+                        label='Follow-up Date'
                         type="date"
                       />
                     </div>
+                    {followupDate && (
+                      <span className="text-sm italic text-yellow-600">
+                        *Note: Next follow-up visit {followupDayName}
+                      </span>
+                    )}
+                    
 
-                    {/* Quick Follow-up History */}
-                    <Card className="border rounded-lg p-3 bg-gray-50">
+                    {/* Follow-up History */}
+                    <Card className="border rounded-lg p-2 bg-gray-50 mt-3">
                       <CardHeader>
                         <CardTitle className="text-sm font-semibold mb-2">Recent Follow-ups</CardTitle>
                       </CardHeader>
@@ -626,7 +631,6 @@ export default function PrenatalFormThirdPg({
                             <RadioGroup
                               onValueChange={(value) => {
                                 field.onChange(value === "yes") // Convert "yes"/"no" to boolean
-                                // setSelectedOption(value)
                               }}
                               value={field.value ? "yes" : "no"} // Convert boolean to "yes"/"no" for RadioGroup
                               className="ml-3"

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useFormContext, type UseFormReturn } from "react-hook-form"
 import type { ColumnDef } from "@tanstack/react-table"
 
+// all components
 import { type z } from "zod"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button/button"
@@ -12,9 +13,14 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 // import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
-import { PatientSearch, type Patient } from "@/components/ui/patientSearch"
-import { Form } from "@/components/ui/form/form" 
+import { Form } from "@/components/ui/form/form"
+import { FormTextArea } from "@/components/ui/form/form-text-area" 
+import { FormField, FormControl, FormItem, FormLabel } from "@/components/ui/form/form"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+
+// health components
 import { IllnessCombobox } from "../../maternal-components/illness-combobox"
+import { PatientSearch, type Patient } from "@/components/ui/patientSearch"
 
 // icons import
 import { MdOutlineSick } from "react-icons/md"
@@ -69,6 +75,7 @@ export default function PrenatalFormFirstPg({
     prevIllness: string
     prevIllnessYr?: number
     ill_id?: number
+    created_at?: string
   }
 
   type previousHospitalization = {
@@ -580,10 +587,16 @@ export default function PrenatalFormFirstPg({
   }, [medHistoryData, isLoading, error, setValue, form])
 
   const getPrevIllnessTableData = () => {
-    return prevIllnessData.map(item => ({
-      prevIllness: item.prevIllness || "None",
-      prevIllnessYr: item.prevIllnessYr,
-    }))
+    return prevIllnessData
+      .sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+        return dateB - dateA
+      })
+      .map(item => ({
+        prevIllness: item.prevIllness || "None",
+        prevIllnessYr: item.prevIllnessYr,
+      }))
   }
 
 
@@ -1096,12 +1109,35 @@ export default function PrenatalFormFirstPg({
                     <div className="grid grid-rows-2 gap-3">
                       <p className="text-sm font-semibold text-black/70 mt-5">History of Large Babies</p>
                       <div className="grid grid-cols-2 gap-3">
-                        <FormInput
-                          control={control}
+                        <FormField
+                          control={form.control}
                           name="obstetricHistory.historyOfLBabiesStr"
-                          label=""
-                          placeholder="Enter yes or no"
-                          type="text"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <RadioGroup
+                                  onValueChange={(value) => {
+                                    field.onChange(value === "yes") 
+                                  }}
+                                  value={field.value ? "yes" : "no"} 
+                                  className="flex flex-row justify-center rounded-md border p-[5px]"
+                                >
+                                  <FormItem className="mr-4">
+                                    <FormControl>
+                                      <RadioGroupItem value="yes" />
+                                    </FormControl>
+                                    <FormLabel className="ml-2">YES</FormLabel>
+                                  </FormItem>
+                                  <FormItem>
+                                    <FormControl>
+                                      <RadioGroupItem value="no" />
+                                    </FormControl>
+                                    <FormLabel className="ml-2">NO</FormLabel>
+                                  </FormItem>
+                                </RadioGroup>
+                              </FormControl>
+                            </FormItem>
+                          )}
                         />
 
                         <FormInput
@@ -1114,12 +1150,37 @@ export default function PrenatalFormFirstPg({
                       </div>
                     </div>
                     <div className="mt-5">
-                      <FormInput
-                        control={control}
-                        name="obstetricHistory.historyOfDiabetes"
-                        label="Diabetes"
-                        placeholder="Enter yes or no"
-                      />
+                      <FormField
+                          control={form.control}
+                          name="obstetricHistory.historyOfDiabetes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-black/70">Diabetes</FormLabel>
+                              <FormControl>
+                                <RadioGroup
+                                  onValueChange={(value) => {
+                                    field.onChange(value === "yes") 
+                                  }}
+                                  value={field.value ? "yes" : "no"} 
+                                  className="flex flex-row justify-center rounded-md border p-[5px]"
+                                >
+                                  <FormItem className="mr-4">
+                                    <FormControl>
+                                      <RadioGroupItem value="yes" />
+                                    </FormControl>
+                                    <FormLabel className="ml-2">YES</FormLabel>
+                                  </FormItem>
+                                  <FormItem>
+                                    <FormControl>
+                                      <RadioGroupItem value="no" />
+                                    </FormControl>
+                                    <FormLabel className="ml-2">NO</FormLabel>
+                                  </FormItem>
+                                </RadioGroup>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
                     </div>
                   </div>
                 </div>
@@ -1130,6 +1191,20 @@ export default function PrenatalFormFirstPg({
                 <h3 className="text-md font-semibold mt-2">MEDICAL HISTORY</h3>
                 <div className="p-4 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols- gap-6">
+                    <div className="space-y-4 border rounded-md p-4">
+                      <div className="flex flex-row items-center gap-2">
+                        <Label>Previous Pregnancy Complication:</Label>
+                      </div>
+                      <div>
+                        <FormTextArea
+                          control={control}
+                          name="medicalHistory.prevComplications"
+                          label=""
+                          placeholder="Enter previous complications"
+                        />
+                      </div>
+                    </div>
+
                     <div className="space-y-4 border rounded-md p-4 items-center">
                       <div className="flex flex-row items-center gap-2">
                         <MdOutlineSick size={25} />
@@ -1175,7 +1250,7 @@ export default function PrenatalFormFirstPg({
                       </div>
                     </div>
 
-                    <div className="space-y-4 border rounded-md p-4 items">
+                    <div className="space-y-4 border rounded-md p-4">
                       <div className="flex flex-row items-center gap-2">
                         <FaRegHospital size={25} />
                         <Label>Previous Hospitalization</Label>

@@ -2,10 +2,15 @@
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries";
-import { PrenatalHistoryTable } from "../../maternal-components/prenatal-history";
+import { Button } from "@/components/ui/button/button";
+import { Printer } from "lucide-react";
+
+import { PrenatalHistoryTable } from "../../maternal-components/prenatalcare-history";
 import PrenatalViewingOne from "./prenatal-viewing";
 import PrenatalFormHistory from "./prenatal-form-history";
+
+import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries";
+
 
 interface PrenatalVisit {
   date: string;
@@ -142,26 +147,11 @@ export default function PrenatalIndivHistory() {
       description="Complete record of prenatal visits and clinical notes"
     >
       <div className="bg-white p-3 space-y-2">
-        {/* Patient Context Info */}
-        <div className="bg-blue-5 p-3 rounded-lg border border-blue-200 mb-4">
-          <div className="text-sm">
-            <div className="font-medium text-2xl text-blue-800">
-              {patientData?.personal_info?.per_fname} {patientData?.personal_info?.per_lname}
-            </div>
-            <div className="text-blue-600">
-              <div>
-                Patient ID: {patientData?.pat_id}
-              </div>
-              
-              Pregnancy ID: {pregnancyId} | Viewing visits 1 through {visitNumber}
-            </div>
-            <div className="text-blue-600">
-              Total prenatal care entries: {processedPrenatalData.length}
-            </div>
-          </div>
+        <div className="flex justify-end pr-4 my-5">
+          <Button variant="outline"><Printer/> Print</Button>
         </div>
 
-        <div className="">
+        <div className="w-full">
           <PrenatalViewingOne pfId={recordId} />
         </div>
         
@@ -176,16 +166,6 @@ export default function PrenatalIndivHistory() {
             </div>
           </div>
         </div>
-
-        {/* Legend for changes */}
-        {/* {hasData && activeTab === "prenatalcare" && (
-          <div className="bg-red-50 p-3 rounded-lg border border-red-200 mb-4">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="w-3 h-3 bg-red-500 rounded"></span>
-              <span className="text-red-700 font-medium">Red highlighting indicates values that changed from the previous visit</span>
-            </div>
-          </div>
-        )} */}
 
         {/* Prenatal History Table with real data */}
         {hasData && activeTab === "prenatalcare" && (

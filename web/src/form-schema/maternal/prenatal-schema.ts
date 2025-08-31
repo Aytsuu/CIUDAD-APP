@@ -139,6 +139,7 @@ export const PrenatalFormSchema = z.object({
         prevIllnessYr: positiveNumberSchema.optional(),
         prevHospitalization: z.string().optional(),
         prevHospitalizationYr: positiveNumberSchema.optional(),
+        previousComplications: z.string().optional(),
 
         prevIllnessData: z.array(z.object({
             prevIllness: z.string().default(''),

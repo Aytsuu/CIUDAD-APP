@@ -9,6 +9,7 @@ export interface PrenatalRecord {
   pf_occupation: string
   pf_lmp: string | null
   pf_edc: string | null
+  previous_complications: string | null
   spouse_data?: {
     spouse_type: string
     spouse_lname: string
@@ -29,6 +30,7 @@ export interface PrenatalRecord {
     obs_abortion: number | null
     obs_still_birth: number | null
     obs_lg_babies: number | null
+    obs_lg_babies_str: string | null
     obs_gravida: number | null
     obs_para: number | null
     obs_fullterm: number | null
