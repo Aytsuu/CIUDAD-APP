@@ -4,8 +4,8 @@ import Complaint from "../(complaint)";
 import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staff/garbage-pickup-request-main";
 import GarbagePickupForm from "@/screens/request/garbage-pickup/form";
 import Request from "../(request)";
-import GarbagePickupHome from "@/screens/request/garbage-pickup/garbage-pickup-home";
+import GarbagePickupHome from "@/screens/request/garbage-pickup/garbage-pickup-main"
 
 export default () => {
-    return <Request/>
+    return <GarbagePickupHome/>
 }
