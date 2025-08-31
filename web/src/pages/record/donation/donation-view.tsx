@@ -26,9 +26,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
     useGetPersonalList();
   const { mutate: updateDonation, isPending } = useUpdateDonation();
 
-  // Find the specific donation
   const donation = donations?.find((d) => d.don_num === don_num);
-
   const form = useForm<z.infer<typeof ClerkDonateViewSchema>>({
     resolver: zodResolver(ClerkDonateViewSchema),
     defaultValues: {
@@ -43,8 +41,6 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
   });
 
   const categoryWatch = form.watch("don_category");
-  const moneyType = form.watch("don_item_name");
-
   useEffect(() => {
     setIsMonetary(categoryWatch === "Monetary Donations");
     if (categoryWatch === "Monetary Donations") {
@@ -139,7 +135,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                 { id: "Cheque", name: "Cheque" },
                 { id: "E-money", name: "E-money" },
               ]}
-              readOnly={true}
+              readOnly={!isEditing}
             />
           ) : (
             <FormInput
@@ -205,7 +201,6 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                 />
               </>
             ) : (
-              moneyType !== "E-money" && ( // Only show Edit button if not E-Money
                 <Button
                   type="button"
                   onClick={() => setIsEditing(true)}
@@ -214,7 +209,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                   Edit
                 </Button>
               )
-            )}
+            }
           </div>
         </form>
       </Form>
