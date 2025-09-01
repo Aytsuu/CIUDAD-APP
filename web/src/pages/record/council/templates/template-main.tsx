@@ -2013,7 +2013,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
         <DialogLayout
           isOpen={!!previewTemplate}
           onOpenChange={() => setPreviewTemplate(null)}
-          className="max-w-full h-full flex flex-col overflow-auto scrollbar-custom"
+          className="max-w-full h-full flex flex-col overflow-auto scrollbar-custom p-9"
           title=""
           description=""
           mainContent={
