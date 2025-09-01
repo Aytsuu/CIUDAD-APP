@@ -53,12 +53,20 @@ class GAD_Budget_Tracker(models.Model):
         db_column='gbudy_num'
     )
     
-    gpr = models.ForeignKey(
-        'ProjectProposal',
-        on_delete=models.CASCADE,
-        related_name='proposals',
-        db_column='gpr_id',
-        null=True
+    # gpr = models.ForeignKey(
+    #     'ProjectProposal',
+    #     on_delete=models.CASCADE,
+    #     related_name='proposals',
+    #     db_column='gpr_id',
+    #     null=True
+    # )
+    
+    dev = models.ForeignKey(
+        DevelopmentPlan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='dev_id'
     )
 
     staff = models.ForeignKey(
@@ -114,16 +122,16 @@ class ProjectProposal(models.Model):
     ]
 
     gpr_id = models.BigAutoField(primary_key=True)
-    gpr_title = models.CharField(max_length=200)
+    # gpr_title = models.CharField(max_length=200)
     gpr_background = models.TextField(blank=True, null=True)
     gpr_date = models.CharField(default=date.today().strftime("%B %d, %Y"))
     gpr_venue = models.CharField(max_length=200, blank=True)
     gpr_monitoring = models.TextField(blank=True)
     gpr_header_img = models.TextField(blank=True, null=True) 
     gpr_page_size = models.CharField(max_length=20, default='letter', null=True)
-    gpr_objectives = models.JSONField(default=list)
-    gpr_participants = models.JSONField(default=list)
-    gpr_budget_items = models.JSONField(default=list)
+    gpr_objectives = models.JSONField(default=list, null=True)
+    # gpr_participants = models.JSONField(default=list)
+    # gpr_budget_items = models.JSONField(default=list)
     gpr_signatories = models.JSONField(default=list)
 
     staff = models.ForeignKey(
@@ -140,6 +148,13 @@ class ProjectProposal(models.Model):
         null=True,
         blank=True,
         db_column='gbud_num'
+    )
+    
+    dev = models.ForeignKey(
+        DevelopmentPlan,
+        on_delete=models.CASCADE,
+        related_name='proposals',
+        db_column='dev_id'
     )
     
     gpr_created = models.DateField(default=date.today)

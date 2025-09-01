@@ -19,7 +19,7 @@ import {
   usePermanentDeleteDisbursementImage,
   usePermanentDeleteDisbursementFolder,
   usePermanentDeleteIncomeFolder,
-} from "./queries";
+} from "./inc-disb-queries";
 import { formatDate } from "@/helpers/dateHelpers";
 import PageLayout from "@/screens/_PageLayout";
 import { IncomeImage, DisbursementImage, Album, ImageItem } from "./inc-disc-types";

@@ -13,7 +13,7 @@ import { ChevronLeft } from "lucide-react-native";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { CreateFolderSchema } from "@/form-schema/treasurer-inc-disbursement";
-import { useCreateFolder, useUploadImages } from "./queries";
+import { useCreateFolder, useUploadImages } from "./inc-disb-queries";
 import { CreateFolderFormValues } from "./inc-disc-types";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import PageLayout from "@/screens/_PageLayout";

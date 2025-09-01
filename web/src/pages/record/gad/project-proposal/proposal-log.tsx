@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProposalLog } from "./projprop-types";
-import { useGetAllProposalLogs } from "./queries/fetchqueries";
+import { useGetAllProposalLogs } from "./queries/projprop-fetchqueries";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 

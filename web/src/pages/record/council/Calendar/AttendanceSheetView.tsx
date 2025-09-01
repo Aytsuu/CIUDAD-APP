@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button/button";
 import sanroque_logo from "@/assets/images/sanroque_logo.jpg";
-import { AttendanceSheetViewProps } from "./ce-att-types";
+import { AttendanceSheetViewProps } from "./councilEventTypes";
 import citylogo from "@/assets/images/cebucity_logo.png";
 
 function formatTimeTo12Hour(time: string | undefined) {

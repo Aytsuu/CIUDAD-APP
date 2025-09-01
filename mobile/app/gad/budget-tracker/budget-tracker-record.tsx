@@ -2,7 +2,7 @@
 
 // // export default BudgetTrackerRecords;
 
-import BudgetTrackerRecords from "@/screens/gad/budget-tracker/budget-record";
+import BudgetTrackerRecords from "@/screens/gad/budget-tracker/gad-budget-record";
 
 export default function BudgetTrackerRecordsRoute() {
     console.log('Rendering /gad/budget-tracker-record route');

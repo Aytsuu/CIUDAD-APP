@@ -8,7 +8,7 @@ import {
   RefreshControl
 } from 'react-native';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useGetCouncilEvents, useGetAttendanceSheets } from '../ce-events/queries';
+import { useGetCouncilEvents, useGetAttendanceSheets } from '../ce-events/ce-att-queries';
 import { SearchInput } from '@/components/ui/search-input';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
