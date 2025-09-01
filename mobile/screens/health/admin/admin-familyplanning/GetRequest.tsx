@@ -5,6 +5,7 @@ import axios from "axios"
 // Type for a single FP Record entry in the individual patient's table
 interface IndividualFPRecordDetail {
   fprecord_id: number
+  fprecord: number
   client_id: string
   patient_name: string
   patient_age: number
@@ -255,10 +256,11 @@ export const getLatestCompleteFPRecordForPatient = async (patientId: string): Pr
 }
 
 // Updated getFPCompleteRecord to handle the new structure (used for viewing a specific record)
-export const getFPCompleteRecord = async (fprecord_id: number): Promise<any> => {
+export const getFPCompleteRecord = async (fprecord_id: any): Promise<any> => {
   try {
     const response = await api2.get(`familyplanning/complete-fp-record/${fprecord_id}/`)
     console.log("Error",response.data);
+    
     return response.data
   } catch (err) {
     console.error(`❌ Error fetching complete FP record ${fprecord_id}:`, err)

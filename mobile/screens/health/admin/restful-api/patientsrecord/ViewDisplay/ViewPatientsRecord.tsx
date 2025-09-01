@@ -23,7 +23,7 @@ import CardLayout from "@/components/ui/card/card-layout";
 import PersonalInfoTab from "./PersonalInfoTab";
 import Records from "./Records";
 import VisitHistoryTab from "./VisitHistoryTab";
-import { getAnimalBiteCount } from "../restful-api/patientsGetAPI";
+import { getAnimalBiteCount } from "../restful-api/get";
 
 interface PatientData {
   pat_id: string;

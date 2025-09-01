@@ -30,5 +30,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "src/supabase/supabase.ts", "src/supabase/supabase.ts"],
+  "include": ["src", "src/supabase/supabase.ts", "src/supabase/supabase.ts", "../mobile/screens/health/schedules/fetch.tsx"],
 }

@@ -1,35 +1,64 @@
-// src/hooks/useTransactions.ts
 import { useQuery } from "@tanstack/react-query";
-import { getTransactionMedicines, getTransactionCommodity, getTransactionFirstAid, getAntigenTransactions } from "./GetRequest";
+import { getMedicineTransactions,getCommodityTransactions,getFirstAidTransactions,getAntigenTransactions} from "./GetRequest";
 
-export const useMedicineTransactions = () => {
+
+
+
+
+// API hook for fetching medicine transactions
+export const useMedicineTransactions = (
+  page: number, 
+  pageSize: number, 
+  search?: string,
+) => {
   return useQuery({
-    queryKey: ["medicineTransactions"],
-    queryFn: getTransactionMedicines,
+    queryKey: ["medicinetransactions", page, pageSize, search],
+    queryFn: () => getMedicineTransactions(page, pageSize, search),
+    refetchOnMount: true,
     staleTime: 0,
   });
 };
 
-export const useCommodityTransactions = () => {
+// API hook for fetching commodity transactions
+export const useCommodityTransactions = (
+  page: number, 
+  pageSize: number, 
+  search?: string,
+) => {
   return useQuery({
-    queryKey: ["commodityTransactions"],
-    queryFn: getTransactionCommodity,
+    queryKey: ["commoditytransactions", page, pageSize, search],
+    queryFn: () => getCommodityTransactions(page, pageSize, search),
+    refetchOnMount: true,
     staleTime: 0,
   });
 };
 
-export const useFirstAidTransactions = () => {
+// API hook for fetching first aid transactions
+export const useFirstAidTransactions = (
+  page: number, 
+  pageSize: number, 
+  search?: string,
+) => {
   return useQuery({
-    queryKey: ["firstAidTransactions"],
-    queryFn: getTransactionFirstAid,
+    queryKey: ["firstaidtransactions", page, pageSize, search],
+    queryFn: () => getFirstAidTransactions(page, pageSize, search),
+    refetchOnMount: true,
     staleTime: 0,
   });
 };
 
-export const useAntigenTransactions = () => {
+
+
+// API hook for fetching antigen transactions
+export const useAntigenTransactions = (
+  page: number, 
+  pageSize: number, 
+  search?: string,
+) => {
   return useQuery({
-    queryKey: ["antigenTransactions"],
-    queryFn: getAntigenTransactions,
+    queryKey: ["antigentransactions", page, pageSize, search],
+    queryFn: () => getAntigenTransactions(page, pageSize, search),
+    refetchOnMount: true,
     staleTime: 0,
   });
 };

@@ -108,11 +108,9 @@ export default function AnimalBiteOverallScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-blue-50">
-        <View className="bg-white p-8 rounded-2xl items-center shadow-sm">
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text className="mt-4 text-gray-600 font-medium">Loading animal bite records...</Text>
         </View>
-      </View>
     )
   }
 

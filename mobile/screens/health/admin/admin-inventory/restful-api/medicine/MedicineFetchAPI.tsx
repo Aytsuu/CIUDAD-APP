@@ -1,29 +1,48 @@
-import {api2} from "@/api/api";
-
-// export const getMedicines = async () => {
-//     try {
-//       const res = await api2.get("inventory/medicinelist/");
-//       if (res.status === 200) { 
-//         return res.data;
-//       }
-//       console.error(res.status);
-//       return [];
-//     } catch (error) {
-//       console.error(error);
-//       return [];
-//     }
-//   };
-  
-  export const getMedicines = async () => {
-    try {
-      const res = await api2.get("inventory/medicineinventorylist/"); // Corrected endpoint
-      if (res.status === 200) {
-        return res.data;
+import { api2 } from "@/api/api";
+// medicineApi.js
+export const getMedicinesTable = async (page?: number, pageSize?: number, search?: string) => {
+  try {
+    const res = await api2.get("inventory/medicine-stock-table/", {
+      params: {
+        page,
+        page_size: pageSize,
+        search: search?.trim() || undefined
       }
-      console.error(res.status);
-      return [];
-    } catch (error) {
-      console.error(error);
-      return [];
+    });
+
+    console.log("Medicine API Response:", res.data);
+
+    if (res.status === 200) {
+      return res.data;
     }
-  };
+    console.error("API Error Status:", res.status);
+    return {
+      results: [],
+      count: 0,
+      next: null,
+      previous: null
+    };
+  } catch (error) {
+    console.error("Medicine API Error:", error);
+    return {
+      results: [],
+      count: 0,
+      next: null,
+      previous: null
+    };
+  }
+};
+
+export const getMedicines = async () => {
+  try {
+    const res = await api2.get("inventory/medicinecreateview/");
+    if (res.status === 200) {
+      return res.data;
+    }
+    console.error(res.status);
+    return [];
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+};

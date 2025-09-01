@@ -12,13 +12,13 @@ const { width } = Dimensions.get('window');
 const Homepage = () => {
   const modules = [
     { name: 'Child Health Records', route: 'admin/childhealth/overall', icon: Baby },
-    { name: 'Family Planning', route: 'admin/familyplanning/overall', icon: Heart },
-    { name: 'Animal Bites', route: '/admin/animalbites/overall', icon: Dog },
+    { name: 'Family Planning', route: '/family-planning/fp-dashboard', icon: Heart },
+    { name: 'Animal Bites', route: 'admin/animalbites/overall', icon: Dog },
     { name: 'Maternal Records', route: '/maternal-records', icon: UserCircle },
     { name: 'Medical Consultation', route: '/medical-consultation', icon: Stethoscope },
-    { name: 'Profiling', route: '/admin-medicinerequest/admin-medicinerequest', icon: UserRoundPlus },
-    { name: 'Patients Records', route: '/admin/patientsrecord/patientsrecord', icon: Users },
-    { name: 'Schedules', route: 'appointments/schedules', icon: Calendar },
+    { name: 'Profiling', route: 'admin/medicinerequest/medicinerequest', icon: UserRoundPlus },
+    { name: 'Patients Records', route: '/admin/patientrecords/patientrecords', icon: Users },
+    { name: 'Schedules', route: 'admin/schedules/all-appointment', icon: Calendar },
     { name: 'Inventory', route: 'admin/inventory/medicine', icon: Archive },
     // { name: 'Transactions', route: 'admin/inventory/transaction', icon: Archive },
   ];
@@ -173,7 +173,7 @@ const Homepage = () => {
         <View className="px-6 mb-8">
           <View className="flex-row justify-between items-center mb-2">
             <Text className="text-gray-800 text-xl font-PoppinsSemiBold">Book appointment</Text>
-            <TouchableOpacity className="bg-blue-700 p-1 rounded-xl" onPress={() => router.push("/appointments/schedules")}>
+            <TouchableOpacity className="bg-blue-700 p-1 rounded-xl" onPress={() => router.push("/my-schedules/my-schedules")}>
               <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My appointments</Text>
             </TouchableOpacity>
           </View>

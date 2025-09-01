@@ -353,8 +353,11 @@ class VaccineStock(models.Model):
     batch_number = models.CharField(max_length=100, default=" N/A")
     qty = models.PositiveIntegerField(default=0)
     dose_ml = models.PositiveIntegerField(default=0)
-    # vacStck_used = models.PositiveIntegerField(default=0)
     vacStck_qty_avail = models.PositiveIntegerField(default=0)
+    wasted_dose =models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE ,db_column='inv_id',related_name='vaccine_stock')
     vac_id = models.ForeignKey('VaccineList',on_delete=models.PROTECT,related_name='vaccine_stock',db_column='vac_id')
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
 

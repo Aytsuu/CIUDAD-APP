@@ -1,6 +1,7 @@
 // app/_layout.tsx
 import { Stack } from "expo-router";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; // Import these
+import { AuthProvider } from "@/screens/health/familyplanning/useAuth";
 
 // Create a client for React Query outside the component to avoid re-creation on re-renders
 const queryClient = new QueryClient();
@@ -9,6 +10,7 @@ export default () => {
     return (
         // Wrap your entire Stack navigator with QueryClientProvider
         <QueryClientProvider client={queryClient}>
+            <AuthProvider>
             <Stack>
                 <Stack.Screen name="medconsultation/med-landing" options={{ headerShown: false }} />
                 <Stack.Screen name="medconsultation/consultationpage" options={{ headerShown: false }} />
@@ -47,8 +49,13 @@ export default () => {
                 <Stack.Screen name="admin/childhealth/individual" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/childhealth/overall" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/childhealth/history" options={{headerShown:false}}/>
-            
+                <Stack.Screen name="admin/schedules/all-appointment" options={{headerShown:false}}/>
+
+                <Stack.Screen name="family-planning/fp-dashboard" options={{headerShown:false}}/>
+                <Stack.Screen name="family-planning/fp-details" options={{headerShown:false}}/>
+                <Stack.Screen name="my-schedules/my-schedules" options={{headerShown:false}}/>
             </Stack>
+            </AuthProvider>
         </QueryClientProvider>
     );
 }

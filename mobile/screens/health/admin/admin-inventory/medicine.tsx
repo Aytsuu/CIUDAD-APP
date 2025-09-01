@@ -16,6 +16,7 @@ import { router } from "expo-router";
 
 // Define interfaces for type safety
 interface InventoryItem {
+  wasted: any;
   id: number;
   name: string;
   category: "medicine" | "vaccine" | "commodity" | "first_aid" | "immunization_supply";
@@ -44,6 +45,7 @@ export default function InventoryScreen() {
   const [showFilters, setShowFilters] = React.useState<boolean>(false);
   const [page, setPage] = React.useState<number>(1);
   const itemsPerPage = 10;
+  const [filterCounts, setFilterCounts] = React.useState<any>({});
 
   const fetchInventoryData = React.useCallback(async () => {
     setIsLoading(true);
@@ -52,11 +54,11 @@ export default function InventoryScreen() {
 
     try {
       const endpoints = [
-        { name: "medicines", url: "/inventory/medicineinventorylist/" },
-        { name: "commodities", url: "/inventory/commodityinventorylist/" },
-        { name: "firstaid", url: "/inventory/firstaidinventorylist/" },
-        { name: "vaccines", url: "/inventory/vaccine_stocks/" },
-        { name: "immunization", url: "/inventory/immunization_stock/" },
+        { name: "medicines", url: "/inventory/medicine-stock-table/" },
+        { name: "commodities", url: "/inventory/commodity-stock-table/" },
+        { name: "firstaid", url: "/inventory/first-aid-stock-table/" },
+        { name: "vaccines", url: "/inventory/combined-stock-table/" },
+        { name: "immunization", url: "/inventory/combined-stock-table/" },
       ];
 
       const results = await Promise.all(
@@ -84,101 +86,132 @@ export default function InventoryScreen() {
 
       // Process medicines
       const medicinesResult = results.find((r) => r.name === "medicines");
-      if (medicinesResult?.success && Array.isArray(medicinesResult.data)) {
+      if (medicinesResult?.success && medicinesResult.data) {
+        // Set filter counts for medicines
+        if (medicinesResult.data.filter_counts) {
+          setFilterCounts(medicinesResult.data.filter_counts);
+        }
+
+        // Process the results array
+        if (Array.isArray(medicinesResult.data.results)) {
+          allInventory.push(
+            ...medicinesResult.data.results.map((item: any) => ({
+              id: item.minv_id ?? item.id ?? Math.random(),
+              name: item.item?.medicineName ?? "Unknown Medicine",
+              category: "medicine" as const,
+              description: item.category ?? "Medicine",
+              stock: item.availableStock ?? 0,
+              wasted: item.wasted ?? 0,
+              minStock: item.isLowStock ? 20 : 50,
+              expiryDate: item.expiryDate ?? "N/A",
+              batchNumber: item.batchNumber ?? item.inv_id ?? "N/A",
+              lastUpdated: formatDate(item.created_at),
+              isExpired: item.isExpired ?? false,
+              isNearExpiry: item.isNearExpiry ?? false,
+              isLowStock: item.isLowStock ?? false,
+              isOutOfStock: item.isOutOfStock ?? false,
+            }))
+          );
+        }
+      }
+      // Process commodities
+      const commoditiesResult = results.find((r) => r.name === "commodities");
+      if (commoditiesResult?.success && Array.isArray(commoditiesResult.data.results)) {
+        if (commoditiesResult.data.filter_counts) {
+          setFilterCounts((prev: any) => ({ ...prev, commodities: commoditiesResult.data.filter_counts }));
+        }
         allInventory.push(
-          ...medicinesResult.data.map((item: any) => ({
-            id: item.minv_id ?? Math.random(), // Fallback ID to prevent duplicates
-            name: item.med_detail?.med_name ?? "Unknown Medicine",
-            category: "medicine" as const,
-            description: item.med_detail?.med_type ?? "Medicine",
-            stock: item.minv_qty_avail ?? 0,
-            minStock: 20,
-            expiryDate: item.inv_detail?.expiry_date ?? "N/A",
-            batchNumber: "N/A",
-            lastUpdated: formatDate(item.inv_detail?.updated_at),
+          ...commoditiesResult.data.results.map((item: any) => ({
+            id: item.cinv_id ?? Math.random(),
+            name: item.item?.com_name ?? "Unknown Commodity",
+            category: "commodity" as const,
+            description: "For all client type", // Default since user_type is absent in API
+            stock: item.availableStock ?? 0,
+            minStock: 50,
+            wasted: item.wasted ?? 0,
+            expiryDate: item.expiryDate ?? "N/A",
+            batchNumber: item.batchNumber ?? "N/A",
+            lastUpdated: formatDate(item.created_at),
           }))
         );
       }
 
-      // Process commodities
-      const commoditiesResult = results.find((r) => r.name === "commodities");
-      if (commoditiesResult?.success && Array.isArray(commoditiesResult.data)) {
-        allInventory.push(
-          ...commoditiesResult.data.map((item: any) => {
-            let userTypeDisplay = item.user_type ?? "all users";
-            if (item.user_type === "Both") {
-              userTypeDisplay = "Current user & New Acceptor";
-            } else if (item.user_type) {
-              userTypeDisplay = `${item.user_type}s`;
-            }
-            return {
-              id: item.cinv_id ?? Math.random(),
-              name: item.com_detail?.com_name ?? item.com_id?.com_name ?? "Unknown Commodity",
-              category: "commodity" as const,
-              description: `For ${userTypeDisplay}`,
-              stock: item.cinv_qty_avail ?? 0,
-              minStock: 50,
-              expiryDate: item.inv_detail?.expiry_date ?? "N/A",
-              batchNumber: item.batch_number ?? "N/A",
-              lastUpdated: formatDate(item.inv_detail?.updated_at),
-            };
-          })
-        );
-      }
+
 
       // Process first aid items
       const firstaidResult = results.find((r) => r.name === "firstaid");
-      if (firstaidResult?.success && Array.isArray(firstaidResult.data)) {
+      if (firstaidResult?.success && Array.isArray(firstaidResult.data.results)) {
+         if (firstaidResult.data.filter_counts) {
+          setFilterCounts((prev: any) => ({ ...prev, firstaidResult: firstaidResult.data.filter_counts }));
+        }
         allInventory.push(
-          ...firstaidResult.data.map((item: any) => ({
+          ...firstaidResult.data.results.map((item: any) => ({
             id: item.finv_id ?? Math.random(),
-            name: item.fa_detail?.fa_name ?? item.fa_id?.fa_name ?? "Unknown First Aid",
+            name: item.item?.fa_name ?? "Unknown First Aid",
             category: "first_aid" as const,
-            description: item.fa_detail?.catlist ?? "First aid item",
-            stock: item.finv_qty_avail ?? 0,
+            description: "",
+            stock: item.availableStock ?? 0,
             minStock: 10,
-            expiryDate: item.inv_detail?.expiry_date ?? "N/A",
-            batchNumber: "N/A",
-            lastUpdated: formatDate(item.inv_detail?.updated_at),
+            wasted: item.wasted ?? 0,
+            expiryDate: item.expiryDate ?? "N/A",
+            batchNumber: item.batchNumber ?? "N/A",
+            lastUpdated: formatDate(item.created_at),
           }))
         );
       }
 
-      // Process vaccines
-      const vaccinesResult = results.find((r) => r.name === "vaccines");
-      if (vaccinesResult?.success && Array.isArray(vaccinesResult.data)) {
-        allInventory.push(
-          ...vaccinesResult.data.map((item: any) => ({
-            id: item.vacStck_id ?? Math.random(),
-            name: item.vaccinelist?.vac_name ?? item.vac_id?.vac_name ?? "Unknown Vaccine",
-            category: "vaccine" as const,
-            description: item.vaccinelist?.vac_type_choices ?? "Vaccine",
-            stock: item.vacStck_qty_avail ?? 0,
-            minStock: 5,
-            expiryDate: item.inv_details?.expiry_date ?? item.inv_id?.expiry_date ?? "N/A",
-            batchNumber: item.batch_number ?? "N/A",
-            lastUpdated: formatDate(item.inv_details?.updated_at ?? item.updated_at),
-          }))
-        );
-      }
+      // Process vaccines and immunization supplies from combined-stock-table
+const combinedResult = results.find((r) => r.name === "vaccines"); // Use 'vaccines' or 'immunization' (they share the endpoint)
+if (combinedResult?.success && Array.isArray(combinedResult.data.results)) {
+  if (combinedResult.data.filter_counts) {
+    setFilterCounts((prev: any) => ({
+      ...prev,
+      vaccines: combinedResult.data.filter_counts, // Store for vaccines
+    }));
+  }
 
-      // Process immunization supplies
-      const immunizationResult = results.find((r) => r.name === "immunization");
-      if (immunizationResult?.success && Array.isArray(immunizationResult.data)) {
-        allInventory.push(
-          ...immunizationResult.data.map((item: any) => ({
-            id: item.imzStck_id ?? Math.random(),
-            name: item.imz_detail?.imz_name ?? item.imz_id?.imz_name ?? "Unknown Supply",
-            category: "immunization_supply" as const,
-            description: item.imzStck_unit ?? "Immunization Supply",
-            stock: item.imzStck_avail ?? 0,
-            minStock: 15,
-            expiryDate: item.inv_detail?.expiry_date ?? "N/A",
-            batchNumber: item.batch_number ?? "N/A",
-            lastUpdated: formatDate(item.inv_detail?.updated_at),
-          }))
-        );
-      }
+  // Process vaccines
+  const vaccineItems = combinedResult.data.results.filter((item: any) => item.type === "vaccine");
+  allInventory.push(
+    ...vaccineItems.map((item: any) => ({
+      id: item.vacStck_id ?? Math.random(),
+      name: item.item?.antigen ?? "Unknown Vaccine",
+      category: "vaccine" as const,
+      description: item.item?.unit ? `${item.item.unit} (${item.item.dosage ? `${item.item.dosage} dose` : "Vaccine"})` : "Vaccine",
+      stock: item.availableStock ?? 0,
+      minStock: 5,
+      wasted: item.wastedDose ?? 0,
+      expiryDate: item.expiryDate ?? "N/A",
+      batchNumber: item.batchNumber ?? "N/A",
+      lastUpdated: formatDate(item.created_at),
+      isExpired: item.isExpired ?? false,
+      isNearExpiry: item.isNearExpiry ?? false,
+      isLowStock: item.isLowStock ?? false,
+      isOutOfStock: item.isOutOfStock ?? false,
+    }))
+  );
+
+  // Process immunization supplies (if present in the response)
+  const immunizationItems = combinedResult.data.results.filter((item: any) => item.type === "immunization_supply");
+  allInventory.push(
+    ...immunizationItems.map((item: any) => ({
+      id: item.imzStck_id ?? Math.random(),
+      name: item.item?.name ?? "Unknown Supply", // Adjust based on actual field
+      category: "immunization_supply" as const,
+      description: item.item?.unit ?? "Immunization Supply",
+      stock: item.availableStock ?? 0,
+      minStock: 15,
+      wasted: item.wastedDose ?? 0,
+      expiryDate: item.expiryDate ?? "N/A",
+      batchNumber: item.batchNumber ?? "N/A",
+      lastUpdated: formatDate(item.created_at),
+      isExpired: item.isExpired ?? false,
+      isNearExpiry: item.isNearExpiry ?? false,
+      isLowStock: item.isLowStock ?? false,
+      isOutOfStock: item.isOutOfStock ?? false,
+    }))
+  );
+}
 
       setInventoryData(allInventory);
 
@@ -269,10 +302,8 @@ export default function InventoryScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-blue-50">
-        <View className="bg-white p-8 rounded-xl shadow-sm items-center">
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text className="mt-4 text-gray-600 font-medium">Loading inventory...</Text>
-        </View>
+        <ActivityIndicator size="large" color="#3B82F6" />
+        <Text className="mt-4 text-gray-600 font-medium">Loading inventory...</Text>
       </View>
     );
   }
@@ -305,7 +336,7 @@ export default function InventoryScreen() {
         <View className="flex-row items-center p-4 pt-12">
           <TouchableOpacity
             className="p-2 mr-3 bg-gray-100 rounded-full"
-            onPress={() => {router.back()}}
+            onPress={() => { router.back() }}
             accessibilityLabel="Go back"
           >
             <ChevronLeft size={24} color="#374151" />
@@ -347,15 +378,13 @@ export default function InventoryScreen() {
                       setSelectedCategory(category.id);
                       setPage(1);
                     }}
-                    className={`px-3 py-1.5 rounded-full ${
-                      selectedCategory === category.id ? "bg-blue-100 border border-blue-200" : "bg-gray-100"
-                    }`}
+                    className={`px-3 py-1.5 rounded-full ${selectedCategory === category.id ? "bg-blue-100 border border-blue-200" : "bg-gray-100"
+                      }`}
                     accessibilityLabel={`Filter by ${category.name}`}
                   >
                     <Text
-                      className={`text-sm ${
-                        selectedCategory === category.id ? "text-blue-700 font-medium" : "text-gray-700"
-                      }`}
+                      className={`text-sm ${selectedCategory === category.id ? "text-blue-700 font-medium" : "text-gray-700"
+                        }`}
                     >
                       {category.name}
                     </Text>
@@ -371,15 +400,13 @@ export default function InventoryScreen() {
                       setSelectedStockFilter(filter.id);
                       setPage(1);
                     }}
-                    className={`px-3 py-1.5 rounded-full ${
-                      selectedStockFilter === filter.id ? "bg-blue-100 border border-blue-200" : "bg-gray-100"
-                    }`}
+                    className={`px-3 py-1.5 rounded-full ${selectedStockFilter === filter.id ? "bg-blue-100 border border-blue-200" : "bg-gray-100"
+                      }`}
                     accessibilityLabel={`Filter by ${filter.name}`}
                   >
                     <Text
-                      className={`text-sm ${
-                        selectedStockFilter === filter.id ? "text-blue-700 font-medium" : "text-gray-700"
-                      }`}
+                      className={`text-sm ${selectedStockFilter === filter.id ? "text-blue-700 font-medium" : "text-gray-700"
+                        }`}
                     >
                       {filter.name}
                     </Text>
@@ -463,22 +490,20 @@ export default function InventoryScreen() {
                         {item.name}
                       </Text>
                       <View
-                        className={`px-2 py-1 rounded-full ${
-                          stockStatus.status === "out_of_stock"
+                        className={`px-2 py-1 rounded-full ${stockStatus.status === "out_of_stock"
                             ? "bg-red-50"
                             : stockStatus.status === "low_stock"
-                            ? "bg-orange-50"
-                            : "bg-green-50"
-                        }`}
+                              ? "bg-orange-50"
+                              : "bg-green-50"
+                          }`}
                       >
                         <Text
-                          className={`text-xs font-medium ${
-                            stockStatus.status === "out_of_stock"
+                          className={`text-xs font-medium ${stockStatus.status === "out_of_stock"
                               ? "text-red-600"
                               : stockStatus.status === "low_stock"
-                              ? "text-orange-600"
-                              : "text-green-600"
-                          }`}
+                                ? "text-orange-600"
+                                : "text-green-600"
+                            }`}
                         >
                           {stockStatus.text}
                         </Text>
@@ -501,6 +526,9 @@ export default function InventoryScreen() {
                     <View className="flex-row justify-between">
                       <Text className="text-gray-500 text-xs">
                         {item.batchNumber !== "N/A" ? `Batch: ${item.batchNumber}` : " "}
+                      </Text>
+                      <Text className="text-gray-500 text-xs">
+                        {item.wasted !== 0 ? `Wasted unit: ${item.wasted}` : " "}
                       </Text>
                       <Text className="text-gray-500 text-xs">
                         {item.expiryDate !== "N/A" ? `Expires: ${item.expiryDate}` : " "}

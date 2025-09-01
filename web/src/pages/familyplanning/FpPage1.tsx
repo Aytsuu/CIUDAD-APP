@@ -123,7 +123,7 @@ export default function FamilyPlanningForm({
       const fetchPatients = async () => {
         setLoadingPatients(true)
         try {
-          const response = await api2.get("patientrecords/patient/view/create/")
+          const response = await api2.get("patientrecords/patient/")
           const formattedPatients = response.data.map((patient: any) => ({
             id: patient.pat_id?.toString() || "",
             name: (
