@@ -16,6 +16,7 @@ import { useBudgetItems } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useCreateIncomeExpense } from "./queries/treasurerIncomeExpenseAddQueries";
 import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 
 interface IncomeandExpenseCreateFormProps {
@@ -28,7 +29,8 @@ interface IncomeandExpenseCreateFormProps {
 
 
 function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateFormProps) {
-
+    
+    const { user } = useAuth();
     const inputCss = "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
     const years = Number(year)
     const [mediaFiles, setMediaFiles] = useState<any[]>([]);
@@ -149,7 +151,8 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
             totalExpense,
             proposedBud,
             particularId,
-            files
+            files,
+            staff: user?.staff?.staff_id
         };
         console.log("TANANNNNNNNNNNNNNNNN: ", allValues)
 

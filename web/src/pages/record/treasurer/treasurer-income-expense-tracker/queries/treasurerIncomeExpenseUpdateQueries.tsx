@@ -64,6 +64,7 @@ type ExtendedIncomeExpenseUpdateValues = z.infer<typeof IncomeExpenseEditFormSch
   returnAmount: number;
   proposedBud: number;
   particularId: number;
+  staff: string;
 };
 
 
@@ -219,6 +220,7 @@ const handleFileUpdates = async (iet_num: number, mediaFiles: any[]) => {
 type ExtendedIncomeValues = z.infer<typeof IncomeEditFormSchema> & {
   totalIncome: number;
   year: number;
+  staff: string;
 };
 
 export const useUpdateIncome = (

@@ -112,6 +112,7 @@ type ExtendedIncomeExpense = z.infer<typeof IncomeExpenseFormSchema> & {
   proposedBud: number;
   particularId: number;
   files: FileData[]; 
+  staff: string;
 };
 
 
@@ -231,6 +232,7 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
 type ExtendedIncomeValues = z.infer<typeof IncomeFormSchema> & {
   totalIncome: number;
   year: number;
+  staff: string;
 };
 
 

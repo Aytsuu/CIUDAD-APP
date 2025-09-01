@@ -20,6 +20,7 @@ import { useIncomeParticular } from "./queries/treasurerIncomeExpenseFetchQuerie
 import { useAddParticular } from "./request/particularsPostRequest";
 import { useDeleteParticular } from "./request/particularsDeleteRequest";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 
 
@@ -39,6 +40,8 @@ interface IncomeEditFormProps {
 }
 
 function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num, incp_id, inc_amount, inc_additional_notes, year, onSuccess }: IncomeEditFormProps) {
+    
+    const { user } = useAuth();    
     const [isEditing, setIsEditing] = useState(false);
     const [_isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [_formValues, setFormValues] = useState<z.infer<typeof IncomeEditFormSchema>>();
@@ -120,6 +123,7 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
             ...values,
             totalIncome,
             year,
+            staff: user?.staff?.staff_id
         }
         
         updateIncome(allValues);
