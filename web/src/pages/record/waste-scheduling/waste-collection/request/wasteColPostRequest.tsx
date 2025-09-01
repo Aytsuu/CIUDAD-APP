@@ -68,7 +68,7 @@ export const wasteAssData = async (assInfo: Record<string, any>) => {
             sitio_id: assInfo.sitio_id,
             wstp_id: assInfo.wstp_id,
             truck_id: parseInt(assInfo.truck_id),
-            staff_id: '00005250722'
+            staff_id: '00001250821'
         });
 
         const res = await api.post('waste/waste-collection-assignment/', {
@@ -76,7 +76,7 @@ export const wasteAssData = async (assInfo: Record<string, any>) => {
             sitio: assInfo.sitio_id,
             wstp: assInfo.wstp_id,
             truck: parseInt(assInfo.truck_id),
-            staff_id: '00005250722'
+            staff_id: '00001250821'
         });
 
         return res.data.was_id;

@@ -1,11 +1,16 @@
 import { Input } from "@/components/ui/input";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Combobox } from "@/components/ui/combobox";
+import { MediaUpload } from "@/components/ui/media-upload";
+import { SetStateAction } from "react";
+import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useUpdateIncome } from "./queries/treasurerIncomeExpenseUpdateQueries";
 import IncomeEditFormSchema from "@/form-schema/treasurer/income-tracker-edit-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
@@ -87,9 +92,9 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
         const inputYear = inputDate.getFullYear();
         let totalIncome = 0.0
 
-        const totIncome = Number(totInc);
-        const prev_amount = Number(inc_amount);
-        const current_amount = Number(values.inc_amount);
+        let totIncome = Number(totInc);
+        let prev_amount = Number(inc_amount);
+        let current_amount = Number(values.inc_amount);
 
         if (inputYear !== Number(year)) {
             form.setError('inc_datetime', {
@@ -305,4 +310,4 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
     );
 }
 
-export default IncomeEditForm; 
+export default IncomeEditForm;
