@@ -9,21 +9,19 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import ScreenLayout from '@/screens/_ScreenLayout';
 import TruckFormSchema from '@/form-schema/waste-truck-schema';
 import { ChevronLeft } from 'lucide-react-native';
-import { TruckFormValues } from './requests';
+import { TruckFormValues } from './waste-personnel-types';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useGetTruckById, useUpdateTruck } from './queries';
-import { Button } from '@/components/ui/button'; // Import Button component
+import { Button } from '@/components/ui/button'; 
 
 export default function WasteTruckEdit() {
   const router = useRouter();
-  const { id } = useLocalSearchParams(); // Get truck ID from route params
-  const [isEditing, setIsEditing] = useState(false); // Start in view mode, unlike original
-
-  // Fetch truck data by ID
-  const { data: truck, isLoading: isTruckLoading, error } = useGetTruckById(id);
-
-  const { mutate: updateTruck, isLoading: isSubmitting } = useUpdateTruck(() => {
-    setIsEditing(false); // Switch back to view mode on successful update
+  const { id } = useLocalSearchParams(); 
+  const [isEditing, setIsEditing] = useState(false); 
+  const idValue = Array.isArray(id) ? id[0] : id;
+  const { data: truck, isLoading: isTruckLoading, error } = useGetTruckById(idValue);
+  const { mutate: updateTruck, isPending: isSubmitting } = useUpdateTruck(() => {
+    setIsEditing(false); 
     router.back();
   });
 
@@ -66,15 +64,12 @@ export default function WasteTruckEdit() {
 
   const onSubmit = (data: TruckFormValues) => {
     if (id && typeof id === 'string') {
-      // Parse truck_capacity to remove commas
       const parsedData = {
         ...data,
         truck_capacity: data.truck_capacity.replace(/,/g, ''),
       };
       updateTruck({ id, data: parsedData });
-    } else {
-      console.error('Invalid truck ID');
-    }
+    } 
   };
 
   // Handle loading state
@@ -136,7 +131,7 @@ export default function WasteTruckEdit() {
           {!isEditing ? (
             <Button
               onPress={() => setIsEditing(true)}
-              className="bg-blue-500 py-3 rounded-lg"
+              className="bg-primaryBlue py-3 rounded-lg"
             >
               <Text className="text-white text-base font-semibold">Edit</Text>
             </Button>
@@ -147,20 +142,20 @@ export default function WasteTruckEdit() {
                   setIsEditing(false);
                   reset(initialFormValues); // Reset to initial values on cancel
                 }}
-                className="flex-1 bg-white border border-blue-500 py-3 rounded-lg"
+                className="flex-1 bg-white border border-primaryBlue py-3 rounded-lg"
               >
-                <Text className="text-blue-500 text-base font-semibold">Cancel</Text>
+                <Text className="text-primaryBlue text-base font-semibold text-center">Cancel</Text>
               </Button>
               <ConfirmationModal
                 trigger={
                   <Button
-                    className="flex-1 bg-blue-500 py-3 rounded-lg flex-row justify-center items-center"
+                    className="flex-1 bg-primaryBlue py-3 rounded-lg flex-row justify-center items-center"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
                       <ActivityIndicator size="small" color="white" />
                     ) : (
-                      <Text className="text-white text-sm font-semibold">Save</Text>
+                      <Text className="text-white text-base font-semibold">Save</Text>
                     )}
                   </Button>
                 }
