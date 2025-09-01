@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
-// import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
+import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useState } from 'react';
 import { minutesOfMeetingEditFormSchema } from '@/form-schema/council/minutesOfMeetingSchema';
 import { useUpdateMinutesOfMeeting } from './queries/MOMUpdateQueries';

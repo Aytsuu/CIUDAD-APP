@@ -47,6 +47,11 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="grid gap-2">
+          <ProfilingSidebar />
+          <ReportSidebar />
+          <GADExpenseSidebar />
+          <CouncilEventsSidebar />
+          <WasteActivitySidebar/>
           <GADExpenseSidebar/>
           <CouncilEventsSidebar/>
         </div>

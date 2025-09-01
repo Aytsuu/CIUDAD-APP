@@ -14,10 +14,10 @@ export const gad_router = [
     path: "/gad/gad-budget-tracker-table/:year/",
     element: <BudgetTracker />,
   },
-  {
-    path: "gad-budget-tracker-entry/:gbud_num/",
-    element: <GADEditEntryForm />,
-  },
+  // {
+  //   path: "gad-budget-tracker-entry/:gbud_num/",
+  //   element: <GADEditEntryForm />,
+  // },
   {
     path: "/gad-budget-tracker-main",
     element: <GADBudgetTrackerMain />,

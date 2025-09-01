@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 import { useState } from "react";
 import {
@@ -14,181 +12,27 @@ import {
   Modal,
   TextInput,
 } from "react-native";
-import { ChevronLeft } from "lucide-react-native";
+import { ChevronLeft, ClipboardCheck } from "lucide-react-native";
 import {
   useGetProjectProposals,
   useGetProjectProposal,
 } from "./queries/fetchqueries";
 import { useUpdateProjectProposalStatus } from "./queries/updatequeries";
-import { QueryProvider } from "./api/query-provider";
 import { ProjectProposalView } from "./view-projprop";
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { useRouter } from "expo-router";
 import { SelectLayout } from "@/components/ui/select-layout";
 import { ProjectProposal, ProposalStatus } from "./projprop-types";
+import { StatusUpdateModal } from "./admin-modal-status";
 
-const StatusUpdateModal: React.FC<{
-  visible: boolean;
-  project: ProjectProposal | null;
-  onClose: () => void;
-  onUpdate: (status: ProposalStatus, reason: string | null) => void;
-  isLoading: boolean;
-}> = ({ visible, project, onClose, onUpdate, isLoading }) => {
-  const [selectedStatus, setSelectedStatus] = useState<ProposalStatus | null>(
-    null
-  );
-  const [reason, setReason] = useState("");
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
-
-  const statusOptions: ProposalStatus[] = [
-    "Pending",
-    "Amend",
-    "Approved",
-    "Rejected",
-  ];
-
-  const isReasonRequired =
-    selectedStatus === "Approved" ||
-    selectedStatus === "Rejected" ||
-    selectedStatus === "Amend";
-
-  const isUpdateDisabled =
-    !selectedStatus ||
-    selectedStatus === project?.status ||
-    (isReasonRequired && !reason.trim());
-
-  const handleUpdate = () => {
-    if (selectedStatus && !isUpdateDisabled) {
-      onUpdate(selectedStatus, isReasonRequired ? reason : null);
-    }
-  };
-
-  const handleClose = () => {
-    setSelectedStatus(null);
-    setReason("");
-    setShowStatusDropdown(false);
-    onClose();
-  };
-
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleClose}
-      statusBarTranslucent={true}
-    >
-      <View className="absolute inset-0 bg-black/50 justify-center items-center">
-        <View className="bg-white rounded-lg p-6 w-[90%] max-w-md">
-          <Text className="text-lg font-semibold text-gray-900 mb-4 text-center">
-            Update Proposal Status
-          </Text>
-
-          <View className="mb-4 relative z-10">
-            <Text className="text-sm font-medium text-gray-700 mb-2">
-              Select Status
-            </Text>
-            <TouchableOpacity
-              className="bg-white border border-gray-300 rounded px-3 py-2 flex-row justify-between items-center"
-              onPress={() => setShowStatusDropdown(!showStatusDropdown)}
-            >
-              <Text className="text-gray-700">
-                {selectedStatus || "Select Status"}
-              </Text>
-              <Text className="text-gray-400">▼</Text>
-            </TouchableOpacity>
-
-            {showStatusDropdown && (
-              <View className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-20">
-                {statusOptions.map((status) => (
-                  <TouchableOpacity
-                    key={status}
-                    className={`px-4 py-3 ${
-                      status === selectedStatus ? "bg-blue-50" : ""
-                    }`}
-                    onPress={() => {
-                      setSelectedStatus(status);
-                      setShowStatusDropdown(false);
-                      if (status !== "Approved" && status !== "Rejected") {
-                        setReason("");
-                      }
-                    }}
-                  >
-                    <Text
-                      className={`text-center ${
-                        status === selectedStatus
-                          ? "text-primaryBlue font-medium"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {status}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-
-          {isReasonRequired && (
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                Reason for {selectedStatus}{" "}
-                <Text className="text-red-500">*</Text>
-              </Text>
-              <TextInput
-                className="bg-white border border-gray-300 rounded px-3 py-2 h-20 text-sm"
-                placeholder={`Enter reason for ${selectedStatus?.toLowerCase()}...`}
-                value={reason}
-                onChangeText={setReason}
-                multiline
-                textAlignVertical="top"
-              />
-              {isReasonRequired && !reason.trim() && (
-                <Text className="text-red-500 text-xs mt-1">
-                  Remark(s) is required for {selectedStatus} status.
-                </Text>
-              )}
-            </View>
-          )}
-
-          <View className="flex-row justify-between mt-4">
-            <TouchableOpacity
-              onPress={handleClose}
-              className="py-2 px-4 rounded bg-gray-200"
-              disabled={isLoading}
-            >
-              <Text className="text-gray-700 font-medium">Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleUpdate}
-              className={`py-2 px-4 rounded ${
-                isUpdateDisabled || isLoading ? "bg-gray-300" : "bg-primaryBlue"
-              }`}
-              disabled={isUpdateDisabled || isLoading}
-            >
-              <Text
-                className={`font-medium ${
-                  isUpdateDisabled || isLoading ? "text-gray-500" : "text-white"
-                }`}
-              >
-                {isLoading ? "Updating..." : "Update"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-};
-
-const AdminUpdateStatusContent: React.FC = () => {
+const AdminUpdateStatus: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedProject, setSelectedProject] =
     useState<ProjectProposal | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageSize, setPageSize] = useState(3);
+  const [pageSize] = useState(5); 
   const [currentPage, setCurrentPage] = useState(1);
 
   const {
@@ -207,11 +51,12 @@ const AdminUpdateStatusContent: React.FC = () => {
     useUpdateProjectProposalStatus();
 
   const statusColors = {
-    pending: "text-blue",
+    pending: "text-blue-800",
     amend: "text-yellow-500",
     approved: "text-green-500",
     rejected: "text-red-500",
     viewed: "text-darkGray",
+    resubmitted: "text-indigo-600",
   };
 
   const filteredProjects = projects
@@ -241,21 +86,25 @@ const AdminUpdateStatusContent: React.FC = () => {
     setRefreshing(false);
   };
 
+    const handleViewLogs = () => {
+    router.push({
+      pathname: "/gad/project-proposal/projprop-logs",
+    });
+  };
+
   const handleProjectPress = (project: ProjectProposal) => {
-    // Automatically set to "Viewed" if current status is "Pending"
     if (project.status === "Pending") {
       updateStatus(
         {
           gprId: project.gprId,
-          status: "Viewed", // This is now type-safe
+          status: "Viewed",
           reason: "Project viewed by admin",
         },
         {
           onSuccess: () => {
-            // Create a new object with the correct type
             const updatedProject: ProjectProposal = {
               ...project,
-              status: "Viewed", // Explicitly typed
+              status: "Viewed",
               statusReason: "Project viewed by admin",
             };
             setSelectedProject(updatedProject);
@@ -263,7 +112,7 @@ const AdminUpdateStatusContent: React.FC = () => {
         }
       );
     } else {
-      setSelectedProject(project); // Original project has correct types
+      setSelectedProject(project);
     }
   };
 
@@ -326,7 +175,7 @@ const AdminUpdateStatusContent: React.FC = () => {
               </Text>
             </TouchableOpacity>
           }
-          disableDocumentManagement // Disable document management features
+          disableDocumentManagement
         />
         <StatusUpdateModal
           visible={showStatusModal}
@@ -355,7 +204,7 @@ const AdminUpdateStatusContent: React.FC = () => {
     return (
       <SafeAreaView className="flex-1 bg-white">
         <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-        <View className="flex-1 justify-center items-center p-4">
+        <View className="flex-1 justify-center items-center p-2">
           <Text className="text-red-500 text-lg font-medium mb-2">
             Error loading proposals
           </Text>
@@ -392,7 +241,7 @@ const AdminUpdateStatusContent: React.FC = () => {
     >
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      <View className="mt-2 px-4 pt-4 pb-2">
+      <View className="mt-2 pt-4 pb-2">
         <View className="mb-4">
           <SelectLayout
             options={[
@@ -400,6 +249,7 @@ const AdminUpdateStatusContent: React.FC = () => {
               { label: "Pending", value: "Pending" },
               { label: "Viewed", value: "Viewed" },
               { label: "Amend", value: "Amend" },
+              { label: "Resubmitted", value: "Resubmitted" },
               { label: "Approved", value: "Approved" },
               { label: "Rejected", value: "Rejected" },
             ]}
@@ -410,9 +260,8 @@ const AdminUpdateStatusContent: React.FC = () => {
           />
         </View>
 
-        {/* Dynamic Total Budget Display */}
-        <View className="flex-row justify-end mb-2">
-          <View className=" px-4 py-2 rounded-lg">
+        <View className="flex-row justify-between mb-2">
+          <View className="px-2 py-2 rounded-lg">
             <Text className="font-medium ">
               Grand Total:{" "}
               <Text className="font-bold text-green-700">
@@ -424,11 +273,21 @@ const AdminUpdateStatusContent: React.FC = () => {
               </Text>
             </Text>
           </View>
+          <View className="flex-row justify-end p-2">
+            <TouchableOpacity
+              onPress={handleViewLogs}
+              className="bg-primaryBlue px-3 py-2 rounded-md"
+            >
+              <Text className="text-white text-[17px]">
+                <ClipboardCheck size={14} color="white" /> Logs
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
       <ScrollView
-        className="flex-1 px-4"
+        className="flex-1"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -501,16 +360,37 @@ const AdminUpdateStatusContent: React.FC = () => {
             </TouchableOpacity>
           ))
         )}
+
+        {/* Pagination Controls */}
+        {filteredProjects.length > pageSize && (
+          <View className="flex-row justify-between items-center mt-4 px-4 pb-4">
+            <TouchableOpacity
+              onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
+            >
+              <Text className="text-primaryBlue font-bold">← Previous</Text>
+            </TouchableOpacity>
+
+            <Text className="text-gray-500">
+              Page {currentPage} of {totalPages}
+            </Text>
+
+            <TouchableOpacity
+              onPress={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className={`p-2 ${
+                currentPage === totalPages ? "opacity-50" : ""
+              }`}
+            >
+              <Text className="text-primaryBlue font-bold">Next →</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </ScreenLayout>
-  );
-};
-
-const AdminUpdateStatus: React.FC = () => {
-  return (
-    <QueryProvider>
-      <AdminUpdateStatusContent />
-    </QueryProvider>
   );
 };
 

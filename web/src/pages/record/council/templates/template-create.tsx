@@ -137,7 +137,7 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import documentTemplateFormSchema from "@/form-schema/council/documentTemlateSchema";
+import documentTemplateFormSchema from "@/form-schema/council/documentTemplateSchema";
 import { useTemplateRecord } from "./queries/template-AddQueries";
 import { Loader2 } from "lucide-react";
 
