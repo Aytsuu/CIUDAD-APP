@@ -1375,7 +1375,7 @@ function CertificatePage() {
                 </div>
 
                 <div className="flex justify-end">
-                    <Button type="button" onClick={handleViewFile2} disabled={!selectedStaffId} >
+                    <Button type="button" onClick={handleViewFile2} disabled={!selectedStaffId || !purposeInput} >
                         Proceed
                     </Button>
                 </div>                       
