@@ -70,7 +70,7 @@ export default function ResidentPending() {
     <View className="flex-1 p-4">
       {/* Header */}
       <Text className="text-lg font-medium text-gray-800 mb-2">
-        My Requests ({filteredData.length})
+        Pending Requests ({filteredData.length})
       </Text>
 
       {/* Search Bar */}
