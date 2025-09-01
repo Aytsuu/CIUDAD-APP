@@ -3,7 +3,7 @@ import GADBudgetTrackerMain from "@/pages/record/gad/budget-tracker/budget-track
 import GADProjectProposal from "@/pages/record/gad/project-proposal/project-proposal-main";
 import AnnualDevelopmentPlan from "@/pages/record/gad/annual_development_plan/annual_development_plan_main";
 import AnnaualDevelopmentPlanTable from "@/pages/record/gad/annual_development_plan/annual_development_table";
-import AdminGADProjectProposal from "@/pages/record/gad/project-proposal/admin-update-status";
+import AdminGADProjectProposal from "@/pages/record/gad/project-proposal/projprop-admin-update-status";
 import ProjectProposalLogTable from "@/pages/record/gad/project-proposal/proposal-log";
 import GADBudgetLogTable from "@/pages/record/gad/budget-tracker/budget-log";
 

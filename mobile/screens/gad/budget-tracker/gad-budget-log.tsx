@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select-layout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import PageLayout from "@/screens/_PageLayout";
-import { useGADBudgetLogs } from "./queries/fetch";
-import { BudgetLogTable } from "./bt-types";
+import { useGADBudgetLogs } from "./queries/btracker-fetch";
+import { BudgetLogTable } from "./gad-btracker-types";
 
 const GADBudgetLogTable = () => {
   const router = useRouter();

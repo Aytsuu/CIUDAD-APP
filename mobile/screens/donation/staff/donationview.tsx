@@ -14,8 +14,8 @@ import {
   useGetDonations,
   useUpdateDonation,
   useGetPersonalList,
-} from "./queries";
-import { Donation } from "../don-types";
+} from "./donation-queries";
+import { Donation } from "../donation-types";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";

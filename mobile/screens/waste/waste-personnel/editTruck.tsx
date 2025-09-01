@@ -11,7 +11,7 @@ import TruckFormSchema from '@/form-schema/waste-truck-schema';
 import { ChevronLeft } from 'lucide-react-native';
 import { TruckFormValues } from './waste-personnel-types';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
-import { useGetTruckById, useUpdateTruck } from './queries';
+import { useGetTruckById, useUpdateTruck } from './waste-personnel-truck-queries';
 import { Button } from '@/components/ui/button'; 
 
 export default function WasteTruckEdit() {

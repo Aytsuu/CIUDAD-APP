@@ -28,7 +28,7 @@ import {
   useAddAttendee,
   useUpdateAttendee,
   useAddAttendanceSheet,
-} from "../ce-events/queries";
+} from "../ce-events/ce-att-queries";
 import { useLocalSearchParams } from "expo-router";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useForm, FormProvider } from "react-hook-form";

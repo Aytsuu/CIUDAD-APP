@@ -11,12 +11,12 @@ import {
   useDeleteAttendanceSheet,
   useArchiveAttendanceSheet,
   useRestoreAttendanceSheet,
-} from "../Calendar/queries/delqueries";
+} from "../Calendar/queries/councilEventdelqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import Attendees from "./Attendees";
-import {useGetCouncilEvents, useGetAttendanceSheets} from "../Calendar/queries/fetchqueries";
-import { CouncilEvent, AttendanceSheet, AttendanceRecord } from "../Calendar/ce-att-types";
+import {useGetCouncilEvents, useGetAttendanceSheets} from "../Calendar/queries/councilEventfetchqueries";
+import { CouncilEvent, AttendanceSheet, AttendanceRecord } from "../Calendar/councilEventTypes";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { HistoryTable } from "@/components/ui/table/history-table";
 

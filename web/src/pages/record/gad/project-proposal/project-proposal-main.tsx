@@ -21,7 +21,7 @@ import {
   useGetProjectProposals,
   useGetProjectProposal,
   useGetSupportDocs,
-} from "./queries/fetchqueries";
+} from "./queries/projprop-fetchqueries";
 import {
   usePermanentDeleteProjectProposal,
   useDeleteSupportDocument,
@@ -29,7 +29,7 @@ import {
   useRestoreProjectProposal,
   useArchiveSupportDocument,
   useRestoreSupportDocument,
-} from "./queries/delqueries";
+} from "./queries/projprop-delqueries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import {
@@ -43,7 +43,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ProjectProposal, SupportDoc } from "./projprop-types";
 import { Link } from "react-router";
-import { DocumentCard } from "./supp-docs-modal";
+import { DocumentCard } from "./projpropsupp-docs-modal";
 
 function GADProjectProposal() {
   const style = {

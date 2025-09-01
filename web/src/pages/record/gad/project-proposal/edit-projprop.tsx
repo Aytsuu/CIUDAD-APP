@@ -4,10 +4,10 @@ import { Plus, X, Wallet } from "lucide-react";
 import {
   useUpdateProjectProposal,
   useUpdateProjectProposalStatus,
-} from "./queries/updatequeries";
-import { useAddSupportDocument } from "./queries/addqueries";
+} from "./queries/projprop-updatequeries";
+import { useAddSupportDocument } from "./queries/projprop-addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import { useGetStaffList } from "./queries/fetchqueries";
+import { useGetStaffList } from "./queries/projprop-fetchqueries";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { ProjectProposalSchema } from "@/form-schema/gad-projprop-create-form-schema";

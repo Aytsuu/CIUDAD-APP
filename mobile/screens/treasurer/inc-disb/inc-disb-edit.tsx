@@ -21,7 +21,7 @@ import {
   useGetIncomeImages,
   useGetDisbursementImages,
   useUploadImages,
-} from "./queries";
+} from "./inc-disb-queries";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import {
   IncomeFolder,

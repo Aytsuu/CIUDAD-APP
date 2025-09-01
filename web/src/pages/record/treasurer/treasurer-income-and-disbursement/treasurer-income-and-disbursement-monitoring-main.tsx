@@ -18,7 +18,7 @@ import {
 import {
   useGetIncomeImages,
   useGetDisbursementImages
-} from "./queries/fetchqueries";
+} from "./queries/incDisb-fetchqueries";
 import {
   useArchiveIncomeImage,
   useRestoreIncomeImage,
@@ -28,9 +28,9 @@ import {
   usePermanentDeleteDisbursementImage,
   usePermanentDeleteIncomeFolder,
   usePermanentDeleteDisbursementFolder,
-} from "./queries/delqueries";
+} from "./queries/incDisb-delqueries";
 import { formatDate } from "@/helpers/dateHelper";
-import { ImageItem, Album, IncomeImage, DisbursementImage } from "./inc-disb-types";
+import { ImageItem, Album, IncomeImage, DisbursementImage } from "./incDisb-types";
 
 function IncomeandDisbursementView() {
   const [currentPage, setCurrentPage] = useState(1);
