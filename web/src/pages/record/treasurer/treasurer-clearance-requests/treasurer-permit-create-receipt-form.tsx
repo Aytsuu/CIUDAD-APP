@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { api } from "@/api/api";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAddReceipt } from "@/pages/record/treasurer/Receipts/queries/receipts-insertQueries";
 import ReceiptSchema from "@/form-schema/receipt-schema";
 

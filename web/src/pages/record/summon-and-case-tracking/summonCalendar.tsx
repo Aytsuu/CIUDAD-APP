@@ -442,7 +442,7 @@ import { Button } from "@/components/ui/button/button";
 import { Calendar } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useAddSummonDates } from "./queries/summonInsertQueries";
 import { toast } from "sonner";
 import { CircleCheck, Plus, CalendarIcon, Clock, Trash2 } from "lucide-react";

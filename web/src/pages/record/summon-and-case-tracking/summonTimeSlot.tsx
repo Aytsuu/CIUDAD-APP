@@ -6,7 +6,7 @@ import { z } from "zod";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Form } from "@/components/ui/form/form";
 import { SummonTimeSchema } from "@/form-schema/summon-time-schema";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { useAddSummonTimeSlots } from "./queries/summonInsertQueries";

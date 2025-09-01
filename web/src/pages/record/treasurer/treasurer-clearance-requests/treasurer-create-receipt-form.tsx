@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage} from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
-import { Card, CardContent } from "@/components/ui/card/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { createReceiptSchema } from "@/form-schema/receipt-schema";
 import { useAcceptRequest } from "./queries/personalClearanceUpdateQueries";
 import { useAddPersonalReceipt } from "../Receipts/queries/receipts-insertQueries";
