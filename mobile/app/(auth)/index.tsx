@@ -5,7 +5,8 @@ import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staf
 import GarbagePickupForm from "@/screens/request/garbage-pickup/form";
 import Request from "../(request)";
 import GarbagePickupHome from "@/screens/request/garbage-pickup/garbage-pickup-main"
+import ResolutionPage from "@/screens/council/resolution/resolution-main";
 
 export default () => {
-    return <GarbagePickupHome/>
+    return <ResolutionPage/>
 }
