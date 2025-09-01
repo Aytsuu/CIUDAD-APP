@@ -162,7 +162,7 @@ const CouncilCalendarPage = () => {
     <TouchableOpacity
       onPress={() =>
         router.push({
-          pathname: "/council/council-events/editEvent",
+          pathname: "/(council)/council-events/editEvent",
           params: { event: JSON.stringify(item), isReadOnly: "true" },
         })
       }
@@ -388,7 +388,7 @@ const CouncilCalendarPage = () => {
             <TouchableOpacity
               className="bg-primaryBlue p-2 rounded-full"
               onPress={() =>
-                router.push("/council/council-events/schedule?isAdding=true")
+                router.push("/(council)/council-events/schedule?isAdding=true")
               }
             >
               <Plus size={20} color="#ffffff" />

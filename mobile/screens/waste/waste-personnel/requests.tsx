@@ -1,45 +1,5 @@
 import { api } from "@/api/api";
-
-// const api = axios.create({
-//   baseURL: 'http://192.168.254.100:8000/',
-//   baseURL: "http://192.168.254.106:8000/",
-// });
-
-// Type definitions
-export interface TruckData {
-  truck_id: string;
-  truck_plate_num: string;
-  truck_model: string;
-  truck_capacity: string;
-  truck_status: "Operational" | "Maintenance";
-  truck_last_maint: string;
-  truck_is_archive?: boolean;
-}
-
-export interface PersonnelItem {
-  id: string;
-  name: string;
-  position: string;
-  contact?: string;
-}
-
-export interface TruckFormValues {
-  truck_plate_num: string;
-  truck_model: string;
-  truck_capacity: string;
-  truck_status: "Operational" | "Maintenance";
-  truck_last_maint: string;
-}
-
-export interface Truck {
-  truck_id: number;
-  truck_plate_num: string;
-  truck_model: string;
-  truck_capacity: string;
-  truck_status: string;
-  truck_last_maint: string;
-  truck_is_archive?: boolean;
-}
+import { Truck, TruckData, PersonnelItem, TruckFormValues } from "./waste-personnel-types";
 
 function isTruck(data: any): data is Truck {
   const isValid = data &&
@@ -49,13 +9,10 @@ function isTruck(data: any): data is Truck {
     (typeof data.truck_capacity === "string" || typeof data.truck_capacity === "number") &&
     typeof data.truck_status === "string" &&
     typeof data.truck_last_maint === "string";
-  if (!isValid) {
-    console.log('Rejected truck:', data);
-  }
   return isValid;
 }
 
-export const getTruckById = async (truck_id: number): Promise<Truck> => {
+export const getTruckById = async (truck_id: string): Promise<Truck> => {
   try {
     const response = await api.get(`waste/waste-trucks/${truck_id}/`);
 

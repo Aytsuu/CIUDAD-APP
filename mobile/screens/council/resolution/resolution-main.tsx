@@ -94,7 +94,7 @@ function ResolutionPage() {
 
   const handleEdit = (item: any) => {
     router.push({
-      pathname: '/council/resolution/res-edit',
+      pathname: '/(council)/resolution/res-edit',
       params: {
         res_num: item.res_num,
         res_title: item.res_title,
@@ -274,7 +274,7 @@ function ResolutionPage() {
             </View>
 
             <Button 
-              onPress={() => router.push('/council/resolution/res-create')} 
+              onPress={() => router.push('/(council)/resolution/res-create')} 
               className="bg-primaryBlue mt-3"
             >
               <Text className="text-white text-[17px]">Create</Text>

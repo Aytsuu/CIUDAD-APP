@@ -7,8 +7,12 @@ from .serializers import *
 from django.db.models import OuterRef, Subquery, Count, Q
 from django.apps import apps
 from django.utils import timezone
-from django.core.files.storage import default_storage
 from rest_framework.permissions import AllowAny
+from django.db.models.functions import ExtractYear
+import logging
+from rest_framework.views import APIView
+
+logger = logging.getLogger(__name__)
 
 class GAD_Budget_TrackerView(generics.ListCreateAPIView):
     serializer_class = GAD_Budget_TrackerSerializer
@@ -425,3 +429,113 @@ class ProjectProposalAvailabilityView(generics.ListAPIView):
             'data': response_data,
             'count': len(response_data)
         })
+        
+# ===========================================================================================================
+
+class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
+    serializer_class = GADDevelopmentPlanSerializer
+
+    def get_queryset(self):
+        year = self.request.query_params.get('year')
+        qs = DevelopmentPlan.objects.all()
+        if year:
+            qs = qs.filter(dev_date__year=year)
+        return qs
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            # Create the development plan first
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            development_plan = serializer.save()
+            
+            # Log the activity
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member from the request or use default
+                staff_id = request.data.get('staff') or '00003250722'  # Default staff ID
+                staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                if staff:
+                    # Create activity log
+                    create_activity_log(
+                        act_type="GAD Development Plan Created",
+                        act_description=f"GAD development plan '{development_plan.dev_project}' created for {development_plan.dev_date} with budget ₱{development_plan.dev_gad_budget}",
+                        staff=staff,
+                        record_id=str(development_plan.dev_id),
+                        feat_name="GAD Development Plan Management"
+                    )
+                    logger.info(f"Activity logged for GAD development plan creation: {development_plan.dev_id}")
+                else:
+                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for GAD development plan creation: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f"Error creating GAD development plan: {str(e)}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+# GET years with data
+class GADDevelopmentPlanYears(APIView):
+    def get(self, request, *args, **kwargs):
+        years = DevelopmentPlan.objects.annotate(year=ExtractYear('dev_date')).values_list('year', flat=True).distinct()
+        return Response(sorted(years))
+
+class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
+    queryset = DevelopmentPlan.objects.all()
+    serializer_class = GADDevelopmentPlanSerializer
+    lookup_field = 'dev_id'
+    
+    def update(self, request, *args, **kwargs):
+        try:
+            # Get the instance before updating
+            instance = self.get_object()
+            
+            # Perform the update
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            development_plan = serializer.save()
+            
+            # Log the activity
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member from the request or use default
+                staff_id = request.data.get('staff') or '00003250722'  # Default staff ID
+                staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                if staff:
+                    # Create activity log
+                    create_activity_log(
+                        act_type="GAD Development Plan Updated",
+                        act_description=f"GAD development plan '{development_plan.dev_project}' updated for {development_plan.dev_date} with budget ₱{development_plan.dev_gad_budget}",
+                        staff=staff,
+                        record_id=str(development_plan.dev_id),
+                        feat_name="GAD Development Plan Management"
+                    )
+                    logger.info(f"Activity logged for GAD development plan update: {development_plan.dev_id}")
+                else:
+                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for GAD development plan update: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error updating GAD development plan: {str(e)}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
