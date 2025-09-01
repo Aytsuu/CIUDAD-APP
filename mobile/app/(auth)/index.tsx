@@ -8,5 +8,5 @@ import GarbagePickupHome from "@/screens/request/garbage-pickup/garbage-pickup-m
 import ResolutionPage from "@/screens/council/resolution/resolution-main";
 
 export default () => {
-    return <ResolutionPage/>
+    return <GarbagePickupHome/>
 }
