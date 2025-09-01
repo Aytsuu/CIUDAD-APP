@@ -21,8 +21,8 @@ export const useSubmitMedicineStock = () => {
     },
     onSuccess: (data) => {
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["medicineinventorylist"] });
       queryClient.invalidateQueries({ queryKey: ["medicinetransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
       queryClient.invalidateQueries({ queryKey: ["inventorylist"] });
 
       navigate(-1);

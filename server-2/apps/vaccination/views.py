@@ -275,7 +275,6 @@ def bulk_create_immunization_histories(request):
 
 # ======================================================================================#
 
-
 class VaccinationSubmissionView(APIView):
     @transaction.atomic
     def post(self, request):
@@ -373,13 +372,49 @@ class VaccinationSubmissionView(APIView):
             )
 
     def process_routine_vaccination(self, assignment_option, form_data, form2_data, 
-                                  signature, pat_id, vaccine_stock, status_val, 
-                                  follow_up_data, vac_name, staff_id):
-        # Create patient record
-        patient_record = PatientRecord.objects.create(
-            pat_id_id=pat_id,
-            patrec_type="Vaccination Record",
-        )
+                              signature, pat_id, vaccine_stock, status_val, 
+                              follow_up_data, vac_name, staff_id):
+    
+        # Check if there's an existing vaccination record for this patient and vaccine
+        existing_vacrec = None
+        try:
+            # First find patient records for this patient
+            patient_records = PatientRecord.objects.filter(pat_id_id=pat_id, patrec_type="Vaccination Record")
+            
+            # Look for a vaccination record that has history with the same vaccine
+            for patrec in patient_records:
+                try:
+                    vacrec = VaccinationRecord.objects.get(patrec_id=patrec.patrec_id)
+                    # Check if this vacrec has any history with the same vaccine
+                    if VaccinationHistory.objects.filter(
+                        vacrec=vacrec, 
+                        vacStck_id__vac_id=vaccine_stock.vac_id
+                    ).exists():
+                        existing_vacrec = vacrec
+                        existing_patrec = patrec
+                        break
+                except VaccinationRecord.DoesNotExist:
+                    continue
+                    
+        except (PatientRecord.DoesNotExist, VaccinationRecord.DoesNotExist):
+            existing_vacrec = None
+        
+        # Create or use existing patient record
+        if existing_vacrec:
+            patient_record = existing_patrec
+            vaccination_record = existing_vacrec
+        else:
+            # Create new patient record if no existing record found
+            patient_record = PatientRecord.objects.create(
+                pat_id_id=pat_id,
+                patrec_type="Vaccination Record",
+            )
+            
+            # Create new vaccination record
+            vaccination_record = VaccinationRecord.objects.create(
+                patrec_id=patient_record,
+                vacrec_totaldose=""
+            )
         
         # Create vital signs if self-assignment
         vital = None
@@ -394,12 +429,6 @@ class VaccinationSubmissionView(APIView):
                 patrec=patient_record
             )
         
-        # Create vaccination record
-        vaccination_record = VaccinationRecord.objects.create(
-            patrec_id=patient_record,
-            vacrec_totaldose=form_data.get('vacrec_totaldose', 0)
-        )
-        
         # Create follow-up visit if needed
         followv = None
         if follow_up_data:
@@ -407,16 +436,16 @@ class VaccinationSubmissionView(APIView):
                 followv_date=follow_up_data.get('followv_date') or form_data.get('followv_date'),
                 followv_status='pending',
                 followv_description=follow_up_data.get('followv_description') or 
-                                  f"Follow-up visit for {vac_name} in queue on {form_data.get('followv_date')}",
+                                f"Follow-up visit for {vac_name} in queue on {form_data.get('followv_date')}",
                 patrec=patient_record
             )
         
-        # Create vaccination history
+        # Create vaccination history - convert to integer
         vachist = VaccinationHistory.objects.create(
             vacrec=vaccination_record,
             assigned_to=form_data.get('assignto'),
             vacStck_id=vaccine_stock,
-            vachist_doseNo=form_data.get('vachist_doseNo', 1),
+            vachist_doseNo=int(form_data.get('vachist_doseNo', 1)),
             vachist_status=status_val,
             staff_id=staff_id,
             vital=vital,
@@ -430,14 +459,15 @@ class VaccinationSubmissionView(APIView):
             'vacrec_id': vaccination_record.vacrec_id,
             'vachist_id': vachist.vachist_id,
             'vital_id': vital.vital_id if vital else None,
-            'followv_id': followv.followv_id if followv else None
+            'followv_id': followv.followv_id if followv else None,
+            'is_new_record': not existing_vacrec  # Flag indicating if new record was created
         }
-
     def process_primary_vaccination(self, assignment_option, form_data, form2_data, 
                                    signature, pat_id, vaccine_stock, status_val, 
                                    follow_up_data, vac_name, staff_id, vaccination_history):
-        dose_no = form_data.get('vachist_doseNo', 1)
-        total_dose = form_data.get('vacrec_totaldose', 0)
+        # Convert to integers for comparison
+        dose_no = int(form_data.get('vachist_doseNo', 1))
+        total_dose = int(form_data.get('vacrec_totaldose', 0))
         
         if dose_no == 1:
             # First dose - create new records
@@ -518,6 +548,7 @@ class VaccinationSubmissionView(APIView):
                 )
             
             followv = None
+            # FIXED: Use integer comparison
             if dose_no < total_dose and follow_up_data:
                 followv = FollowUpVisit.objects.create(
                     followv_date=follow_up_data.get('followv_date') or form_data.get('followv_date'),
@@ -549,7 +580,8 @@ class VaccinationSubmissionView(APIView):
     def process_conditional_vaccination(self, assignment_option, form_data, form2_data, 
                                       signature, pat_id, vaccine_stock, status_val, 
                                       follow_up_data, vac_name, staff_id, vaccination_history):
-        dose_no = form_data.get('vachist_doseNo', 1)
+        # Convert to integer
+        dose_no = int(form_data.get('vachist_doseNo', 1))
         
         if dose_no == 1:
             # First dose
@@ -570,10 +602,22 @@ class VaccinationSubmissionView(APIView):
                     patrec=patient_record
                 )
             
+            # Convert to integer for the vaccination record
             vaccination_record = VaccinationRecord.objects.create(
                 patrec_id=patient_record,
-                vacrec_totaldose=form_data.get('vacrec_totaldose', 0)
+                vacrec_totaldose=int(form_data.get('vacrec_totaldose', 0))
             )
+            
+            # Create follow-up visit if needed for first dose
+            followv = None
+            if follow_up_data:
+                followv = FollowUpVisit.objects.create(
+                    followv_date=follow_up_data.get('followv_date') or form_data.get('followv_date'),
+                    followv_status='pending',
+                    followv_description=follow_up_data.get('followv_description') or 
+                                      f"Follow-up visit for {vac_name} in queue on {form_data.get('followv_date')}",
+                    patrec=patient_record
+                )
             
             vachist = VaccinationHistory.objects.create(
                 vacrec=vaccination_record,
@@ -583,7 +627,7 @@ class VaccinationSubmissionView(APIView):
                 vachist_status=status_val,
                 staff_id=staff_id,
                 vital=vital,
-                followv=None,
+                followv=followv,
                 signature=signature,
                 date_administered=timezone.now().date()
             )
@@ -592,7 +636,8 @@ class VaccinationSubmissionView(APIView):
                 'patrec_id': patient_record.patrec_id,
                 'vacrec_id': vaccination_record.vacrec_id,
                 'vachist_id': vachist.vachist_id,
-                'vital_id': vital.vital_id if vital else None
+                'vital_id': vital.vital_id if vital else None,
+                'followv_id': followv.followv_id if followv else None
             }
             
         else:
@@ -646,7 +691,6 @@ class VaccinationSubmissionView(APIView):
                 'vital_id': vital.vital_id if vital else None,
                 'followv_id': followv.followv_id if followv else None
             }
-
 
 # ======================== Monthly Vaccination REPORTS ========================
             

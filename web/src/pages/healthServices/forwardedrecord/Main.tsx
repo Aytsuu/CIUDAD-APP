@@ -19,21 +19,17 @@ export default function MainForwardedRecord() {
     usePendingMedicalConCount();
   const { data: forwardedVaccinationCount, isLoading: isLoadingVacc } =
     useForwardedVaccinationCount();
-  const { data: forwardedChildMedRecordCount, isLoading: isLoadingChildMed } =
-    useForwardedChildMedRecordCount();
+
   const { data: scheduledVaccinationCount } = useScheduledVaccinationCount();
 
   const CHimmunizationcountData = CHimmunizationcount?.count || 0;
   const pendingMedicalConCountData = pendingMedicalConCount?.count || 0;
   const forwardedVaccinationCountData = forwardedVaccinationCount?.count || 0;
-  const forwardedChildMedRecordCountData = forwardedChildMedRecordCount?.count || 0;
   const scheduledVaccinationCountData = scheduledVaccinationCount?.count || 0;
 
-  const totalconsultationCount =
-    forwardedChildMedRecordCountData + pendingMedicalConCountData;
 
   const isLoading =
-    isLoadingCH || isLoadingPending || isLoadingVacc || isLoadingChildMed;
+    isLoadingCH || isLoadingPending || isLoadingVacc ;
 
   const hasNoRecords =
     CHimmunizationcountData === 0 &&
@@ -69,7 +65,7 @@ export default function MainForwardedRecord() {
         <div className="bg-white p-8 rounded-md shadow-md">
           <ChildHealthImmunizationCard count={CHimmunizationcountData} />
           <ForwardedVaccinationCard count={forwardedVaccinationCountData} />
-          <ForwardedConsultationCard count={totalconsultationCount} />
+          <ForwardedConsultationCard count={pendingMedicalConCountData} />
           <ForwardedScheduledVaccinationCard count={scheduledVaccinationCountData} />
         </div>
       )}

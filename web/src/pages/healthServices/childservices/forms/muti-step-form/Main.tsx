@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
-import ChildHRPage1 from "./child-hr-page1";
-import ChildHRPage2 from "./child-hr-page2";
-import ChildHRPage3 from "./child-hr-page3";
-import LastPage from "./child-hr-page-last";
+import ChildHRPage1 from "./Step1";
+import ChildHRPage2 from "./Step2";
+import ChildHRPage3 from "./Step3";
+import LastPage from "./Step4";
 import { useAuth } from "@/context/AuthContext";
 import {
   FormData,
@@ -25,6 +25,7 @@ import { initialFormData, ImmunizationTracking } from "./types";
 import CardLayout from "@/components/ui/card/card-layout";
 import { useChildHealthHistory } from "../queries/fetchQueries";
 import { isToday } from "@/helpers/isToday";
+import StepIndicator from "./StepsIndicator";
 
 export default function ChildHealthRecordForm() {
   const location = useLocation();
@@ -96,12 +97,29 @@ export default function ChildHealthRecordForm() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [newVitalSigns, setNewVitalSigns] = useState<VitalSignType[]>([]);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   const {
     data: childHealthRecord,
     isLoading: isRecordLoading,
     error: recordError,
   } = useChildHealthHistory(chrecId);
+
+  // Track completed steps based on current page
+  useEffect(() => {
+    const newCompletedSteps = [];
+    if (currentPage > 1) newCompletedSteps.push(1);
+    if (currentPage > 2) newCompletedSteps.push(2);
+    if (currentPage > 3) newCompletedSteps.push(3);
+    setCompletedSteps(newCompletedSteps);
+  }, [currentPage]);
+
+  const handleStepClick = (stepId: number) => {
+    // Only allow navigation to steps that are completed or current
+    if (stepId <= currentPage || completedSteps.includes(stepId)) {
+      setCurrentPage(stepId);
+    }
+  };
 
   const getLatestNoteForRecord = (notesArray: any[]) => {
     if (!notesArray || notesArray.length === 0) return null;
@@ -267,6 +285,8 @@ export default function ChildHealthRecordForm() {
           // Process vital signs
           const vitalSignsFromHistory: VitalSignType[] =
             history.child_health_vital_signs?.map((vital: any) => ({
+
+
               date: vital.created_at
                 ? new Date(vital.created_at).toISOString().split("T")[0]
                 : "",
@@ -277,7 +297,7 @@ export default function ChildHealthRecordForm() {
               ht: vital.bm_details?.height
                 ? Number.parseFloat(vital.bm_details.height)
                 : undefined,
-              age: vital.bm_details?.age || "",
+              age: calculateAgeFromDOB(formData.childDob, vital.created_at).ageString,
               notes: latestNote?.chn_notes || "",
               follov_description:
                 latestNote?.followv_details?.followv_description || "",
@@ -596,6 +616,15 @@ export default function ChildHealthRecordForm() {
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
+
+      {/* Step Indicator */}
+      <StepIndicator
+        currentStep={currentPage}
+        totalSteps={4}
+        onStepClick={handleStepClick}
+        allowClickNavigation={true}
+        completedSteps={completedSteps}
+      />
 
       <CardLayout
         cardClassName="px-4"

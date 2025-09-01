@@ -325,6 +325,8 @@ export const nutritionStatusesFields: FieldConfig[] = [
 ];
 
 
+
+
 export const notesFields: FieldConfig[] = [
   {
     label: "Clinical Notes",
@@ -332,56 +334,117 @@ export const notesFields: FieldConfig[] = [
     format: (val: CHNotes[]) => {
       if (!val || val.length === 0) {
         return [
-          <div key="no-notes" className="text-center">
+          <div key="no-notes" className="text-center" style={{ color: '#374151' }}>
             <span>No clinical notes found</span>
           </div>,
         ];
       }
 
-      // Filter out notes with empty content
-      const validNotes = val.filter(
-        (note) => note.chn_notes && note.chn_notes.trim() !== ""
-      );
+      // Collect all notes from history (including current notes)
+      const allNotes: Array<{
+        content: string;
+        staffName: string;
+        date: string;
+        isLatest: boolean;
+        chnotes_id: number;
+        historyType: string;
+      }> = [];
 
-      // Return empty state if all notes were filtered out
-      if (validNotes.length === 0) {
+      val.forEach((note) => {
+        if (note && note.history && note.history.length > 0) {
+          // Add all historical notes
+          note.history.forEach((historyItem: any, historyIndex: any) => {
+            if (historyItem.chn_notes && historyItem.chn_notes.trim() !== "") {
+              // Determine staff name - use "Updated by staff" if staff_name is null and it's an update
+              let staffName = historyItem.staff_name;
+              if (!staffName) {
+                staffName = historyItem.history_type === "~" ? "Updated by staff" : "Created by staff";
+              }
+              
+              allNotes.push({
+                content: historyItem.chn_notes,
+                staffName: staffName,
+                date: historyItem.history_date 
+                  ? new Date(historyItem.history_date).toLocaleString()
+                  : "Unknown time",
+                isLatest: historyIndex === 0, // First item in history is the latest
+                chnotes_id: note.chnotes_id || 0,
+                historyType: historyItem.history_type || "",
+              });
+            }
+          });
+        } else if (note && note.chn_notes && note.chn_notes.trim() !== "") {
+          // Fallback: if no history, show current note
+          const staffName = note.history?.staff?.rp?.per
+            ? `${note.history?.staff.rp.per.per_fname} ${note.history?.staff.rp.per.per_lname}`
+            : "Created by staff";
+          
+          allNotes.push({
+            content: note.chn_notes,
+            staffName,
+            date: note.updated_at 
+              ? new Date(note.updated_at).toLocaleString()
+              : "Unknown time",
+            isLatest: true,
+            chnotes_id: note.chnotes_id || 0,
+            historyType: "",
+          });
+        }
+      });
+
+      // Sort by date (most recent first)
+      allNotes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      // Return empty state if no notes found
+      if (allNotes.length === 0) {
         return [
-          <div key="no-valid-notes" className="text-center">
-            <span>No clinical notes with content found</span>
+          <div key="no-valid-notes" className="text-center" style={{ color: '#374151' }}>
+            <span>No clinical notes found</span>
           </div>,
         ];
       }
 
-      return validNotes.map((note, index) => {
-        const staffName = note.staff_details?.rp?.per
-          ? `${note.staff_details.rp.per.per_fname} ${note.staff_details.rp.per.per_lname}`
-          : "Unknown staff";
-
-        return (
-          <div
-            key={`note-${note.chnotes_id || index}`}
-            className="flex justify-center space-y-1 mb-2"
-          >
-            <div className="font-medium flex flex-col text-left">
-              <div className="text-left">-{note.chn_notes}</div>
-              <div className="text-xs font-normal ml-4">
-                Created by {staffName} at{" "}
-                {new Date(note.created_at).toLocaleTimeString()}
-              </div>
+      return allNotes.map((noteData, index) => (
+        <div
+          key={`note-${noteData.chnotes_id}-${index}`}
+          className="mb-3 flex justify-center text-black"
+        >
+          <div className="text-left w-full max-w-md text-black">
+            <div className="mb-1 text-black flex items-center">
+              - {noteData.content}
+              {noteData.isLatest && (
+                <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                  Latest
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-gray-600 ml-4">
+              {noteData.staffName} at {noteData.date}
+              
             </div>
           </div>
-        );
-      });
+        </div>
+      ));
     },
   },
   {
     label: "Follow-ups",
     path: ["child_health_notes"],
     format: (val: CHNotes[]) => {
-      const followUps = val?.filter((note) => note.followv_details) || [];
+      if (!val || val.length === 0) {
+        return [
+          <div key="no-followups" className="text-center" style={{ color: '#374151' }}>
+            <span>No follow-ups scheduled</span>
+          </div>,
+        ];
+      }
+
+      // Filter for notes that have follow-up details
+      const followUps = val.filter((note) => note && note.followv_details);
+      
       if (followUps.length === 0) {
         return [
-          <div key="no-followups" className="text-center">
+          <div key="no-followups" className="text-center" style={{ color: '#374151' }}>
             <span>No follow-ups scheduled</span>
           </div>,
         ];
@@ -389,21 +452,20 @@ export const notesFields: FieldConfig[] = [
 
       return followUps.map((note, index) => {
         const followv = note.followv_details!;
+        const followDate = followv.followv_date 
+          ? new Date(followv.followv_date).toLocaleDateString()
+          : "Unknown date";
 
         return (
-          <div key={`followup-${index}`} className="mb-2 flex justify-center">
-            <div className="text-left">
-              <div> -{followv.followv_description || ""} </div>
-
-              <div className="ml-4 flex flex-row gap-2">
-                <div>
-                  Scheduled on
-                  {new Date(followv.followv_date).toLocaleDateString()}
-                </div>
-                <div className="font-normal text-xs">
-                  {" "}
-                  [Status:
-                  {followv.followv_status}]
+          <div key={`followup-${index}`} className="mb-3 flex justify-center text-black">
+            <div className="text-left w-full max-w-md text-black">
+              <div className="mb-1 text-black">
+                - {followv.followv_description || "No description provided"}
+              </div>
+              <div className="ml-4 text-sm text-gray-600">
+                <div>Scheduled on {followDate}</div>
+                <div className="text-xs">
+                  [Status: {followv.followv_status || "Unknown"}]
                 </div>
               </div>
             </div>

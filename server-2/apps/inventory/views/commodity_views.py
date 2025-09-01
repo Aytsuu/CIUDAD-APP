@@ -10,7 +10,8 @@ from rest_framework.views import APIView
 from django.db.models.functions import TruncMonth
 from calendar import monthrange
 from rest_framework.pagination import PageNumberPagination
-from datetime import date
+from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
 from pagination import StandardResultsPagination
 import re
 
@@ -805,13 +806,17 @@ class CommoditySummaryMonthsAPIView(APIView):
                 last_day = monthrange(start_date.year, start_date.month)[1]
                 end_date = start_date.replace(day=last_day)
 
-                # Transactions within month
+                # Transactions within month - EXCLUDE expired items
                 month_transactions = queryset.filter(
                     created_at__date__gte=start_date,
                     created_at__date__lte=end_date
+                ).exclude(
+                    # Exclude items that expired BEFORE this month
+                    cinv_id__inv_id__expiry_date__lt=start_date
                 )
 
                 # Count distinct commodity+inventory combos for this month
+                # Only include items that are not expired (expiry during or after current month)
                 total_items = month_transactions.values(
                     "cinv_id__com_id",
                     "cinv_id__inv_id"
@@ -843,6 +848,8 @@ class CommoditySummaryMonthsAPIView(APIView):
                 'success': False,
                 'error': str(e)
             }, status=500)
+
+
 
 
 class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
@@ -932,8 +939,13 @@ class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
             display_opening = opening_qty + received_qty
             closing_qty = display_opening - dispensed_qty
 
-            # Skip if there's no stock (opening + received = 0) and it's not expiring this month
-            if closing_qty <= 0 and (not expiry_date or expiry_date > end_of_month):
+            # Check if expired this month
+            expired_this_month = (expiry_date and 
+                                start_of_month <= expiry_date <= end_of_month)
+            
+            # Skip if there's no stock and it's not expiring this month
+            # Also include items that expired this month even if closing_qty <= 0
+            if closing_qty <= 0 and (not expiry_date or expiry_date > end_of_month) and not expired_this_month:
                 continue
 
             # Display unit as is (frontend will handle conversion)
@@ -948,7 +960,8 @@ class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
                 'closing': closing_qty,
                 'unit': display_unit,
                 'expiry': expiry_date,
-                'received_from': first_tx.cinv_id.cinv_recevFrom
+                'received_from': first_tx.cinv_id.cinv_recevFrom,
+                'expired_this_month': expired_this_month,  # Added this field for consistency
             })
 
         return Response({
@@ -978,3 +991,287 @@ class MonthlyCommodityRecordsDetailAPIView(generics.ListAPIView):
             qty_num *= pcs_per_box
 
         return qty_num
+    
+    
+    
+# ==========================Commodity Expired/Out-of-Stock Summary API View
+class CommodityExpiredOutOfStockSummaryAPIView(APIView):
+    pagination_class = StandardResultsPagination
+
+    def _parse_qty(self, transaction, multiply_boxes=False):
+        """Extract numeric value from comt_qty and convert boxes to pieces if needed."""
+        match = re.search(r'\d+', str(transaction.comt_qty))
+        qty_num = int(match.group()) if match else 0
+        
+        if (multiply_boxes and 
+            transaction.cinv_id.cinv_qty_unit and 
+            transaction.cinv_id.cinv_qty_unit.lower() == "boxes"):
+            pcs_per_box = transaction.cinv_id.cinv_pcs or 1
+            qty_num *= pcs_per_box
+            
+        return qty_num
+
+    def get(self, request):
+        try:
+            # Get distinct months from commodity transactions
+            distinct_months = CommodityTransaction.objects.annotate(
+                month=TruncMonth('created_at')
+            ).values('month').distinct().order_by('-month')
+
+            formatted_months = []
+
+            for item in distinct_months:
+                month_date = item['month']
+                if not month_date:
+                    continue
+                    
+                month_str = month_date.strftime('%Y-%m')
+                month_name = month_date.strftime('%B %Y')
+
+                # Get the date range for this month
+                start_date = month_date.date()
+                last_day = monthrange(start_date.year, start_date.month)[1]
+                end_date = start_date.replace(day=last_day)
+                near_expiry_threshold = end_date + timedelta(days=30)
+
+                # Get all commodity inventory items that were active up to this month
+                com_expiry_inv_pairs = CommodityTransaction.objects.filter(
+                    created_at__date__lte=end_date
+                ).values_list(
+                    "cinv_id__com_id",
+                    "cinv_id__inv_id__expiry_date",
+                    "cinv_id__inv_id"
+                ).distinct()
+
+                expired_count = 0
+                out_of_stock_count = 0
+                expired_out_of_stock_count = 0
+                near_expiry_count = 0
+
+                seen_combinations = set()
+
+                for com_id, expiry_date, inv_id in com_expiry_inv_pairs:
+                    # Create a unique key for this combination
+                    combo_key = (com_id, expiry_date, inv_id)
+                    if combo_key in seen_combinations:
+                        continue
+                    seen_combinations.add(combo_key)
+
+                    # Skip if no expiry date (can't be expired or near expiry)
+                    if not expiry_date:
+                        continue
+
+                    # Skip if expired BEFORE current month
+                    if expiry_date < start_date:
+                        continue
+
+                    transactions = CommodityTransaction.objects.filter(
+                        cinv_id__com_id=com_id,
+                        cinv_id__inv_id__expiry_date=expiry_date,
+                        cinv_id__inv_id=inv_id
+                    ).order_by("created_at")
+
+                    # Calculate stock levels
+                    opening_in = transactions.filter(created_at__date__lt=start_date, comt_action__icontains="added")
+                    opening_out = transactions.filter(created_at__date__lt=start_date, comt_action__icontains="deduct")
+                    opening_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in opening_in) - sum(self._parse_qty(t, multiply_boxes=False) for t in opening_out)
+
+                    monthly_transactions = transactions.filter(
+                        created_at__date__gte=start_date,
+                        created_at__date__lte=end_date
+                    )
+                    received_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in monthly_transactions.filter(comt_action__icontains="added"))
+                    dispensed_qty = sum(self._parse_qty(t, multiply_boxes=False) for t in monthly_transactions.filter(comt_action__icontains="deduct"))
+
+                    closing_qty = opening_qty + received_qty - dispensed_qty
+
+                    # Check conditions
+                    is_expired = start_date <= expiry_date <= end_date
+                    is_out_of_stock = closing_qty <= 0
+                    is_near_expiry = (end_date < expiry_date <= near_expiry_threshold) and closing_qty > 0
+
+                    if is_expired and is_out_of_stock:
+                        expired_out_of_stock_count += 1
+                    elif is_expired:
+                        expired_count += 1
+                    elif is_out_of_stock:
+                        out_of_stock_count += 1
+                    elif is_near_expiry:
+                        near_expiry_count += 1
+
+                total_problems = expired_count + out_of_stock_count + expired_out_of_stock_count + near_expiry_count
+
+                formatted_months.append({
+                    'month': month_str,
+                    'month_name': month_name,
+                    'total_problems': total_problems,
+                    'expired_count': expired_count,
+                    'out_of_stock_count': out_of_stock_count,
+                    'expired_out_of_stock_count': expired_out_of_stock_count,
+                    'near_expiry_count': near_expiry_count,
+                })
+
+            paginator = self.pagination_class()
+            page = paginator.paginate_queryset(formatted_months, request)
+            if page is not None:
+                return paginator.get_paginated_response({
+                    'success': True,
+                    'data': page,
+                    'total_months': len(formatted_months),
+                })
+
+            return Response({
+                'success': True,
+                'data': formatted_months,
+                'total_months': len(formatted_months),
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e),
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Monthly Commodity Expired/Out-of-Stock Detail API View
+class MonthlyCommodityExpiredOutOfStockDetailAPIView(APIView):
+    pagination_class = StandardResultsPagination
+
+    def _parse_qty(self, transaction, multiply_boxes=False):
+        """Extract numeric value from comt_qty and convert boxes to pieces if needed."""
+        match = re.search(r'\d+', str(transaction.comt_qty))
+        qty_num = int(match.group()) if match else 0
+        
+        # If it's a box unit AND we need to multiply, convert to pieces
+        if (multiply_boxes and 
+            transaction.cinv_id.cinv_qty_unit and 
+            transaction.cinv_id.cinv_qty_unit.lower() == "boxes"):
+            pcs_per_box = transaction.cinv_id.cinv_pcs or 1
+            qty_num *= pcs_per_box
+            
+        return qty_num
+
+    def get(self, request, *args, **kwargs):
+        month_str = self.kwargs['month']  # Format: YYYY-MM
+        try:
+            year, month = map(int, month_str.split('-'))
+        except ValueError:
+            return Response({"error": "Invalid month format"}, status=400)
+
+        start_date = datetime(year, month, 1).date()
+        end_date = (start_date + relativedelta(months=1)) - timedelta(days=1)
+        near_expiry_threshold = end_date + timedelta(days=30)  # 1 month after end of current month
+
+        expired_items = []
+        out_of_stock_items = []
+        expired_out_of_stock_items = []
+        near_expiry_items = []  # New category for near expiry
+
+        # Get all commodity inventory items that were active up to this month
+        com_expiry_inv_pairs = CommodityTransaction.objects.filter(
+            created_at__date__lte=end_date
+        ).values_list(
+            "cinv_id__com_id",
+            "cinv_id__inv_id__expiry_date",
+            "cinv_id__inv_id"
+        ).distinct()
+
+        seen_combinations = set()
+
+        for com_id, expiry_date, inv_id in com_expiry_inv_pairs:
+            # Create a unique key for this combination
+            combo_key = (com_id, expiry_date, inv_id)
+            if combo_key in seen_combinations:
+                continue
+            seen_combinations.add(combo_key)
+
+            # Skip if no expiry date
+            if not expiry_date:
+                continue
+
+            # Skip if expired BEFORE current month
+            if expiry_date < start_date:
+                continue
+
+            try:
+                cinv = CommodityInventory.objects.get(
+                    com_id=com_id,
+                    inv_id__expiry_date=expiry_date,
+                    inv_id=inv_id
+                )
+            except CommodityInventory.DoesNotExist:
+                continue
+
+            transactions = CommodityTransaction.objects.filter(
+                cinv_id__com_id=com_id,
+                cinv_id__inv_id__expiry_date=expiry_date,
+                cinv_id__inv_id=inv_id
+            ).order_by("created_at")
+
+            # Get unit information
+            unit = cinv.cinv_qty_unit
+            pcs_per_box = cinv.cinv_pcs if unit and unit.lower() == "boxes" else 1
+
+            # Calculate stock levels - multiply boxes for added quantities
+            opening_in = transactions.filter(created_at__date__lt=start_date, comt_action__icontains="added")
+            opening_out = transactions.filter(created_at__date__lt=start_date, comt_action__icontains="deduct")
+            opening_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in opening_in) - sum(self._parse_qty(t, multiply_boxes=False) for t in opening_out)
+
+            monthly_transactions = transactions.filter(
+                created_at__date__gte=start_date,
+                created_at__date__lte=end_date
+            )
+            # Multiply boxes for received items
+            received_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in monthly_transactions.filter(comt_action__icontains="added"))
+            # Don't multiply boxes for dispensed items (they're already in pieces)
+            dispensed_qty = sum(self._parse_qty(t, multiply_boxes=False) for t in monthly_transactions.filter(comt_action__icontains="deduct"))
+
+            closing_qty = opening_qty + received_qty - dispensed_qty
+
+            # Check conditions
+            is_expired = start_date <= expiry_date <= end_date
+            is_out_of_stock = closing_qty <= 0
+            is_near_expiry = (end_date < expiry_date <= near_expiry_threshold) and closing_qty > 0
+
+            item_data = {
+                'com_name': f"{cinv.com_id.com_name}",
+                'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else 'No expiry',
+                'opening_stock': opening_qty,
+                'received': received_qty,
+                'dispensed': dispensed_qty,
+                'closing_stock': closing_qty,
+                'unit': 'pcs',
+                'received_from': cinv.cinv_recevFrom,
+                'status': 'Expired' if is_expired else 'Out of Stock' if is_out_of_stock else 'Near Expiry' if is_near_expiry else 'Active'
+            }
+
+            if is_expired and is_out_of_stock:
+                expired_out_of_stock_items.append(item_data)
+            elif is_expired:
+                expired_items.append(item_data)
+            elif is_out_of_stock:
+                out_of_stock_items.append(item_data)
+            elif is_near_expiry:
+                near_expiry_items.append(item_data)
+
+        # Combine all items (including near expiry in problem items)
+        all_problem_items = expired_items + out_of_stock_items + expired_out_of_stock_items + near_expiry_items
+
+        return Response({
+            'success': True,
+            'data': {
+                'month': month_str,
+                'summary': {
+                    'total_problems': len(all_problem_items),
+                    'expired_count': len(expired_items),
+                    'out_of_stock_count': len(out_of_stock_items),
+                    'expired_out_of_stock_count': len(expired_out_of_stock_items),
+                    'near_expiry_count': len(near_expiry_items),  # New count
+                },
+                'expired_items': expired_items,
+                'out_of_stock_items': out_of_stock_items,
+                'expired_out_of_stock_items': expired_out_of_stock_items,
+                'near_expiry_items': near_expiry_items,  # New category
+                'all_problem_items': all_problem_items
+            }
+        })

@@ -38,12 +38,8 @@ const ImageGallery = ({ mediaFiles }: { mediaFiles: MediaUploadType }) => {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {mediaFiles.map((media, index) => (
           <div key={index} className="relative group">
-            {media.type.startsWith('image/') ? (
-              <img 
-                src={media.file as string} 
-                alt={media.name || `Supporting document ${index + 1}`}
-                className="w-full h-32 object-cover rounded-lg border border-gray-200"
-              />
+            {media.type.startsWith("image/") ? (
+              <img src={media.file as string} alt={media.name || `Supporting document ${index + 1}`} className="w-full h-32 object-cover rounded-lg border border-gray-200" />
             ) : (
               <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg border border-gray-200">
                 <FileText className="h-8 w-8 text-gray-400" />
@@ -73,7 +69,7 @@ const MedicineSummaryModal = ({
   onBackToEdit,
   signatureRef,
   onSignatureChange,
-  hasPrescriptionMedicine,
+  hasPrescriptionMedicine
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -99,38 +95,22 @@ const MedicineSummaryModal = ({
             <FileText className="h-5 w-5 text-blue-600" />
             <h2 className="text-xl font-semibold text-gray-900">Medicine Request Summary</h2>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-8 w-8 rounded-full hover:bg-gray-100"
-          >
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full hover:bg-gray-100">
             <X className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Modal Content */}
         <div className="p-6">
-          <p className="text-sm text-gray-600 mb-6">
-            Review your medicine request before submission
-          </p>
+          <p className="text-sm text-gray-600 mb-6">Review your medicine request before submission</p>
 
-          <RequestSummary 
-            selectedMedicines={selectedMedicines} 
-            medicineStocksOptions={medicineStocksOptions} 
-            totalSelectedQuantity={totalSelectedQuantity} 
-          />
-          
+          <RequestSummary selectedMedicines={selectedMedicines} medicineStocksOptions={medicineStocksOptions} totalSelectedQuantity={totalSelectedQuantity} />
+
           {/* Display uploaded images */}
           <ImageGallery mediaFiles={mediaFiles} />
-          
+
           <div className="mt-6">
-            <SignatureField 
-              ref={signatureRef} 
-              title="Signature" 
-              onSignatureChange={onSignatureChange} 
-              required={true} 
-            />
+            <SignatureField ref={signatureRef} title="Signature" onSignatureChange={onSignatureChange} required={true} />
           </div>
 
           {hasPrescriptionMedicine && (
@@ -139,33 +119,18 @@ const MedicineSummaryModal = ({
                 <AlertCircle className="h-4 w-4" />
                 <span className="text-sm font-medium">Prescription Medicine Included</span>
               </div>
-              <p className="text-xs text-amber-700 mt-1">
-                This request contains prescription medication that requires proper authorization.
-              </p>
-              {mediaFiles.length > 0 && (
-                <p className="text-xs text-green-700 mt-1">
-                  ✓ Supporting documents have been uploaded.
-                </p>
-              )}
+              <p className="text-xs text-amber-700 mt-1">This request contains prescription medication that requires proper authorization.</p>
+              {mediaFiles.length > 0 && <p className="text-xs text-green-700 mt-1">✓ Supporting documents have been uploaded.</p>}
             </div>
           )}
         </div>
 
         {/* Modal Footer */}
         <div className="flex flex-col sm:flex-row gap-3 justify-end p-6 border-t border-gray-200 sticky bottom-0 bg-white">
-          <Button 
-            variant="outline" 
-            onClick={onBackToEdit}
-            disabled={isSubmitting}
-            className="w-full sm:w-auto"
-          >
+          <Button variant="outline" onClick={onBackToEdit} disabled={isSubmitting} className="w-full sm:w-auto">
             Back to Edit
           </Button>
-          <Button 
-            onClick={onConfirm}
-            disabled={isSubmitting}
-            className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
-          >
+          <Button onClick={onConfirm} disabled={isSubmitting} className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -182,17 +147,7 @@ const MedicineSummaryModal = ({
 };
 
 // Status Indicator Component
-const StatusIndicator = ({ 
-  selectedMedicines, 
-  totalSelectedQuantity, 
-  hasPrescriptionMedicine,
-  mediaFiles
-}: { 
-  selectedMedicines: any[]; 
-  totalSelectedQuantity: number; 
-  hasPrescriptionMedicine: boolean;
-  mediaFiles: MediaUploadType;
-}) => {
+const StatusIndicator = ({ selectedMedicines, totalSelectedQuantity, hasPrescriptionMedicine, mediaFiles }: { selectedMedicines: any[]; totalSelectedQuantity: number; hasPrescriptionMedicine: boolean; mediaFiles: MediaUploadType }) => {
   return (
     <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
       <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
@@ -207,13 +162,13 @@ const StatusIndicator = ({
         {mediaFiles.length > 0 && (
           <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
             <ImageIcon className="h-3 w-3" />
-            {mediaFiles.length} supporting document{mediaFiles.length > 1 ? 's' : ''} uploaded
+            {mediaFiles.length} supporting document{mediaFiles.length > 1 ? "s" : ""} uploaded
           </p>
         )}
         {hasPrescriptionMedicine && (
           <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
             <Pill className="h-3 w-3" />
-            Prescription medicine detected - {mediaFiles.length > 0 ? '✓ image uploaded' : 'image upload required'}
+            Prescription medicine detected - {mediaFiles.length > 0 ? "✓ image uploaded" : "image upload required"}
           </p>
         )}
       </div>
@@ -241,7 +196,7 @@ export default function MedicineRequestForm() {
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
   const [hasPrescriptionMedicine, setHasPrescriptionMedicine] = useState(false);
-
+  const [med_type,setmed_type]=useState("")
   const form = useForm<MedicineRequestArrayType>({
     resolver: zodResolver(MedicineRequestArraySchema),
     defaultValues: {
@@ -254,8 +209,10 @@ export default function MedicineRequestForm() {
   // Check if any selected medicine is a prescription type
   useEffect(() => {
     if (selectedMedicines.length > 0 && medicineStocksOptions) {
-      const hasPrescription = selectedMedicines.some(selectedMed => {
-        const medicine = medicineStocksOptions.find(m => m.id === selectedMed.minv_id);
+      const hasPrescription = selectedMedicines.some((selectedMed) => {
+        const medicine = medicineStocksOptions.find((m) => m.id === selectedMed.minv_id);
+          setmed_type(medicine && medicine.med_type)
+          console.log("med_type",med_type)
         return medicine && medicine.med_type === "Prescription";
       });
       setHasPrescriptionMedicine(hasPrescription);
@@ -335,16 +292,15 @@ export default function MedicineRequestForm() {
         medicines: selectedMedicines.map((med) => ({
           minv_id: med.minv_id,
           medrec_qty: med.medrec_qty,
-          reason: med.reason || "No reason provided"
+          reason: med.reason || "No reason provided",
+          med_type:med_type
         })),
         files: data.files || []
       };
 
       try {
-        await submitMedicineRequest({ data: requestData, staff_id: staffId });
-        showSuccessToast("Medicine request submitted successfully!");
+        submitMedicineRequest({ data: requestData, staff_id: staffId });
         setShowSummaryModal(false);
-        navigate(-1);
       } catch (error: any) {
         console.error("Submission error:", error);
         showErrorToast(error?.message || "Failed to submit medicine request");
@@ -374,13 +330,13 @@ export default function MedicineRequestForm() {
       showErrorToast("Please complete all required fields");
       return;
     }
-    
+
     // Check if prescription medicine requires image upload
     if (hasPrescriptionMedicine && mediaFiles.length === 0) {
       showErrorToast("Prescription medicine requires an image upload.");
       return;
     }
-    
+
     setShowSummaryModal(true);
   }, [selectedPatientData, selectedPatientId, selectedMedicines, hasInvalidQuantities, mode, hasPrescriptionMedicine, mediaFiles]);
 
@@ -427,24 +383,13 @@ export default function MedicineRequestForm() {
                 <div className="w-full overflow-x-auto">
                   <MedicineDisplay medicines={medicineStocksOptions || []} initialSelectedMedicines={selectedMedicines} onSelectedMedicinesChange={handleSelectedMedicinesChange} itemsPerPage={itemsPerPage} currentPage={currentPage} onPageChange={handlePageChange} />
 
-                  <div className="w-full p-4">
-                    <MediaUpload 
-                      title="Supporting Documents" 
-                      description={hasPrescriptionMedicine 
-                        ? "Prescription medicine selected. Image upload is required." 
-                        : "Upload documents to support the medicine request"} 
-                      mediaFiles={mediaFiles} 
-                      activeVideoId={activeVideoId} 
-                      setActiveVideoId={setActiveVideoId} 
-                      setMediaFiles={setMediaFiles} 
-                      maxFiles={5}
-                    />
-                    {hasPrescriptionMedicine && mediaFiles.length === 0 && (
-                      <div className="mt-2 text-sm text-red-500">
-                        Image upload is required for prescription medicines.
-                      </div>
-                    )}
-                  </div>
+                  {/* Conditionally show MediaUpload only when prescription medicine is selected */}
+                  {hasPrescriptionMedicine && (
+                    <div className="w-full p-4">
+                      <MediaUpload title="Supporting Documents" description="Prescription medicine selected. Image upload is required." mediaFiles={mediaFiles} activeVideoId={activeVideoId} setActiveVideoId={setActiveVideoId} setMediaFiles={setMediaFiles} maxFiles={5} />
+                      {mediaFiles.length === 0 && <div className="mt-2 text-sm text-red-500">Image upload is required for prescription medicines.</div>}
+                    </div>
+                  )}
 
                   <div className="px-3 pt-6">
                     {!isMedicinesLoading && ((mode === "fromindivrecord" && !selectedPatientData) || (mode === "fromallrecordtable" && !selectedPatientId) || selectedMedicines.length === 0 || hasInvalidQuantities) && (
@@ -457,12 +402,7 @@ export default function MedicineRequestForm() {
 
             {!isMedicinesLoading && selectedMedicines.length > 0 && (
               <div className=" gap-3 mt-5 mr-5">
-                <StatusIndicator 
-                  selectedMedicines={selectedMedicines} 
-                  totalSelectedQuantity={totalSelectedQuantity} 
-                  hasPrescriptionMedicine={hasPrescriptionMedicine}
-                  mediaFiles={mediaFiles}
-                />
+                <StatusIndicator selectedMedicines={selectedMedicines} totalSelectedQuantity={totalSelectedQuantity} hasPrescriptionMedicine={hasPrescriptionMedicine} mediaFiles={mediaFiles} />
               </div>
             )}
 
@@ -473,14 +413,7 @@ export default function MedicineRequestForm() {
                 </Button>
                 <Button
                   onClick={handlePreview}
-                  disabled={
-                    (mode === "fromindivrecord" && !selectedPatientData) || 
-                    (mode === "fromallrecordtable" && !selectedPatientId) || 
-                    selectedMedicines.length === 0 || 
-                    hasInvalidQuantities || 
-                    isMedicinesLoading ||
-                    (hasPrescriptionMedicine && mediaFiles.length === 0)
-                  }
+                  disabled={(mode === "fromindivrecord" && !selectedPatientData) || (mode === "fromallrecordtable" && !selectedPatientId) || selectedMedicines.length === 0 || hasInvalidQuantities || isMedicinesLoading || (hasPrescriptionMedicine && mediaFiles.length === 0)}
                   className="w-full sm:w-auto px-6 text-white order-1 sm:order-2"
                 >
                   {isMedicinesLoading ? "Loading..." : "Preview Request"}

@@ -15,26 +15,34 @@ export function VaccinationStatusCards({
     "unvaccinated" | "completed" | "partial"
   >("unvaccinated");
 
-  // Group vaccinations by vaccine type and find the latest record for each
-  const groupedVaccinations = vaccinations.reduce((acc, record) => {
-    const vaccineId =
-      record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id;
+  // Filter out vaccinations with "in queue" status
+  const filteredVaccinations = vaccinations.filter(
+    (record) => record.vachist_status !== "in queue"
+  );
+
+  // Group filtered vaccinations by vaccine ID and find the latest record for each vaccine
+  const latestVaccinationsByVaccine = filteredVaccinations.reduce((acc, record) => {
+    const vaccineId = record.vac?.vac_id || 
+                     record.vaccine_stock?.vaccinelist?.vac_id || 
+                     record.vac_details?.vac_id;
+    
     if (!vaccineId) return acc;
 
-    if (
-      !acc[vaccineId] ||
-      new Date(record.date_administered) >
-        new Date(acc[vaccineId].date_administered)
-    ) {
+    // If we haven't seen this vaccine yet, or this record is newer, update it
+    if (!acc[vaccineId] || 
+        new Date(record.date_administered) > new Date(acc[vaccineId].date_administered)) {
       acc[vaccineId] = record;
     }
+    
     return acc;
   }, {});
 
-  // For each vaccine, find the maximum dose number administered
-  const maxDoseNumbers = vaccinations.reduce((acc, record) => {
-    const vaccineId =
-      record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id;
+  // For each vaccine, find the maximum dose number administered from filtered vaccinations
+  const maxDoseByVaccine = filteredVaccinations.reduce((acc, record) => {
+    const vaccineId = record.vac?.vac_id || 
+                     record.vaccine_stock?.vaccinelist?.vac_id || 
+                     record.vac_details?.vac_id;
+    
     if (!vaccineId) return acc;
 
     if (!acc[vaccineId] || record.vachist_doseNo > acc[vaccineId]) {
@@ -43,24 +51,36 @@ export function VaccinationStatusCards({
     return acc;
   }, {});
 
-  // Categorize the latest records
+  // Categorize the vaccines (only non-"in queue" status)
   const categorizedVaccines = {
-    completed: Object.values(groupedVaccinations).filter(
-      (record: any) =>
-        maxDoseNumbers[
-          record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id
-        ] === record.vacrec_details?.vacrec_totaldose
-    ),
-    partial: Object.values(groupedVaccinations).filter(
-      (record: any) =>
-        maxDoseNumbers[
-          record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id
-        ] < record.vacrec_details?.vacrec_totaldose
-    ),
+    completed: Object.values(latestVaccinationsByVaccine).filter((record: any) => {
+      const vaccineId = record.vac?.vac_id || 
+                       record.vaccine_stock?.vaccinelist?.vac_id || 
+                       record.vac_details?.vac_id;
+      
+      const maxDose = maxDoseByVaccine[vaccineId];
+      const totalDose = record.vacrec_details?.vacrec_totaldose || 
+                       record.vacrec?.vacrec_totaldose;
+      
+      return maxDose === totalDose;
+    }),
+    
+    partial: Object.values(latestVaccinationsByVaccine).filter((record: any) => {
+      const vaccineId = record.vac?.vac_id || 
+                       record.vaccine_stock?.vaccinelist?.vac_id || 
+                       record.vac_details?.vac_id;
+      
+      const maxDose = maxDoseByVaccine[vaccineId];
+      const totalDose = record.vacrec_details?.vacrec_totaldose || 
+                       record.vacrec?.vacrec_totaldose;
+      
+      return maxDose < totalDose;
+    }),
+    
     unvaccinated: unvaccinatedVaccines,
   };
 
-  // Helper component for tab buttons (adopted from FollowUpsCard)
+  // Helper component for tab buttons
   const TabButton = ({
     active,
     type,
@@ -170,9 +190,15 @@ export function VaccinationStatusCards({
             }
 
             // For completed/partial vaccines
-            const vaccineData =
-              record.vaccine_stock?.vaccinelist || record.vac_details || {};
+            const vaccineData = record.vac || 
+                              record.vaccine_stock?.vaccinelist || 
+                              record.vac_details || {};
+            
             const ageGroup = vaccineData.age_group || {};
+            const vaccineId = vaccineData.vac_id;
+            const maxDose = maxDoseByVaccine[vaccineId];
+            const totalDose = record.vacrec_details?.vacrec_totaldose || 
+                             record.vacrec?.vacrec_totaldose;
 
             return (
               <li
@@ -195,10 +221,9 @@ export function VaccinationStatusCards({
                     <div className="flex gap-4 mt-1">
                       <span className="text-xs text-gray-500 flex items-center gap-1">
                         <span className="font-medium">Dose:</span>
-                        {maxDoseNumbers[vaccineData.vac_id]} of{" "}
-                        {record.vacrec_details?.vacrec_totaldose}
+                        {maxDose} of {totalDose}
                       </span>
-                      {ageGroup && (
+                      {ageGroup.agegroup_name && (
                         <span className="text-xs text-gray-500 flex items-center gap-1">
                           <span className="font-medium">Age Group:</span>
                           {ageGroup.agegroup_name}
@@ -221,7 +246,6 @@ export function VaccinationStatusCards({
 
   return (
     <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-      {/* Adopted header style from FollowUpsCard */}
       <div className="flex items-center gap-3 mb-4">
         <div className="p-2 bg-blue-50 rounded-lg">
           <Syringe className="h-5 w-5 text-blue-600" />
@@ -231,7 +255,6 @@ export function VaccinationStatusCards({
         </h2>
       </div>
 
-      {/* Adopted tab design from FollowUpsCard */}
       <div className="flex gap-2 mb-4">
         <TabButton
           active={activeTab === "unvaccinated"}
@@ -253,7 +276,6 @@ export function VaccinationStatusCards({
         />
       </div>
 
-      {/* Content structure with scrollable area */}
       <div>
         {activeTab === "unvaccinated" &&
           renderVaccineList(categorizedVaccines.unvaccinated)}

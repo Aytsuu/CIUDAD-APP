@@ -101,11 +101,23 @@ urlpatterns = [
     # REPORTS
     path('commodity/summaries/',CommoditySummaryMonthsAPIView.as_view(),name='commodity-monthly-summaries'),
     path('commodity/records/<str:month>/',MonthlyCommodityRecordsDetailAPIView.as_view(),name='commodity-monthly-records'),
+     path('commodity-expired-out-of-stock-summary/', CommodityExpiredOutOfStockSummaryAPIView.as_view(), name='commodity-expired-out-of-stock-summary'),
+    path('commodity-expired-out-of-stock-detail/<str:month>/', MonthlyCommodityExpiredOutOfStockDetailAPIView.as_view(), name='commodity-expired-out-of-stock-detail'),
+    
+    
     path('medicine/records/<str:month>/',MonthlyMedicineRecordsDetailAPIView.as_view(),name='medicine-monthly-records'),
-    path( 'medicine/summaries/', MedicineSummaryMonthsAPIView.as_view(), name='medicine-summary-montly'),
+    path('medicine/summaries/', MedicineSummaryMonthsAPIView.as_view(), name='medicine-summary-montly'),
+    path('medicine-expired-out-of-stock-summary/', MedicineExpiredOutOfStockSummaryAPIView.as_view(), name='outofexpiredstocks-monthly-records'),
+    path('medicine-expired-out-of-stock-detail/<str:month>/', MonthlyMedicineExpiredOutOfStockDetailAPIView.as_view(), name='outofexpiredstocks-chart'),
+    
     path('firstaid/summaries/', FirstAidSummaryMonthsAPIView.as_view(), name='firstaid-summary-montly'),
     path('firstaid/records/<str:month>/', MonthlyFirstAidRecordsDetailAPIView.as_view(), name='firstaid-monthly-records'),
+    path('firstaid-expired-out-of-stock-summary/', FirstAidExpiredOutOfStockSummaryAPIView.as_view(), name='firstaid-expired-out-of-stock-summary'),
+    path('firstaid-expired-out-of-stock-detail/<str:month>/', MonthlyFirstAidExpiredOutOfStockDetailAPIView.as_view(), name='firstaid-expired-out-of-stock-detail'),
+    
     path('vaccine/summaries/', VaccinationSummaryMonthsAPIView.as_view(), name='vaccine-summary-montly'),
     path('vaccine/records/<str:month>/', MonthlyVaccinationRecordsDetailAPIView.as_view(), name='vaccine-monthly-records'),
+    path('vaccination-expired-out-of-stock-summary/', VaccinationExpiredOutOfStockSummaryAPIView.as_view(), name='vaccination-expired-out-of-stock-summary'),
+    path('vaccination-expired-out-of-stock-detail/<str:month>/', MonthlyVaccinationExpiredOutOfStockDetailAPIView.as_view(), name='vaccination-expired-out-of-stock-detail'),
     
 ] 

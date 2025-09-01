@@ -415,6 +415,7 @@ INSTALLED_APPS = [
     'apps.servicescheduler',
     'apps.reports',
     'apps.file',
+    "simple_history",
 
 ]
 
@@ -434,6 +435,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.authentication.middleware.AccountMiddleware',
     "django.middleware.gzip.GZipMiddleware",  
+    'simple_history.middleware.HistoryRequestMiddleware',
+
 ]
 
 AUTHENTICATION_BACKENDS = [

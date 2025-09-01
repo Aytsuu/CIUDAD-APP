@@ -130,10 +130,7 @@ export default function ChildHRPage3({
 
   return (
     <div className="w-full h-full flex flex-col">
-      {/* Header Section */}
-      <div className="flex justify-end items-start mb-6">
-        <span className="text-sm font-light text-gray-400">Page 3 of 4</span>
-      </div>
+    
 
       <div>
         <h2 className="text-xl font-semibold text-gray-800">

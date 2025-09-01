@@ -68,6 +68,7 @@ class ChildHealthNotesView(generics.ListCreateAPIView):
     queryset = ChildHealthNotes.objects.all()
     serializer_class = ChildHealthNotesSerializer
 
+
 class ChildHealthNotesUpdateView(generics.RetrieveUpdateAPIView):
     queryset = ChildHealthNotes.objects.all()
     serializer_class = ChildHealthNotesSerializer
@@ -77,7 +78,6 @@ class ChildHealthNotesUpdateView(generics.RetrieveUpdateAPIView):
         if not chnotes_id:
             raise NotFound(detail="Child health notes ID not provided", code=status.HTTP_400_BAD_REQUEST)
         return get_object_or_404(ChildHealthNotes, chnotes_id=chnotes_id)
-    
 class DeleteChildHealthNotesView(generics.DestroyAPIView):
     queryset = ChildHealthNotes.objects.all()
     serializer_class = ChildHealthNotesSerializer
@@ -162,10 +162,18 @@ class UpdateChildHealthSupplementsStatusView(generics.RetrieveUpdateAPIView):
     
 
 class NutritionalStatusView(generics.ListCreateAPIView):
-    queryset = NutritionalStatus.objects.all()
     serializer_class = NutritionalStatusSerializerBase
     
+    def get_queryset(self):
+        queryset = NutritionalStatus.objects.all()
+        pat_id = self.kwargs.get('pat_id')
+        
+        if pat_id:
+            queryset = queryset.filter(pat_id=pat_id)
+        
+        return queryset
     
+
 
 class ChildHealthVitalSignsView(generics.ListCreateAPIView):
     queryset = ChildHealthVitalSigns.objects.all()
@@ -251,7 +259,6 @@ class IndivChildHealthHistoryView(generics.ListAPIView):
                 'child_health_vital_signs__vital',
                 'child_health_vital_signs__bm',
                 'child_health_vital_signs__find',
-                'child_health_vital_signs__nutritional_status',
                 'child_health_supplements',
                 'child_health_supplements__medrec',
                 'exclusive_bf_checks',
@@ -310,7 +317,31 @@ class ChildHealthImmunizationCountView(APIView):
 
 
 
- 
+class MonthlyNutritionalStatusViewChart(generics.ListAPIView):
+    serializer_class = NutritionalStatusSerializerBase
+    
+    def get_queryset(self):
+        """
+        Get nutritional status records for a specific month
+        Defaults to current month if no parameters provided
+        """
+        # Get month and year from query parameters
+        month = self.request.query_params.get('month', None)
+        year = self.request.query_params.get('year', None)
+        
+        # If no parameters provided, use current month
+        if not month or not year:
+            current_date = timezone.now()
+            month = current_date.month
+            year = current_date.year
+        
+        # Filter by month and year
+        queryset = NutritionalStatus.objects.filter(
+            created_at__month=month,
+            created_at__year=year
+        ).order_by('-created_at')
+        
+        return queryset
     
     
 # class MonthlyOPTChildHealthSummariesAPIView(APIView):

@@ -10,15 +10,14 @@ import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices
 import { useSubmitSoapForm } from "./queries.tsx/soap-submission";
 import { soapSchema, SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { ExamSection } from "../types";
-
+import {useRef} from "react"
 interface SoapFormProps {
   patientData: any;
   checkupData: any;
   onBack: () => void;
   initialData?: any;
-  onFormDataUpdate?: (
-    data: Partial<SoapFormType & { selectedMedicines: any[] }>
-  ) => void;
+  onFormDataUpdate?: (data: any) => void; // Use 'any' to be flexible
+
 }
 
 export default function SoapForm({
@@ -32,6 +31,8 @@ export default function SoapForm({
   const staff = user?.staff?.staff_id || null;
 
 
+
+  console.log("Cehck up Data", checkupData);
   const [currentPage, setCurrentPage] = useState(1);
   const { mutate: submitSoapForm, isPending: isSubmitting } =
     useSubmitSoapForm();
@@ -103,18 +104,25 @@ export default function SoapForm({
     };
   }, [form, selectedMedicines, onFormDataUpdate]);
 
-  const hasInvalidQuantities = selectedMedicines.some((med) => {
-    const stock = medicineStocksOptions?.find((m: any) => m.id === med.minv_id);
-    return med.medrec_qty < 1 || (stock && med.medrec_qty > stock.avail);
-  });
 
-  const hasExceededStock = selectedMedicines.some((med) => {
-    const stock = medicineStocksOptions?.find((m: any) => m.id === med.minv_id);
-    return stock && med.medrec_qty > stock.avail;
-  });
 
+  const isUpdating =useRef(false)
   const handleSelectedMedicinesChange = useCallback(
     (updated: any[]) => {
+      // Prevent infinite loops by checking if update is from child component
+      if (isUpdating.current) {
+        isUpdating.current = false;
+        return;
+      }
+
+      // Deep comparison to avoid unnecessary updates
+      const currentJson = JSON.stringify(selectedMedicines.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
+      const updatedJson = JSON.stringify(updated.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
+
+      if (currentJson === updatedJson) {
+        return;
+      }
+
       setSelectedMedicines(updated);
 
       const summaryWithoutMeds = form
@@ -125,9 +133,7 @@ export default function SoapForm({
       const medLines =
         updated.length > 0
           ? updated.map((med) => {
-              const stock = medicineStocksOptions?.find(
-                (m: any) => m.id === med.minv_id
-              );
+              const stock = medicineStocksOptions?.find((m: any) => m.id === med.minv_id);
               return `- ${stock?.name} ${stock?.dosage} (${med.medrec_qty} ${stock?.unit}) ${med.reason}`;
             })
           : [];
@@ -137,17 +143,19 @@ export default function SoapForm({
       form.setValue("plantreatment_summary", newSummary);
       form.setValue("medicineRequest", {
         pat_id: patientData?.pat_id || "",
-        medicines: updated,
+        medicines: updated
       });
 
+      // Only call onFormDataUpdate if it exists
       if (onFormDataUpdate) {
+        const currentValues = form.getValues();
         onFormDataUpdate({
-          ...form.getValues(),
-          selectedMedicines: updated,
+          ...currentValues,
+          selectedMedicines: updated
         });
       }
     },
-    [form, patientData, medicineStocksOptions, onFormDataUpdate]
+    [form, patientData, medicineStocksOptions, onFormDataUpdate] // Remove selectedMedicines from dependencies
   );
 
   const handlePageChange = useCallback((page: number) => {

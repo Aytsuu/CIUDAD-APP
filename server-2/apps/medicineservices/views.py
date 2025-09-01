@@ -107,6 +107,8 @@ class MedicineRecordTableView(APIView):
                     'minv_id': record.minv_id.minv_id if record.minv_id else None,
                     'medicine_name': record.minv_id.med_id.med_name if record.minv_id and record.minv_id.med_id else 'Unknown',
                     'medicine_category': category_name,
+                    'dosage': f"{record.minv_id.minv_dsg} {record.minv_id.minv_dsg_unit}" if record.minv_id else 'N/A',
+                    'form': record.minv_id.minv_form if record.minv_id else 'N/A',
                     'staff_name': f"{record.staff.first_name} {record.staff.last_name}" if record.staff else 'Unknown',
                     'files': file_data,
                     'status': 'Fulfilled' if record.fulfilled_at else 'Pending'
@@ -292,12 +294,6 @@ class MedicineRequestItemDelete(generics.DestroyAPIView):
 
 
 
-
-
-
-
-
-
 class MedicineRequestCreateView(APIView):
     @transaction.atomic
     def post(self, request):
@@ -335,6 +331,7 @@ class MedicineRequestCreateView(APIView):
                 minv_id = med_data.get('minv_id')
                 medrec_qty = med_data.get('medrec_qty')
                 reason = med_data.get('reason', '')
+                med_type = med_data.get('med_type', 'Over The Counter')
                 
                 if not minv_id or not medrec_qty:
                     continue
@@ -367,12 +364,34 @@ class MedicineRequestCreateView(APIView):
                 medicine_records.append(medicine_record)
             
             # 4. Handle file uploads if any
+            uploaded_files = []
             if files:
                 serializer = Medicine_FileSerializer(context={'request': request})
                 try:
-                    # Associate files with the first medicine record
-                    first_medrec_id = medicine_records[0].medrec_id if medicine_records else None
-                    uploaded_files = serializer._upload_files(files, medrec_id=first_medrec_id, medreq_id=medicine_request.medreq_id)
+                    # For each medicine record, check if it's a prescription before associating files
+                    for medicine_record in medicine_records:
+                        med_data = next((med for med in medicines if med.get('minv_id') == medicine_record.minv_id), {})
+                        med_type = med_data.get('med_type', 'Over The Counter')
+                        
+                        # Only associate files with prescription medicines
+                        if med_type.lower() == 'prescription':
+                            uploaded_files.extend(
+                                serializer._upload_files(
+                                    files, 
+                                    medrec_id=medicine_record.medrec_id, 
+                                    medreq_id=medicine_request.medreq_id
+                                )
+                            )
+                            break  # Associate files with the first prescription medicine found
+                    
+                    # If no prescription medicines found, associate files only with medreq_id
+                    if not uploaded_files:
+                        uploaded_files = serializer._upload_files(
+                            files, 
+                            medrec_id=None,  # Don't associate with any medicine record
+                            medreq_id=medicine_request.medreq_id
+                        )
+                        
                 except Exception as e:
                     return Response({"error": f"File upload failed: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
             
@@ -385,8 +404,6 @@ class MedicineRequestCreateView(APIView):
             
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 
@@ -451,8 +468,6 @@ class FindingPlanTreatmentView(generics.CreateAPIView):
     queryset = FindingsPlanTreatment.objects.all()
     
     
-
-
 class MedicineRequestCreateView(APIView):
     @transaction.atomic
     def post(self, request):
@@ -495,6 +510,7 @@ class MedicineRequestCreateView(APIView):
             # 4. Process each medicine and track inventory changes for potential rollback
             medicine_records = []
             inventory_updates = {}  # Store original quantities for rollback
+            medicine_transactions = []  # Store medicine transactions
             
             for med_data in medicines:
                 minv_id = med_data.get('minv_id')
@@ -520,6 +536,24 @@ class MedicineRequestCreateView(APIView):
                     # Update inventory
                     medicine_inv.minv_qty_avail -= medrec_qty
                     medicine_inv.save()
+                    
+                    # Create medicine transaction record
+                    # Determine transaction quantity based on unit
+                    if medicine_inv.minv_qty_unit and medicine_inv.minv_qty_unit.lower() == 'boxes':
+                        mdt_qty = f"{medrec_qty } pcs"  # Convert boxes to pieces (3 pcs per box)
+                    else:
+                        # Use the original unit if not boxes
+                        unit = medicine_inv.minv_qty_unit or 'pcs'
+                        mdt_qty = f"{medrec_qty} {unit}"
+                    
+                    # Create medicine transaction
+                    medicine_transaction = MedicineTransactions.objects.create(
+                        mdt_qty=mdt_qty,
+                        mdt_action="deducted",
+                        staff=staff_instance,
+                        minv_id=medicine_inv
+                    )
+                    medicine_transactions.append(medicine_transaction)
                     
                 except MedicineInventory.DoesNotExist:
                     # This will trigger transaction rollback
@@ -567,6 +601,7 @@ class MedicineRequestCreateView(APIView):
                 "message": "Medicine request created successfully",
                 "patrec_id": patient_record.patrec_id,
                 "medicine_records_created": len(medicine_records),
+                "medicine_transactions_created": len(medicine_transactions),
                 "uploaded_files_count": len(uploaded_files)
             }, status=status.HTTP_201_CREATED)
             
@@ -587,7 +622,6 @@ class MedicineRequestCreateView(APIView):
                 print(f"Error during inventory rollback: {str(rollback_error)}")
             
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 

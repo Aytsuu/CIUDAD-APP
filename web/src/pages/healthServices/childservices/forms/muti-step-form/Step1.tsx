@@ -122,9 +122,7 @@ export default function ChildHRPage1({
 
   return (
     <>
-      <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
-        Page 1 of 4
-      </div>
+    
       <Form {...form}>
         {!isAddNewMode && (
           <div className="flex items-center justify-between gap-3 mb-10 w-full">

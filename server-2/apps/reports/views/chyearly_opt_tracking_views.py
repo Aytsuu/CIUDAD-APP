@@ -13,14 +13,15 @@ from apps.patientrecords.models import *
 from apps.healthProfiling.models import *
 from pagination import *
 from apps.inventory.models import *
-
+from apps.childhealthservices.serializers import NutritionalStatusSerializerBase
 
 class YearlyOPTChildHealthSummariesAPIView(APIView):
     """
-    API View to get yearly summaries of child health records for children aged 0-23 months
+    API View to get yearly summaries of nutritional status records for children aged 0-23 months
     Returns years with record counts for yearly tracking
     Only counts the LATEST records per child in each year
     Filters automatically to children aged 0-23 months
+    Only includes residents (excludes transients)
     """
     pagination_class = StandardResultsPagination
 
@@ -30,7 +31,7 @@ class YearlyOPTChildHealthSummariesAPIView(APIView):
             search_query = request.GET.get('search', '').strip()
 
             # Get all distinct years from the database
-            years_data = ChildHealthVitalSigns.objects.dates('bm__created_at', 'year', order='DESC')
+            years_data = NutritionalStatus.objects.dates('created_at', 'year', order='DESC')
             
             formatted_data = []
             for year_date in years_data:
@@ -93,35 +94,35 @@ class YearlyOPTChildHealthSummariesAPIView(APIView):
         start_date = datetime(year, 1, 1)
         end_date = datetime(year, 12, 31, 23, 59, 59)
 
-        yearly_latest = ChildHealthVitalSigns.objects.filter(
-            chhist__chrec__patrec__pat_id=OuterRef('chhist__chrec__patrec__pat_id'),
-            bm__created_at__range=(start_date, end_date),
-            bm__weight__isnull=False
-        ).order_by('-bm__created_at').values('vital_id')[:1]
+        # Get latest records for the year - only residents
+        yearly_latest = NutritionalStatus.objects.filter(
+            pat=OuterRef('pat'),  # Changed to use pat instead of complex path
+            created_at__range=(start_date, end_date),
+            pat__pat_type='Resident'  # Only residents
+        ).order_by('-created_at').values('nutstat_id')[:1]
 
-        yearly_records = ChildHealthVitalSigns.objects.filter(
-            vital_id__in=Subquery(yearly_latest)
+        # Get the actual records
+        yearly_records = NutritionalStatus.objects.filter(
+            nutstat_id__in=Subquery(yearly_latest)
         ).select_related(
-            'bm', 'chhist', 'chhist__chrec', 'chhist__chrec__patrec',
-            'chhist__chrec__patrec__pat_id', 'chhist__chrec__patrec__pat_id__rp_id',
-            'chhist__chrec__patrec__pat_id__rp_id__per', 'chhist__chrec__patrec__pat_id__trans_id'
+            'pat', 'pat__rp_id', 'pat__rp_id__per'  # Simplified relationships
         )
 
         def filter_children_by_age(records):
             ids = set()
             for record in records:
-                pat_id = record.chhist.chrec.patrec.pat_id
+                pat = record.pat
                 dob = None
-                if pat_id.pat_type == 'Resident' and getattr(pat_id, 'rp_id', None):
-                    dob = pat_id.rp_id.per.per_dob
-                elif pat_id.pat_type == 'Transient' and getattr(pat_id, 'trans_id', None):
-                    dob = pat_id.trans_id.tran_dob
-
-                age_months = self._calculate_age_in_months(
-                    dob, record.bm.created_at if record.bm else None
-                )
-                if 0 <= age_months <= 71:  # Age range 0-23 months
-                    ids.add(pat_id)
+                
+                # Only residents are included, so we only check resident data
+                if pat.pat_type == 'Resident' and hasattr(pat, 'rp_id') and pat.rp_id:
+                    dob = pat.rp_id.per.per_dob
+                
+                age_months = self._calculate_age_in_months(dob, record.created_at)
+                
+                # Filter for children aged 0-23 months (changed from 0-71)
+                if 0 <= age_months <= 23:  # Age range 0-23 months
+                    ids.add(pat.pat_id)
             return ids
 
         yearly_ids = filter_children_by_age(yearly_records)
@@ -131,12 +132,14 @@ class YearlyOPTChildHealthSummariesAPIView(APIView):
             'total': len(yearly_ids)
         }
 
+
 class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
     """
-    API View to get monthly child health report for a specific year
+    API View to get monthly nutritional status report for a specific year
     Returns each child's monthly measurements (Jan-Dec) for children aged 0-23 months
+    Only includes residents (excludes transients)
     """
-    serializer_class = OPTTrackingSerializer
+    serializer_class = NutritionalStatusSerializerBase
     pagination_class = StandardResultsPagination
 
     def _calculate_age_in_months(self, dob, reference_date):
@@ -159,49 +162,48 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         try:
             year = int(year)
         except ValueError:
-            return ChildHealthVitalSigns.objects.none()
+            return NutritionalStatus.objects.none()
 
         start_date = datetime(year, 1, 1)
         end_date = datetime(year, 12, 31, 23, 59, 59)
 
-        # Get all records for the year (not just latest per child)
-        records = ChildHealthVitalSigns.objects.filter(
-            bm__created_at__range=(start_date, end_date),
-            bm__weight__isnull=False
+        # Get all records for the year (not just latest per child) - only residents
+        records = NutritionalStatus.objects.filter(
+            created_at__range=(start_date, end_date),
+            pat__pat_type='Resident'  # Only residents
         ).select_related(
-            'bm', 'chhist', 'chhist__chrec', 'chhist__chrec__patrec',
-            'chhist__chrec__patrec__pat_id', 'chhist__chrec__patrec__pat_id__rp_id',
-            'chhist__chrec__patrec__pat_id__rp_id__per', 'chhist__chrec__patrec__pat_id__trans_id'
+            'bm', 'pat', 'pat__rp_id', 'pat__rp_id__per'
         ).prefetch_related(
-            'nutritional_status',
             Prefetch(
-                'chhist__chrec__patrec__pat_id__rp_id__per__personaladdress_set',
+                'pat__rp_id__per__personaladdress_set',
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio'),
                 to_attr='prefetched_personal_addresses'
             ),
             Prefetch(
-                'chhist__chrec__patrec__pat_id__rp_id__household_set',
+                'pat__rp_id__household_set',
                 queryset=Household.objects.select_related('add', 'add__sitio'),
                 to_attr='prefetched_households'
             )
-        ).order_by('chhist__chrec__patrec__pat_id', 'bm__created_at')
+        ).order_by('pat', 'created_at')
 
         # Filter to only include children aged 0-23 months at any point during the year
         filtered_records = []
         seen_children = set()
         
         for record in records:
-            if record.bm and record.bm.created_at:
-                pat_id = record.chhist.chrec.patrec.pat_id
+            if record.created_at:
+                pat = record.pat
                 dob = None
-                if pat_id.pat_type == 'Resident' and getattr(pat_id, 'rp_id', None):
-                    dob = pat_id.rp_id.per.per_dob
-                elif pat_id.pat_type == 'Transient' and getattr(pat_id, 'trans_id', None):
-                    dob = pat_id.trans_id.tran_dob
+                
+                # Only residents are included
+                if pat.pat_type == 'Resident' and hasattr(pat, 'rp_id') and pat.rp_id:
+                    dob = pat.rp_id.per.per_dob
 
-                age_months = self._calculate_age_in_months(dob, record.bm.created_at)
-                if 0 <= age_months <= 71:
-                    child_id = pat_id.pat_id
+                age_months = self._calculate_age_in_months(dob, record.created_at)
+                
+                # Filter for children aged 0-23 months (changed from 0-71)
+                if 0 <= age_months <= 23:  # Age range 0-23 months
+                    child_id = pat.pat_id
                     if child_id not in seen_children:
                         seen_children.add(child_id)
                     filtered_records.append(record)
@@ -242,7 +244,7 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         return records
 
     def _apply_search_filter(self, records, search_query):
-        """Search by child/patient name, family number, and sitio"""
+        """Search by child/patient name, family number, and sitio - only residents now"""
         search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
         if not search_terms:
             return records
@@ -250,34 +252,24 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         filtered_records = []
         
         for record in records:
-            pat_id = record.chhist.chrec.patrec.pat_id
+            pat = record.pat
             match_found = False
             
             for term in search_terms:
-                # Check child name
-                if pat_id.pat_type == 'Resident' and hasattr(pat_id, 'rp_id') and pat_id.rp_id:
-                    per = pat_id.rp_id.per
+                # Check child name - only residents now
+                if pat.pat_type == 'Resident' and hasattr(pat, 'rp_id') and pat.rp_id:
+                    per = pat.rp_id.per
                     if (term.lower() in per.per_fname.lower() or 
                         term.lower() in per.per_mname.lower() or 
                         term.lower() in per.per_lname.lower()):
                         match_found = True
                         break
-                elif pat_id.pat_type == 'Transient' and hasattr(pat_id, 'trans_id') and pat_id.trans_id:
-                    trans = pat_id.trans_id
-                    if (term.lower() in trans.tran_fname.lower() or 
-                        term.lower() in trans.tran_mname.lower() or 
-                        term.lower() in trans.tran_lname.lower()):
-                        match_found = True
-                        break
                 
-                # Check family number
-                family_no = record.chhist.chrec.family_no
-                if family_no and term.lower() in family_no.lower():
-                    match_found = True
-                    break
+                # Check family number (adjust if you have this data)
+                # family_no = ... # Add logic if you have family number data
                 
                 # Check sitio
-                address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(pat_id)
+                address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(pat)
                 if sitio and term.lower() in sitio.lower():
                     match_found = True
                     break
@@ -288,20 +280,20 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         return filtered_records
 
     def _apply_nutritional_search(self, records, search_query):
+        """Search by nutritional status"""
         search_terms = [term.strip().lower() for term in search_query.split(',') if term.strip()]
         if not search_terms:
             return records
+        
         filtered_records = []
         for record in records:
-            if hasattr(record, 'nutritional_status') and record.nutritional_status.exists():
-                ns = record.nutritional_status.first()
-                for term in search_terms:
-                    if (ns.wfa and term in ns.wfa.lower()) or \
-                       (ns.lhfa and term in ns.lhfa.lower()) or \
-                       (ns.wfl and term in ns.wfl.lower()) or \
-                       (ns.muac_status and term in ns.muac_status.lower()):
-                        filtered_records.append(record)
-                        break
+            for term in search_terms:
+                if (record.wfa and term in record.wfa.lower()) or \
+                   (record.lhfa and term in record.lhfa.lower()) or \
+                   (record.wfl and term in record.wfl.lower()) or \
+                   (record.muac_status and term in record.muac_status.lower()):
+                    filtered_records.append(record)
+                    break
         return filtered_records
 
     def _format_monthly_report_data(self, data, queryset_objects=None):
@@ -321,45 +313,29 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
 
             for i, entry in enumerate(data):
                 try:
-                    vs_obj = queryset_objects[i]
-                    vs = entry['vital_signs']
-                    chist = entry['chist_details']
-                    patrec = chist['chrec_details']['patrec_details']['pat_details']
+                    ns_obj = queryset_objects[i]
+                    pat = entry.get('patient_details', {})
 
                     # Get child ID for grouping
-                    child_id = vs_obj.chhist.chrec.patrec.pat_id.pat_id
+                    child_id = ns_obj.pat.pat_id
 
                     # Initialize child data if not exists
                     if child_id not in children_data:
-                        address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(
-                            vs_obj.chhist.chrec.patrec.pat_id
-                        )
+                        address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(ns_obj.pat)
 
                         # Get patient's date of birth
-                        pat_id = vs_obj.chhist.chrec.patrec.pat_id
+                        pat_obj = ns_obj.pat
                         dob = None
-                        if pat_id.pat_type == 'Resident' and hasattr(pat_id, 'rp_id') and pat_id.rp_id:
-                            dob = pat_id.rp_id.per.per_dob
-                        elif pat_id.pat_type == 'Transient' and hasattr(pat_id, 'trans_id') and pat_id.trans_id:
-                            dob = pat_id.trans_id.tran_dob
-
-                        # Format parents information
-                        parents = {}
-                        family_info = patrec.get('family_head_info', {})
-                        if family_info.get('has_mother'):
-                            mother = family_info['family_heads']['mother']['personal_info']
-                            parents['mother'] = f"{mother['per_fname']} {mother['per_mname']} {mother['per_lname']}"
-                        if family_info.get('has_father'):
-                            father = family_info['family_heads']['father']['personal_info']
-                            parents['father'] = f"{father['per_fname']} {father['per_mname']} {father['per_lname']}"
+                        if pat_obj.pat_type == 'Resident' and hasattr(pat_obj, 'rp_id') and pat_obj.rp_id:
+                            dob = pat_obj.rp_id.per.per_dob
 
                         children_data[child_id] = {
                             'child_id': child_id,
-                            'household_no': chist['chrec_details'].get('family_no', 'N/A'),
-                            'child_name': f"{patrec['personal_info']['per_fname']} {patrec['personal_info']['per_mname']} {patrec['personal_info']['per_lname']}",
-                            'sex': patrec['personal_info']['per_sex'],
-                            'date_of_birth': patrec['personal_info']['per_dob'],
-                            'parents': parents,
+                            'household_no': 'N/A',  # Adjust if you have this data
+                            'child_name': f"{pat.get('first_name', '')} {pat.get('middle_name', '')} {pat.get('last_name', '')}",
+                            'sex': pat.get('gender', ''),
+                            'date_of_birth': pat.get('date_of_birth', ''),
+                            'parents': {},  # Adjust if you have parent data
                             'address': address,
                             'sitio': sitio,
                             'transient': is_transient,
@@ -380,8 +356,8 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                         }
 
                     # Get measurement month
-                    if vs_obj.bm and vs_obj.bm.created_at:
-                        month = vs_obj.bm.created_at.month
+                    if ns_obj.created_at:
+                        month = ns_obj.created_at.month
                         month_name = [
                             'january', 'february', 'march', 'april', 'may', 'june',
                             'july', 'august', 'september', 'october', 'november', 'december'
@@ -389,36 +365,31 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
 
                         # Calculate age at weighing
                         dob = None
-                        pat_id = vs_obj.chhist.chrec.patrec.pat_id
-                        if pat_id.pat_type == 'Resident' and hasattr(pat_id, 'rp_id') and pat_id.rp_id:
-                            dob = pat_id.rp_id.per.per_dob
-                        elif pat_id.pat_type == 'Transient' and hasattr(pat_id, 'trans_id') and pat_id.trans_id:
-                            dob = pat_id.trans_id.tran_dob
+                        pat_obj = ns_obj.pat
+                        if pat_obj.pat_type == 'Resident' and hasattr(pat_obj, 'rp_id') and pat_obj.rp_id:
+                            dob = pat_obj.rp_id.per.per_dob
                         
-                        age_months = self._calculate_age_in_months(dob, vs_obj.bm.created_at)
+                        age_months = self._calculate_age_in_months(dob, ns_obj.created_at)
 
                         # Format nutritional status
-                        nutritional_status = {}
-                        if vs.get('nutritional_status'):
-                            ns = vs['nutritional_status']
-                            nutritional_status = {
-                                'wfa': ns.get('wfa'),
-                                'lhfa': ns.get('lhfa'),
-                                'wfl': ns.get('wfl'),
-                                'muac': ns.get('muac'),
-                                'edema': ns.get('edemaSeverity'),
-                                'muac_status': ns.get('muac_status')
-                            }
+                        nutritional_status = {
+                            'wfa': ns_obj.wfa,
+                            'lhfa': ns_obj.lhfa,
+                            'wfl': ns_obj.wfl,
+                            'muac': ns_obj.muac,
+                            'edema': ns_obj.edemaSeverity,
+                            'muac_status': ns_obj.muac_status
+                        }
 
                         # Update monthly data
                         children_data[child_id]['monthly_data'][month_name] = {
                             'measurement_exists': True,
-                            'date_of_weighing': vs['bm_details']['created_at'][:10] if vs.get('bm_details') else None,
+                            'date_of_weighing': entry.get('created_at', '')[:10],
                             'age_at_weighing': age_months,
-                            'weight': vs['bm_details']['weight'] if vs.get('bm_details') else None,
-                            'height': vs['bm_details']['height'] if vs.get('bm_details') else None,
+                            'weight': entry.get('bm_details', {}).get('weight'),
+                            'height': entry.get('bm_details', {}).get('height'),
                             'nutritional_status': nutritional_status,
-                            'type_of_feeding': chist['chrec_details'].get('type_of_feeding')
+                            'type_of_feeding': 'N/A'  # Adjust if you have this data
                         }
 
                 except Exception as e:
@@ -439,7 +410,7 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         # Get unique child IDs for pagination count
         child_ids = set()
         for record in queryset:
-            child_id = record.chhist.chrec.patrec.pat_id.pat_id
+            child_id = record.pat.pat_id
             child_ids.add(child_id)
         
         # Paginate based on unique children
@@ -449,7 +420,7 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         if page is not None:
             # Get all records for the children in this page
             records_for_page = [record for record in queryset 
-                             if record.chhist.chrec.patrec.pat_id.pat_id in page]
+                             if record.pat.pat_id in page]
             
             serializer = self.get_serializer(records_for_page, many=True)
             return paginator.get_paginated_response(

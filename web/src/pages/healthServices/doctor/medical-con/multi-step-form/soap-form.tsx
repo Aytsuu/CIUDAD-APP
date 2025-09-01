@@ -16,7 +16,7 @@ interface SoapFormProps {
   MedicalConsultation: any;
   onBack: () => void;
   initialData?: any;
-  onFormDataUpdate?: (data: Partial<SoapFormType & { selectedMedicines: any[] }>) => void;
+  onFormDataUpdate?: (data: any) => void; // Use 'any' to be flexible
 }
 
 export default function SoapForm({ patientData, MedicalConsultation, onBack, initialData, onFormDataUpdate }: SoapFormProps) {

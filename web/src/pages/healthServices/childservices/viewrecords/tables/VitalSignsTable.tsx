@@ -9,15 +9,22 @@ import {
 } from "@/components/ui/table/table";
 import { ChildHealthHistoryRecord } from "../types";
 import { format, isValid } from "date-fns";
+import { calculateAgeFromDOB } from "@/helpers/ageCalculator"; // Import the helper
 
 interface VitalSignsTableProps {
   fullHistoryData: ChildHealthHistoryRecord[];
   chhistId: string;
 }
+
 export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
   fullHistoryData,
   chhistId,
 }) => {
+  // Helper function to extract DOB from the nested record structure
+  const extractDOBFromRecord = (record: ChildHealthHistoryRecord): string => {
+    return record?.chrec_details?.patrec_details?.pat_details?.personal_info?.per_dob || "";
+  };
+
   return (
     <div className="border  overflow-hidden">
       <Table className="border-collapse [&_tr:hover]:bg-inherit">
@@ -29,7 +36,6 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
             <TableHead className="border-r">Height (cm)</TableHead>
             <TableHead className="border-r">Temp (°C)</TableHead>
             <TableHead className="border-r">Findings</TableHead>
-
             <TableHead className="border-r">Notes</TableHead>
           </TableRow>
         </TableHeader>
@@ -62,7 +68,7 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
                 const isCurrentRecord = record.chhist_id === chhistId;
                 const vitalSigns = record.child_health_vital_signs?.[0] || {};
                 const bmDetails = vitalSigns.bm_details || {};
-                // const nutritionStatus = record.nutrition_statuses?.[0] || {};
+                const childDOB = extractDOBFromRecord(record); // Extract DOB
 
                 // Get the latest note and follow-up details
                 let latestNoteContent: string | null = null;
@@ -104,7 +110,10 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
                         : "N/A"}
                     </TableCell>
                     <TableCell className="border-r">
-                      {bmDetails.age || "N/A"}
+                      {/* Replace bmDetails.age with calculated age */}
+                      {childDOB && record.created_at
+                        ? calculateAgeFromDOB(childDOB, record.created_at).ageString
+                        : "N/A"}
                     </TableCell>
                     <TableCell className="border-r">
                       {bmDetails.weight || "N/A"}

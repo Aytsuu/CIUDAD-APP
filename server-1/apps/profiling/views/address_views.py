@@ -13,7 +13,7 @@ class AddressBulkCreateView(generics.CreateAPIView):
   def create(self, request, *args, **kwargs):
     serializer = self.get_serializer(data=request.data, many=True)
     serializer.is_valid(raise_exception=True)
-
+fhistory
     # Prepare unique addresses only (skip if already exists)
     seen = set()
     existing_keys = set()

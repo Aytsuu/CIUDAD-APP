@@ -198,9 +198,7 @@ export default function ChildHRPage2({
 
   return (
     <>
-     <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
-            Page 2 of 4
-          </div>
+     
       <Form {...form}>
         <form
           onSubmit={handleSubmit(handleNext, (errors) => {

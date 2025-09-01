@@ -32,3 +32,15 @@ export const getChildHealthHistory = async (chrec: string) => {
 
   }
 };
+
+
+export const getNutritionalStatus = async (id: string) => {
+  try {
+    const response = await api2.get(`/child-health/nutritional-status/${id}/`);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+
+  }
+};
