@@ -23,4 +23,8 @@ urlpatterns = [
     path('project-proposals/<int:gpr_id>/archive/', ProjectProposalArchiveView.as_view(), name='project-proposal-archive'),
     path('project-proposals/<int:gpr_id>/restore/', ProjectProposalRestoreView.as_view(), name='project-proposal-restore'),
     path('status-counts/', ProjectProposalStatusCountView.as_view(), name='project-proposal-status-counts'),
+    
+    path('gad-annual-development-plan/', GADDevelopmentPlanListCreate.as_view()),
+    path('gad-annual-development-plan/years/', GADDevelopmentPlanYears.as_view()),
+    path('gad-annual-development-plan/<int:dev_id>/', GADDevelopmentPlanUpdate.as_view())
 ]

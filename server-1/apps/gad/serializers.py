@@ -3,6 +3,7 @@ from .models import *
 from django.apps import apps
 from decimal import Decimal
 from utils.supabase_client import upload_to_storage, remove_from_storage
+import json
 
 Staff = apps.get_model('administration', 'Staff')
 
@@ -411,3 +412,120 @@ class ProposalSuppDocSerializer(serializers.ModelSerializer):
 
         if psd_files:
             ProposalSuppDoc.objects.bulk_create(psd_files)
+
+# ===========================================================================================================
+
+class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
+
+    total = serializers.SerializerMethodField()
+    staff = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), allow_null=True, required=False)
+    dev_budget_items = serializers.CharField(required=False, allow_blank=True, write_only=True)
+
+    class Meta:
+        model = DevelopmentPlan
+        fields = '__all__'
+        extra_kwargs = {
+            'dev_gad_items': { 'required': False }
+        }
+
+    def get_total(self, obj):
+        try:
+            items = [self._normalize_budget_item(i) for i in (obj.dev_gad_items or [])]
+            total = sum(Decimal(str(i.get('price', 0))) for i in items)
+            return str(total)
+        except Exception:
+            return "0"
+
+    def validate(self, attrs):
+       
+        initial = getattr(self, 'initial_data', {}) or {}
+        dev_budget_items_raw = initial.get('dev_budget_items')
+
+        if dev_budget_items_raw and not attrs.get('budgets'):
+            try:
+                parsed = json.loads(dev_budget_items_raw)
+                if isinstance(parsed, list):
+                    attrs['budgets'] = [self._normalize_budget_item(p) for p in parsed]
+                else:
+                    raise serializers.ValidationError({'dev_budget_items': 'Must be a JSON array.'})
+            except (ValueError, TypeError):
+                raise serializers.ValidationError({'dev_budget_items': 'Invalid JSON provided.'})
+
+        
+        if attrs.get('budgets') is not None:
+            attrs['dev_gad_items'] = [self._normalize_budget_item(b) for b in attrs['budgets']]
+
+        
+        for field in ['dev_project', 'dev_res_person', 'dev_indicator']:
+            if field in initial:
+                normalized = self._ensure_array(initial.get(field))
+                attrs[field] = normalized
+
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop('dev_budget_items', None)
+        budgets_data = validated_data.pop('budgets', None)
+        if budgets_data is not None:
+            validated_data['dev_gad_items'] = [self._normalize_budget_item(b) for b in budgets_data]
+        plan = DevelopmentPlan.objects.create(**validated_data)
+        return plan
+
+    def update(self, instance, validated_data):
+        validated_data.pop('dev_budget_items', None)
+        budgets_data = validated_data.pop('budgets', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if budgets_data is not None:
+            instance.dev_gad_items = [self._normalize_budget_item(b) for b in budgets_data]
+        instance.save()
+        return instance
+
+    def _normalize_budget_item(self, item):
+        if not isinstance(item, dict):
+            return { 'name': '', 'pax': 0, 'price': 0 }
+        return {
+            'name': item.get('name', item.get('gdb_name', '')),
+            'pax': item.get('pax', item.get('gdb_pax', 0)),
+            'price': item.get('price', item.get('gdb_price', 0)),
+        }
+
+    def _ensure_array(self, value):
+        # Accept already-a-list
+        if isinstance(value, list):
+            return value
+        # Try to parse JSON string
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped.startswith('[') and stripped.endswith(']'):
+                try:
+                    parsed = json.loads(value)
+                    return parsed if isinstance(parsed, list) else [str(parsed)]
+                except Exception:
+                    return [value]
+            # Plain string -> wrap
+            return [value]
+        # Fallback
+        return []
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Ensure budgets are not included; use dev_gad_items instead
+        data.pop('budgets', None)
+        # Add computed total
+        data['total'] = self.get_total(instance)
+        # Normalize dev_gad_items entries
+        try:
+            items = getattr(instance, 'dev_gad_items', []) or []
+            data['dev_gad_items'] = [self._normalize_budget_item(i) for i in items]
+        except Exception:
+            pass
+        # Present arrays as comma-separated strings for readability in table
+        for field in ['dev_project', 'dev_res_person', 'dev_indicator']:
+            value = getattr(instance, field, [])
+            try:
+                arr = value if isinstance(value, list) else self._ensure_array(value)
+                data[field] = ", ".join([str(v) for v in arr]) if arr else ""
+            except Exception:
+                data[field] = str(value) if value is not None else ""
+        return data

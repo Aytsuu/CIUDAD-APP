@@ -1,6 +1,29 @@
 from django.db import models
 from datetime import date
 
+class DevelopmentPlan(models.Model):
+    dev_id = models.BigAutoField(primary_key=True)
+    dev_date = models.DateField(default=date.today)
+    dev_client = models.CharField(max_length=200, null=True)
+    dev_issue = models.CharField(max_length=200, null=True)
+    dev_project = models.JSONField(default=list, db_column='dev_project')
+    dev_res_person = models.JSONField(default=list, db_column='dev_res_person')
+    dev_indicator = models.JSONField(default=list, db_column='dev_indicator')
+    dev_gad_items = models.JSONField(default=list, db_column='dev_budget_items')
+    gpr_id = models.ForeignKey( 'gad.ProjectProposal', on_delete=models.SET_NULL,  null=True,  blank=True, db_column='gpr_id')
+
+    staff = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
+
+    class Meta:
+        db_table = 'gad_development_plan'
+        managed = False
+
 class GAD_Budget_Year(models.Model):
     gbudy_num = models.BigAutoField(primary_key=True)
     gbudy_budget = models.DecimalField(max_digits=10, decimal_places=2)
