@@ -13,12 +13,17 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
 
   return useMutation({
     mutationFn: async (data: {
-      gbud_num: number;
+      gbud_num?: number;
       budgetData: Record<string, any>;
       files: Array<{ id: string; name: string; type: string; file: string | File }>;
       filesToDelete: string[];
       remainingBalance: number;
     }) => {
+
+      if (!data.gbud_num) {
+        throw new Error("Budget entry number is required for update");
+      }
+
       // Validate remaining balance (existing logic)
       if (data.budgetData.gbud_type === "Expense" && data.budgetData.gbud_actual_expense) {
         const currentYearBudget = yearBudgets.find(

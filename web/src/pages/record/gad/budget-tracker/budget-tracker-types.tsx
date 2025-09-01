@@ -83,7 +83,7 @@ export type GADBudgetUpdatePayload = {
 };
 
 export type GADEditEntryFormProps = {
-  gbud_num: number;
+  gbud_num?: number;
   onSaveSuccess?: () => void;
 };
 
