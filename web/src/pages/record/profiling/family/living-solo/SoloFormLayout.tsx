@@ -171,23 +171,6 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   }
 
   // ==================== RENDER HELPERS ======================
-  const renderLoadingSkeleton = () => (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-40" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-28" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-    </div>
-  )
-
   const MainContent = (
     <Form {...(tab_params?.isRegistrationTab ? tab_params?.form : form)}>
       <form
@@ -197,25 +180,21 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
         }}
         className="space-y-6"
       >
-        {isLoading && !tab_params?.isRegistrationTab ? (
-          renderLoadingSkeleton()
-        ) : (
-          <LivingSoloForm
-            isRegistrationTab={tab_params?.isRegistrationTab}
-            prefix={tab_params?.isRegistrationTab ? "livingSoloSchema." : ""}
-            buildingReadOnly={buildingReadOnly}
-            residents={formattedResidents}
-            households={formattedHouseholds}
-            isSubmitting={isSubmitting}
-            invalidResident={invalidResident}
-            invalidHousehold={invalidHousehold}
-            form={tab_params?.isRegistrationTab ? tab_params?.form : form}
-            ownedHouses={formatOwnedHouses(tab_params?.form.getValues("houseSchema.list"))}
-            selectOwnedHouses={selectOwnedHouses}
-            setSelectOwnedHouses={setSelectOwnedHouses}
-            onSubmit={submit}
-          />
-        )}
+        <LivingSoloForm
+          isRegistrationTab={tab_params?.isRegistrationTab}
+          prefix={tab_params?.isRegistrationTab ? "livingSoloSchema." : ""}
+          buildingReadOnly={buildingReadOnly}
+          residents={formattedResidents}
+          households={formattedHouseholds}
+          isSubmitting={isSubmitting}
+          invalidResident={invalidResident}
+          invalidHousehold={invalidHousehold}
+          form={tab_params?.isRegistrationTab ? tab_params?.form : form}
+          ownedHouses={formatOwnedHouses(tab_params?.form.getValues("houseSchema.list"))}
+          selectOwnedHouses={selectOwnedHouses}
+          setSelectOwnedHouses={setSelectOwnedHouses}
+          onSubmit={submit}
+        />
       </form>
     </Form>
   )

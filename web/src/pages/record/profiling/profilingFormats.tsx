@@ -42,7 +42,7 @@ export const formatHouseholds = (households: any) => {
   if (!households) return [];
 
   return households.map((household: any) => ({
-    id: String(household.hh_id),
+    id: `${household.hh_id} ${household.head.split("-")[1]}`,
     name: (
       <div className="flex gap-4 items-center">
         <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
