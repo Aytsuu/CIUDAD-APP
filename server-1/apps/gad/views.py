@@ -260,7 +260,7 @@ class UpdateProposalStatusView(generics.GenericAPIView):
                 gprl_reason=reason,
                 gprl_date_approved_rejected=date_approved_rejected,
                 gprl_date_submitted=timezone.now(),  # Set to current time
-                staff=staff if hasattr(request.user, 'staff') else None
+                staff=request.user.staff if hasattr(request.user, 'staff') else None
             )
 
             return Response({"message": "Status updated successfully"})

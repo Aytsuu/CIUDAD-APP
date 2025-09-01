@@ -462,7 +462,6 @@ class PurposeRatesListView(generics.ListCreateAPIView):
     
 # =================== MINUTES OF MEETING VIEWS ======================
 
-# ==================== MINUTES OF MEETING=======================
 class MinutesOfMeetingView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
     queryset = MinutesOfMeeting.objects.all()

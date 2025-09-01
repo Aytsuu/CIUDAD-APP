@@ -58,19 +58,4 @@ urlpatterns=[
     # RESOLUTION SUPP DOCS
     path("resolution-supp/", ResolutionSupDocsView.as_view(), name="council-supp-docs"),
     path('resolution-supp-delete/<int:rsd_id>/', ResolutionSupDocsDetailView.as_view(), name='council-supp-detail'), 
-
-    # ORDINANCE (moved from secretary app)
-    path("ordinance/", OrdinanceListView.as_view(), name="ordinance-list"),
-    path("ordinance/<str:pk>/", OrdinanceDetailView.as_view(), name="ordinance-detail"),
-    path("ordinance/<str:pk>/archive/", OrdinanceArchiveView.as_view(), name="ordinance-archive"),
-    
-    # Supplementary document endpoints
-    path("ordinance-docs/", OrdinanceSupplementaryDocListView.as_view(), name="ordinance-docs-list"),
-    path("ordinance-docs/<str:pk>/", OrdinanceSupplementaryDocDetailView.as_view(), name="ordinance-docs-detail"),
-    path("ordinance-docs/<str:pk>/archive/", OrdinanceSupplementaryDocArchiveView.as_view(), name="ordinance-docs-archive"),
-    
-    # Template endpoints
-    path("templates/", OrdinanceTemplateListView.as_view(), name="templates-list"),
-    path("templates/<int:pk>/", OrdinanceTemplateDetailView.as_view(), name="templates-detail"),
-    path("templates/<int:pk>/archive/", OrdinanceTemplateArchiveView.as_view(), name="templates-archive"),
 ]

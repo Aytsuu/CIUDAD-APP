@@ -162,8 +162,10 @@ class ServiceChargeRequestView(generics.ListCreateAPIView):
 #             return Response(serializer.data, status=status.HTTP_200_OK)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class IssuedCertificateListView(generics.ListAPIView):
-    serializer_class = IssuedCertificateSerializer
+class UpdateServiceChargeRequestView(generics.UpdateAPIView):
+    serializer_class = ServiceChargeRequestSerializer
+    queryset = ServiceChargeRequest.objects.all()
+    lookup_field = 'sr_id'
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()

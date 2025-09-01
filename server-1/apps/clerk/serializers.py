@@ -545,5 +545,3 @@ class FileActionRequestSerializer(serializers.ModelSerializer):
             'file_action_file',
             'comp'
         ]
-
-

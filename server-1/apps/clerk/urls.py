@@ -1,8 +1,7 @@
 from django.urls import path
-from .views import  *
+from .views import *
 
 urlpatterns = [
-    # Service Charge Request URLs
     path('service-charge-request/', ServiceChargeRequestView.as_view(), name='service-charge-request'),
     # path('case-details/<int:sr_id>/', ServiceChargeRequestDetailView.as_view(), name='case-details'),
     # path('case-activity/', CaseActivityView.as_view(), name='case-activity'),

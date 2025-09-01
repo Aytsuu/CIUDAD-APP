@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import {Button} from '../../../../components/ui/button/button.tsx';
-import { Form, FormControl, FormField, FormItem, FormMessage, } from "@/components/ui/form/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input.tsx';
-// import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
+import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal.tsx';
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -16,14 +16,14 @@ import { Loader2 } from "lucide-react";
 
 
 interface ResolutionEditFormProps {
-    // res_num: number,
+    res_num: number,
     res_title: string,
     res_date_approved: string,
     res_area_of_focus: string[],
-    // resolution_files:{
-    //     rf_id: number;
-    //     rf_url: string;
-    // }[];
+    resolution_files:{
+        rf_id: number;
+        rf_url: string;
+    }[];
     onSuccess?: () => void; 
 }
 
