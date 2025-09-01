@@ -113,6 +113,8 @@ import { useState } from "react"
 import ResidentPending from "./tabs/pending"
 import ResidentRejected from "./tabs/rejected"
 import ResidentCancelled from "./tabs/cancelled"
+import ResidentAccepted from "./tabs/accepted"
+import ResidentCompleted from "./tabs/completed"
 
 type TabType = "pending" | "accepted" | "completed" | "rejected" | "cancelled"
 
@@ -133,17 +135,9 @@ export default function GarbagePickupHome() {
       case "pending":
         return <ResidentPending />
       case "accepted":
-        return (
-          <View className="flex-1 items-center justify-center p-4">
-            <Text className="text-gray-500 text-base">No accepted requests</Text>
-          </View>
-        )
+        return <ResidentAccepted/>
       case "completed":
-        return (
-          <View className="flex-1 items-center justify-center p-4">
-            <Text className="text-gray-500 text-base">No completed requests</Text>
-          </View>
-        )
+        return <ResidentCompleted/>
       case "rejected":
         return <ResidentRejected/>
       case "cancelled":
