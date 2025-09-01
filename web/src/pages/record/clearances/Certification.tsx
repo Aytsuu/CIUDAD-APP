@@ -948,6 +948,7 @@ import { capitalize } from "@/helpers/capitalize";
 
 interface ExtendedCertificate extends Certificate {
   AsignatoryStaff?: string;
+  SpecificPurpose?: string;
 }
 
 function CertificatePage() {
@@ -966,6 +967,7 @@ function CertificatePage() {
   const [viewingCertificate, setViewingCertificate] = useState<ExtendedCertificate | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<ExtendedCertificate | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState(""); 
+  const [purposeInput, setPurposeInput] = useState("");
 
   const staffOptions = useMemo(() => {
     return staffList.map((staff) => ({
@@ -1066,7 +1068,8 @@ function CertificatePage() {
       //with both certificate and staff data
       const certDetails: ExtendedCertificate = {
         ...viewingCertificate,
-        AsignatoryStaff: selectedStaff?.name
+        AsignatoryStaff: selectedStaff?.name,
+        SpecificPurpose: purposeInput
       };
       
       setSelectedCertificate(certDetails);// Close the dialog
@@ -1330,6 +1333,7 @@ function CertificatePage() {
           address={selectedCertificate.nrc_address || "Sitio Palma"}
           purpose={selectedCertificate.req_purpose}
           Signatory={selectedCertificate.AsignatoryStaff}
+          specificPurpose={selectedCertificate.SpecificPurpose}
           issuedDate={new Date().toISOString()}
           isNonResident={selectedCertificate.is_nonresident}
         />
@@ -1341,7 +1345,7 @@ function CertificatePage() {
         onOpenChange={(open) => {
           setIsDialogOpen(open);
         }}
-        className="max-w-[30%] h-[250px] flex flex-col overflow-auto scrollbar-custom"
+        className="max-w-[30%] h-[330px] flex flex-col overflow-auto scrollbar-custom"
         title="Additional Details"
         description={`Please provide the needed details for the certificate.`}
         mainContent={
@@ -1360,6 +1364,15 @@ function CertificatePage() {
                     contentClassName="w-full"
                   />   
                 </div>      
+
+                <Label className="pb-1">Purpose</Label>           
+                <div className="w-full pb-3">
+                  <Input 
+                    placeholder="Specify Purpose"
+                    value={purposeInput} 
+                    onChange={(e) => setPurposeInput(e.target.value)}
+                  />
+                </div>
 
                 <div className="flex justify-end">
                     <Button type="button" onClick={handleViewFile2} disabled={!selectedStaffId} >
