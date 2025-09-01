@@ -41,6 +41,9 @@ urlpatterns=[
 
     path('get-particular/', GetParticularsView.as_view(), name='current-year-budget-items'),
 
+    #EXPENSE LOG
+    path('expense-log/', Expense_LogView.as_view(), name='expense-log-list'),
+
     #INCOME URL
     path('income-tracking/', Income_TrackingView.as_view(), name = 'treasurer-income-tracking'),
     path('income-particular/', Income_ParticularView.as_view(), name = 'treasurer-income-particular'),
@@ -74,4 +77,5 @@ urlpatterns=[
     path('clearance-request/<str:cr_id>/', ClearanceRequestDetailView.as_view(), name='clearance-request-detail'),
     path('clearance-request/<str:cr_id>/payment-status/', UpdatePaymentStatusView.as_view(), name='update-payment-status'),
     path('clearance-request/payment-statistics/', PaymentStatisticsView.as_view(), name='payment-statistics'),
+    path('resident-names/', ResidentNameListView.as_view(), name='resident-names')
 ]

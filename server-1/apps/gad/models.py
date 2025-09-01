@@ -1,18 +1,16 @@
 from django.db import models
 from datetime import date
-from django.contrib.postgres.fields import ArrayField
 
-
-#gihimoan lang nako so that I could connect as fk
 class DevelopmentPlan(models.Model):
     dev_id = models.BigAutoField(primary_key=True)
     dev_date = models.DateField(default=date.today)
     dev_client = models.CharField(max_length=200, null=True)
     dev_issue = models.CharField(max_length=200, null=True)
-    dev_project = models.CharField(max_length=200, null=True)
-    dev_res_person = models.CharField(max_length=200, null=True)
-    dev_indicator = models.CharField(max_length=200, null=True)
-    dev_gad_budget = models.DecimalField(max_digits=10, decimal_places=2)
+    dev_project = models.JSONField(default=list, db_column='dev_project')
+    dev_res_person = models.JSONField(default=list, db_column='dev_res_person')
+    dev_indicator = models.JSONField(default=list, db_column='dev_indicator')
+    dev_gad_items = models.JSONField(default=list, db_column='dev_budget_items')
+    gpr_id = models.ForeignKey( 'gad.ProjectProposal', on_delete=models.SET_NULL,  null=True,  blank=True, db_column='gpr_id')
 
     staff = models.ForeignKey(
         'administration.Staff',
@@ -24,35 +22,13 @@ class DevelopmentPlan(models.Model):
 
     class Meta:
         db_table = 'gad_development_plan'
-
-class DevelopmentBudget(models.Model):
-    gdb_id = models.BigAutoField(primary_key=True)
-    gdb_name = models.CharField(max_length=200, null=True)
-    gdb_pax = models.DecimalField(max_digits=10, decimal_places=2)
-    gdb_price = models.DecimalField(max_digits=10, decimal_places=2)
-
-    dev = models.ForeignKey(
-        DevelopmentPlan,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='dev_id',
-        related_name='budgets'
-    )
-
-    class Meta:
-        db_table = 'gad_development_budget'
-
-
-
-#===========================================================================================================
+        managed = False
 
 class GAD_Budget_Year(models.Model):
     gbudy_num = models.BigAutoField(primary_key=True)
     gbudy_budget = models.DecimalField(max_digits=10, decimal_places=2)
     gbudy_year = models.CharField(max_length=4, unique=True)
-    gbudy_expenses = models.DecimalField(max_digits=10, decimal_places=2, default=0) #total expenses for the year from gad_budget_record
-    gbudy_income = models.DecimalField(max_digits=10, decimal_places=2, default=0)# total income for the year from gad_budget_record
+    gbudy_expenses = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     gbudy_is_archive = models.BooleanField(default=False)
 
     class Meta:
@@ -61,21 +37,13 @@ class GAD_Budget_Year(models.Model):
 class GAD_Budget_Tracker(models.Model):
     gbud_num = models.BigAutoField(primary_key=True)
     gbud_datetime = models.DateTimeField(null=True)
-    gbud_type = models.CharField(max_length=100, null=True) #income or expense
     gbud_add_notes = models.CharField(max_length=500, null=True)
-
-    #if type is income
-    gbud_inc_particulars = models.CharField(max_length=200, null=True)
-    gbud_inc_amt = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
-    #if type is expense
-    gbud_exp_particulars = models.CharField(max_length=200, null=True) #this saves the retrieved gdb_name from devbudget
+    gbud_exp_project = models.CharField(max_length=200, null=True)
+    gbud_exp_particulars = models.JSONField(default=list, null=True)
     gbud_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_actual_expense = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_remaining_bal = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_reference_num = models.CharField(max_length=200, null=True)
-
-    #for soft delete
     gbud_is_archive = models.BooleanField(default = False)
     
     gbudy = models.ForeignKey(
@@ -84,13 +52,13 @@ class GAD_Budget_Tracker(models.Model):
         related_name='transactions',
         db_column='gbudy_num'
     )
-
-    gdb = models.ForeignKey(
-        DevelopmentBudget,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='gdb_id'
+    
+    gpr = models.ForeignKey(
+        'ProjectProposal',
+        on_delete=models.CASCADE,
+        related_name='proposals',
+        db_column='gpr_id',
+        null=True
     )
 
     staff = models.ForeignKey(
@@ -121,6 +89,20 @@ class GAD_Budget_File(models.Model):
     class Meta:
         db_table = 'gad_budget_file'
 
+class GADBudgetLog(models.Model):
+    gbudl_id = models.BigAutoField(primary_key=True)
+    gbudl_budget_entry = models.ForeignKey(
+        GAD_Budget_Tracker,
+        on_delete=models.CASCADE,
+        related_name="logs"
+    )
+    gbudl_amount_returned = models.FloatField(default=0, null=True)
+    gbudl_created_at = models.DateTimeField(auto_now_add=True)
+    gbudl_prev_amount = models.FloatField(default=0, null=True)
+
+    class Meta:
+        db_table = "gad_budget_log"
+
 class ProjectProposal(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
@@ -128,6 +110,7 @@ class ProjectProposal(models.Model):
         ('Rejected', 'Rejected'),
         ('Viewed', 'Viewed'),
         ('Amend', 'Amend'),
+        ('Resubmitted', 'Resubmitted')
     ]
 
     gpr_id = models.BigAutoField(primary_key=True)
@@ -189,6 +172,8 @@ class ProjectProposalLog(models.Model):
         ('Approved', 'Approved'),
         ('Rejected', 'Rejected'),
         ('Viewed', 'Viewed'),
+        ('Amend', 'Amend'),
+        ('Resubmitted', 'Resubmitted')
     ]
 
     gprl_id = models.BigAutoField(primary_key=True)

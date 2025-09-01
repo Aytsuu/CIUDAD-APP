@@ -16,8 +16,11 @@ export type MinutesOfMeetingRecords = {
   mom_agenda: string;
   mom_title: string;
   mom_is_archive: boolean;
-  file_url: string;
-  file_id: string;
+  mom_file: {
+    momf_id: string;
+    momf_url: string;
+    momf_name: string;
+  }
   areas_of_focus: string[];
   supporting_docs: SupportingDoc[];
 };

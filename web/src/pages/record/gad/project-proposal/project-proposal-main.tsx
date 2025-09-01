@@ -42,146 +42,18 @@ import ViewProjectProposal from "./view-projprop";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ProjectProposal, SupportDoc } from "./projprop-types";
-
-function DocumentCard({
-  doc,
-  showActions,
-  onDelete,
-  onArchive,
-  onRestore,
-  isDeleting,
-  isArchived = false,
-}: {
-  doc: SupportDoc;
-  showActions: boolean;
-  onDelete?: () => void;
-  onArchive?: () => void;
-  onRestore?: () => void;
-  isDeleting: boolean;
-  isArchived?: boolean;
-}) {
-  return (
-    <div className="flex flex-col items-center p-4 rounded-lg">
-      <div className="relative w-full h-64 flex justify-center items-center">
-        {showActions && (
-          <div className="absolute right-2 top-2 z-10 flex gap-2">
-            {isArchived ? (
-              <>
-                {onRestore && (
-                  <ConfirmationModal
-                    trigger={
-                      <Button
-                        size="icon"
-                        className="h-8 w-8 bg-green-600"
-                        disabled={isDeleting}
-                      >
-                        <ArchiveRestore size={16} />
-                      </Button>
-                    }
-                    title="Restore Supporting Document"
-                    description="Are you sure you want to restore this document?"
-                    actionLabel={isDeleting ? "Restoring..." : "Restore"}
-                    onClick={onRestore}
-                    type="success"
-                  />
-                )}
-                {onDelete && (
-                  <ConfirmationModal
-                    trigger={
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="h-8 w-8"
-                        disabled={isDeleting}
-                      >
-                        <Trash size={16} />
-                      </Button>
-                    }
-                    title="Delete Supporting Document"
-                    description="Are you sure you want to permanently delete this document?"
-                    actionLabel={isDeleting ? "Deleting..." : "Delete"}
-                    onClick={onDelete}
-                    type="destructive"
-                  />
-                )}
-              </>
-            ) : (
-              <>
-                {onArchive && (
-                  <ConfirmationModal
-                    trigger={
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="h-8 w-8"
-                        disabled={isDeleting}
-                      >
-                        <Archive size={16} />
-                      </Button>
-                    }
-                    title="Archive Supporting Document"
-                    description="Are you sure you want to archive this document?"
-                    actionLabel={isDeleting ? "Archiving..." : "Archive"}
-                    onClick={onArchive}
-                    type="warning"
-                  />
-                )}
-              </>
-            )}
-          </div>
-        )}
-        {doc.psd_type?.startsWith("image/") && doc.psd_url ? (
-          <a
-            href={doc.psd_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full h-full flex justify-center items-center"
-          >
-            <img
-              src={doc.psd_url}
-              alt={`Supporting Document ${doc.psd_name || "Unknown"}`}
-              className="w-full h-full object-contain rounded-md cursor-pointer"
-              onError={(e) => {
-                console.error(`Failed to load image: ${doc.psd_url}`);
-                (e.target as HTMLImageElement).src = "/placeholder-image.png";
-              }}
-            />
-          </a>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full w-full bg-gray-100 rounded-md">
-            <p className="mt-2 text-sm text-gray-600">
-              {doc.psd_name || "No file name"}
-            </p>
-            {doc.psd_url ? (
-              <a
-                href={doc.psd_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 text-blue-600 hover:underline"
-              >
-                View Document
-              </a>
-            ) : (
-              <p className="mt-2 text-sm text-red-500">No file available</p>
-            )}
-          </div>
-        )}
-      </div>
-      <p className="mt-2 text-sm text-gray-500 text-center">
-        {doc.psd_name || "Unknown"} {isArchived && "(Archived)"}
-      </p>
-    </div>
-  );
-}
+import { Link } from "react-router";
+import { DocumentCard } from "./supp-docs-modal";
 
 function GADProjectProposal() {
   const style = {
     projStat: {
       pending: "text-blue",
-      approved: "text-green-500",
       amend: "text-yellow-500",
+      approved: "text-green-500",
       rejected: "text-red-500",
       viewed: "text-darkGray",
+      resubmitted: "text-indigo-600",
     },
   };
 
@@ -190,6 +62,7 @@ function GADProjectProposal() {
     { id: "Pending", name: "Pending" },
     { id: "Viewed", name: "Viewed" },
     { id: "Amend", name: "Amend" },
+    { id: "Resubmitted", name: "Resubmitted"},
     { id: "Approved", name: "Approved" },
     { id: "Rejected", name: "Rejected" },
   ];
@@ -241,10 +114,10 @@ function GADProjectProposal() {
     });
 
   useEffect(() => {
-    if (isSuppDocDialogOpen && supportDocs.length > 0) {
-      setSelectedSuppDocs(supportDocs);
-    }
-  }, [supportDocs, isSuppDocDialogOpen]);
+  if (isSuppDocDialogOpen) {
+    setSelectedSuppDocs(supportDocs);
+  }
+}, [supportDocs, isSuppDocDialogOpen]);
 
   useEffect(() => {
     if (detailedProject && selectedProject?.gprId === detailedProject.gprId) {
@@ -508,7 +381,7 @@ function GADProjectProposal() {
       </div>
 
       {/* Dynamic Total Budget Display */}
-      <div className="flex justify-end mt-2 mb-2">
+      <div className="flex justify-between mt-2 mb-2">
         <div className="bg-white border px-4 py-2 rounded-lg">
           <span className="font-medium text-black">
             Grand Total:{" "}
@@ -520,6 +393,11 @@ function GADProjectProposal() {
             </span>
           </span>
         </div>
+        <Link to= "/gad-project-proposal-log">
+        <Button variant="link" className="mr-1 w-20 underline text-sky-600">
+          View Logs
+        </Button>
+        </Link>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -549,7 +427,7 @@ function GADProjectProposal() {
                       onClick={() => handleViewProject(project)}
                     />
                     {viewMode === "active" ? (
-                      project.status !== 'Viewed' && project.status !== 'Amend' && (
+                      (project.status !== 'Viewed' && project.status !== 'Approved' && project.status !== 'Resubmitted') && (
                       <>
                         <ConfirmationModal
                           trigger={
@@ -694,7 +572,7 @@ function GADProjectProposal() {
                   onClick={() => selectedProject && handleEdit(selectedProject)}
                   className="flex items-center gap-2"
                   disabled={
-                    !selectedProject || (selectedProject.status !== "Pending" && selectedProject.status !== "Amend")|| selectedProject.gprIsArchive === true
+                    !selectedProject || (selectedProject.status !== "Pending" && selectedProject.status !== "Amend" && selectedProject.status !== "Rejected")|| selectedProject.gprIsArchive === true
                   }
                 >
                   <Edit size={16} /> Edit
@@ -756,7 +634,7 @@ function GADProjectProposal() {
                         doc={doc}
                         showActions={
                           selectedProject?.gprIsArchive === false &&
-                          selectedProject?.status === "Pending"
+                          (selectedProject?.status === "Pending" || selectedProject?.status === "Amend" || selectedProject?.status === "Rejected")
                         }
                         onDelete={() => handleDeleteDoc(doc.psd_id)}
                         onArchive={() => handleArchiveDoc(doc.psd_id)}
@@ -790,7 +668,7 @@ function GADProjectProposal() {
                         doc={doc}
                         showActions={
                           selectedProject?.gprIsArchive === false &&
-                          selectedProject?.status === "Pending"
+                          (selectedProject?.status === "Pending" || selectedProject?.status === "Amend" || selectedProject?.status === "Rejected")
                         }
                         onDelete={() => handleDeleteDoc(doc.psd_id)}
                         onRestore={() => handleRestoreDoc(doc.psd_id)}

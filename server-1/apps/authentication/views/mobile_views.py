@@ -301,4 +301,3 @@ class MobileLogoutView(APIView):
                 'message': 'Logout completed'
             }, status=status.HTTP_200_OK)
 
-

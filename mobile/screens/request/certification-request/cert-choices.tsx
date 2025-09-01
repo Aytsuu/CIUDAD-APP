@@ -19,11 +19,29 @@ const CertChoices = () => {
       description: "Request permit certification documents for business or activities.",
       route: "/(request)/certification-request/cert-permit",
       icon: "document-text-outline"
-    }
+    },
+    {
+      title: "Business Clearance",
+      description: "Request business clearance documents for existing or new business operations.",
+      route: "/(request)/certification-request/cert-clearance",
+      icon: "business-outline"
+    },
   ];
 
   return (
     <View className="flex-1 bg-white px-5 pt-8">
+      {/* Back Button */}
+      <View className="flex-row items-center mb-6">
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          className="bg-white rounded-full w-10 h-10 items-center justify-center shadow-sm border border-gray-100"
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chevron-back" size={20} color="#374151" />
+        </TouchableOpacity>
+        <Text className="text-lg font-semibold text-gray-900 ml-3">Certification Requests</Text>
+      </View>
+
       <View className="flex-1">
         {menuItem.map((item: any, index: number) => (
           <TouchableOpacity

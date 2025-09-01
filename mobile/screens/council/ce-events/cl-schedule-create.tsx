@@ -18,7 +18,7 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
-import { formatDate } from '@/helpers/dateHelpers';
+import { formatDate } from '@/helpers/dateFormatter';
 import { Staff } from './ce-att-typeFile';
 import { useQueryClient } from '@tanstack/react-query';
 import PageLayout from '@/screens/_PageLayout';
@@ -129,9 +129,7 @@ const CLCreateEvent = () => {
         }
         headerTitle={<Text>Schedule Events</Text>}
         rightAction={
-          <TouchableOpacity>
-            <ChevronLeft size={30} color="black" className="text-white" />
-          </TouchableOpacity>
+          <View/>
         }
     >
         <View className="flex-1 p-4">
@@ -185,7 +183,6 @@ const CLCreateEvent = () => {
                 {isStaffLoading ? (
                   <View className="flex-row justify-center">
                     <Text className="text-gray-500 mr-2">Loading staff...</Text>
-                    <Loader2 size={20} color="gray" className="animate-spin" />
                   </View>
                 ) : (
                   <FormComboCheckbox
@@ -208,7 +205,7 @@ const CLCreateEvent = () => {
                 <Text className="text-white text-base font-semibold text-center">
                   {isSubmitting ? 'Creating...' : 'Create'}
                 </Text>
-                {isSubmitting && <Loader2 size={20} color="white" className="ml-2 animate-spin" />}
+                {isSubmitting}
               </TouchableOpacity>
             </View>
           </View>

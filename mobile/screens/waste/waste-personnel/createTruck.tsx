@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, ScrollView, KeyboardAvoidingView, ActivityIndicator, Text } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,7 +27,7 @@ export default function WasteTruckCreate() {
   });
 
   const onSubmit = (data: TruckFormValues) => {
-    addTruck(data); // Trigger the mutation
+    addTruck(data);
   };
 
   return (

@@ -1,4 +1,10 @@
-export type ProposalStatus = "Pending" | "Amend" | "Approved" | "Rejected" | "Viewed";
+export type ProposalStatus =
+  | "Pending"
+  | "Amend"
+  | "Approved"
+  | "Rejected"
+  | "Viewed"
+  | "Resubmitted";
 
 export type ProjectProposalLog = {
   gprlId: number
@@ -68,4 +74,27 @@ export interface ProjectProposalViewProps {
   onBack?: () => void;
   customHeaderActions?: React.ReactNode;
   disableDocumentManagement?: boolean;
+}
+
+export interface ProposalLog {
+  gprl_id: number;
+  gpr_id: number;
+  gpr_title: string;
+  gprl_date_approved_rejected: string | null;
+  gprl_reason: string | null;
+  gprl_date_submitted: string;
+  gprl_status:
+    | "Pending"
+    | "Approved"
+    | "Rejected"
+    | "Viewed"
+    | "Amend"
+    | "Resubmitted";
+  staff: Staff | null;
+  gpr: number;
+  staff_details: {
+    staff_id: number;
+    full_name: string;
+    position: string;
+  } | null;
 }

@@ -87,7 +87,6 @@ function GADBudgetTrackerMain() {
         {filteredYears.map((tracker) => { 
           const budget = tracker.gbudy_budget || 0;
           const expenses = tracker.gbudy_expenses || 0;
-          const income = tracker.gbudy_income || 0;
           const remainingBal = budget - expenses;
           const progress = budget > 0 
             ? (expenses / budget) * 100 
@@ -120,10 +119,6 @@ function GADBudgetTrackerMain() {
                       <Label className="text-blue">Php {tracker.gbudy_budget}</Label>
                     </div>
                     <div className="flex flex-col sm:flex-row">
-                      <Label className="w-[12rem]">Total Income:</Label>
-                      <Label className="text-green-600">Php {income}</Label>
-                    </div>
-                    <div className="flex flex-col sm:flex-row">
                       <Label className="w-[12rem]">Total Expenses:</Label>
                       <Label className="text-red-600">Php {expenses}</Label>
                     </div>
@@ -131,7 +126,6 @@ function GADBudgetTrackerMain() {
                       <Label className="w-[12rem]">Remaining Balance:</Label>
                       <Label className="text-yellow-600">Php {remainingBal}</Label>
                     </div>
-                    
                     <div className="mt-4">
                       <Progress value={progress} className="w-full h-4 bg-gray-300" />
                       <div className="text-sm text-gray-600 text-center mt-2">

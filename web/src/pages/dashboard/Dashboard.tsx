@@ -6,7 +6,7 @@ import ReportSectionCharts from "@/components/analytics/report/report-section-ch
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { DonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
-import { GADExpenseSidebar, GADIncomeSidebar } from "@/components/analytics/gad/btracker-sidebar";
+import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar";
 import { ProjPropPendingSectionCards } from "@/components/analytics/gad/projprop-section-cards";
 import { CouncilEventsSidebar } from "@/components/analytics/council/ce-event-sidebar";
 import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
@@ -47,12 +47,8 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="grid gap-2">
-          <ProfilingSidebar />
-          <ReportSidebar />
-          <GADExpenseSidebar />
-          <GADIncomeSidebar />
-          <CouncilEventsSidebar />
-          <WasteActivitySidebar/>
+          <GADExpenseSidebar/>
+          <CouncilEventsSidebar/>
         </div>
       </div>
     </MainLayoutComponent>

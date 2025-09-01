@@ -30,6 +30,7 @@ export const useDeleteIncomeExpense = () => {
     onSuccess: () => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['incomeExpense'] });
+      queryClient.invalidateQueries({ queryKey: ['expense_log'] });
       
       // Show success toast
       toast.success("Expense Entry Deleted", {
@@ -137,6 +138,7 @@ export const useArchiveOrRestoreExpense = (onSuccess?: () => void) => {
       queryClient.invalidateQueries({ queryKey: ['incomeExpense'] });
       queryClient.invalidateQueries({ queryKey: ['budgetItems'] });
       queryClient.invalidateQueries({ queryKey: ['income_expense_card'] });
+      queryClient.invalidateQueries({ queryKey: ['expense_log'] });
 
       if (onSuccess) onSuccess();
     },

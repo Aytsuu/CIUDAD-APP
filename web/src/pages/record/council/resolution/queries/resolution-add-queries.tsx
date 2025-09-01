@@ -7,27 +7,43 @@ import { resolution_file_create } from "../request/resolution-post-request";
 import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema.ts';
 
 
+type FileData = {
+    name: string;
+    type: string;
+    file?: string;
+};
+
+type ExtendedResolution= z.infer<typeof resolutionFormSchema> & {
+  files: FileData[]; 
+};
 
 
 export const useCreateResolution = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (values: z.infer<typeof resolutionFormSchema>) => {
+    mutationFn: async (values: ExtendedResolution) => {
       // 1. Create main resolution
       const res_num = await resolution_create(values);
       
       // 2. Create all file resolutin in parallel
-      if (values.res_file?.length) {
+      if (values.files && values.files.length > 0) {
         await Promise.all(
-          values.res_file.map(file => 
+          values.files.map(file => 
             resolution_file_create({
               res_num,
-              file_data: file
+              file_data: {
+                name: file.name,
+                type: file.type,
+                file: file.file
+              }
+            }).catch(error => {
+              console.error("Error creating file entry:", error);
+              return null;
             })
           )
         );
-      }
+      }    
       
       return res_num;
     },  

@@ -18,7 +18,7 @@ export default function WasteTruckEdit() {
   const router = useRouter();
   const { id } = useLocalSearchParams(); 
   const [isEditing, setIsEditing] = useState(false); 
-  const idValue = Array.isArray(id) ? id[0] : id; // Handle string or string[] case
+  const idValue = Array.isArray(id) ? id[0] : id;
   const { data: truck, isLoading: isTruckLoading, error } = useGetTruckById(idValue);
   const { mutate: updateTruck, isPending: isSubmitting } = useUpdateTruck(() => {
     setIsEditing(false); 

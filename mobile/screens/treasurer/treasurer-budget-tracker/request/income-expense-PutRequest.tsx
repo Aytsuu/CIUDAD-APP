@@ -23,7 +23,8 @@ export const updateIncomeExpense = async (iet_num: number, incomeExpenseInfo: Re
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
             iet_receipt_image: 'nothing',
             inv_num: "None",
-            exp_id:  parseInt(incomeExpenseInfo.iet_particulars)
+            exp_id:  parseInt(incomeExpenseInfo.iet_particulars),
+            staff_id: "00001250820"
 
         })
 
@@ -50,7 +51,8 @@ export const updateIncomeTracking = async (inc_num: number, incomeInfo: Record<s
             inc_amount: parseFloatSafe(incomeInfo.inc_amount),
             inc_additional_notes: incomeInfo.inc_additional_notes,
             inc_receipt_image: incomeInfo.inc_receipt_image || null,
-            incp_id:  parseInt(incomeInfo.inc_particulars)
+            incp_id:  parseInt(incomeInfo.inc_particulars),
+            staff_id: "00001250820"            
 
         })
 

@@ -7,24 +7,16 @@ from .serializers import *
 from django.db.models import OuterRef, Subquery, Count, Q
 from django.apps import apps
 from django.utils import timezone
-from rest_framework.views import APIView
-from datetime import datetime
+from rest_framework.permissions import AllowAny
 from django.db.models.functions import ExtractYear
+import logging
+from rest_framework.views import APIView
 
-class DevelopmentBudgetItemsView(generics.ListAPIView):
-    queryset = DevelopmentBudget.objects.all()
-    serializer_class = DevelopmentBudgetSerializer 
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response({
-            'data': serializer.data,
-            'count': queryset.count()
-        })
+logger = logging.getLogger(__name__)
 
 class GAD_Budget_TrackerView(generics.ListCreateAPIView):
     serializer_class = GAD_Budget_TrackerSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         year = self.kwargs.get('year')
@@ -34,21 +26,26 @@ class GAD_Budget_TrackerView(generics.ListCreateAPIView):
         return GAD_Budget_Tracker.objects.filter(
             gbudy__gbudy_year=year,
             # gbud_is_archive=False
-        ).select_related('gbudy', 'gdb', 'staff').prefetch_related('files')
+        ).select_related('gbudy', 'gpr', 'staff').prefetch_related('files')
     
     def perform_create(self, serializer):
-        serializer.save(
-            # gbud_datetime=timezone.now(),
-            staff=getattr(self.request.user, 'staff', None)  # Safely get staff or None
-        )
+        validated_data = serializer.validated_data
+        staff_provided = 'staff' in validated_data and validated_data['staff'] is not None      
+        save_kwargs = {}
+        
+        if not staff_provided:
+            save_kwargs['staff'] = getattr(self.request.user, 'staff', None)
+        
+        serializer.save(**save_kwargs)
     
 class GAD_Budget_TrackerDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = GAD_Budget_Tracker.objects.all()
     serializer_class = GAD_Budget_TrackerSerializer
     lookup_field = 'gbud_num'
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
-        return super().get_queryset().select_related('gbudy', 'gdb', 'staff').prefetch_related('files')
+        return super().get_queryset().select_related('gbudy', 'gpr', 'staff').prefetch_related('files')
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -68,6 +65,7 @@ class GADBudgetRestoreView(generics.UpdateAPIView):
     queryset = GAD_Budget_Tracker.objects.filter(gbud_is_archive=True)
     serializer_class = GAD_Budget_TrackerSerializer
     lookup_field = 'gbud_num'
+    permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -78,66 +76,63 @@ class GADBudgetRestoreView(generics.UpdateAPIView):
 class GAD_Budget_YearView(generics.ListCreateAPIView):
     queryset = GAD_Budget_Year.objects.all()
     serializer_class = GADBudgetYearSerializer
+    permission_classes = [AllowAny]
 
 class GADBudgetFileView(generics.ListCreateAPIView):
-    queryset = GAD_Budget_File.objects.all()
     serializer_class = GADBudgetFileSerializer
+    queryset = GAD_Budget_File.objects.all()
+    permission_classes = [AllowAny]
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context['request'] = self.request
-        return context
-
-    def perform_create(self, serializer):
-        gbud_num = self.request.data.get('gbud')
-        try:
-            budget_tracker = GAD_Budget_Tracker.objects.get(gbud_num=gbud_num)
-            serializer.save(gbud=budget_tracker)
-        except GAD_Budget_Tracker.DoesNotExist:
-            raise serializers.ValidationError("Invalid budget tracker ID")
-    
-    def delete(self, request, *args, **kwargs):
-        gbf_ids = request.data.get('gbf_ids', [])
+    def create(self, request, *args, **kwargs):
         gbud_num = request.data.get('gbud_num')
-        
-        if not gbf_ids:
-            return Response({"detail": "No file IDs provided"}, status=400)
+        if not gbud_num:
+            return Response({"error": "gbud_num is required"}, status=400)
 
-        try:
-            # Verify files belong to the specified budget entry
-            files_to_delete = GAD_Budget_File.objects.filter(
-                gbf_id__in=gbf_ids,
-                gbud__gbud_num=gbud_num
-            )
-            
-            # Delete files from storage first
-            for file in files_to_delete:
-                if file.gbf_path:  # If using storage like S3 or local
-                    default_storage.delete(file.gbf_path)
-            
-            # Then delete DB records
-            count = files_to_delete.delete()[0]
-            
-            return Response({
-                "detail": f"Successfully deleted {count} files",
-                "deleted_ids": gbf_ids
-            }, status=200)
-            
-        except Exception as e:
-            return Response({
-                "detail": f"Error deleting files: {str(e)}",
-                "error": True
-            }, status=400)
+        files = request.data.get('files', [])
+        files_to_delete = request.data.get('filesToDelete', [])
+
+        serializer = self.get_serializer()
+
+        if files_to_delete:
+            serializer._delete_files(files_to_delete, gbud_num=gbud_num)
+            return Response({"status": "Files deleted successfully"}, status=200)
+
+        if not files:
+            return Response({"status": "No files uploaded"}, status=201)
+
+        serializer._upload_files(files, gbud_num=gbud_num)
+        return Response({"status": "Files uploaded successfully"}, status=201)
 
 class GADBudgetFileDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = GAD_Budget_File.objects.all()
     serializer_class = GADBudgetFileSerializer
+    permission_classes = [AllowAny]
+    
+class GADBudgetLogListView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    def get(self, request, year):
+        logs = GADBudgetLog.objects.filter(
+            gbudl_budget_entry__gbudy__gbudy_year=year,
+        ).select_related(
+            'gbudl_budget_entry'
+        ).order_by("-gbudl_created_at")
+        
+        serializer = GADBudgetLogSerializer(logs, many=True)
+        return Response({"data": serializer.data})
 
 class ProjectProposalView(generics.ListCreateAPIView):
     serializer_class = ProjectProposalSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
-        queryset = ProjectProposal.objects.all().select_related('staff')
+        # Get the most recent log date for each proposal
+        latest_log_dates = ProjectProposalLog.objects.filter(
+            gpr_id=OuterRef('gpr_id')
+        ).order_by('-gprl_date_approved_rejected').values('gprl_date_approved_rejected')[:1]
+        
+        queryset = ProjectProposal.objects.all().select_related('staff').annotate(
+            latest_log_date=Subquery(latest_log_dates)
+        ).order_by('-latest_log_date')  # Newest first
 
         # Get archive status from query params
         archive_status = self.request.query_params.get('archive', None)
@@ -157,7 +152,12 @@ class ProjectProposalView(generics.ListCreateAPIView):
         
         status_filter = self.request.query_params.get('status', None)
         if status_filter:
-            queryset = queryset.filter(latest_status=status_filter)
+            latest_status = ProjectProposalLog.objects.filter(
+                gpr_id=OuterRef('gpr_id')
+            ).order_by('-gprl_date_approved_rejected').values('gprl_status')[:1]
+            queryset = queryset.annotate(
+                current_status=Subquery(latest_status)
+            ).filter(current_status=status_filter)
             
         return queryset
 
@@ -181,6 +181,7 @@ class ProjectProposalDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ProjectProposal.objects.all().select_related('staff').prefetch_related('logs')
     serializer_class = ProjectProposalSerializer
     lookup_field = 'gpr_id'
+    permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -193,6 +194,7 @@ class ProjectProposalDetailView(generics.RetrieveUpdateDestroyAPIView):
         if 'status' in request.data:
             new_status = request.data['status']
             reason = request.data.get('reason', 'Status updated')
+            date_approved_rejected = timezone.now()
             
             # Create new log entry for status change
             ProjectProposalLog.objects.create(
@@ -221,13 +223,23 @@ class ProjectProposalDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class ProjectProposalLogView(generics.ListCreateAPIView):
     serializer_class = ProjectProposalLogSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         gpr_id = self.kwargs.get('gpr_id')
         return ProjectProposalLog.objects.filter(gpr__gpr_id=gpr_id).order_by('-gprl_date_approved_rejected')
 
+class AllProjectProposalLogView(generics.ListAPIView):
+    serializer_class = ProjectProposalLogSerializer
+    queryset = ProjectProposalLog.objects.all().order_by('-gprl_date_approved_rejected')
+    permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        return super().get_queryset().select_related('staff', 'staff__rp__per', 'staff__pos' ,'gpr')
+
 class UpdateProposalStatusView(generics.GenericAPIView):
     serializer_class = ProjectProposalLogSerializer
+    permission_classes = [AllowAny]
 
     def patch(self, request, gpr_id):
         try:
@@ -258,31 +270,30 @@ class UpdateProposalStatusView(generics.GenericAPIView):
 class ProposalSuppDocCreateView(generics.ListCreateAPIView):
     serializer_class = ProposalSuppDocSerializer
     queryset = ProposalSuppDoc.objects.all()
-    
+    permission_classes = [AllowAny]
+
     def get_queryset(self):
         return self.queryset.filter(gpr_id=self.kwargs['proposal_id'])
-    
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        try:
-            context['proposal'] = ProjectProposal.objects.get(pk=self.kwargs['proposal_id'])
-        except ProjectProposal.DoesNotExist:
-            raise Response("Project proposal not found")
-        return context
 
-    def perform_create(self, serializer):
-        # Ensure gpr_id is set from URL parameter
-        serializer.save(gpr_id=self.kwargs['proposal_id'])
-    
-    def perform_destroy(self, instance):
-        """Soft delete by archiving"""
-        instance.psd_is_archive = True
-        instance.save() 
+    def create(self, request, *args, **kwargs):
+        gpr_id = self.kwargs.get('proposal_id') or request.data.get('gpr_id')
+        if not gpr_id:
+            return Response({"error": "gpr_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        files = request.data.get('files', [])
+        if not files:
+            return Response({"error": "No files provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer()
+        serializer._upload_files(files, gpr_id=gpr_id)
+
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)
 
 class ProposalSuppDocDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProposalSuppDocSerializer
     queryset = ProposalSuppDoc.objects.all()
     lookup_field = 'psd_id'
+    permission_classes = [AllowAny]
     
     def perform_destroy(self, instance):
         if not instance.psd_is_archive:
@@ -297,6 +308,7 @@ class ProposalSuppDocDetailView(generics.RetrieveUpdateDestroyAPIView):
 Staff = apps.get_model('administration', 'Staff')
 
 class StaffListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     queryset = Staff.objects.select_related('rp__per', 'pos').only(
         'staff_id',
         'rp__per__per_fname',
@@ -309,6 +321,7 @@ class ProjectProposalArchiveView(generics.UpdateAPIView):
     queryset = ProjectProposal.objects.filter(gpr_is_archive=False)
     serializer_class = ProjectProposalSerializer
     lookup_field = 'gpr_id'
+    permission_classes = [AllowAny]
 
     def perform_update(self, serializer):
         serializer.save(gpr_is_archive=True)
@@ -317,11 +330,13 @@ class ProjectProposalRestoreView(generics.UpdateAPIView):
     queryset = ProjectProposal.objects.filter(gpr_is_archive=True)
     serializer_class = ProjectProposalSerializer
     lookup_field = 'gpr_id'
+    permission_classes = [AllowAny]
  
     def perform_update(self, serializer):
         serializer.save(gpr_is_archive=False)
 
 class ProjectProposalStatusCountView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
         # Base queryset for ProjectProposal
         queryset = ProjectProposal.objects.filter(gpr_is_archive=False)
@@ -336,26 +351,85 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
             latest_status=Subquery(latest_logs.values('gprl_status')[:1])
         )
         
-
         # Aggregate counts for each status
         status_counts = queryset.aggregate(
             pending=Count('pk', filter=Q(latest_status='Pending')),
             viewed=Count('pk', filter=Q(latest_status='Viewed')),
             amend=Count('pk', filter=Q(latest_status='Amend')),
+            resubmitted=Count('pk', filter=Q(latest_status='Resubmitted')),
             approved=Count('pk', filter=Q(latest_status='Approved')),
             rejected=Count('pk', filter=Q(latest_status='Rejected'))
         )
-        print("Status Counts:", status_counts)
+
         # Return JSON response with counts
         return Response({
             'pending': status_counts['pending'] or 0,
             'viewed': status_counts['viewed'] or 0,
             'amend': status_counts['amend'] or 0,
+            'resubmitted': status_counts['resubmitted'] or 0,
             'approved': status_counts['approved'] or 0,
             'rejected': status_counts['rejected'] or 0
         })
+        
+class ProjectProposalAvailabilityView(generics.ListAPIView):
+    serializer_class = ProjectProposalSerializer
+    permission_classes = [AllowAny]
 
+    def get_queryset(self):
+        year = self.kwargs.get('year')
+        # Only get approved proposals
+        queryset = ProjectProposal.objects.filter(
+            gpr_is_archive=False,
+            logs__gprl_status='Approved'
+        ).distinct().select_related('staff')
+        return queryset
 
+    def list(self, request, *args, **kwargs):
+        year = self.kwargs.get('year')
+        if not year:
+            raise NotFound("Year parameter is required")
+
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        data = serializer.data
+
+        response_data = []
+        for proposal in data:
+            # Check existing GAD_Budget_Tracker entries for this project and year
+            existing_entries = GAD_Budget_Tracker.objects.filter(
+                gbudy__gbudy_year=year,
+                gbud_exp_project=proposal['gprTitle'],
+                gbud_is_archive=False
+            )
+            is_used = existing_entries.exists()
+
+            # Collect all recorded budget item names
+            recorded_items = set()
+            for entry in existing_entries:
+                for item in entry.gbud_exp_particulars or []:
+                    recorded_items.add(item['name'])
+
+            # Determine unrecorded items
+            project_items = {item['name'] for item in proposal['gprBudgetItems'] or []}
+            unrecorded_items = [
+                item for item in proposal['gprBudgetItems']
+                if item['name'] not in recorded_items
+            ]
+
+            response_data.append({
+                'gpr_id': proposal['gprId'],
+                'gpr_title': proposal['gprTitle'],
+                'gpr_budget_items': proposal['gprBudgetItems'],
+                'recorded_items': list(recorded_items),
+                'unrecorded_items': unrecorded_items,
+                'is_editable': not is_used 
+            })
+
+        return Response({
+            'data': response_data,
+            'count': len(response_data)
+        })
+        
 # ===========================================================================================================
 
 class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
@@ -367,6 +441,48 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
         if year:
             qs = qs.filter(dev_date__year=year)
         return qs
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            # Create the development plan first
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            development_plan = serializer.save()
+            
+            # Log the activity
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member from the request or use default
+                staff_id = request.data.get('staff') or '00003250722'  # Default staff ID
+                staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                if staff:
+                    # Create activity log
+                    create_activity_log(
+                        act_type="GAD Development Plan Created",
+                        act_description=f"GAD development plan '{development_plan.dev_project}' created for {development_plan.dev_date} with budget ₱{development_plan.dev_gad_budget}",
+                        staff=staff,
+                        record_id=str(development_plan.dev_id),
+                        feat_name="GAD Development Plan Management"
+                    )
+                    logger.info(f"Activity logged for GAD development plan creation: {development_plan.dev_id}")
+                else:
+                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for GAD development plan creation: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f"Error creating GAD development plan: {str(e)}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 # GET years with data
 class GADDevelopmentPlanYears(APIView):
@@ -378,3 +494,48 @@ class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
     queryset = DevelopmentPlan.objects.all()
     serializer_class = GADDevelopmentPlanSerializer
     lookup_field = 'dev_id'
+    
+    def update(self, request, *args, **kwargs):
+        try:
+            # Get the instance before updating
+            instance = self.get_object()
+            
+            # Perform the update
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            development_plan = serializer.save()
+            
+            # Log the activity
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member from the request or use default
+                staff_id = request.data.get('staff') or '00003250722'  # Default staff ID
+                staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                if staff:
+                    # Create activity log
+                    create_activity_log(
+                        act_type="GAD Development Plan Updated",
+                        act_description=f"GAD development plan '{development_plan.dev_project}' updated for {development_plan.dev_date} with budget ₱{development_plan.dev_gad_budget}",
+                        staff=staff,
+                        record_id=str(development_plan.dev_id),
+                        feat_name="GAD Development Plan Management"
+                    )
+                    logger.info(f"Activity logged for GAD development plan update: {development_plan.dev_id}")
+                else:
+                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for GAD development plan update: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error updating GAD development plan: {str(e)}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )

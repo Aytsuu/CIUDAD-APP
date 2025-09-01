@@ -2,13 +2,25 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { updateAnnualDevPlan } from "./restful-api/annualPutAPI";
+import { useGetAnnualDevPlanById, useUpdateAnnualDevPlan } from "./queries/annualDevPlanFetchQueries";
 import { toast } from "sonner";
 
 interface BudgetItem {
   gdb_name: string;
   gdb_pax: string;
   gdb_price: string;
+}
+
+interface DevelopmentPlan {
+  dev_id: number;
+  dev_date: string;
+  dev_client: string;
+  dev_issue: string;
+  dev_project: string;
+  dev_indicator: string;
+  dev_gad_budget: string;
+  dev_res_person: string;
+  staff: string;
 }
 
 export default function AnnualDevelopmentPlanEdit() {
@@ -22,7 +34,7 @@ export default function AnnualDevelopmentPlanEdit() {
     dev_project: "",
     dev_res_person: "",
     dev_indicator: "",
-    dev_gad_budget: "0",
+    dev_budget_items: "0",
     staff: "", // Optional staff ID - can be empty
   });
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
@@ -32,33 +44,23 @@ export default function AnnualDevelopmentPlanEdit() {
     gdb_price: "",
   });
 
-  useEffect(() => {
-    // Fetch the existing plan data
-    const fetchPlanData = async () => {
-      try {
-        const response = await fetch(`http://localhost:8000/gad/gad-annual-development-plan/${devId}/`);
-        const data = await response.json();
-        setFormData({
-          dev_date: data.dev_date,
-          dev_client: data.dev_client,
-          dev_issue: data.dev_issue,
-          dev_project: data.dev_project,
-          dev_res_person: data.dev_res_person,
-          dev_indicator: data.dev_indicator,
-          dev_gad_budget: data.dev_gad_budget,
-          staff: data.staff,
-        });
-        setBudgetItems(data.budgets || []);
-      } catch (error) {
-        console.error("Error fetching plan data:", error);
-        toast.error("Failed to fetch plan data");
-      }
-    };
+  const { data: planData, isLoading: isFetching } = useGetAnnualDevPlanById(devId);
 
-    if (devId) {
-      fetchPlanData();
+  useEffect(() => {
+    if (planData) {
+      setFormData({
+        dev_date: planData.dev_date,
+        dev_client: planData.dev_client,
+        dev_issue: planData.dev_issue,
+        dev_project: planData.dev_project,
+        dev_res_person: planData.dev_res_person,
+        dev_indicator: planData.dev_indicator,
+        dev_budget_items: planData.dev_budget_items,
+        staff: planData.staff,
+      });
+      setBudgetItems(planData.budgets || []);
     }
-  }, [devId, toast]);
+  }, [planData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -93,6 +95,8 @@ export default function AnnualDevelopmentPlanEdit() {
     setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_price: "" });
   };
 
+  const updateMutation = useUpdateAnnualDevPlan();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -101,14 +105,7 @@ export default function AnnualDevelopmentPlanEdit() {
       if (!devId) {
         throw new Error("No development plan ID provided");
       }
-      // Filter out empty staff value to avoid validation errors
-      const { staff, ...restFormData } = formData;
-      const payload = { 
-        ...restFormData, 
-        staff: staff || null, // Send null if staff is empty
-        budgets: budgetItems 
-      };
-      await updateAnnualDevPlan(parseInt(devId), payload);
+      await updateMutation.mutateAsync({ devId: parseInt(devId), formData, budgetItems });
       toast.success("Annual development plan updated successfully!");
       navigate(-1);
     } catch (error) {
@@ -290,7 +287,7 @@ export default function AnnualDevelopmentPlanEdit() {
                 disabled={isLoading}
                 className="text-white hover:bg-blue-700 px-6 py-2 rounded-md text-sm font-medium"
               >
-                {isLoading ? "Saving..." : "Save Changes"}
+                {isLoading ? "Saving..." : isFetching ? "Loading..." : "Save Changes"}
               </Button>
               <Button 
                 type="button"

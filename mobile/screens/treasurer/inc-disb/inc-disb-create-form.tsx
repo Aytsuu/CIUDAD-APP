@@ -13,16 +13,14 @@ import { ChevronLeft } from "lucide-react-native";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { CreateFolderSchema } from "@/form-schema/treasurer-inc-disbursement";
-import { useCreateFolder, useUploadImage } from "./queries";
+import { useCreateFolder, useUploadImages } from "./queries";
 import { CreateFolderFormValues } from "./inc-disc-types";
-import MultiImageUploader, {
-  MediaFileType,
-} from "@/components/ui/multi-media-upload";
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import PageLayout from "@/screens/_PageLayout";
 
 const CreateFolderForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
+  const [selectedImages, setSelectedImages] = useState<MediaItem[]>([]);
 
   const {
     control,
@@ -41,11 +39,12 @@ const CreateFolderForm = () => {
 
   const type = useWatch({ control, name: "type" });
   const createFolderMutation = useCreateFolder();
-  const uploadImageMutation = useUploadImage(type === "income");
+  const uploadImagesMutation = useUploadImages(type === "income");
 
   const onSubmit = async (data: CreateFolderFormValues) => {
     setIsSubmitting(true);
     try {
+      // Step 1: Create the folder
       const folderPayload = {
         type: data.type,
         name: data.name,
@@ -58,27 +57,28 @@ const CreateFolderForm = () => {
       const newFolderId =
         data.type === "income" ? newFolder.inf_num : newFolder.dis_num;
 
-      if (!newFolderId)
+      if (!newFolderId) {
         throw new Error("Failed to get folder ID from response");
-
-      if (mediaFiles.length > 0) {
-        await Promise.all(
-          mediaFiles.map((file) => {
-            const imagePayload = {
-              upload_date: new Date().toISOString(),
-              type: file.type || "image/jpeg",
-              name:
-                file.name ||
-                file.path.split("/").pop() ||
-                `image_${Date.now()}.jpg`,
-              path: file.path,
-              url: file.publicUrl || file.uri,
-              folder: newFolderId,
-            };
-            return uploadImageMutation.mutateAsync(imagePayload);
-          })
-        );
       }
+
+      // Step 2: Upload images if any are selected
+      if (selectedImages.length > 0) {
+        // Convert MediaItem[] to the format expected by your backend
+        const imageFiles = selectedImages.map((item) => ({
+          name: item.name || `image_${Date.now()}.jpg`,
+          type: item.type || "image/jpeg",
+          file: `data:${item.type || "image/jpeg"};base64,${item.file}`,
+        }));
+
+        const imagePayload =
+          data.type === "income"
+            ? { inf_num: newFolderId, files: imageFiles }
+            : { dis_num: newFolderId, files: imageFiles };
+
+        await uploadImagesMutation.mutateAsync(imagePayload);
+      }
+      setSelectedImages([]);
+      // Navigate to the folder view
       router.push({
         pathname: "/(treasurer)/inc-disbursement/inc-disb-main",
         params: {
@@ -101,8 +101,25 @@ const CreateFolderForm = () => {
         </TouchableOpacity>
       }
       headerTitle={<Text>Create New Folder and Upload Images</Text>}
-      rightAction={
-        <View></View>
+      rightAction={<View></View>}
+      footer={
+        <View>
+          <TouchableWithoutFeedback
+            onPress={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
+          >
+            <View
+              className={`
+                bg-primaryBlue py-3 rounded-lg
+                ${isSubmitting ? "opacity-70" : ""}
+              `}
+            >
+              <Text className="text-white text-base font-semibold text-center">
+                {isSubmitting ? "Submitting..." : "Create"}
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
       }
     >
       <View className="flex-1 p-5">
@@ -139,41 +156,14 @@ const CreateFolderForm = () => {
           placeholder="Enter description"
         />
 
-        <View className="mb-4">
-          <Text className="text-lg font-bold text-gray-800 mb-2">
-            Upload Images
-          </Text>
-          <MultiImageUploader
-            mediaFiles={mediaFiles}
-            setMediaFiles={setMediaFiles}
-            maxFiles={5}
-          />
-        </View>
-
-        <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
-          <TouchableWithoutFeedback
-            onPress={handleSubmit(onSubmit)}
-            disabled={
-              isSubmitting || mediaFiles.some((f) => f.status === "uploading")
-            }
-          >
-            <View
-              className={`
-                bg-primaryBlue py-3 rounded-lg
-                ${
-                  isSubmitting ||
-                  mediaFiles.some((f) => f.status === "uploading")
-                    ? "opacity-70"
-                    : ""
-                }
-              `}
-            >
-              <Text className="text-white text-base font-semibold text-center">
-                {isSubmitting ? "Submitting..." : "Create"}
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
+        <Text className="text-lg font-bold text-gray-800 mb-2">
+          Upload Images
+        </Text>
+        <MediaPicker
+          selectedImages={selectedImages}
+          setSelectedImages={setSelectedImages}
+          multiple={true}
+        />
       </View>
     </PageLayout>
   );

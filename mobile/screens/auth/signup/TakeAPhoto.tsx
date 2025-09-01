@@ -36,22 +36,22 @@ export default function TakeAPhoto({params} : {params: Record<string, any>}) {
     }
   }, [setIsMatching]);
 
-  const handleManualCapture = () => {
-    if (timerActive) return;
+//   const handleManualCapture = () => {
+//     if (timerActive) return;
     
-    // Reset retry count when starting a new round
-    if (retryCount >= 3) {
-      setRetryCount(0);
-    }
+//     // Reset retry count when starting a new round
+//     if (retryCount >= 3) {
+//       setRetryCount(0);
+//     }
     
-    attemptFaceDetection();
-  };
+//     attemptFaceDetection();
+//   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+//   const formatTime = (seconds: number) => {
+//     const mins = Math.floor(seconds / 60);
+//     const secs = seconds % 60;
+//     return `${mins}:${secs.toString().padStart(2, '0')}`;
+//   };
 
   const isButtonDisabled = isMatching || timerActive;
   const showTimerStatus = timerActive && timeRemaining > 0;

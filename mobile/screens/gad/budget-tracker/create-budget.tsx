@@ -1,104 +1,196 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Modal,
+  ActivityIndicator,
+  FlatList,
+} from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Button } from "@/components/ui/button";
+import { ChevronLeft, X } from "lucide-react-native";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateAndTimeInput } from "@/components/ui/form/form-date-time-input";
-import { useExpenseParticulars, useIncomeParticulars } from "./queries/fetch";
+import {
+  useIncomeParticulars,
+  useGADBudgets,
+  useProjectProposalsAvailability,
+} from "./queries/fetch";
 import { useGetGADYearBudgets } from "./queries/yearqueries";
 import { useCreateGADBudget } from "./queries/add";
-import _ScreenLayout from "@/screens/_ScreenLayout";
-import MultiImageUploader, { MediaFileType } from '@/components/ui/multi-media-upload';
-import BudgetTrackerSchema from "@/form-schema/gad-budget-tracker-schema";
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
+import BudgetTrackerSchema, {
+  FormValues,
+} from "@/form-schema/gad-budget-tracker-schema";
 import PageLayout from "@/screens/_PageLayout";
-import { FormValues } from "./bt-types";
+import { removeLeadingZeros } from "./bt-types";
 
 function GADAddEntryForm() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.budYear as string;
-  const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
-  const [showIncomeParticularsModal, setShowIncomeParticularsModal] = useState(false);
+  const [mediaFiles, setMediaFiles] = useState<MediaItem[]>([]);
+  const [selectedBudgetItems, setSelectedBudgetItems] = useState<
+    { name: string; pax: string; amount: number }[]
+  >([]);
+  const [recordedBudgetItems, setRecordedBudgetItems] = useState<
+    { name: string; pax: string; amount: number }[]
+  >([]);
+  const [showIncomeParticularsModal, setShowIncomeParticularsModal] =
+    useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showBudgetItemsModal, setShowBudgetItemsModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    data: yearBudgets,
+    isLoading: yearBudgetsLoading,
+    refetch: refetchYearBudgets,
+  } = useGetGADYearBudgets();
+  const { data: budgetEntries = [] } = useGADBudgets(year || "");
+  const { data: incomeParticulars, isLoading: incomeParticularsLoading } =
+    useIncomeParticulars(year);
+  const { data: projectProposals, isLoading: projectProposalsLoading } =
+    useProjectProposalsAvailability(year);
+  const { mutate: createBudget } = useCreateGADBudget(
+    yearBudgets || [],
+    budgetEntries
+  );
 
-  const { data: yearBudgets = [] } = useGetGADYearBudgets();
-  const { data: expenseItems = [] } = useExpenseParticulars();
-  const { data: incomeParticulars = [], isLoading: incomeParticularsLoading } = useIncomeParticulars(year);
-  const { mutate: createBudget } = useCreateGADBudget(yearBudgets, []);
-
-  if (!year) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Text>Error: Year parameter is required</Text>
-        <Button onPress={() => router.back()}>
-          <Text>Go Back</Text>
-        </Button>
-      </View>
-    );
-  }
-
-  const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
-
-  if (!currentYearBudget) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Text>Error: No budget found for year {year}</Text>
-        <Button onPress={() => router.back()}>
-          <Text>Go Back</Text>
-        </Button>
-      </View>
-    );
-  }
-
-  const calculateRemainingBalance = () => {
+  const calculateRemainingBalance = (): number => {
+    if (!yearBudgets || !year) return 0;
+    const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
     if (!currentYearBudget) return 0;
-    return (
-      Number(currentYearBudget.gbudy_budget) -
-      Number(currentYearBudget.gbudy_expenses)
-    );
+    const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
+    const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
+    return initialBudget - totalExpenses;
   };
 
-  const remainingBalance = calculateRemainingBalance();
+  const calculateProposedBudget = () => {
+    return selectedBudgetItems
+      .filter((item) => !recordedBudgetItems.some((r) => r.name === item.name))
+      .reduce((sum, item) => {
+        const pax = parseInt(item.pax) || 1;
+        const amount = parseFloat(item.amount.toString()) || 0;
+        return sum + amount * pax;
+      }, 0);
+  };
+
+  const proposedBudget = removeLeadingZeros(calculateProposedBudget());
 
   const form = useForm<FormValues>({
     resolver: zodResolver(BudgetTrackerSchema),
     defaultValues: {
       gbud_type: "Expense",
-      gbud_datetime: new Date().toISOString(),
-      gbud_files: [],
-      gbud_add_notes: null,
-      gbud_inc_particulars: null,
-      gbud_inc_amt: null,
-      gbud_exp_particulars: null,
-      gbud_proposed_budget: null,
-      gbud_actual_expense: null,
+      gbud_datetime: new Date().toISOString().slice(0, 16),
+      gbud_add_notes: "",
+      gbud_inc_particulars: "",
+      gbud_inc_amt: 0,
+      gbud_exp_project: "",
+      gbud_exp_particulars: [],
+      gbud_actual_expense: 0,
+      gbud_proposed_budget: 0,
       gbud_reference_num: null,
-      gbud_remaining_bal: null,
-      gbudy: currentYearBudget.gbudy_num,
-      gdb_id: null,
+      gbud_remaining_bal: 0,
+      gbudy: 0,
+      gpr: 0,
     },
+    context: { calculateRemainingBalance },
   });
 
-  useEffect(() => {
-    form.setValue('gbud_files', mediaFiles.map(file => ({
-      name: file.name,
-      type: file.type,
-      path: file.path,
-      uri: file.publicUrl || file.uri,
-    })));
-  }, [mediaFiles, form]);
-
   const typeWatch = form.watch("gbud_type");
-  const actualExpenseWatch = form.watch("gbud_actual_expense");
-  const proposedBudgetWatch = form.watch("gbud_proposed_budget");
-  const incomeParticularsWatch = form.watch("gbud_inc_particulars");
-
-  const filteredIncomeParticulars = incomeParticulars.filter(item =>
-    item.toLowerCase().includes(searchTerm.toLowerCase())
+  const projectWatch = form.watch("gbud_exp_project");
+  const remainingBalance = calculateRemainingBalance();
+  const selectedProject = projectProposals?.find(
+    (p) => p.gpr_title === projectWatch
   );
+
+  useEffect(() => {
+    if (typeWatch === "Expense") {
+      form.setValue("gbud_proposed_budget", proposedBudget);
+    }
+  }, [proposedBudget, typeWatch]);
+
+  useEffect(() => {
+    if (yearBudgets && !yearBudgetsLoading) {
+      const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+      if (currentYearBudget) {
+        form.setValue("gbudy", currentYearBudget.gbudy_num);
+        form.setValue("gbud_remaining_bal", calculateRemainingBalance());
+      }
+    }
+  }, [yearBudgets, yearBudgetsLoading, year]);
+
+  useEffect(() => {
+    if (projectWatch && projectProposals) {
+      const selectedProject = projectProposals.find(
+        (p) => p.gpr_title === projectWatch
+      );
+      if (selectedProject && selectedProject.gpr_budget_items?.length > 0) {
+        const recordedItems = selectedProject.recorded_items
+          .map((name) =>
+            selectedProject.gpr_budget_items.find((item) => item.name === name)
+          )
+          .filter(Boolean) as { name: string; pax: string; amount: number }[];
+        const unrecordedItems = selectedProject.unrecorded_items || [];
+
+        setRecordedBudgetItems(recordedItems);
+        form.setValue("gbud_exp_particulars", recordedItems);
+        setSelectedBudgetItems(recordedItems);
+
+        if (unrecordedItems.length === 1) {
+          form.setValue("gbud_exp_particulars", [
+            ...recordedItems,
+            ...unrecordedItems,
+          ]);
+          setSelectedBudgetItems([...recordedItems, ...unrecordedItems]);
+        }
+
+        form.setValue("gpr", selectedProject.gpr_id);
+      }
+    }
+  }, [projectWatch, projectProposals]);
+
+  const handleAddBudgetItem = (item: {
+    name: string;
+    pax: string;
+    amount: number;
+  }) => {
+    setSelectedBudgetItems((prev) => {
+      const newItems = [...prev, item];
+      form.setValue("gbud_exp_particulars", newItems);
+      form.trigger("gbud_exp_particulars");
+      return newItems;
+    });
+    setShowBudgetItemsModal(false);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setSelectedBudgetItems((prev) => {
+      const newItems = [...prev];
+      newItems.splice(index, 1);
+      form.setValue("gbud_exp_particulars", newItems);
+      form.trigger("gbud_exp_particulars");
+      return newItems;
+    });
+  };
+
+  const hasUnrecordedItems = () => {
+    return selectedBudgetItems.some(
+      (item) =>
+        !recordedBudgetItems.some((recorded) => recorded.name === item.name)
+    );
+  };
+
+  const filteredIncomeParticulars =
+    incomeParticulars?.filter((item) =>
+      item.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   const handleSelectIncomeParticular = (particular: string) => {
     form.setValue("gbud_inc_particulars", particular);
@@ -106,322 +198,494 @@ function GADAddEntryForm() {
     setSearchTerm("");
   };
 
-  const onSubmit = (values: FormValues) => {
+  const handleSelectProject = (projectTitle: string) => {
+    form.setValue("gbud_exp_project", projectTitle);
+    setShowProjectModal(false);
+  };
+
+  const availableBudgetItems =
+    selectedProject?.unrecorded_items?.filter(
+      (item) =>
+        !selectedBudgetItems.some((selected) => selected.name === item.name)
+    ) || [];
+
+  const onSubmit = async (values: FormValues) => {
+    setIsSubmitting(true);
     const inputDate = new Date(values.gbud_datetime);
     const inputYear = inputDate.getFullYear().toString();
 
     if (inputYear !== year) {
-      form.setError('gbud_datetime', {
-        type: 'manual',
+      form.setError("gbud_datetime", {
+        type: "manual",
         message: `Date must be in ${year}`,
       });
+      setIsSubmitting(false);
       return;
     }
 
-    if (values.gbud_type === 'Expense') {
-      if (
-        values.gbud_actual_expense &&
-        Number(values.gbud_actual_expense) > remainingBalance
-      ) {
-        form.setError('gbud_actual_expense', {
-          type: 'manual',
-          message: `Exceeds remaining balance of ₱${remainingBalance.toLocaleString()}`,
+    if (values.gbud_type === "Expense") {
+      if ((values.gbud_actual_expense ?? 0) > remainingBalance) {
+        form.setError("gbud_actual_expense", {
+          type: "manual",
+          message: `Actual expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`,
         });
+        setIsSubmitting(false);
         return;
       }
     }
 
-    const payload = {
-      budgetData: {
-        ...values,
-        gbud_proposed_budget: values.gbud_type === "Income" ? null : values.gbud_proposed_budget,
-        gbud_actual_expense: values.gbud_type === "Income" ? null : values.gbud_actual_expense,
-        gbud_inc_amt: values.gbud_type === "Income" ? values.gbud_inc_amt : "0.00",
-        gbudy: currentYearBudget.gbudy_num,
-        gbud_files: undefined,
-      },
-      files: values.gbud_files || [],
+    const files = mediaFiles
+      .filter((media) => media.file && media.file.length > 0) // Only include files with base64 data
+      .map((media) => ({
+        id: media.id,
+        name: media.name || `image_${Date.now()}.jpg`,
+        type: media.type || "image/jpeg",
+        file: `data:${media.type || "image/jpeg"};base64,${media.file}`, // ✅ Add data: prefix
+        uri: media.uri,
+      }));
+
+    const budgetData = {
+      gbud_type: values.gbud_type,
+      gbud_datetime: new Date(values.gbud_datetime).toISOString(),
+      gbud_add_notes: values.gbud_add_notes || null,
+      ...(values.gbud_type === "Income" && {
+        gbud_inc_particulars: values.gbud_inc_particulars,
+        gbud_inc_amt: values.gbud_inc_amt,
+      }),
+      ...(values.gbud_type === "Expense" && {
+        gbud_exp_project: values.gbud_exp_project,
+        gbud_exp_particulars: values.gbud_exp_particulars,
+        gbud_actual_expense: values.gbud_actual_expense,
+        gbud_proposed_budget: values.gbud_proposed_budget,
+        gbud_reference_num: values.gbud_reference_num,
+        gbud_remaining_bal:
+          remainingBalance - (values.gbud_actual_expense ?? 0),
+        gpr: values.gpr,
+      }),
+      gbudy: values.gbudy,
     };
 
-    if (values.gbud_files && values.gbud_files.length > 0) {
-      const invalidFiles = values.gbud_files.filter(file => !file.uri || !file.name || !file.type);
-      if (invalidFiles.length > 0) {
-        form.setError('gbud_files', {
-          type: 'manual',
-          message: 'All uploaded files must have valid name, type, and URI',
-        });
-        return;
-      }
+    try {
+      await createBudget(
+        { budgetData, files },
+        {
+          onSuccess: () => {
+            refetchYearBudgets();
+            router.back();
+          },
+          onError: (error) => {
+            console.error("Submission error:", error);
+            setIsSubmitting(false);
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error:", error);
+      setIsSubmitting(false);
     }
-
-    createBudget(payload, {
-      onSuccess: () => router.back(),
-      onError: (error) => {
-        form.setError('root', {
-          type: 'manual',
-          message: 'Failed to save entry. Please check uploaded files and try again.',
-        });
-      },
-    });
   };
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} className="text-black" />
+          <ChevronLeft size={30} color="black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Create Budget Entry</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loading={isPending}
-      loadingMessage="Saving entry..."
-      footer={
-        <View className="px-4 pb-4">
-          <Button
-            onPress={form.handleSubmit(onSubmit)}
-            className="bg-primaryBlue py-3 rounded-lg"
-            disabled={isPending || !form.formState.isValid}
-          >
-            <Text className="text-white text-base font-semibold">
-              {isPending ? "Saving..." : "Save Entry"}
-            </Text>
-          </Button>
-          {!form.formState.isValid && (
-            <Text className="text-red-500 text-xs mt-2">
-              Please fill out all required fields correctly.
-            </Text>
-          )}
-          {form.formState.errors.root && (
-            <Text className="text-red-500 text-xs mt-2">
-              {form.formState.errors.root.message}
-            </Text>
-          )}
-        </View>
-      }
-      stickyFooter={true}
+      headerTitle={<Text>Create Budget Entry</Text>}
+      rightAction={<View />}
     >
-      <View className="flex-1 px-4">
+      <ScrollView
+        className="flex-1 p-4"
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
         <View className="space-y-4">
-          <FormSelect
-            control={form.control}
-            name="gbud_type"
-            label="Entry Type"
-            options={[
-              { label: "Income", value: "Income" },
-              { label: "Expense", value: "Expense" },
-            ]}
-          />
+          <View className="flex-1">
+            <FormSelect
+              control={form.control}
+              name="gbud_type"
+              label="Type of Entry"
+              options={[
+                { label: "Income", value: "Income" },
+                { label: "Expense", value: "Expense" },
+              ]}
+            />
+          </View>
+          <View className="flex-1">
+            <FormDateAndTimeInput
+              control={form.control}
+              name="gbud_datetime"
+              label={`Date (${year} only)`}
+            />
+          </View>
 
-          <FormDateAndTimeInput
-            control={form.control}
-            name="gbud_datetime"
-            label={`Date (${year} only)`}
-          />
-
-          <FormInput
-            control={form.control}
-            name="gbud_add_notes"
-            label="Description"
-            placeholder="Additional notes"
-          />
-
-          {typeWatch === "Income" ? (
-            <>
+          {/* Project/Income Field */}
+          <View className="flex-1 mb-4">
+            {typeWatch === "Income" ? (
               <Controller
                 control={form.control}
                 name="gbud_inc_particulars"
                 render={({ field, fieldState }) => (
-                  <View className="mb-4">
-                    <Text className="text-sm font-medium mb-1">Income Particulars</Text>
-                    <TouchableOpacity 
+                  <View>
+                    <Text className="text-[12px] font-PoppinsRegular">
+                      Income Particulars
+                    </Text>
+                    <TouchableOpacity
                       onPress={() => setShowIncomeParticularsModal(true)}
                       className={`border rounded-lg p-3 ${
                         fieldState.error ? "border-red-500" : "border-gray-300"
                       }`}
                     >
-                      <Text className={field.value ? "text-black" : "text-gray-400"}>
+                      <Text
+                        className={field.value ? "text-black" : "text-gray-400"}
+                      >
                         {field.value || "Select income particulars..."}
                       </Text>
                     </TouchableOpacity>
-                    {fieldState.error && (
-                      <Text className="text-red-500 text-xs mt-1">
-                        {fieldState.error.message}
-                      </Text>
-                    )}
                   </View>
                 )}
               />
-
-              <Modal
-                visible={showIncomeParticularsModal}
-                animationType="slide"
-                transparent={false}
-                onRequestClose={() => setShowIncomeParticularsModal(false)}
-              >
-                <View className="p-4 flex-1">
-                  <View className="flex-row justify-between items-center mb-4">
-                    <Text className="text-lg font-bold">Select Income Particulars</Text>
-                    <Button 
-                      onPress={() => setShowIncomeParticularsModal(false)}
-                      className="bg-gray-200 px-3 py-1 rounded"
+            ) : (
+              <Controller
+                control={form.control}
+                name="gbud_exp_project"
+                render={({ field, fieldState }) => (
+                  <View>
+                    <Text className="text-[12px] font-PoppinsRegular">
+                      Project Title
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => setShowProjectModal(true)}
+                      className={`border rounded-lg p-3 ${
+                        fieldState.error ? "border-red-500" : "border-gray-300"
+                      }`}
                     >
-                      <Text>Close</Text>
-                    </Button>
+                      <Text
+                        className={field.value ? "text-black" : "text-gray-400"}
+                      >
+                        {field.value || "Select project..."}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
+                )}
+              />
+            )}
+          </View>
 
-                  <TextInput
-                    placeholder="Search income particulars..."
-                    value={searchTerm}
-                    onChangeText={setSearchTerm}
-                    className="border border-gray-300 rounded-lg p-3 mb-4"
-                  />
+          {/* Description */}
+          <FormInput
+            control={form.control}
+            name="gbud_add_notes"
+            label="Description"
+            placeholder="Enter related information (if any)"
+          />
 
-                  {incomeParticularsLoading ? (
-                    <Text>Loading...</Text>
-                  ) : (
-                    <ScrollView>
-                      {filteredIncomeParticulars.length > 0 ? (
-                        filteredIncomeParticulars.map((particular, index) => (
-                          <TouchableOpacity
-                            key={index}
-                            onPress={() => handleSelectIncomeParticular(particular)}
-                            className="p-3 border-b border-gray-200"
-                          >
-                            <Text>{particular}</Text>
-                          </TouchableOpacity>
-                        ))
-                      ) : (
-                        <View className="p-3">
-                          <Text>No matching particulars found</Text>
-                          <TouchableOpacity
-                            onPress={() => {
-                              form.setValue("gbud_inc_particulars", searchTerm);
-                              setShowIncomeParticularsModal(false);
-                            }}
-                            className="mt-4 bg-blue-500 p-3 rounded-lg"
-                          >
-                            <Text className="text-white text-center">Use "{searchTerm}" as new particular</Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </ScrollView>
+          {/* Expense Fields */}
+          {typeWatch === "Expense" && (
+            <>
+              <View>
+                <View className="flex-row justify-between items-center mb-2">
+                  <Text className="text-[12px] font-PoppinsRegular">
+                    Budget Items
+                  </Text>
+                  {availableBudgetItems.length > 0 && (
+                    <TouchableOpacity
+                      onPress={() => setShowBudgetItemsModal(true)}
+                      className="bg-blue-500 px-3 py-1 rounded-lg"
+                    >
+                      <Text className="text-white">Add Item</Text>
+                    </TouchableOpacity>
                   )}
                 </View>
-              </Modal>
 
-              <FormInput
-                control={form.control}
-                name="gbud_inc_amt"
-                label="Income Amount"
-                keyboardType="numeric"
-                placeholder="0.00"
-              />
-            </>
-          ) : (
-            <>
-              <FormSelect
-                control={form.control}
-                name="gbud_exp_particulars"
-                label="Expense Particulars"
-                options={expenseItems.map((item) => ({
-                  label: item.gdb_name,
-                  value: item.gdb_name,
-                }))}
-              />
+                {selectedBudgetItems.length > 0 ? (
+                  <View className="border rounded-lg border-gray-300">
+                    {selectedBudgetItems.map((item, index) => {
+                      const isRecorded = recordedBudgetItems.some(
+                        (r) => r.name === item.name
+                      );
+                      return (
+                        <View
+                          key={`${item.name}-${index}`}
+                          className={`flex-row justify-between items-center p-3 ${
+                            index !== selectedBudgetItems.length - 1
+                              ? "border-b border-gray-200"
+                              : ""
+                          }`}
+                        >
+                          <View className="flex-1">
+                            <Text className="font-medium">
+                              {item.name}
+                              {isRecorded && (
+                                <Text className="text-xs text-gray-400 ml-2">
+                                  {" (Recorded)"}
+                                </Text>
+                              )}
+                            </Text>
+                            <Text className="text-sm text-gray-500">
+                              {item.pax}
+                            </Text>
+                          </View>
+                          <View className="flex-row items-center">
+                            <Text className="mr-4">
+                              {`₱${parseFloat(
+                                item.amount.toString()
+                              ).toLocaleString()}`}
+                            </Text>
+                            {!isRecorded && (
+                              <TouchableOpacity
+                                onPress={() => handleRemoveItem(index)}
+                              >
+                                <X size={18} color="#ef4444" />
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <View className="border border-dashed border-gray-300 rounded-lg p-4 items-center">
+                    <Text className="text-gray-400">
+                      {projectWatch
+                        ? "No budget items added yet"
+                        : "Select a project first"}
+                    </Text>
+                  </View>
+                )}
+              </View>
 
-              <FormInput
-                control={form.control}
-                name="gbud_proposed_budget"
-                label="Proposed Budget"
-                keyboardType="numeric"
-                placeholder="0.00"
-              />
+              {/* Proposed Budget */}
+              <View className="mt-4 mb-4">
+                <Text className="text-[12px] font-PoppinsRegular">
+                  Proposed Budget
+                </Text>
+                <View className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <Text className="text-[12px] font-PoppinsRegular">
+                    {`₱${proposedBudget.toLocaleString()}`}
+                  </Text>
+                </View>
+              </View>
 
+              {/* Actual Expense */}
               <FormInput
                 control={form.control}
                 name="gbud_actual_expense"
                 label="Actual Expense"
                 keyboardType="numeric"
-                placeholder="0.00"
               />
 
+              {/* Reference Number */}
               <FormInput
                 control={form.control}
                 name="gbud_reference_num"
                 label="Reference Number"
-                placeholder="Optional reference number"
+                placeholder="Enter reference number"
               />
 
-              <View className="mb-6 border border-dashed border-gray-300 rounded-lg p-4">
-                <Text className="text-sm font-medium mb-2">Supporting Document</Text>
-                <MultiImageUploader
-                  mediaFiles={mediaFiles}
-                  setMediaFiles={setMediaFiles}
-                  maxFiles={5}
+              {/* Supporting Documents */}
+              <View className="mt-4">
+                <Text className="text-sm font-medium mb-1">
+                  Supporting Documents
+                </Text>
+                <MediaPicker
+                  selectedImages={mediaFiles}
+                  setSelectedImages={setMediaFiles}
+                  multiple={true}
+                  maxImages={5}
                 />
               </View>
             </>
           )}
 
-          {currentYearBudget && (
-            <View className="p-4 border border-gray-200 rounded-lg bg-gray-50 mb-6">
-              <View className="flex-row justify-between mb-2">
-                <Text className="font-medium">Current Budget:</Text>
-                <Text>
-                  ₱{Number(currentYearBudget.gbudy_budget).toLocaleString()}
-                </Text>
-              </View>
-              <View className="flex-row justify-between mb-2">
-                <Text className="font-medium">Total Expenses:</Text>
-                <Text>
-                  ₱{Number(currentYearBudget.gbudy_expenses).toLocaleString()}
-                </Text>
-              </View>
-              <View className="flex-row justify-between mb-2">
-                <Text className="font-medium">Total Income:</Text>
-                <Text>
-                  ₱{Number(currentYearBudget.gbudy_income).toLocaleString()}
-                </Text>
-              </View>
-              <View className="flex-row justify-between font-bold">
-                <Text>Remaining Balance:</Text>
-                <Text>₱{remainingBalance.toLocaleString()}</Text>
-              </View>
-
-              {(actualExpenseWatch || proposedBudgetWatch) && (
-                <View className="mt-3">
-                  <View className="flex-row justify-between">
-                    <Text className="font-medium">After This Entry:</Text>
-                    <Text
-                      className={
-                        (Number(actualExpenseWatch) || 0) > remainingBalance
-                          ? "text-red-500"
-                          : ""
-                      }
-                    >
-                      ₱
-                      {(
-                        remainingBalance - (Number(actualExpenseWatch) || 0)
-                      ).toLocaleString()}
-                    </Text>
-                  </View>
-                  {(Number(actualExpenseWatch) || 0) > remainingBalance && (
-                    <Text className="mt-1 text-red-500 font-medium">
-                      Warning: This expense will exceed your remaining budget!
-                    </Text>
-                  )}
-                </View>
-              )}
-            </View>
+          {/* Income Amount */}
+          {typeWatch === "Income" && (
+            <FormInput
+              control={form.control}
+              name="gbud_inc_amt"
+              label="Income Amount"
+              keyboardType="numeric"
+            />
           )}
         </View>
+      </ScrollView>
+
+      <Modal
+        visible={showIncomeParticularsModal}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setShowIncomeParticularsModal(false)}
+      >
+        <View className="p-4 flex-1">
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-lg font-bold">Select Income Particulars</Text>
+            <TouchableOpacity
+              onPress={() => setShowIncomeParticularsModal(false)}
+              className="bg-gray-200 px-3 py-1 rounded"
+            >
+              <Text>Close</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TextInput
+            placeholder="Search income particulars..."
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            className="border border-gray-300 rounded-lg p-3 mb-4"
+          />
+
+          {incomeParticularsLoading ? (
+            <ActivityIndicator size="small" />
+          ) : (
+            <FlatList
+              data={filteredIncomeParticulars}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => handleSelectIncomeParticular(item)}
+                  className="p-3 border-b border-gray-200"
+                >
+                  <Text>{item}</Text>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                <View className="p-3">
+                  <Text>No matching particulars found</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      form.setValue("gbud_inc_particulars", searchTerm);
+                      setShowIncomeParticularsModal(false);
+                    }}
+                    className="mt-4 bg-blue-500 p-3 rounded-lg"
+                  >
+                    <Text className="text-white text-center">
+                      {`Use "${searchTerm}" as new particular`}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              }
+            />
+          )}
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showProjectModal}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setShowProjectModal(false)}
+      >
+        <View className="p-4 flex-1">
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-lg font-bold">Select Project</Text>
+            <TouchableOpacity
+              onPress={() => setShowProjectModal(false)}
+              className="bg-gray-200 px-3 py-1 rounded"
+            >
+              <Text>Close</Text>
+            </TouchableOpacity>
+          </View>
+
+          {projectProposalsLoading ? (
+            <ActivityIndicator size="small" />
+          ) : (
+            <FlatList
+              data={projectProposals || []}
+              keyExtractor={(item) => item.gpr_id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => handleSelectProject(item.gpr_title)}
+                  className="p-3 border-b border-gray-200"
+                >
+                  <Text>{item.gpr_title}</Text>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                <View className="p-3">
+                  <Text>No projects available</Text>
+                </View>
+              }
+            />
+          )}
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showBudgetItemsModal}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setShowBudgetItemsModal(false)}
+      >
+        <View className="p-4 flex-1">
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-lg font-bold">Select Budget Items</Text>
+            <TouchableOpacity
+              onPress={() => setShowBudgetItemsModal(false)}
+              className="bg-gray-200 px-3 py-1 rounded"
+            >
+              <Text>Close</Text>
+            </TouchableOpacity>
+          </View>
+
+          {availableBudgetItems.length === 0 ? (
+            <View className="p-3">
+              <Text>No unrecorded budget items available</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={availableBudgetItems}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => handleAddBudgetItem(item)}
+                  className="p-3 border-b border-gray-200"
+                >
+                  <View className="flex-row justify-between">
+                    <Text>{item.name}</Text>
+                    <Text>₱{item.amount.toLocaleString()}</Text>
+                  </View>
+                  <Text className="text-sm text-gray-500">{item.pax}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          )}
+        </View>
+      </Modal>
+
+      {/* Submit Button */}
+      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
+        <TouchableOpacity
+          className="bg-blue-500 py-3 rounded-lg"
+          onPress={form.handleSubmit(onSubmit)}
+          disabled={
+            isSubmitting ||
+            !form.formState.isValid ||
+            (typeWatch === "Expense" && !hasUnrecordedItems())
+          }
+        >
+          <View className="flex-row justify-center items-center">
+            <Text className="text-white text-base font-semibold">
+              {isSubmitting ? "Saving..." : "Save Entry"}
+            </Text>
+            {isSubmitting && (
+              <ActivityIndicator size="small" color="white" className="ml-2" />
+            )}
+          </View>
+        </TouchableOpacity>
+
+        {!form.formState.isValid && (
+          <Text className="text-red-500 text-xs mt-2 text-center">
+            Please fill out all required fields correctly
+          </Text>
+        )}
+
+        {typeWatch === "Expense" && !hasUnrecordedItems() && (
+          <Text className="text-red-500 text-xs mt-2 text-center">
+            Note: Add at least one new budget item to save
+          </Text>
+        )}
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
 

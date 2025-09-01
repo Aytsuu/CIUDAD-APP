@@ -65,12 +65,6 @@ const DonationView = () => {
   const donCategory = watch("don_category");
   const isMonetary = donCategory === "Monetary Donations";
 
-  useEffect(() => {
-    if (isMonetary && isEditing) {
-      setValue("don_item_name", "");
-    }
-  }, [isMonetary, isEditing, setValue]);
-
   const handleSave = async (formData: any) => {
     if (!donation) return;
 

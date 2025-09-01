@@ -9,16 +9,13 @@ const CertificatesMain = () => {
     // Navigate to the appropriate route based on selection
     switch (route) {
       case 'personal':
-        // Navigate to personal & others section
-        router.push('/certificates/cert-list')
+        router.push('/(certificates)/cert-list')
         break
       case 'permit':
-        // Navigate to permit section
-        router.push('/certificates/business-list')
+        router.push('/(certificates)/business-list')
         break
       case 'certificates':
-        // Navigate to issued certificates section
-        router.push('/certificates/issued-cert-list')
+        router.push('/(certificates)/issued-cert-list')
         break
       default:
         break

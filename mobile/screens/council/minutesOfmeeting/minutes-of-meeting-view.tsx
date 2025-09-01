@@ -12,7 +12,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatAreaOfFocus } from "@/helpers/wordFormatter";
 
-
 export default function MinutesOfMeetingView() {
     const router = useRouter();
     const params = useLocalSearchParams();
@@ -21,7 +20,6 @@ export default function MinutesOfMeetingView() {
     const { mutate: archiveData, isPending: archivePending } = useArchiveMinutesOfMeeting();
     const { mutate: deleteData, isPending: deletePending} = useDeleteMinutesofMeeting();
     const { mutate: restoreData, isPending: restorePending} = useRestoreMinutesOfMeeting();
-    // State for image viewer modal
     const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false);
     const [selectedImages, setSelectedImages] = useState<{momsp_url: string, momsp_name: string}[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -47,14 +45,13 @@ export default function MinutesOfMeetingView() {
         router.push({
             pathname: '/(council)/minutes-of-meeting/mom-edit',
             params: {
-                meetingTitle: item?.mom_title,
-                meetingAgenda: item?.mom_agenda,
-                meetingDate: item?.mom_date,
-                meetingAreas: JSON.stringify(item.areas_of_focus),
-                meetingFile: item.file_url || '',
-                meetingSuppDocs: JSON.stringify(item.supporting_docs),
-                mom_id: item?.mom_id,
-                momf_id: item?.file_id
+                meetingTitle: item?.mom_title ?? '',
+                meetingAgenda: item?.mom_agenda ?? '',
+                meetingDate: item?.mom_date ?? '',
+                meetingAreas: JSON.stringify(item?.areas_of_focus ?? []),
+                meetingFile: JSON.stringify(item?.mom_file ?? []),
+                meetingSuppDocs: JSON.stringify(item?.supporting_docs ?? []),
+                mom_id: item?.mom_id?.toString(),
             }
         });
     };
@@ -89,7 +86,7 @@ export default function MinutesOfMeetingView() {
                     <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
                         {/* Meeting Date Section */}
 
-                         <View className="bg-white rounded-lg p-4 mb-4 mx-4 shadow-sm border border-gray-100">
+                         <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                             <View className="flex-row items-center mb-3 gap-2">
                                 <FileText size={20} color="gray"/>
                                 <Text className="text-lg font-semibold text-gray-800">Title</Text>
@@ -99,7 +96,7 @@ export default function MinutesOfMeetingView() {
                             </Text>
                         </View>
 
-                        <View className="bg-white rounded-lg p-4 mb-4 mx-4 shadow-sm border border-gray-100">
+                        <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                             <View className="flex-row items-center mb-2 gap-2">
                                 <Calendar size={20} color="gray" />
                                 <Text className="text-lg font-semibold text-gray-800">Meeting Date</Text>
@@ -110,20 +107,19 @@ export default function MinutesOfMeetingView() {
                         </View>
 
                         {/* Main Document Section */}
-                        {momDetails.file_url && (
-                            <View className="bg-white rounded-lg p-4 mb-4 mx-4 shadow-sm border border-gray-100">
+                        {momDetails.mom_file.momf_url && (
+                            <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                                 <View className="flex-row items-center mb-3 gap-2">
                                     <FileText size={20}  color="gray"/>
                                     <Text className="text-lg font-semibold text-gray-800">Meeting Document</Text>
                                 </View>
                                 <TouchableOpacity 
-                                    onPress={() => momDetails?.file_url && handleFileOpen(momDetails?.file_url)} 
+                                    onPress={() => momDetails?.mom_file.momf_url && handleFileOpen(momDetails?.mom_file.momf_url)} 
                                     className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex-row items-center justify-between"
                                 >
                                     <View className="flex-row items-center flex-1">
-                                        <FileText size={18} className="text-blue-600 mr-2" />
-                                        <Text className="text-blue-700 font-medium flex-1">
-                                            View Meeting Minutes
+                                        <Text className="text-blue-700 font-medium flex-1"  numberOfLines={1}  ellipsizeMode="tail" >
+                                            {momDetails?.mom_file.momf_name || 'No Document Available'}
                                         </Text>
                                     </View>
                                     <Text className="text-blue-600 text-sm">Open</Text>
@@ -132,7 +128,7 @@ export default function MinutesOfMeetingView() {
                         )}
 
                         {/* Agenda Section */}
-                        <View className="bg-white rounded-lg p-4 mb-4 mx-4 shadow-sm border border-gray-100">
+                        <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                             <View className="flex-row items-center mb-3 gap-2">
                                 <FileText size={20} color="gray"/>
                                 <Text className="text-lg font-semibold text-gray-800">Agenda</Text>
@@ -144,7 +140,7 @@ export default function MinutesOfMeetingView() {
 
                         {/* Areas of Focus Section */}
                         {momDetails.areas_of_focus && momDetails.areas_of_focus.length > 0 && (
-                            <View className="bg-white rounded-lg p-4 mb-4 mx-4 shadow-sm border border-gray-100">
+                            <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                                 <View className="flex-row items-center mb-3 gap-2">
                                     <Target size={20} color="gray"/>
                                     <Text className="text-lg font-semibold text-gray-800">Areas of Focus</Text>
@@ -162,7 +158,7 @@ export default function MinutesOfMeetingView() {
 
                         {/* Supporting Documents Section */}
                         {momDetails.supporting_docs && momDetails.supporting_docs.length > 0 && (
-                            <View className="bg-white rounded-lg p-4 mb-4 mx-4 shadow-sm border border-gray-100">
+                            <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                                 <View className="flex-row items-center mb-3 gap-2">
                                     <Paperclip size={20} color="gray" />
                                     <Text className="text-lg font-semibold text-gray-800">
@@ -186,7 +182,7 @@ export default function MinutesOfMeetingView() {
                                                         {doc.momsp_name}
                                                     </Text>
                                                     <Text className="text-gray-500 text-sm mt-1">
-                                                        {doc.momsp_type.toUpperCase()}
+                                                        {doc.momsp_type}
                                                     </Text>
                                                 </View>
                                             </View>
@@ -211,7 +207,7 @@ export default function MinutesOfMeetingView() {
                         {momDetails.mom_is_archive == false ? (
                             <View className="flex-row justify-center gap-3">
                                 <Button className="bg-blue-50 p-2 rounded-lg" onPress={() => handleEdit(momDetails)}>
-                                    <Text className='text-[#3b82f6] flex flex-row items-center gap-2'>
+                                    <Text className='text-primaryBlue flex flex-row items-center gap-2'>
                                         <Edit3 size={16} color="#3b82f6" /> Edit
                                     </Text> 
                                 </Button>

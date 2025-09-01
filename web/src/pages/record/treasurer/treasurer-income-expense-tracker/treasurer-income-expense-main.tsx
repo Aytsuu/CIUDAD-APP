@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useState } from 'react'; 
 import { Link } from 'react-router';
 import CardLayout from "@/components/ui/card/card-layout";
 import { Calendar, Search } from 'lucide-react';
@@ -11,7 +12,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 
 function IncomeExpenseMain() {
+    const [searchTerm, setSearchTerm] = useState('');
     const { data: fetchedData = [], isLoading } = useIncomeExpenseMainCard();
+
+
+    const filteredData = fetchedData.filter(tracker => {
+        const yearString = tracker.ie_main_year.toString();
+        return yearString.includes(searchTerm.toLowerCase());
+    });
     
     const styles = {
         budgetLabel: "w-[12rem]",
@@ -51,13 +59,14 @@ function IncomeExpenseMain() {
                     <Input 
                         placeholder="Search..." 
                         className="pl-10 w-full bg-white text-sm" 
+                        onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>     
             </div>
 
 
             <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4">
-                {[...fetchedData]
+                {[...filteredData]
                     .sort((a, b) => Number(b.ie_main_year) - Number(a.ie_main_year))
                     .map((tracker: any, index: any) => {
                         

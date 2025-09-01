@@ -65,31 +65,41 @@ class CouncilAttendance(models.Model):
 
 class Template(models.Model):
     temp_id = models.BigAutoField(primary_key=True)
-    temp_header = models.CharField(max_length=200)
-    # temp_below_headerContent = models.CharField(max_length=999, null=True, blank=True)
-    temp_below_headerContent = models.TextField(null=True, blank=True) 
-    temp_title = models.CharField(max_length=200)
-    temp_subtitle = models.CharField(max_length=200, null=True, blank=True)
-    temp_w_sign = models.BooleanField(default=False)
-    temp_w_seal = models.BooleanField(default=False)
-    temp_w_summon = models.BooleanField(default=False)
-    temp_paperSize = models.CharField(max_length=100)
-    temp_margin = models.CharField(max_length=100)
-    temp_filename = models.CharField(max_length=100)
-    temp_body = models.TextField(null=True, blank=True) 
-    temp_is_archive = models.BooleanField(default=False)
-    
-    pr_id = models.ForeignKey(
-        'treasurer.Purpose_And_Rates',
-        on_delete=models.CASCADE,
+    temp_contact_num = models.CharField(max_length=200)
+    temp_email = models.CharField(null=True, blank=True) 
+
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        db_column='pr_id'
-    )    
+        db_column='staff_id'
+    ) 
 
     class Meta:
         db_table = 'template'
 
+
+
+class TemplateFile(models.Model):
+    tf_id = models.BigAutoField(primary_key=True)
+    tf_name = models.CharField(max_length=500)
+    tf_type = models.CharField(max_length=500)
+    tf_path = models.CharField(max_length=500)
+    tf_url = models.CharField(max_length=500)
+    tf_logoType = models.CharField(max_length=500)
+ 
+    temp_id = models.ForeignKey(
+        Template,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='template_files',
+        db_column='temp_id'
+    )   
+
+    class Meta:
+        db_table = 'template_file'
 
 class Resolution(models.Model):
     res_num = models.BigAutoField(primary_key=True)
@@ -188,7 +198,7 @@ class MOMFile(models.Model):
     momf_type = models.CharField(max_length=100)
     momf_path = models.CharField(max_length=500)
     momf_url = models.CharField(max_length=500)
-    mom_id = models.ForeignKey(
+    mom_id = models.OneToOneField(
         'council.MinutesOfMeeting',
         on_delete=models.CASCADE,
         null=True,

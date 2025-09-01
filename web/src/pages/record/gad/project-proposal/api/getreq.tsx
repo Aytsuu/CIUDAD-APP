@@ -128,9 +128,18 @@ const transformProposalWithData = (proposal: any, logs: any[], suppDocs: any[]) 
         )[0]
       : logs[0];
     transformed.statusReason = latestLog.gprl_reason || null;
-    // Always update status from the latest log if it exists
     transformed.status = latestLog.gprl_status || transformed.status;
   }
   
   return transformed;
+};
+
+export const getAllProposalLogs = async () => {
+  try {
+    const res = await api.get(`gad/project-proposal-logs/all/`);
+    return res.data?.data ?? res.data ?? [];
+  } catch (err) {
+    console.error('API error:', err);
+    return [];
+  }
 };

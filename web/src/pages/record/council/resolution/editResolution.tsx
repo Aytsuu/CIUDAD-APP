@@ -1,156 +1,3 @@
-
-// import { useState, useEffect } from 'react';
-// import {Input} from '../../../../components/ui/input.tsx';
-// import {Label} from '../../../../components/ui/label.tsx';
-// import {DatePicker} from '../../../../components/ui/datepicker.tsx';
-// import {Textarea} from '../../../../components/ui/textarea.tsx';
-// import {Button} from '../../../../components/ui/button/button.tsx';
-// import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
-// import { FormTextArea } from '@/components/ui/form/form-text-area';
-// import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input.tsx';
-// import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
-// import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
-// import { zodResolver } from "@hookform/resolvers/zod"
-// import { useForm } from "react-hook-form"
-// import { z } from "zod"
-// import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema.ts';
-// import { usingUpdateResolution } from './queries/resolution-update-queries.tsx';
-
-
-
-
-// interface ResolutionEditFormProps {
-//     res_num: number,
-//     res_title: string,
-//     res_date_approved: string,
-//     res_area_of_focus: string[],
-//     resolution_files:{
-//         rf_id: number;
-//         rf_url: string;
-//     }[];
-//     onSuccess?: () => void; 
-// }
-
-
-// function EditResolution({ res_num, res_title, res_date_approved, res_area_of_focus, resolution_files, onSuccess }: ResolutionEditFormProps) {
-//     const [activeVideoId, setActiveVideoId] = useState<string>("");
-//     // const [mediaFiles, setMediaFiles] = useState<any[]>(() => {
-//     //     return resolution_files?.map(file => ({
-//     //         id: `existing-${file.rf_id}`,
-//     //         type: 'document',
-//     //         status: 'uploaded' as const,
-//     //         publicUrl: file.rf_url,
-//     //         previewUrl: file.rf_url,
-//     //         storagePath: '' 
-//     //     })) || [];
-//     // });
-
-//     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => 
-//         resolution_files?.map(file => ({
-//             id: `existing-${file.rf_id}`,
-//             type: 'document' as const,
-//             file: new File([], file.rf_url.split('/').pop() || `document-${file.rf_id}`), // Create dummy File object
-//             publicUrl: file.rf_url,
-//             storagePath: '', // You might want to set this if you have it
-//             status: 'uploaded' as const,
-//             previewUrl: file.rf_url
-//         })) || []
-//     );
-
-//     const [isEditing, setIsEditing] = useState(false);
-
-
-//     const form = useForm<z.infer<typeof resolutionFormSchema>>({
-//         resolver: zodResolver(resolutionFormSchema),
-//         mode: 'onChange',
-//         defaultValues: {
-//             res_title: res_title,        
-//             res_date_approved: res_date_approved,
-//             res_area_of_focus: res_area_of_focus,
-//             res_file: undefined,
-//         },
-//     });
-
-
-
-
-//     const meetingAreaOfFocus = [
-//         { id: "gad", name: "GAD" },
-//         { id: "finance", name: "Finance" },
-//         { id: "council", name: "Council" },
-//         { id: "waste", name: "Waste Committee" }
-//     ];
-
-//     const { mutate: updateEntry } = usingUpdateResolution(res_num, onSuccess);
-
-
-//     function onSubmit(values: z.infer<typeof resolutionFormSchema>) {
-//         updateEntry(values)
-//     }
-
-//     return (
-//         <Form {...form}>
-//             <form onSubmit={form.handleSubmit(onSubmit)}   className="space-y-4">
-
-//                     {/*Resolution Title*/}
-//                     <FormTextArea
-//                         control={form.control}
-//                         name="res_title"
-//                         label="Resolution Title"  
-//                         placeholder="Enter Resolution Title" 
-//                     />         
-
-//                     {/*Resolution Date Approved*/}
-//                     <FormDateTimeInput
-//                         control={form.control}
-//                         name="res_date_approved"
-//                         label="Date Approved"
-//                         type="date"    
-//                     />
-
-//                     {/*Resolution File Upload*/}
-//                     <FormField
-//                         control={form.control}
-//                         name="res_file"
-//                         render={({ }) => (
-//                             <FormItem>
-//                                 <FormControl>
-//                                     <MediaUpload
-//                                         title="Resolution File"
-//                                         description="Upload resolution documentation"
-//                                         mediaFiles={mediaFiles}
-//                                         setMediaFiles={setMediaFiles}
-//                                         activeVideoId={activeVideoId}
-//                                         setActiveVideoId={setActiveVideoId}
-//                                     />
-//                                 </FormControl>
-//                                 <FormMessage />
-//                             </FormItem>
-//                         )}
-//                     />                                
-
-//                     {/*Resolution Area of Focus*/}
-//                     <FormComboCheckbox
-//                         control={form.control}
-//                         name="res_area_of_focus"
-//                         label="Select Area of Focus"
-//                         options={meetingAreaOfFocus}
-//                     />                               
-
-//                     <div className="flex justify-end pt-5 space-x-2">
-//                         <Button type="submit">Save Entry</Button>
-//                     </div>
-//             </form>
-//         </Form>
-//     );
-// }
-
-// export default EditResolution;
-
-
-
-
-
 import { useState } from 'react';
 import {Button} from '../../../../components/ui/button/button.tsx';
 import { Form, FormControl, FormField, FormItem, FormMessage, } from "@/components/ui/form/form";
@@ -164,7 +11,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema.ts';
 import { usingUpdateResolution } from './queries/resolution-update-queries.tsx';
-
+import { Loader2 } from "lucide-react";
 
 
 
@@ -181,30 +28,18 @@ interface ResolutionEditFormProps {
 }
 
 
-function EditResolution({ res_title, res_date_approved, res_area_of_focus, onSuccess }: ResolutionEditFormProps) {
-    const [_activeVideoId, _setActiveVideoId] = useState<string>("");
-    // const [mediaFiles, setMediaFiles] = useState<any[]>(() => {
-    //     return resolution_files?.map(file => ({
-    //         id: `existing-${file.rf_id}`,
-    //         type: 'document',
-    //         status: 'uploaded' as const,
-    //         publicUrl: file.rf_url,
-    //         previewUrl: file.rf_url,
-    //         storagePath: '' 
-    //     })) || [];
-    // });
+function EditResolution({ res_num, res_title, res_date_approved, res_area_of_focus, resolution_files, onSuccess }: ResolutionEditFormProps) {
+    const [activeVideoId, setActiveVideoId] = useState<string>("");
+    const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
+        return resolution_files?.map(file => ({
+            id: `existing-${file.rf_id}`,
+            name: `file-${file.rf_id}`, 
+            type: 'document/pdf', // Default type or get from your file data
+            url: file.rf_url 
+        })) || [];
+    }); 
 
-    // const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => 
-    //     resolution_files?.map(file => ({
-    //         id: `existing-${file.rf_id}`,
-    //         type: 'document' as const,
-    //         file: new File([], file.rf_url.split('/').pop() || `document-${file.rf_id}`), // Create dummy File object
-    //         publicUrl: file.rf_url,
-    //         storagePath: '', // You might want to set this if you have it
-    //         status: 'uploaded' as const,
-    //         previewUrl: file.rf_url
-    //     })) || []
-    // );
+
 
     const [isEditing, setIsEditing] = useState(false);
     const [_isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -217,8 +52,7 @@ function EditResolution({ res_title, res_date_approved, res_area_of_focus, onSuc
         defaultValues: {
             res_title: res_title,        
             res_date_approved: res_date_approved,
-            res_area_of_focus: res_area_of_focus,
-            res_file: undefined,
+            res_area_of_focus: res_area_of_focus
         },
     });
 
@@ -232,15 +66,22 @@ function EditResolution({ res_title, res_date_approved, res_area_of_focus, onSuc
         { id: "waste", name: "Waste Committee" }
     ];
 
-    const { mutate: _updateEntry } = usingUpdateResolution(onSuccess);
+    const { mutate: updateEntry, isPending } = usingUpdateResolution(onSuccess);
 
 
-    function onSubmit(_values: z.infer<typeof resolutionFormSchema>) {
-        // updateEntry({ 
-        //     ...values, 
-        //     mediaFiles,
-        //     res_num 
-        // });
+    function onSubmit(values: z.infer<typeof resolutionFormSchema>) {
+        const files = mediaFiles.map((media) => ({
+            'id': media.id,
+            'name': media.name,
+            'type': media.type,
+            'file': media.file
+        }))             
+
+        updateEntry({ 
+            ...values, 
+            files,
+            res_num 
+        });
         setIsEditing(false);
     }
 
@@ -278,25 +119,16 @@ function EditResolution({ res_title, res_date_approved, res_area_of_focus, onSuc
                     />
 
                     {/*Resolution File Upload*/}
-                    <FormField
-                        control={form.control}
-                        name="res_file"
-                        render={({ }) => (
-                            <FormItem>
-                                <FormControl>
-                                    {/* <MediaUpload
-                                        title="Resolution File"
-                                        description="Upload resolution documentation"
-                                        mediaFiles={mediaFiles}
-                                        setMediaFiles={setMediaFiles}
-                                        activeVideoId={activeVideoId}
-                                        setActiveVideoId={setActiveVideoId}
-                                    /> */}
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />                                
+                    <MediaUpload
+                        title=""
+                        description="Upload/Edit resolution file"
+                        mediaFiles={mediaFiles}
+                        activeVideoId={activeVideoId}
+                        setMediaFiles={setMediaFiles}
+                        setActiveVideoId={setActiveVideoId}
+                        acceptableFiles='document'
+                        maxFiles={1}
+                    />                            
 
                     {/*Resolution Area of Focus*/}
                     <FormComboCheckbox
@@ -314,8 +146,16 @@ function EditResolution({ res_title, res_date_approved, res_area_of_focus, onSuc
                                     e.preventDefault(); // Prevent form submission
                                     setIsEditing(true); // Toggle editing mode
                                 }}
+                                disabled={ isPending }
                             >
-                                Edit
+                                {isPending ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    "Edit"
+                                )}
                             </Button>
                         ) : (
 

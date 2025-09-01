@@ -566,12 +566,12 @@ const IncomeandDisbursementMain = () => {
                       onError={() => console.log("Image failed to load")}
                       style={{ width: screenWidth * 0.9, height: screenHeight * 0.8 }}
                     />
-                    <View className="mt-2 flex-row justify-end gap-1 absolute bottom-2 right-2">
+                    <View className="mt-2 bg-red-500 p-1 rounded-md flex-row justify-end gap-1 absolute bottom-2 right-2">
                       {viewMode === "active" && (
                         <ConfirmationModal
                           trigger={
                             <TouchableOpacity>
-                              <Archive size={20} color="red" />
+                              <Archive size={20} color='white'/>
                             </TouchableOpacity>
                           }
                           title="Archive Image"

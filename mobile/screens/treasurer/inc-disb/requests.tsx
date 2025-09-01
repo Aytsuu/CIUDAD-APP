@@ -80,7 +80,12 @@ export const getDisbursementImages = async (archive: boolean = false, folderId?:
   }
 }
 
-export const createFolder = async (data: { type: "income" | "disbursement"; name: string; year: string, desc?: string }) => {
+export const createFolder = async (data: { 
+  type: "income" | "disbursement"; 
+  name: string; 
+  year: string; 
+  desc?: string; 
+}) => {
   const endpoint = data.type === "income" 
     ? "treasurer/income-tab/folders/" 
     : "treasurer/disbursement-tab/folders/";
@@ -100,12 +105,9 @@ export const createFolder = async (data: { type: "income" | "disbursement"; name
         dis_is_archive: false,
       };
 
-  console.log("Creating folder at endpoint:", endpoint);
-  console.log("Payload:", payload);
-
   const res = await api.post(endpoint, payload);
   return res.data;
-}
+};
 
 export const updateIncomeFolder = async (inf_num: number, data: { inf_name: string; inf_year: string , inf_desc?: string}) => {
   const res = await api.patch(`treasurer/income-tab/folders/${inf_num}/`, data)
@@ -114,15 +116,5 @@ export const updateIncomeFolder = async (inf_num: number, data: { inf_name: stri
 
 export const updateDisbursementFolder = async (dis_num: number, data: { dis_name: string; dis_year: string; dis_desc?: string }) => {
   const res = await api.patch(`treasurer/disbursement-tab/folders/${dis_num}/`, data)
-  return res.data
-}
-
-export const updateIncomeImage = async (infi_num: number, data: Partial<IncomeImage>) => {
-  const res = await api.patch(`treasurer/income-tab/images/${infi_num}/`, data)
-  return res.data
-}
-
-export const updateDisbursementImage = async (disf_num: number, data: Partial<DisbursementImage>) => {
-  const res = await api.patch(`treasurer/disbursement-tab/images/${disf_num}/`, data)
   return res.data
 }

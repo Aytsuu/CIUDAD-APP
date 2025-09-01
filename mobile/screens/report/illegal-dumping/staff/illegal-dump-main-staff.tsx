@@ -1634,13 +1634,13 @@ export default function WasteIllegalDumping() {
               value="pending"
               className={`flex-1 mx-1 ${activeTab === 'pending' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
             >
-              <Text className={`${activeTab === 'pending' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>Pending</Text>
+              <Text className={`${activeTab === 'pending' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>Reports</Text>
             </TabsTrigger>
             <TabsTrigger
               value="resolved"
               className={`flex-1 mx-1 ${activeTab === 'resolved' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
             >
-              <Text className={`${activeTab === 'resolved' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>Resolved</Text>
+              <Text className={`${activeTab === 'resolved' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>Resolved Reports</Text>
             </TabsTrigger>
           </TabsList>
 

@@ -63,7 +63,7 @@ const GADBudgetTrackerMain = () => {
           <ChevronLeft size={30} className="text-black" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-[13px]">Budget Tracker</Text>}
+      headerTitle={<Text className="text-[13px]">GAD Budget Tracker</Text>}
       >
         
         <View className="flex-1 justify-center items-center">
@@ -88,7 +88,7 @@ const GADBudgetTrackerMain = () => {
           <ChevronLeft size={30} color="black" className="text-black" />
         </TouchableOpacity>
       }
-      headerTitle={<Text>Budget Tracker</Text>}
+      headerTitle={<Text>GAD Budget Tracker</Text>}
       rightAction={
         <TouchableOpacity>
           <ChevronLeft size={30} color="black" className="text-white" />

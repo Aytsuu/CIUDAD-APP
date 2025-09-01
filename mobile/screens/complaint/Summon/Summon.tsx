@@ -1,32 +1,9 @@
 import React, { useState, useCallback, memo, useMemo } from "react";
-import {
-  TouchableOpacity,
-  View,
-  Text,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
-  StatusBar,
-  Modal,
-  Platform,
-} from "react-native";
+import { TouchableOpacity, View, Text, ScrollView, Alert, ActivityIndicator, StatusBar, Modal, Platform,} from "react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
-import {
-  ChevronLeft,
-  Calendar as CalendarIcon,
-  Clock,
-  Info,
-  CheckCircle,
-  AlertCircle,
-  Scale,
-  Send,
-  Phone,
-  Mail,
-  MapPin,
-  ChevronRight,
-  X,
-} from "lucide-react-native";
+import { ChevronLeft, Calendar as CalendarIcon, Clock, Info, CheckCircle, AlertCircle, Scale, Send, Phone, Mail, MapPin, X,} from "lucide-react-native";
 import { router } from "expo-router";
+import { useGetSummonDates, useGetSummonTimeSlots, type SummonTimeSlots } from "../queries/summonFetchQueries";
 
 // Configure calendar locale
 LocaleConfig.locales['en'] = {
@@ -42,11 +19,6 @@ LocaleConfig.locales['en'] = {
   dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
 };
 LocaleConfig.defaultLocale = 'en';
-
-type TimeSlot = {
-  id: string;
-  display: string;
-};
 
 type BarangayAvailability = {
   office_hours: string;
@@ -70,8 +42,52 @@ type BarangayAvailabilityModalProps = {
 export const Summon = () => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
+  const [dateId, setDateId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState<boolean>(false);
+  const {data: summonDates = [], isLoading} = useGetSummonDates();
+
+  // Only fetch time slots when a valid dateId is selected
+  const shouldFetchTimeSlots = !!dateId && dateId > 0;
+  const {data: availableTimeSlots = [], isLoading: istimeslotLoading} = useGetSummonTimeSlots(
+    shouldFetchTimeSlots ? dateId : 0
+  );
+
+  console.log('AvailableTime', availableTimeSlots)
+
+
+  // Create a map of available dates with their sd_id
+  const availableDatesMap = useMemo(() => {
+    const map = new Map<string, number>();
+    summonDates.forEach((summonDate) => {
+      map.set(summonDate.sd_date, summonDate.sd_id);
+    });
+    return map;
+  }, [summonDates]);
+
+  // Format time slots from API data
+  const formattedTimeSlots = useMemo(() => {
+    return availableTimeSlots.map((slot: SummonTimeSlots) => {
+      // Convert 24h time to 12h format
+      const formatTime = (timeString: string) => {
+        const [hours, minutes] = timeString.split(':');
+        const hour = parseInt(hours);
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour % 12 || 12;
+        return `${displayHour}:${minutes} ${period}`;
+      };
+
+      const startTime = formatTime(slot.st_start_time);
+      const endTime = formatTime(slot.st_end_time);
+      
+      return {
+        id: slot.st_id?.toString() || "",
+        display: `${startTime} - ${endTime}`,
+        isBooked: slot.st_is_booked,
+        rawData: slot
+      };
+    });
+  }, [availableTimeSlots]);
 
   // Barangay availability data
   const barangayAvailability: BarangayAvailability = {
@@ -87,82 +103,100 @@ export const Summon = () => {
     holidays: ["2025-01-01", "2025-12-25", "2025-12-30"]
   };
 
-  // Generate marked dates for calendar
+  // Generate marked dates for calendar - disable all dates by default, only enable fetched ones
   const markedDates = useMemo(() => {
     const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
     const marked: any = {};
-    
-    // Mark unavailable dates (past dates, holidays, non-mediation days)
-    const current = new Date(today);
-    current.setDate(current.getDate() - 7); // Start from 7 days ago
-    
-    // Look ahead 60 days
-    for (let i = 0; i < 60; i++) {
+
+    // Start from Jan 1 of current year
+    const current = new Date(today.getFullYear(), 0, 1);
+
+    for (let i = 0; i < 365; i++) {
       const date = new Date(current);
       date.setDate(current.getDate() + i);
+      const dateStr = date.toISOString().split("T")[0];
+
       
-      const dateStr = date.toISOString().split('T')[0];
-      const dayOfWeek = date.getDay();
-      const isMediationDay = [2, 3, 4].includes(dayOfWeek); // Tue=2, Wed=3, Thu=4
-      const isPast = date < today;
-      const isAdvanceNotice = date <= new Date(today.getTime() + (3 * 24 * 60 * 60 * 1000));
-      const isHoliday = barangayAvailability.holidays.includes(dateStr);
-      
-      if (isPast || isHoliday || !isMediationDay || isAdvanceNotice) {
+
+      // Disable all past dates and today
+      if (dateStr === todayStr) {
+        marked[dateStr] = {
+          disableTouchEvent: true,
+          customStyles: {
+            text: {
+              color: "#10B981",
+              fontWeight: "bold",
+            },
+          },
+        };
+        continue;
+      }
+
+      // Disable all past dates
+      if (dateStr < todayStr) {
         marked[dateStr] = {
           disabled: true,
           disableTouchEvent: true,
-          dotColor: '#EF4444',
-          selected: false
+          dotColor: "#D1D5DB",
+          selected: false,
+        };
+        continue;
+      }
+
+      // Enable only future dates from fetched availableDatesMap
+      if (availableDatesMap.has(dateStr)) {
+        marked[dateStr] = {
+          disabled: false,
+          dotColor: "#10B981",
+          selected: dateStr === selectedDate,
+        };
+      } else {
+        marked[dateStr] = {
+          disabled: true,
+          disableTouchEvent: true,
+          selected: false,
         };
       }
     }
-    
-    // Mark today if it's available
-    const todayStr = today.toISOString().split('T')[0];
-    if (!marked[todayStr]) {
-      marked[todayStr] = {
-        selected: todayStr === selectedDate,
-        selectedColor: '#10B981',
-        marked: true,
-        dotColor: 'white'
-      };
-    }
-    
-    // Mark selected date
-    if (selectedDate) {
+
+    // Ensure selected date is styled correctly if valid
+    if (selectedDate && availableDatesMap.has(selectedDate) && selectedDate > todayStr) {
       marked[selectedDate] = {
+        ...marked[selectedDate],
         selected: true,
-        selectedColor: '#10B981'
+        selectedColor: "#10B981",
       };
     }
-    
+
     return marked;
-  }, [selectedDate, barangayAvailability.holidays]);
+  }, [selectedDate, availableDatesMap]);
 
-  // Available time slots
-  const timeSlots: TimeSlot[] = [
-    { id: "09:00", display: "9:00 AM - 10:30 AM" },
-    { id: "10:30", display: "10:30 AM - 12:00 PM" },
-    { id: "13:00", display: "1:00 PM - 2:30 PM" },
-    { id: "14:30", display: "2:30 PM - 4:00 PM" },
-  ];
 
-  const handleDateSelect = useCallback((day: { dateString: string }) => {
+  const handleDateSelect = useCallback((day: any) => {
+    console.log("Day pressed:", day); // Debug log
+    
     const dateStr = day.dateString;
-    const date = new Date(dateStr);
-    const today = new Date();
-    const isPast = date < today;
-    const isAdvanceNotice = date <= new Date(today.getTime() + (3 * 24 * 60 * 60 * 1000));
-    const isHoliday = barangayAvailability.holidays.includes(dateStr);
-    const dayOfWeek = date.getDay();
-    const isMediationDay = [2, 3, 4].includes(dayOfWeek);
-
-    if (!isPast && !isHoliday && isMediationDay && !isAdvanceNotice) {
-      setSelectedDate(dateStr);
+    
+    // Check if the selected date is available
+    if (availableDatesMap.has(dateStr)) {
+      const sd_id = availableDatesMap.get(dateStr);
+      if (sd_id !== undefined) {
+        setSelectedDate(dateStr);
+        setSelectedTimeSlot("");
+        setDateId(sd_id); 
+      } else {
+        setSelectedDate("");
+        setSelectedTimeSlot("");
+        setDateId(null);
+      }
+    } else {
+      console.log("Date not available:", dateStr);
+      setSelectedDate("");
       setSelectedTimeSlot("");
+      setDateId(null); 
     }
-  }, [barangayAvailability.holidays]);
+  }, [availableDatesMap]);
 
   const handleSubmit = useCallback(async () => {
     if (!selectedDate || !selectedTimeSlot) {
@@ -178,11 +212,12 @@ export const Summon = () => {
       const selectedDay = new Date(selectedDate);
       const dayName = selectedDay.toLocaleDateString('en-US', { weekday: 'long' });
       const formattedDate = selectedDay.toLocaleDateString();
-      const selectedTime = timeSlots.find(t => t.id === selectedTimeSlot);
+      const selectedTime = formattedTimeSlots.find(t => t.id === selectedTimeSlot);
+      const sd_id = availableDatesMap.get(selectedDate);
       
       Alert.alert(
         "Mediation Scheduled Successfully",
-        `Your mediation session has been scheduled for ${dayName}, ${formattedDate} at ${selectedTime?.display}. All parties will be notified.`,
+        `Your mediation session has been scheduled for ${dayName}, ${formattedDate} at ${selectedTime?.display}. \nSD_ID: ${sd_id}`,
         [
           {
             text: "OK", 
@@ -195,7 +230,7 @@ export const Summon = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedDate, selectedTimeSlot, timeSlots]);
+  }, [selectedDate, selectedTimeSlot, formattedTimeSlots, availableDatesMap]);
 
   const selectedDayInfo = selectedDate ? new Date(selectedDate) : null;
 
@@ -244,58 +279,65 @@ export const Summon = () => {
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="p-6">
-          {/* Calendar Card */}
-          <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200">
-            <Calendar
-              current={new Date().toISOString()}
-              minDate={new Date()}
-              onDayPress={handleDateSelect}
-              markedDates={markedDates}
-              theme={{
-                backgroundColor: '#ffffff',
-                calendarBackground: '#ffffff',
-                textSectionTitleColor: '#6B7280',
-                selectedDayBackgroundColor: '#10B981',
-                selectedDayTextColor: '#ffffff',
-                todayTextColor: '#10B981',
-                dayTextColor: '#374151',
-                textDisabledColor: '#D1D5DB',
-                dotColor: '#EF4444',
-                selectedDotColor: '#ffffff',
-                arrowColor: '#10B981',
-                monthTextColor: '#111827',
-                textDayFontWeight: '500',
-                textMonthFontWeight: 'bold',
-                textDayHeaderFontWeight: '500',
-                textDayFontSize: 14,
-                textMonthFontSize: 16,
-                textDayHeaderFontSize: 12
-              }}
-              enableSwipeMonths={true}
-              hideExtraDays={true}
-              firstDay={0} // Start week on Sunday
-            />
-            
-            {/* Legend */}
-            <View className="flex-row justify-center mt-6 space-x-6">
-              <View className="flex-row items-center">
-                <View className="w-3 h-3 bg-green-600 rounded-full mr-2" />
-                <Text className="text-xs text-gray-600">Selected</Text>
-              </View>
-              <View className="flex-row items-center">
-                <View className="w-3 h-3 border-2 border-green-500 rounded-full mr-2" />
-                <Text className="text-xs text-gray-600">Today</Text>
-              </View>
-              <View className="flex-row items-center">
-                <View className="w-3 h-3 bg-gray-100 border border-gray-200 rounded-full mr-2" />
-                <Text className="text-xs text-gray-600">Available</Text>
-              </View>
-              <View className="flex-row items-center">
-                <View className="w-3 h-3 bg-red-500 rounded-full mr-2" />
-                <Text className="text-xs text-gray-600">Unavailable</Text>
-              </View>
+          {/* Loading indicator */}
+          {isLoading && (
+            <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200 items-center justify-center">
+              <ActivityIndicator size="large" color="#10B981" />
+              <Text className="text-gray-600 mt-3">Loading available dates...</Text>
             </View>
+          )}         
+
+          {/* Calendar Card */}
+          {!isLoading && (
+            <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200">
+              <Calendar
+                current={new Date().toISOString().split("T")[0]}
+                minDate={summonDates.length > 0 ? summonDates[0].sd_date : new Date().toISOString()}
+                onDayPress={handleDateSelect}
+                markedDates={markedDates}
+                theme={{
+                  backgroundColor: '#ffffff',
+                  calendarBackground: '#ffffff',
+                  textSectionTitleColor: '#6B7280',
+                  selectedDayBackgroundColor: '#10B981',
+                  selectedDayTextColor: '#ffffff',
+                  todayTextColor: '#10B981',
+                  dayTextColor: '#374151',
+                  textDisabledColor: '#D1D5DB',
+                  dotColor: '#EF4444',
+                  selectedDotColor: '#ffffff',
+                  arrowColor: '#10B981',
+                  monthTextColor: '#111827',
+                  textDayFontWeight: '500',
+                  textMonthFontWeight: 'bold',
+                  textDayHeaderFontWeight: '500',
+                  textDayFontSize: 14,
+                  textMonthFontSize: 16,
+                  textDayHeaderFontSize: 12
+                }}
+                enableSwipeMonths={true}
+                hideExtraDays={true}
+                firstDay={0} // Start week on Sunday
+              />
+              
+              {/* Legend */}
+              <View className="flex-row justify-center mt-6 space-x-6 gap-2">
+                <View className="flex-row items-center">
+                  <View className="w-3 h-3 bg-green-600 rounded-full" />
+                  <Text className="text-xs text-gray-600">Selected</Text>
+                </View>
+                <View className="flex-row items-center">
+                  <View className="w-3 h-3 border-2 border-green-500 rounded-full" />
+                  <Text className="text-xs text-gray-600">Today</Text>
+                </View>
+                <View className="flex-row items-center">
+                  <View className="w-3 h-3 bg-gray-100 border border-gray-200 rounded-full" />
+                  <Text className="text-xs text-gray-600">Available</Text>
+                </View>
+              </View>
           </View>
+
+          )}
 
           {/* Selected Date Info Card */}
           {selectedDayInfo && (
@@ -321,16 +363,6 @@ export const Summon = () => {
                 </View>
                 
                 <View className="flex-row items-start">
-                  <View className="bg-green-100 p-1.5 rounded-full mr-3 mt-0.5">
-                    <Scale size={16} color="#10B981" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-sm font-medium text-gray-500">Mediation Hours</Text>
-                    <Text className="text-gray-700">{barangayAvailability.mediation_schedule.hours}</Text>
-                  </View>
-                </View>
-                
-                <View className="flex-row items-start">
                   <View className="bg-red-100 p-1.5 rounded-full mr-3 mt-0.5">
                     <AlertCircle size={16} color="#EF4444" />
                   </View>
@@ -343,8 +375,8 @@ export const Summon = () => {
             </View>
           )}
 
-          {/* Time Slots Card */}
-          {selectedDate && (
+          {/* Time Slots Card - Only show when a date is selected AND we have a valid dateId */}
+            {selectedDate && dateId && shouldFetchTimeSlots && (
             <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200">
               <View className="flex-row items-center mb-4">
                 <View className="bg-green-100 p-2 rounded-full mr-3">
@@ -355,36 +387,58 @@ export const Summon = () => {
                 </Text>
               </View>
               
-              <View className="space-y-3">
-                {timeSlots.map((slot) => (
-                  <TouchableOpacity
-                    key={slot.id}
-                    onPress={() => setSelectedTimeSlot(slot.id)}
-                    className={`p-4 rounded-xl border-2 mb-2 ${
-                      selectedTimeSlot === slot.id
-                        ? "border-green-500 bg-green-50"
-                        : "border-gray-200 bg-gray-50"
-                    }`}
-                    activeOpacity={0.7}
-                  >
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-row items-center">
-                        <Clock size={18} color="#6B7280" />
-                        <Text className={`font-semibold ml-3 ${
-                          selectedTimeSlot === slot.id ? "text-green-600" : "text-gray-900"
-                        }`}>
-                          {slot.display}
-                        </Text>
-                      </View>
-                      {selectedTimeSlot === slot.id && (
-                        <View className="bg-green-500 p-1 rounded-full">
-                          <CheckCircle size={16} color="white" />
+              {istimeslotLoading ? (
+                <View className="py-8 items-center justify-center">
+                  <ActivityIndicator size="small" color="#10B981" />
+                  <Text className="text-gray-600 mt-3">Loading time slots...</Text>
+                </View>
+              ) : formattedTimeSlots.length === 0 ? (
+                <View className="py-8 items-center justify-center">
+                  <AlertCircle size={32} color="#6B7280" />
+                  <Text className="text-gray-600 mt-3 text-center">
+                    No available time slots for this date
+                  </Text>
+                </View>
+              ) : (
+                <View className="space-y-3">
+                  {formattedTimeSlots.map((slot) => (
+                    <TouchableOpacity
+                      key={slot.id}
+                      onPress={() => !slot.isBooked && setSelectedTimeSlot(slot.id)}
+                      className={`p-4 rounded-xl border-2 mb-2 ${
+                        selectedTimeSlot === slot.id
+                          ? "border-green-500 bg-green-50"
+                          : slot.isBooked
+                          ? "border-gray-300 bg-gray-100 opacity-60"
+                          : "border-gray-200 bg-gray-50"
+                      }`}
+                      activeOpacity={0.7}
+                      disabled={slot.isBooked}
+                    >
+                      <View className="flex-row items-center justify-between">
+                        <View className="flex-row items-center">
+                          <Clock size={18} color={slot.isBooked ? "#9CA3AF" : "#6B7280"} />
+                          <Text className={`font-semibold ml-3 ${
+                            selectedTimeSlot === slot.id 
+                              ? "text-green-600" 
+                              : slot.isBooked
+                              ? "text-gray-400"
+                              : "text-gray-900"
+                          }`}>
+                            {slot.display}
+                          </Text>
                         </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                        {selectedTimeSlot === slot.id && (
+                          <View className="bg-green-500 p-1 rounded-full">
+                            <CheckCircle size={16} color="white" />
+                          </View>
+                        )}
+                       
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
           )}
 
@@ -411,7 +465,7 @@ export const Summon = () => {
                 <View className="flex-row">
                   <Text className="text-sm font-medium text-green-800 w-24">Time:</Text>
                   <Text className="text-sm text-green-700 flex-1">
-                    {timeSlots.find(t => t.id === selectedTimeSlot)?.display}
+                    {formattedTimeSlots.find(t => t.id === selectedTimeSlot)?.display}
                   </Text>
                 </View>
                 
@@ -431,11 +485,11 @@ export const Summon = () => {
             activeOpacity={0.8}
             className={`rounded-2xl p-5 items-center justify-center mb-8 ${
               isSubmitting || !selectedDate || !selectedTimeSlot
-                ? "bg-blue-500"
+                ? "bg-gray-400"
                 : "bg-green-600"
             }`}
             style={{
-              shadowColor: "#ffffff",
+              shadowColor: "#10B981",
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.3,
               shadowRadius: 8,
@@ -528,39 +582,7 @@ const BarangayAvailabilityModal: React.FC<BarangayAvailabilityModalProps> = memo
           <Text className="text-gray-700 text-base leading-6">
             {availability.office_hours}
           </Text>
-        </View>
-
-        {/* Mediation Schedule Card */}
-        <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200">
-          <View className="flex-row items-center mb-4">
-            <View className="bg-green-100 p-2 rounded-full mr-3">
-              <Scale size={20} color="#10B981" />
-            </View>
-            <Text className="text-lg font-bold text-gray-900">
-              Mediation Sessions
-            </Text>
-          </View>
-          <View className="space-y-4">
-            <View className="flex-row">
-              <Text className="text-sm font-medium text-gray-500 w-24">Days:</Text>
-              <Text className="text-gray-700 text-sm flex-1">
-                {availability.mediation_schedule.days.join(", ")}
-              </Text>
-            </View>
-            <View className="flex-row">
-              <Text className="text-sm font-medium text-gray-500 w-24">Hours:</Text>
-              <Text className="text-gray-700 text-sm flex-1">
-                {availability.mediation_schedule.hours}
-              </Text>
-            </View>
-            <View className="flex-row">
-              <Text className="text-sm font-medium text-gray-500 w-24">Break:</Text>
-              <Text className="text-gray-700 text-sm flex-1">
-                {availability.mediation_schedule.break}
-              </Text>
-            </View>
-          </View>
-        </View>
+        </View>      
 
         {/* Contact Information Card */}
         <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200">

@@ -1,68 +1,46 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Plus, X, Wallet } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog/dialog";
-import {
-  useAddProjectProposal,
-  // useAddSupportDocument,
-} from "./queries/addqueries";
+import {Dialog,DialogContent,DialogHeader,DialogTitle,} from "@/components/ui/dialog/dialog";
+import {useAddProjectProposal,useAddSupportDocument,} from "./queries/addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { useGetStaffList } from "./queries/fetchqueries";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
-import { ProjectProposalSchema } from "@/form-schema/gad-projprop-create-form-schema";
+import { ProjectProposalSchema, ProjectProposalFormValues } from "@/form-schema/gad-projprop-create-form-schema";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { Form } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import z from "zod";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
 import { generateProposalPdf } from "./personalized-compo/pdfGenerator";
-import { Signatory, ProjectProposalFormProps } from "./projprop-types";
+import { Signatory, ProjectProposalFormProps, ProjectProposalInput, FileInput, SupportDoc } from "./projprop-types";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
+import { useAuth } from "@/context/AuthContext";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
-export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
-  existingProposal,
-}) => {
+export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSuccess, existingProposal }) => {
+  const { user } = useAuth();
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [supportingDocs, setSupportingDocs] = useState<MediaUploadType>([]);
-  const [headerImageUrl, _setHeaderImageUrl] = useState<string | null>(null);
   const [pdfPreview, setPdfPreview] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  // const addSupportDocMutation = useAddSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-  const addMutation = useAddProjectProposal();
+  const addMutation = useAddProjectProposal(!!existingProposal);
+  const addSupportDocMutation = useAddSupportDocument();
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
-  const {
-    data: budgetEntries = [],
-    isLoading: isBudgetLoading,
-  } = useGADBudgets(new Date().getFullYear().toString());
+  const { data: budgetEntries = [], isLoading: isBudgetLoading } = useGADBudgets(new Date().getFullYear().toString());
   const { data: yearBudgets } = useGetGADYearBudgets();
   const currentYear = new Date().getFullYear().toString();
-  const currentYearBudget = yearBudgets?.find(
-    (budget) => budget.gbudy_year === currentYear
-  )?.gbudy_budget;
+  const currentYearBudget = yearBudgets?.find((budget) => budget.gbudy_year === currentYear)?.gbudy_budget;
 
   const latestExpenseWithBalance = budgetEntries
-    .filter(
-      (entry) =>
-        entry.gbud_type === "Expense" &&
-        !entry.gbud_is_archive &&
-        entry.gbud_remaining_bal != null
-    )
-    .sort(
-      (a, b) =>
-        new Date(b.gbud_datetime).getTime() -
-        new Date(a.gbud_datetime).getTime()
-    )[0];
+    .filter((entry) => !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
+    .sort((a, b) => new Date(b.gbud_datetime).getTime() - new Date(a.gbud_datetime).getTime())[0];
 
   const availableBudget = latestExpenseWithBalance
     ? Number(latestExpenseWithBalance.gbud_remaining_bal) === 0
@@ -74,7 +52,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     ? Number(currentYearBudget)
     : 0;
 
-  const form = useForm<z.infer<typeof ProjectProposalSchema>>({
+  const form = useForm<ProjectProposalFormValues>({
     resolver: zodResolver(ProjectProposalSchema),
     defaultValues: {
       projectTitle: "",
@@ -85,15 +63,83 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
       venue: "",
       budgetItems: [{ name: "", pax: "", amount: "0" }],
       monitoringEvaluation: "",
-      signatories: [{ name: "", position: "", type: "prepared" }],
+      signatories: [
+        { name: "", position: "", type: "prepared" },
+        { name: "", position: "Treasurer", type: "approved" },
+      ],
       paperSize: "letter",
       headerImage: [],
       supportingDocs: [],
+      status: "Pending",
+      statusReason: "",
     },
   });
 
-  const { control, setValue, watch, handleSubmit } = form;
+  useEffect(() => {
+    const userStaff = user?.staff;
+    const userFullName = userStaff?.rp?.per
+      ? `${userStaff.rp.per.per_fname} ${userStaff.rp.per.per_lname}`.trim()
+      : user?.username || "";
+    const userPosition = userStaff?.pos?.pos_title || "Staff";
+    const treasurer = staffList.find((s) => s.position === "Treasurer");
+    const treasurerName = treasurer?.full_name || "";
 
+    if (!isStaffLoading && staffList.length > 0) {
+      form.reset({
+        projectTitle: existingProposal?.projectTitle || "",
+        background: existingProposal?.background || "",
+        objectives: existingProposal?.objectives?.length ? existingProposal.objectives : [""],
+        participants: existingProposal?.participants?.length
+          ? existingProposal.participants.map((p: { category: string; count: number }) => ({ category: p.category, count: String(p.count) }))
+          : [{ category: "", count: "0" }],
+        date: existingProposal?.date || "",
+        venue: existingProposal?.venue || "",
+        budgetItems: existingProposal?.budgetItems?.length
+          ? existingProposal.budgetItems.map((b: { name: string; pax: string; amount: number }) => ({ name: b.name, pax: b.pax, amount: String(b.amount) }))
+          : [{ name: "", pax: "", amount: "0" }],
+        monitoringEvaluation: existingProposal?.monitoringEvaluation || "",
+        signatories: existingProposal?.signatories?.length
+          ? existingProposal.signatories
+          : [
+              { name: userFullName, position: userPosition, type: "prepared" },
+              { name: treasurerName, position: "Treasurer", type: "approved" },
+            ],
+        paperSize: existingProposal?.paperSize || "letter",
+        headerImage: existingProposal?.headerImage ? [existingProposal.headerImage] : [],
+        supportingDocs: existingProposal?.supportDocs || [],
+        status: existingProposal?.status || "Pending",
+        statusReason: existingProposal?.statusReason || "",
+      });
+      setMediaFiles(
+        existingProposal?.headerImage
+          ? [{
+              id: "existing",
+              name: existingProposal.headerImage.split('/').pop() || "header-image.jpg",
+              type: "image/jpeg",
+              file: existingProposal.headerImage,
+              url: existingProposal.headerImage,
+            }]
+          : []
+      );
+      setSupportingDocs(
+        existingProposal?.supportDocs?.map((doc: SupportDoc) => ({
+          id: `doc-${doc.psd_id}`,
+          name: doc.psd_name,
+          type: doc.psd_type,
+          file: doc.psd_url,
+          url: doc.psd_url,
+        })) || []
+      );
+    }
+  }, [isStaffLoading, staffList, user, existingProposal, form]);
+
+  useEffect(() => {
+    return () => {
+      if (pdfPreview) URL.revokeObjectURL(pdfPreview);
+    };
+  }, [pdfPreview]);
+
+  const { control, setValue, watch } = form;
   const projectTitle = watch("projectTitle");
   const background = watch("background");
   const objectives = watch("objectives");
@@ -104,6 +150,11 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const monitoringEvaluation = watch("monitoringEvaluation");
   const signatories = watch("signatories");
   const paperSize = watch("paperSize");
+
+  const proposedBudget = budgetItems.reduce((sum: number, item: { name: string; pax: string; amount: string }) => {
+    const pax = parseInt(item.pax) || 1;
+    return sum + (parseInt(item.amount) || 0) * pax;
+  }, 0);
 
   const participantCategories = [
     "Women",
@@ -119,63 +170,46 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   ];
 
   const addParticipant = () => {
-    const newParticipants = [...participants, { category: "", count: "0" }];
-    setValue("participants", newParticipants);
+    setValue("participants", [...participants, { category: "", count: "0" }]);
   };
 
   const removeParticipant = (index: number) => {
     if (participants.length > 1) {
-      const newParticipants = [...participants];
-      newParticipants.splice(index, 1);
-      setValue("participants", newParticipants);
+      setValue("participants", participants.filter((_: { category: string; count: string }, i: number) => i !== index));
     }
   };
 
   const addBudgetItem = () => {
-    const newItems = [...budgetItems, { name: "", pax: "", amount: "0" }];
-    setValue("budgetItems", newItems);
+    setValue("budgetItems", [...budgetItems, { name: "", pax: "", amount: "0" }]);
   };
 
   const removeBudgetItem = (index: number) => {
     if (budgetItems.length > 1) {
-      const newItems = [...budgetItems];
-      newItems.splice(index, 1);
-      setValue("budgetItems", newItems);
+      setValue("budgetItems", budgetItems.filter((_: { name: string; pax: string; amount: string }, i: number) => i !== index));
     }
   };
 
   const addObjective = () => {
-    const newObjectives = [...objectives, ""];
-    setValue("objectives", newObjectives);
+    setValue("objectives", [...objectives, ""]);
   };
 
   const removeObjective = (index: number) => {
     if (objectives.length > 1) {
-      const newObjectives = [...objectives];
-      newObjectives.splice(index, 1);
-      setValue("objectives", newObjectives);
+      setValue("objectives", objectives.filter((_: string, i: number) => i !== index));
     }
   };
 
   const addSignatory = (type: "prepared" | "approved") => {
-    const newSignatories = [...signatories, { name: "", position: "", type }];
-    setValue("signatories", newSignatories);
+    setValue("signatories", [...signatories, { name: "", position: "", type }]);
   };
 
   const removeSignatory = (index: number) => {
     if (signatories.length > 1) {
-      const newSignatories = [...signatories];
-      newSignatories.splice(index, 1);
-      setValue("signatories", newSignatories);
+      setValue("signatories", signatories.filter((_: Signatory, i: number) => i !== index));
     }
   };
 
-  const updateSignatory = (
-    index: number,
-    field: keyof Signatory,
-    value: string,
-    position?: string
-  ) => {
+  const updateSignatory = (index: number, field: keyof Signatory, value: string, position?: string) => {
     setValue(`signatories.${index}.${field}`, value);
     if (position && field === "name") {
       setValue(`signatories.${index}.position`, position);
@@ -196,11 +230,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
           monitoringEvaluation,
           signatories,
           paperSize,
-          headerImage: headerImageUrl,
+          headerImage: mediaFiles[0]?.url || null,
         },
         preview
       );
-
       if (preview && pdfUrl) {
         setPdfPreview(pdfUrl);
         setIsPreviewOpen(true);
@@ -216,106 +249,84 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     setIsPreviewOpen(false);
   };
 
-  const handleSave = async (_data: z.infer<typeof ProjectProposalSchema>) => {
-    // try {
-    //   setErrorMessage(null);
+  const onSubmit = async (data: ProjectProposalFormValues) => {
+  if (proposedBudget > availableBudget) {
+    setErrorMessage(`Proposed budget (₱${proposedBudget.toLocaleString()}) exceeds available budget (₱${availableBudget.toLocaleString()})`);
+    return;
+  }
 
-    //   const headerImage =
-    //     mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
-
-    //   const validSupportDocs = supportingDocs.filter(
-    //     (doc) =>
-    //       doc.status === "uploaded" &&
-    //       doc.publicUrl &&
-    //       doc.storagePath &&
-    //       doc.file?.name &&
-    //       doc.file?.type
-    //   );
-
-    //   const proposalData = {
-    //     projectTitle: data.projectTitle,
-    //     background: data.background,
-    //     objectives: data.objectives.filter((obj) => obj.trim() !== ""),
-    //     participants: data.participants.filter((p) => p.category.trim() !== ""),
-    //     date: data.date,
-    //     venue: data.venue,
-    //     budgetItems: data.budgetItems.filter((item) => item.name.trim() !== ""),
-    //     monitoringEvaluation: data.monitoringEvaluation,
-    //     signatories: data.signatories.filter((s) => s.name.trim() !== ""),
-    //     gpr_header_img: headerImage,
-    //     paperSize: paperSize,
-    //     staff_id: null,
-    //   };
-
-    //   const proposalResponse = await addMutation.mutateAsync(proposalData);
-
-    //   if (validSupportDocs.length > 0) {
-    //     await Promise.all(
-    //       validSupportDocs.map((doc) => {
-    //         const fileData = {
-    //           psd_url: doc.publicUrl!,
-    //           psd_path: doc.storagePath!,
-    //           psd_name: doc.file.name,
-    //           psd_type: doc.file.type,
-    //         };
-    //         return addSupportDocMutation.mutateAsync({
-    //           gprId: proposalResponse.gprId,
-    //           fileData,
-    //         });
-    //       })
-    //     );
-    //   }
-
-    //   form.reset();
-    //   setMediaFiles([]);
-    //   setSupportingDocs([]);
-    //   setHeaderImageUrl(null);
-    //   onSuccess();
-    // } catch (error) {
-    //   console.error("Error in handleSave:", error);
-    //   setErrorMessage(
-    //     "Failed to save proposal. Please check the form data and try again."
-    //   );
-    // }
-  };
-
-  useEffect(() => {
-    if (existingProposal) {
-      const suppDocs =
-        existingProposal.gprSuppDocs?.map((url: string) => ({
-          id: `img-${Math.random().toString(36).substr(2, 9)}`,
-          type: "image" as const,
-          publicUrl: url,
-          status: "uploaded" as const,
-          previewUrl: url,
-          file: new File([], url.split("/").pop() || "image.jpg"),
-        })) || [];
-
-      setSupportingDocs(suppDocs);
-
-      // if (existingProposal?.gpr_header_img) {
-      //   setHeaderImageUrl(existingProposal.gpr_header_img);
-      //   setMediaFiles([
-      //     {
-      //       id: "existing",
-      //       type: "image",
-      //       file: new File([], "existing.jpg"),
-      //       publicUrl: existingProposal.gpr_header_img,
-      //       status: "uploaded",
-      //       previewUrl: existingProposal.gpr_header_img,
-      //     },
-      //   ]);
-      // }
+  try {
+    setErrorMessage(null);
+    let gpr_header_img: string | null = null;    
+    if (mediaFiles.length > 0 && mediaFiles[0].file) {
+      if (mediaFiles[0].file.startsWith('data:')) {
+        gpr_header_img = mediaFiles[0].file; 
+      }
+      else {
+        gpr_header_img = mediaFiles[0].file; 
+      }
     }
-  }, [existingProposal]);
+    else if (existingProposal?.headerImage && mediaFiles.length === 0) {
+      gpr_header_img = null; 
+    }
+    else if (existingProposal?.headerImage) {
+      gpr_header_img = existingProposal.headerImage;
+    }
 
-  useEffect(() => {
-    return () => {
-      if (headerImageUrl && headerImageUrl.startsWith("blob:"))
-        URL.revokeObjectURL(headerImageUrl);
-      if (pdfPreview) URL.revokeObjectURL(pdfPreview);
+    const proposalData: ProjectProposalInput = {
+      gprId: existingProposal?.gprId,
+      gpr_title: data.projectTitle,
+      background: data.background,
+      objectives: data.objectives.filter((obj: string) => obj.trim() !== ""),
+      participants: data.participants.filter((p: { category: string; count: string }) => p.category.trim() !== ""),
+      date: data.date,
+      venue: data.venue,
+      budgetItems: data.budgetItems.filter((item: { name: string; pax: string; amount: string }) => item.name.trim() !== ""),
+      monitoringEvaluation: data.monitoringEvaluation,
+      signatories: data.signatories.filter((s: Signatory) => s.name.trim() !== ""),
+      gpr_header_img,
+      staffId: user?.staff?.staff_id || null,
+      // staffId: "00002250821",
+      gprIsArchive: existingProposal?.gprIsArchive || false,
+      supportDocs: existingProposal?.supportDocs || [],
+      status: data.status || "Pending",
+      statusReason: data.statusReason || null,
+      gpr_page_size: data.paperSize,
     };
-  }, [headerImageUrl, pdfPreview]);
+
+    console.log("Sending proposalData:", JSON.stringify(proposalData, null, 2));
+    const proposalResponse = await addMutation.mutateAsync(proposalData);
+
+    // Handle new supporting documents
+    const newFiles: FileInput[] = supportingDocs
+      .filter((doc): doc is { id: string; name: string; type: string; file: string; url?: string } => 
+        !!doc.file && !existingProposal?.supportDocs?.some((sd: SupportDoc) => sd.psd_url === doc.url))
+      .map((doc) => ({
+        name: doc.name,
+        type: doc.type,
+        file: doc.file,
+      }));
+
+    if (newFiles.length > 0) {
+      await addSupportDocMutation.mutateAsync({
+        gpr_id: proposalResponse.gprId,
+        files: newFiles,
+      });
+    }
+
+    form.reset();
+    setMediaFiles([]);
+    setSupportingDocs([]);
+    onSuccess();
+  } catch (error: any) {
+    console.error("Error in handleSave:", error);
+    setErrorMessage(
+      error.response?.data
+        ? JSON.stringify(error.response.data)
+        : "Failed to save proposal. Please check the form data and try again."
+    );
+  }
+};
 
   return (
     <div className="container mx-auto px-4 sm:px-6 max-w-2xl md:max-w-3xl lg:max-w-4xl">
@@ -327,85 +338,47 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
       <div className="mb-6">
         <label className="block text-sm font-medium mb-2">Paper Size</label>
         <div className="flex flex-wrap gap-4">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="paperSize"
-              checked={paperSize === "a4"}
-              onChange={() => {
-                setValue("paperSize", "a4");
-              }}
-            />
-            A4
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="paperSize"
-              checked={paperSize === "letter"}
-              onChange={() => {
-                setValue("paperSize", "letter");
-              }}
-            />
-            Letter
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="paperSize"
-              checked={paperSize === "legal"}
-              onChange={() => {
-                setValue("paperSize", "legal");
-              }}
-            />
-            Legal
-          </label>
+          {["a4", "letter", "legal"].map((size) => (
+            <label key={size} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="paperSize"
+                checked={paperSize === size}
+                onChange={() => setValue("paperSize", size as "a4" | "letter" | "legal")}
+              />
+              {size.charAt(0).toUpperCase() + size.slice(1)}
+            </label>
+          ))}
         </div>
       </div>
 
       <Form {...form}>
-        <form
-          onSubmit={handleSubmit(handleSave)}
-          className="flex flex-col gap-6"
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Header Image (optional)
-              </label>
+              <label className="block text-sm font-medium mb-2">Header Image (optional)</label>
               <MediaUpload
                 title=""
                 description="Upload an image for the proposal header"
                 mediaFiles={mediaFiles}
+                setMediaFiles={setMediaFiles}
                 activeVideoId={activeVideoId}
-                setMediaFiles={(filesOrUpdater) => {
-                  setMediaFiles((prev) => {
-                    const newFiles =
-                      typeof filesOrUpdater === "function"
-                        ? filesOrUpdater(prev)
-                        : filesOrUpdater;
-                    // const imageUrl =
-                    //   newFiles[0]?.publicUrl || newFiles[0]?.previewUrl || null;
-                    // setHeaderImageUrl(imageUrl);
-                    return newFiles;
-                  });
-                }}
                 setActiveVideoId={setActiveVideoId}
                 maxFiles={1}
+                acceptableFiles="image"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Supporting Documents (optional)
-              </label>
+              <label className="block text-sm font-medium mb-2">Supporting Documents (optional)</label>
               <MediaUpload
                 title=""
                 description="Upload any supporting documents for your proposal"
                 mediaFiles={supportingDocs}
-                activeVideoId={activeVideoId}
                 setMediaFiles={setSupportingDocs}
+                activeVideoId={activeVideoId}
                 setActiveVideoId={setActiveVideoId}
+                acceptableFiles="all"
               />
             </div>
 
@@ -430,15 +403,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Objectives
-              </label>
+              <label className="block text-sm font-medium mb-2">Objectives</label>
               <div className="space-y-2">
-                {objectives.map((_, index) => (
-                  <div
-                    key={index}
-                    className="flex flex-col sm:flex-row gap-2 items-center"
-                  >
+                {objectives.map((_objective: string, index: number) => (
+                  <div key={index} className="flex flex-col sm:flex-row gap-2 items-center">
                     <FormInput
                       control={control}
                       name={`objectives.${index}`}
@@ -450,7 +418,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                       type="button"
                       variant="destructive"
                       size="sm"
-                      className="mt-2"
                       onClick={() => removeObjective(index)}
                       disabled={objectives.length <= 1}
                     >
@@ -471,23 +438,15 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Participants
-              </label>
+              <label className="block text-sm font-medium mb-2">Participants</label>
               <div className="space-y-2">
-                {participants.map((_, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"
-                  >
+                {participants.map((_participant: { category: string; count: string }, index: number) => (
+                  <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
                     <FormSelect
                       control={control}
                       name={`participants.${index}.category`}
                       label=""
-                      options={participantCategories.map((cat) => ({
-                        id: cat,
-                        name: cat,
-                      }))}
+                      options={participantCategories.map((cat) => ({ id: cat, name: cat }))}
                     />
                     <FormInput
                       control={control}
@@ -520,23 +479,19 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <FormDateTimeInput
-                  control={control}
-                  name="date"
-                  label="Date"
-                  type="date"
-                />
-              </div>
-              <div>
-                <FormInput
-                  control={control}
-                  name="venue"
-                  label="Venue"
-                  placeholder="e.g. CEBU CITY HALL, PLAZA SUGBO"
-                  type="text"
-                />
-              </div>
+              <FormDateTimeInput
+                control={control}
+                name="date"
+                label="Date"
+                type="date"
+              />
+              <FormInput
+                control={control}
+                name="venue"
+                label="Venue"
+                placeholder="e.g. CEBU CITY HALL, PLAZA SUGBO"
+                type="text"
+              />
             </div>
 
             <div>
@@ -549,16 +504,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                   <span>Available Funds:</span>
                   {isBudgetLoading ? (
                     <span className="text-gray-500">Loading...</span>
-                  ) : availableBudget != null ? (
-                    <span className="font-mono text-red-500">
-                      ₱
-                      {availableBudget.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </span>
                   ) : (
-                    <span className="text-gray-500">No expense records</span>
+                    <span className="font-mono text-red-500">
+                      ₱{availableBudget.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
                   )}
                 </div>
               </div>
@@ -569,11 +518,8 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                   <span>Amount</span>
                   <span>Action</span>
                 </div>
-                {budgetItems.map((_, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center"
-                  >
+                {budgetItems.map((_budgetItem: { name: string; pax: string; amount: string }, index: number) => (
+                  <div key={index} className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center">
                     <FormInput
                       control={control}
                       name={`budgetItems.${index}.name`}
@@ -599,7 +545,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                       type="button"
                       variant="destructive"
                       size="sm"
-                      className="mt-2"
                       onClick={() => removeBudgetItem(index)}
                       disabled={budgetItems.length <= 1}
                     >
@@ -617,6 +562,14 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                   Add Budget Item
                 </Button>
               </div>
+              {proposedBudget > 0 && (
+                <div className="mt-2 flex justify-between">
+                  <span className="font-medium">Proposed Budget:</span>
+                  <span className={proposedBudget > availableBudget ? "text-red-500" : ""}>
+                    ₱{proposedBudget.toLocaleString()}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div>
@@ -631,21 +584,14 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Prepared by
-                </label>
+                <label className="block text-sm font-medium mb-2">Prepared by</label>
                 <div className="space-y-2">
                   {signatories
-                    .filter((s) => s.type === "prepared")
-                    .map((sig) => {
-                      const globalIndex = signatories.findIndex(
-                        (s) => s === sig
-                      );
+                    .filter((s: Signatory) => s.type === "prepared")
+                    .map((sig: Signatory, _index: number) => {
+                      const globalIndex = signatories.findIndex((s: Signatory) => s === sig);
                       return (
-                        <div
-                          key={globalIndex}
-                          className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"
-                        >
+                        <div key={globalIndex} className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
                           <ComboboxInput
                             value={sig.name}
                             options={staffList}
@@ -653,31 +599,20 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                             label=""
                             placeholder="Select staff..."
                             emptyText="No staff found. Enter name manually."
-                            onSelect={(value, item) => {
-                              updateSignatory(
-                                globalIndex,
-                                "name",
-                                value,
-                                item?.position
-                              );
-                            }}
-                            onCustomInput={(value) => {
-                              updateSignatory(globalIndex, "name", value);
-                            }}
+                            onSelect={(value, item) => updateSignatory(globalIndex, "name", value, item?.position)}
+                            onCustomInput={(value) => updateSignatory(globalIndex, "name", value)}
                             displayKey="full_name"
                             valueKey="staff_id"
                             additionalDataKey="position"
                           />
-                          <div className="flex-1">
-                            <FormInput
-                              control={control}
-                              name={`signatories.${globalIndex}.position`}
-                              label=""
-                              placeholder=""
-                              type="text"
-                              className="p-0"
-                            />
-                          </div>
+                          <FormInput
+                            control={control}
+                            name={`signatories.${globalIndex}.position`}
+                            label=""
+                            placeholder=""
+                            type="text"
+                            className="p-0"
+                          />
                           <Button
                             type="button"
                             variant="destructive"
@@ -703,21 +638,14 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Approved by
-                </label>
+                <label className="block text-sm font-medium mb-2">Approved by</label>
                 <div className="space-y-2">
                   {signatories
-                    .filter((s) => s.type === "approved")
-                    .map((sig) => {
-                      const globalIndex = signatories.findIndex(
-                        (s) => s === sig
-                      );
+                    .filter((s: Signatory) => s.type === "approved")
+                    .map((sig: Signatory, _index: number) => {
+                      const globalIndex = signatories.findIndex((s: Signatory) => s === sig);
                       return (
-                        <div
-                          key={globalIndex}
-                          className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"
-                        >
+                        <div key={globalIndex} className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
                           <ComboboxInput
                             value={sig.name}
                             options={staffList}
@@ -725,31 +653,20 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                             label=""
                             placeholder="Select staff..."
                             emptyText="No staff found. Enter name manually."
-                            onSelect={(value, item) => {
-                              updateSignatory(
-                                globalIndex,
-                                "name",
-                                value,
-                                item?.position
-                              );
-                            }}
-                            onCustomInput={(value) => {
-                              updateSignatory(globalIndex, "name", value);
-                            }}
+                            onSelect={(value, item) => updateSignatory(globalIndex, "name", value, item?.position)}
+                            onCustomInput={(value) => updateSignatory(globalIndex, "name", value)}
                             displayKey="full_name"
                             valueKey="staff_id"
                             additionalDataKey="position"
                           />
-                          <div className="flex-1">
-                            <FormInput
-                              control={control}
-                              name={`signatories.${globalIndex}.position`}
-                              label=""
-                              placeholder=""
-                              type="text"
-                              className="p-0"
-                            />
-                          </div>
+                          <FormInput
+                            control={control}
+                            name={`signatories.${globalIndex}.position`}
+                            label=""
+                            placeholder=""
+                            type="text"
+                            className="p-0"
+                          />
                           <Button
                             type="button"
                             variant="destructive"
@@ -785,13 +702,23 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
               >
                 Preview
               </Button>
-              <Button
-                type="submit"
-                className="w-full sm:w-auto items-center gap-2"
-                disabled={addMutation.isPending}
-              >
-                {addMutation.isPending ? "Saving..." : "Save"}
-              </Button>
+              <ConfirmationModal
+                trigger={
+                  <Button
+                    type="button"
+                    className="w-full sm:w-auto items-center gap-2"
+                    disabled={addMutation.isPending || Object.keys(form.formState.errors).length > 0 || proposedBudget > availableBudget}
+                  >
+                    {addMutation.isPending ? "Saving..." : "Save"}
+                  </Button>
+                }
+                title="Confirm Save"
+                description="Are you sure you want to save this project proposal?"
+                actionLabel="Confirm"
+                onClick={() => form.handleSubmit(onSubmit)()}
+                open={isConfirmModalOpen}
+                onOpenChange={setIsConfirmModalOpen}
+              />
             </div>
           </div>
         </form>

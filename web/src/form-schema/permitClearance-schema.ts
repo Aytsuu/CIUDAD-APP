@@ -7,7 +7,8 @@ const PermitClearanceFormSchema = z.object({
     requestor: z.string().min(1, 'Requestor Name is required.'),
     address: z.string().min(1, 'Address is required.'),
     grossSales: z.string().min(1, 'Gross Sales is required.'),
-    purposes: z.array(z.string()).min(1, 'Please select at least 1 purpose.'),
+    purposes: z.string().min(1, 'Please select a purpose.'),
+    rp_id: z.string().default('')
 
 });
 

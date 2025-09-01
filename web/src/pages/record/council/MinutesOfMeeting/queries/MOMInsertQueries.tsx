@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { insertMinutesOfMeeting } from "../restful-API/MOMPostAPI";
 import { CircleCheck } from "lucide-react";
-import { MediaUploadType } from "@/components/ui/media-upload";
 import {minutesOfMeetingFormSchema} from "@/form-schema/council/minutesOfMeetingSchema";
 import { z } from "zod";
 
@@ -13,12 +12,11 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
   return useMutation({
     mutationFn: async (data: {
         values: z.infer<typeof minutesOfMeetingFormSchema>,
-        mediaFiles: MediaUploadType
+        files: { name: string; type: string; file: string | undefined }[]
     }) => {
-        return insertMinutesOfMeeting(data.values, data.mediaFiles);
+        return insertMinutesOfMeeting(data.values, data.files);
     },
     onSuccess: () => {
-        toast.loading('Creating Meeting Minutes...', { id: "createMOM" });
         queryClient.invalidateQueries({ queryKey: ['momRecords'] });
         queryClient.invalidateQueries({ queryKey: ['momAreasOfFocus'] });
         queryClient.invalidateQueries({ queryKey: ['momFiles'] });

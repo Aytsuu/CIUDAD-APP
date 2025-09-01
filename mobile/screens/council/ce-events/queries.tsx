@@ -1,11 +1,9 @@
-"use client";
-
 import { useRef } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   postCouncilEvent,
   postAttendee,
-  postAttendanceSheet,
+  addAttendanceSheets,
   delCouncilEvent,
   delAttendee,
   delAttendanceSheet,
@@ -21,7 +19,9 @@ import {
   restoreCouncilEvent
 } from "./requests";
 import { useToastContext } from "@/components/ui/toast";
-import { CouncilEventInput, AttendeeInput, AttendanceSheetInput, CouncilEvent, AttendanceSheet, Attendee, Staff } from "./ce-att-typeFile";
+import { CouncilEventInput, AttendeeInput, AttendanceSheetInput, CouncilEvent, AttendanceSheet, Attendee, Staff, UploadFile } from "./ce-att-typeFile";
+import { MediaItem} from "@/components/ui/media-picker";
+
 
 export const useAddCouncilEvent = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
@@ -57,27 +57,46 @@ export const useAddAttendee = (onSuccess?: () => void) => {
   });
 };
 
-export const useAddAttendanceSheet = (onSuccess?: () => void) => {
+export const useAddAttendanceSheet = () => {
   const queryClient = useQueryClient();
   const { toast } = useToastContext();
 
   return useMutation({
-    mutationFn: (attendanceData: AttendanceSheetInput) => 
-       postAttendanceSheet({
-        ce_id: attendanceData.ce_id,
-        att_file_name: attendanceData.att_file_name,
-        att_file_path: attendanceData.att_file_path,
-        att_file_url: attendanceData.att_file_url,
-        att_file_type: attendanceData.att_file_type,
-        staff_id: attendanceData.staff_id
-      }),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["attendanceSheets"] });
-      toast.success('Attendance sheet added successfully');
-      onSuccess?.();
+    mutationFn: async ({
+      ceId,
+      files,
+    }: {
+      ceId: number;
+      files: MediaItem[];
+    }) => {
+      // Filter out files without base64 data and validate types
+      const validFiles = files
+        .filter(file => file.file !== undefined && typeof file.file === 'string')
+        .map(file => file as MediaItem & { file: string });
+
+      if (validFiles.length === 0) {
+        throw new Error("No valid files to upload (missing file data)");
+      }
+
+      // Format files for API - TypeScript now knows file.file exists
+      const formattedFiles: UploadFile[] = validFiles.map(file => ({
+        name: file.name || `attendance_${Date.now()}.jpg`,
+        type: file.type || 'image/jpeg',
+        file: file.file.startsWith('data:') 
+          ? file.file 
+          : `data:${file.type || 'image/jpeg'};base64,${file.file}`,
+        path: `uploads/attendance/${file.name || `file_${Date.now()}`}`
+      }));
+
+      return addAttendanceSheets(ceId, formattedFiles);
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["attendees", data.ce_id] });
+      queryClient.invalidateQueries({ queryKey: ["attendanceSheets", variables.ceId] });
+      toast.success(`Attendance sheet(s) uploaded successfully`);
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to add attendance sheet');
+      toast.error(error.message || "Failed to upload attendance sheets");
     },
   });
 };
@@ -89,8 +108,8 @@ export const useDeleteCouncilEvent = () => {
   return useMutation({
     mutationFn: ({ ce_id, permanent = false }: { ce_id: number; permanent?: boolean }) => 
       delCouncilEvent(ce_id, permanent),
-    onSuccess: (data, variables) => {
-      const { ce_id, permanent } = variables;
+    onSuccess: (_data, variables) => {
+      const { permanent } = variables;
       queryClient.invalidateQueries({ queryKey: ["councilEvents"] });
       toast.success(
         permanent 

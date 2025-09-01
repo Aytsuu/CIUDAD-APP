@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Plus, X, Wallet } from "lucide-react";
-import { useUpdateProjectProposal } from "./queries/updatequeries";
-// import { useAddSupportDocument } from "./queries/addqueries";
+import {
+  useUpdateProjectProposal,
+  useUpdateProjectProposalStatus,
+} from "./queries/updatequeries";
+import { useAddSupportDocument } from "./queries/addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { useGetStaffList } from "./queries/fetchqueries";
 import { useForm } from "react-hook-form";
@@ -17,11 +20,11 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
 import {
-  // ProjectProposal,
-  // ProjectProposalInput,
+  ProjectProposal,
+  ProjectProposalInput,
   EditProjectProposalFormProps,
 } from "./projprop-types";
-import { Signatory } from "./projprop-types";
+import { Signatory, SupportDoc } from "./projprop-types";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 
 export const EditProjectProposalForm: React.FC<
@@ -33,10 +36,13 @@ export const EditProjectProposalForm: React.FC<
   const [activeVideoId, setActiveVideoId] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const updateMutation = useUpdateProjectProposal();
-  // const addSupportDocMutation = useAddSupportDocument();
+  const addSupportDocMutation = useAddSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-
-  // Display remaining balance from budget tracker
+  const [showConfirm, setShowConfirm] = useState(false);
+  const updateStatusMutation = useUpdateProjectProposalStatus();
+  const [confirmAction, setConfirmAction] = useState<"save" | "resubmit">(
+    "save"
+  );
   const { data: budgetEntries = [], isLoading: isBudgetLoading } =
     useGADBudgets(new Date().getFullYear().toString());
   const { data: yearBudgets } = useGetGADYearBudgets();
@@ -48,7 +54,6 @@ export const EditProjectProposalForm: React.FC<
   const latestExpenseWithBalance = budgetEntries
     .filter(
       (entry) =>
-        entry.gbud_type === "Expense" &&
         !entry.gbud_is_archive &&
         entry.gbud_remaining_bal != null
     )
@@ -68,43 +73,43 @@ export const EditProjectProposalForm: React.FC<
     ? Number(currentYearBudget)
     : 0;
 
-  const form = useForm<z.infer<typeof ProjectProposalSchema>>({
-    resolver: zodResolver(ProjectProposalSchema),
-    defaultValues: {
-      projectTitle: initialValues?.projectTitle || "",
-      background: initialValues?.background || "",
-      objectives: initialValues?.objectives?.length
-        ? initialValues.objectives
-        : [""],
-      participants: initialValues?.participants?.length
-        ? initialValues.participants.map((p) => ({
-            category: p.category,
-            count: String(p.count || 0),
-          }))
-        : [{ category: "", count: "0" }],
-      date: initialValues?.date || "",
-      venue: initialValues?.venue || "",
-      budgetItems: initialValues?.budgetItems?.length
-        ? initialValues.budgetItems.map((item) => ({
-            name: item.name,
-            pax: item.pax,
-            amount: String(item.amount || 0),
-          }))
-        : [{ name: "", pax: "", amount: "0" }],
-      monitoringEvaluation: initialValues?.monitoringEvaluation || "",
-      signatories: initialValues?.signatories?.length
-        ? initialValues.signatories.map((sig) => ({
-            name: sig.name,
-            position: sig.position,
-            type:
-              sig.type === "prepared" || sig.type === "approved"
-                ? sig.type
-                : "prepared",
-          }))
-        : [{ name: "", position: "", type: "prepared" }],
-      paperSize: initialValues?.paperSize || "letter",
-    },
-  });
+const form = useForm<z.infer<typeof ProjectProposalSchema>>({
+  resolver: zodResolver(ProjectProposalSchema),
+  defaultValues: {
+    projectTitle: initialValues?.projectTitle || "",
+    background: initialValues?.background || "",
+    objectives: initialValues?.objectives?.length
+      ? initialValues.objectives
+      : [""],
+    participants: initialValues?.participants?.length
+      ? initialValues.participants.map((p) => ({
+          category: p.category,
+          count: String(p.count || 0),
+        }))
+      : [{ category: "", count: "0" }],
+    date: initialValues?.date || "",
+    venue: initialValues?.venue || "",
+    budgetItems: initialValues?.budgetItems?.length
+      ? initialValues.budgetItems.map((item) => ({
+          name: item.name,
+          pax: item.pax,
+          amount: String(item.amount || 0),
+        }))
+      : [{ name: "", pax: "", amount: "0" }],
+    monitoringEvaluation: initialValues?.monitoringEvaluation || "",
+    signatories: initialValues?.signatories?.length
+      ? initialValues.signatories.map((sig) => ({
+          name: sig.name,
+          position: sig.position,
+          type:
+            sig.type === "prepared" || sig.type === "approved"
+              ? sig.type
+              : "prepared",
+        }))
+      : [{ name: "", position: "", type: "prepared" }],
+    paperSize: initialValues?.paperSize || "letter",
+  },
+});
 
   const { control, setValue, watch, handleSubmit } = form;
 
@@ -128,50 +133,32 @@ export const EditProjectProposalForm: React.FC<
   ];
 
   useEffect(() => {
-    console.log("EditProjectProposalForm props:", {
-      initialValues,
-      isEditMode,
-      isSubmitting,
-    });
-  }, [initialValues, isEditMode, isSubmitting]);
-
-  useEffect(() => {
     if (initialValues && isEditMode) {
-      // const suppDocs =
-      //   initialValues.supportDocs?.map((doc: any) => {
-      //     let type: "image" | "video" | "document" = "document";
-      //     if (doc.psd_type?.startsWith("image/")) {
-      //       type = "image";
-      //     } else if (doc.psd_type?.startsWith("video/")) {
-      //       type = "video";
-      //     }
+      // Set header image
+      setMediaFiles(
+        initialValues.headerImage
+          ? [
+              {
+                id: "existing-header",
+                name:
+                  initialValues.headerImage.split("/").pop() ||
+                  "header-image.jpg",
+                type: "image/jpeg",
+                url: initialValues.headerImage,
+              },
+            ]
+          : []
+      );
 
-      //     return {
-      //       id: `doc-${doc.psd_id}`,
-      //       type,
-      //       file: new File([], doc.psd_name),
-      //       publicUrl: doc.psd_url,
-      //       storagePath: doc.psd_path || `uploads/${doc.psd_name}`,
-      //       status: "uploaded" as const,
-      //       previewUrl: doc.psd_url,
-      //     };
-      //   }) || [];
-
-      // setSupportingDocs(suppDocs);
-
-      if (initialValues.headerImage) {
-        setHeaderImageUrl(initialValues.headerImage);
-        // setMediaFiles([
-        //   {
-        //     id: "existing-header",
-        //     type: "image",
-        //     file: new File([], "header.jpg"),
-        //     publicUrl: initialValues.headerImage,
-        //     status: "uploaded",
-        //     previewUrl: initialValues.headerImage,
-        //   },
-        // ]);
-      }
+      // Set supporting documents
+      setSupportingDocs(
+        initialValues.supportDocs?.map((doc: SupportDoc) => ({
+          id: `doc-${doc.psd_id}`,
+          name: doc.psd_name,
+          type: doc.psd_type,
+          url: doc.psd_url,
+        })) || []
+      );
     }
   }, [initialValues, isEditMode]);
 
@@ -247,151 +234,166 @@ export const EditProjectProposalForm: React.FC<
     }
   };
 
-  const handleSave = async (_data: z.infer<typeof ProjectProposalSchema>) => {
-    if (!initialValues?.gprId) {
-      setErrorMessage("No project ID provided for update.");
-      return;
+const handleSave = async (data: z.infer<typeof ProjectProposalSchema>) => {
+  if (!initialValues?.gprId) {
+    setErrorMessage("No project ID provided for update.");
+    return;
+  }
+  
+
+  const gprId = initialValues.gprId;
+
+  try {
+    setErrorMessage(null);
+    
+     // Handle header image logic
+    let headerImage: string | null = initialValues.headerImage || null;
+    
+    if (mediaFiles.length > 0) {
+      const currentFile = mediaFiles[0];
+      if (currentFile.file?.startsWith("data:")) {
+        // New file uploaded
+        headerImage = currentFile.file;
+      } else if (currentFile.url && !currentFile.file) {
+        // Existing file remains unchanged
+        headerImage = currentFile.url;
+      }
+    } else if (mediaFiles.length === 0 && initialValues.headerImage) {
+      // Header image was explicitly removed
+      headerImage = null;
     }
 
-    // const gprId = initialValues.gprId;
+    const existingSupportDocs = initialValues.supportDocs || [];
+    const keptDocs = supportingDocs
+      .filter(doc => doc.url && !doc.file) // Only existing files (have URL but no new file data)
+      .map(doc => {
+        const existingDoc = existingSupportDocs.find(sd => sd.psd_url === doc.url);
+        return existingDoc ? {
+          psd_id: existingDoc.psd_id,
+          psd_url: existingDoc.psd_url,
+          psd_name: existingDoc.psd_name,
+          psd_type: existingDoc.psd_type,
+          psd_is_archive: false
+        } : null;
+      })
+      .filter(doc => doc !== null);
 
-  //   try {
-  //     setErrorMessage(null);
-  //     const headerImage =
-  //       mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
+    // New files to upload
+    const newDocs = supportingDocs
+      .filter(doc => doc.file && doc.file.startsWith("data:"))
+      .map(doc => ({
+        name: doc.name,
+        type: doc.type,
+        file: doc.file as string,
+      }));
 
-  //     const validSupportDocs = supportingDocs.filter(
-  //       (
-  //         doc
-  //       ): doc is {
-  //         id: string;
-  //         type: "image" | "video" | "document";
-  //         file: File;
-  //         publicUrl: string;
-  //         storagePath: string;
-  //         status: "uploaded";
-  //         previewUrl?: string;
-  //       } =>
-  //         doc.status === "uploaded" &&
-  //         !!doc.publicUrl &&
-  //         !!doc.storagePath &&
-  //         !!doc.file?.name &&
-  //         !!doc.file?.type
-  //     );
+    // Files to archive (existing docs not in current supportingDocs)
+    const currentDocUrls = supportingDocs
+      .filter(doc => doc.url)
+      .map(doc => doc.url);
+    
+    const docsToArchive = existingSupportDocs
+      .filter(doc => !currentDocUrls.includes(doc.psd_url))
+      .map(doc => ({
+        psd_id: doc.psd_id,
+        psd_url: doc.psd_url,
+        psd_name: doc.psd_name,
+        psd_type: doc.psd_type,
+        psd_is_archive: true // Mark for archiving
+      }));
 
-  //     // Preserve all existing supportDocs and include new ones, default to empty array if undefined
-  //     const existingSupportDocs = initialValues.supportDocs || [];
-  //     const updatedSupportDocs = validSupportDocs.map((doc) => {
-  //       const existingDoc = existingSupportDocs.find(
-  //         (d) => d.psd_url === doc.publicUrl
-  //       );
-  //       return {
-  //         psd_id: existingDoc?.psd_id || Date.now() + Math.random(), // Temporary ID for new docs
-  //         psd_url: doc.publicUrl,
-  //         psd_name: doc.file.name,
-  //         psd_type: doc.file.type,
-  //         psd_path: doc.storagePath,
-  //         psd_is_archive: false,
-  //       };
-  //     });
+    // Combine kept docs and docs to archive
+    const allSupportDocs = [...keptDocs, ...docsToArchive];
 
-  //     // Identify new documents to add via mutation
-  //     const newDocs = updatedSupportDocs.filter(
-  //       (doc) =>
-  //         !existingSupportDocs.some(
-  //           (existing) => existing.psd_id === doc.psd_id
-  //         )
-  //     );
+    const proposalData: ProjectProposalInput = {
+      gprId,
+      gpr_title: data.projectTitle,
+      background: data.background,
+      objectives: data.objectives.filter((obj) => obj.trim() !== ""),
+      participants: data.participants
+        .filter((p) => p.category.trim() !== "")
+        .map((p) => ({
+          category: p.category,
+          count: p.count,
+        })),
+      date: data.date,
+      venue: data.venue,
+      budgetItems: data.budgetItems
+        .filter((item) => item.name.trim() !== "")
+        .map((item) => ({
+          name: item.name,
+          pax: item.pax,
+          amount: item.amount,
+        })),
+      monitoringEvaluation: data.monitoringEvaluation,
+      signatories: data.signatories.filter((s) => s.name.trim() !== ""),
+      gpr_header_img: headerImage,
+      staffId: initialValues.staffId || null,
+      gprIsArchive: initialValues.gprIsArchive || false,
+      gpr_page_size: data.paperSize,
+      supportDocs: allSupportDocs,
+      status: confirmAction === "resubmit" 
+        ? "Resubmitted" 
+        : initialValues.status, // Keep original status unless resubmitting
+      statusReason: confirmAction === "resubmit"
+        ? "Project proposal resubmitted by user"
+        : initialValues.statusReason, // Keep original reason
+    };
 
-  //     // Update existing supportDocs for PUT
-  //     const proposalData: ProjectProposalInput = {
-  //       projectTitle: data.projectTitle,
-  //       background: data.background,
-  //       objectives: data.objectives.filter((obj) => obj.trim() !== ""),
-  //       participants: data.participants
-  //         .filter((p) => p.category.trim() !== "")
-  //         .map((p) => ({
-  //           category: p.category,
-  //           count: p.count,
-  //         })),
-  //       date: data.date,
-  //       venue: data.venue,
-  //       budgetItems: data.budgetItems
-  //         .filter((item) => item.name.trim() !== "")
-  //         .map((item) => ({
-  //           name: item.name,
-  //           pax: item.pax,
-  //           amount: item.amount,
-  //         })),
-  //       monitoringEvaluation: data.monitoringEvaluation,
-  //       signatories: data.signatories.filter((s) => s.name.trim() !== ""),
-  //       gpr_header_img: headerImage,
-  //       staffId: initialValues.staffId || null,
-  //       gprIsArchive: initialValues.gprIsArchive || false,
-  //       supportDocs:
-  //         existingSupportDocs.map((doc) => ({
-  //           psd_id: doc.psd_id,
-  //           psd_url: doc.psd_url,
-  //           psd_name: doc.psd_name,
-  //           psd_type: doc.psd_type,
-  //           psd_is_archive: doc.psd_is_archive,
-  //         })) || [], // Only existing docs with valid psdId for PUT
-  //     };
+    await updateMutation.mutateAsync(proposalData);
 
-  //     const fullProposal: ProjectProposal = {
-  //       ...initialValues,
-  //       ...proposalData,
-  //       paperSize: data.paperSize,
-  //       headerImage: headerImage,
-  //       supportDocs: proposalData.supportDocs || [], // Ensure a default empty array
-  //       participants: proposalData.participants.map((p) => ({
-  //         category: p.category,
-  //         count: parseInt(p.count) || 0,
-  //       })),
-  //       budgetItems: proposalData.budgetItems.map((item) => ({
-  //         name: item.name,
-  //         pax: item.pax,
-  //         amount: parseFloat(item.amount) || 0,
-  //       })),
-  //     };
+    // Upload new supporting documents if any
+    if (newDocs.length > 0) {
+      await addSupportDocMutation.mutateAsync({
+        gpr_id: gprId,
+        files: newDocs,
+      });
+    }
 
-  //     // Add new documents via mutation before updating the proposal
-  //     if (newDocs.length > 0) {
-  //       await Promise.all(
-  //         newDocs.map((doc) =>
-  //           addSupportDocMutation.mutateAsync({
-  //             gprId,
-  //             fileData: {
-  //               psd_url: doc.psd_url,
-  //               psd_path: doc.psd_path!,
-  //               psd_name: doc.psd_name,
-  //               psd_type: doc.psd_type,
-  //             },
-  //           })
-  //         )
-  //       );
-  //     }
+    if (confirmAction === "resubmit") {
+      await updateStatusMutation.mutateAsync({
+        gprId,
+        status: "Resubmitted",
+        reason: "Project proposal resubmitted by user",
+      });
+    }
 
-  //     await updateMutation.mutateAsync({
-  //       gprId,
-  //       proposalData,
-  //       proposalF: fullProposal,
-  //     });
+    const fullProposal: ProjectProposal = {
+      ...initialValues,
+      projectTitle: data.projectTitle,
+      background: data.background,
+      objectives: proposalData.objectives,
+      participants: proposalData.participants.map((p) => ({
+        category: p.category,
+        count: parseInt(p.count) || 0,
+      })),
+      date: data.date,
+      venue: data.venue,
+      budgetItems: proposalData.budgetItems.map((item) => ({
+        name: item.name,
+        pax: item.pax,
+        amount: parseFloat(item.amount) || 0,
+      })),
+      monitoringEvaluation: data.monitoringEvaluation,
+      signatories: proposalData.signatories,
+      headerImage: headerImage,
+      paperSize: data.paperSize,
+      supportDocs: allSupportDocs,
+      status: proposalData.status,
+      statusReason: proposalData.statusReason,
+    };
 
-  //     onSuccess(fullProposal);
-  //   } catch (error: any) {
-  //     console.error("Error in handleSave:", error);
-  //     setErrorMessage(
-  //       error.response?.data?.detail ||
-  //         error.message ||
-  //         "Failed to save proposal. Please check the form data and try again."
-  //     );
-  //   }
-  };
-
-  const handleConfirmSave = () => {
-    handleSubmit(handleSave)();
-  };
+    onSuccess(fullProposal);
+  } catch (error: any) {
+    console.error("Error in handleSave:", error);
+    console.error("Error response data:", error.response?.data);
+    setErrorMessage(
+      error.response?.data?.detail ||
+        error.message ||
+        "Failed to save proposal. Please check the form data and try again."
+    );
+  }
+};
 
   return (
     <div className="container mx-auto px-4 sm:px-6 max-w-2xl md:max-w-3xl lg:max-w-4xl">
@@ -403,39 +405,17 @@ export const EditProjectProposalForm: React.FC<
       <div className="mb-6">
         <label className="block text-sm font-medium mb-2">Paper Size</label>
         <div className="flex flex-wrap gap-4">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="paperSize"
-              checked={paperSize === "a4"}
-              onChange={() => {
-                setValue("paperSize", "a4");
-              }}
-            />
-            A4
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="paperSize"
-              checked={paperSize === "letter"}
-              onChange={() => {
-                setValue("paperSize", "letter");
-              }}
-            />
-            Letter
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="paperSize"
-              checked={paperSize === "legal"}
-              onChange={() => {
-                setValue("paperSize", "legal");
-              }}
-            />
-            Legal
-          </label>
+          {["a4", "letter", "legal"].map((size) => (
+            <label key={size} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="paperSize"
+                checked={paperSize === size}
+                onChange={() => setValue("paperSize", size as "a4" | "letter" | "legal")}
+              />
+              {size.charAt(0).toUpperCase() + size.slice(1)}
+            </label>
+          ))}
         </div>
       </div>
 
@@ -460,13 +440,13 @@ export const EditProjectProposalForm: React.FC<
                       typeof filesOrUpdater === "function"
                         ? filesOrUpdater(prev)
                         : filesOrUpdater;
-                    // const imageUrl =
-                    //   newFiles[0]?.publicUrl || newFiles[0]?.previewUrl || null;
-                    // setHeaderImageUrl(imageUrl);
+                    const imageUrl = newFiles[0]?.url || null;
+                    setHeaderImageUrl(imageUrl);
                     return newFiles;
                   });
                 }}
                 setActiveVideoId={setActiveVideoId}
+                maxFiles={1}
               />
             </div>
 
@@ -481,6 +461,7 @@ export const EditProjectProposalForm: React.FC<
                 activeVideoId={activeVideoId}
                 setMediaFiles={setSupportingDocs}
                 setActiveVideoId={setActiveVideoId}
+                hideRemoveButton={true}
               />
             </div>
 
@@ -852,22 +833,82 @@ export const EditProjectProposalForm: React.FC<
               </div>
             </div>
             <div className="flex flex-col sm:flex-row justify-end mt-6 gap-3">
-              <ConfirmationModal
-                trigger={
+              <div className="flex gap-2 mb-6">
+                {initialValues?.status !== "Amend" &&
+                initialValues?.status !== "Rejected" ? (
                   <Button
                     type="button"
+                    onClick={() => {
+                      setConfirmAction("save");
+                      setShowConfirm(true);
+                    }}
                     disabled={updateMutation.isPending || isSubmitting}
-                    className="gap-2 w-full sm:w-auto mb-5"
+                    className="gap-2"
                   >
-                    {updateMutation.isPending || isSubmitting
-                      ? "Updating..."
-                      : "Save"}
+                    Save
                   </Button>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setConfirmAction("save");
+                        setShowConfirm(true);
+                      }}
+                      disabled={updateMutation.isPending || isSubmitting}
+                      className="gap-2"
+                    >
+                      Just Save
+                    </Button>
+
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setConfirmAction("resubmit");
+                        setShowConfirm(true);
+                      }}
+                      disabled={updateMutation.isPending || isSubmitting}
+                      className="gap-2"
+                    >
+                      Save and Resubmit
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              <ConfirmationModal
+                open={showConfirm}
+                onOpenChange={setShowConfirm}
+                title={
+                  confirmAction === "save"
+                    ? "Confirm Save"
+                    : "Confirm Resubmission"
                 }
-                title="Confirm Save"
-                description="Are you sure you want to save the changes?"
-                actionLabel="Confirm"
-                onClick={handleConfirmSave}
+                description={
+                  confirmAction === "save"
+                    ? "Are you sure you want to save without resubmitting?"
+                    : "Are you sure you want to save and resubmit this proposal?"
+                }
+                actionLabel={
+                  confirmAction === "save"
+                    ? "Confirm Save"
+                    : "Confirm Resubmission"
+                }
+                onClick={() => {
+                  if (confirmAction === "resubmit") {
+                    handleSubmit((data) => {
+                      const updatedData = {
+                        ...data,
+                        status: "Resubmitted" as const,
+                        statusReason: "Project proposal resubmitted by user",
+                      };
+                      handleSave(updatedData);
+                    })();
+                  } else {
+                    handleSubmit(handleSave)();
+                  }
+                }}
               />
             </div>
           </div>

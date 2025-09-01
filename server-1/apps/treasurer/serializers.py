@@ -1,11 +1,11 @@
 from rest_framework import serializers
 from .models import *
-from apps.clerk.models import ClerkCertificate, Invoice
+from apps.profiling.models import *
+from apps.clerk.models import ClerkCertificate
+from utils.supabase_client import upload_to_storage
 from django.utils import timezone
 from django.db import transaction
-from utils.supabase_client import upload_to_storage
 from apps.profiling.serializers.business_serializers import FileInputSerializer
-
 
 class Budget_Plan_DetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -66,7 +66,7 @@ class BudgetPlanFileCreateSerializer(serializers.ModelSerializer):
                 plan_id= plan_id
             )
 
-            url = upload_to_storage(file_data, 'image-bucket', 'uploads')
+            url = upload_to_storage(file_data, 'budgetplan-bucket', '')
             bpf_file.bpf_url = url
             bpf_files.append(bpf_file)
 
@@ -80,11 +80,13 @@ class BudgetPlanFileViewSerializer(serializers.ModelSerializer):
         model = BudgetPlan_File
         fields='__all__'
 
-
 class BudgetPlanHistorySerializer(serializers.ModelSerializer):
     class Meta: 
         model = Budget_Plan_History
         fields = '__all__'
+
+
+# =========================== INCOME & DISBURSEMENT ==========================
 
 class Income_Folder_Serializer(serializers.ModelSerializer):
     class Meta:
@@ -93,24 +95,100 @@ class Income_Folder_Serializer(serializers.ModelSerializer):
         read_only_fields = ['inf_is_archive']
 
 class Income_ImageSerializers(serializers.ModelSerializer):
-    file_url = serializers.CharField(source='file.file_url', read_only=True)
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
     inf_year = serializers.CharField(source='inf_num.inf_year', read_only=True)
     inf_name = serializers.CharField(source='inf_num.inf_name', read_only=True)
     inf_desc = serializers.CharField(source='inf_num.inf_desc', read_only=True)
     class Meta:
         model = Income_Image
-        fields = ['infi_num', 'infi_upload_date', 'infi_is_archive', 'file_url', 'inf_num', 'staff_name', 'inf_year', 'inf_name']
+        fields = ['infi_num', 'infi_upload_date', 'infi_is_archive', 'infi_type', 'infi_name', 'infi_path', 'infi_url', 'inf_num', 'staff_name', 'inf_year', 'inf_name','inf_desc']
+        extra_kwargs = {
+            'inf_num': {'required': True},
+            'infi_name': {'required': True},
+            'infi_type': {'required': True},
+            'infi_url': {'read_only': True},
+            'infi_path': {'read_only': True},
+        }
+    
+    def _upload_files(self, files, inf_num_id=None):
+        """Upload multiple files for an income folder"""
+        if not inf_num_id:
+            raise serializers.ValidationError({"error": "inf_num is required"})
+
+        try:
+            folder = Income_File_Folder.objects.get(pk=inf_num_id)
+        except Income_File_Folder.DoesNotExist:
+            raise serializers.ValidationError(f"Income folder with id {inf_num_id} does not exist")
+
+        income_images = []
+        for file_data in files:
+            if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
+                continue
+
+            income_image = Income_Image(
+                infi_name=file_data['name'],
+                infi_type=file_data['type'],
+                infi_path=f"Uploads/income/{file_data['name']}",
+                inf_num=folder,
+                staff=self.context['request'].user.staff if hasattr(self.context['request'].user, 'staff') else None
+            )
+            
+            income_image.infi_url = upload_to_storage(file_data, 'income-disbursement-bucket', 'income_images')
+            income_images.append(income_image)
+
+        if income_images:
+            Income_Image.objects.bulk_create(income_images)
+        
+        return income_images
 
 class Disbursement_ImageSerializers(serializers.ModelSerializer):
-    file_url = serializers.CharField(source='file.file_url', read_only=True)
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
     dis_year = serializers.CharField(source='dis_num.dis_year', read_only=True)
     dis_name = serializers.CharField(source='dis_num.dis_name', read_only=True)
     dis_desc = serializers.CharField(source='dis_num.dis_desc', read_only=True)
     class Meta:
         model = Disbursement_Image
-        fields = ['disf_num', 'disf_upload_date', 'disf_is_archive', 'file_url', 'dis_num', 'staff_name', 'dis_year', 'dis_name']
+        fields = ['disf_num', 'disf_upload_date', 'disf_is_archive', 'disf_type', 'disf_name', 'disf_path', 'disf_url', 'dis_num', 'staff_name', 'dis_year', 'dis_name','dis_desc']
+        extra_kwargs = {
+            'dis_num': {'required': True},
+            'disf_name': {'required': True},
+            'disf_type': {'required': True},
+            'disf_url': {'read_only': True},
+            'disf_path': {'read_only': True},
+        }
+    
+    def _upload_files(self, files, dis_num_id=None):
+        """Upload multiple files for a disbursement folder"""
+        if not dis_num_id:
+            raise serializers.ValidationError({"error": "dis_num is required"})
+
+        try:
+            folder = Disbursement_File_Folder.objects.get(pk=dis_num_id)
+        except Disbursement_File_Folder.DoesNotExist:
+            raise serializers.ValidationError(f"Disbursement folder with id {dis_num_id} does not exist")
+
+        disbursement_images = []
+        for file_data in files:
+            if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
+                continue
+
+            disbursement_image = Disbursement_Image(
+                disf_name=file_data['name'],
+                disf_type=file_data['type'],
+                disf_path=f"Uploads/disbursement/{file_data['name']}",
+                dis_num=folder,
+                staff=self.context['request'].user.staff if hasattr(self.context['request'].user, 'staff') else None
+            )
+            
+            # Upload to your storage system
+            disbursement_image.disf_url = upload_to_storage(file_data, 'income-disbursement-bucket', 'disbursement_images')
+            disbursement_images.append(disbursement_image)
+
+        if disbursement_images:
+            Disbursement_Image.objects.bulk_create(disbursement_images)
+        
+        return disbursement_images
+
         
 class Disbursement_Folder_Serializer(serializers.ModelSerializer):
     class Meta:
@@ -135,9 +213,38 @@ class Expense_ParticularSerializers(serializers.ModelSerializer):
         }
 
 class Income_Expense_FileSerializers(serializers.ModelSerializer):
+    
     class Meta:
         model = Income_Expense_File
         fields = '__all__'
+    
+    def _upload_files(self, files, iet_num=None):
+
+        if not iet_num:
+            return
+        
+        try:
+            tracking_instance = Income_Expense_Tracking.objects.get(pk=iet_num)
+        except Income_Expense_Tracking.DoesNotExist:
+            
+            raise ValueError(f"Income_Expense_Tracking with id {iet_num} does not exist")       
+        
+        ief_files = []
+        for file_data in files:
+            ief_file = Income_Expense_File(
+                ief_name=file_data['name'],
+                ief_type=file_data['type'],
+                ief_path=file_data['name'],
+                iet_num=tracking_instance  # THIS SETS THE FOREIGN KEY
+            )
+
+            url = upload_to_storage(file_data, 'fbudget-tracker-bucket', '')
+            ief_file.ief_url = url
+            ief_files.append(ief_file)
+
+        if ief_files:
+            Income_Expense_File.objects.bulk_create(ief_files)
+
 
 
 class Income_Expense_FileSimpleSerializer(serializers.ModelSerializer):
@@ -151,10 +258,52 @@ class Income_Expense_FileSimpleSerializer(serializers.ModelSerializer):
 class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
     exp_budget_item = serializers.CharField(source='exp_id.exp_budget_item', read_only=True)
     files = Income_Expense_FileSimpleSerializer(many=True, read_only=True)  # Add this line
-    
+    staff_name = serializers.SerializerMethodField()   
+
     class Meta:
         model = Income_Expense_Tracking
         fields = '__all__'
+    
+    def get_staff_name(self, obj):
+        if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+            per = obj.staff_id.rp.per
+
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+            
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+            
+            return full_name
+        return None
+
+
+class Expense_LogSerializers(serializers.ModelSerializer):
+    el_particular = serializers.CharField(source='iet_num.exp_id.exp_budget_item', read_only=True)
+    el_is_archive = serializers.BooleanField(source='iet_num.iet_is_archive', read_only=True)
+    staff_name = serializers.SerializerMethodField()   
+
+    class Meta:
+        model = Expense_Log
+        fields = '__all__'
+    
+    def get_staff_name(self, obj):
+        if obj.iet_num and obj.iet_num.staff_id and obj.iet_num.staff_id.rp and obj.iet_num.staff_id.rp.per:
+            per = obj.iet_num.staff_id.rp.per
+
+            # Build full name
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+
+            return full_name
+        return None
 
 
 # -------- INCOME 
@@ -167,10 +316,26 @@ class Income_ParticularSerializers(serializers.ModelSerializer):
 
 class Income_TrackingSerializers(serializers.ModelSerializer):
     incp_item = serializers.CharField(source='incp_id.incp_item', read_only=True)
+    staff_name = serializers.SerializerMethodField()   
 
     class Meta:
         model = Income_Tracking
         fields = '__all__'
+
+    def get_staff_name(self, obj):
+        if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+            per = obj.staff_id.rp.per
+
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+            
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+            
+            return full_name
+        return None      
 
 
 class Income_Expense_MainSerializers(serializers.ModelSerializer):
@@ -193,21 +358,110 @@ class Purpose_And_RatesSerializers(serializers.ModelSerializer):
         fields= '__all__'
 
 
-#=============================================================================
+# class InvoiceSerializers(serializers.ModelSerializer):
+#     class Meta:
+#         model = Invoice
+#         fields= '__all__'
+
+
+
+# class InvoiceSerializers(serializers.ModelSerializer):
+#     inv_payor = serializers.SerializerMethodField()  # Changed field name
+    
+#     class Meta:
+#         model = Invoice
+#         fields = '__all__'
+    
+#     def get_inv_payor(self, obj):  # Renamed method
+#         return f"{obj.cr_id.rp_id.per.per_lname}, {obj.cr_id.rp_id.per.per_fname}"
+
+
+# invoice
 class InvoiceSerializers(serializers.ModelSerializer):
     inv_payor = serializers.SerializerMethodField()
-    inv_pay_method = serializers.CharField(source='cr_id.req_pay_method') 
     
     class Meta:
         model = Invoice
         fields = ['inv_num', 'inv_serial_num', 'inv_date', 'inv_amount', 
-                 'inv_nat_of_collection', 'cr_id', 'inv_payor', 'inv_pay_method']
+                 'inv_nat_of_collection', 'nrc_id', 'bpr_id','inv_payor', 'inv_change']
     
     def get_inv_payor(self, obj):
+        # If the invoice is linked to a resident certificate
+        if obj.bpr_id is not None:
+            try:
+                return f"{obj.bpr_id.rp_id.per.per_lname}, {obj.bpr_id.rp_id.per.per_fname}"
+            except AttributeError:
+                return "Unknown Business Owner"
+
+        # If the invoice is linked to a non-resident certificate
+        elif obj.nrc_id is not None:
+            try:
+                return obj.nrc_id.nrc_requester
+            except AttributeError:
+                return "Unknown Non-Resident"
+
+        #  If neither cr_id nor nrc_id exists
+        return "Unknown"
+    
+
+    def create(self, validated_data):
+        # Create the invoice
+        invoice = Invoice.objects.create(**validated_data)
+        
         try:
-            return f"{obj.cr_id.rp_id.per.per_lname}, {obj.cr_id.rp_id.per.per_fname}"
-        except:
-            return "Unknown"
+            # Check if it's a business permit request and calculate change
+            if invoice.bpr_id and hasattr(invoice.bpr_id, 'pr_id') and invoice.bpr_id.pr_id:
+                required_amount = float(invoice.bpr_id.pr_id.pr_rate or 0)
+                paid_amount = float(invoice.inv_amount or 0)
+                
+                change_amount = paid_amount - required_amount
+                invoice.inv_change = change_amount if change_amount > 0 else 0
+                invoice.save()
+                
+                # Update payment status
+                business_permit = invoice.bpr_id
+                business_permit.req_payment_status = "Paid"
+                business_permit.save()
+                
+                invoice.inv_status = "Paid"
+                invoice.save()
+                
+                # Log activity
+                try:
+                    from apps.act_log.utils import create_activity_log
+                    from apps.administration.models import Staff
+                    
+                    staff_id = getattr(business_permit.staff_id, 'staff_id', '00003250722') if business_permit.staff_id else '00003250722'
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                    
+                    if staff:
+                        create_activity_log(
+                            act_type="Receipt Created",
+                            act_description=f"Receipt {invoice.inv_serial_num} created for business permit {business_permit.bpr_id}. Payment status updated to Paid.",
+                            staff=staff,
+                            record_id=invoice.inv_serial_num,
+                            feat_name="Receipt Management"
+                        )
+                except Exception as e:
+                    print(f"Failed to log activity: {e}")
+            
+            # Check if it's a non-resident certificate request
+            elif invoice.nrc_id:
+                # Add similar logic for non-resident certificates if needed
+                invoice.inv_status = "Paid"
+                invoice.save()
+                
+                # Update non-resident certificate payment status
+                non_resident_cert = invoice.nrc_id
+                non_resident_cert.nrc_req_payment_status = "Paid"
+                non_resident_cert.save()
+                
+        except Exception as e:
+            print(f"Failed to process invoice: {e}")
+            invoice.inv_change = 0
+            invoice.save()
+        
+        return invoice
 
 
 # Clearance Request Serializers
@@ -222,8 +476,8 @@ class ClearanceRequestSerializer(serializers.ModelSerializer):
         model = ClerkCertificate
         fields = [
             'cr_id', 'resident_details', 'req_pay_method', 'req_request_date',
-            'req_claim_date', 'req_type', 'req_status', 'req_payment_status',
-            'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details'
+            'req_type', 'req_status', 'req_payment_status',
+            'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details', 'pr_id'
         ]
 
     def get_resident_details(self, obj):
@@ -236,7 +490,7 @@ class ClearanceRequestSerializer(serializers.ModelSerializer):
 
     def get_invoice(self, obj):
         try:
-            invoice = obj.clerk_invoices.first()
+            invoice = obj.treasurer_invoices.first()
             if invoice:
                 return {
                     'inv_num': invoice.inv_num,
@@ -256,7 +510,7 @@ class ClearanceRequestSerializer(serializers.ModelSerializer):
 
     def get_req_amount(self, obj):
         try:
-            invoice = obj.clerk_invoices.first()
+            invoice = obj.treasurer_invoices.first()
             return str(invoice.inv_amount) if invoice else "0"
         except:
             return "0"
@@ -276,8 +530,8 @@ class ClearanceRequestDetailSerializer(serializers.ModelSerializer):
         model = ClerkCertificate
         fields = [
             'cr_id', 'resident_details', 'req_pay_method', 'req_request_date',
-            'req_claim_date', 'req_type', 'req_status', 'req_payment_status',
-            'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details'
+            'req_type', 'req_status', 'req_payment_status',
+            'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details', 'pr_id'
         ]
 
     def get_resident_details(self, obj):
@@ -298,7 +552,7 @@ class ClearanceRequestDetailSerializer(serializers.ModelSerializer):
 
     def get_invoice(self, obj):
         try:
-            invoice = obj.clerk_invoices.first()
+            invoice = obj.treasurer_invoices.first()
             if invoice:
                 return {
                     'inv_num': invoice.inv_num,
@@ -318,7 +572,7 @@ class ClearanceRequestDetailSerializer(serializers.ModelSerializer):
 
     def get_req_amount(self, obj):
         try:
-            invoice = obj.clerk_invoices.first()
+            invoice = obj.treasurer_invoices.first()
             return str(invoice.inv_amount) if invoice else "0"
         except:
             return "0"
@@ -338,3 +592,27 @@ class PaymentStatusUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClerkCertificate
         fields = ['payment_status']
+
+class ResidentNameSerializer(serializers.ModelSerializer):
+    per_id = serializers.IntegerField(source='per.per_id')
+    first_name = serializers.CharField(source='per.per_fname')
+    last_name = serializers.CharField(source='per.per_lname')
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ResidentProfile
+        fields = ['rp_id', 'per_id', 'first_name', 'last_name', 'full_name']
+    
+    def get_full_name(self, obj):
+        name_parts = [obj.per.per_lname, obj.per.per_fname]
+        if obj.per.per_mname:
+            name_parts.append(obj.per.per_mname)
+        if obj.per.per_suffix:
+            name_parts.append(obj.per.per_suffix)
+        return ', '.join(name_parts)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not instance.rp_id: 
+            return None
+        return data

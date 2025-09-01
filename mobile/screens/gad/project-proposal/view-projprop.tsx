@@ -23,7 +23,7 @@ import {
   useRestoreSupportDocument,
   useDeleteSupportDocument,
 } from "./queries/delqueries";
-import MultiImageUploader from "@/components/ui/multi-media-upload";
+import MediaPicker from "@/components/ui/media-picker";
 import { SupportDoc, ProjectProposalViewProps } from "./projprop-types";
 import { useRouter } from "expo-router";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
@@ -39,7 +39,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
     "active" | "archived"
   >("active");
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [mediaFiles, setMediaFiles] = useState<any[]>([]);
+  const [selectedImages, setSelectedImages] = useState<any[]>([]);
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -65,24 +65,23 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
   ).filter((doc) => doc.psd_type?.startsWith("image/"));
 
   const handleUploadFiles = async () => {
+    console.log('Selected images:', selectedImages.map(file => ({
+      uri: file.uri,
+      id: file.id,
+      name: file.name,
+      type: file.type,
+      hasFile: !!file.file,
+      filePrefix: file.file ? file.file.substring(0, 20) : 'undefined'
+    })));
+    
+
     try {
-      const uploadPromises = mediaFiles.map(async (file) => {
-        if (!file.publicUrl) return;
-
-        await addSupportDocMutation.mutateAsync({
-          gprId: project.gprId!,
-          fileData: {
-            psd_url: file.publicUrl,
-            psd_path: file.path,
-            psd_name: file.name,
-            psd_type: file.type,
-          },
-        });
+      await addSupportDocMutation.mutateAsync({
+        gprId: project.gprId!,
+        files: selectedImages,
       });
-
-      await Promise.all(uploadPromises);
       setShowUploadModal(false);
-      setMediaFiles([]);
+      setSelectedImages([]);
       refetchSupportDocs();
     } catch (error) {
       console.error("Error uploading files:", error);
@@ -132,7 +131,9 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
     <ScrollView className="flex-1 bg-white p-4">
       {!disableDocumentManagement && (
         <View className="flex-row justify-between items-center mb-4">
-          {(project.status === "Pending" || project.status === "Amend") && (
+          {(project.status === "Pending" ||
+            project.status === "Amend" ||
+            project.status === "Rejected") && (
             <TouchableOpacity
               className={`px-4 py-2 rounded-lg ${
                 project.gprIsArchive ? "bg-gray-300" : "bg-blue-500"
@@ -220,7 +221,10 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
             {!disableDocumentManagement && (
               <View className="p-4 bg-white border-t gap-2 border-gray-200 flex-row justify-end space-x-2">
                 {supportDocsViewMode === "active"
-                  ? !project.gprIsArchive && (
+                  ? !project.gprIsArchive &&
+                    (project.status === "Pending" ||
+                      project.status === "Amend" ||
+                      project.status === "Rejected") && (
                       <ConfirmationModal
                         trigger={
                           <TouchableOpacity className="p-2 rounded-lg">
@@ -233,7 +237,10 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                         onPress={() => handleArchiveSupportDoc(doc.psd_id)}
                       />
                     )
-                  : !project.gprIsArchive && (
+                  : !project.gprIsArchive &&
+                    (project.status === "Pending" ||
+                      project.status === "Amend" ||
+                      project.status === "Rejected") && (
                       <>
                         <ConfirmationModal
                           trigger={
@@ -583,11 +590,11 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               </Text>
               <TouchableOpacity
                 onPress={handleUploadFiles}
-                disabled={mediaFiles.length === 0}
+                disabled={selectedImages.length === 0}
               >
                 <Text
                   className={`${
-                    mediaFiles.length === 0 ? "text-gray-400" : "text-blue-500"
+                    selectedImages.length === 0 ? "text-gray-400" : "text-blue-500"
                   }`}
                 >
                   Upload
@@ -595,10 +602,12 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               </TouchableOpacity>
             </View>
 
-            <MultiImageUploader
-              mediaFiles={mediaFiles}
-              setMediaFiles={setMediaFiles}
-              maxFiles={10}
+            <MediaPicker
+              selectedImages={selectedImages}
+              setSelectedImages={setSelectedImages}
+              maxImages={10}
+              multiple={true}
+              editable={true}
             />
           </SafeAreaView>
         </Modal>

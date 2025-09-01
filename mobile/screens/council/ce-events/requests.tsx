@@ -1,5 +1,5 @@
 import { api } from "../../../api/api";
-import { formatDate } from "@/helpers/dateHelpers";
+import { formatDate } from "@/helpers/dateFormatter";
 import { Staff, AttendanceSheetInput } from "./ce-att-typeFile";
 
 export const getCouncilEvents = async () => {
@@ -101,21 +101,23 @@ export const postAttendee = async (attendeeInfo: Record<string, any>) => {
   }
 };
 
-export const postAttendanceSheet = async (
-  attendanceInfo: AttendanceSheetInput
+export const addAttendanceSheets = async (
+  ceId: number,
+  files: Array<{
+    name: string;
+    type: string;
+    file: string; // base64
+    path: string;
+  }>
 ) => {
   try {
-    const res = await api.post("council/attendance-sheets/", {
-      ce_id: attendanceInfo.ce_id,
-      att_file_name: attendanceInfo.att_file_name,
-      att_file_path: attendanceInfo.att_file_path,
-      att_file_url: attendanceInfo.att_file_url,
-      att_file_type: attendanceInfo.att_file_type,
-      staff_id: attendanceInfo.staff_id,
+    const response = await api.post(`council/attendance-sheets/`, {
+      ce_id: ceId,
+      files: files,
     });
-    return res.data;
-  } catch (err) {
-    throw err;
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to upload files");
   }
 };
 

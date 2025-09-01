@@ -85,8 +85,7 @@ const items: BaseMenuItem[] = [
     items: [
       { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
       { title: "Project Proposal", url: "/gad-project-proposal"},
-      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
-      { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
+      { title: "Annual Development Plan", url: "/gad-annual-development-plan"},
     ],
   },
   {
@@ -115,7 +114,7 @@ const items: BaseMenuItem[] = [
         url: "/treasurer-income-and-disbursement",
       },
       {
-        title: "Clearance Requests",
+        title: "Payment Request",
         url: "/",
         items: [
           { title: "Personal & Others", url: "/treasurer-personal-and-others" },
@@ -126,6 +125,17 @@ const items: BaseMenuItem[] = [
         ],
       },
       { title: "Receipts", url: "/treasurer-receipts" },
+      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
+    ],
+  },
+  {
+    title: "Certificate and Clearances",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Certifications", url: "record/clearances/certification" },
+      { title: "Business Permits", url: "record/clearances/businesspermit" },
+      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
     ],
   },
   {
@@ -143,6 +153,11 @@ const items: BaseMenuItem[] = [
   {
     title: "Waste Personnel & Collection Vehicle",
     url: "/waste-personnel",
+  },
+  {
+    title: "Activity Log",
+    url: "/record/activity-log",
+
   },
   {
     title: "Announcement",

@@ -135,3 +135,13 @@ const transformProposalWithData = (proposal: any, logs: any[], suppDocs: any[]) 
   
   return transformed;
 };
+
+export const getAllProposalLogs = async () => {
+  try {
+    const res = await api.get(`gad/project-proposal-logs/all/`);
+    return res.data?.data ?? res.data ?? [];
+  } catch (err) {
+    console.error('API error:', err);
+    return [];
+  }
+};

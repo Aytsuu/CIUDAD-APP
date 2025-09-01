@@ -14,6 +14,18 @@ import {
 export const variants: Record<string, string> = {
   default: "",
   destructive: "bg-red-500 hover:bg-red-500/90",
+};
+
+interface ConfirmationModalProps {
+  trigger?: React.ReactNode;
+  title: string;
+  description: string;
+  actionLabel: string;
+  type?: string;
+  variant?: string;
+  onClick?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function ConfirmationModal({

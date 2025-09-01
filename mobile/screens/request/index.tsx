@@ -19,6 +19,11 @@ export default () => {
      route: "/(request)/certification-request/cert-choices"
   },
   {
+    title: "Track Requests",
+    description: "Track your personal certifications and business permits.",
+    route: "/(request)/cert-tracking"
+  },
+  {
     title: "Medicine Request",
      description: "",
      route: ""

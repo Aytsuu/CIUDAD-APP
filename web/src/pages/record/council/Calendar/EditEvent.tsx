@@ -391,7 +391,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                     trigger={
                       <Button
                         type="button"
-                        className="bg-white text-red-500 hover:bg-gray-100"
+                        className="bg-red-500 text-white hover:bg-gray-100"
                         disabled={isArchiving}
                       >
                         {isArchiving ? (

@@ -7,20 +7,6 @@ const resolutionFormSchema = z.object({
     res_date_approved: z.string().date(),
     res_area_of_focus: z.array(z.string()).nonempty(),
 
-    res_file: z.array(z.object({
-        name: z.string(),
-        type: z.string(),
-        path: z.string(),
-        uri: z.string(),
-    })).optional(),
-
-    res_supp_docs: z.array(z.object({
-        name: z.string(),
-        type: z.string(),
-        path: z.string(),
-        uri: z.string(),
-    })).optional(),
-
 });
 
 export default resolutionFormSchema;

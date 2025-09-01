@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,10 +11,9 @@ interface AnnualDevelopmentPlanViewProps {
 }
 
 interface BudgetItem {
-  gdb_id?: number;
-  gdb_name: string;
-  gdb_pax: string;
-  gdb_price: string;
+  name: string;
+  pax: string;
+  price: string;
 }
 
 interface DevelopmentPlan {
@@ -24,10 +23,10 @@ interface DevelopmentPlan {
   dev_issue: string;
   dev_project: string;
   dev_indicator: string;
-  dev_gad_budget: string;
   dev_res_person: string;
   staff: string;
-  budgets?: BudgetItem[];
+  dev_gad_items?: BudgetItem[];
+  total?: string;
 }
 
 export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelopmentPlanViewProps) {
@@ -125,30 +124,30 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                     </div>
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
-                    {plan.budgets && plan.budgets.length > 0 ? (
-                      plan.budgets.map((item, idx) => (
-                        <div key={item.gdb_id || idx}>{item.gdb_name}</div>
+                    {plan.dev_gad_items && plan.dev_gad_items.length > 0 ? (
+                      plan.dev_gad_items.map((item, idx) => (
+                        <div key={idx}>{item.name}</div>
                       ))
                     ) : (
                       <span>-</span>
                     )}
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
-                    {plan.budgets && plan.budgets.length > 0 ? (
-                      plan.budgets.map((item, idx) => (
-                        <div key={item.gdb_id || idx}>{item.gdb_pax}</div>
+                    {plan.dev_gad_items && plan.dev_gad_items.length > 0 ? (
+                      plan.dev_gad_items.map((item, idx) => (
+                        <div key={idx}>{item.pax}</div>
                       ))
                     ) : (
                       <span>-</span>
                     )}
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
-                    {plan.budgets && plan.budgets.length > 0 ? (
-                      plan.budgets.map((item, idx) => (
-                        <div key={item.gdb_id || idx}>₱{item.gdb_price}</div>
+                    {plan.dev_gad_items && plan.dev_gad_items.length > 0 ? (
+                      plan.dev_gad_items.map((item, idx) => (
+                        <div key={idx}>₱{item.price}</div>
                       ))
                     ) : (
-                      <span>₱{plan.dev_gad_budget}</span>
+                      <span>₱{plan.total || '0'}</span>
                     )}
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
@@ -161,7 +160,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
               <tr className="bg-gray-50 font-semibold">
                 <td className="px-3 py-2 text-right border border-gray-200" colSpan={5}>Total</td>
                 <td className="px-3 py-2 border border-gray-200">
-                  ₱{plans.reduce((sum, plan) => sum + parseFloat(plan.dev_gad_budget), 0).toFixed(2)}
+                  ₱{plans.reduce((sum, plan) => sum + parseFloat(plan.total || '0'), 0).toFixed(2)}
                 </td>
                 <td className="px-3 py-2 border border-gray-200"></td>
               </tr>

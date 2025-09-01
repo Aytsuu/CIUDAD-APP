@@ -44,11 +44,13 @@ class UpdateTemplateByPrIdView(generics.UpdateAPIView):
 class CouncilSchedulingView(generics.ListCreateAPIView):
     serializer_class = CouncilSchedulingSerializer
     queryset = CouncilScheduling.objects.all()
+    permission_classes = [AllowAny]
 
 class CouncilSchedulingDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilSchedulingSerializer
     queryset = CouncilScheduling.objects.all()
     lookup_field = 'ce_id'
+    permission_classes = [AllowAny]
 
     def get_object(self):
         # Use the lookup_field (ce_id) from URL kwargs
@@ -90,6 +92,7 @@ class CouncilSchedulingRestoreView(generics.UpdateAPIView):
     queryset = CouncilScheduling.objects.filter(ce_is_archive=True)
     serializer_class = CouncilSchedulingSerializer
     lookup_field = 'ce_id'
+    permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -100,15 +103,18 @@ class CouncilSchedulingRestoreView(generics.UpdateAPIView):
 class AttendeesView(generics.ListCreateAPIView):
     serializer_class = CouncilAttendeesSerializer
     queryset = CouncilAttendees.objects.all()
+    permission_classes = [AllowAny]
 
 class AttendeesDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilAttendeesSerializer
     queryset = CouncilAttendees.objects.all()
     lookup_field = 'atn_id'
+    permission_classes = [AllowAny]
 
 class AttendeesBulkView(generics.GenericAPIView):
     serializer_class = CouncilAttendeesSerializer
     queryset = CouncilAttendees.objects.all()
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         ce_id = request.data.get('ce_id')
@@ -137,6 +143,7 @@ class AttendeesBulkView(generics.GenericAPIView):
 class AttendanceSheetListView(generics.ListCreateAPIView):
     serializer_class = CouncilAttendanceSerializer
     queryset = CouncilAttendance.objects.all()
+    permission_classes = [AllowAny]
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -153,10 +160,26 @@ class AttendanceSheetListView(generics.ListCreateAPIView):
             
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        ce_id = kwargs.get('ce_id') or request.data.get('ce_id')
+        files = request.data.get('files', [])
+        
+        if not ce_id:
+            return Response({"error": "ce_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not files:
+            return Response({"error": "No files provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer()
+        serializer._upload_file(files, ce_id=ce_id)
+        
+        return Response({"message": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)
+
 class AttendanceSheetDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilAttendanceSerializer
     queryset = CouncilAttendance.objects.all()
     lookup_field = 'att_id'
+    permission_classes = [AllowAny]
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -176,6 +199,7 @@ class RestoreAttendanceView(generics.UpdateAPIView):
     queryset = CouncilAttendance.objects.filter(att_is_archive=True)
     serializer_class = CouncilAttendanceSerializer
     lookup_field = 'att_id'
+    permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -186,6 +210,7 @@ class RestoreAttendanceView(generics.UpdateAPIView):
 
 class StaffAttendanceRankingView(generics.ListAPIView):
     serializer_class = StaffAttendanceRankingSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         # Aggregate present attendees by atn_name for non-archived events
@@ -209,6 +234,7 @@ class StaffAttendanceRankingView(generics.ListAPIView):
 
 Staff = apps.get_model('administration', 'Staff')
 class StaffListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     queryset = Staff.objects.select_related('pos', 'rp__per').only(
         'staff_id',
         'rp__per__per_fname',
@@ -219,8 +245,55 @@ class StaffListView(generics.ListAPIView):
 
 #TEMPLATE
 class TemplateView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = TemplateSerializer
     queryset = Template.objects.all()
+
+
+class TemplateFileView(generics.ListCreateAPIView):
+    serializer_class = TemplateFileSerializer
+    queryset = TemplateFile.objects.all()
+
+    # def get_queryset(self):
+    #     queryset = super().get_queryset()
+    #     temp_id = self.request.query_params.get('temp_id')
+    #     if temp_id:
+    #         queryset = queryset.filter(temp_id=temp_id)
+    #     return queryset    
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        temp_id = self.request.query_params.get('temp_id')
+        logo_type = self.request.query_params.get('logoType')  # Add this
+        
+        if temp_id:
+            queryset = queryset.filter(temp_id=temp_id)
+        if logo_type:  # Add this filter
+            queryset = queryset.filter(tf_logoType=logo_type)
+            
+        return queryset    
+
+    def create(self, request, *args, **kwargs):
+        # Get iet_num from either query params or request data
+        temp_id = request.query_params.get('temp_id') or request.data.get('temp_id')
+        
+        if not temp_id:
+            return Response(
+                {"error": "temp_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Call your serializer's upload method
+        files = request.data.get('files', [])
+        self.get_serializer()._upload_files(files, temp_id=temp_id)
+        
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)    
+
+
+class TemplateFileDetailView(generics.RetrieveDestroyAPIView):
+    queryset = TemplateFile.objects.all()
+    serializer_class = TemplateFileSerializer
+    lookup_field = 'tf_id' 
 
 
 class SummonTemplateView(APIView):
@@ -324,6 +397,23 @@ class ResolutionFileView(generics.ListCreateAPIView):
             queryset = queryset.filter(res_num=res_num)
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        # Get res_num from either query params or request data
+        res_num = request.query_params.get('res_num') or request.data.get('res_num')
+        
+        if not res_num:
+            return Response(
+                {"error": "res_num is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Call your serializer's upload method
+        files = request.data.get('files', [])
+        self.get_serializer()._upload_files(files, res_num=res_num)
+        
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)    
+
+
 # Deleting Res File or replace if updated
 class ResolutionFileDetailView(generics.RetrieveDestroyAPIView):
     queryset = ResolutionFile.objects.all()
@@ -342,6 +432,22 @@ class ResolutionSupDocsView(generics.ListCreateAPIView):
         if res_num:
             queryset = queryset.filter(res_num=res_num)
         return queryset
+    
+    def create(self, request, *args, **kwargs):
+        # Get res_num from either query params or request data
+        res_num = request.query_params.get('res_num') or request.data.get('res_num')
+        
+        if not res_num:
+            return Response(
+                {"error": "res_num is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Call your serializer's upload method
+        files = request.data.get('files', [])
+        self.get_serializer()._upload_files(files, res_num=res_num)
+        
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)      
 
 
 class ResolutionSupDocsDetailView(generics.RetrieveDestroyAPIView):
@@ -354,6 +460,7 @@ class PurposeRatesListView(generics.ListCreateAPIView):
     queryset = Purpose_And_Rates.objects.all()
     serializer_class = PurposeRatesListViewSerializer
     
+# =================== MINUTES OF MEETING VIEWS ======================
 
 # ==================== MINUTES OF MEETING=======================
 class MinutesOfMeetingView(generics.ListCreateAPIView):
@@ -370,8 +477,15 @@ class MOMAreaOfFocusView(generics.ListCreateAPIView):
     queryset = MOMAreaOfFocus.objects.all()
 
 class MOMFileView(generics.ListCreateAPIView):
-    serializer_class = MOMFileSerialzer
+    serializer_class = MOMFileCreateSerializer
     queryset = MOMFile.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print(serializer.errors) 
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
 
 class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
     serializer_class = MinutesOfMeetingSerializer
@@ -395,19 +509,14 @@ class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
         return get_object_or_404(MinutesOfMeeting, mom_id=mom_id) 
     
 
-class UpdateMOMFileView(generics.RetrieveUpdateAPIView):
-    serializer_class = MOMFileSerialzer
+class DeleteMOMFileView(generics.DestroyAPIView):
+    serializer_class = MOMFileViewSerializer    
     queryset = MOMFile.objects.all()
-    lookup_field = 'momf_id'
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+    def get_object(self):
+        mom_id = self.kwargs.get('mom_id')
+        return get_object_or_404(MOMFile, mom_id=mom_id)
+
 
 class DeleteMOMAreaOfFocusView(APIView):
     def delete(self, request, mom_id):
@@ -418,14 +527,9 @@ class DeleteMOMAreaOfFocusView(APIView):
             {"detail": f"{deleted_count} area(s) of focus deleted."},
             status=status.HTTP_204_NO_CONTENT
         )
-    
-
-class MOMSuppDocView(generics.ListCreateAPIView):
-    serializer_class = MOMSuppDocSerializer
-    query_set = MOMSuppDoc.objects.all()
 
 class MeetingSuppDocsView(generics.ListAPIView):
-    serializer_class = MOMSuppDocSerializer
+    serializer_class = MOMSuppDocViewSerializer
     
     def get_queryset(self):
         mom_id = self.kwargs['mom_id']
@@ -433,91 +537,9 @@ class MeetingSuppDocsView(generics.ListAPIView):
 
 class DeleteMOMSuppDocView(generics.DestroyAPIView):
     queryset = MOMSuppDoc.objects.all()
-    serializer_class = MOMSuppDocSerializer
+    serializer_class = MOMSuppDocViewSerializer
     lookup_field = 'momsp_id'
 
-
-# ==================== ORDINANCE =======================
-# Ordinance Views (moved from secretary app)
-
-class OrdinanceListView(generics.ListCreateAPIView):
-    queryset = Ordinance.objects.all()
-    serializer_class = OrdinanceSerializer
-
-    def get_queryset(self):
-        return Ordinance.objects.filter(ord_is_archive=False)
-
-class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Ordinance.objects.all()
-    serializer_class = OrdinanceSerializer
-    lookup_field = 'ord_num'
-
-class OrdinanceArchiveView(generics.UpdateAPIView):
-    queryset = Ordinance.objects.all()
-    serializer_class = OrdinanceSerializer
-    lookup_field = 'ord_num'
-
-    def update(self, request, *args, **kwargs):
-        ordinance = self.get_object()
-        ordinance.ord_is_archive = True
-        ordinance.save()
-        return Response({'message': 'Ordinance archived successfully'})
-
-class OrdinanceSupplementaryDocListView(generics.ListCreateAPIView):
-    queryset = OrdinanceSupplementaryDoc.objects.all()
-    serializer_class = OrdinanceSupplementaryDocSerializer
-
-    def get_queryset(self):
-        return OrdinanceSupplementaryDoc.objects.filter(osd_is_archive=False)
-
-class OrdinanceSupplementaryDocDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = OrdinanceSupplementaryDoc.objects.all()
-    serializer_class = OrdinanceSupplementaryDocSerializer
-
-class OrdinanceSupplementaryDocArchiveView(generics.UpdateAPIView):
-    queryset = OrdinanceSupplementaryDoc.objects.all()
-    serializer_class = OrdinanceSupplementaryDocSerializer
-
-    def update(self, request, *args, **kwargs):
-        doc = self.get_object()
-        doc.osd_is_archive = True
-        doc.save()
-        return Response({'message': 'Supplementary document archived successfully'})
-
-# Template Views
-class OrdinanceTemplateListView(generics.ListCreateAPIView):
-    queryset = OrdinanceTemplate.objects.all()
-    serializer_class = OrdinanceTemplateSerializer
-
-    def get_queryset(self):
-        return OrdinanceTemplate.objects.filter(is_active=True)
-
-    def create(self, request, *args, **kwargs):
-        # Create template data
-        template_data = {
-            'title': request.data.get('title'),
-            'template_body': request.data.get('template_body'),
-            'with_seal': request.data.get('with_seal', 'false').lower() == 'true',
-            'with_signature': request.data.get('with_signature', 'false').lower() == 'true',
-            'pdf_url': request.data.get('pdf_url'),
-        }
-
-        serializer = self.get_serializer(data=template_data)
-        serializer.is_valid(raise_exception=True)
-        template = serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-class OrdinanceTemplateDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = OrdinanceTemplate.objects.all()
-    serializer_class = OrdinanceTemplateSerializer
-
-class OrdinanceTemplateArchiveView(generics.UpdateAPIView):
-    queryset = OrdinanceTemplate.objects.all()
-    serializer_class = OrdinanceTemplateSerializer
-
-    def update(self, request, *args, **kwargs):
-        template = self.get_object()
-        template.is_active = False
-        template.save()
-        return Response({'message': 'Template archived successfully'}) 
+class MOMSuppDocView(generics.ListCreateAPIView):
+    serializer_class = MOMSuppDocCreateSerializer
+    query_set = MOMSuppDoc.objects.all()

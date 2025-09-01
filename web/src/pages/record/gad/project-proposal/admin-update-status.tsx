@@ -5,7 +5,11 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { X, Search, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import {useGetProjectProposals,useGetProjectProposal,useGetSupportDocs,} from "./queries/fetchqueries";
+import {
+  useGetProjectProposals,
+  useGetProjectProposal,
+  useGetSupportDocs,
+} from "./queries/fetchqueries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import {Dialog,DialogContent,DialogHeader,DialogTitle,} from "@/components/ui/dialog/dialog";
@@ -13,6 +17,7 @@ import ViewProjectProposal from "./view-projprop";
 import { useUpdateProjectProposalStatus } from "./queries/updatequeries";
 import { ProposalStatus, SupportDoc, ProjectProposal } from "./projprop-types";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Link } from "react-router";
 
 function AdminGADProjectProposal() {
   const style = {
@@ -22,6 +27,7 @@ function AdminGADProjectProposal() {
       approved: "text-green-500",
       rejected: "text-red-500",
       viewed: "text-darkGray",
+      resubmitted: "text-indigo-600",
     },
   };
 
@@ -30,6 +36,13 @@ function AdminGADProjectProposal() {
     { id: "Pending", name: "Pending" },
     { id: "Viewed", name: "Viewed" },
     { id: "Amend", name: "Amend" },
+    { id: "Resubmitted", name: "Resubmitted"},
+    { id: "Approved", name: "Approved" },
+    { id: "Rejected", name: "Rejected" },
+  ];
+
+  const updateStatus = [
+    { id: "Amend", name: "Amend" },
     { id: "Approved", name: "Approved" },
     { id: "Rejected", name: "Rejected" },
   ];
@@ -37,11 +50,13 @@ function AdminGADProjectProposal() {
   const {data: projects = [],isLoading,isError,error} = useGetProjectProposals();
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<ProjectProposal | null>(null);
+  const [selectedProject, setSelectedProject] =
+    useState<ProjectProposal | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSuppDocDialogOpen, setIsSuppDocDialogOpen] = useState(false);
   const [selectedSuppDocs, setSelectedSuppDocs] = useState<SupportDoc[]>([]);
-  const [isStatusUpdateDialogOpen, setIsStatusUpdateDialogOpen] = useState(false);
+  const [isStatusUpdateDialogOpen, setIsStatusUpdateDialogOpen] =
+    useState(false);
   const [newStatus, setNewStatus] = useState<ProposalStatus | null>(null);
   const [reason, setReason] = useState<string | null>(null);
   const updateStatusMutation = useUpdateProjectProposalStatus();
@@ -61,10 +76,10 @@ function AdminGADProjectProposal() {
     });
 
   useEffect(() => {
-    if (isSuppDocDialogOpen && supportDocs.length > 0) {
-      setSelectedSuppDocs(supportDocs);
-    }
-  }, [supportDocs, isSuppDocDialogOpen]);
+  if (isSuppDocDialogOpen) {
+    setSelectedSuppDocs(supportDocs);
+  }
+}, [supportDocs, isSuppDocDialogOpen]);
 
   useEffect(() => {
     if (detailedProject && selectedProject?.gprId === detailedProject.gprId) {
@@ -120,14 +135,14 @@ function AdminGADProjectProposal() {
             setIsViewDialogOpen(true);
           },
           onError: (_error) => {
-            setSelectedProject(project); // Original project has correct types
+            setSelectedProject(project);
             setIsViewDialogOpen(true);
           },
         }
       );
     } else {
       setTimeout(() => {
-        setSelectedProject(project); // Original project has correct types
+        setSelectedProject(project);
         setIsViewDialogOpen(true);
       }, 50);
     }
@@ -186,7 +201,7 @@ function AdminGADProjectProposal() {
     );
   };
 
-  const isReasonRequired = newStatus === "Approved" || newStatus === "Rejected";
+  const isReasonRequired = newStatus === "Amend";
   const isUpdateDisabled =
     !newStatus ||
     newStatus === selectedProject?.status ||
@@ -255,9 +270,10 @@ function AdminGADProjectProposal() {
       </div>
       <hr className="border-gray mb-5 sm:mb-4" />
 
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-          <div className="relative flex-1">
+      <div className="flex flex-col md:flex-row justify-between gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 w-full">
+          {/* Search input with flex-grow */}
+          <div className="relative flex-grow">
             <Search
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
               size={17}
@@ -269,10 +285,12 @@ function AdminGADProjectProposal() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex flex-row gap-2 justify-center items-center">
-            <Label>Filter: </Label>
+
+          {/* Filter with fixed width */}
+          <div className="flex flex-row gap-2 items-center w-[200px]">
+            <Label className="whitespace-nowrap">Filter:</Label>
             <SelectLayout
-              className="bg-white"
+              className="bg-white w-full"
               options={filter}
               placeholder="Filter"
               value={selectedFilter}
@@ -281,24 +299,28 @@ function AdminGADProjectProposal() {
           </div>
         </div>
 
-        {/* Dynamic Total Budget Display */}
-        <div className="flex justify-end mt-2 mb-2">
-          <div className="bg-white border px-4 py-2 rounded-lg">
-            <span className="font-medium text-black">
-              Grand Total:{" "}
-              <span className="font-bold text-green-700">
-                ₱
-                {new Intl.NumberFormat("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }).format(totalBudget)}
-              </span>
+      {/* Dynamic Total Budget Display */}
+      <div className="flex justify-between mt-2">
+        <div className="bg-white border px-4 py-2 rounded-lg">
+          <span className="font-medium text-black">
+            Grand Total:{" "}
+            <span className="font-bold text-green-700">
+              ₱
+              {new Intl.NumberFormat("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(totalBudget)}
             </span>
           </div>
         </div>
+        <Link to="/gad-project-proposal-log">
+          <Button variant="link" className="mr-1 w-20 underline text-sky-600">
+            View Logs
+          </Button>
+        </Link>
       </div>
 
-      <div className="flex flex-col mt-4 gap-4">
+      <div className="flex flex-col mt-2 gap-4">
         {paginatedProjects.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No project proposals found.
@@ -307,7 +329,7 @@ function AdminGADProjectProposal() {
         {paginatedProjects.map((project: ProjectProposal, index: number) => {
           const status =
             project.status.toLowerCase() as keyof typeof style.projStat;
-          const reason = project.statusReason || "No reason provided";
+          const reason = project.statusReason || "No remarks provided";
 
           return (
             <CardLayout
@@ -457,7 +479,7 @@ function AdminGADProjectProposal() {
               <SelectLayout
                 className="bg-white mt-1 w-full"
                 placeholder="Select Status"
-                options={filter.filter(
+                options={updateStatus.filter(
                   (f) => f.id !== "All" && f.id !== "Viewed"
                 )}
                 value={newStatus || ""}

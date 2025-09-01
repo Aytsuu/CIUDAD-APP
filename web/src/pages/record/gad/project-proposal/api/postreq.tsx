@@ -1,48 +1,25 @@
 import { api } from "@/api/api";
+import { SupportDocInput, ProjectProposalInput, prepareProposalPayload } from "../projprop-types";
 
-export const postProjectProposal = async (proposalInfo: Record<string, any>) => {
-  try {
-    const payload = {
-      gpr_title: proposalInfo.projectTitle,
-      gpr_background: proposalInfo.background,
-      gpr_objectives: proposalInfo.objectives || [],
-      gpr_participants: proposalInfo.participants || [],
-      gpr_date: proposalInfo.date,
-      gpr_venue: proposalInfo.venue,
-      gpr_budget_items: proposalInfo.budgetItems || [],
-      gpr_monitoring: proposalInfo.monitoringEvaluation,
-      gpr_signatories: proposalInfo.signatories || [],
-      gpr_header_img: proposalInfo.gpr_header_img || null,
-      staff: proposalInfo.staffId || null,
-      gpr_is_archive: false,
-      gpr_page_size: proposalInfo.paperSize
-    };
 
-    const res = await api.post('gad/project-proposals/', payload);
-    return res.data;
-  } catch (err: any) {
-    throw err;
-  }
+export const postProjectProposal = async (proposalData: ProjectProposalInput) => {
+  const cleanedPayload = prepareProposalPayload(proposalData);
+  
+  const response = await api.post('/gad/project-proposals/', cleanedPayload, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  return response.data;
 };
 
-export const addSupportDocument = async (gprId: number, fileData: {
-  psd_url: string;
-  psd_path: string;
-  psd_name: string;
-  psd_type: string;
-}) => {
-  if (!gprId) {
-    throw new Error("Project ID is required");
+export const addSupportDocuments = async (fileData: SupportDocInput) => {
+  if (!fileData.gpr_id) {
+    throw new Error("Project proposal ID is required");
   }
-  
-  try {
-    const res = await api.post(`gad/project-proposals/${gprId}/support-docs/`, {
-      ...fileData,
-      psd_is_archive: false,
-      gpr_id: gprId 
-    });
-    return res.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.post(
+    `/gad/project-proposals/${fileData.gpr_id}/support-docs/`, 
+    fileData
+  );
+  return response.data;
 };

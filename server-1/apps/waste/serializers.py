@@ -4,6 +4,11 @@ from rest_framework import serializers, generics
 from .models import *
 from .models import WasteTruck
 from apps.profiling.models import Sitio
+from utils.supabase_client import upload_to_storage
+from .models import WasteTruck
+from apps.profiling.models import Sitio
+from apps.treasurer.serializers import FileInputSerializer
+from django.db import transaction
 
 
 class WasteEventSerializer(serializers.ModelSerializer):
@@ -180,11 +185,65 @@ class WasteReportFileSerializer(serializers.ModelSerializer):
         model = WasteReport_File
         fields = '__all__'
 
+    def _upload_files(self, files, rep_id=None):
+
+        if not rep_id:
+            return
+        
+        try:
+            tracking_instance = WasteReport.objects.get(pk=rep_id)
+        except WasteReport.DoesNotExist:
+            
+            raise ValueError(f"Income_Expense_Tracking with id {rep_id} does not exist")       
+        
+        rep_files = []
+        for file_data in files:
+            rep_file = WasteReport_File(
+                wrf_name =file_data['name'],
+                wrf_type=file_data['type'],
+                wrf_path=f"illegal-dumping/{file_data['name']}",
+                rep_id=tracking_instance  # THIS SETS THE FOREIGN KEY
+            )
+
+            url = upload_to_storage(file_data, 'report-bucket', 'illegal-dumping')
+            rep_file.wrf_url = url
+            rep_files.append(rep_file)
+
+        if rep_files:
+            WasteReport_File.objects.bulk_create(rep_files)
+
 
 class WasteReportResolveFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = WasteReportResolve_File
         fields = '__all__'        
+
+    def _upload_files(self, files, rep_id=None):
+
+        if not rep_id:
+            return
+        
+        try:
+            tracking_instance = WasteReport.objects.get(pk=rep_id)
+        except WasteReport.DoesNotExist:
+            
+            raise ValueError(f"Income_Expense_Tracking with id {rep_id} does not exist")       
+        
+        rep_rslv_files = []
+        for file_data in files:
+            rep_rslv_file = WasteReportResolve_File(
+                wrsf_name =file_data['name'],
+                wrsf_type=file_data['type'],
+                wrsf_path=f"illegal-dumping/{file_data['name']}",
+                rep_id=tracking_instance  # THIS SETS THE FOREIGN KEY
+            )
+
+            url = upload_to_storage(file_data, 'report-bucket', 'illegal-dumping')
+            rep_rslv_file.wrsf_url = url
+            rep_rslv_files.append(rep_rslv_file)
+
+        if rep_rslv_files:
+            WasteReportResolve_File.objects.bulk_create(rep_rslv_files)
 
         
 class WasteReportSerializer(serializers.ModelSerializer):
@@ -226,10 +285,48 @@ class SitioSerializer(serializers.ModelSerializer):
         model = Sitio
         fields = ['sitio_id', 'sitio_name']
 
-# class AllGarbagePickupSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Garbage_Pickup_Request
-#         fields = '__all__'
+class GarbagePickupFileSerializer(serializers.ModelSerializer):
+    files = FileInputSerializer(write_only=True, required=False, many=True)
+
+    class Meta:
+        model = GarbagePickupRequestFile
+        fields = '__all__'
+        extra_kwargs = {
+            'gprf_url': {'read_only': True},
+            'gprf_name': {'required': False},  
+            'gprf_path': {'required': False},
+            'gprf_type': {'required': False},
+        }
+
+    @transaction.atomic
+    def create(self, validated_data):
+        files_data = validated_data.pop('files', [])
+        if not files_data:
+            raise serializers.ValidationError({"files": "At least one file must be provided"})
+            
+        created_files = self._upload_files(files_data)
+
+        if not created_files:
+            raise serializers.ValidationError("Failed to upload files")
+
+        return created_files[0]
+
+    def _upload_files(self, files_data):
+        gprf_files = []
+        for file_data in files_data:
+            gprf_file = GarbagePickupRequestFile(
+                gprf_name=file_data['name'],
+                gprf_type=file_data['type'],
+                gprf_path=file_data['name'],
+            )
+
+            url = upload_to_storage(file_data, 'request-bucket', 'garbage-pickup')
+            gprf_file.gprf_url = url
+            gprf_files.append(gprf_file)
+
+        if gprf_files:
+            return GarbagePickupRequestFile.objects.bulk_create(gprf_files)
+        return []
 
 class GarbagePickupRequestPendingSerializer(serializers.ModelSerializer):
     garb_requester = serializers.SerializerMethodField()
@@ -248,8 +345,8 @@ class GarbagePickupRequestPendingSerializer(serializers.ModelSerializer):
         return "Unknown"
     
     def get_file_url(self, obj):
-        return obj.file.file_url if obj.file else ""
-    
+        return obj.gprf.gprf_url if obj.gprf else ""
+
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
     
@@ -300,7 +397,7 @@ class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
         return decision.dec_rejection_reason if decision else ""
 
     def get_file_url(self, obj):
-        return obj.file.file_url if obj.file else ""
+        return obj.gprf.gprf_url if obj.gprf else ""
     
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
@@ -443,7 +540,7 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
             return []
 
     def get_file_url(self, obj):
-        return obj.file.file_url if obj.file else ""
+        return obj.gprf.gprf_url if obj.gprf else ""
     
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
@@ -538,7 +635,7 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
             return "Truck info unavailable"
         
     def get_file_url(self, obj):
-        return obj.file.file_url if obj.file else ""
+        return obj.gprf.gprf_url if obj.gprf else ""
     
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
@@ -563,3 +660,26 @@ class PickupConfirmationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pickup_Confirmation
         fields = '__all__' 
+
+
+class GarbagePickupRequestByResidentSerializer(serializers.ModelSerializer):
+    garb_requester = serializers.SerializerMethodField()
+    file_url = serializers.SerializerMethodField()
+    sitio_name = serializers.SerializerMethodField()
+    garb_additional_notes = serializers.CharField(required=False, allow_blank=True)
+    sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all())
+
+    class Meta:
+        model = Garbage_Pickup_Request
+        fields = '__all__'
+
+    def get_garb_requester(self, obj):
+        if obj.rp and obj.rp.per:
+            return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}".strip()
+        return "Unknown"
+    
+    def get_file_url(self, obj):
+        return obj.gprf.gprf_url if obj.gprf else ""
+
+    def get_sitio_name(self, obj):
+        return obj.sitio_id.sitio_name if obj.sitio_id else ""

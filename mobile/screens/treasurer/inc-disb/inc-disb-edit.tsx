@@ -1,10 +1,14 @@
 import "@/global.css";
 import { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+} from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { useForm} from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {  ChevronLeft } from "lucide-react-native";
+import { ChevronLeft } from "lucide-react-native";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
@@ -14,14 +18,11 @@ import {
   useUpdateFolder,
   useGetIncomeFolder,
   useGetDisbursementFolder,
-  useUpdateImage,
   useGetIncomeImages,
   useGetDisbursementImages,
-  useUploadImage,
+  useUploadImages,
 } from "./queries";
-import MultiImageUploader, {
-  MediaFileType,
-} from "@/components/ui/multi-media-upload";
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import {
   IncomeFolder,
   DisbursementFolder,
@@ -37,13 +38,10 @@ const EditFolderForm = () => {
     type: string;
   }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
-  const [initialImages, setInitialImages] = useState<MediaFileType[]>([]);
-  const {
-    control,
-    handleSubmit,
-    reset,
-  } = useForm<CreateFolderFormValues>({
+  const [selectedImages, setSelectedImages] = useState<MediaItem[]>([]);
+  const [initialImageIds, setInitialImageIds] = useState<string[]>([]);
+
+  const { control, handleSubmit, reset } = useForm<CreateFolderFormValues>({
     resolver: zodResolver(CreateFolderSchema),
     defaultValues: {
       type: "income",
@@ -55,7 +53,6 @@ const EditFolderForm = () => {
   });
 
   const updateFolderMutation = useUpdateFolder();
-  const updateImageMutation = useUpdateImage();
   const createFolderMutation = useCreateFolder();
   const { data: incomeFolder, isLoading: isIncomeFolderLoading } =
     useGetIncomeFolder(
@@ -73,6 +70,7 @@ const EditFolderForm = () => {
     false,
     folderType === "disbursement" ? parseInt(folderId, 10) : undefined
   );
+  
 
   useEffect(() => {
     if (folderId && folderType) {
@@ -104,14 +102,12 @@ const EditFolderForm = () => {
       if (folderType === "income" && incomeImages) images = incomeImages;
       else if (folderType === "disbursement" && disbursementImages)
         images = disbursementImages;
-      const initialMediaFiles = images.map(
+
+      // Convert existing images to MediaItem format
+      const initialMediaItems: MediaItem[] = images.map(
         (img) =>
           ({
-            uri:
-              folderType === "income"
-                ? (img as IncomeImage).infi_url
-                : (img as DisbursementImage).disf_url,
-            status: "uploaded" as const,
+            file: "", // Base64 not available for existing images
             type:
               folderType === "income"
                 ? (img as IncomeImage).infi_type
@@ -120,18 +116,20 @@ const EditFolderForm = () => {
               folderType === "income"
                 ? (img as IncomeImage).infi_name
                 : (img as DisbursementImage).disf_name,
-            path:
+            uri:
               folderType === "income"
-                ? (img as IncomeImage).infi_path
-                : (img as DisbursementImage).disf_path,
+                ? (img as IncomeImage).infi_url
+                : (img as DisbursementImage).disf_url,
             id: (folderType === "income"
               ? (img as IncomeImage).infi_num
               : (img as DisbursementImage).disf_num
             ).toString(),
-          } as MediaFileType)
+          } as MediaItem)
       );
-      setInitialImages(initialMediaFiles);
-      setMediaFiles(initialMediaFiles);
+
+      const initialIds = initialMediaItems.map((item) => item.id || "");
+      setInitialImageIds(initialIds);
+      setSelectedImages(initialMediaItems);
     }
   }, [
     folderId,
@@ -145,7 +143,8 @@ const EditFolderForm = () => {
     reset,
   ]);
 
-  const uploadImageMutation = useUploadImage(folderType === "income");
+  const uploadImagesMutation = useUploadImages(folderType === "income");
+
   const onSubmit = async (data: {
     type: "income" | "disbursement";
     name: string;
@@ -164,69 +163,66 @@ const EditFolderForm = () => {
           data: { name: data.name, year: data.year, desc: data.desc ?? "" },
         });
 
-        // 2. Handle new images using useUploadImage (same as create form)
-        const newFiles = mediaFiles.filter(
-          (file) =>
-            file.status === "uploaded" &&
-            !initialImages.some((i) => i.id === file.id)
+        // 2. Handle new images (those not in initialImageIds and have file data)
+        const newImages = selectedImages.filter(
+          (image) => !initialImageIds.includes(image.id || "") && image.file
         );
 
-        await Promise.all(
-          newFiles.map((file) => {
-            return uploadImageMutation.mutateAsync({
-              upload_date: new Date().toISOString(),
-              type: file.type || "image/jpeg",
-              name:
-                file.name ||
-                file.path.split("/").pop() ||
-                `image_${Date.now()}.jpg`,
-              path: file.path || "",
-              url: file.publicUrl || file.uri || "",
-              folder: folderIdNum,
-            });
-          })
-        );
+        if (newImages.length > 0) {
+          // Convert MediaItem[] to the format expected by your backend
+          const imageFiles = newImages.map((item) => ({
+            name: item.name || `image_${Date.now()}.jpg`,
+            type: item.type || "image/jpeg",
+            file: `data:${item.type || "image/jpeg"};base64,${item.file}`,
+          }));
 
-        // 3. Handle updated images (keep using updateImageMutation)
-        const updatedFiles = mediaFiles.filter((file) =>
-          initialImages.some(
-            (i) =>
-              i.id === file.id && (i.uri !== file.uri || i.path !== file.path)
-          )
-        );
+          const imagePayload =
+            data.type === "income"
+              ? { inf_num: folderIdNum, files: imageFiles }
+              : { dis_num: folderIdNum, files: imageFiles };
 
-        await Promise.all(
-          updatedFiles.map((file) => {
-            const initialImage = initialImages.find((i) => i.id === file.id);
-            if (!initialImage) return Promise.resolve();
-
-            return updateImageMutation.mutateAsync({
-              id: parseInt(initialImage.id, 10),
-              type: data.type,
-              data: {
-                [data.type === "income" ? "infi_url" : "disf_url"]:
-                  file.publicUrl || file.uri,
-                [data.type === "income" ? "infi_path" : "disf_path"]:
-                  file.path || "",
-              },
-            });
-          })
-        );
-
+          await uploadImagesMutation.mutateAsync(imagePayload);
+        }
+        setSelectedImages([]);
+        
         router.push({
           pathname: "/(treasurer)/inc-disbursement/inc-disb-main",
           params: { isIncome: (data.type === "income").toString(), folderId },
         });
       } else {
+        // Create new folder (same as create form)
         const folderPayload = {
           type: data.type,
           name: data.name,
           desc: data.desc ?? "",
           year: data.year,
+          is_archive: false,
         };
+
         const newFolder = await createFolderMutation.mutateAsync(folderPayload);
         const newFolderId =
           data.type === "income" ? newFolder.inf_num : newFolder.dis_num;
+
+        if (!newFolderId) {
+          throw new Error("Failed to get folder ID from response");
+        }
+
+        // Upload images if any are selected
+        if (selectedImages.length > 0) {
+          const imageFiles = selectedImages.map((item) => ({
+            name: item.name || `image_${Date.now()}.jpg`,
+            type: item.type || "image/jpeg",
+            file: `data:${item.type || "image/jpeg"};base64,${item.file}`,
+          }));
+
+          const imagePayload =
+            data.type === "income"
+              ? { inf_num: newFolderId, files: imageFiles }
+              : { dis_num: newFolderId, files: imageFiles };
+
+          await uploadImagesMutation.mutateAsync(imagePayload);
+        }
+
         router.push({
           pathname: "/(treasurer)/inc-disbursement/inc-disb-main",
           params: {
@@ -250,8 +246,30 @@ const EditFolderForm = () => {
         </TouchableOpacity>
       }
       headerTitle={<Text>Edit Folder and Manage Images</Text>}
-      rightAction={
-        <View></View>
+      rightAction={<View></View>}
+      footer={
+        <View>
+          <ConfirmationModal
+            trigger={
+              <TouchableOpacity
+                className={`bg-primaryBlue py-3 rounded-lg ${
+                  isSubmitting ? "opacity-70" : ""
+                }`}
+                disabled={isSubmitting}
+              >
+                <Text className="text-white text-base font-semibold text-center">
+                  {isSubmitting ? "Submitting..." : "Update"}
+                </Text>
+              </TouchableOpacity>
+            }
+            title="Confirm Changes"
+            description="Are you sure you want to save these changes to the folder and images?"
+            actionLabel="Save Changes"
+            onPress={handleSubmit(onSubmit)}
+            loading={isSubmitting}
+            loadingMessage="Saving changes..."
+          />
+        </View>
       }
     >
       <View className="flex-1 p-5">
@@ -286,48 +304,17 @@ const EditFolderForm = () => {
           label="Description"
           placeholder="Enter description"
         />
-        <View className="mb-4">
-          <Text className="text-lg font-bold text-gray-800 mb-2">
-            Manage Images
-          </Text>
-          <MultiImageUploader
-            mediaFiles={mediaFiles}
-            setMediaFiles={setMediaFiles}
-            maxFiles={5}
-            hideRemoveButton={true}
-          />
-        </View>
 
-        <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
-          <ConfirmationModal
-            trigger={
-              <TouchableOpacity
-                className={`bg-primaryBlue py-3 rounded-lg ${
-                  isSubmitting ||
-                  mediaFiles.some((f) => f.status === "uploading")
-                    ? "opacity-70"
-                    : ""
-                }`}
-                disabled={
-                  isSubmitting ||
-                  mediaFiles.some((f) => f.status === "uploading")
-                }
-              >
-                <Text className="text-white text-base font-semibold text-center">
-                  {isSubmitting ? "Submitting..." : "Update"}
-                </Text>
-              </TouchableOpacity>
-            }
-            title="Confirm Changes"
-            description="Are you sure you want to save these changes to the folder and images?"
-            actionLabel="Save Changes"
-            onPress={handleSubmit(onSubmit)}
-            loading={
-              isSubmitting || mediaFiles.some((f) => f.status === "uploading")
-            }
-            loadingMessage="Saving changes..."
-          />
-      </View>
+        <Text className="text-lg font-bold text-gray-800 mb-2">
+          Manage Images
+        </Text>
+        <MediaPicker
+          selectedImages={selectedImages}
+          setSelectedImages={setSelectedImages}
+          multiple={true}
+          onlyRemoveNewImages={true}
+          initialImageIds={initialImageIds}
+        />
       </View>
     </PageLayout>
   );

@@ -713,4 +713,3 @@ class VerifyOTP(APIView):
 #         logger.error(f"Failed to send OTP email: {str(e)}", exc_info=True)
 #         return Response({'error': 'Failed to send OTP email'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
 
-
