@@ -18,6 +18,7 @@ type FileData = {
 type ExtendedResolutionUpdateValues = z.infer<typeof resolutionFormSchema> & {
   files: FileData[]; 
   res_num: number;
+  staff: string;
 };
 
 export const usingUpdateResolution = (onSuccess?: () => void) => {
@@ -30,6 +31,7 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
         res_title: values.res_title,
         res_date_approved: values.res_date_approved,
         res_area_of_focus: values.res_area_of_focus,
+        staff: values.staff
       });
       
       // Handle file updates

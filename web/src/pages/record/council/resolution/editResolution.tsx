@@ -12,7 +12,7 @@ import { z } from "zod"
 import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema.ts';
 import { usingUpdateResolution } from './queries/resolution-update-queries.tsx';
 import { Loader2 } from "lucide-react";
-
+import { useAuth } from "@/context/AuthContext";
 
 
 interface ResolutionEditFormProps {
@@ -29,6 +29,8 @@ interface ResolutionEditFormProps {
 
 
 function EditResolution({ res_num, res_title, res_date_approved, res_area_of_focus, resolution_files, onSuccess }: ResolutionEditFormProps) {
+    
+    const { user } = useAuth();
     const [activeVideoId, setActiveVideoId] = useState<string>("");
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
         return resolution_files?.map(file => ({
@@ -80,7 +82,8 @@ function EditResolution({ res_num, res_title, res_date_approved, res_area_of_foc
         updateEntry({ 
             ...values, 
             files,
-            res_num 
+            res_num,
+            staff: user?.staff?.staff_id 
         });
         setIsEditing(false);
     }

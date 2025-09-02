@@ -70,9 +70,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
       gbud_reference_num: null,
       gbud_remaining_bal: 0,
       gbudy: 0,
-      gpr: 0,
-      staff: "00002250821",
-      // staff: user?.staff?.staff_id || null
+      staff: user?.staff?.staff_id || null
     },
     context: { calculateRemainingBalance },
   });
@@ -110,7 +108,6 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
           message: "No budget found for the selected year",
         });
       }
-      form.setValue("staff", "00002250821");
       form.trigger();
     }
   }, [yearBudgets, yearBudgetsLoading, year, form]);
@@ -146,12 +143,9 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
           setSelectedBudgetItems([...recordedItems, ...unrecordedItems]);
         }
 
-        form.setValue("gpr", selectedProject.gpr_id);
         form.clearErrors("gbud_exp_particulars");
         form.clearErrors("gbud_exp_project");
-        form.clearErrors("gpr");
       } else {
-        form.setValue("gpr", 0);
         form.setValue("gbud_exp_particulars", []);
         setSelectedBudgetItems([]);
         setRecordedBudgetItems([]);
@@ -239,19 +233,16 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
 
     const budgetData = {
       gbud_datetime: new Date(values.gbud_datetime).toISOString(),
-      gbud_add_notes: values.gbud_add_notes || null,
-      ...{
-        gbud_exp_project: values.gbud_exp_project,
-        gbud_exp_particulars: values.gbud_exp_particulars,
-        gbud_actual_expense: values.gbud_actual_expense,
-        gbud_proposed_budget: values.gbud_proposed_budget,
-        gbud_reference_num: values.gbud_reference_num,
-        gbud_remaining_bal:
-          remainingBalance - (values.gbud_actual_expense || 0),
-        gpr: values.gpr,
-      },
-      gbudy: values.gbudy,
-      staff: values.staff,
+    gbud_add_notes: values.gbud_add_notes || null,
+    gbud_exp_particulars: values.gbud_exp_particulars,
+    gbud_actual_expense: values.gbud_actual_expense,
+    gbud_proposed_budget: values.gbud_proposed_budget,
+    gbud_reference_num: values.gbud_reference_num,
+    gbud_remaining_bal: remainingBalance - (values.gbud_actual_expense || 0),
+    dev: selectedProject?.dev_id,
+    gbud_project_index: selectedProject?.project_index || 0,
+    gbudy: values.gbudy,
+    staff: values.staff,
     };
 
     try {
@@ -313,7 +304,8 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                       onSelect={(value, item) => {
                         field.onChange(value);
                         if (item) {
-                          form.setValue("gpr", item.gpr_id);
+                          form.setValue("dev", item.dev_id);
+    form.setValue("gbud_project_index", item.project_index);
                           const recordedItems = item.recorded_items
                             .map((name) =>
                               item.gpr_budget_items.find((b) => b.name === name)
@@ -326,9 +318,6 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                           form.setValue("gbud_exp_particulars", recordedItems);
                           setSelectedBudgetItems(recordedItems);
                           setRecordedBudgetItems(recordedItems);
-                          form.clearErrors("gbud_exp_particulars");
-                          form.clearErrors("gbud_exp_project");
-                          form.clearErrors("gpr");
                         }
                       }}
                       displayKey="gpr_title"

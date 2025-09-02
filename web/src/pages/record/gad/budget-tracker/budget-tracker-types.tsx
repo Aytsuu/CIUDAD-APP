@@ -14,6 +14,9 @@ export type GADBudgetEntryUI = GADBudgetEntry & {
   gbud_exp_project?: string | null;
   gbud_exp_particulars?: string | { name: string; pax: string; amount: number }[] | null;
   files?: GADBudgetFile[];
+  dev?: number;
+  gbud_project_index: number;
+  staff?: string | null;
 };
 
 export type GADBudgetYearEntry = {
@@ -59,13 +62,13 @@ export type GADBudgetFile = {
 export type GADBudgetCreatePayload = {
   gbud_datetime: string;
   gbud_add_notes?: string | null;
-  gbud_exp_project?: string | null;
   gbud_exp_particulars?: { name: string; pax: string; amount: number }[] | null;
   gbud_actual_expense?: number | null;
   gbud_reference_num?: string | null;
   gbud_remaining_bal?: number | null;
   gbudy: number;
-  gpr_id?: number | null;
+  dev?: number;
+  gbud_project_index: number;
   staff?: string | null;
 };
 
@@ -78,7 +81,8 @@ export type GADBudgetUpdatePayload = {
   gbud_reference_num?: string | null;
   gbud_remaining_bal?: number | null;
   gbudy: number;
-  gpr?: number | null; 
+  dev?: number;
+  gbud_project_index: number;
   staff?: string | null;
 };
 
@@ -88,14 +92,15 @@ export type GADEditEntryFormProps = {
 };
 
 export interface ProjectProposal {
-  gpr_id: number;
+  gpr_id: string;
   gpr_title: string;
   gpr_budget_items: { name: string; pax: string; amount: number }[];
   recorded_items: string[];
   unrecorded_items: { name: string; pax: string; amount: number }[];
   is_editable: boolean;
+  dev_id: number;
+  project_index: number;
 }
-
 export interface BudgetLogTable {
   gbudl_id: number;
   gbud_exp_project: string | null;

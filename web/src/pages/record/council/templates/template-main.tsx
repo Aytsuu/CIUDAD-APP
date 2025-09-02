@@ -1256,7 +1256,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_body: "/*TO WHOM IT MAY CONCERN:*/\n\n" +
       `This is to certify that ${businessName?.toUpperCase()} located at ${address}, Barangay San Roque Ciudad, Cebu City.\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*ELECTRICAL CONNECTION PURPOSES ONLY.*/\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },   
     {
       temp_id: "MCWD Requirements",
@@ -1282,7 +1282,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
     }, 
     {
-      temp_id: "scholarship",
+      temp_id: "Scholarship",
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1351,7 +1351,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
     },        
     {
-      temp_id: "board",
+      temp_id: "Board Examination",
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1395,30 +1395,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*TESDA REQUIREMENTS PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
-    },  
-    {
-      temp_id: "schoolRequire",
-      temp_title: "CERTIFICATION",
-      temp_barangayLogo: barangayLogo,
-      temp_cityLogo: cityLogo,
-      temp_email: templates[0]?.temp_email,  
-      temp_telNum: templates[0]?.temp_contact_num,
-      temp_paperSize: "letter",
-      temp_margin: "normal",
-      temp_filename: "School Requirement",
-      temp_w_sign_right: false,
-      temp_w_sign_left: false,
-      temp_w_sign_applicant: true,
-      temp_w_seal: true,
-      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
-      "NAME                     :           [ NAME ]\n" +
-      "AGE                        :            [ AGE ]\n" +
-      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
-      "ADDRESS              :            [ ADDRESS ]\n\n" +
-      "This certification is being issued upon the request of the above mentioned name to support the application for the /*SCHOOL REQUIREMENTS PURPOSES ONLY.*/  " +
-      "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
-    },      
+    },     
     {
       temp_id: "PWD Identification",
       temp_title: "CERTIFICATION",
@@ -1443,7 +1420,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
     },        
     {
-      temp_id: "Señior Citizen Identification",
+      temp_id: "Señior Citizen's Identification",
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1451,7 +1428,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_telNum: templates[0]?.temp_contact_num,
       temp_paperSize: "letter",
       temp_margin: "normal",
-      temp_filename: "Señior Citizen Identification",
+      temp_filename: "Señior Citizen's Identification",
       temp_w_sign_right: false,
       temp_w_sign_left: false,
       temp_w_sign_applicant: true,
@@ -1512,7 +1489,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
     },  
     {
-      temp_id: "fire",
+      temp_id: "Fire Victim",
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1531,7 +1508,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "This CERTIFICATION issued upon the request of the interested party as a supporting document for /*ALS PURPOSES ONLY.*/" 
     },    
     {
-      temp_id: "building",
+      temp_id: "Building Permit",
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1551,7 +1528,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "Given this [ DAY [st/nd/rd/th] ] day of [ AUGUST ] [2025] at Barangay San Roque (Ciudad) Cebu City."
     },   
     {
-      temp_id: "cohabitation",
+      temp_id: "Cohabitation",
       temp_title: "CERTIFICATION",
       temp_subtitle: "(Cohabitation)",
       temp_barangayLogo: barangayLogo,
@@ -1573,7 +1550,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "Cebu City, Cebu Philippines." 
     },     
     {
-      temp_id: "bussClear",
+      temp_id: "Business Clearance",
       temp_title: "BARANGAY BUSINESS CLEARANCE",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1613,7 +1590,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
     //   "\tIssued this [ DAY [st/nd/rd/th] ] day [MONTH] [YEAR] at Barangay San Roque (Ciudad), Cebu City"
     // },
     {
-      temp_id: "fileAction",
+      temp_id: "File Action",
       temp_belowHeaderContent: "\t\t\t\t\t\t\t\t\t\t\t\t\t\tBarangay Case No.[ Case No. ]\n" +
       "[ Name of Complainant ]\n" +
       "[ Address ], Brgy. San Roque Ciudad Cebu City\n" +
@@ -1643,7 +1620,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "This [ DAY [st/nd/rd/th] ] day of [MONTH] [YEAR] in Barangay San Roque Ciudad Cebu City." 
     },       
     {
-      temp_id: "Marriage",
+      temp_id: "Marriage Certification",
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1668,7 +1645,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
     },  
     {
-      temp_id: "dwup",
+      temp_id: "DWUP",
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1733,7 +1710,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
     },     
     {
-      temp_id: "burial",
+      temp_id: "Burial",
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1756,7 +1733,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
     },  
     {
-      temp_id: "philhealth",
+      temp_id: "PHILHEALTH",
       temp_title: "CERTIFICATE OF INDIGENCY",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1779,7 +1756,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
     },           
     {
-      temp_id: "jobseeker",
+      temp_id: "First Time Jobseeker",
       temp_title: "BARANGAY CERTIFICATION",
       temp_subtitle: "(First Time Jobseeker Assistance Act-R.A 11261)",      
       temp_barangayLogo: barangayLogo,
@@ -1800,7 +1777,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "This certification is valid only one (1) year from the issuance."
     },   
     {
-      temp_id: "barangayClear",
+      temp_id: "Barangay Clearance",
       temp_title: "BARANGAY CLEARANCE", 
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,

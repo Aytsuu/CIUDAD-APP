@@ -26,7 +26,32 @@ class GAD_Budget_TrackerView(generics.ListCreateAPIView):
         return GAD_Budget_Tracker.objects.filter(
             gbudy__gbudy_year=year,
             # gbud_is_archive=False
-        ).select_related('gbudy', 'gpr', 'staff').prefetch_related('files')
+        ).select_related('gbudy', 'dev', 'staff').prefetch_related('files')
+    
+    def create(self, request, *args, **kwargs):
+        # Log the incoming request data
+        logger.debug(f"Received POST request to {request.path}")
+        logger.debug(f"Request data: {request.data}")
+        logger.debug(f"Request user: {request.user}")
+        logger.debug(f"Request headers: {dict(request.headers)}")
+        
+        try:
+            # Let the parent class handle the creation
+            response = super().create(request, *args, **kwargs)
+            logger.debug(f"Request successful: {response.status_code}")
+            return response
+            
+        except Exception as e:
+            # Log any exceptions that occur
+            logger.error(f"Error in create method: {str(e)}")
+            logger.error(f"Error type: {type(e).__name__}")
+            
+            # If it's a validation error, log the details
+            if hasattr(e, 'detail'):
+                logger.error(f"Validation errors: {e.detail}")
+            
+            # Re-raise the exception to maintain normal error handling
+            raise
     
     def perform_create(self, serializer):
         validated_data = serializer.validated_data
@@ -34,7 +59,11 @@ class GAD_Budget_TrackerView(generics.ListCreateAPIView):
         save_kwargs = {}
         
         if not staff_provided:
-            save_kwargs['staff'] = getattr(self.request.user, 'staff', None)
+            try:
+                save_kwargs['staff'] = getattr(self.request.user, 'staff', None)
+            except:
+                save_kwargs['staff'] = None
+                logger.warning("No staff available for this request")
         
         serializer.save(**save_kwargs)
     
@@ -45,7 +74,7 @@ class GAD_Budget_TrackerDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        return super().get_queryset().select_related('gbudy', 'gpr', 'staff').prefetch_related('files')
+        return super().get_queryset().select_related('gbudy', 'dev', 'staff').prefetch_related('files')
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -372,17 +401,18 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
         })
         
 class ProjectProposalAvailabilityView(generics.ListAPIView):
-    serializer_class = ProjectProposalSerializer
+    serializer_class = GADDevelopmentPlanSerializer
     permission_classes = [AllowAny]
 
     def get_queryset(self):
         year = self.kwargs.get('year')
-        # Only get approved proposals
-        queryset = ProjectProposal.objects.filter(
-            gpr_is_archive=False,
-            logs__gprl_status='Approved'
-        ).distinct().select_related('staff')
-        return queryset
+        if not year:
+            return DevelopmentPlan.objects.none()
+        
+        # Get development plans for the specified year
+        return DevelopmentPlan.objects.filter(
+            dev_date__year=year
+        ).distinct()
 
     def list(self, request, *args, **kwargs):
         year = self.kwargs.get('year')
@@ -390,40 +420,70 @@ class ProjectProposalAvailabilityView(generics.ListAPIView):
             raise NotFound("Year parameter is required")
 
         queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        data = serializer.data
-
+        
         response_data = []
-        for proposal in data:
-            # Check existing GAD_Budget_Tracker entries for this project and year
-            existing_entries = GAD_Budget_Tracker.objects.filter(
-                gbudy__gbudy_year=year,
-                gbud_exp_project=proposal['gprTitle'],
-                gbud_is_archive=False
-            )
-            is_used = existing_entries.exists()
+        for dev_plan in queryset:
+            # Get the project titles from dev_project (which is a JSONField)
+            projects = dev_plan.dev_project if isinstance(dev_plan.dev_project, list) else [dev_plan.dev_project] if dev_plan.dev_project else []
+            
+            # Get budget items from dev_gad_items
+            budget_items = dev_plan.dev_gad_items or []
+            
+            for project_index, project_title in enumerate(projects):
+                if not project_title:  # Skip empty project titles
+                    continue
+                    
+                # Check existing GAD_Budget_Tracker entries for this specific project and year
+                existing_entries = GAD_Budget_Tracker.objects.filter(
+                    gbudy__gbudy_year=year,
+                    dev=dev_plan,
+                    gbud_project_index=project_index,
+                    gbud_is_archive=False
+                )
+                is_used = existing_entries.exists()
 
-            # Collect all recorded budget item names
-            recorded_items = set()
-            for entry in existing_entries:
-                for item in entry.gbud_exp_particulars or []:
-                    recorded_items.add(item['name'])
+                # Collect all recorded budget item names for this specific project
+                recorded_items = set()
+                for entry in existing_entries:
+                    for item in entry.gbud_exp_particulars or []:
+                        recorded_items.add(item.get('name', ''))
 
-            # Determine unrecorded items
-            project_items = {item['name'] for item in proposal['gprBudgetItems'] or []}
-            unrecorded_items = [
-                item for item in proposal['gprBudgetItems']
-                if item['name'] not in recorded_items
-            ]
+                # Determine unrecorded items from development plan budget items
+                unrecorded_items = []
+                recorded_budget_items = []
+                
+                for item in budget_items:
+                    item_name = item.get('name', item.get('gdb_name', ''))
+                    if not item_name:
+                        continue
+                        
+                    normalized_item = {
+                        'name': item_name,
+                        'pax': item.get('pax', item.get('gdb_pax', 1)),
+                        'amount': item.get('price', item.get('gdb_price', 0))
+                    }
+                    
+                    if item_name in recorded_items:
+                        recorded_budget_items.append(normalized_item)
+                    else:
+                        unrecorded_items.append(normalized_item)
 
-            response_data.append({
-                'gpr_id': proposal['gprId'],
-                'gpr_title': proposal['gprTitle'],
-                'gpr_budget_items': proposal['gprBudgetItems'],
-                'recorded_items': list(recorded_items),
-                'unrecorded_items': unrecorded_items,
-                'is_editable': not is_used 
-            })
+                response_data.append({
+                    'gpr_id': f"{dev_plan.dev_id}_{project_index}",  # Unique identifier combining dev_id and project index
+                    'gpr_title': project_title,
+                    'gpr_budget_items': [{
+                        'name': item.get('name', item.get('gdb_name', '')),
+                        'pax': item.get('pax', item.get('gdb_pax', 1)),
+                        'amount': item.get('price', item.get('gdb_price', 0))
+                    } for item in budget_items if item.get('name', item.get('gdb_name', ''))],
+                    'recorded_items': list(recorded_items),
+                    'unrecorded_items': unrecorded_items,
+                    'is_editable': not is_used,
+                    'dev_id': dev_plan.dev_id,
+                    'dev_client': dev_plan.dev_client,
+                    'dev_issue': dev_plan.dev_issue,
+                    'project_index': project_index 
+                })
 
         return Response({
             'data': response_data,
