@@ -822,6 +822,96 @@
 //       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
 //       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
 //     },     
+//     {
+//       temp_id: "Indigency (for minors)",
+//       temp_title: "CERTIFICATE OF INDIGENCY",
+//       temp_barangayLogo: barangayLogo,
+//       temp_cityLogo: cityLogo,
+//       temp_email: templates[0]?.temp_email,  
+//       temp_telNum: templates[0]?.temp_contact_num,
+//       temp_paperSize: "legal",
+//       temp_margin: "normal",
+//       temp_filename: "INDIGENCY (for minors)",
+//       temp_w_sign_right: false,
+//       temp_w_sign_left: false,
+//       temp_w_sign_applicant: true,
+//       temp_w_seal: true,
+//       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+//       "NAME                     :           [ NAME ]\n" +
+//       "AGE                        :            [ AGE ]\n" +
+//       "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+//       "ADDRESS              :            [ ADDRESS ]\n\n" +
+//       "Further certifies that the above-mentioned name is the child of \n\n" +
+//       "NAME                     :           [ NAME ]\n" +
+//       "AGE                        :            [ AGE ]\n" +
+//       "BIRTHDATE\t  :           [ BIRTHDATE ]\n\n" +
+//       "This certification is being issued upon the request of the above mentioned name to support the application for the /*PWD FINANCIAL ASSISTANCE PURPOSES ONLY.*/   " +
+//       "Affixed below is the name and signature of the above-mentioned name. They belong to an /*indigent family, no income/low income.*/\n\n" +
+//       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+//     },     
+//     {
+//       temp_id: "Indigency",
+//       temp_title: "CERTIFICATE OF INDIGENCY",
+//       temp_barangayLogo: barangayLogo,
+//       temp_cityLogo: cityLogo,
+//       temp_email: templates[0]?.temp_email,  
+//       temp_telNum: templates[0]?.temp_contact_num,
+//       temp_paperSize: "letter",
+//       temp_margin: "normal",
+//       temp_filename: "INDIGENCY",
+//       temp_w_sign_right: false,
+//       temp_w_sign_left: false,
+//       temp_w_sign_applicant: true,
+//       temp_w_seal: true,
+//       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+//       "NAME                     :           [ NAME ]\n" +
+//       "AGE                        :            [ AGE ]\n" +
+//       "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+//       "ADDRESS              :            [ ADDRESS ]\n\n" +
+//       "This certification is being issued upon the request of the above mentioned name to support the application for the /*PWD FINANCIAL ASSISTANCE PURPOSES ONLY.*/   " +
+//       "Affixed below is the name and signature of the above-mentioned name. They belong to an /*indigent family, no income/low income.*/\n\n" +
+//       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+//     },     
+//     {
+//       temp_id: "Barangay Sinulog Permit",
+//       temp_title: "BARANGAY BUSINESS CLEARANCE",
+//       temp_barangayLogo: barangayLogo,
+//       temp_cityLogo: cityLogo,
+//       temp_email: templates[0]?.temp_email,  
+//       temp_telNum: templates[0]?.temp_contact_num,
+//       temp_paperSize: "letter",
+//       temp_margin: "normal",
+//       temp_filename: "Barangay Sinulog Permit",
+//       temp_w_sign_right: true,
+//       temp_w_sign_left: false,
+//       temp_w_sign_applicant: false,
+//       temp_w_seal: false,
+//       temp_body: `\nTO WHOM IT MAY CONCERN:\n\nThis is to certify that {businessName} residence / office address at ${address},  /*Barangay San Roque (Ciudad), Cebu City*/. Which ` +
+//       "is within the Territorial Jurisdiction of the Barangay in accordance with Section # 152 of Republic Act No. 7160, otherwise known as Local Government Code 1991.\n\n\n" +
+//       "\t\tThis clearance is issued upon the request of the subject person / establishment for\n\n" +
+//       "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t/*BARANGAY SINULOG PERMIT*/\n\n" +
+//       `\tIssued this ${FormattedIssuanceDate} at Barangay San Roque (Ciudad), Cebu City`
+//     },
+//     {
+//       temp_id: "Barangay Fiesta Permit",
+//       temp_title: "BARANGAY BUSINESS CLEARANCE",
+//       temp_barangayLogo: barangayLogo,
+//       temp_cityLogo: cityLogo,
+//       temp_email: templates[0]?.temp_email,  
+//       temp_telNum: templates[0]?.temp_contact_num,
+//       temp_paperSize: "letter",
+//       temp_margin: "normal",
+//       temp_filename: "Barangay Fiesta Permit",
+//       temp_w_sign_right: true,
+//       temp_w_sign_left: false,
+//       temp_w_sign_applicant: false,
+//       temp_w_seal: false,
+//       temp_body: `\nTO WHOM IT MAY CONCERN:\n\nThis is to certify that {businessName} residence / office address at ${address},  /*Barangay San Roque (Ciudad), Cebu City*/. Which ` +
+//       "is within the Territorial Jurisdiction of the Barangay in accordance with Section # 152 of Republic Act No. 7160, otherwise known as Local Government Code 1991.\n\n\n" +
+//       "\t\tThis clearance is issued upon the request of the subject person / establishment for\n\n" +
+//       "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t/*BARANGAY FIESTA PERMIT*/\n\n" +
+//       `\tIssued this ${FormattedIssuanceDate} at Barangay San Roque (Ciudad), Cebu City`
+//     },    
 //   ];  
 
 
@@ -1863,7 +1953,124 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*PWD FINANCIAL ASSISTANCE PURPOSES ONLY.*/   " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
-    },        
+    },  
+    {
+      temp_id: "Indigency (for minors)",
+      temp_title: "CERTIFICATE OF INDIGENCY",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Good Moral",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "Further certifies that the above-mentioned name is the child of \n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*PWD FINANCIAL ASSISTANCE PURPOSES ONLY.*/   " +
+      "Affixed below is the name and signature of the above-mentioned name. They belong to an /*indigent family, no income/low income.*/\n\n" +
+      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },   
+    {
+      temp_id: "Indigency (for minors)",
+      temp_title: "CERTIFICATE OF INDIGENCY",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "legal",
+      temp_margin: "normal",
+      temp_filename: "INDIGENCY (for minors)",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "Further certifies that the above-mentioned name is the child of \n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*PWD FINANCIAL ASSISTANCE PURPOSES ONLY.*/   " +
+      "Affixed below is the name and signature of the above-mentioned name. They belong to an /*indigent family, no income/low income.*/\n\n" +
+      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },     
+    {
+      temp_id: "Indigency",
+      temp_title: "CERTIFICATE OF INDIGENCY",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "INDIGENCY",
+      temp_w_sign_right: false,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: true,
+      temp_w_seal: true,
+      temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
+      "NAME                     :           [ NAME ]\n" +
+      "AGE                        :            [ AGE ]\n" +
+      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
+      "ADDRESS              :            [ ADDRESS ]\n\n" +
+      "This certification is being issued upon the request of the above mentioned name to support the application for the /*PWD FINANCIAL ASSISTANCE PURPOSES ONLY.*/   " +
+      "Affixed below is the name and signature of the above-mentioned name. They belong to an /*indigent family, no income/low income.*/\n\n" +
+      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+    },     
+    {
+      temp_id: "Barangay Sinulog Permit",
+      temp_title: "BARANGAY BUSINESS CLEARANCE",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Barangay Sinulog Permit",
+      temp_w_sign_right: true,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: false,
+      temp_w_seal: false,
+      temp_body: `\nTO WHOM IT MAY CONCERN:\n\nThis is to certify that ${businessName} residence / office address at ${address},  /*Barangay San Roque (Ciudad), Cebu City*/. Which ` +
+      "is within the Territorial Jurisdiction of the Barangay in accordance with Section # 152 of Republic Act No. 7160, otherwise known as Local Government Code 1991.\n\n\n" +
+      "\t\tThis clearance is issued upon the request of the subject person / establishment for\n\n" +
+      "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t/*BARANGAY SINULOG PERMIT*/\n\n" +
+      `\tIssued this ${FormattedIssuanceDate} at Barangay San Roque (Ciudad), Cebu City`
+    },
+    {
+      temp_id: "Barangay Fiesta Permit",
+      temp_title: "BARANGAY BUSINESS CLEARANCE",
+      temp_barangayLogo: barangayLogo,
+      temp_cityLogo: cityLogo,
+      temp_email: templates[0]?.temp_email,  
+      temp_telNum: templates[0]?.temp_contact_num,
+      temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "Barangay Fiesta Permit",
+      temp_w_sign_right: true,
+      temp_w_sign_left: false,
+      temp_w_sign_applicant: false,
+      temp_w_seal: false,
+      temp_body: `\nTO WHOM IT MAY CONCERN:\n\nThis is to certify that ${businessName} residence / office address at ${address},  /*Barangay San Roque (Ciudad), Cebu City*/. Which ` +
+      "is within the Territorial Jurisdiction of the Barangay in accordance with Section # 152 of Republic Act No. 7160, otherwise known as Local Government Code 1991.\n\n\n" +
+      "\t\tThis clearance is issued upon the request of the subject person / establishment for\n\n" +
+      "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t/*BARANGAY FIESTA PERMIT*/\n\n" +
+      `\tIssued this ${FormattedIssuanceDate} at Barangay San Roque (Ciudad), Cebu City`
+    },           
   ];  
 
 
