@@ -2,6 +2,7 @@
 
 import { api2 } from "@/api/api"
 import axios from "axios"
+import { capitalizeAllFields } from "@/helpers/capitalize"
 
 export interface PrenatalRecord {
   pat_id: string
@@ -120,7 +121,7 @@ export interface PrenatalRecord {
 export const addPrenatalRecord = async (data: PrenatalRecord) => {
   try {
     console.log("Sending Prenatal Record Data: ", data)
-    const res = await api2.post("maternal/prenatal-record/", data)
+    const res = await api2.post("maternal/prenatal-record/", capitalizeAllFields(data))
 
     return res.data.pf_id
   } catch (error) {
@@ -140,7 +141,7 @@ export interface IllnessData {
 
 export const addIllnessData = async (data: IllnessData) => {
   try {
-    const res = await api2.post("maternal/prenatal/illness/create/", data)
+    const res = await api2.post("maternal/prenatal/illness/create/", capitalizeAllFields(data))
     return res.data
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -200,7 +201,7 @@ export const addPostpartumRecord = async (data: PostpartumCompleteData): Promise
   try {
     console.log("Sending postpartum data to API:", data)
 
-    const res = await api2.post("maternal/postpartum_record/", data)
+    const res = await api2.post("maternal/postpartum_record/", capitalizeAllFields(data))
 
     console.log("Postpartum record created successfully:", res.data)
 
@@ -215,26 +216,26 @@ export const addPostpartumRecord = async (data: PostpartumCompleteData): Promise
   }
 }
 
-export const getPostpartumRecords = async () => {
-  try {
-    const res = await api2.get("maternal/postpartum_records/")
-    return res.data
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error("Get Postpartum Records Error: ", error.response?.data || error.message)
-    }
-    throw error
-  }
-}
+// export const getPostpartumRecords = async () => {
+//   try {
+//     const res = await api2.get("maternal/postpartum_records/")
+//     return res.data
+//   } catch (error) {
+//     if (axios.isAxiosError(error)) {
+//       console.error("Get Postpartum Records Error: ", error.response?.data || error.message)
+//     }
+//     throw error
+//   }
+// }
 
-export const getPostpartumRecordDetail = async (ppr_id: string) => {
-  try {
-    const res = await api2.get(`maternal/postpartum_record/${ppr_id}/`)
-    return res.data
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error("Get Postpartum Record Detail Error: ", error.response?.data || error.message)
-    }
-    throw error
-  }
-}
+// export const getPostpartumRecordDetail = async (ppr_id: string) => {
+//   try {
+//     const res = await api2.get(`maternal/postpartum_record/${ppr_id}/`)
+//     return res.data
+//   } catch (error) {
+//     if (axios.isAxiosError(error)) {
+//       console.error("Get Postpartum Record Detail Error: ", error.response?.data || error.message)
+//     }
+//     throw error
+//   }
+// }

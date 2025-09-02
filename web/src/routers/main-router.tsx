@@ -38,6 +38,7 @@ import { forwardedhealthrecord_router } from "./forwardedhealthrecords";
 import { firstaid_router } from "./firstaid-router";
 import { health_schedule_routes } from "./health-schedules-router";
 import { medicalConsultation } from "./med-consultation";
+import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
 
 export const main_router: RouteObject[] = [
   {
@@ -90,6 +91,7 @@ export const main_router: RouteObject[] = [
       ...forwardedhealthrecord_router,
       ...firstaid_router,
       ...health_schedule_routes,
+      ...bhw_daily_notes_router,
     ]
   }
 ];

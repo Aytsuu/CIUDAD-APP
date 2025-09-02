@@ -15,124 +15,124 @@ import type { MenuItem, SubMenuItemProps, MenuItemProps } from "./sidebarTypes";
 
 // Menu items with dropdown support
 const items: MenuItem[] = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-  },
-  {
-    title: "Calendar",
-    url: "/waste-calendar-scheduling",
-  },
-  {
-    title: "Administration",
-    url: "/administration",
-  },
-  {
-    title: "Profiling",
-    subItems: true,
-    url: "/",
-    items: [
-      { title: "Resident", url: "/resident" },
-      { title: "Family", url: "/family" },
-      { title: "Household", url: "/household" },
-      { title: "Business", url: "/business/record/active" },
-    ],
-  },
-  {
-    title: "Report",
-    subItems: true,
-    url: "/",
-    items: [
-      { title: "Incident", url: "/report/incident"},
-      { title: "Acknowledgement", url: "/report/acknowledgement"},
-      { title: "Weekly Accomplishment", url: "/report/weekly-accomplishment"},
-      { title: "Securado", url: "/report/securado"}  
-    ],
-  },
-  {
-    title: "Complaint",
-    url: "/complaint",
-  },
-  {
-    title: "Team",
-    url: "/team",
-  },
-  {
-    title: "Summon & Case Tracker",
-    url: "/summon-and-case-tracking",
-  },
-  {
-    title: "GAD",
-    subItems: true,
-    url: "/",
-    items: [
-      { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
-      { title: "Project Proposal", url: "/gad-project-proposal"},
-      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
-      { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
-    ],
-  },
-  {
-    title: "Council",
-    subItems: true,
-    url: "/",
-    items: [
-      { title: "Council Events", url: "/calendar-page" },
-      { title: "Attendance", url: "/attendance-page" },
-      { title: "Ordinance", url: "/ord-page" },
-      { title: "Resolution", url: "/res-page" },
-      { title: "Minutes of Meeting", url: "/mom-page" },
-      { title: "Document Template", url: "/templates-main"}
-    ],
-  },
-  {
-    title: "Finance",
-    subItems: true,
-    url: "/",
-    items: [
-      { title: "Budget Plan", url: "/treasurer-budget-plan" },
-      {
-        title: "Income & Expense Tracking",
-        url: "/treasurer-income-expense-main",
-      },
-      {
-        title: "Income & Disbursement",
-        url: "/treasurer-income-and-disbursement",
-      },
-      {
-        title: "Clearance Requests",
-        url: "/",
-        anotherItems: [
-          { title: "Personal & Others", url: "/treasurer-personal-and-others" },
-          { title: "Permit", url: "/treasurer-permit" },
-          { title: "Service Charge", url: "/treasurer-service-charge" },
-          { title: "Barangay Service", url: "/treasurer-barangay-service" },
-          { title: "Rates", url: "/treasurer-rates" },
-        ],
-      },
-      { title: "Receipts", url: "/treasurer-receipts" },
-    ],
-  },
-  {
-    title: "Donation",
-    url: "/donation-record",
-  },
-  {
-    title: "Illegal Dumping Reports",
-    url: "/waste-illegaldumping-report",
-  },
-  {
-    title: "Garbage Pickup Request",
-    url: "/garbage-pickup-request"
-  },
-  {
-    title: "Waste Personnel & Collection Vehicle",
-    url: "/waste-personnel",
-  },
-  {
-    title: "Announcement",
-    url: "/announcement",
-  },
+  // {
+  //   title: "Dashboard",
+  //   url: "/dashboard",
+  // },
+  // {
+  //   title: "Calendar",
+  //   url: "/waste-calendar-scheduling",
+  // },
+  // {
+  //   title: "Administration",
+  //   url: "/administration",
+  // },
+  // {
+  //   title: "Profiling",
+  //   subItems: true,
+  //   url: "/",
+  //   items: [
+  //     { title: "Resident", url: "/resident" },
+  //     { title: "Family", url: "/family" },
+  //     { title: "Household", url: "/household" },
+  //     { title: "Business", url: "/business/record/active" },
+  //   ],
+  // },
+  // {
+  //   title: "Report",
+  //   subItems: true,
+  //   url: "/",
+  //   items: [
+  //     { title: "Incident", url: "/report/incident"},
+  //     { title: "Acknowledgement", url: "/report/acknowledgement"},
+  //     { title: "Weekly Accomplishment", url: "/report/weekly-accomplishment"},
+  //     { title: "Securado", url: "/report/securado"}  
+  //   ],
+  // },
+  // {
+  //   title: "Complaint",
+  //   url: "/complaint",
+  // },
+  // {
+  //   title: "Team",
+  //   url: "/team",
+  // },
+  // {
+  //   title: "Summon & Case Tracker",
+  //   url: "/summon-and-case-tracking",
+  // },
+  // {
+  //   title: "GAD",
+  //   subItems: true,
+  //   url: "/",
+  //   items: [
+  //     { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
+  //     { title: "Project Proposal", url: "/gad-project-proposal"},
+  //     { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
+  //     { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
+  //   ],
+  // },
+  // {
+  //   title: "Council",
+  //   subItems: true,
+  //   url: "/",
+  //   items: [
+  //     { title: "Council Events", url: "/calendar-page" },
+  //     { title: "Attendance", url: "/attendance-page" },
+  //     { title: "Ordinance", url: "/ord-page" },
+  //     { title: "Resolution", url: "/res-page" },
+  //     { title: "Minutes of Meeting", url: "/mom-page" },
+  //     { title: "Document Template", url: "/templates-main"}
+  //   ],
+  // },
+  // {
+  //   title: "Finance",
+  //   subItems: true,
+  //   url: "/",
+  //   items: [
+  //     { title: "Budget Plan", url: "/treasurer-budget-plan" },
+  //     {
+  //       title: "Income & Expense Tracking",
+  //       url: "/treasurer-income-expense-main",
+  //     },
+  //     {
+  //       title: "Income & Disbursement",
+  //       url: "/treasurer-income-and-disbursement",
+  //     },
+  //     {
+  //       title: "Clearance Requests",
+  //       url: "/",
+  //       anotherItems: [
+  //         { title: "Personal & Others", url: "/treasurer-personal-and-others" },
+  //         { title: "Permit", url: "/treasurer-permit" },
+  //         { title: "Service Charge", url: "/treasurer-service-charge" },
+  //         { title: "Barangay Service", url: "/treasurer-barangay-service" },
+  //         { title: "Rates", url: "/treasurer-rates" },
+  //       ],
+  //     },
+  //     { title: "Receipts", url: "/treasurer-receipts" },
+  //   ],
+  // },
+  // {
+  //   title: "Donation",
+  //   url: "/donation-record",
+  // },
+  // {
+  //   title: "Illegal Dumping Reports",
+  //   url: "/waste-illegaldumping-report",
+  // },
+  // {
+  //   title: "Garbage Pickup Request",
+  //   url: "/garbage-pickup-request"
+  // },
+  // {
+  //   title: "Waste Personnel & Collection Vehicle",
+  //   url: "/waste-personnel",
+  // },
+  // {
+  //   title: "Announcement",
+  //   url: "/announcement",
+  // },
   {
     title: "Services",
     subItems: true,
@@ -183,6 +183,7 @@ const items: MenuItem[] = [
       { title: "Schedules", url: "/health-appointments" },
       { title: "Service Scheduler", url: "/health-services/scheduler" },
       { title: "Reports", url: "/healthcare-reports" },
+      { title: "BHW Daily Notes", url: "/bhw-all-notes" },
 
       {
         title: "Inventory",
@@ -202,21 +203,21 @@ const items: MenuItem[] = [
       },
     ],
   },
-  {
-    title: "Clerk",
-    subItems: true,
-    url: "/",
-    items: [
-      { title: "Certifications", url: "record/clearances/certification" },
-      { title: "Business Permits", url: "record/clearances/businesspermit" },
-      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
-    ],
-  },
-  {
-    title: "Activity Log",
-    url: "/record/activity-log",
+  // {
+  //   title: "Clerk",
+  //   subItems: true,
+  //   url: "/",
+  //   items: [
+  //     { title: "Certifications", url: "record/clearances/certification" },
+  //     { title: "Business Permits", url: "record/clearances/businesspermit" },
+  //     { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
+  //   ],
+  // },
+  // {
+  //   title: "Activity Log",
+  //   url: "/record/activity-log",
 
-  },
+  // },
 ];
 
 const SubMenuItemComponent: React.FC<SubMenuItemProps> = ({

@@ -3,10 +3,10 @@ import z from "zod"
 // positive number schema
 export const positiveNumberSchema = z
   .union([
-    z.string(),  // input as string
-    z.number(),  //  number input
-    z.null(),    // db null values
-    z.undefined(), // undefined values
+    z.string(),  
+    z.number(), 
+    z.null(),    
+    z.undefined(), 
   ])
   .transform((val, ctx) => {
     if (val === null || val === undefined || val === "") {
