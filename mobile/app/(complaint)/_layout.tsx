@@ -18,7 +18,6 @@ export default () => {
 
   return (
     <ComplaintFormProvider methods={methods}>
-<<<<<<< HEAD
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false}} />
           <Stack.Screen name="complaint-form" options={{ headerShown: false}} />
@@ -26,14 +25,6 @@ export default () => {
           <Stack.Screen name="summon-payment" options={{ headerShown: false}} />
           <Stack.Screen name="summon-details" options={{ headerShown: false}} />
         </Stack>
-=======
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false}} />
-        <Stack.Screen name="complaint-form" options={{ headerShown: false}} />
-        <Stack.Screen name="summon-details" options={{ headerShown: false}} />
-        <Stack.Screen name="summon-payment" options={{ headerShown: false}} />
-      </Stack>
->>>>>>> master-pao-backup
     </ComplaintFormProvider>
   )
 }

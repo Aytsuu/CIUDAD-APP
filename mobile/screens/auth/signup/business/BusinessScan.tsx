@@ -51,17 +51,6 @@ export default function BusinessScan() {
     return (
       <FeedbackScreen
         status={status}
-        onRetry={() => {  
-          // Simulate a retry that might succeed
-          const willSucceed = Math.random() > 0.5;
-          setTimeout(() => {
-            setStatus(willSucceed ? "success" : "failure");
-          }, 1500);
-        }}
-        onOk={() => {
-          router.push('/(auth)')
-          reset();
-        }}
       />
     );
   }

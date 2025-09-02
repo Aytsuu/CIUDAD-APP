@@ -19,11 +19,11 @@ const sexOptions: { label: string; value: string }[] = [
   { label: "Female", value: "female" },
 ]
 
-// const civilStatusOptions: { label: string; value: string }[] = [
-//   { label: "Single", value: "single" },
-//   { label: "Married", value: "married" },
-//   { label: "Widowed", value: "widowed" },
-// ]
+const civilStatusOptions: { label: string; value: string }[] = [
+  { label: "Single", value: "single" },
+  { label: "Married", value: "married" },
+  { label: "Widowed", value: "widowed" },
+]
 
 const religionOptions: { label: string; value: string }[] = [
   { label: "Roman Catholic", value: "roman catholic" },
@@ -84,7 +84,7 @@ const PersonalInformation = React.memo(({ params } : {params: Record<string, any
     setAddresses(addList)
   }, [])
 
-//   const handleSubmit = async () => {
+  const handleSubmit = async () => {
 
     const formIsValid = await trigger([
       `${params.name}.per_fname`,

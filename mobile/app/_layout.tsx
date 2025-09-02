@@ -62,7 +62,6 @@ export default function RootLayout() {
               <Stack.Screen name="(complaint)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(profiling)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(report)" options={{ headerShown: false, animation: 'fade' }} />
-              <Stack.Screen name="(request)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(securado)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(health)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="animal-bites/[id]" options = {{ headerShown: false, animation: 'fade'}}/>
