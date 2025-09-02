@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteCouncilEvent, useRestoreCouncilEvent } from "./queries/delqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { useGetWasteCollectionSchedFull } from "../../waste-scheduling/waste-colllection/queries/wasteColFetchQueries.tsx";
+import { useGetWasteCollectionSchedFull } from "../../waste-scheduling/waste-collection/queries/wasteColFetchQueries.tsx";
 import { useGetHotspotRecords } from "../../waste-scheduling/waste-hotspot/queries/hotspotFetchQueries.tsx";
 import { hotspotColumns, wasteColColumns, councilEventColumns } from "./council-event-cols.tsx";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -21,10 +21,10 @@ function CalendarPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"calendar" | "archive">("calendar");
   const [viewEvent, setViewEvent] = useState<any | null>(null);
-  const [actionInProgress, setActionInProgress] = useState(false);
+  const [_actionInProgress, setActionInProgress] = useState(false);
   const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
   const { data: hotspotData = [] } = useGetHotspotRecords();
-  const { data: wasteCollectionData = [], isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
+  const { data: wasteCollectionData = [], isLoading: _isWasteColLoading } = useGetWasteCollectionSchedFull();
 
   const calendarSources = [
     {

@@ -104,8 +104,8 @@ export const useHandleWaste = () => {
   const { mutateAsync: updateVaccineStock } = useUpdateVaccineStockQuantity();
   const { mutateAsync: createVaccineWaste } =
     useCreateVaccineWasteTransaction();
-  const { mutateAsync: updateImmunizationStock } =
-    useUpdateImmunizationStockQuantity();
+  // const { mutateAsync: updateImmunizationStock } =
+  //   useUpdateImmunizationStockQuantity();
   const { mutateAsync: createImmunizationWaste } =
     useCreateImmunizationWasteTransaction();
 

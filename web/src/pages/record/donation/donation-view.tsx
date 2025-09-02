@@ -15,7 +15,7 @@ import {
   useGetDonations,
   useGetPersonalList,
 } from "./queries/donationFetchQueries";
-import { ComboboxInput } from "@/components/ui/form/form-combo-box";
+import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import { ClerkDonateViewProps } from "./donation-types";
 
 function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {

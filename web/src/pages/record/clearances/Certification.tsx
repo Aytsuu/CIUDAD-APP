@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Loader2 } from 'lucide-react';
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -80,10 +80,10 @@ export const columns: ColumnDef<Certificate>[] = [
 ];
 
 function CertificatePage() {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // const navigate = useNavigate();
+  // const { id } = useParams();
   const [currentPage, setCurrentPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [_isModalOpen, _setIsModalOpen] = useState(false);
 
   const { data: certificates, isLoading, error } = useQuery({
     queryKey: ["certificates"],
@@ -94,19 +94,19 @@ function CertificatePage() {
     setCurrentPage(page);
   };
 
-  const handleRowClick = (row: Certificate) => {
-    const fullName = `${row.resident_details?.per_fname || ''} ${row.resident_details?.per_lname || ''}`.trim();
-    navigate(`/record/clearances/ViewDocument/${row.cr_id}`, {
-      state: {
-        name: fullName || row.cr_id, // Use full name if available, fallback to ID
-        purpose: row.req_type,
-        date: row.req_claim_date,
-        requestId: row.cr_id,
-        requestDate: row.req_request_date,
-        paymentMethod: row.req_pay_method,
-      },
-    });
-  };
+  // const handleRowClick = (row: Certificate) => {
+  //   const fullName = `${row.resident_details?.per_fname || ''} ${row.resident_details?.per_lname || ''}`.trim();
+  //   navigate(`/record/clearances/ViewDocument/${row.cr_id}`, {
+  //     state: {
+  //       name: fullName || row.cr_id, // Use full name if available, fallback to ID
+  //       purpose: row.req_type,
+  //       date: row.req_claim_date,
+  //       requestId: row.cr_id,
+  //       requestDate: row.req_request_date,
+  //       paymentMethod: row.req_pay_method,
+  //     },
+  //   });
+  // };
 
   return (
     <div className="w-full h-full flex flex-col">

@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, ArrowUpDown, Loader2 } from "lucide-react";
+import { Search, ArrowUpDown } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
-import { DataTable } from "@/components/ui/table/data-table";
+// import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 // import AddBusinessDocument from "@/pages/record/clearances/CreateBusinessModal";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -94,12 +94,12 @@ export const columns: ColumnDef<BusinessDocument>[] = [
 ];
 
 function BusinessDocumentPage() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [_isModalOpen, _setIsModalOpen] = useState(false);
 
   // Fetch business data using React Query
-  const { data: businessDocuments, isLoading, error } = useQuery({
+  const { data: businessDocuments } = useQuery({
     queryKey: ["businessDocuments"],
     queryFn: getBusinessPermit,
   });
@@ -108,23 +108,23 @@ function BusinessDocumentPage() {
     setCurrentPage(page);
   };
 
-  const handleRowClick = (row: BusinessDocument) => {
-    navigate(`/record/clearances/ViewDocument/${row.permit_req_no}`, {
-      state: {
-        requestNo: row.permit_req_no,
-        purpose: row.issued_permit?.pr_purpose || row.business_details.bus_name,
-        paymentMethod: row.req_pay_method,
-        dateRequested: row.req_request_date,
-        dateClaim: row.req_claim_date,
-        status: row.req_status,
-        paymentStatus: row.req_payment_status,
-        transactionId: row.req_transac_id,
-        type: row.business_details.bus_name,
-        rate: row.issued_permit?.ags_rate,
-        category: row.issued_permit?.pr_category,
-      },
-    });
-  };
+  // const handleRowClick = (row: BusinessDocument) => {
+  //   navigate(`/record/clearances/ViewDocument/${row.permit_req_no}`, {
+  //     state: {
+  //       requestNo: row.permit_req_no,
+  //       purpose: row.issued_permit?.pr_purpose || row.business_details.bus_name,
+  //       paymentMethod: row.req_pay_method,
+  //       dateRequested: row.req_request_date,
+  //       dateClaim: row.req_claim_date,
+  //       status: row.req_status,
+  //       paymentStatus: row.req_payment_status,
+  //       transactionId: row.req_transac_id,
+  //       type: row.business_details.bus_name,
+  //       rate: row.issued_permit?.ags_rate,
+  //       category: row.issued_permit?.pr_category,
+  //     },
+  //   });
+  // };
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -172,7 +172,7 @@ function BusinessDocumentPage() {
         </div>
 
         <div className="bg-white w-full overflow-x-auto">
-          {isLoading ? (
+          {/* {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
             </div>
@@ -180,7 +180,7 @@ function BusinessDocumentPage() {
             <div className="text-center py-5 text-red-500">Error loading data</div>
           ) : (
             <DataTable columns={columns} data={businessDocuments || []} onRowClick={handleRowClick} header={true} />
-          )}
+          )} */}
         </div>
       </div>
 

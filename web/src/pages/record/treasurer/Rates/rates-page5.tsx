@@ -49,10 +49,10 @@ function RatesPage5() {
 
     const barangayData = fetchedData.filter(row => row.pr_category === "Barangay Service")
 
-    const { filtered: filteredActive, paginated: paginatedActive, total: totalActive } =
+    const { filtered: _filteredActive, paginated: paginatedActive, total: totalActive } =
         filterAndPaginate(barangayData.filter(row => !row.pr_is_archive), searchQueryActive, currentPageActive, pageSizeActive)
 
-    const { filtered: filteredHistory, paginated: paginatedHistory, total: totalHistory } =
+    const { filtered: _filteredHistory, paginated: paginatedHistory, total: totalHistory } =
         filterAndPaginate(barangayData, searchQueryHistory, currentPageHistory, pageSizeHistory)
 
     const activeColumns: ColumnDef<PurposeAndRate>[] = [

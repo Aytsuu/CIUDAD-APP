@@ -14,7 +14,7 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { useEffect, useState } from "react"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
-import { Card, CardContent } from "@/components/ui/card/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { useAddPrenatalRecord } from "../../queries/maternalAddQueries"
 
 export default function PrenatalFormFourthPq({

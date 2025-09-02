@@ -26,7 +26,7 @@ export const useArchiveProjectProposal = () => {
       
       return { previousProposals };
     },
-    onError: (error: Error, gprId, context) => {
+    onError: (error: Error, _gprId, context) => {
       if (context?.previousProposals) {
         queryClient.setQueryData(["projectProposals"], context.previousProposals);
       }
@@ -65,7 +65,7 @@ export const useRestoreProjectProposal = () => {
       
       return { previousProposals };
     },
-    onError: (error: Error, gprId, context) => {
+    onError: (error: Error, _gprId, context) => {
       if (context?.previousProposals) {
         queryClient.setQueryData(["projectProposals"], context.previousProposals);
       }
@@ -100,7 +100,7 @@ export const usePermanentDeleteProjectProposal = () => {
       
       return { previousProposals };
     },
-    onError: (error: Error, gprId, context) => {
+    onError: (error: Error, _gprId, context) => {
       if (context?.previousProposals) {
         queryClient.setQueryData(["projectProposals"], context.previousProposals);
       }
@@ -127,7 +127,7 @@ export const usePermanentDeleteProjectProposal = () => {
     mutationFn: async ({ gprId, psdId }: { gprId: number; psdId: number }) => {
       return deleteSupportDocument(gprId, psdId);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
       toast.success("Support document deleted successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -150,7 +150,7 @@ export const useArchiveSupportDocument = () => {
     mutationFn: async ({ gprId, psdId }: { gprId: number; psdId: number }) => {
       return archiveSupportDocument(gprId, psdId);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
       toast.success("Support document archived successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -173,7 +173,7 @@ export const useRestoreSupportDocument = () => {
     mutationFn: async ({ gprId, psdId }: { gprId: number; psdId: number }) => {
       return restoreSupportDocument(gprId, psdId);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["supportDocs", variables.gprId] });
       toast.success("Support document restored successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,

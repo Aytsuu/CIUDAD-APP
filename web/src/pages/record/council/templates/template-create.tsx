@@ -1503,7 +1503,7 @@
 
 
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -1525,7 +1525,7 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import documentTemplateFormSchema from "@/form-schema/council/documentTemlateSchema";
+import documentTemplateFormSchema from "@/form-schema/council/documentTemplateSchema";
 import TemplatePreview from "./template-preview";
 import { useTemplateRecord } from "./queries/template-AddQueries";
 import { useGetPurposeRates } from "./queries/template-FetchQueries";
@@ -1570,13 +1570,13 @@ function TemplateCreateForm({ onSuccess }: { onSuccess?: () => void }) {
 
   const isSummonChecked = form.watch('temp_w_summon');
 
-  useEffect(() => {
-    if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
-      form.setValue('temp_header', mediaFiles[0].publicUrl);
-    } else {
-      form.setValue('temp_header', 'no-image-url-fetched');
-    }
-  }, [mediaFiles, form]);
+  // useEffect(() => {
+  //   if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+  //     form.setValue('temp_header', mediaFiles[0].publicUrl);
+  //   } else {
+  //     form.setValue('temp_header', 'no-image-url-fetched');
+  //   }
+  // }, [mediaFiles, form]);
 
 
   function onSubmit(values: z.infer<typeof documentTemplateFormSchema>) {

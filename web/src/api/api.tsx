@@ -1,9 +1,17 @@
 import axios from "axios";
-import supabase from "@/supabase/supabase";
+
+// export const api = axios.create({
+//   baseURL: import.meta.env.VITE_API_URL,
+//   withCredentials: true,
+//   headers: {
+//     "Content-Type": "application/json",
+//     "Accept": "application/json",
+//   },
+// });
 
 export const api = axios.create({
   baseURL: "http://localhost:8000",
-  withCredentials: true,
+  withCredentials: true, 
   headers: {
     "Content-Type": "application/json",
     "Accept": "application/json",
@@ -11,58 +19,39 @@ export const api = axios.create({
 });
 
 export const api2 = axios.create({
-  baseURL: import.meta.env.VITE_API_URL2,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
+  baseURL: "http://localhost:8001",
 });
 
-// // Request interceptor to add auth token
-// api.interceptors.request.use(async (config) => {
-//   // Skip auth for login and signup endpoints
-//   if (
-//     config.url?.includes("authentication/login/") ||
-//     config.url?.includes("authentication/signup/")
-//   ) {
-//     return config;
-//   }
+// Track refresh state to prevent multiple refresh attempts
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
 
-// Response interceptor to handle auth errors
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+// Simple access token storage (you could also use a more sophisticated store)
+let currentAccessToken: string | null = null;
 
-    // If we get 401 and haven't already retried
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+// Function to set access token (called from AuthContext)
+export const setAccessToken = (token: string | null) => {
+  currentAccessToken = token;
+};
 
-      try {
-        // Try to refresh the session
-        const { data, error: refreshError } = await supabase.auth.refreshSession();
-        
-        if (refreshError || !data.session?.access_token) {
-          // Refresh failed, redirect to login
-          console.error("Session refresh failed:", refreshError);
-          await supabase.auth.signOut();
-          // Redirect to login page here
-          // window.location.href = '/login';
-          return Promise.reject(error);
-        }
-
-        // Retry the original request with new token
-        originalRequest.headers.Authorization = `Bearer ${data.session.access_token}`;
-        return api(originalRequest);
-        
-      } catch (refreshError) {
-        console.error("Error refreshing session:", refreshError);
-        await supabase.auth.signOut();
-        return Promise.reject(error);
-      }
+// Add auth token to requests
+api.interceptors.request.use(
+  (config) => {
+    // Skip auth for public endpoints
+    const publicEndpoints = [
+      "authentication/signup/",
+      "authentication/web/login/",
+    ];
+    
+    const isPublicEndpoint = publicEndpoints.some(endpoint => 
+      config.url?.includes(endpoint)
+    );
+    console.log("AccessToken value: ",currentAccessToken)
+    if (!isPublicEndpoint && currentAccessToken) {
+      config.headers.Authorization = `Bearer ${currentAccessToken}`;
     }
 
-    return Promise.reject(error);
-  }
+    return config;
+  },
+  (error) => Promise.reject(error)
 );

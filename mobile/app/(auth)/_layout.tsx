@@ -27,6 +27,8 @@ export default () => {
           <RegistationFormProvider methods={methods}>
             <Stack>
               <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="otp" options={{ headerShown: false }} />
+              <Stack.Screen name="loginscreen" options={{ headerShown: false }} />
               <Stack.Screen name="registration/family/register-new" options={{ headerShown: false }} />
               <Stack.Screen name="registration/family/account-reg-new" options={{ headerShown: false }} />
               <Stack.Screen name="registration/family/respondent" options={{ headerShown: false }} />
@@ -42,8 +44,8 @@ export default () => {
               <Stack.Screen name="registration/individual/account-reg" options={{ headerShown: false }} />
 
               {/* STACKS THAT ARE NOT BEING USED, MIGHT REMOVE THEM LATER. */}
-              <Stack.Screen name="registration/business/respondent-information" options={{ headerShown: false }} />
-              <Stack.Screen name="registration/business/account-registration" options={{ headerShown: false }} />
+              <Stack.Screen name="registration/business/respondent-information" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/business/account-registration" options={{ headerShown: false, animation: 'fade' }}/>
             </Stack>
           </RegistationFormProvider>
         </RegistrationTypeProvider>

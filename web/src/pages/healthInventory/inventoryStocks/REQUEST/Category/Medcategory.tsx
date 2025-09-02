@@ -192,12 +192,12 @@ export const useCategoriesMedicine = () => {
     setIsDeleteConfirmationOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (categoryToDelete !== null) {
-      handleDeleteCategory(categoryToDelete);
-    }
-    setIsDeleteConfirmationOpen(false);
-  };
+  // const handleConfirmDelete = () => {
+  //   if (categoryToDelete !== null) {
+  //     handleDeleteCategory(categoryToDelete);
+  //   }
+  //   setIsDeleteConfirmationOpen(false);
+  // };
 
   const ConfirmationDialogs = () => (
     <>

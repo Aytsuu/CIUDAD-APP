@@ -58,13 +58,6 @@ export const useArchiveHotspot = () => {
     onSuccess: () => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['hotspots'] });
-      
-      // Show success toast
-    //   toast.success("Successfully archived schedule", {
-    //     id: "updateHotspot",
-    //     icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-    //     duration: 6000
-    //   });
     },
     onError: (err) => {
       toast.error("Failed to archived schedule", {

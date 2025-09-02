@@ -46,10 +46,10 @@ function RatesPage4() {
 
     const permitData = fetchedData.filter(row => row.pr_category === "Permit Clearance")
 
-    const { filtered: filteredActive, paginated: paginatedActive, total: totalActive } =
+    const { filtered: _filteredActive, paginated: paginatedActive, total: totalActive } =
         filterAndPaginate(permitData.filter(row => !row.pr_is_archive), searchQueryActive, currentPageActive, pageSizeActive)
 
-    const { filtered: filteredHistory, paginated: paginatedHistory, total: totalHistory } =
+    const { filtered: _filteredHistory, paginated: paginatedHistory, total: totalHistory } =
         filterAndPaginate(permitData, searchQueryHistory, currentPageHistory, pageSizeHistory)
 
     const activeColumns: ColumnDef<PurposeAndRate>[] = [

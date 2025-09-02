@@ -1,14 +1,13 @@
 export type UserPosition =
-  | 'health_staff'
-  | 'medical_officer'
-  | 'treasurer'
-  | 'clerk'
-  | 'admin'
-  | 'supervisor'
-  | 'tanod'
-  | 'Emergency Response Head'
-  | 'Barangay Captain'
-  ;
+  | "health_staff"
+  | "medical_officer"
+  | "treasurer"
+  | "clerk"
+  | "admin"
+  | "supervisor"
+  | "tanod"
+  | "Emergency Response Head"
+  | "Barangay Captain";
 
 export interface User {
   acc_id?: string;
@@ -18,7 +17,6 @@ export interface User {
   profile_image?: string | null;
   resident?: Record<string, any>;
   staff?: Record<string, any>;
-  department?: string;
 }
 
 export interface AuthContextType {
@@ -28,9 +26,20 @@ export interface AuthContextType {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  signUp: (email: string, password: string, username?: string) => Promise<{ requiresConfirmation?: boolean }>;
+  signUp: (
+    email: string,
+    password: string,
+    username?: string
+  ) => Promise<{ requiresConfirmation?: boolean }>;
   refreshSession: () => Promise<void>;
-  clearError: () => void;
+
+  sendEmailOTP: (email: string) => Promise<any>;
+  verifyEmailOTPAndLogin: (otp: string, email: string) => Promise<User>;
+  otpSent: boolean;
+  email: string | null;
+  // // New Google methods
+  loginWithGoogle: () => Promise<void>;
+  handleGoogleCallback: () => Promise<void>;
 }
 
 // Notification types
@@ -53,20 +62,20 @@ export interface Notification {
   metadata?: Record<string, any>;
 }
 
-export interface CreateNotificationPayload{
+export interface CreateNotificationPayload {
   title: string;
   message: string;
   recipient_ids: string[];
   metadata?: Record<string, any>;
 }
 
-export interface NotficationFormat{
-    title: string;
-    message: string;
-    recipient_ids: (string | number)[];
-    metadata: {
-        action_url: string,
-        sender_name: string,
-        sender_avatar: string,
-    };
+export interface NotficationFormat {
+  title: string;
+  message: string;
+  recipient_ids: (string | number)[];
+  metadata: {
+    action_url: string;
+    sender_name: string;
+    sender_avatar: string;
+  };
 }

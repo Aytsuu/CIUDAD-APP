@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom" // Assuming react-router-dom for 
 import type { StockRecords } from "./type"
 import { useAntigenCombineStocks } from "../REQUEST/Antigen/queries/AntigenFetchQueries"
 import { toast } from "sonner"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card" // Import Card components
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card" // Import Card components
 
 export function isVaccine(record: StockRecords): record is StockRecords & { type: "vaccine" } {
   return record.type === "vaccine"
@@ -101,7 +101,7 @@ export default function CombinedStockTable() {
 
       const availableStock = record.availableStock
       const expiryDate = record.expiryDate
-      const created_at=record.created_at
+      // const created_at=record.created_at
 
       const isItemExpired = isExpired(expiryDate)
       const isItemLowStock = isLowStock(availableStock) // Using the component's isLowStock

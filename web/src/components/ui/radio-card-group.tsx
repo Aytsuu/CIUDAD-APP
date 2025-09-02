@@ -38,7 +38,7 @@ export function RadioCardGroup({
                 field.onChange(value)
                 onChange?.(value)
               }}
-              value={field.value}
+              value={field.value || ""} // Ensure there's always a default value
               className={`grid grid-cols-1 md:grid-cols-${columns} gap-6`}
             >
               {options.map((option) => (
@@ -48,12 +48,15 @@ export function RadioCardGroup({
                     "p-4 border rounded-md transition-all duration-200 cursor-pointer hover:shadow-md",
                     field.value === option.value && "border-primary bg-primary/5"
                   )}
-                  onClick={() => field.onChange(option.value)}
                 >
                   <div className="flex items-start space-x-3">
-                    <RadioGroupItem value={option.value} id={option.value} className="mt-1" />
+                    <RadioGroupItem 
+                      value={option.value} 
+                      id={`${name}-${option.value}`} 
+                      className="mt-1" 
+                    />
                     <div className="space-y-1.5">
-                      <Label htmlFor={option.value} className="font-semibold">
+                      <Label htmlFor={`${name}-${option.value}`} className="font-semibold cursor-pointer">
                         {option.title}
                         {option.subtitle && (
                           <>

@@ -10,6 +10,7 @@ export default function ResidentFormLayout() {
   const { type = Type.Create } = state?.params || {};
 
   // ==================== RENDER ====================
+  console.log(type)
   switch (type) {
     case Type.Viewing:
       return <ResidentViewForm params={state?.params} />;

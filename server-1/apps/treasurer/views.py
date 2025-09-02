@@ -9,7 +9,6 @@ from datetime import datetime
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
 from .models import Budget_Plan_Detail, Budget_Plan
-from .serializers import ClearanceRequestSerializer, ClearanceRequestDetailSerializer, PaymentStatusUpdateSerializer
 
 class BudgetPlanView(generics.ListCreateAPIView):
     serializer_class = BudgetPlanSerializer
@@ -59,11 +58,11 @@ class BudgetPlanHistoryView(generics.ListCreateAPIView):
 
         
 class BudgetPlanFileView(generics.ListCreateAPIView):
-    serializer_class = BudgetPlanFileSerializer
+    serializer_class = BudgetPlanFileCreateSerializer
     queryset = BudgetPlan_File.objects.all()
 
 class BudgetPlanFileRetrieveView(generics.ListCreateAPIView):
-    serializer_class = BudgetPlanFileSerializer
+    serializer_class = BudgetPlanFileViewSerializer
 
     def get_queryset(self):
         plan_id = self.kwargs.get('plan_id')
@@ -105,7 +104,7 @@ class PreviousYearBudgetPlanDetailsView(generics.ListAPIView):
     
 class DeleteBudgetPlanFile(generics.RetrieveDestroyAPIView):
     queryset = BudgetPlan_File.objects.all()
-    serializer_class = BudgetPlanFileSerializer
+    serializer_class = BudgetPlanFileViewSerializer
     lookup_field = 'bpf_id'
 
 class DeleteRetrieveBudgetPlanAndDetails(generics.RetrieveDestroyAPIView):

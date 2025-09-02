@@ -2,11 +2,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
-import { createGADBudget, createGADBudgetFile } from "../requestAPI/BTPostRequest";
+import { createGADBudget } from "../requestAPI/BTPostRequest";
 import { MediaUploadType } from "@/components/ui/media-upload";
 import { BudgetYear, BudgetEntry, GADBudgetCreatePayload } from "../budget-tracker-types";
 
-export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: BudgetEntry[]) => {
+export const useCreateGADBudget = (yearBudgets: BudgetYear[], _budgetEntries: BudgetEntry[]) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   
@@ -35,26 +35,26 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: Bud
       const budgetEntry = await createGADBudget(data.budgetData);
       
       // Validate and create files
-      if (data.files.length > 0) {
-        const validFiles = data.files.filter(
-          (media) =>
-            media.status === "uploaded" &&
-            media.publicUrl &&
-            media.storagePath &&
-            media.file?.name &&
-            media.file?.type
-        );
-        if (validFiles.length === 0) {
-          throw new Error("No valid files have finished uploading");
-        }
-        await Promise.all(
-          validFiles.map((file) => createGADBudgetFile(file, budgetEntry.gbud_num))
-        );
-      }
+      // if (data.files.length > 0) {
+      //   const validFiles = data.files.filter(
+      //     (media) =>
+      //       media.status === "uploaded" &&
+      //       media.publicUrl &&
+      //       media.storagePath &&
+      //       media.file?.name &&
+      //       media.file?.type
+      //   );
+      //   if (validFiles.length === 0) {
+      //     throw new Error("No valid files have finished uploading");
+      //   }
+      //   await Promise.all(
+      //     validFiles.map((file) => createGADBudgetFile(file, budgetEntry.gbud_num))
+      //   );
+      // }
       
       return budgetEntry;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       const year = new Date(variables.budgetData.gbud_datetime).getFullYear().toString();
       queryClient.invalidateQueries({
         queryKey: ['gad-budgets', year],

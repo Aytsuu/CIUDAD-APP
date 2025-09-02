@@ -26,7 +26,7 @@ export const AddressDrawer = ({
 }) => {
   const { toast } = useToastContext();
   const { height: screenHeight } = Dimensions.get("window");
-  const { control, trigger, watch, getValues, resetField } =
+  const { control, trigger, watch, getValues, resetField, setValue } =
     useRegistrationFormContext();
   const { data: sitioList, isLoading } = useGetSitio();
   const [isInternalAddress, setIsInternalAddress] =
@@ -46,7 +46,12 @@ export const AddressDrawer = ({
       if (name === "personalInfoSchema.per_addresses.new.add_barangay") {
         const barangay =
           value.personalInfoSchema?.per_addresses?.new?.add_barangay;
-        if (barangay && barangay.toLowerCase() === "san roque") {
+
+        if (barangay?.trim().toLowerCase() === "san roque" || 
+            barangay?.trim().toLowerCase() === "ciudad")
+          setValue('personalInfoSchema.per_addresses.new.add_barangay', "San Roque (ciudad)")
+
+        if (barangay && barangay.trim().toLowerCase() === "san roque (ciudad)") {
           setIsInternalAddress(true);
         } else {
           setIsInternalAddress(false);
@@ -61,7 +66,7 @@ export const AddressDrawer = ({
     const barangay = getValues(
       "personalInfoSchema.per_addresses.new.add_barangay"
     );
-    if (barangay && barangay.toLowerCase() === "san roque") {
+    if (barangay && barangay.trim().toLowerCase() === "san roque (ciudad)") {
       setIsInternalAddress(true);
     } else {
       setIsInternalAddress(false);

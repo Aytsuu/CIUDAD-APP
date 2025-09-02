@@ -1,9 +1,9 @@
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { Clock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
 import { useLatestExpenses, useLatestIncomes } from "./btracker-analytics-queries";
-import type { GADBudgetEntryUI } from "@/pages/record/gad/budget-tracker/queries/BTFetchQueries";
+import type { GADBudgetEntryUI } from "@/pages/record/gad/budget-tracker/budget-tracker-types";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";

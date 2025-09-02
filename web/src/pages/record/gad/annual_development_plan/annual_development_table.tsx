@@ -1,10 +1,3 @@
-
-type DevelopmentPlan = [
-    {
-        
-    }
-]
-
 function AnnaualDevelopmentPlanTable(){
     return(
         <div className="bg-snow w-full h-full">

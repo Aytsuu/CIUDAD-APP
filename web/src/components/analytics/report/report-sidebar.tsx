@@ -1,6 +1,6 @@
 import React from "react";
 import { useGetSidebarAnalytics } from "./report-analytics-queries";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { Clock, ChevronRight, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 

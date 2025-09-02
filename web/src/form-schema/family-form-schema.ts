@@ -140,7 +140,7 @@ export const tbSurveilanceSchema = z.object({
 
 })
 
-export const familyFormSchema = z.object({
+export const familyFormSchema2 = z.object({
   demographicInfo: demographicInfoSchema,
   motherInfo: parentInfoSchema.extend({
     healthRelDetails: perAddDetails.optional(),

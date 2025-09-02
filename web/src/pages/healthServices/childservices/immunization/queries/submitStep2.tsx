@@ -60,7 +60,7 @@ export const useImmunizationMutations = () => {
       imt_ids: [],
     };
 
-    const chrec_id = ChildHealthRecord.chrec;
+    // const chrec_id = ChildHealthRecord.chrec;
     const chist_id = ChildHealthRecord.chhist_id;
     const patrec_id = ChildHealthRecord.chrec_details.patrec_details.patrec_id;
 

@@ -144,23 +144,23 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       form.reset(formValues);
 
       if (budgetEntry.files?.length) {
-        const files = budgetEntry.files.map((file) => {
-          const dummyFile = new File([], file.gbf_name, {
-            type: file.gbf_type || "image/jpeg",
-            lastModified: Date.now(),
-          });
+        // const files = budgetEntry.files.map((file) => {
+        //   const dummyFile = new File([], file.gbf_name, {
+        //     type: file.gbf_type || "image/jpeg",
+        //     lastModified: Date.now(),
+        //   });
 
-          return {
-            id: `receipt-${file.gbf_id}`,
-            type: "image" as const,
-            file: dummyFile,
-            publicUrl: file.gbf_url,
-            storagePath: file.gbf_path,
-            status: "uploaded" as const,
-            previewUrl: file.gbf_url,
-          };
-        });
-        setMediaFiles(files);
+        //   return {
+        //     id: `receipt-${file.gbf_id}`,
+        //     type: "image" as const,
+        //     file: dummyFile,
+        //     publicUrl: file.gbf_url,
+        //     storagePath: file.gbf_path,
+        //     status: "uploaded" as const,
+        //     previewUrl: file.gbf_url,
+        //   };
+        // });
+        // setMediaFiles(files);
         setRemovedFiles([]); // Clear removed files on initial load
       } else {
         setMediaFiles([]);
@@ -537,17 +537,17 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                       setMediaFiles={setMediaFiles}
                       activeVideoId={activeVideoId}
                       setActiveVideoId={setActiveVideoId}
-                      onFileRemoved={(removedId) => {
-                        setRemovedFiles((prev) => {
-                          if (prev.includes(removedId)) {
-                            console.log(
-                              `File ID ${removedId} already marked for removal`
-                            );
-                            return prev;
-                          }
-                          return [...prev, removedId];
-                        });
-                      }}
+                      // onFileRemoved={(removedId) => {
+                      //   setRemovedFiles((prev) => {
+                      //     if (prev.includes(removedId)) {
+                      //       console.log(
+                      //         `File ID ${removedId} already marked for removal`
+                      //       );
+                      //       return prev;
+                      //     }
+                      //     return [...prev, removedId];
+                      //   });
+                      // }}
                     />
                   ) : mediaFiles.length > 0 ? (
                     <div className="space-y-2">
@@ -556,11 +556,11 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                       </label>
                       {mediaFiles.map((file) => (
                         <div key={file.id} className="border rounded-md p-2">
-                          <img
+                          {/* <img
                             src={file.publicUrl}
                             alt="Receipt"
                             className="max-h-60 object-contain w-full"
-                          />
+                          /> */}
                         </div>
                       ))}
                     </div>
@@ -642,18 +642,18 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                       setIsEditing(false);
                       setRemovedFiles([]); // Clear removed files on cancel
                       if (budgetEntry?.files?.length) {
-                        const files = budgetEntry.files.map((file) => ({
-                          id: `receipt-${file.gbf_id}`,
-                          type: "image" as const,
-                          file: new File([], file.gbf_name, {
-                            type: file.gbf_type || "image/jpeg",
-                          }),
-                          publicUrl: file.gbf_url,
-                          storagePath: file.gbf_path,
-                          status: "uploaded" as const,
-                          previewUrl: file.gbf_url,
-                        }));
-                        setMediaFiles(files);
+                        // const files = budgetEntry.files.map((file) => ({
+                        //   id: `receipt-${file.gbf_id}`,
+                        //   type: "image" as const,
+                        //   file: new File([], file.gbf_name, {
+                        //     type: file.gbf_type || "image/jpeg",
+                        //   }),
+                        //   publicUrl: file.gbf_url,
+                        //   storagePath: file.gbf_path,
+                        //   status: "uploaded" as const,
+                        //   previewUrl: file.gbf_url,
+                        // }));
+                        // setMediaFiles(files);
                       } else {
                         setMediaFiles([]);
                       }

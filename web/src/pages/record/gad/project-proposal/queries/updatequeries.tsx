@@ -52,7 +52,7 @@ export const useUpdateProjectProposal = () => {
 
       return { previousProposals };
     },
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, _variables, context) => {
       if (context?.previousProposals) {
         queryClient.setQueryData(["projectProposals"], context.previousProposals);
       }
@@ -105,7 +105,7 @@ export const useUpdateProjectProposalStatus = () => {
 
       return { previousProposals };
     },
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, _variables, context) => {
       if (context?.previousProposals) {
         queryClient.setQueryData(["projectProposals"], context.previousProposals);
       }
@@ -114,7 +114,7 @@ export const useUpdateProjectProposalStatus = () => {
         duration: 2000,
       });
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       toast.success("Data updated successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000,
