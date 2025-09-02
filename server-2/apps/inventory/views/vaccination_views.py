@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from django.db.models.functions import TruncMonth
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
+from calendar import monthrange
 import re
 from django.db.models import Q
 from pagination import *
@@ -58,25 +59,8 @@ class ImmunizationSuppliesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestr
         except ProtectedError:
             raise ValidationError("Cannot delete medicine. It is still in use by other records.")
         
-        
-class ImmunizationStockSuppliesView(generics.ListCreateAPIView):
-    serializer_class=ImmnunizationStockSuppliesSerializer
-    queryset=ImmunizationStock.objects.all()
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-    def get_queryset(self):
-        queryset = ImmunizationStock.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
-        return queryset
-    
-class ImmunizationTransactionView(generics.ListCreateAPIView):
-    serializer_class=ImmunizationSuppliesTransactionSerializer
-    # queryset=ImmunizationTransaction.objects.all() 
-    pagination_class = StandardResultsPagination
-    
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
 
-
+    
 class ImmunizationSuppliesStockRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ImmnunizationStockSuppliesSerializer
     queryset = ImmunizationStock.objects.all()
@@ -86,18 +70,147 @@ class ImmunizationSuppliesStockRetrieveUpdateDestroyView(generics.RetrieveUpdate
         imzStck_id = self.kwargs.get('imzStck_id')
         obj = get_object_or_404(ImmunizationStock, imzStck_id=imzStck_id)
         return obj
+     
+class ImmunizationStockCreate(APIView):
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            
+            # Step 1: Create Inventory
+            inventory_data = self._prepare_inventory_data(data)
+            inventory_serializer = InventorySerializers(data=inventory_data)
+            
+            if not inventory_serializer.is_valid():
+                return Response({
+                    'error': 'Inventory validation failed',
+                    'details': inventory_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            inventory = inventory_serializer.save()
+            inv_id = inventory.inv_id
+            
+            # Step 2: Create ImmunizationStock
+            immunization_stock_data = self._prepare_immunization_stock_data(data, inv_id)
+            immunization_stock_serializer = ImmnunizationStockSuppliesSerializer(data=immunization_stock_data)
+            
+            if not immunization_stock_serializer.is_valid():
+                return Response({
+                    'error': 'ImmunizationStock validation failed',
+                    'details': immunization_stock_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            immunization_stock = immunization_stock_serializer.save()
+            imzStck_id = immunization_stock.imzStck_id
+            
+            # Step 3: Create AntigenTransaction
+            antigen_transaction_data = self._prepare_antigen_transaction_data(data, imzStck_id)
+            antigen_transaction_serializer = AntigenTransactionSerializer(data=antigen_transaction_data)
+            
+            if not antigen_transaction_serializer.is_valid():
+                return Response({
+                    'error': 'AntigenTransaction validation failed',
+                    'details': antigen_transaction_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            antigen_transaction = antigen_transaction_serializer.save()
+            
+            # Return success response with all created IDs
+            return Response({
+                'success': True,
+                'message': 'Immunization stock created successfully',
+                'data': {
+                    'inv_id': inv_id,
+                    'imzStck_id': imzStck_id,
+                    'antt_id': antigen_transaction.antt_id
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            # Transaction will be automatically rolled back due to @transaction.atomic
+            return Response({
+                'error': 'Failed to create immunization stock',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-class ArchiveImmunizationSuppliesStockListView(generics.ListAPIView):
-    serializer_class = ImmnunizationStockSuppliesSerializer
-    queryset = ImmunizationStock.objects.all()
+    def _prepare_inventory_data(self, data):
+        """Prepare inventory data from request"""
+        return {
+            'expiry_date': data.get('expiry_date'),
+            'inv_type': data.get('inv_type', 'Antigen'),  # default type
+            'is_Archived': False
+        }
     
-    def get_queryset(self):
-        # Filter to only include records where inv_id__is_Archived is True
-        return ImmunizationStock.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
+    def _prepare_immunization_stock_data(self, data, inv_id):
+        """Prepare immunization stock data from request"""
+        # Handle nested data structure if present
+        if 'data' in data:
+            nested_data = data.get('data', {})
+            immunization_data = {
+                **nested_data,
+                'imz_id': data.get('imz_id'),
+                'inv_id': inv_id
+            }
+        else:
+            immunization_data = data.copy()
+            immunization_data['inv_id'] = inv_id
+        
+        # Validate imz_id
+        imz_id = immunization_data.get('imz_id')
+        if not imz_id or (isinstance(imz_id, str) and not imz_id.isdigit()):
+            raise ValueError("Invalid immunization supply selection")
+        
+        imz_id = int(imz_id)
+        immunization_data['imz_id'] = imz_id
+        
+        # Calculate quantities based on unit
+        is_boxes = immunization_data.get('imzStck_unit') == 'boxes'
+        qty = int(immunization_data.get('imzStck_qty', 0))
+        pcs_per_box = int(immunization_data.get('imzStck_pcs', 0)) if is_boxes else 0
+        
+        # Set calculated fields
+        immunization_data.update({
+            'imzStck_qty': qty,
+            'imzStck_per_pcs': 0,  # Always 0 as per your logic
+            'imzStck_pcs': pcs_per_box,
+            'imzStck_used': immunization_data.get('imzStck_used', 0)
+        })
+        
+        # Calculate total available pieces
+        if is_boxes:
+            immunization_data['imzStck_avail'] = qty * pcs_per_box
+        else:
+            immunization_data['imzStck_avail'] = qty
+        
+        # Handle batch number
+        batch_number = immunization_data.get('batch_number', 'N/A')
+        if batch_number:
+            immunization_data['batch_number'] = batch_number.upper().strip()
+        else:
+            immunization_data['batch_number'] = 'N/A'
+            
+        return immunization_data
+    
+    def _prepare_antigen_transaction_data(self, data, imzStck_id):
+        """Prepare antigen transaction data from request"""
+        qty_unit = data.get('imzStck_unit')
+        qty = data.get('imzStck_qty', 0)
+        pcs = data.get('imzStck_pcs', 0)
+        
+        # Format quantity string based on unit
+        if qty_unit == 'boxes':
+            antt_qty = f"{qty} boxes ({pcs} pcs per box)"
+        else:
+            antt_qty = f"{qty} {qty_unit}"
+        
+        return {
+            'antt_qty': antt_qty,
+            'antt_action': 'Added',
+            'imzStck_id': imzStck_id,
+            'staff': data.get('staff')  # Include staff if provided
+        }
 
 
-
-    
 # =======================VACCINES================================#
 class VaccineListView(generics.ListCreateAPIView):
     serializer_class = VacccinationListSerializer
@@ -129,9 +242,12 @@ class RoutineFrequencyView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
      
-     
+            
+class ConditionalVaccineListView(generics.ListCreateAPIView):
+    serializer_class = CondtionaleVaccineSerializer
+    queryset = ConditionalVaccine.objects.all()
     
-# Vaccine List Views
+    
 class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VacccinationListSerializer
     queryset = VaccineList.objects.all()
@@ -150,10 +266,6 @@ class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
                 {"error": "Cannot delete. It is still in use by other records."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-            
-class ConditionalVaccineListView(generics.ListCreateAPIView):
-    serializer_class = CondtionaleVaccineSerializer
-    queryset = ConditionalVaccine.objects.all()
 class ConditionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CondtionaleVaccineSerializer
     queryset = ConditionalVaccine.objects.all()
@@ -187,16 +299,15 @@ class RoutineFrequencyRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAP
 
  
 class VaccineStocksView(generics.ListCreateAPIView):
-    serializer_class=VaccineStockSerializer
-    queryset=VaccineStock.objects.all()
+    serializer_class = VaccineStockSerializer
+    queryset = VaccineStock.objects.all()
     
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
     def get_queryset(self):
-        # Filter out MedicineInventory entries where the related Inventory is archived
+        # Filter out VaccineStock entries where the related Inventory is archived
         queryset = VaccineStock.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
-        return queryset 
+        return queryset
     
+
 class VaccineStockRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VaccineStockSerializer
     queryset = VaccineStock.objects.all()
@@ -207,8 +318,142 @@ class VaccineStockRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVie
         return obj
     
 
-    
 
+class VaccineStockCreate(APIView): 
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            
+            # Step 1: Create Inventory
+            inventory_data = self._prepare_inventory_data(data)
+            inventory_serializer = InventorySerializers(data=inventory_data)
+            
+            if not inventory_serializer.is_valid():
+                return Response({
+                    'error': 'Inventory validation failed',
+                    'details': inventory_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            inventory = inventory_serializer.save()
+            inv_id = inventory.inv_id
+            
+            # Step 2: Create VaccineStock
+            vaccine_stock_data = self._prepare_vaccine_stock_data(data, inv_id)
+            vaccine_stock_serializer = VaccineStockSerializer(data=vaccine_stock_data)
+            
+            if not vaccine_stock_serializer.is_valid():
+                return Response({
+                    'error': 'VaccineStock validation failed',
+                    'details': vaccine_stock_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            vaccine_stock = vaccine_stock_serializer.save()
+            vacStck_id = vaccine_stock.vacStck_id
+            
+            # Step 3: Create AntigenTransaction
+            antigen_transaction_data = self._prepare_antigen_transaction_data(data, vacStck_id)
+            antigen_transaction_serializer = AntigenTransactionSerializer(data=antigen_transaction_data)
+            
+            if not antigen_transaction_serializer.is_valid():
+                return Response({
+                    'error': 'AntigenTransaction validation failed',
+                    'details': antigen_transaction_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            antigen_transaction = antigen_transaction_serializer.save()
+            
+            # Return success response with all created IDs
+            return Response({
+                'success': True,
+                'message': 'Vaccine stock created successfully',
+                'data': {
+                    'inv_id': inv_id,
+                    'vacStck_id': vacStck_id,
+                    'antt_id': antigen_transaction.antt_id
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            # Transaction will be automatically rolled back due to @transaction.atomic
+            return Response({
+                'error': 'Failed to create vaccine stock',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _prepare_inventory_data(self, data):
+        """Prepare inventory data from request"""
+        return {
+            'expiry_date': data.get('expiry_date'),
+            'inv_type': data.get('inv_type', 'Antigen'),  # default type
+            'is_Archived': False
+        }
+    
+    def _prepare_vaccine_stock_data(self, data, inv_id):
+        """Prepare vaccine stock data from request"""
+        # Handle nested data structure if present
+        if 'data' in data:
+            nested_data = data.get('data', {})
+            vaccine_data = {
+                **nested_data,
+                'vac_id': data.get('vac_id'),
+                'inv_id': inv_id
+            }
+        else:
+            vaccine_data = data.copy()
+            vaccine_data['inv_id'] = inv_id
+        
+        # Validate vac_id
+        vac_id = vaccine_data.get('vac_id')
+        if not vac_id or (isinstance(vac_id, str) and not vac_id.isdigit()):
+            raise ValueError("Invalid vaccine selection")
+        
+        vac_id = int(vac_id)
+        vaccine_data['vac_id'] = vac_id
+        
+        # Calculate quantities
+        solvent_type = vaccine_data.get('solvent', 'diluent')
+        qty = int(vaccine_data.get('qty', 0))
+        volume = vaccine_data.get('volume', vaccine_data.get('dose_ml', 0))
+        dose_ml = int(volume) if volume else 0
+        
+        vaccine_data.update({
+            'qty': qty,
+            'dose_ml': dose_ml,
+            'wasted_dose': vaccine_data.get('wasted_dose', 0)
+        })
+        
+        # Calculate available quantity based on solvent type
+        if solvent_type == "doses":
+            vaccine_data['vacStck_qty_avail'] = qty * dose_ml
+        else:  # diluent
+            vaccine_data['vacStck_qty_avail'] = qty
+        
+        # Handle batch number formatting
+        batch_number = vaccine_data.get('batchNumber') or vaccine_data.get('batch_number', '')
+        if batch_number:
+            vaccine_data['batch_number'] = batch_number.upper().strip()
+        
+        return vaccine_data
+    
+    def _prepare_antigen_transaction_data(self, data, vacStck_id):
+        """Prepare antigen transaction data from request"""
+        solvent_type = data.get('solvent', 'diluent')
+        qty = data.get('qty', 0)
+        
+        # Determine unit based on solvent type
+        unit = "vial/s" if solvent_type == "doses" else "container/s"
+        string_qty = f"{qty} {unit}"
+        
+        return {
+            'antt_qty': string_qty,
+            'antt_action': 'Added',
+            'vacStck_id': vacStck_id,
+            'staff': data.get('staff')  # Include staff if provided
+        }
+
+
+    
     
 class AntigenTransactionView(generics.ListCreateAPIView):
     serializer_class = AntigenTransactionSerializer
@@ -217,21 +462,9 @@ class AntigenTransactionView(generics.ListCreateAPIView):
     def get_queryset(self):
         return AntigenTransaction.objects.all().order_by('-created_at')  # or any logic
 
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-
-    
-
-class ArchiveVaccineStocksView(generics.ListAPIView):
-    serializer_class=VaccineStockSerializer
-    queryset=VaccineStock.objects.all()
    
-    def get_queryset(self):
-        # Filter out MedicineInventory entries where the related Inventory is archived
-        queryset = VaccineStock.objects.select_related('inv_id').filter(inv_id__is_Archived=True)
-        return queryset 
     
-    
+
 class CombinedVaccineDataView(APIView):
     pagination_class = StandardResultsPagination
     
@@ -270,8 +503,780 @@ class CombinedVaccineDataView(APIView):
                 'page_size': paginator.page_size,
             }
         })
+
+
+
+
+# ANTIGEN STOCK
+class CombinedStockTable(APIView):
+    """
+    API view that combines vaccine stocks and immunization supplies 
+    to match the frontend getCombinedStock function logic with filters
+    """
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        try:
+            
+            self.auto_archive_expired_items()
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            stock_filter = request.GET.get('filter', 'all').lower()
+            
+            # Get vaccine stocks with related data (not archived)
+            vaccine_stocks = VaccineStock.objects.select_related(
+                'vac_id', 'inv_id'
+            ).filter(inv_id__is_Archived=False)
+            
+            # Get immunization stocks with related data (not archived)
+            immunization_stocks = ImmunizationStock.objects.select_related(
+                'imz_id', 'inv_id'
+            ).filter(inv_id__is_Archived=False)
+            
+            # Apply search filter if provided
+            if search_query:
+                vaccine_stocks = vaccine_stocks.filter(
+                    Q(vac_id__vac_name__icontains=search_query) |
+                    Q(batch_number__icontains=search_query)
+                )
+                immunization_stocks = immunization_stocks.filter(
+                    Q(imz_id__imz_name__icontains=search_query) |
+                    Q(batch_number__icontains=search_query)
+                )
+            
+            # Calculate today's date for expiry comparisons
+            today = timezone.now().date()
+            
+            combined_data = []
+            filter_counts = {
+                'out_of_stock': 0,
+                'low_stock': 0,
+                'near_expiry': 0,
+                'expired': 0,
+                'total': 0
+            }
+            
+            # Process vaccine stocks
+            for stock in vaccine_stocks:
+                doses_per_vial = stock.dose_ml if stock.dose_ml else 1
+                total_doses = doses_per_vial * stock.qty
+                
+                # Calculate available stock
+                if stock.solvent and stock.solvent.lower() == "diluent":
+                    available_stock = stock.vacStck_qty_avail
+                    # For diluent, low stock threshold is 10 containers
+                    low_stock_threshold = 10
+                else:
+                    available_stock = stock.vacStck_qty_avail
+                    # For regular vaccines, low stock threshold is 10 vials
+                    low_stock_threshold = 10
+                
+                # Check expiry status
+                expiry_date = stock.inv_id.expiry_date if stock.inv_id else None
+                is_expired = expiry_date and expiry_date < today if expiry_date else False
+                
+                # Check near expiry (within 30 days)
+                is_near_expiry = False
+                if expiry_date and not is_expired:
+                    days_until_expiry = (expiry_date - today).days
+                    is_near_expiry = 0 < days_until_expiry <= 30
+                
+                # Check low stock based on unit type
+                is_low_stock = available_stock <= low_stock_threshold
+                
+                # Check out of stock
+                is_out_of_stock = available_stock <= 0
+                
+                # Update filter counts (only count non-archived items)
+                if not stock.inv_id.is_Archived if stock.inv_id else False:
+                    filter_counts['total'] += 1
+                    if is_out_of_stock:
+                        filter_counts['out_of_stock'] += 1
+                    if is_low_stock and not is_expired:
+                        filter_counts['low_stock'] += 1
+                    if is_near_expiry:
+                        filter_counts['near_expiry'] += 1
+                    if is_expired:
+                        filter_counts['expired'] += 1
+                
+                # Apply filter
+                if stock_filter != 'all':
+                    if stock_filter == 'expired' and not is_expired:
+                        continue
+                    elif stock_filter == 'near_expiry' and not is_near_expiry:
+                        continue
+                    elif stock_filter == 'low_stock' and not is_low_stock:
+                        continue
+                    elif stock_filter == 'out_of_stock' and not is_out_of_stock:
+                        continue
+                
+                if stock.solvent and stock.solvent.lower() == "diluent":
+                    # Diluent handling
+                    item_data = {
+                        'type': 'vaccine',
+                        'id': stock.vacStck_id,
+                        'batchNumber': stock.batch_number,
+                        'category': 'vaccine',
+                        'item': {
+                            'antigen': stock.vac_id.vac_name if stock.vac_id else "Unknown Vaccine",
+                            'dosage': stock.volume if hasattr(stock, 'volume') else None,
+                            'unit': 'container',
+                        },
+                        'qty': f"{stock.qty} containers",
+                        'administered': f"{getattr(stock, 'vacStck_used', 0)} containers",
+                        'wastedDose': str(stock.wasted_dose or 0),
+                        'availableStock': available_stock,
+                        'expiryDate': expiry_date.isoformat() if expiry_date else None,
+                        'inv_id': stock.inv_id.inv_id if stock.inv_id else None,
+                        'solvent': stock.solvent,
+                        'vacStck_id': stock.vacStck_id,
+                        'vac_id': stock.vac_id.vac_id if stock.vac_id else None,
+                        'qty_number': stock.qty,
+                        'isArchived': stock.inv_id.is_Archived if stock.inv_id else False,
+                        'created_at': stock.created_at.isoformat() if stock.created_at else None,
+                        'isExpired': is_expired,
+                        'isNearExpiry': is_near_expiry,
+                        'isLowStock': is_low_stock,
+                        'isOutOfStock': is_out_of_stock
+                    }
+                else:
+                    # Regular vaccine handling
+                    item_data = {
+                        'type': 'vaccine',
+                        'id': stock.vacStck_id,
+                        'batchNumber': stock.batch_number,
+                        'category': 'Vaccine',
+                        'item': {
+                            'antigen': stock.vac_id.vac_name if stock.vac_id else "Unknown Vaccine",
+                            'dosage': stock.dose_ml,
+                            'unit': 'ml',
+                        },
+                        'qty': f"{stock.qty} vials ({total_doses} doses)",
+                        'administered': f"{getattr(stock, 'vacStck_used', 0)} doses",
+                        'wastedDose': str(stock.wasted_dose or 0),
+                        'availableStock': available_stock,
+                        'expiryDate': expiry_date.isoformat() if expiry_date else None,
+                        'solvent': stock.solvent,
+                        'inv_id': stock.inv_id.inv_id if stock.inv_id else None,
+                        'dose_ml': stock.dose_ml,
+                        'vacStck_id': stock.vacStck_id,
+                        'dosesPerVial': doses_per_vial,
+                        'vac_id': stock.vac_id.vac_id if stock.vac_id else None,
+                        'qty_number': stock.qty,
+                        'isArchived': stock.inv_id.is_Archived if stock.inv_id else False,
+                        'created_at': stock.created_at.isoformat() if stock.created_at else None,
+                        'isExpired': is_expired,
+                        'isNearExpiry': is_near_expiry,
+                        'isLowStock': is_low_stock,
+                        'isOutOfStock': is_out_of_stock
+                    }
+                
+                combined_data.append(item_data)
+            
+            # Process immunization supplies
+            for stock in immunization_stocks:
+                total_pcs = stock.imzStck_qty * stock.imzStck_pcs
+                
+                if stock.imzStck_unit == "pcs":
+                    qty_display = f"{stock.imzStck_qty} pc/s"
+                    # For pieces, low stock threshold is 20 pcs
+                    low_stock_threshold = 20
+                else:
+                    qty_display = f"{stock.imzStck_qty} boxes ({total_pcs} pcs)"
+                    # For boxes, low stock threshold is 2 boxes
+                    low_stock_threshold = 2
+                
+                # Calculate available stock
+                available_stock = stock.imzStck_avail
+                
+                # Check expiry status
+                expiry_date = stock.inv_id.expiry_date if stock.inv_id else None
+                is_expired = expiry_date and expiry_date < today if expiry_date else False
+                
+                # Check near expiry (within 30 days)
+                is_near_expiry = False
+                if expiry_date and not is_expired:
+                    days_until_expiry = (expiry_date - today).days
+                    is_near_expiry = 0 < days_until_expiry <= 30
+                
+                # Check low stock based on unit type
+                is_low_stock = available_stock <= low_stock_threshold
+                
+                # Check out of stock
+                is_out_of_stock = available_stock <= 0
+                
+                # Update filter counts (only count non-archived items)
+                if not stock.inv_id.is_Archived if stock.inv_id else False:
+                    filter_counts['total'] += 1
+                    if is_out_of_stock:
+                        filter_counts['out_of_stock'] += 1
+                    if is_low_stock and not is_expired:
+                        filter_counts['low_stock'] += 1
+                    if is_near_expiry:
+                        filter_counts['near_expiry'] += 1
+                    if is_expired:
+                        filter_counts['expired'] += 1
+                
+                # Apply filter
+                if stock_filter != 'all':
+                    if stock_filter == 'expired' and not is_expired:
+                        continue
+                    elif stock_filter == 'near_expiry' and not is_near_expiry:
+                        continue
+                    elif stock_filter == 'low_stock' and not is_low_stock:
+                        continue
+                    elif stock_filter == 'out_of_stock' and not is_out_of_stock:
+                        continue
+                
+                item_data = {
+                    'type': 'supply',
+                    'id': stock.imzStck_id,
+                    'batchNumber': stock.batch_number or "N/A",
+                    'category': 'Immunization Supplies',
+                    'item': {
+                        'antigen': stock.imz_id.imz_name if stock.imz_id else "Unknown Supply",
+                        'dosage': 1,
+                        'unit': stock.imzStck_unit,
+                    },
+                    'qty': qty_display,
+                    'administered': f"{stock.imzStck_used} pcs",
+                    'wastedDose': str(getattr(stock, 'wasted_dose', 0) or 0),
+                    'availableStock': available_stock,
+                    'expiryDate': expiry_date.isoformat() if expiry_date else "N/A",
+                    'inv_id': stock.inv_id.inv_id if stock.inv_id else None,
+                    'imz_id': stock.imz_id.imz_id if stock.imz_id else None,
+                    'imzStck_id': stock.imzStck_id,
+                    'imzStck_unit': stock.imzStck_unit,
+                    'imzStck_used': stock.imzStck_used or 0,
+                    'imzStck_pcs': stock.imzStck_pcs,
+                    'qty_number': stock.imzStck_qty,
+                    'isArchived': stock.inv_id.is_Archived if stock.inv_id else False,
+                    'created_at': stock.created_at.isoformat() if stock.created_at else None,
+                    'isExpired': is_expired,
+                    'isNearExpiry': is_near_expiry,
+                    'isLowStock': is_low_stock,
+                    'isOutOfStock': is_out_of_stock
+                }
+                
+                combined_data.append(item_data)
+            
+            # Sort by ID descending (matching frontend logic)
+            combined_data.sort(key=lambda x: x['id'], reverse=True)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            page = paginator.paginate_queryset(combined_data, request)
+            
+            if page is not None:
+                # Create custom response with both paginated data and filter counts
+                response = paginator.get_paginated_response(page)
+                # Add filter_counts to the response data
+                response_data = response.data
+                response_data['filter_counts'] = filter_counts
+                return Response(response_data)
+            
+            return Response({
+                'success': True,
+                'data': combined_data,
+                'count': len(combined_data),
+                'filter_counts': filter_counts
+            }, status=status.HTTP_200_OK)
         
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching combined stock data: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def auto_archive_expired_items(self):
+        """Auto-archive items that expired more than 10 days ago and log transactions"""
+        from datetime import timedelta
         
+        today = timezone.now().date()
+        archive_date = today - timedelta(days=10)  # Changed from 1 to 10 days
+        
+        print(f"Auto-archiving items expired before: {archive_date}")
+        
+        # Archive expired vaccine stocks
+        vaccine_stocks = VaccineStock.objects.select_related('inv_id').filter(
+            inv_id__expiry_date__lte=archive_date,
+            inv_id__is_Archived=False
+        )
+        
+        archived_vaccine_count = 0
+        for stock in vaccine_stocks:
+            # Get the current available quantity before archiving
+            current_qty = stock.vacStck_qty_avail or 0
+            
+            # Determine the unit based on solvent type
+            if stock.solvent and stock.solvent.lower() == "doses":
+                qty_with_unit = f"{current_qty} doses"
+            elif stock.solvent and stock.solvent.lower() == "container":
+                qty_with_unit = f"{current_qty} pcs"
+            else:
+                # For other solvent types, use the immunization unit or default to doses
+                qty_with_unit = f"{current_qty} doses"  # Default for vaccines
+            
+            # Archive the inventory
+            stock.inv_id.is_Archived = True
+            stock.inv_id.save()
+            
+            # Create transaction record for the archive action
+            AntigenTransaction.objects.create(
+                antt_qty=qty_with_unit,  # Record the quantity with unit that was archived
+                antt_action='Expired',  # Clear action indicating expiration-based archiving
+                vacStck_id=stock,  # Reference to the vaccine stock
+                imzStck_id=None,  # Not an immunization stock
+                staff=None  # System action, so no staff member
+            )
+            
+            archived_vaccine_count += 1
+            print(f"Archived vaccine stock: {stock.vacStck_id}, Expiry: {stock.inv_id.expiry_date}, Qty: {qty_with_unit}")
+        
+        # Archive expired immunization stocks
+        immunization_stocks = ImmunizationStock.objects.select_related('inv_id').filter(
+            inv_id__expiry_date__lte=archive_date,
+            inv_id__is_Archived=False
+        )
+        
+        archived_immunization_count = 0
+        for stock in immunization_stocks:
+            # Get the current available quantity before archiving
+            current_qty = stock.imzStck_avail or 0
+            
+            # Determine the unit based on immunization unit
+            if stock.imzStck_unit and stock.imzStck_unit.lower() == "boxes":
+                qty_with_unit = f"{current_qty} pcs"
+            else:
+                # Use the actual immunization unit or default to pcs
+                unit = stock.imzStck_unit if stock.imzStck_unit else "pcs"
+                qty_with_unit = f"{current_qty} {unit}"
+            
+            # Archive the inventory
+            stock.inv_id.is_Archived = True
+            stock.inv_id.save()
+            
+            # Create transaction record for the archive action
+            AntigenTransaction.objects.create(
+                antt_qty=qty_with_unit,  # Record the quantity with unit that was archived
+                antt_action='Expired',  # Clear action indicating expiration-based archiving
+                vacStck_id=None,  # Not a vaccine stock
+                imzStck_id=stock,  # Reference to the immunization stock
+                staff=None  # System action, so no staff member
+            )
+            
+            archived_immunization_count += 1
+            print(f"Archived immunization stock: {stock.imzStck_id}, Expiry: {stock.inv_id.expiry_date}, Qty: {qty_with_unit}")
+        
+        print(f"Auto-archived {archived_vaccine_count} vaccine items and {archived_immunization_count} immunization items with transaction records")
+
+
+
+
+# ==========================TRANSATION=========================
+from django.db.models import Q, Case, When, Value, CharField
+from django.db.models.functions import Coalesce
+
+class AntigenTransactionView(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        try:
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            # Get antigen transactions with related data
+            transactions = AntigenTransaction.objects.select_related(
+                'vacStck_id__vac_id',
+                'vacStck_id__inv_id',
+                'imzStck_id__imz_id',
+                'imzStck_id__inv_id',
+                'staff'
+            ).all()
+            
+            # Apply search filter if provided
+            if search_query:
+                transactions = transactions.filter(
+                    Q(vacStck_id__vac_id__vac_name__icontains=search_query) |
+                    Q(imzStck_id__imz_id__imz_name__icontains=search_query) |
+                    Q(vacStck_id__inv_id__inv_id__icontains=search_query) |
+                    Q(imzStck_id__inv_id__inv_id__icontains=search_query) |
+                    Q(antt_action__icontains=search_query) |
+                    Q(staff__first_name__icontains=search_query) |
+                    Q(staff__last_name__icontains=search_query)
+                )
+            
+            # Format the data for response
+            transaction_data = []
+            
+            for transaction in transactions:
+                staff = transaction.staff
+                vaccine_stock = transaction.vacStck_id
+                immunization_stock = transaction.imzStck_id
+                
+                # Determine item type and get details
+                item_name = "Manage by System"
+                item_type = "Unknown"
+                inv_id = "N/A"
+                
+                if vaccine_stock:
+                    vaccine = vaccine_stock.vac_id
+                    inventory = vaccine_stock.inv_id
+                    item_name = vaccine.vac_name if vaccine else "Unknown Vaccine"
+                    item_type = "Vaccine"
+                    inv_id = inventory.inv_id if inventory else "N/A"
+                elif immunization_stock:
+                    immunization = immunization_stock.imz_id
+                    inventory = immunization_stock.inv_id
+                    item_name = immunization.imz_name if immunization else "Unknown Supply"
+                    item_type = "Immunization Supply"
+                    inv_id = inventory.inv_id if inventory else "N/A"
+                
+                # Format staff name
+                staff_name = "Unknown"
+                if staff:
+                    staff_name = f"{staff.first_name or ''} {staff.last_name or ''}".strip()
+                    if not staff_name:
+                        staff_name = staff.username
+                
+                item_data = {
+                    'antt_id': transaction.antt_id,
+                    'item_name': item_name,
+                    'item_type': item_type,
+                    'inv_id': inv_id,
+                    'antt_qty': transaction.antt_qty,
+                    'antt_action': transaction.antt_action,
+                    'staff': staff_name,
+                    'created_at': transaction.created_at.isoformat() if transaction.created_at else None,
+                }
+                
+                transaction_data.append(item_data)
+            
+            # Sort by created_at descending (most recent first)
+            transaction_data.sort(key=lambda x: x['created_at'] if x['created_at'] else '', reverse=True)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginator.page_size = page_size
+            page_data = paginator.paginate_queryset(transaction_data, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response(response.data)
+            
+            return Response({
+                'success': True,
+                'results': transaction_data,
+                'count': len(transaction_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            print(f"Error traceback: {traceback.format_exc()}")
+            return Response({
+                'success': False,
+                'error': f'Error fetching antigen transactions: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# ===========================ARCHIVE==============================
+class AntigenArchiveInventoryView(APIView):
+    
+    def patch(self, request, inv_id):
+        """
+        Archive inventory item and create expired transaction only if expired AND has available stock
+        """
+        try:
+            # Get inventory item
+            inventory = get_object_or_404(Inventory, inv_id=inv_id)
+            
+            # Archive the inventory
+            inventory.is_Archived = True
+            inventory.updated_at = timezone.now()
+            inventory.save()
+            
+            # Check if item is expired and has available stock to create transaction
+            is_expired = request.data.get('is_expired', False)
+            has_available_stock = request.data.get('has_available_stock', False)
+            
+            transaction_created = False
+            if is_expired and has_available_stock:
+                try:
+                    self._create_expired_transaction(inventory)
+                    transaction_created = True
+                except Exception as e:
+                    # Roll back the archive operation if transaction creation fails
+                    inventory.is_Archived = False
+                    inventory.save()
+                    return Response(
+                        {"error": f"Failed to create transaction for expired item: {str(e)}"}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            return Response(
+                {
+                    "message": "Inventory archived successfully", 
+                    "inv_id": inv_id,
+                    "transaction_created": transaction_created
+                },
+                status=status.HTTP_200_OK
+            )
+            
+        except Exception as e:
+            return Response(
+                {"error": f"Error archiving inventory: {str(e)}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    def _create_expired_transaction(self, inventory):
+        """
+        Create expired transaction for items with available stock
+        """
+        transaction_data = {
+            "antt_action": "Expired",
+            "staff": None
+        }
+        
+        # Handle different inventory types
+        if hasattr(inventory, 'vaccine_stock'):
+            self._handle_vaccine_transaction(inventory.vaccine_stock, transaction_data)
+        elif hasattr(inventory, 'immunization_stock'):
+            self._handle_immunization_transaction(inventory.immunization_stock, transaction_data)
+        # Add other inventory types here as needed
+        
+        # Create the transaction
+        AntigenTransaction.objects.create(**transaction_data)
+    
+    def _handle_vaccine_transaction(self, vaccine_stock, transaction_data):
+        """Handle vaccine stock transaction data"""
+        current_qty = vaccine_stock.vacStck_qty_avail or 0
+        
+        if vaccine_stock.solvent and vaccine_stock.solvent.lower() == 'diluent':
+            qty_with_unit = f"{current_qty} containers"
+        elif vaccine_stock.solvent and vaccine_stock.solvent.lower() == 'doses':
+            qty_with_unit = f"{current_qty} doses"
+        else:
+            qty_with_unit = f"{current_qty} doses"
+        
+        transaction_data["antt_qty"] = qty_with_unit
+        transaction_data["vacStck_id"] = vaccine_stock
+    
+    def _handle_immunization_transaction(self, immunization_stock, transaction_data):
+        """Handle immunization stock transaction data"""
+        current_qty = immunization_stock.imzStck_avail or 0
+        unit = immunization_stock.imzStck_unit or "pcs"
+        
+        if unit.lower() == "boxes":
+            qty_with_unit = f"{current_qty} pcs"
+        else:
+            qty_with_unit = f"{current_qty} {unit}"
+        
+        transaction_data["antt_qty"] = qty_with_unit
+        transaction_data["imzStck_id"] = immunization_stock
+        
+
+
+
+
+class ArchivedAntigenTable(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        try:
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            # Get archived vaccine stocks
+            vaccine_stocks = VaccineStock.objects.select_related(
+                'vac_id', 'inv_id'
+            ).filter(inv_id__is_Archived=True)
+            
+            # Get archived immunization stocks
+            immunization_stocks = ImmunizationStock.objects.select_related(
+                'imz_id', 'inv_id'
+            ).filter(inv_id__is_Archived=True)
+            
+            # Apply search filter if provided
+            if search_query:
+                vaccine_stocks = vaccine_stocks.filter(
+                    Q(vac_id__vac_name__icontains=search_query) |
+                    Q(batch_number__icontains=search_query) |
+                    Q(inv_id__inv_id__icontains=search_query)
+                )
+                immunization_stocks = immunization_stocks.filter(
+                    Q(imz_id__imz_name__icontains=search_query) |
+                    Q(batch_number__icontains=search_query) |
+                    Q(inv_id__inv_id__icontains=search_query)
+                )
+            
+            # Calculate today's date for expiry comparisons
+            today = timezone.now().date()
+            
+            archived_data = []
+            
+            # Process archived vaccine stocks
+            for stock in vaccine_stocks:
+                doses_per_vial = stock.dose_ml if stock.dose_ml else 1
+                total_doses = doses_per_vial * stock.qty
+                
+                # Calculate available stock
+                available_stock = stock.vacStck_qty_avail
+                
+                # Check expiry status
+                expiry_date = stock.inv_id.expiry_date if stock.inv_id else None
+                is_expired = expiry_date and expiry_date < today if expiry_date else False
+                
+                # Determine archive reason
+                archive_reason = 'Expired' if is_expired else 'Out of Stock'
+                
+                if stock.solvent and stock.solvent.lower() == "diluent":
+                    # Diluent handling - qty used = total containers - wasted containers
+                    wasted_containers = stock.wasted_dose or 0
+                    actual_used_containers = stock.qty - wasted_containers
+                    
+                    item_data = {
+                        'type': 'vaccine',
+                        'id': stock.vacStck_id,
+                        'batchNumber': stock.batch_number or "N/A",
+                        'category': 'Vaccine',
+                        'item': {
+                            'antigen': stock.vac_id.vac_name if stock.vac_id else "Unknown Vaccine",
+                            'dosage': stock.volume if hasattr(stock, 'volume') else None,
+                            'unit': 'container',
+                        },
+                        'qty': f"{stock.qty} containers",
+                        'administered': f"{actual_used_containers} containers",
+                        'wastedDose': str(wasted_containers),
+                        'availableStock': available_stock,
+                        'expiryDate': expiry_date.isoformat() if expiry_date else "N/A",
+                        'archivedDate': stock.inv_id.updated_at.isoformat() if stock.inv_id and stock.inv_id.updated_at else stock.inv_id.created_at.isoformat() if stock.inv_id else None,
+                        'reason': archive_reason,
+                        'inv_id': stock.inv_id.inv_id if stock.inv_id else None,
+                        'solvent': stock.solvent,
+                        'vacStck_id': stock.vacStck_id,
+                        'vac_id': stock.vac_id.vac_id if stock.vac_id else None,
+                        'qty_number': stock.qty,
+                        'isArchived': stock.inv_id.is_Archived if stock.inv_id else False,
+                        'created_at': stock.created_at.isoformat() if stock.created_at else None,
+                    }
+                else:
+                    # Regular vaccine handling - qty used = total doses - wasted doses
+                    wasted_doses = stock.wasted_dose or 0
+                    actual_used_doses = total_doses - wasted_doses
+                    
+                    item_data = {
+                        'type': 'vaccine',
+                        'id': stock.vacStck_id,
+                        'batchNumber': stock.batch_number or "N/A",
+                        'category': 'Vaccine',
+                        'item': {
+                            'antigen': stock.vac_id.vac_name if stock.vac_id else "Unknown Vaccine",
+                            'dosage': stock.dose_ml,
+                            'unit': 'ml',
+                        },
+                        'qty': f"{stock.qty} vials ({total_doses} doses)",
+                        'administered': f"{actual_used_doses} doses",
+                        'wastedDose': str(wasted_doses),
+                        'availableStock': available_stock,
+                        'expiryDate': expiry_date.isoformat() if expiry_date else "N/A",
+                        'archivedDate': stock.inv_id.updated_at.isoformat() if stock.inv_id and stock.inv_id.updated_at else stock.inv_id.created_at.isoformat() if stock.inv_id else None,
+                        'reason': archive_reason,
+                        'solvent': stock.solvent,
+                        'inv_id': stock.inv_id.inv_id if stock.inv_id else None,
+                        'dose_ml': stock.dose_ml,
+                        'vacStck_id': stock.vacStck_id,
+                        'dosesPerVial': doses_per_vial,
+                        'vac_id': stock.vac_id.vac_id if stock.vac_id else None,
+                        'qty_number': stock.qty,
+                        'isArchived': stock.inv_id.is_Archived if stock.inv_id else False,
+                        'created_at': stock.created_at.isoformat() if stock.created_at else None,
+                    }
+                
+                archived_data.append(item_data)
+            
+            # Process archived immunization supplies
+            for stock in immunization_stocks:
+                total_pcs = stock.imzStck_qty * stock.imzStck_pcs
+                
+                if stock.imzStck_unit == "pcs":
+                    qty_display = f"{stock.imzStck_qty} pc/s"
+                else:
+                    qty_display = f"{stock.imzStck_qty} boxes ({total_pcs} pcs)"
+                
+                # Calculate available stock
+                available_stock = stock.imzStck_avail
+                
+                # Check expiry status
+                expiry_date = stock.inv_id.expiry_date if stock.inv_id else None
+                is_expired = expiry_date and expiry_date < today if expiry_date else False
+                
+                # Determine archive reason
+                archive_reason = 'Expired' if is_expired else 'Out of Stock'
+                
+                # Immunization supplies - qty used = total pieces - wasted pieces
+                wasted_pcs = getattr(stock, 'wasted_dose', 0) or 0
+                actual_used_pcs = total_pcs - wasted_pcs
+                
+                item_data = {
+                    'type': 'supply',
+                    'id': stock.imzStck_id,
+                    'batchNumber': stock.batch_number or "N/A",
+                    'category': 'Immunization Supplies',
+                    'item': {
+                        'antigen': stock.imz_id.imz_name if stock.imz_id else "Unknown Supply",
+                        'dosage': 1,
+                        'unit': stock.imzStck_unit,
+                    },
+                    'qty': qty_display,
+                    'administered': f"{actual_used_pcs} pcs",
+                    'wastedDose': str(wasted_pcs),
+                    'availableStock': available_stock,
+                    'expiryDate': expiry_date.isoformat() if expiry_date else "N/A",
+                    'archivedDate': stock.inv_id.updated_at.isoformat() if stock.inv_id and stock.inv_id.updated_at else stock.inv_id.created_at.isoformat() if stock.inv_id else None,
+                    'reason': archive_reason,
+                    'inv_id': stock.inv_id.inv_id if stock.inv_id else None,
+                    'imz_id': stock.imz_id.imz_id if stock.imz_id else None,
+                    'imzStck_id': stock.imzStck_id,
+                    'imzStck_unit': stock.imzStck_unit,
+                    'imzStck_used': stock.imzStck_used or 0,
+                    'imzStck_pcs': stock.imzStck_pcs,
+                    'qty_number': stock.imzStck_qty,
+                    'isArchived': stock.inv_id.is_Archived if stock.inv_id else False,
+                    'created_at': stock.created_at.isoformat() if stock.created_at else None,
+                }
+                
+                archived_data.append(item_data)
+            
+            # Sort by archived date descending (most recent first)
+            archived_data.sort(key=lambda x: x['archivedDate'] if x['archivedDate'] else '', reverse=True)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginator.page_size = page_size
+            page_data = paginator.paginate_queryset(archived_data, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response(response.data)
+            
+            return Response({
+                'success': True,
+                'results': archived_data,
+                'count': len(archived_data)
+            }, status=status.HTTP_500_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching archived antigens: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
 
 # ==================VACCINATION/IMMUNIZATION REPORT=======================
 
@@ -326,60 +1331,32 @@ class VaccinationSummaryMonthsAPIView(APIView):
                 last_day = monthrange(start_date.year, start_date.month)[1]
                 end_date = start_date.replace(day=last_day)
 
-                # Count vaccine items (with transactions OR expired in this month)
-                vaccine_with_transactions = VaccineStock.objects.filter(
+                # Get unique vaccine items with transactions in this month, excluding expired items
+                vaccine_items = VaccineStock.objects.filter(
                     antigen_transactions__created_at__date__gte=start_date,
                     antigen_transactions__created_at__date__lte=end_date
-                ).distinct().count()
-                
-                vaccine_expired_this_month = VaccineStock.objects.filter(
-                    inv_id__expiry_date__gte=start_date,
-                    inv_id__expiry_date__lte=end_date
                 ).exclude(
-                    inv_id__expiry_date__lt=start_date  # Exclude items expired before this month
+                    # Exclude items that expired BEFORE this month
+                    inv_id__expiry_date__lt=start_date
                 ).distinct().count()
-                
-                # Count immunization items (with transactions OR expired in this month)
-                immunization_with_transactions = ImmunizationStock.objects.filter(
+
+                # Get unique immunization items with transactions in this month, excluding expired items
+                immunization_items = ImmunizationStock.objects.filter(
                     antigen_transactions__created_at__date__gte=start_date,
                     antigen_transactions__created_at__date__lte=end_date
-                ).distinct().count()
-                
-                immunization_expired_this_month = ImmunizationStock.objects.filter(
-                    inv_id__expiry_date__gte=start_date,
-                    inv_id__expiry_date__lte=end_date
                 ).exclude(
-                    inv_id__expiry_date__lt=start_date  # Exclude items expired before this month
+                    # Exclude items that expired BEFORE this month
+                    inv_id__expiry_date__lt=start_date
                 ).distinct().count()
 
-                # Get unique vaccine items (either with transactions or expired)
-                vaccine_items_with_tx_or_expired = VaccineStock.objects.filter(
-                    Q(antigen_transactions__created_at__date__gte=start_date,
-                      antigen_transactions__created_at__date__lte=end_date) |
-                    Q(inv_id__expiry_date__gte=start_date,
-                      inv_id__expiry_date__lte=end_date)
-                ).exclude(
-                    inv_id__expiry_date__lt=start_date  # Exclude items expired before this month
-                ).distinct().count()
-
-                # Get unique immunization items (either with transactions or expired)
-                immunization_items_with_tx_or_expired = ImmunizationStock.objects.filter(
-                    Q(antigen_transactions__created_at__date__gte=start_date,
-                      antigen_transactions__created_at__date__lte=end_date) |
-                    Q(inv_id__expiry_date__gte=start_date,
-                      inv_id__expiry_date__lte=end_date)
-                ).exclude(
-                    inv_id__expiry_date__lt=start_date  # Exclude items expired before this month
-                ).distinct().count()
-
-                total_items = vaccine_items_with_tx_or_expired + immunization_items_with_tx_or_expired
+                total_items = vaccine_items + immunization_items
 
                 formatted_months.append({
                     'month': month_str,
                     'month_name': month_name,
                     'total_items': total_items,
-                    'vaccine_items': vaccine_items_with_tx_or_expired,
-                    'immunization_items': immunization_items_with_tx_or_expired,
+                    'vaccine_items': vaccine_items,
+                    'immunization_items': immunization_items,
                 })
 
             paginator = self.pagination_class()
@@ -403,6 +1380,7 @@ class VaccinationSummaryMonthsAPIView(APIView):
                 'error': str(e),
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
     pagination_class = StandardResultsPagination
 
@@ -418,38 +1396,48 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
 
         inventory_summary = []
 
-        # Process Vaccine Stocks - Only get stocks that have transactions in the selected month
-        # OR expired in the selected month
-        vaccine_stocks = VaccineStock.objects.filter(
-            Q(antigen_transactions__created_at__date__gte=start_date,
-              antigen_transactions__created_at__date__lte=end_date) |
-            Q(inv_id__expiry_date__gte=start_date,
-              inv_id__expiry_date__lte=end_date)
-        ).select_related('vac_id', 'inv_id').distinct()
+        # Get unique vaccine + expiry_date + inv_id combos to avoid duplicates
+        vaccine_expiry_inv_pairs = AntigenTransaction.objects.filter(
+            created_at__date__lte=end_date
+        ).exclude(
+            # Exclude items that expired BEFORE this month
+            vacStck_id__inv_id__expiry_date__lt=start_date
+        ).values_list(
+            "vacStck_id__vac_id",
+            "vacStck_id__inv_id__expiry_date",
+            "vacStck_id__inv_id"
+        ).distinct()
 
-        for vstock in vaccine_stocks:
-            # Skip if expired before this month (but not in this month)
-            if (vstock.inv_id.expiry_date and 
-                vstock.inv_id.expiry_date < start_date):
+        # Track unique combinations to avoid duplicates
+        seen_vaccine_combinations = set()
+
+        for vac_id, expiry_date, inv_id in vaccine_expiry_inv_pairs:
+            # Skip if expiry date is before the current month (already expired)
+            if expiry_date and expiry_date < start_date:
+                continue
+                
+            # Create a unique key for this combination
+            combo_key = (vac_id, expiry_date, inv_id)
+            
+            # Skip if we've already processed this combination
+            if combo_key in seen_vaccine_combinations:
+                continue
+                
+            seen_vaccine_combinations.add(combo_key)
+
+            # Get the specific vaccine stock
+            try:
+                vstock = VaccineStock.objects.get(
+                    vac_id=vac_id,
+                    inv_id__expiry_date=expiry_date,
+                    inv_id=inv_id
+                )
+            except VaccineStock.DoesNotExist:
                 continue
 
             transactions = AntigenTransaction.objects.filter(
                 vacStck_id=vstock.vacStck_id
             ).order_by("created_at")
-
-            # Check if this stock has any transactions in the selected month
-            monthly_transactions = transactions.filter(
-                created_at__date__gte=start_date,
-                created_at__date__lte=end_date
-            )
-            
-            # Check if expired in this month
-            expired_this_month = (vstock.inv_id.expiry_date and 
-                                start_date <= vstock.inv_id.expiry_date <= end_date)
-            
-            # Skip if no transactions in this month AND didn't expire in this month
-            if not monthly_transactions.exists() and not expired_this_month:
-                continue
 
             # Check if this is a vaccine (doses) or diluent
             is_doses = vstock.solvent.lower() != 'diluent'
@@ -476,6 +1464,10 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
                     transactions.filter(created_at__date__lt=start_date), "administered")
                 
                 # Monthly transactions
+                monthly_transactions = transactions.filter(
+                    created_at__date__gte=start_date,
+                    created_at__date__lte=end_date
+                )
                 received_vials = calculate_quantities(monthly_transactions, "added")
                 dispensed_doses = calculate_quantities(monthly_transactions, "deduct")
                 wasted_doses = calculate_quantities(monthly_transactions, "wasted")
@@ -504,10 +1496,19 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
                 closing_doses = total_available_doses - dispensed_doses - wasted_doses - administered_doses
                 closing_vials = math.ceil(closing_doses / dose_ml) if closing_doses > 0 else 0
 
-                # If expired this month, set closing to 0
-                if expired_this_month:
-                    closing_vials = 0
-                    closing_doses = 0
+                # Check if expired this month
+                expired_this_month = (vstock.inv_id.expiry_date and 
+                                    start_date <= vstock.inv_id.expiry_date <= end_date)
+                
+                # REMOVED: Don't set closing to 0 for expired items
+                # if expired_this_month:
+                #     closing_vials = 0
+                #     closing_doses = 0
+
+                # Skip if there's no stock and it's not expiring this month
+                # Also include items that expired this month even if closing_doses <= 0
+                if closing_doses <= 0 and (not expiry_date or expiry_date > end_date) and not expired_this_month:
+                    continue
 
                 # If opening was 0 but we received, show received in opening for display only
                 if opening_vials_display == 0 and received_vials > 0:
@@ -555,6 +1556,10 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
                     transactions.filter(created_at__date__lt=start_date), "administered")
                 
                 # Monthly transactions
+                monthly_transactions = transactions.filter(
+                    created_at__date__gte=start_date,
+                    created_at__date__lte=end_date
+                )
                 received_qty = calculate_quantities(monthly_transactions, "added")
                 dispensed_qty = calculate_quantities(monthly_transactions, "deduct")
                 wasted_qty = calculate_quantities(monthly_transactions, "wasted")
@@ -565,10 +1570,19 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
                 # Calculate closing correctly
                 closing_qty = opening_qty + received_qty - dispensed_qty - wasted_qty - administered_qty
                 
-                # If expired this month, set closing to 0
-                if expired_this_month:
-                    closing_qty = 0
+                # Check if expired this month
+                expired_this_month = (vstock.inv_id.expiry_date and 
+                                    start_date <= vstock.inv_id.expiry_date <= end_date)
                 
+                # REMOVED: Don't set closing to 0 for expired items
+                # if expired_this_month:
+                #     closing_qty = 0
+                
+                # Skip if there's no stock and it's not expiring this month
+                # Also include items that expired this month even if closing_qty <= 0
+                if closing_qty <= 0 and (not expiry_date or expiry_date > end_date) and not expired_this_month:
+                    continue
+
                 # If no opening balance but received in this month, show received as opening for display only
                 if opening_qty <= 0 and received_qty > 0:
                     opening_display = received_qty
@@ -600,38 +1614,48 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
 
             inventory_summary.append(item_data)
 
-        # Process Immunization Stocks - Only get stocks that have transactions in the selected month
-        # OR expired in the selected month
-        immunization_stocks = ImmunizationStock.objects.filter(
-            Q(antigen_transactions__created_at__date__gte=start_date,
-              antigen_transactions__created_at__date__lte=end_date) |
-            Q(inv_id__expiry_date__gte=start_date,
-              inv_id__expiry_date__lte=end_date)
-        ).select_related('imz_id', 'inv_id').distinct()
+        # Get unique immunization + expiry_date + inv_id combos to avoid duplicates
+        immunization_expiry_inv_pairs = AntigenTransaction.objects.filter(
+            created_at__date__lte=end_date
+        ).exclude(
+            # Exclude items that expired BEFORE this month
+            imzStck_id__inv_id__expiry_date__lt=start_date
+        ).values_list(
+            "imzStck_id__imz_id",
+            "imzStck_id__inv_id__expiry_date",
+            "imzStck_id__inv_id"
+        ).distinct()
 
-        for istock in immunization_stocks:
-            # Skip if expired before this month (but not in this month)
-            if (istock.inv_id.expiry_date and 
-                istock.inv_id.expiry_date < start_date):
+        # Track unique combinations to avoid duplicates
+        seen_immunization_combinations = set()
+
+        for imz_id, expiry_date, inv_id in immunization_expiry_inv_pairs:
+            # Skip if expiry date is before the current month (already expired)
+            if expiry_date and expiry_date < start_date:
+                continue
+                
+            # Create a unique key for this combination
+            combo_key = (imz_id, expiry_date, inv_id)
+            
+            # Skip if we've already processed this combination
+            if combo_key in seen_immunization_combinations:
+                continue
+                
+            seen_immunization_combinations.add(combo_key)
+
+            # Get the specific immunization stock
+            try:
+                istock = ImmunizationStock.objects.get(
+                    imz_id=imz_id,
+                    inv_id__expiry_date=expiry_date,
+                    inv_id=inv_id
+                )
+            except ImmunizationStock.DoesNotExist:
                 continue
 
             transactions = AntigenTransaction.objects.filter(
                 imzStck_id=istock.imzStck_id
             ).order_by("created_at")
-
-            # Check if this stock has any transactions in the selected month
-            monthly_transactions = transactions.filter(
-                created_at__date__gte=start_date,
-                created_at__date__lte=end_date
-            )
-            
-            # Check if expired in this month
-            expired_this_month = (istock.inv_id.expiry_date and 
-                                start_date <= istock.inv_id.expiry_date <= end_date)
-            
-            # Skip if no transactions in this month AND didn't expire in this month
-            if not monthly_transactions.exists() and not expired_this_month:
-                continue
 
             def calculate_quantities(qs, action):
                 return sum(
@@ -648,6 +1672,11 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
             opening_administered = calculate_quantities(
                 transactions.filter(created_at__date__lt=start_date), "administered")
 
+            # Monthly transactions
+            monthly_transactions = transactions.filter(
+                created_at__date__gte=start_date,
+                created_at__date__lte=end_date
+            )
             received_qty = calculate_quantities(monthly_transactions, "added")
             dispensed_qty = calculate_quantities(monthly_transactions, "deduct")
             wasted_qty = calculate_quantities(monthly_transactions, "wasted")
@@ -658,15 +1687,18 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
             # Calculate closing correctly
             closing_qty = opening_qty + received_qty - dispensed_qty - wasted_qty - administered_qty
             
-            # If expired this month, set closing to 0
-            if expired_this_month:
-                closing_qty = 0
+            # Check if expired this month
+            expired_this_month = (istock.inv_id.expiry_date and 
+                                start_date <= istock.inv_id.expiry_date <= end_date)
             
-            # If no opening balance but received in this month, show received as opening for display only
-            if opening_qty <= 0 and received_qty > 0:
-                opening_display = received_qty
-            else:
-                opening_display = opening_qty
+            # REMOVED: Don't set closing to 0 for expired items
+            # if expired_this_month:
+            #     closing_qty = 0
+            
+            # Skip if there's no stock and it's not expiring this month
+            # Also include items that expired this month even if closing_qty <= 0
+            if closing_qty <= 0 and (not expiry_date or expiry_date > end_date) and not expired_this_month:
+                continue
 
             if istock.imzStck_unit.lower() == "boxes":
                 pcs_per_box = istock.imzStck_per_pcs or 1
@@ -675,6 +1707,12 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
                 dispensed_qty *= pcs_per_box
                 wasted_qty *= pcs_per_box
                 administered_qty *= pcs_per_box
+
+            # If no opening balance but received in this month, show received as opening for display only
+            if opening_qty <= 0 and received_qty > 0:
+                opening_display = received_qty
+            else:
+                opening_display = opening_qty
 
             # Format received, dispensed, wasted, and administered - display blank if 0
             received_display = received_qty if received_qty > 0 else ""
@@ -707,5 +1745,479 @@ class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
                 'total_items': len(inventory_summary),
                 'vaccine_items': len([x for x in inventory_summary if x['type'] == 'vaccine']),
                 'immunization_items': len([x for x in inventory_summary if x['type'] == 'immunization']),
+            }
+        })
+        
+
+#==========EXPIRED OUTOFSTOCK REPORT==========================
+# Vaccination Expired/Out-of-Stock Summary API View
+class VaccinationExpiredOutOfStockSummaryAPIView(APIView):
+    pagination_class = StandardResultsPagination
+
+    def _parse_qty(self, transaction, is_vaccine=False, multiply_doses=False):
+        """Extract numeric value from antt_qty and convert vials to doses if needed."""
+        match = re.search(r'\d+', str(transaction.antt_qty))
+        qty_num = int(match.group()) if match else 0
+        
+        # For vaccine doses, multiply by dose_ml if needed
+        if is_vaccine and multiply_doses and transaction.vacStck_id:
+            dose_ml = transaction.vacStck_id.dose_ml or 1
+            qty_num *= dose_ml
+            
+        return qty_num
+
+    def get(self, request):
+        try:
+            # Get distinct months from antigen transactions
+            distinct_months = AntigenTransaction.objects.annotate(
+                month=TruncMonth('created_at')
+            ).values('month').distinct().order_by('-month')
+
+            formatted_months = []
+
+            for item in distinct_months:
+                month_date = item['month']
+                if not month_date:
+                    continue
+                    
+                month_str = month_date.strftime('%Y-%m')
+                month_name = month_date.strftime('%B %Y')
+
+                # Get the date range for this month
+                start_date = month_date.date()
+                last_day = monthrange(start_date.year, start_date.month)[1]
+                end_date = start_date.replace(day=last_day)
+                near_expiry_threshold = end_date + timedelta(days=30)
+
+                # Get all vaccine inventory items that were active up to this month
+                vaccine_expiry_inv_pairs = AntigenTransaction.objects.filter(
+                    created_at__date__lte=end_date,
+                    vacStck_id__isnull=False
+                ).values_list(
+                    "vacStck_id__vac_id",
+                    "vacStck_id__inv_id__expiry_date",
+                    "vacStck_id__inv_id"
+                ).distinct()
+
+                # Get all immunization inventory items that were active up to this month
+                immunization_expiry_inv_pairs = AntigenTransaction.objects.filter(
+                    created_at__date__lte=end_date,
+                    imzStck_id__isnull=False
+                ).values_list(
+                    "imzStck_id__imz_id",
+                    "imzStck_id__inv_id__expiry_date",
+                    "imzStck_id__inv_id"
+                ).distinct()
+
+                expired_count = 0
+                out_of_stock_count = 0
+                expired_out_of_stock_count = 0
+                near_expiry_count = 0
+
+                seen_combinations = set()
+
+                # Process vaccine items
+                for vac_id, expiry_date, inv_id in vaccine_expiry_inv_pairs:
+                    combo_key = ('vaccine', vac_id, expiry_date, inv_id)
+                    if combo_key in seen_combinations:
+                        continue
+                    seen_combinations.add(combo_key)
+
+                    if not expiry_date:
+                        continue
+
+                    if expiry_date < start_date:
+                        continue
+
+                    transactions = AntigenTransaction.objects.filter(
+                        vacStck_id__vac_id=vac_id,
+                        vacStck_id__inv_id__expiry_date=expiry_date,
+                        vacStck_id__inv_id=inv_id
+                    ).order_by("created_at")
+
+                    try:
+                        vstock = VaccineStock.objects.get(
+                            vac_id=vac_id,
+                            inv_id__expiry_date=expiry_date,
+                            inv_id=inv_id
+                        )
+                    except VaccineStock.DoesNotExist:
+                        continue
+
+                    # Check if this is a vaccine (doses) or diluent
+                    is_doses = vstock.solvent.lower() != 'diluent'
+                    dose_ml = vstock.dose_ml if (is_doses and vstock.dose_ml and vstock.dose_ml > 0) else 1
+
+                    # Calculate stock levels
+                    opening_in = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="added")
+                    opening_out = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="deduct")
+                    opening_wasted = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="wasted")
+                    opening_administered = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="administered")
+                    
+                    opening_qty = (sum(self._parse_qty(t, is_vaccine=True, multiply_doses=True) for t in opening_in) - 
+                                 sum(self._parse_qty(t, is_vaccine=True, multiply_doses=False) for t in opening_out) -
+                                 sum(self._parse_qty(t, is_vaccine=True, multiply_doses=False) for t in opening_wasted) -
+                                 sum(self._parse_qty(t, is_vaccine=True, multiply_doses=False) for t in opening_administered))
+
+                    monthly_transactions = transactions.filter(
+                        created_at__date__gte=start_date,
+                        created_at__date__lte=end_date
+                    )
+                    received_qty = sum(self._parse_qty(t, is_vaccine=True, multiply_doses=True) for t in monthly_transactions.filter(antt_action__icontains="added"))
+                    dispensed_qty = sum(self._parse_qty(t, is_vaccine=True, multiply_doses=False) for t in monthly_transactions.filter(antt_action__icontains="deduct"))
+                    wasted_qty = sum(self._parse_qty(t, is_vaccine=True, multiply_doses=False) for t in monthly_transactions.filter(antt_action__icontains="wasted"))
+                    administered_qty = sum(self._parse_qty(t, is_vaccine=True, multiply_doses=False) for t in monthly_transactions.filter(antt_action__icontains="administered"))
+
+                    closing_qty = opening_qty + received_qty - dispensed_qty - wasted_qty - administered_qty
+
+                    # Check conditions
+                    is_expired = start_date <= expiry_date <= end_date
+                    is_out_of_stock = closing_qty <= 0
+                    is_near_expiry = (end_date < expiry_date <= near_expiry_threshold) and closing_qty > 0
+
+                    if is_expired and is_out_of_stock:
+                        expired_out_of_stock_count += 1
+                    elif is_expired:
+                        expired_count += 1
+                    elif is_out_of_stock:
+                        out_of_stock_count += 1
+                    elif is_near_expiry:
+                        near_expiry_count += 1
+
+                # Process immunization items
+                for imz_id, expiry_date, inv_id in immunization_expiry_inv_pairs:
+                    combo_key = ('immunization', imz_id, expiry_date, inv_id)
+                    if combo_key in seen_combinations:
+                        continue
+                    seen_combinations.add(combo_key)
+
+                    if not expiry_date:
+                        continue
+
+                    if expiry_date < start_date:
+                        continue
+
+                    transactions = AntigenTransaction.objects.filter(
+                        imzStck_id__imz_id=imz_id,
+                        imzStck_id__inv_id__expiry_date=expiry_date,
+                        imzStck_id__inv_id=inv_id
+                    ).order_by("created_at")
+
+                    try:
+                        istock = ImmunizationStock.objects.get(
+                            imz_id=imz_id,
+                            inv_id__expiry_date=expiry_date,
+                            inv_id=inv_id
+                        )
+                    except ImmunizationStock.DoesNotExist:
+                        continue
+
+                    # Calculate stock levels
+                    opening_in = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="added")
+                    opening_out = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="deduct")
+                    opening_wasted = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="wasted")
+                    opening_administered = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="administered")
+                    
+                    opening_qty = (sum(self._parse_qty(t) for t in opening_in) - 
+                                 sum(self._parse_qty(t) for t in opening_out) -
+                                 sum(self._parse_qty(t) for t in opening_wasted) -
+                                 sum(self._parse_qty(t) for t in opening_administered))
+
+                    monthly_transactions = transactions.filter(
+                        created_at__date__gte=start_date,
+                        created_at__date__lte=end_date
+                    )
+                    received_qty = sum(self._parse_qty(t) for t in monthly_transactions.filter(antt_action__icontains="added"))
+                    dispensed_qty = sum(self._parse_qty(t) for t in monthly_transactions.filter(antt_action__icontains="deduct"))
+                    wasted_qty = sum(self._parse_qty(t) for t in monthly_transactions.filter(antt_action__icontains="wasted"))
+                    administered_qty = sum(self._parse_qty(t) for t in monthly_transactions.filter(antt_action__icontains="administered"))
+
+                    closing_qty = opening_qty + received_qty - dispensed_qty - wasted_qty - administered_qty
+
+                    # Check conditions
+                    is_expired = start_date <= expiry_date <= end_date
+                    is_out_of_stock = closing_qty <= 0
+                    is_near_expiry = (end_date < expiry_date <= near_expiry_threshold) and closing_qty > 0
+
+                    if is_expired and is_out_of_stock:
+                        expired_out_of_stock_count += 1
+                    elif is_expired:
+                        expired_count += 1
+                    elif is_out_of_stock:
+                        out_of_stock_count += 1
+                    elif is_near_expiry:
+                        near_expiry_count += 1
+
+                total_problems = expired_count + out_of_stock_count + expired_out_of_stock_count + near_expiry_count
+
+                formatted_months.append({
+                    'month': month_str,
+                    'month_name': month_name,
+                    'total_problems': total_problems,
+                    'expired_count': expired_count,
+                    'out_of_stock_count': out_of_stock_count,
+                    'expired_out_of_stock_count': expired_out_of_stock_count,
+                    'near_expiry_count': near_expiry_count,
+                })
+
+            paginator = self.pagination_class()
+            page = paginator.paginate_queryset(formatted_months, request)
+            if page is not None:
+                return paginator.get_paginated_response({
+                    'success': True,
+                    'data': page,
+                    'total_months': len(formatted_months),
+                })
+
+            return Response({
+                'success': True,
+                'data': formatted_months,
+                'total_months': len(formatted_months),
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e),
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Monthly Vaccination Expired/Out-of-Stock Detail API View
+class MonthlyVaccinationExpiredOutOfStockDetailAPIView(APIView):
+    pagination_class = StandardResultsPagination
+
+    def _parse_qty(self, transaction, is_vaccine=False, multiply_doses=False):
+        """Extract numeric value from antt_qty and convert vials to doses if needed."""
+        match = re.search(r'\d+', str(transaction.antt_qty))
+        qty_num = int(match.group()) if match else 0
+        
+        # For vaccine doses, multiply by dose_ml if needed
+        if is_vaccine and multiply_doses and transaction.vacStck_id:
+            dose_ml = transaction.vacStck_id.dose_ml or 1
+            qty_num *= dose_ml
+            
+        return qty_num
+
+    def get(self, request, *args, **kwargs):
+        month_str = self.kwargs['month']  # Format: YYYY-MM
+        try:
+            year, month = map(int, month_str.split('-'))
+        except ValueError:
+            return Response({"error": "Invalid month format"}, status=400)
+
+        start_date = datetime(year, month, 1).date()
+        end_date = (start_date + relativedelta(months=1)) - timedelta(days=1)
+        near_expiry_threshold = end_date + timedelta(days=30)  # 1 month after end of current month
+
+        expired_items = []
+        out_of_stock_items = []
+        expired_out_of_stock_items = []
+        near_expiry_items = []
+
+        # Get all vaccine inventory items that were active up to this month
+        vaccine_expiry_inv_pairs = AntigenTransaction.objects.filter(
+            created_at__date__lte=end_date,
+            vacStck_id__isnull=False
+        ).values_list(
+            "vacStck_id__vac_id",
+            "vacStck_id__inv_id__expiry_date",
+            "vacStck_id__inv_id"
+        ).distinct()
+
+        seen_combinations = set()
+
+        # Process vaccine items
+        for vac_id, expiry_date, inv_id in vaccine_expiry_inv_pairs:
+            combo_key = ('vaccine', vac_id, expiry_date, inv_id)
+            if combo_key in seen_combinations:
+                continue
+            seen_combinations.add(combo_key)
+
+            if not expiry_date:
+                continue
+
+            if expiry_date < start_date:
+                continue
+
+            try:
+                vstock = VaccineStock.objects.get(
+                    vac_id=vac_id,
+                    inv_id__expiry_date=expiry_date,
+                    inv_id=inv_id
+                )
+            except VaccineStock.DoesNotExist:
+                continue
+
+            transactions = AntigenTransaction.objects.filter(
+                vacStck_id__vac_id=vac_id,
+                vacStck_id__inv_id__expiry_date=expiry_date,
+                vacStck_id__inv_id=inv_id
+            ).order_by("created_at")
+
+            # Check if this is a vaccine (doses) or diluent
+            is_doses = vstock.solvent.lower() != 'diluent'
+            dose_ml = vstock.dose_ml if (is_doses and vstock.dose_ml and vstock.dose_ml > 0) else 1
+
+            # Calculate stock levels
+            opening_in = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="added")
+            opening_out = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="deduct")
+            opening_wasted = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="wasted")
+            opening_administered = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="administered")
+            
+            opening_qty = (sum(self._parse_qty(t, is_vaccine=True, multiply_doses=True) for t in opening_in) - 
+                         sum(self._parse_qty(t, is_vaccine=True, multiply_doses=False) for t in opening_out) -
+                         sum(self._parse_qty(t, is_vaccine=True, multiply_doses=False) for t in opening_wasted) -
+                         sum(self._parse_qty(t, is_vaccine=True, multiply_doses=False) for t in opening_administered))
+
+            monthly_transactions = transactions.filter(
+                created_at__date__gte=start_date,
+                created_at__date__lte=end_date
+            )
+            received_qty = sum(self._parse_qty(t, is_vaccine=True, multiply_doses=True) for t in monthly_transactions.filter(antt_action__icontains="added"))
+            dispensed_qty = sum(self._parse_qty(t, is_vaccine=True, multiply_doses=False) for t in monthly_transactions.filter(antt_action__icontains="deduct"))
+            wasted_qty = sum(self._parse_qty(t, is_vaccine=True, multiply_doses=False) for t in monthly_transactions.filter(antt_action__icontains="wasted"))
+            administered_qty = sum(self._parse_qty(t, is_vaccine=True, multiply_doses=False) for t in monthly_transactions.filter(antt_action__icontains="administered"))
+
+            closing_qty = opening_qty + received_qty - dispensed_qty - wasted_qty - administered_qty
+
+            # Check conditions
+            is_expired = start_date <= expiry_date <= end_date
+            is_out_of_stock = closing_qty <= 0
+            is_near_expiry = (end_date < expiry_date <= near_expiry_threshold) and closing_qty > 0
+
+            item_data = {
+                'type': 'vaccine',
+                'name': vstock.vac_id.vac_name,
+                'solvent': vstock.solvent,
+                'batch_number': vstock.batch_number,
+                'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else 'No expiry',
+                'opening_stock': opening_qty,
+                'received': received_qty,
+                'dispensed': dispensed_qty,
+                'wasted': wasted_qty,
+                'administered': administered_qty,
+                'closing_stock': closing_qty,
+                'unit': 'doses' if is_doses else 'containers',
+                'dose_ml': dose_ml if is_doses else 1,
+                'status': 'Expired' if is_expired else 'Out of Stock' if is_out_of_stock else 'Near Expiry' if is_near_expiry else 'Active'
+            }
+
+            if is_expired and is_out_of_stock:
+                expired_out_of_stock_items.append(item_data)
+            elif is_expired:
+                expired_items.append(item_data)
+            elif is_out_of_stock:
+                out_of_stock_items.append(item_data)
+            elif is_near_expiry:
+                near_expiry_items.append(item_data)
+
+        # Get all immunization inventory items that were active up to this month
+        immunization_expiry_inv_pairs = AntigenTransaction.objects.filter(
+            created_at__date__lte=end_date,
+            imzStck_id__isnull=False
+        ).values_list(
+            "imzStck_id__imz_id",
+            "imzStck_id__inv_id__expiry_date",
+            "imzStck_id__inv_id"
+        ).distinct()
+
+        # Process immunization items
+        for imz_id, expiry_date, inv_id in immunization_expiry_inv_pairs:
+            combo_key = ('immunization', imz_id, expiry_date, inv_id)
+            if combo_key in seen_combinations:
+                continue
+            seen_combinations.add(combo_key)
+
+            if not expiry_date:
+                continue
+
+            if expiry_date < start_date:
+                continue
+
+            try:
+                istock = ImmunizationStock.objects.get(
+                    imz_id=imz_id,
+                    inv_id__expiry_date=expiry_date,
+                    inv_id=inv_id
+                )
+            except ImmunizationStock.DoesNotExist:
+                continue
+
+            transactions = AntigenTransaction.objects.filter(
+                imzStck_id__imz_id=imz_id,
+                imzStck_id__inv_id__expiry_date=expiry_date,
+                imzStck_id__inv_id=inv_id
+            ).order_by("created_at")
+
+            # Calculate stock levels
+            opening_in = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="added")
+            opening_out = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="deduct")
+            opening_wasted = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="wasted")
+            opening_administered = transactions.filter(created_at__date__lt=start_date, antt_action__icontains="administered")
+            
+            opening_qty = (sum(self._parse_qty(t) for t in opening_in) - 
+                         sum(self._parse_qty(t) for t in opening_out) -
+                         sum(self._parse_qty(t) for t in opening_wasted) -
+                         sum(self._parse_qty(t) for t in opening_administered))
+
+            monthly_transactions = transactions.filter(
+                created_at__date__gte=start_date,
+                created_at__date__lte=end_date
+            )
+            received_qty = sum(self._parse_qty(t) for t in monthly_transactions.filter(antt_action__icontains="added"))
+            dispensed_qty = sum(self._parse_qty(t) for t in monthly_transactions.filter(antt_action__icontains="deduct"))
+            wasted_qty = sum(self._parse_qty(t) for t in monthly_transactions.filter(antt_action__icontains="wasted"))
+            administered_qty = sum(self._parse_qty(t) for t in monthly_transactions.filter(antt_action__icontains="administered"))
+
+            closing_qty = opening_qty + received_qty - dispensed_qty - wasted_qty - administered_qty
+
+            # Check conditions
+            is_expired = start_date <= expiry_date <= end_date
+            is_out_of_stock = closing_qty <= 0
+            is_near_expiry = (end_date < expiry_date <= near_expiry_threshold) and closing_qty > 0
+
+            item_data = {
+                'type': 'immunization',
+                'name': istock.imz_id.imz_name,
+                'batch_number': istock.batch_number,
+                'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else 'No expiry',
+                'opening_stock': opening_qty,
+                'received': received_qty,
+                'dispensed': dispensed_qty,
+                'wasted': wasted_qty,
+                'administered': administered_qty,
+                'closing_stock': closing_qty,
+                'unit': 'pcs',
+                'status': 'Expired' if is_expired else 'Out of Stock' if is_out_of_stock else 'Near Expiry' if is_near_expiry else 'Active'
+            }
+
+            if is_expired and is_out_of_stock:
+                expired_out_of_stock_items.append(item_data)
+            elif is_expired:
+                expired_items.append(item_data)
+            elif is_out_of_stock:
+                out_of_stock_items.append(item_data)
+            elif is_near_expiry:
+                near_expiry_items.append(item_data)
+
+        # Combine all items
+        all_problem_items = expired_items + out_of_stock_items + expired_out_of_stock_items + near_expiry_items
+
+        return Response({
+            'success': True,
+            'data': {
+                'month': month_str,
+                'summary': {
+                    'total_problems': len(all_problem_items),
+                    'expired_count': len(expired_items),
+                    'out_of_stock_count': len(out_of_stock_items),
+                    'expired_out_of_stock_count': len(expired_out_of_stock_items),
+                    'near_expiry_count': len(near_expiry_items),
+                },
+                'expired_items': expired_items,
+                'out_of_stock_items': out_of_stock_items,
+                'expired_out_of_stock_items': expired_out_of_stock_items,
+                'near_expiry_items': near_expiry_items,
+                'all_problem_items': all_problem_items
             }
         })

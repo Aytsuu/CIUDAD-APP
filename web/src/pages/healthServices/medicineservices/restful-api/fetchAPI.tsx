@@ -9,6 +9,7 @@ export interface MedicineStock {
   dosage: string;
   form: string;
   expiry: string | null;
+  med_type: string; // Optional if med_type is not always present
   available: number; // minv_qty_avail
   batch_number?: string; // Optional if 
   avail: number; // minv_qty
@@ -36,6 +37,7 @@ export const fetchMedicinesWithStock = () => {
         qty: stock.minv_qty || 0,
         med_id: stock.med_detail?.med_id || 'Unknown ID',
         name: stock.med_detail?.med_name || 'Unknown Medicine',
+        med_type: stock.med_detail?.med_type || 'General',
         dosage: `${stock.minv_dsg || 0} ${stock.minv_dsg_unit || ''}`.trim(),
         form: stock.minv_form || '',
         expiry: stock.inv_detail?.expiry_date || null,

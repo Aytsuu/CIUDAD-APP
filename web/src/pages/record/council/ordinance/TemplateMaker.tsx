@@ -1,4 +1,3 @@
-"use client"
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button/button';
 import { Input } from '@/components/ui/input';
@@ -116,12 +115,12 @@ function TemplateMaker() {
         withSignature: false, // Remove signature requirement
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [headerMedia, setHeaderMedia] = useState<File | null>(null);
+    const [_headerMedia, setHeaderMedia] = useState<File | null>(null);
     const [showAISuggestions, setShowAISuggestions] = useState(false);
-    const [selectedSuggestion, setSelectedSuggestion] = useState<AISuggestion | null>(null);
-    const [showPDFPreview, setShowPDFPreview] = useState(false);
+    const [_selectedSuggestion, setSelectedSuggestion] = useState<AISuggestion | null>(null);
+    const [_showPDFPreview, _setShowPDFPreview] = useState(false);
 
-    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchParams, _setSearchParams] = useSearchParams();
     const templateId = searchParams.get('id');
 
     useEffect(() => {
@@ -150,13 +149,13 @@ function TemplateMaker() {
         loadTemplate();
     }, [templateId]);
 
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            setHeaderMedia(file);
-            setTemplateData(prev => ({ ...prev, headerMedia: file }));
-        }
-    };
+    // const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    //     const file = event.target.files?.[0];
+    //     if (file) {
+    //         setHeaderMedia(file);
+    //         setTemplateData(prev => ({ ...prev, headerMedia: file }));
+    //     }
+    // };
 
     const handleAISuggestion = (suggestion: AISuggestion) => {
         setSelectedSuggestion(suggestion);

@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from django.db.models import ProtectedError
 from rest_framework import viewsets
 from django.shortcuts import get_object_or_404
+from rest_framework.decorators import api_view
 
 
 
@@ -58,4 +59,3 @@ class InventoryUpdateView(generics.RetrieveUpdateAPIView):
        obj = get_object_or_404(Inventory, inv_id = inv_id)
        return obj
 
-     

@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
 import WasteEventSchedSchema from '@/form-schema/waste-event-form-schema';
-import { Card, CardContent } from '@/components/ui/card/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { CalendarDays, Clock, MapPin, Users, User, FileText, Bell } from 'lucide-react';
 import { createWasteEvent } from './queries/wasteEventQueries';
 import { toast } from 'sonner';
@@ -44,9 +44,9 @@ function WasteEventSched() {
         },
     });
 
-    const handleResetAnnouncements = () => {
-        form.setValue('selectedAnnouncements', []);
-    };
+    // const handleResetAnnouncements = () => {
+    //     form.setValue('selectedAnnouncements', []);
+    // };
 
     const onSubmit = async (values: z.infer<typeof WasteEventSchedSchema>) => {
         try {

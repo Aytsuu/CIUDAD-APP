@@ -42,12 +42,12 @@ export default function HouseholdProfileForm({
         <Combobox
           options={residents}
           value={form.watch("householdHead")}
-          onChange={(value) => form.setValue("householdHead", value)}
+          onChange={(value) => form.setValue("householdHead", value as string)}
           placeholder="Select a household head"
           emptyMessage={
             <div className="flex gap-2 justify-center items-center">
               <Label className="font-normal text-[13px]">No resident found.</Label>
-              <Link to="/resident/form">
+              <Link to="/profiling/resident/form">
                 <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
                   Register
                 </Label>

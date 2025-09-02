@@ -17,7 +17,6 @@ export const useAddPatient = () => {
 	return useMutation({
 		mutationFn: createPatients,
 		onSuccess: (data) => {
-			// Add null check to prevent the TypeError
 			if (data && data.pat_id) {
 				queryClient.invalidateQueries({ queryKey: patientQueryKey.lists() });
 				queryClient.setQueryData(patientQueryKey.detail(data.pat_id), data);

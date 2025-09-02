@@ -129,6 +129,7 @@ export default function MonthlyMedicineDetails() {
     "Medicine Name",
     "Stocks On Hand",
     "Stock Available",
+    "Qty Used",
     "Unit",
     "Expiry",
   ];
@@ -254,6 +255,7 @@ export default function MonthlyMedicineDetails() {
                   item.med_name,
                   item.opening.toString(),
                   item.closing.toString(),
+                  item.dispensed.toString(),
                   item.unit,
                   item.expiry
                     ? new Date(item.expiry).toLocaleDateString()

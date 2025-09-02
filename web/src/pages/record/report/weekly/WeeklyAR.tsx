@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Card, CardContent } from "@/components/ui/card/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { Calendar, FileText, AlertCircle, MoveRight, CalendarDays, Loader2 } from "lucide-react"
@@ -201,10 +201,10 @@ export default function WeeklyAR() {
                                         key={index}
                                         variant={"outline"}
                                         className={`text-white border-none ${
-                                          war.status === "Signed" ? "bg-green-500" : "bg-orange-500"
+                                          war.war_files.length > 0 ? "bg-green-500" : "bg-orange-500"
                                         }`}
                                       >
-                                        {war.status}
+                                        {war.war_files.length > 0 ? "Signed" : "Unsigned"}
                                       </Badge>
                                     ))}
                                     <Badge variant="secondary">

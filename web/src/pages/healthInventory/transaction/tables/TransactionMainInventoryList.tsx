@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Pill, Syringe, Package, Bandage } from "lucide-react";
 import VaccinationList from "./TransactionAntigen";
 import FirstAidList from "./TransactionFirstAidList";
-import MedicineList from "./TransactionMedicineList";
-import CommodityList from "./TransactionCommodityList";
+import MedicineTransactionTable from "./TransactionMedicineList";
+import CommodityTransactionTable from "./TransactionCommodityList";
 
 export default function TransactionMainInventoryList() {
   const [selectedView, setSelectedView] = useState<string>("medicine");
@@ -36,34 +36,34 @@ export default function TransactionMainInventoryList() {
         <Tabs
           value={selectedView}
           onValueChange={setSelectedView}
-          className="w-full"
+          className="w-md"
         >
           <div className="px-4 pt-4">
-            <TabsList className="w-full grid grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1">
+            <TabsList className="w-md grid grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1">
               <TabsTrigger
                 value="medicine"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-full"
+                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md"
               >
                 <Pill className="h-4 w-4" />
                 <span>Medicine</span>
               </TabsTrigger>
               <TabsTrigger
                 value="antigen"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-full"
+                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md"
               >
                 <Syringe className="h-4 w-4" />
                 <span>Antigen</span>
               </TabsTrigger>
               <TabsTrigger
                 value="commodity"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-full"
+                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md"
               >
                 <Package className="h-4 w-4" />
                 <span>Commodity</span>
               </TabsTrigger>
               <TabsTrigger
                 value="firstaid"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-full"
+                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md"
               >
                 <Bandage className="h-4 w-4" />
                 <span>First Aid</span>
@@ -73,13 +73,13 @@ export default function TransactionMainInventoryList() {
 
           <CardContent className="p-4 pt-6">
             <TabsContent value="medicine" className="mt-0">
-              <MedicineList />
+              <MedicineTransactionTable />
             </TabsContent>
             <TabsContent value="antigen" className="mt-0">
               <VaccinationList />
             </TabsContent>
             <TabsContent value="commodity" className="mt-0">
-              <CommodityList />
+              <CommodityTransactionTable />
             </TabsContent>
             <TabsContent value="firstaid" className="mt-0">
               <FirstAidList />

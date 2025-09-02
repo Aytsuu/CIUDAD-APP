@@ -21,6 +21,34 @@ import {
 } from "../restful-api/profilingGetAPI";
 import { api } from "@/api/api";
 
+// ================ ALL =================
+export const useProfilingAllRecord = (
+  page: number,
+  pageSize: number,
+  searchQuery: string,
+) => {
+  return useQuery({
+    queryKey: ['profilingAllRecord', page, pageSize, searchQuery],
+    queryFn: async () => {
+      try {
+        const res = await api.get('profiling/all/', {
+          params: {
+            page,
+            page_size: pageSize,
+            search: searchQuery
+          }
+        });
+
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+} 
+ 
 // ================ ADDRESS =================
 export const usePerAddressesList = () => {
   return useQuery({
@@ -55,7 +83,8 @@ export const usePersonalHistory = (per_id: string) => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 5000,
+    enabled: !!per_id
   })
 }
 
@@ -70,7 +99,7 @@ export const useResidentsList = (
       if(disable) return [];
       return getResidentsList(is_staff, exclude_independent)
     },
-    staleTime: 5000,
+    staleTime: 5000,  
   });
 };
 
@@ -235,7 +264,29 @@ export const useBusinessInfo = (busId: number) => {
       }
     },
     staleTime: 5000,
+    enabled: !!busId
   });
+}
+
+export const useBusinessHistory = (busId: string) => {
+  return useQuery({
+    queryKey: ['businessHistory', busId],
+    queryFn: async () => {
+      try {
+        const res = await api.get('profiling/business/history/', {
+          params: {
+            bus_id: busId
+          }
+        });
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    staleTime: 5000,
+    enabled: !!busId
+  })
 }
 
 export const useOwnedBusinesses = (data: Record<string, any>) => {
@@ -271,6 +322,22 @@ export const useRespondentInfo = (respondentId: string) => {
   })
 }
 
+export const useModificationRequests = () => {
+  return useQuery({
+    queryKey: ['modificationRequests'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('profiling/business/modification/request-list/');
+        return res.data
+      } catch (err) {
+        console.error(err);
+        throw(err);
+      }
+    },
+    staleTime: 5000
+  })
+}
+
 
 // ================ HOUSEHOLDS ================ (Status: Optmizing....)
 export const useHouseholdsList = () => {
@@ -280,6 +347,21 @@ export const useHouseholdsList = () => {
     staleTime: 5000,
   });
 };
+
+export const useHouseholdData = (hh_id: string) => {
+  return useQuery({
+    queryKey: ["householdData", hh_id],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`profiling/household/${hh_id}/data/`)
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    }
+  })
+}
 
 export const useHouseholdTable = (
   page: number,

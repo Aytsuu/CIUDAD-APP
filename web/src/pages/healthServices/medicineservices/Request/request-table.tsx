@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery } from "@tanstack/react-query";
-import { calculateAge } from "@/helpers/ageCalculator";
+// import { calculateAge } from "@/helpers/ageCalculator";
 import { api2 } from "@/api/api";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -54,21 +54,21 @@ const getMedicineRequests = async (): Promise<any[]> => {
   }
 };
 
-const getPatientDisplayInfo = (request: MedicineRequest) => {
-  const personalInfo = request.personal_info || {};
-  const fullName =
-    [personalInfo.per_lname, personalInfo.per_fname, personalInfo.per_mname]
-      .filter(Boolean)
-      .join(" ")
-      .trim() || "Unknown Patient";
+// const getPatientDisplayInfo = (request: MedicineRequest) => {
+//   const personalInfo = request.personal_info || {};
+//   const fullName =
+//     [personalInfo.per_lname, personalInfo.per_fname, personalInfo.per_mname]
+//       .filter(Boolean)
+//       .join(" ")
+//       .trim() || "Unknown Patient";
 
-  const dob = personalInfo.per_dob;
-  const age = dob ? calculateAge(dob) : "N/A";
-  const sex = personalInfo.per_sex || "N/A";
-  const contact = personalInfo.per_contact || "N/A";
+//   const dob = personalInfo.per_dob;
+//   const age = dob ? calculateAge(dob) : "N/A";
+//   const sex = personalInfo.per_sex || "N/A";
+//   const contact = personalInfo.per_contact || "N/A";
 
-  return { fullName, age, sex, contact };
-};
+//   return { fullName, age, sex, contact };
+// };
 
 const filterByDateRange = (data: MedicineRequest[], range: string) => {
   const now = new Date();

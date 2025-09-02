@@ -36,7 +36,6 @@ export const fetchPatientRecords = async () => {
       default: patientData,
       formatted: patientData.map((patient: any) => ({
         id: `${patient.pat_id.toString()}, ${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim(),
-        // id:patient.pat_id.toString(),
         pat_id: patient.pat_id,
         name: (
           <div className="flex items-center gap-3">

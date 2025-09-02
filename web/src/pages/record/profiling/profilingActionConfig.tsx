@@ -1,4 +1,4 @@
-import { Type, Origin } from "./profilingEnums";
+import { Type, Origin } from "./ProfilingEnums";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
@@ -9,6 +9,7 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 // Configuration Object
 export const buttonConfig = (
   form: any,
+  addresses: any,
   isAssignmentOpen: boolean,
   isAllowSubmit: boolean,
   setIsAssignmentOpen: (value: boolean) => void,
@@ -29,6 +30,7 @@ export const buttonConfig = (
               setIsAssignmentOpen(false);
             }}
             personalInfoform={form}
+            addresses={addresses}
           />
         }
         isOpen={isAssignmentOpen}
@@ -75,7 +77,7 @@ export const buttonConfig = (
         <ConfirmationModal
           trigger={<Button className="w-full"> 
             <Check/>
-            Approve & Create Record 
+            Approve Request
           </Button>
           }
           title="Confirm Approval"
@@ -107,6 +109,7 @@ type OriginKeys = keyof ReturnType<typeof buttonConfig>;
 
 export const renderActionButton = ({
   form,
+  addresses,
   isAssignmentOpen,
   formType,
   origin="defaultOrigin",
@@ -117,6 +120,7 @@ export const renderActionButton = ({
   submit,
 }: {
   form?: any;
+  addresses?: any;
   isAssignmentOpen?: boolean;
   formType: Type;
   origin?: OriginKeys;
@@ -128,6 +132,7 @@ export const renderActionButton = ({
 }) => {
   const config = buttonConfig(
     form,
+    addresses,
     isAssignmentOpen || false,
     isAllowSubmit || false,
     setIsAssignmentOpen || (() => {}),

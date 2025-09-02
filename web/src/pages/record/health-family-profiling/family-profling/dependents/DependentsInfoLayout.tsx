@@ -12,9 +12,16 @@ import { CircleAlert, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from "@/context/AuthContext";
-import { useAddFamilyHealth, useAddFamilyCompositionHealth } from "../queries/profilingAddQueries";
+import { 
+  useAddFamily, 
+  useAddFamilyComposition,
+} from "../../../profiling/queries/profilingAddQueries";
+import {
+  useAddFamilyHealth,
+  useAddFamilyCompositionHealth 
+} from "../../../health-family-profiling/family-profling/queries/profilingAddQueries";
 import { LoadButton } from "@/components/ui/button/load-button";
-import { useSafeNavigate } from "@/hooks/use-safe-navigate";
+import { useAddRespondentHealth, useAddPerAdditionalDetailsHealth, useAddMotherHealthInfo } from "../queries/profilingAddQueries";
 
 export default function DependentsInfoLayout({
   form,
@@ -23,21 +30,34 @@ export default function DependentsInfoLayout({
   dependentsList,
   setDependentsList,
   back,
+  setFamId,
+  nextStep
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
   selectedParents: string[];
   dependentsList: DependentRecord[];
-  setDependentsList: React.Dispatch<React.SetStateAction<DependentRecord[]>>
-  defaultValues: Record<string, any>;
+  setDependentsList: React.Dispatch<React.SetStateAction<DependentRecord[]>>;
   back: () => void;
+  setFamId: React.Dispatch<React.SetStateAction<string>>;
+  nextStep: () => void;
 }) {
 
   const PARENT_ROLES = ["Mother", "Father", "Guardian"];
   const { user } = useAuth();
-  const { safeNavigate } = useSafeNavigate(); 
+  
+  // Main database hooks
+  const { mutateAsync: addFamily } = useAddFamily();
+  const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
+  
+  // Health database hooks
   const { mutateAsync: addFamilyHealth } = useAddFamilyHealth();
   const { mutateAsync: addFamilyCompositionHealth } = useAddFamilyCompositionHealth();
+  // Add hooks for respondent and health details
+  const { mutateAsync: addRespondent } = useAddRespondentHealth();
+  const { mutateAsync: addPerAdditionalDetails } = useAddPerAdditionalDetailsHealth();
+  const { mutateAsync: addMotherHealthInfo } = useAddMotherHealthInfo();
+
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   React.useEffect(() => {
@@ -117,8 +137,7 @@ export default function DependentsInfoLayout({
 
     if(dependentsList.length === 0){
       setIsSubmitting(false);
-      toast('Family Registration', {
-        description: "Must have atleast one dependent.",
+      toast('Must have atleast one dependent.', {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
         style: {
           border: '1px solid rgb(225, 193, 193)',
@@ -130,49 +149,63 @@ export default function DependentsInfoLayout({
       return;
     }
 
-    // Get form values
-    const demographicInfo = form.getValues().demographicInfo;
-    const dependentsInfo = form.getValues().dependentsInfo.list;
+    try {
+      const demographicInfo = form.getValues().demographicInfo;
+      // Create family and retrieve new fam_id
+      const newFamily = await addFamily({
+        demographicInfo: demographicInfo, 
+        staffId: user?.staff?.staff_id || ""
+      });
+      // Store fam_id for subsequent queries
+      setFamId(newFamily.fam_id);
 
-    // Store information to the database
-    const family = await addFamilyHealth({
-      demographicInfo: demographicInfo, 
-      staffId: user?.staff?.staff_id || ""
-    });
+      // Create family compositions for parents first
+      const parentCompositions = selectedParents
+        .filter(parentId => parentId) // Filter out empty parent IDs
+        .map((parentId, index) => ({
+          fam: newFamily.fam_id,
+          rp: parentId,
+          fc_role: PARENT_ROLES[index], // "Mother", "Father", "Guardian"
+        }));
 
-    let bulk_composition: {
-      fam: string, 
-      fc_role: string, 
-      rp: string}[] = [];
+      // Create family compositions for dependents
+      const dependentCompositions = dependentsList.map(dep => ({
+        fam: newFamily.fam_id,
+        rp: dep.id,
+        fc_role: 'Dependent',
+      }));
 
-    selectedParents.map((parentId, index) => {
-      if(!parentId) return;
-      bulk_composition = [
-        ...bulk_composition,
-        {
-          fam: family.fam_id,
-          fc_role: PARENT_ROLES[index],
-          rp: parentId
-        }
-      ]
-    });
+      // Combine all compositions
+      const allCompositions = [...parentCompositions, ...dependentCompositions];
+      
+      await addFamilyComposition(allCompositions);
 
-    dependentsInfo.map((dependent) => {
-      bulk_composition = [
-        ...bulk_composition,
-        {
-          fam: family.fam_id,
-          fc_role: 'Dependent',
-          rp: dependent.id?.split(" ")[0] as string
-        }
-      ]
-    })
+      toast("Record added successfully", {
+        icon: <CircleAlert size={24} className="fill-green-500 stroke-white" />,
+        style: {
+          border: '1px solid rgb(187, 222, 251)',
+          padding: '16px',
+          color: '#1e3a8a',
+          background: '#eff6ff',
+        },
+      });
 
-    addFamilyCompositionHealth(bulk_composition,{
-      onSuccess: () => {
-        safeNavigate.back();
-      }
-    });
+      // Proceed to next step
+      nextStep();
+    } catch (error) {
+      console.error('Family registration failed:', error);
+      setIsSubmitting(false);
+      toast('Family Registration Failed', {
+        description: "Registration failed. Please try again.",
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+        style: {
+          border: '1px solid rgb(225, 193, 193)',
+          padding: '16px',
+          color: '#b91c1c',
+          background: '#fef2f2',
+        },
+      });
+    }
   }
 
   return (

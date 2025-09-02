@@ -2,19 +2,26 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import React from 'react'
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { Home, Logs, Mail, CircleUserRound } from 'lucide-react-native';
+import HomeUnfocused from '@/assets/icons/tabs/home(unfocused).svg'
+import HomeFocused from '@/assets/icons/tabs/home(focused).svg'
+import MyRequestUnfocused from '@/assets/icons/tabs/myrequest(unfocused).svg'
+import MyRequestFocused from '@/assets/icons/tabs/myrequest(focused).svg'
+import InboxUnfocused from '@/assets/icons/tabs/inbox(unfocused).svg'
+import InboxFocused from '@/assets/icons/tabs/inbox(focused).svg'
+import UserUnfocused from '@/assets/icons/tabs/user(unfocused).svg'
+import UserFocused from '@/assets/icons/tabs/user(focused).svg'
 
-const getIcon = (routeName: string, color: string) => {
-  const iconProps = { color, size: 24, strokeWidth: 1.6 };
-  
+
+const getIcon = (routeName: string, isFocused: boolean) => {
   switch (routeName) {
     case 'index':
-      return <Home {...iconProps} />;
+      return isFocused ? <HomeFocused /> : <HomeUnfocused />;
     case 'my-request':
-      return <Logs {...iconProps} />;
+      return isFocused ? <MyRequestFocused /> : <MyRequestUnfocused />;
     case 'inbox':
-      return <Mail {...iconProps} />;
+      return isFocused ? <InboxFocused /> : <InboxUnfocused />;
     case 'account':
-      return <CircleUserRound {...iconProps} />;
+      return isFocused ? <UserFocused /> : <UserUnfocused />;
     default:
       return null;
   }
@@ -23,8 +30,8 @@ const getIcon = (routeName: string, color: string) => {
 export const NavigationBar = ({ state, descriptors, navigation } : {
   state: any; descriptors: any, navigation: any
 }) => {
-    const primaryColor = '#0891b2';
-    const greyColor = '#737373';
+    const primaryColor = '#0084F0';
+    const greyColor = '#3F3F3F';
   return (
     <View style={styles.tabbar}>
       {state.routes.map((route: any, index: number) => {
@@ -66,10 +73,10 @@ export const NavigationBar = ({ state, descriptors, navigation } : {
             onPress={onPress}
             onLongPress={onLongPress}
           >
-            {getIcon(route.name, iconColor)}
+            {getIcon(route.name, isFocused)}
             <Text style={{
                 color: iconColor,
-                fontSize: 11
+                fontSize: 10
             }}>
               {label}
             </Text>
@@ -87,12 +94,15 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: 'white',
-        paddingVertical: 15,
-        paddingBottom: 30,
+        paddingVertical: 10,
+        paddingBottom: 10,
+        borderTopWidth: 0.2,
+        borderTopColor: '#d2d2d2'
     },
     tabbarItem: {
       flex: 1,
       justifyContent: 'center',
-      alignItems: 'center'
+      alignItems: 'center',
+      gap: 4
     }
 })

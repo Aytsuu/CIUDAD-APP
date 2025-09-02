@@ -32,6 +32,8 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
   const { mutateAsync: addMedicineMutation } = useAddMedicine();
   const { mutateAsync: updateMedicineMutation } = useUpdateMedicine();
   const { data: medicines } = useMedicinesList();
+  const [isFormValid, setIsFormValid] = useState(false);
+
 
   const form = useForm<MedicineType>({
     resolver: zodResolver(MedicineListSchema),
@@ -60,6 +62,14 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
       }
     }
   }, [categories, mode, initialData, form]);
+
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      const isValid = form.formState.isValid;
+      setIsFormValid(isValid);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const handleConfirmAction = async () => {
     setIsSubmitting(true);
@@ -202,7 +212,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
             </Button>
             <ConfirmationModal
               trigger={
-                <Button type="submit" disabled={isSubmitting || (isEditMode && !hasFormChanges)}>
+                <Button type="submit" disabled={isSubmitting || (isEditMode && !hasFormChanges || !isFormValid)}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

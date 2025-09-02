@@ -9,21 +9,21 @@ import AnnouncementView from "./announcementview"
 import { Input } from "@/components/ui/input"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { type Announcement, useDeleteAnnouncement } from "./queries/announcementDeleteQueries"
 import { useGetAnnouncement } from "./queries/announcementFetchQueries"
 
 function AnnouncementTracker() {
-  const [data] = useState<Announcement[]>([])
+  const [_data] = useState<Announcement[]>([])
   const [error] = useState<string | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [pageSize, setPageSize] = useState(9)
   const [currentPage, setCurrentPage] = useState(1)
 
-  const { data: announcements = [], isLoading, refetch } = useGetAnnouncement()
+  const { data: announcements = [], isLoading } = useGetAnnouncement()
   const { mutate: deleteEntry } = useDeleteAnnouncement()
 
   const handleDelete = async (ann_id: number) => {
@@ -112,10 +112,10 @@ function AnnouncementTracker() {
             mainContent={
               <div className="w-full h-full">
                 <AnnouncementCreateForm
-                  onSuccess={() => {
-                    setIsDialogOpen(false)
-                    refetch()
-                  }}
+                  // onSuccess={() => {
+                  //   setIsDialogOpen(false)
+                  //   refetch()
+                  // }}
                 />
               </div>
             }
@@ -204,7 +204,10 @@ function AnnouncementTracker() {
                             description=""
                             mainContent={
                               <div className="w-full h-full">
-                                <AnnouncementView ann_id={announcement.ann_id!} onSaveSuccess={refetch} />
+                                <AnnouncementView 
+                                  ann_id={announcement.ann_id!} 
+                                  // onSaveSuccess={refetch} 
+                                />
                               </div>
                             }
                           />

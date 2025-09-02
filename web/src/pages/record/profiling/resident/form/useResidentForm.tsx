@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useNavigate } from "react-router";
-import { Origin } from "../../profilingEnums";
+import { Origin } from "../../ProfilingEnums";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import isEqual from "lodash/isEqual";
 
@@ -14,7 +14,7 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
   const defaultValues = generateDefaultValues(personalInfoSchema);
   const form = useForm<z.infer<typeof personalInfoSchema>>({
     resolver: zodResolver(personalInfoSchema),
-    // defaultValues,
+    defaultValues,
   });
 
   React.useEffect(() => {
@@ -40,6 +40,8 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
       { key: "per_religion", value: resident?.per_religion || "" },
       { key: "per_edAttainment", value: resident?.per_edAttainment || "" },
       { key: "per_contact", value: resident?.per_contact || "" },
+      { key: "per_disability", value: resident?.per_disability || "" },
+      { key: "per_addresses", value: resident?.per_addresses || [] },
     ];
 
     fields.map((f: any) => {
@@ -62,29 +64,6 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
     const obj1 = normalize(currentValues)
     const obj2 = normalize(initialValues)
     return isEqual(obj1, obj2)
-    // Optional fields
-    // const optionalFields = [
-    //   "per_id",
-    //   "per_mname",
-    //   "per_suffix",
-    //   "per_edAttainment",
-    // ];
-    // const keys = Object.keys(currentValues);
-    // const isDefault = keys.every((key) => {
-    //   if (optionalFields.includes(key)) {
-    //     const isParamEmpty = !initialValues[key] || initialValues[key] === "";
-    //     const isValueEmpty = !currentValues[key] || currentValues[key] === "";
-
-    //     return (
-    //       (isParamEmpty && isValueEmpty) || // Both empty
-    //       String(initialValues[key]) == String(currentValues[key]) // Both non-empty and equal
-    //     );
-    //   } else {
-    //     if(!initialValues[key] && currentValues[key] === "") return true;
-    //     return initialValues[key] == currentValues[key] ? true : false;
-    //   }
-    // });
-    // return isDefault;
   };
 
   const handleSubmitSuccess = (message: string, redirectPath?: string, state?: any) => {

@@ -32,6 +32,7 @@ interface FirstAidModalProps {
 export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidModalProps) {
   const [firstAidName, setFirstAidName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(false);
   const { categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs } = useCategoriesFirstAid();
   const { mutateAsync: addFirstAidMutation } = useAddFirstAid();
   const { mutateAsync: updateFirstAidMutation } = useUpdateFirstAid();
@@ -63,6 +64,14 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
       }
     }
   }, [categories, mode, initialData, form]);
+
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      const isValid = form.formState.isValid;
+      setIsFormValid(isValid);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const handleConfirmAction = async () => {
     setIsSubmitting(true);
@@ -211,7 +220,7 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
 
             <ConfirmationModal
               trigger={
-                <Button type="submit" disabled={isSubmitting || (isEditMode && !hasFormChanges)}>
+                <Button type="submit" disabled={isSubmitting || (isEditMode && !hasFormChanges) || !isFormValid}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

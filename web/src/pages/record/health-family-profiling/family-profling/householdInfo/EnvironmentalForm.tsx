@@ -1,20 +1,20 @@
 import React from "react";
 import { Form } from "@/components/ui/form/form";
-import { familyFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { FormSelect } from "@/components/ui/form/form-select";
+import { FormInput } from "@/components/ui/form/form-input";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
 import { RadioCardGroup } from "@/components/ui/radio-card-group";
 import { Separator } from "@/components/ui/separator";
+import { useWaterSupplyOptions } from "../queries/profilingFetchQueries";
 
 export default function EnvironmentalForm({
-  residents,
   form,
-  selectedResidentId,
-  onSelect,
   prefix,
   title,
+  householdId,
 }: {
   residents: any;
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
@@ -22,18 +22,19 @@ export default function EnvironmentalForm({
   onSelect: React.Dispatch<React.SetStateAction<string>>;
   prefix: "environmentalForm";
   title: string;
+  householdId?: string;
 }) {
-  const filteredResidents = React.useMemo(() => {
-    return residents.formatted.filter((resident: any) => {
-      const residentId = resident.id.split(" ")[0];
-      return residentId !== selectedResidentId;
-    });
-  }, [residents.formatted, selectedResidentId]);
 
   const [facilityType, setFacilityType] = React.useState<string>("");
 
+  // Fetch water supply types from backend
+  const { data: waterSupplyOptionsData, isLoading: isLoadingWaterSupply, error: waterSupplyError } = useWaterSupplyOptions();
+
   // Watch the facility type value
   const selectedFacilityType = form.watch("environmentalForm.facilityType");
+  const selectedWaterSupply = form.watch("environmentalForm.waterSupply");
+  const selectedHouseholdId = form.watch("demographicInfo.householdNo");
+  const selectedWasteManagement = form.watch("environmentalForm.wasteManagement");
 
   React.useEffect(() => {
     // Clear the specific facility type when switching between sanitary/unsanitary
@@ -44,6 +45,55 @@ export default function EnvironmentalForm({
     }
     setFacilityType(selectedFacilityType);
   }, [selectedFacilityType, form]);
+
+  // Clear others field when waste management is not "others"
+  React.useEffect(() => {
+    if (selectedWasteManagement !== "others") {
+      form.setValue("environmentalForm.wasteManagementOthers", "");
+    }
+  }, [selectedWasteManagement, form]);
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('EnvironmentalForm - Water supply value:', selectedWaterSupply);
+    console.log('EnvironmentalForm - Household ID from form:', selectedHouseholdId);
+    console.log('EnvironmentalForm - Household ID from props:', householdId);
+    console.log('EnvironmentalForm - Water supply options data:', waterSupplyOptionsData);
+  }, [selectedWaterSupply, selectedHouseholdId, householdId, waterSupplyOptionsData]);
+
+  // Prepare water supply options for RadioCardGroup
+  const waterSupplyOptions = React.useMemo(() => {
+    if (!waterSupplyOptionsData?.data) {
+      // Fallback to hardcoded options if backend data is not available
+      return [
+        {
+          value: "level1",
+          title: "LEVEL I",
+          subtitle: "POINT SOURCE",
+          description: "Developed/protected/improved spring or dug well without distribution/piping system...",
+        },
+        {
+          value: "level2",
+          title: "LEVEL II",
+          subtitle: "COMMUNAL (COMMON) FAUCET OR STAND POST",
+          description: "HH using point source with distribution system to a communal (common) faucet...",
+        },
+        {
+          value: "level3",
+          title: "LEVEL III",
+          subtitle: "INDIVIDUAL CONNECTION",
+          description: "HH with faucet/tap (e.g. water supplied by MCWD, BWSA, Homeowner's Assoc...)",
+        },
+      ];
+    }
+
+    // Use backend data
+    return waterSupplyOptionsData.data;
+  }, [waterSupplyOptionsData]);
+
+  if (waterSupplyError) {
+    console.error('Error loading water supply types:', waterSupplyError);
+  }
 
   
 
@@ -59,34 +109,18 @@ export default function EnvironmentalForm({
       <Form {...form}>
         <form className="grid gap-4">
           <h2>A. Type of Water Supply</h2>
-          <RadioCardGroup
-            name="waterSupply"
-            control={form.control}
-            options={[
-              {
-                value: "level1",
-                title: "LEVEL I",
-                subtitle: "POINT SOURCE",
-                description:
-                  "Developed/protected/improved spring or dug well without distribution/piping system...",
-              },
-              {
-                value: "level2",
-                title: "LEVEL II",
-                subtitle: "COMMUNAL (COMMON) FAUCET OR STAND POST",
-                description:
-                  "HH using point source with distribution system to a communal (common) faucet...",
-              },
-              {
-                value: "level3",
-                title: "LEVEL III",
-                subtitle: "INDIVIDUAL CONNECTION",
-                description:
-                  "HH with faucet/tap (e.g. water supplied by MCWD, BWSA, Homeowner's Assoc...)",
-              },
-            ]}
-            columns={3}
-          />
+          {isLoadingWaterSupply ? (
+            <div className="flex justify-center items-center p-8">
+              <div className="text-gray-500">Loading water supply options...</div>
+            </div>
+          ) : (
+            <RadioCardGroup
+              name={`${prefix}.waterSupply`}
+              control={form.control}
+              options={waterSupplyOptions}
+              columns={3}
+            />
+          )}
 
           <div className="mb-2 mt-2">
             <Separator></Separator>
@@ -163,9 +197,19 @@ export default function EnvironmentalForm({
                 { id: "recycling", name: "Recyling/Reuse" },
                 { id: "collectedbycity", name: "Collected by City Collection and Disposal System" },
                 { id: "burning", name: "Burning/Burying" },
-                { id: "others", name: "Others.."}
+                { id: "others", name: "Others"}
               ]}
             />
+            
+            {/* Show "Others" input field when "others" is selected */}
+            {selectedWasteManagement === "others" && (
+              <FormInput
+                control={form.control}
+                name={`${prefix}.wasteManagementOthers`}
+                label="Please specify"
+                placeholder="Enter waste management type"
+              />
+            )}
           </div>
         </form>
       </Form>

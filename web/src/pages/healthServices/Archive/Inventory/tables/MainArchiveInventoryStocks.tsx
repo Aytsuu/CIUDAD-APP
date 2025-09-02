@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Pill, Syringe, Package, Bandage } from "lucide-react";
-import MedicineStocks from "./MedicineStocks";
-import VaccineStocks from "./VaccineStocks";
-import FirstAidStocks from "./FirstAidStocks";
-import CommodityStocks from "./CommodityStocks";
+import MedicineArchiveTable from "./MedicineStocks";
+import CombinedStockTable from "./VaccineStocks";
+import FirstAidArchiveTable from "./FirstAidStocks";
+import CommodityArchiveTable from "./CommodityStocks";
 
 type ArchiveInventoryView = "medicine" | "vaccine" | "commodity" | "firstaid";
 
@@ -65,16 +65,16 @@ export default function ArchiveMainInventoryStocks() {
 
           <CardContent className="p-4 pt-6">
             <TabsContent value="medicine" className="mt-0">
-              <MedicineStocks />
+              <MedicineArchiveTable />
             </TabsContent>
             <TabsContent value="vaccine" className="mt-0">
-              <VaccineStocks />
+              <CombinedStockTable />
             </TabsContent>
             <TabsContent value="commodity" className="mt-0">
-              <CommodityStocks />
+              <CommodityArchiveTable />
             </TabsContent>
             <TabsContent value="firstaid" className="mt-0">
-              <FirstAidStocks />
+              <MedicineArchiveTable />
             </TabsContent>
           </CardContent>
         </Tabs>

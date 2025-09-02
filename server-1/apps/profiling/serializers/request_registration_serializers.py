@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from ..models import *
+from django.db import transaction
 from apps.profiling.serializers.personal_serializers import PersonalBaseSerializer
 from apps.account.models import Account
 from utils.supabase_client import supabase
@@ -19,25 +20,26 @@ class RequestTableSerializer(serializers.ModelSerializer):
     compositions = obj.request_composition.all()
     result = []
     for comp in compositions:
-        if comp.per:  # Check if personal info exists
-            instance = PersonalBaseSerializer(comp.per).data
-            person_data = {
-                'role': comp.rrc_fam_role,
-                'acc': comp.acc_id if comp.acc else None,
-                'per_id': instance['per_id'],
-                'per_lname': instance['per_lname'],
-                'per_fname': instance['per_fname'],
-                'per_mname': instance['per_mname'],
-                'per_suffix': instance['per_suffix'],
-                'per_dob': instance['per_dob'],
-                'per_sex': instance['per_sex'],
-                'per_status': instance['per_status'],
-                'per_edAttainment': instance['per_edAttainment'],
-                'per_religion': instance['per_religion'],
-                'per_contact': instance['per_contact'],
-                'addresses': instance['addresses']
-            }
-            result.append(person_data)
+      if comp.per:  # Check if personal info exists
+        instance = PersonalBaseSerializer(comp.per).data
+        person_data = {
+          'role': comp.rrc_fam_role,
+          'acc': comp.acc_id if comp.acc else None,
+          'per_id': instance['per_id'],
+          'per_lname': instance['per_lname'],
+          'per_fname': instance['per_fname'],
+          'per_mname': instance['per_mname'],
+          'per_suffix': instance['per_suffix'],
+          'per_dob': instance['per_dob'],
+          'per_sex': instance['per_sex'],
+          'per_status': instance['per_status'],
+          'per_edAttainment': instance['per_edAttainment'],
+          'per_religion': instance['per_religion'],
+          'per_contact': instance['per_contact'],
+          'per_disability': instance['per_disability'],
+          'per_addresses': instance['per_addresses']
+        }
+        result.append(person_data)
     return result
   
 class FamilyRequestTableSerializer(serializers.ModelSerializer):
@@ -47,9 +49,10 @@ class FamilyRequestTableSerializer(serializers.ModelSerializer):
     fields = ['']
 
 class AccountInputSerializer(serializers.Serializer):
-  email = serializers.EmailField()
-  username = serializers.CharField()
-  password = serializers.CharField()
+  email = serializers.EmailField(write_only=True, required=False)
+  phone = serializers.CharField(write_only=True, required=False)
+  username = serializers.CharField(write_only=True)
+  password = serializers.CharField(write_only=True)
 
 class CompositionSerializer(serializers.Serializer):
   per = serializers.PrimaryKeyRelatedField(
@@ -65,6 +68,7 @@ class RequestCreateSerializer(serializers.ModelSerializer):
     model = RequestRegistration
     fields = ['comp']
   
+  @transaction.atomic
   def create(self, validated_data):
     comp = validated_data.get('comp', None)
         
@@ -84,21 +88,23 @@ class RequestCreateSerializer(serializers.ModelSerializer):
         
         if 'acc' in data:  
           acc = data['acc']  
-          supabase_response = supabase.auth.sign_up({
-              "email": acc['email'],
-              "password": acc['password'],
-              "options": {
-                  "data": {
-                      "username": acc['username'] or acc['email'].split('@')[0],
-                  }
-              }
-          })
+          # supabase_response = supabase.auth.sign_up({
+          #     "email": acc.get('email', None),
+          #     "phone": acc.get('phone', None),
+          #     "password": acc['password'],
+          #     "options": {
+          #         "data": {
+          #             "username": acc['username'],
+          #         }
+          #     }
+          # })
                                 
           # Create account in local database
           account = Account.objects.create(
-              email=acc['email'],
-              username=acc['username'] or acc['email'].split('@')[0],
-              supabase_id=supabase_response.user.id,  # Store Supabase ID
+              email=acc.get('email', None),
+              phone=acc.get('phone', None),
+              username=acc['username'],
+              # supabase_id=supabase_response.user.id,  # Store Supabase ID
           )
 
           new_data['acc'] = account

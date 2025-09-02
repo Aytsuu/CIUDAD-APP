@@ -19,6 +19,8 @@ from apps.reports.models import *
 from apps.reports.serializers import *
 from pagination import *
 from django.db.models import Q, Prefetch
+from utils import *  # Assuming you have this
+
 
 class PatientMedicineRecordsView(generics.ListAPIView):
     serializer_class = PatientMedicineRecordSerializer
@@ -36,11 +38,110 @@ class IndividualMedicineRecordView(generics.ListCreateAPIView):
         return MedicineRecord.objects.filter(
             patrec_id__pat_id=pat_id
         ).order_by('-fulfilled_at')  
+        
+        
+# views.py (alternative approach)
+class MedicineRecordTableView(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request, pat_id):
+        try:
+            # Get parameters
+            search_query = request.GET.get('search', '').strip()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            # Get medicine records for the patient with prefetch for better performance
+            medicine_records = MedicineRecord.objects.select_related(
+                'minv_id',
+                'minv_id__med_id',
+                'staff'
+            ).prefetch_related(
+                'minv_id__med_id__cat',
+                'medicine_files'
+            ).filter(
+                patrec_id__pat_id=pat_id
+            ).order_by('-fulfilled_at')
+            
+            # Apply search filter if provided
+            if search_query:
+                medicine_records = medicine_records.filter(
+                    Q(minv_id__med_id__med_name__icontains=search_query) |
+                    Q(reason__icontains=search_query) |
+                    Q(medrec_id__icontains=search_query) |
+                    Q(status__icontains=search_query) |
+                    Q(minv_id__med_id__cat__cat_name__icontains=search_query)
+                )
+            
+            # Prepare response data
+            records_data = []
+            
+            for record in medicine_records:
+                # Get associated files using the related name
+                file_data = [
+                    {
+                        'medf_id': file.medf_id,
+                        'medf_name': file.medf_name,
+                        'medf_type': file.medf_type,
+                        'medf_url': file.medf_url,
+                        'created_at': file.created_at
+                    }
+                    for file in record.medicine_files.all()
+                ]
+                
+                # Get category name safely
+                category_name = 'N/A'
+                if (hasattr(record.minv_id, 'med_id') and 
+                    record.minv_id.med_id and 
+                    hasattr(record.minv_id.med_id, 'cat') and 
+                    record.minv_id.med_id.cat):
+                    category_name = record.minv_id.med_id.cat.cat_name
+                
+                record_data = {
+                    'medrec_id': record.medrec_id,
+                    'medrec_qty': record.medrec_qty,
+                    'reason': record.reason,
+                    'requested_at': record.requested_at,
+                    'fulfilled_at': record.fulfilled_at,
+                    'signature': record.signature,
+                    'minv_id': record.minv_id.minv_id if record.minv_id else None,
+                    'medicine_name': record.minv_id.med_id.med_name if record.minv_id and record.minv_id.med_id else 'Unknown',
+                    'medicine_category': category_name,
+                    'dosage': f"{record.minv_id.minv_dsg} {record.minv_id.minv_dsg_unit}" if record.minv_id else 'N/A',
+                    'form': record.minv_id.minv_form if record.minv_id else 'N/A',
+                    'staff_name': f"{record.staff.first_name} {record.staff.last_name}" if record.staff else 'Unknown',
+                    'files': file_data,
+                    'status': 'Fulfilled' if record.fulfilled_at else 'Pending'
+                }
+                
+                records_data.append(record_data)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginator.page_size = page_size
+            page_data = paginator.paginate_queryset(records_data, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response(response.data)
+            
+            return Response({
+                'success': True,
+                'results': records_data,
+                'count': len(records_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error fetching medicine records: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CreateMedicineRecordView(generics.CreateAPIView):
     serializer_class = MedicineRecordSerialzer
     queryset = MedicineRecord.objects.all()
-    
     
 
 class GetMedRecordCountView(APIView):
@@ -54,11 +155,13 @@ class GetMedRecordCountView(APIView):
         
 
 
+# MEDICINE REQUEST WEB
 class MedicineRequestView(generics.ListCreateAPIView):
     serializer_class = MedicineRequestSerializer
 
     def get_queryset(self):
-        return MedicineRequest.objects.filter(status='pending')
+        return MedicineRequest.objects.filter(status='processing')
+    
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         try:
@@ -91,7 +194,7 @@ class MedicineRequestView(generics.ListCreateAPIView):
             medicine_request = MedicineRequest.objects.create(
                 pat_id=patient,  # Pass the Patient instance
                 rp_id=resident,  # Pass the ResidentProfile instance
-                status='pending'
+                status='processing'
             )
 
             # Process medicine items
@@ -129,6 +232,8 @@ class MedicineRequestView(generics.ListCreateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
+        
+    
         
 class MedicineRequestItemView(generics.ListCreateAPIView):
     serializer_class = MedicineRequestItemSerializer
@@ -176,6 +281,136 @@ class MedicineRequestItemDelete(generics.DestroyAPIView):
     def get_object(self):
         medreqitem_id = self.kwargs['medreqitem_id']
         return MedicineRequestItem.objects.get(medreqitem_id=medreqitem_id)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class MedicineRequestCreateView(APIView):
+    @transaction.atomic
+    def post(self, request):
+        try:
+            # Extract data from request
+            pat_id = request.data.get('pat_id')
+            signature = request.data.get('signature')
+            medicines = request.data.get('medicines', [])
+            files = request.data.get('files', [])
+            staff_id = request.data.get('staff_id')
+            
+            if not pat_id:
+                return Response({"error": "pat_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not medicines:
+                return Response({"error": "At least one medicine is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 1. Create patient record
+            patient_record = PatientRecord.objects.create(
+                pat_id=pat_id,
+                patrec_type="Medicine Request",
+                staff_id=staff_id
+            )
+            
+            # 2. Create medicine request
+            medicine_request = MedicineRequest.objects.create(
+                medreq_status='completed',
+                staff_id=staff_id,
+                signature=signature
+            )
+            
+            # 3. Process each medicine
+            medicine_records = []
+            for med_data in medicines:
+                minv_id = med_data.get('minv_id')
+                medrec_qty = med_data.get('medrec_qty')
+                reason = med_data.get('reason', '')
+                med_type = med_data.get('med_type', 'Over The Counter')
+                
+                if not minv_id or not medrec_qty:
+                    continue
+                
+                # Check medicine inventory
+                try:
+                    medicine_inv = MedicineInventory.objects.get(minv_id=minv_id)
+                    if medicine_inv.minv_qty_avail < medrec_qty:
+                        raise Exception(f"Insufficient stock for medicine ID {minv_id}")
+                    
+                    # Update inventory
+                    medicine_inv.minv_qty_avail -= medrec_qty
+                    medicine_inv.save()
+                    
+                except MedicineInventory.DoesNotExist:
+                    raise Exception(f"Medicine ID {minv_id} not found in inventory")
+                
+                # Create medicine record
+                medicine_record = MedicineRecord.objects.create(
+                    medrec_qty=medrec_qty,
+                    reason=reason,
+                    signature=signature,
+                    requested_at=timezone.now(),
+                    fulfilled_at=timezone.now(),
+                    patrec_id=patient_record.patrec_id,
+                    minv_id=minv_id,
+                    medreq_id=medicine_request.medreq_id,
+                    staff_id=staff_id
+                )
+                medicine_records.append(medicine_record)
+            
+            # 4. Handle file uploads if any
+            uploaded_files = []
+            if files:
+                serializer = Medicine_FileSerializer(context={'request': request})
+                try:
+                    # For each medicine record, check if it's a prescription before associating files
+                    for medicine_record in medicine_records:
+                        med_data = next((med for med in medicines if med.get('minv_id') == medicine_record.minv_id), {})
+                        med_type = med_data.get('med_type', 'Over The Counter')
+                        
+                        # Only associate files with prescription medicines
+                        if med_type.lower() == 'prescription':
+                            uploaded_files.extend(
+                                serializer._upload_files(
+                                    files, 
+                                    medrec_id=medicine_record.medrec_id, 
+                                    medreq_id=medicine_request.medreq_id
+                                )
+                            )
+                            break  # Associate files with the first prescription medicine found
+                    
+                    # If no prescription medicines found, associate files only with medreq_id
+                    if not uploaded_files:
+                        uploaded_files = serializer._upload_files(
+                            files, 
+                            medrec_id=None,  # Don't associate with any medicine record
+                            medreq_id=medicine_request.medreq_id
+                        )
+                        
+                except Exception as e:
+                    return Response({"error": f"File upload failed: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response({
+                "message": "Medicine request created successfully",
+                "medreq_id": medicine_request.medreq_id,
+                "patrec_id": patient_record.patrec_id,
+                "uploaded_files_count": len(uploaded_files) if files else 0
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
 
 
 
@@ -234,107 +469,163 @@ class FindingPlanTreatmentView(generics.CreateAPIView):
     queryset = FindingsPlanTreatment.objects.all()
     
     
-
-class MedicineFileView(generics.ListCreateAPIView):
-    serializer_class = MedicineFileCreateSerializer
-    queryset = Medicine_File.objects.all()
-    
-    
-class ProcessMedicineRequestView(APIView):
+class MedicineRequestCreateView(APIView):
     @transaction.atomic
-    def post(self, request, *args, **kwargs):
-        data = request.data
-        staff_id = data.get("staff_id")
-        pat_id = data.get("pat_id")
-        signature = data.get("signature")
-
-        # Medicines may come in as JSON string if multipart/form-data
-        medicines_raw = data.get("medicines", "[]")
-        if isinstance(medicines_raw, str):
-            try:
-                medicines = json.loads(medicines_raw)
-            except Exception:
-                return Response({"error": "Invalid medicines format"}, status=400)
-        else:
-            medicines = medicines_raw
-
-        # Files must come from request.FILES
-        files = request.FILES.getlist("files")
-
-        results = []
-
+    def post(self, request):
         try:
-            patient = Patient.objects.get(pk=pat_id)
-        except Patient.DoesNotExist:
-            return Response({"error": f"Patient {pat_id} not found"}, status=404)
-
-        staff = Staff.objects.filter(pk=staff_id).first()
-
-        patient_record = PatientRecord.objects.create(
-            pat_id=patient,
-            patrec_type="Medicine Record",
-        )
-
-        for med in medicines:
+            # Extract data from request
+            pat_id = request.data.get('pat_id')
+            signature = request.data.get('signature')
+            medicines = request.data.get('medicines', [])
+            files = request.data.get('files', [])
+            staff_id = request.data.get('staff_id')
+            
+            print(f"Received request data: pat_id={pat_id}, medicines={len(medicines)}, files={len(files)}")
+            
+            if not pat_id:
+                return Response({"error": "pat_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not medicines:
+                return Response({"error": "At least one medicine is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 1. Get the Patient instance
             try:
-                minv_id = int(med.get("minv_id"))
-                qty_requested = int(med.get("medrec_qty"))
-
-                # Inventory
-                medicine_inv = MedicineInventory.objects.select_for_update().get(minv_id=minv_id)
-                if medicine_inv.minv_qty_avail < qty_requested:
-                    raise serializers.ValidationError(f"Insufficient stock for medicine {minv_id}")
-
-                medicine_inv.minv_qty_avail -= qty_requested
-                medicine_inv.staff = staff
-                medicine_inv.save(update_fields=["minv_qty_avail", "staff", "created_at"])
-
-                # Transaction
-                MedicineTransactions.objects.create(
-                    mdt_qty=f"{qty_requested} {medicine_inv.minv_qty_unit}",
-                    mdt_action="Deducted (Medicine Request)",
-                    staff=staff,
-                    minv_id=medicine_inv
-                )
-
-                # Medicine record
-                med_record = MedicineRecord.objects.create(
-                    patrec_id=patient_record,
-                    minv_id=medicine_inv,
-                    medrec_qty=qty_requested,
-                    reason=med.get("reason"),
+                patient = Patient.objects.get(pat_id=pat_id)
+            except Patient.DoesNotExist:
+                return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            # 2. Get Staff instance if staff_id is provided
+            staff_instance = None
+            if staff_id:
+                try:
+                    staff_instance = Staff.objects.get(staff_id=staff_id)
+                except Staff.DoesNotExist:
+                    print(f"Staff with ID {staff_id} not found, continuing without staff")
+            
+            # 3. Create patient record with Patient instance
+            patient_record = PatientRecord.objects.create(
+                pat_id=patient,
+                patrec_type="Medicine Request",
+            )
+            
+            # 4. Process each medicine and track inventory changes for potential rollback
+            medicine_records = []
+            inventory_updates = {}  # Store original quantities for rollback
+            medicine_transactions = []  # Store medicine transactions
+            
+            for med_data in medicines:
+                minv_id = med_data.get('minv_id')
+                medrec_qty = med_data.get('medrec_qty')
+                reason = med_data.get('reason', '')
+                
+                if not minv_id or not medrec_qty:
+                    continue
+                
+                # Check medicine inventory
+                try:
+                    medicine_inv = MedicineInventory.objects.get(minv_id=minv_id)
+                    if medicine_inv.minv_qty_avail < medrec_qty:
+                        # This will trigger transaction rollback
+                        raise Exception(f"Insufficient stock for medicine ID {minv_id}. Available: {medicine_inv.minv_qty_avail}, Requested: {medrec_qty}")
+                    
+                    # Store original quantity for rollback
+                    inventory_updates[minv_id] = {
+                        'medicine_inv': medicine_inv,
+                        'original_qty': medicine_inv.minv_qty_avail
+                    }
+                    
+                    # Update inventory
+                    medicine_inv.minv_qty_avail -= medrec_qty
+                    medicine_inv.save()
+                    
+                    # Create medicine transaction record
+                    # Determine transaction quantity based on unit
+                    if medicine_inv.minv_qty_unit and medicine_inv.minv_qty_unit.lower() == 'boxes':
+                        mdt_qty = f"{medrec_qty } pcs"  # Convert boxes to pieces (3 pcs per box)
+                    else:
+                        # Use the original unit if not boxes
+                        unit = medicine_inv.minv_qty_unit or 'pcs'
+                        mdt_qty = f"{medrec_qty} {unit}"
+                    
+                    # Create medicine transaction
+                    medicine_transaction = MedicineTransactions.objects.create(
+                        mdt_qty=mdt_qty,
+                        mdt_action="deducted",
+                        staff=staff_instance,
+                        minv_id=medicine_inv
+                    )
+                    medicine_transactions.append(medicine_transaction)
+                    
+                except MedicineInventory.DoesNotExist:
+                    # This will trigger transaction rollback
+                    raise Exception(f"Medicine ID {minv_id} not found in inventory")
+                
+                # Create medicine record
+                medicine_record = MedicineRecord.objects.create(
+                    medrec_qty=medrec_qty,
+                    reason=reason,
                     signature=signature,
                     requested_at=timezone.now(),
                     fulfilled_at=timezone.now(),
-                    staff=staff
+                    patrec_id=patient_record,
+                    minv_id=medicine_inv,
+                    staff=staff_instance
                 )
+                medicine_records.append(medicine_record)
+            
+            # 5. Handle file uploads - THIS MUST BE INSIDE THE TRANSACTION SCOPE
+            uploaded_files = []
+            if files and medicine_records:
+                try:
+                    # Create a savepoint before file operations
+                    sid = transaction.savepoint()
+                    
+                    serializer = Medicine_FileSerializer(context={'request': request})
+                    first_medrec = medicine_records[0]
+                    uploaded_files = serializer._upload_files(files, medrec_instance=first_medrec)
+                    
+                    if not uploaded_files:
+                        print("No files were uploaded successfully")
+                        # If file upload is critical, you can raise an exception here:
+                        # raise Exception("File upload failed")
+                    
+                    print(f"Successfully processed {len(uploaded_files)} files")
+                    
+                except Exception as e:
+                    print(f"File upload error: {str(e)}")
+                    # Rollback to savepoint if file upload fails
+                    transaction.savepoint_rollback(sid)
+                    # If file upload is critical, re-raise the exception to trigger full rollback:
+                    raise Exception(f"File upload failed: {str(e)}")
+            
+            return Response({
+                "message": "Medicine request created successfully",
+                "patrec_id": patient_record.patrec_id,
+                "medicine_records_created": len(medicine_records),
+                "medicine_transactions_created": len(medicine_transactions),
+                "uploaded_files_count": len(uploaded_files)
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            print(f"Unexpected error: {str(e)}")
+            # The @transaction.atomic decorator will automatically rollback
+            # all database changes if we reach here
+            
+            # Manual inventory rollback (in case transaction doesn't cover everything)
+            try:
+                for minv_id, update_info in inventory_updates.items():
+                    medicine_inv = update_info['medicine_inv']
+                    original_qty = update_info['original_qty']
+                    medicine_inv.minv_qty_avail = original_qty
+                    medicine_inv.save()
+                    print(f"Rolled back inventory for medicine {minv_id} to {original_qty}")
+            except Exception as rollback_error:
+                print(f"Error during inventory rollback: {str(rollback_error)}")
+            
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-                # Files upload
-                if files:
-                    file_data = [{"name": f.name, "type": f.content_type, "file": f} for f in files]
-                    file_serializer = MedicineFileCreateSerializer(
-                        data={"files": file_data, "medrec": med_record.pk}
-                    )
-                    file_serializer.is_valid(raise_exception=True)
-                    file_serializer.save()
 
-                results.append({"success": True, "medicine_id": minv_id, "medrec_id": med_record.pk})
 
-            except Exception as e:
-                transaction.set_rollback(True)
-                return Response({"results": [{"success": False, "error": str(e)}]}, status=400)
-
-        return Response({"results": results, "patrec_id": patient_record.patrec_id}, status=201)
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
  
 class MonthlyMedicineSummariesAPIView(APIView):
     def get(self, request):

@@ -14,11 +14,11 @@ import { useRestoreMinutesOfMeeting, useArchiveMinutesOfMeeting } from "./querie
 import { useDeleteMinutesofMeeting } from "./queries/MOMDeleteQueries"
 import EditMinutesOfMeeting from "./editMinutesOfMeeting"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { Card } from "@/components/ui/card/card"
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card } from "@/components/ui/card"
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 function MinutesOfMeetingPage() {
-  const [filter, setFilter] = useState<string>("all")
+  const [filter, _setFilter] = useState<string>("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingRowId, setEditingRowId] = useState<number | null>(null)
   const { data: momRecords = [], isLoading } = useGetMinutesOfMeetingRecords()

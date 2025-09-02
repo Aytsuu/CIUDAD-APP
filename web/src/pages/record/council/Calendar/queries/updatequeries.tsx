@@ -91,14 +91,14 @@ export const useUpdateAttendees = () => { // New mutation
   return useMutation({
     mutationFn: ({ ce_id, attendees }: { ce_id: number; attendees: { atn_name: string; atn_designation: string; atn_present_or_absent: string }[] }) =>
       updateAttendees(ce_id, attendees),
-    onSuccess: (updatedData, variables) => {
+    onSuccess: (_updatedData, variables) => {
       queryClient.setQueryData(["attendees", variables.ce_id], (old: Attendee[] = []) => 
         variables.attendees.map((a, index) => ({ atn_id: old[index]?.atn_id || index + 1, ...a, ce_id: variables.ce_id, staff_id: null }))
       );
       queryClient.invalidateQueries({ queryKey: ["attendees", variables.ce_id] });
     },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.detail || error.message || "Unknown error";
+    onError: (_error: any) => {
+      // const errorMessage = error.response?.data?.detail || error.message || "Unknown error";
 
     },
     onMutate: async (variables) => {

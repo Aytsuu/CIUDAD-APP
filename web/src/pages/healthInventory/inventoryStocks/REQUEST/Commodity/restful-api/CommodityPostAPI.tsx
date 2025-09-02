@@ -1,50 +1,32 @@
-import {api2} from "@/api/api";
+import { api2 } from "@/api/api";
 
-export const addCommodityInventory = async (
-  data: Record<string, any>
-) => {
+export const createCommodityStock = async (data: Record<string, any>) => {
   try {
     if (!data.com_id) {
       throw new Error("Commodity ID is required.");
     }
-    const res = await api2.post("inventory/commodityinventorylist/", data);
-
+    const res = await api2.post("inventory/commodity-create/", data);
     if (res.data.error) {
       throw new Error(res.data.error);
     }
-
     return res.data;
   } catch (err) {
     console.error(err);
-    throw err; 
+    throw err;
   }
 };
 
-
-export const addCommodityTransaction = async (
-  string_qty: string,
-  staffId: string,
-  cinv_id: number,
-  action: string
-) => {
+export const addCommodityTransaction = async (data: Record<any, string>) => {
   try {
-    if (!cinv_id) {
+    if (!data.cinv_id) {
       throw new Error("Commodity inventory ID is required.");
     }
-
-    const res = await api2.post("inventory/commoditytransaction/", {
-      comt_qty: string_qty,
-      comt_action: action,
-      staff: staffId || null,
-      cinv_id: cinv_id,
-    });
-
+    const res = await api2.post("inventory/commoditytransaction/", data);
     if (res.data.error) {
       throw new Error(res.data.error);
     }
-
     return res.data;
   } catch (err) {
-    console.error(err)
-}
+    console.error(err);
+  }
 };

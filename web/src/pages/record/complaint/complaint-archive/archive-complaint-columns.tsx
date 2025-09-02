@@ -53,16 +53,7 @@ export const archiveComplaintColumns = (data: Complaint[]): ColumnDef<Complaint>
     ),
     cell: ({ row }) => {
       return (
-        <div className="relative flex items-center justify-center h-full">
-          {/* Archive icon on the far left */}
-          <div className="absolute left-2">
-            <TooltipLayout
-              trigger={<Archive className="text-gray-500" size={20} />}
-              content="Archived"
-            />
-          </div>
-
-          {/* Badge centered */}
+        <div className="relative flex items-center justify-center">
           <Badge variant="outline" className="font-medium bg-gray-50 text-gray-700">
             COMP-2025-{row.original.comp_id}
           </Badge>
@@ -167,26 +158,26 @@ export const archiveComplaintColumns = (data: Complaint[]): ColumnDef<Complaint>
       );
     },
   },
-  {
-    accessorKey: "date_archived",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Date Archived
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => {
-    //   const dateArchived = row.original.date_archived;
-      return (
-        <div className="font-normal text-gray-700">
-          {/* {dateArchived ? new Date(dateArchived).toLocaleDateString() : "N/A"} */}
-        </div>
-      );
-    },
-  },
+  // {
+    // accessorKey: "date_archived",
+    // header: ({ column }) => (
+    //   <div
+    //     className="flex w-full justify-center items-center gap-2 cursor-pointer"
+    //     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    //   >
+    //     Date Archived
+    //     <ArrowUpDown size={14} />
+    //   </div>
+    // ),
+  //   cell: ({ row }) => {
+  //   //   const dateArchived = row.original.date_archived;
+  //     return (
+  //       <div className="font-normal text-gray-700">
+  //         {/* {dateArchived ? new Date(dateArchived).toLocaleDateString() : "N/A"} */}
+  //       </div>
+  //     );
+  //   },
+  // },
   {
     accessorKey: "actions",
     header: "Action",

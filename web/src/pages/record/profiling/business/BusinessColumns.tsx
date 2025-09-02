@@ -1,10 +1,10 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { BusinessRecord, BusinessRespondent } from "../profilingTypes";
+import { BusinessRecord, BusinessRespondent } from "../ProfilingTypes";
 import { useNavigate } from "react-router";
 import ViewButton from "@/components/ui/view-button";
 import { formatDate } from "@/helpers/dateHelper";
 import { Combobox } from "@/components/ui/combobox";
-import { formatOwnedBusinesses } from "../profilingFormats";
+import { formatOwnedBusinesses } from "../ProfilingFormats";
 import React from "react";
 
 export const activeColumns: ColumnDef<BusinessRecord>[] = [
@@ -30,12 +30,19 @@ export const activeColumns: ColumnDef<BusinessRecord>[] = [
   {
     accessorKey: "respondent",
     header: "Respondent",
+    cell: ({row}) => (
+      <div className="flex justify-center items-center gap-2">
+        <p>{row.original.respondent}</p>
+        {row.original.rp && <div className="w-2 h-2 rounded-full bg-blue-600"/>}
+        {row.original.br && <div className="w-2 h-2 rounded-full bg-blue-300"/>}
+      </div>
+    )
   },
   {
     accessorKey: "bus_date_verified",
     header: "Date Registered",
     cell: ({row}) => (
-      formatDate(row.original.bus_date_verified, true)
+      formatDate(row.original.bus_date_verified, "long")
     )
   },
   {
@@ -45,7 +52,7 @@ export const activeColumns: ColumnDef<BusinessRecord>[] = [
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/business/form", {
+        navigate("form", {
           state: {
             params: {
               type: "viewing",
@@ -85,12 +92,18 @@ export const pendingColumns: ColumnDef<BusinessRecord>[] = [
   {
     accessorKey: "respondent",
     header: "Respondent",
+    cell: ({row}) => (
+      <div className="flex">
+        <p>{row.original.respondent}</p>
+        <div className="w-4 h-4 rounded-full bg-blue-500"/>
+      </div>
+    )
   },
   {
     accessorKey: "bus_date_of_registration",
     header: "Date Submitted",
     cell: ({row}) => (
-      formatDate(row.original.bus_date_of_registration, true)
+      formatDate(row.original.bus_date_of_registration, "long")
     )
   },
   {
@@ -100,7 +113,7 @@ export const pendingColumns: ColumnDef<BusinessRecord>[] = [
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/business/form", {
+        navigate("form", {
           state: {
             params: {
               type: "request",
@@ -136,9 +149,21 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
     header: "Last Name",
   },
   {
+    accessorKey: "suffix",
+    header: "Suffix",
+  },
+   {
+    accessorKey: "sex",
+    header: "Sex",
+    cell: ({row}) => (
+      row.original.sex[0]
+    )
+  },
+  {
     accessorKey: "businesses",
     header: "Owned Businesses",
     cell: ({row}) => {
+      const navigate = useNavigate();
       const businesses = row.original.businesses;
       const formattedBusinesses = React.useMemo(() => formatOwnedBusinesses(businesses), [businesses])
 
@@ -146,6 +171,16 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
         <Combobox 
           options={formattedBusinesses}
           value={String(row.original.businesses.length)}
+          onChange={(value) => {
+            navigate("/profiling/business/record/form", {
+              state: {
+                params: {
+                  type: "viewing",
+                  busId: value?.split(' ')[0],
+                }
+              }
+            })
+          }}
           emptyMessage="No businesses owned"
           placeholder="Search business"
           staticVal={true}
@@ -158,7 +193,7 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
     accessorKey: "br_date_registered",
     header: "Date Regitered",
     cell: ({row}) => (
-      formatDate(row.original.br_date_registered, true)
+      formatDate(row.original.br_date_registered, "long")
     )
   },
   {

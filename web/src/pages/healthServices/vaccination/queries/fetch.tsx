@@ -62,7 +62,8 @@ export const useIndivPatientVaccinationRecords = (patientId?: string) => {
             follow_up_visit: {
               followv_id: record.follow_up_visit?.followv_id,
               followv_date: record.follow_up_visit?.followv_date || "No Schedule",
-              followv_status: record.follow_up_visit?.followv_status || "N/A"
+              followv_status: record.follow_up_visit?.followv_status || "N/A",
+              followv_description: record.follow_up_visit?.followv_description || "N/A",
             },
             vacrec_details: record.vacrec_details || {
               vacrec_id: record.vacrec_details?.vacrec_id || 0,
@@ -273,8 +274,6 @@ export const fetchVaccinesWithStock = (dob?: string) => {
 
 
 //HELPERS
-
-
 export const filterVaccinesByAge = (vaccines: any[], dob: string) => {
   if (!dob) return vaccines; // Return all vaccines if no DOB provided
   
@@ -320,7 +319,7 @@ export const filterVaccinesByAge = (vaccines: any[], dob: string) => {
 // Helper function to parse the age string into numeric value and unit
 const parseAgeString = (ageString: string): { value: number; unit: string } => {
   const parts = ageString.split(' ');
-  if (parts.length < 2) return { value: 0, unit: 'days' }; // Default for newborns
+  if (parts.length < 2) return { value: 0, unit: 'days' }; 
   
   const value = parseInt(parts[0]);
   const unit = parts[1].includes('year') ? 'years' : 

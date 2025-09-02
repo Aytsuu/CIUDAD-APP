@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getOPTSummaries, getOPTMonthlyReport } from "../restful-api/fetch";
+import { getOPTSummaries, getOPTMonthlyReport} from "../restful-api/fetch";
 
 export const useOPTSummaries = (
     page: number, 
@@ -18,3 +18,4 @@ export const useOPTSummaries = (
       queryFn: () => getOPTMonthlyReport(month, sitio),
     });
   };
+

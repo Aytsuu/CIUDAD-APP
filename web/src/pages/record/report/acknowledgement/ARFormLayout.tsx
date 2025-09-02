@@ -9,11 +9,11 @@ import ARForm from "./ARForm";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { MediaUploadType } from "@/components/ui/media-upload";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { useLocation } from "react-router";
 import { useAddAR } from "../queries/reportAdd";
 import { useAuth } from "@/context/AuthContext";
-import { formatSitio } from "../../profiling/profilingFormats";
+import { formatSitio } from "../../profiling/ProfilingFormats";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 // Main component for the DRR AR Form

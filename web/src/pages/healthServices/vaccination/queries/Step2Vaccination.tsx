@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createVitalSigns } from "../restful-api/post";
 import { updateVaccinationHistory } from "../restful-api/update";
 import { deleteVitalSigns } from "@/pages/healthServices/vaccination/restful-api/delete";
-import { toast } from "sonner";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 export const useStep2VaccinationMutation = () => {
   const queryClient = useQueryClient();
@@ -50,12 +50,12 @@ export const useStep2VaccinationMutation = () => {
       }
     },
     onSuccess: () => {
-      toast.success("Vaccination record updated successfully");
       queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
+      showSuccessToast("Vaccination record saved successfully" );
     },
     onError: (error) => {
       console.error("Failed to save vaccination record:", error);
-      toast.error("Failed to save vaccination record");
+      showErrorToast("Failed to save vaccination record. Please try again." );
     },
   });
 };

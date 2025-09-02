@@ -214,13 +214,13 @@ function WasteIllegalDumpingDetails({
   rep_date,
   rep_contact,
   rep_date_resolved,
-  sitio_id,
+  // sitio_id,
   sitio_name,
   waste_report_file,
   waste_report_rslv_file
 }: WasteReportDetailsProps) {
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [_isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentImageResIndex, setCurrentImageResIndex] = useState(0);
   const isResolved = !!rep_date_resolved || rep_status === "resolved";

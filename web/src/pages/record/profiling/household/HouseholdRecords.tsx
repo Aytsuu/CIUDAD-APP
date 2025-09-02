@@ -1,5 +1,3 @@
-"use client"
-
 import React from "react"
 import { Search, Plus, Download, Users, FileDown, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -12,9 +10,10 @@ import { Link } from "react-router"
 import { useHouseholdTable } from "../queries/profilingFetchQueries"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Card } from "@/components/ui/card/card"
+import { Card } from "@/components/ui/card"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function HouseholdRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -95,7 +94,7 @@ export default function HouseholdRecords() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <Link to="/household/form">
+                <Link to="/profiling/household/form">
                   <Button className="px-4">
                     <Plus size={16} className="mr-2" />
                     Register Household
@@ -129,8 +128,8 @@ export default function HouseholdRecords() {
           {/* Loading State */}
           {isLoading && (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-              <span className="ml-2 text-gray-600">Loading households...</span>
+              <Spinner size="lg" />
+              <span className="ml-4 text-gray-600">Loading households...</span>
             </div>
           )}
 
@@ -146,14 +145,6 @@ export default function HouseholdRecords() {
                   ? `No households match "${searchQuery}". Try adjusting your search.`
                   : "Get started by registering your first household."}
               </p>
-              {!searchQuery && (
-                <Link to="/household/form">
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Register First Household
-                  </Button>
-                </Link>
-              )}
             </div>
           )}
 

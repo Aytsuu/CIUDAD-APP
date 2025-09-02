@@ -5,10 +5,10 @@ import {
   useEffect,
   ReactNode,
   useCallback,
+  useRef,
 } from "react";
 import { AuthContextType, User } from "./auth-types";
-import { api } from "@/api/api";
-import { supabase } from "@/lib/supabase";
+import { api, setAccessToken } from "@/api/api";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -17,245 +17,280 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
-  const clearError = () => setError(null);
+  // ✅ keep instant reference to user
+  const userRef = useRef<User | null>(null);
 
-  const handleError = (error: any, defaultMessage: string) => {
-    const message = error?.message || defaultMessage;
-    setError(message);
-    throw new Error(message);
+  const hasInitialized = useRef(false);
+  const isAuthenticating = useRef(false);
+  const refreshTokenRef = useRef<string | null>(null);
+
+  const clearError = () => {
+    setError(null);
   };
 
-  // Check authentication status on app load
+  const clearAuthState = useCallback(() => {
+    setUser(null);
+    userRef.current = null;
+    setIsAuthenticated(false);
+    setError(null);
+    setAccessToken(null);
+    refreshTokenRef.current = null;
+  }, []);
+
+  const setUserSync = (userData: User | null) => {
+    setUser(userData);
+    userRef.current = userData; // ✅ always in sync
+  };
+
   const checkAuthStatus = useCallback(async () => {
+    if (isAuthenticating.current) return;
+
     try {
       setIsLoading(true);
-      console.log("🔍 Starting auth status check...");
-      
-      // First check if we have a valid Supabase session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session?.access_token) {
-        console.log("❌ No valid Supabase session found");
-        setUser(null);
-        setIsAuthenticated(false);
+
+      const authorizationHeader = api.defaults.headers.common["Authorization"];
+      const currentToken =
+        typeof authorizationHeader === "string"
+          ? authorizationHeader.split(" ")[1]
+          : undefined;
+
+      if (!currentToken) {
+        clearAuthState();
         return;
       }
 
-      console.log("✅ Found Supabase session, verifying with backend...");
+      try {
+        // Validate current token
+        const validateResponse = await api.post(
+          "authentication/mobile/refresh/",
+          { access_token: currentToken }
+        );
 
-      // If we have a session, verify with backend
-      const response = await api.get("authentication/mobile/user/");
-      
-      if (response.data && response.data.user) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        console.log("✅ Authentication verified successfully:", response.data.user.email);
-      } else {
-        console.warn("⚠️ No user data in response");
-        setUser(null);
-        setIsAuthenticated(false);
+        if (validateResponse.data.valid && validateResponse.data.user) {
+          setUserSync(validateResponse.data.user);
+          setIsAuthenticated(true);
+          return;
+        }
+
+        // Try refresh token
+        if (refreshTokenRef.current) {
+          const refreshResponse = await api.post(
+            "authentication/mobile/refresh-token/",
+            { refresh_token: refreshTokenRef.current }
+          );
+
+          if (refreshResponse.data.user && refreshResponse.data.access_token) {
+            setUserSync(refreshResponse.data.user);
+            setIsAuthenticated(true);
+            setAccessToken(refreshResponse.data.access_token);
+
+            if (refreshResponse.data.refresh_token) {
+              refreshTokenRef.current = refreshResponse.data.refresh_token;
+            }
+            return;
+          }
+        }
+
+        clearAuthState();
+      } catch (refreshError: any) {
+        if (refreshError?.response?.status === 401) {
+          clearAuthState();
+          setError("Session expired - please login again");
+        } else if (refreshError?.response?.status === 404) {
+          clearAuthState();
+          setError("Account not found - please login again");
+        } else {
+          setError("Network error during authentication check");
+        }
       }
-      
     } catch (error: any) {
-      console.error("Error details:", {
-        status: error?.response?.status,
-        data: error?.response?.data,
-        message: error?.message
-      });
-      
-      if (error?.response?.status === 401) {
-        // 401 = Authentication failed, clear session
-        console.log("🧹 Clearing invalid session due to 401...");
-        await supabase.auth.signOut();
+      if (!error?.response?.status) {
+        setError("Network error during authentication check");
       }
-      
-      setUser(null);
-      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
+      setHasCheckedAuth(true);
     }
-  }, []);
+  }, [clearAuthState]);
 
-  // Listen to Supabase auth changes
+  // Initial check
   useEffect(() => {
-    console.log("👂 Setting up auth state listener...");
-    let mounted = true; 
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return; // Prevent updates if unmounted
-        
-        if (event === 'SIGNED_OUT' || !session) {
-          if (mounted) {
-            setUser(null);
-            setIsAuthenticated(false);
-            setIsLoading(false);
-            setError(null); // Clear any permission errors
-          }
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // Add delay to prevent rapid successive calls
-          setTimeout(() => {
-            if (mounted) {
-              checkAuthStatus();
-            }
-          }, 500);
-        }
-      } 
-    );
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+    checkAuthStatus();
+  }, [checkAuthStatus]);
 
-    // Initial auth check with delay
-    setTimeout(() => {
-      if (mounted) {
+  // Auto-refresh
+  useEffect(() => {
+    let refreshInterval: NodeJS.Timeout;
+
+    if (isAuthenticated && !isLoading && user && hasCheckedAuth) {
+      const refreshIntervalTime = 50 * 60 * 1000;
+      refreshInterval = setInterval(() => {
         checkAuthStatus();
-      }
-    }, 100);
+      }, refreshIntervalTime);
+    }
 
     return () => {
-      console.log("🧹 Cleaning up auth state listener");
-      mounted = false;
-      subscription.unsubscribe();
+      if (refreshInterval) clearInterval(refreshInterval);
     };
-  }, []); 
+  }, [isAuthenticated, isLoading, user, hasCheckedAuth, checkAuthStatus]);
 
   const login = async (email: string, password: string) => {
+    isAuthenticating.current = true;
     setIsLoading(true);
     clearError();
 
     try {
-      const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
+      const response = await api.post("authentication/mobile/login/", {
         email,
         password,
       });
 
-      if (supabaseError) {
-        console.error("❌ Supabase authentication failed:", supabaseError);
-        throw new Error(supabaseError.message);
+      if (!response.data?.access_token || !response.data?.user) {
+        throw new Error("Invalid response from server");
       }
 
-      const response = await api.post('authentication/mobile/login/', {
-        email,
-        password,
-      });
+      const { access_token, refresh_token, user: userData } = response.data;
 
-      if (response.data && response.data.user) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-      } else {
-        throw new Error("No user data in login response");
-      }
-      
+      setAccessToken(access_token);
+      refreshTokenRef.current = refresh_token;
+
+      setUserSync(userData);
+      setIsAuthenticated(true);
+      setHasCheckedAuth(true);
+
+      console.log("userData:", userData.acc_id);
+      console.log("userRef:", userRef.current?.acc_id);
+
+      return userData;
     } catch (error: any) {
-      console.error("❌ Login error:", error);
-      
-      await supabase.auth.signOut();
-      
-      const message = error?.response?.data?.error || error?.message || 'Login failed';
-      handleError({message}, "Login failed");
+      let message =
+        error?.response?.data?.error ||
+        error?.message ||
+        "Login failed";
+      if (error?.response?.status === 401)
+        message = "Invalid email or password";
+      if (error?.response?.status === 404) message = "Account not found";
+
+      setError(message);
+      clearAuthState();
+      throw new Error(message);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const signUp = async (
-    email: string,
-    password: string,
-    username?: string
-  ): Promise<{ requiresConfirmation?: boolean }> => {
-    setIsLoading(true);
-    clearError();
-
-    try {
-      const response = await api.post('authentication/signup/', {
-        email, 
-        password,
-        username,
-      });
-
-      // If signup successful and no confirmation required, user might be auto-logged in
-      // if (!response.data.requiresConfirmation && response.data.user) {
-      //   setUser(response.data.user);
-      //   setIsAuthenticated(true);
-      // }
-
-      return { requiresConfirmation: response.data?.requiresConfirmation ?? false };
-    } catch (error: any){
-      console.error("❌ Signup error:", error);
-      
-      // If backend signup fails, clean up supabase user
-      try {
-        await supabase.auth.signOut();
-      } catch (cleanupError) {
-        console.error("❌ Error during signup cleanup:", cleanupError);
-      }
-      
-      const message = error.response?.data?.error || 'Signup failed';
-      handleError({message}, "Signup failed");
-      throw error;
-    } finally {
-      setIsLoading(false);
+      isAuthenticating.current = false;
     }
   };
 
   const logout = async () => {
     setIsLoading(true);
-
     try {
-      await supabase.auth.signOut();
-      
-      try {
-        await api.post('authentication/logout/');
-      } catch (logoutError) {
-        console.warn("⚠️ Backend logout failed:", logoutError);
-        // Continue anyway
-      }
-
-      console.log("✅ Logout successful");
-
-    } catch (error) {
-      console.error('❌ Logout error: ', error);
-    } finally {
-      setUser(null);
-      setIsAuthenticated(false);
+      await api.post("authentication/logout/");
+    } catch {}
+    finally {
+      clearAuthState();
       setIsLoading(false);
-      setError(null);
+      setHasCheckedAuth(false);
     }
   };
 
-  const refreshSession = async () => {
+  const sendOtp = async (phoneNumber: string) => {
     setIsLoading(true);
+    clearError();
 
     try {
-      const { data, error } = await supabase.auth.refreshSession();
-      
-      if (error || !data.session) {
-        throw new Error("Failed to refresh Supabase session");
-      }
+      const response = await api.post("authentication/mobile/send-otp/", {
+        phone_number: phoneNumber,
+      });
 
-      const response = await api.post('authentication/refresh/');
-      
-      if (response.data && response.data.user) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        console.log("✅ Session refresh successful");
-      } else {
-        throw new Error("No user data in refresh response");
-      }
-      
+      return {
+        success: true,
+        message: response.data?.message || "OTP sent successfully!",
+      };
     } catch (error: any) {
-      console.error('❌ Session refresh failed: ', error);
-      
-      // If refresh fails, sign out completely
-      await supabase.auth.signOut();
-      setUser(null);
-      setIsAuthenticated(false);
+      const message = error?.response?.data?.error || "Failed to send OTP";
+      setError(message);
+      return { success: false, message };
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const verifyOtp = async (phoneNumber: string, otp: string) => {
+    isAuthenticating.current = true;
+    setIsLoading(true);
+    clearError();
+
+    try {
+      const response = await api.post("authentication/mobile/verify-otp/", {
+        phone_number: phoneNumber,
+        otp,
+      });
+
+      if (response.data?.access_token && response.data?.user) {
+        const { access_token, refresh_token, user: userData } = response.data;
+
+        setAccessToken(access_token);
+        if (refresh_token) refreshTokenRef.current = refresh_token;
+
+        setUserSync(userData);
+        setIsAuthenticated(true);
+        setHasCheckedAuth(true);
+      }
+
+      return response.data;
+    } catch (error: any) {
+      const message = error?.response?.data?.error || "OTP verification failed";
+      setError(message);
+      throw error;
+    } finally {
+      setIsLoading(false);
+      isAuthenticating.current = false;
+    }
+  };
+
+  const signUp = async (email: string, password: string, username?: string) => {
+    isAuthenticating.current = true;
+    setIsLoading(true);
+    clearError();
+
+    try {
+      const response = await api.post("authentication/signup/", {
+        email,
+        password,
+        username,
+      });
+
+      if (!response.data.requiresConfirmation &&
+          response.data.user &&
+          response.data.access_token) {
+        const { access_token, refresh_token, user: userData } = response.data;
+
+        setAccessToken(access_token);
+        if (refresh_token) refreshTokenRef.current = refresh_token;
+
+        setUserSync(userData);
+        setIsAuthenticated(true);
+        setHasCheckedAuth(true);
+      }
+
+      return {
+        requiresConfirmation: response.data?.requiresConfirmation ?? false,
+      };
+    } catch (error: any) {
+      const message = error.response?.data?.error || "Signup failed";
+      setError(message);
+      throw error;
+    } finally {
+      setIsLoading(false);
+      isAuthenticating.current = false;
     }
   };
 
   return (
-    <AuthContext.Provider 
+    <AuthContext.Provider
       value={{
         user,
         isAuthenticated,
@@ -264,8 +299,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         signUp,
-        refreshSession,
+        refreshSession: checkAuthStatus,
         clearError,
+        verifyOtp,
+        sendOtp,
       }}
     >
       {children}
@@ -275,6 +312,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if(!context) throw new Error("useAuth must be used within AuthProvider");
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 };

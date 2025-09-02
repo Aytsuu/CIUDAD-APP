@@ -1,10 +1,12 @@
 from django.db import models
-from apps.patientrecords.models import PatientRecord,BodyMeasurement,VitalSigns, Finding,FollowUpVisit
+from apps.patientrecords.models import PatientRecord,Patient,BodyMeasurement,VitalSigns, Finding,FollowUpVisit
 from apps.inventory.models import MedicineInventory
 from apps.vaccination.models import VaccinationRecord,VaccinationHistory
 from apps.administration.models import Staff
 from apps.medicineservices.models import MedicineRequestItem,MedicineRequest,MedicineRecord
-
+from simple_history.models import HistoricalRecords
+from simple_history.utils import update_change_reason
+from django.conf import settings
 
 
 # Create your models here.
@@ -64,10 +66,14 @@ class ChildHealthNotes(models.Model):
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_notes')
     followv = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='child_health_notes', null=True, blank=True)
     staff =models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_notes', null=True, blank=True) 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True) 
-    
-    
+    history = HistoricalRecords(
+        table_name='child_health_notes_history',
+        cascade_delete_history=True,
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        
+    )
+   
     class Meta:
         db_table = 'child_health_notes'
 
@@ -94,8 +100,6 @@ class ChildHealthSupplements(models.Model):
         
 class ChildHealthSupplementsStatus(models.Model):
     chssupplementstat_id = models.BigAutoField(primary_key=True)
-    # chsupplement = models.ForeignKey(ChildHealthSupplements, on_delete=models.CASCADE, related_name='statuses')
-    # status = models.CharField(max_length=100, blank=True, null=True)
     date_completed = models.DateField(blank=True, null=True)  # Date when the status was completed
     birthwt = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     status_type = models.CharField(choices=[('birthwt', 'Birth Weight'), ('anemic', 'Anemic')])
@@ -116,9 +120,10 @@ class NutritionalStatus(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     edemaSeverity= models.CharField(max_length=100, default="None")  # Edema severity
     muac_status = models.CharField(max_length=100, blank=True, null=True)  # Status of MUAC
-    # bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_histories', blank=True, null=True)
+    bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_histories')
     # chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chhist_id')
-    chvital=models.ForeignKey(ChildHealthVitalSigns, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chvital_id')
+    # chvital=models.ForeignKey(ChildHealthVitalSigns, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chvital_id')
+    pat = models.ForeignKey(Patient,on_delete=models.CASCADE, related_name='child_health_histories' )
     class Meta:
         db_table = 'nutritional_status'
         

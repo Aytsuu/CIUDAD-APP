@@ -7,7 +7,7 @@ from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasu
 from apps.patientrecords.serializers.findings_serializers import FindingSerializer
 from apps.patientrecords.models import *
 from apps.administration.serializers.staff_serializers import *  
-
+from apps.childhealthservices.serializers import NutritionalStatusSerializerBase
 class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
     patient_details = PatientSerializer(source='*', read_only=True)
     medicalrec_count = serializers.IntegerField(read_only=True)  # ✅ Add this line

@@ -11,7 +11,7 @@ import {
   createChildHealthHistory,
   processMedicineRequest
 } from "./createAPI";
-import { updateSupplementStatus, updateCHHistory } from "./updateAPI";
+import { updateSupplementStatus, updateCHHistory,updateChildHealthNotes } from "./updateAPI";
 import { AddRecordArgs } from "../muti-step-form/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
@@ -28,8 +28,10 @@ export async function updateChildHealthRecord({
   const old_chhist = originalRecord?.chhist_id;
   const old_chrec_id = originalChrecDetails.chrec_id;
   const old_patrec_id = originalPatrecDetails.patrec_id;
+  const chnotes_id = todaysHistoricalRecord?.chnotes_id;
   console.log("Original Record Details:", originalRecord);
   console.log("SBackend:", submittedData);
+  console.log("chnotes_id:", chnotes_id);
 
   if (!submittedData.pat_id) {
     throw new Error("Patient ID is required");
@@ -65,7 +67,7 @@ export async function updateChildHealthRecord({
       const originalNotes = todaysHistoricalRecord?.notes;
       const submittedNotes = submittedVitalSign.notes;
 
-      if (!originalFollowvId && isFollowUpDataPresentInForm) {
+      if (!originalFollowvId && isFollowUpDataPresentInForm && !chnotes_id) {
         const newFollowUp = await createFollowUpVisit({
           followv_date: submittedData.vitalSigns[0].followUpVisit || null,
           created_at: new Date().toISOString(),
@@ -88,15 +90,15 @@ export async function updateChildHealthRecord({
         });
       } else {
         if (submittedNotes !== originalNotes) {
-          await createChildHealthNotes({
-            chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            followv: originalFollowvId,
-            chhist: current_chhist_id,
-            staff: staff,
-          });
+          await updateChildHealthNotes(
+            chnotes_id,
+            {
+              chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
+              staff: staff || null,
+            }
+          );
         }
+        
       }
 
       await updateCHHistory({
@@ -304,6 +306,10 @@ export async function updateChildHealthRecord({
           created_at: vital.date, // Use the vital sign's date
           chvital: Number(chvital_id), // Link to the vital sign's ID
           edemaSeverity: submittedData.edemaSeverity || "none",
+          bm: bmi_id,
+          pat:submittedData.pat_id
+
+
         });
       }
     }

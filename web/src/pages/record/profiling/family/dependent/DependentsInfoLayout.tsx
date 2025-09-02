@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button/button";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import DependentForm from "./DependentForm";
 import { DataTable } from "@/components/ui/table/data-table";
-import { DependentRecord } from "../../profilingTypes";
+import { DependentRecord } from "../../ProfilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { CircleAlert, CircleCheck, Trash } from "lucide-react";
@@ -18,6 +18,7 @@ import {
 } from "../../queries/profilingAddQueries";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { useSafeNavigate } from "@/hooks/use-safe-navigate";
+import { showErrorToast } from "@/components/ui/toast";
 
 export default function DependentsInfoLayout({
   form,
@@ -120,15 +121,7 @@ export default function DependentsInfoLayout({
 
     if(dependentsList.length === 0){
       setIsSubmitting(false);
-      toast('Must have atleast one dependent.', {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        style: {
-          border: '1px solid rgb(225, 193, 193)',
-          padding: '16px',
-          color: '#b91c1c',
-          background: '#fef2f2',
-        },
-      });
+      showErrorToast("Must have atleast one dependent")
       return;
     }
 

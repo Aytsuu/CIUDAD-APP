@@ -45,8 +45,8 @@ function AdminGADProjectProposal() {
   const [newStatus, setNewStatus] = useState<ProposalStatus | null>(null);
   const [reason, setReason] = useState<string | null>(null);
   const updateStatusMutation = useUpdateProjectProposalStatus();
-  const [isPdfLoading, setIsPdfLoading] = useState(true);
-  const [pageSize, setPageSize] = useState(3);
+  const [_isPdfLoading, setIsPdfLoading] = useState(true);
+  const [pageSize, _setPageSize] = useState(3);
   const [currentPage, setCurrentPage] = useState(1);
   const { data: detailedProject } = useGetProjectProposal(
     selectedProject?.gprId || 0,
@@ -119,7 +119,7 @@ function AdminGADProjectProposal() {
             setSelectedProject(updatedProject);
             setIsViewDialogOpen(true);
           },
-          onError: (error) => {
+          onError: (_error) => {
             setSelectedProject(project); // Original project has correct types
             setIsViewDialogOpen(true);
           },

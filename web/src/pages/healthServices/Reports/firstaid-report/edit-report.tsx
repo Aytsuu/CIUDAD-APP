@@ -1,5 +1,5 @@
 // MonthlyFirstAidDetails.tsx
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, Loader2, Edit } from "lucide-react";
@@ -237,7 +237,7 @@ export default function EditMonthlyRecipientList() {
                 <Combobox
                   options={staffOptions?.formatted || []}
                   value={selectedStaffId}
-                  onChange={setSelectedStaffId}
+                  onChange={(value) => setSelectedStaffId(value || "")}
                   placeholder={
                     isLoading ? "Loading staff..." : "Select staff member"
                   }

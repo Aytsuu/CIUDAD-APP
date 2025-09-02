@@ -12,7 +12,7 @@ interface BudgetHeaderFormProps {
 }
 
 function BudgetHeaderForm({ form, onSubmit, onBack }: BudgetHeaderFormProps) {
-    const handleSubmit = (values: z.infer<typeof BudgetPlanStep1Schema>) => {
+    const handleSubmit = ( _values: z.infer<typeof BudgetPlanStep1Schema>) => {
        onSubmit();
     };
 

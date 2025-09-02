@@ -46,13 +46,24 @@ def get_latest_height_weight(pat_id):
             patrec__pat_id=pat_id
         ).order_by('-created_at').first()
 
-        if latest:
-            return {
-                'height': float(latest.height),
-                'weight': float(latest.weight),
-                'created_at': latest.created_at
-            }
+        # Check if a record was found AND if it has valid height/weight
+        if latest and latest.height is not None and latest.weight is not None:
+            # Optional: Check if values are positive numbers
+            try:
+                height_val = float(latest.height)
+                weight_val = float(latest.weight)
+                # If conversion is successful, return the data
+                return {
+                    'height': height_val,
+                    'weight': weight_val,
+                    'created_at': latest.created_at
+                }
+            except (TypeError, ValueError):
+                # Handle the case where height/weight are strings that can't be converted (e.g., "")
+                print(f"Error: Invalid height or weight value for record ID {latest.id}")
+                return None
         else:
+            # Return None if no record found, or record has null height/weight
             return None
     except Exception as e:
         print("Error fetching height and weight:", e)

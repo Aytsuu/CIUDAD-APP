@@ -1,17 +1,17 @@
 import React from "react"
 import { Form } from "@/components/ui/form/form"
-import { Card } from "@/components/ui/card/card"
+import { Card } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/table/data-table"
 import { capitalizeAllFields } from "@/helpers/capitalize"
 import { useLoading } from "@/context/LoadingContext"
 import { Loader2, Building2, ChevronLeft } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { useLocation } from "react-router"
-import { formatSitio } from "../profilingFormats"
+import { formatSitio } from "../ProfilingFormats"
 import { useResidentForm } from "../resident/form/useResidentForm"
 import { useAddAddress, useAddPerAddress } from "../queries/profilingAddQueries"
 import { useUpdateProfile } from "../queries/profilingUpdateQueries"
-import { Type } from "../profilingEnums"
+import { Type } from "../ProfilingEnums"
 import { useOwnedBusinesses, useRespondentInfo, useSitioList } from "../queries/profilingFetchQueries"
 import { businessDetailsColumns } from "../resident/ResidentColumns"
 import PersonalInfoForm from "../resident/form/PersonalInfoForm"
@@ -56,21 +56,20 @@ export default function RespondentDetails() {
   const { showLoading, hideLoading } = useLoading()
   const { mutateAsync: updateProfile } = useUpdateProfile()
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
-  const [formType, setFormType] = React.useState<Type>(params.type)
+  const [formType, setFormType] = React.useState<Type>(params?.type)
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false)
   const [addresses, setAddresses] = React.useState<Record<string, any>[]>([])
   const [validAddresses, setValidAddresses] = React.useState<boolean[]>([])
   const { mutateAsync: addAddress } = useAddAddress()
   const { mutateAsync: addPersonalAddress } = useAddPerAddress()
-  const { data: respondentInfo, isLoading: isLoadingRespondentInfo } = useRespondentInfo(params.data.respondentId)
+  const { data: respondentInfo, isLoading: isLoadingRespondentInfo } = useRespondentInfo(params?.data.respondentId)
   const { data: ownedBusinesses, isLoading: isLoadingBusinesses } = useOwnedBusinesses({
-    br: params.data.respondentId,
+    br: params?.data.respondentId,
   })
   const { data: sitioList } = useSitioList()
 
   const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } = useResidentForm(respondentInfo)
   const businesses = ownedBusinesses?.results || []
-  console.log(ownedBusinesses)
   const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList])
 
   const validator = React.useMemo(

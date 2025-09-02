@@ -1,5 +1,5 @@
 import React from "react";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { BsFillPeopleFill, BsFillPersonPlusFill } from 'react-icons/bs';
 import { MdGroupWork } from "react-icons/md";
 import ParentsFormLayout from "./parent/ParentsFormLayout";
@@ -11,8 +11,8 @@ import { useForm } from "react-hook-form";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { formatHouseholds, formatResidents } from "../profilingFormats";
-import { DependentRecord } from "../profilingTypes";
+import { formatHouseholds, formatResidents } from "../ProfilingFormats";
+import { DependentRecord } from "../ProfilingTypes";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useHouseholdsList, useResidentsList } from "../queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
@@ -84,7 +84,7 @@ export default function FamilyProfileForm() {
           progress={calculateProgress()}
           steps={registrationSteps}
         />
-        <Card className="w-full">
+        <Card className="w-full mt-6">
           {currentStep === 1 && (
             <DemographicForm
               form={form}

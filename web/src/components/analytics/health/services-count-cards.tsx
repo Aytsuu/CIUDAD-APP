@@ -1,4 +1,4 @@
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   useGetChildHealthTotalRecords,
   useGetFirstAidTotalRecords,

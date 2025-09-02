@@ -19,12 +19,14 @@ export const FormSelect = React.memo(({
     options, 
     readOnly,
     isLoading = false,
+    placeholder,
     emptyMessage = "No options available"
 }: { 
     control: any; 
     name: string; 
     label?: string; 
     options: { id: string; name: string }[]; 
+    placeholder?: string
     readOnly?: boolean;
     isLoading?: boolean;
     emptyMessage?: string;
@@ -50,7 +52,7 @@ export const FormSelect = React.memo(({
                     <FormControl>
                         {!readOnly ? (
                             <SelectLayout
-                                placeholder="Select "
+                                placeholder={placeholder || "Select"}
                                 className="w-full"
                                 options={selectOptions}
                                 value={field.value}

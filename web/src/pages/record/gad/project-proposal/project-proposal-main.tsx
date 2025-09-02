@@ -212,7 +212,7 @@ function GADProjectProposal() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isPdfLoading, setIsPdfLoading] = useState(true);
+  const [_isPdfLoading, setIsPdfLoading] = useState(true);
   const [editingProject, setEditingProject] = useState<ProjectProposal | null>(
     null
   );
@@ -225,7 +225,7 @@ function GADProjectProposal() {
   const [isDeletingDoc, setIsDeletingDoc] = useState(false);
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
   const [suppDocTab, setSuppDocTab] = useState<"active" | "archived">("active");
-  const [pageSize, setPageSize] = useState(3);
+  const [pageSize, _setPageSize] = useState(3);
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data: detailedProject } = useGetProjectProposal(
@@ -820,7 +820,7 @@ function GADProjectProposal() {
           mainContent={
             <div className="w-full h-full">
               <EditProjectProposalForm
-                onSuccess={(updatedData) => {
+                onSuccess={(_updatedData) => {
                   setIsEditDialogOpen(false);
                   setSelectedProject(null);
                   setEditingProject(null);

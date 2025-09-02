@@ -14,7 +14,7 @@ import { useLoading } from "@/context/LoadingContext";
 import { ExportButton } from "@/components/ui/export";
 
 export default function AllMedicalConsRecord() {
-  const [value, setValue] = useState("");
+  // const [value, setValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);

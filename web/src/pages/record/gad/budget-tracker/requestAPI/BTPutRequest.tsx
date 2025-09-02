@@ -11,23 +11,23 @@ export const updateGADBudget = async (gbud_num: number, payload: GADBudgetUpdate
   }
 };
 
-export const createGADBudgetFile = async (media: MediaUploadType[number], gbud_num: number) => {
-     if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
-       throw new Error('File upload incomplete: missing URL or path');
-     }
-     const formData = new FormData();
-     formData.append('file', media.file);
-     formData.append('gbud', gbud_num.toString());
-     formData.append('gbf_name', media.file.name);
-     formData.append('gbf_type', media.file.type || 'image/jpeg');
-     formData.append('gbf_path', media.storagePath);
-     formData.append('gbf_url', media.publicUrl);
-     try {
-       const response = await api.post('/gad/gad-budget-files/', formData, {
-         headers: { 'Content-Type': 'multipart/form-data' },
-       });
-       return response.data;
-     } catch (error: any) {
-       throw error;
-     }
+export const createGADBudgetFile = async (_media: MediaUploadType[number], _gbud_num: number) => {
+    //  if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
+    //    throw new Error('File upload incomplete: missing URL or path');
+    //  }
+    //  const formData = new FormData();
+    //  formData.append('file', media.file);
+    //  formData.append('gbud', gbud_num.toString());
+    //  formData.append('gbf_name', media.file.name);
+    //  formData.append('gbf_type', media.file.type || 'image/jpeg');
+    //  formData.append('gbf_path', media.storagePath);
+    //  formData.append('gbf_url', media.publicUrl);
+    //  try {
+    //    const response = await api.post('/gad/gad-budget-files/', formData, {
+    //      headers: { 'Content-Type': 'multipart/form-data' },
+    //    });
+    //    return response.data;
+    //  } catch (error: any) {
+    //    throw error;
+    //  }
    };

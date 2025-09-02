@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import *
 from apps.administration.serializers.staff_serializers import StaffBaseSerializer,StaffFullSerializer,StaffTableSerializer
-from apps.patientrecords.serializers.patients_serializers import PatientRecordSerializer
+from apps.patientrecords.serializers.patients_serializers import PatientRecordSerializer,PatientSerializer
 from apps.patientrecords.serializers.vitalsigns_serializers import VitalSignsSerializer
 from apps.patientrecords.serializers.followvisits_serializers import FollowUpVisitSerializerBase
 from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasurementSerializer
@@ -39,6 +39,37 @@ class ChildHealthNotesSerializer(serializers.ModelSerializer):
     chhist_details = ChildHealthHistorySerializerBase(source='chhist', read_only=True)
     followv_details = FollowUpVisitSerializerBase(source='followv', read_only=True)
     staff_details = StaffFullSerializer(source='staff', read_only=True)
+    
+    # Add history field
+    history = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ChildHealthNotes
+        fields = '__all__'  # or list your specific fields and add 'history'
+        # fields = ['chnotes_id', 'chn_notes', 'created_at', 'updated_at', 
+        #          'chhist', 'followv', 'staff', 'chhist_details', 
+        #          'followv_details', 'staff_details', 'history']
+    
+    def get_history(self, obj):
+        """Get history records for this note"""
+        history_qs = obj.history.all()[:10]  # Get last 10 history records
+        
+        history_data = []
+        for h in history_qs:
+            history_data.append({
+                'history_id': h.history_id,
+                'history_date': h.history_date,
+                'history_type': h.history_type,
+                'history_change_reason': getattr(h, 'history_change_reason', None),
+                'chn_notes': h.chn_notes,
+                'created_at': h.created_at,
+                'updated_at': h.updated_at,
+                # Include staff info if available in history
+                'staff_name': f"{h.staff.rp.per.per_fname} {h.staff.rp.per.per_lname}" if h.staff and h.staff.rp and h.staff.rp.per else None,
+                'staff_id': h.staff.staff_id if h.staff else None,
+            })
+        
+        return history_data
 
     class Meta:
         model = ChildHealthNotes
@@ -61,9 +92,16 @@ class ChildHealthSupplementStatusSerializer(serializers.ModelSerializer):
     
 
 class NutritionalStatusSerializerBase(serializers.ModelSerializer):
+    bm_details = BodyMeasurementSerializer(source='bm', read_only=True)
+    pat_details = PatientSerializer(source='pat', read_only=True)
+
     class Meta:
         model = NutritionalStatus
         fields = '__all__'
+        extra_fields = ['patient_details', 'gender']
+
+   
+   
         
 
 class ChildHealthVitalSignsSerializer(serializers.ModelSerializer):
@@ -114,7 +152,6 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
     exclusive_bf_checks = ExclusiveBFCheckSerializer(many=True, read_only=True)
     immunization_tracking = ChildHealthImmunizationHistorySerializer(many=True, read_only=True)
     supplements_statuses =ChildHealthSupplementStatusSerializer(many=True, read_only=True)
-    nutrition_statuses = serializers.SerializerMethodField()
     disabilities = serializers.SerializerMethodField()  # 🔷 ADD THIS
 
 
@@ -134,18 +171,10 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
             'exclusive_bf_checks',
             'immunization_tracking',
             'supplements_statuses',
-            'nutrition_statuses',
         ]
 
 
-    def get_nutrition_statuses(self, obj):
-        # fetch nutritional status for each vital sign
-        vitals = obj.child_health_vital_signs.all()
-        nut_stats = []
-        for vital in vitals:
-            for nut in vital.nutritional_status.all():
-                nut_stats.append(NutritionalStatusSerializerBase(nut).data)
-        return nut_stats
+
     def get_disabilities(self, obj): 
         patrec = obj.chrec.patrec
         disabilities = patrec.patient_disabilities.all()

@@ -370,6 +370,9 @@ INSTALLED_APPS = [
     'apps.childhealthservices',
     'apps.servicescheduler',
     'apps.reports',
+    'apps.file',
+    "simple_history",
+
 ]
 
 
@@ -384,7 +387,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'apps.authentication.middleware.AccountMiddleware',
     "django.middleware.gzip.GZipMiddleware",  
+    'simple_history.middleware.HistoryRequestMiddleware',
+]
+
+AUTHENTICATION_BACKENDS = [
+    'apps.authentication.backends.SupabaseAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -466,6 +476,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ========================
 # CORS SETTINGS
 # ========================
+REST_FRAMEWORK = {
+    # 'DEFAULT_AUTHENTICATION_CLASSES': [
+    #     'apps.authentication.backends.SupabaseAuthBackend',
+    # ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        # 'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
@@ -474,9 +493,21 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 ALLOWED_HOSTS = ['*'] 
-CORS_ALLOW_ALL_ORIGINS = True # disable in production
-CORS_ALLOW_CREDENTIALS = True # false in production
+CORS_ALLOW_ALL_ORIGINS= True
+CORS_ALLOW_CREDENTIALS= True
 
+
+
+# JWT Authentication Settings
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',

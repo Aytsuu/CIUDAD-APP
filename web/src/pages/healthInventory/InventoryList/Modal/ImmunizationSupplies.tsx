@@ -29,9 +29,11 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
   const location = useLocation();
   const navigate = useNavigate();
   const [supplyName, setSupplyName] = useState<string>("");
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(false);
 
-  // If using as a standalone component, get initialData from location
+
   const locationInitialData = location.state?.initialData as ImmunizationData;
   const effectiveInitialData = initialData || locationInitialData;
 
@@ -58,6 +60,14 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
       });
     }
   }, [mode, effectiveInitialData, form]);
+
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      const isValid = form.formState.isValid;
+      setIsFormValid(isValid);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const hasChanges = (data: ImmunizationType) => {
     if (mode === "add") return true;
@@ -165,7 +175,7 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
                 <Button 
                   type="submit" 
                   className="w-full sm:w-auto" 
-                  disabled={isSubmitting || (mode === "edit" && effectiveInitialData && !hasChanges(form.watch()))}
+                  disabled={isSubmitting || (mode === "edit" && effectiveInitialData && !hasChanges(form.watch())) || !isFormValid}
                 >
                   {isSubmitting ? (
                     <>

@@ -4,8 +4,10 @@ from .views import *
 urlpatterns=[
         path('all-medicine-records/', PatientMedicineRecordsView.as_view(), name='all-medrecords'),
         path('indiv-medicine-record/<str:pat_id>/', IndividualMedicineRecordView.as_view(), name='inv-medrecord'),
+        path('medicine-records-table/<str:pat_id>/', MedicineRecordTableView.as_view(), name='medicine-records-table'),
+
         path('create-medicine-record/', CreateMedicineRecordView.as_view(), name='create-medrecord'),
-        
+
         path('medrec-totalrecords/', MedicineTotalCountAPIView.as_view(), name='medrec-totalrecords'),
         path('medrec-count/<str:pat_id>/', GetMedRecordCountView.as_view(), name='medrec-count'),
         path('month-count/', MonthlyMedicineCountAPIView.as_view(), name='month-count'),
@@ -20,12 +22,12 @@ urlpatterns=[
         path('medicine-records/monthly/', MonthlyMedicineSummariesAPIView.as_view(), name='monthly_medicine_records'),
         path('medicine-reports/<str:month>/', MonthlyMedicineRecordsDetailAPIView.as_view(), name='medicine-reports'),
         path('medicines-request/monthly/chart/<str:month>/', MonthlyMedicineChart.as_view(), name='medicines_list'),
+         
+         
+                 #REVISE (BACKEND)
+
+        path('create-medicine/request/', MedicineRequestCreateView.as_view(), name='medicine-request-create'),
         
-        path('medicine-file/', MedicineFileView.as_view(), name='medicine_file_create'),
-        
-        
-        #REVISE (BACKEND)
-        path('process-medicine-request/', ProcessMedicineRequestView.as_view(), name='process_medicine_request'),       
         
         
         

@@ -4,7 +4,6 @@ import { Form, FormItem, FormLabel } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CommodityStockType, CommodityStocksSchema } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
-import { fetchCommodity } from "../REQUEST/Commodity/restful-api/CommodityFetchAPI";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
@@ -12,13 +11,14 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useSubmitCommodityStock } from "../REQUEST/Commodity/queries/CommodityPostQueries";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { Pill } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { Combobox } from "@/components/ui/combobox";
+import { fetchCommodity } from "../REQUEST/Commodity/queries/CommodityFetchQueries";
 
 export default function AddCommodityStock() {
   const { user } = useAuth();
-  const staff_id = user?.staff?.staff_id;
+  const staff = user?.staff?.staff_id || "";
   const form = useForm<CommodityStockType>({
     resolver: zodResolver(CommodityStocksSchema),
     defaultValues: {
@@ -27,11 +27,12 @@ export default function AddCommodityStock() {
       cinv_qty: undefined,
       cinv_pcs: undefined,
       cinv_recevFrom: "",
-      expiryDate: new Date().toISOString().split("T")[0]
+      expiry_date: "",
+      staff: staff,
+      inv_type: "Commodity"
     }
   });
 
-  const commodity: Array<{ id: string; name: string; category: string; user_type?: string }> = fetchCommodity();
   const { mutate: submit, isPending } = useSubmitCommodityStock();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<CommodityStockType | null>(null);
@@ -42,16 +43,17 @@ export default function AddCommodityStock() {
   const pcs = form.watch("cinv_pcs") || 0;
   const comId = form.watch("com_id");
   const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
+  const { data: commodityOptions, isLoading: isCommodityLoading } = fetchCommodity();
 
   // Update user_type when com_id changes
   useEffect(() => {
     if (comId) {
-      const selectedCommodity = commodity.find((item) => item.id === comId);
+      const selectedCommodity = commodityOptions?.default.find((item: any) => item.com_id === comId);
       setSelectedUserType(selectedCommodity?.user_type ?? "Unknown");
     } else {
       setSelectedUserType(""); // Reset when no commodity is selected
     }
-  }, [comId, commodity]);
+  }, [comId, commodityOptions]);
 
   const onSubmit = (data: CommodityStockType) => {
     console.log("Form submitted, opening confirmation dialog");
@@ -62,7 +64,7 @@ export default function AddCommodityStock() {
   const confirmAdd = async () => {
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-    submit({ data: formData, staff: staff_id });
+    submit({ data: formData });
   };
 
   return (
@@ -73,7 +75,29 @@ export default function AddCommodityStock() {
           <hr className="mb-2" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormSelect control={form.control} name="com_id" label="Commodity Name" options={commodity} />
+            {/* Commodity Selection Combobox */}
+            <div className="mt-2">
+              <Label className="block mb-2 text-black/70">Commodity Name</Label>
+              <div className="relative">
+                <Combobox
+                  options={commodityOptions?.formatted || []}
+                  value={commodityOptions?.formatted?.find((option: any) => option.id.startsWith(form.watch("com_id") + ","))?.id || ""}
+                  onChange={(value) => {
+                    const comId = value.split(",")[0]; // Get the first part before the comma
+                    form.setValue("com_id", comId);
+
+                    // Update user_type when commodity is selected
+                    const selectedCommodity = commodityOptions?.default.find((com: any) => com.com_id === comId);
+                    if (selectedCommodity) {
+                      setSelectedUserType(selectedCommodity.user_type || "");
+                    }
+                  }}
+                  placeholder={isCommodityLoading ? "Loading commodities..." : "Select commodity"}
+                  emptyMessage="No available commodities"
+                  triggerClassName="w-full"
+                />
+              </div>
+            </div>
 
             <div className="flex flex-col">
               <FormLabel className="text-darkGray">User Type</FormLabel>
@@ -82,7 +106,7 @@ export default function AddCommodityStock() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date" />
+            <FormDateTimeInput control={form.control} name="expiry_date" label="Expiry Date" type="date" />
             <FormSelect
               control={form.control}
               name="cinv_recevFrom"

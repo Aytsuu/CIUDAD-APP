@@ -1,11 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.core.files.base import ContentFile
 from ..verification import KYCVerificationProcessor
 from ..models import KYCRecord
 
 class KYCDocumentMatchingView(APIView):
+  permission_classes = [AllowAny]
   def post(self, request):
     id_image = request.data.get('image', None)
     kyc_id = request.data.get('kyc_id', None)
@@ -34,6 +36,7 @@ class KYCDocumentMatchingView(APIView):
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 class KYCFaceMatchingView(APIView):
+  permission_classes = [AllowAny]
   def post(self, request):
     kyc_id = request.data.get('kyc_id', None)
     face_image = request.data.get('image', None)

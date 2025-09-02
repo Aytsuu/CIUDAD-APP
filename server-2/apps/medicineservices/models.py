@@ -11,7 +11,6 @@ class MedicineRequest(models.Model):
     requested_at = models.DateTimeField(auto_now_add=True)
     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, db_column='rp_id', related_name='medicine_requests',blank=True,null=True)
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='medicine_requests',blank=True,null=True)
-    fullfilled_at = models.DateTimeField(null=True, blank=True) 
     status = models.CharField(max_length=20, default='pending')
    
     def __str__(self):
@@ -26,6 +25,9 @@ class MedicineRequestItem(models.Model):
     reason = models.TextField(blank=True, null=True)  # (OP)    
     minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_request_items')
     medreq_id = models.ForeignKey('MedicineRequest', on_delete=models.CASCADE, related_name='items',db_column='medreq_id')
+    med= models.ForeignKey(Medicinelist, on_delete=models.CASCADE, related_name='medicine_request_items', db_column='med_id', blank=True, null=True)
+    status = models.CharField(max_length=20, default='pending') #refered  or confirm
+
 
     def __str__(self):
         return f"MedicineRequestItem #{self.medreqitem_id}"
@@ -52,7 +54,7 @@ class MedicineRecord(models.Model):
     class Meta:
         db_table = 'medicine_record'
         
-class Medicine_File(models.Model):
+class Medicine_File(models.Model): 
 
     medf_id = models.BigAutoField(primary_key=True)
     medf_name = models.CharField(max_length=255)
@@ -60,6 +62,7 @@ class Medicine_File(models.Model):
     medf_path = models.CharField(max_length=500)
     medf_url = models.CharField(max_length=500)
     medrec= models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='medicine_files', blank=True, null=True)
+    medreqitem= models.ForeignKey(MedicineRequestItem, on_delete=models.CASCADE, related_name='medicine_files', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

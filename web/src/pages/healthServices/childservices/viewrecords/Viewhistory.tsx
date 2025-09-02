@@ -3,10 +3,9 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { HealthHistoryAccordions } from "@/components/ui/childhealth-history-accordion";
+import { HealthHistoryTable } from "./health-history-table"; // Updated import
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button/button";
-import { Accordion } from "@/components/ui/accordion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChildHealthHistoryRecord } from "./types";
 import { getSupplementStatusesFields } from "./config";
@@ -15,33 +14,23 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { History, Baby } from "lucide-react";
 import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 
-
 export default function ChildHealthHistoryDetail() {
   // Navigation and routing
   const navigate = useNavigate();
   const location = useLocation();
   const {  chrecId, chhistId } = location.state?.params || {};
-
-  // State management
-  const [fullHistoryData, setFullHistoryData] = useState<
-    ChildHealthHistoryRecord[]
-  >([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [recordsPerPage, setRecordsPerPage] = useState(2);
-  const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
-
-  const supplementStatusesFields = useMemo(
-    () => getSupplementStatusesFields(fullHistoryData),
-    [fullHistoryData]
-  );
-
-
   const { 
     data: historyData, 
     isLoading, 
   } = useChildHealthHistory(chrecId);
 
   
+  // State management
+  const [fullHistoryData, setFullHistoryData] = useState<
+    ChildHealthHistoryRecord[]
+  >([]);
+  const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
+
   useEffect(() => {
     if (historyData) {
       const sortedHistory = (historyData[0]?.child_health_histories || [])
@@ -50,38 +39,13 @@ export default function ChildHealthHistoryDetail() {
         );
       
       setFullHistoryData(sortedHistory);
-
-      // Set initial index to the selected record
-      const initialIndex = sortedHistory.findIndex(
-        (record: ChildHealthHistoryRecord) => record.chhist_id === chhistId
-      );
-      setCurrentIndex(initialIndex !== -1 ? initialIndex : 0);
     }
   }, [historyData, chhistId]);
 
-  // Memoized data for display
-  const recordsToDisplay = useMemo(() => {
-    if (fullHistoryData.length === 0) return [];
-    return fullHistoryData.slice(currentIndex, currentIndex + recordsPerPage);
-  }, [fullHistoryData, currentIndex, recordsPerPage]);
-
-  // Navigation handlers
-  const handleSwipeLeft = () => {
-    if (currentIndex < fullHistoryData.length - recordsPerPage) {
-      setCurrentIndex((prev) => prev + 1);
-    }
-  };
-
-  const handleSwipeRight = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-    }
-  };
-
-  // Set default value for recordsPerPage
-  useEffect(() => {
-    setRecordsPerPage(3);
-  }, []);
+  const supplementStatusesFields = useMemo(
+    () => getSupplementStatusesFields(fullHistoryData),
+    [fullHistoryData]
+  );
 
   // Loading state
   if (isLoading) {
@@ -148,7 +112,7 @@ export default function ChildHealthHistoryDetail() {
               {/* Current Record Tab */}
               <TabsContent value="current">
                 <PatientSummarySection
-                  recordsToDisplay={[fullHistoryData[currentIndex]]}
+                  recordsToDisplay={fullHistoryData.length > 0 ? [fullHistoryData.find(record => record.chhist_id === chhistId) || fullHistoryData[0]] : []}
                   fullHistoryData={fullHistoryData}
                   chhistId={chhistId}
                 />
@@ -156,7 +120,7 @@ export default function ChildHealthHistoryDetail() {
 
               {/* History Tab */}
               <TabsContent value="history">
-                {recordsToDisplay.length === 0 ? (
+                {fullHistoryData.length === 0 ? (
                   <div className="p-6 text-center text-gray-600">
                     <p>No health history found for this child.</p>
                   </div>
@@ -165,83 +129,26 @@ export default function ChildHealthHistoryDetail() {
                     cardClassName="border rounded-lg shadow-sm"
                     content={
                       <div className="space-y-6 p-6">
-                        {/* Pagination Controls with Record Count */}
-                        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                        {/* Record Count */}
+                        <div className="flex justify-center">
                           <div className="text-sm text-gray-500 font-medium">
-                            Showing records {currentIndex + 1}-
-                            {Math.min(
-                              currentIndex + recordsPerPage,
-                              fullHistoryData.length
-                            )}{" "}
-                            of {fullHistoryData.length}
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={handleSwipeRight}
-                              disabled={currentIndex === 0}
-                              className="border-gray-300 hover:bg-gray-50 transition-colors"
-                              aria-label="Previous records"
-                            >
-                              <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={handleSwipeLeft}
-                              disabled={
-                                currentIndex >=
-                                fullHistoryData.length - recordsPerPage
-                              }
-                              className="border-gray-300 hover:bg-gray-50 transition-colors"
-                              aria-label="Next records"
-                            >
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
+                            Showing {fullHistoryData.length} health {fullHistoryData.length === 1 ? 'record' : 'records'}
                           </div>
                         </div>
 
                         {/* Divider */}
                         <hr className="border-gray-200" />
 
-                        {/* Accordion Sections */}
-                        <Accordion
-                          type="multiple"
-                          className="w-full space-y-4"
-                          defaultValue={["record-overview", "child-details"]}
-                        >
-                          <HealthHistoryAccordions
-                            recordsToDisplay={recordsToDisplay}
+                        {/* Table View */}
+                        <div className="w-full">
+                          <HealthHistoryTable
+                            recordsToDisplay={fullHistoryData} // Show all records for horizontal scrolling
                             chhistId={chhistId}
                             supplementStatusesFields={supplementStatusesFields}
                           />
-                        </Accordion>
-
-                        {/* Bottom Pagination Controls (for mobile) */}
-                        <div className="sm:hidden flex justify-center gap-4 pt-4">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={handleSwipeRight}
-                            disabled={currentIndex === 0}
-                            className="border-gray-300 hover:bg-gray-50"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={handleSwipeLeft}
-                            disabled={
-                              currentIndex >=
-                              fullHistoryData.length - recordsPerPage
-                            }
-                            className="border-gray-300 hover:bg-gray-50"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
                         </div>
+
+
                       </div>
                     }
                   />

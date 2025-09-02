@@ -72,3 +72,4 @@ export const deductFirstAidStock = async (
     throw error instanceof Error ? error : new Error("An error occurred");
   }
 };
+

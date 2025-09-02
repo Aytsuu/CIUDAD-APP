@@ -2,10 +2,10 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, CircleChevronRight } from "lucide-react";
 import { Link } from "react-router";
 import { Label } from "@/components/ui/label";
-import { FamilyRequestRecord, IndividualRequestRecord } from "../profilingTypes";
+import { FamilyRequestRecord, IndividualRequestRecord } from "../ProfilingTypes";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { Combobox } from "@/components/ui/combobox";
-import { formatRequestComposition } from "../profilingFormats";
+import { formatRequestComposition } from "../ProfilingFormats";
 
 // Define the colums for the data table
 export const IndividualRequestColumns: ColumnDef<IndividualRequestRecord>[] = [
@@ -76,10 +76,9 @@ export const IndividualRequestColumns: ColumnDef<IndividualRequestRecord>[] = [
     header: "Action",
     cell: ({ row }) => (
       <Link
-        to="/request/pending/individual/registration"
+        to="/profiling/request/pending/individual/registration"
         state={{
           params: {
-            type: "request",
             title: "Registration Request",
             description:
               "This is a registration request submitted by the user. Please review the details and approve accordingly.",
@@ -182,7 +181,7 @@ export const FamilyRequestColumns: ColumnDef<FamilyRequestRecord>[] = [
     header: "Action",
     cell: ({ row }) => (
       <Link
-        to="/request/pending/family/registration"
+        to="/profiling/request/pending/family/registration"
         state={{
           params: {
             data: row.original,

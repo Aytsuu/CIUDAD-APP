@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog/dialog";
 import {
   useAddProjectProposal,
-  useAddSupportDocument,
+  // useAddSupportDocument,
 } from "./queries/addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { useGetStaffList } from "./queries/fetchqueries";
@@ -25,20 +25,19 @@ import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
 import { generateProposalPdf } from "./personalized-compo/pdfGenerator";
 import { Signatory, ProjectProposalFormProps } from "./projprop-types";
-import { ComboboxInput } from "@/components/ui/form/form-combo-box";
+import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 
 export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
-  onSuccess,
   existingProposal,
 }) => {
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [supportingDocs, setSupportingDocs] = useState<MediaUploadType>([]);
-  const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
+  const [headerImageUrl, _setHeaderImageUrl] = useState<string | null>(null);
   const [pdfPreview, setPdfPreview] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const addSupportDocMutation = useAddSupportDocument();
+  // const addSupportDocMutation = useAddSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const addMutation = useAddProjectProposal();
 
@@ -217,67 +216,67 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     setIsPreviewOpen(false);
   };
 
-  const handleSave = async (data: z.infer<typeof ProjectProposalSchema>) => {
-    try {
-      setErrorMessage(null);
+  const handleSave = async (_data: z.infer<typeof ProjectProposalSchema>) => {
+    // try {
+    //   setErrorMessage(null);
 
-      const headerImage =
-        mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
+    //   const headerImage =
+    //     mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
 
-      const validSupportDocs = supportingDocs.filter(
-        (doc) =>
-          doc.status === "uploaded" &&
-          doc.publicUrl &&
-          doc.storagePath &&
-          doc.file?.name &&
-          doc.file?.type
-      );
+    //   const validSupportDocs = supportingDocs.filter(
+    //     (doc) =>
+    //       doc.status === "uploaded" &&
+    //       doc.publicUrl &&
+    //       doc.storagePath &&
+    //       doc.file?.name &&
+    //       doc.file?.type
+    //   );
 
-      const proposalData = {
-        projectTitle: data.projectTitle,
-        background: data.background,
-        objectives: data.objectives.filter((obj) => obj.trim() !== ""),
-        participants: data.participants.filter((p) => p.category.trim() !== ""),
-        date: data.date,
-        venue: data.venue,
-        budgetItems: data.budgetItems.filter((item) => item.name.trim() !== ""),
-        monitoringEvaluation: data.monitoringEvaluation,
-        signatories: data.signatories.filter((s) => s.name.trim() !== ""),
-        gpr_header_img: headerImage,
-        paperSize: paperSize,
-        staff_id: null,
-      };
+    //   const proposalData = {
+    //     projectTitle: data.projectTitle,
+    //     background: data.background,
+    //     objectives: data.objectives.filter((obj) => obj.trim() !== ""),
+    //     participants: data.participants.filter((p) => p.category.trim() !== ""),
+    //     date: data.date,
+    //     venue: data.venue,
+    //     budgetItems: data.budgetItems.filter((item) => item.name.trim() !== ""),
+    //     monitoringEvaluation: data.monitoringEvaluation,
+    //     signatories: data.signatories.filter((s) => s.name.trim() !== ""),
+    //     gpr_header_img: headerImage,
+    //     paperSize: paperSize,
+    //     staff_id: null,
+    //   };
 
-      const proposalResponse = await addMutation.mutateAsync(proposalData);
+    //   const proposalResponse = await addMutation.mutateAsync(proposalData);
 
-      if (validSupportDocs.length > 0) {
-        await Promise.all(
-          validSupportDocs.map((doc) => {
-            const fileData = {
-              psd_url: doc.publicUrl!,
-              psd_path: doc.storagePath!,
-              psd_name: doc.file.name,
-              psd_type: doc.file.type,
-            };
-            return addSupportDocMutation.mutateAsync({
-              gprId: proposalResponse.gprId,
-              fileData,
-            });
-          })
-        );
-      }
+    //   if (validSupportDocs.length > 0) {
+    //     await Promise.all(
+    //       validSupportDocs.map((doc) => {
+    //         const fileData = {
+    //           psd_url: doc.publicUrl!,
+    //           psd_path: doc.storagePath!,
+    //           psd_name: doc.file.name,
+    //           psd_type: doc.file.type,
+    //         };
+    //         return addSupportDocMutation.mutateAsync({
+    //           gprId: proposalResponse.gprId,
+    //           fileData,
+    //         });
+    //       })
+    //     );
+    //   }
 
-      form.reset();
-      setMediaFiles([]);
-      setSupportingDocs([]);
-      setHeaderImageUrl(null);
-      onSuccess();
-    } catch (error) {
-      console.error("Error in handleSave:", error);
-      setErrorMessage(
-        "Failed to save proposal. Please check the form data and try again."
-      );
-    }
+    //   form.reset();
+    //   setMediaFiles([]);
+    //   setSupportingDocs([]);
+    //   setHeaderImageUrl(null);
+    //   onSuccess();
+    // } catch (error) {
+    //   console.error("Error in handleSave:", error);
+    //   setErrorMessage(
+    //     "Failed to save proposal. Please check the form data and try again."
+    //   );
+    // }
   };
 
   useEffect(() => {
@@ -294,19 +293,19 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
 
       setSupportingDocs(suppDocs);
 
-      if (existingProposal?.gpr_header_img) {
-        setHeaderImageUrl(existingProposal.gpr_header_img);
-        setMediaFiles([
-          {
-            id: "existing",
-            type: "image",
-            file: new File([], "existing.jpg"),
-            publicUrl: existingProposal.gpr_header_img,
-            status: "uploaded",
-            previewUrl: existingProposal.gpr_header_img,
-          },
-        ]);
-      }
+      // if (existingProposal?.gpr_header_img) {
+      //   setHeaderImageUrl(existingProposal.gpr_header_img);
+      //   setMediaFiles([
+      //     {
+      //       id: "existing",
+      //       type: "image",
+      //       file: new File([], "existing.jpg"),
+      //       publicUrl: existingProposal.gpr_header_img,
+      //       status: "uploaded",
+      //       previewUrl: existingProposal.gpr_header_img,
+      //     },
+      //   ]);
+      // }
     }
   }, [existingProposal]);
 
@@ -385,9 +384,9 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                       typeof filesOrUpdater === "function"
                         ? filesOrUpdater(prev)
                         : filesOrUpdater;
-                    const imageUrl =
-                      newFiles[0]?.publicUrl || newFiles[0]?.previewUrl || null;
-                    setHeaderImageUrl(imageUrl);
+                    // const imageUrl =
+                    //   newFiles[0]?.publicUrl || newFiles[0]?.previewUrl || null;
+                    // setHeaderImageUrl(imageUrl);
                     return newFiles;
                   });
                 }}

@@ -32,7 +32,7 @@ export const useUpdateWasteTruck = () => {
       return { previousTrucks };
     },
 
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, _variables, context) => {
       if (context?.previousTrucks) {
         queryClient.setQueryData(["wasteTrucks"], context.previousTrucks);
       }
@@ -41,7 +41,7 @@ export const useUpdateWasteTruck = () => {
         duration: 2000,
       });
     },
-    onSuccess: (updatedData, variables) => {
+    onSuccess: (_updatedData, _variables) => {
       toast.success("Truck updated successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000,

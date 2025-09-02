@@ -1,13 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addPosition, addStaff, assignFeature, setPermission } from "../restful-api/administrationPostAPI";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 
 // Adding
 export const useAddPosition = () => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ data, staffId }: { data: any; staffId: string }) =>
@@ -17,13 +15,6 @@ export const useAddPosition = () => {
         ...old,
         newPosition,
       ]);
-      toast("New record created successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        action: {
-          label: "View",
-          onClick: () => navigate(-1),
-        },
-      });
     },
   });
 };
@@ -36,7 +27,13 @@ export const useAssignFeature = () => {
       featureId: string;
       staffId: string;
     }) => assignFeature(positionId, featureId, staffId),
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+    onSuccess: (data) => {
+      queryClient.setQueryData(['allAssignedFeatures'], (old: any[] = []) => [
+        ...old,
+        data
+      ])
+      queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+    }
   })
 }
 
@@ -68,11 +65,6 @@ export const useAddStaff = () => {
 
       queryClient.invalidateQueries({queryKey: ['staffs']})
 
-      // Deliver feedback
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
-
       navigate(-1)
     }
   });
@@ -83,15 +75,30 @@ export const useAddPositionBulk = () => {
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       try {
-        const res = await api.post('administration/position/bulk/create/', data);
-        return res.data;
-      } catch(err) {
-        console.error(err);
+        console.log('Payload being sent to bulk create:', data);
+        
+        // Call both APIs
+        const [res1, res2] = await Promise.all([
+          api.post('administration/position/bulk/create/', data),
+          api2.post('administration/position/bulk/create/', data)
+        ]);
+        
+        return {
+          api1Response: res1.data,
+          api2Response: res2.data
+        };
+      } catch(err: any) {
+        console.error('Bulk position creation error:', err);
+        if (err.response) {
+          console.error('Response data:', err.response.data);
+          console.error('Response status:', err.response.status);
+        }
         throw err;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ['positions']})
+      queryClient.invalidateQueries({queryKey: ['positions']});
+      queryClient.invalidateQueries({queryKey: ['positionsHealth']});
     }
   })
 }

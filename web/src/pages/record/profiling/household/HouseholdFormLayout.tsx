@@ -2,27 +2,24 @@ import React from "react"
 import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import HouseholdProfileForm from "./HouseholdProfileForm"
-import { formatAddresses, formatResidents } from "../profilingFormats"
+import { formatAddresses, formatResidents } from "../ProfilingFormats"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { useForm } from "react-hook-form"
+import { useFieldArray, useForm } from "react-hook-form"
 import { householdFormSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { MapPin, Users, HousePlus, Plus } from "lucide-react"
+import { HousePlus, Plus, MoveRight, X } from "lucide-react"
 import { Form } from "@/components/ui/form/form"
 import { useAuth } from "@/context/AuthContext"
 import { useAddHousehold } from "../queries/profilingAddQueries"
 import { usePerAddressesList, useResidentsList } from "../queries/profilingFetchQueries"
 import { useLoading } from "@/context/LoadingContext"
 import { useSafeNavigate } from "@/hooks/use-safe-navigate"
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { FormSelect } from "@/components/ui/form/form-select"
-import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import { Button } from "@/components/ui/button/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { cn } from "@/lib/utils"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
+import { capitalize } from "@mui/material"
+import { Badge } from "@/components/ui/badge"
 
 export default function HouseholdFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // =============== STATE INITIALIZATION ==================
@@ -33,7 +30,6 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false)
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [addresses, setAddresses] = React.useState<any[]>([])
-  const [showAddressField, setShowAddressField] = React.useState<boolean>(false)
 
   const defaultValues = generateDefaultValues(householdFormSchema)
   const form = useForm<z.infer<typeof householdFormSchema>>({
@@ -41,20 +37,20 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
     defaultValues,
   })
 
-  // =============== QUERIES ==================
   const { mutateAsync: addHousehold } = useAddHousehold()
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList()
   const { data: perAddressList, isLoading: isLoadingPerAddress } = usePerAddressesList()
-
-  // =============== MEMOIZED VALUES ==================
-  const formattedAddresses = React.useMemo(
-    () => formatAddresses(tab_params?.isRegistrationTab ? tab_params.addresses : addresses) || [],
-    [tab_params?.addresses, addresses],
-  )
-
-  const formattedResidents = React.useMemo(() => formatResidents(residentsList) || [], [residentsList])
-
+  const formattedAddresses = formatAddresses(addresses) || []
+  const formattedResidents = formatResidents(residentsList) || []
   const isLoading = isLoadingResidents || isLoadingPerAddress
+  
+  const { append } = useFieldArray({
+    control: tab_params?.form?.control || form?.control,
+    name: "houseSchema.list"
+  })
+
+  const houseList = tab_params?.form.watch("houseSchema.list");
+  console.log(houseList)
 
   // =================== SIDE EFFECTS ======================
   React.useEffect(() => {
@@ -66,28 +62,71 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   }, [isLoading, showLoading, hideLoading])
 
   React.useEffect(() => {
-    if (tab_params?.residentId) {
-      form.setValue("householdHead", tab_params.residentId)
-    }
-  }, [tab_params?.residentId, form])
-
-  React.useEffect(() => {
+    if(tab_params?.isRegistrationTab) return;
     const head = form.watch("householdHead")
+    console.log('Selected household head:', head)
+    console.log('Residents list:', residentsList)
+    console.log('Per address list:', perAddressList)
+    
     if (head && residentsList) {
       const resident = residentsList.find((res: any) => res.rp_id == head.split(" ")[0])
+      console.log('Found resident:', resident)
+      
       if (resident) {
-        const filteredAddresses = perAddressList.filter((per_add: any) => per_add?.per === resident.personal_info.per_id)
+        const filteredAddresses = perAddressList?.filter((per_add: any) => per_add?.per === resident.personal_info.per_id)
         form.resetField('address')
+        console.log('Filtered addresses:', filteredAddresses)
+        console.log('Looking for per_id:', resident.personal_info.per_id)
+        
         setAddresses(filteredAddresses)
-        setShowAddressField(filteredAddresses.length > 0)
+        
+        // Debug the formatted addresses
+        console.log('Formatted addresses:', formatAddresses(filteredAddresses))
       }
     } else {
       setAddresses([])
-      setShowAddressField(false)
     }
   }, [form.watch("householdHead"), residentsList, perAddressList])
 
+  React.useEffect(() => {
+    const per_addresses = tab_params?.form.getValues().personalSchema.per_addresses;
+    if(per_addresses?.length > 0) {
+      setAddresses(per_addresses)
+    }
+  }, [tab_params?.form.watch("personalSchema.per_addresses")])
+
   // ==================== HANDLERS ========================
+  const handleContinue = () => {
+    const hasHouse = tab_params?.form.getValues("houseSchema.list").length > 0;
+    if(!hasHouse) {
+      showErrorToast("At least one owned houses is required to continue. Skip if not applicable.");
+      return;
+    }
+
+    tab_params?.next(true)
+  }
+
+  const handleAddHouse = async () => {
+    if (!(await tab_params?.form.trigger(["houseSchema.info"]))) {
+      showErrorToast("Please fill out all required fields")
+      return
+    }
+    
+    const houseInfo = tab_params?.form.getValues("houseSchema.info");
+    append({
+      ...houseInfo,
+      nhts: capitalize(houseInfo.nhts)
+    })
+    tab_params?.form.resetField("houseSchema.info")
+  }
+
+  const handleRemoveHouse = (index: number) => {
+    const list = tab_params?.form.getValues("houseSchema.list");
+    tab_params?.form.setValue("houseSchema.list", list.filter((_prev: any, idx: number) => 
+      idx !== index
+    ))
+  }
+
   const handleSubmit = async () => {
     setIsSubmitting(true)
 
@@ -104,8 +143,8 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
       }
 
       const householdInfo = form.getValues()
+      console.log(householdInfo)
 
-      // Add to main household database
       await addHousehold({
         householdInfo: householdInfo,
         staffId: user?.staff?.staff_id,
@@ -113,13 +152,8 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
 
       // Show success toast
       showSuccessToast("Household registered successfully!");
+      safeNavigate.back()
 
-      // Navigate based on context
-      if (tab_params?.isRegistrationTab) {
-        tab_params.next?.()
-      } else {
-        safeNavigate.back()
-      }
     } catch (error) {
       console.error("Error adding household:", error)
       showErrorToast("Failed to add household. Please try again.");
@@ -129,154 +163,134 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   }
 
   const handleSkip = () => {
-    tab_params?.next?.()
+    tab_params?.next?.(false)
   }
 
   // ==================== RENDER HELPERS ======================
-  const residentRegistrationForm = () => (
-    <div className="w-full flex justify-center px-4">
-      <Card className="w-full max-w-2xl shadow-lg border-0 bg-gradient-to-br from-white to-gray-50/50">
-        <CardHeader className="text-center pb-6">
-          <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <HousePlus className="w-8 h-8 text-blue-600" />
-          </div>
-          <h2 className="text-2xl font-bold mb-2">Household Registration</h2>
-          <p className="max-w-md mx-auto leading-relaxed">
-            Is this resident a house owner? If yes, please complete the household information below to proceed.
-          </p>
-        </CardHeader>
+  const residentRegistrationForm = () => {
+    return (
+      <div className="flex justify-center">
+        <Card className="w-full max-w-7xl max-h-[700px] shadow-none rounded-lg overflow-y-auto">
+          <CardHeader className="text-center pb-6">
+            <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+              <HousePlus className="w-8 h-8 text-blue-600" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">House Registration</h2>
+            <p className="max-w-2xl mx-auto leading-relaxed">
+              Is this resident a house owner? If yes, please add the house information below to proceed.
+            </p>
+          </CardHeader> 
+          <CardContent>
+            <div className="flex w-full gap-4">
+              <Form {...tab_params?.form}>
+                <form className="w-full max-w-lg grid gap-4 border p-5 rounded-lg">
+                  <div className="">
+                    <p className="font-semibold">House Information</p>
+                    <p className="text-sm text-gray-700">
+                      Fill all required fields
+                    </p>
+                  </div>
 
-        <CardContent className="space-y-6">
-          {/* Info Alert */}
-          <Alert className="border-blue-200 bg-blue-50">
-            <AlertDescription className="text-blue-800">
-              This step is optional. You can skip if the resident is not a house owner or if you prefer to register the
-              household later.
-            </AlertDescription>
-          </Alert>
-          <Form {...form}>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                handleSubmit()
-              }}
-              className="space-y-6"
-            >
-              {/* NHTS Status */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-gray-500" />
-                  <label className="text-sm font-medium text-gray-700">NHTS Household Status</label>
-                  <Badge variant="secondary" className="text-xs">
-                    Required
-                  </Badge>
-                </div>
-                <FormSelect
-                  control={form.control}
-                  name="nhts"
-                  label="Select NHTS status"
-                  options={[
-                    { id: "no", name: "No - Not an NHTS household" },
-                    { id: "yes", name: "Yes - NHTS household" },
-                  ]}
-                  readOnly={false}
-                />
-                <p className="text-xs text-gray-500">
-                  NHTS (National Household Targeting System) identifies poor households for social protection
-                  programs.
-                </p>
-              </div>
+                  {/* NHTS Status */}
+                  <div className="space-y-3">
+                    <div className="max-w-xs">
+                      <FormSelect
+                        control={tab_params?.form.control}
+                        name="houseSchema.info.nhts"
+                        label="Select NHTS status"
+                        options={[
+                          { id: "no", name: "No - Not an NHTS household" },
+                          { id: "yes", name: "Yes - NHTS household" },
+                        ]}
+                        readOnly={false}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      NHTS (National Household Targeting System)
+                    </p>
+                  </div>
 
-              <Separator />
-
-              {/* Address Selection */}
-              <div
-                className={cn(
-                  "space-y-3 transition-all duration-300",
-                  showAddressField ? "opacity-100" : "opacity-50",
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gray-500" />
-                  <label className="text-sm font-medium text-gray-700">Household Address</label>
-                  {formattedAddresses.length > 0 && (
-                    <Badge variant="secondary" className="text-xs">
-                      Required
-                    </Badge>
-                  )}
-                </div>
-
-                {formattedAddresses.length > 0 ? (
-                  <>
+                  {/* Address Selection */}
+                  <div className="max-w-lg space-y-3 transition-all duration-300 opacity-100">
                     <FormSelect
-                      control={form.control}
-                      name="address"
+                      control={tab_params?.form.control}
+                      name="houseSchema.info.address"
                       label="Select household address"
                       options={formattedAddresses}
                       readOnly={false}
                     />
-                    <p className="text-xs text-gray-500">Select the primary address for this household.</p>
-                  </>
-                ) : (
-                  <Alert className="border-amber-200 bg-amber-50">
-                    <AlertDescription className="text-amber-800">
-                      No addresses found for the selected resident. Please ensure the resident has a registered
-                      address.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
+                    <p className="text-xs text-gray-500">
+                      This reflects the addresses entered in the resident personal information.
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-end mt-5">
+                    <Button onClick={handleAddHouse} type="button" variant={"secondary"}>
+                      <Plus/> Add Household
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+              <div className="w-full flex flex-col border rounded-lg gap-4 p-5">
+                <div className="">
+                  <p className="font-semibold">Owned Houses</p>
+                  <p className="text-sm text-gray-700">
+                    This section shows the list of owned houses
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  {houseList?.map((house: any, index: number) => {
+                    const sitio = house?.address.split("-")[1]
+                    const street = house?.address.split("-")[2]
 
+                    return (
+                      <Card className="flex justify-between items-center py-2 px-3">
+                        <div className="flex gap-4">
+                          <div>House {index + 1}</div>
+                          <p>Sitio {capitalize(sitio)}, {street}</p>
+                          <Badge>{house.nhts == "yes" ? "NHTS" : "Not an NHTS"}</Badge>
+                        </div>
+                        <X 
+                          size={16} 
+                          className="cursor-pointer text-red-500"
+                          onClick={() => handleRemoveHouse(index)}
+                        />
+                      </Card>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end mt-8">
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-6">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   variant="ghost"
-                  className="flex-1 h-11"
+                  className="flex-1"
                   type="button"
                   onClick={handleSkip}
-                  disabled={isSubmitting}
                 >
                   Skip for Now
                 </Button>
 
-                <ConfirmationModal
-                  trigger={
-                    <Button
-                      className="flex-1 h-11 bg-blue-600 hover:bg-blue-700"
-                      disabled={isSubmitting || formattedAddresses.length === 0}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          Registering...
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-4 h-4 mr-2" />
-                          Register Household
-                        </>
-                      )}
-                    </Button>
-                  }
-                  title="Confirm Household Registration"
-                  description="Are you sure you want to register this household? This action will create a new household record in the system."
-                  actionLabel="Yes, Register"
-                  onClick={handleSubmit}
-                />
+                <Button onClick={handleContinue} type="button"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 w-32"
+                >
+                  Next <MoveRight/>
+                </Button>
               </div>
-
-              {/* Help Text */}
-              <div className="text-center pt-4 border-t">
-                <p className="text-xs text-gray-500">
-                  Need help? Contact your administrator or skip this step and register the household later.
-                </p>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
-  )
+            </div>
+            {/* Help Text */}
+            <div className="text-center pt-4 border-t mt-8">
+              <p className="text-xs text-gray-500">
+                Need help? Contact your administrator or skip this step and register the household later.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   const standardForm = () => (
     <div className="w-full flex justify-center">

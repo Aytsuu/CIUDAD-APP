@@ -2,12 +2,12 @@ import React from "react"
 import { Form } from "@/components/ui/form/form"
 import PersonalInfoForm from "./PersonalInfoForm"
 import { useResidentForm } from "./useResidentForm"
-import { Type } from "../../profilingEnums"
+import { Type } from "../../ProfilingEnums"
 import { useUpdateProfile } from "../../queries/profilingUpdateQueries"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { Card } from "@/components/ui/card/card"
+import { Card } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/table/data-table"
-import { businessDetailsColumns, familyDetailsColumns } from "../ResidentColumns"
+import { businessDetailsColumns, familyDetailsColumns, residentColumns } from "../ResidentColumns"
 import {
   useFamilyMembers,
   useOwnedBusinesses,
@@ -15,48 +15,25 @@ import {
   usePersonalInfo,
   useSitioList,
 } from "../../queries/profilingFetchQueries"
-import { formatSitio } from "../../profilingFormats"
+import { formatSitio } from "../../ProfilingFormats"
 import { useAddAddress, useAddPerAddress } from "../../queries/profilingAddQueries"
 import { capitalizeAllFields } from "@/helpers/capitalize"
 import { useLoading } from "@/context/LoadingContext"
-import { Loader2, Users, Building2, History, Clock, User, Calendar } from "lucide-react"
+import { Users, History, Clock, UsersRound, UserRound, Building, Eye, MoveRight } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
-import { Button } from "@/components/ui/button/button"
 import { Label } from "@/components/ui/label"
 import { useNavigate } from "react-router"
-
-// Loading Component
-const ActivityIndicator = ({ message }: { message: string }) => (
-  <div className="flex flex-col items-center justify-center py-12 space-y-4">
-    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-    <p className="text-sm text-gray-500">{message}</p>
-  </div>
-)
-
-// Empty State Component
-const EmptyState = ({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: React.ElementType
-  title: string
-  description: string
-}) => (
-  <div className="flex flex-col items-center justify-center py-12 space-y-4">
-    <div className="rounded-full bg-gray-100 p-4">
-      <Icon className="h-8 w-8 text-gray-400" />
-    </div>
-    <div className="text-center space-y-1">
-      <h3 className="text-sm font-medium text-gray-900">{title}</h3>
-      <p className="text-sm text-gray-500">{description}</p>
-    </div>
-  </div>
-)
+import { RenderHistory } from "../../ProfilingHistory"
+import { ActivityIndicator } from "@/components/ui/activity-indicator"
+import { EmptyState } from "@/components/ui/empty-state"
+import { CardSidebar } from "@/components/ui/card-sidebar"
+import { Button } from "@/components/ui/button/button"
 
 export default function ResidentViewForm({ params }: { params: any }) {
-  // ============= STATE INITIALIZATION ===============
+  // ============= STATE INITIALIZATION =============== 
+  const currentPath = location.pathname.split("/").pop() as string
+  console.log("current path:", currentPath)
   const navigate = useNavigate();
   const { user } = useAuth()
   const { showLoading, hideLoading } = useLoading()
@@ -66,6 +43,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false)
   const [addresses, setAddresses] = React.useState<Record<string, any>[]>([])
   const [validAddresses, setValidAddresses] = React.useState<boolean[]>([])
+  const [selectedItem, setSelectedItem] = React.useState<string>(currentPath);
   const { mutateAsync: addAddress } = useAddAddress()
   const { mutateAsync: addPersonalAddress } = useAddPerAddress()
   const { data: personalInfo, isLoading: isLoadingPersonalInfo } = usePersonalInfo(params.data.residentId)
@@ -78,7 +56,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
 
   const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } = useResidentForm(personalInfo)
   const family = familyMembers?.results || []
-  const businesses = ownedBusinesses || []
+  const businesses = ownedBusinesses?.results || []
   const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList])
 
   const validator = React.useMemo(
@@ -93,7 +71,56 @@ export default function ResidentViewForm({ params }: { params: any }) {
     [addresses],
   )
 
-  console.log(personalHistory)
+  const MenuItems = [
+    {
+      id: "personal",
+      label: "Personal",
+      description: "Personal Information",
+      icon: UserRound,
+      route: "personal",
+      state: {
+        params: {
+          type: 'viewing',
+          data: {
+            residentId: params?.data.residentId,
+            familyId: params?.data.familyId
+          }
+        }
+      }
+    },
+    {
+      id: "family",
+      label: "Family",
+      description: "Family Information",
+      icon: UsersRound,
+      route: "family",
+      state: {
+        params: {
+          type: 'viewing',
+          data: {
+            residentId: params?.data.residentId,
+            familyId: params?.data.familyId
+          }
+        }
+      }
+    },
+    ...(businesses?.length > 0 ? [{
+      id: "business",
+      label: "Business",
+      description: "Business Information",
+      icon: Building,
+      route: "business",
+      state: {
+        params: {
+          type: 'viewing',
+          data: {
+            residentId: params?.data.residentId,
+            familyId: params?.data.familyId
+          }
+        }
+      }
+    }] : []) as any
+  ]
   
   // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
@@ -215,7 +242,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
   }
 
   const handleHistoryItemClick = (index: number) => {
-    navigate('/resident/update/view', {
+    navigate('/profiling/resident/history/view', {
       state: {
         params: {
           newData: personalHistory[index],
@@ -223,87 +250,6 @@ export default function ResidentViewForm({ params }: { params: any }) {
         }
       }
     })
-  }
-
-  // Render Personal History Content
-  const renderPersonalHistory = () => {
-    if (isLoadingPersonalHistory) {
-      return (
-        <div className="p-4">
-          <ActivityIndicator message="Loading history..." />
-        </div>
-      )
-    }
-
-    if (!personalHistory || personalHistory.length === 0) {
-      return (
-        <div className="p-4">
-          <EmptyState icon={Clock} title="No history found" description="No recorded updates." />
-        </div>
-      )
-    }
-
-    return (
-      <div className="py-5 max-h-[80vh] overflow-y-auto">
-        <div className="space-y-2">
-
-          {personalHistory.map((historyItem: any, index: number) => (
-            <div
-              key={historyItem.history_id}
-              className={`border rounded-md p-3 hover:bg-gray-50 transition-all duration-300`}
-              style={{
-                opacity: 0,
-                animation: `fadeInUp 0.4s ease-out ${index * 0.1}s forwards`,
-              }}
-            >
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-medium text-green-700">Personal Information Update</h4>
-                  {(index + 1) < personalHistory.length ? (<Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleHistoryItemClick(index)
-                    }}
-                  >
-                    View
-                  </Button>) : (
-                    <Label className="text-xs mb-1 text-gray-500">Created</Label>
-                  )}
-                </div>
-                <div className="flex items-center justify-between text-xs text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <User className="h-3 w-3" />
-                    <span className="truncate max-w-[120px]">{historyItem.history_user_name}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs">
-                    <Calendar className="h-3 w-3" />
-                    <span className="whitespace-nowrap">{historyItem.history_date}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <style>
-          {`
-            @keyframes fadeInUp {
-              from {
-                opacity: 0;
-                transform: translateY(10px);
-              }
-              to {
-                opacity: 1;
-                transform: translateY(0);
-              }
-            }
-          `}
-        </style>
-      </div>
-    )
   }
 
   // Render Family Card Content
@@ -322,7 +268,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
     }
     return (
       <div className="flex justify-center">
-        <div className="w-full max-w-5xl mt-5 border">
+        <div className="w-full mt-5 border">
           <DataTable
             columns={familyDetailsColumns(params.data.residentId, params.data.familyId)}
             data={family}
@@ -336,18 +282,6 @@ export default function ResidentViewForm({ params }: { params: any }) {
 
   // Render Business Card Content
   const renderBusinessContent = () => {
-    if (isLoadingBusinesses) {
-      return <ActivityIndicator message="Loading business information..." />
-    }
-    if (!businesses || businesses.length === 0) {
-      return (
-        <EmptyState
-          icon={Building2}
-          title="No businesses found"
-          description="This resident has no registered business ownership."
-        />
-      )
-    }
     return (
       <div className="flex justify-center">
         <div className="w-full max-w-5xl mt-5 border">
@@ -368,8 +302,22 @@ export default function ResidentViewForm({ params }: { params: any }) {
       title="Resident Details"
       description="Information is displayed in a clear, organized, and secure manner."
     >
-      <div className="grid gap-8">
-        <Card className="w-full p-10">
+      <div className="flex gap-4">
+        <div className="w-1/6">
+          <CardSidebar 
+            sidebarItems={MenuItems}
+            selectedItem={selectedItem}
+            setSelectedItem={setSelectedItem}
+            header={
+              <div className="flex flex-col px-5 py-3 bg-blue-100 font-semibold">
+                <span className="text-sm text-black/80 font-normal">Select a record to view</span>
+              </div>
+            }
+            
+          />
+        </div>
+        <div className="grid w-full gap-8 max-h-[800px] overflow-y-auto">
+          {currentPath == "personal" && <Card className="w-full p-10">
           <div className="pb-4 flex justify-between">
             <div>
               <h2 className="text-lg font-semibold">Personal Information</h2>
@@ -380,7 +328,14 @@ export default function ResidentViewForm({ params }: { params: any }) {
                 trigger={
                   <History size={20} className="text-gray-800 cursor-pointer hover:text-blue-600 transition-colors" />
                 }
-                content={renderPersonalHistory()}
+                content={
+                  <RenderHistory 
+                    history={personalHistory}
+                    isLoadingHistory={isLoadingPersonalHistory}
+                    itemTitle="Personal Information Update"
+                    handleHistoryItemClick={handleHistoryItemClick}
+                  />
+                }
                 title={
                   <Label className="flex items-center gap-2 text-lg text-darkBlue1">
                     <Clock size={20}/>
@@ -418,23 +373,42 @@ export default function ResidentViewForm({ params }: { params: any }) {
               </form>
             </Form>
           )}
-        </Card>
-
-        <Card className="w-full p-10">
-          <div className="pb-4">
-            <h2 className="text-lg font-semibold">Family</h2>
-            <p className="text-xs text-black/50">Shows family details of this resident</p>
+        </Card>}
+          
+          {currentPath == "family" && <Card className="w-full p-10">
+          <div className="flex justify-between">
+            <div className="pb-4">
+              <h2 className="text-lg font-semibold">Family</h2>
+              <p className="text-xs text-black/50">Shows family members of this resident</p>
+            </div>
+            <Button variant={'ghost'}
+              onClick={() => {
+                navigate("/profiling/family/view", {
+                  state: {
+                    params: {
+                      fam_id: params.data.familyId
+                    }
+                  }
+                })
+              }}
+            >
+              View full details <MoveRight/>
+            </Button>
           </div>
-          {renderFamilyContent()}
-        </Card>
-
-        <Card className="w-full p-10">
-          <div className="pb-4">
-            <h2 className="text-lg font-semibold">Business</h2>
-            <p className="text-xs text-black/50">Shows owned business of this resident</p>
-          </div>
-          {renderBusinessContent()}
-        </Card>
+            {renderFamilyContent()}
+          </Card>}
+          
+          {currentPath == "business" && (!isLoadingBusinesses && (!businesses || businesses.length > 0)) &&
+            <Card className="w-full p-10">
+              <div className="pb-4">
+                <h2 className="text-lg font-semibold">Business</h2>
+                <p className="text-xs text-black/50">Shows owned business of this resident</p>
+              </div>
+              {renderBusinessContent()}
+            </Card>
+          }
+          
+        </div>
       </div>
     </LayoutWithBack>
   )
