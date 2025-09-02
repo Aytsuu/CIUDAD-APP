@@ -21,19 +21,21 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     lname = serializers.CharField(source='per.per_lname')
     fname = serializers.CharField(source='per.per_fname')
     mname = serializers.SerializerMethodField()
+    suffix = serializers.CharField(source='per.per_suffix')
     sex = serializers.CharField(source='per.per_sex')
+    pwd = serializers.CharField(source="per.per_disability")
     household_no = serializers.SerializerMethodField()
     family_no = serializers.SerializerMethodField()
     business_owner = serializers.SerializerMethodField()
     has_account = serializers.SerializerMethodField()
     dob = serializers.DateField(source="per.per_dob")
     age = serializers.SerializerMethodField()
-    registered_by = serializers.SerializerMethodField()
+    per_id = serializers.CharField(source="per.per_id")
 
     class Meta:
         model = ResidentProfile
-        fields = [ 'rp_id', 'rp_date_registered', 'lname', 'fname', 'mname', 'dob', 
-                  'age', 'sex', 'household_no', 'family_no', 'business_owner', 'has_account', 'registered_by']
+        fields = [ 'rp_id', 'per_id', 'rp_date_registered', 'lname', 'fname', 'mname', 'suffix', 'dob', 
+                  'age', 'sex', 'pwd', 'household_no', 'family_no', 'business_owner', 'has_account']
     
     def get_mname(self, obj):
         return obj.per.per_mname if obj.per.per_mname else ''
@@ -71,11 +73,19 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
                 
             return f"{prefix}{staff_id}"
         return "-"
+    
+    def get_age(self, obj):
+        dob = obj.per.per_dob
+        today = datetime.today().date()
+
+        age = today.year - dob.year - (
+            (today.month, today.day) < (dob.month, dob.day)
+        )
+        return age
 
 class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
     per = PersonalBaseSerializer()
     per_id = serializers.IntegerField(write_only=True, allow_null=True, required=False)
-    staff = serializers.CharField(allow_null=True, required=False) 
 
     class Meta:
         model = ResidentProfile
@@ -90,23 +100,14 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
         # Extract personal data
         personal_data = validated_data.pop('per')
         per = validated_data.pop('per_id', None)
-        staff_id = validated_data.get('staff')
+        staff = validated_data.pop('staff', None)
 
-        try:
-            staff = Staff.objects.get(staff_id=staff_id)
-        except Staff.DoesNotExist:
-            raise serializers.ValidationError({"staff_id" : "Invalid staff ID"})
-        
         if per:
-            personal = Personal.objects.get(per_id=per)
+            personal = Personal.objects.filter(per_id=per).first()
         else:
             # Create Personal record
-            personal_serializer = PersonalBaseSerializer(data=personal_data)
-            personal_serializer.is_valid(raise_exception=True)
-            personal = personal_serializer.save()
-
+            personal = Personal(**personal_data)
             personal._history_user = staff
-            personal._history_change_reason = f"Created by staff {staff_id}"
             personal.save()
 
         # Create ResidentProfile record
@@ -117,6 +118,13 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
         )
         
         return resident_profile
+
+    def to_representation(self, instance):
+        return {
+            'rp_id': instance.rp_id,
+            'per': PersonalWithHistorySerializer(instance.per).data,
+            'staff': instance.staff_id,
+        }
 
     def generate_resident_no(self):
         next_val = ResidentProfile.objects.count() + 1
@@ -162,11 +170,12 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
             (today.month, today.day) < (dob.month, dob.day)
         )
         return age
-    
+        
     def get_per_addresses(self, obj):
         per_addresses = PersonalAddress.objects.filter(per=obj.per)
         addresses = [pa.add for pa in per_addresses.select_related('add')]
         return AddressBaseSerializer(addresses, many=True).data
+    
     def get_per_additional_details(self, obj):
         details = HealthRelatedDetails.objects.filter(rp=obj).first()
         return HealthRelatedDetailsSerializer(details).data if details else None

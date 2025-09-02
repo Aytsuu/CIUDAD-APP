@@ -10,13 +10,15 @@ import {
   addPersonalAddress,
   addResidentAndPersonal,
 } from "../restful-api/profiingPostAPI";
-import { api } from "@/api/api";
+import { api, api2 } from "@/api/api";
 
 export const useAddAllProfile = () => {
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       try {
         const res = await api.post("profiling/complete/registration/", data);
+        await api2.post("health-profiling/complete/registration/", data);
+
         return res.data;
       } catch (err) {
         console.error(err)

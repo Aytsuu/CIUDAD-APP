@@ -308,6 +308,11 @@ SUPABASE_CONFIG = {
     'JWT_AUDIENCE': 'authenticated',
 }
 
+# Individual SUPABASE settings for compatibility with utils/supabase_client.py
+SUPABASE_URL = config('SUPABASE_URL')
+SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY')
+SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET')
+
 # ========================
 # FIREBASE CONFIGURATION
 # ========================

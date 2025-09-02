@@ -17,7 +17,6 @@ export default function ParentsFormLayout({
   dependentsList,
   setSelectedMotherId,
   setSelectedFatherId,
-  setSelectedGuardianId,
   setSelectedRespondentId,
   onSubmit,
   back,
@@ -28,13 +27,12 @@ export default function ParentsFormLayout({
   dependentsList: DependentRecord[];
   setSelectedMotherId: React.Dispatch<React.SetStateAction<string>>;
   setSelectedFatherId: React.Dispatch<React.SetStateAction<string>>;
-  setSelectedGuardianId: React.Dispatch<React.SetStateAction<string>>;
   setSelectedRespondentId?: React.Dispatch<React.SetStateAction<string>>;
   onSubmit: () => void;
   back: () => void;
 }) {
   // Add state for respondent selection - use internal state or external prop
-  const [internalSelectedRespondentId, setInternalSelectedRespondentId] = React.useState("")
+  const [, setInternalSelectedRespondentId] = React.useState("")
   const respondentSetter = setSelectedRespondentId || setInternalSelectedRespondentId;
 
   const submit = React.useCallback(() => {

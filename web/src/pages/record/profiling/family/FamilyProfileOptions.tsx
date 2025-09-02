@@ -18,7 +18,7 @@ export default function FamilyProfileOptions() {
         
       </Link>
       <Link
-        to="/profiling/family/form"
+        to="/family/family-profile-form"
         className="relative inline-block overflow-hidden group border-2 h-full rounded-lg"
       >
         {/* Text content */}

@@ -16,9 +16,13 @@ from .views.health_records_form_views import *
 from .views.family_health_profiling_views import *
 from .views.survey_views import *
 from .views.survey_form_views import *
+from .views.all_record_views import *
 # from .views_deprecated import * # To be removed
 
 urlpatterns = [
+     # All record (combined record of resident and business respondents)
+    # path("all/", AllRecordTableView.as_view(), name="all-record"),
+    path("complete/registration/", CompleteRegistrationView.as_view(), name="complete-registration"),
     # Sitio Urls
     path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
 
