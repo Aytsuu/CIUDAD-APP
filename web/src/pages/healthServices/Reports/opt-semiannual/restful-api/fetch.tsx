@@ -12,7 +12,7 @@ export const getOPTYears = async (
     params.append('page', page.toString());
     params.append('page_size', pageSize.toString());
 
-    const response = await api2.get<OPTYearsResponse>(`/reports/opt-tracking/yearly-summaries/?${params.toString()}`);
+    const response = await api2.get<OPTYearsResponse>(`/reports/opt-tracking/yearly-summaries-semi-annual/?${params.toString()}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching OPT years:", error);

@@ -25,6 +25,9 @@ class MedicineRequestItem(models.Model):
     reason = models.TextField(blank=True, null=True)  # (OP)    
     minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_request_items')
     medreq_id = models.ForeignKey('MedicineRequest', on_delete=models.CASCADE, related_name='items',db_column='medreq_id')
+    med= models.ForeignKey(Medicinelist, on_delete=models.CASCADE, related_name='medicine_request_items', db_column='med_id', blank=True, null=True)
+    status = models.CharField(max_length=20, default='pending') #refered  or confirm
+
 
     def __str__(self):
         return f"MedicineRequestItem #{self.medreqitem_id}"
@@ -51,7 +54,7 @@ class MedicineRecord(models.Model):
     class Meta:
         db_table = 'medicine_record'
         
-class Medicine_File(models.Model):
+class Medicine_File(models.Model): 
 
     medf_id = models.BigAutoField(primary_key=True)
     medf_name = models.CharField(max_length=255)

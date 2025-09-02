@@ -109,6 +109,7 @@ urlpatterns = [
     path('medicine/summaries/', MedicineSummaryMonthsAPIView.as_view(), name='medicine-summary-montly'),
     path('medicine-expired-out-of-stock-summary/', MedicineExpiredOutOfStockSummaryAPIView.as_view(), name='outofexpiredstocks-monthly-records'),
     path('medicine-expired-out-of-stock-detail/<str:month>/', MonthlyMedicineExpiredOutOfStockDetailAPIView.as_view(), name='outofexpiredstocks-chart'),
+    path('medicine-avaiable-records/', MedicineListAvailableTable.as_view(), name='medicine-available'),
     
     path('firstaid/summaries/', FirstAidSummaryMonthsAPIView.as_view(), name='firstaid-summary-montly'),
     path('firstaid/records/<str:month>/', MonthlyFirstAidRecordsDetailAPIView.as_view(), name='firstaid-monthly-records'),

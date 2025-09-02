@@ -4,7 +4,7 @@ from ..models import *
 from ..serializers.medicine_serializers import *
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import ProtectedError, Q
+from django.db.models import ProtectedError, Q, Sum
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
@@ -17,6 +17,75 @@ from calendar import monthrange
 
 
 
+
+class MedicineListAvailableTable(APIView):
+    def get(self, request):
+        # Get current date for expiry comparison
+        today = timezone.now().date()
+        
+        # Get query parameters for filtering (simplified)
+        med_type_filter = request.query_params.get('med_type', None)
+        
+        # Base queryset - get all medicines with available quantity calculation
+        medicines = Medicinelist.objects.annotate(
+            total_qty_available=Sum(
+                'medicineinventory__minv_qty_avail',
+                filter=Q(medicineinventory__inv_id__expiry_date__gte=today) | 
+                       Q(medicineinventory__inv_id__expiry_date__isnull=True)
+            )
+        ).prefetch_related(
+            'medicineinventory_set__inv_id'
+        ).all()  # Get all medicines
+        
+        # Apply filters if provided
+        if med_type_filter:
+            medicines = medicines.filter(med_type__icontains=med_type_filter)
+        
+        # Prepare response data
+        medicine_data = []
+        for medicine in medicines:
+            # Check if medicine has any available stock
+            has_stock = medicine.total_qty_available and medicine.total_qty_available > 0
+            
+          
+            
+            if has_stock:
+                # Get all inventory items for this medicine that are not expired
+                inventory_items = []
+                for med_inv in medicine.medicineinventory_set.all():
+                    if (med_inv.inv_id.expiry_date is None or 
+                        med_inv.inv_id.expiry_date >= today) and \
+                       med_inv.minv_qty_avail > 0:
+                        
+                        inventory_items.append({
+                            'minv_id': med_inv.minv_id,
+                            'dosage': f"{med_inv.minv_dsg} {med_inv.minv_dsg_unit}",
+                            'form': med_inv.minv_form,
+                            'quantity_available': med_inv.minv_qty_avail,
+                            'quantity_unit': med_inv.minv_qty_unit,
+                            'expiry_date': med_inv.inv_id.expiry_date,
+                            'inventory_type': med_inv.inv_id.inv_type
+                        })
+                
+                medicine_data.append({
+                    'med_id': medicine.med_id,
+                    'med_name': medicine.med_name,
+                    'med_type': medicine.med_type,
+                    'total_qty_available': medicine.total_qty_available,
+                    'inventory_items': inventory_items,
+                    'status': 'Available'
+                })
+            else:
+                medicine_data.append({
+                    'med_id': medicine.med_id,
+                    'med_name': medicine.med_name,
+                    'med_type': medicine.med_type,
+                    'total_qty_available': 0,
+                    'inventory_items': [],
+                    'status': 'No available stocks'
+                })
+        
+        return Response({'medicines': medicine_data}, status=status.HTTP_200_OK)
 
 # For listing with pagination and search
 class MedicineListTable(generics.ListAPIView):

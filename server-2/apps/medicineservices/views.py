@@ -160,7 +160,8 @@ class MedicineRequestView(generics.ListCreateAPIView):
     serializer_class = MedicineRequestSerializer
 
     def get_queryset(self):
-        return MedicineRequest.objects.filter(status='pending')
+        return MedicineRequest.objects.filter(status='processing')
+    
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         try:
@@ -193,7 +194,7 @@ class MedicineRequestView(generics.ListCreateAPIView):
             medicine_request = MedicineRequest.objects.create(
                 pat_id=patient,  # Pass the Patient instance
                 rp_id=resident,  # Pass the ResidentProfile instance
-                status='pending'
+                status='processing'
             )
 
             # Process medicine items

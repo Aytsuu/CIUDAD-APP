@@ -21,7 +21,7 @@ urlpatterns=[
         path('opt-tracking/monthly/summaries/', MonthlyOPTChildHealthSummariesAPIView.as_view(), name='opt-tracking-detail'),
         path('opt-tracking/reports/<str:month>/', MonthlyOPTChildHealthReportAPIView.as_view(), name='opt-tracking-detail'),
         # New semi-annual 24-71 mos URLs
-        path('opt-tracking/yearly-summaries-semi-annual', YearlySemiOPTChildHealthSummariesAPIView.as_view(), name='yearly-child-health-summaries'),
+        path('opt-tracking/yearly-summaries-semi-annual/', YearlySemiOPTChildHealthSummariesAPIView.as_view(), name='yearly-child-health-summaries'),
         path('opt-tracking/semi-annual-report/<str:year>/',SemiAnnualOPTChildHealthReportAPIView.as_view(),  name='semi-annual-child-health-report'),
         # yearl 0-23 mos jan-decemeber opt tracking
         path('opt-tracking/yearly-report/<str:year>/', YearlyMonthlyOPTChildHealthReportAPIView.as_view(), name='yearly-child-health-report'),

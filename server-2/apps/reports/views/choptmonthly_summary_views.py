@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 # Django imports
 from django.db.models import (
-    Case, When, F, CharField, Q, Prefetch, Count
+    Case, When, F, CharField, Q, Prefetch, Count, Value
 )
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
@@ -245,19 +245,24 @@ from apps.childhealthservices.serializers import NutritionalStatusSerializerBase
 #         serializer = self.get_serializer(queryset, many=True)
 #         return Response(self._format_report_data(serializer.data, queryset))
 
+
+
 # =====OPT SUMMARY=====
 class OPTSummaryAllMonths(APIView):
     def get(self, request):
         try:
-            # Base queryset with all necessary relations - now using NutritionalStatus
-            # Filter to only include residents (exclude transients)
-            queryset = NutritionalStatus.objects.filter(
-                pat__pat_type='Resident'  # Only include residents
-            ).select_related(
+            # Base queryset with all necessary relations - now including both residents and transients
+            queryset = NutritionalStatus.objects.all().select_related(
                 'bm', 'bm__patrec', 'bm__patrec__pat_id', 'pat',
-                'pat__rp_id', 'pat__rp_id__per'
+                'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
             ).annotate(
-                sex=F('pat__rp_id__per__per_sex')  # Simplified since we only have residents
+                # Use Case/When to get gender from both resident and transient
+                sex=Case(
+                    When(pat__pat_type='Resident', then=F('pat__rp_id__per__per_sex')),
+                    When(pat__pat_type='Transient', then=F('pat__trans_id__tran_sex')),
+                    default=Value('Unknown'),
+                    output_field=CharField()
+                )
             ).order_by('-created_at')
 
             # Search query (month name or year)
@@ -329,6 +334,15 @@ class OPTSummaryAllMonths(APIView):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
+
+
+
+
+
+
+
+
+
 class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
     serializer_class = NutritionalStatusSerializerBase
     pagination_class = None
@@ -362,16 +376,21 @@ class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
         except ValueError:
             return NutritionalStatus.objects.none()
 
-        # Filter to only include residents (exclude transients)
+        # REMOVED the filter to include both residents and transients
         queryset = NutritionalStatus.objects.filter(
-            pat__pat_type='Resident',  # Only include residents
             created_at__gte=start_date,
             created_at__lte=end_date
         ).annotate(
-            sex=F('pat__rp_id__per__per_sex')  # Simplified since we only have residents
+            # Use Case/When to get gender from both resident and transient
+            sex=Case(
+                When(pat__pat_type='Resident', then=F('pat__rp_id__per__per_sex')),
+                When(pat__pat_type='Transient', then=F('pat__trans_id__tran_sex')),
+                default=Value('Unknown'),
+                output_field=CharField()
+            )
         ).select_related(
             'bm', 'bm__patrec', 'pat',
-            'pat__rp_id', 'pat__rp_id__per'  # Removed pat__trans_id since we don't need it
+            'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
         )
 
         sitio_search = self.request.query_params.get('sitio', '').strip()
@@ -381,9 +400,10 @@ class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
         return queryset
 
     def _apply_sitio_search(self, queryset, sitio_search):
-        """Search by sitio - only for residents now"""
+        """Search by sitio - for both residents and transients"""
         return queryset.filter(
-            Q(pat__rp_id__per__personaladdress__add__sitio__sitio_name__icontains=sitio_search)
+            Q(pat__rp_id__per__personaladdress__add__sitio__sitio_name__icontains=sitio_search) |
+            Q(pat__trans_id__tradd_id__tradd_sitio__icontains=sitio_search)
         ).distinct()
 
     def _calculate_age_in_months(self, dob, reference_date):
@@ -443,10 +463,14 @@ class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
         overall_totals = {"Male": 0, "Female": 0}
 
         for obj in queryset:
-            # Get patient's date of birth - only residents now
+            # Get patient's date of birth - both residents and transients
             dob = None
-            if obj.pat.pat_type == 'Resident' and hasattr(obj.pat, 'rp_id') and obj.pat.rp_id:
-                dob = obj.pat.rp_id.per.per_dob
+            pat = obj.pat
+            
+            if pat.pat_type == 'Resident' and hasattr(pat, 'rp_id') and pat.rp_id:
+                dob = pat.rp_id.per.per_dob
+            elif pat.pat_type == 'Transient' and hasattr(pat, 'trans_id') and pat.trans_id:
+                dob = pat.trans_id.tran_dob
             
             # Get reference date (use created_at of nutritional status record)
             reference_date = obj.created_at
