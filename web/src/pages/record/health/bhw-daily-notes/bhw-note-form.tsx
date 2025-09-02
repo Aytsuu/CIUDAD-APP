@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import z from "zod"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button/button"
+import { Separator } from "@/components/ui/separator"
 
 
 export default function BHWNoteForm() {
@@ -68,7 +69,34 @@ export default function BHWNoteForm() {
                      </div>
                      
                      <div className="mb-5">
-                        <Label className=" text-md font-bold mb-3">Child Body Measurement</Label>
+                        <Label className=" text-md font-semibold">Child Anthropometric Measurement</Label>
+                        <Separator className="mt-2 mb-4"/>
+                        <div className="grid grid-cols-2 gap-2 mb-5">
+                           <FormInput
+                              control={form.control}
+                              label="Weight"
+                              placeholder="Enter weight"
+                              name="weight"
+                           />
+                           <FormInput
+                              control={form.control}
+                              label="Height"
+                              placeholder="Enter height"
+                              name="height"
+                           />
+                        </div>
+
+                        <div className="flex flex-col border p-5 rounded-lg">
+                              <Label>Measurement Completion List</Label>
+                           <div className="flex h-[200px] border p-5 mt-3 rounded-md overflow-y-auto">
+
+                           </div>
+                        </div>
+                     </div>
+
+                     <div className="mb-5">
+                        <Label className=" text-md font-semibold">Disease Surveillance Cases</Label>
+                        <Separator className="mt-2 mb-4"/>
                         <div className="grid grid-cols-2 gap-2">
                            <FormInput
                               control={form.control}
@@ -83,7 +111,6 @@ export default function BHWNoteForm() {
                               name="height"
                            />
                         </div>
-                        
                      </div>
 
                      <div className="mb-5">
