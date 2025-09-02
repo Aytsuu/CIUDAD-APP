@@ -1,6 +1,6 @@
 // Import necessary components and icons
 import { Button } from "@/components/ui/button/button";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Textarea } from "@/components/ui/textarea";

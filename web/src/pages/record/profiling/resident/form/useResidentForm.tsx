@@ -40,6 +40,7 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
       { key: "per_religion", value: resident?.per_religion || "" },
       { key: "per_edAttainment", value: resident?.per_edAttainment || "" },
       { key: "per_contact", value: resident?.per_contact || "" },
+      { key: "per_disability", value: resident?.per_disability || "" },
       { key: "per_addresses", value: resident?.per_addresses || [] },
     ];
 

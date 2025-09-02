@@ -32,6 +32,31 @@ const religionOptions: { label: string; value: string }[] = [
   { label: "Born Again", value: "born again" },
 ]
 
+const edAttainmentOptions: { label: string; value: string }[] = [
+  { label: "No Formal Education", value: "no formal education" },
+  { label: "Elementary", value: "elementary" },
+  { label: "High School", value: "high school" },
+  { label: "Vocational / Technical", value: "vocational / technical" },
+  { label: "College Level", value: "college level" },
+  { label: "Bachelor's Degree", value: "bachelor's degree" },
+  { label: "Master's Degree", value: "master's degree" },
+  { label: "Doctorate Degree", value: "doctorate degree" },
+];
+
+const pwdOptions: { label: string; value: string }[] = [
+  { label: "Visual Disability", value: "visual disability" },
+  { label: "Hearing Disability", value: "hearing disability" },
+  { label: "Speech Impairment", value: "speech impairment" },
+  { label: "Learning Disability", value: "learning disability" },
+  { label: "Intellectual Disability", value: "intellectual disability" },
+  { label: "Mental Disability", value: "mental disability" },
+  { label: "Psychosocial Disability", value: "psychosocial disability" },
+  { label: "Physical Disability", value: "physical disability" },
+  { label: "Cancer", value: "cancer" },
+  { label: "Rare Disease", value: "rare disease" },
+  { label: "Multiple Disabilities", value: "multiple disabilities" },
+]
+
 const PersonalInformation = React.memo(({ params } : {params: Record<string, any>}) => {
   const router = useRouter();
   const { toast } = useToastContext()
@@ -72,6 +97,7 @@ const PersonalInformation = React.memo(({ params } : {params: Record<string, any
       `${params.name}.per_religion`,
       `${params.name}.per_edAttainment`,
       `${params.name}.per_contact`,
+      `${params.name}.per_disability`,
     ] as any)
 
     if (!formIsValid) {
@@ -129,6 +155,7 @@ const PersonalInformation = React.memo(({ params } : {params: Record<string, any
           <FormSelect control={control} name={`${params.name}.per_sex`} options={sexOptions} label="Sex"/>
           <FormSelect control={control} name={`${params.name}.per_status`} options={civilStatusOptions} label="Marital Status"/>
           <FormSelect control={control} label="Religion" name={`${params.name}.per_religion`} options={religionOptions}/>
+          <FormSelect control={control} label="Disability (if applicable)" name={`${params.name}.per_disability`} options={pwdOptions}/>
         </View>
       </View>
 
@@ -140,7 +167,7 @@ const PersonalInformation = React.memo(({ params } : {params: Record<string, any
         </View>
 
         <View className="space-y-4">
-          <FormInput control={control} label="Educational Attainment" name={`${params.name}.per_edAttainment`} />
+          <FormSelect control={control} label="Attainment" name={`${params.name}.per_edAttainment`} options={edAttainmentOptions}/>
         </View>
       </View>
 

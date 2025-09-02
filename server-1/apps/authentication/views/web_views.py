@@ -205,8 +205,8 @@ class WebLoginView(APIView):
             except Exception as supabase_error:
                 logger.error(f"Supabase authentication failed: {str(supabase_error)}")
                 return Response(
-                    {'error': 'Email not found in the system or invalid credentials'},
-                    status=status.HTTP_401_UNAUTHORIZED
+                    {'error': "Invalid login credentials"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
             # Check if account exists in local database
@@ -246,7 +246,7 @@ class WebLoginView(APIView):
             
             response = Response(response_data, status=status.HTTP_200_OK)
             
-            # Store refresh token in HttpOnly cookie (SECURE!)
+            # Store refresh token in HttpOnly cookie
             response.set_cookie(
                 'refresh_token',
                 supabase_response.session.refresh_token,

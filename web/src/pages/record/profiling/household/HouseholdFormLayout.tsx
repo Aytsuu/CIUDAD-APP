@@ -14,11 +14,12 @@ import { useAddHousehold } from "../queries/profilingAddQueries"
 import { usePerAddressesList, useResidentsList } from "../queries/profilingFetchQueries"
 import { useLoading } from "@/context/LoadingContext"
 import { useSafeNavigate } from "@/hooks/use-safe-navigate"
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { Button } from "@/components/ui/button/button"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 import { capitalize } from "@mui/material"
+import { Badge } from "@/components/ui/badge"
 
 export default function HouseholdFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // =============== STATE INITIALIZATION ==================
@@ -44,7 +45,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   const isLoading = isLoadingResidents || isLoadingPerAddress
   
   const { append } = useFieldArray({
-    control: tab_params?.form.control,
+    control: tab_params?.form?.control || form?.control,
     name: "houseSchema.list"
   })
 
@@ -244,6 +245,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
                         <div className="flex gap-4">
                           <div>House {index + 1}</div>
                           <p>Sitio {capitalize(sitio)}, {street}</p>
+                          <Badge>{house.nhts == "yes" ? "NHTS" : "Not an NHTS"}</Badge>
                         </div>
                         <X 
                           size={16} 

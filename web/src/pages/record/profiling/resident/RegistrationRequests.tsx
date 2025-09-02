@@ -8,7 +8,7 @@ import { FamilyRequestColumns, IndividualRequestColumns } from "./RequestColumns
 import { useRequests } from "../queries/profilingFetchQueries"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { Card, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useLoading } from "@/context/LoadingContext"
 import { CardSidebar } from "@/components/ui/card-sidebar"
@@ -86,6 +86,7 @@ export default function RegistrationRequests() {
           per_edAttainment: personal.per_edAttainment,
           per_religion: personal.per_religion,
           per_contact: personal.per_contact,
+          per_disability: personal.per_disability,
           per_addresses: personal.per_addresses
         }
       } else {

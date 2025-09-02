@@ -22,10 +22,22 @@ export type ResidentRecord = {
   mname: string;
   suffix: string;
   sex: string;
+  dob: string;
+  pwd: string;
   rp_date_registered: string;
   registered_by: string;
   has_account: boolean;
 };
+
+export type voterRecord = {
+  voter_id: string;
+  lname: string;
+  fname: string;
+  mname: string;
+  suffix: string;
+  sex: string;
+  dob: string;
+}
 
 export type ResidentFamilyRecord = {
   rp_id: string;
@@ -113,6 +125,7 @@ export type IndividualRequestRecord = {
   per_dob: string;
   per_status: string;
   per_contact: string;
+  per_disability: string;
   per_edAttainment: string;
   per_religion: string;
   per_addresses: Record<string, any>[];
@@ -132,6 +145,7 @@ export type BusinessRecord = {
   bus_gross_sales: string;
   sitio: string;
   bus_street: string;
+  respondent: string;
   bus_date_of_registration: string;
   bus_date_verified: string;
   rp: string;

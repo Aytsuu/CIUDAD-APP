@@ -30,7 +30,7 @@ export default function IndividualCompletion() {
     setIsSubmitting(true);
     try {
       const {per_addresses, ...data} = getValues("personalInfoSchema");
-      const {confirmPassword, ...accountInfo} = getValues("accountFormSchema")
+      const {confirmPassword, phone, ...accountInfo} = getValues("accountFormSchema")
       
       addPersonal({...capitalizeAllFields(data)}, {
         onSuccess: (newData) => {
@@ -46,6 +46,7 @@ export default function IndividualCompletion() {
 
           addRequest({
             per: newData.per_id,
+            role: "Independent",
             acc: accountInfo
           }, {
             onSuccess: () => {
@@ -71,14 +72,6 @@ export default function IndividualCompletion() {
     return (
       <FeedbackScreen
         status={status}
-        onRetry={() => {
-          // Simulate a retry that might succeed
-          const willSucceed = Math.random() > 0.5;
-          setTimeout(() => {
-            setStatus(willSucceed ? "success" : "failure");
-          }, 1500);
-        }}
-        onOk={() => router.push('/(auth)')}
       />
     );
   }

@@ -2,16 +2,9 @@ import React from "react";
 import { Form } from "@/components/ui/form/form";
 import PersonalInfoForm from "./PersonalInfoForm";
 import { useResidentForm } from "./useResidentForm";
-import { useAuth } from "@/context/AuthContext";
 import { Origin, Type } from "../../ProfilingEnums";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
-import { capitalizeAllFields } from "@/helpers/capitalize";
-import {
-  useAddAddress,
-  useAddPerAddress,
-  useAddResidentAndPersonal,
-} from "../../queries/profilingAddQueries";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   useResidentsList,
   useSitioList,
@@ -25,7 +18,7 @@ import {
   UserRoundPlus,
   MoveRight,
 } from "lucide-react";
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 import { formatResidents, formatSitio } from "../../ProfilingFormats";
 import { Button } from "@/components/ui/button/button";
 
@@ -44,7 +37,6 @@ export default function ResidentCreateForm({ params }: {
   params: Record<string, any>
 }) {
   // ============= STATE INITIALIZATION ===============
-  const { user } = useAuth();
   const { showLoading, hideLoading } = useLoading();
   const {
     form,
@@ -52,11 +44,8 @@ export default function ResidentCreateForm({ params }: {
     populateFields,
     checkDefaultValues,
   } = useResidentForm("", params?.origin);
-  const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
-  const { mutateAsync: addAddress } = useAddAddress();
-  const { mutateAsync: addPersonalAddress } = useAddPerAddress();
    const [addresses, setAddresses] = React.useState<any[]>(DEFAULT_ADDRESS);
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [isSubmitting] = React.useState<boolean>(false);
   const [isAssignmentOpen, setIsAssignmentOpen] =
     React.useState<boolean>(false);
   const [isAllowSubmit, setIsAllowSubmit] = React.useState<boolean>(false);
@@ -253,16 +242,6 @@ export default function ResidentCreateForm({ params }: {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Info Alert */}
-          {/* <Alert className="border-blue-200 bg-blue-50">
-            <AlertDescription className="text-blue-800 flex items-center gap-2">
-              <strong>Resident Registration:</strong> Please ensure all
-              information is accurate as this will be used for official records
-              and identification purposes.
-            </AlertDescription>
-          </Alert>
-          <Separator /> */}
-
           {/* Form Content */}
           <div className="p-6">
             {MainContent}

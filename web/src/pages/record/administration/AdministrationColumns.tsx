@@ -164,7 +164,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
       };
 
       const handleView = async () => {
-        navigate("/profiling/resident/view", {
+        navigate("/profiling/resident/view/personal", {
           state: {
             params: {
               type: 'viewing',

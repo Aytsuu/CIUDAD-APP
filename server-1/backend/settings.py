@@ -475,6 +475,7 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
         'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', default='5432'),
+        'CONN_MAX_AGE': 0
     }
 }
 
@@ -517,10 +518,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # API endpoints (views that extend APIView or ViewSet).
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'apps.authentication.SupabaseAuth.SupabaseAuthentication',
+        # 'apps.authentication.SupabaseAuth.SupabaseAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        # 'rest_framework.permissions.IsAuthenticated',
     ],
 }
 

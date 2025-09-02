@@ -39,7 +39,8 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
           'per__per_mname',
           'per__per_sex',
           'per__per_suffix',
-          'per__per_dob'
+          'per__per_dob',
+          'per__per_disability',
         )
 
         search_query = self.request.query_params.get('search', '').strip()
@@ -58,8 +59,8 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
                         Q(per__per_lname__icontains=part) |
                         Q(per__per_fname__icontains=part) |
                         Q(per__per_mname__icontains=part) |
-                        Q(per__per_suffix__icontains=part) 
-
+                        Q(per__per_suffix__icontains=part) |
+                        Q(per__per_disability__icontains=part)
                     )
                 
                 queryset = queryset.filter(

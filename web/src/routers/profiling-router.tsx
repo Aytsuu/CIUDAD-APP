@@ -20,6 +20,7 @@ import RespondentRecords from "@/pages/record/profiling/business/RespondentRecor
 import RespondentDetails from "@/pages/record/profiling/business/RespondentDetails";
 import ProfilingAllRecords from "@/pages/record/profiling/ProfilingAllRecords";
 import BusinessHistoryView from "@/pages/record/profiling/business/BusinessHistoryView";
+import VoterRecords from "@/pages/record/profiling/voters/VoterRecords";
 
 export const profiling_router = [
   // All Records
@@ -160,5 +161,11 @@ export const profiling_router = [
   {
     path: "profiling/business/history/view",
     element: <BusinessHistoryView />,
+  },
+
+  // Voters
+  {
+    path: "profiling/voters",
+    element: <VoterRecords />,
   },
 ];

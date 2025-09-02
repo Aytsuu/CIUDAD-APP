@@ -15,8 +15,9 @@ import { useAuth } from "@/context/AuthContext";
 import { usePositions } from "./queries/administrationFetchQueries";
 import { formatPositions } from "./AdministrationFormats";
 import { useAddStaff } from "./queries/administrationAddQueries";
-import { useAddAllProfile, useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";
+import { useAddAllProfile } from "../profiling/queries/profilingAddQueries";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 
 export default function AssignPosition({
   personalInfoform,
@@ -81,7 +82,7 @@ export default function AssignPosition({
         // Register resident first, then assign position (APIs handle dual database operations)
         personalInfoform.setValue("per_addresses", addresses)
         const personalInfo = personalInfoform.getValues();
-        const {per_id, ...personal} = personalInfo
+        const {per_id, ...personal} = capitalizeAllFields(personalInfo)
 
         if (!personal) {
           setIsSubmitting(false);

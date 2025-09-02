@@ -20,6 +20,9 @@ import { useAddAllProfile } from "../queries/profilingAddQueries";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { useAuth } from "@/context/AuthContext";
 import { useSafeNavigate } from "@/hooks/use-safe-navigate";
+import { useDeleteRequest } from "../queries/profilingDeleteQueries";
+import { useUpdateAccount } from "../queries/profilingUpdateQueries";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 
 export default function RegistrationLayout() {
   // --------------- STATE INITIALIZATION ------------------
@@ -28,6 +31,8 @@ export default function RegistrationLayout() {
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params, [location.state]);
   const { mutateAsync: addAllProfile } = useAddAllProfile();
+  const { mutateAsync: deleteRequest } = useDeleteRequest();
+  const { mutateAsync: updateAccount } = useUpdateAccount();
   const [currentStep, setCurrentStep] = React.useState<number>(1);
   const [hasFamily, setHasFamily] = React.useState<boolean>(false);
   const [completed, setCompleted] = React.useState<Set<number>>(new Set())
@@ -58,7 +63,7 @@ export default function RegistrationLayout() {
     if(id > currentStep && ![...completed].includes(id)) return;
     if(!id) return;
     setCurrentStep(id)
-  }, [])
+  }, [currentStep, completed])
 
   // Calculate progress based on current step
   const calculateProgress = React.useCallback(() => {
@@ -76,12 +81,13 @@ export default function RegistrationLayout() {
     for(const step of newList) {
       const nextStep = currentStep + stepCounter
       if(nextStep !== step) {
+        console.log(nextStep)
         setCurrentStep(nextStep)
         return;
       }
       stepCounter++;
     }
-
+    
     setCurrentStep((prev) => prev + stepCounter);
   }
 
@@ -111,7 +117,7 @@ export default function RegistrationLayout() {
         ...(!noHouse && {houses: houseSchema.list}),
         ...(!notLivingSolo && {livingSolo: livingSoloSchema}),
         ...(!noFamily && {family: familySchema}),
-        ...(!noBusiness && {business: {...business, files: files}}),
+        ...(!noBusiness && {business: {...business, bus_status: 'Active', files: files}}),
         staff: user?.staff?.staff_id
       })
       
@@ -141,15 +147,29 @@ export default function RegistrationLayout() {
     files: Record<string, any>[]
   ) => {
     try {
-      await addAllProfile({
+      const resident = await addAllProfile({
         personal: personalSchema,
         ...(!noHouse && {houses: houseSchema.list}),
         ...(!notLivingSolo && {livingSolo: livingSoloSchema}),
         ...(!noFamily && {family: familySchema}),
-        ...(!noBusiness && {business: {...business, files: files}}),
+        ...(!noBusiness && {business: {...business, bus_status: 'Active', files: files}}),
         staff: user?.staff?.staff_id
       })
+
+      await updateAccount({
+        accNo: params.data.acc,
+        data: { rp: resident.rp_id },
+      }, {
+          onSuccess: () => {
+            deleteRequest(params.data.req_id);
+          },
+        }
+      );
+
       showSuccessToast("Registration has been approved. New record added.")
+      registrationForm.reset();
+      safeNavigate.back();
+
     } catch (err) {
       showErrorToast("Failed to process registration approval. Please try again.")
     } finally {
@@ -193,12 +213,12 @@ export default function RegistrationLayout() {
           notLivingSolo,
           noFamily,
           noBusiness,
-          personal,
+          capitalizeAllFields(personal),
           accountSchema,
           houseSchema,
           livingSoloSchema,
           familySchema,
-          business,
+          capitalizeAllFields(business),
           newFiles
         )
         break;
@@ -358,9 +378,10 @@ export default function RegistrationLayout() {
               isRegistrationTab: true,
               next: (compeleteness: boolean) => {
                 if(compeleteness) setCompleted((prev) => new Set([...prev, 2]));
+                else setCompleted((prev) => new Set([...prev].filter((id) => id !== 2)))
                 setProgress()
               },
-              form: registrationForm,
+              form: registrationForm
             }}
           />
         )}
@@ -374,8 +395,11 @@ export default function RegistrationLayout() {
                       if(compeleteness) setCompleted((prev) => new Set([...prev, 3]));
                       setProgress()
                     },
-                    setHasFamily: (value: boolean) => setHasFamily(value),
-                    form: registrationForm,
+                    setHasFamily: (value: boolean) => {
+                      registrationForm.resetField("livingSoloSchema")
+                      setHasFamily(value)
+                    },
+                    form: registrationForm
                   }}
                 />
               ) : (
@@ -385,8 +409,11 @@ export default function RegistrationLayout() {
                       if(compeleteness) setCompleted((prev) => new Set([...prev, 3]));
                       setProgress()
                     },
-                    setHasFamily: (value: boolean) => setHasFamily(value),
-                    form: registrationForm,
+                    setHasFamily: (value: boolean) => {
+                      registrationForm.resetField("familySchema")
+                      setHasFamily(value)
+                    },
+                    form: registrationForm
                   }}
                 />
               )}
@@ -396,11 +423,13 @@ export default function RegistrationLayout() {
           <BusinessFormLayout 
             tab_params={{
               isRegistrationTab: true,
+              type: "create",
               next: (compeleteness: boolean) => {
                 if(compeleteness) setCompleted((prev) => new Set([...prev, 4]));
+                else setCompleted((prev) => new Set([...prev].filter((id) => id !== 4)))
                 setProgress()
               },
-              form: registrationForm,
+              form: registrationForm  
             }}
           />
         )}

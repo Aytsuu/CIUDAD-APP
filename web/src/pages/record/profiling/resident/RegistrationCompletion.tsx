@@ -4,7 +4,7 @@ import {
   Check,
   Loader2,
 } from "lucide-react";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button/button";
 
 const RegistrationCompletion = ({ params } : {  params: Record<string, any> }) => {

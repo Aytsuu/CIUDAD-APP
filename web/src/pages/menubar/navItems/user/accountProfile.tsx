@@ -3,10 +3,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
-import {
-  User,
-  LogOut,
-} from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +18,8 @@ import CardLayout from "../../../../components/ui/card/card-layout";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import sanRoqueLogo  from "@/assets/images/sanRoqueLogo.svg"
+import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
+import HeaderUserSkeleton from "./user-skeleton";
 
 export default function AccountProfile(): JSX.Element {
   const { user, logout } = useAuth();
@@ -29,10 +27,15 @@ export default function AccountProfile(): JSX.Element {
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
 
   const handleLogout = () => {
-    logout()
+    logout();
     navigate("/home");
     setShowLogoutAlert(false);
   };
+
+  // 👉 if user is still loading, show skeleton instead
+  if (!user) {
+    return <HeaderUserSkeleton />;
+  }
 
   const profileOptions = [
     {
@@ -73,7 +76,9 @@ export default function AccountProfile(): JSX.Element {
         className="h-10 w-10 rounded-full flex-shrink-0 object-cover"
       />
       <div className="flex flex-col max-w-[180px]">
-        <p className="font-medium truncate">{`${user?.resident?.per?.per_fname} ${user?.resident?.per?.per_lname}`}</p>
+        <p className="font-medium truncate">
+          {`${user?.resident?.per?.per_fname} ${user?.resident?.per?.per_lname}`}
+        </p>
         <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
       </div>
     </div>

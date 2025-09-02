@@ -4,7 +4,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "./card";
+} from "../card";
 import { cn } from "@/lib/utils";
 
 type CardProps = {
