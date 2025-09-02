@@ -9,7 +9,7 @@ import { WARTemplatePDF } from "./WARTemplatePDF";
 import { useUpdateTemplate } from "../queries/reportUpdate";
 import { useGetSpecificTemplate } from "../queries/reportFetch";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { Card, CardContent } from "@/components/ui/card/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useGetStaffByTitle } from "../../administration/queries/administrationFetchQueries";
 import { Combobox } from "@/components/ui/combobox";
 import { formatStaffs } from "../../administration/AdministrationFormats";

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label"
 import { useLocation } from "react-router"
 import type { Assigned, Feature } from "./AdministrationTypes"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAllAssignedFeatures, usePositions } from "./queries/administrationFetchQueries"
 import { Users, Settings } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -34,7 +34,6 @@ export default function RoleLayout() {
       newMap.get(+feature.pos.pos_id)?.push(feature)
     })
     
-    console.log(newMap)
     setPositionFeaturesMap(newMap)
   }, [allAssignedFeatures])
 
@@ -67,10 +66,10 @@ export default function RoleLayout() {
   const groupedFeatures = React.useMemo(() => {
     const groups: Record<string, Feature[]> = {}
     for (const feature of params.features || []) {
-      if (!groups[feature.feat_category]) {
-        groups[feature.feat_category] = []
+      if (!groups[feature.feat_group]) {
+        groups[feature.feat_group] = []
       }
-      groups[feature.feat_category].push(feature)
+      groups[feature.feat_group].push(feature)
     }
     return groups
   }, [params.features])
@@ -122,7 +121,7 @@ export default function RoleLayout() {
             <CardContent className="p-0">
               <div className="px-6">
                 {isLoadingAllAssignedFeatures ? (
-                  <div className="space-y-3">
+                  <div className="space-y-3 pb-6">
                     {[...Array(5)].map((_, i) => (
                       <Skeleton key={i} className="h-12 w-full" />
                     ))}

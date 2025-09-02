@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/ui/table/data-table"
-import { Card } from "@/components/ui/card/card"
+import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button/button"
 import { ChevronLeft, Check, AlertTriangle } from "lucide-react"

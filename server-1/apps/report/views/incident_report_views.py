@@ -3,12 +3,15 @@ from django.db.models import Q
 from ..serializers.incident_report_serializers import *
 from ..models import IncidentReport
 from apps.pagination import StandardResultsPagination
+from rest_framework.permissions import AllowAny
 
 class IRCreateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = IRCreateSerializer
   queryset = IncidentReport.objects.all()
   
 class IRTableView(generics.ListAPIView):
+  permission_classes = [AllowAny]
   serializer_class = IRTableSerializer
   pagination_class = StandardResultsPagination
 

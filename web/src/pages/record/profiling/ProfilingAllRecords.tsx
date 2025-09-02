@@ -1,7 +1,7 @@
 import React from "react"
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Plus, FileDown, Search, Users, Loader2 } from "lucide-react"
 import { Link } from "react-router"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"

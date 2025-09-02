@@ -16,10 +16,10 @@ import TakeAPhoto from "./TakeAPhoto";
 
 export default function CompleteScanProcess({params} : {params: Record<string, any>}) {
   // INITIALIZATION
-  const [phase, setPhase] = React.useState<number>(1);
+  const [phase, setPhase] = React.useState<number>(2);
   const [currentStep, setCurrentStep] = React.useState<number>(0);
   const [requestId, setRequestId] = React.useState<number | null>(null);
-  const [isCompleted, setIsCompleted] = React.useState<boolean>(false);
+  const [isCompleted, setIsCompleted] = React.useState<boolean>(true); // Temporary bypass 
   const { reset } = useRegistrationFormContext();
 
   // HANDLERS

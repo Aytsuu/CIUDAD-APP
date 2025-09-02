@@ -42,15 +42,15 @@ export const formatHouseholds = (households: any) => {
   if (!households) return [];
 
   return households.map((household: any) => ({
-    id: String(household.hh_id),
+    id: `${household.hh_id} ${household.head.split("-")[1]}`,
     name: (
       <div className="flex gap-4 items-center">
         <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
           #{household.hh_id}
         </span>
         <div className="flex items-center gap-2">
-          <Label>Head:</Label>
-          {household.head}
+          <Label>Owner:</Label>
+          {household.head.split("-")[1]}
         </div>
       </div>
     ),
@@ -68,9 +68,9 @@ export const formatAddresses = (addresses: any) => {
     }, idx: number) => {
       if(item.sitio) {
         return {
-          per_id: item.per,
-          add_id: item.add_id,
-          id: `${item.add_id} address ${idx+1} - ${item.sitio.toLowerCase()}, ${item.add_street.toLowerCase()}`,
+          // per_id: item.per,
+          // add_id: item.add_id,
+          id: `${item.add_id}-${item.sitio.toLowerCase()}-${item.add_street}`,
           name: `Address ${idx+1} - ${capitalize(item.sitio)}, ${item.add_street}`, 
         }
       }
@@ -148,4 +148,15 @@ export const formatModificationRequests = (requests: any) => {
         </div>
       )
     }))
+}
+
+export const formatOwnedHouses = (houses: any) => {
+  if(!houses) return;
+  return houses.map((house: any, index: number) => ({
+    id: String(index),
+    name: <div className="flex gap-2">
+      <p>{`House ${index + 1} - Sitio ${house.address.split("-")[1]}, ${house.address.split("-")[2]}`}</p>
+      <Badge>{house.nhts == "yes" ? "NHTS" : "Not an NHTS"}</Badge>
+    </div>
+  }))
 }

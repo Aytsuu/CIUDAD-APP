@@ -18,6 +18,8 @@ from django.db import transaction
 from django.utils import timezone
 import uuid
 from django.db.models import Q
+from rest_framework.permissions import IsAuthenticated
+
 logger = logging.getLogger(__name__)
 
 class ComplaintCreateView(APIView):
@@ -155,6 +157,7 @@ class ComplaintCreateView(APIView):
             ComplaintAccused.objects.create(comp=complaint, acsd=accused)
 
 class ComplaintListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = ComplaintSerializer
 
     def get_queryset(self):

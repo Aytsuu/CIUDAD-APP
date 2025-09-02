@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Button } from "@/components/ui/button/button"
 import { Checkbox } from "@/components/ui/checkbox"

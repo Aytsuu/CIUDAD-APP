@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Link, Outlet, useLocation } from "react-router-dom"
 
 const NavItemList = [

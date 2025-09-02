@@ -2,6 +2,11 @@
   "expo": {
     "name": "mobile",
     "slug": "mobile",
+    "splash": {
+      "image": "./assets/images/CIUDADLogo.svg",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

@@ -19,8 +19,11 @@ export default () => {
   return (
     <ComplaintFormProvider methods={methods}>
         <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }} />
-          <Stack.Screen name="complaint-form" options={{ headerShown: false, animation: 'fade' }} />
+          <Stack.Screen name="index" options={{ headerShown: false}} />
+          <Stack.Screen name="complaint-form" options={{ headerShown: false}} />
+          <Stack.Screen name="complaint/[id]" options={{ headerShown: false}} />
+          <Stack.Screen name="summon-payment" options={{ headerShown: false}} />
+          <Stack.Screen name="summon-details" options={{ headerShown: false}} />
         </Stack>
     </ComplaintFormProvider>
   )

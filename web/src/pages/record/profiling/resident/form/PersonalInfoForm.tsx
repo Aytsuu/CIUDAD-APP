@@ -1,11 +1,8 @@
-import { UseFormReturn } from "react-hook-form";
-import { z } from "zod";
 import { Origin, Type } from "../../ProfilingEnums";
 import { renderActionButton } from "../../ProfilingActionConfig";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import React from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button/button";
@@ -15,20 +12,23 @@ import { Input } from "@/components/ui/input";
 import { capitalize } from "@/helpers/capitalize";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Link } from "react-router";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 
 // ==================== TYPES ====================
 type PersonalInfoFormProps = {
+  prefix?: string
   formattedSitio?: any;
   formattedResidents?: any;
   addresses?: any[];
   validAddresses?: boolean[];
-  form: UseFormReturn<z.infer<typeof personalInfoSchema>>;
+  form: any;
   formType: Type;
   isAssignmentOpen?: boolean;
   origin?: Origin;
   isSubmitting: boolean;
   isReadOnly: boolean;
   isAllowSubmit?: boolean;
+  buttonIsVisible?: boolean;
   setAddresses?: React.Dispatch<React.SetStateAction<any[]>>;
   setValidAddresses?: React.Dispatch<React.SetStateAction<boolean[]>>;
   setIsAssignmentOpen?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -68,8 +68,23 @@ const EDUCATIONAL_ATTAINMENT = [
   { id: "doctorate degree", name: "Doctorate Degree" }
 ];
 
+const PWD_OPTIONS = [
+  { id: "visual disability", name: "Visual Disability" },
+  { id: "hearing disability", name: "Hearing Disability" },
+  { id: "speech impairment", name: "Speech Impairment" },
+  { id: "learning disability", name: "Learning Disability" },
+  { id: "intellectual disability", name: "Intellectual Disability" },
+  { id: "mental disability", name: "Mental Disability" },
+  { id: "psychosocial disability", name: "Psychosocial Disability" },
+  { id: "physical disability", name: "Physical Disability" },
+  { id: "cancer", name: "Cancer" },
+  { id: "rare disease", name: "Rare Disease" },
+  { id: "multiple disabilities", name: "Multiple Disabilities" }
+]
+
 // ==================== COMPONENT ====================
 const PersonalInfoForm = ({
+  prefix = "",
   formattedSitio,
   formattedResidents,
   addresses,
@@ -81,6 +96,7 @@ const PersonalInfoForm = ({
   isSubmitting = false,
   isReadOnly = false,
   isAllowSubmit,
+  buttonIsVisible = true,
   setAddresses,
   setValidAddresses,
   setIsAssignmentOpen,
@@ -112,9 +128,9 @@ const PersonalInfoForm = ({
       {origin === Origin.Administration && (
         <Combobox 
           options={formattedResidents}
-          value={watch("per_id") as string}
+          value={watch(`${prefix}per_id` as any) as string}
           onChange={(value) => {
-            setValue("per_id", value);
+            setValue(`${prefix}per_id` as any, value);
             onComboboxChange && onComboboxChange();
           }}
           placeholder="Select a resident"
@@ -140,24 +156,25 @@ const PersonalInfoForm = ({
       )}
       {/* Name Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <FormInput control={control} name="per_lname" label="Last Name" placeholder="Enter Last Name" readOnly={isReadOnly} />
-        <FormInput control={control} name="per_fname" label="First Name" placeholder="Enter First Name" readOnly={isReadOnly} />
-        <FormInput control={control} name="per_mname" label="Middle Name" placeholder="Enter Middle Name" readOnly={isReadOnly} />
-        <FormInput control={control} name="per_suffix" label="Suffix" placeholder="Sfx." readOnly={isReadOnly} />
+        <FormInput control={control} name={`${prefix}per_lname`} label="Last Name" placeholder="Enter Last Name" readOnly={isReadOnly} />
+        <FormInput control={control} name={`${prefix}per_fname`} label="First Name" placeholder="Enter First Name" readOnly={isReadOnly} />
+        <FormInput control={control} name={`${prefix}per_mname`} label="Middle Name" placeholder="Enter Middle Name" readOnly={isReadOnly} />
+        <FormInput control={control} name={`${prefix}per_suffix`} label="Suffix" placeholder="Sfx." readOnly={isReadOnly} />
       </div>
 
       {/* Sex, Status, DOB, Address */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <FormSelect control={control} name="per_sex" label="Sex" placeholder="Enter sex" options={SEX_OPTIONS} readOnly={isReadOnly} />
-        <FormDateTimeInput control={control} name="per_dob" label="Date of Birth" type="date" readOnly={isReadOnly} />
-        <FormSelect control={control} name="per_status" label="Marital Status" placeholder="Enter marital status" options={MARITAL_STATUS_OPTIONS} readOnly={isReadOnly} />
-        <FormInput control={control} name="per_contact" label="Contact" placeholder="Enter contact" readOnly={isReadOnly} type="number" />
+        <FormSelect control={control} name={`${prefix}per_sex`} label="Sex" options={SEX_OPTIONS} readOnly={isReadOnly} />
+        <FormDateTimeInput control={control} name={`${prefix}per_dob`} label="Date of Birth" type="date" readOnly={isReadOnly} />
+        <FormSelect control={control} name={`${prefix}per_status`} label="Marital Status" options={MARITAL_STATUS_OPTIONS} readOnly={isReadOnly} />
+        <FormInput control={control} name={`${prefix}per_contact`} label="Contact" placeholder="Enter contact" readOnly={isReadOnly} type="number" />
       </div>
 
       {/* Education, Religion, Contact */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <FormSelect control={control} name="per_edAttainment" label="Educational Attainment" placeholder="Enter educational attainment" readOnly={isReadOnly} options={EDUCATIONAL_ATTAINMENT}/>
-        <FormSelect control={control} name="per_religion" label="Religion" options={RELIGION_OPTIONS} readOnly={isReadOnly} />
+        <FormSelect control={control} name={`${prefix}per_edAttainment`} label="Educational Attainment" readOnly={isReadOnly} options={EDUCATIONAL_ATTAINMENT}/>
+        <FormSelect control={control} name={`${prefix}per_religion`} label="Religion" options={RELIGION_OPTIONS} readOnly={isReadOnly} />
+        <FormSelect control={control} name={`${prefix}per_disability`} label="Disability (if applicable)" options={PWD_OPTIONS} readOnly={isReadOnly} />
       </div>
       <div className="grid grid-cols-1 gap-4">
         {
@@ -180,15 +197,30 @@ const PersonalInfoForm = ({
                     className="border-none shadow-none focus-visible:ring-0"
                     readOnly={isReadOnly}
                   /> <p className="opacity-40">/</p>
-                  <Input
-                    placeholder="Barangay"
-                    value={address.add_barangay}
-                    onChange={(e) => handleSetAddress(idx, 'add_barangay', e.target.value)}
-                    className="border-none shadow-none focus-visible:ring-0"
-                    readOnly={isReadOnly}
-                  /> <p className="opacity-40">/</p>
+                  <TooltipLayout
+                    trigger={
+                      <div className="w-full flex items-center"><Input
+                        placeholder="Barangay"
+                        value={address.add_barangay}
+                        onChange={(e) => {
+                          if(["san roque", "sanroque", "ciudad"].includes(e.target.value?.trim().toLowerCase())) {
+                            handleSetAddress(idx, 'add_barangay', "San Roque (ciudad)")
+                          } else {
+                            handleSetAddress(idx, 'add_barangay', e.target.value)
+                          }
+                        }}
+                        className="border-none shadow-none focus-visible:ring-0"
+                        readOnly={isReadOnly}
+                      /> <p className="opacity-40">/</p></div>
+                    }
+                    content={<div>
+                      <p className="max-w-xs">
+                        Tip: If you type <b>san roque</b>, <b>sanroque</b>, or <b>ciudad</b>, the system will automatically autocomplete it to <b>San Roque (ciudad)</b>.
+                      </p>
+                    </div>}
+                  />
 
-                  {address.add_barangay === "San Roque" ? ( !isReadOnly  ? 
+                  {address.add_barangay?.trim().toLowerCase() === "san roque (ciudad)" ? ( !isReadOnly  ? 
                     (<SelectLayout
                       className="border-none w-full"
                       placeholder="Sitio"
@@ -246,12 +278,12 @@ const PersonalInfoForm = ({
           ))
         }
         {(formType !== Type.Viewing) && 
-          (!watch("per_id") || watch("per_id") == "undefined") &&
+          (!watch(`${prefix}per_id` as any) || watch(`${prefix}per_id` as any) == "undefined") &&
           <div>
             <Button 
               variant={"outline"} 
               type="button"
-              className="border-none shadow-none text-black/50 hover:text-black/60"
+              className="border-none shadow-none text-black/50 hover:text-black/80"
               onClick={() => setAddresses && setAddresses((prev) => [
                 ...prev, {
                   add_province: '',
@@ -270,8 +302,9 @@ const PersonalInfoForm = ({
       </div>
 
       <div className="mt-8 flex justify-end gap-3">
-        {renderActionButton({
+        {buttonIsVisible && renderActionButton({
           form,
+          addresses,
           isAssignmentOpen,
           formType,
           origin,

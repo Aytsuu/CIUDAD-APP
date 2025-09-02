@@ -6,13 +6,12 @@ export function filterComplaints(
 ): Complaint[] {
   let result = [...complaints];
 
-  // Search filtering
   if (query.trim()) {
     const q = query.toLowerCase();
     result = result.filter((c) => {
       const firstComplainant = c.complainant?.[0];
-      const accusedNames = c.accused?.map((a) => a.acsd_name) || [];
-      const accusedAddresses = c.accused?.flatMap((a) => [
+      const accusedNames = c.accused_persons?.map((a) => a.acsd_name) || [];
+      const accusedAddresses = c.accused_persons?.flatMap((a) => [
         a.add?.add_province,
         a.add?.add_city,
         a.add?.add_barangay,

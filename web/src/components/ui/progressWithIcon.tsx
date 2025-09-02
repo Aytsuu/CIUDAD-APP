@@ -5,7 +5,7 @@ import type { IconType } from "react-icons"
 interface ProgressProps {
   progress: number
   steps: Step[]
-  completed: any[]
+  completed?: any[]
   skippedColor?: string
   completedColor?: string
   activeColor?: string
@@ -14,17 +14,17 @@ interface ProgressProps {
 }
 
 interface Step {
-  id: number
+  id?: number
   label: string
   minProgress: number
   icon: IconType,
-  onClick: (id: number) => void
+  onClick?: (id: number) => void
 }
 
 interface StepIconProps {
   progress: number
   step: Step
-  completed: any[]
+  completed?: any[]
   skippedColor?: string
   completedColor?: string
   activeColor?: string
@@ -39,7 +39,10 @@ const StepIcon: React.FC<StepIconProps> = ({
   activeColor = "text-gray-500",
   inactiveColor = "text-gray-400",
 }) => {
-  if ((progress > step.minProgress && completed.includes(step.id)) || completed.includes(step.id)) {
+  if (((progress > step.minProgress && completed?.includes(step.id))) || 
+    completed?.includes(step.id) ||
+    (!completed && progress > step.minProgress)
+  ) {
     return <BsCheckLg className={completedColor} size={20} />
   }
 
@@ -62,7 +65,7 @@ export default function ProgressWithIcon({
   }
 
   const getStepCircleClasses = (step: Step) => {
-    if (completed.includes(step.id)) {
+    if (completed?.includes(step.id) || (!completed && progress > step.minProgress)) {
       return `bg-${completedColor} border-${completedColor}`
     } else if (progress === step.minProgress) {
       return `border-${activeColor} bg-white`
@@ -72,23 +75,15 @@ export default function ProgressWithIcon({
   }
 
   const getStepLabelClasses = (step: Step) => {
-    if(progress > step.minProgress && !completed.includes(step.id)) {
-      return `text-${inactiveColor.replace("300", "500")}`
-    }
+    if(!completed && progress > step.minProgress)
+      return `text-${completedColor.replace("500", "600")} font-semibold`
+
+    if(progress > step.minProgress && !completed?.includes(step.id)) 
+      return `text-${inactiveColor.replace("300", "500")}`    
 
     return progress >= step.minProgress
       ? `text-${completedColor.replace("500", "600")} font-semibold`
       : `text-${inactiveColor.replace("300", "500")}`
-  }
-
-  const getStepNumberClasses = (step: Step) => {
-    if(progress > step.minProgress && !completed.includes(step.id)) {
-      return `text-${inactiveColor.replace("300", "500")} font-medium`
-    }
-
-    return progress >= step.minProgress
-      ? `text-${completedColor.replace("500", "600")} font-bold`
-      : `text-${inactiveColor.replace("300", "500")} font-medium`
   }
 
   return (
@@ -110,8 +105,7 @@ export default function ProgressWithIcon({
 
             <div className="flex flex-col items-center space-y-2 px-4 cursor-pointer"
               onClick={() => {
-                if(completed.includes(step.id) || progress < step.minProgress) return;
-                step.onClick && step.onClick(step.id)
+                step.onClick && step.onClick(step.id as any)
               }}
             >
               {/* Step Number */}
@@ -119,7 +113,7 @@ export default function ProgressWithIcon({
                 <p
                   className={`
                     text-xs sm:text-sm font-medium
-                    ${getStepNumberClasses(step)}
+                    ${getStepLabelClasses(step)}
                     transition-colors duration-300
                   `}
                 >

@@ -44,7 +44,8 @@ export const useProfilingAllRecord = (
         console.error(err);
         throw err;
       }
-    }
+    },
+    staleTime: 5000
   })
 } 
  
@@ -82,7 +83,8 @@ export const usePersonalHistory = (per_id: string) => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 5000,
+    enabled: !!per_id
   })
 }
 
@@ -97,7 +99,7 @@ export const useResidentsList = (
       if(disable) return [];
       return getResidentsList(is_staff, exclude_independent)
     },
-    staleTime: 5000,
+    staleTime: 5000,  
   });
 };
 
@@ -262,6 +264,7 @@ export const useBusinessInfo = (busId: number) => {
       }
     },
     staleTime: 5000,
+    enabled: !!busId
   });
 }
 
@@ -281,7 +284,8 @@ export const useBusinessHistory = (busId: string) => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 5000,
+    enabled: !!busId
   })
 }
 
@@ -343,6 +347,21 @@ export const useHouseholdsList = () => {
     staleTime: 5000,
   });
 };
+
+export const useHouseholdData = (hh_id: string) => {
+  return useQuery({
+    queryKey: ["householdData", hh_id],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`profiling/household/${hh_id}/data/`)
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    }
+  })
+}
 
 export const useHouseholdTable = (
   page: number,

@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button/button"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { useNavigate } from "react-router"
@@ -43,7 +43,7 @@ export default function AdministrationPositions({
 
     return filtered.reduce((acc: Record<string, any[]>, position: any) => {
       // Use 'Other' category for positions without a group
-      const category = position.pos_group || 'Other'
+      const category = position.pos_group || 'No Group'
       if (!acc[category]) {
         acc[category] = []
       }

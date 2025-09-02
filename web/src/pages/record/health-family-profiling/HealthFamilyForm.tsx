@@ -1,5 +1,5 @@
 import React from "react";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button/button";
 import ParentsFormLayout from "../../record/health-family-profiling/family-profling/parents/ParentsFormLayout";
 import DependentsInfoLayout from "../../record/health-family-profiling/family-profling/dependents/DependentsInfoLayout";

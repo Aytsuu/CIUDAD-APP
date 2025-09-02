@@ -53,15 +53,13 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     staff = obj.staff
     staff_type = staff.staff_type
     staff_id = staff.staff_id
-    
-    if staff_type == 'Barangay Staff':
-      prefix = 'B-'
-    elif staff_type == 'Health Staff':
-      prefix = 'H-'
-    else:
-      prefix = ''
-    
-    return f"{prefix}{staff_id}"
+    fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+    fam_id = fam.fam.fam_id if fam else ""
+    personal = staff.rp.per
+    staff_name = f'{personal.per_lname}, {personal.per_fname}' \
+                  f' {personal.per_mname[0]}.' if personal.per_mname else ''
+
+    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
 class FamilyCreateSerializer(serializers.ModelSerializer):
   class Meta: 
@@ -81,7 +79,7 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
   
   def generate_fam_no(self, building_type):
 
-    type = {'Owner' : 'O', 'Renter' : 'R', 'Other' : 'I'}
+    type = {'Owner' : 'O', 'Renter' : 'R', 'Sharer' : 'S'}
 
     next_val = Family.objects.count() + 1
     date = datetime.now()
@@ -96,29 +94,14 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
 
 class FamilyListSerializer(serializers.ModelSerializer):
   total_members = serializers.SerializerMethodField()
-  registered_by = serializers.SerializerMethodField()
 
   class Meta:
     model = Family
-    fields = ['fam_id', 'fam_building', 'total_members', 'fam_indigenous', 'fam_date_registered',
-              'registered_by']
+    fields = ['fam_id', 'fam_building', 'total_members', 'fam_indigenous', 'fam_date_registered']
   
   def get_total_members(self, obj):
     return FamilyComposition.objects.filter(fam=obj).count()
-  
-  def get_registered_by(self, obj):
-    staff = obj.staff
-    staff_type = staff.staff_type
-    staff_id = staff.staff_id
-    
-    if staff_type == 'Barangay Staff':
-      prefix = 'B-'
-    elif staff_type == 'Health Staff':
-      prefix = 'H-'
-    else:
-      prefix = ''
-    
-    return f"{prefix}{staff_id}"
+
 
 
 
