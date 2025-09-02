@@ -5,14 +5,13 @@ import {api} from "@/api/api";
 
 export const resolution_create = async (resolutionInfo: Record<string, any>) => {
     try{
-        const staff = "00004250624";
 
         console.log({
             res_title: resolutionInfo.res_title,
             res_date_approved: resolutionInfo.res_date_approved,
             res_area_of_focus: resolutionInfo.res_area_of_focus,
             res_is_archive: false,
-            staff_id: Number(staff),
+            staff: resolutionInfo.staff,
         })
 
         const res = await api.post('council/resolution/',{
@@ -20,7 +19,7 @@ export const resolution_create = async (resolutionInfo: Record<string, any>) => 
             res_date_approved: resolutionInfo.res_date_approved,
             res_area_of_focus: resolutionInfo.res_area_of_focus,
             res_is_archive: false,
-            staff_id: staff,
+            staff: resolutionInfo.staff,
         })
 
         return res.data.res_num;

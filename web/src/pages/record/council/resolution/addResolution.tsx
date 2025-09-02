@@ -15,6 +15,7 @@ import { z } from "zod"
 import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema.ts';
 import { useCreateResolution } from './queries/resolution-add-queries.tsx';
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 
 
@@ -24,6 +25,8 @@ interface ResolutionCreateFormProps {
 
 
 function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
+
+    const { user } = useAuth();
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
 
@@ -60,7 +63,8 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
 
         const allValues = {
             ...values,
-            files
+            files,
+            staff: user?.staff?.staff_id
         }
 
         createResolution(allValues)
