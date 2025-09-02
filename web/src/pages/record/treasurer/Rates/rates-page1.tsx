@@ -187,25 +187,6 @@ function RatesPage1() {
         <div className='bg-snow w-full h-full'>
             <div className='bg-white drop-shadow rounded-lg'>
                 <div className='p-7 flex flex-col justify-end gap-7'>
-                    <div className="flex flex-row items-center justify-between flex-wrap gap-4">
-                        <h2 className='font-bold'>
-                            BARANGAY CLEARANCE FOR BUSINESS PERMIT BASED ON ANNUAL GROSS SALES FOR RECEIPTS:
-                        </h2>
-                        <DialogLayout
-                            trigger={<Button>+ Add</Button>}
-                            title='Add New Range and Fee for Business Permit'
-                            description="Set a new annual gross sales range and its associated fee for business permits."
-                            mainContent={
-                                <RatesFormPage1
-                                    lastMaxRange={lastMaxRange}
-                                    onSuccess={() => setIsDialogOpen(false)}
-                                />
-                            }
-                            isOpen={isDialogOpen}
-                            onOpenChange={setIsDialogOpen}
-                        />
-                    </div>
-
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
                         <TabsList className="grid w-full grid-cols-2 max-w-xs">
                             <TabsTrigger value="active">Active Items</TabsTrigger>
@@ -219,17 +200,32 @@ function RatesPage1() {
                         <TabsContent value="active">
                             <div className="flex flex-col gap-4">
                                 {/* Search & Size */}
-                                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                                    <div className="relative w-full sm:w-64">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
-                                        <Input
-                                            placeholder="Search..."
-                                            className="pl-10 bg-white"
-                                            value={searchQueryActive}
-                                            onChange={(e) => {
-                                                setSearchQueryActive(e.target.value)
-                                                setCurrentPageActive(1)
-                                            }}
+                                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                                        <div className="relative w-full sm:w-64">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
+                                            <Input
+                                                placeholder="Search..."
+                                                className="pl-10 bg-white"
+                                                value={searchQueryActive}
+                                                onChange={(e) => {
+                                                    setSearchQueryActive(e.target.value)
+                                                    setCurrentPageActive(1)
+                                                }}
+                                            />
+                                        </div>
+                                        <DialogLayout
+                                            trigger={<Button>+ Add</Button>}
+                                            title='Add New Range and Fee for Business Permit'
+                                            description="Set a new annual gross sales range and its associated fee for business permits."
+                                            mainContent={
+                                                <RatesFormPage1
+                                                    lastMaxRange={lastMaxRange}
+                                                    onSuccess={() => setIsDialogOpen(false)}
+                                                />
+                                            }
+                                            isOpen={isDialogOpen}
+                                            onOpenChange={setIsDialogOpen}
                                         />
                                     </div>
 
