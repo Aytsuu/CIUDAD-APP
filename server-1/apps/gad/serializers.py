@@ -115,45 +115,41 @@ class GADBudgetFileReadSerializer(serializers.ModelSerializer):
 class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
     gbudy = serializers.PrimaryKeyRelatedField(queryset=GAD_Budget_Year.objects.all())
     staff = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), allow_null=True, required=False)
-    gpr = serializers.PrimaryKeyRelatedField(queryset=ProjectProposal.objects.all(), allow_null=True, default=None)
+    dev = serializers.PrimaryKeyRelatedField(queryset=DevelopmentPlan.objects.all(), allow_null=True, default=None)
     files = serializers.SerializerMethodField()
     
     class Meta:
         model = GAD_Budget_Tracker
         fields = [
-            'gbud_num', 'gbud_datetime', 'gbud_add_notes', 'gbud_exp_particulars', 'gbud_exp_project', 'gbud_actual_expense',
-            'gbud_remaining_bal', 'gbud_reference_num', 'gbud_is_archive',
-            'gbudy', 'staff', 'gpr', "gbud_proposed_budget", 'files'
+            'gbud_num', 'gbud_datetime', 'gbud_add_notes', 'gbud_exp_particulars', 'gbud_actual_expense',
+            'gbud_remaining_bal', 'gbud_reference_num', 'gbud_is_archive', 'gbud_project_index',
+            'gbudy', 'staff', "gbud_proposed_budget", 'files', 'dev'
         ]
         extra_kwargs = {
             'gbud_num': {'read_only': True},
             'gbud_exp_particulars': {'required': False, 'allow_null': True},
-            'gbud_exp_project': {'required': False, 'allow_null': True},
             'gbud_proposed_budget': {'required': False, 'allow_null': True},
             'gbud_actual_expense': {'required': False, 'allow_null': True},
             'gbud_reference_num': {'required': False, 'allow_null': True},
             'gbud_remaining_bal': {'required': False, 'allow_null': True},
-            'gpr': {'required': False}
+            'dev': {'required': False}
         }
 
     def validate(self, data):
         if self.instance and self.instance.gbud_proposed_budget:
             data['gbud_proposed_budget'] = self.instance.gbud_proposed_budget
 
-        if not data.get("gbud_exp_project"):
-            raise serializers.ValidationError({"gbud_exp_project": "Project title is required for expense entries"})
         if not data.get("gbud_exp_particulars") or not isinstance(data["gbud_exp_particulars"], list):
             raise serializers.ValidationError({"gbud_exp_particulars": "At least one budget item is required for expense entries"})
         
         # Only calculate proposed budget for new entries
         if not self.instance:
             recorded_items = GAD_Budget_Tracker.objects.filter(
-                gbud_exp_project=data.get("gbud_exp_project"),
-                gpr=data["gpr"],
+                dev=data["dev"],
                 gbudy__gbudy_year=data["gbudy"].gbudy_year
             ).values_list("gbud_exp_particulars", flat=True)
             recorded_item_names = {item["name"] for entry in recorded_items if entry for item in entry}
-
+            
             submitted_item_names = {item["name"] for item in data["gbud_exp_particulars"]}
             if not recorded_item_names.issubset(submitted_item_names):
                 raise serializers.ValidationError({
@@ -216,7 +212,7 @@ class GADBudgetYearSerializer(serializers.ModelSerializer):
         fields = ['gbudy_num', 'gbudy_budget', 'gbudy_year', 'gbudy_expenses', 'gbudy_is_archive']
         
 class GADBudgetLogSerializer(serializers.ModelSerializer):
-    gbud_exp_project = serializers.CharField(source='gbudl_budget_entry.gbud_exp_project', read_only=True)
+    gbud_exp_project = serializers.CharField(source='gbudl_budget_entry.project_title', read_only=True)
     gbud_exp_particulars = serializers.JSONField(source='gbudl_budget_entry.gbud_exp_particulars', read_only=True)
     gbud_proposed_budget = serializers.DecimalField(
         source='gbudl_budget_entry.gbud_proposed_budget', 
@@ -278,9 +274,25 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     logs = ProjectProposalLogSerializer(many=True, read_only=True)
     gpr_header_img = serializers.JSONField(write_only=True, required=False, allow_null=True)  # Accept JSON object for upload
-
+    dev_details = serializers.SerializerMethodField()
+    
     def get_status(self, obj):
         return obj.current_status
+    
+    def get_dev_details(self, obj):
+        """Get development plan details for this proposal"""
+        if obj.dev:
+            return {
+                'dev_id': obj.dev.dev_id,
+                'dev_project': obj.dev.dev_project,
+                'dev_gad_items': obj.dev.dev_gad_items,
+                'dev_res_person': obj.dev.dev_res_person,
+                'dev_indicator': obj.dev.dev_indicator,
+                'dev_client': obj.dev.dev_client,
+                'dev_issue': obj.dev.dev_issue,
+                'dev_date': obj.dev.dev_date
+            }
+        return None
     
     def validate_gpr_header_img(self, value):
         if value is None:
@@ -344,7 +356,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         return {
             'gprId': data['gpr_id'],
-            'gprTitle': data['gpr_title'],
+            'gprTitle': instance.gpr_title,
             'gprBackground': data['gpr_background'],
             'gprDate': data['gpr_date'],
             'gprVenue': data['gpr_venue'],
@@ -353,14 +365,17 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             'gprDateCreated': data['gpr_created'],
             'gprIsArchive': data['gpr_is_archive'],
             'gprObjectives': data['gpr_objectives'],
-            'gprParticipants': data['gpr_participants'],
-            'gprBudgetItems': data['gpr_budget_items'],
+            'gprParticipants': instance.gpr_participants,
+            'gprBudgetItems': instance.gpr_budget_items,
             'gprSignatories': data['gpr_signatories'],
             'gpr_page_size': data['gpr_page_size'],
             'status': data['status'],
             'staffId': data.get('staff'),
             'staffName': data.get('staff_name', 'Unknown'),
             'logs': data['logs'],
+            'devId': data.get('dev'),
+            'devDetails': data['dev_details'],
+            'gbudId': data.get('gbud'),
         }
 
     class Meta:
@@ -369,7 +384,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             'gpr_id', 'gpr_title', 'gpr_background', 'gpr_date', 'gpr_venue',
             'gpr_monitoring', 'gpr_header_img', 'gpr_created', 'gpr_is_archive',
             'gpr_objectives', 'gpr_participants', 'gpr_budget_items', 'gpr_signatories',
-            'staff', 'status', 'logs', 'gpr_page_size', 'gbud'
+            'staff', 'status', 'logs', 'gpr_page_size', 'gbud', 'dev'
         ]
         extra_kwargs = {
             'gpr_id': {'read_only': True},

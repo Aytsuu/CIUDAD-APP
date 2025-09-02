@@ -44,7 +44,8 @@ const GADAddEntrySchema = z.object({
   gbud_remaining_bal: DataRequirement.optional(),
   gbud_proposed_budget: DataRequirement.optional(),
   gbudy: z.number().min(1, "Valid year budget is required"),
-  gpr: z.number().optional().nullable(),
+  dev: z.number().optional().nullable(),
+  gbud_project_index: z.number().default(0),
   staff: z.string().optional().nullable(),
 })
 

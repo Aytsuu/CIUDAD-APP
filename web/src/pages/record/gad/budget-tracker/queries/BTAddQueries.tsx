@@ -51,7 +51,7 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], _budgetEntries: Bu
 
       return budgetEntry;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
       const year = new Date(variables.budgetData.gbud_datetime).getFullYear().toString();
       queryClient.invalidateQueries({
         queryKey: ['gad-budgets', year],

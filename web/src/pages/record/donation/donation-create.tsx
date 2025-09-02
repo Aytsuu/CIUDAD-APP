@@ -27,7 +27,7 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
       don_description: "",
       don_category: "",
       don_date: new Date().toISOString().split("T")[0],
-      staff: user?.staff?.staff_id || "00001250821",
+      staff: user?.staff?.staff_id || null,
     },
   });
 
