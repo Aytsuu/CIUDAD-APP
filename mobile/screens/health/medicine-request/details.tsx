@@ -15,7 +15,7 @@ type MedicineDetailsProps = {
   medicine_type: string; // "Prescription" or "Over-the-Counter"
   dosage: string;
   description?: string;
-  minv_qty_avail: number; // Available stock
+  availableStock: number; // Available stock
 };
 
 
@@ -221,7 +221,7 @@ export default function MedicineDetailsScreen() {
       medicine_type: medicine.medicine_type,
       dosage: medicine.dosage,
       description: medicine.description,
-      minv_qty_avail: medicine.minv_qty_avail,
+      minv_qty_avail: medicine.availableStock,
       reason: reason,
       uploadedFiles: uploadedFiles.length > 0 ? uploadedFiles : undefined,
 
@@ -435,12 +435,12 @@ export default function MedicineDetailsScreen() {
 
             {/* Add to Cart Button */}
             <TouchableOpacity
-              className={`py-4 rounded-xl items-center ${medicine.minv_qty_avail > 0 ? "bg-indigo-600" : "bg-gray-400"}`}
+              className={`py-4 rounded-xl items-center ${medicine.availableStock > 0 ? "bg-indigo-600" : "bg-gray-400"}`}
               onPress={handleAddToCart}
-              disabled={medicine.minv_qty_avail === 0 || (requiresPrescription && uploadedFiles.length === 0)}
+              disabled={medicine.availableStock === 0 || (requiresPrescription && uploadedFiles.length === 0)}
             >
               <Text className="text-white font-bold text-lg">
-                {medicine.minv_qty_avail > 0 ? "Add to Request" : "Out of Stock"}
+                {medicine.availableStock > 0 ? "Add to Request" : "Out of Stock"}
               </Text>
             </TouchableOpacity>
 
@@ -450,7 +450,7 @@ export default function MedicineDetailsScreen() {
               </Text>
             )}
             {!reason.trim() && (
-                <Text className="text-red-500 text-sm text-center mt-1">
+                <Text className="text-red-500 text-sm text-center mt-3">
                     * Reason for request is required.
                 </Text>
             )}

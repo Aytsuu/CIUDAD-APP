@@ -57,7 +57,7 @@ export default function Confirmation() {
   return (
     <View className="flex-1 bg-white">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 pt-12 pb-4 bg-blue-50">
+      <View className="flex-row items-center justify-between px-4 pt-12 pb-4 mt-4">
         <TouchableWithoutFeedback onPress={() => router.back()}>
           <View className="flex-row items-center">
             <ArrowLeft size={20} color="#263D67" strokeWidth={2} />

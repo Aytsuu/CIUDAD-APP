@@ -197,7 +197,7 @@ export default function AllChildHealthRecords() {
             <View className="flex-row items-center">
               <Calendar size={16} className="text-gray-400 mr-2" />
               <Text className="text-sm text-gray-600 flex-1">
-                Age: <Text className="font-medium text-gray-900">{child.age} years</Text>
+                Age: <Text className="font-medium text-gray-900">{child.age}</Text>
               </Text>
               <Text className="text-xs text-gray-500">
                 {child.dob ? new Date(child.dob).toLocaleDateString() : 'N/A'}

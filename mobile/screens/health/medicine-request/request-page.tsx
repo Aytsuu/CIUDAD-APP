@@ -103,6 +103,7 @@ export default function MedicineRequestScreen() {
       availableStock: medicine.availableStock,
     });
     
+    
     router.push({
       pathname: "/medicine-request/details",
       params: { medicineData: medicineString },
