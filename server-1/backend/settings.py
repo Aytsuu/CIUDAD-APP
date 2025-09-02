@@ -504,9 +504,10 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True 
 
-# Static files 
+# # Static files 
 STATIC_URL = 'static/'
-DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
+STATC_ROOT = BASE_DIR / 'staticfiles'
+# DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
