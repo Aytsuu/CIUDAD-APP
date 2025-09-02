@@ -1256,7 +1256,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_body: "/*TO WHOM IT MAY CONCERN:*/\n\n" +
       `This is to certify that ${businessName?.toUpperCase()} located at ${address}, Barangay San Roque Ciudad, Cebu City.\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*ELECTRICAL CONNECTION PURPOSES ONLY.*/\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },   
     {
       temp_id: "MCWD Requirements",
@@ -1512,7 +1512,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
     },  
     {
-      temp_id: "fire",
+      temp_id: "Fire Victim",
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1613,7 +1613,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
     //   "\tIssued this [ DAY [st/nd/rd/th] ] day [MONTH] [YEAR] at Barangay San Roque (Ciudad), Cebu City"
     // },
     {
-      temp_id: "fileAction",
+      temp_id: "File Action",
       temp_belowHeaderContent: "\t\t\t\t\t\t\t\t\t\t\t\t\t\tBarangay Case No.[ Case No. ]\n" +
       "[ Name of Complainant ]\n" +
       "[ Address ], Brgy. San Roque Ciudad Cebu City\n" +
@@ -1643,7 +1643,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "This [ DAY [st/nd/rd/th] ] day of [MONTH] [YEAR] in Barangay San Roque Ciudad Cebu City." 
     },       
     {
-      temp_id: "Marriage",
+      temp_id: "Marriage Certification",
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1668,7 +1668,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
     },  
     {
-      temp_id: "dwup",
+      temp_id: "DWUP",
       temp_title: "CERTIFICATION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
