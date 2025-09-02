@@ -19,6 +19,7 @@ import { useGetWasteTrucks } from './queries/wasteColFetchQueries';
 import { useGetWasteSitio } from './queries/wasteColFetchQueries';
 import { useCreateWasteSchedule } from './queries/wasteColAddQueries';
 import { useAssignCollectors } from './queries/wasteColAddQueries';
+import { useAuth } from "@/context/AuthContext";
 
 
 
@@ -38,6 +39,8 @@ const announcementOptions = [
 
 
 function WasteColSched({ onSuccess }: WasteColSchedProps) {
+
+    const { user } = useAuth();
 
     //ADD QUERY MUTATIONS
     const { mutate: createSchedule } = useCreateWasteSchedule();
@@ -99,7 +102,8 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
         createSchedule({
             ...values,
-            time: formattedTime
+            time: formattedTime,
+            staff: user?.staff?.staff_id
         }, {
             onSuccess: (wc_num) => {
                 assignCollectors({
