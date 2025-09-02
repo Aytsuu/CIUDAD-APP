@@ -1,7 +1,7 @@
 "use client"
 
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card/card"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, Loader2, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button/button"

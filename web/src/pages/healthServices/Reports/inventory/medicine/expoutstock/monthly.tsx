@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
 import { useMedicineExpiredOutOfStockSummary } from "./queries/fetch";
 import { MonthInfoCard } from "../../../month-folder-comonent";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 
 export default function MedicineExpiredOutOfStockSummary() {

@@ -1,6 +1,6 @@
 // pages/PrenatalIndivHistory.tsx
 // import { useNavigate } from "react-router";
-// import { Card, CardContent } from "@/components/ui/card/card";
+// import { Card, CardContent } from "@/components/ui/card";
 // import { Button } from "@/components/ui/button/button";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useState } from "react";

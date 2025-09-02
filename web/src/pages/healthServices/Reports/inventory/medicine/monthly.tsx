@@ -8,7 +8,7 @@ import { useLoading } from "@/context/LoadingContext";
 import { MedicineMonthItem } from "./types";
 import { useMedicineMonths } from "./queries/fetch";
 import { MonthInfoCard } from "../../month-folder-comonent";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button/button";
