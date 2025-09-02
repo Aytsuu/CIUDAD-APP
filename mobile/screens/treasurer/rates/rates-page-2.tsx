@@ -47,7 +47,7 @@ export default function RatesPage2() {
         pr_id: item.pr_id.toString(),
         pr_purpose: item.pr_purpose,
         pr_amount: item.pr_rate.toString(),
-        category: 'Personal And Others',
+        category: 'Personal',
       },
     });
   };

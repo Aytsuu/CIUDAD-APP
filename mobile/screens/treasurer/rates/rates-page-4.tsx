@@ -47,7 +47,7 @@ export default function RatesPage4() {
         pr_id: item.pr_id.toString(),
         pr_purpose: item.pr_purpose,
         pr_amount: item.pr_rate.toString(),
-        category: 'Permit Clearance',
+        category: 'Business Permit',
       },
     });
    };
