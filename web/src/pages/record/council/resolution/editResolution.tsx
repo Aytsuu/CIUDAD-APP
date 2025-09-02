@@ -156,7 +156,7 @@ import {Button} from '../../../../components/ui/button/button.tsx';
 import { Form, FormControl, FormField, FormItem, FormMessage, } from "@/components/ui/form/form";
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input.tsx';
-import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
+// import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal.tsx';
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -169,20 +169,20 @@ import { usingUpdateResolution } from './queries/resolution-update-queries.tsx';
 
 
 interface ResolutionEditFormProps {
-    res_num: number,
+    // res_num: number,
     res_title: string,
     res_date_approved: string,
     res_area_of_focus: string[],
-    resolution_files:{
-        rf_id: number;
-        rf_url: string;
-    }[];
+    // resolution_files:{
+    //     rf_id: number;
+    //     rf_url: string;
+    // }[];
     onSuccess?: () => void; 
 }
 
 
-function EditResolution({ res_num, res_title, res_date_approved, res_area_of_focus, resolution_files, onSuccess }: ResolutionEditFormProps) {
-    const [activeVideoId, setActiveVideoId] = useState<string>("");
+function EditResolution({ res_title, res_date_approved, res_area_of_focus, onSuccess }: ResolutionEditFormProps) {
+    const [_activeVideoId, _setActiveVideoId] = useState<string>("");
     // const [mediaFiles, setMediaFiles] = useState<any[]>(() => {
     //     return resolution_files?.map(file => ({
     //         id: `existing-${file.rf_id}`,
@@ -194,21 +194,21 @@ function EditResolution({ res_num, res_title, res_date_approved, res_area_of_foc
     //     })) || [];
     // });
 
-    const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => 
-        resolution_files?.map(file => ({
-            id: `existing-${file.rf_id}`,
-            type: 'document' as const,
-            file: new File([], file.rf_url.split('/').pop() || `document-${file.rf_id}`), // Create dummy File object
-            publicUrl: file.rf_url,
-            storagePath: '', // You might want to set this if you have it
-            status: 'uploaded' as const,
-            previewUrl: file.rf_url
-        })) || []
-    );
+    // const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => 
+    //     resolution_files?.map(file => ({
+    //         id: `existing-${file.rf_id}`,
+    //         type: 'document' as const,
+    //         file: new File([], file.rf_url.split('/').pop() || `document-${file.rf_id}`), // Create dummy File object
+    //         publicUrl: file.rf_url,
+    //         storagePath: '', // You might want to set this if you have it
+    //         status: 'uploaded' as const,
+    //         previewUrl: file.rf_url
+    //     })) || []
+    // );
 
     const [isEditing, setIsEditing] = useState(false);
-    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-    const [formValues, setFormValues] = useState<z.infer<typeof resolutionFormSchema>>();
+    const [_isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [_formValues, setFormValues] = useState<z.infer<typeof resolutionFormSchema>>();
 
 
     const form = useForm<z.infer<typeof resolutionFormSchema>>({
@@ -232,19 +232,19 @@ function EditResolution({ res_num, res_title, res_date_approved, res_area_of_foc
         { id: "waste", name: "Waste Committee" }
     ];
 
-    const { mutate: updateEntry } = usingUpdateResolution(onSuccess);
+    const { mutate: _updateEntry } = usingUpdateResolution(onSuccess);
 
 
-    function onSubmit(values: z.infer<typeof resolutionFormSchema>) {
-        updateEntry({ 
-            ...values, 
-            mediaFiles,
-            res_num 
-        });
+    function onSubmit(_values: z.infer<typeof resolutionFormSchema>) {
+        // updateEntry({ 
+        //     ...values, 
+        //     mediaFiles,
+        //     res_num 
+        // });
         setIsEditing(false);
     }
 
-    const handleSaveClick = (e: React.FormEvent) => {
+    const handleSaveClick = (_e: React.FormEvent) => {
         // e.preventDefault();
         setFormValues(form.getValues());
         setIsConfirmOpen(true);
@@ -284,14 +284,14 @@ function EditResolution({ res_num, res_title, res_date_approved, res_area_of_foc
                         render={({ }) => (
                             <FormItem>
                                 <FormControl>
-                                    <MediaUpload
+                                    {/* <MediaUpload
                                         title="Resolution File"
                                         description="Upload resolution documentation"
                                         mediaFiles={mediaFiles}
                                         setMediaFiles={setMediaFiles}
                                         activeVideoId={activeVideoId}
                                         setActiveVideoId={setActiveVideoId}
-                                    />
+                                    /> */}
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>

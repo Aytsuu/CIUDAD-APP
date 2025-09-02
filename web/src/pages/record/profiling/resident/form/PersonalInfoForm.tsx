@@ -1,7 +1,7 @@
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { Origin, Type } from "../../profilingEnums";
-import { renderActionButton } from "../../profilingActionConfig";
+import { Origin, Type } from "../../ProfilingEnums";
+import { renderActionButton } from "../../ProfilingActionConfig";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
@@ -50,6 +50,24 @@ const MARITAL_STATUS_OPTIONS = [
   { id: "widowed", name: "Widowed" },
 ];
 
+const RELIGION_OPTIONS = [
+  { id: "roman catholic", name: "Roman Catholic" },
+  { id: "muslim", name: "Muslim" },
+  { id: "iglesia ni cristo", name: "Iglesia ni Cristo" },
+  { id: "born again", name: "Born Again" },
+]
+
+const EDUCATIONAL_ATTAINMENT = [
+  { id: "no formal education", name: "No Formal Education" },
+  { id: "elementary", name: "Elementary" },
+  { id: "high school", name: "High School" },
+  { id: "vocational / technical", name: "Vocational / Technical" },
+  { id: "college level", name: "College Level" },
+  { id: "bachelor's degree", name: "Bachelor's Degree" },
+  { id: "master's degree", name: "Master's Degree" },
+  { id: "doctorate degree", name: "Doctorate Degree" }
+];
+
 // ==================== COMPONENT ====================
 const PersonalInfoForm = ({
   formattedSitio,
@@ -92,7 +110,7 @@ const PersonalInfoForm = ({
   return (
     <>
       {origin === Origin.Administration && (
-        <Combobox
+        <Combobox 
           options={formattedResidents}
           value={watch("per_id") as string}
           onChange={(value) => {
@@ -130,16 +148,16 @@ const PersonalInfoForm = ({
 
       {/* Sex, Status, DOB, Address */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <FormSelect control={control} name="per_sex" label="Sex"  options={SEX_OPTIONS} readOnly={isReadOnly} />
+        <FormSelect control={control} name="per_sex" label="Sex" placeholder="Enter sex" options={SEX_OPTIONS} readOnly={isReadOnly} />
         <FormDateTimeInput control={control} name="per_dob" label="Date of Birth" type="date" readOnly={isReadOnly} />
-        <FormSelect control={control} name="per_status" label="Marital Status" options={MARITAL_STATUS_OPTIONS} readOnly={isReadOnly} />
+        <FormSelect control={control} name="per_status" label="Marital Status" placeholder="Enter marital status" options={MARITAL_STATUS_OPTIONS} readOnly={isReadOnly} />
         <FormInput control={control} name="per_contact" label="Contact" placeholder="Enter contact" readOnly={isReadOnly} type="number" />
       </div>
 
       {/* Education, Religion, Contact */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <FormInput control={control} name="per_edAttainment" label="Educational Attainment" placeholder="Enter educational attainment" readOnly={isReadOnly} />
-        <FormInput control={control} name="per_religion" label="Religion" placeholder="Enter religion" readOnly={isReadOnly} />
+        <FormSelect control={control} name="per_edAttainment" label="Educational Attainment" placeholder="Enter educational attainment" readOnly={isReadOnly} options={EDUCATIONAL_ATTAINMENT}/>
+        <FormSelect control={control} name="per_religion" label="Religion" options={RELIGION_OPTIONS} readOnly={isReadOnly} />
       </div>
       <div className="grid grid-cols-1 gap-4">
         {
@@ -206,10 +224,11 @@ const PersonalInfoForm = ({
                   <Button 
                     type={"button"}
                     variant={"outline"} 
-                    className="border-none shadow-none"
+                    className="border-none shadow-none text-red-500 hover:text-red-500"
                     onClick={() => handleRemoveAddress(idx)}
                   >
                     <X className="cursor-pointer  text-red-500"/>
+                    Remove
                   </Button>
                 }
               </div>
@@ -226,25 +245,28 @@ const PersonalInfoForm = ({
             </div>
           ))
         }
-        {!(formType === Type.Viewing) && <div>
-          <Button 
-            variant={"outline"} 
-            type="button"
-            className="border-none shadow-none text-black/50 hover:text-black/60"
-            onClick={() => setAddresses && setAddresses((prev) => [
-              ...prev, {
-                add_province: '',
-                add_city: '',
-                add_barangay: '',
-                sitio: '',
-                add_external_sitio: '',
-                add_street: ''
-              }
-            ])}
-          >
-            <Plus/> Add Address
-          </Button>
-        </div>}
+        {(formType !== Type.Viewing) && 
+          (!watch("per_id") || watch("per_id") == "undefined") &&
+          <div>
+            <Button 
+              variant={"outline"} 
+              type="button"
+              className="border-none shadow-none text-black/50 hover:text-black/60"
+              onClick={() => setAddresses && setAddresses((prev) => [
+                ...prev, {
+                  add_province: '',
+                  add_city: '',
+                  add_barangay: '',
+                  sitio: '',
+                  add_external_sitio: '',
+                  add_street: ''
+                }
+              ])}
+            >
+              <Plus/> Add Address
+            </Button>
+          </div>
+        }
       </div>
 
       <div className="mt-8 flex justify-end gap-3">

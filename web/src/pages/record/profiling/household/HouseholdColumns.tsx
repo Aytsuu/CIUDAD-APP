@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
-import { HouseholdFamRecord, HouseholdRecord } from "../profilingTypes";
+import { HouseholdFamRecord, HouseholdRecord } from "../ProfilingTypes";
 import { Label } from "@/components/ui/label";
 import { useLoading } from "@/context/LoadingContext";
 import { getFamFilteredByHouse, getFamilyData, getFamilyMembers, getHouseholdList } from "../restful-api/profilingGetAPI";
@@ -10,11 +10,12 @@ import ViewButton from "@/components/ui/view-button";
 import { Combobox } from "@/components/ui/combobox";
 import React from "react";
 import { useFamFilteredByHouse } from "../queries/profilingFetchQueries";
-import { formatFamiles } from "../profilingFormats";
+import { formatFamiles } from "../ProfilingFormats";
 import { Button } from "@/components/ui/button/button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { capitalize } from "@/helpers/capitalize";
 import { useUpdateFamily } from "../queries/profilingUpdateQueries";
+import { formatDate } from "@/helpers/dateHelper";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -122,7 +123,30 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
   },
   {
     accessorKey: 'date_registered',
-    header: 'Date Registered'
+    header: 'Date Registered',
+    cell: ({row}) => (
+      formatDate(row.original.date_registered, "long")
+    )
+  },
+  {
+    accessorKey: 'registered_by',
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Registered By
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const registeredBy = row.getValue("registered_by") as string;
+      return (
+        <div className="text-center">
+          {registeredBy || "-"}
+        </div>
+      );
+    },
   },
   {
     accessorKey: 'action',
@@ -145,7 +169,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
         showLoading();
         try {
           const families = await getFamFilteredByHouse(row.original.hh_id);
-          navigate("/household/view", {
+          navigate("/profiling/household/view", {
             state: {
               params: {
                 families: families,
@@ -186,7 +210,7 @@ export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
             getHouseholdList()
           ]);
           
-          navigate("/family/view", {
+          navigate("/profiling/family/view", {
             state: {
               params: {
                 family: {
@@ -202,22 +226,20 @@ export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
         }
       };
 
-      const handleBuildingChange = (value: string) => {
-        if(value !== building?.toLowerCase()){
-          setBuilding(capitalize(value));
-
-          const data = {
-            fam_building: capitalize(value),
+      const handleBuildingChange = async (value: string) => {
+        if (value !== building?.toLowerCase()) {
+          const newBuilding = capitalize(value);
+          setBuilding(newBuilding);
+          const data = { fam_building: newBuilding };
+          try {
+            await updateFamily({
+              data: data,
+              familyId: family.fam_id,
+              oldHouseholdId: ""
+            })
+          } catch (error) {
+            setBuilding(family.fam_building);
           }
-          updateFamily({
-            data: data,
-            familyId: family.fam_id,
-            oldHouseholdId: ""
-          }, {
-            onError: () => {
-              setBuilding(family.fam_building);
-            }
-          })
         }
       };
 

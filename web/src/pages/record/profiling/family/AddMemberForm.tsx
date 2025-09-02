@@ -12,7 +12,7 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { Loader2, Plus } from "lucide-react";
 import { LoadButton } from "@/components/ui/button/load-button";
-import { formatResidents } from "../profilingFormats";
+import { formatResidents } from "../ProfilingFormats";
 import { useAddFamilyComposition } from "../queries/profilingAddQueries";
 import { useResidentsWithFamExclusion } from "../queries/profilingFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
@@ -92,7 +92,7 @@ export default function AddMemberForm({
           <Combobox
             options={formattedResidents}
             value={form.watch("id")}
-            onChange={(value) => form.setValue("id", value)}
+            onChange={(value) => form.setValue("id", value as string)}
             placeholder="Select a resident" 
             emptyMessage={
               <div className="flex gap-2 justify-center items-center">

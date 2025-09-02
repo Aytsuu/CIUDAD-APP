@@ -31,7 +31,7 @@ export const useDeleteWasteTruck = () => {
 
       return { previousTrucks };
     },
-    onError: (error: Error, { truck_id }, context) => {
+    onError: (error: Error, _truck_id , context) => {
       if (context?.previousTrucks) {
         queryClient.setQueryData(['wasteTrucks'], context.previousTrucks);
       }
@@ -40,7 +40,7 @@ export const useDeleteWasteTruck = () => {
         duration: 2000 
       });
     },
-    onSuccess: (_, { truck_id, permanent }) => {
+    onSuccess: (_, { permanent }) => {
       toast.success(`Waste truck ${permanent ? "deleted" : "archived"} successfully`, {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000,
@@ -70,7 +70,7 @@ export const useRestoreWasteTruck = () => {
 
       return { previousTrucks };
     },
-    onError: (error: Error, truck_id, context) => {
+    onError: (error: Error, _truck_id, context) => {
       if (context?.previousTrucks) {
         queryClient.setQueryData(['wasteTrucks'], context.previousTrucks);
       }
@@ -79,7 +79,7 @@ export const useRestoreWasteTruck = () => {
         duration: 2000 
       });
     },
-    onSuccess: (_, truck_id) => {
+    onSuccess: (_, _truck_id) => {
       toast.success("Waste truck restored successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000,

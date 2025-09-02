@@ -10,7 +10,7 @@ export const useDeleteCouncilEvent = () => {
   return useMutation({
     mutationFn: ({ ce_id, permanent = false }: { ce_id: number; permanent?: boolean }) => 
       delCouncilEvent(ce_id, permanent),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       const { ce_id, permanent } = variables;
       if (permanent) {
         // Permanent delete

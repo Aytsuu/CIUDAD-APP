@@ -3,9 +3,7 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Alert,
   FlatList,
-  Linking,
   ActivityIndicator,
 } from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
@@ -21,9 +19,9 @@ import { Download } from "@/lib/icons/Download";
 import { Eye } from "@/lib/icons/Eye";
 import PageLayout from "@/screens/_PageLayout";
 import { formatDate } from "@/helpers/dateHelpers";
-import { useBusinessInfo } from "../queries/profilingGetQueries";
 import { formatCurrency } from "@/helpers/currencyFormat";
 import { CreditCard } from "lucide-react-native";
+import { useBusinessInfo } from "@/screens/business/queries/businessGetQueries";
 
 // Loading Card Component
 const LoadingCard = ({ title, message }: { title: string, message: string }) => (
@@ -123,7 +121,7 @@ export default function BusinessDetails() {
   const respondentId = businessInfo?.rp ? business.rp : businessInfo?.br?.br_id;
   const businessName = business?.bus_name || 'Unnamed Business';
   const businessAddress = businessInfo ? `${businessInfo?.bus_street || ''}, Sitio ${businessInfo?.sitio || ''}` : '';
-  const registeredDate = businessInfo ? formatDate(businessInfo?.bus_date_registered, true) : '';
+  const registeredDate = businessInfo ? formatDate(businessInfo?.bus_date_registered, 'long') : '';
   const registeredBy = businessInfo?.bus_registered_by || 'N/A';
   const businessFiles = businessInfo?.files || [];
 

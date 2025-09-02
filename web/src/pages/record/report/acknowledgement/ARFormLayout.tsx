@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card/card";
 import { useLocation } from "react-router";
 import { useAddAR } from "../queries/reportAdd";
 import { useAuth } from "@/context/AuthContext";
-import { formatSitio } from "../../profiling/profilingFormats";
+import { formatSitio } from "../../profiling/ProfilingFormats";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 // Main component for the DRR AR Form

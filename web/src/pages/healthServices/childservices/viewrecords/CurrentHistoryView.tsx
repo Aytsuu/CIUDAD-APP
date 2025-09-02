@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { format, isValid } from "date-fns";
 import { getValueByPath } from "./ChildHealthutils";
 import { VitalSignsTable } from "./tables/VitalSignsTable";

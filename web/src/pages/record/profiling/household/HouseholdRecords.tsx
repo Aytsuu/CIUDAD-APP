@@ -1,5 +1,3 @@
-"use client"
-
 import React from "react"
 import { Search, Plus, Download, Users, FileDown, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -95,7 +93,7 @@ export default function HouseholdRecords() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <Link to="/household/form">
+                <Link to="/profiling/household/form">
                   <Button className="px-4">
                     <Plus size={16} className="mr-2" />
                     Register Household
@@ -146,14 +144,6 @@ export default function HouseholdRecords() {
                   ? `No households match "${searchQuery}". Try adjusting your search.`
                   : "Get started by registering your first household."}
               </p>
-              {!searchQuery && (
-                <Link to="/household/form">
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Register First Household
-                  </Button>
-                </Link>
-              )}
             </div>
           )}
 

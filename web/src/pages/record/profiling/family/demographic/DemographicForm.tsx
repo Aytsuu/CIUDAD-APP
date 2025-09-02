@@ -66,7 +66,7 @@ export default function DemographicForm({
                 emptyMessage={
                   <div className="flex gap-2 justify-center items-center">
                     <Label className="font-normal text-[13px]">No household found.</Label>
-                    <Link to="/household/form">
+                    <Link to="/profiling/household/form">
                       <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
                         Register
                       </Label>

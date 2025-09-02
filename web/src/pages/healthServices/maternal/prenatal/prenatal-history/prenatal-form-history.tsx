@@ -1,4 +1,4 @@
-"use client"
+// "use client"
 
 // import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 // import { DataTable } from "@/components/ui/table/data-table"

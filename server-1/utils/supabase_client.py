@@ -46,5 +46,11 @@ def upload_to_storage(file_data, bucket, folder=None):
     except Exception as e:
         logger.error(f"Failed to upload file {file_data['name']}: {str(e)}")
 
-    return url if url else None
-         
+    return url
+
+def remove_from_storage(bucket, file_path):
+    try:
+        supabase.storage.from_(bucket).remove([file_path])
+    except Exception as e:
+        logger.error(f"Failed to delete file {file_path} from bucket {bucket}: {str(e)}")
+    return

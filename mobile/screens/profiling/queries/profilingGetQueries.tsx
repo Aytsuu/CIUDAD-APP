@@ -1,5 +1,7 @@
 import { api } from "@/api/api";
-import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import React from "react";
 
 
 export const useGetCardAnalytics = () => {
@@ -39,8 +41,9 @@ export const useResidentsTable = (page: number, pageSize: number, searchQuery: s
   })
 }
 
-export const useGetPersonalInfo = (residentId: string) => {
-  return useQuery({
+export const useGetPersonalInfo = (residentId: string, personalId: string) => {
+  const queryClient = useQueryClient()
+  const query = useQuery({
     queryKey: ['personalInfo', residentId],
     queryFn: async () => {
       try {
@@ -50,8 +53,33 @@ export const useGetPersonalInfo = (residentId: string) => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: Infinity,
+    enabled: !!residentId
   })
+
+  React.useEffect(() => {
+    if(!residentId) return;
+    const channel = supabase
+      .channel(`personal-update-${residentId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "personal",
+          filter: `per_id=eq.${personalId}`
+        },
+        () => {
+          queryClient.invalidateQueries({queryKey: ['personalInfo', residentId]})
+        }
+      ).subscribe()
+
+    return () => {
+      supabase.removeChannel(channel);
+    }
+  }, [residentId, queryClient])
+
+  return query
 }
 
 export const useFamiliesTable = (page: number, pageSize: number, searchQuery: string) => {
@@ -77,7 +105,8 @@ export const useFamiliesTable = (page: number, pageSize: number, searchQuery: st
 }
 
 export const useGetFamilyMembers = (familyId: string) => {
-  return useQuery({
+  const queryClient = useQueryClient()
+  const query = useQuery({
     queryKey: ['familyMembers', familyId],
     queryFn: async () => {
       if(!familyId) return [];
@@ -88,8 +117,33 @@ export const useGetFamilyMembers = (familyId: string) => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: Infinity,
+    enabled: !!familyId
   })
+  
+  React.useEffect(() => {
+    if(!familyId) return;
+    const channel = supabase
+      .channel(`family-update-${familyId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "family_composition",
+          filter: `fam_id=eq.${familyId}`
+        },
+        () => {
+          queryClient.invalidateQueries({queryKey: ['familyMembers', familyId]})
+        }
+      ).subscribe()
+
+    return () => {
+      supabase.removeChannel(channel);
+    }
+  }, [familyId, queryClient])
+
+  return query
 }
 
 export const useHouseholdTable = (page: number, pageSize: number, searchQuery: string) => {
@@ -132,21 +186,4 @@ export const useBusinessTable = (page: number, pageSize: number, searchQuery: st
     },
     staleTime: 5000,
   })
-}
-
-export const useBusinessInfo = (busId: number) => {
-  return useQuery({
-    queryKey: ["businessInfo", busId],
-    queryFn: async () => {
-      if (!busId) return null;
-      
-      try {
-        const res = await api.get(`profiling/business/${busId}/info/`);
-        return res.data;
-      } catch (err) {
-        throw err;
-      }
-    },
-    staleTime: 5000,
-  });
 }

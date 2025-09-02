@@ -27,7 +27,7 @@ function BudgetPlanHistory({ planId }: { planId: string }) {
     return { filtered, paginated, total };
   };
 
-  const { filtered, paginated, total } = filterAndPaginate(fetchedData, searchTerm, currentPage, pageSize);
+  const { paginated, total } = filterAndPaginate(fetchedData, searchTerm, currentPage, pageSize);
 
   const columns: ColumnDef<BudgetPlanHistory>[] = [
     { 

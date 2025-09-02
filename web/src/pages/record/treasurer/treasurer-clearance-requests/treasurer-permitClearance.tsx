@@ -213,7 +213,7 @@ export const PermitClearanceRecords: PermitClearance[] = [
 
 function PermitClearance(){
     // Fetch data from backend
-    const { data: permitClearances, isLoading, error } = useQuery({
+    const { data: permitClearances} = useQuery({
         queryKey: ["permitClearances"],
         queryFn: getPermitClearances
     });

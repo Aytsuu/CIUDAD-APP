@@ -30,7 +30,7 @@ export default function MainLayout() {
             </div>
           </SidebarProvider>
         </div>
-        <main className="py-10 pl-8 pr-14 overflow-y-auto flex-1 bg-[#F3F4F8]">
+        <main className="py-10 pl-8 pr-14 flex-1 bg-[#F3F4F8]">
           <Outlet />
           <Toaster visibleToasts={5}/>
         </main>

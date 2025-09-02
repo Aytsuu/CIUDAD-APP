@@ -196,7 +196,7 @@
 
 
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {Button} from '../../../../components/ui/button/button.tsx';
 import { Form, FormControl, FormField, FormItem, FormMessage, } from "@/components/ui/form/form";
 import { FormTextArea } from '@/components/ui/form/form-text-area';
@@ -238,18 +238,18 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
     });
 
 
-    useEffect(() => {
-        if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
-            form.setValue('res_file', mediaFiles.map(file => ({
-                name: file.file.name,
-                type: file.file.type,
-                path: file.storagePath || '',
-                url: file.publicUrl || ''
-            })));
-        } else {
-            form.setValue('res_file', []);
-        }
-    }, [mediaFiles, form]);
+    // useEffect(() => {
+    //     if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+    //         form.setValue('res_file', mediaFiles.map(file => ({
+    //             name: file.file.name,
+    //             type: file.file.type,
+    //             path: file.storagePath || '',
+    //             url: file.publicUrl || ''
+    //         })));
+    //     } else {
+    //         form.setValue('res_file', []);
+    //     }
+    // }, [mediaFiles, form]);
 
 
 

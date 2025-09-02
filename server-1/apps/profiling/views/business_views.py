@@ -1,7 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Q
+from django.db.models import Q, Count
 from ..models import Business, BusinessFile
 from apps.account.models import Account
 from ..serializers.business_serializers import *
@@ -64,7 +64,9 @@ class BusinessRespondentTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = BusinessRespondent.objects.all()
+    queryset = BusinessRespondent.objects.annotate(
+      business_count=Count('owned_business')
+    ).filter(business_count__gt=0)
 
     return queryset
 
@@ -100,6 +102,11 @@ class BusinessUpdateView(generics.UpdateAPIView):
   serializer_class = BusinessCreateUpdateSerializer
   queryset = Business.objects.all()
   lookup_field = 'bus_id'
+
+  def update(self, request, *args, **kwargs):
+    super().update(request, *args, **kwargs)  # performs the update
+    instance = self.get_object()
+    return Response(BusinessInfoSerializer(instance).data)
 
 class VerifyBusinessRespondent(APIView):
   def post(self, request, *args, **kwargs):
@@ -149,3 +156,48 @@ class SpecificOwnerView(generics.ListAPIView):
       else:
           return Business.objects.none()
 
+class BusinessModificationCreateView(generics.CreateAPIView):
+  serializer_class = BusinessModificationCreateSerializer
+  queryset = BusinessModification.objects.all()
+
+  def create(self, request, *args, **kwargs):
+    serializer = self.get_serializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    instance = serializer.save()
+
+    return Response(
+        BusinessModificationListSerializer(instance).data,
+        status=status.HTTP_200_OK
+    )
+
+
+class BusinessModificationListView(generics.ListAPIView):
+  serializer_class = BusinessModificationListSerializer
+  queryset = BusinessModification.objects.filter(bm_status=None)
+
+class BusinessModificationDeleteView(generics.DestroyAPIView):
+  serializer_class = BusinessModificationBaseSerializer
+  queryset = BusinessModification.objects.all()
+
+class BusinessModificationUpdateView(generics.UpdateAPIView):
+  serializer_class = BusinessModificationBaseSerializer
+  queryset = BusinessModification.objects.all()
+  lookup_field = 'bm_id'
+
+  def update(self, request, *args, **kwargs):
+    instance = self.get_object()
+    serializer = self.get_serializer(instance, data=request.data, partial=True)
+    
+    if serializer.is_valid():
+      serializer.save()
+      return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_400_BAD_REQUEST)
+  
+class BusinessHistoryView(APIView):
+  def get(self, request, *args, **kwargs):
+    bus_id = request.query_params.get('bus_id', None)
+
+    if bus_id:
+      query = Business.history.filter(bus_id=bus_id, bus_status='Active')
+      return Response(data=BusinessHistoryBaseSerializer(query, many=True).data, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_404_NOT_FOUND)

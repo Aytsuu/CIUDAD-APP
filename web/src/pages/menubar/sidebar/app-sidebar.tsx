@@ -1,80 +1,84 @@
-
-import React, { useState } from "react";
-import { Link } from "react-router";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "./sidebar";
-import type { MenuItem, SubMenuItemProps, MenuItemProps } from "./sidebarTypes";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "./sidebar";
+import { capitalize } from "@/helpers/capitalize";
 
-// Menu items with dropdown support
-const items: MenuItem[] = [
+// Updated types to be more flexible
+interface BaseMenuItem {
+  title: string;
+  url?: string;
+  items?: BaseMenuItem[];
+}
+
+// Menu items with unlimited nesting support
+const items: BaseMenuItem[] = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: "/dashboard"
   },
   {
     title: "Calendar",
-    url: "/waste-calendar-scheduling",
+    url: "/waste-calendar-scheduling"
   },
   {
     title: "Administration",
-    url: "/administration",
+    url: "/administration"
   },
   {
     title: "Profiling",
-    subItems: true,
     url: "/",
     items: [
-      { title: "Resident", url: "/resident" },
-      { title: "Family", url: "/family" },
-      { title: "Household", url: "/household" },
-      { title: "Business", url: "/business/record/active" },
-    ],
+      { title: "All", url: "/profiling/all" },
+      {
+        title: "Resident",
+        url: "/profiling/resident",
+        items: [
+          { title: "Family", url: "/profiling/family" },
+          { title: "Household", url: "/profiling/household" }
+        ]
+      },
+      {
+        title: "Business",
+        url: "/profiling/business/record",
+        items: [{ title: "Respondent", url: "/profiling/business/record/respondent" }]
+      }
+    ]
   },
   {
     title: "Report",
-    subItems: true,
     url: "/",
     items: [
-      { title: "Incident", url: "/report/incident"},
-      { title: "Acknowledgement", url: "/report/acknowledgement"},
-      { title: "Weekly Accomplishment", url: "/report/weekly-accomplishment"},
-      { title: "Securado", url: "/report/securado"}  
-    ],
+      { title: "Incident", url: "/report/incident" },
+      { title: "Acknowledgement", url: "/report/acknowledgement" },
+      { title: "Weekly Accomplishment", url: "/report/weekly-accomplishment" },
+      { title: "Securado", url: "/report/securado" }
+    ]
   },
   {
     title: "Complaint",
-    url: "/complaint",
+    url: "/complaint"
   },
   {
     title: "Team",
-    url: "/team",
+    url: "/team"
   },
   {
     title: "Summon & Case Tracker",
-    url: "/summon-and-case-tracking",
+    url: "/summon-and-case-tracking"
   },
   {
     title: "GAD",
-    subItems: true,
     url: "/",
     items: [
-      { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
-      { title: "Project Proposal", url: "/gad-project-proposal"},
-      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
-      { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
-    ],
+      { title: "Budget Tracker", url: "/gad-budget-tracker-main" },
+      { title: "Project Proposal", url: "/gad-project-proposal" },
+      { title: "Review Project Proposal", url: "/gad-review-project-proposal" },
+      { title: "Annual Development Plan", url: "/gad-annual-development-plan" }
+    ]
   },
   {
     title: "Council",
-    subItems: true,
     url: "/",
     items: [
       { title: "Council Events", url: "/calendar-page" },
@@ -82,44 +86,43 @@ const items: MenuItem[] = [
       { title: "Ordinance", url: "/ord-page" },
       { title: "Resolution", url: "/res-page" },
       { title: "Minutes of Meeting", url: "/mom-page" },
-      { title: "Document Template", url: "/templates-main"}
-    ],
+      { title: "Document Template", url: "/templates-main" }
+    ]
   },
   {
     title: "Finance",
-    subItems: true,
     url: "/",
     items: [
       { title: "Budget Plan", url: "/treasurer-budget-plan" },
       {
         title: "Income & Expense Tracking",
-        url: "/treasurer-income-expense-main",
+        url: "/treasurer-income-expense-main"
       },
       {
         title: "Income & Disbursement",
-        url: "/treasurer-income-and-disbursement",
+        url: "/treasurer-income-and-disbursement"
       },
       {
         title: "Clearance Requests",
         url: "/",
-        anotherItems: [
+        items: [
           { title: "Personal & Others", url: "/treasurer-personal-and-others" },
           { title: "Permit", url: "/treasurer-permit" },
           { title: "Service Charge", url: "/treasurer-service-charge" },
           { title: "Barangay Service", url: "/treasurer-barangay-service" },
-          { title: "Rates", url: "/treasurer-rates" },
-        ],
+          { title: "Rates", url: "/treasurer-rates" }
+        ]
       },
-      { title: "Receipts", url: "/treasurer-receipts" },
-    ],
+      { title: "Receipts", url: "/treasurer-receipts" }
+    ]
   },
   {
     title: "Donation",
-    url: "/donation-record",
+    url: "/donation-record"
   },
   {
     title: "Illegal Dumping Reports",
-    url: "/waste-illegaldumping-report",
+    url: "/waste-illegaldumping-report"
   },
   {
     title: "Garbage Pickup Request",
@@ -127,21 +130,31 @@ const items: MenuItem[] = [
   },
   {
     title: "Waste Personnel & Collection Vehicle",
-    url: "/waste-personnel",
+    url: "/waste-personnel"
   },
   {
     title: "Announcement",
-    url: "/announcement",
+    url: "/announcement"
   },
   {
-    title: "Services",
-    subItems: true,
+    title: "Clerk",
     url: "/",
     items: [
-      { title: "Administration", url: "/health-administration" },
+      { title: "Certifications", url: "record/clearances/certification" },
+      { title: "Business Permits", url: "record/clearances/businesspermit" },
+      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" }
+    ]
+  },
+  {
+    title: "Activity Log",
+    url: "/record/activity-log"
+  },
+  { title: "Patients Record", url: "/patients-record-main" },
 
-      { title: "Patients Record", url: "/patients-record-main" },
-      {title: "Forwarded Records", url: "/forwarded-records"},
+  {
+    title: "Services",
+    url: "/",
+    items: [
       // {
       //   title: "Forwarded Records",
       //   url: "/",
@@ -158,18 +171,7 @@ const items: MenuItem[] = [
       //     },
       //   ],
       // },
-      {
-        title: "Manage Request",
-        url: "/",
-        anotherItems: [
-          {
-            title: "Medicine Request ",
-            url: "/medicine-requests",
-          },
-          { title: "Medical Consultation", url: "/" },
-         
-        ],
-      },
+      { title: "Forwarded Records", url: "/forwarded-records" },
       { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Family Profiling", url: "/family-profiling-main" },
       { title: "Medical Consultation Record", url: "/allMedRecords" },
@@ -178,199 +180,149 @@ const items: MenuItem[] = [
       { title: "Child Health Record", url: "/all-child-health-records" },
       { title: "Vaccination Record", url: "/VaccinationManagement" },
       { title: "Medicine Record", url: "/all-medicine-records" },
-      { title: "Firstaid Record ", url: "/all-firstaid-records" },
-      { title: "Archive", url: "/archiveMainInventoryStocks" },
-      { title: "Schedules", url: "/health-appointments" },
-      { title: "Service Scheduler", url: "/health-services/scheduler" },
-      { title: "Reports", url: "/healthcare-reports" },
-
-      {
-        title: "Inventory",
-        url: "/",
-        anotherItems: [
-          { title: "Inventory List", url: "/mainInventoryList" },
-          { title: "Inventory Stocks", url: "/main-inventory" },
-        ],
-      },
-      {
-        title: "Queueing",
-        url: "/",
-        anotherItems: [
-          { title: "Patients Queue", url: "/patientsQueue" },
-          { title: "Processing Queue", url: "/processingQueue" },
-        ],
-      },
-    ],
+      { title: "Firstaid Record", url: "/all-firstaid-records" },
+      { title: "Schedules", url: "/health-appointments" }
+    ]
   },
+
   {
-    title: "Clerk",
-    subItems: true,
+    title: "Inventory",
     url: "/",
     items: [
-      { title: "Certifications", url: "record/clearances/certification" },
-      { title: "Business Permits", url: "record/clearances/businesspermit" },
-      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
-    ],
+      { title: "Inventory List", url: "/mainInventoryList" },
+      { title: "Inventory Stocks", url: "/main-inventory" }
+    ]
   },
   {
-    title: "Activity Log",
-    url: "/record/activity-log",
+    title: "Manage Request",
+    url: "/",
+    items: [
+      {
+        title: "Medicine Request",
+        url: "/medicine-requests"
+      },
+      { title: "Medical Consultation", url: "/" }
+    ]
+  },
 
+  { title: "Service Scheduler", url: "/health-services/scheduler" },
+  { title: "Reports", url: "/healthcare-reports" },
+  {
+    title: "Manage",
+    url: "/",
+    items: [
+      {
+        title: "Manage age group",
+        url: "/age-group"
+      },
+      { title: "Medical Consultation", url: "/" }
+    ]
   },
 ];
 
-const SubMenuItemComponent: React.FC<SubMenuItemProps> = ({
-  item,
-  activeItem,
-  setActiveItem,
-}) => {
-  const [isThirdLevelOpen, setIsThirdLevelOpen] = useState(false);
-  const hasThirdLevel = item.anotherItems && item.anotherItems.length > 0;
-  const isActive = activeItem === item.title;
+interface MenuItemComponentProps {
+  item: BaseMenuItem;
+  activeItem: string;
+  setActiveItem: (title: string) => void;
+  level?: number;
+}
 
-  if (hasThirdLevel) {
-    return (
-      <div className="w-full">
-        <div
-          className={`flex items-center justify-between px-4 py-2 text-sm rounded-md cursor-pointer ${
-            isActive
-              ? "bg-[#1273B2]/10 text-[#1273B8]"
-              : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-          }`}
-          onClick={() => {
-            setIsThirdLevelOpen(!isThirdLevelOpen);
-            setActiveItem(item.title);
-          }}
-        >
-          <span>{item.title}</span>
-          {isThirdLevelOpen ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-        </div>
-        {isThirdLevelOpen && (
-          <div className="ml-4 mt-1 space-y-1">
-            {item.anotherItems?.map((thirdItem) => (
-              <SidebarMenuButton
-                key={thirdItem.title}
-                asChild
-                className="w-full"
-              >
-                <Link
-                  to={thirdItem.url}
-                  className={`flex items-center px-4 py-2 text-sm rounded-md ${
-                    activeItem === thirdItem.title
-                      ? "bg-[#1273B2]/10 text-[#1273B8]"
-                      : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-                  }`}
-                  onClick={() => setActiveItem(thirdItem.title)}
-                >
-                  <span>{thirdItem.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <SidebarMenuButton asChild className="w-full">
-      <Link
-        to={item.url}
-        className={`flex items-center px-4 py-2 text-sm rounded-md ${
-          isActive
-            ? "bg-[#1273B2]/10 text-[#1273B8]"
-            : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-        }`}
-        onClick={() => setActiveItem(item.title)}
-      >
-        <span>{item.title}</span>
-      </Link>
-    </SidebarMenuButton>
-  );
-};
-
-const MenuItem: React.FC<MenuItemProps> = ({
-  item,
-  activeItem,
-  setActiveItem,
-}) => {
+// Single recursive component that handles all nesting levels
+const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, activeItem, setActiveItem, level = 0 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const isActive = activeItem === item.title;
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  if (item.subItems && item.items) {
+  const hasSubItems = item.items && item.items.length > 0;
+  const isActive = activeItem === item.title;
+  const currentPath = location.pathname.split("/").pop() as string;
+
+  // Auto-set active item based on current path
+  useEffect(() => {
+    if (item.url && item.url.split("/").pop() === currentPath) {
+      setActiveItem(capitalize(item.title) as string);
+    }
+  }, [currentPath, item.url, item.title, setActiveItem]);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (hasSubItems && (!item.url || item.url === "/")) {
+      // Toggle submenu for items without navigable URLs
+      setIsOpen(!isOpen);
+      setActiveItem(item.title);
+    } else if (item.url && item.url !== "/") {
+      // Navigate to URL
+      setActiveItem(item.title);
+      navigate(item.url);
+    }
+  };
+
+  const toggleSubmenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+    setActiveItem(item.title);
+  };
+
+  // Calculate indentation based on nesting level
+  const indentClass = level > 0 ? `pl-${level * 4}` : "";
+
+  // Base styles
+  const baseStyles = `flex items-center px-4 py-2.5 text-sm rounded-md cursor-pointer transition-colors ${isActive ? "bg-[#1273B2]/10 text-[#1273B8]" : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"}`;
+
+  if (hasSubItems) {
     return (
       <SidebarMenuItem>
-        <div
-          className={`w-full cursor-pointer rounded-md ${
-            isActive
-              ? "bg-[#1273B2]/10 text-[#1273B8]"
-              : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-          }`}
-          onClick={() => {
-            setIsOpen(!isOpen);
-            setActiveItem(item.title);
-          }}
-        >
-          <div className="flex items-center justify-between px-4 py-2 rounded-md">
-            <span>{item.title}</span>
-            {isOpen ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-          </div>
+        <div className={`w-full ${indentClass}`}>
+          <SidebarMenuButton asChild className="w-full">
+            <React.Fragment>
+              <div className={baseStyles} onClick={handleClick}>
+                <span className="flex-1">{item.title}</span>
+                <div onClick={toggleSubmenu}>{isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</div>
+              </div>
+              {isOpen && (
+                <div className="mt-1 space-y-1">
+                  {item.items!.map((subItem, index) => (
+                    <MenuItemComponent key={`${subItem.title}-${index}`} item={subItem} activeItem={activeItem} setActiveItem={setActiveItem} level={level + 1} />
+                  ))}
+                </div>
+              )}
+            </React.Fragment>
+          </SidebarMenuButton>
         </div>
-        {isOpen && (
-          <div className="ml-4 mt-1 space-y-1">
-            {item.items.map((subItem) => (
-              <SubMenuItemComponent
-                key={subItem.title}
-                item={subItem}
-                activeItem={activeItem}
-                setActiveItem={setActiveItem}
-              />
-            ))}
-          </div>
-        )}
       </SidebarMenuItem>
     );
   }
 
+  // Leaf item without subitems
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild>
-        {item.url && (
-          <Link
-            to={item.url}
-            className={`flex items-center px-4 py-2 rounded-md ${
-              isActive
-                ? "bg-[#1273B2]/10 text-[#1273B8]"
-                : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-            }`}
-            onClick={() => setActiveItem(item.title)}
-          >
-            <span>{item.title}</span>
-          </Link>
-        )}
-      </SidebarMenuButton>
+      <div className={indentClass}>
+        <SidebarMenuButton asChild className="w-full">
+          {item.url && item.url !== "/" ? (
+            <Link to={item.url} className={baseStyles} onClick={() => setActiveItem(item.title)}>
+              <span>{item.title}</span>
+            </Link>
+          ) : (
+            <div className={baseStyles} onClick={() => setActiveItem(item.title)}>
+              <span>{item.title}</span>
+            </div>
+          )}
+        </SidebarMenuButton>
+      </div>
     </SidebarMenuItem>
   );
 };
 
-export function AppSidebar({ assignedFeatures }: { assignedFeatures: any }) {
+export function AppSidebar({ assignedFeatures }: { assignedFeatures?: any }) {
   const [activeItem, setActiveItem] = useState<string>("");
 
-  // const items: MenuItem[] = assignedFeatures.map((item) => {
-  //   const feature = item.feat;
-  //   return {
-  //     title: feature.feat_name,
-  //     url: feature.feat_url,
-  //   }
-  // });
+  // Uncomment and modify this if you want to use assignedFeatures instead of hardcoded items
+  // const dynamicItems: BaseMenuItem[] = assignedFeatures?.map((item: any) => ({
+  //   title: item.feat.feat_name,
+  //   url: item.feat.feat_url,
+  // })) || items;
+
   return (
     <Sidebar className="border-none">
       <SidebarContent>
@@ -378,13 +330,8 @@ export function AppSidebar({ assignedFeatures }: { assignedFeatures: any }) {
           <SidebarGroupContent>
             <div className="w-full h-14"></div>
             <SidebarMenu>
-              {items.map((item) => (
-                <MenuItem
-                  key={item.title}
-                  item={item}
-                  activeItem={activeItem}
-                  setActiveItem={setActiveItem}
-                />
+              {items.map((item, index) => (
+                <MenuItemComponent key={`${item.title}-${index}`} item={item} activeItem={activeItem} setActiveItem={setActiveItem} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -395,135 +342,3 @@ export function AppSidebar({ assignedFeatures }: { assignedFeatures: any }) {
 }
 
 export default AppSidebar;
-
-// import React, { useState } from "react";
-// import { Link } from "react-router";
-// import { ChevronDown, ChevronRight } from "lucide-react";
-// import { useAuth } from "@/context/AuthContext";
-// import {
-//   Sidebar,
-//   SidebarContent,
-//   SidebarGroup,
-//   SidebarGroupContent,
-//   SidebarMenu,
-//   SidebarMenuButton,
-//   SidebarMenuItem,
-// } from "./sidebar";
-
-// interface Feature {
-//   feat_name: string;
-//   feat_url: string;
-//   feat_category: string;
-// }
-
-// interface Assignment {
-//   feat: Feature;
-// }
-
-// interface GroupedFeatures {
-//   [category: string]: Feature[];
-// }
-
-// export function AppSidebar() {
-//   const [activeItem, setActiveItem] = useState<string>("");
-//   const [openCategory, setOpenCategory] = useState<string | null>(null);
-//   const { user } = useAuth();
-
-//   const staticItems = [
-//     { label: "Dashboard", path: "/dashboard" },
-//     { label: "Announcement", path: "/announcement" },
-//   ];
-
-//   const assignments: Assignment[] = user?.staff?.assignments || [];
-
-//   const groupedFeatures: GroupedFeatures = assignments.reduce((acc, assignment) => {
-//     const feat = assignment.feat;
-//     if (!feat) return acc;
-
-//     const { feat_category } = feat;
-//     if (!acc[feat_category]) {
-//       acc[feat_category] = [];
-//     }
-
-//     acc[feat_category].push(feat);
-//     return acc;
-//   }, {} as GroupedFeatures);
-
-//   return (
-//     <Sidebar className="border-none">
-//       <SidebarContent>
-//         <SidebarGroup>
-//           <SidebarGroupContent>
-//             <div className="w-full h-14" />
-//             <SidebarMenu>
-//               {staticItems.map((item) => (
-//                 <SidebarMenuItem key={item.label}>
-//                   <SidebarMenuButton asChild className="w-full">
-//                     <Link
-//                       to={item.path}
-//                       className={`flex items-center px-4 py-2 text-sm rounded-md ${
-//                         activeItem === item.label
-//                           ? "bg-[#1273B2]/10 text-[#1273B8]"
-//                           : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-//                       }`}
-//                       onClick={() => setActiveItem(item.label)}
-//                     >
-//                       <span>{item.label}</span>
-//                     </Link>
-//                   </SidebarMenuButton>
-//                 </SidebarMenuItem>
-//               ))}
-
-//               {/* Dynamic Feature Groups */}
-//               {Object.entries(groupedFeatures).map(([category, features]) => (
-//                 <SidebarMenuItem key={category}>
-//                   <div
-//                     className={`w-full cursor-pointer rounded-md ${
-//                       openCategory === category
-//                         ? "bg-[#1273B2]/10 text-[#1273B8]"
-//                         : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-//                     }`}
-//                     onClick={() =>
-//                       setOpenCategory(openCategory === category ? null : category)
-//                     }
-//                   >
-//                     <div className="flex items-center justify-between px-4 py-2 rounded-md">
-//                       <span>{category}</span>
-//                       {openCategory === category ? (
-//                         <ChevronDown className="h-4 w-4" />
-//                       ) : (
-//                         <ChevronRight className="h-4 w-4" />
-//                       )}
-//                     </div>
-//                   </div>
-
-//                   {openCategory === category && (
-//                     <div className="ml-4 mt-1 space-y-1">
-//                       {features.map((feat) => (
-//                         <SidebarMenuButton key={feat.feat_name} asChild className="w-full">
-//                           <Link
-//                             to={feat.feat_url}
-//                             className={`flex items-center px-4 py-2 text-sm rounded-md ${
-//                               activeItem === feat.feat_name
-//                                 ? "bg-[#1273B2]/10 text-[#1273B8]"
-//                                 : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-//                             }`}
-//                             onClick={() => setActiveItem(feat.feat_name)}
-//                           >
-//                             <span>{feat.feat_name}</span>
-//                           </Link>
-//                         </SidebarMenuButton>
-//                       ))}
-//                     </div>
-//                   )}
-//                 </SidebarMenuItem>
-//               ))}
-//             </SidebarMenu>
-//           </SidebarGroupContent>
-//         </SidebarGroup>
-//       </SidebarContent>
-//     </Sidebar>
-//   );
-// }
-
-// export default AppSidebar;

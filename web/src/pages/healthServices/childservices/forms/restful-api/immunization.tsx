@@ -2,7 +2,7 @@
 import {
   createFollowUpVisit,
   createPatientDisability,
-  createChildHealthNotes,
+  // createChildHealthNotes,
   createExclusiveBFCheck
 } from "./createAPI";
 import { updateSupplementStatus, updateCHHistory } from "./updateAPI";
@@ -71,24 +71,24 @@ export async function updateChildHealthRecord({
         });
         followv_id = newFollowUp.followv_id;
 
-        const newNotes = await createChildHealthNotes({
-          chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          followv: followv_id,
-          chhist: current_chhist_id,
-          staff: staff || null,
-        });
+        // const newNotes = await createChildHealthNotes({
+        //   chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
+        //   created_at: new Date().toISOString(),
+        //   updated_at: new Date().toISOString(),
+        //   followv: followv_id,
+        //   chhist: current_chhist_id,
+        //   staff: staff || null,
+        // });
       } else {
         if (submittedNotes !== originalNotes) {
-          const newNotes = await createChildHealthNotes({
-            chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            followv: originalFollowvId,
-            chhist: current_chhist_id,
-            staff: staff,
-          });
+          // const newNotes = await createChildHealthNotes({
+          //   chn_notes: submittedData.vitalSigns?.[0]?.notes || "",
+          //   created_at: new Date().toISOString(),
+          //   updated_at: new Date().toISOString(),
+          //   followv: originalFollowvId,
+          //   chhist: current_chhist_id,
+          //   staff: staff,
+          // });
         }
       }
 

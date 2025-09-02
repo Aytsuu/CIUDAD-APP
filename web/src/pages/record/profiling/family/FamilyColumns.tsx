@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, CircleAlert, CircleCheck, CircleMinus, Loader2 } from "lucide-react";
-import { FamilyRecord, MemberRecord } from "../profilingTypes";
+import { FamilyRecord, MemberRecord } from "../ProfilingTypes";
 import { Label } from "@/components/ui/label";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
@@ -13,12 +13,13 @@ import { getFamilyData, getFamilyMembers, getHouseholdList, getPersonalInfo } fr
 import { Badge } from "@/components/ui/badge";
 import { Combobox } from "@/components/ui/combobox";
 import { useResidentsFamSpecificList } from "../queries/profilingFetchQueries";
-import { formatResidents } from "../profilingFormats";
+import { formatResidents } from "../ProfilingFormats";
 import ViewButton from "@/components/ui/view-button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
 import { capitalize } from "@/helpers/capitalize";
 import { useUpdateFamilyRole } from "../queries/profilingUpdateQueries";
+import { formatDate } from "@/helpers/dateHelper";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -108,6 +109,29 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
   {
     accessorKey: "fam_date_registered",
     header: "Date Registered",
+    cell: ({row}) => (
+      formatDate(row.original.fam_date_registered, "long")
+    )
+  },
+  {
+    accessorKey: "registered_by",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Registered By
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const registeredBy = row.getValue("registered_by") as string;
+      return (
+        <div className="text-center">
+          {registeredBy || "-"}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "action",
@@ -122,7 +146,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
           const familyData = await getFamilyData(row.original.fam_id);
           const members = await getFamilyMembers(row.original.fam_id);
           const households = await getHouseholdList();
-          navigate("/family/view", {
+          navigate("/profiling/family/view", {
             state: {
               params: {
                 family: {
@@ -165,7 +189,7 @@ export const familyViewColumns = (
         showLoading();
         try {
           const personalInfo = await getPersonalInfo(data.rp_id);
-            navigate("/resident/view", {
+            navigate("/profiling/resident/view", {
               state: {
                 params: {
                   type: 'viewing',
@@ -182,19 +206,16 @@ export const familyViewColumns = (
         }
       }
 
-      const handleRoleChange = (value: string) => {
-        if(value !== role?.toLowerCase()) {
-          setRole(capitalize(value));
-          updateFamilyRole({
-            familyId: family.fam_id,
-            residentId: data.rp_id,
-            fc_role: capitalize(value)
-          }, {
-            onError: (status) => {
-              setRole(data.fc_role);
-              throw status;
-            }
-          })
+      const handleRoleChange = async (value: string) => {
+        if (value !== role?.toLowerCase()) {
+          const newRole = capitalize(value);
+          setRole(newRole);
+          try {
+            await updateFamilyRole({ familyId: family.fam_id, residentId: data.rp_id, fc_role: newRole })
+          } catch (error) {
+            setRole(data.fc_role);
+            throw error;
+          }
         }
       }
 

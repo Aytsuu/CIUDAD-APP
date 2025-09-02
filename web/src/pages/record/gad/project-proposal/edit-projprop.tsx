@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Plus, X, Wallet } from "lucide-react";
 import { useUpdateProjectProposal } from "./queries/updatequeries";
-import { useAddSupportDocument } from "./queries/addqueries";
+// import { useAddSupportDocument } from "./queries/addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { useGetStaffList } from "./queries/fetchqueries";
 import { useForm } from "react-hook-form";
@@ -17,23 +17,23 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
 import {
-  ProjectProposal,
-  ProjectProposalInput,
+  // ProjectProposal,
+  // ProjectProposalInput,
   EditProjectProposalFormProps,
 } from "./projprop-types";
 import { Signatory } from "./projprop-types";
-import { ComboboxInput } from "@/components/ui/form/form-combo-box";
+import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 
 export const EditProjectProposalForm: React.FC<
   EditProjectProposalFormProps
-> = ({ onSuccess, initialValues, isEditMode, isSubmitting }) => {
+> = ({ initialValues, isEditMode, isSubmitting }) => {
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [supportingDocs, setSupportingDocs] = useState<MediaUploadType>([]);
   const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const updateMutation = useUpdateProjectProposal();
-  const addSupportDocMutation = useAddSupportDocument();
+  // const addSupportDocMutation = useAddSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
 
   // Display remaining balance from budget tracker
@@ -137,40 +137,40 @@ export const EditProjectProposalForm: React.FC<
 
   useEffect(() => {
     if (initialValues && isEditMode) {
-      const suppDocs =
-        initialValues.supportDocs?.map((doc: any) => {
-          let type: "image" | "video" | "document" = "document";
-          if (doc.psd_type?.startsWith("image/")) {
-            type = "image";
-          } else if (doc.psd_type?.startsWith("video/")) {
-            type = "video";
-          }
+      // const suppDocs =
+      //   initialValues.supportDocs?.map((doc: any) => {
+      //     let type: "image" | "video" | "document" = "document";
+      //     if (doc.psd_type?.startsWith("image/")) {
+      //       type = "image";
+      //     } else if (doc.psd_type?.startsWith("video/")) {
+      //       type = "video";
+      //     }
 
-          return {
-            id: `doc-${doc.psd_id}`,
-            type,
-            file: new File([], doc.psd_name),
-            publicUrl: doc.psd_url,
-            storagePath: doc.psd_path || `uploads/${doc.psd_name}`,
-            status: "uploaded" as const,
-            previewUrl: doc.psd_url,
-          };
-        }) || [];
+      //     return {
+      //       id: `doc-${doc.psd_id}`,
+      //       type,
+      //       file: new File([], doc.psd_name),
+      //       publicUrl: doc.psd_url,
+      //       storagePath: doc.psd_path || `uploads/${doc.psd_name}`,
+      //       status: "uploaded" as const,
+      //       previewUrl: doc.psd_url,
+      //     };
+      //   }) || [];
 
-      setSupportingDocs(suppDocs);
+      // setSupportingDocs(suppDocs);
 
       if (initialValues.headerImage) {
         setHeaderImageUrl(initialValues.headerImage);
-        setMediaFiles([
-          {
-            id: "existing-header",
-            type: "image",
-            file: new File([], "header.jpg"),
-            publicUrl: initialValues.headerImage,
-            status: "uploaded",
-            previewUrl: initialValues.headerImage,
-          },
-        ]);
+        // setMediaFiles([
+        //   {
+        //     id: "existing-header",
+        //     type: "image",
+        //     file: new File([], "header.jpg"),
+        //     publicUrl: initialValues.headerImage,
+        //     status: "uploaded",
+        //     previewUrl: initialValues.headerImage,
+        //   },
+        // ]);
       }
     }
   }, [initialValues, isEditMode]);
@@ -247,146 +247,146 @@ export const EditProjectProposalForm: React.FC<
     }
   };
 
-  const handleSave = async (data: z.infer<typeof ProjectProposalSchema>) => {
+  const handleSave = async (_data: z.infer<typeof ProjectProposalSchema>) => {
     if (!initialValues?.gprId) {
       setErrorMessage("No project ID provided for update.");
       return;
     }
 
-    const gprId = initialValues.gprId;
+    // const gprId = initialValues.gprId;
 
-    try {
-      setErrorMessage(null);
-      const headerImage =
-        mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
+  //   try {
+  //     setErrorMessage(null);
+  //     const headerImage =
+  //       mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
 
-      const validSupportDocs = supportingDocs.filter(
-        (
-          doc
-        ): doc is {
-          id: string;
-          type: "image" | "video" | "document";
-          file: File;
-          publicUrl: string;
-          storagePath: string;
-          status: "uploaded";
-          previewUrl?: string;
-        } =>
-          doc.status === "uploaded" &&
-          !!doc.publicUrl &&
-          !!doc.storagePath &&
-          !!doc.file?.name &&
-          !!doc.file?.type
-      );
+  //     const validSupportDocs = supportingDocs.filter(
+  //       (
+  //         doc
+  //       ): doc is {
+  //         id: string;
+  //         type: "image" | "video" | "document";
+  //         file: File;
+  //         publicUrl: string;
+  //         storagePath: string;
+  //         status: "uploaded";
+  //         previewUrl?: string;
+  //       } =>
+  //         doc.status === "uploaded" &&
+  //         !!doc.publicUrl &&
+  //         !!doc.storagePath &&
+  //         !!doc.file?.name &&
+  //         !!doc.file?.type
+  //     );
 
-      // Preserve all existing supportDocs and include new ones, default to empty array if undefined
-      const existingSupportDocs = initialValues.supportDocs || [];
-      const updatedSupportDocs = validSupportDocs.map((doc) => {
-        const existingDoc = existingSupportDocs.find(
-          (d) => d.psd_url === doc.publicUrl
-        );
-        return {
-          psd_id: existingDoc?.psd_id || Date.now() + Math.random(), // Temporary ID for new docs
-          psd_url: doc.publicUrl,
-          psd_name: doc.file.name,
-          psd_type: doc.file.type,
-          psd_path: doc.storagePath,
-          psd_is_archive: false,
-        };
-      });
+  //     // Preserve all existing supportDocs and include new ones, default to empty array if undefined
+  //     const existingSupportDocs = initialValues.supportDocs || [];
+  //     const updatedSupportDocs = validSupportDocs.map((doc) => {
+  //       const existingDoc = existingSupportDocs.find(
+  //         (d) => d.psd_url === doc.publicUrl
+  //       );
+  //       return {
+  //         psd_id: existingDoc?.psd_id || Date.now() + Math.random(), // Temporary ID for new docs
+  //         psd_url: doc.publicUrl,
+  //         psd_name: doc.file.name,
+  //         psd_type: doc.file.type,
+  //         psd_path: doc.storagePath,
+  //         psd_is_archive: false,
+  //       };
+  //     });
 
-      // Identify new documents to add via mutation
-      const newDocs = updatedSupportDocs.filter(
-        (doc) =>
-          !existingSupportDocs.some(
-            (existing) => existing.psd_id === doc.psd_id
-          )
-      );
+  //     // Identify new documents to add via mutation
+  //     const newDocs = updatedSupportDocs.filter(
+  //       (doc) =>
+  //         !existingSupportDocs.some(
+  //           (existing) => existing.psd_id === doc.psd_id
+  //         )
+  //     );
 
-      // Update existing supportDocs for PUT
-      const proposalData: ProjectProposalInput = {
-        projectTitle: data.projectTitle,
-        background: data.background,
-        objectives: data.objectives.filter((obj) => obj.trim() !== ""),
-        participants: data.participants
-          .filter((p) => p.category.trim() !== "")
-          .map((p) => ({
-            category: p.category,
-            count: p.count,
-          })),
-        date: data.date,
-        venue: data.venue,
-        budgetItems: data.budgetItems
-          .filter((item) => item.name.trim() !== "")
-          .map((item) => ({
-            name: item.name,
-            pax: item.pax,
-            amount: item.amount,
-          })),
-        monitoringEvaluation: data.monitoringEvaluation,
-        signatories: data.signatories.filter((s) => s.name.trim() !== ""),
-        gpr_header_img: headerImage,
-        staffId: initialValues.staffId || null,
-        gprIsArchive: initialValues.gprIsArchive || false,
-        supportDocs:
-          existingSupportDocs.map((doc) => ({
-            psd_id: doc.psd_id,
-            psd_url: doc.psd_url,
-            psd_name: doc.psd_name,
-            psd_type: doc.psd_type,
-            psd_is_archive: doc.psd_is_archive,
-          })) || [], // Only existing docs with valid psdId for PUT
-      };
+  //     // Update existing supportDocs for PUT
+  //     const proposalData: ProjectProposalInput = {
+  //       projectTitle: data.projectTitle,
+  //       background: data.background,
+  //       objectives: data.objectives.filter((obj) => obj.trim() !== ""),
+  //       participants: data.participants
+  //         .filter((p) => p.category.trim() !== "")
+  //         .map((p) => ({
+  //           category: p.category,
+  //           count: p.count,
+  //         })),
+  //       date: data.date,
+  //       venue: data.venue,
+  //       budgetItems: data.budgetItems
+  //         .filter((item) => item.name.trim() !== "")
+  //         .map((item) => ({
+  //           name: item.name,
+  //           pax: item.pax,
+  //           amount: item.amount,
+  //         })),
+  //       monitoringEvaluation: data.monitoringEvaluation,
+  //       signatories: data.signatories.filter((s) => s.name.trim() !== ""),
+  //       gpr_header_img: headerImage,
+  //       staffId: initialValues.staffId || null,
+  //       gprIsArchive: initialValues.gprIsArchive || false,
+  //       supportDocs:
+  //         existingSupportDocs.map((doc) => ({
+  //           psd_id: doc.psd_id,
+  //           psd_url: doc.psd_url,
+  //           psd_name: doc.psd_name,
+  //           psd_type: doc.psd_type,
+  //           psd_is_archive: doc.psd_is_archive,
+  //         })) || [], // Only existing docs with valid psdId for PUT
+  //     };
 
-      const fullProposal: ProjectProposal = {
-        ...initialValues,
-        ...proposalData,
-        paperSize: data.paperSize,
-        headerImage: headerImage,
-        supportDocs: proposalData.supportDocs || [], // Ensure a default empty array
-        participants: proposalData.participants.map((p) => ({
-          category: p.category,
-          count: parseInt(p.count) || 0,
-        })),
-        budgetItems: proposalData.budgetItems.map((item) => ({
-          name: item.name,
-          pax: item.pax,
-          amount: parseFloat(item.amount) || 0,
-        })),
-      };
+  //     const fullProposal: ProjectProposal = {
+  //       ...initialValues,
+  //       ...proposalData,
+  //       paperSize: data.paperSize,
+  //       headerImage: headerImage,
+  //       supportDocs: proposalData.supportDocs || [], // Ensure a default empty array
+  //       participants: proposalData.participants.map((p) => ({
+  //         category: p.category,
+  //         count: parseInt(p.count) || 0,
+  //       })),
+  //       budgetItems: proposalData.budgetItems.map((item) => ({
+  //         name: item.name,
+  //         pax: item.pax,
+  //         amount: parseFloat(item.amount) || 0,
+  //       })),
+  //     };
 
-      // Add new documents via mutation before updating the proposal
-      if (newDocs.length > 0) {
-        await Promise.all(
-          newDocs.map((doc) =>
-            addSupportDocMutation.mutateAsync({
-              gprId,
-              fileData: {
-                psd_url: doc.psd_url,
-                psd_path: doc.psd_path!,
-                psd_name: doc.psd_name,
-                psd_type: doc.psd_type,
-              },
-            })
-          )
-        );
-      }
+  //     // Add new documents via mutation before updating the proposal
+  //     if (newDocs.length > 0) {
+  //       await Promise.all(
+  //         newDocs.map((doc) =>
+  //           addSupportDocMutation.mutateAsync({
+  //             gprId,
+  //             fileData: {
+  //               psd_url: doc.psd_url,
+  //               psd_path: doc.psd_path!,
+  //               psd_name: doc.psd_name,
+  //               psd_type: doc.psd_type,
+  //             },
+  //           })
+  //         )
+  //       );
+  //     }
 
-      await updateMutation.mutateAsync({
-        gprId,
-        proposalData,
-        proposalF: fullProposal,
-      });
+  //     await updateMutation.mutateAsync({
+  //       gprId,
+  //       proposalData,
+  //       proposalF: fullProposal,
+  //     });
 
-      onSuccess(fullProposal);
-    } catch (error: any) {
-      console.error("Error in handleSave:", error);
-      setErrorMessage(
-        error.response?.data?.detail ||
-          error.message ||
-          "Failed to save proposal. Please check the form data and try again."
-      );
-    }
+  //     onSuccess(fullProposal);
+  //   } catch (error: any) {
+  //     console.error("Error in handleSave:", error);
+  //     setErrorMessage(
+  //       error.response?.data?.detail ||
+  //         error.message ||
+  //         "Failed to save proposal. Please check the form data and try again."
+  //     );
+  //   }
   };
 
   const handleConfirmSave = () => {
@@ -460,9 +460,9 @@ export const EditProjectProposalForm: React.FC<
                       typeof filesOrUpdater === "function"
                         ? filesOrUpdater(prev)
                         : filesOrUpdater;
-                    const imageUrl =
-                      newFiles[0]?.publicUrl || newFiles[0]?.previewUrl || null;
-                    setHeaderImageUrl(imageUrl);
+                    // const imageUrl =
+                    //   newFiles[0]?.publicUrl || newFiles[0]?.previewUrl || null;
+                    // setHeaderImageUrl(imageUrl);
                     return newFiles;
                   });
                 }}

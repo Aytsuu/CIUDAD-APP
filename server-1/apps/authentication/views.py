@@ -228,7 +228,7 @@ class WebLoginView(APIView):
                     {'error': "Staff Privileges Required"}, 
                     status=status.HTTP_403_FORBIDDEN
                 )
-
+            print(serializer.data)
             return Response({
                 'user': serializer.data,
                 'access_token': supabase_response.session.access_token,
@@ -244,7 +244,7 @@ class WebLoginView(APIView):
             )
 
 class WebUserView(APIView):
-    permission_classes = [AllowAny]
+    # permission_classes = [AllowAny]
 
     def get(self, request):
         try:
@@ -280,6 +280,7 @@ class WebUserView(APIView):
             return Response({
                 'user': serializer.data,
                 'message': 'User data retrieved successfully'
+                
             })
             
         except Exception as e:

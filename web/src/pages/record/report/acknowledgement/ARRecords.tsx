@@ -146,7 +146,7 @@ export default function ARRecords() {
     >
       {/* Selection Mode Banner */}
       {isCreatingWeeklyAR && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="bg-blue-100 p-2 rounded-full">
               <Check className="h-5 w-5 text-blue-600" />

@@ -9,7 +9,7 @@ import RatesPage5 from "./rates-page5"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 function RatesForm() {
-  const [activeTab, setActiveTab] = useState<"page1" | "page2" | "page3" | "page4" | "page5">("page1")
+  const [_activeTab, setActiveTab] = useState<"page1" | "page2" | "page3" | "page4" | "page5">("page1")
 
   return (
     <div className="w-full pb-2 bg-snow">

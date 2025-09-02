@@ -2,19 +2,26 @@ import React from "react";
 import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import EnvironmentalForm from "./EnvironmentalForm";
-import { familyFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
 
 export default function EnvironmentalFormLayout({
   form,
   residents,
   selectedResidentId,
   setSelectedResidentId,
+  householdId,
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
   selectedResidentId: string;
   setSelectedResidentId: React.Dispatch<React.SetStateAction<string>>;
+  householdId?: string;
 }) {
+  
+  // Debug logging for household ID
+  React.useEffect(() => {
+    console.log('EnvironmentalFormLayout - Received Household ID:', householdId);
+  }, [householdId]);
   return (
     <div className="w-full max-w-full mx-auto">
       <div className="flex flex-col bg-white rounded-lg overflow-hidden">
@@ -30,6 +37,7 @@ export default function EnvironmentalFormLayout({
               onSelect={setSelectedResidentId}
               prefix="environmentalForm"
               title="Environmental Health and Sanitation"
+              householdId={householdId}
               />
             </div>
           </div>

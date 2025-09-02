@@ -1,4 +1,16 @@
 
+export type AllRecordCombined = {
+  id: string;
+  lname: string;
+  fname: string;
+  mname: string;
+  suffix: string;
+  sex: string;
+  date_registered: string;
+  family_no: string;
+  type: string;
+}
+
 export type ResidentRecord = {
   rp_id: string;
   household_no: string;
@@ -9,6 +21,7 @@ export type ResidentRecord = {
   fname: string;
   mname: string;
   suffix: string;
+  sex: string;
   rp_date_registered: string;
   registered_by: string;
   has_account: boolean;
@@ -51,6 +64,7 @@ export type FamilyRecord = {
   father: string;
   guardian: string;
   fam_date_registered: string;
+  registered_by: string;
 }
 
 export type MemberRecord = {
@@ -119,6 +133,8 @@ export type BusinessRespondent = {
   lname: string;
   fname: string;
   mname: string;
+  suffix: string;
+  sex: string;
   br_date_registered: string;
   businesses: Record<string, any>[];
 }
