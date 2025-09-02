@@ -10,7 +10,6 @@ class DevelopmentPlan(models.Model):
     dev_res_person = models.JSONField(default=list, db_column='dev_res_person')
     dev_indicator = models.JSONField(default=list, db_column='dev_indicator')
     dev_gad_items = models.JSONField(default=list, db_column='dev_budget_items')
-    gpr_id = models.ForeignKey( 'gad.ProjectProposal', on_delete=models.SET_NULL,  null=True,  blank=True, db_column='gpr_id')
 
     staff = models.ForeignKey(
         'administration.Staff',
@@ -38,13 +37,14 @@ class GAD_Budget_Tracker(models.Model):
     gbud_num = models.BigAutoField(primary_key=True)
     gbud_datetime = models.DateTimeField(null=True)
     gbud_add_notes = models.CharField(max_length=500, null=True)
-    gbud_exp_project = models.CharField(max_length=200, null=True)
+    # gbud_exp_project = models.CharField(max_length=200, null=True)
     gbud_exp_particulars = models.JSONField(default=list, null=True)
     gbud_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_actual_expense = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_remaining_bal = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_reference_num = models.CharField(max_length=200, null=True)
     gbud_is_archive = models.BooleanField(default = False)
+    gbud_project_index = models.IntegerField(default=0, help_text="Index of project in dev_project array")
     
     gbudy = models.ForeignKey(
         GAD_Budget_Year, 
@@ -52,14 +52,6 @@ class GAD_Budget_Tracker(models.Model):
         related_name='transactions',
         db_column='gbudy_num'
     )
-    
-    # gpr = models.ForeignKey(
-    #     'ProjectProposal',
-    #     on_delete=models.CASCADE,
-    #     related_name='proposals',
-    #     db_column='gpr_id',
-    #     null=True
-    # )
     
     dev = models.ForeignKey(
         DevelopmentPlan,
@@ -79,6 +71,22 @@ class GAD_Budget_Tracker(models.Model):
     
     class Meta:
         db_table = 'gad_budget_record'
+    
+    @property
+    def project_title(self):
+        """Get the project title from the related development plan"""
+        if self.dev and self.dev.dev_project:
+            projects = self.dev.dev_project if isinstance(self.dev.dev_project, list) else [self.dev.dev_project]
+            if 0 <= self.gbud_project_index < len(projects):
+                return projects[self.gbud_project_index]
+        return None
+    
+    @property
+    def budget_items(self):
+        """Get budget items from the related development plan"""
+        if self.dev and self.dev.dev_gad_items:
+            return self.dev.dev_gad_items
+        return []
 
 class GAD_Budget_File(models.Model):
     gbf_id = models.BigAutoField(primary_key=True)

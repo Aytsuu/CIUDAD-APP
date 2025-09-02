@@ -62,44 +62,45 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       gbud_reference_num: "",
       gbud_remaining_bal: 0,
       gbudy: 0,
-      gpr: 0,
+      dev: 0,
+      gbud_project_index: 0,
     },
     context: { calculateRemainingBalance },
   });
-  const projectWatch = form.watch("gbud_exp_project");
   const remainingBalance = calculateRemainingBalance();
 
   // Update the useEffect where you set form values
   useEffect(() => {
-    if (budgetEntry) {
+    if (budgetEntry && projectProposals) {
       const formattedDate = budgetEntry.gbud_datetime
         ? new Date(budgetEntry.gbud_datetime).toISOString().slice(0, 16)
         : new Date().toISOString().slice(0, 16);
 
-      // Parse gbud_exp_particulars if it's a string
-      let parsedParticulars: { name: string; pax: string; amount: number }[] =
-        [];
-      if (budgetEntry.gbud_exp_particulars) {
-        if (typeof budgetEntry.gbud_exp_particulars === "string") {
-          try {
-            parsedParticulars = JSON.parse(budgetEntry.gbud_exp_particulars);
-          } catch (e) {
-            console.error(
-              "Failed to parse gbud_exp_particulars:",
-              budgetEntry.gbud_exp_particulars
-            );
-            parsedParticulars = [];
-          }
-        } else if (Array.isArray(budgetEntry.gbud_exp_particulars)) {
-          parsedParticulars = budgetEntry.gbud_exp_particulars;
+    const matchingProject = projectProposals.find(
+      (p) => p.dev_id === budgetEntry.dev && p.project_index === budgetEntry.gbud_project_index
+    );
+    const projectTitle = matchingProject?.gpr_title || budgetEntry.gbud_exp_project || "";
+
+      let recordedItems: { name: string; pax: string; amount: number }[] = [];
+    if (budgetEntry.gbud_exp_particulars) {
+      if (typeof budgetEntry.gbud_exp_particulars === "string") {
+        try {
+          recordedItems = JSON.parse(budgetEntry.gbud_exp_particulars);
+        } catch (e) {
+          console.error("Failed to parse gbud_exp_particulars:", budgetEntry.gbud_exp_particulars);
+          recordedItems = [];
         }
+      } else if (Array.isArray(budgetEntry.gbud_exp_particulars)) {
+        recordedItems = budgetEntry.gbud_exp_particulars;
       }
+    }
+
 
       const formValues: FormValues = {
         gbud_datetime: formattedDate,
         gbud_add_notes: budgetEntry.gbud_add_notes || "",
-        gbud_exp_project: budgetEntry.gbud_exp_project || "",
-        gbud_exp_particulars: parsedParticulars, // Use parsed array
+        gbud_exp_project: projectTitle,
+        gbud_exp_particulars: recordedItems,
         gbud_proposed_budget: budgetEntry.gbud_proposed_budget
           ? Number(budgetEntry.gbud_proposed_budget)
           : 0,
@@ -111,11 +112,8 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
           ? Number(budgetEntry.gbud_remaining_bal)
           : 0,
         gbudy: yearBudgets?.find((b) => b.gbudy_year === year)?.gbudy_num || 0,
-        gpr: budgetEntry.gpr
-          ? typeof budgetEntry.gpr === "object"
-            ? budgetEntry.gpr.gpr_id
-            : budgetEntry.gpr
-          : null,
+        dev: budgetEntry.dev || 0,
+        gbud_project_index: budgetEntry.gbud_project_index || 0,
       };
 
       form.reset(formValues);
@@ -130,10 +128,10 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         setMediaFiles(files);
       }
 
-      setSelectedBudgetItems(parsedParticulars);
-      setRecordedBudgetItems(parsedParticulars);
+      setSelectedBudgetItems(recordedItems);
+      setRecordedBudgetItems(recordedItems);
     }
-  }, [budgetEntry, yearBudgets, year]);
+  }, [budgetEntry, yearBudgets, year, projectProposals]);
 
   const handleConfirmSave = (values: FormValues) => {
     const inputDate = new Date(values.gbud_datetime);
@@ -175,9 +173,9 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         gbud_proposed_budget: values.gbud_proposed_budget,
         gbud_actual_expense: values.gbud_actual_expense,
         gbud_reference_num: values.gbud_reference_num,
-        gbud_remaining_bal:
-          remainingBalance - (values.gbud_actual_expense || 0),
-        gpr: values.gpr,
+        gbud_remaining_bal: remainingBalance - (values.gbud_actual_expense || 0),
+        dev: values.dev,
+        gbud_project_index: values.gbud_project_index,
       },
       gbudy: values.gbudy,
     };
@@ -224,8 +222,8 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
 
   const currentYearBudget = yearBudgets?.find((b) => b.gbudy_year === year);
   const selectedProject = projectProposals?.find(
-    (p) => p.gpr_title === projectWatch
-  );
+  (p) => p.dev_id === budgetEntry.dev && p.project_index === budgetEntry.gbud_project_index
+);
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
@@ -256,7 +254,10 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                       placeholder="Select project..."
                       onSelect={(value, item) => {
                         field.onChange(value);
-                        form.setValue("gpr", item?.gpr_id ?? null);
+                        if (item) {
+                        form.setValue("dev", item.dev_id);
+                        form.setValue("gbud_project_index", item.project_index);
+                       }
                       }}
                       readOnly={true}
                     />
@@ -271,9 +272,9 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                   <label className="text-sm font-medium">Budget Items</label>
                   <div className="border rounded p-4">
                     {/* Show recorded items from the project */}
-                    {selectedProject.gpr_budget_items.map((item) => (
+                    {selectedBudgetItems.map((item, index) => (
                       <div
-                        key={item.name}
+                        key={`${item.name}-${index}`}
                         className="flex justify-between items-center py-2 border-b last:border-b-0"
                       >
                         <div>
@@ -283,10 +284,6 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                           </span>
                           {selectedProject.recorded_items.includes(
                             item.name
-                          ) && (
-                            <span className="text-xs text-gray-400 ml-2">
-                              (Recorded)
-                            </span>
                           )}
                         </div>
                         <span>₱{item.amount.toLocaleString()}</span>
