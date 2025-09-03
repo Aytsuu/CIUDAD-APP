@@ -143,3 +143,27 @@ export const getAllProposalLogs = async () => {
     return [];
   }
 };
+
+
+export const getAvailableDevPlanProjects = async (year?: string) => {
+  try {
+    const currentYear = year || new Date().getFullYear().toString();
+    const res = await api.get(`gad/project-proposals-availability/${currentYear}/`);
+    
+    const data = res.data?.data ?? [];
+    
+    return data.map((project: any) => ({
+      dev_id: project.dev_id,
+      dev_client: project.dev_client,
+      dev_issue: project.dev_issue,
+      project_title: project.project_title,
+      // Remove project_index from here
+      participants: project.participants || [],
+      budget_items: project.budget_items || [],
+      dev_date: project.dev_date,
+    }));
+  } catch (err) {
+    console.error('Error fetching available development plan projects:', err);
+    return [];
+  }
+};

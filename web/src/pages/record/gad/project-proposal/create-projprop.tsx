@@ -4,7 +4,7 @@ import { Plus, X, Wallet } from "lucide-react";
 import {Dialog,DialogContent,DialogHeader,DialogTitle,} from "@/components/ui/dialog/dialog";
 import {useAddProjectProposal,useAddSupportDocument,} from "./queries/projprop-addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import { useGetStaffList } from "./queries/projprop-fetchqueries";
+import { useGetStaffList, useGetAvailableDevPlanProjects } from "./queries/projprop-fetchqueries";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { ProjectProposalSchema, ProjectProposalFormValues } from "@/form-schema/gad-projprop-create-form-schema";
@@ -19,9 +19,11 @@ import { Signatory, ProjectProposalFormProps, ProjectProposalInput, FileInput, S
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import { useAuth } from "@/context/AuthContext";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { Combobox } from "@/components/ui/combobox";
 
 export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSuccess, existingProposal }) => {
   const { user } = useAuth();
+  const { data: availableProjects = [], isLoading: isProjectsLoading } = useGetAvailableDevPlanProjects();
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [supportingDocs, setSupportingDocs] = useState<MediaUploadType>([]);
   const [pdfPreview, setPdfPreview] = useState<string | null>(null);
@@ -32,6 +34,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
   const addMutation = useAddProjectProposal(!!existingProposal);
   const addSupportDocMutation = useAddSupportDocument();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [selectedDevProject, setSelectedDevProject] = useState<any>(null);
 
   const { data: budgetEntries = [], isLoading: isBudgetLoading } = useGADBudgets(new Date().getFullYear().toString());
   const { data: yearBudgets } = useGetGADYearBudgets();
@@ -55,7 +58,13 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
   const form = useForm<ProjectProposalFormValues>({
     resolver: zodResolver(ProjectProposalSchema),
     defaultValues: {
-      projectTitle: "",
+      selectedDevProject: {
+        dev_id: 0,
+        project_title: "",
+        project_index: 0,
+        participants: [],
+        budget_items: [],
+      },
       background: "",
       objectives: [""],
       participants: [{ category: "", count: "0" }],
@@ -84,32 +93,63 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
     const treasurer = staffList.find((s) => s.position === "Treasurer");
     const treasurerName = treasurer?.full_name || "";
 
-    if (!isStaffLoading && staffList.length > 0) {
-      form.reset({
-        projectTitle: existingProposal?.projectTitle || "",
-        background: existingProposal?.background || "",
-        objectives: existingProposal?.objectives?.length ? existingProposal.objectives : [""],
-        participants: existingProposal?.participants?.length
-          ? existingProposal.participants.map((p: { category: string; count: number }) => ({ category: p.category, count: String(p.count) }))
-          : [{ category: "", count: "0" }],
-        date: existingProposal?.date || "",
-        venue: existingProposal?.venue || "",
-        budgetItems: existingProposal?.budgetItems?.length
-          ? existingProposal.budgetItems.map((b: { name: string; pax: string; amount: number }) => ({ name: b.name, pax: b.pax, amount: String(b.amount) }))
-          : [{ name: "", pax: "", amount: "0" }],
-        monitoringEvaluation: existingProposal?.monitoringEvaluation || "",
-        signatories: existingProposal?.signatories?.length
-          ? existingProposal.signatories
-          : [
-              { name: userFullName, position: userPosition, type: "prepared" },
-              { name: treasurerName, position: "Treasurer", type: "approved" },
-            ],
-        paperSize: existingProposal?.paperSize || "letter",
-        headerImage: existingProposal?.headerImage ? [existingProposal.headerImage] : [],
-        supportingDocs: existingProposal?.supportDocs || [],
-        status: existingProposal?.status || "Pending",
-        statusReason: existingProposal?.statusReason || "",
-      });
+        if (!isStaffLoading && staffList.length > 0) {
+      if (existingProposal) {
+        // Load existing proposal data
+        const existingDevProject = availableProjects.find(
+          p => p.dev_id === existingProposal.devId && p.project_index === existingProposal.projectIndex
+        ) || {
+          dev_id: existingProposal.devId || 0,
+          project_title: existingProposal.projectTitle || "",
+          project_index: existingProposal.projectIndex || 0,
+          participants: existingProposal.participants || [],
+          budget_items: existingProposal.budgetItems || [],
+        };
+
+        setSelectedDevProject(existingDevProject);
+        
+        form.reset({
+          selectedDevProject: existingDevProject,
+          background: existingProposal.background || "",
+          objectives: existingProposal.objectives?.length ? existingProposal.objectives : [""],
+          participants: existingProposal.participants?.length
+            ? existingProposal.participants.map((p: any) => ({ 
+                category: typeof p === 'string' ? p : p.category || p, 
+                count: typeof p === 'object' ? String(p.count || 0) : "0" 
+              }))
+            : [{ category: "", count: "0" }],
+          date: existingProposal.date || "",
+          venue: existingProposal.venue || "",
+          budgetItems: existingProposal.budgetItems?.length
+            ? existingProposal.budgetItems.map((b: any) => ({ 
+                name: b.name, 
+                pax: String(b.pax || ""), 
+                amount: String(b.price || b.amount || 0) 
+              }))
+            : [{ name: "", pax: "", amount: "0" }],
+          monitoringEvaluation: existingProposal.monitoringEvaluation || "",
+          signatories: existingProposal.signatories?.length
+            ? existingProposal.signatories
+            : [
+                { name: userFullName, position: userPosition, type: "prepared" },
+                { name: treasurerName, position: "Treasurer", type: "approved" },
+              ],
+          paperSize: existingProposal.paperSize || "letter",
+          headerImage: existingProposal.headerImage ? [existingProposal.headerImage] : [],
+          supportingDocs: existingProposal.supportDocs || [],
+          status: existingProposal.status || "Pending",
+          statusReason: existingProposal.statusReason || "",
+        });
+      } else {
+        // New proposal - set default signatories
+        form.reset({
+          ...form.getValues(),
+          signatories: [
+            { name: userFullName, position: userPosition, type: "prepared" },
+            { name: treasurerName, position: "Treasurer", type: "approved" },
+          ],
+        });
+      }
       setMediaFiles(
         existingProposal?.headerImage
           ? [{
@@ -140,9 +180,9 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
   }, [pdfPreview]);
 
   const { control, setValue, watch } = form;
-  const projectTitle = watch("projectTitle");
-  const background = watch("background");
+  const watchedSelectedDevProject = watch("selectedDevProject");
   const objectives = watch("objectives");
+  const background = watch("background");
   const participants = watch("participants");
   const date = watch("date");
   const venue = watch("venue");
@@ -168,6 +208,15 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
     "Barangay Staff",
     "GAD Staff",
   ];
+
+  // Handle project selection from combobox
+  const handleProjectSelect = (projectId: string) => {
+    const selectedProject = availableProjects.find(project => project.dev_id.toString() === projectId);
+    if (selectedProject) {
+      setSelectedDevProject(selectedProject);
+      setValue("selectedDevProject", selectedProject);
+    }
+  };
 
   const addParticipant = () => {
     setValue("participants", [...participants, { category: "", count: "0" }]);
@@ -220,7 +269,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
     try {
       const pdfUrl = await generateProposalPdf(
         {
-          projectTitle,
+          projectTitle: watchedSelectedDevProject?.project_title || "",
           background,
           objectives,
           participants,
@@ -274,24 +323,23 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
     }
 
     const proposalData: ProjectProposalInput = {
-      gprId: existingProposal?.gprId,
-      gpr_title: data.projectTitle,
-      background: data.background,
-      objectives: data.objectives.filter((obj: string) => obj.trim() !== ""),
-      participants: data.participants.filter((p: { category: string; count: string }) => p.category.trim() !== ""),
-      date: data.date,
-      venue: data.venue,
-      budgetItems: data.budgetItems.filter((item: { name: string; pax: string; amount: string }) => item.name.trim() !== ""),
-      monitoringEvaluation: data.monitoringEvaluation,
-      signatories: data.signatories.filter((s: Signatory) => s.name.trim() !== ""),
-      gpr_header_img,
-      staffId: user?.staff?.staff_id || null,
-      gprIsArchive: existingProposal?.gprIsArchive || false,
-      supportDocs: existingProposal?.supportDocs || [],
-      status: data.status || "Pending",
-      statusReason: data.statusReason || null,
-      gpr_page_size: data.paperSize,
-    };
+        gprId: existingProposal?.gprId,
+        gpr_background: data.background,
+        gpr_objectives: data.objectives.filter((obj: string) => obj.trim() !== ""),
+        gpr_date: data.date,
+        gpr_venue: data.venue,
+        gpr_monitoring: data.monitoringEvaluation,
+        gpr_signatories: data.signatories.filter((s: Signatory) => s.name.trim() !== ""),
+        gpr_header_img,
+        staffId: user?.staff?.staff_id || null,
+        gprIsArchive: existingProposal?.gprIsArchive || false,
+        status: data.status || "Pending",
+        statusReason: data.statusReason || null,
+        gpr_page_size: data.paperSize,
+        // Development plan fields
+        dev: data.selectedDevProject.dev_id,
+        gpr_project_index: data.selectedDevProject.project_index,
+      };
 
     console.log("Sending proposalData:", JSON.stringify(proposalData, null, 2));
     const proposalResponse = await addMutation.mutateAsync(proposalData);
@@ -354,6 +402,22 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
           <div className="space-y-6">
+            {/* Project Title Combobox */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Select Project</label>
+              <Combobox
+                options={availableProjects.map(project => ({
+                  id: project.dev_id.toString(),
+                  name: project.project_title
+                }))}
+                value={selectedDevProject?.dev_id?.toString() || ""}
+                onChange={handleProjectSelect}
+                placeholder="Select a project..."
+                emptyMessage="No projects found"
+                isLoading={isProjectsLoading}
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium mb-2">Header Image (optional)</label>
               <MediaUpload
@@ -378,16 +442,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({ onSucc
                 activeVideoId={activeVideoId}
                 setActiveVideoId={setActiveVideoId}
                 acceptableFiles="all"
-              />
-            </div>
-
-            <div>
-              <FormInput
-                control={control}
-                name="projectTitle"
-                label="Project Title"
-                placeholder="Enter project title"
-                type="text"
               />
             </div>
 

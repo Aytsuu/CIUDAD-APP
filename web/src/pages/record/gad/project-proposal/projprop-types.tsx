@@ -35,15 +35,33 @@ export type SupportDocInput = {
   files: FileInput[];
 };
 
+// NEW: Development Plan Project type
+export type DevelopmentPlanProject = {
+  dev_id: number;
+  dev_client: string;
+  dev_issue: string;
+  project_title: string;
+  project_index: number;
+  participants: string[]; // From dev_indicator
+  budget_items: BudgetItem[];
+  dev_date: string;
+};
+
+export type BudgetItem = {
+  name: string;
+  pax: number | string;
+  price: number;
+};
+
 export type ProjectProposal = {
   gprId: number;
-  projectTitle: string;
+  projectTitle: string; // Now from development plan
   background: string;
   objectives: string[];
-  participants: { category: string; count: number }[];
+  participants: string[]; // Now from dev_indicator
   date: string;
   venue: string;
-  budgetItems: { name: string; pax: string; amount: number }[];
+  budgetItems: BudgetItem[]; // Now from dev_gad_items
   monitoringEvaluation: string;
   signatories: {
     name: string;
@@ -60,24 +78,29 @@ export type ProjectProposal = {
   logs: ProjectProposalLog[];
   paperSize: "a4" | "letter" | "legal";
   supportDocs: SupportDoc[];
-  current_budget_balance?: number | null;
-  gbud?: {
-    gbud_num: number;
-    gbud_remaining_bal: number;
+  // NEW fields
+  devId: number;
+  projectIndex: number;
+  devDetails?: {
+    dev_id: number;
+    dev_project: string[];
+    dev_gad_items: BudgetItem[];
+    dev_res_person: string[];
+    dev_indicator: string[];
+    dev_client: string;
+    dev_issue: string;
+    dev_date: string;
   };
 };
 
 export type ProjectProposalInput = {
   gprId?: number;
-  gpr_title: string;
-  background: string;
-  objectives: string[];
-  participants: { category: string; count: string }[];
-  date: string;
-  venue: string;
-  budgetItems: { name: string; pax: string; amount: string }[];
-  monitoringEvaluation: string;
-  signatories: {
+  gpr_background: string;
+  gpr_objectives: string[];
+  gpr_date: string;
+  gpr_venue: string;
+  gpr_monitoring: string;
+  gpr_signatories: {
     name: string;
     position: string;
     type: "prepared" | "approved";
@@ -89,6 +112,9 @@ export type ProjectProposalInput = {
   status: ProposalStatus;
   statusReason: string | null;
   gpr_page_size: "a4" | "letter" | "legal";
+  // NEW required fields
+  dev: number; // Development plan ID
+  gpr_project_index: number; // Index of project in dev_project array
 };
 
 export type Staff = {
@@ -166,26 +192,18 @@ export const prepareProposalPayload = (proposalData: ProjectProposalInput) => {
   }
 
   const payload = {
-    gpr_title: proposalData.gpr_title,
-    gpr_background: proposalData.background,
-    gpr_objectives: proposalData.objectives,
-    gpr_participants: proposalData.participants.map(p => ({
-      category: p.category,
-      count: parseInt(p.count, 10),
-    })),
-    gpr_date: proposalData.date,
-    gpr_venue: proposalData.venue,
-    gpr_budget_items: proposalData.budgetItems.map(b => ({
-      name: b.name,
-      pax: b.pax,
-      amount: parseFloat(b.amount),
-    })),
-    gpr_monitoring: proposalData.monitoringEvaluation,
-    gpr_signatories: proposalData.signatories,
+    gpr_background: proposalData.gpr_background,
+    gpr_objectives: proposalData.gpr_objectives,
+    gpr_date: proposalData.gpr_date,
+    gpr_venue: proposalData.gpr_venue,
+    gpr_monitoring: proposalData.gpr_monitoring,
+    gpr_signatories: proposalData.gpr_signatories,
     gpr_header_img: headerImageData,
     staff: proposalData.staffId,
     gpr_is_archive: proposalData.gprIsArchive || false,
     gpr_page_size: proposalData.gpr_page_size,
+    dev: proposalData.dev,
+    gpr_project_index: proposalData.gpr_project_index,
   };
 
   // Clean payload by removing null/undefined values
@@ -196,35 +214,25 @@ export const prepareProposalPayload = (proposalData: ProjectProposalInput) => {
 
 export const prepareEditProposalPayload = (proposalData: ProjectProposalInput) => {
   const payload: any = {
-    gpr_title: proposalData.gpr_title,
-    gpr_background: proposalData.background,
-    gpr_objectives: proposalData.objectives,
-    gpr_participants: proposalData.participants.map(p => ({
-      category: p.category,
-      count: parseInt(p.count, 10) || 0,
-    })),
-    gpr_date: proposalData.date,
-    gpr_venue: proposalData.venue,
-    gpr_budget_items: proposalData.budgetItems.map(b => ({
-      name: b.name,
-      pax: b.pax,
-      amount: parseFloat(b.amount) || 0,
-    })),
-    gpr_monitoring: proposalData.monitoringEvaluation,
-    gpr_signatories: proposalData.signatories,
+    gpr_background: proposalData.gpr_background,
+    gpr_objectives: proposalData.gpr_objectives,
+    gpr_date: proposalData.gpr_date,
+    gpr_venue: proposalData.gpr_venue,
+    gpr_monitoring: proposalData.gpr_monitoring,
+    gpr_signatories: proposalData.gpr_signatories,
     staff: proposalData.staffId,
     gpr_is_archive: proposalData.gprIsArchive || false,
     gpr_page_size: proposalData.gpr_page_size,
+    dev: proposalData.dev,
+    gpr_project_index: proposalData.gpr_project_index,
   };
 
   // Handle header image explicitly
   if (proposalData.gpr_header_img !== undefined) {
     if (proposalData.gpr_header_img === null) {
-      // Case 1: Explicit removal
       payload.gpr_header_img = null;
     } else if (typeof proposalData.gpr_header_img === 'string') {
       if (proposalData.gpr_header_img.startsWith('data:')) {
-        // Case 2: New upload
         const [header, _data] = proposalData.gpr_header_img.split(';base64,');
         const mimeType = header.split(':')[1];
         payload.gpr_header_img = {

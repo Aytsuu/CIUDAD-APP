@@ -12,7 +12,21 @@ const DataRequirement = z.union([
 ]).transform((val) => String(val));
 
 export const ProjectProposalSchema = z.object({
-  projectTitle: z.string().min(1, "Project Title is required"),
+  selectedDevProject: z.object({
+    dev_id: z.number(),
+    project_title: z.string(),
+    project_index: z.number(),
+    participants: z.array(z.string()),
+    budget_items: z.array(z.object({
+      name: z.string(),
+      pax: z.union([z.number(), z.string()]),
+      price: z.number()
+    })),
+    dev_client: z.string().optional(),
+    dev_issue: z.string().optional(),
+  }).refine(data => data.dev_id > 0, {
+    message: "Please select a development plan project"
+  }),
   background: z.string().min(1, "Background is required"),
   objectives: z
     .array(z.string().min(1, "Objective cannot be empty"))

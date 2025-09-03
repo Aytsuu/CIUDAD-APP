@@ -159,9 +159,9 @@ class ProjectProposalView(generics.ListCreateAPIView):
             gpr_id=OuterRef('gpr_id')
         ).order_by('-gprl_date_approved_rejected').values('gprl_date_approved_rejected')[:1]
         
-        queryset = ProjectProposal.objects.all().select_related('staff').annotate(
+        queryset = ProjectProposal.objects.all().select_related('staff', 'dev').annotate(
             latest_log_date=Subquery(latest_log_dates)
-        ).order_by('-latest_log_date')  # Newest first
+        ).order_by('-latest_log_date')
 
         # Get archive status from query params
         archive_status = self.request.query_params.get('archive', None)
@@ -191,6 +191,46 @@ class ProjectProposalView(generics.ListCreateAPIView):
         return queryset
 
     def create(self, request, *args, **kwargs):
+        # Validate required fields for new structure
+        dev_id = request.data.get('dev')
+        project_index = request.data.get('gpr_project_index', 0)
+        
+        if not dev_id:
+            return Response(
+                {"error": "Development plan (dev) is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        try:
+            # Validate that the dev plan exists and has the specified project
+            dev_plan = DevelopmentPlan.objects.get(pk=dev_id)
+            projects = dev_plan.dev_project if isinstance(dev_plan.dev_project, list) else [dev_plan.dev_project] if dev_plan.dev_project else []
+            
+            if project_index >= len(projects) or not projects[project_index]:
+                return Response(
+                    {"error": f"Invalid project index {project_index} for development plan {dev_id}"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            # Check if proposal already exists for this dev plan + project index
+            existing_proposal = ProjectProposal.objects.filter(
+                dev_id=dev_id,
+                gpr_project_index=project_index,
+                gpr_is_archive=False
+            ).exists()
+            
+            if existing_proposal:
+                return Response(
+                    {"error": "A proposal already exists for this development plan project"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+        except DevelopmentPlan.DoesNotExist:
+            return Response(
+                {"error": f"Development plan with id {dev_id} does not exist"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         proposal = serializer.save()
@@ -401,94 +441,61 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
         })
         
 class ProjectProposalAvailabilityView(generics.ListAPIView):
-    serializer_class = GADDevelopmentPlanSerializer
     permission_classes = [AllowAny]
-
-    def get_queryset(self):
-        year = self.kwargs.get('year')
+    
+    def get(self, request, year=None):
         if not year:
-            return DevelopmentPlan.objects.none()
-        
-        # Get development plans for the specified year
-        return DevelopmentPlan.objects.filter(
-            dev_date__year=year
-        ).distinct()
-
-    def list(self, request, *args, **kwargs):
-        year = self.kwargs.get('year')
-        if not year:
-            raise NotFound("Year parameter is required")
-
-        queryset = self.get_queryset()
-        
-        response_data = []
-        for dev_plan in queryset:
-            # Get the project titles from dev_project (which is a JSONField)
-            projects = dev_plan.dev_project if isinstance(dev_plan.dev_project, list) else [dev_plan.dev_project] if dev_plan.dev_project else []
+            year = timezone.now().year
             
-            # Get budget items from dev_gad_items
-            budget_items = dev_plan.dev_gad_items or []
+        try:
+            # Get all development plans for the specified year
+            dev_plans = DevelopmentPlan.objects.filter(
+                dev_date__year=year
+            ).values(
+                'dev_id', 'dev_client', 'dev_issue', 'dev_project', 
+                'dev_indicator', 'dev_gad_items', 'dev_date'
+            )
             
-            for project_index, project_title in enumerate(projects):
-                if not project_title:  # Skip empty project titles
-                    continue
-                    
-                # Check existing GAD_Budget_Tracker entries for this specific project and year
-                existing_entries = GAD_Budget_Tracker.objects.filter(
-                    gbudy__gbudy_year=year,
-                    dev=dev_plan,
-                    gbud_project_index=project_index,
-                    gbud_is_archive=False
-                )
-                is_used = existing_entries.exists()
-
-                # Collect all recorded budget item names for this specific project
-                recorded_items = set()
-                for entry in existing_entries:
-                    for item in entry.gbud_exp_particulars or []:
-                        recorded_items.add(item.get('name', ''))
-
-                # Determine unrecorded items from development plan budget items
-                unrecorded_items = []
-                recorded_budget_items = []
+            available_projects = []
+            
+            for dev_plan in dev_plans:
+                dev_project = dev_plan['dev_project']
+                projects = dev_project if isinstance(dev_project, list) else []
                 
-                for item in budget_items:
-                    item_name = item.get('name', item.get('gdb_name', ''))
-                    if not item_name:
-                        continue
-                        
-                    normalized_item = {
-                        'name': item_name,
-                        'pax': item.get('pax', item.get('gdb_pax', 1)),
-                        'amount': item.get('price', item.get('gdb_price', 0))
-                    }
-                    
-                    if item_name in recorded_items:
-                        recorded_budget_items.append(normalized_item)
-                    else:
-                        unrecorded_items.append(normalized_item)
-
-                response_data.append({
-                    'gpr_id': f"{dev_plan.dev_id}_{project_index}",  # Unique identifier combining dev_id and project index
-                    'gpr_title': project_title,
-                    'gpr_budget_items': [{
-                        'name': item.get('name', item.get('gdb_name', '')),
-                        'pax': item.get('pax', item.get('gdb_pax', 1)),
-                        'amount': item.get('price', item.get('gdb_price', 0))
-                    } for item in budget_items if item.get('name', item.get('gdb_name', ''))],
-                    'recorded_items': list(recorded_items),
-                    'unrecorded_items': unrecorded_items,
-                    'is_editable': not is_used,
-                    'dev_id': dev_plan.dev_id,
-                    'dev_client': dev_plan.dev_client,
-                    'dev_issue': dev_plan.dev_issue,
-                    'project_index': project_index 
-                })
-
-        return Response({
-            'data': response_data,
-            'count': len(response_data)
-        })
+                # Check if ANY proposal exists for this development plan
+                existing_proposal = ProjectProposal.objects.filter(
+                    dev_id=dev_plan['dev_id'],
+                    gpr_is_archive=False
+                ).exists()
+                
+                # If no proposals exist for this dev plan, include all its projects
+                if not existing_proposal:
+                    for project_title in projects:
+                        if not project_title:
+                            continue
+                            
+                        available_projects.append({
+                            'dev_id': dev_plan['dev_id'],
+                            'dev_client': dev_plan['dev_client'],
+                            'dev_issue': dev_plan['dev_issue'],
+                            'project_title': project_title,
+                            'participants': dev_plan['dev_indicator'] or [],
+                            'budget_items': dev_plan['dev_gad_items'] or [],
+                            'dev_date': dev_plan['dev_date']
+                        })
+            
+            return Response({
+                'data': available_projects,
+                'year': year,
+                'count': len(available_projects)
+            })
+            
+        except Exception as e:
+            logger.error(f"Error fetching development plan projects: {str(e)}", exc_info=True)
+            return Response(
+                {"error": "Internal server error", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
 # ===========================================================================================================
 
