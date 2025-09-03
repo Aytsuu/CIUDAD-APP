@@ -194,6 +194,13 @@ class WasteReportFileView(generics.ListCreateAPIView):
         return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)   
 
 
+class WasteReportDeleteFileView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]
+    queryset = WasteReport_File.objects.all()
+    serializer_class = WasteReportFileSerializer
+    lookup_field = 'wrf_id' 
+    
+
 class WasteReportResolveFileView(generics.ListCreateAPIView):
     serializer_class = WasteReportResolveFileSerializer
     queryset = WasteReportResolve_File.objects.all()

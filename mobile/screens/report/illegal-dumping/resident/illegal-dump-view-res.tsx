@@ -25,8 +25,10 @@ export default function WasteIllegalDumpingResDetails() {
     rep_contact,
     rep_status,
     rep_date,
+    rep_anonymous,
     rep_date_resolved,
     sitio_name,
+    sitio_id,
     waste_report_file,
     waste_report_rslv_file
   } = params;
@@ -38,9 +40,8 @@ export default function WasteIllegalDumpingResDetails() {
 
   console.log("LENGTH RESFILES: ", parsedResFiles.length)
 
-
-
   const isCancelled = !!rep_date_resolved || rep_status === "cancelled";
+
 
   const getStatusStyle = () => {
     switch (String(rep_status)?.toLowerCase()) {
@@ -89,6 +90,25 @@ export default function WasteIllegalDumpingResDetails() {
       updateRep(updateData);
   };
 
+  const handleResubmit = async () => {
+    router.push({
+      pathname:
+        '/(waste)/illegal-dumping/resident/illegal-dump-res-resubmit',
+      params: {
+        rep_id: rep_id,
+        rep_matter: rep_matter,
+        rep_location: rep_location,
+        sitio_id: sitio_id,
+        rep_violator: rep_violator,
+        rep_contact: rep_contact,
+        rep_date: rep_date,
+        rep_anonymous: rep_anonymous,
+        rep_add_details: rep_add_details,
+        waste_report_file: waste_report_file
+      },
+    });
+  };
+
 
   return (
     <>
@@ -102,59 +122,61 @@ export default function WasteIllegalDumpingResDetails() {
           </TouchableOpacity>
         }
         footer={
-          isCancelled ? (
+          rep_status === "resolved" ? null : (
+            isCancelled ? (
               <ConfirmationModal
-                  trigger={
-                      <TouchableOpacity
-                          className={"py-4 rounded-md mt-4 items-center bg-blue-500"}
-                          disabled={isPending}
-                      >
-                          {isPending ? (
-                              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                              <ActivityIndicator 
-                                  size="small" 
-                                  color="white" 
-                                  style={{marginRight: 8}}
-                              />
-                              <Text className="text-white font-medium">Loading...</Text>
-                              </View>
-                          ) : (
-                              <Text className="text-white font-medium text-md">Re-submit Report</Text>
-                          )}                                    
-                      </TouchableOpacity>
-                  }
-                  title="Re-submit Report"
-                  description="Are you sure you want to re-submit report?"
-                  actionLabel="Confirm"
-                  onPress={handleSubmitResolution}
+                trigger={
+                  <TouchableOpacity
+                    className={"py-4 rounded-md mt-4 items-center bg-blue-500"}
+                    disabled={isPending}
+                  >
+                    {isPending ? (
+                      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <ActivityIndicator 
+                          size="small" 
+                          color="white" 
+                          style={{marginRight: 8}}
+                        />
+                        <Text className="text-white font-medium">Loading...</Text>
+                      </View>
+                    ) : (
+                      <Text className="text-white font-medium text-md">Re-submit Report</Text>
+                    )}                                    
+                  </TouchableOpacity>
+                }
+                title="Re-submit Report"
+                description="Are you sure you want to re-submit report?"
+                actionLabel="Confirm"
+                onPress={handleResubmit}
               />              
-          ) : (
+            ) : (
               <ConfirmationModal
-                  trigger={
-                      <TouchableOpacity
-                          className={"py-4 rounded-md mt-4 items-center bg-red-500"}
-                          disabled={isCancelled || isPending}
-                      >
-                          {isPending ? (
-                              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                              <ActivityIndicator 
-                                  size="small" 
-                                  color="white" 
-                                  style={{marginRight: 8}}
-                              />
-                              <Text className="text-white font-medium">Loading...</Text>
-                              </View>
-                          ) : (
-                              <Text className="text-white font-medium text-md">Cancel </Text>
-                          )}                                    
-                      </TouchableOpacity>
-                  }
-                  title="Cancel Report"
-                  description="Are you sure you want to cancel this report?"
-                  actionLabel="Confirm"
-                  onPress={handleSubmitResolution}
+                trigger={
+                  <TouchableOpacity
+                    className={"py-4 rounded-md mt-4 items-center bg-red-500"}
+                    disabled={isCancelled || isPending}
+                  >
+                    {isPending ? (
+                      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <ActivityIndicator 
+                          size="small" 
+                          color="white" 
+                          style={{marginRight: 8}}
+                        />
+                        <Text className="text-white font-medium">Loading...</Text>
+                      </View>
+                    ) : (
+                      <Text className="text-white font-medium text-md">Cancel </Text>
+                    )}                                    
+                  </TouchableOpacity>
+                }
+                title="Cancel Report"
+                description="Are you sure you want to cancel this report?"
+                actionLabel="Confirm"
+                onPress={handleSubmitResolution}
               />                
-          )        
+            )        
+          )
         }
         stickyFooter={true}
       >

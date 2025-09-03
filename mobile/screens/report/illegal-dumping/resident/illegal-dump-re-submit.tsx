@@ -8,7 +8,7 @@ import IllegalDumpResSchema from '@/form-schema/waste/waste-illegal-dump-res';
 import { Form, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import z from "zod";
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
@@ -21,12 +21,48 @@ import { useGetWasteSitio } from '../queries/illegal-dump-fetch-queries';
 import { useAddWasteReport } from '../queries/illegal-dum-add-queries';
 
 
-export default function IllegalDumpCreateForm() {
+
+
+export default function IllegalDumpResubmitForm() {
+  const params = useLocalSearchParams();    
   const router = useRouter();
-  const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
   const { data: fetchedSitio = [], isLoading } = useGetWasteSitio();
   const { mutate: addReport, isPending: isCreating } = useAddWasteReport();
 
+
+  // Parse all params
+  const {
+    rep_id,
+    rep_matter,
+    rep_location,
+    rep_add_details,
+    rep_violator,
+    rep_complainant,
+    rep_contact,
+    rep_status,
+    rep_date,
+    rep_anonymous,
+    rep_date_resolved,
+    sitio_name,
+    sitio_id,
+    waste_report_file,
+    waste_report_rslv_file
+  } = params;
+
+  console.log('waste_report_file:', waste_report_file);
+
+  // Parse the waste_report_file array
+  const parsedFiles = waste_report_file ? JSON.parse(waste_report_file as string) : [];
+
+
+    const [selectedImages, setSelectedImages] = useState<MediaItem[]>(
+        parsedFiles.map((file: any) => ({
+        id: `existing-${file.wrf_id}`,
+        name: file.wrf_name || `file-${file.wrf_id}`,
+        type: 'image/jpeg',
+        uri: file.wrf_url
+        }))
+    );
 
   const repMatterOptions = [
     {label: "Littering, Illegal dumping, Illegal disposal of garbage", value: "Littering, Illegal dumping, Illegal disposal of garbage"},
@@ -47,13 +83,13 @@ export default function IllegalDumpCreateForm() {
   const { control,  handleSubmit,   formState: { errors },  setValue } = useForm({
     resolver: zodResolver(IllegalDumpResSchema),
     defaultValues: {
-      sitio_id: '',
-      rep_date: '',
-      rep_location: '',
-      rep_violator: '',
-      rep_add_details: '',
-      rep_matter: '',
-      rep_anonymous: false,
+      sitio_id: String(sitio_id),
+      rep_date: String(rep_date),
+      rep_location: String(rep_location),
+      rep_violator: String(rep_violator),
+      rep_add_details: String(rep_add_details),
+      rep_matter: String(rep_matter),
+      rep_anonymous: rep_anonymous === 'true' ? true : false,
     }
   });
 

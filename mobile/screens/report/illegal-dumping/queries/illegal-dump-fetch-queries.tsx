@@ -40,6 +40,7 @@ export type WasteReport = {
     sitio_name: string;
     waste_report_file: {
         wrf_id: number;
+        wrf_name: string;
         wrf_url: string;
         wrf_type: string;
     }[];

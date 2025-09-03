@@ -732,6 +732,7 @@ export default function WasteIllegalDumpingResMain() {
         rep_matter: item.rep_matter,
         rep_location: item.rep_location,
         sitio_name: item.sitio_name,
+        sitio_id: item.sitio_id,
         rep_violator: item.rep_violator,
         rep_complainant: item.rep_complainant,
         rep_contact: item.rep_contact,
@@ -758,10 +759,7 @@ export default function WasteIllegalDumpingResMain() {
       onPress={() => handleView(item)}
       className="mb-3 border border-gray-200 rounded-lg p-4 bg-white shadow-sm active:opacity-80"
     >
-      <View className="flex-row justify-between items-start mb-3">
-        <Text className="font-semibold text-xl">
-          Report #{item.rep_id}
-        </Text>
+      <View className="flex-row justify-end items-start mb-3">
         <View className="flex-row items-center">
           {item.rep_status === 'resolved' ? (
             <View className="flex-row items-center bg-green-50 px-2 py-1 rounded-full">
