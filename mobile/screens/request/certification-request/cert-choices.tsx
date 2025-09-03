@@ -15,16 +15,10 @@ const CertChoices = () => {
       icon: "person-outline"
     },
     {
-      title: "Permit",
+      title: "Business Permit and Business Clearance",
       description: "Request permit certification documents for business or activities.",
-      route: "/(request)/certification-request/cert-permit",
+      route: "/(request)/certification-request/cert-business-request",
       icon: "document-text-outline"
-    },
-    {
-      title: "Business Clearance",
-      description: "Request business clearance documents for existing or new business operations.",
-      route: "/(request)/certification-request/cert-clearance",
-      icon: "business-outline"
     },
   ];
 

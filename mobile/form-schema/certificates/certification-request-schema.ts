@@ -20,6 +20,8 @@ export const BusinessPermitSchema = z.object({
     assessment_image: z.string().optional(), // Assessment document for all businesses
     pr_id: z.number().optional(), // Purpose and rates ID
     rp_id: z.string().optional(), // Resident profile ID
+    req_amount: z.number().optional(), // Required amount field
+    ags_id: z.number().optional(), // Annual gross sales ID
 });
 
 
