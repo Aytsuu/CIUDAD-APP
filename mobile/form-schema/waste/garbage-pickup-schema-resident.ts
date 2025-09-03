@@ -7,4 +7,5 @@ export const garbagePickupRequestCreateSchema = z.object({
     garb_pref_date: z.string().nonempty('This field is required').default(''),
     garb_pref_time: z.string().nonempty('This field is required').default(''),   
     garb_additional_notes: z.string().default(''),
+    rp_id: z.string().default('')
 })

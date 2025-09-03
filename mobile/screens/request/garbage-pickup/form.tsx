@@ -16,11 +16,14 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useGetSitio } from './queries/garbagePickupResidentFetchQueries';
 import { useAddaGarbagePickupRequest } from './queries/garbagePickupResidentInsertQueries';
+import { RootState } from '@/redux';
+import { useSelector } from 'react-redux';
 
 export default function GarbagePickupForm() {
+  const {user, isLoading} = useSelector((state: RootState) => state.auth)
   const router = useRouter();
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
-  const { data: fetchedSitio = [], isLoading } = useGetSitio();
+  const { data: fetchedSitio = [], isLoading: isLoadingSitio } = useGetSitio();
   const {mutate: addRequest, isPending} = useAddaGarbagePickupRequest()
 
   const wasteTypes = [
@@ -46,6 +49,7 @@ export default function GarbagePickupForm() {
       garb_pref_time: '',
       garb_waste_type: '',
       garb_additional_notes: '',
+      rp_id: user.resident.rp_id
     }
   });
 
@@ -60,7 +64,7 @@ export default function GarbagePickupForm() {
     addRequest({values, files})
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingSitio) {
     return (
       <_ScreenLayout>
         <View className="flex-1 items-center justify-center">
@@ -73,18 +77,18 @@ export default function GarbagePickupForm() {
 
   return (
     <_ScreenLayout
+      showExitButton={false}
       customLeftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} className="text-black" />
         </TouchableOpacity>
       }
       headerBetweenAction={<Text className="text-[13px]">Request a Garbage Pickup</Text>}
-      showExitButton={false}
       loading={isLoading || isPending}
       loadingMessage='Loading...'
     >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="mb-8">
+        <View className="mb-8 p-4">
           <View className="space-y-4">
             <FormSelect
               control={control}

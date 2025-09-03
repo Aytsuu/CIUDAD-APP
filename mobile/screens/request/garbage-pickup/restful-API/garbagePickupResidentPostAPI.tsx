@@ -29,7 +29,7 @@ export const addGarbagePickupRequest = async (requestInfo: Record<string, any>, 
             garb_created_at: new Date().toISOString(),
             sitio_id: requestInfo.sitio_id, // this is OK
             gprf: Number(fileId),
-            rp: '00003250829'  
+            rp: requestInfo.rp_id 
         };
 
         console.log("Garbage Pickup Request Payload:", payload);

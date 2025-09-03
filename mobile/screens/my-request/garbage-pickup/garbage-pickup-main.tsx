@@ -12,7 +12,7 @@ import ResidentCompleted from "./tabs/completed"
 
 type TabType = "pending" | "accepted" | "completed" | "rejected" | "cancelled"
 
-export default function GarbagePickupHome() {
+export default function GarbagePickupTrackingMain() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabType>("pending")
 
