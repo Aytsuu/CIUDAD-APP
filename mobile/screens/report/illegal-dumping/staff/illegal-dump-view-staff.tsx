@@ -46,6 +46,8 @@ export default function WasteIllegalDumpingDetails() {
 
   const isResolved = !!rep_date_resolved || rep_status === "resolved";
 
+  const isCancelled = rep_status === "cancelled";
+
   const getStatusStyle = () => {
     switch (String(rep_status)?.toLowerCase()) {
       case 'pending':
@@ -124,10 +126,10 @@ export default function WasteIllegalDumpingDetails() {
         }
         footer={
           <TouchableOpacity
-            disabled={isResolved}
+            disabled={isResolved || isCancelled}
             onPress={handleMarkResolved}
             className={`py-3 rounded-md border self-center w-full items-center ${
-              isResolved
+              isResolved || isCancelled
               ? "bg-gray-50 border-gray-200" 
               : "bg-green-100 border-green-500"
             }`}
@@ -265,7 +267,7 @@ export default function WasteIllegalDumpingDetails() {
                             trigger={
                                 <TouchableOpacity
                                     className={`py-3 rounded-md mt-4 items-center ${
-                                        isResolved ? "bg-gray-400" : "bg-blue-500"
+                                        isResolved || isCancelled ? "bg-gray-400" : "bg-blue-500"
                                     }`}
                                     disabled={isResolved || isPending}
                                 >
