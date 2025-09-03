@@ -3,8 +3,10 @@ import { useQuery, useMutation, useQueryClient  } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
 import { updateWasteReport } from "../request/illegal-dump-put-request";
 import { uploadResolvedImage } from "../request/illegal-dump-put-request";
+import { updateWasteResReport } from "../request/illegal-dump-put-request";
 
 
+// =========================================== STAFF =============================
 type FileData = {
     name: string;
     type: string;
@@ -60,6 +62,43 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
       console.error("Error updating waste report:", err);
       toast.error(
         "Failed to update report. Please try again.",
+      );
+    }
+  });
+};
+
+
+
+// =========================================== RESIDENT ========================================
+
+export const useUpdateWasteResReport = (rep_id: number, onSuccess?: () => void) => {
+  const queryClient = useQueryClient();
+  const {toast} = useToastContext();  
+
+  return useMutation({
+    mutationFn: async (values: { 
+      rep_status: string;
+    }) => {
+
+      await updateWasteResReport(rep_id, {
+        rep_status: values.rep_status,
+      });
+      
+      return rep_id;
+    },  
+    onSuccess: () => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['wastereport'] });
+            
+      // Show success toast
+      toast.success('Report is cancelled successfully');
+
+      if (onSuccess) onSuccess();
+    },
+    onError: (err) => {
+      console.error("Error in cancelling waste report:", err);
+      toast.error(
+        "Failed to cancel report. Please try again.",
       );
     }
   });
