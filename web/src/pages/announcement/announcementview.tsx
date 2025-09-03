@@ -44,7 +44,9 @@ function AnnouncementView() {
 
   const formatDateTimeLocal = (value: string | Date) => {
     const date = new Date(value);
-    return date.toISOString().slice(0, 16);
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60000);
+    return localDate.toISOString().slice(0, 16);
   };
 
   const form = useForm<z.infer<typeof AnnouncementSchema>>({
@@ -58,7 +60,15 @@ function AnnouncementView() {
       ann_end_at: announcement?.ann_end_at
         ? formatDateTimeLocal(announcement.ann_end_at)
         : formatDateTimeLocal(new Date()),
-      ann_type: capitalizeWords((announcement as any)?.ann_type || "General"),
+      ann_event_start: announcement?.ann_event_start
+        ? formatDateTimeLocal(announcement.ann_event_start)
+        : formatDateTimeLocal(new Date()),
+      ann_event_end: announcement?.ann_event_end
+        ? formatDateTimeLocal(announcement.ann_event_end)
+        : formatDateTimeLocal(new Date()),
+      ann_type: (announcement?.ann_type || "general").toLowerCase(),
+      ann_to_sms: announcement?.ann_to_sms ?? true, // <-- Added
+      ann_to_email: announcement?.ann_to_email ?? true, // <-- Added
     },
   });
 
@@ -98,7 +108,9 @@ function AnnouncementView() {
                   <FileText className="h-5 w-5 text-gray-600" />
                   <CardTitle className="text-lg">Basic Information</CardTitle>
                 </div>
-                <CardDescription>Main details of the announcement</CardDescription>
+                <CardDescription>
+                  Main details of the announcement
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormInput
@@ -127,149 +139,183 @@ function AnnouncementView() {
               </CardContent>
             </Card>
 
-      {/* Attached Files */}
-{(announcement.announcement_files?.length ?? 0) > 0 && (
-  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-    <CardHeader className="pb-4">
-      <div className="flex items-center gap-2">
-        <FileText className="h-5 w-5 text-gray-600" />
-        <CardTitle className="text-lg">Attached Files</CardTitle>
-      </div>
-      <CardDescription>Media attached to the announcement</CardDescription>
-    </CardHeader>
-    <CardContent className="flex flex-wrap gap-4">
-      {announcement.announcement_files?.map(
-        (file: { af_type: string; af_url: string; af_name: string }, index: Key) => (
-          <div
-            key={index}
-            className="w-40 h-40 border rounded overflow-hidden shadow-sm"
-          >
-            {file.af_type.startsWith("image/") ? (
-              <img
-                src={file.af_url}
-                alt={capitalizeWords(file.af_name)}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-sm text-gray-500 px-2 text-center">
-                {capitalizeWords(file.af_name)}
-              </div>
+            {/* Attached Files */}
+            {(announcement.announcement_files?.length ?? 0) > 0 && (
+              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-gray-600" />
+                    <CardTitle className="text-lg">Attached Files</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Media attached to the announcement
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-4">
+                  {announcement.announcement_files?.map(
+                    (
+                      file: { af_type: string; af_url: string; af_name: string },
+                      index: Key
+                    ) => (
+                      <div
+                        key={index}
+                        className="w-40 h-40 border rounded overflow-hidden shadow-sm"
+                      >
+                        {file.af_type.startsWith("image/") ? (
+                          <img
+                            src={file.af_url}
+                            alt={capitalizeWords(file.af_name)}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-sm text-gray-500 px-2 text-center">
+                            {capitalizeWords(file.af_name)}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  )}
+                </CardContent>
+              </Card>
             )}
-          </div>
-        )
-      )}
-    </CardContent>
-  </Card>
-)}
 
-          {/* Schedule */}
-          <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-2">
-      <Calendar className="h-5 w-5 text-gray-600" />
-      <CardTitle className="text-lg">Schedule</CardTitle>
+            {/* Schedule */}
+            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-gray-600" />
+                  <CardTitle className="text-lg">Schedule</CardTitle>
+                </div>
+                <CardDescription>
+                  When this announcement is active
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Clock className="h-4 w-4" />
+                    Start Posting
+                  </div>
+                  <FormDateTimeInput
+                    control={form.control}
+                    name="ann_start_at"
+                    label=""
+                    readOnly={!isEditing}
+                    type="datetime-local"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Clock className="h-4 w-4" />
+                    End Posting
+                  </div>
+                  <FormDateTimeInput
+                    control={form.control}
+                    name="ann_end_at"
+                    label=""
+                    readOnly={!isEditing}
+                    type="datetime-local"
+                  />
+                </div>
+
+                {/* Event Start & End */}
+                {announcement.ann_type?.toLowerCase() === "event" && (
+                  <>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <Clock className="h-4 w-4" />
+                        Event Start
+                      </div>
+                      <FormDateTimeInput
+                        control={form.control}
+                        name="ann_event_start"
+                        label=""
+                        readOnly={!isEditing}
+                        type="datetime-local"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <Clock className="h-4 w-4" />
+                        Event End
+                      </div>
+                      <FormDateTimeInput
+                        control={form.control}
+                        name="ann_event_end"
+                        label=""
+                        readOnly={!isEditing}
+                        type="datetime-local"
+                      />
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+{/* Delivery Options */}
+<Card className="shadow-md border-0 bg-white/80 backdrop-blur-md">
+  <CardHeader className="pb-2">
+    <div className="flex items-center gap-2">
+      <Megaphone className="h-5 w-5 text-blue-600" />
+      <CardTitle className="text-lg font-semibold">Delivery Options</CardTitle>
     </div>
-    <CardDescription>When this announcement is active</CardDescription>
+    <CardDescription className="text-gray-500 text-sm">
+      Indicates how this announcement was sent
+    </CardDescription>
   </CardHeader>
-  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {/* Normal Announcement */}
-    {announcement.ann_type?.toLowerCase() !== "event" && (
-      <>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <Clock className="h-4 w-4" />
-            Start Posting
-          </div>
-          <FormDateTimeInput
-            control={form.control}
-            name="ann_start_at"
-            label=""
-            readOnly={!isEditing}
-            type="datetime-local"
-          />
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <Clock className="h-4 w-4" />
-            End Posting
-          </div>
-          <FormDateTimeInput
-            control={form.control}
-            name="ann_end_at"
-            label=""
-            readOnly={!isEditing}
-            type="datetime-local"
-          />
-        </div>
-      </>
-    )}
-
-    {/* Event Announcement */}
-    {announcement.ann_type?.toLowerCase() === "event" && (
-      <>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <Clock className="h-4 w-4" />
-            Event Start
-          </div>
-          <FormDateTimeInput
-            control={form.control}
-            name="ann_event_start"
-            label=""
-            readOnly={!isEditing}
-            type="datetime-local"
-          />
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <Clock className="h-4 w-4" />
-            Event End
-          </div>
-          <FormDateTimeInput
-            control={form.control}
-            name="ann_event_end"
-            label=""
-            readOnly={!isEditing}
-            type="datetime-local"
-          />
-        </div>
-      </>
-    )}
+  <CardContent className="grid grid-cols-2 gap-4 mt-2">
+    <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded shadow-sm">
+      <span className="text-gray-600 font-medium">Send via SMS:</span>
+      <span className={`font-semibold ${announcement.ann_to_sms ? "text-green-600" : "text-red-600"}`}>
+        {announcement.ann_to_sms ? "Yes" : "No"}
+      </span>
+    </div>
+    <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded shadow-sm">
+      <span className="text-gray-600 font-medium">Send via Email:</span>
+      <span className={`font-semibold ${announcement.ann_to_email ? "text-green-600" : "text-red-600"}`}>
+        {announcement.ann_to_email ? "Yes" : "No"}
+      </span>
+    </div>
   </CardContent>
 </Card>
 
-
-         {/* Recipients - Hide if public */}
-{announcement.ann_type?.toLowerCase() !== "public" &&
-  matchingRecipients.some(r => r.ar_type?.trim()) && (
-    <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-      <CardHeader className="pb-4">
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-gray-600" />
-          <CardTitle className="text-lg">Recipients</CardTitle>
-        </div>
-        <CardDescription>Who received this announcement</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div>
-          <p className="text-sm font-medium text-gray-700 mb-1">Recipient Types</p>
-          <div className="flex flex-wrap gap-2">
-            {uniquePreserve(
-              matchingRecipients
-                .map(r => r.ar_type?.trim())
-                .filter(Boolean)
-                .map(capitalizeWords)
-            ).map((type, i) => (
-              <Badge key={i} variant="secondary" className="text-xs px-2 py-1">
-                {type}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )}
-
+            {/* Recipients */}
+            {announcement.ann_type?.toLowerCase() !== "public" &&
+              matchingRecipients.some((r) => r.ar_type?.trim()) && (
+                <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-gray-600" />
+                      <CardTitle className="text-lg">Recipients</CardTitle>
+                    </div>
+                    <CardDescription>
+                      Who received this announcement
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-1">
+                        Recipient Types
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {uniquePreserve(
+                          matchingRecipients
+                            .map((r) => r.ar_type?.trim())
+                            .filter(Boolean)
+                            .map(capitalizeWords)
+                        ).map((type, i) => (
+                          <Badge
+                            key={i}
+                            variant="secondary"
+                            className="text-xs px-2 py-1"
+                          >
+                            {type}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
           </form>
         </Form>
       </div>
