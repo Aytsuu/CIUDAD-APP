@@ -12,7 +12,7 @@ const { width } = Dimensions.get('window');
 const Homepage = () => {
   const modules = [
     { name: 'Child Health Records', route: 'admin/childhealth/overall', icon: Baby },
-    { name: 'Family Planning', route: '/family-planning/fp-dashboard', icon: Heart },
+    { name: 'Family Planning', route: 'admin/familyplanning/overall', icon: Heart },
     { name: 'Animal Bites', route: 'admin/animalbites/overall', icon: Dog },
     { name: 'Maternal Records', route: '/maternal-records', icon: UserCircle },
     { name: 'Medical Consultation', route: '/medical-consultation', icon: Stethoscope },
@@ -76,15 +76,15 @@ const Homepage = () => {
           {/* <TodayScheduleWidget onViewWeeklySchedule={handleViewWeeklySczhedule} /> */}
         </View>
 
-        <View className="mt-5">
+        <View className="mt-3">
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 15 }}
           >
-            <View className="px-2 mb-4">
+            <View className="px-2  mb-4">
               
-              <View className="flex-row gap-4">
+              <View className="flex-row gap-4 ">
                 <TouchableOpacity
                   onPress={() => router.push("/family-planning/famplanning")}
                   className="w-64 transform transition-transform duration-200 active:scale-95"

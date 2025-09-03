@@ -10,7 +10,9 @@ import {
   Loader2,
   AlertCircle,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react-native";
+import PageLayout from "@/screens/_PageLayout";
 
 interface FPRecord {
   fprecord_id: number;
@@ -219,26 +221,19 @@ export default function OverallFpRecordsScreen() {
   }
 
   return (
+        <PageLayout
+          leftAction={
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            >
+              <ChevronLeft size={24} className="text-gray-700" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text className="text-gray-900 text-[13px]">Family Planning Records</Text>}
+          rightAction={<View className="w-10 h-10" />}
+        >
     <View className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="bg-white pt-14 pb-4 px-4 shadow-sm">
-        <View className="flex-row items-center">
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 items-center justify-center mr-3">
-            <ArrowLeft size={20} color="#374151" />
-          </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-xl font-semibold text-gray-900">
-              Family Planning
-            </Text>
-            <Text className="text-sm text-gray-500 mt-0.5">
-              {filteredRecords.length} records
-            </Text>
-          </View>
-        </View>
-      </View>
-
       {/* Stats Cards */}
       <View className="px-4 py-4">
         <View className="flex-row gap-3 ">
@@ -371,5 +366,6 @@ export default function OverallFpRecordsScreen() {
         </View>
       )}
     </View>
+</PageLayout>
   );
 }

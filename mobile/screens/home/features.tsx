@@ -44,6 +44,7 @@ export const features: FeatureType[] = [
     icon: <Health width={30} height={30}/>,
     route: "/(health)"
   },
+ 
   {
     name: "Securado",
     icon: <Securado width={30} height={30}/>,

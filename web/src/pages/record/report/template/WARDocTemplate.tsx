@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CircleAlert, Loader2, Pen, Printer, Upload, X } from "lucide-react";
+import { Loader2, Pen, Printer, Upload } from "lucide-react";
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table";
 import { cn } from "@/lib/utils";
@@ -9,10 +9,9 @@ import { WARTemplatePDF } from "./WARTemplatePDF";
 import { useUpdateTemplate } from "../queries/reportUpdate";
 import { useGetSpecificTemplate } from "../queries/reportFetch";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { Card, CardContent } from "@/components/ui/card/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useGetStaffByTitle } from "../../administration/queries/administrationFetchQueries";
 import { Combobox } from "@/components/ui/combobox";
-import { toast } from "sonner";
 import { formatStaffs } from "../../administration/AdministrationFormats";
 import { fileToBase64 } from "@/helpers/fileHelpers";
 import { showErrorToast } from "@/components/ui/toast";
@@ -397,7 +396,7 @@ export const WARDocTemplate = ({
                       variant="modal"
                       customTrigger={<Pen size={16} className="absolute right-0 top-0 cursor-pointer"/>}
                       value=""
-                      onChange={(value) => changePreparedBy(value)}
+                      onChange={(value) => changePreparedBy(value as string)}
                       options={formattedStaffs}
                       emptyMessage="No staff available"
                       size={1000}
@@ -413,7 +412,7 @@ export const WARDocTemplate = ({
                       variant="modal"
                       customTrigger={<Pen size={16} className="absolute right-0 top-0 cursor-pointer"/>}
                       value=""
-                      onChange={(value) => changeRecommendedBy(value)}
+                      onChange={(value) => changeRecommendedBy(value as string)}
                       options={formattedStaffs}
                       emptyMessage="No staff available"
                       size={700}
@@ -429,7 +428,7 @@ export const WARDocTemplate = ({
                       variant="modal"
                       customTrigger={<Pen size={16} className="absolute right-0 top-0 cursor-pointer"/>}
                       value=""
-                      onChange={(value) => changeApprovedBy(value)}
+                      onChange={(value) => changeApprovedBy(value as string)}
                       options={formattedStaffs}
                       emptyMessage="No staff available"
                       size={700}

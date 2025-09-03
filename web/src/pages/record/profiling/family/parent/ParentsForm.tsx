@@ -82,7 +82,7 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
           <Combobox
             options={filteredResidents}
             value={form.watch(`${prefix}.id`)} // Use the isolated watched value
-            onChange={(value) => form.setValue(`${prefix}.id`, value)}
+            onChange={(value) => form.setValue(`${prefix}.id`, value as string)}
             placeholder="Select a resident"
             contentClassName="w-[28rem]"
             triggerClassName="w-1/3"

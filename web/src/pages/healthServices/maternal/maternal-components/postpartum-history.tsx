@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table";
 import { Badge } from "@/components/ui/badge";
 

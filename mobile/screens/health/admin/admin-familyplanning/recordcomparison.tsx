@@ -97,7 +97,7 @@ const RecordComparisonScreen: React.FC = () => {
 
   return (
     <View className="flex-1 p-4 bg-gray-50">
-      <TouchableOpacity className="self-start mb-4 px-3 py-2 rounded-lg bg-gray-200" onPress={() => navigation.goBack()}>
+      <TouchableOpacity className="self-start mb-4 px-3 py-2 rounded-lg bg-gray-200" onPress={() => router.back()}>
         <Text className="text-gray-800 text-base font-bold">← Back to History</Text>
       </TouchableOpacity>
 

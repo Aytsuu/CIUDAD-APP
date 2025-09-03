@@ -20,11 +20,13 @@ import {
   Users,
   TrendingUp,
   Filter,
+  ChevronLeft,
 } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
 import { format } from "date-fns"
-import { useAllFollowUpVisits } from "../../schedules/fetch"
+import { useAllFollowUpVisits } from "../../my-schedules/fetch"
+import PageLayout from "@/screens/_PageLayout"
 
 type ScheduleRecord = {
   id: number
@@ -282,17 +284,26 @@ export default function AdminAppointmentsScreen() {
   }
 
   return (
+       <PageLayout
+          leftAction={
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            >
+              <ChevronLeft size={24} className="text-gray-700" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text className="text-gray-900 text-[13px]">All Appointments</Text>}
+          rightAction={<TouchableOpacity
+            onPress={() => setShowFilters(!showFilters)}
+            className="p-2 bg-gray-100 rounded-xl"
+          >
+            <Filter size={20} color="#3B82F6" />
+          </TouchableOpacity>}
+        >
     <View className="flex-1 bg-gray-100">
       {/* Header */}
       <View className="bg-white shadow-md">
-        <View className="flex-row items-center p-4 pt-12">
-          <TouchableOpacity onPress={() => router.back()} className="p-2">
-            <ArrowLeft size={24} color="#1F2937" />
-          </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-2xl font-bold text-gray-900">All Appointments</Text>
-          </View>
-        </View>
 
         {/* Search and Filter Bar */}
         <View className="px-4 pb-4">
@@ -307,9 +318,7 @@ export default function AdminAppointmentsScreen() {
                 onChangeText={setSearchQuery}
               />
             </View>
-            <TouchableOpacity onPress={() => setShowFilters(!showFilters)} className="p-3 bg-blue-600 rounded-2xl shadow-sm">
-              <Filter size={20} color="#FFFFFF" />
-            </TouchableOpacity>
+            
           </View>
 
           {/* Filter Dropdown */}
@@ -462,5 +471,6 @@ export default function AdminAppointmentsScreen() {
         )}
       />
     </View>
+    </PageLayout>
   )
 }

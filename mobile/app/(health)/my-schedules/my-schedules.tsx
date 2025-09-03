@@ -1,4 +1,4 @@
-import MyAppointmentsScreen from "@/screens/health/schedules/my-schedules"
+import MyAppointmentsScreen from "@/screens/health/my-schedules/my-schedules"
 
 
 export default () => {

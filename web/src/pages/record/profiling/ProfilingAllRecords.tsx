@@ -1,9 +1,8 @@
 import React from "react"
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
-import { Badge } from "@/components/ui/badge"
-import { Plus, ClockArrowUp, FileDown, Search, Users, Loader2, CircleUserRound, House, UsersRound, Building } from "lucide-react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Plus, FileDown, Search, Users, Loader2 } from "lucide-react"
 import { Link } from "react-router"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DataTable } from "@/components/ui/table/data-table"
@@ -11,30 +10,10 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
-import { Skeleton } from "@/components/ui/skeleton"
-import { capitalize } from "@/helpers/capitalize"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { allRecordColumns } from "./AllRecordColumns"
 import { useProfilingAllRecord } from "./queries/profilingFetchQueries"
 
-const profiles = [
-  {
-    id: 'account', 
-    icon: CircleUserRound,
-  },
-  {
-    id: 'household', 
-    icon: House
-  },
-  {
-    id: 'family', 
-    icon: UsersRound
-  },
-  {
-    id: 'business', 
-    icon: Building
-  },
-]
 
 export default function ProfilingAllRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -54,6 +33,8 @@ export default function ProfilingAllRecords() {
   const totalCount = profilingAllRecord?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize)
 
+  console.log(recordList)
+
   // ----------------- SIDE EFFECTS --------------------
   // Reset to page 1 when search changes
   React.useEffect(() => {
@@ -69,7 +50,7 @@ export default function ProfilingAllRecords() {
 
   return (
     // ----------------- RENDER --------------------
-    <MainLayoutComponent title="Resident" description="Manage and view all residents in your community">
+    <MainLayoutComponent title="All Records" description="Manage and view all profiling records in your community">
       <div className="space-y-6">
         {/* Search and Actions */}
         <Card>
@@ -79,7 +60,7 @@ export default function ProfilingAllRecords() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Search residents by name, ID, or sitio..."
+                    placeholder="Search record by name, ID, or sitio..."
                     className="pl-10 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -102,7 +83,7 @@ export default function ProfilingAllRecords() {
                     ]}
                   />
 
-                <Link
+                {/* <Link
                   to="/profiling/resident/registration"
                   state={{
                     params: {
@@ -117,7 +98,7 @@ export default function ProfilingAllRecords() {
                     <Plus className="h-4 w-4 mr-2" />
                     Register Resident
                   </Button>
-                </Link>
+                </Link> */}
               </div>
             </div>
           </CardHeader>
@@ -141,7 +122,7 @@ export default function ProfilingAllRecords() {
                 </Select>
                 <span>entries</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              {/* <div className="flex items-center gap-2 text-sm text-gray-600">
                 <div className="flex item-center justify-between gap-12">
                   {profiles.map((profile: any, idx: number) => (
                     <div key={idx} className="flex gap-2">
@@ -153,14 +134,14 @@ export default function ProfilingAllRecords() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Loading State */}
             {isLoading && (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                <span className="ml-2 text-gray-600">Loading residents...</span>
+                <span className="ml-2 text-gray-600">Loading records...</span>
               </div>
             )}
 
@@ -173,8 +154,8 @@ export default function ProfilingAllRecords() {
                 </h3>
                 <p className="text-gray-500 mb-4">
                   {searchQuery
-                    ? `No residents match "${searchQuery}". Try adjusting your search.`
-                    : "Get started by registering your first resident."}
+                    ? `No record match "${searchQuery}". Try adjusting your search.`
+                    : "Get started by adding your first profiling."}
                 </p>
                 {!searchQuery && (
                   <Link
@@ -203,7 +184,7 @@ export default function ProfilingAllRecords() {
 
             {/* Pagination */}
             {!isLoading && recordList.length > 0 && (
-              <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
+              <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t rounded-b-lg bg-gray-50">
                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
                   Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
                   <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}

@@ -13,6 +13,7 @@ import { Text } from "@/components/ui/text";
 import * as React from "react";
 import { api2 } from "@/api/api";
 import { router } from "expo-router";
+import PageLayout from "@/screens/_PageLayout";
 
 // Define interfaces for type safety
 interface InventoryItem {
@@ -330,21 +331,27 @@ if (combinedResult?.success && Array.isArray(combinedResult.data.results)) {
   }
 
   return (
+    <PageLayout
+                  leftAction={
+                    <TouchableOpacity
+                      onPress={() => router.back()}
+                      className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+                    >
+                      <ChevronLeft size={24} className="text-gray-700" />
+                    </TouchableOpacity>
+                  }
+                  headerTitle={<Text className="text-gray-900 text-[13px]">All Appointments</Text>}
+                  rightAction={<TouchableOpacity
+                    onPress={() => setShowFilters(!showFilters)}
+                    className="p-2 bg-gray-100 rounded-xl"
+                  >
+                    <Filter size={20} color="#3B82F6" />
+                  </TouchableOpacity>}
+                >
     <View className="flex-1 bg-blue-50">
       {/* Header */}
       <View className="bg-white shadow-sm">
-        <View className="flex-row items-center p-4 pt-12">
-          <TouchableOpacity
-            className="p-2 mr-3 bg-gray-100 rounded-full"
-            onPress={() => { router.back() }}
-            accessibilityLabel="Go back"
-          >
-            <ChevronLeft size={24} color="#374151" />
-          </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-xl font-bold text-gray-800">Medical Inventory</Text>
-          </View>
-        </View>
+           
         {/* Search and Filter */}
         <View className="px-4 pb-4">
           <View className="flex-row items-center gap-3">
@@ -352,20 +359,14 @@ if (combinedResult?.success && Array.isArray(combinedResult.data.results)) {
               <Search size={20} color="#6B7280" />
               <TextInput
                 className="flex-1 ml-3 text-gray-800"
-                placeholder="Search inventory..."
+                placeholder="Search..."
                 placeholderTextColor="#9CA3AF"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 accessibilityLabel="Search inventory items"
               />
             </View>
-            <TouchableOpacity
-              onPress={() => setShowFilters(!showFilters)}
-              className="p-2 bg-gray-100 rounded-xl"
-              accessibilityLabel="Toggle filters"
-            >
-              <Filter size={20} color="#3B82F6" />
-            </TouchableOpacity>
+          
           </View>
           {showFilters && (
             <View className="mt-3 bg-white rounded-xl p-4 shadow-sm">
@@ -568,5 +569,6 @@ if (combinedResult?.success && Array.isArray(combinedResult.data.results)) {
         )}
       </ScrollView>
     </View>
+    </PageLayout>
   );
 }

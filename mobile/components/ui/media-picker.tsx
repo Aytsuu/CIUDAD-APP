@@ -86,7 +86,26 @@ export default function MediaPicker({
       }
     }
     await fetchGalleryAssets()
-    setSelectedGalleryItems(new Set())
+    
+    // Pre-select already selected images in the gallery
+    const preSelectedItems = new Set<string>()
+    
+    // Get all gallery assets to find matching URIs
+    const media = await MediaLibrary.getAssetsAsync({
+      mediaType: "photo",
+      first: 100,
+      sortBy: ["creationTime"],
+    })
+    
+    // Find gallery items that match already selected images
+    selectedImages.forEach(selectedImage => {
+      const matchingAsset = media.assets.find(asset => asset.uri === selectedImage.uri)
+      if (matchingAsset) {
+        preSelectedItems.add(matchingAsset.id)
+      }
+    })
+    
+    setSelectedGalleryItems(preSelectedItems)
     setGalleryVisible(true)
   }
 
@@ -147,9 +166,13 @@ export default function MediaPicker({
 
     // Multiple selection mode
     const newSelected = new Set(selectedGalleryItems)
+    
     if (newSelected.has(item.id)) {
+      // Unchecking - remove from gallery selection and from selected images
       newSelected.delete(item.id)
+      setSelectedImages(prev => prev.filter(selectedImage => selectedImage.uri !== item.uri))
     } else {
+      // Checking - add to gallery selection
       if (newSelected.size < maxImages) {
         newSelected.add(item.id)
       } else {
@@ -184,7 +207,6 @@ export default function MediaPicker({
         
         // Save photo to media library to get proper URI
         const asset = await MediaLibrary.createAssetAsync(`file://${photo.path}`)
-        console.log("Photo captured and saved:", asset)
 
         handleSelectedImages([{uri: asset.uri, filename: `photo_${Date.now()}.jpg`}])
         setCameraVisible(false)
@@ -206,7 +228,6 @@ export default function MediaPicker({
   const removeImage = (index: number) => {
     setSelectedImages((prev) => {
       const updated = prev.filter((_, i) => i !== index)
-      console.log("Removed image at index", index, "Updated list:", updated)
       return updated
     })
   }
@@ -217,7 +238,7 @@ export default function MediaPicker({
     console.log("All images cleared")
   }
 
-  const canSelectMore = multiple && selectedImages.length < maxImages
+  const canSelectMore = multiple && selectedImages?.length < maxImages
 
   if (!device) {
     return (
@@ -230,7 +251,7 @@ export default function MediaPicker({
   return (
     <View className="flex-1">
       {/* Display selected images as file names */}
-      {selectedImages.length > 0 ? (
+      {selectedImages?.length > 0 ? (
         <View className="flex-1">
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -275,7 +296,7 @@ export default function MediaPicker({
       )}
 
       {/* Clear all button for multiple mode */}
-      {multiple && selectedImages.length > 1 && (
+      {multiple && selectedImages?.length > 1 && (
         <TouchableOpacity
           className="mt-2 p-2 bg-red-500 rounded-lg justify-center items-center"
           onPress={removeAllImages}
@@ -285,7 +306,7 @@ export default function MediaPicker({
       )}
 
       {/* Add more button for multiple mode */}
-      {multiple && selectedImages.length > 0 && canSelectMore && (
+      {multiple && selectedImages?.length > 0 && canSelectMore && (
         <TouchableOpacity
           className="mt-2 p-3 bg-[#1778F2] rounded-lg justify-center items-center"
           onPress={openGallery}

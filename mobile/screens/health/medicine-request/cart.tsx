@@ -1,4 +1,3 @@
-// cart.tsx
 import { useState, useEffect } from "react"
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert } from "react-native"
 import { router } from "expo-router"

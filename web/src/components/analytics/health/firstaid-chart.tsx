@@ -15,7 +15,7 @@ import {
   import { ChevronLeft, ChevronRight } from "lucide-react";
   import { format, subMonths, addMonths, parseISO, isSameMonth } from "date-fns";
   import { useState } from "react";
-  import { CardTitle } from "@/components/ui/card/card";
+  import { CardTitle } from "@/components/ui/card";
   import { useFirstAidChart } from "@/pages/healthServices/Reports/firstaid-report/queries/fetchQueries";
   import { FirstAidChartResponse } from "@/pages/healthServices/Reports/firstaid-report/types";
   interface FirstAidChartProps {

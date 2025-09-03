@@ -39,18 +39,7 @@ urlpatterns = [
     path('firstaid/',include("apps.firstaid.urls")),
     path('child-health/',include("apps.childhealthservices.urls")),
 	path('servicescheduler/', include("apps.servicescheduler.urls")),
-    path('file/', include('apps.file.urls')),
     path('reports/', include('apps.reports.urls')),
-    
-
-    
-    # path('user/', include('apps.account.urls')),
-    # path('waste/', include('apps.waste.urls')),
-    # path('profiling/', include("apps.profiling.urls")),
-    # path('file/', include('apps.file.urls')),
-    # path('treasurer/', include('apps.treasurer.urls')),
-    # path('donation/', include('apps.donation.urls')),
-    # path('gad/', include('apps.gad.urls')),   
 ]
 
 

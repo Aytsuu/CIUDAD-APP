@@ -14,7 +14,7 @@ import { CommodityStocksColumns } from "./columns/CommodityCol";
 import { useNavigate } from "react-router-dom";
 import { useCommodityStocksTable } from "../REQUEST/Commodity/queries/CommodityFetchQueries";
 import { useArchiveCommodityStocks } from "../REQUEST/Archive/ArchivePutQueries";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expired";

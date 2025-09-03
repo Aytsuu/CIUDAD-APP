@@ -1,5 +1,5 @@
 export const MainLayoutComponent = ({title, description, children} : 
-    {title: string; description: string; children: React.ReactNode; className?: string}) => {
+    {title: React.ReactNode; description: string; children: React.ReactNode; className?: string}) => {
     return (
         <div className="w-full">
             <div className="mb-4">

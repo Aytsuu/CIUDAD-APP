@@ -8,13 +8,12 @@ import { Search, Plus, FileInput, Loader2, XCircle, Clock, CalendarOff } from "l
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { getColumns } from "./columns/FirstAidCol";
 import { useNavigate } from "react-router-dom";
 import { useFirstAidStocksTable } from "../REQUEST/FirstAid/queries/FirstAidFetchQueries";
 import { useArchiveFirstAidInventory } from "../REQUEST/Archive/ArchivePutQueries";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expired";

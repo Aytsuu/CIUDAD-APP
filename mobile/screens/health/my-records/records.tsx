@@ -5,6 +5,7 @@ import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
 import { SelectLayout, DropdownOption } from '@/components/ui/select-layout';
 import { router } from 'expo-router';
+import PageLayout from '@/screens/_PageLayout';
 
 interface Service {
   label: string;
@@ -70,27 +71,21 @@ export default function Records() {
   const selectedService = services.find((service) => service.value === selectedServiceValue) || services[0];
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+      <PageLayout
+            leftAction={
+              <TouchableOpacity
+                onPress={() => router.back()}
+                className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+              >
+                <ChevronLeft size={24} className="text-gray-700" />
+              </TouchableOpacity>
+            }
+            headerTitle={<Text className="text-gray-900 text-[13px]">My Records</Text>}
+            rightAction={<View className="w-10 h-10" />}
+          >
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      {/* Header */}
-      <View className="px-6 pt-6 pb-4 border-b border-gray-100 mt-5">
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity
-            onPress={() => {
-              console.log('Navigating back');
-              router.back();
-            }}
-            className="p-2 -ml-2"
-          >
-            <ChevronLeft size={20} color="#1e40af" />
-          </TouchableOpacity>
-
-          <Text className="text-xl font-semibold text-blue-800">My Health Records</Text>
-
-          <View className="w-8" />
-        </View>
-      </View>
+    
 
       <ScrollView
         className="flex-1"
@@ -192,6 +187,6 @@ export default function Records() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </PageLayout>
   );
 }

@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, subMonths, addMonths, parseISO, isSameMonth } from "date-fns";
 import { useState } from "react";
-import { CardTitle } from "@/components/ui/card/card";
 import {
   Select,
   SelectContent,
@@ -23,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select/select";
+import { CardTitle } from "@/components/ui/card";
 
 type ChartCategory = "WFA" | "HFA" | "WFH";
 

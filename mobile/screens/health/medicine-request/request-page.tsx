@@ -2,9 +2,10 @@
 import { useState, useEffect, useMemo } from "react"
 import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from "react-native"
 import { router } from "expo-router"
-import { ArrowLeft, Search, ShoppingBag, ChevronDown, Pill, Filter, X, Ban } from "lucide-react-native"
+import { ArrowLeft, Search, ShoppingBag, ChevronDown, Pill, Filter, X, Ban, ChevronLeft } from "lucide-react-native"
 import { useGlobalCartState } from "./cart-state"
 import { useMedicines } from "../admin/admin-inventory/queries/medicine/MedicineFetchQueries"
+import PageLayout from "@/screens/_PageLayout"
 
 // Updated type definition to match the API response
 export type MedicineDisplay = {
@@ -136,23 +137,28 @@ export default function MedicineRequestScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-1 p-3">
-        {/* Header */}
-        <View className="flex-row items-center justify-between mt-10 p-3 border-b border-gray-200 bg-white">
-          <TouchableOpacity onPress={() => router.back()} className="p-2">
-            <ArrowLeft size={24} color="#333" />
-          </TouchableOpacity>
-          <Text className="text-xl font-semibold text-gray-800">Request Medicine</Text>
-          <TouchableOpacity onPress={() => router.push("/medicine-request/cart")} className="p-2 relative">
+    <PageLayout
+          leftAction={
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            >
+              <ChevronLeft size={24} className="text-gray-700" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text className="text-gray-900 text-[13px]">Request Medicine</Text>}
+          rightAction={<TouchableOpacity onPress={() => router.push("/medicine-request/cart")} className="p-2 relative">
             <ShoppingBag size={24} color="blue" />
             {cartItems.length > 0 && (
               <View className="absolute -top-1 -right-1 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
                 <Text className="text-white text-xs font-bold">{cartItems.length}</Text>
               </View>
             )}
-          </TouchableOpacity>
-        </View>
+          </TouchableOpacity> }
+        >
+    
+
+        
 
         {/* Search and Filter */}
         <View className="p-4 bg-white shadow-sm">
@@ -211,6 +217,7 @@ export default function MedicineRequestScreen() {
 
         {/* Medicine List */}
         <View className="flex-1 bg-white ">
+          <Text className="ml-4">Available Medicines</Text>
           <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
             {medicines.length > 0 ? (
               <View className="px-4 py-3 gap-2">
@@ -292,7 +299,6 @@ export default function MedicineRequestScreen() {
             )}
           </ScrollView>
         </View>
-      </View>
-    </SafeAreaView>
+     </PageLayout>
   )
 }

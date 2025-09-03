@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Combobox } from "@/components/ui/combobox";

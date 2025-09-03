@@ -1,45 +1,48 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import React from "react";
 import {
   CheckCircle,
-  ArrowRight,
-  CircleUserRound,
-  HousePlus,
-  UsersRound,
-  Store,
-  UserRoundPlus,
+  Check,
+  Loader2,
 } from "lucide-react";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button/button";
-import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
-const RegistrationCompletion = () => {
-  const [completedSteps, setCompletedSteps] = useState(0);
-  const { safeNavigate } = useSafeNavigate();
+const RegistrationCompletion = ({ params } : {  params: Record<string, any> }) => {
+  // ====================== STATE INITIALIZATION ========================
+  const [completedSteps, setCompletedSteps] = React.useState<any[]>([]);
+  const [_currentStepIndex, setCurrentStepIndex] = React.useState(0);
 
-  const steps = [
-    { icon: UserRoundPlus, label: "Personal Profile" },
-    { icon: CircleUserRound, label: "Account Setup" },
-    { icon: HousePlus, label: "Household Info" },
-    { icon: UsersRound, label: "Family Details" },
-    { icon: Store, label: "Business Registration" },
-  ];
+  // ====================== SIDE EFFECTS ========================
+  React.useEffect(() => {
+    // Start with empty completed steps for animation
+    setCompletedSteps([]);
+    setCurrentStepIndex(0);
 
-  useEffect(() => {
     const timer = setInterval(() => {
-      setCompletedSteps((prev) => {
-        if (prev < steps.length) {
-          return prev + 1;
+      setCurrentStepIndex((prevIndex) => {
+        if (prevIndex < params?.completed.length) {
+          setCompletedSteps((prevCompleted) => [
+            ...prevCompleted,
+            params?.completed.sort((a: number,b: number) => a - b)[prevIndex]
+          ]);
+          return prevIndex + 1;
+        } else {
+          // Clear interval when all steps are completed
+          clearInterval(timer);
+          return prevIndex;
         }
-        clearInterval(timer);
-        return prev;
       });
     }, 400);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [params?.completed]);
 
+  // ====================== HANDLERS ========================
+  const submit = async () => {
+    params?.register()
+  }
+
+  // ====================== RENDER ========================
   return (
     <div className="min-h-screen flex justify-center">
       <div className="w-full max-w-lg">
@@ -49,45 +52,44 @@ const RegistrationCompletion = () => {
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-
           {/* Title */}
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-            Registration Complete
+            Complete Your Registration
           </h1>
-
           <p className="text-gray-600 mb-8">
-            Welcome! Your account has been successfully created.
+            Ensure all information provided are accurate
           </p>
-
+          <p className="text-gray-600 mb-8">
+            {completedSteps.length} of {params?.steps.length} Profile
+          </p>
           {/* Steps List */}
           <div className="space-y-3 mb-8">
-            {steps.map((step, index) => {
+            {params?.steps.map((step: any, index: number) => {
               const Icon = step.icon;
-              const isCompleted = index < completedSteps;
-
+              const isCompleted = completedSteps.sort((a,b) => a - b).includes(step.id);
               return (
                 <div
                   key={index}
-                  className={`flex items-center p-3 rounded-lg transition-all duration-300 ${
+                  className={`flex items-center p-3 rounded-lg transition-all duration-500 cursor-pointer ${
                     isCompleted
-                      ? "bg-green-50 border border-green-100"
+                      ? "bg-green-50 border border-green-100 scale-[1.02]"
                       : "bg-gray-50"
                   }`}
+                  onClick={() => step.onClick(step.id)}
                 >
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 transition-all duration-300 ${
-                      isCompleted ? "bg-green-500" : "bg-gray-300"
+                    className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 transition-all duration-500 ${
+                      isCompleted ? "bg-green-500 scale-110" : "bg-gray-300"
                     }`}
                   >
                     {isCompleted ? (
-                      <CheckCircle className="w-4 h-4 text-white" />
+                      <CheckCircle className="w-4 h-4 text-white animate-pulse" />
                     ) : (
                       <Icon className="w-4 h-4 text-gray-500" />
                     )}
                   </div>
-
                   <span
-                    className={`text-sm font-medium ${
+                    className={`text-sm font-medium transition-all duration-500 ${
                       isCompleted ? "text-gray-900" : "text-gray-500"
                     }`}
                   >
@@ -97,21 +99,20 @@ const RegistrationCompletion = () => {
               );
             })}
           </div>
-
           {/* Action Buttons */}
-
-          <Button onClick={() => safeNavigate.back()}>
-            Go to Dashboard
-            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
+          <Button 
+            onClick={submit}
+            className={`transition-all duration-300 ${
+              completedSteps.length === params?.completed.length 
+                ? "opacity-100" 
+                : "opacity-50 pointer-events-none"
+            }`}
+            disabled={params?.isSubmitting}
+          >
+            {params?.isSubmitting && <Loader2 className="animate-spin"/>}
+            {params?.isSubmitting ? "Registering..." : "Register"}
+            <Check className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
           </Button>
-
-          {/* Footer Note */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <span className="font-medium">Next:</span> Check your email for
-              confirmation and setup instructions.
-            </p>
-          </div>
         </Card>
       </div>
     </div>

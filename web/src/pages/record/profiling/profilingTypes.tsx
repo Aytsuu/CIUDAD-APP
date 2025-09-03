@@ -1,8 +1,14 @@
 
 export type AllRecordCombined = {
+  id: string;
   lname: string;
   fname: string;
   mname: string;
+  suffix: string;
+  sex: string;
+  date_registered: string;
+  family_no: string;
+  type: string;
 }
 
 export type ResidentRecord = {
@@ -15,10 +21,23 @@ export type ResidentRecord = {
   fname: string;
   mname: string;
   suffix: string;
+  sex: string;
+  dob: string;
+  pwd: string;
   rp_date_registered: string;
   registered_by: string;
   has_account: boolean;
 };
+
+export type voterRecord = {
+  voter_id: string;
+  lname: string;
+  fname: string;
+  mname: string;
+  suffix: string;
+  sex: string;
+  dob: string;
+}
 
 export type ResidentFamilyRecord = {
   rp_id: string;
@@ -57,10 +76,16 @@ export type FamilyRecord = {
   father: string;
   guardian: string;
   fam_date_registered: string;
+  registered_by: string;
 }
 
 export type MemberRecord = {
-  data: Record<string, any>;
+  dob: string
+  fc_role: string
+  name: string
+  rp_id: string
+  sex: string
+  status: string
 }
 
 export type HouseholdRecord = {
@@ -76,7 +101,12 @@ export type HouseholdRecord = {
 }
 
 export type HouseholdFamRecord = {
-  data: React.ReactNode
+  fam_id: string
+  fam_building: string
+  total_members: string
+  fam_indigenous: string
+  fam_date_registered: string
+  registered_by: string
 }
 
 export type SitioRecord = {
@@ -95,10 +125,10 @@ export type IndividualRequestRecord = {
   per_dob: string;
   per_status: string;
   per_contact: string;
+  per_disability: string;
   per_edAttainment: string;
   per_religion: string;
-  addresses: Record<string, any>[];
-  files: Record<string, any>[]
+  per_addresses: Record<string, any>[];
   req_date: string;
 }
 
@@ -115,6 +145,7 @@ export type BusinessRecord = {
   bus_gross_sales: string;
   sitio: string;
   bus_street: string;
+  respondent: string;
   bus_date_of_registration: string;
   bus_date_verified: string;
   rp: string;
@@ -125,6 +156,8 @@ export type BusinessRespondent = {
   lname: string;
   fname: string;
   mname: string;
+  suffix: string;
+  sex: string;
   br_date_registered: string;
   businesses: Record<string, any>[];
 }

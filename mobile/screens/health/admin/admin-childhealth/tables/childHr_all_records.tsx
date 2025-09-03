@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, Plus, Filter, User, Phone, MapPin, Calendar, Baby, Heart, Loader2 } from 'lucide-react-native';
+import { Search, Plus, Filter, User, Phone, MapPin, Calendar, Baby, Heart, Loader2, ChevronLeft } from 'lucide-react-native';
 import { Input } from '@/components/ui/input';
 import { MainLayoutComponent } from '@/components/healthcomponents/mainlayoutcomponent';
 import { SelectLayout } from '@/components/ui/select-layout';
@@ -12,6 +12,7 @@ import { useChildHealthRecords } from '../forms/queries/fetchQueries';
 import { calculateAge } from '@/helpers/ageCalculator';
 import { ChildHealthRecord } from '../forms/muti-step-form/types';
 import { filterOptions } from './types';
+import PageLayout from '@/screens/_PageLayout';
 
 export default function AllChildHealthRecords() {
   const router = useRouter();
@@ -297,7 +298,18 @@ export default function AllChildHealthRecords() {
   };
 
   return (
-    <MainLayoutComponent title="Child Health Records" description="Manage and view children's health records">
+    <PageLayout
+          leftAction={
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            >
+              <ChevronLeft size={24} className="text-gray-700" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text className="text-gray-900 text-[13px]">Child Health Records</Text>}
+          rightAction={<View className="w-10 h-10" />}
+        >
       <View className="px-4 pt-4 pb-2 bg-white">
         <View className="flex-row items-center gap-2 mb-4">
           <View className="flex-1">
@@ -361,6 +373,6 @@ export default function AllChildHealthRecords() {
           </>
         )}
       </ScrollView>
-    </MainLayoutComponent>
+        </PageLayout>
   );
 }

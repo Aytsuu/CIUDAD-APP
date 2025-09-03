@@ -11,7 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useState } from "react"
@@ -131,7 +131,7 @@ export const ReviewInfo = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
+    <div className="max-w-5xl mx-auto space-y-4">
       {/* Complainant Info */}
       <Card className="border">
         <CardHeader className="p-4 border-b">

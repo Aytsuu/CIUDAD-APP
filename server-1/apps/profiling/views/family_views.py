@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django.db.models import Prefetch, Q, Count, Value, CharField, Subquery, OuterRef, F
 from django.db.models.functions import Coalesce, Concat
 from ..serializers.family_serializers import *
@@ -8,6 +9,7 @@ from ..serializers.resident_profile_serializers import *
 from apps.pagination import *
 
 class FamilyTableView(generics.ListCreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = FamilyTableSerializer
   pagination_class = StandardResultsPagination
 
@@ -27,7 +29,7 @@ class FamilyTableView(generics.ListCreateAPIView):
 
         )
 
-        queryset = Family.objects.select_related('staff').prefetch_related(
+        queryset = Family.objects.select_related('staff', 'hh__add__sitio').prefetch_related(
             Prefetch('family_compositions', queryset=family_compositions)
         ).annotate(
             members=Count('family_compositions'),
@@ -65,7 +67,11 @@ class FamilyTableView(generics.ListCreateAPIView):
             'fam_id',
             'fam_date_registered',
             'fam_building',
+            'fam_indigenous',
             'staff__staff_id',
+            'staff__staff_type',
+            'hh__hh_id',
+            'hh__add__sitio__sitio_name',
         )
 
         search_query = self.request.query_params.get('search', '').strip()
@@ -83,6 +89,7 @@ class FamilyTableView(generics.ListCreateAPIView):
         return queryset
   
 class FamilyDataView(generics.RetrieveAPIView):
+  permission_classes = [AllowAny]
   serializer_class = FamilyTableSerializer # To be modified
   lookup_field = 'fam_id'
   
@@ -91,12 +98,12 @@ class FamilyDataView(generics.RetrieveAPIView):
     return Family.objects.filter(fam_id=fam_id)
   
 class FamilyCreateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
   serializer_class = FamilyCreateSerializer
-  
-  def create(self, request, *args, **kwargs):
-    return super().create(request, *args, **kwargs)
+  queryset = Family.objects.all()
 
 class FamilyFilteredByHouseholdView(generics.ListAPIView):
+  permission_classes = [AllowAny]
   serializer_class = FamilyListSerializer
   lookup_field = 'hh'
   
@@ -105,6 +112,7 @@ class FamilyFilteredByHouseholdView(generics.ListAPIView):
     return Family.objects.filter(hh=household_no)
   
 class FamilyUpdateView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = FamilyBaseSerializer
     queryset = Family.objects.all()
     lookup_field = 'fam_id'
@@ -118,6 +126,7 @@ class FamilyUpdateView(generics.RetrieveUpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyFamily(APIView):
+    permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
       fam_id = request.data.get('fam_id')
       exists = Family.objects.filter(fam_id=fam_id).first()

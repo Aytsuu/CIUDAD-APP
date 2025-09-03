@@ -1,4 +1,3 @@
-
 import {api2} from "@/api/api";
 
 // POST request for firstaidinventorylist model

@@ -35,6 +35,9 @@ import { health_schedule_routes } from "./health-schedules-router";
 import { medicalConsultation } from "./med-consultation";
 import { summon_router } from "./summon-router";
 import { withTransition } from '@/helpers/withTransition';
+import { viewprofile_router } from "./Account-settings";
+
+import { ProtectedRoute } from "@/ProtectedRoutes";
 
 export const main_router: RouteObject[] = [
   {
@@ -103,6 +106,7 @@ export const main_router: RouteObject[] = [
       ...forwardedhealthrecord_router,
       ...firstaid_router,
       ...health_schedule_routes,
+      ...viewprofile_router,
     ]),
   },
 ];

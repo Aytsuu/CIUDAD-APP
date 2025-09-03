@@ -1,4 +1,4 @@
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useGetCardAnalytics } from "./admin-analytics-queries"
 
 

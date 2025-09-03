@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { View,Text,TouchableOpacity,ScrollView,Alert,SafeAreaView,StatusBar } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import PageLayout from '@/screens/_PageLayout';
+import { router } from 'expo-router';
+import { ChevronLeft } from 'lucide-react-native';
 
 interface User {
   name: string;
@@ -128,7 +131,19 @@ const PrenatalBookingPage: React.FC = () => {
   };
 
   return (
-    <SafeAreaView className='flex-1 bg-gray-100'>
+    <PageLayout
+          leftAction={
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            >
+              <ChevronLeft size={24} className="text-gray-700" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text className="text-gray-900 text-[13px]">Resident Details</Text>}
+          rightAction={<View className="w-10 h-10" />}
+        >
+    
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       <ScrollView className='flex-1 p-4' showsVerticalScrollIndicator={false}>
         
@@ -247,7 +262,7 @@ const PrenatalBookingPage: React.FC = () => {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+   </PageLayout>
   );
 };
 
