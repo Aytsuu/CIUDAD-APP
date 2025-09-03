@@ -31,7 +31,7 @@ export default () => {
   {
     title: 'Waste Report', 
     description: 'Report waste management issues.', 
-    route: ''
+    route: '/(waste)/illegal-dumping/resident/illegal-dump-res-create'
   },
 ]
 

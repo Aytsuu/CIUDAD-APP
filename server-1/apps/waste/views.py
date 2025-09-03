@@ -221,9 +221,23 @@ class WasteReportResolveFileView(generics.ListCreateAPIView):
         
         return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)    
 
+# class WasteReportView(generics.ListCreateAPIView):
+#     serializer_class = WasteReportSerializer
+#     queryset = WasteReport.objects.all()
+
+
 class WasteReportView(generics.ListCreateAPIView):
     serializer_class = WasteReportSerializer
-    queryset = WasteReport.objects.all()
+    def get_queryset(self):
+        queryset = WasteReport.objects.all()
+        rp_id = self.request.query_params.get('rp_id')
+        
+        if rp_id:
+            # Filter by rp_id if provided
+            queryset = queryset.filter(rp_id=rp_id)
+        
+        return queryset
+    
 
 class UpdateWasteReportView(generics.RetrieveUpdateAPIView):
     serializer_class = WasteReportSerializer

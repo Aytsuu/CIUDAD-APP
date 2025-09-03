@@ -6,6 +6,8 @@ import SendEmailOTP from "@/screens/auth/signup/EmailOTP";
 import LoginScreen from "@/screens/auth/login/loginscreen";
 import IndividualInformation from "@/screens/auth/signup/individual/IndividualInformation";
 import PurposeAndRatesMain from "@/screens/treasurer/rates/purpose-and-rate-main";
+import Report from "../(report)";
+import WasteIllegalDumpingResMain from "@/screens/report/illegal-dumping/resident/illegal-dump-main-res";
 
 // Makes the Error Overlay dissapear
 // import { LogBox } from 'react-native';
@@ -15,6 +17,6 @@ import PurposeAndRatesMain from "@/screens/treasurer/rates/purpose-and-rate-main
 // }
 
 export default () => {
-    return <PurposeAndRatesMain/>
+    return <WasteIllegalDumpingResMain/>
 }
  
