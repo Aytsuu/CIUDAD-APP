@@ -643,3 +643,13 @@ class GarbagePickupRequestPendingByRPView(generics.ListAPIView):
         )
         print(f"Found {queryset.count()} records") 
         return queryset
+    
+class GarbagePickupRequestRejectedByRPView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestRejectedSerializer
+    
+    def get_queryset(self):
+        rp_id = self.kwargs.get('rp_id')
+        return Garbage_Pickup_Request.objects.filter(
+            rp_id=rp_id, 
+            garb_req_status='rejected'  # Filter for rejected status
+        )
