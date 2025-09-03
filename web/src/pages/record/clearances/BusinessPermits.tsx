@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {Search, ArrowUpDown, Loader2, CheckCircle, Eye } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
-import { DataTable } from "@/components/ui/table/data-table-click";
+import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Button } from "@/components/ui/button/button";
@@ -231,7 +231,10 @@ function BusinessDocumentPage() {
           ) : error ? (
             <div className="text-center py-5 text-red-500">Error loading data</div>
           ) : (
-            <DataTable columns={columns} data={businessPermits || []} onRowClick={handleRowClick} header={true} />
+            <DataTable 
+            columns={columns} 
+            data={businessPermits || []}
+            header={true} />
           )}
         </div>
       </div>

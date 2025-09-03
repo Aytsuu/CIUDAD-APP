@@ -23,7 +23,7 @@ export const testServerConnection = async () => {
         const permitResponse = await api.get('clerk/business-permit/');
         console.log("Business permit endpoint accessible:", permitResponse.status);
         
-        console.log("✅ All endpoints are accessible!");
+        console.log("All endpoints are accessible!");
         return true;
     } catch (err: any) {
         console.error("Server connection test failed:", err);
@@ -40,7 +40,7 @@ export const testServerConnection = async () => {
         
         // If it's a 404, the server is reachable but endpoint doesn't exist
         if (err.response?.status === 404) {
-            console.log("⚠️ Server is reachable but endpoint returned 404");
+            console.log("Server is reachable but endpoint returned 404");
             console.log("This might mean the endpoint doesn't exist or requires authentication");
         }
         
@@ -123,26 +123,31 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
             const randomPart = Math.random().toString(36).substring(2, 4).toUpperCase();
             const bpr_id = `BPR${timestamp.slice(-6)}${randomPart}`;
             
-            const payload = {
+            const payload: any = {
                 bpr_id: bpr_id, 
                 req_request_date: new Date().toISOString().split('T')[0], // Current date
                 req_sales_proof: requestInfo.gross_sales || '', // Use gross_sales from requestInfo
                 req_status: 'Pending',
                 req_payment_status: 'Unpaid',
-                bus_id: requestInfo.business_id, // Business ID from mobile app
+                req_amount: requestInfo.req_amount || 0, // Required amount field
                 rp_id: await getValidResidentProfileId(),
                 ags_id: requestInfo.ags_id || null, // Annual gross sales ID (optional)
                 pr_id: requestInfo.pr_id || null, // Purpose and rate ID (optional)
+                bus_permit_name: requestInfo.business_name || '', // Business name field
+                bus_permit_address: requestInfo.business_address || '', // Business address field
                 // Image fields for business_permit_file table (handled by backend)
                 previous_permit_image: requestInfo.previous_permit_image || null,
                 assessment_image: requestInfo.assessment_image || null
             };
 
-            console.log("Business Permit Request Payload:", payload);
-            console.log("Making POST request to: clerk/business-permit/");
-            console.log("Full URL:", api.defaults.baseURL + "/clerk/business-permit/");
+            // Always include bus_id - use null if no business exists
+            payload.bus_id = requestInfo.business_id || null;
 
-            const res = await api.post('clerk/business-permit/', payload);
+            console.log("Business Permit Request Payload:", payload);
+            console.log("Making POST request to: clerk/business-clearance/");
+            console.log("Full URL:", api.defaults.baseURL + "/clerk/business-clearance/");
+
+            const res = await api.post('clerk/business-clearance/', payload);
             console.log("Response received:", res.data);
             return res.data;
         } else {
@@ -181,19 +186,24 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
 
 export const addBusinessClearance = async (requestInfo: Record<string, any>, staffId?: string) => {
     try {
-        const payload = {
+        const payload: any = {
             req_request_date: new Date().toISOString().split('T')[0], // Current date
             req_sales_proof: requestInfo.gross_sales || '', // Use gross_sales from requestInfo
             req_status: 'Pending',
             req_payment_status: 'Unpaid',
-            bus_id: requestInfo.business_id, // Business ID from mobile app
+            req_amount: requestInfo.req_amount || 0, // Required amount field
             rp_id: await getValidResidentProfileId(),
             ags_id: requestInfo.ags_id || null, // Annual gross sales ID (optional)
             pr_id: requestInfo.pr_id || null, // Purpose and rate ID (optional)
+            bus_permit_name: requestInfo.business_name || '', // Business name field
+            bus_permit_address: requestInfo.business_address || '', // Business address field
             // Image fields for business_permit_file table (handled by backend)
             previous_permit_image: requestInfo.previous_permit_image || null,
             assessment_image: requestInfo.assessment_image || null
         };
+
+        // Always include bus_id - use null if no business exists
+        payload.bus_id = requestInfo.business_id || null;
 
         console.log("Business Clearance Request Payload:", payload);
         console.log("Making POST request to: clerk/business-clearance/");

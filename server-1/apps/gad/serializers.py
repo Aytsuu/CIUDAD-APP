@@ -4,6 +4,7 @@ from django.apps import apps
 from decimal import Decimal
 from utils.supabase_client import upload_to_storage, remove_from_storage
 import json
+from decimal import Decimal
 
 Staff = apps.get_model('administration', 'Staff')
 

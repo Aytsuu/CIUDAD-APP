@@ -58,12 +58,14 @@ class NonResidentCertificateRequest(models.Model):
 class IssuedCertificate(models.Model):
     ic_id = models.BigAutoField(primary_key=True)
     ic_date_of_issuance = models.DateField()
+    ic_file = models.TextField(null=True, blank=True)
     certificate = models.ForeignKey(ClerkCertificate, on_delete=models.CASCADE, db_column='cr_id', null=True, blank = True)
     nonresidentcert = models.ForeignKey(NonResidentCertificateRequest, on_delete=models.CASCADE, db_column='nrc_id', null = True, blank = True)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'issued_certificate'
+        managed = False
 
 # Business Models
 class Business(models.Model):
@@ -91,10 +93,12 @@ class BusinessPermitRequest(models.Model):
     req_payment_status = models.CharField(max_length=100, default='Unpaid')
     req_amount = models.DecimalField(max_digits=10, decimal_places=2)
     ags_id = models.ForeignKey('treasurer.annual_gross_sales', on_delete=models.CASCADE, db_column='ags_id', related_name='business_permits', null=True)
-    bus_id = models.ForeignKey('Business', on_delete=models.CASCADE, db_column='bus_id', related_name='permit_requests')
+    bus_id = models.ForeignKey('Business', on_delete=models.CASCADE, db_column='bus_id', related_name='permit_requests', null=True, blank=True)
     pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete=models.CASCADE, db_column='pr_id', related_name='business_permits', null=True)
     staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='staff_id', related_name='staff_business_permits', null=True)
     rp_id = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, db_column='rp_id', null=True)
+    bus_permit_name = models.CharField(max_length=255, null=True, blank=True)  # Add business name field
+    bus_permit_address = models.CharField(max_length=500, null=True, blank=True)  # Add business address field
 
     # previous_permit_image = models.CharField(max_length=500, null=True, blank=True)
     # assessment_image = models.CharField(max_length=500, null=True, blank=True)

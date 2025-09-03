@@ -235,6 +235,10 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
 
     def get_business_name(self, obj):
         try:
+            # First try to get from the new bus_permit_name field
+            if obj.bus_permit_name:
+                return obj.bus_permit_name
+            # Fallback to bus_id if available
             return obj.bus_id.bus_name if obj.bus_id and hasattr(obj.bus_id, 'bus_name') else ""
         except Exception:
             return ""
@@ -247,6 +251,10 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
 
     def get_business_address(self, obj):
         try:
+            # First try to get from the new bus_permit_address field
+            if obj.bus_permit_address:
+                return obj.bus_permit_address
+            # Fallback to bus_id if available
             if obj.bus_id and hasattr(obj.bus_id, 'add_id') and obj.bus_id.add_id:
                 # Fetch the actual address using the Address model
                 try:
@@ -295,7 +303,6 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             return 0.0
 
 class BusinessPermitCreateSerializer(serializers.ModelSerializer):
-    # Removed business_name, business_address, business_gross_sales since they come from bus_id
     
     class Meta:
         model = BusinessPermitRequest
@@ -310,7 +317,9 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             'pr_id',
             'rp_id',
             'staff_id',
-            'req_amount',  # Add req_amount field
+            'req_amount',  
+            'bus_permit_name',  
+            'bus_permit_address',  
         ]
         extra_kwargs = {
             'bpr_id': {'required': False},
@@ -545,3 +554,5 @@ class FileActionRequestSerializer(serializers.ModelSerializer):
             'file_action_file',
             'comp'
         ]
+
+
