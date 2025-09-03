@@ -631,12 +631,15 @@ class AssignmentCollectorDeleteView(generics.DestroyAPIView):
         acl_id = self.kwargs.get('acl_id')
         return get_object_or_404(Assignment_Collector, acl_id=acl_id)
     
-class ResidentPendingRequestsView(generics.ListAPIView):
-    serializer_class = GarbagePickupRequestByResidentSerializer
+class GarbagePickupRequestPendingByRPView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestPendingSerializer
     
     def get_queryset(self):
         rp_id = self.kwargs.get('rp_id')
-        return Garbage_Pickup_Request.objects.filter(
+        print(f"Filtering for rp_id: {rp_id}")  
+        queryset = Garbage_Pickup_Request.objects.filter(
             rp_id=rp_id, 
             garb_req_status='pending'  
         )
+        print(f"Found {queryset.count()} records") 
+        return queryset

@@ -1,58 +1,34 @@
 import { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Modal, Image } from "react-native";
-import { XCircle, X, Search, Info } from "lucide-react-native";
+import { X, Search, Info } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { formatTime } from "@/helpers/timeFormatter";
-
-// Mock data interface
-interface GarbageRequest {
-  garb_id: string;
-  garb_location: string;
-  garb_waste_type: string;
-  garb_pref_date: string;
-  garb_pref_time: string;
-  garb_additional_notes?: string;
-  garb_created_at: string;
-  file_url?: string;
-  sitio_name?: string;
-}
+import { RootState } from "@/redux";
+import { useSelector, UseSelector } from "react-redux";
+import { useGetGarbagePendingResident, type GarbageRequestPending } from "../queries/garbagePickupFetchQueries";
 
 export default function ResidentPending() {
+  const {user, isLoading: userLoading} = useSelector((state: RootState) => state.auth)
+  const { data: pendingRequests = [], isLoading: isDataLoading} = useGetGarbagePendingResident(user.resident.rp_id)
   const [searchQuery, setSearchQuery] = useState("");
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState("");
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
+
+  console.log('id', user.resident.rp_id)
+  console.log('Pending:', pendingRequests)
+
+  const handleViewImage = (imageUrl: string) => {
+    setCurrentImage(imageUrl);
+    setViewImageModalVisible(true);
+    setCurrentZoomScale(1);
+  };
   
-  // Mock data - replace with your actual data source
-  const [requestsData, setRequestsData] = useState<GarbageRequest[]>([
-    {
-      garb_id: "1",
-      garb_location: "Main Street",
-      garb_waste_type: "General Waste",
-      garb_pref_date: "2023-10-15",
-      garb_pref_time: "10:00:00",
-      garb_created_at: "2023-10-10T08:30:00Z",
-      sitio_name: "Sitio 1",
-      file_url: "https://example.com/image1.jpg"
-    },
-    {
-      garb_id: "2",
-      garb_location: "Park Avenue",
-      garb_waste_type: "Recyclables",
-      garb_pref_date: "2023-10-16",
-      garb_pref_time: "14:30:00",
-      garb_additional_notes: "Please collect plastic bottles separately",
-      garb_created_at: "2023-10-11T09:15:00Z",
-      sitio_name: "Sitio 2"
-    }
-  ]);
 
-  const isLoading = false; // Replace with actual loading state if needed
-
-  const filteredData = requestsData.filter((request) => {
+  const filteredData = pendingRequests.filter((request) => {
     const searchString = `
       ${request.garb_location} 
       ${request.garb_waste_type} 
@@ -74,7 +50,7 @@ export default function ResidentPending() {
       </Text>
 
       {/* Search Bar */}
-      {!isLoading && (
+      {!isDataLoading && (
         <View className="flex-row items-center bg-white border border-gray-200 rounded-lg px-3 mb-4 mt-2">
           <Search size={18} color="#6b7280" />
           <Input
@@ -88,7 +64,7 @@ export default function ResidentPending() {
       )}
 
       {/* List */}
-      {isLoading ? (
+      {isDataLoading ? (
         <View className="justify-center items-center py-8">
           <Text className="text-center text-gray-500">Loading requests...</Text>
         </View>
@@ -97,7 +73,7 @@ export default function ResidentPending() {
           <View className="bg-blue-50 rounded-lg items-cente">
             <Info size={24} color="#3b82f6" className="mb-2" />
             <Text className="text-center text-gray-600">
-              {requestsData.length === 0 
+              {pendingRequests.length === 0 
                 ? "No requests available" 
                 : "No matching requests found"}
             </Text>
@@ -166,7 +142,7 @@ export default function ResidentPending() {
                     {request.file_url && (
                       <View className="mt-2">
                         <TouchableOpacity
-                        //   onPress={() => handleViewImage(request.file_url)}
+                          onPress={() => handleViewImage(request.file_url)}
                         >
                           <Text className="text-sm text-blue-600 underline">
                             View Attached Image

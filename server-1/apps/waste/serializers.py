@@ -753,24 +753,3 @@ class PickupConfirmationSerializer(serializers.ModelSerializer):
         fields = '__all__' 
 
 
-class GarbagePickupRequestByResidentSerializer(serializers.ModelSerializer):
-    garb_requester = serializers.SerializerMethodField()
-    file_url = serializers.SerializerMethodField()
-    sitio_name = serializers.SerializerMethodField()
-    garb_additional_notes = serializers.CharField(required=False, allow_blank=True)
-    sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all())
-
-    class Meta:
-        model = Garbage_Pickup_Request
-        fields = '__all__'
-
-    def get_garb_requester(self, obj):
-        if obj.rp and obj.rp.per:
-            return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}".strip()
-        return "Unknown"
-    
-    def get_file_url(self, obj):
-        return obj.gprf.gprf_url if obj.gprf else ""
-
-    def get_sitio_name(self, obj):
-        return obj.sitio_id.sitio_name if obj.sitio_id else ""
