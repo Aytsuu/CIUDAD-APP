@@ -4,6 +4,7 @@ from django.apps import apps
 from decimal import Decimal
 from utils.supabase_client import upload_to_storage, remove_from_storage
 import json
+from decimal import Decimal
 
 Staff = apps.get_model('administration', 'Staff')
 
@@ -273,8 +274,11 @@ class ProjectProposalLogSerializer(serializers.ModelSerializer):
 class ProjectProposalSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     logs = ProjectProposalLogSerializer(many=True, read_only=True)
-    gpr_header_img = serializers.JSONField(write_only=True, required=False, allow_null=True)  # Accept JSON object for upload
+    gpr_header_img = serializers.JSONField(write_only=True, required=False, allow_null=True)
     dev_details = serializers.SerializerMethodField()
+    project_title = serializers.SerializerMethodField()
+    participants = serializers.SerializerMethodField()
+    budget_items = serializers.SerializerMethodField()
     
     def get_status(self, obj):
         return obj.current_status
@@ -294,6 +298,18 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             }
         return None
     
+    def get_project_title(self, obj):
+        """Get project title from development plan"""
+        return obj.project_title
+    
+    def get_participants(self, obj):
+        """Get participants from development plan indicators"""
+        return obj.participants
+    
+    def get_budget_items(self, obj):
+        """Get budget items from development plan"""
+        return obj.budget_items
+    
     def validate_gpr_header_img(self, value):
         if value is None:
             return value
@@ -301,12 +317,26 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'gpr_header_img': 'Must be an object with name, type, and file (base64 data URL)'
             })
-        # Optionally restrict to images
         if not value['type'].startswith('image/'):
             raise serializers.ValidationError({
                 'gpr_header_img': 'Only image files are allowed'
             })
         return value
+
+    def validate(self, attrs):
+        # Ensure dev and gpr_project_index are valid
+        if 'dev' in attrs and 'gpr_project_index' in attrs:
+            dev = attrs['dev']
+            project_index = attrs['gpr_project_index']
+            
+            if dev.dev_project:
+                projects = dev.dev_project if isinstance(dev.dev_project, list) else [dev.dev_project]
+                if project_index < 0 or project_index >= len(projects):
+                    raise serializers.ValidationError({
+                        'gpr_project_index': f'Project index must be between 0 and {len(projects) - 1}'
+                    })
+        
+        return attrs
 
     def create(self, validated_data):
         header_img_data = validated_data.pop('gpr_header_img', None)
@@ -333,21 +363,17 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             header_img_data = validated_data.pop('gpr_header_img')
             header_img_provided = True
 
-        # Only modify header image if it was explicitly provided in the request
         if header_img_provided:
             if header_img_data is None:
-                # Explicit removal - clear the header image
                 instance.gpr_header_img = None
             elif isinstance(header_img_data, dict):
                 try:
-                    # Upload new file
                     url = upload_to_storage(header_img_data, 'project-proposal-bucket', 'header_images')
                     instance.gpr_header_img = url
                 except Exception as e:
                     raise serializers.ValidationError({
                         'gpr_header_img': f"Upload failed: {str(e)}"
                     })
-        # If header_img_provided is False, we don't touch the existing header image at all
 
         instance = super().update(instance, validated_data)
         return instance
@@ -356,7 +382,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         return {
             'gprId': data['gpr_id'],
-            'gprTitle': instance.gpr_title,
+            'gprTitle': instance.project_title,  
             'gprBackground': data['gpr_background'],
             'gprDate': data['gpr_date'],
             'gprVenue': data['gpr_venue'],
@@ -365,10 +391,11 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             'gprDateCreated': data['gpr_created'],
             'gprIsArchive': data['gpr_is_archive'],
             'gprObjectives': data['gpr_objectives'],
-            'gprParticipants': instance.gpr_participants,
-            'gprBudgetItems': instance.gpr_budget_items,
+            'gprParticipants': instance.participants, 
+            'gprBudgetItems': instance.budget_items,   
             'gprSignatories': data['gpr_signatories'],
             'gpr_page_size': data['gpr_page_size'],
+            'gpr_project_index': data['gpr_project_index'],
             'status': data['status'],
             'staffId': data.get('staff'),
             'staffName': data.get('staff_name', 'Unknown'),
@@ -381,16 +408,18 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProjectProposal
         fields = [
-            'gpr_id', 'gpr_title', 'gpr_background', 'gpr_date', 'gpr_venue',
+            'gpr_id', 'gpr_background', 'gpr_date', 'gpr_venue',
             'gpr_monitoring', 'gpr_header_img', 'gpr_created', 'gpr_is_archive',
-            'gpr_objectives', 'gpr_participants', 'gpr_budget_items', 'gpr_signatories',
+            'gpr_objectives', 'gpr_signatories', 'gpr_project_index',
             'staff', 'status', 'logs', 'gpr_page_size', 'gbud', 'dev'
         ]
         extra_kwargs = {
             'gpr_id': {'read_only': True},
             'gpr_created': {'read_only': True},
             'staff': {'required': False, 'write_only': True},
-            'gpr_header_img': {'write_only': True}
+            'gpr_header_img': {'write_only': True},
+            'dev': {'required': True},
+            'gpr_project_index': {'required': True}
         }
 
 class ProposalSuppDocSerializer(serializers.ModelSerializer):

@@ -1,5 +1,8 @@
 import { api } from "@/api/api";
 
+
+// =========================================== STAFF ========================================================
+
 export const updateWasteReport = async (rep_id: number, wasteReportInfo: Record<string, any>) => {
 
     try{
@@ -51,4 +54,27 @@ export const uploadResolvedImage = async (data: {
     console.error(`Failed to create file ${data.file_data.name}:`, err);
     throw err;
   }
+}
+
+
+// ==================================================== RESIDENT =============================================
+
+// Resident Cancel Report
+export const updateWasteResReport = async (rep_id: number, wasteReportInfo: Record<string, any>) => {
+
+    try{
+
+        console.log("REPORT DATA REQ: ",{
+            rep_status: wasteReportInfo.rep_status,
+        })
+
+        const res = await api.put(`waste/update-waste-report/${rep_id}/`,{
+            rep_status: wasteReportInfo.rep_status,
+        })
+
+        return res.data;
+    }
+    catch (err){
+        console.error(err);
+    }
 }

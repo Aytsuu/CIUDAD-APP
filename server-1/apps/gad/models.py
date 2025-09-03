@@ -10,7 +10,8 @@ class DevelopmentPlan(models.Model):
     dev_res_person = models.JSONField(default=list, db_column='dev_res_person')
     dev_indicator = models.JSONField(default=list, db_column='dev_indicator')
     dev_gad_items = models.JSONField(default=list, db_column='dev_budget_items')
-
+    gpr_id = models.ForeignKey( 'gad.ProjectProposal', on_delete=models.SET_NULL,  null=True,  blank=True, db_column='gpr_id')
+    
     staff = models.ForeignKey(
         'administration.Staff',
         on_delete=models.SET_NULL,
@@ -188,6 +189,29 @@ class ProjectProposal(models.Model):
         """Get the date from the most recent status change"""
         latest_log = self.logs.order_by('-gprl_date_approved_rejected').first()
         return latest_log.prl_date_approved_rejected if latest_log else None
+    
+    @property
+    def project_title(self):
+        """Get the project title from the related development plan"""
+        if self.dev and self.dev.dev_project:
+            projects = self.dev.dev_project if isinstance(self.dev.dev_project, list) else [self.dev.dev_project]
+            if 0 <= self.gpr_project_index < len(projects):
+                return projects[self.gpr_project_index]
+        return None
+    
+    @property
+    def participants(self):
+        """Get participants from the related development plan indicators"""
+        if self.dev and self.dev.dev_indicator:
+            return self.dev.dev_indicator
+        return []
+    
+    @property
+    def budget_items(self):
+        """Get budget items from the related development plan"""
+        if self.dev and self.dev.dev_gad_items:
+            return self.dev.dev_gad_items
+        return []
 
 class ProjectProposalLog(models.Model):
     STATUS_CHOICES = [
