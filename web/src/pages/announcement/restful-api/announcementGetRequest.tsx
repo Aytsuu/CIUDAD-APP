@@ -3,7 +3,7 @@ import { api } from "@/api/api";
 export const getAnnouncementRequest = async () => {
   try {
     const response = await api.get(`announcement/list/`);
-    const data = response.data?.data ?? response.data ?? [];
+    const data = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
     const announcements = Array.isArray(data) ? data : [];
 
     // Sort announcements by created_at descending

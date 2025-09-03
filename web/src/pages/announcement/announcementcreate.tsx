@@ -9,7 +9,7 @@ import AnnouncementSchema from "@/form-schema/Announcement/announcementschema";
 import { usePostAnnouncement, usePostAnnouncementRecipient } from "./queries/announcementAddQueries";
 import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
 import { Button } from "@/components/ui/button/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Calendar, Users, Send, MessageSquare } from "lucide-react";
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -19,6 +19,7 @@ import axios from "axios";
 import { usePositions } from "@/pages/record/administration/queries/administrationFetchQueries";
 import { useNavigate } from "react-router-dom";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
+import { capitalize } from "@/helpers/capitalize";
 
 // Helpers
 function capitalizeWords(str: string) {
@@ -72,7 +73,7 @@ const AnnouncementCreate = () => {
     ann_event_end: "",
     ann_type: "",
     ar_type: [],
-    recipient: "everyone",
+    ar_category: "everyone",
     staff: user?.staff?.staff_id || "",
     pos_category: "",
     pos_group: "",
@@ -86,7 +87,7 @@ const AnnouncementCreate = () => {
   });
 
   const annType = form.watch("ann_type");
-  const recipientType = form.watch("recipient");
+  const recipientType = form.watch("ar_category");
   const posCategory = form.watch("pos_category");
   const posGroup = form.watch("pos_group");
 
@@ -109,7 +110,7 @@ const AnnouncementCreate = () => {
 
   const { mutateAsync: postAnnouncement } = usePostAnnouncement();
   const { mutateAsync: postAnnouncementRecipient } = usePostAnnouncementRecipient();
-  const { data: positions = [] } = usePositions();
+  const { data: positions = [] } = usePositions("Barangay Staff");
 
   const categoryOptions = React.useMemo(() => {
     const cats = positions.map((p: { pos_category: any }) => p.pos_category).filter(Boolean);
@@ -150,7 +151,7 @@ const AnnouncementCreate = () => {
         cleanedData[key] = value !== "" && value !== undefined ? value : null;
       }
 
-      let { ar_type, pos_category, pos_group, ...announcementData } = cleanedData;
+      let { ar_type, ar_category, pos_category, pos_group, ...announcementData } = cleanedData;
 
       if (Array.isArray(ar_type)) {
         const origWithKey = (ar_type as string[]).map((t: string) => ({
@@ -169,7 +170,7 @@ const AnnouncementCreate = () => {
         }));
         announcementData.files = filesPayload;
       }
-
+console.log(announcementData)
       const createdAnnouncement = await postAnnouncement(announcementData);
 
       if (Array.isArray(ar_type) && ar_type.length > 0) {
@@ -177,7 +178,8 @@ const AnnouncementCreate = () => {
           .filter(Boolean)
           .map((type: string) => ({
             ann: createdAnnouncement?.ann_id,
-            ar_type: String(type).trim(),
+            ar_type: capitalize(type.trim()),
+            ar_category: ar_category.trim()
           }));
 
         await postAnnouncementRecipient({ recipients: recipientsPayload });
@@ -281,7 +283,7 @@ const AnnouncementCreate = () => {
                 <CardContent className="space-y-6">
                   <FormSelect
                     control={form.control}
-                    name="recipient"
+                    name="ar_category"
                     label="Target Audience"
                     options={[
                       { id: "everyone", name: "Everyone" },
@@ -307,19 +309,6 @@ const AnnouncementCreate = () => {
                         />
                       )}
                     </>
-                  )}
-                  {recipientType === "resident" && (
-                    <FormComboCheckbox
-                      label="Age Groups"
-                      control={form.control}
-                      name="ar_type"
-                      options={[
-                        { id: "all", name: "All" },
-                        { id: "adolecent", name: "Adoloscent (10-19 Years Old)" },
-                        { id: "adult", name: "Adult (20-59 Years Old)" },
-                        { id: "senior citizen", name: "Senior Citizen (60+ Years Old)" },
-                      ]}
-                    />
                   )}
                 </CardContent>
               </Card>

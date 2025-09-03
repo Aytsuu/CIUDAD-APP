@@ -10,11 +10,20 @@ from .serializers import (
     AnnouncementRecipientFilteredSerializer
 )
 from django.db import transaction
-
+from django.utils import timezone
+from django.db.models import Q
 
 class AnnouncementView(generics.ListCreateAPIView):
-    queryset = Announcement.objects.all()
     serializer_class = AnnouncementCreateSerializer
+
+    def get_queryset(self):
+        now = timezone.now()
+        return Announcement.objects.filter(
+            ann_status="Active"
+        ).filter(
+            Q(ann_start_at__lte=now) | Q(ann_start_at__isnull=True),
+            Q(ann_end_at__gte=now) | Q(ann_end_at__isnull=True)
+        ).order_by('-ann_created_at')
 
 
 class AnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):

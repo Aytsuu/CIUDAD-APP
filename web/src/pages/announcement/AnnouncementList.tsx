@@ -6,7 +6,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Input } from "@/components/ui/input";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useDeleteAnnouncement } from "./queries/announcementDeleteQueries";
 import { useGetAnnouncement } from "./queries/announcementFetchQueries";

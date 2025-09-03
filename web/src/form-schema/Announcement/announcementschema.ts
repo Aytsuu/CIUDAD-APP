@@ -21,7 +21,7 @@ const AnnouncementSchema = z.object({
   ann_type: z.string().nonempty({ message: "Type is required" }),
   ar_type: z.array(z.string()).optional().default([]),
   staff: z.string().optional(),
-  recipient: z.string().nonempty({ message: "Recipient is required" }),
+  ar_category: z.string().nonempty({ message: "Recipient is required" }),
   ann_to_sms: z.boolean().optional().default(false),
   ann_to_email: z.boolean().optional().default(false),
   staff_group: z.string().optional(), 

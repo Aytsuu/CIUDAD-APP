@@ -12,7 +12,7 @@ class Announcement(models.Model):
     ann_type = models.CharField(max_length=50)
     ann_to_sms = models.BooleanField(default=True)
     ann_to_email = models.BooleanField(default=True)
-    # ann_status = models.CharField(max_length=50, default="Inactive")
+    ann_status = models.CharField(max_length=50, default="Inactive")
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
     
     class Meta:
@@ -42,7 +42,7 @@ class AnnouncementRecipient(models.Model):
         Announcement,
         on_delete=models.CASCADE,
     )
-
+    ar_category = models.CharField(max_length=50)
     ar_type = models.CharField(max_length=50)
 
     class Meta:
