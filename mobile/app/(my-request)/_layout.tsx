@@ -6,6 +6,7 @@ export default () => {
         <ToastProvider>
             <Stack>
                 <Stack.Screen name="garbage-pickup/garbage-pickup-tracker" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="certification-tracking/certificate-request-tracker" options={{ headerShown: false, animation: 'fade' }} />
             </Stack>
         </ToastProvider>
     )

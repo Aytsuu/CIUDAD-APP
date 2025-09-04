@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
-import ScreenLayout from "../_ScreenLayout";
+import _ScreenLayout from '@/screens/_ScreenLayout';
 import { useRouter } from "expo-router";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useCertTracking, useCancelCertificate } from "./queries/certTrackingQueries";
@@ -71,7 +71,7 @@ export default function CertTrackingMain() {
   }
 
   return (
-    <ScreenLayout
+    <_ScreenLayout
       customLeftAction={
         <TouchableOpacity
           onPress={() => router.back()}
@@ -228,7 +228,7 @@ export default function CertTrackingMain() {
           </>
         )}
       </View>
-    </ScreenLayout>
+    </_ScreenLayout>
   );
 }
 
