@@ -28,9 +28,11 @@ export default function WasteIllegalDumpingResDetails() {
     rep_complainant,
     rep_contact,
     rep_status,
+    rep_cancel_reason,
     rep_date,
     rep_anonymous,
     rep_date_resolved,
+    rep_date_cancelled,
     sitio_name,
     sitio_id,
     waste_report_file,
@@ -310,6 +312,20 @@ export default function WasteIllegalDumpingResDetails() {
                     <Text>{formatDate(rep_date_resolved as string)}</Text>              
                   </View>
                 )}
+
+                {rep_date_cancelled && (
+                  <View className="flex-row justify-between mb-4">
+                    <View className="w-[48%]">
+                      <Text className="font-semibold text-gray-600 mb-1">Date & Time Cancelled</Text>
+                      <Text>{formatDate(rep_date_cancelled as string)}</Text>              
+                    </View>
+
+                    <View className="w-[48%]">
+                      <Text className="font-semibold text-gray-600 mb-1">Cancel Reason</Text>
+                      <Text>{rep_cancel_reason}</Text>              
+                    </View>                    
+                  </View>
+                )}                
 
                 <View className="mb-4">
                   <Text className="font-semibold text-gray-600 mb-1">Report Details</Text>

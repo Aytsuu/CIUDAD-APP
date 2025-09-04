@@ -715,8 +715,10 @@ export default function WasteIllegalDumpingResMain() {
         rep_complainant: item.rep_complainant,
         rep_contact: item.rep_contact,
         rep_status: item.rep_status,
+        rep_cancel_reason: item.rep_cancel_reason,
         rep_date: item.rep_date,
         rep_date_resolved: item.rep_date_resolved,
+        rep_date_cancelled: item.rep_date_cancelled,
         rep_anonymous: item.rep_anonymous,
         rep_add_details: item.rep_add_details,
         waste_report_file: JSON.stringify(item.waste_report_file || []),
@@ -782,6 +784,13 @@ export default function WasteIllegalDumpingResMain() {
         <Text className="text-base font-semibold">Location:</Text>
         <Text className="text-base">{item.rep_location}</Text>
       </View>
+
+      {item.rep_status === "cancelled" && (
+        <View className="mb-4">
+          <Text className="text-base font-semibold">Cancel Reason:</Text>
+          <Text>{item.rep_cancel_reason}</Text>              
+        </View>
+      )}   
 
       <View className="self-end">
         <SquareArrowOutUpRight size={16} color="#00A8F0" />

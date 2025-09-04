@@ -130,6 +130,8 @@ export const addWasteReport = async (reportInfo: Record<string, any>) => {
                 }]
             };
 
+            console.log("RESUBMIT REPORT PICTURESSS", payload)
+
             return api.post('waste/waste-rep-file/', payload);
         });
 

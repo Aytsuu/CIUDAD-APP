@@ -348,9 +348,9 @@ class WasteReportSerializer(serializers.ModelSerializer):
         fields = [
             'rep_id', 'rep_matter', 'rep_location', 'rep_add_details',
             'rep_violator', 'rep_anonymous', 'rep_contact', 'rep_status', 
-            'rep_date', 'rep_date_resolved', 'rep_complainant', 'waste_report_file', 
-            'rep_cancel_reason', 'waste_report_rslv_file', 'sitio_name', 'sitio_id', 
-            'staff_id', 'rp_id'
+            'rep_date', 'rep_date_resolved', 'rep_date_cancelled', 'rep_complainant', 
+            'rep_cancel_reason', 'waste_report_file', 'waste_report_rslv_file', 'sitio_name',
+            'sitio_id', 'staff_id', 'rp_id'
         ]
     
     def get_rep_complainant(self, obj):

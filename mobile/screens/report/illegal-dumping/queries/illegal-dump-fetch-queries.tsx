@@ -33,9 +33,11 @@ export type WasteReport = {
     rep_complainant: string;
     rep_contact: string;
     rep_status: string;
+    rep_cancel_reason: string;
     rep_date: string;
     rep_anonymous: boolean;
     rep_date_resolved: string;
+    rep_date_cancelled: string;
     sitio_id: number;
     sitio_name: string;
     waste_report_file: {

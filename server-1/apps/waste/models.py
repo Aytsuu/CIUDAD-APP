@@ -30,19 +30,17 @@ class WasteCollectionStaff(models.Model):
 
 class WasteReport(models.Model):
     rep_id = models.BigAutoField(primary_key=True)
-    # rep_image = models.CharField(default="none", null=True, blank=True)
     rep_matter = models.CharField(default="none")
     rep_location = models.CharField(default="none")
     rep_add_details = models.CharField(max_length=200, null=True)
     rep_violator = models.CharField(default="none")
-    # rep_complainant = models.CharField(default="none")
     rep_anonymous = models.BooleanField(default=False)
     rep_contact = models.CharField(default="none")
     rep_status = models.CharField(max_length=100, default="pending")
     rep_cancel_reason =  models.CharField(max_length=200, null=True)
     rep_date = models.DateTimeField(null=True)
     rep_date_resolved = models.DateTimeField(null=True)
-    # rep_resolved_img = models.CharField(null=True, blank=True)
+    rep_date_cancelled = models.DateTimeField(null=True)
 
     sitio_id = models.ForeignKey(
         'profiling.Sitio', 
