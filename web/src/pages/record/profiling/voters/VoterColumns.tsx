@@ -7,27 +7,19 @@ export const voterColumns: ColumnDef<voterRecord>[] = [
     header: "Voter ID"
   },
   {
-    accessorKey: "lname",
+    accessorKey: "voter_name",
     header: "Last Name"
   },
   {
-    accessorKey: "fname",
+    accessorKey: "voter_address",
     header: "First Name"
   },
   {
-    accessorKey: "mname",
+    accessorKey: "voter_category",
     header: "Middle Name"
   },
   {
-    accessorKey: "suffix",
+    accessorKey: "voter_precinct",
     header: "Suffix"
-  },
-  {
-    accessorKey: "sex",
-    header: "Sex"
-  },
-  {
-    accessorKey: "dob",
-    header: "Date of Birth"
   },
 ]
