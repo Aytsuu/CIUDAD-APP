@@ -54,15 +54,15 @@ export default function IllegalDumpResubmitForm() {
   // Parse the waste_report_file array
   const parsedFiles = waste_report_file ? JSON.parse(waste_report_file as string) : [];
 
-
-    const [selectedImages, setSelectedImages] = useState<MediaItem[]>(
-        parsedFiles.map((file: any) => ({
-        id: `existing-${file.wrf_id}`,
-        name: file.wrf_name || `file-${file.wrf_id}`,
-        type: 'image/jpeg',
-        uri: file.wrf_url
-        }))
-    );
+  const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
+    // const [selectedImages, setSelectedImages] = useState<MediaItem[]>(
+    //     parsedFiles.map((file: any) => ({
+    //     id: `existing-${file.wrf_id}`,
+    //     name: file.wrf_name || `file-${file.wrf_id}`,
+    //     type: 'image/jpeg',
+    //     uri: file.wrf_url
+    //     }))
+    // );
 
   const repMatterOptions = [
     {label: "Littering, Illegal dumping, Illegal disposal of garbage", value: "Littering, Illegal dumping, Illegal disposal of garbage"},
@@ -107,7 +107,11 @@ export default function IllegalDumpResubmitForm() {
       files      
     }
 
-    addReport(allValues)
+    addReport(allValues, {
+      onSuccess: () => {
+        router.push('/(waste)/illegal-dumping/resident/illegal-dump-res-main');
+      }
+    });
   };
 
 
@@ -128,7 +132,7 @@ export default function IllegalDumpResubmitForm() {
       footer={
         <View className="w-full">
             <TouchableOpacity
-                className="bg-primaryBlue py-3 rounded-md w-full items-center"
+                className="bg-primaryBlue py-4 rounded-md w-full items-center"
                 onPress={handleSubmit(onSubmit)}
             >
                 <Text className="text-white text-base font-semibold">Submit</Text>

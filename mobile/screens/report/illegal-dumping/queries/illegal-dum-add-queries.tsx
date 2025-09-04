@@ -23,7 +23,7 @@ export const useAddWasteReport = (onSuccess?: () => void) => {
             mutationFn: (values: ExtendedIllegalDump) => 
             addWasteReport(values),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['wasteResReport'] });
+                queryClient.invalidateQueries({ queryKey: ['wastereport'] });
 
                 toast.success('Report Submitted!')
                 onSuccess?.()

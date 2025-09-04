@@ -139,7 +139,7 @@ export default function WasteIllegalDumpingResDetails() {
   return (
     <>
       <_ScreenLayout
-        headerBetweenAction={<Text className="text-[18px] font-semibold">Report No. {rep_id}</Text>}
+        headerBetweenAction=""
         showExitButton={true}
         showBackButton={false}
         customRightAction={
@@ -292,17 +292,17 @@ export default function WasteIllegalDumpingResDetails() {
                   </View>
                   <View className="w-[48%]">
                     <Text className="font-semibold text-gray-600 mb-1">Report Status</Text>
-                        <View className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusStyle()}`}>
-                            <Text>
-                                {rep_status === "resolved" ? (
-                                    <Text className="text-green-600 text-sm font-medium ml-1">Resolved</Text>
-                                ) : rep_status === "cancelled" ? (
-                                    <Text className="text-red-600 text-sm font-medium">Cancelled</Text>
-                                ) : (
-                                    <Text className="text-primaryBlue text-sm font-medium">In progress</Text>                                  
-                                )}
-                            </Text>
-                        </View>      
+                    <View className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusStyle()}`}>
+                        <Text>
+                            {rep_status === "resolved" ? (
+                                <Text className="text-green-600 text-sm font-medium ml-1">Resolved</Text>
+                            ) : rep_status === "cancelled" ? (
+                                <Text className="text-red-600 text-sm font-medium">Cancelled</Text>
+                            ) : (
+                                <Text className="text-primaryBlue text-sm font-medium">In progress</Text>                                  
+                            )}
+                        </Text>
+                    </View>      
                   </View>
                 </View>
 
