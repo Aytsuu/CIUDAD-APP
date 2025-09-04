@@ -155,11 +155,6 @@ const items: BaseMenuItem[] = [
     url: "/waste-personnel",
   },
   {
-    title: "Activity Log",
-    url: "/record/activity-log",
-
-  },
-  {
     title: "Announcement",
     url: "/announcement",
   },
@@ -226,15 +221,6 @@ const items: BaseMenuItem[] = [
           { title: "Processing Queue", url: "/processingQueue" },
         ],
       },
-    ],
-  },
-  {
-    title: "Clerk",
-    url: "/",
-    items: [
-      { title: "Certifications", url: "record/clearances/certification" },
-      { title: "Business Permits", url: "record/clearances/businesspermit" },
-      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
     ],
   },
   {

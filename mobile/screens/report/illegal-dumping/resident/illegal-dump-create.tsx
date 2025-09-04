@@ -71,7 +71,11 @@ export default function IllegalDumpCreateForm() {
       files      
     }
 
-    addReport(allValues)
+    addReport(allValues, {
+      onSuccess: () => {
+        router.push('/(waste)/illegal-dumping/resident/illegal-dump-res-main');
+      }
+    });
   };
 
 
@@ -92,7 +96,7 @@ export default function IllegalDumpCreateForm() {
       footer={
         <View className="w-full">
             <TouchableOpacity
-                className="bg-primaryBlue py-3 rounded-md w-full items-center"
+                className="bg-primaryBlue py-4 rounded-md w-full items-center"
                 onPress={handleSubmit(onSubmit)}
             >
                 <Text className="text-white text-base font-semibold">Submit</Text>

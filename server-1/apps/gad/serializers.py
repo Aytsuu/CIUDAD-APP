@@ -353,7 +353,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
                     'gpr_header_img': f"Upload failed: {str(e)}"
                 })
 
-        return instance
+        return instance 
 
     def update(self, instance, validated_data):
         header_img_data = None

@@ -28,6 +28,7 @@ export default function WasteIllegalDumpingDetails() {
     rep_status,
     rep_date,
     rep_date_resolved,
+    rep_date_cancelled,
     sitio_name,
     waste_report_file,
     waste_report_rslv_file
@@ -51,9 +52,11 @@ export default function WasteIllegalDumpingDetails() {
   const getStatusStyle = () => {
     switch (String(rep_status)?.toLowerCase()) {
       case 'pending':
-        return 'bg-orange-100 text-orange-800 border-orange-500';
+        return 'bg-blue-100 text-primaryBlue border-primaryBlue';
       case 'resolved':
         return 'bg-green-100 text-green-800 border-green-500';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-500';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-500';
     }
@@ -135,7 +138,7 @@ export default function WasteIllegalDumpingDetails() {
             }`}
           >
             <Text className={`text-md ${
-              isResolved ? "text-gray-500" : "text-green-800"
+              isResolved || isCancelled  ? "text-gray-500" : "text-green-800"
             }`}>
               ✓ Mark as Resolved
             </Text>
@@ -194,8 +197,8 @@ export default function WasteIllegalDumpingDetails() {
 
                 <View className="flex-row justify-between mb-4">
                   <View className="w-[48%]">
-                    <Text className="font-semibold text-gray-600 mb-1">Contact Number</Text>
-                    <Text>{rep_contact}</Text>
+                    <Text className="font-semibold text-gray-600 mb-1">Complainant</Text>
+                    <Text>{rep_complainant || "Unknown"}</Text>
                   </View>
                   <View className="w-[48%]">
                     <Text className="font-semibold text-gray-600 mb-1">Violator</Text>
@@ -205,23 +208,43 @@ export default function WasteIllegalDumpingDetails() {
 
                 <View className="flex-row justify-between mb-4">
                   <View className="w-[48%]">
-                    <Text className="font-semibold text-gray-600 mb-1">Date & Time</Text>
-                    <Text>{formatDate(rep_date as string)}</Text>
-                  </View>
+                    <Text className="font-semibold text-gray-600 mb-1">Contact Number</Text>
+                    <Text>{rep_contact}</Text>
+                  </View>                  
                   <View className="w-[48%]">
                     <Text className="font-semibold text-gray-600 mb-1">Report Status</Text>
                     <View className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusStyle()}`}>
-                      <Text>{rep_status || "No status provided"}</Text>
-                    </View>      
+                        <Text>
+                            {rep_status === "resolved" ? (
+                                <Text className="text-green-600 text-sm font-medium ml-1">Resolved</Text>
+                            ) : rep_status === "cancelled" ? (
+                                <Text className="text-red-600 text-sm font-medium">Cancelled</Text>
+                            ) : (
+                                <Text className="text-primaryBlue text-sm font-medium">In progress</Text>                                  
+                            )}
+                        </Text>
+                    </View>       
                   </View>
                 </View>
 
-                {rep_date_resolved && (
-                  <View className="mb-4">
-                    <Text className="font-semibold text-gray-600 mb-1">Date & Time Resolved</Text>
-                    <Text>{formatDate(rep_date_resolved as string)}</Text>              
+                <View className="flex-row justify-between mb-4">
+                  <View className="w-[48%]">
+                    <Text className="font-semibold text-gray-600 mb-1">Date & Time</Text>
+                    <Text>{formatDate(rep_date as string)}</Text>
                   </View>
-                )}
+                  {rep_date_resolved ? (
+                    <View className="w-[48%]">
+                      <Text className="font-semibold text-gray-600 mb-1">Date & Time Resolved</Text>
+                      <Text>{formatDate(rep_date_resolved as string)}</Text>
+                    </View>
+                  ) : rep_date_cancelled ? (
+                    <View className="w-[48%]">
+                      <Text className="font-semibold text-gray-600 mb-1">Date & Time Cancelled</Text>
+                      <Text>{formatDate(rep_date_cancelled as string)}</Text>
+                    </View>
+                  ) : ""}                 
+                </View>                
+
 
                 <View className="mb-4">
                   <Text className="font-semibold text-gray-600 mb-1">Report Details</Text>
