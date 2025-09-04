@@ -4,6 +4,9 @@ import { X, Search, Info, ChevronRight } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
+import { RootState } from "@/redux";
+import { useSelector, UseSelector } from "react-redux";
+import { useGetGarbageAcceptedResident } from "../queries/garbagePickupFetchQueries";
 
 // Mock data interface
 interface GarbageRequest {
@@ -21,38 +24,10 @@ interface GarbageRequest {
 
 export default function ResidentAccepted() {
   const [searchQuery, setSearchQuery] = useState("");
-  
-  // Mock data - replace with your actual data source
-  const [requestsData, setRequestsData] = useState<GarbageRequest[]>([
-    {
-      garb_id: "1",
-      garb_location: "Main Street",
-      garb_waste_type: "General Waste",
-      garb_created_at: "2023-10-10T08:30:00Z",
-      dec_date: "2023-10-11T10:15:00Z",
-      sitio_name: "Sitio 1",
-      assignment_info: {
-        driver: "John Driver",
-        collectors: ["Alice", "Bob", "Charlie"]
-      }
-    },
-    {
-      garb_id: "2",
-      garb_location: "Park Avenue",
-      garb_waste_type: "Recyclables",
-      garb_created_at: "2023-10-11T09:15:00Z",
-      dec_date: "2023-10-12T14:20:00Z",
-      sitio_name: "Sitio 2",
-      assignment_info: {
-        driver: "Jane Driver",
-        collectors: ["David", "Eva"]
-      }
-    }
-  ]);
+  const {user, isLoading: isUserLoading} = useSelector((state: RootState) => state.auth)
+  const {data: acceptedRequest = [], isLoading: isDataLoading} = useGetGarbageAcceptedResident(user.resident.rp_id)
 
-  const isLoading = false; // Replace with actual loading state if needed
-
-  const filteredData = requestsData.filter((request) => {
+  const filteredData = acceptedRequest.filter((request) => {
     const searchString = `
       ${request.garb_location} 
       ${request.garb_waste_type}
@@ -76,7 +51,7 @@ export default function ResidentAccepted() {
       </Text>
 
       {/* Search Bar */}
-      {!isLoading && (
+      {!isDataLoading && (
         <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3 mb-4 mt-2">
           <Search size={18} color="#6b7280" />
           <Input
@@ -90,7 +65,7 @@ export default function ResidentAccepted() {
       )}
 
       {/* List */}
-      {isLoading ? (
+      {isDataLoading ? (
         <View className="justify-center items-center py-8">
           <Text className="text-center text-gray-500">Loading accepted requests...</Text>
         </View>
@@ -99,7 +74,7 @@ export default function ResidentAccepted() {
           <View className="bg-blue-50 p-6 rounded-lg items-center">
             <Info size={24} color="#3b82f6" className="mb-2" />
             <Text className="text-center text-gray-600">
-              {requestsData.length === 0 
+              {acceptedRequest.length === 0 
                 ? "No accepted requests available" 
                 : "No matching requests found"}
             </Text>

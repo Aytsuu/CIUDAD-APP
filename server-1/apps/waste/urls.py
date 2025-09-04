@@ -70,6 +70,9 @@ urlpatterns = [
     # Resident
     path('garbage-pickup-pending/<str:rp_id>/', GarbagePickupRequestPendingByRPView.as_view(), name = 'garbage-pickup-pending-resident'),
     path('garbage-pickup-rejected/<str:rp_id>/', GarbagePickupRequestRejectedByRPView.as_view(), name="garbage-pickup-rejected"),
+    path('garbage-pickup-accepted/<str:rp_id>/', GarbagePickupRequestAcceptedByRPView.as_view(), name="garbage-pickup-accepted"),
+    path('garbage-pickup-completed/<str:rp_id>/', GarbagePickupRequestCompletedByRPView.as_view(), name="garbage-pickup-completed"),
+
 
     # Driver
     path('driver-garbage-pickup-tasks/', GarbagePickupRequestsByDriverView.as_view(), name='garbage-pickup-tasks'),

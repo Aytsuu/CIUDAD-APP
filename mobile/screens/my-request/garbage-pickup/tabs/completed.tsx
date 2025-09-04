@@ -4,50 +4,16 @@ import { Search, Info, ChevronRight } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
-
-// Mock data interface
-interface GarbageRequest {
-  garb_id: string;
-  garb_location: string;
-  garb_waste_type: string;
-  garb_created_at: string;
-  sitio_name?: string;
-  conf_resident_conf?: boolean;
-  conf_resident_conf_date?: string;
-  conf_staff_conf?: boolean;
-  conf_staff_conf_date?: string;
-}
+import { useGetGarbageCompleteResident } from "../queries/garbagePickupFetchQueries";
+import { RootState } from "@/redux";
+import { useSelector } from "react-redux";
 
 export default function ResidentCompleted() {
   const [searchQuery, setSearchQuery] = useState("");
-  
-  const [requestsData, setRequestsData] = useState<GarbageRequest[]>([
-    {
-      garb_id: "1",
-      garb_location: "Main Street",
-      garb_waste_type: "General Waste",
-      garb_created_at: "2023-10-10T08:30:00Z",
-      sitio_name: "Sitio 1",
-      conf_resident_conf: true,
-      conf_resident_conf_date: "2023-10-15T14:20:00Z",
-      conf_staff_conf: true,
-      conf_staff_conf_date: "2023-10-15T14:25:00Z"
-    },
-    {
-      garb_id: "2",
-      garb_location: "Park Avenue",
-      garb_waste_type: "Recyclables",
-      garb_created_at: "2023-10-11T09:15:00Z",
-      sitio_name: "Sitio 2",
-      conf_resident_conf: true,
-      conf_resident_conf_date: "2023-10-16T10:30:00Z",
-      conf_staff_conf: false
-    }
-  ]);
+  const {user, isLoading: isUserLoading} = useSelector((state: RootState) => state.auth)
+  const {data: completedRequests = [], isLoading: isDataLoading} = useGetGarbageCompleteResident(user.resident.rp_id)
 
-  const isLoading = false; // Replace with actual loading state if needed
-
-  const filteredData = requestsData.filter((request) => {
+  const filteredData = completedRequests.filter((request) => {
     const searchString = `
       ${request.garb_location} 
       ${request.garb_waste_type}
@@ -69,7 +35,7 @@ export default function ResidentCompleted() {
       </Text>
 
       {/* Search Bar */}
-      {!isLoading && (
+      {!isDataLoading && (
         <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3 mb-4 mt-2">
           <Search size={18} color="#6b7280" />
           <Input
@@ -83,7 +49,7 @@ export default function ResidentCompleted() {
       )}
 
       {/* List */}
-      {isLoading ? (
+      {isDataLoading ? (
         <View className="justify-center items-center py-8">
           <Text className="text-center text-gray-500">Loading completed requests...</Text>
         </View>
@@ -92,7 +58,7 @@ export default function ResidentCompleted() {
           <View className="bg-blue-50 p-6 rounded-lg items-center">
             <Info size={24} color="#3b82f6" className="mb-2" />
             <Text className="text-center text-gray-600">
-              {requestsData.length === 0 
+              {completedRequests.length === 0 
                 ? "No completed requests available" 
                 : "No matching completed requests found"}
             </Text>

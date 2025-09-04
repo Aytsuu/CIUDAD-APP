@@ -10,8 +10,7 @@ class DevelopmentPlan(models.Model):
     dev_res_person = models.JSONField(default=list, db_column='dev_res_person')
     dev_indicator = models.JSONField(default=list, db_column='dev_indicator')
     dev_gad_items = models.JSONField(default=list, db_column='dev_budget_items')
-    gpr_id = models.ForeignKey( 'gad.ProjectProposal', on_delete=models.SET_NULL,  null=True,  blank=True, db_column='gpr_id')
-    
+   
     staff = models.ForeignKey(
         'administration.Staff',
         on_delete=models.SET_NULL,

@@ -19,6 +19,6 @@ import WasteIllegalDumping from "@/screens/report/illegal-dumping/staff/illegal-
 // }
 
 export default () => {
-    return <WasteIllegalDumpingResMain/>
+    return <App/>
 }
  

@@ -658,5 +658,25 @@ class GarbagePickupRequestRejectedByRPView(generics.ListAPIView):
         rp_id = self.kwargs.get('rp_id')
         return Garbage_Pickup_Request.objects.filter(
             rp_id=rp_id, 
-            garb_req_status='rejected'  # Filter for rejected status
+            garb_req_status='rejected'  
+        )
+    
+class GarbagePickupRequestAcceptedByRPView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestAcceptedSerializer
+    
+    def get_queryset(self):
+        rp_id = self.kwargs.get('rp_id')
+        return Garbage_Pickup_Request.objects.filter(
+            rp_id=rp_id, 
+            garb_req_status='accepted' 
+        )
+
+class GarbagePickupRequestCompletedByRPView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestCompletedSerializer
+    
+    def get_queryset(self):
+        rp_id = self.kwargs.get('rp_id')
+        return Garbage_Pickup_Request.objects.filter(
+            rp_id=rp_id, 
+            garb_req_status='completed'  
         )
