@@ -162,227 +162,246 @@ export const createHistoricalVitalSignsColumns =
     },
   ];
 
-// Today's Entry Vital Signs Columns (Editable)
-export const createTodaysVitalSignsColumns = (
-  editingRowIndex: number | null,
-  editVitalSignFormControl: Control<VitalSignType>,
-  editVitalSignFormHandleSubmit: UseFormHandleSubmit<VitalSignType>,
-  onUpdateVitalSign: (index: number, values: VitalSignType) => void,
-  onStartEdit: (index: number, data: VitalSignType) => void,
-  onCancelEdit: () => void,
-  editVitalSignFormReset: (data: VitalSignType) => void
-): ColumnDef<VitalSignType>[] => [
-  {
-    accessorKey: "date",
-    header: "Date",
-    cell: ({ row }) => {
-      const isEditing = editingRowIndex === row.index;
-      if (isEditing) {
-        return (
-          <FormDateTimeInput
-            control={editVitalSignFormControl}
-            name="date"
-            label=""
-            type="date"
-            readOnly
-          />
-        );
-      }
-      return row.original.date;
+  export const createTodaysVitalSignsColumns = (
+    editingRowIndex: number | null,
+    editVitalSignFormControl: Control<VitalSignType>,
+    editVitalSignFormHandleSubmit: UseFormHandleSubmit<VitalSignType>,
+    onUpdateVitalSign: (index: number, values: VitalSignType) => void,
+    onStartEdit: (index: number, data: VitalSignType) => void,
+    onCancelEdit: () => void,
+    editVitalSignFormReset: (data: VitalSignType) => void
+  ): ColumnDef<VitalSignType>[] => [
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => {
+        const isEditing = editingRowIndex === row.index;
+        if (isEditing) {
+          return (
+            <span>{row.original.date || "N/A"}</span>
+
+          );
+        }
+        return row.original.date;
+      },
     },
-  },
-  {
-    accessorKey: "age",
-    header: "Age",
-    cell: ({ row }) => {
-      const isEditing = editingRowIndex === row.index;
-      if (isEditing) {
-        return (
-          <FormInput
-            control={editVitalSignFormControl}
-            name="age"
-            label=""
-            type="text"
-            placeholder="Age"
-            readOnly
-          />
-        );
-      }
-      return row.original.age;
+    {
+      accessorKey: "age",
+      header: "Age",
+      cell: ({ row }) => {
+        const isEditing = editingRowIndex === row.index;
+        if (isEditing) {
+            return <span>{row.original.age || "N/A"}</span>;
+        }
+        return row.original.age;
+      },
     },
-  },
-  {
-    accessorKey: "ht",
-    header: "Height (cm)",
-    cell: ({ row }) => {
-      const isEditing = editingRowIndex === row.index;
-      if (isEditing) {
-        return (
-          <FormInput
-            control={editVitalSignFormControl}
-            name="ht"
-            label=""
-            type="number"
-            placeholder="Height"
-            className="w-full"
-          />
-        );
-      }
-      return row.original.ht || "-";
-    },
-  },
-  {
-    accessorKey: "wt",
-    header: "Weight (kg)",
-    cell: ({ row }) => {
-      const isEditing = editingRowIndex === row.index;
-      if (isEditing) {
-        return (
-          <FormInput
-            control={editVitalSignFormControl}
-            name="wt"
-            label=""
-            type="number"
-            placeholder="Weight"
-            className="w-full"
-          />
-        );
-      }
-      return (
-        <div className="flex justify-center">{row.original.wt || "-"}</div>
-      );
-    },
-  },
-  {
-    accessorKey: "temp",
-    header: "Temp (°C)",
-    cell: ({ row }) => {
-      const isEditing = editingRowIndex === row.index;
-      if (isEditing) {
-        return (
-          <FormInput
-            control={editVitalSignFormControl}
-            name="temp"
-            label=""
-            type="number"
-            placeholder="Temperature"
-            className="w-full"
-          />
-        );
-      }
-      return (
-        <div className="flex justify-center">{row.original.temp || "-"}</div>
-      );
-    },
-  },
-  {
-    accessorKey: "notes",
-    header: "Notes",
-    cell: ({ row }) => {
-      const isEditing = editingRowIndex === row.index;
-      if (isEditing) {
-        return (
-          <div className="min-w-[250px] space-y-2">
-            <FormTextArea
+    {
+      accessorKey: "ht",
+      header: "Height (cm)",
+      cell: ({ row }) => {
+        const isEditing = editingRowIndex === row.index;
+        if (isEditing) {
+          return (
+            <FormInput
               control={editVitalSignFormControl}
-              name="notes"
-              label="Notes"
-              placeholder="Enter notes"
-              rows={3}
-            />
-            <FormTextArea
-              control={editVitalSignFormControl}
-              name="follov_description"
-              label="Follow-up reason"
-              placeholder="Follow-up reason"
+              name="ht"
+              label=""
+              type="number"
+              placeholder="Height"
               className="w-full"
-              rows={3}
-              readOnly={!!row.original.followv_id}
             />
-            <FormDateTimeInput
+          );
+        }
+        return row.original.ht || "-";
+      },
+    },
+    {
+      accessorKey: "wt",
+      header: "Weight (kg)",
+      cell: ({ row }) => {
+        const isEditing = editingRowIndex === row.index;
+        if (isEditing) {
+          return (
+            <FormInput
               control={editVitalSignFormControl}
-              name="followUpVisit"
-              label="Follow-up date"
-              type="date"
-              readOnly={!!row.original.followv_id}
+              name="wt"
+              label=""
+              type="number"
+              placeholder="Weight"
+              className="w-full"
             />
-          </div>
-        );
-      }
-      const displayNotes = row.original.notes || "No notes for this entry.";
-      return (
-        <div className="flex justify-center ">
-          <div className="max-w-[200px] text-left">
-            <p className="whitespace-pre-wrap">{displayNotes}</p>
-            {row.original.followUpVisit && (
-              <p className="mt-1 flex flex-col  text-xs text-gray-500">
-                {row.original.follov_description && (
-                  <span>Follow up reason {row.original.follov_description}</span>
-                )}
-                <span>
-                  Schedule on{row.original.followUpVisit} (
-                  {row.original.followv_status || "N/A"})
-                </span>
-              </p>
-            )}
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "action",
-    header: "Action",
-    cell: ({ row }) => {
-      const isEditing = editingRowIndex === row.index;
-      if (isEditing) {
+          );
+        }
         return (
-          <div className="flex gap-1">
-            <Button
-              size="sm"
-              onClick={editVitalSignFormHandleSubmit((data) => {
-                onUpdateVitalSign(row.index, data);
-              })}
-              className="bg-green-600 px-2 py-1 text-xs hover:bg-green-700"
-            >
-              Save
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onCancelEdit}
-              className="px-2 py-1 text-xs"
-            >
-              Cancel
-            </Button>
+          <div className="flex justify-center">{row.original.wt || "-"}</div>
+        );
+      },
+    },
+    {
+      accessorKey: "temp",
+      header: "Temp (°C)",
+      cell: ({ row }) => {
+        const isEditing = editingRowIndex === row.index;
+        if (isEditing) {
+          return (
+            <FormInput
+              control={editVitalSignFormControl}
+              name="temp"
+              label=""
+              type="number"
+              placeholder="Temperature"
+              className="w-[100px]"
+            />
+          );
+        }
+        return (
+          <div className="flex justify-center">{row.original.temp || "-"}</div>
+        );
+      },
+    },
+    // ADD THIS NEW COLUMN FOR REMARKS
+    {
+      accessorKey: "remarks",
+      header: "Remarks",
+      cell: ({ row }) => {
+        const isEditing = editingRowIndex === row.index;
+        if (isEditing) {
+          return (
+            <FormTextArea
+              control={editVitalSignFormControl}
+              name="remarks"
+              label="Remarks"
+              placeholder="Enter remarks"
+              rows={2}
+              className="min-w-[200px]"
+            />
+          );
+        }
+        const displayRemarks = row.original.remarks || "No remarks";
+        return (
+          <div className="flex justify-center">
+            <div className="max-w-[200px] text-left">
+              <p className="whitespace-pre-wrap text-sm">{displayRemarks}</p>
+            </div>
           </div>
         );
-      }
-      return (
-        <Button
-          size="sm"
-          onClick={() => {
-            onStartEdit(row.index, row.original);
-            editVitalSignFormReset({
-              date: row.original.date,
-              age: row.original.age,
-              wt: row.original.wt,
-              ht: row.original.ht,
-              temp: row.original.temp,
-              follov_description: row.original.follov_description || "",
-              followUpVisit: row.original.followUpVisit || "",
-              notes: row.original.notes || "",
-            });
-          }}
-          className="px-2 py-1"
-          title="Edit vital sign"
-        >
-          Update
-        </Button>
-      );
+      },
     },
-  },
-];
+    {
+      accessorKey: "notes",
+      header: "Notes",
+      cell: ({ row }) => {
+        const isEditing = editingRowIndex === row.index;
+        if (isEditing) {
+          return (
+            <div className="min-w-[200px] space-y-2">
+              <FormTextArea
+                control={editVitalSignFormControl}
+                name="notes"
+                label="Notes"
+                placeholder="Enter notes"
+                rows={3}
+              />
+              <FormTextArea
+                control={editVitalSignFormControl}
+                name="follov_description"
+                label="Follow-up reason"
+                placeholder="Follow-up reason"
+                className="w-full"
+                rows={3}
+                readOnly={!!row.original.followv_id}
+              />
+              <FormDateTimeInput
+                control={editVitalSignFormControl}
+                name="followUpVisit"
+                label="Follow-up date"
+                type="date"
+                readOnly={!!row.original.followv_id}
+              />
+            </div>
+          );
+        }
+        const displayNotes = row.original.notes || "No notes for this entry.";
+        return (
+          <div className="flex justify-center">
+            <div className="max-w-[200px] text-left">
+              <p className="whitespace-pre-wrap">{displayNotes}</p>
+              {row.original.followUpVisit && (
+                <p className="mt-1 flex flex-col text-xs text-gray-500">
+                  {row.original.follov_description && (
+                    <span>Follow up reason {row.original.follov_description}</span>
+                  )}
+                  <span>
+                    Schedule on {row.original.followUpVisit} (
+                    {row.original.followv_status || "N/A"})
+                  </span>
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "action",
+      header: "Action",
+      cell: ({ row }) => {
+        const isEditing = editingRowIndex === row.index;
+        if (isEditing) {
+          return (
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                onClick={editVitalSignFormHandleSubmit((data) => {
+                  onUpdateVitalSign(row.index, data);
+                })}
+                className="bg-green-600 px-2 py-1 text-xs hover:bg-green-700"
+              >
+                Save
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onCancelEdit}
+                className="px-2 py-1 text-xs"
+              >
+                Cancel
+              </Button>
+            </div>
+          );
+        }
+        return (
+          <Button
+            size="sm"
+            onClick={() => {
+              onStartEdit(row.index, row.original);
+              editVitalSignFormReset({
+                date: row.original.date,
+                age: row.original.age,
+                wt: row.original.wt,
+                ht: row.original.ht,
+                temp: row.original.temp,
+                remarks: row.original.remarks || "", // ADD REMARKS HERE
+                follov_description: row.original.follov_description || "",
+                followUpVisit: row.original.followUpVisit || "",
+                notes: row.original.notes || "",
+                followv_status: row.original.followv_status || "",
+                followv_id: row.original.followv_id || "",
+                chvital_id: row.original.chvital_id || "",
+                is_opt: row.original.is_opt || false,
+              });
+            }}
+            className="px-2 py-1"
+            title="Edit vital sign"
+          >
+            Update
+          </Button>
+        );
+      },
+    },
+  ];
+
 
 // Historical Medicine Columns
 export const createHistoricalMedicineColumns = (): ColumnDef<Medicine>[] => [

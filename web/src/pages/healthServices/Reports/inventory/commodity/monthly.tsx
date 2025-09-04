@@ -10,7 +10,7 @@ import { toast } from "sonner"
 import { useLoading } from "@/context/LoadingContext"
 import type { CommodityMonthItem } from "./types"
 import { useCommodityMonths } from "./queries/fetch"
-import { MonthInfoCard } from "../../month-folder-comonent"
+import { MonthInfoCard } from "../../month-folder-component"
 
 export default function InventoryMonthlyCommodityRecords() {
   const { showLoading, hideLoading } = useLoading()

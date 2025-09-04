@@ -154,9 +154,16 @@ class GetMedRecordCountView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
+# MEDICINE REQUEST WEB
+class MedicineRequestPendingTableView(generics.ListCreateAPIView):
+    serializer_class = MedicineRequestSerializer
+
+    def get_queryset(self):
+        return MedicineRequest.objects.filter(status='pending')
+    
 
 # MEDICINE REQUEST WEB
-class MedicineRequestView(generics.ListCreateAPIView):
+class MedicineRequestProcessingView(generics.ListCreateAPIView):
     serializer_class = MedicineRequestSerializer
 
     def get_queryset(self):

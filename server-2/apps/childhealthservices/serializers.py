@@ -16,6 +16,7 @@ class ChildHealthrecordSerializerBase(serializers.ModelSerializer):
     class Meta:
         model = ChildHealthrecord
         fields = '__all__'
+        
 class ChildHealthrecordSerializer(serializers.ModelSerializer):
     patrec_details = PatientRecordSerializer(source='patrec', read_only=True)
     class Meta:

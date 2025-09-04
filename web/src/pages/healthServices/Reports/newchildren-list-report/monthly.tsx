@@ -1,35 +1,36 @@
+// MonthlyChildrenRecords.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, ChevronLeft, Folder } from "lucide-react";
+import { Loader2, Search, ChevronLeft, Folder, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
-import { useMedicineMonthly } from "./queries/fetchQueries";
-import { MonthInfoCard } from "../month-folder-component";
+import { useMonthlyChildrenCount } from "./queries/fetchQueries";
 import { Card } from "@/components/ui/card";
+import { MonthInfoCard } from "../month-folder-component";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
-export default function MonthlyMedicineRecords() {
+export default function MonthlyNewChildrenRecords() {
   const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [yearFilter] = useState<string>("all");
+  const [yearFilter, setYearFilter] = useState<string>("all");
   const navigate = useNavigate();
 
   const {
     data: apiResponse,
     isLoading,
     error,
-  } = useMedicineMonthly(yearFilter);
+  } = useMonthlyChildrenCount(yearFilter);
 
   useEffect(() => {
     if (error) {
-      toast.error("Failed to fetch report");
-      toast("Retrying to fetch report...");
+      toast.error("Failed to fetch children records");
+      toast("Retrying to fetch records...");
       setTimeout(() => {
         window.location.reload();
       }, 2000);
@@ -48,7 +49,7 @@ export default function MonthlyMedicineRecords() {
   const totalMonths = monthlyData.length;
 
   // Filter data based on search query
-  const filteredData = monthlyData.filter((monthData) => {
+  const filteredData = monthlyData.filter((monthData:any) => {
     const monthName = new Date(monthData.month + "-01").toLocaleString(
       "default",
       {
@@ -71,16 +72,22 @@ export default function MonthlyMedicineRecords() {
     setCurrentPage(1);
   }, [searchQuery, yearFilter]);
 
+  
   return (
     <LayoutWithBack
-      title="Monthly Medicine Records"
-      description={`View medicine records grouped by month (${totalMonths} months found)`}>
+      title="Monthly New Children Records"
+      description={`View new children records grouped by month (${totalMonths} months found)`}>
       <div>
-        <Card className="">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center ">
-            <div className="flex-1"></div>
+        <Card className="p-6">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
+            <div className="flex items-center gap-2">
+              <UserPlus className="h-6 w-6 text-primary" />
+              <h2 className="text-xl font-semibold">New Children Records</h2>
+            </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 p-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+             
+
               {/* Search Input */}
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -112,6 +119,7 @@ export default function MonthlyMedicineRecords() {
                   <SelectContent>
                     <SelectItem value="10">10</SelectItem>
                     <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
                   </SelectContent>
                 </Select>
                 <span className="text-sm text-gray-600">entries per page</span>
@@ -131,12 +139,12 @@ export default function MonthlyMedicineRecords() {
               {isLoading ? (
                 <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500">
                   <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-                  <span>Loading medicine records...</span>
+                  <span>Loading children records...</span>
                 </div>
               ) : paginatedData.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {paginatedData.map((record) => {
-                    const monthName = new Date(record.month + "-01").toLocaleString(
+                  {paginatedData.map((record:any) => {
+                    const monthName = new Date(record.year_month + "-01").toLocaleString(
                       "default",
                       {
                         month: "long",
@@ -146,24 +154,22 @@ export default function MonthlyMedicineRecords() {
 
                     return (
                       <MonthInfoCard
-                        key={record.month}
+                        key={record.year_month}
                         monthItem={{
-                          month: record.month,
-                          total_items: record.record_count,
+                          month: record.year_month,
+                          total_items: record.count,
                           month_name: monthName,
                         }}
                         navigateTo={{
-                          path: "/monthly-medicine-details",
+                          path: "/monthly-new-children-records/details",
                           state: {
-                            month: record.month,
+                            month: record.year_month,
                             monthName: monthName,
-                            records: record.records,
-                            recordCount: record.record_count,
-                            monthlyrcplist_id: record.monthlyrcplist_id
+                            recordCount: record.count,
                           },
                         }}
-                        className="[&_.icon-gradient]:from-blue-400 [&_.icon-gradient]:to-blue-600 
-                                  [&_.item-count]:bg-blue-100 [&_.item-count]:text-blue-700 
+                        className="[&_.icon-gradient]:from-green-400 [&_.icon-gradient]:to-green-600 
+                                  [&_.item-count]:bg-green-100 [&_.item-count]:text-green-700 
                                   hover:scale-105 transition-transform duration-200"
                       />
                     );
@@ -174,7 +180,7 @@ export default function MonthlyMedicineRecords() {
                   <Folder className="w-16 h-16 text-gray-300 mb-4" />
                   <h3 className="text-lg font-medium mb-2">No months found</h3>
                   <p className="text-sm text-center text-gray-400">
-                    {searchQuery ? "Try adjusting your search criteria" : "No medicine records available"}
+                    {searchQuery ? "Try adjusting your search criteria" : "No children records available"}
                   </p>
                 </div>
               )}

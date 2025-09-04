@@ -46,6 +46,7 @@ export async function updateChildHealthRecord({
   let current_chhist_id = old_chhist;
   let chvital_id: string | undefined;
   let followv_id: string | null = null;
+  let bmi_id: string | undefined;
 
   if (
     submittedData.created_at &&
@@ -263,16 +264,33 @@ export async function updateChildHealthRecord({
     });
     newNotes.chnotes_id;
 
+
+    if (submittedData.vitalSigns?.length === 1) {
+      const vital = submittedData.vitalSigns[0];
+      console.log("Recorded OPT TRACKING")
+      if (!vital.chvital_id && vital.date && submittedData.nutritionalStatus) {
+     
     // Create body measurements
     const newBMI = await createBodyMeasurement({
       age: submittedData.childAge,
       height: submittedData.vitalSigns?.[0]?.ht || null,
-      weight: submittedData.vitalSigns?.[0]?.wt || null,
-      created_at: new Date().toISOString(),
+      weight: submittedData.vitalSigns?.[0]?.wt || null,    
+      wfa: submittedData.nutritionalStatus.wfa || "",
+      lhfa: submittedData.nutritionalStatus.lhfa || "",
+      wfl: submittedData.nutritionalStatus.wfh || "",
+      muac: submittedData.nutritionalStatus.muac?.toString() || "",
+      muac_status: submittedData.nutritionalStatus.muac_status || "",
+      edemaSeverity: submittedData.edemaSeverity || "none",
+      pat:submittedData.pat_id,
+      remarks:submittedData.vitalSigns?.[0]?.remarks || "",
+      is_opt:submittedData.vitalSigns?.[0]?.is_opt || false,
       patrec: patrec_id,
       staff: staff,
     });
-    const bmi_id = newBMI.bm_id;
+     bmi_id = newBMI.bm_id;
+      }
+
+    }
 
     const vitalsigns = await createVitalSigns({
       vital_temp: submittedData.vitalSigns?.[0]?.temp || "",
@@ -287,32 +305,33 @@ export async function updateChildHealthRecord({
       vital: vital_id,
       bm: bmi_id,
       chhist: current_chhist_id,
-      created_at: new Date().toISOString(),
+
     });
     chvital_id = newVitalSign.chvital_id;
 
     // Assuming submittedData.vitalSigns is an array of VitalSignType objects
     // and VitalSignType includes an optional 'id' or 'chvital_id' for existing records
-    if (submittedData.vitalSigns?.length === 1) {
-      const vital = submittedData.vitalSigns[0];
-      // Check if the vital sign is new (no id or chvital_id)
-      if (!vital.chvital_id && vital.date && submittedData.nutritionalStatus) {
-        await createNutritionalStatus({
-          wfa: submittedData.nutritionalStatus.wfa || "",
-          lhfa: submittedData.nutritionalStatus.lhfa || "",
-          wfl: submittedData.nutritionalStatus.wfh || "",
-          muac: submittedData.nutritionalStatus.muac?.toString() || "",
-          muac_status: submittedData.nutritionalStatus.muac_status || "",
-          created_at: vital.date, // Use the vital sign's date
-          chvital: Number(chvital_id), // Link to the vital sign's ID
-          edemaSeverity: submittedData.edemaSeverity || "none",
-          bm: bmi_id,
-          pat:submittedData.pat_id
+    // if (submittedData.vitalSigns?.length === 1 && submittedData.vitalSigns?.[0]?.is_opt == true) {
+    //   const vital = submittedData.vitalSigns[0];
+    //   console.log("Recorded OPT TRACKING")
+    //   if (!vital.chvital_id && vital.date && submittedData.nutritionalStatus) {
+    //     await createNutritionalStatus({
+    //       wfa: submittedData.nutritionalStatus.wfa || "",
+    //       lhfa: submittedData.nutritionalStatus.lhfa || "",
+    //       wfl: submittedData.nutritionalStatus.wfh || "",
+    //       muac: submittedData.nutritionalStatus.muac?.toString() || "",
+    //       muac_status: submittedData.nutritionalStatus.muac_status || "",
+    //       created_at: vital.date, // Use the vital sign's date
+    //       chvital: Number(chvital_id), // Link to the vital sign's ID
+    //       edemaSeverity: submittedData.edemaSeverity || "none",
+    //       bm: bmi_id,
+    //       pat:submittedData.pat_id,
+    //       remarks:submittedData.vitalSigns?.[0]?.remarks || "",
+    //       is_opt:submittedData.vitalSigns?.[0]?.is_opt || false,
 
-
-        });
-      }
-    }
+    //     });
+    //   }
+    // }
 
     // Handle breastfeeding dates
     if (submittedData.BFdates && submittedData.BFdates.length > 0) {

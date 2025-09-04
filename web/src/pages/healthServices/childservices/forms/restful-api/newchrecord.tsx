@@ -1,18 +1,5 @@
 // src/services/childHealthAPI.ts
-import {
-  createFollowUpVisit,
-  createBodyMeasurement,
-  createPatientDisability,
-  
-  createChildHealthNotes,
-  createChildVitalSign,
-  createNutritionalStatus,
-  createSupplementStatus,
-  createExclusiveBFCheck,
-  createChildHealthRecord,
-  createChildHealthHistory,
-  processMedicineRequest
-} from "./createAPI";
+import { createFollowUpVisit, createBodyMeasurement, createPatientDisability, createChildHealthNotes, createChildVitalSign, createNutritionalStatus, createSupplementStatus, createExclusiveBFCheck, createChildHealthRecord, createChildHealthHistory, processMedicineRequest } from "./createAPI";
 import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
 
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
@@ -32,10 +19,7 @@ export interface AddRecordResult {
   followv_id?: string | null;
 }
 
-export async function addChildHealthRecord({
-  submittedData,
-  staff,
-}: AddRecordArgs): Promise<AddRecordResult> {
+export async function addChildHealthRecord({ submittedData, staff }: AddRecordArgs): Promise<AddRecordResult> {
   // Validate required fields
   if (!submittedData.pat_id) {
     throw new Error("Patient ID is required");
@@ -47,21 +31,18 @@ export async function addChildHealthRecord({
   // Transient update handling
   if (submittedData.residenceType === "Transient") {
     try {
-      const transRes = await api2.patch(
-        `patientrecords/update-transient/${submittedData.trans_id}/`,
-        {
-          mother_fname: submittedData.motherFname || null,
-          mother_lname: submittedData.motherLname || null,
-          mother_mname: submittedData.motherMname || null,
-          mother_age: submittedData.motherAge || null,
-          mother_dob: submittedData.motherdob || null,
-          father_fname: submittedData.fatherFname || null,
-          father_lname: submittedData.fatherLname || null,
-          father_mname: submittedData.fatherMname || null,
-          father_age: submittedData.fatherAge || null,
-          father_dob: submittedData.fatherdob || null,
-        }
-      );
+      const transRes = await api2.patch(`patientrecords/update-transient/${submittedData.trans_id}/`, {
+        mother_fname: submittedData.motherFname || null,
+        mother_lname: submittedData.motherLname || null,
+        mother_mname: submittedData.motherMname || null,
+        mother_age: submittedData.motherAge || null,
+        mother_dob: submittedData.motherdob || null,
+        father_fname: submittedData.fatherFname || null,
+        father_lname: submittedData.fatherLname || null,
+        father_mname: submittedData.fatherMname || null,
+        father_age: submittedData.fatherAge || null,
+        father_dob: submittedData.fatherdob || null
+      });
       if (transRes.status !== 200) {
         throw new Error("Failed to update transient information");
       }
@@ -69,9 +50,7 @@ export async function addChildHealthRecord({
     } catch (transientError) {
       console.error("Transient update error:", transientError);
       if (transientError instanceof Error) {
-        throw new Error(
-          `Failed to update transient: ${transientError.message}`
-        );
+        throw new Error(`Failed to update transient: ${transientError.message}`);
       } else {
         throw new Error("Failed to update transient: Unknown error");
       }
@@ -79,11 +58,7 @@ export async function addChildHealthRecord({
   }
 
   // Create patient record
-  const newPatrec = await createPatientRecord(
-   { pat_id:submittedData.pat_id,
-    patrec_type:"Child Health Record",
-    staff:staff}
-  );
+  const newPatrec = await createPatientRecord({ pat_id: submittedData.pat_id, patrec_type: "Child Health Record", staff: staff });
 
   const patrec_id = newPatrec.patrec_id;
   const newChrec = await createChildHealthRecord({
@@ -98,7 +73,7 @@ export async function addChildHealthRecord({
     newborn_screening: submittedData.dateNewbornScreening || "",
     staff: staff,
     patrec: patrec_id,
-    landmarks: submittedData.landmarks || null,
+    landmarks: submittedData.landmarks || null
   });
 
   const chrec_id = newChrec.chrec_id;
@@ -109,7 +84,7 @@ export async function addChildHealthRecord({
     created_at: new Date().toISOString(),
     chrec: chrec_id,
     status: submittedData.status || "recorded",
-    tt_status: submittedData.tt_status,
+    tt_status: submittedData.tt_status
   });
   const current_chhist_id = newChhist.chhist_id;
 
@@ -119,12 +94,10 @@ export async function addChildHealthRecord({
     const newFollowUp = await createFollowUpVisit({
       followv_date: submittedData.vitalSigns[0].followUpVisit,
       created_at: new Date().toISOString(),
-      followv_description:
-        submittedData.vitalSigns[0].follov_description ||
-        "Follow Up for Child Health",
+      followv_description: submittedData.vitalSigns[0].follov_description || "Follow Up for Child Health",
       patrec: patrec_id,
       followv_status: "pending",
-      updated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     });
     followv_id = newFollowUp.followv_id;
   }
@@ -137,25 +110,43 @@ export async function addChildHealthRecord({
       updated_at: new Date().toISOString(),
       followv: followv_id,
       chhist: current_chhist_id,
-      staff: staff || null,
+      staff: staff || null
     });
   }
 
+
+  let bmi_id = null;
+  // Create body measurements
+  if (submittedData.vitalSigns?.length === 1 ) {
+    const vital = submittedData.vitalSigns[0];
+    console.log("Recorded OPT TRACKING")
+    if (!vital.chvital_id && vital.date && submittedData.nutritionalStatus) {
+   
   // Create body measurements
   const newBMI = await createBodyMeasurement({
     age: submittedData.childAge,
     height: submittedData.vitalSigns?.[0]?.ht || null,
-    weight: submittedData.vitalSigns?.[0]?.wt || null,
-    created_at: new Date().toISOString(),
+    weight: submittedData.vitalSigns?.[0]?.wt || null,    
+    wfa: submittedData.nutritionalStatus.wfa || "",
+    lhfa: submittedData.nutritionalStatus.lhfa || "",
+    wfl: submittedData.nutritionalStatus.wfh || "",
+    muac: submittedData.nutritionalStatus.muac?.toString() || "",
+    muac_status: submittedData.nutritionalStatus.muac_status || "",
+    edemaSeverity: submittedData.edemaSeverity || "none",
+    pat:submittedData.pat_id,
+    remarks:submittedData.vitalSigns?.[0]?.remarks || "",
+    is_opt:submittedData.vitalSigns?.[0]?.is_opt || false,
     patrec: patrec_id,
-    staff: staff || null,
+    staff: staff,
   });
-  const bmi_id = newBMI.bm_id;
+   bmi_id = newBMI.bm_id;
+    }
 
+  }
   const vitalsigns = await createVitalSigns({
     vital_temp: submittedData.vitalSigns?.[0]?.temp || "",
     staff: staff || null,
-    patrec:patrec_id
+    patrec: patrec_id
   });
   const vital_id = vitalsigns.vital_id;
 
@@ -167,54 +158,48 @@ export async function addChildHealthRecord({
     bm: bmi_id,
     chhist: current_chhist_id,
     created_at: new Date().toISOString(),
-
   });
   const chvital_id = newVitalSign.chvital_id;
 
-  // Create nutritional status
-  await createNutritionalStatus({
-    wfa: submittedData.nutritionalStatus?.wfa || "",
-    lhfa: submittedData.nutritionalStatus?.lhfa || "",
-    wfl: submittedData.nutritionalStatus?.wfh || "",
-    muac: submittedData.nutritionalStatus?.muac?.toString() || "",
-    muac_status: submittedData.nutritionalStatus?.muac_status || "",
-    created_at: new Date().toISOString(),
-    // chvital: chvital_id,
-    edemaSeverity: submittedData.edemaSeverity || "None",
-    bm: bmi_id,
-    pat:submittedData.pat_id
-  });
+  // if (submittedData.vitalSigns?.[0]?.is_opt == true) {
+  //   console.log("Optional vital signs, adding nutritional status for OPT");
+  //   await createNutritionalStatus({
+  //     wfa: submittedData.nutritionalStatus?.wfa || "",
+  //     lhfa: submittedData.nutritionalStatus?.lhfa || "",
+  //     wfl: submittedData.nutritionalStatus?.wfh || "",
+  //     muac: submittedData.nutritionalStatus?.muac?.toString() || "",
+  //     muac_status: submittedData.nutritionalStatus?.muac_status || "",
+  //     created_at: new Date().toISOString(),
+  //     edemaSeverity: submittedData.edemaSeverity || "None",
+  //     bm: bmi_id,
+  //     pat: submittedData.pat_id,
+  //     remarks: submittedData.vitalSigns?.[0]?.remarks || "",
+  //     is_opt: submittedData.vitalSigns?.[0]?.is_opt || false
 
-  console.log(submittedData.BFdates);
-  // Handle breastfeeding dates
+  //   });
+  // }
+  // console.log(submittedData.BFdates);
+
   if (submittedData.BFdates && submittedData.BFdates.length > 0) {
     for (const date of submittedData.BFdates) {
       await createExclusiveBFCheck({
         chhist: current_chhist_id,
-        BFdates: submittedData.BFdates,
+        BFdates: submittedData.BFdates
       });
     }
   }
 
   // Handle disabilities
-  if (
-    submittedData.disabilityTypes &&
-    submittedData.disabilityTypes.length > 0
-  ) {
+  if (submittedData.disabilityTypes && submittedData.disabilityTypes.length > 0) {
     await createPatientDisability({
       patrec: patrec_id,
-      disabilities: submittedData.disabilityTypes?.map(String) || [],
+      disabilities: submittedData.disabilityTypes?.map(String) || []
     });
   }
 
   // Handle low birth weight
-  const isLowBirthWeight =
-    submittedData.vitalSigns?.[0]?.wt &&
-    Number.parseFloat(String(submittedData.vitalSigns[0].wt)) < 2.5;
-  if (
-    isLowBirthWeight &&
-    (submittedData.birthwt?.seen || submittedData.birthwt?.given_iron)
-  ) {
+  const isLowBirthWeight = submittedData.vitalSigns?.[0]?.wt && Number.parseFloat(String(submittedData.vitalSigns[0].wt)) < 2.5;
+  if (isLowBirthWeight && (submittedData.birthwt?.seen || submittedData.birthwt?.given_iron)) {
     await createSupplementStatus({
       status_type: "birthwt",
       date_seen: submittedData.birthwt?.seen || null,
@@ -222,7 +207,7 @@ export async function addChildHealthRecord({
       chhist: current_chhist_id,
       created_at: new Date().toISOString(),
       birthwt: Number(submittedData.vitalSigns?.[0]?.wt),
-      date_completed: null,
+      date_completed: null
     });
   }
 
@@ -236,11 +221,10 @@ export async function addChildHealthRecord({
       created_at: new Date().toISOString(),
       birthwt: Number(submittedData.vitalSigns?.[0]?.wt),
       date_completed: null,
-      updated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     });
   }
 
-  
   if (submittedData.medicines && submittedData.medicines.length > 0) {
     await processMedicineRequest(
       {
@@ -248,14 +232,12 @@ export async function addChildHealthRecord({
         medicines: submittedData.medicines.map((med) => ({
           minv_id: med.minv_id,
           medrec_qty: med.medrec_qty,
-          reason: med.reason || "",
-        })),
+          reason: med.reason || ""
+        }))
       },
       staff || null,
       current_chhist_id
-
     );
-    
   }
 
   return {
@@ -263,12 +245,9 @@ export async function addChildHealthRecord({
     chrec_id,
     chhist_id: current_chhist_id,
     chvital_id,
-    followv_id,
+    followv_id
   };
 }
-
-
-
 
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -282,17 +261,13 @@ export const useChildHealthRecordMutation = () => {
     mutationFn: addChildHealthRecord,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
-      queryClient.invalidateQueries({ queryKey: ["childHealthHistory",data.chrec_id] }); 
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.chrec_id] });
       toast.success("Child health record created successfully!");
       navigate(-1);
     },
     onError: (error: unknown) => {
       console.error("Failed to create child health record:", error);
-      toast.error(
-        `Operation Failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-    },
+      toast.error(`Operation Failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
   });
 };

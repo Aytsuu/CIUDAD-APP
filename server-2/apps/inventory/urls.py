@@ -47,7 +47,7 @@ urlpatterns = [
     
     path("commodity-stock-table/",CommodityStockTableView.as_view(),name="commodity-stock-view"),
     path('archive/commoditystocks-table/', ArchivedCommodityTable.as_view(), name='archived-commodity-table'),
-    path('commodity-transactions/table/',CommodityTransactionView.as_view(), name='commodity-transactions'),
+    path('commodity-transactions/table/',CommodityTransactionTableView.as_view(), name='commodity-transactions'),
     
 
     path("firstaidlist/", FirstAidListView.as_view(), name="firstaidlist"),

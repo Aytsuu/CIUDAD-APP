@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
 import { OPTMonthItem } from "./types";
 import { useOPTMonths } from "./queries/fetch";
-import { MonthInfoCard } from "../month-folder-comonent";
+import { MonthInfoCard } from "../month-folder-component";
 
 export default function MonthlyOPTRecords() {
   const { showLoading, hideLoading } = useLoading();

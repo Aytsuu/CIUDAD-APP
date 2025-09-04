@@ -529,8 +529,6 @@ class MedicineTransactionView(generics.ListCreateAPIView):
     
     
 # ============================TRANSACTION=================================
-from django.db.models import F, Value, CharField
-from django.db.models.functions import Concat
 
 class MedicineTransactionView(APIView):
     pagination_class = StandardResultsPagination
@@ -542,11 +540,11 @@ class MedicineTransactionView(APIView):
             page = int(request.GET.get('page', 1))
             page_size = int(request.GET.get('page_size', 10))
             
-            # Get medicine transactions with related data
+            # Get medicine transactions with related data - add more related fields
             transactions = MedicineTransactions.objects.select_related(
                 'minv_id__med_id', 
                 'minv_id__inv_id',
-                'staff'
+                'staff__rp__per'  # Add this to get the personal info
             ).all()
             
             # Apply search filter if provided
@@ -555,8 +553,8 @@ class MedicineTransactionView(APIView):
                     Q(minv_id__med_id__med_name__icontains=search_query) |
                     Q(minv_id__inv_id__inv_id__icontains=search_query) |
                     Q(mdt_action__icontains=search_query) |
-                    Q(staff__first_name__icontains=search_query) |
-                    Q(staff__last_name__icontains=search_query)
+                    Q(staff__rp__per__per_fname__icontains=search_query) |  # Update these
+                    Q(staff__rp__per__per_lname__icontains=search_query)    # Update these
                 )
             
             # Format the data for response
@@ -569,13 +567,14 @@ class MedicineTransactionView(APIView):
                 inventory = medicine_inventory.inv_id if medicine_inventory else None
                 staff = transaction.staff
                 
-                # Format staff name
-                staff_name = "Managed by Sytem"
-                if staff:
-                    staff_name = f"{staff.first_name or ''} {staff.last_name or ''}".strip()
+                # Format staff name - FIXED
+                staff_name = "Managed by System"
+                if staff and staff.rp and staff.rp.per:
+                    personal = staff.rp.per
+                    staff_name = f"{personal.per_fname or ''} {personal.per_lname or ''}".strip()
                     if not staff_name:
-                        staff_name = staff.username
-                
+                        staff_name = f"Staff {staff.staff_id}"  # Fallback to staff ID
+                 
                 item_data = {
                     'mdt_id': transaction.mdt_id,
                     'inv_id': inventory.inv_id if inventory else "N/A",
@@ -618,7 +617,6 @@ class MedicineTransactionView(APIView):
                 'success': False,
                 'error': f'Error fetching medicine transactions: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
 
 # ===========================MEDICINE ARCHIVE==============================
 class MedicineArchiveInventoryView(APIView):
@@ -1058,9 +1056,8 @@ class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
         return int(match.group()) if match else 0   
     
     
+    
 #======================== EXPIRED AND OUT OF STOCK REPORT=========================
-
-
 class MedicineExpiredOutOfStockSummaryAPIView(APIView):
     pagination_class = StandardResultsPagination
 
@@ -1197,6 +1194,7 @@ class MedicineExpiredOutOfStockSummaryAPIView(APIView):
                 'success': False,
                 'error': str(e),
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
         
 class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
     pagination_class = StandardResultsPagination

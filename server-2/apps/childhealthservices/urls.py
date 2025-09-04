@@ -17,6 +17,7 @@ urlpatterns = [
     path('supplements/', ChildHealthSupplementsView.as_view(), name='child-health-supplements'),
     path('supplement-status/', ChildHealthSupplementStatusView.as_view(), name='child-health-supplement-status'),
     path('update-supplement-status/', UpdateChildHealthSupplementsStatusView.as_view(), name='update-child-health-supplement-status'),
+     path('nutritional-status/', NutritionalStatusView.as_view(), name='create-nutritional-status'),
     path('nutritional-status/<str:pat_id>/', NutritionalStatusView.as_view(), name='nutritional-status'),
     path('nutritional-status-monthly/', MonthlyNutritionalStatusViewChart.as_view(), name='nutritional-status-all'),
 

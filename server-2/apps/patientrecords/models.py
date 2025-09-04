@@ -215,11 +215,19 @@ class BodyMeasurement(models.Model):
     bm_id = models.BigAutoField(primary_key=True)  
     height = models.DecimalField(max_digits=5, decimal_places=2,default=Decimal('0.00'))
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
-    # bmi = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
-    # bmi_category = models.CharField(max_length=100)
+    wfa = models.CharField(max_length=100, blank=True, null=True)  # Weight-for-Age
+    lhfa = models.CharField(max_length=100, blank=True, null=True)  # Length-for-Age
+    wfl = models.CharField(max_length=100, blank=True, null=True)  # Weight-for-Length
+    muac = models.CharField(max_length=100, blank=True, null=True)  # Mid-Upper Arm Circumference
+    created_at = models.DateTimeField(auto_now_add=True)
+    edemaSeverity= models.CharField(max_length=100, default="None")  # Edema severity
+    muac_status = models.CharField(max_length=100, blank=True, null=True)  # Status of MUAC
+    remarks = models.TextField(blank=True, null=True)  # Additional remarks
+    is_opt = models.BooleanField(default=False)  # Indicates if the vital sign is optional
     created_at = models.DateTimeField(auto_now_add=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='body_measurements')
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='body_measurements', null=True, blank=True)
+    pat = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='body_measurements', db_column='pat_id', null=True, blank=True)
     class Meta:
         db_table = 'body_measurement'
            
