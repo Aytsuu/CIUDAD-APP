@@ -135,3 +135,40 @@ export const getGarbageCancelledResident = async (rp_id: string) => {
         throw err;
     }
 }
+
+
+export const getAcceptedDetailsResident = async (garb_id: string) => {
+    try {
+        const { data } = await api.get(`waste/garbage-pickup-view-accepted/${garb_id}/`, {
+            params: {
+                status: "accepted"
+            }
+        });
+
+        return {
+            garb_id: data.garb_id || '',
+            garb_location: data.garb_location || '',
+            garb_waste_type: data.garb_waste_type || '',
+            garb_created_at: data.garb_created_at || '',
+            dec_date: data.dec_date || null,
+            truck_id: data.truck_id || null,
+            driver_id: data.driver_id || null,
+            collector_ids: data.collector_ids || [],
+            pickup_assignment_id: data.pickup_assignment_id || null,
+            assignment_collector_ids: data.assignment_collector_ids || [],
+            assignment_info: data.assignment_info ? {
+                driver: data.assignment_info.driver || '',
+                pick_time: data.assignment_info.pick_time || '',
+                pick_date: data.assignment_info.pick_date || '',
+                collectors: data.assignment_info.collectors || [],
+                truck: data.assignment_info.truck || '',
+            } : null,
+            file_url: data.file_url || '',
+            sitio_name: data.sitio_name || ''
+        };
+
+    } catch (err) {
+        console.error('Failed to fetch garbage request details:', err);
+        return null; 
+    }
+}

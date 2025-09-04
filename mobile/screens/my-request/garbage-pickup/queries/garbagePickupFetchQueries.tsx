@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { getGarbagePendingResident, getGarbageRejectedResident, getGarbageAcceptedResident, getGarbageCompletedResident, getGarbageCancelledResident } from "../restful-API/garbagePickupGetAPI";
+import { getGarbagePendingResident, getGarbageRejectedResident, getGarbageAcceptedResident, getGarbageCompletedResident, getGarbageCancelledResident,
+    getAcceptedDetailsResident
+ } from "../restful-API/garbagePickupGetAPI";
 
 export type GarbageRequestPending = {
     garb_id: string;
@@ -51,7 +53,6 @@ export const useGetGarbageRejectedResident = (rp_id: string) => {
 export type GarbageRequestAccept = {
   garb_id: string;
   garb_location: string;
-  garb_requester: string;
   garb_waste_type: string;
   garb_created_at: string;
   dec_date: string;
@@ -80,6 +81,16 @@ export const useGetGarbageAcceptedResident = (rp_id: string) => {
         enabled: !!rp_id,
     });
 }
+
+export const useGetAcceptedDetailsResident = (garb_id: string) => {
+    return useQuery<GarbageRequestAccept | null>({
+        queryKey: ["garbageAcceptedRequest", garb_id], 
+        queryFn: () => getAcceptedDetailsResident(garb_id),
+        staleTime: 1000 * 60 * 30, 
+        enabled: !!garb_id,
+    });
+}
+
 
 
 export type GarbageRequestComplete = {

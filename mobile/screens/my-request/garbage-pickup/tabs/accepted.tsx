@@ -7,6 +7,7 @@ import { formatTimestamp } from "@/helpers/timestampformatter";
 import { RootState } from "@/redux";
 import { useSelector, UseSelector } from "react-redux";
 import { useGetGarbageAcceptedResident } from "../queries/garbagePickupFetchQueries";
+import { router } from "expo-router";
 
 export default function ResidentAccepted() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,8 +26,12 @@ export default function ResidentAccepted() {
   });
 
   const handleViewAssignment = (garb_id: string) => {
-    console.log("View assignment:", garb_id);
-    // Navigate to assignment details
+    router.push({
+      pathname: '/(my-request)/garbage-pickup/view-accepted-details',
+      params: {
+        garb_id: garb_id
+      }
+    })
   };
 
   return (
