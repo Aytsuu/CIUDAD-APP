@@ -78,10 +78,12 @@ export const useUpdateWasteResReport = (rep_id: number, onSuccess?: () => void) 
   return useMutation({
     mutationFn: async (values: { 
       rep_status: string;
+      rep_cancel_reason: string;
     }) => {
 
       await updateWasteResReport(rep_id, {
         rep_status: values.rep_status,
+        rep_cancel_reason: values.rep_cancel_reason
       });
       
       return rep_id;

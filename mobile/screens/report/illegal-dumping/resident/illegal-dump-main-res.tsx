@@ -625,33 +625,11 @@
 
 
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  ActivityIndicator,
-  FlatList,
-  TouchableOpacity,
-} from 'react-native';
-import {
-  Search,
-  CheckCircle,
-  ChevronLeft,
-  SquareArrowOutUpRight,
-  XCircle,
-} from 'lucide-react-native';
-import {
-  useWasteReport,
-  type WasteReport,
-} from '../queries/illegal-dump-fetch-queries';
+import { View, Text, TextInput, Pressable, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
+import { Search, CheckCircle, ChevronLeft, SquareArrowOutUpRight, XCircle } from 'lucide-react-native';
+import { useWasteReport, type WasteReport } from '../queries/illegal-dump-fetch-queries';
 import { SelectLayout } from '@/components/ui/select-layout';
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
 
