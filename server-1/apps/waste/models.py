@@ -39,6 +39,7 @@ class WasteReport(models.Model):
     rep_anonymous = models.BooleanField(default=False)
     rep_contact = models.CharField(default="none")
     rep_status = models.CharField(max_length=100, default="pending")
+    rep_cancel_reason =  models.CharField(max_length=200, null=True)
     rep_date = models.DateTimeField(null=True)
     rep_date_resolved = models.DateTimeField(null=True)
     # rep_resolved_img = models.CharField(null=True, blank=True)
