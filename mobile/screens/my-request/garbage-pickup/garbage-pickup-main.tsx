@@ -53,9 +53,7 @@ export default function GarbagePickupTrackingMain() {
       }
       headerTitle={<Text className="text-gray-900 text-[13px]">Garbage Pickup</Text>}
       rightAction={
-        <TouchableOpacity className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-          <Search size={22} className="text-gray-700" />
-        </TouchableOpacity>
+        <View className="w-10 h-10 "></View>
       }
     >
       <View className="flex-1">

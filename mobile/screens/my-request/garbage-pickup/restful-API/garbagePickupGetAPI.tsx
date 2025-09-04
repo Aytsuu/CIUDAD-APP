@@ -32,6 +32,9 @@ export const getGarbageRejectedResident = async (rp_id: string) => {
             garb_location: item.garb_location || '',
             garb_waste_type: item.garb_waste_type || '',
             garb_created_at: item.garb_created_at || '',
+            garb_pref_date: item.garb_pref_date,
+            garb_pref_time: item.garb_pref_time,
+            garb_additional_notes: item.garb_additional_notes,
             dec_id: item.dec_id || null, 
             dec_date: item.dec_date || null,
             dec_reason: item.dec_reason || '',
@@ -98,6 +101,32 @@ export const getGarbageCompletedResident = async (rp_id: string) => {
                 collectors: item.assignment_info.collectors || [],
                 truck: item.assignment_info.truck || '',
             } : null,
+            file_url: item.file_url || '',
+            sitio_name: item.sitio_name || ''
+        }));
+    }catch(err){
+        console.error('API Error:', err)
+        throw err;
+    }
+}
+
+
+export const getGarbageCancelledResident = async (rp_id: string) => {
+    try{
+
+        const {data} = await api.get(`/waste/garbage-pickup-cancelled/${rp_id}/`)
+
+        return data.map((item: any) => ({
+            garb_id: item.garb_id || '', 
+            garb_location: item.garb_location || '',
+            garb_waste_type: item.garb_waste_type || '',
+            garb_created_at: item.garb_created_at || '',
+            garb_pref_date: item.garb_pref_date,
+            garb_pref_time: item.garb_pref_time,
+            garb_additional_notes: item.garb_additional_notes,
+            dec_id: item.dec_id || null, 
+            dec_date: item.dec_date || null,
+            dec_reason: item.dec_reason || '',
             file_url: item.file_url || '',
             sitio_name: item.sitio_name || ''
         }));

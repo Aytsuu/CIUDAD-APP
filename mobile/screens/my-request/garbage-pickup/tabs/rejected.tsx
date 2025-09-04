@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { RootState } from "@/redux";
-import { useSelector, UseSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useGetGarbageRejectedResident } from "../queries/garbagePickupFetchQueries";
+import { formatTime } from "@/helpers/timeFormatter";
 
 export default function ResidentRejected() {
   const {user, isLoading: isUserLoading} = useSelector((state: RootState)=> state.auth)
@@ -106,13 +107,30 @@ export default function ResidentRejected() {
                       <Text className="text-sm font-semibold ">{request.garb_waste_type}</Text>
                     </View>
 
-                    {/* Rejection Date */}
-                    {request.dec_date && (
-                      <View className="flex-row justify-between">
-                        <Text className="text-sm text-gray-600">Rejection Date:</Text>
-                        <Text className="text-sm font-medium text-red-700">
-                          {formatTimestamp(request.dec_date)}
-                        </Text>
+                    {/* Preferred Date */}
+                    <View className="flex-row justify-between">
+                        <Text className="text-sm text-gray-600">Preferred Date & Time:</Text>
+                        <Text className="text-sm">{request.garb_pref_date}, {formatTime(request.garb_pref_time)}</Text>
+                    </View>
+
+                    {/* Additional Notes */}
+                    {request.garb_additional_notes && (
+                        <View className="mt-2">
+                        <Text className="text-sm text-gray-600">Notes:</Text>
+                        <Text className="text-sm text-gray-800">{request.garb_additional_notes}</Text>
+                        </View>
+                    )}
+
+                    {/* Attached File Link */}
+                    {request.file_url && (
+                      <View className="mt-3">
+                        <TouchableOpacity
+                          onPress={() => handleViewImage(request.file_url)}
+                        >
+                          <Text className="text-sm font-medium text-blue-600 underline">
+                            View Attached Image
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                     )}
 
@@ -126,16 +144,13 @@ export default function ResidentRejected() {
                       </View>
                     )}
 
-                    {/* Attached File Link */}
-                    {request.file_url && (
-                      <View className="mt-3">
-                        <TouchableOpacity
-                          onPress={() => handleViewImage(request.file_url)}
-                        >
-                          <Text className="text-sm font-medium text-blue-600 underline">
-                            View Attached Image
-                          </Text>
-                        </TouchableOpacity>
+                    {/* Rejection Date */}
+                    {request.dec_date && (
+                      <View className="flex-row justify-between">
+                        <Text className="text-sm text-gray-600">Rejection Date:</Text>
+                        <Text className="text-sm font-medium text-red-700">
+                          {formatTimestamp(request.dec_date)}
+                        </Text>
                       </View>
                     )}
                   </View>

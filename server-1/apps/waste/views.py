@@ -10,7 +10,7 @@ from apps.profiling.models import Sitio
 from rest_framework import generics
 from .signals import archive_completed_hotspots
 from rest_framework.permissions import AllowAny
-
+from django.db.models import OuterRef, Subquery
 # Create your views here.
 #KANI 3RD
 
@@ -656,9 +656,16 @@ class GarbagePickupRequestRejectedByRPView(generics.ListAPIView):
     
     def get_queryset(self):
         rp_id = self.kwargs.get('rp_id')
-        return Garbage_Pickup_Request.objects.filter(
-            rp_id=rp_id, 
-            garb_req_status='rejected'  
+
+        latest_decision = Pickup_Request_Decision.objects.filter(
+            garb_id=OuterRef('pk')
+        ).order_by('-dec_date')
+
+        return (
+            Garbage_Pickup_Request.objects
+            .filter(rp_id=rp_id, garb_req_status='rejected')
+            .annotate(latest_dec_date=Subquery(latest_decision.values('dec_date')[:1]))
+            .order_by('-latest_dec_date')  # newest on top
         )
     
 class GarbagePickupRequestAcceptedByRPView(generics.ListAPIView):
@@ -680,3 +687,21 @@ class GarbagePickupRequestCompletedByRPView(generics.ListAPIView):
             rp_id=rp_id, 
             garb_req_status='completed'  
         )
+
+class GarbagePickupRequestCancelledByRPView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestRejectedSerializer
+
+    def get_queryset(self):
+        rp_id = self.kwargs.get('rp_id')
+
+        latest_decision = Pickup_Request_Decision.objects.filter(
+            garb_id=OuterRef('pk')
+        ).order_by('-dec_date')
+
+        return (
+            Garbage_Pickup_Request.objects
+            .filter(rp_id=rp_id, garb_req_status='cancelled')
+            .annotate(latest_dec_date=Subquery(latest_decision.values('dec_date')[:1]))
+            .order_by('-latest_dec_date')  # newest on top
+        )
+

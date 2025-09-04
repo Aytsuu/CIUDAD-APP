@@ -8,20 +8,6 @@ import { RootState } from "@/redux";
 import { useSelector, UseSelector } from "react-redux";
 import { useGetGarbageAcceptedResident } from "../queries/garbagePickupFetchQueries";
 
-// Mock data interface
-interface GarbageRequest {
-  garb_id: string;
-  garb_location: string;
-  garb_waste_type: string;
-  garb_created_at: string;
-  dec_date?: string;
-  sitio_name?: string;
-  assignment_info?: {
-    driver?: string;
-    collectors?: string[];
-  };
-}
-
 export default function ResidentAccepted() {
   const [searchQuery, setSearchQuery] = useState("");
   const {user, isLoading: isUserLoading} = useSelector((state: RootState) => state.auth)

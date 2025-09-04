@@ -72,6 +72,7 @@ urlpatterns = [
     path('garbage-pickup-rejected/<str:rp_id>/', GarbagePickupRequestRejectedByRPView.as_view(), name="garbage-pickup-rejected"),
     path('garbage-pickup-accepted/<str:rp_id>/', GarbagePickupRequestAcceptedByRPView.as_view(), name="garbage-pickup-accepted"),
     path('garbage-pickup-completed/<str:rp_id>/', GarbagePickupRequestCompletedByRPView.as_view(), name="garbage-pickup-completed"),
+    path('garbage-pickup-cancelled/<str:rp_id>/', GarbagePickupRequestCancelledByRPView.as_view(), name="garbage-pickup-cancelled"),
 
 
     # Driver

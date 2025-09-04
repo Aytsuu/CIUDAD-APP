@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { formatTime } from "@/helpers/timeFormatter";
 import { RootState } from "@/redux";
-import { useSelector, UseSelector } from "react-redux";
-import { useGetGarbagePendingResident, type GarbageRequestPending } from "../queries/garbagePickupFetchQueries";
+import { useSelector } from "react-redux";
+import { useGetGarbagePendingResident } from "../queries/garbagePickupFetchQueries";
+import { router } from "expo-router";
 
 export default function ResidentPending() {
-  const {user, isLoading: userLoading} = useSelector((state: RootState) => state.auth)
+  const {user, isLoading: _userLoading} = useSelector((state: RootState) => state.auth)
   const { data: pendingRequests = [], isLoading: isDataLoading} = useGetGarbagePendingResident(user.resident.rp_id)
   const [searchQuery, setSearchQuery] = useState("");
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
@@ -41,6 +42,14 @@ export default function ResidentPending() {
     return searchString.includes(searchQuery.toLowerCase());
   });
  
+  const handleCancelReq = (garb_id: string) => {
+    router.push({
+      pathname: '/(my-request)/garbage-pickup/garbage-cancel-req-form',
+      params: {
+        garb_id: garb_id
+      }
+    })
+  }
 
   return (
     <View className="flex-1 p-4">
@@ -70,11 +79,11 @@ export default function ResidentPending() {
         </View>
       ) : filteredData.length === 0 ? (
         <View className="justify-center items-center py-8">
-          <View className="bg-blue-50 rounded-lg items-cente">
+          <View className="bg-blue-50 p-6 rounded-lg items-center">
             <Info size={24} color="#3b82f6" className="mb-2" />
             <Text className="text-center text-gray-600">
               {pendingRequests.length === 0 
-                ? "No requests available" 
+                ? "No pending requests available" 
                 : "No matching requests found"}
             </Text>
             {searchQuery && (
@@ -120,14 +129,8 @@ export default function ResidentPending() {
 
                     {/* Preferred Date */}
                     <View className="flex-row justify-between">
-                      <Text className="text-sm text-gray-600">Preferred Date:</Text>
-                      <Text className="text-sm">{request.garb_pref_date}</Text>
-                    </View>
-
-                    {/* Preferred Time */}
-                    <View className="flex-row justify-between">
-                      <Text className="text-sm text-gray-600">Preferred Time:</Text>
-                      <Text className="text-sm">{formatTime(request.garb_pref_time)}</Text>
+                      <Text className="text-sm text-gray-600">Preferred Date & Time:</Text>
+                      <Text className="text-sm">{request.garb_pref_date}, {formatTime(request.garb_pref_time)}</Text>
                     </View>
 
                     {/* Additional Notes */}
@@ -152,12 +155,9 @@ export default function ResidentPending() {
                     )}
 
                     {/* Cancel Button */}
-                    <View className="flex-row justify-end mt-4">
-                      <Button 
-                        className="bg-[#ff2c2c]"
-                        // onPress={() => handleCancel(request.garb_id)}
-                      >
-                        <Text className="text-white text-sm">Cancel</Text>
+                   <View className="flex-row justify-end mt-4">
+                      <Button className="border border-red-500 native:h-[40px] rounded-lg px-4" onPress={() => handleCancelReq(request.garb_id)}>
+                        <Text className="text-red-600">Cancel</Text>
                       </Button>
                     </View>
                   </View>

@@ -455,6 +455,9 @@ class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
             'garb_id',
             'garb_location',
             'garb_waste_type',
+            'garb_pref_date',      
+            'garb_pref_time',      
+            'garb_additional_notes', 
             'garb_created_at',
             'garb_requester',
             'dec_id',
@@ -485,7 +488,7 @@ class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
 
     def get_dec_reason(self, obj):
         decision = self.get_decision(obj)
-        return decision.dec_rejection_reason if decision else ""
+        return decision.dec_reason if decision else ""
 
     def get_file_url(self, obj):
         return obj.gprf.gprf_url if obj.gprf else ""
