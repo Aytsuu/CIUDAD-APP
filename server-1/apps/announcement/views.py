@@ -55,6 +55,7 @@ class AnnouncementFileDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class AnnouncementRecipientView(generics.ListCreateAPIView):
+    # serializer_class = BulkAnnouncementRecipientSerializer
     queryset = AnnouncementRecipient.objects.all()
 
     def get_serializer_class(self):

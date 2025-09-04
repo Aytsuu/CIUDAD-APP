@@ -41,6 +41,7 @@ export function useGetAnnouncement() {
   return useQuery({
     queryKey: ["announcements"],
     queryFn: getAnnouncementRequest,
+    staleTime: 5000
   });
 }
 
@@ -50,5 +51,6 @@ export function useGetAnnouncementRecipient(ann_id: number) {
     queryKey: ["announcementRecipients", ann_id],
     queryFn: () => getAnnouncementRecipientRequest(ann_id),
     enabled: !!ann_id, // only run when we have an id
+    staleTime: 5000
   });
 }

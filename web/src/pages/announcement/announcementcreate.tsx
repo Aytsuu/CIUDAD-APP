@@ -173,7 +173,7 @@ const AnnouncementCreate = () => {
 console.log(announcementData)
       const createdAnnouncement = await postAnnouncement(announcementData);
 
-      if (Array.isArray(ar_type) && ar_type.length > 0) {
+      if (Array.isArray(ar_type) && ar_type.length > 0){
         const recipientsPayload = (ar_type as string[])
           .filter(Boolean)
           .map((type: string) => ({
@@ -183,6 +183,13 @@ console.log(announcementData)
           }));
 
         await postAnnouncementRecipient({ recipients: recipientsPayload });
+      }
+
+      if (ar_category.toLowerCase() == "resident"){
+        await postAnnouncementRecipient({ recipients:[{
+            ann: createdAnnouncement?.ann_id,
+            ar_category: ar_category.trim()
+          }]});
       }
 
       form.reset({ ...defaultValues, staff: user?.staff?.staff_id || "" });

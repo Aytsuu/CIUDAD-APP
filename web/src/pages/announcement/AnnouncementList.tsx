@@ -29,7 +29,7 @@ function AnnouncementTracker() {
     deleteEntry(ann_id)
   }
 
-  // ✅ Date formatter (Asia/Manila)
+  
   const formatDate = (dateString: string) => {
     if (!dateString) return "—"
     const date = new Date(dateString)

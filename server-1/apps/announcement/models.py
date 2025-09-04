@@ -43,7 +43,7 @@ class AnnouncementRecipient(models.Model):
         on_delete=models.CASCADE,
     )
     ar_category = models.CharField(max_length=50)
-    ar_type = models.CharField(max_length=50)
+    ar_type = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         db_table = 'announcement_recipient'
