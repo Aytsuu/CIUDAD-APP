@@ -625,33 +625,11 @@
 
 
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  ActivityIndicator,
-  FlatList,
-  TouchableOpacity,
-} from 'react-native';
-import {
-  Search,
-  CheckCircle,
-  ChevronLeft,
-  SquareArrowOutUpRight,
-  XCircle,
-} from 'lucide-react-native';
-import {
-  useWasteReport,
-  type WasteReport,
-} from '../queries/illegal-dump-fetch-queries';
+import { View, Text, TextInput, Pressable, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
+import { Search, CheckCircle, ChevronLeft, SquareArrowOutUpRight, XCircle } from 'lucide-react-native';
+import { useWasteReport, type WasteReport } from '../queries/illegal-dump-fetch-queries';
 import { SelectLayout } from '@/components/ui/select-layout';
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
 
@@ -732,12 +710,15 @@ export default function WasteIllegalDumpingResMain() {
         rep_matter: item.rep_matter,
         rep_location: item.rep_location,
         sitio_name: item.sitio_name,
+        sitio_id: item.sitio_id,
         rep_violator: item.rep_violator,
         rep_complainant: item.rep_complainant,
         rep_contact: item.rep_contact,
         rep_status: item.rep_status,
+        rep_cancel_reason: item.rep_cancel_reason,
         rep_date: item.rep_date,
         rep_date_resolved: item.rep_date_resolved,
+        rep_date_cancelled: item.rep_date_cancelled,
         rep_anonymous: item.rep_anonymous,
         rep_add_details: item.rep_add_details,
         waste_report_file: JSON.stringify(item.waste_report_file || []),
@@ -758,10 +739,7 @@ export default function WasteIllegalDumpingResMain() {
       onPress={() => handleView(item)}
       className="mb-3 border border-gray-200 rounded-lg p-4 bg-white shadow-sm active:opacity-80"
     >
-      <View className="flex-row justify-between items-start mb-3">
-        <Text className="font-semibold text-xl">
-          Report #{item.rep_id}
-        </Text>
+      <View className="flex-row justify-end items-start mb-3">
         <View className="flex-row items-center">
           {item.rep_status === 'resolved' ? (
             <View className="flex-row items-center bg-green-50 px-2 py-1 rounded-full">
@@ -806,6 +784,13 @@ export default function WasteIllegalDumpingResMain() {
         <Text className="text-base font-semibold">Location:</Text>
         <Text className="text-base">{item.rep_location}</Text>
       </View>
+
+      {item.rep_status === "cancelled" && (
+        <View className="mb-4">
+          <Text className="text-base font-semibold">Cancel Reason:</Text>
+          <Text>{item.rep_cancel_reason}</Text>              
+        </View>
+      )}   
 
       <View className="self-end">
         <SquareArrowOutUpRight size={16} color="#00A8F0" />

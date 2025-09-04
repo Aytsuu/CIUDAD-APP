@@ -11,7 +11,9 @@ export default () => {
 
                 <Stack.Screen name="illegal-dumping/resident/illegal-dump-res-main" options={{ headerShown: false, animation: 'fade' }} />  
                 <Stack.Screen name="illegal-dumping/resident/illegal-dump-res-create" options={{ headerShown: false, animation: 'fade' }} />   
-                <Stack.Screen name="illegal-dumping/resident/illegal-dump-view-res" options={{ headerShown: false, animation: 'fade' }} />                   
+                <Stack.Screen name="illegal-dumping/resident/illegal-dump-res-resubmit" options={{ headerShown: false, animation: 'fade' }} />                  
+                <Stack.Screen name="illegal-dumping/resident/illegal-dump-view-res" options={{ headerShown: false, animation: 'fade' }} />                                   
+
                 <Stack.Screen name="illegal-dumping/staff/illegal-dump-main-staff" options={{ headerShown: false, animation: 'fade' }} />    
                 <Stack.Screen name="illegal-dumping/staff/illegal-dump-view-staff" options={{ headerShown: false, animation: 'fade' }} />  
                 

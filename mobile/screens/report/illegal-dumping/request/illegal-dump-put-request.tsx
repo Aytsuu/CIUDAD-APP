@@ -63,13 +63,17 @@ export const uploadResolvedImage = async (data: {
 export const updateWasteResReport = async (rep_id: number, wasteReportInfo: Record<string, any>) => {
 
     try{
+        const currentTimestamp = new Date().toISOString();
 
         console.log("REPORT DATA REQ: ",{
             rep_status: wasteReportInfo.rep_status,
+            rep_cancel_reason: wasteReportInfo.rep_cancel_reason
         })
 
         const res = await api.put(`waste/update-waste-report/${rep_id}/`,{
             rep_status: wasteReportInfo.rep_status,
+            rep_cancel_reason: wasteReportInfo.rep_cancel_reason,
+            rep_date_cancelled: currentTimestamp
         })
 
         return res.data;

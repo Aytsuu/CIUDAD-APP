@@ -7,13 +7,17 @@ import ImageCarousel from '@/components/ui/imageCarousel';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useUpdateWasteResReport } from '../queries/illegal-dump-update-queries';
 import { ActivityIndicator } from 'react-native';
+import { SelectLayout } from '@/components/ui/select-layout';
 
 
 export default function WasteIllegalDumpingResDetails() {
   // Get all params from the route
   const params = useLocalSearchParams();
   const router = useRouter();
+  const [showResolutionModal, setShowResolutionModal] = useState(false);
+  const [selectedReasonId, setSelectedReasonId] = useState("");
   
+
   // Parse all params
   const {
     rep_id,
@@ -24,9 +28,13 @@ export default function WasteIllegalDumpingResDetails() {
     rep_complainant,
     rep_contact,
     rep_status,
+    rep_cancel_reason,
     rep_date,
+    rep_anonymous,
     rep_date_resolved,
+    rep_date_cancelled,
     sitio_name,
+    sitio_id,
     waste_report_file,
     waste_report_rslv_file
   } = params;
@@ -38,9 +46,8 @@ export default function WasteIllegalDumpingResDetails() {
 
   console.log("LENGTH RESFILES: ", parsedResFiles.length)
 
-
-
   const isCancelled = !!rep_date_resolved || rep_status === "cancelled";
+
 
   const getStatusStyle = () => {
     switch (String(rep_status)?.toLowerCase()) {
@@ -71,6 +78,15 @@ export default function WasteIllegalDumpingResDetails() {
     return date.toLocaleString('en-US', options);
   };
 
+  const filterOptions = [
+    { id: "1", name: "Duplicate report - already reported this issue" },
+    { id: "2", name: "Wrong location - incorrect address or coordinates" },
+    { id: "3", name: "Issue already resolved - waste has been cleaned up" },
+    { id: "4", name: "False alarm - mistaken for illegal dumping" },
+    { id: "5", name: "Incomplete information - need to resubmit with more details" },
+    { id: "6", name: "Personal reason - no longer able to pursue this report" },
+    { id: "7", name: "Other reason" },
+  ];
   
   
   //UPDATE MUTATION
@@ -81,12 +97,42 @@ export default function WasteIllegalDumpingResDetails() {
   });
 
 
-  const handleSubmitResolution = () => {        
+  const handleCancelReport = () => {
+    setShowResolutionModal(true);
+  };
+
+  const handleSubmitReport = () => {        
+      const selectedReason = filterOptions.find(option => option.id === selectedReasonId);    
+      
       const updateData = {
           rep_status: "cancelled",
+          rep_cancel_reason: selectedReason?.name
       };
       
-      updateRep(updateData);
+      updateRep(updateData, {
+        onSuccess: () => {
+          setTimeout(() => setShowResolutionModal(false), 100);
+        }
+      });
+  };
+
+  const handleResubmit = async () => {
+    router.push({
+      pathname:
+        '/(waste)/illegal-dumping/resident/illegal-dump-res-resubmit',
+      params: {
+        rep_id: rep_id,
+        rep_matter: rep_matter,
+        rep_location: rep_location,
+        sitio_id: sitio_id,
+        rep_violator: rep_violator,
+        rep_contact: rep_contact,
+        rep_date: rep_date,
+        rep_anonymous: rep_anonymous,
+        rep_add_details: rep_add_details,
+        waste_report_file: waste_report_file
+      },
+    });
   };
 
 
@@ -102,59 +148,80 @@ export default function WasteIllegalDumpingResDetails() {
           </TouchableOpacity>
         }
         footer={
-          isCancelled ? (
+          rep_status === "resolved" ? null : (
+            isCancelled ? (
               <ConfirmationModal
-                  trigger={
-                      <TouchableOpacity
-                          className={"py-4 rounded-md mt-4 items-center bg-blue-500"}
-                          disabled={isPending}
-                      >
-                          {isPending ? (
-                              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                              <ActivityIndicator 
-                                  size="small" 
-                                  color="white" 
-                                  style={{marginRight: 8}}
-                              />
-                              <Text className="text-white font-medium">Loading...</Text>
-                              </View>
-                          ) : (
-                              <Text className="text-white font-medium text-md">Re-submit Report</Text>
-                          )}                                    
-                      </TouchableOpacity>
-                  }
-                  title="Re-submit Report"
-                  description="Are you sure you want to re-submit report?"
-                  actionLabel="Confirm"
-                  onPress={handleSubmitResolution}
+                trigger={
+                  <TouchableOpacity
+                    className={"py-4 rounded-md mt-4 items-center bg-blue-500"}
+                    disabled={isPending}
+                  >
+                    {isPending ? (
+                      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <ActivityIndicator 
+                          size="small" 
+                          color="white" 
+                          style={{marginRight: 8}}
+                        />
+                        <Text className="text-white font-medium">Loading...</Text>
+                      </View>
+                    ) : (
+                      <Text className="text-white font-medium text-md">Re-submit Report</Text>
+                    )}                                    
+                  </TouchableOpacity>
+                }
+                title="Re-submit Report"
+                description="Are you sure you want to re-submit report?"
+                actionLabel="Confirm"
+                onPress={handleResubmit}
               />              
-          ) : (
-              <ConfirmationModal
-                  trigger={
-                      <TouchableOpacity
-                          className={"py-4 rounded-md mt-4 items-center bg-red-500"}
-                          disabled={isCancelled || isPending}
-                      >
-                          {isPending ? (
-                              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                              <ActivityIndicator 
-                                  size="small" 
-                                  color="white" 
-                                  style={{marginRight: 8}}
-                              />
-                              <Text className="text-white font-medium">Loading...</Text>
-                              </View>
-                          ) : (
-                              <Text className="text-white font-medium text-md">Cancel </Text>
-                          )}                                    
-                      </TouchableOpacity>
-                  }
-                  title="Cancel Report"
-                  description="Are you sure you want to cancel this report?"
-                  actionLabel="Confirm"
-                  onPress={handleSubmitResolution}
-              />                
-          )        
+            ) : (
+              // <ConfirmationModal
+              //   trigger={
+              //     <TouchableOpacity
+              //       className={"py-4 rounded-md mt-4 items-center bg-red-500"}
+              //       disabled={isCancelled || isPending}
+              //     >
+              //       {isPending ? (
+              //         <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              //           <ActivityIndicator 
+              //             size="small" 
+              //             color="white" 
+              //             style={{marginRight: 8}}
+              //           />
+              //           <Text className="text-white font-medium">Loading...</Text>
+              //         </View>
+              //       ) : (
+              //         <Text className="text-white font-medium text-md">Cancel </Text>
+              //       )}                                    
+              //     </TouchableOpacity>
+              //   }
+              //   title="Cancel Report"
+              //   description="Are you sure you want to cancel this report?"
+              //   actionLabel="Confirm"
+              //   onPress={handleSubmitResolution}
+              // />  
+              
+              <TouchableOpacity
+                disabled={isCancelled || isPending}
+                onPress={handleCancelReport}
+                className={"py-4 rounded-md mt-4 items-center bg-red-500"}
+              >
+                {isPending ? (
+                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                    <ActivityIndicator 
+                      size="small" 
+                      color="white" 
+                      style={{marginRight: 8}}
+                    />
+                    <Text className="text-white font-medium">Loading...</Text>
+                  </View>
+                ) : (
+                  <Text className="text-white font-medium text-md">Cancel </Text>
+                )}  
+              </TouchableOpacity>              
+            )        
+          )
         }
         stickyFooter={true}
       >
@@ -246,6 +313,20 @@ export default function WasteIllegalDumpingResDetails() {
                   </View>
                 )}
 
+                {rep_date_cancelled && (
+                  <View className="flex-row justify-between mb-4">
+                    <View className="w-[48%]">
+                      <Text className="font-semibold text-gray-600 mb-1">Date & Time Cancelled</Text>
+                      <Text>{formatDate(rep_date_cancelled as string)}</Text>              
+                    </View>
+
+                    <View className="w-[48%]">
+                      <Text className="font-semibold text-gray-600 mb-1">Cancel Reason</Text>
+                      <Text>{rep_cancel_reason}</Text>              
+                    </View>                    
+                  </View>
+                )}                
+
                 <View className="mb-4">
                   <Text className="font-semibold text-gray-600 mb-1">Report Details</Text>
                   <Text>{rep_add_details || "No additional details provided."}</Text>
@@ -255,6 +336,72 @@ export default function WasteIllegalDumpingResDetails() {
           </View>
         </ScrollView>
       </_ScreenLayout>
+
+      <Modal
+          visible={showResolutionModal}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setShowResolutionModal(false)}
+      >
+          <View className="flex-1 bg-black/50 justify-center px-5 pb-10">
+              <View className="w-full bg-white rounded-lg overflow-hidden">
+                  {/* Modal Header */}
+                  <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
+                      <Text className="text-lg font-semibold">Provide a Reason for Cancelling</Text>
+                      <TouchableOpacity 
+                          onPress={() => setShowResolutionModal(false)}
+                          className="p-1"
+                      >
+                          <X size={20} className="text-black" />
+                      </TouchableOpacity>
+                  </View>
+
+                  {/* Scrollable Modal Content */}
+                  <ScrollView contentContainerStyle={{ padding: 16 }}>
+                      <Text className="text-md font-medium mb-3">Reason</Text>
+                      <SelectLayout
+                        placeholder="Select Reason"
+                        options={filterOptions.map(({ id, name }) => ({
+                          value: id,
+                          label: name,
+                        }))}
+                        selectedValue={selectedReasonId}
+                        onSelect={(option) => setSelectedReasonId(option.value)}
+                        className="bg-white mb-5"
+                      />               
+
+                      {/* Submit Button */}
+                      <ConfirmationModal
+                          trigger={
+                              <TouchableOpacity
+                                  className={`py-3 rounded-md mt-4 items-center ${
+                                      isCancelled ? "bg-gray-400" : "bg-blue-500"
+                                  }`}
+                                  disabled={isCancelled || isPending}
+                              >
+                                  {isPending ? (
+                                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                                      <ActivityIndicator 
+                                        size="small" 
+                                        color="white" 
+                                        style={{marginRight: 8}}
+                                      />
+                                      <Text className="text-white font-medium">Submitting...</Text>
+                                    </View>
+                                  ) : (
+                                    <Text className="text-white font-medium">Submit</Text>
+                                  )}                                    
+                              </TouchableOpacity>
+                          }
+                          title="Cancel Report"
+                          description="Are you sure you want to cancel this report?"
+                          actionLabel="Confirm"
+                          onPress={handleSubmitReport}
+                      />                     
+                  </ScrollView>
+              </View>
+          </View>
+      </Modal>      
     </>
   );
 }
