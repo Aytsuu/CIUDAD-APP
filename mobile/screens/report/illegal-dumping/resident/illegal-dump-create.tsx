@@ -71,7 +71,11 @@ export default function IllegalDumpCreateForm() {
       files      
     }
 
-    addReport(allValues)
+    addReport(allValues, {
+      onSuccess: () => {
+        router.push('/(waste)/illegal-dumping/resident/illegal-dump-res-main');
+      }
+    });
   };
 
 
