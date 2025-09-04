@@ -15,7 +15,7 @@ export default function WasteIllegalDumpingResDetails() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const [showResolutionModal, setShowResolutionModal] = useState(false);
-  const [selectedFilterId, setSelectedFilterId] = useState("");
+  const [selectedReasonId, setSelectedReasonId] = useState("");
   
 
   // Parse all params
@@ -77,9 +77,13 @@ export default function WasteIllegalDumpingResDetails() {
   };
 
   const filterOptions = [
-    { id: "0", name: "Reason 1" },
-    { id: "1", name: "Reason 2" },
-    { id: "2", name: "Reason 3" },
+    { id: "1", name: "Duplicate report - already reported this issue" },
+    { id: "2", name: "Wrong location - incorrect address or coordinates" },
+    { id: "3", name: "Issue already resolved - waste has been cleaned up" },
+    { id: "4", name: "False alarm - mistaken for illegal dumping" },
+    { id: "5", name: "Incomplete information - need to resubmit with more details" },
+    { id: "6", name: "Personal reason - no longer able to pursue this report" },
+    { id: "7", name: "Other reason" },
   ];
   
   
@@ -95,14 +99,19 @@ export default function WasteIllegalDumpingResDetails() {
     setShowResolutionModal(true);
   };
 
-  const handleSubmitResolution = () => {        
+  const handleSubmitReport = () => {        
+      const selectedReason = filterOptions.find(option => option.id === selectedReasonId);    
+      
       const updateData = {
           rep_status: "cancelled",
-          rep_cancel_reason: selectedFilterId
+          rep_cancel_reason: selectedReason?.name
       };
       
-      // updateRep(updateData);
-      console.log("CANCEL DATAAA MAEMM: ", updateData)
+      updateRep(updateData, {
+        onSuccess: () => {
+          setTimeout(() => setShowResolutionModal(false), 100);
+        }
+      });
   };
 
   const handleResubmit = async () => {
@@ -340,10 +349,10 @@ export default function WasteIllegalDumpingResDetails() {
                           value: id,
                           label: name,
                         }))}
-                        selectedValue={selectedFilterId}
-                        onSelect={(option) => setSelectedFilterId(option.value)}
+                        selectedValue={selectedReasonId}
+                        onSelect={(option) => setSelectedReasonId(option.value)}
                         className="bg-white mb-5"
-                      />                      
+                      />               
 
                       {/* Submit Button */}
                       <ConfirmationModal
@@ -371,7 +380,7 @@ export default function WasteIllegalDumpingResDetails() {
                           title="Cancel Report"
                           description="Are you sure you want to cancel this report?"
                           actionLabel="Confirm"
-                          onPress={handleSubmitResolution}
+                          onPress={handleSubmitReport}
                       />                     
                   </ScrollView>
               </View>
