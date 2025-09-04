@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-
+import _ScreenLayout from '@/screens/_ScreenLayout';
 import { useAddPersonalCertification } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
 import { usePurposeAndRates, type PurposeAndRate } from "./queries/certificationReqFetchQueries";
@@ -62,11 +62,23 @@ const CertForm: React.FC = () => {
   };
 
   return (
-    <View className="flex-1 bg-gray-50 px-4 pt-8">
-      {/* Loading Overlay */}
-      {addPersonalCert.status === 'pending' && (
-        <View className="absolute inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
-          <View className="bg-white rounded-xl p-6 items-center shadow-lg">
+    <_ScreenLayout
+      customLeftAction={
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Ionicons name="chevron-back" size={20} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerBetweenAction={<Text className="text-[13px]">Submit a Request</Text>}
+      customRightAction={<View className="w-10 h-10" />}
+    >
+      <View className="flex-1 px-5">
+        {/* Loading Overlay */}
+        {addPersonalCert.status === 'pending' && (
+          <View className="absolute inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
+            <View className="bg-white rounded-xl p-6 items-center shadow-lg">
             <ActivityIndicator size="large" color="#00AFFF" />
             <Text className="text-gray-800 font-semibold text-lg mt-4">Submitting...</Text>
             <Text className="text-gray-600 text-sm mt-2 text-center">
@@ -143,7 +155,8 @@ const CertForm: React.FC = () => {
           {addPersonalCert.status === 'pending' ? 'Submitting...' : 'Submit Request'}
         </Text>
       </TouchableOpacity>
-    </View>
+      </View>
+    </_ScreenLayout>
   );
 };
 
