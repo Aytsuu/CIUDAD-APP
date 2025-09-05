@@ -8,6 +8,9 @@ import { RootState } from "@/redux";
 import { useSelector, UseSelector } from "react-redux";
 import { useGetGarbageAcceptedResident } from "../queries/garbagePickupFetchQueries";
 import { router } from "expo-router";
+import { Button } from "@/components/ui/button";
+import { ConfirmationModal } from "@/components/ui/confirmationModal";
+import { CheckCircle } from "lucide-react-native";
 
 export default function ResidentAccepted() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -139,6 +142,20 @@ export default function ResidentAccepted() {
                           )}
                         </View>
                       )}
+                    </View>
+
+                    <View className='flex flex-row justify-end'>
+                      <ConfirmationModal
+                          trigger={
+                              <Button className="bg-[#17AD00] p-2 w-12">
+                                <CheckCircle size={20} color="white" />
+                              </Button>
+                          }
+                          actionLabel="Confirm"
+                          title="Confirm Completion"
+                          description="Would you like to confirm the completion of the task?"
+                          // onPress={() => handleConfirmCompletion(requestDetails?.garb_id)}
+                      />
                     </View>
                   </CardContent>
                 </Card>

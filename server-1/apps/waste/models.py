@@ -1,8 +1,6 @@
 from django.db import models
-from django.db.models import Q, ExpressionWrapper, F, DateTimeField
 from datetime import date, datetime
-from django.core.validators import MaxValueValidator
-from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
 def current_time():
     return datetime.now().time()
@@ -229,8 +227,8 @@ class GarbagePickupRequestFile(models.Model):
 
 
 class Garbage_Pickup_Request(models.Model):
-    garb_id = models.BigAutoField(primary_key=True)
-    garb_location = models.CharField(max_length=20, null=False)
+    garb_id = models.CharField(primary_key=True, max_length=15, editable=False)
+    garb_location = models.CharField(max_length=250, null=False)
     garb_waste_type = models.CharField(max_length=250, null=False)
     garb_pref_date = models.DateField(default=date.today)
     garb_pref_time = models.TimeField(default=current_time)
@@ -262,6 +260,42 @@ class Garbage_Pickup_Request(models.Model):
 
     class Meta:
         db_table = 'garbage_pickup_request'
+
+    def save(self, *args, **kwargs):
+        if not self.garb_id:
+            self.garb_id = self.generate_custom_id()
+        super().save(*args, **kwargs)
+
+    def generate_custom_id(self):
+        current_year = datetime.now().year % 100  
+        year_suffix = f"-{current_year:02d}"
+        
+        try:
+            current_year_ids = Garbage_Pickup_Request.objects.filter(
+                garb_id__endswith=year_suffix
+            )
+            
+            if current_year_ids.exists():
+                max_id = 0
+                for obj in current_year_ids:
+                    try:
+                        numeric_part = obj.garb_id[3:8] 
+                        numeric_value = int(numeric_part)
+                        if numeric_value > max_id:
+                            max_id = numeric_value
+                    except (ValueError, IndexError):
+                        continue
+                
+                next_number = max_id + 1
+            else:
+                next_number = 0
+                
+        except ObjectDoesNotExist:
+            next_number = 0
+        
+        number_part = f"{next_number:05d}"
+        
+        return f"GPR{number_part}{year_suffix}"
 
     def get_resident_name(self):
         return str(self.rp.per) if self.rp and self.rp.per else "Unknown"

@@ -71,15 +71,6 @@ export default function GarbageCancelRequestForm() {
                 name="reason"
                 placeholder="Enter reason"
             />
-
-            {/* <View className="pt-4 pb-8 bg-white border-t border-gray-100 px-4">
-              <Button
-                onPress={handleSubmit(onSubmit)}
-                className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
-              >
-                <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
-              </Button>
-            </View> */}
           </View>
         </View>
       </ScrollView>
