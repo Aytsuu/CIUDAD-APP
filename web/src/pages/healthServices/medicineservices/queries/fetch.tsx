@@ -1,7 +1,26 @@
 
 // // Custom hook (separate file or at the bottom)
-// import { useQuery } from "@tanstack/react-query";
-// import { getMedicineRecords } from "../restful-api/getAPI";
+import { useQuery } from "@tanstack/react-query";
+import { getIndividualMedicineRecords } from "../restful-api/getAPI";
+
+
+
+export const useIndividualMedicineRecords = (
+    pat_id: string,
+    page: number,
+    pageSize: number,
+    search?: string
+  ) => {
+    return useQuery({
+      queryKey: ["individualMedicineRecords", pat_id, page, pageSize, search],
+      queryFn: () => getIndividualMedicineRecords(pat_id, page, pageSize, search),
+      refetchOnMount: true,
+      staleTime: 0,
+    });
+  };
+
+
+
 
 // export const useMedicineRecords = (
 //   search?: string,

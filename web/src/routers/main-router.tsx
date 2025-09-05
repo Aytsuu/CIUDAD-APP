@@ -32,12 +32,10 @@ import { medicineRequest } from "./medicine-request";
 import { forwardedhealthrecord_router } from "./forwardedhealthrecords";
 import { firstaid_router } from "./firstaid-router";
 import { health_schedule_routes } from "./health-schedules-router";
-import { medicalConsultation } from "./med-consultation";
 import { summon_router } from "./summon-router";
 import { withTransition } from '@/helpers/withTransition';
 import { viewprofile_router } from "./Account-settings";
 
-import { ProtectedRoute } from "@/ProtectedRoutes";
 
 export const main_router: RouteObject[] = [
   {
@@ -96,8 +94,6 @@ export const main_router: RouteObject[] = [
       ...announcement_route,
       ...famplanning_route,
       ...healthinventory,
-      ...medicalConsultation,
-      ...medicalConsultation,
       ...doctorRouting,
       ...summon_router,
       ...familyProfilingRoute,

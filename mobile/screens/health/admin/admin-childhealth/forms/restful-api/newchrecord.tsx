@@ -268,12 +268,12 @@ export async function addChildHealthRecord({
 
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { useToastContext } from "@/components/ui/toast";
 
 export const useChildHealthRecordMutation = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
+const { toast } = useToastContext();
   return useMutation({
     mutationFn: addChildHealthRecord,
     onSuccess: (data) => {

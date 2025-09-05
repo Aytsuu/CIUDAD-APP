@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Pill, Syringe, Package, LigatureIcon as Bandage } from "lucide-react";
+import { Pill, Syringe, Package, Bandage } from "lucide-react";
 import VaccinationList from "./TransactionAntigen";
 import FirstAidList from "./TransactionFirstAidList";
 import MedicineTransactionTable from "./TransactionMedicineList";

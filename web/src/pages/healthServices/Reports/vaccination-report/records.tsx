@@ -25,6 +25,18 @@ import { toast } from "sonner";
 import { getOrdinalSuffix } from "@/helpers/getOrdinalSuffix";
 import { MonthlyVaccineRecord } from "./types";
 
+// Age calculation helper function
+const calculateAge = (dob: string, referenceDate: string) => {
+  const birthDate = new Date(dob);
+  const refDate = new Date(referenceDate);
+  let age = refDate.getFullYear() - birthDate.getFullYear();
+  const monthDiff = refDate.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && refDate.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 export default function MonthlyVaccinationDetails() {
   const location = useLocation();
   const state = location.state as {
@@ -146,7 +158,9 @@ export default function MonthlyVaccinationDetails() {
         "Dose Number": record.vachist_doseNo
           ? `${getOrdinalSuffix(Number(record.vachist_doseNo))} dose`
           : "N/A",
-        "Age at Vaccination": record.vachist_age || "N/A",
+        "Age at Vaccination": personalInfo?.per_dob && record.created_at
+          ? calculateAge(personalInfo.per_dob, record.created_at)
+          : "N/A",
         Status: record.vachist_status || "No status provided",
         "Follow-up Date": record.follow_up_visit?.followv_date
           ? new Date(record.follow_up_visit.followv_date).toLocaleDateString()
@@ -193,8 +207,7 @@ export default function MonthlyVaccinationDetails() {
     document.body.innerHTML = printContent.innerHTML;
     window.print();
     document.body.innerHTML = originalContents;
-    window.location.reload(); // <-- simplest but reloads entire page (loses app state)
-
+    window.location.reload();
   };
 
   const tableHeader = [
@@ -217,6 +230,11 @@ export default function MonthlyVaccinationDetails() {
       .filter(Boolean)
       .join(" ");
 
+    // Calculate age using created_at date and patient DOB
+    const age = personalInfo?.per_dob && record.created_at
+      ? calculateAge(personalInfo.per_dob, record.created_at)
+      : "N/A";
+
     return [
       record.date_administered
         ? new Date(record.date_administered).toLocaleDateString()
@@ -229,7 +247,7 @@ export default function MonthlyVaccinationDetails() {
       record.vachist_doseNo
         ? `${getOrdinalSuffix(Number(record.vachist_doseNo))} dose`
         : "N/A",
-      record.vachist_age || "N/A",
+      age, // Use the calculated age instead of record.vachist_age
     ];
   });
 
@@ -331,8 +349,8 @@ export default function MonthlyVaccinationDetails() {
           className=" py-4 px-4"
           id="printable-area"
           style={{
-            width: "full", // Changed from 8.5in to 11in for landscape
-            minHeight: "8.5in", // Changed from 14in to 8.5in for landscape
+            width: "full",
+            minHeight: "8.5in",
             position: "relative",
             margin: "0 auto",
             paddingBottom: "120px",

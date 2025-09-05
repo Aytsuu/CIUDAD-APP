@@ -262,10 +262,10 @@ export default function MyAppointmentsScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-100">
-        <View className="bg-white p-8 rounded-2xl shadow-lg items-center">
+        {/* <View className="bg-white p-8 rounded-2xl shadow-lg items-center"> */}
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text className="mt-4 text-gray-600 font-medium">Loading your appointments...</Text>
-        </View>
+        {/* </View> */}
       </View>
     )
   }

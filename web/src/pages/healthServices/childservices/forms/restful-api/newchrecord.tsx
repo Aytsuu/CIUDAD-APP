@@ -179,8 +179,10 @@ export async function addChildHealthRecord({
     muac: submittedData.nutritionalStatus?.muac?.toString() || "",
     muac_status: submittedData.nutritionalStatus?.muac_status || "",
     created_at: new Date().toISOString(),
-    chvital: chvital_id,
+    // chvital: chvital_id,
     edemaSeverity: submittedData.edemaSeverity || "None",
+    bm: bmi_id,
+    pat:submittedData.pat_id
   });
 
   console.log(submittedData.BFdates);

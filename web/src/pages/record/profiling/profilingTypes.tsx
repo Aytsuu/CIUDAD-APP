@@ -149,6 +149,7 @@ export type BusinessRecord = {
   bus_date_of_registration: string;
   bus_date_verified: string;
   rp: string;
+  br: string;
 }
 
 export type BusinessRespondent = {

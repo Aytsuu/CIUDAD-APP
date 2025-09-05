@@ -4,9 +4,10 @@ import { useState, useMemo } from "react"
 import { View, Text, TextInput, TouchableOpacity, FlatList, ScrollView } from "react-native"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { router } from "expo-router"
-import { ArrowLeft, Search, Loader2, AlertCircle, ChevronRight, Heart, Calendar, Clock, TrendingUp, AlertTriangle, Plus, Filter } from "lucide-react-native"
+import { ArrowLeft, Search, Loader2, AlertCircle, ChevronRight, Heart, Calendar, Clock, TrendingUp, AlertTriangle, Plus, Filter, ChevronLeft } from "lucide-react-native"
 import { getFPRecordsForPatient } from "../admin/admin-familyplanning/GetRequest"
 import { useAuth } from "./useAuth"
+import PageLayout from "@/screens/_PageLayout"
 
 interface FPRecord {
   fprecord: number
@@ -495,26 +496,18 @@ export default function MyFpDashboardScreen() {
   }
 
   return (
+     <PageLayout
+        leftAction={<TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-slate-700" />
+        </TouchableOpacity>}
+        headerTitle={<Text className="text-slate-900 text-[13px]">My Family Planning Records</Text>}
+        rightAction={<View className="w-10 h-10" />}>
     <View className="flex-1 bg-gray-50">
       {/* Enhanced Header */}
-      <View className="bg-blue-600 pt-14  px-4">
-        <View className="flex-row items-center mb-4">
-          <TouchableOpacity 
-            onPress={() => router.back()} 
-            className="w-10 h-10 bg-white/20 rounded-full items-center justify-center mr-3"
-          >
-            <ArrowLeft size={20} color="white" />
-          </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-2xl font-bold text-white">Family Planning</Text>
-            <Text className="text-blue-100 text-sm mt-1">Your health journey</Text>
-          </View>
-        </View>
-        
-        {/* Quick Stats in Header */}
-     
-      </View>
-
+   
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Enhanced Stats */}
         <EnhancedStats records={fpRecords} />
@@ -614,5 +607,6 @@ export default function MyFpDashboardScreen() {
         </View>
       </ScrollView>
     </View>
+  </PageLayout>
   )
 }

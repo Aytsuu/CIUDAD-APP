@@ -13,6 +13,7 @@ import {
 import { getAllPatients, getPatientById, createPatient } from "../api/get-api"
 
 import { submitAnimalBiteReferral } from "./postrequest"
+import { useToastContext } from "@/components/ui/toast"
 
 export const useAllPatients = () => {
   return useQuery({
@@ -21,7 +22,7 @@ export const useAllPatients = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }
-
+const { toast } = useToastContext();
 export const usePatient = (patientId: string) => {
   return useQuery({
     queryKey: ["patient", patientId],

@@ -237,7 +237,7 @@ export default function EditMonthlyRecipientList() {
                 <Combobox
                   options={staffOptions?.formatted || []}
                   value={selectedStaffId}
-                  onChange={setSelectedStaffId}
+                  onChange={(value) => setSelectedStaffId(value || "")}
                   placeholder={
                     isLoading ? "Loading staff..." : "Select staff member"
                   }

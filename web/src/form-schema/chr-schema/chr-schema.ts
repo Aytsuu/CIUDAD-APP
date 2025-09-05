@@ -61,12 +61,15 @@ export const SupplementSchema = z.object({
   supplementSummary: z.string().optional(),
 })
 
+
+
+
 export const VitalSignSchema = z.object({
   date: z.string().min(1, "Date is required"),
   age: z.string().min(1, "Age is required"),
-  ht: heightSchema,
-  wt: weightSchema,
-  temp: temperatureSchema,
+  ht: heightSchema.optional(),
+  wt: weightSchema.optional(),
+  temp: temperatureSchema.optional(),
   follov_description: z.string().optional(),
   notes: z.string().optional(),
   followUpVisit: z.string().optional(),
@@ -75,6 +78,8 @@ export const VitalSignSchema = z.object({
   bm_id: z.string().optional(), // Body measurement ID
   chnotes_id: z.string().optional(), // Child health notes ID
   followv_status:z.string().optional(), // Follow-up visit status
+  remarks: z.string().optional(),
+  is_opt: z.boolean().optional().default(false), // New field to indicate if the entry is optional
 
 })
 
@@ -100,7 +105,7 @@ export const HealthStatusSchema = z.object({
 export const NutritionalStatusSchema = z.object({
   wfa: z.enum(["N", "UW", "SUW", "OW", ""]).optional(), // Weight for Age
   lhfa: z.enum(["N", "ST", "SST", "T", ""]).optional(), // Length/Height for Age
-  wfh: z.enum(["N", "W", "SW", "OW", ""]).optional(), // Weight for Height/Length
+  wfh: z.enum(["N", "W", "SW", "OW", "OB",""]).optional(), // Weight for Height/Length
   muac: z.number().optional(), // Mid-Upper Arm Circumference (manual input)
   muac_status: z.enum(["N", "MAM", "SAM", ""]).optional(), // MUAC status
   

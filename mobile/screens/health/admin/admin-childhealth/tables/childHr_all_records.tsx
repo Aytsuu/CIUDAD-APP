@@ -1,13 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { View, Text, TouchableOpacity, TextInput, FlatList, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, Plus, Filter, User, Phone, MapPin, Calendar, Baby, Heart, Loader2, ChevronLeft } from 'lucide-react-native';
-import { Input } from '@/components/ui/input';
-import { MainLayoutComponent } from '@/components/healthcomponents/mainlayoutcomponent';
-import { SelectLayout } from '@/components/ui/select-layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Search, User, Phone, MapPin, Calendar, Baby, Heart, Loader2, ChevronLeft, ChevronRight, UserCheck, UserPlus, Users } from 'lucide-react-native';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useChildHealthRecords } from '../forms/queries/fetchQueries';
 import { calculateAge } from '@/helpers/ageCalculator';
 import { ChildHealthRecord } from '../forms/muti-step-form/types';
@@ -16,19 +13,15 @@ import PageLayout from '@/screens/_PageLayout';
 
 export default function AllChildHealthRecords() {
   const router = useRouter();
-  const { data: childHealthRecords, isLoading: isFetchingChildRecords } = useChildHealthRecords();
+  const { data: childHealthRecords, isLoading, isFetching, refetch } = useChildHealthRecords();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<ChildHealthRecord[]>([]);
-  const [currentData, setCurrentData] = useState<ChildHealthRecord[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
   const [selectedFilter, setSelectedFilter] = useState('all');
 
   const formatChildHealthData = useCallback((): ChildHealthRecord[] => {
     if (!childHealthRecords) {
-      console.warn('No child health records received from useChildHealthRecords');
       return [];
     }
 
@@ -85,294 +78,409 @@ export default function AllChildHealthRecords() {
         province: ''
       };
 
-      if (!childRecord.chrec_id || !childRecord.pat_id || !childRecord.dob) {
-        console.warn(`Invalid ChildHealthRecord: missing required fields`, {
-          chrec_id: childRecord.chrec_id,
-          pat_id: childRecord.pat_id,
-          dob: childRecord.dob,
-          record,
-        });
-      }
-
       return childRecord;
     });
   }, [childHealthRecords]);
 
-  useEffect(() => {
-    const formattedData = formatChildHealthData();
-    const filtered = formattedData.filter((item) => {
-      const matchesFilter =
-        selectedFilter === 'all' ||
-        (selectedFilter === 'resident' && item.pat_type.toLowerCase() === 'resident') ||
-        (selectedFilter === 'transient' && item.pat_type.toLowerCase() === 'transient');
+  const formattedData = useMemo(() => formatChildHealthData(), [formatChildHealthData]);
 
-      const matchesSearch = (
-        `${item.fname} ${item.lname} ${item.mname} ` +
-        `${item.mother_fname} ${item.mother_lname} ${item.mother_mname} ` +
-        `${item.father_fname} ${item.father_lname} ${item.father_mname} ` +
-        `${item.address} ${item.sitio} ${item.family_no} ${item.pat_type}`
-      ).toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredData = useMemo(() => {
+    let filtered = formattedData;
 
-      return matchesFilter && matchesSearch;
-    });
+    if (searchQuery) {
+      filtered = filtered.filter((item) => {
+        const searchText = (
+          `${item.fname} ${item.lname} ${item.mname} ` +
+          `${item.mother_fname} ${item.mother_lname} ${item.mother_mname} ` +
+          `${item.father_fname} ${item.father_lname} ${item.father_mname} ` +
+          `${item.address} ${item.sitio} ${item.family_no} ${item.pat_type}`
+        ).toLowerCase();
+        return searchText.includes(searchQuery.toLowerCase());
+      });
+    }
 
-    setFilteredData(filtered);
-    setTotalPages(Math.ceil(filtered.length / pageSize));
-    setCurrentPage(1);
-  }, [searchQuery, selectedFilter, pageSize, childHealthRecords, formatChildHealthData]);
+    if (selectedFilter !== 'all') {
+      filtered = filtered.filter((item) => 
+        item.pat_type.toLowerCase() === selectedFilter
+      );
+    }
 
-  useEffect(() => {
+    return filtered;
+  }, [formattedData, searchQuery, selectedFilter]);
+
+  const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setCurrentData(filteredData.slice(startIndex, endIndex));
-  }, [currentPage, pageSize, filteredData]);
+    return filteredData.slice(startIndex, startIndex + pageSize);
+  }, [filteredData, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+
+  const stats = useMemo(() => ({
+    totalChildren: formattedData.length,
+    residentChildren: formattedData.filter((p) => p.pat_type.toLowerCase() === "resident").length,
+    transientChildren: formattedData.filter((p) => p.pat_type.toLowerCase() === "transient").length,
+  }), [formattedData]);
+
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+    setCurrentPage(1);
+  }, [refetch]);
+
+  const handleFilterChange = (value: string) => {
+    setSelectedFilter(value);
+    setCurrentPage(1);
+  };
 
   const formatFullName = (fname: string, mname: string, lname: string) => {
     return `${fname} ${mname ? mname + ' ' : ''}${lname}`.trim();
   };
 
-  const getPatientTypeColor = (type: string) => {
-    const lowerType = type.toLowerCase();
-    return lowerType === 'resident' 
-      ? 'bg-emerald-100 text-emerald-800' 
-      : lowerType === 'transient'
-      ? 'bg-blue-100 text-blue-800'
-      : 'bg-gray-100 text-gray-800';
-  };
+  const filterOptions = [
+    { id: "all", name: "All Types" },
+    { id: "resident", name: "Residents" },
+    { id: "transient", name: "Transients" },
+  ];
 
-  const getSexColor = (sex: string) => {
-    const lowerSex = sex.toLowerCase();
-    return lowerSex === 'male'
-      ? 'bg-blue-100 text-blue-800'
-      : lowerSex === 'female'
-      ? 'bg-rose-100 text-rose-800'
-      : 'bg-gray-100 text-gray-800';
-  };
-
-  const ChildCard = ({ child }: { child: ChildHealthRecord }) => (
-    <TouchableOpacity
-      onPress={() => {
-        if (!child.chrec_id || !child.pat_id || !child.dob) {
-          console.error('Cannot navigate: ChildHealthRecord is missing required fields', {
-            chrec_id: child.chrec_id,
-            pat_id: child.pat_id,
-            dob: child.dob,
-            child,
-          });
-          return;
-        }
-        const params = { ChildHealthRecord: JSON.stringify(child) };
-        router.push({
-          pathname: '/admin/childhealth/individual',
-          params,
-        });
-      }}
-      className="mb-3"
-    >
-      <Card className="bg-white border border-gray-200 rounded-lg shadow-sm">
-        <CardHeader className="pb-2 px-4 pt-3">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center flex-1">
-              <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center mr-3">
-                <Baby size={24} color="#6b7280" />
-              </View>
+  const renderChildItem = ({ item: child }: { item: ChildHealthRecord }) => (
+    <View className="px-4 mb-3">
+      <Card className="bg-white border border-slate-200">
+        <CardContent className="p-0">
+          <TouchableOpacity
+            onPress={() => {
+              if (!child.chrec_id || !child.pat_id || !child.dob) {
+                console.error('Cannot navigate: ChildHealthRecord is missing required fields');
+                return;
+              }
+              const params = { ChildHealthRecord: JSON.stringify(child) };
+              router.push({
+                pathname: '/admin/childhealth/individual',
+                params,
+              });
+            }}
+            className="p-4"
+          >
+            {/* Header */}
+            <View className="flex-row items-center justify-between mb-3">
               <View className="flex-1">
-                <Text className="text-base font-semibold text-gray-900" numberOfLines={1}>
+                <Text className="text-lg font-semibold mb-1">
                   {formatFullName(child.fname, child.mname, child.lname)}
                 </Text>
-                <View className="flex-row items-center mt-1 gap-2">
-                  <Badge className={`px-2 py-1 ${getSexColor(child.sex)}`}>
-                    <Text className="text-xs font-medium">{child.sex}</Text>
-                  </Badge>
-                  <Badge className={`px-2 py-1 ${getPatientTypeColor(child.pat_type)}`}>
-                    <Text className="text-xs font-medium">{child.pat_type}</Text>
-                  </Badge>
+                <View className="flex-row items-center">
+                  <Text 
+                    // variant={child.pat_type.toLowerCase() === "transient" ? "secondary" : "default"}
+                    className="mr-2"
+                  >
+                    <Text className="text-xs">{child.pat_type}</Text>
+                  </Text>
+                  <Text 
+                    // variant={child.sex.toLowerCase() === "male" ? "default" : "secondary"}
+                    className="mr-2"
+                  >
+                    <Text className="text-xs">{child.sex}</Text>
+                  </Text>
+                  <Text className="text-xs text-slate-500">
+                    {/* Family #{child.family_no} */}
+                  </Text>
+                </View>
+              </View>
+              <View className="w-8 h-8 bg-slate-100 rounded-full items-center justify-center">
+                <ChevronRight size={16} color="#64748b" />
+              </View>
+            </View>
+
+            {/* Child Info */}
+            <View className="flex-row justify-between mb-3">
+              <View className="flex-1 mr-3">
+                <Text className="text-xs text-slate-400 uppercase tracking-wide mb-1">
+                  Age
+                </Text>
+                <Text className="text-sm text-slate-700 font-medium">
+                  {child.age} years old
+                </Text>
+              </View>
+              <View className="flex-1 ml-3">
+                <Text className="text-xs text-slate-400 uppercase tracking-wide mb-1">
+                  Checkups
+                </Text>
+                <Text className="text-sm text-slate-700 font-medium">
+                  {child.health_checkup_count} visits
+                </Text>
+              </View>
+            </View>
+
+            {/* Parents Section */}
+            <View className="bg-slate-50 rounded-lg p-3 mb-3">
+              <Text className="text-xs text-slate-400 uppercase tracking-wide mb-2">
+                Parents
+              </Text>
+              <View className="space-y-1">
+                <View className="flex-row items-center">
+                  <Text className="text-xs text-slate-500 w-12">Mother:</Text>
+                  <Text className="text-sm text-slate-700 font-medium flex-1">
+                    {formatFullName(child.mother_fname, child.mother_mname, child.mother_lname) || 'Not provided'}
+                  </Text>
+                </View>
+                {child.mother_contact && (
+                  <View className="flex-row items-center">
+                    <Phone size={12} color="#64748b" />
+                    <Text className="text-xs text-slate-500 ml-1">{child.mother_contact}</Text>
+                  </View>
+                )}
+                <View className="flex-row items-center">
+                  <Text className="text-xs text-slate-500 w-12">Father:</Text>
+                  <Text className="text-sm text-slate-700 font-medium flex-1">
+                    {formatFullName(child.father_fname, child.father_mname, child.father_lname) || 'Not provided'}
+                  </Text>
                 </View>
               </View>
             </View>
-          </View>
-        </CardHeader>
-        
-        <CardContent className="px-4 pb-4 pt-2 space-y-3">
-          <View className="space-y-2">
-            <View className="flex-row items-center">
-              <Calendar size={16} className="text-gray-400 mr-2" />
-              <Text className="text-sm text-gray-600 flex-1">
-                Age: <Text className="font-medium text-gray-900">{child.age}</Text>
-              </Text>
-              <Text className="text-xs text-gray-500">
-                {child.dob ? new Date(child.dob).toLocaleDateString() : 'N/A'}
-              </Text>
+
+            {/* Birth Info */}
+            <View className="flex-row justify-between mb-3">
+              <View className="flex-1 mr-3">
+                <Text className="text-xs text-slate-400 uppercase tracking-wide mb-1">
+                  Birth Weight
+                </Text>
+                <Text className="text-sm text-slate-700 font-medium">
+                  {child.birth_weight || 'N/A'} kg
+                </Text>
+              </View>
+              <View className="flex-1 ml-3">
+                <Text className="text-xs text-slate-400 uppercase tracking-wide mb-1">
+                  Feeding Type
+                </Text>
+                <Text className="text-sm text-slate-700 font-medium">
+                  {child.type_of_feeding}
+                </Text>
+              </View>
             </View>
-            
-            <View className="flex-row items-start">
-              <MapPin size={16} className="text-gray-400 mr-2 mt-0.5" />
-              <Text className="text-sm text-gray-600 flex-1" numberOfLines={2}>
+
+            {/* Address & Date */}
+            <View className="pt-3 border-t border-slate-100">
+              <Text className="text-xs text-slate-400 uppercase tracking-wide mb-1">
+                Address
+              </Text>
+              <Text className="text-sm text-slate-700 mb-2" numberOfLines={2}>
                 {child.address}
               </Text>
-            </View>
-
-            <View className="flex-row items-center">
-              <Heart size={16} className="text-gray-400 mr-2" />
-              <Text className="text-sm text-gray-600">
-                Checkups: <Text className="font-medium text-gray-900">{child.health_checkup_count}</Text>
-              </Text>
-              <Text className="text-sm text-gray-600 ml-4">
-                Family #: <Text className="font-medium text-gray-900">{child.family_no}</Text>
+              <Text className="text-xs text-slate-500">
+                Born: {child.dob ? new Date(child.dob).toLocaleDateString() : 'N/A'}
               </Text>
             </View>
-          </View>
-
-          <View className="bg-gray-50 rounded-md p-3 space-y-2">
-            <Text className="text-sm font-semibold text-gray-800">Parents</Text>
-            
-            <View className="flex-row items-center">
-              <User size={14} className="text-rose-500 mr-2" />
-              <Text className="text-sm text-gray-600 flex-1">
-                <Text className="font-medium text-gray-800">
-                  {formatFullName(child.mother_fname, child.mother_mname, child.mother_lname) || 'Not provided'}
-                </Text>
-              </Text>
-            </View>
-            {child.mother_contact && (
-              <View className="flex-row items-center ml-5">
-                <Phone size={14} className="text-gray-400 mr-2" />
-                <Text className="text-sm text-gray-500">{child.mother_contact}</Text>
-              </View>
-            )}
-
-            <View className="flex-row items-center">
-              <User size={14} className="text-blue-500 mr-2" />
-              <Text className="text-sm text-gray-600 flex-1">
-                <Text className="font-medium text-gray-800">
-                  {formatFullName(child.father_fname, child.father_mname, child.father_lname) || 'Not provided'}
-                </Text>
-              </Text>
-            </View>
-            {child.father_contact && (
-              <View className="flex-row items-center ml-5">
-                <Phone size={14} className="text-gray-400 mr-2" />
-                <Text className="text-sm text-gray-500">{child.father_contact}</Text>
-              </View>
-            )}
-          </View>
-
-          <View className="flex-row justify-between bg-gray-50 rounded-md p-3">
-            <View className="items-center flex-1">
-              <Text className="text-xs text-gray-600">Weight</Text>
-              <Text className="text-sm font-semibold text-gray-900">{child.birth_weight || 'N/A'} kg</Text>
-            </View>
-            <View className="items-center flex-1 border-l border-gray-200">
-              <Text className="text-xs text-gray-600">Height</Text>
-              <Text className="text-sm font-semibold text-gray-900">{child.birth_height || 'N/A'} cm</Text>
-            </View>
-            <View className="items-center flex-1 border-l border-gray-200">
-              <Text className="text-xs text-gray-600">Feeding</Text>
-              <Text className="text-sm font-semibold text-gray-900" numberOfLines={1}>{child.type_of_feeding}</Text>
-            </View>
-          </View>
+          </TouchableOpacity>
         </CardContent>
       </Card>
-    </TouchableOpacity>
+    </View>
   );
 
-  const LoadMoreButton = () => {
-    if (currentPage >= totalPages) return null;
-    
-    return (
-      <TouchableOpacity
-        onPress={() => setCurrentPage(prev => prev + 1)}
-        className="mt-4 mb-6"
-      >
-        <Button
-          variant="outline"
-          className="border-gray-200 bg-white rounded-lg"
-        >
-          <Text className="text-gray-700 font-medium">Load More</Text>
-          <Text className="text-xs text-gray-500 mt-1">
-            Showing {currentData.length} of {filteredData.length} records
-          </Text>
-        </Button>
-      </TouchableOpacity>
-    );
-  };
-
-  return (
-    <PageLayout
-          leftAction={
-            <TouchableOpacity
-              onPress={() => router.back()}
-              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-            >
-              <ChevronLeft size={24} className="text-gray-700" />
-            </TouchableOpacity>
-          }
-          headerTitle={<Text className="text-gray-900 text-[13px]">Child Health Records</Text>}
-          rightAction={<View className="w-10 h-10" />}
-        >
-      <View className="px-4 pt-4 pb-2 bg-white">
-        <View className="flex-row items-center gap-2 mb-4">
+  const renderHeader = () => (
+    <View>
+      {/* Stats Cards */}
+      <View className="px-4 py-4 ">
+        <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input
-              placeholder="Search records..."
-              className="bg-gray-50 border-gray-200 rounded-lg pl-10 text-sm"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            <Search size={18} className="absolute left-3 top-3 text-gray-400" />
+            <Card className="bg-blue-100 border-blue-200">
+              <CardContent className="p-4">
+                <View className="flex-row items-center">
+                  <Users size={24} color="#3b82f6" />
+                  <View className="ml-3">
+                    <Text className="text-2xl font-bold text-blue-900">
+                      {stats.totalChildren}
+                    </Text>
+                    <Text className="text-sm text-blue-700">Total</Text>
+                  </View>
+                </View>
+              </CardContent>
+            </Card>
           </View>
-          <SelectLayout
-            placeholder="Filter"
-            label=""
-            className="bg-gray-50 border-gray-200 rounded-lg w-24 text-sm"
-            options={filterOptions}
-            value={selectedFilter}
-            onChange={setSelectedFilter}
-          />
-        </View>
-
-        <View className="flex-row items-center justify-between">
-          <Text className="text-sm text-gray-500">
-            {filteredData.length} record{filteredData.length !== 1 ? 's' : ''} found
-          </Text>
-          {selectedFilter !== 'all' && (
-            <Badge className="bg-gray-100 text-gray-700 px-2 py-1">
-              <Text className="text-xs font-medium">{selectedFilter}</Text>
-            </Badge>
-          )}
+          <View className="flex-1">
+            <Card className="bg-green-100 border-green-200">
+              <CardContent className="p-4">
+                <View className="flex-row items-center">
+                  <UserCheck size={24} color="#059669" />
+                  <View className="ml-3">
+                    <Text className="text-2xl font-bold text-green-900">
+                      {stats.residentChildren}
+                    </Text>
+                    <Text className="text-sm text-green-700">Residents</Text>
+                  </View>
+                </View>
+              </CardContent>
+            </Card>
+          </View>
+          <View className="flex-1">
+            <Card className="bg-amber-100 border-amber-200">
+              <CardContent className="p-4">
+                <View className="flex-row items-center">
+                  <UserPlus size={24} color="#d97706" />
+                  <View className="ml-3">
+                    <Text className="text-2xl font-bold text-amber-900">
+                      {stats.transientChildren}
+                    </Text>
+                    <Text className="text-sm text-amber-700">Transients</Text>
+                  </View>
+                </View>
+              </CardContent>
+            </Card>
+          </View>
         </View>
       </View>
 
-      <ScrollView
-        className="flex-1 px-4"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
-      >
-        {isFetchingChildRecords ? (
-          <View className="flex-1 items-center justify-center py-20">
-            <Loader2 size={24} className="text-gray-400 animate-spin mb-2" />
-            <Text className="text-sm text-gray-500">Loading records...</Text>
-          </View>
-        ) : currentData.length === 0 ? (
-          <View className="flex-1 items-center justify-center py-20">
-            <Baby size={40} className="text-gray-300 mb-3" />
-            <Text className="text-base font-medium text-gray-600 mb-1">No Records Found</Text>
-            <Text className="text-sm text-gray-500 text-center px-8">
-              {searchQuery || selectedFilter !== 'all' 
-                ? 'Adjust your search or filter criteria' 
-                : 'Add a new child health record to begin'
-              }
-            </Text>
-          </View>
-        ) : (
-          <>
-            {currentData.map((child) => (
-              <ChildCard key={child.chrec_id} child={child} />
-            ))}
-            <LoadMoreButton />
-          </>
-        )}
-      </ScrollView>
-        </PageLayout>
+      {/* Search & Filter */}
+      <View className="px-4 mb-4">
+        {/* Search Bar */}
+        <Card className="mb-3 bg-white border-slate-300">
+          <CardContent className="p-0">
+            <View className="flex-row items-center px-4 rounded-xl py-3">
+              <Search size={18} color="#94a3b8" />
+              <TextInput
+                className="flex-1 text-slate-900 ml-3 "
+                placeholder="Search children..."
+                placeholderTextColor="#94a3b8"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+          </CardContent>
+        </Card>
+
+        {/* Filter */}
+        <Card className="bg-white border-slate-200">
+          <CardContent className="p-2">
+            <View className="flex-row justify-between">
+              {filterOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.id}
+                  onPress={() => handleFilterChange(option.id)}
+                  className={`flex-1 items-center py-2 rounded-lg mx-1 ${
+                    selectedFilter === option.id ? "bg-blue-600" : "bg-slate-50"
+                  }`}
+                >
+                  <Text
+                    className={`text-sm font-semibold ${
+                      selectedFilter === option.id ? "text-white" : "text-slate-700"
+                    }`}
+                  >
+                    {option.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </CardContent>
+        </Card>
+      </View>
+    </View>
+  );
+
+  const renderEmpty = () => (
+    <View className="px-4">
+      <Card className="bg-white border-slate-200">
+        <CardContent className="items-center justify-center py-12">
+          <Baby size={48} color="#94a3b8" />
+          <Text className="text-lg font-medium text-slate-900 mt-4">
+            No Records Found
+          </Text>
+          <Text className="text-slate-500 text-center mt-2">
+            {searchQuery || selectedFilter !== 'all' 
+              ? 'Adjust your search or filter criteria' 
+              : 'Add a new child health record to begin'
+            }
+          </Text>
+        </CardContent>
+      </Card>
+    </View>
+  );
+
+  const renderFooter = () => {
+    if (filteredData.length === 0 || totalPages <= 1) return null;
+    
+    return (
+      <View className="px-4 mb-4">
+        <Card className="bg-white border-slate-200">
+          <CardContent className="p-4">
+            <View className="flex-row items-center justify-between">
+              <Button
+                onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                variant={currentPage === 1 ? "secondary" : "default"}
+                className={currentPage === 1 ? "bg-slate-200" : "bg-blue-600"}
+              >
+                <Text
+                  className={`font-medium ${
+                    currentPage === 1 ? "text-slate-400" : "text-white"
+                  }`}
+                >
+                  Previous
+                </Text>
+              </Button>
+
+              <Text className="text-slate-600 font-medium">
+                Page {currentPage} of {totalPages}
+              </Text>
+
+              <Button
+                onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                variant={currentPage === totalPages ? "secondary" : "default"}
+                className={currentPage === totalPages ? "bg-slate-200" : "bg-blue-600"}
+              >
+                <Text
+                  className={`font-medium ${
+                    currentPage === totalPages ? "text-slate-400" : "text-white"
+                  }`}
+                >
+                  Next
+                </Text>
+              </Button>
+            </View>
+          </CardContent>
+        </Card>
+      </View>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-slate-50 items-center justify-center">
+        <Loader2 size={24} color="#3b82f6" />
+        <Text className="text-slate-600 mt-3">Loading child health records...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <PageLayout
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-slate-700" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-slate-900 text-[13px]">Child Health Records</Text>}
+      rightAction={<View className="w-10 h-10" />}
+    >
+      <View className="flex-1 bg-slate-50">
+        <FlatList
+          data={paginatedData}
+          renderItem={renderChildItem}
+          keyExtractor={(item) => item.chrec_id}
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={renderEmpty}
+          ListFooterComponent={renderFooter}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isFetching}
+              onRefresh={handleRefresh}
+              tintColor="#3b82f6"
+              colors={["#3b82f6"]}
+            />
+          }
+        />
+      </View>
+    </PageLayout>
   );
 }

@@ -92,14 +92,29 @@ class GetMedConCountView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+
 class PendingMedConCountView(APIView):
     def get(self, request, *args, **kwargs):
-        count = (
+        # Count pending medical consultations
+        med_con_count = (
             MedicalConsultation_Record.objects
             .filter(medrec_status="pending")
             .count()
         )
-        return Response({"count": count})
+        
+        # Count child health check-ups (where status is "check-up")
+        child_checkup_count = (
+            ChildHealth_History.objects
+            .filter(status="check-up")
+            .count()
+        )
+        
+        # Total count
+        total_count = med_con_count + child_checkup_count
+        
+        return Response({
+            "count": total_count
+        })
     
 class MedicalConsultationTotalCountAPIView(APIView):
     def get(self, request):
@@ -190,6 +205,7 @@ class CreateMedicalConsultationView(APIView):
                 bm=bm,
                 find=None,
                 medrec_chief_complaint=data["medrec_chief_complaint"],
+                
                 staff=staff,
             )
 
@@ -297,6 +313,9 @@ class SoapFormSubmissionView(APIView):
 
 
 
+
+
+
 # CHILD HEALTH SOAP FORM
 class ChildHealthSoapFormSubmissionView(APIView):
     @transaction.atomic
@@ -304,7 +323,6 @@ class ChildHealthSoapFormSubmissionView(APIView):
         try:
             data = request.data
             staff_id = data.get("staff_id")  # can be null
-            medrec_id = data.get("medrec_id")  # can be null
             patrec_id = data.get("patrec_id")  # required
             chhist_id = data.get("chhist_id")  # can be null
             chvital_id = data.get("chvital_id")  # can be null

@@ -162,18 +162,18 @@ class MedicineRecordSerializer(serializers.ModelSerializer):
 class Medicine_FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medicine_File
-        fields = '__all__'
+        fields = '_all_'
         extra_kwargs = {
             'medrec': {'required': False, 'default': None},
-            'medreqitem': {'required': False, 'default': None},
+            'medreq': {'required': False, 'default': None},
             'medf_url': {'read_only': True},
             'medf_path': {'read_only': True},
         }
     
-    def _upload_files(self, files, medrec_instance=None, medreqitem_instance=None):
+    def _upload_files(self, files, medrec_instance=None, medreq_instance=None):
         """Upload multiple files for medicine record or request item"""
-        if not medrec_instance and not medreqitem_instance:
-            raise serializers.ValidationError({"error": "Either medrec_instance or medreqitem_instance is required"})
+        if not medrec_instance and not medreq_instance:
+            raise serializers.ValidationError({"error": "Either medrec_instance or medreq_instance is required"})
         
         med_files = []
         
@@ -189,7 +189,7 @@ class Medicine_FileSerializer(serializers.ModelSerializer):
                 medf_type=file_data['type'],
                 medf_path=f"medicine/{file_data['name']}",  # Fixed path format
                 medrec=medrec_instance,
-                medreqitem=medreqitem_instance,
+                medreq=medreq_instance,
                 created_at=timezone.now(),
             )
             

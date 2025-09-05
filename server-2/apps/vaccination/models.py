@@ -5,6 +5,7 @@ from apps.patientrecords.models import VitalSigns
 from apps.patientrecords.models import FollowUpVisit
 from apps.administration.models import Staff
 
+
 class VaccinationRecord(models.Model):
     vacrec_id = models.BigAutoField(primary_key=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='vaccination_records',db_column='patrec_id')

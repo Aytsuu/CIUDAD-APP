@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { Pill, Syringe, Package, Bandage } from "lucide-react";
 import FirstAidList from "./FirstAidList";
 import MedicineList from "./MedicineList";
@@ -10,7 +11,6 @@ import AntigenList from "./AntigenList";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useMedicinelistCount } from "../queries/medicine/MedicineFetchQueries";
 import { useCommoditylistCount } from "../queries/commodity/CommodityFetchQueries";
-import { Card } from "@/components/ui/card";
 
 const TabConfig = [
   {

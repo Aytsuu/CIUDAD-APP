@@ -2,12 +2,15 @@
 
 import React, { useMemo } from "react"
 import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
-import { User, FileText, AlertCircle, Package, Clock, Shield, Activity, ArrowLeft } from "lucide-react-native"
+import { User, FileText, AlertCircle, Package, Clock, Shield, Activity, ArrowLeft, ChevronLeft } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
 import { format } from "date-fns"
 import { useAuth } from "../familyplanning/useAuth"
 import { useAnimalBitePatientHistory, useAnimalBitePatientSummary } from "./db-request/get-query"
+import { getPatientRecordsByPatId } from "./api/get-api"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import PageLayout from "@/screens/_PageLayout"
 
 // Remove the mock API function and use your actual API call
 type PatientRecordDetail = {
@@ -34,15 +37,19 @@ type PatientRecordDetail = {
 
 export default function MyAnimalBiteRecordsScreen() {
   const { user } = useAuth()
-  
-  // Use your actual API hook for the logged-in user
+  const queryClient = useQueryClient()
+
   const { 
     data: records = [], 
     isLoading, 
     isError, 
     error, 
-    refetch 
-  } = useAnimalBitePatientHistory(user?.id)
+    refetch, 
+  } = useQuery<PatientRecordDetail[],Error>({
+    queryKey: ["myAnimalbiteRecord", user?.id],
+    queryFn: () => getPatientRecordsByPatId(user?.id || ""),
+    enabled: !!user?.id,
+  })
 
   const [refreshing, setRefreshing] = React.useState(false)
 
@@ -109,10 +116,10 @@ export default function MyAnimalBiteRecordsScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-blue-50">
-        <View className="bg-white p-8 rounded-2xl items-center shadow-sm">
+        {/* <View className="bg-white p-8 rounded-2xl items-center shadow-sm"> */}
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text className="mt-4 text-gray-600 font-medium">Loading your animal bite records...</Text>
-        </View>
+        {/* </View> */}
       </View>
     )
   }
@@ -146,19 +153,17 @@ export default function MyAnimalBiteRecordsScreen() {
   }
 
   return (
-    <View className="flex-1 bg-blue-50">
-      {/* Header */}
-      <View className="bg-white shadow-sm">
-        <View className="flex-row items-center p-4 pt-12">
-          <TouchableOpacity onPress={() => router.back()} className="p-2">
-            <ArrowLeft size={24} color="#333" />
-          </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-xl font-bold text-gray-800">My Animal Bite Records</Text>
-          </View>
-        </View>
-      </View>
-
+       <PageLayout
+            leftAction={<TouchableOpacity
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
+            >
+              <ChevronLeft size={24} className="text-slate-700" />
+            </TouchableOpacity>}
+            headerTitle={<Text className="text-slate-900 text-[13px]">My Animal Bite Records</Text>}
+            rightAction={<View className="w-10 h-10" />}>
+    <View className="flex-1 ">
+ 
       <ScrollView className="flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {/* Patient Information Card */}
         {patientInfo && (
@@ -222,11 +227,11 @@ export default function MyAnimalBiteRecordsScreen() {
 
         {/* Records Summary */}
         <View className="px-4 mb-4">
-          <View className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <View className="flex-row items-center mb-4">
+          <View className="p-6">
+            {/* <View className="flex-row bg items-center mb-4">
               <Activity size={24} color="#3B82F6" />
               <Text className="text-xl font-bold text-gray-800 ml-3">My Records Summary</Text>
-            </View>
+            </View> */}
             <View className="flex-row justify-between">
               <View className="items-center">
                 <Text className="text-3xl font-bold text-blue-600">{records?.length || 0}</Text>
@@ -252,7 +257,7 @@ export default function MyAnimalBiteRecordsScreen() {
         <View className="px-4 pb-6">
           <View className="flex-row items-center mb-4 mt-5">
             <FileText size={24} color="#374151" />
-            <Text className="text-xl font-bold text-gray-800 ml-3">My Records History</Text>
+            <Text className="text-xl font-bold text-gray-800 ml-3">My Referrals History</Text>
           </View>
 
           {records && records.length > 0 ? (
@@ -343,5 +348,6 @@ export default function MyAnimalBiteRecordsScreen() {
         </View>
       </ScrollView>
     </View>
+  </PageLayout>
   )
 }

@@ -1,4 +1,3 @@
-// request-page.tsx
 import { useState, useEffect, useMemo } from "react"
 import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from "react-native"
 import { router } from "expo-router"
@@ -9,107 +8,83 @@ import PageLayout from "@/screens/_PageLayout"
 
 // Updated type definition to match the API response
 export type MedicineDisplay = {
-  type: string;
-  id: number;
-  batchNumber: string;
-  category: string;
-  item: {
-    medicineName: string;
-    dosage: number;
-    dsgUnit: string;
-    form: string;
-  };
-  qty: {
-    qty: number;
-    pcs: number;
-  };
-  minv_qty_unit: string;
-  administered: string;
-  wasted: string;
-  availableStock: number;
-  expiryDate: string;
-  inv_id: string;
   med_id: string;
-  minv_id: number;
-  qty_number: number;
-  isArchived: boolean;
-  created_at: string;
-  isExpired: boolean;
-  isNearExpiry: boolean;
-  isLowStock: boolean;
-  isOutOfStock: boolean;
+  med_name: string;
+  med_type: string;
+  total_qty_available: number;
+  inventory_items: {
+    minv_id: number;
+    dosage: string;
+    form: string;
+    quantity_available: number;
+    quantity_unit: string;
+    expiry_date: string;
+    inventory_type: string;
+  }[];
+  status: string;
 };
 
 export default function MedicineRequestScreen() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [showCategories, setShowCategories] = useState(false)
-  const [pageSize, setPageSize] = useState<number>(10);
-  const [currentPage, setCurrentPage] = useState<number>(1);
 
   const { cartItems } = useGlobalCartState();
 
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   // Fetch medicines using react-query
-  const { data: fetchedMedicines, isLoading, isError, error } = useMedicines(currentPage, pageSize, searchQuery);
+  const { data: fetchedMedicines, isLoading, isError, error } = useMedicines(currentPage,pageSize,searchQuery);
 
-  // Process and filter medicines
+  // Process and filter medicines`
   const medicines = useMemo(() => {
-    if (!fetchedMedicines || !fetchedMedicines.results) return [];
+    if (!fetchedMedicines || !fetchedMedicines.medicines) return [];
 
     const lowercasedQuery = searchQuery.toLowerCase();
-    return fetchedMedicines.results.filter((medicine: MedicineDisplay) => {
+    
+    return fetchedMedicines.medicines.filter((medicine: MedicineDisplay) => {
       const matchesSearch =
-        (medicine.item.medicineName && medicine.item.medicineName.toLowerCase().includes(lowercasedQuery)) ||
-        (medicine.category && medicine.category.toLowerCase().includes(lowercasedQuery)) ||
-        (medicine.item.form && medicine.item.form.toLowerCase().includes(lowercasedQuery)) ||
-        (medicine.item.dosage != null && medicine.item.dsgUnit &&
-          `${medicine.item.dosage} ${medicine.item.dsgUnit}`.toLowerCase().includes(lowercasedQuery));
+        (medicine.med_name && medicine.med_name.toLowerCase().includes(lowercasedQuery)) ||
+        (medicine.med_type && medicine.med_type.toLowerCase().includes(lowercasedQuery)) ||
+        (medicine.inventory_items[0]?.form && medicine.inventory_items[0].form.toLowerCase().includes(lowercasedQuery)) ||
+        (medicine.inventory_items[0]?.dosage && medicine.inventory_items[0].dosage.toLowerCase().includes(lowercasedQuery));
 
-      const matchesCategory =
-        selectedCategory === "All" || (medicine.category && medicine.category === selectedCategory);
+      const matchesCategory = selectedCategory === "All";
 
       return matchesSearch && matchesCategory;
     });
   }, [fetchedMedicines, searchQuery, selectedCategory]);
 
-  // Extract unique categories for filter dropdown
+  // Extract unique categories for filter dropdown (simplified since we don't have categories in new API)
   const categories = useMemo(() => {
-    if (!fetchedMedicines || !fetchedMedicines.results) return ["All"];
-    
-    const uniqueCategories = Array.from(
-      new Set(
-        fetchedMedicines.results
-          .filter((med: MedicineDisplay) => med.category && typeof med.category === "string")
-          .map((med: MedicineDisplay) => med.category)
-      )
-    );
-    return ["All", ...uniqueCategories];
-  }, [fetchedMedicines]);
+    return ["All"]; // Simplified since the new API doesn't provide categories
+  }, []);
 
   // Handle press on a medicine item
   const handleMedicinePress = (medicine: MedicineDisplay) => {
     // Check if medicine is out of stock
-    if (medicine.availableStock <= 0) {
+    if (medicine.total_qty_available <= 0) {
       return; // Do nothing if out of stock
     }
 
-    const medicineString = JSON.stringify({
-      id: medicine.med_id,
-      name: medicine.item.medicineName,
-      category: medicine.category,
-      medicine_type: medicine.item.form,
-      dosage: medicine.item.dosage && medicine.item.dsgUnit 
-        ? `${medicine.item.dosage} ${medicine.item.dsgUnit}`.trim() 
-        : "Not specified",
-      availableStock: medicine.availableStock,
-    });
+    // Get the first inventory item for details
+    const firstInventory = medicine.inventory_items[0];
     
+    const medicineString = JSON.stringify({
+      minv_id: firstInventory?.minv_id, // Add minv_id (numeric)
+      med_id: medicine.med_id,
+      name: medicine.med_name,
+      med_type: medicine.med_type,
+      dosage: firstInventory?.dosage || "Not specified",
+      availableStock: medicine.total_qty_available,
+    });
     
     router.push({
       pathname: "/medicine-request/details",
       params: { medicineData: medicineString },
     });
   };
+
 
   if (isLoading) {
     return (
@@ -219,74 +194,86 @@ export default function MedicineRequestScreen() {
         <View className="flex-1 bg-white ">
           <Text className="ml-4">Available Medicines</Text>
           <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-            {medicines.length > 0 ? (
-              <View className="px-4 py-3 gap-2">
-                {medicines.map((medicine: MedicineDisplay) => {
-                  // Check if medicine is out of stock
-                  const isOutOfStock = medicine.availableStock <= 0;
-                  console.log("Stocks:", medicine.availableStock)
-                  return (
-                    <TouchableOpacity
-                      key={medicine.med_id}
-                      onPress={() => handleMedicinePress(medicine)}
-                      className={`flex-row items-center justify-between p-4 mb-3 rounded-lg shadow-sm border ${isOutOfStock
-                          ? "bg-gray-100 border-gray-300 opacity-70"
-                          : "bg-white border-gray-300"
-                        }`}
-                      disabled={isOutOfStock}
-                    >
-                      <View className="flex-row items-center flex-1">
-                        <Pill size={24} color={isOutOfStock ? "#9CA3AF" : "blue"} />
-                        <View className="flex-1 ml-4">
-                          <View className="flex-row items-center justify-between">
-                            <Text className={`text-lg font-semibold ${isOutOfStock ? "text-gray-500" : "text-gray-900"
-                              }`}>
-                              {medicine.item.medicineName || "Unknown Medicine"}
-                            </Text>
-                            {isOutOfStock && (
-                              <View className="flex-row items-center bg-red-100 px-2 py-1 rounded-full">
-                                <Ban size={14} color="#EF4444" />
-                                <Text className="text-red-700 text-xs font-medium ml-1">Out of Stock</Text>
-                              </View>
-                            )}
-                          </View>
-                          <View className="flex-row items-center justify-between mt-1">
-                            <Text className={`text-sm font-medium ${isOutOfStock ? "text-gray-400" : "text-gray-700"
-                              }`}>
-                              {medicine.category || "Unknown Category"}
-                            </Text>
-                            {!isOutOfStock && (
-                              <Text className="text-green-600 text-sm font-medium">
-                                {/* In Stock: {medicine.availableStock} */}
-                              </Text>
-                            )}
-                          </View>
-                          <Text className={`text-sm mt-1 ${isOutOfStock ? "text-gray-400" : "text-gray-600"
-                            }`}>
-                            Type: {medicine.item.form || "Not specified"}
-                          </Text>
-                          {medicine.item.dosage && medicine.item.dsgUnit && (
-                            <Text className={`text-sm mt-1 ${isOutOfStock ? "text-gray-400" : "text-gray-600"
-                              }`}>
-                              Dosage: {medicine.item.dosage} {medicine.item.dsgUnit}
-                            </Text>
-                          )}
-                        </View>
-                      </View>
-                      {!isOutOfStock && (
-                        <View className="ml-4">
-                          <ChevronDown
-                            size={20}
-                            color="#9CA3AF"
-                            style={{ transform: [{ rotate: "270deg" }] }}
-                          />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
+           {medicines.length > 0 ? (
+  <View className="px-4 py-3 gap-2">
+    {medicines.map((medicine: MedicineDisplay) => {
+      // Check if medicine is out of stock
+      const isOutOfStock = medicine.total_qty_available <= 0;
+      
+      return (
+        <TouchableOpacity
+          key={medicine.med_id}
+          onPress={() => handleMedicinePress(medicine)}
+          className={`flex-row items-center justify-between p-4 mb-3 rounded-lg shadow-sm border ${
+            isOutOfStock
+              ? "bg-gray-100 border-gray-300 opacity-70"
+              : "bg-white border-gray-300"
+          }`}
+          disabled={isOutOfStock}
+        >
+          <View className="flex-row items-center flex-1">
+            <Pill size={24} color={isOutOfStock ? "#9CA3AF" : "blue"} />
+            <View className="flex-1 ml-4">
+              <View className="flex-row items-center justify-between">
+                <Text className={`text-lg font-semibold ${
+                  isOutOfStock ? "text-gray-500" : "text-gray-900"
+                }`}>
+                  {medicine.med_name || "Unknown Medicine"}
+                </Text>
+                {isOutOfStock && (
+                  <View className="flex-row items-center bg-red-100 px-2 py-1 rounded-full">
+                    <Ban size={14} color="#EF4444" />
+                    <Text className="text-red-700 text-xs font-medium ml-1">Out of Stock</Text>
+                  </View>
+                )}
               </View>
-            ) : (
+              
+              <View className="flex-row items-center justify-between mt-1">
+                <Text className={`text-sm font-medium ${
+                  isOutOfStock ? "text-gray-400" : "text-gray-700"
+                }`}>
+                  {medicine.med_type || "Unknown Type"}
+                </Text>
+                {!isOutOfStock && (
+                  <Text className="text-green-600 text-sm font-medium">
+                    {/* In Stock: {medicine.total_qty_available} */}
+                    {/* Medicine type: {medicine.med_type} */}
+                  </Text>
+                )}
+              </View>
+              
+              {medicine.inventory_items[0]?.form && (
+                <Text className={`text-sm mt-1 ${
+                  isOutOfStock ? "text-gray-400" : "text-gray-600"
+                }`}>
+                  Form: {medicine.inventory_items[0].form}
+                </Text>
+              )}
+              
+              {medicine.inventory_items[0]?.dosage && (
+                <Text className={`text-sm mt-1 ${
+                  isOutOfStock ? "text-gray-400" : "text-gray-600"
+                }`}>
+                  Dosage: {medicine.inventory_items[0].dosage}
+                </Text>
+              )}
+            </View>
+          </View>
+          
+          {!isOutOfStock && (
+            <View className="ml-4">
+              <ChevronDown
+                size={20}
+                color="#9CA3AF"
+                style={{ transform: [{ rotate: "270deg" }] }}
+              />
+            </View>
+          )}
+        </TouchableOpacity>
+      );
+    })}
+  </View>
+) : (
               <View className="flex-1 justify-center items-center mt-20">
                 <View className="bg-gray-100 p-6 rounded-full mb-4">
                   <Search size={32} color="#9CA3AF" />

@@ -23,9 +23,18 @@ urlpatterns=[
         path('medicine-reports/<str:month>/', MonthlyMedicineRecordsDetailAPIView.as_view(), name='medicine-reports'),
         path('medicines-request/monthly/chart/<str:month>/', MonthlyMedicineChart.as_view(), name='medicines_list'),
          
+         
+         
+        path('submit-request/', SubmitMedicineRequestView.as_view(), name='submit-medicine-request'),
+    
+    # Admin management endpoints
+        path('admin/requests/', AdminMedicineRequestsView.as_view(), name='admin-medicine-requests'),
+        path('admin/requests/<int:medreq_id>/', MedicineRequestDetailView.as_view(), name='medicine-request-detail'),
+        path('admin/requests/<int:medreq_id>/status/', UpdateMedicineRequestStatusView.as_view(), name='update-request-status'),
+                 #REVISE (BACKEND)
+
         path('create-medicine/request/', MedicineRequestCreateView.as_view(), name='medicine-request-create'),
         
-        #REVISE (BACKEND)
         
         
         

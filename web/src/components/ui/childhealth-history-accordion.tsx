@@ -49,17 +49,7 @@ export function HealthHistoryAccordions({
         />
       </AccordionSection>
 
-      {/* <AccordionSection
-        value="parent-newborn"
-        title="Parent & Newborn Screening"
-        icon={<Users className="h-5 w-5" />}
-      >
-        <SectionRenderer
-          fields={familyHeadInfoFields}
-          recordsToDisplay={recordsToDisplay}
-          chhistId={chhistId}
-        />
-      </AccordionSection> */}
+     
 
       <AccordionSection
         value="exclusive-bf-checks"
@@ -109,17 +99,7 @@ export function HealthHistoryAccordions({
         />
       </AccordionSection>
 
-      <AccordionSection
-        value="nutritional-status"
-        title="Nutritional Status"
-        icon={<Soup className="h-5 w-5" />}
-      >
-        <SectionRenderer
-          fields={nutritionStatusesFields}
-          recordsToDisplay={recordsToDisplay}
-          chhistId={chhistId}
-        />
-      </AccordionSection>
+     
 
       <AccordionSection
         value="immunization"

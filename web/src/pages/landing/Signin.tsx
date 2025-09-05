@@ -378,7 +378,7 @@ export default function SignIn() {
 //   CardDescription,
 //   CardHeader,
 //   CardTitle,
-// } from "@/components/ui/card/card";
+// } from "@/components/ui/card";
 // import {
 //   Dialog,
 //   DialogContent,

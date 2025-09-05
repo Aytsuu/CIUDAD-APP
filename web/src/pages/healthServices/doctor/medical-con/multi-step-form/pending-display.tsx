@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button/button";
-
 import { ChevronRight, Stethoscope } from "lucide-react";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { api2 } from "@/api/api";

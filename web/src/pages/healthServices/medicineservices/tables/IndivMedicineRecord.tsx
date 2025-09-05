@@ -22,11 +22,8 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery } from "@tanstack/react-query";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
-import { api2 } from "@/api/api";
-import { MedicineRecord } from "../types";
 import { medicineRecordColumns } from "./columns/inv-med-col";
-
-
+import { useIndividualMedicineRecords } from "../queries/fetch";
 
 export default function IndivMedicineRecords() {
   const location = useLocation();
@@ -35,14 +32,14 @@ export default function IndivMedicineRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Guard clause for missing patientData
   if (!patientData?.pat_id) {
     return <div>Error: Patient ID not provided</div>;
   }
 
-  const [selectedPatientData, setSelectedPatientData] =
-    useState<any | null>(null);
+  const [selectedPatientData, setSelectedPatientData] = useState<any | null>(null);
 
   useEffect(() => {
     if (location.state?.params?.patientData) {
@@ -51,58 +48,39 @@ export default function IndivMedicineRecords() {
     }
   }, [location.state]);
 
-  // Fetch medicine records
-  const {
-    data: medicineRecords,
-    isLoading,
-  } = useQuery({
-    queryKey: ["patientMedicineDetails", patientData.pat_id],
-    queryFn: async () => {
-      const response = await api2.get(
-        `/medicine/indiv-medicine-record/${patientData.pat_id}/`
-      );
-      return response.data;
-    },
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  // Debounce search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 500);
 
-  const formatMedicineData = React.useCallback((): MedicineRecord[] => {
-    if (!medicineRecords) return [];
-    return medicineRecords.map((record: any) => ({
-      medrec_id: record.medrec_id,
-      medrec_qty: record.medrec_qty,
-      status: record.status,
-      req_type: record.req_type,
-      reason: record.reason || "No reason Provided",
-      is_archived: record.is_archived,
-      requested_at: record.requested_at,
-      fulfilled_at: record.fulfilled_at,
-      signature: record.signature,
-      patrec_id: record.patrec_id,
-      minv_id: record.minv_id,
-      minv_details: record.minv_details || null,
-    }));
-  }, [medicineRecords]);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
-  const filteredData = React.useMemo(() => {
-    const data = formatMedicineData();
-    if (!searchQuery) return data;
-
-    return data.filter((record) => {
-      const searchText =
-        `${record.medrec_id} ${record.minv_details?.med_detail?.med_name} ${record.minv_details?.med_detail?.catlist} ${record.status} ${record.req_type}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-  }, [searchQuery, formatMedicineData]);
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
+  // Updated to use pagination parameters with search
+  const { data: apiResponse, isLoading, error } = useIndividualMedicineRecords(
+    patientData.pat_id,
+    currentPage,
+    pageSize,
+    debouncedSearch
   );
 
-  const recordCount = formatMedicineData().length;
+  // Extract data from paginated response
+  const medicineRecords = apiResponse?.results || [];
+  const totalCount = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  console.log("Medicine Records API Response:", apiResponse);
+  if (error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-red-500">Error loading medicine records</div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -144,7 +122,6 @@ export default function IndivMedicineRecords() {
           </div>
         )}
 
-
         <div className="w-full lg:flex justify-between items-center mb-4 gap-6 mt-4">
           <div className="flex gap-2 items-center p-2">
             <div className="flex items-center justify-center">
@@ -155,7 +132,7 @@ export default function IndivMedicineRecords() {
                 Total Medicine Records
               </p>
             </div>
-            <p className="text-2xl font-bold text-gray-900">{recordCount}</p>
+            <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
           </div>
 
           <div className="flex flex-1 justify-between items-center gap-2">
@@ -200,6 +177,7 @@ export default function IndivMedicineRecords() {
                 onChange={(e) => {
                   const value = +e.target.value;
                   setPageSize(value >= 1 ? value : 1);
+                  setCurrentPage(1);
                 }}
                 min="1"
               />
@@ -224,17 +202,29 @@ export default function IndivMedicineRecords() {
 
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin mx-auto my-4" />
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading medicine records...</span>
+              </div>
+            ) : error ? (
+              <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
+                <span className="ml-2">Error loading medicine records. Please check console.</span>
+              </div>
+            ) : medicineRecords.length === 0 ? (
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+                <span className="ml-2">
+                  {debouncedSearch ? "No records found for your search" : "No medicine records found"}
+                </span>
+              </div>
             ) : (
-              <DataTable columns={medicineRecordColumns} data={paginatedData} />
+              <DataTable columns={medicineRecordColumns} data={medicineRecords} />
             )}
           </div>
+
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} records
+              Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-
+              {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
             </p>
             <div className="w-full sm:w-auto flex justify-center">
               <PaginationLayout

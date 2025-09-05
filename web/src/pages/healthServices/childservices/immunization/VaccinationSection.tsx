@@ -85,8 +85,8 @@ export function VaccinationSection({
                 options={vaccineListOptions.formatted}
                 value={selectedVaccineListId}
                 onChange={(value) => {
-                  handleExistingVaccineChange(value);
-                  setSelectedVaccineListId(value);
+                  handleExistingVaccineChange(value ?? "");
+                  setSelectedVaccineListId(value ?? "");
                 }}
                 placeholder="Select vaccine"
                 triggerClassName={`w-full ${existingVaccineErrors.vaccine ? "border-red-500" : ""}`}
@@ -157,8 +157,8 @@ export function VaccinationSection({
                 options={vaccinesData?.formatted ?? []}
                 value={formWatch("vaccines.0.vaccineType") || ""}
                 onChange={(value) => {
-                  handleVaccineChange(value);
-                  setSelectedVaccineId(value);
+                  handleVaccineChange(value ?? "");
+                  setSelectedVaccineId(value ?? "");
                 }}
                 placeholder={isLoading ? "Loading vaccines..." : "Search and select a vaccine"}
                 triggerClassName="font-normal w-full"

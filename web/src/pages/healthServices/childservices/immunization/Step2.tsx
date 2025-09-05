@@ -2,10 +2,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { HeartPulse, ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Form } from "@/components/ui/form/form";
 import { toast } from "sonner";

@@ -25,7 +25,8 @@ const FileSchema = z.object({
 export const MedicineRequestSchema = z.object({
   minv_id: z.string().optional(),
   medrec_qty: z.number().optional(),
-  reason: z.string().optional()
+  reason: z.string().optional(),
+  med_type: z.string().optional(), // Add med_type field here
 });
 
 export const MedicineRequestArraySchema = z.object({

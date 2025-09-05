@@ -1,6 +1,6 @@
 import AllChildHealthRecords from "@/pages/healthServices/childservices/tables/ChildHR_all_records";
 import InvChildHealthRecords from "@/pages/healthServices/childservices/tables/ChildHR_inv_records";
-import ChildHealthRecordForm from "@/pages/healthServices/childservices/forms/muti-step-form/child-health-record-form";
+import ChildHealthRecordForm from "@/pages/healthServices/childservices/forms/muti-step-form/Main";
 import ChildHealthHistoryDetail from "@/pages/healthServices/childservices/viewrecords/Viewhistory";
 import ChildImmunization from "@/pages/healthServices/childservices/immunization/Main";
 import ChildMedicalConsultation from "@/pages/healthServices/doctor/child-medical-con/Main";

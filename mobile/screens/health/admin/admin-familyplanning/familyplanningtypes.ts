@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 
 export type PatientInfo = {
   pat_id: string;

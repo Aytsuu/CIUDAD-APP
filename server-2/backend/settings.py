@@ -407,7 +407,7 @@ INSTALLED_APPS = [
     'backend.firebase.notifications',
     'detection',
     # 'apps.gad'
-    'apps.account',
+    # 'apps.account',
     'apps.medicalConsultation',
     'apps.medicineservices',
     'apps.firstaid',
@@ -415,6 +415,7 @@ INSTALLED_APPS = [
     'apps.servicescheduler',
     'apps.reports',
     'apps.file',
+    "simple_history",
 
 ]
 
@@ -432,8 +433,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.authentication.middleware.AccountMiddleware',
+    # 'apps.authentication.middleware.AccountMiddleware',
     "django.middleware.gzip.GZipMiddleware",  
+    'simple_history.middleware.HistoryRequestMiddleware',
+
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -522,9 +525,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # REST FRAMEWORK
 # ========================
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'apps.authentication.backends.SupabaseAuthBackend',
-    ],
+    # 'DEFAULT_AUTHENTICATION_CLASSES': [
+    #     'apps.authentication.backends.SupabaseAuthBackend',
+    # ],
     'DEFAULT_PERMISSION_CLASSES': [
         # 'rest_framework.permissions.IsAuthenticated',
     ],
@@ -551,11 +554,20 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    'content-type',
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
     'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
     'x-csrftoken',
+    'x-requested-with',
+    'cache-control',
+    'pragma',
 ]
+
 CORS_EXPOSE_HEADERS = ['Authorization']
 
 CORS_ALLOW_METHODS = [
