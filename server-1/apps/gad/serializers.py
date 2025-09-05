@@ -323,21 +323,6 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             })
         return value
 
-    def validate(self, attrs):
-        # Ensure dev and gpr_project_index are valid
-        if 'dev' in attrs and 'gpr_project_index' in attrs:
-            dev = attrs['dev']
-            project_index = attrs['gpr_project_index']
-            
-            if dev.dev_project:
-                projects = dev.dev_project if isinstance(dev.dev_project, list) else [dev.dev_project]
-                if project_index < 0 or project_index >= len(projects):
-                    raise serializers.ValidationError({
-                        'gpr_project_index': f'Project index must be between 0 and {len(projects) - 1}'
-                    })
-        
-        return attrs
-
     def create(self, validated_data):
         header_img_data = validated_data.pop('gpr_header_img', None)
         instance = super().create(validated_data)
@@ -395,7 +380,6 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             'gprBudgetItems': instance.budget_items,   
             'gprSignatories': data['gpr_signatories'],
             'gpr_page_size': data['gpr_page_size'],
-            'gpr_project_index': data['gpr_project_index'],
             'status': data['status'],
             'staffId': data.get('staff'),
             'staffName': data.get('staff_name', 'Unknown'),
@@ -410,8 +394,8 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         fields = [
             'gpr_id', 'gpr_background', 'gpr_date', 'gpr_venue',
             'gpr_monitoring', 'gpr_header_img', 'gpr_created', 'gpr_is_archive',
-            'gpr_objectives', 'gpr_signatories', 'gpr_project_index',
-            'staff', 'status', 'logs', 'gpr_page_size', 'gbud', 'dev'
+            'gpr_objectives', 'gpr_signatories', 'project_title', 'budget_items',
+            'staff', 'status', 'logs', 'gpr_page_size', 'gbud', 'dev', 'dev_details', 'participants'
         ]
         extra_kwargs = {
             'gpr_id': {'read_only': True},
@@ -419,7 +403,6 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             'staff': {'required': False, 'write_only': True},
             'gpr_header_img': {'write_only': True},
             'dev': {'required': True},
-            'gpr_project_index': {'required': True}
         }
 
 class ProposalSuppDocSerializer(serializers.ModelSerializer):

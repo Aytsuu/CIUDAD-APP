@@ -193,7 +193,6 @@ class ProjectProposalView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         # Validate required fields for new structure
         dev_id = request.data.get('dev')
-        project_index = request.data.get('gpr_project_index', 0)
         
         if not dev_id:
             return Response(
@@ -205,17 +204,10 @@ class ProjectProposalView(generics.ListCreateAPIView):
             # Validate that the dev plan exists and has the specified project
             dev_plan = DevelopmentPlan.objects.get(pk=dev_id)
             projects = dev_plan.dev_project if isinstance(dev_plan.dev_project, list) else [dev_plan.dev_project] if dev_plan.dev_project else []
-            
-            if project_index >= len(projects) or not projects[project_index]:
-                return Response(
-                    {"error": f"Invalid project index {project_index} for development plan {dev_id}"}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
                 
             # Check if proposal already exists for this dev plan + project index
             existing_proposal = ProjectProposal.objects.filter(
                 dev_id=dev_id,
-                gpr_project_index=project_index,
                 gpr_is_archive=False
             ).exists()
             

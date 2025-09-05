@@ -194,8 +194,6 @@ class ProjectProposal(models.Model):
         """Get the project title from the related development plan"""
         if self.dev and self.dev.dev_project:
             projects = self.dev.dev_project if isinstance(self.dev.dev_project, list) else [self.dev.dev_project]
-            if 0 <= self.gpr_project_index < len(projects):
-                return projects[self.gpr_project_index]
         return None
     
     @property

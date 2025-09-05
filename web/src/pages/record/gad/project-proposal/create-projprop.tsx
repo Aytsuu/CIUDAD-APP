@@ -52,7 +52,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const [pdfPreview, setPdfPreview] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [_errorMessage, setErrorMessage] = useState<string | null>(null);
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const addMutation = useAddProjectProposal(!!existingProposal);
   const addSupportDocMutation = useAddSupportDocument();
@@ -93,7 +93,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
       selectedDevProject: {
         dev_id: 0,
         project_title: "",
-        project_index: 0,
         participants: [],
         budget_items: [],
       },
@@ -127,15 +126,11 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
 
     if (!isStaffLoading && staffList.length > 0) {
       if (existingProposal) {
-        // Load existing proposal data
         const existingDevProject = availableProjects.find(
-          (p) =>
-            p.dev_id === existingProposal.devId &&
-            p.project_index === existingProposal.projectIndex
+          (p) => p.dev_id === existingProposal.devId
         ) || {
           dev_id: existingProposal.devId || 0,
           project_title: existingProposal.projectTitle || "",
-          project_index: existingProposal.projectIndex || 0,
           participants: existingProposal.participants || [],
           budget_items: existingProposal.budgetItems || [],
         };
@@ -187,7 +182,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
           statusReason: existingProposal.statusReason || "",
         });
       } else {
-        // New proposal - set default signatories
         form.reset({
           ...form.getValues(),
           signatories: [
@@ -262,6 +256,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     "GAD Staff",
   ];
 
+  // In handleProjectSelect function, replace the form.setValue call with:
   const handleProjectSelect = (projectId?: string) => {
     const selectedProject = availableProjects.find(
       (project) => project.dev_id.toString() === projectId
@@ -269,14 +264,15 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
 
     if (selectedProject) {
       setSelectedDevProject(selectedProject);
-      setValue("selectedDevProject", selectedProject);
+
+      // Use setValue without immediate validation to avoid blocking
+      setValue("selectedDevProject", selectedProject as any);
 
       // Auto-populate form fields with development plan data
       if (
         selectedProject.participants &&
         selectedProject.participants.length > 0
       ) {
-        // Convert participants to the form's expected format
         const formattedParticipants = selectedProject.participants.map(
           (participant: string | any) => {
             if (typeof participant === "string") {
@@ -300,7 +296,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
         selectedProject.budget_items &&
         selectedProject.budget_items.length > 0
       ) {
-        // Convert budget items to the form's expected format
         const formattedBudgetItems = selectedProject.budget_items.map(
           (item: any) => ({
             name: item.name || "",
@@ -412,7 +407,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
         setIsPreviewOpen(true);
       }
     } catch (error) {
-      console.error("Error generating PDF:", error);
       setErrorMessage("Failed to generate PDF preview. Please try again.");
     }
   };
@@ -422,6 +416,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     setIsPreviewOpen(false);
   };
 
+  // Replace your onSubmit function with this fixed version:
   const onSubmit = async (data: ProjectProposalFormValues) => {
     if (proposedBudget > availableBudget) {
       setErrorMessage(
@@ -433,6 +428,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     try {
       setErrorMessage(null);
       let gpr_header_img: string | null = null;
+
       if (mediaFiles.length > 0 && mediaFiles[0].file) {
         if (mediaFiles[0].file.startsWith("data:")) {
           gpr_header_img = mediaFiles[0].file;
@@ -463,18 +459,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
         status: data.status || "Pending",
         statusReason: data.statusReason || null,
         gpr_page_size: data.paperSize,
-        // Development plan fields
         dev: data.selectedDevProject.dev_id,
-        gpr_project_index: data.selectedDevProject.project_index,
       };
 
-      console.log(
-        "Sending proposalData:",
-        JSON.stringify(proposalData, null, 2)
-      );
       const proposalResponse = await addMutation.mutateAsync(proposalData);
-
-      // Handle new supporting documents
       const newFiles: FileInput[] = supportingDocs
         .filter(
           (
@@ -507,9 +495,9 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
       form.reset();
       setMediaFiles([]);
       setSupportingDocs([]);
+
       onSuccess();
     } catch (error: any) {
-      console.error("Error in handleSave:", error);
       setErrorMessage(
         error.response?.data
           ? JSON.stringify(error.response.data)
@@ -520,11 +508,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
 
   return (
     <div className="container mx-auto px-4 sm:px-6 max-w-2xl md:max-w-3xl lg:max-w-4xl">
-      {errorMessage && (
-        <div className="mb-4 p-2 sm:p-4 bg-red-100 text-red-700 rounded">
-          {errorMessage}
-        </div>
-      )}
       <div className="mb-6">
         <label className="block text-sm font-medium mb-2">Paper Size</label>
         <div className="flex flex-wrap gap-4">

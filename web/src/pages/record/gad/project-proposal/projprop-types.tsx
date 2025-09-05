@@ -35,13 +35,11 @@ export type SupportDocInput = {
   files: FileInput[];
 };
 
-// NEW: Development Plan Project type
 export type DevelopmentPlanProject = {
   dev_id: number;
   dev_client: string;
   dev_issue: string;
   project_title: string;
-  project_index: number;
   participants: string[]; // From dev_indicator
   budget_items: BudgetItem[];
   dev_date: string;
@@ -50,7 +48,7 @@ export type DevelopmentPlanProject = {
 export type BudgetItem = {
   name: string;
   pax: number | string;
-  price: number;
+  amount: number | string;
 };
 
 export type ProjectProposal = {
@@ -114,7 +112,6 @@ export type ProjectProposalInput = {
   gpr_page_size: "a4" | "letter" | "legal";
   // NEW required fields
   dev: number; // Development plan ID
-  gpr_project_index: number; // Index of project in dev_project array
 };
 
 export type Staff = {
@@ -203,7 +200,6 @@ export const prepareProposalPayload = (proposalData: ProjectProposalInput) => {
     gpr_is_archive: proposalData.gprIsArchive || false,
     gpr_page_size: proposalData.gpr_page_size,
     dev: proposalData.dev,
-    gpr_project_index: proposalData.gpr_project_index,
   };
 
   // Clean payload by removing null/undefined values
@@ -224,7 +220,6 @@ export const prepareEditProposalPayload = (proposalData: ProjectProposalInput) =
     gpr_is_archive: proposalData.gprIsArchive || false,
     gpr_page_size: proposalData.gpr_page_size,
     dev: proposalData.dev,
-    gpr_project_index: proposalData.gpr_project_index,
   };
 
   // Handle header image explicitly
