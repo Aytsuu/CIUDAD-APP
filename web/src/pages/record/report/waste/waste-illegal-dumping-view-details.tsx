@@ -9,11 +9,13 @@ interface WasteReportDetailsProps {
   rep_matter: string;
   rep_location: string;
   rep_add_details: string;
+  rep_complainant: string;
   rep_violator: string;
   rep_contact: string;
   rep_status: string;
   rep_date: string;
   rep_date_resolved: string;
+  rep_date_cancelled: string;
   sitio_id: number;
   sitio_name: string;
   waste_report_file: {
@@ -30,15 +32,16 @@ interface WasteReportDetailsProps {
 
 function WasteIllegalDumpingDetails({
   rep_id,
-  // rep_image,
   rep_status,
   rep_matter,
   rep_location,
   rep_add_details,
+  rep_complainant,
   rep_violator,
   rep_date,
   rep_contact,
   rep_date_resolved,
+  rep_date_cancelled,
   sitio_name,
   waste_report_file,
   waste_report_rslv_file
@@ -47,7 +50,8 @@ function WasteIllegalDumpingDetails({
   const [_isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentImageResIndex, setCurrentImageResIndex] = useState(0);
-  const isResolved = !!rep_date_resolved || rep_status === "resolved";
+  const isResolved = rep_status === "resolved";
+  const isCancelled = rep_status === "cancelled";
 
   //Report Evidence Images
   const nextImage = () => {
@@ -81,9 +85,11 @@ function WasteIllegalDumpingDetails({
   const getStatusStyle = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'pending':
-        return 'bg-orange-100 text-orange-800 border-orange-500';
+        return 'bg-blue-100 text-blue-800 border-blue-500';
       case 'resolved':
         return 'bg-green-100 text-green-800 border-green-500';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-500';
     }
   };
 
@@ -110,7 +116,7 @@ function WasteIllegalDumpingDetails({
       {/* Header */}
       <div className="space-y-2">
         <div className="flex flex-wrap justify-center">
-            <span className="bg-gray text-sm text-black-100 px-3 py-1 rounded">
+            <span className="bg-gray-200 text-sm text-black-100 px-3 py-1 rounded">
                 {rep_matter}
             </span>
         </div>
@@ -241,9 +247,9 @@ function WasteIllegalDumpingDetails({
 
             <div className="grid grid-cols-2">
               <div>
-                <p className="font-semibold">Contact Number</p>
-                <p>{rep_contact}</p>
-              </div>
+                <p className="font-semibold">Complainant</p>
+                <p>{rep_complainant || "Unknown"}</p>
+              </div>              
               <div>
                 <p className="font-semibold">Violator</p>
                 <p>{rep_violator || "Unknown"}</p>
@@ -252,8 +258,8 @@ function WasteIllegalDumpingDetails({
 
             <div className="grid grid-cols-2">
               <div>
-                <p className="font-semibold">Date and Time</p>
-                <p>{formatDate(rep_date)}</p>
+                <p className="font-semibold">Contact Number</p>
+                <p>{rep_contact}</p>
               </div>
               <div>
                 <p className="font-semibold pb-2">Report Status</p>
@@ -261,13 +267,25 @@ function WasteIllegalDumpingDetails({
                   {rep_status || "No status provided"}
                 </div>      
               </div>
-              {rep_date_resolved && (
+            </div>
+
+            <div className="grid grid-cols-2">
+              <div>
+                <p className="font-semibold">Date and Time</p>
+                <p>{formatDate(rep_date)}</p>
+              </div>           
+              {rep_date_resolved ? (
                 <div>
                   <p className="font-semibold">Date & Time Resolved</p>
                   <p>{formatDate(rep_date_resolved)}</p>              
                 </div>
-              )}
-            </div>
+              ) : rep_date_cancelled ? (
+                <div>
+                  <p className="font-semibold">Date & Time Cancelled</p>
+                  <p>{formatDate(rep_date_cancelled)}</p>              
+                </div>                
+              ) : ""}                 
+            </div>            
 
             <div>
               <p className="font-semibold">Report Details</p>
@@ -282,7 +300,7 @@ function WasteIllegalDumpingDetails({
                 trigger={
                   <div 
                     className={`px-4 py-2 rounded-md text-sm border ${
-                      isResolved 
+                      isResolved || isCancelled
                         ? "bg-gray-200 text-gray-500 cursor-not-allowed" 
                         : "bg-green-100 text-green-800 text-12px border border-green-500 hover:bg-green-200 hover:text-green-900"
                     }`}
@@ -293,7 +311,7 @@ function WasteIllegalDumpingDetails({
                 className="max-w-[30%] h-[340px] flex flex-col overflow-auto"
                 title="Proof of Resolution"
                 description="Please provide an image"
-                mainContent={<WasteReportResolved rep_id={rep_id} is_resolve={isResolved} onSuccess={() => setIsDialogOpen(false)}/>}
+                mainContent={<WasteReportResolved rep_id={rep_id} is_resolve={isResolved || isCancelled} onSuccess={() => setIsDialogOpen(false)}/>}
               />
             </div>
           </div>
