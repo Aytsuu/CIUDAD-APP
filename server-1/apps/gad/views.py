@@ -28,24 +28,13 @@ class GAD_Budget_TrackerView(generics.ListCreateAPIView):
             # gbud_is_archive=False
         ).select_related('gbudy', 'dev', 'staff').prefetch_related('files')
     
-    def create(self, request, *args, **kwargs):
-        # Log the incoming request data
-        logger.debug(f"Received POST request to {request.path}")
-        logger.debug(f"Request data: {request.data}")
-        logger.debug(f"Request user: {request.user}")
-        logger.debug(f"Request headers: {dict(request.headers)}")
-        
+    def create(self, request, *args, **kwargs):      
         try:
             # Let the parent class handle the creation
             response = super().create(request, *args, **kwargs)
-            logger.debug(f"Request successful: {response.status_code}")
             return response
             
-        except Exception as e:
-            # Log any exceptions that occur
-            logger.error(f"Error in create method: {str(e)}")
-            logger.error(f"Error type: {type(e).__name__}")
-            
+        except Exception as e:            
             # If it's a validation error, log the details
             if hasattr(e, 'detail'):
                 logger.error(f"Validation errors: {e.detail}")
@@ -432,7 +421,97 @@ class ProjectProposalStatusCountView(generics.GenericAPIView):
             'rejected': status_counts['rejected'] or 0
         })
         
-class ProjectProposalAvailabilityView(generics.ListAPIView):
+class ProjectProposalForBT(generics.ListAPIView):
+    serializer_class = GADDevelopmentPlanSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        year = self.kwargs.get('year')
+        if not year:
+            return DevelopmentPlan.objects.none()
+        
+        # Get development plans for the specified year
+        return DevelopmentPlan.objects.filter(
+            dev_date__year=year
+        ).distinct()
+
+    def list(self, request, *args, **kwargs):
+        year = self.kwargs.get('year')
+        if not year:
+            raise NotFound("Year parameter is required")
+
+        queryset = self.get_queryset()
+        
+        response_data = []
+        for dev_plan in queryset:
+            # Get the project titles from dev_project (which is a JSONField)
+            projects = dev_plan.dev_project if isinstance(dev_plan.dev_project, list) else [dev_plan.dev_project] if dev_plan.dev_project else []
+            
+            # Get budget items from dev_gad_items
+            budget_items = dev_plan.dev_gad_items or []
+            
+            for project_index, project_title in enumerate(projects):
+                if not project_title:  # Skip empty project titles
+                    continue
+                    
+                # Check existing GAD_Budget_Tracker entries for this specific project and year
+                existing_entries = GAD_Budget_Tracker.objects.filter(
+                    gbudy__gbudy_year=year,
+                    dev=dev_plan,
+                    gbud_project_index=project_index,
+                    gbud_is_archive=False
+                )
+                is_used = existing_entries.exists()
+
+                # Collect all recorded budget item names for this specific project
+                recorded_items = set()
+                for entry in existing_entries:
+                    for item in entry.gbud_exp_particulars or []:
+                        recorded_items.add(item.get('name', ''))
+
+                # Determine unrecorded items from development plan budget items
+                unrecorded_items = []
+                recorded_budget_items = []
+                
+                for item in budget_items:
+                    item_name = item.get('name', item.get('gdb_name', ''))
+                    if not item_name:
+                        continue
+                        
+                    normalized_item = {
+                        'name': item_name,
+                        'pax': item.get('pax', item.get('gdb_pax', 1)),
+                        'amount': item.get('price', item.get('gdb_price', 0))
+                    }
+                    
+                    if item_name in recorded_items:
+                        recorded_budget_items.append(normalized_item)
+                    else:
+                        unrecorded_items.append(normalized_item)
+
+                response_data.append({
+                    'gpr_id': f"{dev_plan.dev_id}_{project_index}", 
+                    'gpr_title': project_title,
+                    'gpr_budget_items': [{
+                        'name': item.get('name', item.get('gdb_name', '')),
+                        'pax': item.get('pax', item.get('gdb_pax', 1)),
+                        'amount': item.get('price', item.get('gdb_price', 0))
+                    } for item in budget_items if item.get('name', item.get('gdb_name', ''))],
+                    'recorded_items': list(recorded_items),
+                    'unrecorded_items': unrecorded_items,
+                    'is_editable': not is_used,
+                    'dev_id': dev_plan.dev_id,
+                    'dev_client': dev_plan.dev_client,
+                    'dev_issue': dev_plan.dev_issue,
+                    'project_index': project_index 
+                })
+
+        return Response({
+            'data': response_data,
+            'count': len(response_data)
+        })
+
+class ProjectProposalForProposal(generics.ListAPIView):
     permission_classes = [AllowAny]
     
     def get(self, request, year=None):
@@ -488,7 +567,6 @@ class ProjectProposalAvailabilityView(generics.ListAPIView):
                 {"error": "Internal server error", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
 # ===========================================================================================================
 
 class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
