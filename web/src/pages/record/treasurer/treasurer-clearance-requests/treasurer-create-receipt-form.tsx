@@ -8,23 +8,38 @@ import { Card, CardContent } from "@/components/ui/card";
 import { createReceiptSchema } from "@/form-schema/receipt-schema";
 import { useAcceptRequest } from "./queries/personalClearanceUpdateQueries";
 import { useAddPersonalReceipt } from "../Receipts/queries/receipts-insertQueries";
+import { useMemo } from "react";
 
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
-function ReceiptForm({id, purpose, rate, requester, pay_status, pr_id, nat_col, is_resident, onSuccess}: {
+function ReceiptForm({
+    id,
+    purpose,
+    rate,
+    requester,
+    pay_status,
+    nat_col,
+    is_resident,
+    onSuccess,
+    discountedAmount
+}: {
     id: string;
     purpose: string | undefined;
     rate: string | undefined;
     requester: string;
     pay_status: string;
-    pr_id: number | undefined;
     nat_col: string;
     is_resident: boolean;
-    onSuccess: () => void}){
+    onSuccess: () => void;
+    discountedAmount?: string;
+}){
     const { mutate: receipt, isPending} = useAddPersonalReceipt(onSuccess)
     const { mutate: acceptReq, isPending: isAcceptPending} = useAcceptRequest()
 
    console.log('stat', pay_status)
-    const ReceiptSchema = createReceiptSchema(rate);
+    const ReceiptSchema = useMemo(() => {
+        return createReceiptSchema(discountedAmount || rate);
+    }, [discountedAmount, rate]);
+
 
     const form = useForm<z.infer<typeof ReceiptSchema>>({
         resolver: zodResolver(ReceiptSchema),
@@ -36,9 +51,7 @@ function ReceiptForm({id, purpose, rate, requester, pay_status, pr_id, nat_col, 
         }
     });
 
-
-   
-   const onSubmit = async () => {
+    const onSubmit = async () => {
         
         try {
             if (is_resident){
@@ -62,12 +75,15 @@ function ReceiptForm({id, purpose, rate, requester, pay_status, pr_id, nat_col, 
 
     const isAmountInsufficient = () => {
         const amountPaid = form.watch("inv_amount");
-        if (!amountPaid || !rate) return false;
+        if (!amountPaid) return false;
         const amount = Number(amountPaid);
-        return amount > 0 && amount < parseFloat(rate);
+        
+        const targetAmount = discountedAmount ? parseFloat(discountedAmount) : parseFloat(rate || "0");
+        return amount > 0 && amount < targetAmount;
     };
 
     return(
+        <>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* Debug info */}
@@ -122,6 +138,33 @@ function ReceiptForm({id, purpose, rate, requester, pay_status, pr_id, nat_col, 
                 </CardContent>
                 </Card>
 
+                {/* Amount and Discount Section */}
+                <div className="flex justify-between items-center">
+                    {/* Amount Display */}
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-sm font-medium">Final Amount:</span>
+                        <span className="text-lg font-semibold text-primary">
+                            ₱{discountedAmount || rate}
+                        </span>
+                        {discountedAmount && (
+                            <span className="text-sm text-muted-foreground line-through">₱{rate}</span>
+                        )}
+                    </div>
+                    
+                    {/* Discount Button */}
+                    <Button 
+                        type="button"
+                        variant="outline"
+                        disabled={isAlreadyPaid}
+                        className="flex items-center gap-2"
+                        onClick={() => {
+                            onSuccess(); // Hide the create receipt form
+                        }}
+                    >
+                        Apply Discount
+                    </Button>
+                </div>
+
                 {/* Only show these fields if NOT resident */}
                 {!is_resident && (
                 <>
@@ -167,22 +210,22 @@ function ReceiptForm({id, purpose, rate, requester, pay_status, pr_id, nat_col, 
 
                         {isAmountInsufficient() && (
                             <div className="text-sm text-red-600 mt-1">
-                            Amount paid (₱{form.watch("inv_amount")}) is less than required amount (₱{rate})
+                            Amount paid (₱{form.watch("inv_amount")}) is less than required amount (₱{discountedAmount || rate})
                             </div>
                         )}
                         </FormItem>
                     )}
                     />
 
-                    {purpose && rate && Number(form.watch("inv_amount")) > 0 && 
-                    Number(form.watch("inv_amount")) > parseFloat(rate) && (
+                    {purpose && (discountedAmount || rate) && Number(form.watch("inv_amount")) > 0 && 
+                    Number(form.watch("inv_amount")) > parseFloat(discountedAmount || rate || "0") && (
                     <div className="space-y-2 p-3 bg-gray-50 rounded-md">
                         <div className="flex justify-between text-sm border-t pt-2">
                         <span className="font-semibold">Change:</span>
                         <span className="text-green-600 font-semibold">
                             ₱{(
                             (Number(form.watch("inv_amount")) || 0) - 
-                            parseFloat(rate)
+                            parseFloat(discountedAmount || rate || "0")
                             ).toLocaleString('en-US', { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
@@ -212,6 +255,8 @@ function ReceiptForm({id, purpose, rate, requester, pay_status, pr_id, nat_col, 
                 </div>
             </form>
             </Form>
+
+        </>
     )
 }
 
