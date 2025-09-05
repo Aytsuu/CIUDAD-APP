@@ -11,6 +11,10 @@ import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { pendingItemsColumns } from "./columns";
 import { usePendingItemsMedRequest } from "../queries.tsx/fetch";
+import { MedicineDisplay } from "@/components/ui/medicine-display";
+import { RequestSummary } from "@/components/ui/medicine-sumdisplay";
+import { fetchMedicinesWithStock } from "../../restful-api/fetchAPI";
+
 export default function MedicineRequestPendingItems() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -24,6 +28,10 @@ export default function MedicineRequestPendingItems() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [medicineDisplayPage, setMedicineDisplayPage] = useState(1);
+
+  // Use the existing fetchMedicinesWithStock function
+  const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
 
   // Guard clause for missing medreq_id
   if (!medreq_id) {
@@ -49,7 +57,52 @@ export default function MedicineRequestPendingItems() {
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Get patient info from first item if available
+  // Prepare selected medicines from the pending items with the reason field
+  const selectedMedicines = medicineData.flatMap((medicine: any) =>
+    medicine.request_items.map((item: any) => ({
+      minv_id: medicine.med_id, // This should match the id field in medicine display
+      medrec_qty: item.medreqitem_qty || item.quantity || 1,
+      reason: item.reason || "No reason provided", // Use the reason field from request_items
+      inventory_id: item.inventory?.minv_id || null
+    }))
+  );
+
+  console.log("Selected Medicines:", selectedMedicines);
+  console.log("Medicine Data:", medicineData);
+
+  // Enhance medicine stocks with pre-filled reasons
+  const enhancedMedicineStocks = medicineStocksOptions?.map((medicine: any) => {
+    // Find matching selected medicine to get the reason
+    const matchingSelectedMed = selectedMedicines.find((selectedMed: any) => {
+      // Try multiple matching strategies
+      const matchesMedId = medicine.med_id === selectedMed.minv_id;
+      const matchesId = medicine.id === selectedMed.minv_id;
+      const matchesStringId = medicine.id === String(selectedMed.minv_id);
+      
+      return matchesMedId || matchesId || matchesStringId;
+    });
+    
+    // Add pre-filled reason if found
+    return {
+      ...medicine,
+      preFilledReason: matchingSelectedMed?.reason || ""
+    };
+  }) || [];
+
+  console.log("Enhanced Medicine Stocks:", enhancedMedicineStocks);
+
+  // Filter to only include medicines that are in the selectedMedicines
+  const filteredMedicineStocks = enhancedMedicineStocks.filter((medicine: any) =>
+    selectedMedicines.some((selectedMed: any) => {
+      const matchesMedId = medicine.med_id === selectedMed.minv_id;
+      const matchesId = medicine.id === selectedMed.minv_id;
+      const matchesStringId = medicine.id === String(selectedMed.minv_id);
+      
+      return matchesMedId || matchesId || matchesStringId;
+    })
+  );
+
+  console.log("Filtered Medicine Stocks:", filteredMedicineStocks);
 
   // Flatten the data for the table
   const tableData = medicineData.flatMap((medicine: any) =>
@@ -58,7 +111,9 @@ export default function MedicineRequestPendingItems() {
       med_name: medicine.med_name,
       med_type: medicine.med_type,
       total_available_stock: medicine.total_available_stock,
-      med_id: medicine.med_id
+      med_id: medicine.med_id,
+      reason: item.reason || "No reason provided" ,// Use the reason field
+      medreq_id: item.medreq_id
     }))
   );
 
@@ -155,6 +210,22 @@ export default function MedicineRequestPendingItems() {
         </div></>
           )}
         </div>
+
+        {/* Medicine Display (Read-only) - Only show medicines that have the same med_id */}
+        {!isMedicinesLoading && filteredMedicineStocks.length > 0 && (
+          <div className="mt-6">
+            <MedicineDisplay 
+              medicines={filteredMedicineStocks} 
+              initialSelectedMedicines={selectedMedicines}
+              onSelectedMedicinesChange={() => {}} // Empty function for read-only
+              itemsPerPage={pageSize}
+              currentPage={medicineDisplayPage}
+              onPageChange={setMedicineDisplayPage}
+              autoFillReasons={true}
+              isLoading={isMedicinesLoading}
+            />
+          </div>
+        )}
 
         <div className="flex justify-end mt-3 mb-3">
           <Button>Process Request</Button>

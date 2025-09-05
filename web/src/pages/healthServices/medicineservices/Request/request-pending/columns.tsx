@@ -78,6 +78,8 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
   }
 ];
 
+
+
 export const pendingItemsColumns: ColumnDef<any>[] = [
   {
     accessorKey: "medicine",
@@ -110,6 +112,15 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
     cell: ({ row }) => (
       <div className="min-w-[200px] max-w-[300px] px-3 py-2">
         <div className="text-sm text-gray-700 line-clamp-3">{row.original.reason || "No reason provided"}</div>
+      </div>
+    )
+  },
+  {
+    accessorKey: "reason",
+    header: "Reason",
+    cell: ({ row }) => (
+      <div className="min-w-[200px] max-w-[300px] px-3 py-2">
+        <div className="text-sm text-gray-700 line-clamp-3">{row.original.medreqitem_id || "No reason provided"}</div>
       </div>
     )
   },
@@ -175,22 +186,7 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
         console.log("Confirming:", row.original);
       };
 
-      const handleRefer = async (referralReason: string) => {
-        setIsProcessing(true);
-        try {
-          // Your referral API call here
-          console.log("Referring:", row.original, "Reason:", referralReason);
-          await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
-          setIsRejectOpen(false);
-          // Show success toast or handle success
-        } catch (error) {
-          console.error("Referral failed:", error);
-          // Show error toast
-        } finally {
-          setIsProcessing(false);
-        }
-      };
-
+     
       return (
         <div className="flex justify-center ">
           {med_type === "Prescription" && (
@@ -198,7 +194,7 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
               <Button size="sm" variant="destructive" className="text-xs" onClick={() => setIsRejectOpen(true)}>
                 Reject Document
               </Button>
-              <Reject isOpen={isRejectOpen} onClose={() => setIsRejectOpen(false)} onConfirm={handleRefer} medicineName={row.original.med_name} isLoading={isProcessing} />
+              <Reject isOpen={isRejectOpen} onClose={() => setIsRejectOpen(false)}  data={row.original} isLoading={isProcessing} />
             </>
           )}
         </div>

@@ -36,6 +36,7 @@ export const fetchMedicinesWithStock = () => {
         unit: stock.minv_qty_unit === 'boxes' ? 'pcs' : stock.minv_qty_unit || 'units',
         qty: stock.minv_qty || 0,
         med_id: stock.med_detail?.med_id || 'Unknown ID',
+        inv_id: stock.inv_id || 'Unknown Inventory ID',
         name: stock.med_detail?.med_name || 'Unknown Medicine',
         med_type: stock.med_detail?.med_type || 'General',
         dosage: `${stock.minv_dsg || 0} ${stock.minv_dsg_unit || ''}`.trim(),

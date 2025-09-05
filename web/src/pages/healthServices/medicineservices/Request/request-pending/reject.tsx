@@ -1,12 +1,14 @@
-// components/referral-modal.tsx
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { X, Send, AlertCircle } from "lucide-react";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
+import { Form } from "@/components/ui/form/form";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
+import { toast } from "sonner";
+import { api2 } from "@/api/api";
 
 // Define the form schema
 const referralFormSchema = z.object({
@@ -18,18 +20,20 @@ type ReferralFormValues = z.infer<typeof referralFormSchema>;
 interface RejectProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (reason: string) => void;
-  medicineName: string;
+  data: any;
   isLoading?: boolean;
+  onSuccess?: () => void; // Add callback for successful rejection
 }
 
 export const Reject = ({
   isOpen,
   onClose,
-  onConfirm,
-  medicineName,
-  isLoading = false
+  data,
+  isLoading = false,
+  onSuccess
 }: RejectProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const form = useForm<ReferralFormValues>({
     resolver: zodResolver(referralFormSchema),
     defaultValues: {
@@ -37,13 +41,38 @@ export const Reject = ({
     }
   });
 
-  const handleSubmit = (data: ReferralFormValues) => {
-    onConfirm(data.reason.trim());
-    form.reset(); // Reset form after submit
+  const handleSubmit = async (formData: ReferralFormValues) => {
+    setIsSubmitting(true);
+    try {
+      // Prepare the data for API call
+      const updateData = {
+        status: 'rejected',
+        archive_reason: formData.reason,
+        is_archived: true
+      };
+
+      // Make the PATCH request
+      await api2.patch(`/medicine/medicine-request-item/${data.medreqitem_id}/`, updateData);
+      
+      form.reset();
+      toast.success("Document rejected successfully");
+      
+      // Call the success callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error("Rejection failed:", error);
+      toast.error("Failed to reject document");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
-    form.reset(); // Reset form on close
+    form.reset();
     onClose();
   };
 
@@ -63,7 +92,7 @@ export const Reject = ({
             size="icon"
             onClick={handleClose}
             className="h-8 w-8 rounded-full hover:bg-gray-100"
-            disabled={isLoading}
+            disabled={isSubmitting}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -73,7 +102,7 @@ export const Reject = ({
         <div className="p-6 ">
           <div className="mb-4">
             <Label className="text-sm font-medium text-gray-700">
-              Medicine: <span className="font-semibold text-gray-900">{medicineName}</span>
+              Medicine: <span className="font-semibold text-gray-900">{data.med_name}</span>
             </Label>
           </div>
 
@@ -83,9 +112,9 @@ export const Reject = ({
                 name="reason"
                 control={form.control}
                 label=""
-                placeholder="Enter the reason for rejecttion..."
+                placeholder="Enter the reason for rejection..."
                 rows={4}
-                />
+              />
 
               {/* Modal Footer */}
               <div className="flex gap-3 justify-end pt-4">
@@ -93,17 +122,17 @@ export const Reject = ({
                   type="button"
                   variant="outline"
                   onClick={handleClose}
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                   className="min-w-[80px]"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isLoading || !form.formState.isValid}
+                  disabled={isSubmitting || !form.formState.isValid}
                   className="min-w-[80px] bg-amber-600 hover:bg-amber-700"
                 >
-                  {isLoading ? (
+                  {isSubmitting ? (
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                       Sending...
@@ -122,4 +151,4 @@ export const Reject = ({
       </div>
     </div>
   );
-};
+};    

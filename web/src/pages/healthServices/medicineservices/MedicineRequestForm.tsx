@@ -381,7 +381,7 @@ export default function MedicineRequestForm() {
                 </div>
 
                 <div className="w-full overflow-x-auto">
-                  <MedicineDisplay medicines={medicineStocksOptions || []} initialSelectedMedicines={selectedMedicines} onSelectedMedicinesChange={handleSelectedMedicinesChange} itemsPerPage={itemsPerPage} currentPage={currentPage} onPageChange={handlePageChange} />
+                  <MedicineDisplay medicines={medicineStocksOptions || []} initialSelectedMedicines={selectedMedicines} onSelectedMedicinesChange={handleSelectedMedicinesChange} itemsPerPage={itemsPerPage} currentPage={currentPage} onPageChange={handlePageChange} isLoading={isMedicinesLoading} />
 
                   {/* Conditionally show MediaUpload only when prescription medicine is selected */}
                   {hasPrescriptionMedicine && (
