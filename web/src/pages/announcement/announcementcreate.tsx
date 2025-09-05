@@ -73,7 +73,7 @@ const AnnouncementCreate = () => {
     ann_event_end: "",
     ann_type: "",
     ar_type: [],
-    ar_category: "everyone",
+    ar_category: "",
     staff: user?.staff?.staff_id || "",
     pos_category: "",
     pos_group: "",
@@ -293,7 +293,6 @@ console.log(announcementData)
                     name="ar_category"
                     label="Target Audience"
                     options={[
-                      { id: "everyone", name: "Everyone" },
                       { id: "resident", name: "Resident" },
                       { id: "staff", name: "Staff" },
                     ]}

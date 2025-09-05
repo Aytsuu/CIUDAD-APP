@@ -29,7 +29,6 @@ function AnnouncementTracker() {
     deleteEntry(ann_id)
   }
 
-  
   const formatDate = (dateString: string) => {
     if (!dateString) return "—"
     const date = new Date(dateString)
@@ -46,11 +45,10 @@ function AnnouncementTracker() {
     }).format(date)
   }
 
-  // ✅ Apply search ONLY on announcement title
   let filteredData = announcements.filter((announcement) => {
     return announcement.ann_title?.toLowerCase().includes(searchQuery.toLowerCase())
   })
-  // ✅ Apply filters
+
   if (filter === "dateRecent") {
     filteredData = [...filteredData].sort(
       (a, b) => new Date(b.ann_created_at).getTime() - new Date(a.ann_created_at).getTime(),
@@ -153,111 +151,97 @@ function AnnouncementTracker() {
         ) : (
           <>
             <div className="w-full">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              <div className="grid grid-cols-1 gap-4 mb-6 max-w-6xl mx-auto">
                 {paginatedData.map((announcement) => (
                   <Card
                     key={announcement.ann_id}
                     className="w-full shadow-sm border-gray-200 hover:shadow-md transition-shadow duration-200 bg-white flex flex-col"
                   >
-                    <CardContent className="p-0 flex flex-col h-full">
-                      <div className="flex flex-col lg:flex-row flex-1">
-                        <div className="flex-1 p-4 lg:p-6">
-                          <div className="mb-3">
-                            <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1 leading-tight">
-                              {announcement.ann_title}
-                            </h2>
-                            <div className="flex items-center text-base text-gray-500 mb-2">
-                              <Calendar className="w-4 h-4 mr-2" />
-                              Posted on {formatDate(announcement.ann_created_at)}
-                            </div>
-                          </div>
-                          <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
-                            {announcement.ann_details}
-                          </p>
-                        </div>
-
-                        <div className="w-full lg:w-80 bg-gray-50/80 border-t lg:border-t-0 lg:border-l border-gray-200 p-4 lg:p-5">
-                          <div className="space-y-3">
-                            <div className="grid grid-cols-1 gap-3">
-                              <div className="bg-white p-3 rounded-lg border border-gray-100">
-                                <div className="flex items-center mb-1">
-                                  <Clock className="w-4 h-4 text-green-600 mr-2" />
-                                  <span className="text-base font-medium text-gray-700">Start At</span>
-                                </div>
-                                <p className="text-base text-gray-900 font-medium">
-                                  {formatDate(announcement.ann_start_at)}
-                                </p>
-                              </div>
-
-                              <div className="bg-white p-3 rounded-lg border border-gray-100">
-                                <div className="flex items-center mb-1">
-                                  <Clock className="w-4 h-4 text-red-600 mr-2" />
-                                  <span className="text-base font-medium text-gray-700">End At</span>
-                                </div>
-                                <p className="text-base text-gray-900 font-medium">
-                                  {formatDate(announcement.ann_end_at)}
-                                </p>
-                              </div>
-
-                              <div className="bg-white p-3 rounded-lg border border-gray-100">
-                                <div className="flex items-center mb-2">
-                                  <Calendar className="w-4 h-4 text-blue-600 mr-2" />
-                                  <span className="text-base font-medium text-gray-700">Event Period</span>
-                                </div>
-                                <div className="space-y-1">
-                                  <p className="text-sm text-gray-600">
-                                    <span className="font-medium">Start:</span>{" "}
-                                    {formatDate(announcement.ann_event_start)}
-                                  </p>
-                                  <p className="text-sm text-gray-600">
-                                    <span className="font-medium">End:</span> {formatDate(announcement.ann_event_end)}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="pt-3 border-t border-gray-200">
-                              <h4 className="text-base font-medium text-gray-700 mb-2">Notification Status</h4>
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center">
-                                    <MessageSquare className="w-4 h-4 text-gray-500 mr-2" />
-                                    <span className="text-base text-gray-600">SMS</span>
-                                  </div>
-                                  <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                      announcement.ann_to_sms
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-gray-100 text-gray-600"
-                                    }`}
-                                  >
-                                    {announcement.ann_to_sms ? "Enabled" : "Disabled"}
-                                  </span>
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center">
-                                    <Mail className="w-4 h-4 text-gray-500 mr-2" />
-                                    <span className="text-base text-gray-600">Email</span>
-                                  </div>
-                                  <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                      announcement.ann_to_email
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-gray-100 text-gray-600"
-                                    }`}
-                                  >
-                                    {announcement.ann_to_email ? "Enabled" : "Disabled"}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                    <CardContent className="p-4 flex flex-col h-full">
+                      <div className="mb-3">
+                        <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-1 leading-tight">
+                          {announcement.ann_title}
+                        </h2>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          Posted on {formatDate(announcement.ann_created_at)}
                         </div>
                       </div>
 
-                      <div className="mt-auto bg-gradient-to-r from-gray-50/50 to-transparent border-t border-gray-100">
-                        <div className="flex justify-start gap-3 p-4 lg:px-6">
+                      <div className="mb-4 flex-1">
+                        <p className="text-base text-gray-700 leading-relaxed whitespace-pre-wrap break-words line-clamp-3">
+                          {announcement.ann_details}
+                        </p>
+                      </div>
+
+                      <div className="border-t border-gray-200 pt-3 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div>
+                            <div className="flex items-center mb-1">
+                              <Clock className="w-4 h-4 text-green-600 mr-2" />
+                              <span className="text-sm font-medium text-gray-700">Start At</span>
+                            </div>
+                            <p className="text-sm text-gray-900 font-medium">{formatDate(announcement.ann_start_at)}</p>
+                          </div>
+
+                          <div>
+                            <div className="flex items-center mb-1">
+                              <Clock className="w-4 h-4 text-red-600 mr-2" />
+                              <span className="text-sm font-medium text-gray-700">End At</span>
+                            </div>
+                            <p className="text-sm text-gray-900 font-medium">{formatDate(announcement.ann_end_at)}</p>
+                          </div>
+
+                          <div>
+                            <div className="flex items-center mb-1">
+                              <Calendar className="w-4 h-4 text-blue-600 mr-2" />
+                              <span className="text-sm font-medium text-gray-700">Event Period</span>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-xs text-gray-600">
+                                <span className="font-medium">Start:</span> {formatDate(announcement.ann_event_start)}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                <span className="font-medium">End:</span> {formatDate(announcement.ann_event_end)}
+                              </p>
+                            </div>
+                          </div>
+
+                          {(announcement.ann_to_sms || announcement.ann_to_email) && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">Notification Status</h4>
+                              <div className="space-y-1">
+                                {announcement.ann_to_sms && (
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                      <MessageSquare className="w-3 h-3 text-gray-500 mr-1" />
+                                      <span className="text-xs text-gray-600">SMS</span>
+                                    </div>
+                                    <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                      Enabled
+                                    </span>
+                                  </div>
+                                )}
+
+                                {announcement.ann_to_email && (
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                      <Mail className="w-3 h-3 text-gray-500 mr-1" />
+                                      <span className="text-xs text-gray-600">Email</span>
+                                    </div>
+                                    <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                      Enabled
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-auto bg-gradient-to-r from-gray-50/50 to-transparent border-t border-gray-100 -mx-4 -mb-4">
+                        <div className="flex justify-start gap-3 p-3 lg:px-4">
                           <Link to={`/announcement/${announcement.ann_id}`}>
                             <TooltipLayout
                               trigger={
