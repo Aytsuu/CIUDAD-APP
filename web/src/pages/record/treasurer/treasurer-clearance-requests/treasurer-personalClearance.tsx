@@ -1058,13 +1058,14 @@ import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetNonResidentCertReq, type NonResidentReq, usegetResidentCertReq, type ResidentReq } from "./queries/CertClearanceFetchQueries";
 import DeclineRequestForm from "./declineForm";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 function PersonalClearance() {
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(1); 
     const [pageSize, setPageSize] = useState(10);
     const [activeTab, setActiveTab] = useState<"paid" | "unpaid" | "declined">("unpaid");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [residentType, setResidentType] = useState<"resident" | "non-resident">("non-resident");
+    const [residentType, setResidentType] = useState<"resident" | "non-resident">("resident");
     
     const {data: nonResidentClearanceRequests = [], isLoading: nonResidentLoading, error: nonResidentError} = useGetNonResidentCertReq();
     const {data: residentClearanceRequests = [], isLoading: residentLoading, error: residentError} = usegetResidentCertReq();
@@ -1417,18 +1418,6 @@ function PersonalClearance() {
                         {/* Toggle Button between Resident and Non-Resident */}
                         <div className="flex bg-white rounded-lg p-1 border border-gray-300">
                             <button
-                                onClick={() => setResidentType("non-resident")}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
-                                    residentType === "non-resident"
-                                        ? "bg-emerald-100 text-emerald-800 border-emerald-200 shadow-sm"
-                                        : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
-                                }`}
-                            >
-                                <Users size={16} />
-                                Non-Resident
-                            </button>
-
-                            <button
                                 onClick={() => setResidentType("resident")}
                                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                     residentType === "resident"
@@ -1438,6 +1427,18 @@ function PersonalClearance() {
                             >
                                 <User size={16} />
                                 Resident
+                            </button>
+
+                            <button
+                                onClick={() => setResidentType("non-resident")}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
+                                    residentType === "non-resident"
+                                        ? "bg-emerald-100 text-emerald-800 border-emerald-200 shadow-sm"
+                                        : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
+                                }`}
+                            >
+                                <Users size={16} />
+                                Non-Resident
                             </button>
                         </div>
                     </div>

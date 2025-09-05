@@ -28,7 +28,7 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
 
     const purposeOptions = purposes
     .filter(purposes => purposes.pr_is_archive === false)
-    .filter(purposes => purposes.pr_category === 'Personal And Others')
+    .filter(purposes => purposes.pr_category === 'Personal')
     .map(purposes => ({
         id: purposes.pr_id.toString(),
         name: `${purposes.pr_purpose}`
