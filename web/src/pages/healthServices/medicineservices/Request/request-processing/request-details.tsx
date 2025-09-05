@@ -23,13 +23,14 @@ import {
   HeartPulse,
   Home,
 } from "lucide-react";
-import { MedicineRequestDetailProps, MedicineRequestItem } from "./types";
-import { fetchRequestItems } from "./restful-api/get";
+import { MedicineRequestDetailProps, MedicineRequestItem } from "../types";
+import { getRequestItems } from "../restful-api/get";
 import { createPatients } from "@/pages/record/health/patientsRecord/restful-api/post";
 import { createMedicineRecord } from "@/pages/healthServices/medicineservices/restful-api/postAPI";
-import { updateMedicineRequest } from "./restful-api/update";
+import { updateMedicineRequest } from "../restful-api/update";
 import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
 import { useAuth } from "@/context/AuthContext";
+
 
 export default function MedicineRequestDetail() {
   const location = useLocation();
@@ -51,7 +52,7 @@ export default function MedicineRequestDetail() {
     queryKey: ["requestItem"],
     queryFn: () =>
       request
-        ? fetchRequestItems(
+        ? getRequestItems(
             request.medreq_id,
             request.pat_id || null,
             request.rp_id || null
@@ -391,7 +392,7 @@ export default function MedicineRequestDetail() {
 
   if (!request) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div >
         <div className="text-center">
           <AlertCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">

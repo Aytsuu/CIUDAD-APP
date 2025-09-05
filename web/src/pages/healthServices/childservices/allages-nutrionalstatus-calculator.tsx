@@ -3,8 +3,15 @@ import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { AlertCircle, CheckCircle, AlertTriangle } from "lucide-react"
-import type { NutritionalStatusType } from "@/form-schema/chr-schema/chr-schema"
 import { LFA_GIRLS_TABLE,LFA_BOYS_TABLE,WFA_BOYS_TABLE,WFA_GIRLS_TABLE,WFH_BOYS_TABLE,WFH_GIRLS_TABLE } from "@/pages/healthServices/childservices/tables/who-tables"
+
+export type NutritionalStatusType = {
+  wfa: "" | "N" | "UW" | "SUW" | "MUW" | "OW" | "OB" | "OB1" | "OB2" | "OB3" | undefined;
+  lhfa: "" | "N" | "ST" | "SST" | "T" | "N/A" | undefined;
+  wfh: "" | "N" | "W" | "SW" | "OW" | "OB" | "MUW" | "UW" | "SUW" | "OB1" | "OB2" | "OB3" | undefined;
+  muac: number | undefined;
+  muac_status: "" | "N" | "MAM" | "SAM" | undefined;
+};
 
 interface NutritionalStatusCalculatorProps {
   weight?: number
@@ -235,11 +242,11 @@ export function NutritionalStatusCalculator({
     const ageDetails = parseAge(age || "");
     
     const newStatus: NutritionalStatusType = {
-      wfa: weight ? calculateWFA(weight, ageDetails) : "",
-      lhfa: height ? calculateLHFA(height, ageDetails) : "",
-      wfh: weight && height ? calculateWFH(weight, height, ageDetails) : "",
+      wfa: weight ? calculateWFA(weight, ageDetails) as "" | "N" | "UW" | "SUW" | "MUW" | "OW" | "OB" | "OB1" | "OB2" | "OB3" | undefined : "",
+      lhfa: height ? calculateLHFA(height, ageDetails) as "" | "N" | "ST" | "SST" | "T" | "N/A" | undefined : "",
+      wfh: weight && height ? calculateWFH(weight, height, ageDetails) as "" | "N" | "W" | "SW" | "OW" | "OB" | "MUW" | "UW" | "SUW" | "OB1" | "OB2" | "OB3" | undefined : "",
       muac: manualMuac,
-      muac_status: manualMuac ? getMUACClassification(manualMuac, ageDetails.years, gender) : ""
+      muac_status: manualMuac ? getMUACClassification(manualMuac, ageDetails.years, gender) as "" | "N" | "MAM" | "SAM" | undefined : ""
     };
     
     setNutritionalStatus(newStatus);

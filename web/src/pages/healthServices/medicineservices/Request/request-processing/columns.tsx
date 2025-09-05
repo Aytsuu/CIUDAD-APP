@@ -1,7 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import { MedicineRequest } from "./types";
+import { MedicineRequest } from "../types";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { Link } from "react-router-dom";
 

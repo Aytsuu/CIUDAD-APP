@@ -11,7 +11,7 @@
   );
 
   // Modal component for viewing documents
-  const DocumentModal = ({ files, isOpen, onClose, isLoading = false }: { files: any[]; isOpen: boolean; onClose: () => void; isLoading?: boolean }) => {
+  export const DocumentModal = ({ files, isOpen, onClose, isLoading = false }: { files: any[]; isOpen: boolean; onClose: () => void; isLoading?: boolean }) => {
     if (!isOpen) return null;
 
     return (

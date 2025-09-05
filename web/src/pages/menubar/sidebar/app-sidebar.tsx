@@ -221,7 +221,7 @@ const healthItems: BaseMenuItem[] = [
     items: [
       {
         title: "Medicine Request",
-        url: "/medicine-requests"
+        url: "/medicine-request"
       },
       { title: "Medical Consultation", url: "/" }
     ]

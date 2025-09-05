@@ -9,19 +9,7 @@ export interface Address {
     full_address: string;
   }
   
-  export interface PersonalInfo {
-    per_id: number;
-    per_lname: string;
-    per_fname: string;
-    per_mname: string | null;
-    per_suffix: string | null;
-    per_dob: string;
-    per_sex: string;
-    per_status: string;
-    per_edAttainment: string;
-    per_religion: string;
-    per_contact: string;
-  }
+
   
   export interface MedicineDetail {
     med_name: string;
@@ -70,4 +58,41 @@ export interface MedicineRequest {
 export interface MedicineRequestWithItems extends MedicineRequest {
   total_quantity: number;
   items?: MedicineRequestItem[]; // Optional array of items
+}
+
+
+
+// PENDING
+// types/medicine-request.ts
+export interface PersonalInfo {
+  per_fname: string;
+  per_lname: string;
+  per_mname: string;
+  per_suffix: string;
+  per_dob: string;
+  per_sex: string;
+  per_status: string;
+  per_edAttainment: string;
+  per_religion: string;
+  per_contact: string;
+}
+
+export interface MedicineRequestPending {
+  medreq_id: number;
+  address: string | null;
+  personal_info: PersonalInfo;
+  total_quantity: number;
+  requested_at: string;
+  status: string;
+  rp_id: string | null;
+  pat_id: string;
+}
+
+// types.ts
+export interface MedicineRequestPendingResponse {
+  success: boolean;
+  results: MedicineRequestPending[];
+  count: number;
+  next?: string;
+  previous?: string;
 }

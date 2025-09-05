@@ -121,4 +121,6 @@ urlpatterns = [
     path('vaccination-expired-out-of-stock-summary/', VaccinationExpiredOutOfStockSummaryAPIView.as_view(), name='vaccination-expired-out-of-stock-summary'),
     path('vaccination-expired-out-of-stock-detail/<str:month>/', MonthlyVaccinationExpiredOutOfStockDetailAPIView.as_view(), name='vaccination-expired-out-of-stock-detail'),
     
+    
+    path('medreq-items-pending/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
 ] 
