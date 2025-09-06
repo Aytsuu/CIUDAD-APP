@@ -50,8 +50,8 @@ urlpatterns=[
 
     # RESOLUTION
     path("resolution/", ResolutionView.as_view(), name="council-resolution"),
-    path("update-resolution/<int:res_num>/", UpdateResolutionView.as_view(), name="update-resolution"),
-    path('delete-resolution/<int:res_num>/', DeleteResolutionView.as_view(), name='delete-resolution'),
+    path("update-resolution/<str:res_num>/", UpdateResolutionView.as_view(), name="update-resolution"),
+    path('delete-resolution/<str:res_num>/', DeleteResolutionView.as_view(), name='delete-resolution'),
     # RESOLUTION FILE
     path("resolution-file/", ResolutionFileView.as_view(), name="council-resolution-file"),
     path('resolution-file-delete/<int:rf_id>/', ResolutionFileDetailView.as_view(), name='council-file-detail'),

@@ -17,7 +17,7 @@ type FileData = {
 
 type ExtendedResolutionUpdateValues = z.infer<typeof resolutionFormSchema> & {
   files: FileData[]; 
-  res_num: number;
+  res_num: String;
   staff: string;
 };
 
@@ -62,7 +62,7 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
 
 
 
-const handleResolutionFileUpdates = async (res_num: number, mediaFiles: any[]) => {
+const handleResolutionFileUpdates = async (res_num: String, mediaFiles: any[]) => {
   try {
     // Get current files from server
     const currentFilesRes = await api.get(`council/resolution-file/?res_num=${res_num}`);

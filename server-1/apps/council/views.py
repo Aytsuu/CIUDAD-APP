@@ -14,7 +14,8 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.exceptions import NotFound
-
+from rest_framework import generics, status
+from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 
@@ -353,9 +354,28 @@ class DeleteTemplateByPrIdView(generics.DestroyAPIView):
 
  # =================================  RESOLUTION =================================
 
+# class ResolutionView(generics.ListCreateAPIView):
+#     serializer_class = ResolutionSerializer
+#     queryset = Resolution.objects.all()
+
 class ResolutionView(generics.ListCreateAPIView):
     serializer_class = ResolutionSerializer
     queryset = Resolution.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        # Check if we need to generate a resolution number
+        res_num = request.data.get('res_num', '').strip()
+        
+        if not res_num:
+            # Generate automatic resolution number using the model method
+            request.data['res_num'] = Resolution.generate_resolution_number()
+        
+        # Continue with the normal creation process
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class DeleteResolutionView(generics.DestroyAPIView):
