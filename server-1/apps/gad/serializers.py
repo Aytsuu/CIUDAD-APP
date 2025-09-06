@@ -284,20 +284,41 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         return obj.current_status
     
     def get_dev_details(self, obj):
-        """Get development plan details for this proposal"""
+        """Get development plan details for this proposal, with parsed dev_project and dev_indicator"""
         if obj.dev:
+            # --- Parse dev_project ---
+            dev_project_raw = obj.dev.dev_project
+            try:
+                dev_project = json.loads(dev_project_raw) if dev_project_raw else {}
+            except (ValueError, TypeError):
+                dev_project = dev_project_raw or {}
+
+            # --- Parse dev_indicator ---
+            parsed_indicators = []
+            if obj.dev.dev_indicator:
+                for entry in obj.dev.dev_indicator:
+                    # Split entries by commas, e.g. "LGBTQIA+ (5 participants), Erpat (5 participants)"
+                    parts = [p.strip() for p in entry.split(",") if p.strip()]
+                    for part in parts:
+                        match = re.match(r'^(.*?)\s*\((\d+)\s*participants?\)$', part)
+                        if match:
+                            category, count = match.groups()
+                            parsed_indicators.append({"category": category.strip(), "count": int(count)})
+                        else:
+                            parsed_indicators.append({"category": part, "count": None})
+
             return {
                 'dev_id': obj.dev.dev_id,
-                'dev_project': obj.dev.dev_project,
+                'dev_project': dev_project,
                 'dev_gad_items': obj.dev.dev_gad_items,
                 'dev_res_person': obj.dev.dev_res_person,
-                'dev_indicator': obj.dev.dev_indicator,
+                'dev_indicator': parsed_indicators,
                 'dev_client': obj.dev.dev_client,
                 'dev_issue': obj.dev.dev_issue,
                 'dev_date': obj.dev.dev_date
             }
         return None
-    
+
     def get_project_title(self, obj):
         """Get project title from development plan"""
         return obj.project_title
