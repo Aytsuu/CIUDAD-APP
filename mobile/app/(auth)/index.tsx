@@ -11,8 +11,9 @@ import IllegalDumpCreateForm from "@/screens/report/illegal-dumping/resident/ill
 import WasteIllegalDumping from "@/screens/report/illegal-dumping/staff/illegal-dump-main-staff";
 import DriverTasksMain from "@/screens/waste/waste-garbage-pickup-request/driver/garbage-pickup-tasks-main";
 import ResolutionPage from "@/screens/council/resolution/resolution-main";
+import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staff/garbage-pickup-request-main";
 
 export default () => {
-    return <ResolutionPage/>
+    return <DriverTasksMain/>
 }
  

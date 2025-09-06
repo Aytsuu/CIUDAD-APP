@@ -21,17 +21,20 @@ export default function GarbageCompletedTasks() {
   const renderTaskCard = (task: GarbageCompletedTasks) => (
     <Card className="border border-gray-200 rounded-lg bg-white mb-4">
       <CardHeader className="border-b border-gray-200 p-4">
-        <View className="flex-row justify-between items-center">
-          <View>
-            <Text className="font-medium">{task.garb_requester}</Text>
-            <Text className="text-sm text-gray-500">
-              Sitio: {task.sitio_name}, {task.garb_location}
-            </Text>
-          </View>
-          <View className="flex-row gap-1 items-center">
-            <Text className="text-xs text-gray-500">
-              {formatTimestamp(task.conf_staff_conf_date || task.conf_resident_conf_date || '')}
-            </Text>
+        <View className="flex flex-row justify-between items-center">
+          <View className="flex-1">
+            <View className='flex flex-row items-center gap-2 mb-1'>
+              <View className="bg-blue-600 px-3 py-1 rounded-full self-start">
+                <Text className="text-white font-bold text-sm tracking-wide">{task.garb_id}</Text>
+              </View>
+              <Text className="font-medium">{task.garb_requester}</Text>
+            </View>
+            <View className='flex flex-row justify-between items-center gap-2'>
+                <Text className="text-xs text-gray-500">
+                  Sitio: {task.sitio_name}, {task.garb_location}
+                </Text>
+                <Text className="text-xs text-gray-500">{formatTimestamp(task.dec_date)}</Text>
+            </View>
           </View>
         </View>
       </CardHeader>
@@ -47,7 +50,7 @@ export default function GarbageCompletedTasks() {
           {task.conf_staff_conf_date && (
             <View className="flex-row justify-between">
               <Text className="text-sm text-gray-600">Date Completed:</Text>
-              <Text className="text-sm">{new Date(task.conf_staff_conf_date).toLocaleDateString()}</Text>
+              <Text className="text-sm text-green-600 font-bold">{formatTimestamp(task.conf_staff_conf_date)}</Text>
             </View>
           )}
 

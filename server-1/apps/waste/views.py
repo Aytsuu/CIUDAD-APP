@@ -568,6 +568,26 @@ class GarbagePickupCompletedRequestDetailView(generics.RetrieveAPIView):
         obj = super().get_object()
         return obj
     
+# class GarbagePickupCompletedByDriverView(generics.ListAPIView):
+#     serializer_class = GarbagePickupRequestCompletedSerializer
+
+#     def get_queryset(self):
+#         driver_id = self.request.query_params.get('wstp_id')
+
+#         if not driver_id:
+#             return Garbage_Pickup_Request.objects.none()
+
+#         assigned_garb_ids = Pickup_Assignment.objects.filter(
+#             wstp_id=driver_id
+#         ).values_list('garb_id', flat=True)
+
+#         confirmed_garb_ids = Pickup_Confirmation.objects.filter(
+#             garb_id__in=assigned_garb_ids,
+#             conf_staff_conf=True
+#         ).values_list('garb_id', flat=True)
+
+#         return Garbage_Pickup_Request.objects.filter(garb_id__in=confirmed_garb_ids)
+
 class GarbagePickupCompletedByDriverView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestCompletedSerializer
 
@@ -577,17 +597,12 @@ class GarbagePickupCompletedByDriverView(generics.ListAPIView):
         if not driver_id:
             return Garbage_Pickup_Request.objects.none()
 
-        assigned_garb_ids = Pickup_Assignment.objects.filter(
-            wstp_id=driver_id
-        ).values_list('garb_id', flat=True)
-
-        confirmed_garb_ids = Pickup_Confirmation.objects.filter(
-            garb_id__in=assigned_garb_ids,
-            conf_staff_conf=True
-        ).values_list('garb_id', flat=True)
-
-        return Garbage_Pickup_Request.objects.filter(garb_id__in=confirmed_garb_ids)
-
+        return Garbage_Pickup_Request.objects.filter(
+            pickup_assignment__wstp_id=driver_id,
+            pickup_confirmation__conf_staff_conf=True
+        ).prefetch_related(
+            'pickup_request_decision_set' 
+        ).distinct()
 
 class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):
     serializer_class = GarbagePickupRequestPendingSerializer
@@ -699,16 +714,6 @@ class GarbagePickupRequestAcceptedDetailView(generics.RetrieveAPIView):
     def get_object(self):
         garb_id = self.kwargs.get('garb_id')
         return generics.get_object_or_404(self.get_queryset(), garb_id=garb_id)
-
-# class GarbagePickupRequestCompletedByRPView(generics.ListAPIView):
-#     serializer_class = GarbagePickupRequestCompletedSerializer
-    
-#     def get_queryset(self):
-#         rp_id = self.kwargs.get('rp_id')
-#         return Garbage_Pickup_Request.objects.filter(
-#             rp_id=rp_id, 
-#             garb_req_status='completed'  
-#         )
     
 
 class GarbagePickupRequestCompletedByRPView(generics.ListAPIView):

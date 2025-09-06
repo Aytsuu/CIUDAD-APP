@@ -645,8 +645,8 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
     confirmation_info = serializers.SerializerMethodField()
     assignment_info = serializers.SerializerMethodField()
     file_url = serializers.SerializerMethodField()
-    sitio_name = serializers.SerializerMethodField()
-
+    sitio_name = serializers.SerializerMethodField()    
+    dec_date = serializers.SerializerMethodField()
 
     class Meta:
         model = Garbage_Pickup_Request
@@ -654,6 +654,7 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
             'garb_id',
             'garb_location',
             'garb_waste_type',
+            'dec_date',
             'garb_created_at',
             'garb_requester',
             'confirmation_info',
@@ -683,6 +684,13 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
                 'conf_resident_conf': None,
                 'conf_staff_conf': None,
             }
+
+    def get_dec_date(self, obj):
+        try:
+            decision = Pickup_Request_Decision.objects.get(garb_id=obj)
+            return decision.dec_date
+        except Pickup_Request_Decision.DoesNotExist:
+            return None
         
     def get_assignment_info(self, obj):
         try:

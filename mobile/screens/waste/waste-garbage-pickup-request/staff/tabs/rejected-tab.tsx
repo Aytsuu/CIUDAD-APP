@@ -81,18 +81,21 @@ export default function RejectedGarbageRequest() {
                 className="border border-gray-200 rounded-lg bg-white"
               >
                 <CardHeader className="border-b border-gray-200 p-4">
-                  <View className="flex-row justify-between items-center">
-                    <View>
-                      <Text className="font-medium">{request.garb_requester}</Text>
-                      <Text className="text-sm text-gray-500">
-                        Sitio: {request.sitio_name}, {request.garb_location}
-                      </Text>
-                    </View>
-                    <View className="flex-row gap-1 items-center">
-                      <Text className="text-xs text-gray-500">
-                        {formatTimestamp(request.garb_created_at)}
-                      </Text>
-                    </View>
+                  <View className="flex flex-row justify-between items-center">
+                      <View className="flex-1">
+                       <View className='flex flex-row items-center gap-2 mb-1'>
+                          <View className="bg-blue-600 px-3 py-1 rounded-full self-start">
+                            <Text className="text-white font-bold text-sm tracking-wide">{request.garb_id}</Text>
+                          </View>
+                          <Text className="font-medium">{request.garb_requester}</Text>
+                        </View>
+                        <View className='flex flex-row justify-between items-center gap-2'>
+                            <Text className="text-xs text-gray-500">
+                              Sitio: {request.sitio_name}, {request.garb_location}
+                            </Text>
+                            <Text className="text-xs text-gray-500">{formatTimestamp(request.garb_created_at)}</Text>
+                        </View>
+                      </View>
                   </View>
                 </CardHeader>
                 <CardContent className="p-4">

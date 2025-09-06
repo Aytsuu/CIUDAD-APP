@@ -32,6 +32,7 @@ export type GarbageCompletedTasks = {
   garb_location: string;
   garb_requester: string;
   garb_waste_type: string;
+  dec_date: string;
   conf_resident_conf_date: string | null;  
   conf_resident_conf: boolean | null;     
   conf_staff_conf_date: string | null;    
