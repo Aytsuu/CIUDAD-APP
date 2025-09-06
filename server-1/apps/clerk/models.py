@@ -49,11 +49,13 @@ class NonResidentCertificateRequest(models.Model):
     nrc_date_completed = models.DateTimeField(null=True, blank=True)
     nrc_date_rejected = models.DateTimeField(null=True, blank = True)
     nrc_reason = models.CharField(max_length = 500, default = 'None')
+    nrc_discount_reason = models.TextField(default = 'None')
     pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete=models.CASCADE, db_column='pr_id', related_name='nonresident_certificates', null=True)
     staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='staff_id', null=True)
 
     class Meta:
         db_table = 'nonresident_cert_req'
+        managed = False
         
 class IssuedCertificate(models.Model):
     ic_id = models.BigAutoField(primary_key=True)

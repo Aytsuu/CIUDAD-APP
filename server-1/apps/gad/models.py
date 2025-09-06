@@ -1,12 +1,14 @@
 from django.db import models
 from datetime import date
+import json, re
 
 class DevelopmentPlan(models.Model):
     dev_id = models.BigAutoField(primary_key=True)
     dev_date = models.DateField(default=date.today)
     dev_client = models.CharField(max_length=200, null=True)
     dev_issue = models.CharField(max_length=200, null=True)
-    dev_project = models.JSONField(default=list, db_column='dev_project')
+    dev_project = models.TextField(null=True, blank=True, db_column='dev_project')
+    dev_activity = models.JSONField(default=list, null=True, blank=True, db_column='dev_activity')
     dev_res_person = models.JSONField(default=list, db_column='dev_res_person')
     dev_indicator = models.JSONField(default=list, db_column='dev_indicator')
     dev_gad_items = models.JSONField(default=list, db_column='dev_budget_items')
@@ -193,16 +195,36 @@ class ProjectProposal(models.Model):
     def project_title(self):
         """Get the project title from the related development plan"""
         if self.dev and self.dev.dev_project:
-            projects = self.dev.dev_project if isinstance(self.dev.dev_project, list) else [self.dev.dev_project]
-            if projects: 
-                return projects[0] if isinstance(projects[0], str) else "Untitled Project"
+            try:
+                # Try parsing as JSON
+                projects = json.loads(self.dev.dev_project)
+                if isinstance(projects, list) and projects:
+                    return projects[0] if isinstance(projects[0], str) else "Untitled Project"
+                elif isinstance(projects, str):
+                    return projects
+            except (json.JSONDecodeError, TypeError):
+                # Fallback: just treat it as plain text
+                return self.dev.dev_project
         return "Untitled Project"
 
     @property
     def participants(self):
         """Get participants from the related development plan indicators"""
         if self.dev and self.dev.dev_indicator:
-            return self.dev.dev_indicator
+            result = []
+            for entry in self.dev.dev_indicator:
+                # Split by comma in case multiple groups are in one string
+                parts = [p.strip() for p in entry.split(",") if p.strip()]
+                for part in parts:
+                    # Match "GroupName (5 participants)"
+                    match = re.match(r'^(.*?)\s*\((\d+)\s*participants?\)$', part)
+                    if match:
+                        category, count = match.groups()
+                        result.append({"category": category.strip(), "count": int(count)})
+                    else:
+                        # fallback if no match
+                        result.append({"category": part, "count": None})
+            return result
         return []
     
     @property

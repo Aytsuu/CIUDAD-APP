@@ -2,14 +2,17 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useSelector } from 'react-redux';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { useAddPersonalCertification } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
 import { usePurposeAndRates, type PurposeAndRate } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, type DropdownOption } from "@/components/ui/select-layout";
+import { RootState } from '@/redux';
 
 const CertForm: React.FC = () => {
   const router = useRouter();
+  const {user, isLoading} = useSelector((state: RootState) => state.auth);
   const [personalType, setPersonalType] = useState("");
   const [purpose, setPurpose] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -45,7 +48,7 @@ const CertForm: React.FC = () => {
     
     const result = CertificationRequestSchema.safeParse({
       cert_type: "personal",
-      requester: "user", // This should come from auth context
+      requester: user?.resident?.rp_id || "", 
       purposes: [purpose], 
     });
     if (!result.success) {
@@ -55,11 +58,34 @@ const CertForm: React.FC = () => {
     const selectedPurposeId = purposeData.find(p => p.pr_purpose === personalType)?.pr_id;
     addPersonalCert.mutate({
       cert_type: "personal",
-      requester: "user", 
+      requester: user?.resident?.rp_id || "", 
       purposes: [purpose], 
       pr_id: selectedPurposeId, // Add the purpose ID
     });
   };
+
+  // Show loading screen while auth is loading
+  if (isLoading) {
+    return (
+      <_ScreenLayout
+        customLeftAction={
+          <TouchableOpacity 
+            onPress={() => router.back()} 
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Ionicons name="chevron-back" size={20} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerBetweenAction={<Text className="text-[13px]">Submit a Request</Text>}
+        customRightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#00AFFF" />
+          <Text className="text-gray-600 text-base mt-4">Loading...</Text>
+        </View>
+      </_ScreenLayout>
+    );
+  }
 
   return (
     <_ScreenLayout
@@ -146,13 +172,13 @@ const CertForm: React.FC = () => {
 
       {/* Submit Button */}
       <TouchableOpacity
-        className={`bg-[#00AFFF] rounded-lg py-3 items-center mt-8 shadow-md ${addPersonalCert.status === 'pending' ? 'opacity-50' : ''}`}
+        className={`bg-[#00AFFF] rounded-lg py-3 items-center mt-8 shadow-md ${addPersonalCert.status === 'pending' || isLoading ? 'opacity-50' : ''}`}
         activeOpacity={0.85}
         onPress={handleSubmit}
-        disabled={addPersonalCert.status === 'pending'}
+        disabled={addPersonalCert.status === 'pending' || isLoading}
       >
         <Text className="text-white font-semibold text-base">
-          {addPersonalCert.status === 'pending' ? 'Submitting...' : 'Submit Request'}
+          {addPersonalCert.status === 'pending' ? 'Submitting...' : isLoading ? 'Loading...' : 'Submit Request'}
         </Text>
       </TouchableOpacity>
       </View>

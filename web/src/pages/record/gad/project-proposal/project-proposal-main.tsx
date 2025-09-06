@@ -261,8 +261,10 @@ function GADProjectProposal() {
     if (!project.budgetItems || project.budgetItems.length === 0) return sum;
 
     const projectTotal = project.budgetItems.reduce((projectSum, item) => {
-      const amount = item.amount || 0;
-      const paxCount = item.pax?.includes("pax") ? parseInt(item.pax) || 1 : 1;
+      const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
+      const paxCount = typeof item.pax === 'string' 
+        ? parseInt(item.pax.replace(/\D/g, '')) || 1 
+        : 1;
       return projectSum + (paxCount * amount);
     }, 0);
 
@@ -495,11 +497,10 @@ function GADProjectProposal() {
                                 maximumFractionDigits: 2 
                               }).format(
                                 project.budgetItems.reduce((grandTotal, item) => {
-                                  const amount = item.amount || 0;
-                                  const paxCount = 
-                                    item.pax?.includes("pax") 
-                                      ? parseInt(item.pax) || 1 
-                                      : 1;
+                                  const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
+                                  const paxCount = typeof item.pax === 'string' 
+                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
+                                    : 1;
                                   return grandTotal + (paxCount * amount);
                                 }, 0)
                               )

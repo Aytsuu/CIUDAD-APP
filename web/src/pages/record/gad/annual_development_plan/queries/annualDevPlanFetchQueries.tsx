@@ -14,6 +14,7 @@ export interface AnnualDevPlanFormData {
     dev_client: string;
     dev_issue: string;
     dev_project: string;
+    dev_activity?: string;
     dev_res_person: string;
     dev_indicator: string;
     dev_budget_items: string;
@@ -28,7 +29,8 @@ export const useCreateAnnualDevPlan = () => {
 
             const payload = {
                 ...restFormData,
-                dev_project: JSON.stringify(restFormData.dev_project ? [restFormData.dev_project] : []),
+                dev_project: restFormData.dev_project, // Keep as text
+                dev_activity: restFormData.dev_activity || null, // Keep as JSON string
                 dev_res_person: JSON.stringify(resPersons && resPersons.length ? resPersons : (restFormData.dev_res_person ? [restFormData.dev_res_person] : [])),
                 dev_indicator: JSON.stringify(restFormData.dev_indicator ? [restFormData.dev_indicator] : []),
                 dev_budget_items: JSON.stringify(budgetItems),

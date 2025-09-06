@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useSelector } from 'react-redux';
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAddBusinessPermit } from "./queries/certificationReqInsertQueries";
@@ -9,14 +10,11 @@ import { CertificationRequestSchema } from "@/form-schema/certificates/certifica
 import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import _ScreenLayout from '@/screens/_ScreenLayout';
+import { RootState } from '@/redux';
 
 const CertPermit: React.FC = () => {
   const router = useRouter();
-
-  // naay business00001250821
-  // const RESIDENT_ID = "00001250821"; 
-  // walay business
-  const RESIDENT_ID = "00014250829";
+  const {user, isLoading} = useSelector((state: RootState) => state.auth);
   
   const [permitType, setPermitType] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -35,7 +33,9 @@ const CertPermit: React.FC = () => {
   const addBusinessPermit = useAddBusinessPermit();
   const { data: purposeAndRates = [], isLoading: isLoadingPurposes } = usePurposeAndRates();
   const { data: annualGrossSales = [], isLoading: isLoadingGrossSales } = useAnnualGrossSales();
-  const { data: businessResponse = { results: [] }, isLoading: isLoadingBusiness, error: businessError } = useBusinessByResidentId(RESIDENT_ID);
+  const { data: businessResponse = { results: [] }, isLoading: isLoadingBusiness, error: businessError } = useBusinessByResidentId(
+    user?.resident?.rp_id || ""
+  );
   const businessData = businessResponse?.results || [];
 
   
@@ -183,7 +183,7 @@ const CertPermit: React.FC = () => {
       business_name: businessName || "",
       business_address: businessAddress || "",
       gross_sales: businessData.length === 0 ? (selectedGrossSalesRange || "") : (grossSales || ""),
-      rp_id: RESIDENT_ID,
+      rp_id: user?.resident?.rp_id || "",
       previous_permit_image: previousPermitImage || undefined,
       assessment_image: assessmentImage || undefined,
     });
@@ -229,13 +229,36 @@ const CertPermit: React.FC = () => {
       gross_sales: businessData.length === 0 ? selectedGrossSalesRange : grossSales,
       business_id: businessData.length > 0 ? businessData[0]?.bus_id : undefined, 
       pr_id: selectedPurpose?.pr_id, // Add the purpose and rates ID
-      rp_id: RESIDENT_ID,
+      rp_id: user?.resident?.rp_id || "",
       req_amount: reqAmount, // Add the required amount field
       ags_id: agsId || undefined, // Add the annual gross sales ID
       previous_permit_image: previousPermitImage || undefined,
       assessment_image: assessmentImage || undefined,
     });
   };
+
+  // Show loading screen while auth is loading
+  if (isLoading) {
+    return (
+      <_ScreenLayout
+        customLeftAction={
+          <TouchableOpacity 
+            onPress={() => router.back()} 
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Ionicons name="chevron-back" size={20} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerBetweenAction={<Text className="text-[13px]">Submit a Request</Text>}
+        customRightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#00AFFF" />
+          <Text className="text-gray-600 text-base mt-4">Loading...</Text>
+        </View>
+      </_ScreenLayout>
+    );
+  }
 
   return (
     <_ScreenLayout
@@ -313,13 +336,13 @@ const CertPermit: React.FC = () => {
           selectedValue={permitType}
           onSelect={(option) => setPermitType(option.value)}
           placeholder={
-            isLoadingBusiness 
+            isLoadingBusiness || isLoading
               ? "Loading business information..." 
               : businessData.length === 0 
                 ? "Business Clearance available" 
                 : "Select permit type"
           }
-          disabled={isLoadingBusiness || isLoadingPurposes}
+          disabled={isLoadingBusiness || isLoadingPurposes || isLoading}
           className="mb-3"
         />
 
@@ -502,7 +525,7 @@ const CertPermit: React.FC = () => {
             </View>
 
             {/* Submit Button */}
-            {!isLoadingBusiness && (businessData.length > 0 || permitType === 'Business Clearance') ? (
+            {!isLoadingBusiness && !isLoading && (businessData.length > 0 || permitType === 'Business Clearance') ? (
               <TouchableOpacity
                 className={`bg-[#00AFFF] rounded-xl py-4 items-center mt-2 mb-8 ${addBusinessPermit.status === 'pending' ? 'opacity-50' : ''}`}
                 activeOpacity={0.85}
@@ -516,7 +539,7 @@ const CertPermit: React.FC = () => {
             ) : (
               <View className="bg-gray-100 rounded-xl py-4 items-center mt-2 mb-8">
                 <Text className="text-gray-500 font-semibold text-base">
-                  Cannot Request Business Permit
+                  {isLoading ? 'Loading user data...' : 'Cannot Request Business Permit'}
                 </Text>
               </View>
             )}

@@ -88,7 +88,11 @@ const transformProposalWithData = (proposal: any, logs: any[], suppDocs: any[]) 
     participants: proposal.gprParticipants ?? proposal.gpr_participants ?? [],
     date: proposal.gprDate ?? proposal.gpr_date ?? new Date().toISOString(),
     venue: proposal.gprVenue ?? proposal.gpr_venue ?? 'No venue provided',
-    budgetItems: proposal.gprBudgetItems ?? proposal.gpr_budget_items ?? [],
+     budgetItems: (proposal.gprBudgetItems || proposal.gpr_budget_items || []).map((item: any) => ({
+      name: item.name || '',
+      pax: item.pax || '',
+      amount: item.amount || item.price || 0 
+    })),
     monitoringEvaluation: proposal.gprMonitoring ?? proposal.gpr_monitoring ?? '',
     signatories: proposal.gprSignatories ?? proposal.gpr_signatories ?? [],
     headerImage: proposal.gprHeaderImage ?? proposal.gprHeaderImg ?? proposal.gpr_header_img ?? null,
@@ -118,6 +122,18 @@ const transformProposalWithData = (proposal: any, logs: any[], suppDocs: any[]) 
       };
     }),
     paperSize: proposal.gprPageSize ?? proposal.gpr_page_size ?? 'letter',
+    devId: proposal.devId ?? proposal.dev_id ?? proposal.dev?.dev_id ?? 0,
+    projectIndex: proposal.projectIndex ?? proposal.gpr_project_index ?? 0,
+    devDetails: proposal.devDetails ?? proposal.dev_details ?? (proposal.dev ? {
+      dev_id: proposal.dev.dev_id,
+      dev_project: proposal.dev.dev_project,
+      dev_gad_items: proposal.dev.dev_gad_items,
+      dev_res_person: proposal.dev.dev_res_person,
+      dev_indicator: proposal.dev.dev_indicator,
+      dev_client: proposal.dev.dev_client,
+      dev_issue: proposal.dev.dev_issue,
+      dev_date: proposal.dev.dev_date
+    } : undefined)
   };
 
   if (logs?.length > 0) {

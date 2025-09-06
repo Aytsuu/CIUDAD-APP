@@ -519,7 +519,6 @@ class ProjectProposalForProposal(generics.ListAPIView):
             year = timezone.now().year
             
         try:
-            # Get all development plans for the specified year
             dev_plans = DevelopmentPlan.objects.filter(
                 dev_date__year=year
             ).values(
@@ -530,28 +529,51 @@ class ProjectProposalForProposal(generics.ListAPIView):
             available_projects = []
             
             for dev_plan in dev_plans:
+                # ---- projects (dev_project stored as TextField with JSON text or plain string)
                 dev_project = dev_plan['dev_project']
-                projects = dev_project if isinstance(dev_project, list) else []
-                
-                # Check if ANY proposal exists for this development plan
+                projects = []
+                if dev_project:
+                    try:
+                        parsed = json.loads(dev_project)
+                        if isinstance(parsed, list):
+                            projects = parsed
+                        elif isinstance(parsed, str):
+                            projects = [parsed]
+                    except (json.JSONDecodeError, TypeError):
+                        projects = [dev_project]
+
+                # ---- participants (parse dev_indicator into [{category, count}])
+                participants = parse_dev_indicator_to_participants(dev_plan.get('dev_indicator'))
+
+                # ---- budget items (normalize to {name, pax, amount})
+                budget_items_raw = dev_plan.get('dev_gad_items') or []
+                norm_budget_items = []
+                for item in (budget_items_raw or []):
+                    if not isinstance(item, dict):
+                        continue
+                    norm_budget_items.append({
+                        "name": item.get("name", item.get("gdb_name", "")),
+                        "pax": item.get("pax", item.get("gdb_pax", 1)),
+                        "amount": item.get("amount", item.get("price", item.get("gdb_price", 0))),
+                    })
+
+                # ---- filter out dev plans that already have a proposal
                 existing_proposal = ProjectProposal.objects.filter(
                     dev_id=dev_plan['dev_id'],
                     gpr_is_archive=False
                 ).exists()
                 
-                # If no proposals exist for this dev plan, include all its projects
                 if not existing_proposal:
                     for project_title in projects:
                         if not project_title:
                             continue
-                            
                         available_projects.append({
                             'dev_id': dev_plan['dev_id'],
                             'dev_client': dev_plan['dev_client'],
                             'dev_issue': dev_plan['dev_issue'],
                             'project_title': project_title,
-                            'participants': dev_plan['dev_indicator'] or [],
-                            'budget_items': dev_plan['dev_gad_items'] or [],
+                            'participants': participants,         
+                            'budget_items': norm_budget_items,     
                             'dev_date': dev_plan['dev_date']
                         })
             
@@ -567,6 +589,7 @@ class ProjectProposalForProposal(generics.ListAPIView):
                 {"error": "Internal server error", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 # ===========================================================================================================
 
 class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
@@ -676,3 +699,55 @@ class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
                 {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+            
+            
+            
+            
+ # ==================================================== parsing helper                 
+def parse_dev_indicator_to_participants(value):
+    """
+    Accepts:
+      - list of strings (e.g., ["LGBTQIA+ (5 participants), Erpat (5 participants)"])
+      - single string (same as above)
+      - list of already-shaped dicts (kept as-is with keys normalized)
+    Returns: list[{"category": str, "count": str}]
+    """
+    if not value:
+        return []
+
+    # If value is JSON text, try to parse it
+    if isinstance(value, str):
+        s = value.strip()
+        try:
+            value = json.loads(s)
+        except Exception:
+            value = [s]
+
+    out = []
+    if isinstance(value, list):
+        for v in value:
+            # Already objects? normalize keys
+            if isinstance(v, dict):
+                cat = v.get("category") or v.get("group") or v.get("name") or ""
+                cnt = v.get("count") or v.get("participants") or v.get("value")
+                if cat:
+                    out.append({"category": str(cat).strip(), "count": str(cnt) if cnt is not None else "0"})
+                continue
+
+            if isinstance(v, str):
+                # split on commas into tokens like "LGBTQIA+ (5 participants)"
+                parts = [p.strip() for p in v.split(",") if p.strip()]
+                for part in parts:
+                    m = re.match(r'^(?P<cat>.+?)\s*(?:\((?P<count>\d+)\s*participants?\))?$', part, re.IGNORECASE)
+                    if m:
+                        cat = m.group("cat").strip()
+                        cnt = m.group("count") or "0"
+                        out.append({"category": cat, "count": str(cnt)})
+                    else:
+                        # fallback: strip parentheses, grab first number if any
+                        cat = re.sub(r'\(.*\)', '', part).strip()
+                        m2 = re.search(r'(\d+)', part)
+                        cnt = m2.group(1) if m2 else "0"
+                        if cat:
+                            out.append({"category": cat, "count": str(cnt)})
+    return out

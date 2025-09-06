@@ -1,18 +1,18 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
+import { useSelector } from 'react-redux';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { useRouter } from "expo-router";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useCertTracking, useCancelCertificate } from "./queries/certTrackingQueries";
+import { RootState } from '@/redux';
 
 export default function CertTrackingMain() {
   const router = useRouter();
+  const {user, isLoading: authLoading} = useSelector((state: RootState) => state.auth);
 
-
-  const RESIDENT_ID = "00017250822";
-
-  const { data, isLoading, isError } = useCertTracking(RESIDENT_ID);
-  const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(RESIDENT_ID);
+  const { data, isLoading, isError } = useCertTracking(user?.resident?.rp_id || "");
+  const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(user?.resident?.rp_id || "");
   const [activeTab, setActiveTab] = React.useState<'personal' | 'business'>('personal');
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'in_progress' | 'completed' | 'cancelled'>('all');
 
@@ -67,6 +67,29 @@ export default function CertTrackingMain() {
         { text: 'No', style: 'cancel' },
         { text: 'Yes', style: 'destructive', onPress: () => cancelCert(String(item?.cr_id)) }
       ]
+    );
+  }
+
+  // Show loading screen while auth is loading
+  if (authLoading) {
+    return (
+      <_ScreenLayout
+        customLeftAction={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        headerBetweenAction={<Text className="text-[13px]">Track Requests</Text>}
+        customRightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#00AFFF" />
+          <Text className="text-gray-600 text-base mt-4">Loading...</Text>
+        </View>
+      </_ScreenLayout>
     );
   }
 
