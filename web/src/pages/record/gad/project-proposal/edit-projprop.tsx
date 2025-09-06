@@ -8,8 +8,7 @@ import {
 import { useAddSupportDocument } from "./queries/projprop-addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import {
-  useGetStaffList,
-  useGetAvailableDevPlanProjects,
+  useGetStaffList
 } from "./queries/projprop-fetchqueries";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
@@ -40,19 +39,7 @@ export const EditProjectProposalForm: React.FC<
   const updateMutation = useUpdateProjectProposal();
   const addSupportDocMutation = useAddSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-  const [selectedDevProject, setSelectedDevProject] = useState<any>(null);
-  const { data: availableProjects = [], isLoading: _isProjectsLoading } =
-    useGetAvailableDevPlanProjects();
-  const handleProjectSelect = (projectId?: string) => {
-    const selectedProject = availableProjects.find(
-      (project) => project.dev_id.toString() === projectId
-    );
-
-    if (selectedProject) {
-      setSelectedDevProject(selectedProject);
-      setValue("selectedDevProject", selectedProject as any);
-    }
-  };
+  const [selectedDevProject] = useState<any>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const updateStatusMutation = useUpdateProjectProposalStatus();
   const [confirmAction, setConfirmAction] = useState<"save" | "resubmit">(
@@ -123,7 +110,7 @@ export const EditProjectProposalForm: React.FC<
                 : item.pax || "",
             amount:
               typeof item.amount === "number"
-                ? item.amount.toString()
+                ? item.amount
                 : item.amount || "0",
           }))
         : [{ name: "", pax: "", amount: "0" }],
@@ -380,7 +367,7 @@ export const EditProjectProposalForm: React.FC<
             .map((item) => ({
               name: item.name,
               pax: item.pax,
-              amount: parseFloat(item.amount) || 0,
+              amount: item.amount,
             })),
           monitoringEvaluation: data.monitoringEvaluation,
           signatories: data.signatories.filter((s) => s.name.trim() !== ""),

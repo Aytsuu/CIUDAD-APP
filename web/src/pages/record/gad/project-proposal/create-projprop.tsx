@@ -155,7 +155,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
             ? existingProposal.budgetItems.map((b: any) => ({
                 name: b.name,
                 pax: String(b.pax || ""),
-                amount: String(b.price || b.amount || 0),
+                amount: String( b.amount || 0),
               }))
             : [{ name: "", pax: "", amount: "0" }],
           monitoringEvaluation: existingProposal.monitoringEvaluation || "",
@@ -300,9 +300,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
           (item: any) => ({
             name: item.name || "",
             pax: item.pax ? String(item.pax) : "1",
-            amount: item.price
-              ? String(item.price)
-              : item.amount
+            amount: item.amount
               ? String(item.amount)
               : "0",
           })

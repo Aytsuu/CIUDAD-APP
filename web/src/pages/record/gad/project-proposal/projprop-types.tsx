@@ -48,7 +48,7 @@ export type DevelopmentPlanProject = {
 export type BudgetItem = {
   name: string;
   pax: number | string;
-  amount: number | string;
+  amount: string;
 };
 
 export type ProjectProposal = {
