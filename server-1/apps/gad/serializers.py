@@ -483,7 +483,27 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
             attrs['dev_gad_items'] = [self._normalize_budget_item(b) for b in attrs['budgets']]
 
         
-        for field in ['dev_project', 'dev_res_person', 'dev_indicator']:
+        # Handle dev_project as text (not JSON array)
+        if 'dev_project' in initial:
+            attrs['dev_project'] = initial.get('dev_project', '')
+        
+        # Handle dev_activity as JSON array
+        if 'dev_activity' in initial:
+            dev_activity_raw = initial.get('dev_activity')
+            if dev_activity_raw:
+                try:
+                    if isinstance(dev_activity_raw, str):
+                        parsed = json.loads(dev_activity_raw)
+                        attrs['dev_activity'] = parsed if isinstance(parsed, list) else []
+                    else:
+                        attrs['dev_activity'] = dev_activity_raw if isinstance(dev_activity_raw, list) else []
+                except (ValueError, TypeError):
+                    attrs['dev_activity'] = []
+            else:
+                attrs['dev_activity'] = []
+        
+        # Handle other JSON fields
+        for field in ['dev_res_person', 'dev_indicator']:
             if field in initial:
                 normalized = self._ensure_array(initial.get(field))
                 attrs[field] = normalized
@@ -547,8 +567,14 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
             data['dev_gad_items'] = [self._normalize_budget_item(i) for i in items]
         except Exception:
             pass
-        # Present arrays as comma-separated strings for readability in table
-        for field in ['dev_project', 'dev_res_person', 'dev_indicator']:
+        # Present dev_project as text (already handled)
+        data['dev_project'] = getattr(instance, 'dev_project', '') or ""
+        
+        # Present dev_activity as JSON array (keep as is for frontend processing)
+        data['dev_activity'] = getattr(instance, 'dev_activity', []) or []
+        
+        # Present other arrays as comma-separated strings for readability in table
+        for field in ['dev_res_person', 'dev_indicator']:
             value = getattr(instance, field, [])
             try:
                 arr = value if isinstance(value, list) else self._ensure_array(value)

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -117,7 +117,11 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                   <td className="px-3 py-2 align-top border border-gray-200">{plan.dev_project}</td>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     <div>
-                      {plan.dev_indicator}
+                      <ul className="list-disc list-inside">
+                        {plan.dev_indicator.split(',').map((indicator, idx) => (
+                          <li key={idx} className="text-sm">{indicator.trim()}</li>
+                        ))}
+                      </ul>
                       <div className="mt-2 text-xs text-gray-500">
                         {new Date(plan.dev_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                       </div>
@@ -152,7 +156,9 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     <ul className="list-disc list-inside">
-                      <li>{plan.dev_res_person}</li>
+                      {plan.dev_res_person.split(',').map((person, idx) => (
+                        <li key={idx} className="text-sm">{person.trim()}</li>
+                      ))}
                     </ul>
                   </td>
                 </tr>

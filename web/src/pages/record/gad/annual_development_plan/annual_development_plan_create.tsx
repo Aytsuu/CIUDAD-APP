@@ -35,6 +35,7 @@ export default function AnnualDevelopmentPlanCreate() {
       dev_client: "",
       dev_issue: "",
       dev_project: "",
+      dev_activity: "",
       dev_res_person: "",
       dev_indicator: "",
       dev_budget_items: "0",
@@ -53,8 +54,10 @@ export default function AnnualDevelopmentPlanCreate() {
   const [staffLoading, setStaffLoading] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<{ staff_id: string; full_name: string; position: string }[]>([]);
 
-  const [projectInputs, setProjectInputs] = useState<string[]>(['']);
-  const [currentProjectInput, setCurrentProjectInput] = useState('');
+
+  const [activityInputs, setActivityInputs] = useState<{activity: string, participants: number}[]>([]);
+  const [currentActivityInput, setCurrentActivityInput] = useState('');
+  const [activityParticipantCount, setActivityParticipantCount] = useState<number>(1);
 
   const [indicatorInputs, setIndicatorInputs] = useState<{indicator: string, participants: number}[]>([]);
   const [currentIndicatorInput, setCurrentIndicatorInput] = useState('');
@@ -120,21 +123,28 @@ export default function AnnualDevelopmentPlanCreate() {
     form.setValue("dev_gad_budget", "0");
   };
 
-  // Project input handlers
-  const addProjectInput = () => {
-    if (currentProjectInput.trim()) {
-      setProjectInputs(prev => [...prev, currentProjectInput.trim()]);
-      const updatedProjects = [...projectInputs, currentProjectInput.trim()];
-      form.setValue("dev_project", updatedProjects.filter(p => p.trim()).join(', '));
-      setCurrentProjectInput('');
+
+  // Activity input handlers (JSON format)
+  const addActivityInput = () => {
+    if (currentActivityInput.trim()) {
+      setActivityInputs(prev => {
+        const newActivities = [...prev, {
+          activity: currentActivityInput.trim(),
+          participants: activityParticipantCount
+        }];
+        form.setValue("dev_activity", JSON.stringify(newActivities));
+        return newActivities;
+      });
+      setCurrentActivityInput('');
+      setActivityParticipantCount(1);
     }
   };
 
-  const removeProjectInput = (index: number) => {
-    setProjectInputs(prev => {
-      const newProjects = prev.filter((_, i) => i !== index);
-      form.setValue("dev_project", newProjects.filter(p => p.trim()).join(', '));
-      return newProjects;
+  const removeActivityInput = (index: number) => {
+    setActivityInputs(prev => {
+      const newActivities = prev.filter((_, i) => i !== index);
+      form.setValue("dev_activity", JSON.stringify(newActivities));
+      return newActivities;
     });
   };
 
@@ -247,37 +257,55 @@ export default function AnnualDevelopmentPlanCreate() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Program Details</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* GAD Program/Project/Activity */}
+            {/* Left Column */}
+            <div className="space-y-8">
+            {/* GAD Program/Project/Activity - Single Input */}
             <div className="space-y-4">
-              <label className="text-lg font-medium text-gray-700">GAD Program/Project/Activity</label>
+              <label className="text-lg font-medium text-gray-700">GAD Program Title</label>
+              <input
+                type="text"
+                {...form.register("dev_project")}
+                placeholder="Enter GAD program details..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              />
+              {form.formState.errors.dev_project && (
+                <p className="text-red-500 text-sm">{form.formState.errors.dev_project.message}</p>
+              )}
+            </div>
+
+            {/* GAD Activity Section */}
+            <div className="space-y-4">
+              <label className="text-lg font-medium text-gray-700">GAD Activity Details</label>
               <div className="flex gap-3">
                 <input
                   type="text"
-                  value={currentProjectInput}
-                  onChange={(e) => setCurrentProjectInput(e.target.value)}
-                  placeholder="Enter GAD program details..."
+                  value={currentActivityInput}
+                  onChange={(e) => setCurrentActivityInput(e.target.value)}
+                  placeholder="Enter GAD activity details..."
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 />
                 <Button 
                   type="button"
-                  onClick={addProjectInput}
+                  onClick={addActivityInput}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors min-w-[60px]"
                 >
                   Add
                 </Button>
               </div>
               <div className="border-2 border-dashed border-gray-200 rounded-lg bg-gray-50 h-32 overflow-y-auto p-3">
-                {projectInputs.filter(p => p.trim()).length === 0 ? (
+                {activityInputs.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-400 text-sm">No projects added yet</p>
+                    <p className="text-gray-400 text-sm">No activities added yet</p>
                   </div>
                 ) : (
-                  projectInputs.filter(p => p.trim()).map((project, index) => (
+                  activityInputs.map((item, index) => (
                     <div key={index} className="flex items-center gap-3 mb-3 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
-                      <span className="text-sm flex-1 text-gray-700">{project}</span>
+                      <div className="flex-1">
+                        <span className="text-sm text-gray-700">{item.activity}</span>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => removeProjectInput(index)}
+                        onClick={() => removeActivityInput(index)}
                         className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded-full transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,9 +317,12 @@ export default function AnnualDevelopmentPlanCreate() {
                 )}
               </div>
             </div>
+            </div>
 
-            {/* Performance Indicator and Target */}
+            {/* Right Column */}
             <div className="space-y-4">
+              {/* Performance Indicator and Target */}
+              <div className="space-y-4">
               <label className="text-lg font-medium text-gray-700">Performance Indicator and Target</label>
               <div className="flex gap-3">
                 <select
@@ -342,6 +373,7 @@ export default function AnnualDevelopmentPlanCreate() {
                     </div>
                   ))
                 )}
+              </div>
               </div>
             </div>
           </div>
