@@ -25,6 +25,7 @@ function PersonalClearance() {
     const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
     const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
     const [appliedDiscountAmount, setAppliedDiscountAmount] = useState<string | undefined>(undefined);
+    const [appliedDiscountReason, setAppliedDiscountReason] = useState<string | undefined>(undefined);
     const [currentReceipt, setCurrentReceipt] = useState<{
         id: string;
         purpose: string | undefined;
@@ -567,6 +568,7 @@ function PersonalClearance() {
                         <ReceiptForm
                             {...currentReceipt}
                             discountedAmount={appliedDiscountAmount}
+                            discountReason={appliedDiscountReason}
                             onSuccess={() => {
                                 setIsReceiptModalOpen(false);
                                 setIsDiscountModalOpen(true);
@@ -591,9 +593,11 @@ function PersonalClearance() {
                     currentReceipt && (
                         <DiscountAuthorizationForm
                             originalAmount={currentReceipt.rate}
-                            onAuthorize={(amount: string) => {
+                            onAuthorize={(amount: string, reason: string) => {
                                 console.log('Discounted amount applied:', amount);
+                                console.log('Discount reason:', reason);
                                 setAppliedDiscountAmount(amount);
+                                setAppliedDiscountReason(reason);
                                 console.log('Setting discount amount and showing receipt form');
                                 setIsDiscountModalOpen(false);
                                 // Use setTimeout to ensure the discount modal closes before opening receipt modal
@@ -603,6 +607,8 @@ function PersonalClearance() {
                             }}
                             onCancel={() => {
                                 console.log('Discount cancelled, showing receipt form');
+                                setAppliedDiscountAmount(undefined);
+                                setAppliedDiscountReason(undefined);
                                 setIsDiscountModalOpen(false);
                                 setTimeout(() => {
                                     setIsReceiptModalOpen(true);

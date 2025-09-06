@@ -9,13 +9,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 interface DiscountAuthorizationFormProps {
     originalAmount: string | undefined;
-    onAuthorize: (discountedAmount: string) => void;
+    onAuthorize: (discountedAmount: string, discountReason: string) => void;
     onCancel: () => void;
 }
 
 const DiscountSchema = z.object({
     authCode: z.string().min(1, "Authorization code is required"),
-    discountedAmount: z.string().min(1, "Discounted amount is required")
+    discountedAmount: z.string().min(1, "Discounted amount is required"),
+    discountReason: z.string().min(1, "Reason for discount is required")
 });
 
 function DiscountAuthorizationForm({ originalAmount, onAuthorize, onCancel }: DiscountAuthorizationFormProps) {
@@ -29,7 +30,8 @@ function DiscountAuthorizationForm({ originalAmount, onAuthorize, onCancel }: Di
         resolver: zodResolver(DiscountSchema),
         defaultValues: {
             authCode: "",
-            discountedAmount: originalAmount || "0"
+            discountedAmount: originalAmount || "0",
+            discountReason: ""
         }
     });
 
@@ -63,7 +65,8 @@ function DiscountAuthorizationForm({ originalAmount, onAuthorize, onCancel }: Di
 
     const handleApplyDiscount = () => {
         const discountedAmount = form.getValues("discountedAmount");
-        onAuthorize(discountedAmount);
+        const discountReason = form.getValues("discountReason");
+        onAuthorize(discountedAmount, discountReason);
     };
 
     return (
@@ -113,30 +116,50 @@ function DiscountAuthorizationForm({ originalAmount, onAuthorize, onCancel }: Di
 
                     {/* Discounted Amount Section - Only shows when authorized */}
                     {isAuthorized && (
-                        <FormField
-                            control={form.control}
-                            name="discountedAmount"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Discounted Amount (₱)</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            {...field}
-                                            onChange={(e) => handleDiscountedAmountChange(e.target.value)}
-                                            max={originalAmount}
-                                            min="0"
-                                        />
-                                    </FormControl>
-                                    {amountError && (
-                                        <FormMessage>{amountError}</FormMessage>
-                                    )}
-                                    <p className="text-sm text-muted-foreground">
-                                        Original amount: ₱{originalAmount} | Discount: ₱{(parseFloat(originalAmount || "0") - parseFloat(field.value || "0")).toFixed(2)}
-                                    </p>
-                                </FormItem>
-                            )}
-                        />
+                        <>
+                            <FormField
+                                control={form.control}
+                                name="discountedAmount"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Discounted Amount (₱)</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="number"
+                                                {...field}
+                                                onChange={(e) => handleDiscountedAmountChange(e.target.value)}
+                                                max={originalAmount}
+                                                min="0"
+                                            />
+                                        </FormControl>
+                                        {amountError && (
+                                            <FormMessage>{amountError}</FormMessage>
+                                        )}
+                                        <p className="text-sm text-muted-foreground">
+                                            Original amount: ₱{originalAmount} | Discount: ₱{(parseFloat(originalAmount || "0") - parseFloat(field.value || "0")).toFixed(2)}
+                                        </p>
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="discountReason"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Reason for Discount</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="text"
+                                                placeholder="Enter reason for applying discount"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </>
                     )}
                 </div>
 

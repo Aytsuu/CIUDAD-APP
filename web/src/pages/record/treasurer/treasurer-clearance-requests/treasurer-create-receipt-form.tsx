@@ -6,7 +6,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage} from "@
 import { useForm } from "react-hook-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { createReceiptSchema } from "@/form-schema/receipt-schema";
-import { useAcceptRequest } from "./queries/personalClearanceUpdateQueries";
+import { useAcceptRequest, useAcceptNonResRequest } from "./queries/personalClearanceUpdateQueries";
 import { useAddPersonalReceipt } from "../Receipts/queries/receipts-insertQueries";
 import { useMemo } from "react";
 
@@ -20,7 +20,8 @@ function ReceiptForm({
     nat_col,
     is_resident,
     onSuccess,
-    discountedAmount
+    discountedAmount,
+    discountReason
 }: {
     id: string;
     purpose: string | undefined;
@@ -31,9 +32,11 @@ function ReceiptForm({
     is_resident: boolean;
     onSuccess: () => void;
     discountedAmount?: string;
+    discountReason?: string;
 }){
     const { mutate: receipt, isPending} = useAddPersonalReceipt(onSuccess)
     const { mutate: acceptReq, isPending: isAcceptPending} = useAcceptRequest()
+    const { mutate: acceptNonResReq, isPending: isAcceptNonResPending} = useAcceptNonResRequest()
 
    console.log('stat', pay_status)
     const ReceiptSchema = useMemo(() => {
@@ -57,8 +60,8 @@ function ReceiptForm({
             if (is_resident){
                 await acceptReq(id)
             } else {
-                const values = form.getValues()
-            await receipt(values);
+                // For non-resident requests, use the acceptNonResReq mutation
+                await acceptNonResReq({nrc_id: id, discountReason: discountReason})
             }
             console.log('Receipt mutation called successfully');
         } catch (error) {
@@ -156,7 +159,7 @@ function ReceiptForm({
                         type="button"
                         variant="outline"
                         disabled={isAlreadyPaid}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
                         onClick={() => {
                             onSuccess(); // Hide the create receipt form
                         }}
@@ -241,10 +244,10 @@ function ReceiptForm({
                 <div className="flex justify-end gap-3 mt-6">
                 <Button 
                     type="submit" 
-                    disabled={isPending || isAlreadyPaid || (!is_resident && isAmountInsufficient())}
+                    disabled={isPending || isAcceptPending || isAcceptNonResPending || isAlreadyPaid || (!is_resident && isAmountInsufficient())}
                     className={isAlreadyPaid ? "opacity-50 cursor-not-allowed" : ""}
                 >
-                    {isPending || isAcceptPending
+                    {isPending || isAcceptPending || isAcceptNonResPending
                     ? "Processing..." 
                     : isAlreadyPaid 
                         ? "Cannot Proceed" 

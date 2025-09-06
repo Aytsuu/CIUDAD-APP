@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { acceptReq, declineReq, declineNonResReq } from "../restful-api/personalClearancePutAPI";
+import { acceptReq, declineReq, declineNonResReq, acceptNonResReq } from "../restful-api/personalClearancePutAPI";
 
 
 export const useAcceptRequest = (onSuccess?: () => void) => {
@@ -52,6 +52,33 @@ export const useDeclineRequest = (onSuccess?: () => void) => {
                 console.error("Error declining request", err);
                 toast.error(
                     "Failed to decline request. Please check the data and try again.",
+                    { duration: 2000 }
+                );
+            }
+        })
+}
+
+export const useAcceptNonResRequest = (onSuccess?: () => void) => {
+        const queryClient = useQueryClient();
+
+        return useMutation({
+            mutationFn: (values: {nrc_id: string, discountReason?: string}) => 
+            acceptNonResReq(values.nrc_id, values.discountReason),
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['nonResidentReq'] });
+
+        
+                toast.success('Request Accepted!', {
+                    id: "accept",
+                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                    duration: 2000
+                });
+                onSuccess?.()
+            },
+            onError: (err) => {
+                console.error("Error accepting request", err);
+                toast.error(
+                    "Failed to accept request. Please check the data and try again.",
                     { duration: 2000 }
                 );
             }
