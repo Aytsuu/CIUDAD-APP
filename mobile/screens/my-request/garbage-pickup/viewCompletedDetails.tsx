@@ -92,7 +92,7 @@ export default function ResidentCompletedDetails() {
           {requestDetails?.conf_resident_conf_date && (
             <View className="py-3 border-b border-gray-100">
               <View className="flex-row items-center mb-2">
-                <CheckCircle size={16} color="#030d23ff" className="mr-2" />
+                <CheckCircle size={16} color="#6b7280" className="mr-2" />
                 <Text className="text-gray-600 font-PoppinsMedium">Completion Acknowledged:</Text>
               </View>
               <View className="ml-6">
