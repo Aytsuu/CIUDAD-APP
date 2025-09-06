@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {Button} from '../../../../components/ui/button/button.tsx';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
 import { FormTextArea } from '@/components/ui/form/form-text-area';
+import { FormInput } from '@/components/ui/form/form-input.tsx';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input.tsx';
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal.tsx';
@@ -103,6 +104,16 @@ function EditResolution({ res_num, res_title, res_date_approved, res_area_of_foc
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}   className="space-y-4">
+                    
+                    
+                    {/*Resolution Title*/}
+                    <FormInput
+                        control={form.control}
+                        name="res_num"
+                        label="Resolution Number"
+                        placeholder="Enter Resolution Number"
+                        readOnly={true} 
+                    />
 
                     {/*Resolution Title*/}
                     <FormTextArea
