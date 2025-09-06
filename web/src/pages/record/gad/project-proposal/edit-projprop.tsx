@@ -7,7 +7,9 @@ import {
 } from "./queries/projprop-updatequeries";
 import { useAddSupportDocument } from "./queries/projprop-addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import { useGetStaffList } from "./queries/projprop-fetchqueries";
+import {
+  useGetStaffList
+} from "./queries/projprop-fetchqueries";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { ProjectProposalSchema } from "@/form-schema/gad-projprop-create-form-schema";
@@ -20,16 +22,15 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
 import {
-  ProjectProposal,
   ProjectProposalInput,
   EditProjectProposalFormProps,
 } from "./projprop-types";
-import { Signatory, SupportDoc } from "./projprop-types";
+import { Signatory, SupportDoc, ProjectProposal } from "./projprop-types";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 
 export const EditProjectProposalForm: React.FC<
   EditProjectProposalFormProps
-> = ({ initialValues, isEditMode, isSubmitting }) => {
+> = ({ initialValues, isEditMode, isSubmitting, onSuccess }) => {
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [supportingDocs, setSupportingDocs] = useState<MediaUploadType>([]);
   const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
@@ -38,6 +39,7 @@ export const EditProjectProposalForm: React.FC<
   const updateMutation = useUpdateProjectProposal();
   const addSupportDocMutation = useAddSupportDocument();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
+  const [selectedDevProject] = useState<any>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const updateStatusMutation = useUpdateProjectProposalStatus();
   const [confirmAction, setConfirmAction] = useState<"save" | "resubmit">(
@@ -53,9 +55,7 @@ export const EditProjectProposalForm: React.FC<
 
   const latestExpenseWithBalance = budgetEntries
     .filter(
-      (entry) =>
-        !entry.gbud_is_archive &&
-        entry.gbud_remaining_bal != null
+      (entry) => !entry.gbud_is_archive && entry.gbud_remaining_bal != null
     )
     .sort(
       (a, b) =>
@@ -73,43 +73,54 @@ export const EditProjectProposalForm: React.FC<
     ? Number(currentYearBudget)
     : 0;
 
-const form = useForm<z.infer<typeof ProjectProposalSchema>>({
-  resolver: zodResolver(ProjectProposalSchema),
-  defaultValues: {
-    projectTitle: initialValues?.projectTitle || "",
-    background: initialValues?.background || "",
-    objectives: initialValues?.objectives?.length
-      ? initialValues.objectives
-      : [""],
-    participants: initialValues?.participants?.length
-      ? initialValues.participants.map((p) => ({
-          category: p.category,
-          count: String(p.count || 0),
-        }))
-      : [{ category: "", count: "0" }],
-    date: initialValues?.date || "",
-    venue: initialValues?.venue || "",
-    budgetItems: initialValues?.budgetItems?.length
-      ? initialValues.budgetItems.map((item) => ({
-          name: item.name,
-          pax: item.pax,
-          amount: String(item.amount || 0),
-        }))
-      : [{ name: "", pax: "", amount: "0" }],
-    monitoringEvaluation: initialValues?.monitoringEvaluation || "",
-    signatories: initialValues?.signatories?.length
-      ? initialValues.signatories.map((sig) => ({
-          name: sig.name,
-          position: sig.position,
-          type:
-            sig.type === "prepared" || sig.type === "approved"
-              ? sig.type
-              : "prepared",
-        }))
-      : [{ name: "", position: "", type: "prepared" }],
-    paperSize: initialValues?.paperSize || "letter",
-  },
-});
+  const form = useForm<z.infer<typeof ProjectProposalSchema>>({
+    resolver: zodResolver(ProjectProposalSchema),
+    defaultValues: {
+      selectedDevProject: initialValues?.devId
+        ? {
+            dev_id: initialValues.devId,
+            project_title: initialValues.projectTitle || "",
+            participants: initialValues.participants || [],
+            budget_items: initialValues.budgetItems || [],
+          }
+        : {
+            dev_id: 0,
+            project_title: "",
+            participants: [],
+            budget_items: [],
+          },
+      background: initialValues?.background || "",
+      objectives: initialValues?.objectives?.length
+        ? initialValues.objectives
+        : [""],
+      participants: initialValues?.participants?.length
+        ? initialValues?.participants.map((p: any) => ({
+            category: typeof p === "string" ? p : p.category || p,
+            count: typeof p === "object" ? String(p.count || 0) : "0",
+          }))
+        : [{ category: "", count: "0" }],
+      date: initialValues?.date || "",
+      venue: initialValues?.venue || "",
+      budgetItems: initialValues?.budgetItems?.length
+        ? initialValues.budgetItems.map((item) => ({
+            name: item.name,
+            pax:
+              typeof item.pax === "number"
+                ? item.pax.toString()
+                : item.pax || "",
+            amount:
+              typeof item.amount === "number"
+                ? item.amount
+                : item.amount || "0",
+          }))
+        : [{ name: "", pax: "", amount: "0" }],
+      monitoringEvaluation: initialValues?.monitoringEvaluation || "",
+      signatories: initialValues?.signatories?.length
+        ? initialValues.signatories
+        : [{ name: "", position: "", type: "prepared" }],
+      paperSize: initialValues?.paperSize || "letter",
+    },
+  });
 
   const { control, setValue, watch, handleSubmit } = form;
 
@@ -234,166 +245,155 @@ const form = useForm<z.infer<typeof ProjectProposalSchema>>({
     }
   };
 
-const handleSave = async (data: z.infer<typeof ProjectProposalSchema>) => {
-  if (!initialValues?.gprId) {
-    setErrorMessage("No project ID provided for update.");
-    return;
-  }
-  
+  const handleSave = async (data: z.infer<typeof ProjectProposalSchema>) => {
+    if (!initialValues?.gprId) {
+      setErrorMessage("No project ID provided for update.");
+      return;
+    }
 
-  const gprId = initialValues.gprId;
+    try {
+      setErrorMessage(null);
 
-  try {
-    setErrorMessage(null);
-    
-     // Handle header image logic
-    let headerImage: string | null = initialValues.headerImage || null;
-    
-    if (mediaFiles.length > 0) {
-      const currentFile = mediaFiles[0];
-      if (currentFile.file?.startsWith("data:")) {
-        // New file uploaded
-        headerImage = currentFile.file;
-      } else if (currentFile.url && !currentFile.file) {
-        // Existing file remains unchanged
-        headerImage = currentFile.url;
+      // Handle header image logic (same as before)
+      let headerImage: string | null = initialValues.headerImage || null;
+
+      if (mediaFiles.length > 0) {
+        const currentFile = mediaFiles[0];
+        if (currentFile.file?.startsWith("data:")) {
+          headerImage = currentFile.file;
+        } else if (currentFile.url && !currentFile.file) {
+          headerImage = currentFile.url;
+        }
+      } else if (mediaFiles.length === 0 && initialValues.headerImage) {
+        headerImage = null;
       }
-    } else if (mediaFiles.length === 0 && initialValues.headerImage) {
-      // Header image was explicitly removed
-      headerImage = null;
+      const existingSupportDocs = initialValues.supportDocs || [];
+      const keptDocs = supportingDocs
+        .filter((doc) => doc.url && !doc.file)
+        .map((doc) => {
+          const existingDoc = existingSupportDocs.find(
+            (sd) => sd.psd_url === doc.url
+          );
+          return existingDoc
+            ? {
+                psd_id: existingDoc.psd_id,
+                psd_url: existingDoc.psd_url,
+                psd_name: existingDoc.psd_name,
+                psd_type: existingDoc.psd_type,
+                psd_is_archive: false,
+              }
+            : null;
+        })
+        .filter((doc) => doc !== null);
+
+      const newDocs = supportingDocs
+        .filter((doc) => doc.file && doc.file.startsWith("data:"))
+        .map((doc) => ({
+          name: doc.name,
+          type: doc.type,
+          file: doc.file as string,
+        }));
+
+      const currentDocUrls = supportingDocs
+        .filter((doc) => doc.url)
+        .map((doc) => doc.url);
+
+      const docsToArchive = existingSupportDocs
+        .filter((doc) => !currentDocUrls.includes(doc.psd_url))
+        .map((doc) => ({
+          psd_id: doc.psd_id,
+          psd_url: doc.psd_url,
+          psd_name: doc.psd_name,
+          psd_type: doc.psd_type,
+          psd_is_archive: true,
+        }));
+
+      // FIXED: Use the same data structure as Create form
+      const proposalData: ProjectProposalInput = {
+        gprId: initialValues.gprId,
+        gpr_background: data.background,
+        gpr_objectives: data.objectives.filter((obj) => obj.trim() !== ""),
+        gpr_date: data.date,
+        gpr_venue: data.venue,
+        gpr_monitoring: data.monitoringEvaluation,
+        gpr_signatories: data.signatories.filter((s) => s.name.trim() !== ""),
+        gpr_header_img: headerImage,
+        staffId: initialValues.staffId || null,
+        gprIsArchive: initialValues.gprIsArchive || false,
+        status:
+          confirmAction === "resubmit" ? "Resubmitted" : initialValues.status,
+        statusReason:
+          confirmAction === "resubmit"
+            ? "Project proposal resubmitted by user"
+            : initialValues.statusReason,
+        gpr_page_size: data.paperSize,
+        dev: data.selectedDevProject?.dev_id || initialValues.devId || 0,
+      };
+
+      await updateMutation.mutateAsync(proposalData);
+
+      // Upload new supporting documents
+      if (newDocs.length > 0) {
+        await addSupportDocMutation.mutateAsync({
+          gpr_id: initialValues.gprId,
+          files: newDocs,
+        });
+      }
+
+      if (confirmAction === "resubmit") {
+        await updateStatusMutation.mutateAsync({
+          gprId: initialValues.gprId,
+          status: "Resubmitted",
+          reason: "Project proposal resubmitted by user",
+        });
+      }
+
+      if (onSuccess) {
+        const updatedProject: ProjectProposal = {
+          ...initialValues!,
+          projectTitle:
+            data.selectedDevProject?.project_title ||
+            initialValues?.projectTitle ||
+            "",
+          background: data.background,
+          objectives: data.objectives.filter((obj) => obj.trim() !== ""),
+          participants: data.participants
+            .filter((p) => p.category.trim() !== "")
+            .map((p) => p.category),
+          date: data.date,
+          venue: data.venue,
+          budgetItems: data.budgetItems
+            .filter((item) => item.name.trim() !== "")
+            .map((item) => ({
+              name: item.name,
+              pax: item.pax,
+              amount: item.amount,
+            })),
+          monitoringEvaluation: data.monitoringEvaluation,
+          signatories: data.signatories.filter((s) => s.name.trim() !== ""),
+          headerImage: headerImage,
+          paperSize: data.paperSize,
+          supportDocs: [...keptDocs, ...docsToArchive] as SupportDoc[],
+          status:
+            confirmAction === "resubmit"
+              ? "Resubmitted"
+              : initialValues?.status || "Pending",
+          statusReason:
+            confirmAction === "resubmit"
+              ? "Project proposal resubmitted by user"
+              : initialValues?.statusReason,
+        };
+        onSuccess(updatedProject);
+      }
+    } catch (error: any) {
+      console.error("Error in handleSave:", error);
+      setErrorMessage(
+        error.response?.data?.detail ||
+          error.message ||
+          "Failed to save proposal. Please check the form data and try again."
+      );
     }
-
-    const existingSupportDocs = initialValues.supportDocs || [];
-    const keptDocs = supportingDocs
-      .filter(doc => doc.url && !doc.file) // Only existing files (have URL but no new file data)
-      .map(doc => {
-        const existingDoc = existingSupportDocs.find(sd => sd.psd_url === doc.url);
-        return existingDoc ? {
-          psd_id: existingDoc.psd_id,
-          psd_url: existingDoc.psd_url,
-          psd_name: existingDoc.psd_name,
-          psd_type: existingDoc.psd_type,
-          psd_is_archive: false
-        } : null;
-      })
-      .filter(doc => doc !== null);
-
-    // New files to upload
-    const newDocs = supportingDocs
-      .filter(doc => doc.file && doc.file.startsWith("data:"))
-      .map(doc => ({
-        name: doc.name,
-        type: doc.type,
-        file: doc.file as string,
-      }));
-
-    // Files to archive (existing docs not in current supportingDocs)
-    const currentDocUrls = supportingDocs
-      .filter(doc => doc.url)
-      .map(doc => doc.url);
-    
-    const docsToArchive = existingSupportDocs
-      .filter(doc => !currentDocUrls.includes(doc.psd_url))
-      .map(doc => ({
-        psd_id: doc.psd_id,
-        psd_url: doc.psd_url,
-        psd_name: doc.psd_name,
-        psd_type: doc.psd_type,
-        psd_is_archive: true // Mark for archiving
-      }));
-
-    // Combine kept docs and docs to archive
-    const allSupportDocs = [...keptDocs, ...docsToArchive];
-
-    const proposalData: ProjectProposalInput = {
-      gprId,
-      gpr_title: data.projectTitle,
-      background: data.background,
-      objectives: data.objectives.filter((obj) => obj.trim() !== ""),
-      participants: data.participants
-        .filter((p) => p.category.trim() !== "")
-        .map((p) => ({
-          category: p.category,
-          count: p.count,
-        })),
-      date: data.date,
-      venue: data.venue,
-      budgetItems: data.budgetItems
-        .filter((item) => item.name.trim() !== "")
-        .map((item) => ({
-          name: item.name,
-          pax: item.pax,
-          amount: item.amount,
-        })),
-      monitoringEvaluation: data.monitoringEvaluation,
-      signatories: data.signatories.filter((s) => s.name.trim() !== ""),
-      gpr_header_img: headerImage,
-      staffId: initialValues.staffId || null,
-      gprIsArchive: initialValues.gprIsArchive || false,
-      gpr_page_size: data.paperSize,
-      supportDocs: allSupportDocs,
-      status: confirmAction === "resubmit" 
-        ? "Resubmitted" 
-        : initialValues.status, // Keep original status unless resubmitting
-      statusReason: confirmAction === "resubmit"
-        ? "Project proposal resubmitted by user"
-        : initialValues.statusReason, // Keep original reason
-    };
-
-    await updateMutation.mutateAsync(proposalData);
-
-    // Upload new supporting documents if any
-    if (newDocs.length > 0) {
-      await addSupportDocMutation.mutateAsync({
-        gpr_id: gprId,
-        files: newDocs,
-      });
-    }
-
-    if (confirmAction === "resubmit") {
-      await updateStatusMutation.mutateAsync({
-        gprId,
-        status: "Resubmitted",
-        reason: "Project proposal resubmitted by user",
-      });
-    }
-
-    const fullProposal: ProjectProposal = {
-      ...initialValues,
-      projectTitle: data.projectTitle,
-      background: data.background,
-      objectives: proposalData.objectives,
-      participants: proposalData.participants.map((p) => ({
-        category: p.category,
-        count: parseInt(p.count) || 0,
-      })),
-      date: data.date,
-      venue: data.venue,
-      budgetItems: proposalData.budgetItems.map((item) => ({
-        name: item.name,
-        pax: item.pax,
-        amount: parseFloat(item.amount) || 0,
-      })),
-      monitoringEvaluation: data.monitoringEvaluation,
-      signatories: proposalData.signatories,
-      headerImage: headerImage,
-      paperSize: data.paperSize,
-      supportDocs: allSupportDocs,
-      status: proposalData.status,
-      statusReason: proposalData.statusReason,
-    };
-
-    onSuccess(fullProposal);
-  } catch (error: any) {
-    console.error("Error in handleSave:", error);
-    console.error("Error response data:", error.response?.data);
-    setErrorMessage(
-      error.response?.data?.detail ||
-        error.message ||
-        "Failed to save proposal. Please check the form data and try again."
-    );
-  }
-};
+  };
 
   return (
     <div className="container mx-auto px-4 sm:px-6 max-w-2xl md:max-w-3xl lg:max-w-4xl">
@@ -411,7 +411,9 @@ const handleSave = async (data: z.infer<typeof ProjectProposalSchema>) => {
                 type="radio"
                 name="paperSize"
                 checked={paperSize === size}
-                onChange={() => setValue("paperSize", size as "a4" | "letter" | "legal")}
+                onChange={() =>
+                  setValue("paperSize", size as "a4" | "letter" | "legal")
+                }
               />
               {size.charAt(0).toUpperCase() + size.slice(1)}
             </label>
@@ -424,13 +426,21 @@ const handleSave = async (data: z.infer<typeof ProjectProposalSchema>) => {
           onSubmit={handleSubmit(handleSave)}
           className="flex flex-col gap-6"
         >
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Program Title
+            </label>
+            <div className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm">
+              {watch("selectedDevProject")?.project_title ||
+                selectedDevProject?.project_title ||
+                initialValues?.projectTitle ||
+                "No Program available"}
+            </div>
+          </div>
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Header Image (optional)
-              </label>
               <MediaUpload
-                title="Header Image"
+                title="Header Image (Optional)"
                 description="Upload an image for the proposal header"
                 mediaFiles={mediaFiles}
                 activeVideoId={activeVideoId}
@@ -451,11 +461,8 @@ const handleSave = async (data: z.infer<typeof ProjectProposalSchema>) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Supporting Documents (optional)
-              </label>
               <MediaUpload
-                title="Supporting Documents"
+                title="Supporting Documents (Optional)"
                 description="Upload any supporting documents for your proposal"
                 mediaFiles={supportingDocs}
                 activeVideoId={activeVideoId}
@@ -464,17 +471,6 @@ const handleSave = async (data: z.infer<typeof ProjectProposalSchema>) => {
                 hideRemoveButton={true}
               />
             </div>
-
-            <div>
-              <FormInput
-                control={control}
-                name="projectTitle"
-                label="Project Title"
-                placeholder="Enter project title"
-                type="text"
-              />
-            </div>
-
             <div>
               <FormInput
                 control={control}

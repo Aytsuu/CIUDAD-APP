@@ -27,7 +27,7 @@ export type SupportDoc = {
 export type FileInput = {
   name: string;
   type: string;
-  file: string; // Base64 string
+  file: string; 
 };
 
 export type SupportDocInput = {
@@ -40,7 +40,7 @@ export type DevelopmentPlanProject = {
   dev_client: string;
   dev_issue: string;
   project_title: string;
-  participants: string[]; // From dev_indicator
+  participants: string[]; 
   budget_items: BudgetItem[];
   dev_date: string;
 };
@@ -48,7 +48,7 @@ export type DevelopmentPlanProject = {
 export type BudgetItem = {
   name: string;
   pax: number | string;
-  amount: number | string;
+  amount: string;
 };
 
 export type ProjectProposal = {
@@ -109,8 +109,7 @@ export type ProjectProposalInput = {
   status: ProposalStatus;
   statusReason: string | null;
   gpr_page_size: "a4" | "letter" | "legal";
-  // NEW required fields
-  dev: number; // Development plan ID
+  dev: number;
 };
 
 export type Staff = {
