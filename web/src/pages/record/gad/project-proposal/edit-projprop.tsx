@@ -77,18 +77,30 @@ export const EditProjectProposalForm: React.FC<
     resolver: zodResolver(ProjectProposalSchema),
     defaultValues: {
       selectedDevProject: initialValues?.devId
-        ? {
-            dev_id: initialValues.devId,
-            project_title: initialValues.projectTitle || "",
-            participants: initialValues.participants || [],
-            budget_items: initialValues.budgetItems || [],
-          }
-        : {
-            dev_id: 0,
-            project_title: "",
-            participants: [],
-            budget_items: [],
-          },
+  ? {
+      dev_id: initialValues.devId,
+      project_title: initialValues.projectTitle || "",
+      participants: initialValues.participants?.map((p: any) =>
+        typeof p === "string"
+          ? { category: p, count: "0" }
+          : {
+              category: p.category || "",
+              count: String(p.count || 0),
+            }
+      ) || [],
+      budget_items: initialValues.budgetItems?.map((item: any) => ({
+        name: item.name,
+        pax: typeof item.pax === "number" ? item.pax.toString() : item.pax || "",
+        amount:
+          typeof item.amount === "number" ? String(item.amount) : item.amount || "0",
+      })) || [],
+    }
+  : {
+      dev_id: 0,
+      project_title: "",
+      participants: [],
+      budget_items: [],
+    },
       background: initialValues?.background || "",
       objectives: initialValues?.objectives?.length
         ? initialValues.objectives
@@ -308,7 +320,21 @@ export const EditProjectProposalForm: React.FC<
           psd_is_archive: true,
         }));
 
-      // FIXED: Use the same data structure as Create form
+      const formattedParticipants = data.participants
+        .filter(p => p.category.trim() !== "")
+        .map(p => ({
+          category: p.category,
+          count: parseInt(p.count) || 0
+        }));
+      
+      const formattedBudgetItems = data.budgetItems
+        .filter(item => item.name.trim() !== "")
+        .map(item => ({
+          name: item.name,
+          pax: item.pax || "1",
+          amount: parseFloat(item.amount) || 0
+        }));
+
       const proposalData: ProjectProposalInput = {
         gprId: initialValues.gprId,
         gpr_background: data.background,
@@ -328,6 +354,8 @@ export const EditProjectProposalForm: React.FC<
             : initialValues.statusReason,
         gpr_page_size: data.paperSize,
         dev: data.selectedDevProject?.dev_id || initialValues.devId || 0,
+        participants: formattedParticipants,
+        budget_items: formattedBudgetItems
       };
 
       await updateMutation.mutateAsync(proposalData);
@@ -357,18 +385,8 @@ export const EditProjectProposalForm: React.FC<
             "",
           background: data.background,
           objectives: data.objectives.filter((obj) => obj.trim() !== ""),
-          participants: data.participants
-            .filter((p) => p.category.trim() !== "")
-            .map((p) => p.category),
           date: data.date,
           venue: data.venue,
-          budgetItems: data.budgetItems
-            .filter((item) => item.name.trim() !== "")
-            .map((item) => ({
-              name: item.name,
-              pax: item.pax,
-              amount: item.amount,
-            })),
           monitoringEvaluation: data.monitoringEvaluation,
           signatories: data.signatories.filter((s) => s.name.trim() !== ""),
           headerImage: headerImage,
@@ -382,6 +400,8 @@ export const EditProjectProposalForm: React.FC<
             confirmAction === "resubmit"
               ? "Project proposal resubmitted by user"
               : initialValues?.statusReason,
+          participants: formattedParticipants,
+          budgetItems: formattedBudgetItems
         };
         onSuccess(updatedProject);
       }
@@ -535,7 +555,7 @@ export const EditProjectProposalForm: React.FC<
                     <FormSelect
                       control={control}
                       name={`participants.${index}.category`}
-                      label="Category"
+                      label=""
                       options={participantCategories.map((cat) => ({
                         id: cat,
                         name: cat,
@@ -544,15 +564,14 @@ export const EditProjectProposalForm: React.FC<
                     <FormInput
                       control={control}
                       name={`participants.${index}.count`}
-                      label="Count"
+                      label=""
                       placeholder="Count"
-                      type="text"
+                      type="number"
                     />
                     <Button
                       type="button"
                       variant="destructive"
                       size="sm"
-                      className="mt-8"
                       onClick={() => removeParticipant(index)}
                       disabled={participants.length <= 1}
                     >

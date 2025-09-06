@@ -279,6 +279,8 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
     project_title = serializers.SerializerMethodField()
     participants = serializers.SerializerMethodField()
     budget_items = serializers.SerializerMethodField()
+    participants = serializers.JSONField(required=False)
+    budget_items = serializers.JSONField(required=False)
     
     def get_status(self, obj):
         return obj.current_status
@@ -297,15 +299,27 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             parsed_indicators = []
             if obj.dev.dev_indicator:
                 for entry in obj.dev.dev_indicator:
-                    # Split entries by commas, e.g. "LGBTQIA+ (5 participants), Erpat (5 participants)"
-                    parts = [p.strip() for p in entry.split(",") if p.strip()]
-                    for part in parts:
-                        match = re.match(r'^(.*?)\s*\((\d+)\s*participants?\)$', part)
-                        if match:
-                            category, count = match.groups()
-                            parsed_indicators.append({"category": category.strip(), "count": int(count)})
-                        else:
-                            parsed_indicators.append({"category": part, "count": None})
+                    # Check if entry is already a dictionary (parsed format)
+                    if isinstance(entry, dict):
+                        # Entry is already in the expected format
+                        parsed_indicators.append({
+                            "category": entry.get("category", ""),
+                            "count": entry.get("count", None)
+                        })
+                    elif isinstance(entry, str):
+                        # Entry is a string that needs to be parsed
+                        # Split entries by commas, e.g. "LGBTQIA+ (5 participants), Erpat (5 participants)"
+                        parts = [p.strip() for p in entry.split(",") if p.strip()]
+                        for part in parts:
+                            match = re.match(r'^(.*?)\s*\((\d+)\s*participants?\)$', part)
+                            if match:
+                                category, count = match.groups()
+                                parsed_indicators.append({"category": category.strip(), "count": int(count)})
+                            else:
+                                parsed_indicators.append({"category": part, "count": None})
+                    else:
+                        # Handle other types by converting to string representation
+                        parsed_indicators.append({"category": str(entry), "count": None})
 
             return {
                 'dev_id': obj.dev.dev_id,
@@ -345,9 +359,25 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
+        participants = validated_data.pop('participants', None)
+        budget_items = validated_data.pop('budget_items', None)
         header_img_data = validated_data.pop('gpr_header_img', None)
         instance = super().create(validated_data)
 
+        if participants is not None or budget_items is not None:
+                dev_plan = instance.dev
+                if dev_plan:
+                    if participants is not None:
+                        dev_plan.dev_indicator = participants
+                        
+                    if budget_items is not None:
+                        dev_plan.dev_gad_items = budget_items
+                        
+                    try:
+                        dev_plan.save()
+                    except Exception as e:
+                        print("Error saving DevelopmentPlan:", str(e))
+                        
         if header_img_data:
             try:
                 # Upload to Supabase
@@ -380,6 +410,19 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError({
                         'gpr_header_img': f"Upload failed: {str(e)}"
                     })
+        
+        participants = validated_data.pop('participants', None)
+        budget_items = validated_data.pop('budget_items', None)
+        
+        # Update the related DevelopmentPlan if participants or budget_items are provided
+        if participants is not None or budget_items is not None:
+            dev_plan = instance.dev
+            if dev_plan:
+                if participants is not None:
+                    dev_plan.dev_indicator = participants
+                if budget_items is not None:
+                    dev_plan.dev_gad_items = budget_items
+                dev_plan.save()
 
         instance = super().update(instance, validated_data)
         return instance

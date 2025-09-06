@@ -54,7 +54,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const [activeVideoId, setActiveVideoId] = useState<string>("");
   const [_errorMessage, setErrorMessage] = useState<string | null>(null);
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-  const addMutation = useAddProjectProposal(!!existingProposal);
+  const addMutation = useAddProjectProposal();
   const addSupportDocMutation = useAddSupportDocument();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedDevProject, setSelectedDevProject] = useState<any>(null);
@@ -66,6 +66,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const currentYearBudget = yearBudgets?.find(
     (budget) => budget.gbudy_year === currentYear
   )?.gbudy_budget;
+  
 
   const latestExpenseWithBalance = budgetEntries
     .filter(
@@ -414,95 +415,112 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     setIsPreviewOpen(false);
   };
 
-  // Replace your onSubmit function with this fixed version:
-  const onSubmit = async (data: ProjectProposalFormValues) => {
-    if (proposedBudget > availableBudget) {
-      setErrorMessage(
-        `Proposed budget (₱${proposedBudget.toLocaleString()}) exceeds available budget (₱${availableBudget.toLocaleString()})`
-      );
-      return;
+const onSubmit = async (data: ProjectProposalFormValues) => {
+  
+  if (proposedBudget > availableBudget) {
+    setErrorMessage(
+      `Proposed budget (₱${proposedBudget.toLocaleString()}) exceeds available budget (₱${availableBudget.toLocaleString()})`
+    );
+    return;
+  }
+
+  const formattedParticipants = data.participants
+    .filter(p => p.category.trim() !== "")
+    .map(p => ({
+      category: p.category,
+      count: parseInt(p.count) || 0
+    }));
+  
+  const formattedBudgetItems = data.budgetItems
+    .filter(item => item.name.trim() !== "")
+    .map(item => ({
+      name: item.name,
+      pax: item.pax || "1",
+      amount: parseFloat(item.amount) || 0
+    }));
+
+  try {
+    setErrorMessage(null);
+    let gpr_header_img: string | null = null;
+
+    if (mediaFiles.length > 0 && mediaFiles[0].file) {
+      if (mediaFiles[0].file.startsWith("data:")) {
+        gpr_header_img = mediaFiles[0].file;
+      } else {
+        gpr_header_img = mediaFiles[0].file;
+      }
     }
 
-    try {
-      setErrorMessage(null);
-      let gpr_header_img: string | null = null;
+    const proposalData: ProjectProposalInput = {
+      gprId: existingProposal?.gprId,
+      gpr_background: data.background,
+      gpr_objectives: data.objectives.filter((obj: string) => obj.trim() !== ""),
+      gpr_date: data.date,
+      gpr_venue: data.venue,
+      gpr_monitoring: data.monitoringEvaluation,
+      gpr_signatories: data.signatories.filter((s: Signatory) => s.name.trim() !== ""),
+      gpr_header_img,
+      staffId: user?.staff?.staff_id || null,
+      gprIsArchive: existingProposal?.gprIsArchive || false,
+      status: data.status || "Pending",
+      statusReason: data.statusReason || null,
+      gpr_page_size: data.paperSize,
+      dev: data.selectedDevProject.dev_id,
+      participants: formattedParticipants,
+      budget_items: formattedBudgetItems
+    };
 
-      if (mediaFiles.length > 0 && mediaFiles[0].file) {
-        if (mediaFiles[0].file.startsWith("data:")) {
-          gpr_header_img = mediaFiles[0].file;
-        } else {
-          gpr_header_img = mediaFiles[0].file;
-        }
-      } else if (existingProposal?.headerImage && mediaFiles.length === 0) {
-        gpr_header_img = null;
-      } else if (existingProposal?.headerImage) {
-        gpr_header_img = existingProposal.headerImage;
+
+    // Create the proposal
+    const proposalResponse = await addMutation.mutateAsync(proposalData);
+
+    // Handle supporting documents using the returned ID
+    const newFiles: FileInput[] = supportingDocs
+      .filter((doc) => !!doc.file && !existingProposal?.supportDocs?.some((sd: SupportDoc) => sd.psd_url === doc.url))
+      .map((doc) => ({
+        name: doc.name,
+        type: doc.type,
+        file: doc.file as string,
+      }));
+
+
+    if (newFiles.length > 0) {
+      const gprId = proposalResponse.gprId || proposalResponse.gpr_id;
+      if (!gprId) {
+        throw new Error('No proposal ID returned from server');
       }
-
-      const proposalData: ProjectProposalInput = {
-        gprId: existingProposal?.gprId,
-        gpr_background: data.background,
-        gpr_objectives: data.objectives.filter(
-          (obj: string) => obj.trim() !== ""
-        ),
-        gpr_date: data.date,
-        gpr_venue: data.venue,
-        gpr_monitoring: data.monitoringEvaluation,
-        gpr_signatories: data.signatories.filter(
-          (s: Signatory) => s.name.trim() !== ""
-        ),
-        gpr_header_img,
-        staffId: user?.staff?.staff_id || null,
-        gprIsArchive: existingProposal?.gprIsArchive || false,
-        status: data.status || "Pending",
-        statusReason: data.statusReason || null,
-        gpr_page_size: data.paperSize,
-        dev: data.selectedDevProject.dev_id,
-      };
-
-      const proposalResponse = await addMutation.mutateAsync(proposalData);
-      const newFiles: FileInput[] = supportingDocs
-        .filter(
-          (
-            doc
-          ): doc is {
-            id: string;
-            name: string;
-            type: string;
-            file: string;
-            url?: string;
-          } =>
-            !!doc.file &&
-            !existingProposal?.supportDocs?.some(
-              (sd: SupportDoc) => sd.psd_url === doc.url
-            )
-        )
-        .map((doc) => ({
-          name: doc.name,
-          type: doc.type,
-          file: doc.file,
-        }));
-
-      if (newFiles.length > 0) {
-        await addSupportDocMutation.mutateAsync({
-          gpr_id: proposalResponse.gprId,
-          files: newFiles,
-        });
-      }
-
-      form.reset();
-      setMediaFiles([]);
-      setSupportingDocs([]);
-
-      onSuccess();
-    } catch (error: any) {
-      setErrorMessage(
-        error.response?.data
-          ? JSON.stringify(error.response.data)
-          : "Failed to save proposal. Please check the form data and try again."
-      );
+      
+      const supportDocResult = await addSupportDocMutation.mutateAsync({
+        gpr_id: gprId,
+        files: newFiles,
+      });
     }
-  };
+
+    form.reset();
+    setMediaFiles([]);
+    setSupportingDocs([]);
+    onSuccess();
+
+  } catch (error: any) {
+    let errorMessage = "Failed to save proposal. Please check the form data and try again.";
+    
+    if (error.response?.data) {
+      if (typeof error.response.data === 'string') {
+        errorMessage = error.response.data;
+      } else if (error.response.data.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response.data.detail) {
+        errorMessage = error.response.data.detail;
+      } else {
+        errorMessage = JSON.stringify(error.response.data, null, 2);
+      }
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    setErrorMessage(errorMessage);
+  }
+};
 
   return (
     <div className="container mx-auto px-4 sm:px-6 max-w-2xl md:max-w-3xl lg:max-w-4xl">
@@ -775,11 +793,11 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                 </Button>
               </div>
               {proposedBudget > 0 && (
-                <div className="mt-2 flex justify-between">
-                  <span className="font-medium">Proposed Budget:</span>
+                <div className="mt-4 flex justify-between">
+                  <span className="font-medium text-blue-800">Proposed Budget:</span>
                   <span
                     className={
-                      proposedBudget > availableBudget ? "text-red-500" : ""
+                      proposedBudget > availableBudget ? "text-red-500" : "text-blue-800"
                     }
                   >
                     ₱{proposedBudget.toLocaleString()}
@@ -967,7 +985,9 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                 title="Confirm Save"
                 description="Are you sure you want to save this project proposal?"
                 actionLabel="Confirm"
-                onClick={() => form.handleSubmit(onSubmit)()}
+                onClick={() => {
+                  form.handleSubmit(onSubmit)();
+                }}
                 open={isConfirmModalOpen}
                 onOpenChange={setIsConfirmModalOpen}
               />

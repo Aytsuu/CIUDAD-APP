@@ -209,24 +209,32 @@ class ProjectProposal(models.Model):
 
     @property
     def participants(self):
-        """Get participants from the related development plan indicators"""
+        """Get participants from the related development plan indicators."""
         if self.dev and self.dev.dev_indicator:
             result = []
             for entry in self.dev.dev_indicator:
-                # Split by comma in case multiple groups are in one string
-                parts = [p.strip() for p in entry.split(",") if p.strip()]
-                for part in parts:
-                    # Match "GroupName (5 participants)"
-                    match = re.match(r'^(.*?)\s*\((\d+)\s*participants?\)$', part)
-                    if match:
-                        category, count = match.groups()
-                        result.append({"category": category.strip(), "count": int(count)})
-                    else:
-                        # fallback if no match
-                        result.append({"category": part, "count": None})
+                if isinstance(entry, dict):
+                    # Already structured
+                    category = str(entry.get("category", "")).strip()
+                    count = entry.get("count")
+                    try:
+                        count = int(count)
+                    except (ValueError, TypeError):
+                        count = None
+                    result.append({"category": category, "count": count})
+                elif isinstance(entry, str):
+                    # Could be multiple comma-separated groups
+                    parts = [p.strip() for p in entry.split(",") if p.strip()]
+                    for part in parts:
+                        match = re.match(r'^(.*?)\s*\((\d+)\s*participants?\)$', part)
+                        if match:
+                            category, count = match.groups()
+                            result.append({"category": category.strip(), "count": int(count)})
+                        else:
+                            result.append({"category": part, "count": None})
             return result
         return []
-    
+        
     @property
     def budget_items(self):
         """Get budget items from the related development plan"""

@@ -236,9 +236,17 @@ class ProjectProposalDetailView(generics.RetrieveUpdateDestroyAPIView):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        participants = request.data.get('participants')
+        budget_items = request.data.get('budget_items')
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+        
+        # Save with the additional data
+        serializer.save(
+            participants=participants,
+            budget_items=budget_items
+        )
         
         # Check if status was updated in the request
         if 'status' in request.data:
