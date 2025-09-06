@@ -33,11 +33,13 @@ export const useUpdateProjectProposalStatus = () => {
       gprId,
       status,
       reason,
+      staffId
     }: {
       gprId: number;
       status: ProposalStatus;
       reason: string | null;
-    }) => patchProjectProposalStatus(gprId, status, reason),
+      staffId?: number | null;
+    }) => patchProjectProposalStatus(gprId, status, reason, staffId),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: ["projectProposals"] });
       const previousProposals = queryClient.getQueryData<ProjectProposal[]>(["projectProposals"]);

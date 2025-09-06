@@ -249,7 +249,7 @@ class GADBudgetLogSerializer(serializers.ModelSerializer):
         
 class ProjectProposalLogSerializer(serializers.ModelSerializer):
     staff_details = StaffSerializer(source='staff', read_only=True)
-    gpr_title = serializers.CharField(source='gpr.gpr_title', read_only=True)
+    gpr_title = serializers.SerializerMethodField()  # Changed to SerializerMethodField
     gpr_id = serializers.IntegerField(source='gpr.gpr_id', read_only=True)
     
     class Meta:
@@ -270,6 +270,18 @@ class ProjectProposalLogSerializer(serializers.ModelSerializer):
             'gprl_id': {'read_only': True},
             'gprl_date_approved_rejected': {'read_only': True}
         }
+    
+    def get_gpr_title(self, obj):
+        """Get title from the development plan via ProjectProposal"""
+        try:
+            # Access the development plan through the project proposal
+            if obj.gpr and obj.gpr.dev:
+                # Try to get the project title from the development plan
+                return obj.gpr.project_title  # This uses the property method from ProjectProposal
+            return "No Title Available"
+        except AttributeError:
+            return "Title Not Found"
+
 
 class ProjectProposalSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()

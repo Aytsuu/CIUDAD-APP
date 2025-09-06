@@ -304,13 +304,22 @@ class UpdateProposalStatusView(generics.GenericAPIView):
             proposal = ProjectProposal.objects.get(gpr_id=gpr_id)
             status = request.data.get('gprl_status')
             reason = request.data.get('gprl_reason', 'Status updated')  # Default reason if not provided
-
+            staff_id = request.data.get('staffId')
+            
             if status not in dict(ProjectProposal.STATUS_CHOICES):
                 return Response({"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
 
             # Always set gprl_date_approved_rejected for any status change
             date_approved_rejected = timezone.now()
 
+            staff_instance = None
+            if staff_id:
+                try:
+                    staff_instance = Staff.objects.get(staff_id=staff_id)
+                except Staff.DoesNotExist:
+                    # Handle case where staff doesn't exist
+                    pass
+                
             # Create a new log entry
             ProjectProposalLog.objects.create(
                 gpr=proposal,
@@ -318,7 +327,7 @@ class UpdateProposalStatusView(generics.GenericAPIView):
                 gprl_reason=reason,
                 gprl_date_approved_rejected=date_approved_rejected,
                 gprl_date_submitted=timezone.now(),  # Set to current time
-                staff=request.user.staff if hasattr(request.user, 'staff') else None
+                staff=staff_instance
             )
 
             return Response({"message": "Status updated successfully"})
