@@ -235,6 +235,12 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
         }
     }, [resolutionData]);
 
+    
+    const validateResolutionNumberFormat = (resNum: string): boolean => {
+        const pattern = /^\d{3}-\d{2}$/;
+        return pattern.test(resNum);
+    };
+
     const onSubmit = (values: z.infer<typeof resolutionFormSchema>) => {
         // For new resolutions, ensure res_num is empty
         if (resolutionType === "new") {
@@ -248,6 +254,15 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
                 });                
                 return; 
             }
+
+            if (!validateResolutionNumberFormat(values.res_num)) {
+                form.setError("res_num", {
+                    type: "manual",
+                    message: "Resolution number must be in the format: 001-25 (3 digits, dash, 2 digits)",
+                });                
+                return;                 
+            }        
+            
         }
         
         const resFiles = selectedDocuments.map((docs: any) => ({

@@ -203,6 +203,13 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
     }, [resolutionData]);    
 
 
+    //Validator for the res_num format
+    const validateResolutionNumberFormat = (resNum: string): boolean => {
+        const pattern = /^\d{3}-\d{2}$/;
+        return pattern.test(resNum);
+    };    
+
+
     const meetingAreaOfFocus = [
         { id: "gad", name: "GAD" },
         { id: "finance", name: "Finance" },
@@ -225,6 +232,14 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
                 });                
                 return; // Stop form submission
             }
+
+            if (!validateResolutionNumberFormat(values.res_num)) {
+                form.setError("res_num", {
+                    type: "manual",
+                    message: "Resolution number must be in the format: 001-25 (3 digits, dash, 2 digits)",
+                });                
+                return;                 
+            }              
         }
         
         const files = mediaFiles.map((media) => ({

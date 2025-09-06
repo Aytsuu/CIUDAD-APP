@@ -60,8 +60,12 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
     );    
     
     // Update mutation
-    const { mutate: updateEntry, isPending } = usingUpdateResolution(onSuccess);
-    
+    const { mutate: updateEntry, isPending } = usingUpdateResolution(() => {
+        onSuccess?.();
+        setTimeout(() => {
+            router.back();
+        }, 700);
+    });
 
     const meetingAreaOfFocus = [
         { id: "gad", name: "GAD" },
