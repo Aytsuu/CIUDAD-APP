@@ -700,16 +700,29 @@ class GarbagePickupRequestAcceptedDetailView(generics.RetrieveAPIView):
         garb_id = self.kwargs.get('garb_id')
         return generics.get_object_or_404(self.get_queryset(), garb_id=garb_id)
 
+# class GarbagePickupRequestCompletedByRPView(generics.ListAPIView):
+#     serializer_class = GarbagePickupRequestCompletedSerializer
+    
+#     def get_queryset(self):
+#         rp_id = self.kwargs.get('rp_id')
+#         return Garbage_Pickup_Request.objects.filter(
+#             rp_id=rp_id, 
+#             garb_req_status='completed'  
+#         )
+    
+
 class GarbagePickupRequestCompletedByRPView(generics.ListAPIView):
-    serializer_class = GarbagePickupRequestCompletedSerializer
+    serializer_class = ResidentCompletedPickupRequestSerializer
     
     def get_queryset(self):
         rp_id = self.kwargs.get('rp_id')
         return Garbage_Pickup_Request.objects.filter(
             rp_id=rp_id, 
-            garb_req_status='completed'  
-        )
-    
+            garb_req_status='completed'
+        ).filter(
+            Q(pickup_confirmation__conf_resident_conf=True) &
+            Q(pickup_confirmation__conf_staff_conf=True)
+        ).distinct()
 
 class GarbagePickupRequestCancelledByRPView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestRejectedSerializer

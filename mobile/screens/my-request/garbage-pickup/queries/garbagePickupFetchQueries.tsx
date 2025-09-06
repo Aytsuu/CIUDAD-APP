@@ -50,48 +50,6 @@ export const useGetGarbageRejectedResident = (rp_id: string) => {
     });
 }
 
-// export type GarbageRequestAccept = {
-//   garb_id: string;
-//   garb_location: string;
-//   garb_waste_type: string;
-//   garb_created_at: string;
-//   dec_date: string;
-//   truck_id: string | null;
-//   driver_id: string | null;
-//   collector_ids?: string[];
-//   pickup_assignment_id?: string | null;
-//   assignment_collector_ids?: string[];
-//   assignment_info?: {
-//     driver?: string;
-//     collectors?: string[];
-//     pick_time?: string;
-//     pick_date?: string;
-//     truck?: string;
-//   } | null;
-//   file_url: string;
-//   sitio_name: string;
-// };
-// export type GarbageRequestAccept = {
-//   garb_id: string;
-//   garb_location: string;
-//   garb_waste_type: string;
-//   garb_created_at: string;
-//   garb_additional_notes: string;
-//   garb_req_status: string;
-//   garb_requester: string;
-//   dec_date: string;
-//   assignment_info?: {
-//     driver?: string;
-//     pick_time?: string;
-//     pick_date?: string;
-//     truck?: string;
-//   } | null;
-//   confirmation_info?: {
-//     conf_resident_conf: boolean;
-//     conf_resident_conf_date: string | null;
-//   } | null;
-//   file_url: string;
-//   sitio_name: string;
 export type GarbageRequestAccept = {
   garb_id: string;
   garb_location: string;
