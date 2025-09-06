@@ -107,29 +107,19 @@ export default function ResidentCompleted() {
 
                     {/* Confirmation Status */}
                     <View className="mt-3 pt-3 border-t border-gray-100">
-                      <Text className="text-sm font-medium text-gray-700 mb-2">Confirmations</Text>
+                      <Text className="text-sm font-medium text-gray-700 mb-2">Completion Details</Text>
 
-                      <View className="flex-row justify-between mb-2">
-                        <Text className="text-sm text-gray-600">Resident:</Text>
-                        <Text className={`text-sm font-medium ${request.conf_resident_conf ? 'text-green-600' : 'text-red-600'}`}>
-                          {request.conf_resident_conf ? 'Confirmed' : 'Not Confirmed'}
-                          {request.conf_resident_conf_date && (
-                            <Text className="text-xs text-gray-500">
-                              {" "}({formatTimestamp(request.conf_resident_conf_date)})
-                            </Text>
-                          )}
+                      <View className="flex-row justify-between">
+                        <Text className="text-sm text-gray-600">Pickup Completion Date:</Text>
+                        <Text className={'text-sm font-bold text-green-600'}>
+                           {formatTimestamp(request.conf_staff_conf_date|| '')}
                         </Text>
                       </View>
 
-                      <View className="flex-row justify-between">
-                        <Text className="text-sm text-gray-600">Staff:</Text>
-                        <Text className={`text-sm font-medium ${request.conf_staff_conf ? 'text-green-600' : 'text-red-600'}`}>
-                          {request.conf_staff_conf ? 'Confirmed' : 'Not Confirmed'}
-                          {request.conf_staff_conf_date && (
-                            <Text className="text-xs text-gray-500">
-                              {" "}({formatTimestamp(request.conf_staff_conf_date)})
-                            </Text>
-                          )}
+                      <View className="flex-row justify-between mb-2">
+                        <Text className="text-sm text-gray-600">Completion Acknowledged:</Text>
+                        <Text className={'text-sm font-bold text-green-600'}>
+                           {formatTimestamp(request.conf_resident_conf_date|| '')}
                         </Text>
                       </View>
                     </View>

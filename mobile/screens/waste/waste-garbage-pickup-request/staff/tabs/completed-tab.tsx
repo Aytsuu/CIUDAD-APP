@@ -13,6 +13,7 @@ export default function CompletedGarbageRequest() {
   const { data: completedReqData = [], isLoading } = useGetGarbageCompleteRequest();
   const filteredData = completedReqData.filter((request) => {
     const searchString = `
+      ${request.garb_id} 
       ${request.garb_requester} 
       ${request.garb_location} 
       ${request.garb_waste_type}

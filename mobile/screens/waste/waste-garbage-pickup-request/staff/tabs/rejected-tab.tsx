@@ -15,6 +15,7 @@ export default function RejectedGarbageRequest() {
 
   const filteredData = rejectedReqData.filter((request) => {
     const searchString = `
+      ${request.garb_id} 
       ${request.garb_requester} 
       ${request.garb_location} 
       ${request.garb_waste_type}

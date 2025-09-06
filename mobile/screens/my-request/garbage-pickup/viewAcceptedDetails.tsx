@@ -14,7 +14,7 @@ export default function ResidentAcceptedDetails() {
   const params = useLocalSearchParams()
   const garb_id = String(params.garb_id)
   const { data: requestDetails, isPending } = useGetAcceptedDetailsResident(garb_id)
-  const {mutate: confirm} = useUpdateGarbReqStatusResident(() => {}, false)
+  const {mutate: confirm} = useUpdateGarbReqStatusResident(() => {}, true)
   
   console.log("Request Details:", requestDetails)
 

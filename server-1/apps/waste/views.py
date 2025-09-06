@@ -568,26 +568,6 @@ class GarbagePickupCompletedRequestDetailView(generics.RetrieveAPIView):
         obj = super().get_object()
         return obj
     
-# class GarbagePickupCompletedByDriverView(generics.ListAPIView):
-#     serializer_class = GarbagePickupRequestCompletedSerializer
-
-#     def get_queryset(self):
-#         driver_id = self.request.query_params.get('wstp_id')
-
-#         if not driver_id:
-#             return Garbage_Pickup_Request.objects.none()
-
-#         assigned_garb_ids = Pickup_Assignment.objects.filter(
-#             wstp_id=driver_id
-#         ).values_list('garb_id', flat=True)
-
-#         confirmed_garb_ids = Pickup_Confirmation.objects.filter(
-#             garb_id__in=assigned_garb_ids,
-#             conf_staff_conf=True
-#         ).values_list('garb_id', flat=True)
-
-#         return Garbage_Pickup_Request.objects.filter(garb_id__in=confirmed_garb_ids)
-
 class GarbagePickupCompletedByDriverView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestCompletedSerializer
 
@@ -678,10 +658,11 @@ class GarbagePickupRequestPendingByRPView(generics.ListAPIView):
         queryset = Garbage_Pickup_Request.objects.filter(
             rp_id=rp_id, 
             garb_req_status='pending'  
-        )
+        ).order_by('-garb_created_at')  # Most recent first
         print(f"Found {queryset.count()} records") 
         return queryset
-    
+
+
 class GarbagePickupRequestRejectedByRPView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestRejectedSerializer
     
@@ -704,10 +685,15 @@ class GarbagePickupRequestAcceptedByRPView(generics.ListAPIView):
         
     def get_queryset(self):
         rp_id = self.kwargs.get('rp_id')
+        latest_decision = Pickup_Request_Decision.objects.filter(
+            garb_id=OuterRef('pk')
+        ).order_by('-dec_date').values('dec_date')[:1]
         
         accepted_requests = Garbage_Pickup_Request.objects.filter(
             rp_id=rp_id, 
             garb_req_status='accepted'
+        ).annotate(
+            latest_dec_date=Subquery(latest_decision)
         )
         
         completed_requests = Garbage_Pickup_Request.objects.filter(
@@ -715,9 +701,16 @@ class GarbagePickupRequestAcceptedByRPView(generics.ListAPIView):
             garb_req_status='completed'
         ).filter(
             pickup_confirmation__conf_resident_conf=False
+        ).annotate(
+            latest_dec_date=Subquery(latest_decision)
         )
         
-        return accepted_requests | completed_requests
+        queryset = (accepted_requests | completed_requests).order_by(
+            '-latest_dec_date',  
+            '-garb_created_at'   
+        )
+        
+        return queryset
     
 
 class GarbagePickupRequestAcceptedDetailView(generics.RetrieveAPIView):
@@ -735,12 +728,22 @@ class GarbagePickupRequestCompletedByRPView(generics.ListAPIView):
     
     def get_queryset(self):
         rp_id = self.kwargs.get('rp_id')
+        
+        resident_conf_date = Pickup_Confirmation.objects.filter(
+            garb_id=OuterRef('pk'),
+            conf_resident_conf=True
+        ).values('conf_resident_conf_date')[:1]
+        
         return Garbage_Pickup_Request.objects.filter(
             rp_id=rp_id, 
             garb_req_status='completed'
         ).filter(
             Q(pickup_confirmation__conf_resident_conf=True) &
             Q(pickup_confirmation__conf_staff_conf=True)
+        ).annotate(
+            resident_confirmation_date=Subquery(resident_conf_date)
+        ).order_by(
+            '-resident_confirmation_date' 
         ).distinct()
 
 class GarbagePickupRequestCancelledByRPView(generics.ListAPIView):
