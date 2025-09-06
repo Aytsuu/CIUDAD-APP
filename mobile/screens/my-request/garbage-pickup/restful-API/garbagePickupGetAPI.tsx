@@ -137,40 +137,6 @@ export const getGarbageCancelledResident = async (rp_id: string) => {
     }
 }
 
-
-// export const getAcceptedDetailsResident = async (garb_id: string) => {
-//     try {
-//         const { data } = await api.get(`waste/garbage-pickup-accepted-detail/${garb_id}/`);
-//         return {
-//             garb_id: data.garb_id || '',
-//             garb_location: data.garb_location || '',
-//             garb_waste_type: data.garb_waste_type || '',
-//             garb_created_at: data.garb_created_at || '',
-//             garb_additional_notes: data.garb_additional_notes || '',
-//             garb_req_status: data.garb_req_status || '',
-//             garb_requester: data.garb_requester || 'Unknown', // Changed from '' to 'Unknown'
-//             dec_date: data.dec_date || null,
-//             assignment_info: data.assignment_info ? {
-//                 driver: data.assignment_info.driver || '',
-//                 pick_time: data.assignment_info.pick_time || '',
-//                 pick_date: data.assignment_info.pick_date || '',
-//                 collectors: data.assignment_info.collectors || [], 
-//                 truck: data.assignment_info.truck || '',
-//             } : null,
-//             confirmation_info: data.confirmation_info ? {
-//                 conf_resident_conf: data.confirmation_info.conf_resident_conf || false,
-//                 conf_resident_conf_date: data.confirmation_info.conf_resident_conf_date || null,
-//             } : null,
-//             file_url: data.file_url || '',
-//             sitio_name: data.sitio_name || ''
-//         };
-
-//     } catch (err) {
-//         console.error('Failed to fetch garbage request details:', err);
-//         return null; 
-//     }
-// }
-
 export const getAcceptedDetailsResident = async (garb_id: string) => {
     try {
         const { data } = await api.get(`waste/garbage-pickup-accepted-detail/${garb_id}/`);
