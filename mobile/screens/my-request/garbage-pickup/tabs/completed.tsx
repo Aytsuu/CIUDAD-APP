@@ -7,10 +7,12 @@ import { formatTimestamp } from "@/helpers/timestampformatter";
 import { useGetGarbageCompleteResident } from "../queries/garbagePickupFetchQueries";
 import { RootState } from "@/redux";
 import { useSelector } from "react-redux";
+import { useRouter } from "expo-router";
 
 export default function ResidentCompleted() {
+  const router = useRouter(); 
   const [searchQuery, setSearchQuery] = useState("");
-  const {user, isLoading: isUserLoading} = useSelector((state: RootState) => state.auth)
+  const {user, isLoading: _isUserLoading} = useSelector((state: RootState) => state.auth)
   const {data: completedRequests = [], isLoading: isDataLoading} = useGetGarbageCompleteResident(user.resident.rp_id)
 
   const filteredData = completedRequests.filter((request) => {
@@ -23,8 +25,12 @@ export default function ResidentCompleted() {
   });
 
   const handleViewDetails = (garb_id: string) => {
-    console.log("View details:", garb_id);
-    // Navigate to details
+    router.push({
+      pathname: '/(my-request)/garbage-pickup/view-completed-details',
+      params: {
+        garb_id: garb_id
+      }
+    })
   }
 
   return (

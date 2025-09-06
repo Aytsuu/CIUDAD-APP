@@ -9,14 +9,7 @@ import PurposeAndRatesMain from "@/screens/treasurer/rates/purpose-and-rate-main
 import WasteIllegalDumpingResMain from "@/screens/report/illegal-dumping/resident/illegal-dump-main-res";
 import IllegalDumpCreateForm from "@/screens/report/illegal-dumping/resident/illegal-dump-create";
 import WasteIllegalDumping from "@/screens/report/illegal-dumping/staff/illegal-dump-main-staff";
-
-
-// Makes the Error Overlay dissapear
-// import { LogBox } from 'react-native';
-
-// if (__DEV__) {
-//   LogBox.ignoreAllLogs(true);
-// }
+import DriverTasksMain from "@/screens/waste/waste-garbage-pickup-request/driver/garbage-pickup-tasks-main";
 
 export default () => {
     return <App/>

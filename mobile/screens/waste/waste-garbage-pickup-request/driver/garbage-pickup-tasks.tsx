@@ -52,18 +52,10 @@ export default function GarbagePickupTasks() {
           </View>
 
           {/* Scheduled Pickup Date */}
-          {task.assignment_info?.pick_date && (
+          {task.assignment_info?.pick_date && task.assignment_info?.pick_time && (
             <View className="flex-row justify-between">
-              <Text className="text-sm text-gray-600">Pickup Date:</Text>
-              <Text className="text-sm">{task.assignment_info.pick_date}</Text>
-            </View>
-          )}
-
-          {/* Scheduled Pickup Time */}
-          {task.assignment_info?.pick_time && (
-            <View className="flex-row justify-between">
-              <Text className="text-sm text-gray-600">Pickup Time:</Text>
-              <Text className="text-sm">{formatTime(task.assignment_info.pick_time)}</Text>
+              <Text className="text-sm text-gray-600">Pickup Date & Time:</Text>
+              <Text className="text-sm">{task.assignment_info.pick_date}, {formatTime(task.assignment_info.pick_time)}</Text>
             </View>
           )}
 
