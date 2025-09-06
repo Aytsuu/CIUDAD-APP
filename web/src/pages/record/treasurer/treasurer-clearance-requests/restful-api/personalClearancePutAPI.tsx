@@ -27,6 +27,24 @@ export const declineReq = async (cr_id: string, reason: string) => {
     }
 }
 
+export const acceptNonResReq = async (nrc_id: string, discountReason?: string) => {
+    try{
+        const payload: any = {
+            nrc_req_status: "In Progress",
+            nrc_req_payment_status: "Paid"
+        };
+        
+        if (discountReason) {
+            payload.nrc_discount_reason = discountReason;
+        }
+        
+        const res = await api.put(`/clerk/update-personal-req-status/${nrc_id}/`, payload)
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
 export const declineNonResReq = async (nrc_id: string, reason: string) => {
     try{
         console.log("DECLINE RES ID: ", nrc_id)

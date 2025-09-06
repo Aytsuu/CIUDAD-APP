@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -22,6 +22,7 @@ interface DevelopmentPlan {
   dev_client: string;
   dev_issue: string;
   dev_project: string;
+  dev_activity: string;
   dev_indicator: string;
   dev_res_person: string;
   staff: string;
@@ -85,6 +86,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
               <col className="w-40" />
               <col className="w-20" />
               <col className="w-24" />
+              <col className="w-24" />
               <col className="w-56" />
             </colgroup>
             <thead>
@@ -92,17 +94,14 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                 <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}>GENDER ISSUE OR<br />GAD MANDATE</th>
                 <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}>GAD PROGRAM/ PROJECT/ ACTIVITY</th>
                 <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}>PERFORMANCE INDICATOR AND TARGET</th>
-                <th className="px-3 py-2 text-center align-bottom border border-gray-200" colSpan={3}>GAD BUDGET</th>
+                <th className="px-3 py-2 text-center align-bottom border border-gray-200" colSpan={4}>GAD BUDGET</th>
                 <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}>RESPONSIBLE PERSON</th>
               </tr>
-              <tr className="bg-gray-100 text-gray-700 border-b border-gray-200">
-                <th className=""></th>
-              </tr>
               <tr className="bg-blue-50 text-blue-900 font-semibold border-b border-blue-100">
-                <td className="bg-sky-100 px-3 py-2 border border-blue-200" colSpan={4}>CLIENT FOCUSED</td>
+                <td className="bg-sky-100 px-3 py-2 border border-blue-200" colSpan={1}>CLIENT FOCUSED</td>
                 <th className="bg-sky-100 px-3 py-1 text-center border border-gray-200">pax</th>
                 <th className="bg-sky-100 px-3 py-1 text-center border border-gray-200">amount (PHP)</th>
-                <th className="bg-sky-100"></th>
+                <th className="bg-sky-100 px-3 py-1 text-center border border-gray-200">total</th>
               </tr>
             </thead>
             <tbody>
@@ -114,10 +113,40 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                       <div className="text-xs mt-2 text-gray-700">{plan.dev_issue}</div>
                     </div>
                   </td>
-                  <td className="px-3 py-2 align-top border border-gray-200">{plan.dev_project}</td>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     <div>
-                      {plan.dev_indicator}
+                      <div className="font-semibold text-gray-900 mb-2">
+                        {(() => {
+                          try {
+                            // Parse dev_project if it's a JSON string
+                            if (typeof plan.dev_project === 'string' && plan.dev_project.startsWith('[')) {
+                              const parsed = JSON.parse(plan.dev_project);
+                              return Array.isArray(parsed) ? parsed[0] : plan.dev_project;
+                            }
+                            return plan.dev_project;
+                          } catch (error) {
+                            return plan.dev_project;
+                          }
+                        })()}
+                      </div>
+                      {plan.dev_activity && Array.isArray(plan.dev_activity) && plan.dev_activity.length > 0 && (
+                        <div className="text-sm text-gray-600 mt-2">
+                          <ul className="list-disc list-inside space-y-1">
+                            {plan.dev_activity.map((activity: any, idx: number) => (
+                              <li key={idx} className="text-xs">{activity.activity}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2 align-top border border-gray-200">
+                    <div>
+                      <ul className="list-disc list-inside">
+                        {plan.dev_indicator.split(',').map((indicator, idx) => (
+                          <li key={idx} className="text-sm">{indicator.trim()}</li>
+                        ))}
+                      </ul>
                       <div className="mt-2 text-xs text-gray-500">
                         {new Date(plan.dev_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                       </div>
@@ -151,14 +180,23 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                     )}
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
+                    {plan.dev_gad_items && plan.dev_gad_items.length > 0 ? (
+                      <div>₱{plan.dev_gad_items.reduce((sum, item) => sum + parseFloat(item.price), 0).toFixed(2)}</div>
+                    ) : (
+                      <span>₱{plan.total || '0'}</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 align-top border border-gray-200">
                     <ul className="list-disc list-inside">
-                      <li>{plan.dev_res_person}</li>
+                      {plan.dev_res_person.split(',').map((person, idx) => (
+                        <li key={idx} className="text-sm">{person.trim()}</li>
+                      ))}
                     </ul>
                   </td>
                 </tr>
               ))}
               <tr className="bg-gray-50 font-semibold">
-                <td className="px-3 py-2 text-right border border-gray-200" colSpan={5}>Total</td>
+                <td className="px-3 py-2 text-right border border-gray-200" colSpan={6}>Total</td>
                 <td className="px-3 py-2 border border-gray-200">
                   ₱{plans.reduce((sum, plan) => sum + parseFloat(plan.total || '0'), 0).toFixed(2)}
                 </td>

@@ -222,9 +222,11 @@ function AdminGADProjectProposal() {
     if (!project.budgetItems || project.budgetItems.length === 0) return sum;
 
     const projectTotal = project.budgetItems.reduce((projectSum, item) => {
-      const amount = item.amount || 0;
-      const paxCount = item.pax?.includes("pax") ? parseInt(item.pax) || 1 : 1;
-      return projectSum + paxCount * amount;
+      const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
+      const paxCount = typeof item.pax === 'string' 
+        ? parseInt(item.pax.replace(/\D/g, '')) || 1 
+        : 1;
+      return projectSum + (paxCount * amount);
     }, 0);
 
     return sum + projectTotal;
@@ -370,23 +372,24 @@ function AdminGADProjectProposal() {
                     </span>
                   </div>
                   <span className="text-xs text-gray-500 underline">
-                    Total Budget: ₱
-                    {project.budgetItems && project.budgetItems.length > 0
-                      ? new Intl.NumberFormat("en-US", {
-                          style: "decimal",
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }).format(
-                          project.budgetItems.reduce((grandTotal, item) => {
-                            const amount = item.amount || 0;
-                            const paxCount = item.pax?.includes("pax")
-                              ? parseInt(item.pax) || 1
-                              : 1;
-                            return grandTotal + paxCount * amount;
-                          }, 0)
-                        )
-                      : "N/A"}
-                  </span>
+                       Total Budget: ₱{
+                          project.budgetItems && project.budgetItems.length > 0
+                            ? new Intl.NumberFormat('en-US', { 
+                                style: 'decimal', 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                              }).format(
+                                project.budgetItems.reduce((grandTotal, item) => {
+                                  const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
+                                  const paxCount = typeof item.pax === 'string' 
+                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
+                                    : 1;
+                                  return grandTotal + (paxCount * amount);
+                                }, 0)
+                              )
+                            : "N/A"
+                        }
+                    </span>
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex flex-col gap-1">
                       <span

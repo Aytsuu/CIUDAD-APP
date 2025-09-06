@@ -12,9 +12,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
-
-
 class InvoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invoice
@@ -125,7 +122,8 @@ class NonResidentCertReqSerializer(serializers.ModelSerializer):
             "nrc_birthdate",
             "pr_id",    
             "purpose",   
-            "amount",   
+            "amount",
+            "nrc_discount_reason",   
         ]
 
     def get_purpose(self, obj):
@@ -139,7 +137,7 @@ class NonResidentCertReqSerializer(serializers.ModelSerializer):
 class NonResidentCertReqUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = NonResidentCertificateRequest
-        fields = ["nrc_req_status", "nrc_req_payment_status", "nrc_pay_date", "nrc_date_completed"]
+        fields = ["nrc_req_status", "nrc_req_payment_status", "nrc_pay_date", "nrc_date_completed", "nrc_discount_reason"]
 
 
 class ClerkCertificateSerializer(serializers.ModelSerializer):

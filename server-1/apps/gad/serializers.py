@@ -284,20 +284,41 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         return obj.current_status
     
     def get_dev_details(self, obj):
-        """Get development plan details for this proposal"""
+        """Get development plan details for this proposal, with parsed dev_project and dev_indicator"""
         if obj.dev:
+            # --- Parse dev_project ---
+            dev_project_raw = obj.dev.dev_project
+            try:
+                dev_project = json.loads(dev_project_raw) if dev_project_raw else {}
+            except (ValueError, TypeError):
+                dev_project = dev_project_raw or {}
+
+            # --- Parse dev_indicator ---
+            parsed_indicators = []
+            if obj.dev.dev_indicator:
+                for entry in obj.dev.dev_indicator:
+                    # Split entries by commas, e.g. "LGBTQIA+ (5 participants), Erpat (5 participants)"
+                    parts = [p.strip() for p in entry.split(",") if p.strip()]
+                    for part in parts:
+                        match = re.match(r'^(.*?)\s*\((\d+)\s*participants?\)$', part)
+                        if match:
+                            category, count = match.groups()
+                            parsed_indicators.append({"category": category.strip(), "count": int(count)})
+                        else:
+                            parsed_indicators.append({"category": part, "count": None})
+
             return {
                 'dev_id': obj.dev.dev_id,
-                'dev_project': obj.dev.dev_project,
+                'dev_project': dev_project,
                 'dev_gad_items': obj.dev.dev_gad_items,
                 'dev_res_person': obj.dev.dev_res_person,
-                'dev_indicator': obj.dev.dev_indicator,
+                'dev_indicator': parsed_indicators,
                 'dev_client': obj.dev.dev_client,
                 'dev_issue': obj.dev.dev_issue,
                 'dev_date': obj.dev.dev_date
             }
         return None
-    
+
     def get_project_title(self, obj):
         """Get project title from development plan"""
         return obj.project_title
@@ -483,7 +504,27 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
             attrs['dev_gad_items'] = [self._normalize_budget_item(b) for b in attrs['budgets']]
 
         
-        for field in ['dev_project', 'dev_res_person', 'dev_indicator']:
+        # Handle dev_project as text (not JSON array)
+        if 'dev_project' in initial:
+            attrs['dev_project'] = initial.get('dev_project', '')
+        
+        # Handle dev_activity as JSON array
+        if 'dev_activity' in initial:
+            dev_activity_raw = initial.get('dev_activity')
+            if dev_activity_raw:
+                try:
+                    if isinstance(dev_activity_raw, str):
+                        parsed = json.loads(dev_activity_raw)
+                        attrs['dev_activity'] = parsed if isinstance(parsed, list) else []
+                    else:
+                        attrs['dev_activity'] = dev_activity_raw if isinstance(dev_activity_raw, list) else []
+                except (ValueError, TypeError):
+                    attrs['dev_activity'] = []
+            else:
+                attrs['dev_activity'] = []
+        
+        # Handle other JSON fields
+        for field in ['dev_res_person', 'dev_indicator']:
             if field in initial:
                 normalized = self._ensure_array(initial.get(field))
                 attrs[field] = normalized
@@ -547,8 +588,14 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
             data['dev_gad_items'] = [self._normalize_budget_item(i) for i in items]
         except Exception:
             pass
-        # Present arrays as comma-separated strings for readability in table
-        for field in ['dev_project', 'dev_res_person', 'dev_indicator']:
+        # Present dev_project as text (already handled)
+        data['dev_project'] = getattr(instance, 'dev_project', '') or ""
+        
+        # Present dev_activity as JSON array (keep as is for frontend processing)
+        data['dev_activity'] = getattr(instance, 'dev_activity', []) or []
+        
+        # Present other arrays as comma-separated strings for readability in table
+        for field in ['dev_res_person', 'dev_indicator']:
             value = getattr(instance, field, [])
             try:
                 arr = value if isinstance(value, list) else self._ensure_array(value)
