@@ -250,8 +250,8 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                     <ComboboxInput
                       value={field.value || ""}
                       options={projectProposals || []}
-                      label="Project Title"
-                      placeholder="Select project..."
+                      label="Program Title"
+                      placeholder="Select Program..."
                       onSelect={(value, item) => {
                         field.onChange(value);
                         if (item) {
