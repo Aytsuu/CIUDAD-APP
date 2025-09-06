@@ -46,24 +46,16 @@ export default function GarbageCompletedTasks() {
           {/* Completed Date */}
           {task.conf_staff_conf_date && (
             <View className="flex-row justify-between">
-              <Text className="text-sm text-gray-600">Completed Date:</Text>
+              <Text className="text-sm text-gray-600">Date Completed:</Text>
               <Text className="text-sm">{new Date(task.conf_staff_conf_date).toLocaleDateString()}</Text>
             </View>
           )}
 
           {/* Pickup Date */}
-          {task.assignment_info?.pick_date && (
+          {task.assignment_info?.pick_date && task.assignment_info?.pick_time && (
             <View className="flex-row justify-between">
-              <Text className="text-sm text-gray-600">Pickup Date:</Text>
-              <Text className="text-sm">{task.assignment_info.pick_date}</Text>
-            </View>
-          )}
-
-          {/* Pickup Time */}
-          {task.assignment_info?.pick_time && (
-            <View className="flex-row justify-between">
-              <Text className="text-sm text-gray-600">Pickup Time:</Text>
-              <Text className="text-sm">{formatTime(task.assignment_info.pick_time)}</Text>
+              <Text className="text-sm text-gray-600">Pickup Date & Time:</Text>
+              <Text className="text-sm">{task.assignment_info.pick_date}, {formatTime(task.assignment_info.pick_time)}</Text>
             </View>
           )}
 
@@ -78,7 +70,7 @@ export default function GarbageCompletedTasks() {
           {/* Assigned Collectors */}
           {task.assignment_info?.collectors && task.assignment_info.collectors.length > 0 && (
             <View>
-              <Text className="text-sm text-gray-600">Team Members:</Text>
+              <Text className="text-sm text-gray-600">Collectors:</Text>
               <Text className="text-sm">
                 {task.assignment_info.collectors.join(", ")}
               </Text>

@@ -18,7 +18,7 @@ export type GarbagePickupTask = {
     sitio_name: string;
 }
 
-const driver_id = '5'
+const driver_id = '1'
 export const useGetGarbagePickupTasks = () => {
     return useQuery<GarbagePickupTask[]>({
         queryKey: ["garbagePickupTasks", driver_id], 
