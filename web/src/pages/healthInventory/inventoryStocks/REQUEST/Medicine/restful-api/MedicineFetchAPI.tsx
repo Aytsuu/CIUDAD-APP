@@ -21,7 +21,7 @@ export const fetchMedicines = () => {
         return {
           default: medicines,
           formatted: medicines.map((medicine: any) => ({
-            id:` ${String(medicine.med_id)},${medicine.med_name}`,
+            id:`${String(medicine.med_id)},${medicine.med_name}`,
             name: `${medicine.med_name} `,
             rawName: medicine.med_name,
             category: medicine.catlist || "No Category"

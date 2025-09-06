@@ -5,13 +5,11 @@ import type { MedicineRecords, ApiItemWithStaff } from "../types";
 import { SearchInput } from "@/components/ui/search-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMedicineTransactions } from "../restful-api/transaction/fetchqueries";
-// import { useNavigation } from '@react-navigation/native'; // If using React Navigation
 
 export default function MedicineListScreen() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10); // Still useful for pagination
   const [currentPage, setCurrentPage] = React.useState(1);
-  // const navigation = useNavigation(); // If using React Navigation
 
   const { data: medicinesData, isLoading: isLoadingMedicines } = useMedicineTransactions(currentPage,pageSize,searchQuery);
 

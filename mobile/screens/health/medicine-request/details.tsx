@@ -124,16 +124,21 @@ export default function MedicineDetailsScreen() {
           {/* Request Form Card */}
           <View className="bg-white rounded-2xl p-6 shadow-md">
             {/* Reason Input */}
-            <View className="mb-6">
-              <Text className="text-gray-700 font-semibold mb-3">Reason for Request</Text>
+             <View className="mb-6">
+              <Text className="text-gray-700 font-semibold mb-2">Reason for Request *</Text>
+              <Text className="text-red-600 text-sm mb-3 italic">
+                Please describe your symptoms or medical condition requiring this medicine. 
+                Be specific and truthful for proper evaluation.
+              </Text>
               <TextInput
-                className="border border-gray-100 rounded-xl p-4 min-h-[120px] text-gray-700 bg-gray-50"
-                placeholder="Please describe your symptoms or reason for requesting this medicine..."
+                className="border border-gray-200 rounded-xl p-4 min-h-[120px] text-gray-700 bg-white"
+                placeholder="Example: I have been experiencing fever and headache for 2 days. Temperature is 38.5°C..."
                 multiline
                 textAlignVertical="top"
                 value={reason}
                 onChangeText={setReason}
               />
+              
             </View>
 
             {/* Add to Cart Button */}

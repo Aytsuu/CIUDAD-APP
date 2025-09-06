@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { View, Text, FlatList, TouchableOpacity } from "react-native"
 import { useQuery } from "@tanstack/react-query"
-import { useNavigation } from "@react-navigation/native"
 import {
   ArrowLeft,
   FileText,
@@ -14,7 +13,7 @@ import {
   Heart,
   GitCompare, // Import GitCompare icon
 } from "lucide-react-native"
-import { router } from "expo-router"
+import { router, useRouter } from "expo-router"
 import { getFPRecordsForPatient } from "../admin/admin-familyplanning/GetRequest"
 import { useAuth } from "./useAuth"
 
@@ -89,7 +88,7 @@ interface FPRecord {
 }
 
 export default function MyFpRecordsScreen() {
-  const navigation = useNavigation()
+  const router = useRouter()
   const { user } = useAuth()
   const [selectedRecords, setSelectedRecords] = useState<FPRecord[]>([])
 

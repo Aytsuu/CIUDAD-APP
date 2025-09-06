@@ -48,10 +48,9 @@ const Homepage = () => {
       image: require('@/assets/images/Health/Home/animalbites.jpg')
     },
   ];
-
   const handleViewWeeklySchedule = () => {
-    router.push('/admin/scheduler/schedule-weekly'); 
-  };
+    router.push("/admin/scheduler/schedule-weekly")
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -72,8 +71,8 @@ const Homepage = () => {
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Today's Schedule Widget */}
-        <View className="px-6 mt-5">
-          {/* <TodayScheduleWidget onViewWeeklySchedule={handleViewWeeklySczhedule} /> */}
+        <View className="px-6 mt-5 mb-3">
+          <TodayScheduleWidget />
         </View>
 
         <View className="mt-3">

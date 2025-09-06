@@ -12,10 +12,10 @@ from apps.childhealthservices.models import *
 from apps.childhealthservices.serializers import *
 from ..utils import *
 from apps.patientrecords.models import *
+from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasurementSerializer
 from apps.healthProfiling.models import *
 from pagination import *
 from apps.inventory.models import *
-
 
 
 class YearlySemiOPTChildHealthSummariesAPIView(APIView):
@@ -25,6 +25,7 @@ class YearlySemiOPTChildHealthSummariesAPIView(APIView):
     Only counts the LATEST records per child in each semi-annual period
     Filters automatically to children aged 0–71 months
     Includes both residents and transients
+    Only counts records where is_opt==TRUE
     """
     pagination_class = StandardResultsPagination
 
@@ -34,7 +35,7 @@ class YearlySemiOPTChildHealthSummariesAPIView(APIView):
             search_query = request.GET.get('search', '').strip()
 
             # Get all distinct years from the database
-            years_data = NutritionalStatus.objects.dates('created_at', 'year', order='DESC')
+            years_data = BodyMeasurement.objects.dates('created_at', 'year', order='DESC')
             
             formatted_data = []
             for year_date in years_data:
@@ -100,31 +101,37 @@ class YearlySemiOPTChildHealthSummariesAPIView(APIView):
         end_date = datetime(year, 12, 31, 23, 59, 59)
 
         # Get latest records for first semester (Jan-Jul) - both residents and transients
-        first_semi_latest = NutritionalStatus.objects.filter(
+        # Added is_opt=True filter
+        first_semi_latest = BodyMeasurement.objects.filter(
             pat=OuterRef('pat'),
-            created_at__range=(start_date, mid_date)
-            # Removed pat__pat_type='Resident' filter
-        ).order_by('-created_at').values('nutstat_id')[:1]
+            created_at__range=(start_date, mid_date),
+            is_opt=True  # Filter for OPT records only
+        ).order_by('-created_at').values('bm_id')[:1]
 
         # Get latest records for second semester (Aug-Dec) - both residents and transients
-        second_semi_latest = NutritionalStatus.objects.filter(
+        # Added is_opt=True filter
+        second_semi_latest = BodyMeasurement.objects.filter(
             pat=OuterRef('pat'),
-            created_at__range=(mid_date + timedelta(seconds=1), end_date)
-            # Removed pat__pat_type='Resident' filter
-        ).order_by('-created_at').values('nutstat_id')[:1]
+            created_at__range=(mid_date + timedelta(seconds=1), end_date),
+            is_opt=True  # Filter for OPT records only
+        ).order_by('-created_at').values('bm_id')[:1]
 
         # Get the actual records for first semester
-        first_semi_records = NutritionalStatus.objects.filter(
-            nutstat_id__in=Subquery(first_semi_latest)
+        # Added is_opt=True filter
+        first_semi_records = BodyMeasurement.objects.filter(
+            bm_id__in=Subquery(first_semi_latest),
+            is_opt=True  # Filter for OPT records only
         ).select_related(
-            'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
+            'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
         )
 
         # Get the actual records for second semester
-        second_semi_records = NutritionalStatus.objects.filter(
-            nutstat_id__in=Subquery(second_semi_latest)
+        # Added is_opt=True filter
+        second_semi_records = BodyMeasurement.objects.filter(
+            bm_id__in=Subquery(second_semi_latest),
+            is_opt=True  # Filter for OPT records only
         ).select_related(
-            'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
+            'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
         )
 
         def filter_children_by_age(records):
@@ -163,7 +170,7 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
     Automatically filters to children aged 0–71 months
     Includes both residents and transients
     """
-    serializer_class = NutritionalStatusSerializerBase
+    serializer_class = BodyMeasurementSerializer
     pagination_class = StandardResultsPagination
 
     def _calculate_age_in_months(self, dob, reference_date):
@@ -196,35 +203,37 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
         try:
             year = int(year)
         except ValueError:
-            return NutritionalStatus.objects.none()
+            return BodyMeasurement.objects.none()
 
         start_date = datetime(year, 1, 1)
         end_date = datetime(year + 1, 1, 1) - timedelta(microseconds=1)
 
         # Get latest records for first semester (Jan-Jul) - both residents and transients
-        first_semi_latest = NutritionalStatus.objects.filter(
+        first_semi_latest = BodyMeasurement.objects.filter(
             pat=OuterRef('pat'),
+            is_opt=True,  # Filter for OPT records only
             created_at__gte=start_date,
             created_at__month__lte=7,
             created_at__year=year
             # Removed pat__pat_type='Resident' filter
-        ).order_by('-created_at').values('nutstat_id')[:1]
+        ).order_by('-created_at').values('bm_id')[:1]
 
         # Get latest records for second semester (Aug-Dec) - both residents and transients
-        second_semi_latest = NutritionalStatus.objects.filter(
+        second_semi_latest = BodyMeasurement.objects.filter(
             pat=OuterRef('pat'),
+            is_opt=True,  # Filter for OPT records only
             created_at__month__gte=8,
             created_at__year=year,
             created_at__lte=end_date
             # Removed pat__pat_type='Resident' filter
-        ).order_by('-created_at').values('nutstat_id')[:1]
+        ).order_by('-created_at').values('bm_id')[:1]
 
         # Get all records first, then filter by age
-        latest_records = NutritionalStatus.objects.filter(
-            Q(nutstat_id__in=Subquery(first_semi_latest)) |
-            Q(nutstat_id__in=Subquery(second_semi_latest))
+        latest_records = BodyMeasurement.objects.filter(
+            Q(bm_id=Subquery(first_semi_latest)) |
+            Q(bm_id=Subquery(second_semi_latest))
         ).select_related(
-            'bm', 'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
+            'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
         ).prefetch_related(
             Prefetch(
                 'pat__rp_id__per__personaladdress_set',
@@ -467,10 +476,17 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
             for i, entry in enumerate(data):
                 try:
                     ns_obj = queryset_objects[i]
-                    pat = entry.get('patient_details', {})
 
                     # Get child ID for grouping
                     child_id = ns_obj.pat.pat_id
+                         # Get child name from pat_details.personal_info
+                    pat_details = entry.get('pat_details', {})
+                    personal_info = pat_details.get('personal_info', {})
+                    
+                    child_fname = personal_info.get('per_fname', '')
+                    child_mname = personal_info.get('per_mname', '')
+                    child_lname = personal_info.get('per_lname', '')
+                    child_name = f"{child_fname} {child_mname} {child_lname}".strip()
 
                     address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(ns_obj.pat)
 
@@ -512,8 +528,8 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
                     weighing_data = {
                         'date_of_weighing': entry.get('created_at', '')[:10],
                         'age_at_weighing': age_in_months,
-                        'weight': entry.get('bm_details', {}).get('weight'),
-                        'height': entry.get('bm_details', {}).get('height'),
+                        'weight': entry.get('weight'),
+                        'height': entry.get('height'),
                         'nutritional_status': nutritional_status,
                         'type_of_feeding': 'N/A'  # Adjust if you have this data
                     }
@@ -523,7 +539,7 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
                         children_data[child_id] = {
                             'child_id': child_id,
                             'household_no': household_no,  # Now using the same logic as PatientSerializer
-                            'child_name': f"{pat.get('first_name', '')} {pat.get('middle_name', '')} {pat.get('last_name', '')}",
+                            'child_name': child_name,
                             'sex': sex,  # Now properly set based on patient type
                             'date_of_birth': dob,  # Now properly set based on patient type
                             'age_in_months': age_in_months,

@@ -10,7 +10,7 @@ import { toast } from "sonner"
 import { useLoading } from "@/context/LoadingContext"
 import type { OPTYearItem } from "./types"
 import { useOPTYears } from "./queries/fetch"
-import { MonthInfoCard } from "../month-folder-comonent"
+import { MonthInfoCard } from "../month-folder-component"
 export default function YearlySemiAnnualOPTRecords() {
   const { showLoading, hideLoading } = useLoading()
   const [searchQuery, setSearchQuery] = useState("")

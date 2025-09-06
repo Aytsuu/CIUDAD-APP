@@ -16,8 +16,6 @@ import re
 from calendar import monthrange
 
 
-
-
 class MedicineListAvailableTable(APIView):
     def get(self, request):
         # Get current date for expiry comparison
@@ -529,8 +527,6 @@ class MedicineTransactionView(generics.ListCreateAPIView):
     
     
 # ============================TRANSACTION=================================
-from django.db.models import F, Value, CharField
-from django.db.models.functions import Concat
 
 class MedicineTransactionView(APIView):
     pagination_class = StandardResultsPagination
@@ -542,11 +538,11 @@ class MedicineTransactionView(APIView):
             page = int(request.GET.get('page', 1))
             page_size = int(request.GET.get('page_size', 10))
             
-            # Get medicine transactions with related data
+            # Get medicine transactions with related data - add more related fields
             transactions = MedicineTransactions.objects.select_related(
                 'minv_id__med_id', 
                 'minv_id__inv_id',
-                'staff'
+                'staff__rp__per'  # Add this to get the personal info
             ).all()
             
             # Apply search filter if provided
@@ -555,8 +551,8 @@ class MedicineTransactionView(APIView):
                     Q(minv_id__med_id__med_name__icontains=search_query) |
                     Q(minv_id__inv_id__inv_id__icontains=search_query) |
                     Q(mdt_action__icontains=search_query) |
-                    Q(staff__first_name__icontains=search_query) |
-                    Q(staff__last_name__icontains=search_query)
+                    Q(staff__rp__per__per_fname__icontains=search_query) |  # Update these
+                    Q(staff__rp__per__per_lname__icontains=search_query)    # Update these
                 )
             
             # Format the data for response
@@ -569,13 +565,14 @@ class MedicineTransactionView(APIView):
                 inventory = medicine_inventory.inv_id if medicine_inventory else None
                 staff = transaction.staff
                 
-                # Format staff name
-                staff_name = "Managed by Sytem"
-                if staff:
-                    staff_name = f"{staff.first_name or ''} {staff.last_name or ''}".strip()
+                # Format staff name - FIXED
+                staff_name = "Managed by System"
+                if staff and staff.rp and staff.rp.per:
+                    personal = staff.rp.per
+                    staff_name = f"{personal.per_fname or ''} {personal.per_lname or ''}".strip()
                     if not staff_name:
-                        staff_name = staff.username
-                
+                        staff_name = f"Staff {staff.staff_id}"  # Fallback to staff ID
+                 
                 item_data = {
                     'mdt_id': transaction.mdt_id,
                     'inv_id': inventory.inv_id if inventory else "N/A",
@@ -618,7 +615,6 @@ class MedicineTransactionView(APIView):
                 'success': False,
                 'error': f'Error fetching medicine transactions: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
 
 # ===========================MEDICINE ARCHIVE==============================
 class MedicineArchiveInventoryView(APIView):
@@ -1058,9 +1054,8 @@ class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
         return int(match.group()) if match else 0   
     
     
+    
 #======================== EXPIRED AND OUT OF STOCK REPORT=========================
-
-
 class MedicineExpiredOutOfStockSummaryAPIView(APIView):
     pagination_class = StandardResultsPagination
 
@@ -1197,6 +1192,7 @@ class MedicineExpiredOutOfStockSummaryAPIView(APIView):
                 'success': False,
                 'error': str(e),
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
         
 class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
     pagination_class = StandardResultsPagination
@@ -1338,3 +1334,190 @@ class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
                 'all_problem_items': all_problem_items
             }
         })  
+        
+        
+        
+from apps.medicineservices.models import MedicineRequestItem, MedicineRequest
+class MedicineRequestPendingItemsTableView(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            # Get the medicine request ID from URL parameters
+            medreq_id = self.kwargs.get('medreq_id')
+            
+            # Base queryset for medicine request items
+            queryset = MedicineRequestItem.objects.all()
+            
+            # Filter by medicine request ID if provided
+            if medreq_id:
+                queryset = queryset.filter(medreq_id=medreq_id)
+            else:
+                # If no specific medreq_id provided, filter by pending status
+                queryset = queryset.filter(medreq_id__status='pending')
+            
+            # Add select_related and prefetch_related for performance
+            queryset = queryset.select_related(
+                'minv_id', 
+                'medreq_id', 
+                'med', 
+                'medreq_id__rp_id', 
+                'medreq_id__pat_id',
+                'medreq_id__pat_id__rp_id',
+                'medreq_id__pat_id__trans_id',
+                'medreq_id__rp_id__per',
+                'minv_id__med_id',
+                'minv_id__inv_id',
+            ).prefetch_related(
+                'medreq_id__medicine_files',
+            ).order_by('-medreq_id__requested_at')
+            
+            # Group by med_id and prepare response data
+            medicine_groups = {}
+            
+            for item in queryset:
+                med_id = None
+                med_name = "Unknown Medicine"
+                
+                # Get medicine ID and name
+                if item.med:
+                    med_id = item.med.med_id
+                    med_name = item.med.med_name
+                    med_type = item.minv_id.med_id.med_type
+
+                elif item.minv_id and item.minv_id.med_id:
+                    med_id = item.minv_id.med_id.med_id
+                    med_name = item.minv_id.med_id.med_name
+                    med_type = item.minv_id.med_id.med_type
+                
+                # Get formatted patient name
+                patient_name = "Unknown Patient"
+                if item.medreq_id.pat_id:
+                    patient = item.medreq_id.pat_id
+                    
+                    if patient.rp_id and patient.rp_id.per:
+                        personal = patient.rp_id.per
+                        patient_name = f"{personal.per_fname} {personal.per_lname}"
+                        if personal.per_mname:
+                            patient_name = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
+                    elif patient.trans_id:
+                        transient = patient.trans_id
+                        patient_name = f"{transient.tran_fname} {transient.tran_lname}"
+                        if transient.tran_mname:
+                            patient_name = f"{transient.tran_fname} {transient.tran_mname} {transient.tran_lname}"
+                
+                if med_id not in medicine_groups:
+                    # Get ALL available stock for this medicine (no expiry filter)
+                    available_stock = MedicineInventory.objects.filter(
+                        med_id=med_id,
+                        minv_qty_avail__gt=0
+                    ).aggregate(total_available=Sum('minv_qty_avail'))['total_available'] or 0
+                    
+                    medicine_groups[med_id] = {
+                        'med_id': med_id,
+                        'med_name': med_name,
+                        'med_type':med_type,
+                        'patient_name': patient_name,  # Add formatted patient name here
+                        'total_available_stock': available_stock,
+                        'request_items': []
+                    }
+                
+                # Get medicine files for this request
+                medicine_files = []
+                for file in item.medreq_id.medicine_files.all():
+                    medicine_files.append({
+                        'medf_id': file.medf_id,
+                        'medf_name': file.medf_name,
+                        'medf_type': file.medf_type,
+                        'medf_path': file.medf_path,
+                        'medf_url': file.medf_url,
+                        'created_at': file.created_at
+                    })
+                
+                # Get patient information
+                patient_info = {}
+                if item.medreq_id.pat_id:
+                    patient = item.medreq_id.pat_id
+                    
+                    if patient.rp_id and patient.rp_id.per:
+                        personal = patient.rp_id.per
+                        patient_info = {
+                            'pat_id': patient.pat_id,
+                            'type': 'resident',
+                            'per_fname': personal.per_fname,
+                            'per_lname': personal.per_lname,
+                            'per_mname': personal.per_mname,
+                            'per_contact': personal.per_contact,
+                            'per_dob': personal.per_dob,
+                            'per_sex': personal.per_sex
+                        }
+                    elif patient.trans_id:
+                        transient = patient.trans_id
+                        patient_info = {
+                            'pat_id': patient.pat_id,
+                            'type': 'transient',
+                            'tran_fname': transient.tran_fname,
+                            'tran_lname': transient.tran_lname,
+                            'tran_mname': transient.tran_mname,
+                            'tran_contact': transient.tran_contact,
+                            'tran_dob': transient.tran_dob,
+                            'tran_sex': transient.tran_sex
+                        }
+                
+                # Get inventory details
+                inventory_info = {}
+                if item.minv_id:
+                    inventory_info = {
+                        'minv_id': item.minv_id.minv_id,
+                        'dosage': f"{item.minv_id.minv_dsg} {item.minv_id.minv_dsg_unit}",
+                        'form': item.minv_id.minv_form,
+                        'expiry_date': item.minv_id.inv_id.expiry_date if item.minv_id.inv_id else None,
+                        'quantity_available': item.minv_id.minv_qty_avail
+                    }
+                
+                request_item_data = {
+                    'medreqitem_id': item.medreqitem_id,
+                    'medreqitem_qty': item.medreqitem_qty,
+                    'reason': item.reason,
+                    'status': item.status,
+                    'inventory': inventory_info,
+                    'patient': patient_info,
+                    'medicine_files': medicine_files,
+                    'medreq_id': item.medreq_id.medreq_id,
+                    'requested_at': item.medreq_id.requested_at,
+                    'medreq_status': item.medreq_id.status
+                }
+                
+                medicine_groups[med_id]['request_items'].append(request_item_data)
+            
+            # Convert to list for pagination
+            medicine_data = list(medicine_groups.values())
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            page_size = int(request.GET.get('page_size', paginator.page_size))
+            paginator.page_size = page_size
+            
+            page_data = paginator.paginate_queryset(medicine_data, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response({
+                    'success': True,
+                    'results': response.data['results'],
+                    'count': response.data['count'],
+                    'next': response.data.get('next'),
+                    'previous': response.data.get('previous')
+                })
+            
+            return Response({
+                'success': True,
+                'results': medicine_data,
+                'count': len(medicine_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching medicine request items: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

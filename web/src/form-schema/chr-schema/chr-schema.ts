@@ -108,7 +108,6 @@ export const NutritionalStatusSchema = z.object({
   wfh: z.enum(["N", "W", "SW", "OW", "OB",""]).optional(), // Weight for Height/Length
   muac: z.number().optional(), // Mid-Upper Arm Circumference (manual input)
   muac_status: z.enum(["N", "MAM", "SAM", ""]).optional(), // MUAC status
-  
   date: z.string().optional(), // Date of nutritional status assessment
   edemaSeverity:z.string().optional()
 })

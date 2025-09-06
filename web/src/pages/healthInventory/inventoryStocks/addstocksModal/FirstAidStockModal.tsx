@@ -76,7 +76,7 @@ export default function FirstAidStockModal() {
                   }
                   onChange={(value) => {
                     // Extract only the fa_id from the concatenated value
-                    const faId = value.split(',')[0]; // Get the first part before the comma
+                    const faId = (value ?? '').split(',')[0]; // Get the first part before the comma
                     form.setValue("fa_id", faId);
                     
                     // Update category when first aid item is selected

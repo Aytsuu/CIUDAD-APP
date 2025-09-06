@@ -10,10 +10,10 @@ from apps.childhealthservices.models import *
 from apps.childhealthservices.serializers import *
 from ..utils import *
 from apps.patientrecords.models import *
+from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasurementSerializer
 from apps.healthProfiling.models import *
 from pagination import *
 from apps.inventory.models import *
-from apps.childhealthservices.serializers import NutritionalStatusSerializerBase
 
 
 class YearlyOPTChildHealthSummariesAPIView(APIView):
@@ -32,7 +32,7 @@ class YearlyOPTChildHealthSummariesAPIView(APIView):
             search_query = request.GET.get('search', '').strip()
 
             # Get all distinct years from the database
-            years_data = NutritionalStatus.objects.dates('created_at', 'year', order='DESC')
+            years_data = BodyMeasurement.objects.dates('created_at', 'year', order='DESC')
             
             formatted_data = []
             for year_date in years_data:
@@ -96,15 +96,16 @@ class YearlyOPTChildHealthSummariesAPIView(APIView):
         end_date = datetime(year, 12, 31, 23, 59, 59)
 
         # Get latest records for the year - both residents and transients
-        yearly_latest = NutritionalStatus.objects.filter(
+        yearly_latest = BodyMeasurement.objects.filter(
+            is_opt=True,
             pat=OuterRef('pat'),
             created_at__range=(start_date, end_date)
             # Removed pat__pat_type='Resident' filter
-        ).order_by('-created_at').values('nutstat_id')[:1]
+        ).order_by('-created_at').values('bm_id')[:1]
 
         # Get the actual records
-        yearly_records = NutritionalStatus.objects.filter(
-            nutstat_id__in=Subquery(yearly_latest)
+        yearly_records = BodyMeasurement.objects.filter(
+            bm_id__in=Subquery(yearly_latest)
         ).select_related(
             'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
         )
@@ -144,7 +145,7 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
     Returns each child's monthly measurements (Jan-Dec) for children aged 0-23 months
     Includes both residents and transients
     """
-    serializer_class = NutritionalStatusSerializerBase
+    serializer_class = BodyMeasurementSerializer
     pagination_class = StandardResultsPagination
 
     def _calculate_age_in_months(self, dob, reference_date):
@@ -167,17 +168,19 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         try:
             year = int(year)
         except ValueError:
-            return NutritionalStatus.objects.none()
+            return BodyMeasurement.objects.none()
 
         start_date = datetime(year, 1, 1)
         end_date = datetime(year, 12, 31, 23, 59, 59)
 
         # Get all records for the year (not just latest per child) - both residents and transients
-        records = NutritionalStatus.objects.filter(
-            created_at__range=(start_date, end_date)
+        records = BodyMeasurement.objects.filter(
+            created_at__range=(start_date, end_date),
+            is_opt=True,
+        
             # Removed pat__pat_type='Resident' filter
         ).select_related(
-            'bm', 'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
+        'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
         ).prefetch_related(
             Prefetch(
                 'pat__rp_id__per__personaladdress_set',
@@ -241,7 +244,7 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                 return []
 
         # Nutritional status filter
-        nutritional_search = self.request.query_params.get('nutritional_status', '').strip()
+        nutritional_search = self.request.query_params.get('body_measurement', '').strip()
         if nutritional_search:
             filters_applied = True
             records = self._apply_nutritional_search(records, nutritional_search)
@@ -378,17 +381,24 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                 'age_at_weighing': None,
                 'weight': None,
                 'height': None,
-                'nutritional_status': None,
+                'body_measurement': None,
                 'type_of_feeding': None
             }
 
             for i, entry in enumerate(data):
                 try:
                     ns_obj = queryset_objects[i]
-                    pat = entry.get('patient_details', {})
 
                     # Get child ID for grouping
                     child_id = ns_obj.pat.pat_id
+                         # Get child name from pat_details.personal_info
+                    pat_details = entry.get('pat_details', {})
+                    personal_info = pat_details.get('personal_info', {})
+                    
+                    child_fname = personal_info.get('per_fname', '')
+                    child_mname = personal_info.get('per_mname', '')
+                    child_lname = personal_info.get('per_lname', '')
+                    child_name = f"{child_fname} {child_mname} {child_lname}".strip()
 
                     # Initialize child data if not exists
                     if child_id not in children_data:
@@ -415,7 +425,7 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                         children_data[child_id] = {
                             'child_id': child_id,
                             'household_no': household_no,  # Now using the same logic as PatientSerializer
-                            'child_name': f"{pat.get('first_name', '')} {pat.get('middle_name', '')} {pat.get('last_name', '')}",
+                            'child_name': child_name,
                             'sex': sex,  # Now properly set based on patient type
                             'date_of_birth': dob,  # Now properly set based on patient type
                             'parents': parents,  # Now using the same logic as PatientSerializer
@@ -457,7 +467,7 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                         age_months = self._calculate_age_in_months(dob, ns_obj.created_at)
 
                         # Format nutritional status
-                        nutritional_status = {
+                        body_measurement = {
                             'wfa': ns_obj.wfa,
                             'lhfa': ns_obj.lhfa,
                             'wfl': ns_obj.wfl,
@@ -471,9 +481,9 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                             'measurement_exists': True,
                             'date_of_weighing': entry.get('created_at', '')[:10],
                             'age_at_weighing': age_months,
-                            'weight': entry.get('bm_details', {}).get('weight'),
-                            'height': entry.get('bm_details', {}).get('height'),
-                            'nutritional_status': nutritional_status,
+                            'weight': entry.get('weight'),
+                            'height': entry.get('height'),
+                            'body_measurement': body_measurement,
                             'type_of_feeding': 'N/A'  # Adjust if you have this data
                         }
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
-import { ArrowLeft, Trash2, ShoppingBag, Pill, Upload, Camera, X, CheckCircle } from "lucide-react-native";
+import { ArrowLeft, Trash2, ShoppingBag, Pill, Upload, Camera, X, CheckCircle, AlertTriangle } from "lucide-react-native";
 import { useGlobalCartState, removeFromCart, clearCart, addUploadedFile, removeUploadedFile, UploadedFile } from "./cart-state";
 import { submitMedicineRequest } from "./queries/queries";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
@@ -10,6 +10,7 @@ export default function CartScreen() {
   const { cartItems, uploadedFiles } = useGlobalCartState();
   const [showUploadOptions, setShowUploadOptions] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Loading state
   const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
   const requiresPrescription = cartItems.some(item => item.med_type === "Prescription");
@@ -27,11 +28,9 @@ export default function CartScreen() {
   };
 
   const handleMediaSelected = (mediaItems: MediaItem[] | ((prev: MediaItem[]) => MediaItem[])) => {
-    console.log("Received mediaItems:", mediaItems);
     if (typeof mediaItems === "function") {
       setSelectedMedia((prev) => {
         const newItems = mediaItems(prev);
-        console.log("Functional update result:", newItems);
         if (!Array.isArray(newItems)) {
           console.error("Functional update returned invalid mediaItems:", newItems);
           Alert.alert("Error", "No valid media items selected. Please try again.");
@@ -44,9 +43,7 @@ export default function CartScreen() {
           uri: item.uri,
           size: item.file ? (item.file.length * 3) / 4 : undefined,
         }));
-        console.log("Converted to UploadedFile:", newFiles);
         const validFiles = newFiles.filter(file => checkFileSize(file.size, file.name));
-        console.log("Valid files after size check:", validFiles);
         validFiles.forEach(file => addUploadedFile(file));
         setShowUploadOptions(false);
         return newItems;
@@ -113,6 +110,8 @@ const handleConfirm = async () => {
     return;
   }
 
+  setIsSubmitting(true); // Start loading
+
   try {
     const formData = new FormData();
     const medicineData = cartItems.map(item => ({
@@ -131,11 +130,6 @@ const handleConfirm = async () => {
         type: file.type,
       } as any);
     });
-
-    // Debug FormData
-    for (let [key, value] of formData as any) {
-      console.log(`${key}:`, value);
-    }
 
     const response = await submitMedicineRequest(formData);
     if (response.success) {
@@ -173,6 +167,8 @@ const handleConfirm = async () => {
       data: error.response?.data,
     });
     Alert.alert("Error", error.response?.data?.error || "Failed to submit your request. Please try again.");
+  } finally {
+    setIsSubmitting(false); // Stop loading regardless of success or error
   }
 };
 
@@ -185,10 +181,14 @@ const handleConfirm = async () => {
           </TouchableOpacity>
           <Text className="ml-4 text-xl font-semibold text-gray-800">Your Request Bag</Text>
         </View>
-
+        
         {cartItems.length > 0 ? (
-          <>
-            <ScrollView className="flex-1 bg-white">
+          <View className="flex-1">
+            <ScrollView 
+              className="flex-1 bg-white" 
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            >
               {cartItems.map((item, index) => (
                 <View key={item.minv_id} className="bg-white rounded-lg p-6 mb-3 shadow-sm border border-gray-300">
                   <View className="flex-row items-center mb-3">
@@ -218,79 +218,103 @@ const handleConfirm = async () => {
                   </TouchableOpacity>
                 </View>
               ))}
+
+              {/* Medical Documentation Section */}
+              <View className="bg-white rounded-2xl p-6 shadow-md mt-4">
+                <View className="flex-row items-center justify-between mb-3">
+                  <Text className="text-gray-700 font-semibold">
+                    Medical Documentation {requiresPrescription && <Text className="text-red-500">*</Text>}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setShowUploadOptions(!showUploadOptions)}
+                    className="bg-indigo-600 px-4 py-2 rounded-xl flex-row items-center"
+                  >
+                    <Upload size={16} color="#fff" />
+                    <Text className="text-white font-medium ml-2">Upload Images</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                <Text className="text-gray-500 text-sm mb-4">
+                  Upload prescription, doctor's note, or consultation image (JPG, PNG - Max 15MB)
+                </Text>
+
+                {/* Warning Message */}
+                <View className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4 flex-row items-start">
+                  <AlertTriangle size={20} color="#F59E0B" className="mt-0.5" />
+                  <View className="ml-3 flex-1">
+                    <Text className="text-amber-800 font-semibold text-sm mb-1">Important Notice</Text>
+                    <Text className="text-amber-700 text-sm leading-5">
+Upload only valid prescriptions or any medical records. All documents will be check. False or forged uploads are strictly prohibited.
+                    </Text>
+                  </View>
+                </View>
+
+                {showUploadOptions && (
+                  <View className="mb-4">
+                    <MediaPicker
+                      selectedImages={selectedMedia}
+                      setSelectedImages={handleMediaSelected}
+                      multiple={true}
+                      maxImages={5}
+                    />
+                  </View>
+                )}
+
+                {uploadedFiles.length > 0 && (
+                  <View className="space-y-2">
+                    {uploadedFiles.map((file) => (
+                      <View
+                        key={file.id}
+                        className="bg-green-50 border border-green-200 rounded-xl p-4 flex-row items-center justify-between"
+                      >
+                        <View className="flex-row items-center flex-1">
+                          {getFileIcon(file.type)}
+                          <View className="ml-3 flex-1">
+                            <Text className="text-gray-800 font-medium" numberOfLines={1}>
+                              {file.name}
+                            </Text>
+                            <Text className="text-gray-500 text-sm">{formatFileSize(file.size)}</Text>
+                          </View>
+                          <CheckCircle size={20} color="#10B981" />
+                        </View>
+                        <TouchableOpacity onPress={() => removeFile(file.id)} className="ml-3 p-1">
+                          <X size={18} color="#EF4444" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {requiresPrescription && uploadedFiles.length === 0 && (
+                  <Text className="text-red-500 text-sm text-center mt-2">
+                    * Please upload prescription image to proceed
+                  </Text>
+                )}
+              </View>
             </ScrollView>
 
-            <View className="bg-white rounded-2xl p-6 shadow-md mt-4">
-              <View className="flex-row items-center justify-between mb-3">
-                <Text className="text-gray-700 font-semibold">
-                  Medical Documentation {requiresPrescription && <Text className="text-red-500">*</Text>}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => setShowUploadOptions(!showUploadOptions)}
-                  className="bg-indigo-600 px-4 py-2 rounded-xl flex-row items-center"
-                >
-                  <Upload size={16} color="#fff" />
-                  <Text className="text-white font-medium ml-2">Upload Images</Text>
-                </TouchableOpacity>
-              </View>
-              <Text className="text-gray-500 text-sm mb-4">
-                Upload prescription, doctor's note, or consultation image (JPG, PNG - Max 15MB)
-              </Text>
-              {showUploadOptions && (
-                <MediaPicker
-                  selectedImages={selectedMedia}
-                  setSelectedImages={handleMediaSelected}
-                  multiple={true}
-                  maxImages={5}
-                />
-              )}
-              {uploadedFiles.length > 0 && (
-                <View className="space-y-2">
-                  {uploadedFiles.map((file) => (
-                    <View
-                      key={file.id}
-                      className="bg-green-50 border border-green-200 rounded-xl p-4 flex-row items-center justify-between"
-                    >
-                      <View className="flex-row items-center flex-1">
-                        {getFileIcon(file.type)}
-                        <View className="ml-3 flex-1">
-                          <Text className="text-gray-800 font-medium" numberOfLines={1}>
-                            {file.name}
-                          </Text>
-                          <Text className="text-gray-500 text-sm">{formatFileSize(file.size)}</Text>
-                        </View>
-                        <CheckCircle size={20} color="#10B981" />
-                      </View>
-                      <TouchableOpacity onPress={() => removeFile(file.id)} className="ml-3 p-1">
-                        <X size={18} color="#EF4444" />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </View>
-              )}
-              {requiresPrescription && uploadedFiles.length === 0 && (
-                <Text className="text-red-500 text-sm text-center mt-2">
-                  * Please upload prescription image to proceed
-                </Text>
-              )}
-            </View>
-
-            <View className="mt-4">
+            {/* Fixed Action Buttons */}
+            <View className="bg-gray-50 pt-4">
               <TouchableOpacity
-                className={`py-3 rounded-lg items-center shadow ${requiresPrescription && uploadedFiles.length === 0 ? "bg-gray-400" : "bg-blue-600"}`}
+                className={`py-3 rounded-lg items-center justify-center shadow ${requiresPrescription && uploadedFiles.length === 0 ? "bg-gray-400" : "bg-blue-600"} ${isSubmitting ? "opacity-70" : ""}`}
                 onPress={handleConfirm}
-                disabled={requiresPrescription && uploadedFiles.length === 0}
+                disabled={requiresPrescription && uploadedFiles.length === 0 || isSubmitting}
               >
-                <Text className="text-white font-bold text-base">Confirm Request</Text>
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text className="text-white font-bold text-base">Confirm Request</Text>
+                )}
               </TouchableOpacity>
               <TouchableOpacity
                 className="border border-blue-600 py-3 rounded-lg items-center mt-3"
                 onPress={() => router.back()}
+                disabled={isSubmitting}
               >
                 <Text className="text-blue-600 font-medium text-base">Continue Browsing</Text>
               </TouchableOpacity>
             </View>
-          </>
+          </View>
         ) : (
           <View className="flex-1 justify-center items-center">
             <ShoppingBag size={64} color="#9CA3AF" className="mb-4 opacity-50" />

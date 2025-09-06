@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
-import { MonthInfoCard } from "../../../month-folder-comonent";
+import { MonthInfoCard } from "../../../month-folder-component";
 import { useFirstAidExpiredOutOfStockSummary } from "./queries/fetch";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";

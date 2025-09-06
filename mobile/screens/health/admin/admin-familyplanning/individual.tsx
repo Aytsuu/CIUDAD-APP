@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigation, useRoute } from '@react-navigation/native';
 import { getFPCompleteRecord, getFPRecordsForPatient } from "./GetRequest";
 import { 
   ArrowLeft, 
@@ -14,12 +13,15 @@ import {
   AlertCircle,
   Clock,
   Stethoscope,
-  ChevronRight
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react-native";
-import { router } from "expo-router";
+import { router, useRouter } from "expo-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useRoute } from "@react-navigation/native";
+import PageLayout from "@/screens/_PageLayout";
 
 // Define FPRecord type
 interface FPRecord {
@@ -46,7 +48,6 @@ const InfoRow = ({ icon: Icon, label, value, iconColor = "#64748b" }) => (
 );
 
 export default function IndividualFpRecordsScreen() {
-  const navigation = useNavigation();
   const route = useRoute();
   const { patientId } = route.params as { patientId: string };
   const [selectedRecords, setSelectedRecords] = useState<FPRecord[]>([]);
@@ -210,23 +211,19 @@ export default function IndividualFpRecordsScreen() {
   };
 
   const renderHeader = () => (
+    
     <View>
-      {/* Header */}
-      <View className="bg-blue-600 px-4 pt-16 pb-6">
-        <View className="flex-row items-center">
-          <TouchableOpacity 
-            onPress={() => router.back()} 
-            className="mr-4 w-10 h-10 bg-white/20 rounded-xl items-center justify-center"
-          >
-            <ArrowLeft size={20} color="white" />
-          </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-2xl font-bold text-white">Individual Records</Text>
-            <Text className="text-blue-100 mt-1">Patient Family Planning History</Text>
-          </View>
-        </View>
-      </View>
-
+    <PageLayout
+        leftAction={<TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-slate-700" />
+        </TouchableOpacity>}
+        headerTitle={<Text className="text-slate-900 text-[13px]">Family Planning Records</Text>}
+        rightAction={<View className="w-10 h-10" />} children={undefined}    >
+ 
+</PageLayout>
       {/* Summary Card */}
       <View className="px-4 -mt-2 mb-4">
         <Card className="bg-white border border-slate-200">
@@ -235,7 +232,7 @@ export default function IndividualFpRecordsScreen() {
               <View>
                 <Text className="text-lg font-bold text-slate-900">Patient Records</Text>
                 <Text className="text-sm text-slate-600">
-                  {fpPatientRecords.length} record{fpPatientRecords.length !== 1 ? 's' : ''} found
+                  {(fpPatientRecords as FPRecord[]).length} record{(fpPatientRecords as FPRecord[]).length !== 1 ? 's' : ''} found
                 </Text>
               </View>
               <View className="w-12 h-12 bg-blue-50 rounded-xl items-center justify-center">
@@ -313,7 +310,7 @@ export default function IndividualFpRecordsScreen() {
       />
 
       {/* Compare Button */}
-      {fpPatientRecords.length > 0 && (
+      {(fpPatientRecords as FPRecord[]).length > 0 && (
         <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4">
           <Button
             onPress={handleCompareRecords}

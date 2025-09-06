@@ -1,11 +1,7 @@
-# from django.db import models
-
-# # Create your models here.
-# from django.db import models
-
 from django.db import models
 from django.conf import settings
 from datetime import date
+from simple_history.models import HistoricalRecords
 
 class Sitio(models.Model):
     sitio_id = models.CharField(max_length=100, primary_key=True)
@@ -28,6 +24,9 @@ class Address(models.Model):
 
     class Meta:
         db_table = 'address'
+        indexes = [
+            models.Index(fields=['sitio']),
+        ]
 
     def __str__(self):
         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
@@ -36,14 +35,22 @@ class Personal(models.Model):
     per_id = models.BigAutoField(primary_key=True)
     per_lname = models.CharField(max_length=100)
     per_fname = models.CharField(max_length=100)
-    per_mname = models.CharField(max_length=100, null=True)
-    per_suffix = models.CharField(max_length=100, null=True)
+    per_mname = models.CharField(max_length=100, null=True, blank=True)
+    per_suffix = models.CharField(max_length=100, null=True, blank=True)
     per_dob = models.DateField()
     per_sex = models.CharField(max_length=100)
     per_status = models.CharField(max_length=100)
-    per_edAttainment = models.CharField(max_length=100, null=True)
+    per_edAttainment = models.CharField(max_length=100, null=True, blank=True)
     per_religion = models.CharField(max_length=100)
-    per_contact = models.CharField(max_length=100)  
+    per_contact = models.CharField(max_length=20)  
+    per_disability = models.CharField(max_length=100, null=True, blank=True)
+
+    history = HistoricalRecords(
+        table_name='personal_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True,
+    )
 
     class Meta:
         db_table = 'personal'
@@ -64,6 +71,15 @@ class PersonalAddress(models.Model):
 
     class Meta:
         db_table = 'personal_address'
+
+class PersonalAddressHistory(models.Model):
+    pah_id = models.BigAutoField(primary_key=True)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    add = models.ForeignKey(Address, on_delete=models.CASCADE)
+    history_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'personal_address_history'
 
 class ResidentProfile(models.Model):
     rp_id = models.CharField(max_length=50, primary_key=True)
@@ -140,10 +156,11 @@ class RequestRegistration(models.Model):
         return f"Request #{self.req_id} by {self.per} on {self.req_date}"
 
 class HealthRelatedDetails(models.Model):
-    hrd_id = models.BigAutoField(primary_key=True)
-    hrd_bloodType = models.CharField(max_length=5, null=True, blank=True)
-    hrd_philhealth_id = models.CharField(max_length=50, null=True, blank=True)
-    hrd_covid_vax_status = models.CharField(max_length=50, null=True, blank=True)
+    per_add_id = models.BigAutoField(primary_key=True)
+    per_add_bloodType = models.CharField(max_length=5, null=True, blank=True)
+    per_add_philhealth_id = models.CharField(max_length=50, null=True, blank=True)
+    per_add_covid_vax_status = models.CharField(max_length=50, null=True, blank=True)
+    per_add_rel_to_hh_head = models.CharField(max_length=100, null=True, blank=True)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, null=True, blank=True)
     
     class Meta:

@@ -11,7 +11,7 @@ export default function SchedulerMainScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      <SchedulerMain onGoBack={handleGoBack} />
+      <SchedulerMain/>
     </View>
   );
 }

@@ -385,7 +385,6 @@ export default function ChildHRPage2({
                 control={form.control}
                 name="tt_status"
                 label="TT Status"
-                readOnly={isaddnewchildhealthrecordMode}
                 options={[
                   { id: "none", name: "None" },
                   { id: "TT1", name: "TT1" },

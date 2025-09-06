@@ -4,15 +4,17 @@ import React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button/button"
-import { Printer, Search, Loader2 } from "lucide-react"
+import { Printer, Search, Loader2, Filter, X } from "lucide-react"
 import { exportToCSV, exportToExcel, exportToPDF } from "../firstaid-report/export-report"
 import { ExportDropdown } from "../firstaid-report/export-dropdown"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useLoading } from "@/context/LoadingContext"
 import { toast } from "sonner"
 import { useYearlyOPTRecords } from "./queries/fetch"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
+import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value)
@@ -73,19 +75,30 @@ export default function QuarterlyOPTDetails() {
   const [nutritionalStatus, setNutritionalStatus] = useState("")
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([])
+  const [showSitioFilter, setShowSitioFilter] = useState(false)
+
+  // Fetch sitio list
+  const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
+  const sitios = sitioData || [];
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500)
   const debouncedNutritionalStatus = useDebounce(nutritionalStatus, 500)
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [debouncedSearchQuery, debouncedNutritionalStatus])
+  }, [debouncedSearchQuery, debouncedNutritionalStatus, selectedSitios])
+
+  // Combine selected sitios with search query
+  const combinedSearchQuery = selectedSitios.length > 0 
+    ? selectedSitios.join(',')
+    : debouncedSearchQuery;
 
   const {
     data: apiResponse,
     isLoading,
     error,
-  } = useYearlyOPTRecords(year, currentPage, pageSize, debouncedSearchQuery, debouncedNutritionalStatus)
+  } = useYearlyOPTRecords(year, currentPage, pageSize, combinedSearchQuery, debouncedNutritionalStatus)
 
   const records = apiResponse?.results?.children_data || []
   const totalEntries = apiResponse?.count || 0
@@ -167,6 +180,33 @@ export default function QuarterlyOPTDetails() {
     return date.toLocaleDateString("en-CA")
   }
 
+  const handleSitioSelection = (sitio_name: string, checked: boolean) => {
+    if (checked) {
+      setSelectedSitios([...selectedSitios, sitio_name]);
+      setSearchQuery(""); // Clear search query when selecting sitios
+    } else {
+      setSelectedSitios(selectedSitios.filter(sitio => sitio !== sitio_name));
+    }
+  };
+
+  const handleSelectAllSitios = (checked: boolean) => {
+    if (checked && sitios.length > 0) {
+      setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
+      setSearchQuery(""); // Clear search query when selecting all
+    } else {
+      setSelectedSitios([]);
+    }
+  };
+
+  const handleClearFilter = () => {
+    setSelectedSitios([]);
+    setSearchQuery("");
+  };
+
+  const filteredSitios = sitios.filter((sitio: any) =>
+    sitio.sitio_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <LayoutWithBack
       title={`Quarterly OPT Tracking`}
@@ -212,6 +252,62 @@ export default function QuarterlyOPTDetails() {
               onChange={(e) => setNutritionalStatus(e.target.value)}
             />
           </div>
+
+          {/* Sitio Filter Dropdown */}
+          <div className="relative">
+            <Button
+              onClick={() => setShowSitioFilter(!showSitioFilter)}
+              className="gap-2"
+              variant="outline"
+            >
+              <Filter className="h-4 w-4" />
+              Filter Sitios
+              {selectedSitios.length > 0 && ` (${selectedSitios.length})`}
+            </Button>
+            
+            {showSitioFilter && (
+              <div className="absolute top-full left-0 mt-2 w-64 max-h-80 overflow-y-auto bg-white border rounded-md shadow-lg z-10 p-3">
+                {isLoadingSitios ? (
+                  <div className="flex items-center justify-center py-2">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Loading sitios...
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center space-x-2 mb-2 p-2 border-b">
+                      <Checkbox
+                        id="select-all-sitios"
+                        checked={selectedSitios.length === sitios.length && sitios.length > 0}
+                        onCheckedChange={(checked) => handleSelectAllSitios(checked as boolean)}
+                      />
+                      <label
+                        htmlFor="select-all-sitios"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Select All
+                      </label>
+                    </div>
+                    
+                    {filteredSitios.map((sitio: any) => (
+                      <div key={sitio.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50">
+                        <Checkbox
+                          id={`sitio-${sitio.id}`}
+                          checked={selectedSitios.includes(sitio.sitio_name)}
+                          onCheckedChange={(checked) => handleSitioSelection(sitio.sitio_name, checked as boolean)}
+                        />
+                        <label
+                          htmlFor={`sitio-${sitio.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {sitio.sitio_name}
+                        </label>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-2 items-center">
@@ -227,6 +323,33 @@ export default function QuarterlyOPTDetails() {
           </Button>
         </div>
       </div>
+
+      {/* Display selected sitios as chips */}
+      {selectedSitios.length > 0 && (
+        <div className="bg-gray-50 p-3 flex flex-wrap gap-2">
+          <span className="text-sm font-medium">Filtered by sitios:</span>
+          {selectedSitios.map(sitio => (
+            <span 
+              key={sitio} 
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+            >
+              {sitio}
+              <button
+                onClick={() => handleSitioSelection(sitio, false)}
+                className="ml-1.5 rounded-full flex-shrink-0"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          <button
+            onClick={handleClearFilter}
+            className="text-xs text-blue-600 hover:text-blue-800 ml-2"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
 
       {/* Pagination Controls */}
       <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50">
@@ -291,8 +414,13 @@ export default function QuarterlyOPTDetails() {
 
             <div className="text-start mb-4 flex justify-between items-center text-xs">
               <div className="flex">
-                <span className="mr-1 font-semibold">Search:</span>
-                <span className="underline">{searchQuery || "All"}</span>
+                <span className="mr-1 font-semibold">Barangay/Sitio:</span>
+                <span className="underline">
+                  {selectedSitios.length > 0 
+                    ? selectedSitios.join(", ") 
+                    : searchQuery || "All Sitios"
+                  }
+                </span>
               </div>
               <div>
                 <span className="font-semibold">Calendar Year: </span>
@@ -312,7 +440,7 @@ export default function QuarterlyOPTDetails() {
                 <div className="text-center">
                   <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-gray-600">
-                    {searchQuery || nutritionalStatus
+                    {searchQuery || nutritionalStatus || selectedSitios.length > 0
                       ? "No records found matching your filters"
                       : "No records found for this period"}
                   </p>

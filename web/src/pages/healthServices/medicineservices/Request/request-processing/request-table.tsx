@@ -5,70 +5,14 @@ import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search, FileInput, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery } from "@tanstack/react-query";
-// import { calculateAge } from "@/helpers/ageCalculator";
-import { api2 } from "@/api/api";
 import { useState } from "react";
-import { toast } from "sonner";
-import { MedicineRequest } from "./types";
+import { MedicineRequest } from "../types";
 import { medicineRequestColumns } from "./columns";
+import { useProcessingMedrequest } from "../queries.tsx/fetch";
 
-const getMedicineRequests = async (): Promise<any[]> => {
-  try {
-    const [requestsResponse, itemsResponse] = await Promise.all([
-      api2.get("/medicine/medicine-request/"),
-      api2.get("/medicine/medicine-request-items/"),
-    ]);
 
-    const requests = requestsResponse.data || [];
-    const itemsData = itemsResponse.data || [];
-
-    const quantityMap = itemsData.reduce(
-      (acc: Record<number, number>, item: any) => {
-        if (item?.medreq_id) {
-          acc[item.medreq_id] =
-            (acc[item.medreq_id] || 0) + (item.medreqitem_qty || 0);
-        }
-        return acc;
-      },
-      {}
-    );
-
-    return requests.map((request: any) => ({
-      ...request,
-      total_quantity: request.medreq_id
-        ? quantityMap[request.medreq_id] || 0
-        : 0,
-    }));
-  } catch (error) {
-    console.error("Error fetching medicine requests:", error);
-    toast.error("Failed to load medicine requests");
-    return [];
-  }
-};
-
-// const getPatientDisplayInfo = (request: MedicineRequest) => {
-//   const personalInfo = request.personal_info || {};
-//   const fullName =
-//     [personalInfo.per_lname, personalInfo.per_fname, personalInfo.per_mname]
-//       .filter(Boolean)
-//       .join(" ")
-//       .trim() || "Unknown Patient";
-
-//   const dob = personalInfo.per_dob;
-//   const age = dob ? calculateAge(dob) : "N/A";
-//   const sex = personalInfo.per_sex || "N/A";
-//   const contact = personalInfo.per_contact || "N/A";
-
-//   return { fullName, age, sex, contact };
-// };
 
 const filterByDateRange = (data: MedicineRequest[], range: string) => {
   const now = new Date();
@@ -109,17 +53,7 @@ export default function MedicineRequests() {
   const [dateFilter, setDateFilter] = useState<string>("all");
   const navigate = useNavigate();
 
-  const {
-    data: medicineRequests = [],
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<MedicineRequest[]>({
-    queryKey: ["medicineRequests"],
-    queryFn: getMedicineRequests,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  const { data: medicineRequests = [], isLoading, error, refetch } = useProcessingMedrequest();
 
   const filteredData = React.useMemo(() => {
     let result = medicineRequests;
@@ -131,16 +65,8 @@ export default function MedicineRequests() {
 
     // Apply search filter
     if (searchQuery) {
-      result = result.filter((request) => {
-        const searchText = [
-          request.medreq_id?.toString() || "",
-          request.personal_info?.per_lname || "",
-          request.personal_info?.per_fname || "",
-          request.personal_info?.per_contact || "",
-        ]
-          .join(" ")
-          .toLowerCase()
-          .trim();
+      result = result.filter((request: any) => {
+        const searchText = [request.medreq_id?.toString() || "", request.personal_info?.per_lname || "", request.personal_info?.per_fname || "", request.personal_info?.per_contact || ""].join(" ").toLowerCase().trim();
         return searchText.includes(searchQuery.toLowerCase());
       });
     }
@@ -149,18 +75,13 @@ export default function MedicineRequests() {
   }, [searchQuery, medicineRequests, statusFilter, dateFilter]);
 
   const totalPages = Math.max(Math.ceil(filteredData.length / pageSize), 1);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const columns = medicineRequestColumns;
   if (error) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center p-8">
-        <div className="text-red-500 text-lg mb-4">
-          Failed to load medicine requests
-        </div>
+        <div className="text-red-500 text-lg mb-4">Failed to load medicine requests</div>
         <div className="flex gap-4">
           <Button onClick={() => refetch()}>Retry</Button>
           <Button variant="outline" onClick={() => navigate("/")}>
@@ -172,26 +93,11 @@ export default function MedicineRequests() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <div className="flex-col items-center">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Medicine Requests
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view medicine requests
-          </p>
-        </div>
-      </div>
-      <hr className="border-gray-300 mb-4" />
-
+    <div>
       <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
         <div className="w-full flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-              size={17}
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input
               placeholder="Search by ID, name, or contact..."
               className="pl-10 bg-white w-full"
@@ -211,7 +117,7 @@ export default function MedicineRequests() {
               { id: "all", name: "All Dates" },
               { id: "today", name: "Today" },
               { id: "this-week", name: "This Week" },
-              { id: "this-month", name: "This Month" },
+              { id: "this-month", name: "This Month" }
             ]}
             value={dateFilter}
             onChange={(value) => {
@@ -248,12 +154,7 @@ export default function MedicineRequests() {
           <div className="flex justify-end sm:justify-start">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  aria-label="Export data"
-                  className="flex items-center gap-2"
-                  disabled={filteredData.length === 0}
-                >
+                <Button variant="outline" aria-label="Export data" className="flex items-center gap-2" disabled={filteredData.length === 0}>
                   <FileInput size={16} />
                   Export
                 </Button>
@@ -281,18 +182,11 @@ export default function MedicineRequests() {
         {filteredData.length > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
+              Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
             </p>
 
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           </div>
         )}

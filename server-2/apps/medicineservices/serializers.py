@@ -43,98 +43,198 @@ class MedicineRecordSerializerMinimal(serializers.ModelSerializer):
 class MedicineRequestSerializer(serializers.ModelSerializer):
     address = serializers.SerializerMethodField()
     personal_info = serializers.SerializerMethodField()
-    total_quantity = serializers.SerializerMethodField()  # Add this field
-
-    def get_total_quantity(self, obj):
-        """Calculate total quantity of all items in this request"""
-        return obj.items.aggregate(
-            total=models.Sum('medreqitem_qty')
-        )['total'] or 0
-        
-    def get_rp(self, obj):
-        # Try to get ResidentProfile through pat_id if it exists
-        try:
-            if obj.pat_id and hasattr(obj.pat_id, 'rp_id'):
-                return obj.pat_id.rp_id
-        except Exception as e:
-            print("⚠️ pat_id not available:", e)
-
-        # Fallback if rp_id is directly available
-        return getattr(obj, 'rp_id', None)
-
-    def get_personal_info(self, obj):
-        # Handle resident patient
-        if obj.pat_id and obj.pat_id.pat_type == 'Resident' and obj.pat_id.rp_id and hasattr(obj.pat_id.rp_id, 'per'):
-            personal = obj.pat_id.rp_id.per
-            return PersonalSerializer(personal, context=self.context).data
-        
-        # Handle transient patient
-        if obj.pat_id and obj.pat_id.pat_type == 'Transient' and obj.pat_id.trans_id:
-            trans = obj.pat_id.trans_id
-            return {
-                'per_fname': trans.tran_fname,
-                'per_lname': trans.tran_lname,
-                'per_mname': trans.tran_mname,
-                'per_suffix': trans.tran_suffix,
-                'per_dob': trans.tran_dob,
-                'per_sex': trans.tran_sex,
-                'per_status': trans.tran_status,
-                'per_edAttainment': trans.tran_ed_attainment,
-                'per_religion': trans.tran_religion,
-                'per_contact': trans.tran_contact,
-            }
-        return None
-
-    def get_address(self, obj):
-        rp = self.get_rp(obj)
-        if not rp or not hasattr(rp, 'per'):
-            return None
-
-        # Check PersonalAddress
-        personal_address = PersonalAddress.objects.select_related('add', 'add__sitio').filter(per=rp.per).first()
-        if personal_address and personal_address.add:
-            address = personal_address.add
-            sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-            return {
-                'add_street': address.add_street,
-                'add_barangay': address.add_barangay,
-                'add_city': address.add_city,
-                'add_province': address.add_province,
-                'sitio': sitio,
-                'full_address': f"{sitio}, {address.add_barangay}, {address.add_city}, {address.add_province}, {address.add_street}"
-            }
-
-        # Fallback to Household address
-        household = Household.objects.select_related('add', 'add__sitio').filter(rp=rp).first()
-        if household and household.add:
-            address = household.add
-            sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-            return {
-                'add_street': address.add_street,
-                'add_barangay': address.add_barangay,
-                'add_city': address.add_city,
-                'add_province': address.add_province,
-                'sitio': sitio,
-                'full_address': f"{sitio}, {address.add_barangay}, {address.add_city}, {address.add_province}, {address.add_street}"
-            }
-
-        return None
-    
-    
+    pat_type = serializers.SerializerMethodField()
+    pat_id_value = serializers.SerializerMethodField()
+    total_quantity = serializers.SerializerMethodField()
 
     class Meta:
         model = MedicineRequest
         fields = '__all__'
 
+    def get_total_quantity(self, obj):
+        """Calculate total quantity of all items in this request"""
+        try:
+            return obj.items.aggregate(total=models.Sum('medreqitem_qty'))['total'] or 0
+        except Exception as e:
+            print(f"Error calculating total quantity: {str(e)}")
+            return 0
 
-class MedicineRequestItemSerializer(serializers.ModelSerializer):
-    minv_details = MedicineInventorySerializer(source='minv_id', read_only=True)
-    medreq_details = MedicineRequestSerializer(source='medreq_id', read_only=True)
-    
-    class Meta:
-        model = MedicineRequestItem
-        fields = '__all__'
-    
+    def get_pat_type(self, obj):
+        """Get patient type"""
+        try:
+            if obj.pat_id:
+                return obj.pat_id.pat_type
+            elif obj.rp_id:
+                return 'Resident'
+        except Exception as e:
+            print(f"Error getting patient type: {str(e)}")
+        return None
+
+    def get_pat_id_value(self, obj):
+        """Get patient ID value"""
+        try:
+            if obj.pat_id:
+                return obj.pat_id.pat_id
+            elif obj.rp_id:
+                return f"RES_{obj.rp_id.rp_id}"
+        except Exception as e:
+            print(f"Error getting patient ID: {str(e)}")
+        return None
+
+    def get_personal_info(self, obj):
+        """Get personal information with proper error handling"""
+        try:
+            # Handle resident through pat_id
+            if obj.pat_id and obj.pat_id.pat_type == 'Resident' and obj.pat_id.rp_id:
+                personal = obj.pat_id.rp_id.per
+                return {
+                    'per_fname': personal.per_fname,
+                    'per_lname': personal.per_lname,
+                    'per_mname': personal.per_mname,
+                    'per_suffix': personal.per_suffix,
+                    'per_dob': personal.per_dob,
+                    'per_sex': personal.per_sex,
+                    'per_status': personal.per_status,
+                    'per_edAttainment': personal.per_edAttainment,
+                    'per_religion': personal.per_religion,
+                    'per_contact': personal.per_contact,
+                    'per_occupation': personal.per_occupation,
+                }
+            
+            # Handle resident through direct rp_id
+            elif obj.rp_id and hasattr(obj.rp_id, 'per'):
+                personal = obj.rp_id.per
+                return {
+                    'per_fname': personal.per_fname,
+                    'per_lname': personal.per_lname,
+                    'per_mname': personal.per_mname,
+                    'per_suffix': personal.per_suffix,
+                    'per_dob': personal.per_dob,
+                    'per_sex': personal.per_sex,
+                    'per_status': personal.per_status,
+                    'per_edAttainment': personal.per_edAttainment,
+                    'per_religion': personal.per_religion,
+                    'per_contact': personal.per_contact,
+                    'per_occupation': personal.per_occupation,
+                }
+            
+            # Handle transient patient
+            elif obj.pat_id and obj.pat_id.pat_type == 'Transient' and obj.pat_id.trans_id:
+                trans = obj.pat_id.trans_id
+                return {
+                    'per_fname': trans.tran_fname,
+                    'per_lname': trans.tran_lname,
+                    'per_mname': trans.tran_mname,
+                    'per_suffix': trans.tran_suffix,
+                    'per_dob': trans.tran_dob,
+                    'per_sex': trans.tran_sex,
+                    'per_status': trans.tran_status,
+                    'per_edAttainment': trans.tran_ed_attainment,
+                    'per_religion': trans.tran_religion,
+                    'per_contact': trans.tran_contact,
+                }
+                
+        except Exception as e:
+            print(f"Error getting personal info: {str(e)}")
+        return None
+
+    def get_address(self, obj):
+        """Get address with proper formatting and error handling"""
+        try:
+            # Handle resident through pat_id
+            if obj.pat_id and obj.pat_id.pat_type == 'Resident' and obj.pat_id.rp_id:
+                return self._get_resident_address(obj.pat_id.rp_id)
+            
+            # Handle resident through direct rp_id
+            elif obj.rp_id:
+                return self._get_resident_address(obj.rp_id)
+            
+            # Handle transient patient
+            elif obj.pat_id and obj.pat_id.pat_type == 'Transient' and obj.pat_id.trans_id:
+                return self._get_transient_address(obj.pat_id.trans_id)
+                
+        except Exception as e:
+            print(f"Error getting address: {str(e)}")
+        return None
+
+    def _get_resident_address(self, rp):
+        """Get address for resident with proper formatting"""
+        try:
+            # Check PersonalAddress first
+            personal_address = PersonalAddress.objects.select_related('add', 'add__sitio').filter(per=rp.per).first()
+            if personal_address and personal_address.add:
+                address = personal_address.add
+                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                address_parts = [
+                    f"Sitio {sitio}" if sitio else None,
+                    address.add_barangay,
+                    address.add_city,
+                    address.add_province,
+                    address.add_street,
+                ]
+                full_address = ", ".join(filter(None, address_parts))
+                return {
+                    'add_street': address.add_street,
+                    'add_barangay': address.add_barangay,
+                    'add_city': address.add_city,
+                    'add_province': address.add_province,
+                    'add_sitio': sitio,
+                    'full_address': full_address
+                }
+
+            # Fallback to Household address
+            household = Household.objects.select_related('add', 'add__sitio').filter(rp=rp).first()
+            if household and household.add:
+                address = household.add
+                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                address_parts = [
+                    f"Sitio {sitio}" if sitio else None,
+                    address.add_barangay,
+                    address.add_city,
+                    address.add_province,
+                    address.add_street,
+                ]
+                full_address = ", ".join(filter(None, address_parts))
+                return {
+                    'add_street': address.add_street,
+                    'add_barangay': address.add_barangay,
+                    'add_city': address.add_city,
+                    'add_province': address.add_province,
+                    'add_sitio': sitio,
+                    'full_address': full_address
+                }
+                
+        except Exception as e:
+            print(f"Error getting resident address: {str(e)}")
+        return None
+
+    def _get_transient_address(self, trans):
+        """Get address for transient with proper formatting"""
+        try:
+            if trans.tradd_id:
+                trans_addr = trans.tradd_id
+                sitio = trans_addr.tradd_sitio
+                address_parts = [
+                    f"Sitio {sitio}" if sitio else None,
+                    trans_addr.tradd_barangay,
+                    trans_addr.tradd_city,
+                    trans_addr.tradd_province,
+                    trans_addr.tradd_street,
+                ]
+                full_address = ", ".join(filter(None, address_parts))
+                return {
+                    'add_street': trans_addr.tradd_street,
+                    'add_barangay': trans_addr.tradd_barangay,
+                    'add_city': trans_addr.tradd_city,
+                    'add_province': trans_addr.tradd_province,
+                    'add_sitio': sitio,
+                    'full_address': full_address
+                }
+        except Exception as e:
+            print(f"Error getting transient address: {str(e)}")
+        return None
+
+
     
 class FindingPlanTreatmentSerializer(serializers.ModelSerializer):
     medreq_details = MedicineRequestSerializer(source='medreq', read_only=True)
@@ -158,11 +258,21 @@ class MedicineRecordSerializer(serializers.ModelSerializer):
         fields = '__all__'
       
       
+class MedicineRequestItemSerializer(serializers.ModelSerializer):
+    minv_details = MedicineInventorySerializer(source='minv_id', read_only=True)
+    medreq_details = MedicineRequestSerializer(source='medreq_id', read_only=True)
+    med_details=MedicineListSerializers(source='med', read_only=True)
+    medicine_files = MedicineFileSerializer(source='medreq_id.medicine_files', many=True, read_only=True)
+    
+    class Meta:
+        model = MedicineRequestItem
+        fields = '__all__'
+    
       
 class Medicine_FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medicine_File
-        fields = '_all_'
+        fields = '__all__'
         extra_kwargs = {
             'medrec': {'required': False, 'default': None},
             'medreq': {'required': False, 'default': None},

@@ -8,7 +8,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
 import { useCommodityExpiredOutOfStockSummary } from "./queries/fetch";
-import { MonthInfoCard } from "../../../month-folder-comonent";
+import { MonthInfoCard } from "../../../month-folder-component";
 
 export default function CommodityExpiredOutOfStockSummary() {
   const { showLoading, hideLoading } = useLoading();

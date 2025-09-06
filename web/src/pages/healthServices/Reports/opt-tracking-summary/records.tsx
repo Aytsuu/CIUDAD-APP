@@ -7,42 +7,29 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import TableLayout from "@/components/ui/table/table-layout";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Icons
-import { ChevronLeft, Printer, Loader2, X } from "lucide-react";
+import { ChevronLeft, Printer, Loader2, X, Filter, Search } from "lucide-react";
 
 // Hooks
 import { useLoading } from "@/context/LoadingContext";
-import { useOPTMonthlyReport } from "./queries/fetch";
+import { useOPTMonthlyReport, } from "./queries/fetch";
+import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 
-interface OPTMonthlyDetailsResponse {
-  month: string;
-  sitio_filter?: string;
-  report: {
-    WFA: {
-      age_groups: Record<
-        string,
-        Record<string, { Male: number; Female: number }>
-      >;
-      totals: { Male: number; Female: number };
+
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
     };
-    HFA: {
-      age_groups: Record<
-        string,
-        Record<string, { Male: number; Female: number }>
-      >;
-      totals: { Male: number; Female: number };
-    };
-    WFH: {
-      age_groups: Record<
-        string,
-        Record<string, { Male: number; Female: number }>
-      >;
-      totals: { Male: number; Female: number };
-    };
-    overall_totals: { Male: number; Female: number };
-  };
+  }, [value, delay]);
+  return debouncedValue;
 }
 
 export default function OPTMonthlyDetails() {
@@ -50,7 +37,18 @@ export default function OPTMonthlyDetails() {
   const { month, monthName } = location.state;
   const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
-  const [sitioFilter, setSitioFilter] = useState("");
+  const [sitioSearch, setSitioSearch] = useState("");
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
+  const [showSitioFilter, setShowSitioFilter] = useState(false);
+
+  // Fetch sitio list
+  const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
+  const sitios = sitioData || [];
+
+  const debouncedSitioSearch = useDebounce(sitioSearch, 500);
+
+  // Combine selected sitios for API call
+  const sitioFilter = selectedSitios.length > 0 ? selectedSitios.join(',') : '';
 
   const {
     data: reportData,
@@ -77,17 +75,6 @@ export default function OPTMonthlyDetails() {
     }
   }, [error]);
 
-  // Debounce sitio filter changes
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (sitioFilter !== "") {
-        refetch();
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [sitioFilter, refetch]);
-
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");
     if (!printContent) return;
@@ -100,8 +87,38 @@ export default function OPTMonthlyDetails() {
   };
 
   const handleClearFilter = () => {
-    setSitioFilter("");
+    setSelectedSitios([]);
+    setSitioSearch("");
   };
+
+  const handleSitioSelection = (sitio_name: string, checked: boolean) => {
+    if (checked) {
+      setSelectedSitios([...selectedSitios, sitio_name]);
+      setSitioSearch(""); // Clear manual search when selecting sitios
+    } else {
+      setSelectedSitios(selectedSitios.filter(sitio => sitio !== sitio_name));
+    }
+  };
+
+  const handleSelectAllSitios = (checked: boolean) => {
+    if (checked && sitios.length > 0) {
+      setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
+      setSitioSearch(""); // Clear manual search when selecting all
+    } else {
+      setSelectedSitios([]);
+    }
+  };
+
+  const handleManualSitioSearch = (value: string) => {
+    setSitioSearch(value);
+    if (value) {
+      setSelectedSitios([]); // Clear selected sitios when manually searching
+    }
+  };
+
+  const filteredSitios = sitios.filter((sitio: any) =>
+    sitio.sitio_name.toLowerCase().includes(debouncedSitioSearch.toLowerCase())
+  );
 
   const renderValue = (value: number) => {
     return value === 0 ? '-' : value;
@@ -552,31 +569,106 @@ export default function OPTMonthlyDetails() {
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
-      <div className="flex flex-col p-4 border bg-white py-10 px-4">
+      <div className="flex flex-col p-4 border bg-white py-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-2 w-full">
-            <Input
-              placeholder="Filter by sitio..."
-              value={sitioFilter}
-              onChange={(e) => setSitioFilter(e.target.value)}
-              className="bg-white w-full"
-            />
-            {sitioFilter && (
-              <Button variant="ghost" onClick={handleClearFilter} size="sm">
-                <X className="h-4 w-4" />
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search by sitio..."
+                className="pl-10 w-full"
+                value={sitioSearch}
+                onChange={(e) => handleManualSitioSearch(e.target.value)}
+              />
+            </div>
+            
+            {/* Sitio Filter Dropdown */}
+            <div className="relative">
+              <Button
+                onClick={() => setShowSitioFilter(!showSitioFilter)}
+                className="gap-2"
+                variant="outline"
+              >
+                <Filter className="h-4 w-4" />
+                Filter Sitios
+                {selectedSitios.length > 0 && ` (${selectedSitios.length})`}
               </Button>
-            )}
+              
+              {showSitioFilter && (
+                <div className="absolute top-full left-0 mt-2 w-64 max-h-80 overflow-y-auto bg-white border rounded-md shadow-lg z-10 p-3">
+                  {isLoadingSitios ? (
+                    <div className="flex items-center justify-center py-2">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Loading sitios...
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center space-x-2 mb-2 p-2 border-b">
+                        <Checkbox
+                          id="select-all-sitios"
+                          checked={selectedSitios.length === sitios.length && sitios.length > 0}
+                          onCheckedChange={(checked) => handleSelectAllSitios(checked as boolean)}
+                        />
+                        <label
+                          htmlFor="select-all-sitios"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Select All
+                        </label>
+                      </div>
+                      
+                      {filteredSitios.map((sitio: any) => (
+                        <div key={sitio.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50">
+                          <Checkbox
+                            id={`sitio-${sitio.id}`}
+                            checked={selectedSitios.includes(sitio.sitio_name)}
+                            onCheckedChange={(checked) => handleSitioSelection(sitio.sitio_name, checked as boolean)}
+                          />
+                          <label
+                            htmlFor={`sitio-${sitio.id}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {sitio.sitio_name}
+                          </label>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
+          
           <Button onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
             Print Report
           </Button>
         </div>
 
-        {sitioFilter && (
-          <div className="text-sm text-gray-600 mt-4">
-            Showing results for sitio:{" "}
-            <span className="font-semibold">{sitioFilter}</span>
+        {/* Display selected sitios as chips */}
+        {selectedSitios.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="text-sm font-medium">Filtered by sitios:</span>
+            {selectedSitios.map(sitio => (
+              <span 
+                key={sitio} 
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+              >
+                {sitio}
+                <button
+                  onClick={() => handleSitioSelection(sitio, false)}
+                  className="ml-1.5 rounded-full flex-shrink-0"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            <button
+              onClick={handleClearFilter}
+              className="text-xs text-blue-600 hover:text-blue-800 ml-2"
+            >
+              Clear all
+            </button>
           </div>
         )}
       </div>
@@ -590,9 +682,9 @@ export default function OPTMonthlyDetails() {
             <p>
               <strong>OPT Month:</strong> {monthName}
             </p>
-            {sitioFilter && (
+            {selectedSitios.length > 0 && (
               <p>
-                <strong>Filtered by Sitio:</strong> {sitioFilter}
+                <strong>Filtered by Sitio:</strong> {selectedSitios.join(", ")}
               </p>
             )}
           </div>

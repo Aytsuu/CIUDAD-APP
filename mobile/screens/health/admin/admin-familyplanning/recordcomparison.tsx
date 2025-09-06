@@ -1,9 +1,8 @@
 // RecordComparisonScreen.tsx
 import React from 'react';
 import { View, Text, ScrollView, Dimensions, TouchableOpacity, Image } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
 import { FamilyPlanningRecordDetail } from './familyplanningtypes'; // Import your type definition
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -73,11 +72,11 @@ const Section: React.FC<SectionProps> = ({ title, children }) => (
 
 const RecordComparisonScreen: React.FC = () => {
   // const navigation = useNavigation();
-  const route = useRoute();
-  
+  const router = useRouter();
+
   // Parse the records with proper typing
-  const record1 = route.params?.record1 ? JSON.parse(route.params.record1) as FamilyPlanningRecordDetail : null;
-  const record2 = route.params?.record2 ? JSON.parse(route.params.record2) as FamilyPlanningRecordDetail : null;
+  const record1 = router.params?.record1 ? JSON.parse(router.params.record1) as FamilyPlanningRecordDetail : null;
+  const record2 = router.params?.record2 ? JSON.parse(router.params.record2) as FamilyPlanningRecordDetail : null;
 
   if (!record1 || !record2) {
     return (
