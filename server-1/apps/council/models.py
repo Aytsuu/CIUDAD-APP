@@ -101,7 +101,7 @@ class TemplateFile(models.Model):
         db_table = 'template_file'
 
 class Resolution(models.Model):
-    res_num = models.BigAutoField(primary_key=True)
+    res_num = models.CharField(primary_key=True)
     res_title = models.CharField(max_length=500)
     res_date_approved = models.DateField(default=date.today)
     res_area_of_focus = ArrayField(
