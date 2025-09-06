@@ -5,23 +5,26 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useGetAnnualDevPlanById, useUpdateAnnualDevPlan } from "./queries/annualDevPlanFetchQueries";
 import { toast } from "sonner";
 
+const getClientOptions = () => (
+  <>
+    <option value="">Select client</option>
+    <option value="Women">Women</option>
+    <option value="LGBTQIA+">LGBTQIA+</option>
+    <option value="Responsible Person">Responsible Person</option>
+    <option value="Senior">Senior</option>
+    <option value="PWD">PWD</option>
+    <option value="Solo Parent">Solo Parent</option>
+    <option value="Erpat">Erpat</option>
+    <option value="Children">Children</option>
+  </>
+);
+
 interface BudgetItem {
   gdb_name: string;
   gdb_pax: string;
   gdb_price: string;
 }
 
-interface DevelopmentPlan {
-  dev_id: number;
-  dev_date: string;
-  dev_client: string;
-  dev_issue: string;
-  dev_project: string;
-  dev_indicator: string;
-  dev_gad_budget: string;
-  dev_res_person: string;
-  staff: string;
-}
 
 export default function AnnualDevelopmentPlanEdit() {
   const navigate = useNavigate();
@@ -157,15 +160,7 @@ export default function AnnualDevelopmentPlanEdit() {
                   className="border rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
-                  <option value="">Select client</option>
-                  <option value="Women">Women</option>
-                  <option value="LGBTQIA+">LGBTQIA+</option>
-                  <option value="Responsible Person">Responsible Person</option>
-                  <option value="Senior">Senior</option>
-                  <option value="PWD">PWD</option>
-                  <option value="Solo Parent">Solo Parent</option>
-                  <option value="Erpat">Erpat</option>
-                  <option value="Children">Children</option>
+                  {getClientOptions()}
                 </select>
               </div>
             </div>
