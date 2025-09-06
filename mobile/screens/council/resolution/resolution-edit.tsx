@@ -74,6 +74,7 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
         resolver: zodResolver(resolutionFormSchema),
         mode: 'onChange',
         defaultValues: {
+            res_num: String(res_num),
             res_title: String(res_title),        
             res_date_approved: String(res_date_approved),
             res_area_of_focus: parsedAreaOfFocus,
@@ -101,7 +102,7 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
             ...values, 
             resFiles,
             resSuppDocs,
-            res_num: Number(res_num) 
+            res_num: String(res_num) 
         });
     };
 
@@ -132,6 +133,15 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
             stickyFooter={true}
         >
             <View className="w-full space-y-4 px-4 pt-5">
+
+                <FormInput
+                    control={form.control}
+                    name="res_num"
+                    label="Resolution Number"
+                    placeholder="Enter Resolution Number"
+                    editable={false} 
+                />            
+
                 {/* Resolution Title */}
                 <FormTextArea
                     control={form.control}
@@ -147,9 +157,6 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
                     label="Date Approved"
                     type="date"    
                 />
-
-                {/* TODO: Add file upload component for React Native */}
-                {/* Currently not implemented as React Native requires different file handling */}
 
                 {/* Resolution Area of Focus */}
                 <FormComboCheckbox

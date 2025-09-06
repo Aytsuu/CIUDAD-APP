@@ -68,9 +68,9 @@ function ResolutionPage() {
     return result;
   }, [resolutionData, activeTab, filter, searchQuery]);
 
-  const handleDelete = (res_num: number) => deleteRes(res_num);
-  const handleArchive = (res_num: number) => archiveRestore({ res_num, res_is_archive: true });
-  const handleRestore = (res_num: number) => archiveRestore({ res_num, res_is_archive: false });
+  const handleDelete = (res_num: number) => deleteRes(String(res_num));
+  const handleArchive = (res_num: number) => archiveRestore({ res_num: String(res_num), res_is_archive: true });
+  const handleRestore = (res_num: number) => archiveRestore({ res_num: String(res_num), res_is_archive: false });
 
   const handleViewPdf = (pdfUrl: string) => {
     if (!pdfUrl) {

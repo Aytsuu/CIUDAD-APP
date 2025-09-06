@@ -10,8 +10,9 @@ import WasteIllegalDumpingResMain from "@/screens/report/illegal-dumping/residen
 import IllegalDumpCreateForm from "@/screens/report/illegal-dumping/resident/illegal-dump-create";
 import WasteIllegalDumping from "@/screens/report/illegal-dumping/staff/illegal-dump-main-staff";
 import DriverTasksMain from "@/screens/waste/waste-garbage-pickup-request/driver/garbage-pickup-tasks-main";
+import ResolutionPage from "@/screens/council/resolution/resolution-main";
 
 export default () => {
-    return <App/>
+    return <ResolutionPage/>
 }
  
