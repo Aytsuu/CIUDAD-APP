@@ -14,6 +14,7 @@ import { useDeleteAnnouncement } from "./queries/announcementDeleteQueries"
 import { useGetAnnouncement } from "./queries/announcementFetchQueries"
 import { Button } from "@/components/ui/button/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import { Badge } from "@/components/ui/badge"
 
 function AnnouncementTracker() {
   const [error] = useState<string | null>(null)
@@ -53,18 +54,37 @@ function AnnouncementTracker() {
     filteredData = [...filteredData].sort(
       (a, b) => new Date(b.ann_created_at).getTime() - new Date(a.ann_created_at).getTime(),
     )
-  } else if (filter === "a-z") {
-    filteredData = [...filteredData].sort((a, b) => a.ann_title.localeCompare(b.ann_title))
-  } else if (filter === "z-a") {
-    filteredData = [...filteredData].sort((a, b) => b.ann_title.localeCompare(a.ann_title))
   } else if (filter === "toSms") {
     filteredData = filteredData.filter((a) => a.ann_to_sms === true)
   } else if (filter === "toEmail") {
     filteredData = filteredData.filter((a) => a.ann_to_email === true)
+  } else if (filter === "general") {
+    filteredData = filteredData.filter((a) => a.ann_type === "general")
+  } else if (filter === "public") {
+    filteredData = filteredData.filter((a) => a.ann_type === "public")
+  } else if (filter === "event") {
+    filteredData = filteredData.filter((a) => a.ann_type === "event")
   }
 
   const totalPages = Math.ceil(filteredData.length / pageSize)
   const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  const getBadgeVariant = (type: string) => {
+    switch (type) {
+      case "sms":
+        return "default"
+      case "email":
+        return "secondary"
+      case "general":
+        return "outline"
+      case "public":
+        return "destructive"
+      case "event":
+        return "default"
+      default:
+        return "outline"
+    }
+  }
 
   if (isLoading) {
     return (
@@ -127,8 +147,9 @@ function AnnouncementTracker() {
                 <SelectItem value="dateRecent">Date Created</SelectItem>
                 <SelectItem value="toSms">To SMS</SelectItem>
                 <SelectItem value="toEmail">To Email</SelectItem>
-                <SelectItem value="a-z">A–Z</SelectItem>
-                <SelectItem value="z-a">Z–A</SelectItem>
+                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="public">Public</SelectItem>
+                <SelectItem value="event">Event</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -158,8 +179,16 @@ function AnnouncementTracker() {
                     className="w-full shadow-sm border-gray-200 hover:shadow-md transition-shadow duration-200 bg-white flex flex-col"
                   >
                     <CardContent className="p-4 flex flex-col h-full">
-                      <div className="mb-3">
-                        <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-1 leading-tight">
+                      <div className="mb-3 relative">
+                        {announcement.ann_type && (
+                          <Badge
+                            variant={getBadgeVariant(announcement.ann_type)}
+                            className="absolute top-0 right-0 text-xs"
+                          >
+                            {announcement.ann_type.toUpperCase()}
+                          </Badge>
+                        )}
+                        <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-1 leading-tight pr-20">
                           {announcement.ann_title}
                         </h2>
                         <div className="flex items-center text-sm text-gray-500">
@@ -170,48 +199,80 @@ function AnnouncementTracker() {
 
                       <div className="border-t border-gray-200 pt-3 mb-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                          {announcement.ann_start_at && (
-                            <div>
-                              <div className="flex items-center mb-1">
-                                <Clock className="w-4 h-4 text-green-600 mr-2" />
-                                <span className="text-sm font-medium text-gray-700">Start At</span>
-                              </div>
-                              <p className="text-sm text-gray-900 font-medium">
-                                {formatDate(announcement.ann_start_at)}
-                              </p>
-                            </div>
-                          )}
-
-                          {announcement.ann_end_at && (
-                            <div>
-                              <div className="flex items-center mb-1">
-                                <Clock className="w-4 h-4 text-red-600 mr-2" />
-                                <span className="text-sm font-medium text-gray-700">End At</span>
-                              </div>
-                              <p className="text-sm text-gray-900 font-medium">{formatDate(announcement.ann_end_at)}</p>
-                            </div>
-                          )}
-
-                          {(announcement.ann_event_start || announcement.ann_event_end) && (
-                            <div>
-                              <div className="flex items-center mb-1">
-                                <Calendar className="w-4 h-4 text-blue-600 mr-2" />
-                                <span className="text-sm font-medium text-gray-700">Event Period</span>
-                              </div>
-                              <div className="space-y-1">
-                                {announcement.ann_event_start && (
-                                  <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Start:</span>{" "}
-                                    {formatDate(announcement.ann_event_start)}
+                          {announcement.ann_type === "event" ? (
+                            <>
+                              {announcement.ann_start_at && (
+                                <div>
+                                  <div className="flex items-center mb-1">
+                                    <Clock className="w-4 h-4 text-green-600 mr-2" />
+                                    <span className="text-sm font-medium text-gray-700">Posted On</span>
+                                  </div>
+                                  <p className="text-sm text-gray-900 font-medium">
+                                    {formatDate(announcement.ann_start_at)}
                                   </p>
-                                )}
-                                {announcement.ann_event_end && (
-                                  <p className="text-xs text-gray-600">
-                                    <span className="font-medium">End:</span> {formatDate(announcement.ann_event_end)}
+                                </div>
+                              )}
+
+                              {(announcement.ann_event_start || announcement.ann_event_end) && (
+                                <div className="md:col-span-2">
+                                  <div className="flex items-center mb-3">
+                                    <Calendar className="w-4 h-4 text-gray-600 mr-2" />
+                                    <h4 className="text-sm font-medium text-gray-700">Event Period</h4>
+                                  </div>
+                                  <div className="flex items-center justify-between gap-8">
+                                    {announcement.ann_event_start && (
+                                      <div className="flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-green-600" />
+                                        <div>
+                                          <span className="text-sm font-medium text-gray-700">Start At</span>
+                                          <p className="text-sm text-gray-900 font-medium">
+                                            {formatDate(announcement.ann_event_start)}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {announcement.ann_event_end && (
+                                      <div className="flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-red-600" />
+                                        <div>
+                                          <span className="text-sm font-medium text-gray-700">End At</span>
+                                          <p className="text-sm text-gray-900 font-medium">
+                                            {formatDate(announcement.ann_event_end)}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {announcement.ann_start_at && (
+                                <div>
+                                  <div className="flex items-center mb-1">
+                                    <Clock className="w-4 h-4 text-green-600 mr-2" />
+                                    <span className="text-sm font-medium text-gray-700">Start At</span>
+                                  </div>
+                                  <p className="text-sm text-gray-900 font-medium">
+                                    {formatDate(announcement.ann_start_at)}
                                   </p>
-                                )}
-                              </div>
-                            </div>
+                                </div>
+                              )}
+
+                              {announcement.ann_end_at && (
+                                <div>
+                                  <div className="flex items-center mb-1">
+                                    <Clock className="w-4 h-4 text-red-600 mr-2" />
+                                    <span className="text-sm font-medium text-gray-700">End At</span>
+                                  </div>
+                                  <p className="text-sm text-gray-900 font-medium">
+                                    {formatDate(announcement.ann_end_at)}
+                                  </p>
+                                </div>
+                              )}
+                            </>
                           )}
 
                           {(announcement.ann_to_sms || announcement.ann_to_email) && (

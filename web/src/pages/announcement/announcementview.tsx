@@ -42,7 +42,8 @@ function AnnouncementView() {
   const announcement = announcements?.find((a) => a.ann_id === ann_id);
   const matchingRecipients = recipients?.filter((r) => r.ann === ann_id) || [];
 
-  const formatDateTimeLocal = (value: string | Date) => {
+  const formatDateTimeLocal = (value?: string | Date | null) => {
+    if (!value) return "";
     const date = new Date(value);
     const offset = date.getTimezoneOffset();
     const localDate = new Date(date.getTime() - offset * 60000);
@@ -56,19 +57,19 @@ function AnnouncementView() {
       ann_details: capitalizeWords(announcement?.ann_details || ""),
       ann_start_at: announcement?.ann_start_at
         ? formatDateTimeLocal(announcement.ann_start_at)
-        : formatDateTimeLocal(new Date()),
+        : "",
       ann_end_at: announcement?.ann_end_at
         ? formatDateTimeLocal(announcement.ann_end_at)
-        : formatDateTimeLocal(new Date()),
+        : "",
       ann_event_start: announcement?.ann_event_start
         ? formatDateTimeLocal(announcement.ann_event_start)
-        : formatDateTimeLocal(new Date()),
+        : "",
       ann_event_end: announcement?.ann_event_end
         ? formatDateTimeLocal(announcement.ann_event_end)
-        : formatDateTimeLocal(new Date()),
+        : "",
       ann_type: (announcement?.ann_type || "general").toLowerCase(),
-      ann_to_sms: announcement?.ann_to_sms ?? true, // <-- Added
-      ann_to_email: announcement?.ann_to_email ?? true, // <-- Added
+      ann_to_sms: announcement?.ann_to_sms ?? true,
+      ann_to_email: announcement?.ann_to_email ?? true,
     },
   });
 
@@ -179,104 +180,145 @@ function AnnouncementView() {
               </Card>
             )}
 
-            {/* Schedule */}
-            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-              <CardHeader className="pb-4">
+           {/* Schedule */}
+{(
+  (announcement.ann_type?.toLowerCase() === "event" &&
+    (announcement.ann_event_start || announcement.ann_event_end)) ||
+  (announcement.ann_type?.toLowerCase() !== "event" &&
+    (announcement.ann_start_at || announcement.ann_end_at))
+) && (
+  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+    <CardHeader className="pb-4">
+      <div className="flex items-center gap-2">
+        <Calendar className="h-5 w-5 text-gray-600" />
+        <CardTitle className="text-lg">Schedule</CardTitle>
+      </div>
+      <CardDescription>
+        When this announcement is active
+      </CardDescription>
+    </CardHeader>
+    <CardContent
+      className={`grid grid-cols-1 ${
+        announcement.ann_type?.toLowerCase() === "event"
+          ? "md:grid-cols-2"
+          : "md:grid-cols-2"
+      } gap-4`}
+    >
+      {announcement.ann_type?.toLowerCase() === "event" ? (
+        <>
+          {announcement.ann_event_start && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Clock className="h-4 w-4" />
+                Event Start
+              </div>
+              <FormDateTimeInput
+                control={form.control}
+                name="ann_event_start"
+                label=""
+                readOnly
+                type="datetime-local"
+              />
+            </div>
+          )}
+          {announcement.ann_event_end && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Clock className="h-4 w-4" />
+                Event End
+              </div>
+              <FormDateTimeInput
+                control={form.control}
+                name="ann_event_end"
+                label=""
+                readOnly
+                type="datetime-local"
+              />
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {announcement.ann_start_at && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Clock className="h-4 w-4" />
+                Start Posting
+              </div>
+              <FormDateTimeInput
+                control={form.control}
+                name="ann_start_at"
+                label=""
+                readOnly
+                type="datetime-local"
+              />
+            </div>
+          )}
+          {announcement.ann_end_at && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Clock className="h-4 w-4" />
+                End Posting
+              </div>
+              <FormDateTimeInput
+                control={form.control}
+                name="ann_end_at"
+                label=""
+                readOnly
+                type="datetime-local"
+              />
+            </div>
+          )}
+        </>
+      )}
+    </CardContent>
+  </Card>
+)}
+
+
+
+            {/* Delivery Options */}
+            <Card className="shadow-md border-0 bg-white/80 backdrop-blur-md">
+              <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-gray-600" />
-                  <CardTitle className="text-lg">Schedule</CardTitle>
+                  <Megaphone className="h-5 w-5 text-blue-600" />
+                  <CardTitle className="text-lg font-semibold">
+                    Delivery Options
+                  </CardTitle>
                 </div>
-                <CardDescription>
-                  When this announcement is active
+                <CardDescription className="text-gray-500 text-sm">
+                  Indicates how this announcement was sent
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <Clock className="h-4 w-4" />
-                    Start Posting
-                  </div>
-                  <FormDateTimeInput
-                    control={form.control}
-                    name="ann_start_at"
-                    label=""
-                    readOnly={!isEditing}
-                    type="datetime-local"
-                  />
+              <CardContent className="grid grid-cols-2 gap-4 mt-2">
+                <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded shadow-sm">
+                  <span className="text-gray-600 font-medium">
+                    Send via SMS:
+                  </span>
+                  <span
+                    className={`font-semibold ${
+                      announcement.ann_to_sms ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    {announcement.ann_to_sms ? "Yes" : "No"}
+                  </span>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <Clock className="h-4 w-4" />
-                    End Posting
-                  </div>
-                  <FormDateTimeInput
-                    control={form.control}
-                    name="ann_end_at"
-                    label=""
-                    readOnly={!isEditing}
-                    type="datetime-local"
-                  />
+                <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded shadow-sm">
+                  <span className="text-gray-600 font-medium">
+                    Send via Email:
+                  </span>
+                  <span
+                    className={`font-semibold ${
+                      announcement.ann_to_email
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {announcement.ann_to_email ? "Yes" : "No"}
+                  </span>
                 </div>
-
-                {/* Event Start & End */}
-                {announcement.ann_type?.toLowerCase() === "event" && (
-                  <>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                        <Clock className="h-4 w-4" />
-                        Event Start
-                      </div>
-                      <FormDateTimeInput
-                        control={form.control}
-                        name="ann_event_start"
-                        label=""
-                        readOnly={!isEditing}
-                        type="datetime-local"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                        <Clock className="h-4 w-4" />
-                        Event End
-                      </div>
-                      <FormDateTimeInput
-                        control={form.control}
-                        name="ann_event_end"
-                        label=""
-                        readOnly={!isEditing}
-                        type="datetime-local"
-                      />
-                    </div>
-                  </>
-                )}
               </CardContent>
             </Card>
-{/* Delivery Options */}
-<Card className="shadow-md border-0 bg-white/80 backdrop-blur-md">
-  <CardHeader className="pb-2">
-    <div className="flex items-center gap-2">
-      <Megaphone className="h-5 w-5 text-blue-600" />
-      <CardTitle className="text-lg font-semibold">Delivery Options</CardTitle>
-    </div>
-    <CardDescription className="text-gray-500 text-sm">
-      Indicates how this announcement was sent
-    </CardDescription>
-  </CardHeader>
-  <CardContent className="grid grid-cols-2 gap-4 mt-2">
-    <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded shadow-sm">
-      <span className="text-gray-600 font-medium">Send via SMS:</span>
-      <span className={`font-semibold ${announcement.ann_to_sms ? "text-green-600" : "text-red-600"}`}>
-        {announcement.ann_to_sms ? "Yes" : "No"}
-      </span>
-    </div>
-    <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded shadow-sm">
-      <span className="text-gray-600 font-medium">Send via Email:</span>
-      <span className={`font-semibold ${announcement.ann_to_email ? "text-green-600" : "text-red-600"}`}>
-        {announcement.ann_to_email ? "Yes" : "No"}
-      </span>
-    </div>
-  </CardContent>
-</Card>
 
             {/* Recipients */}
             {announcement.ann_type?.toLowerCase() !== "public" &&

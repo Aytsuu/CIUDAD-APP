@@ -4,14 +4,22 @@ export const postAnnouncement = async (announcement: Record<string, any>) => {
   try {
     const now = new Date().toISOString();
 
-    const payload = {
+    const payload: Record<string, any> = {
       ...announcement,
       ann_created_at: now,
-      ann_start_at: announcement.ann_start_at ?? now,
-      ann_end_at: announcement.ann_end_at ?? now,
-      ann_event_start: announcement.ann_event_start ?? null,
-      ann_event_end: announcement.ann_event_end ?? null,
+      ann_event_start: announcement.ann_event_start || null,
+      ann_event_end: announcement.ann_event_end || null,
     };
+
+    // Only include ann_start_at if provided
+    if (announcement.ann_start_at && announcement.ann_start_at.trim() !== "") {
+      payload.ann_start_at = announcement.ann_start_at;
+    }
+
+    // Only include ann_end_at if provided
+    if (announcement.ann_end_at && announcement.ann_end_at.trim() !== "") {
+      payload.ann_end_at = announcement.ann_end_at;
+    }
 
     console.log("Sending payload:", payload);
 
