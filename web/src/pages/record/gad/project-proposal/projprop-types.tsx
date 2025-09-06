@@ -53,13 +53,13 @@ export type BudgetItem = {
 
 export type ProjectProposal = {
   gprId: number;
-  projectTitle: string; // Now from development plan
+  projectTitle: string; 
   background: string;
   objectives: string[];
-  participants: string[]; // Now from dev_indicator
+  participants: string[]; 
   date: string;
   venue: string;
-  budgetItems: BudgetItem[]; // Now from dev_gad_items
+  budgetItems: BudgetItem[]; 
   monitoringEvaluation: string;
   signatories: {
     name: string;
@@ -76,7 +76,6 @@ export type ProjectProposal = {
   logs: ProjectProposalLog[];
   paperSize: "a4" | "letter" | "legal";
   supportDocs: SupportDoc[];
-  // NEW fields
   devId: number;
   projectIndex: number;
   devDetails?: {
