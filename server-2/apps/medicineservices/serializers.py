@@ -33,13 +33,17 @@ class MedicineRecordSerialzer(serializers.ModelSerializer):
     class Meta:
         model = MedicineRecord
         fields = '__all__'
+class MedicineRecordCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicineRecord
+        fields = '__all__'
 
 class MedicineRecordSerializerMinimal(serializers.ModelSerializer):
     minv_details = MedicineInventorySerializer(source='minv_id', read_only=True)
     class Meta:
         model = MedicineRecord
         fields = '__all__'
-        
+
 class MedicineRequestSerializer(serializers.ModelSerializer):
     address = serializers.SerializerMethodField()
     personal_info = serializers.SerializerMethodField()

@@ -77,7 +77,6 @@ export async function addChildHealthRecord({ submittedData, staff }: AddRecordAr
   });
 
   const chrec_id = newChrec.chrec_id;
-  console.log("Child health record created:", newChrec);
 
   // Create child health history
   const newChhist = await createChildHealthHistory({
@@ -119,7 +118,6 @@ export async function addChildHealthRecord({ submittedData, staff }: AddRecordAr
   // Create body measurements
   if (submittedData.vitalSigns?.length === 1 ) {
     const vital = submittedData.vitalSigns[0];
-    console.log("Recorded OPT TRACKING")
     if (!vital.chvital_id && vital.date && submittedData.nutritionalStatus) {
    
   // Create body measurements
@@ -150,7 +148,6 @@ export async function addChildHealthRecord({ submittedData, staff }: AddRecordAr
   });
   const vital_id = vitalsigns.vital_id;
 
-  console.log("Vital signs created:", vitalsigns);
   // Create vital signs
   const newVitalSign = await createChildVitalSign({
     // temp: submittedData.vitalSigns?.[0]?.temp || null,
@@ -231,12 +228,14 @@ export async function addChildHealthRecord({ submittedData, staff }: AddRecordAr
         pat_id: submittedData.pat_id,
         medicines: submittedData.medicines.map((med) => ({
           minv_id: med.minv_id,
-          medrec_qty: med.medrec_qty,
+          medrec_qty: Number(med.medrec_qty),
           reason: med.reason || ""
-        }))
+        })),
+        staff_id: staff || undefined ,
+        chhist_id: current_chhist_id
+        
       },
-      staff || null,
-      current_chhist_id
+    
     );
   }
 

@@ -64,6 +64,7 @@ class MedicineRequestItem(models.Model):
     is_archived = models.BooleanField(default=False)
     archive_reason = models.TextField(blank=True, null=True)  
     
+    
 
 
     def __str__(self):
@@ -71,6 +72,15 @@ class MedicineRequestItem(models.Model):
     class Meta:
         db_table = 'medicine_request_item'  
 
+class MedicineAllocation(models.Model):
+    alloc_id = models.BigAutoField(primary_key=True)
+    medreqitem = models.ForeignKey(MedicineRequestItem, on_delete=models.CASCADE, related_name="allocations")
+    minv= models.ForeignKey(MedicineInventory, on_delete=models.CASCADE)
+    allocated_qty = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'medicine_request_allocation'
 
 class MedicineRecord(models.Model):
     medrec_id = models.BigAutoField(primary_key=True)
@@ -90,6 +100,8 @@ class MedicineRecord(models.Model):
         return f"MedicineRecord #{self.medrec_id}"
     class Meta:
         db_table = 'medicine_record'
+
+
         
 class Medicine_File(models.Model): 
 

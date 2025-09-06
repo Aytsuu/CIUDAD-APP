@@ -3,16 +3,14 @@ import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown, Search, ChevronLeft, Pill, AlertCircle, Loader2 } from "lucide-react";
+import { ChevronLeft, Pill, AlertCircle, Loader2 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { pendingItemsColumns } from "./columns";
 import { usePendingItemsMedRequest } from "../queries.tsx/fetch";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
-import { RequestSummary } from "@/components/ui/medicine-sumdisplay";
 import { fetchMedicinesWithStock } from "../../restful-api/fetchAPI";
 
 export default function MedicineRequestPendingItems() {
@@ -58,14 +56,14 @@ export default function MedicineRequestPendingItems() {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   // Prepare selected medicines from the pending items with the reason field
-  const selectedMedicines = medicineData.flatMap((medicine: any) =>
-    medicine.request_items.map((item: any) => ({
-      minv_id: medicine.med_id, // This should match the id field in medicine display
-      medrec_qty: item.medreqitem_qty || item.quantity || 1,
-      reason: item.reason || "No reason provided", // Use the reason field from request_items
-      inventory_id: item.inventory?.minv_id || null
-    }))
-  );
+  // const selectedMedicines = medicineData.flatMap((medicine: any) =>
+  //   medicine.request_items.map((item: any) => ({
+  //     minv_id: medicine.med_id, // This should match the id field in medicine display
+  //     medrec_qty: item.medreqitem_qty || item.quantity || 1,
+  //     reason: item.reason || "No reason provided", // Use the reason field from request_items
+  //     inventory_id: item.inventory?.minv_id || null
+  //   }))
+  // );
 
   console.log("Selected Medicines:", selectedMedicines);
   console.log("Medicine Data:", medicineData);
@@ -116,6 +114,14 @@ export default function MedicineRequestPendingItems() {
       medreq_id: item.medreq_id
     }))
   );
+
+  // Check if all items are rejected or referred
+  const allItemsRejectedOrReferred = tableData.every((item: any) => 
+    item.status === 'rejected' || item.status === 'referred' || item.status === 'on referred'
+  );
+
+  // Check if there are any pending items
+  const hasPendingItems = tableData.some((item: any) => item.status === 'pending');
 
   if (error) {
     return (
@@ -228,7 +234,12 @@ export default function MedicineRequestPendingItems() {
         )}
 
         <div className="flex justify-end mt-3 mb-3">
-          <Button>Process Request</Button>
+          <Button 
+            disabled={allItemsRejectedOrReferred || !hasPendingItems}
+            className={allItemsRejectedOrReferred || !hasPendingItems ? "opacity-50 cursor-not-allowed" : ""}
+          >
+            {allItemsRejectedOrReferred ? "All Items Processed" : "Process Request"}
+          </Button>
         </div>
        
       </div>

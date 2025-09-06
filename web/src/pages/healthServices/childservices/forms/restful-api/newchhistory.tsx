@@ -126,9 +126,10 @@ export async function updateChildHealthRecord({
               medrec_qty: med.medrec_qty,
               reason: med.reason || "",
             })),
+            staff_id: staff || null,
+            chhist_id: current_chhist_id,
           },
-          staff || null,
-          current_chhist_id
+        
         );
       }
     }
@@ -227,6 +228,8 @@ export async function updateChildHealthRecord({
       }
     }
   }
+
+  
 
   // ==============================================================//
   else {
@@ -389,9 +392,10 @@ export async function updateChildHealthRecord({
             medrec_qty: med.medrec_qty,
             reason: med.reason || "",
           })),
+          staff_id: staff || null,
+          chhist_id: current_chhist_id,
         },
-        staff || null,
-        current_chhist_id
+      
       );
     }
 

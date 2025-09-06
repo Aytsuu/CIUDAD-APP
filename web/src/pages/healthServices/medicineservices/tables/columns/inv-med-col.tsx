@@ -1,20 +1,122 @@
-  // src/features/medicine/components/medicine-record-columns.ts
-  import { ColumnDef } from "@tanstack/react-table";
-  import { useState } from "react";
+// src/features/medicine/components/medicine-record-columns.ts
+import { ColumnDef } from "@tanstack/react-table";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
-  // Skeleton component for loading state
-  const DocumentSkeleton = () => (
-    <div className="border rounded-lg p-4 animate-pulse flex flex-col">
-      <div className="bg-gray-200 h-4 w-3/4 mb-3 rounded"></div>
-      <div className="bg-gray-200 h-48 w-full rounded flex-grow"></div>
+// Skeleton component for loading state
+const DocumentSkeleton = () => (
+  <div className="border rounded-lg p-4 animate-pulse flex flex-col">
+    <div className="bg-gray-200 h-4 w-3/4 mb-3 rounded"></div>
+    <div className="bg-gray-200 h-48 w-full rounded flex-grow"></div>
+  </div>
+);
+
+// Full Screen Image Viewer Component
+const FullScreenImageViewer = ({ 
+  images, 
+  currentIndex, 
+  onClose, 
+  onNext, 
+  onPrev 
+}: { 
+  images: any[]; 
+  currentIndex: number; 
+  onClose: () => void; 
+  onNext: () => void; 
+  onPrev: () => void; 
+}) => {
+  const currentImage = images[currentIndex];
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
+      {/* Close Button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 p-2 bg-black bg-opacity-50 rounded-full"
+        aria-label="Close"
+      >
+        <X size={24} />
+      </button>
+
+      {/* Navigation Arrows */}
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={onPrev}
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-10 p-2 bg-black bg-opacity-50 rounded-full"
+            aria-label="Previous image"
+          >
+            <ChevronLeft size={32} />
+          </button>
+          <button
+            onClick={onNext}
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-10 p-2 bg-black bg-opacity-50 rounded-full"
+            aria-label="Next image"
+          >
+            <ChevronRight size={32} />
+          </button>
+        </>
+      )}
+
+      {/* Image Counter */}
+      {images.length > 1 && (
+        <div className="absolute top-4 left-4 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded-full">
+          {currentIndex + 1} / {images.length}
+        </div>
+      )}
+
+      {/* Main Image */}
+      <div className="max-w-full max-h-full flex items-center justify-center">
+        <img
+          src={currentImage.medf_url}
+          alt={currentImage.medf_name || `Document ${currentIndex + 1}`}
+          className="max-w-full max-h-full object-contain"
+          style={{ maxHeight: '90vh', maxWidth: '90vw' }}
+        />
+      </div>
+
+      {/* Image Name */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded-full max-w-80 truncate">
+        {currentImage.medf_name || `Document ${currentIndex + 1}`}
+      </div>
     </div>
   );
+};
 
-  // Modal component for viewing documents
-  export const DocumentModal = ({ files, isOpen, onClose, isLoading = false }: { files: any[]; isOpen: boolean; onClose: () => void; isLoading?: boolean }) => {
-    if (!isOpen) return null;
+// Modal component for viewing documents
+export const DocumentModal = ({ files, isOpen, onClose, isLoading = false }: { files: any[]; isOpen: boolean; onClose: () => void; isLoading?: boolean }) => {
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
 
-    return (
+  if (!isOpen) return null;
+
+  // Handle image click to open full screen
+  const handleImageClick = (index: number) => {
+    setSelectedImageIndex(index);
+    setIsFullScreenOpen(true);
+  };
+
+  // Handle full screen navigation
+  const handleNextImage = () => {
+    if (selectedImageIndex !== null) {
+      setSelectedImageIndex((selectedImageIndex + 1) % files.length);
+    }
+  };
+
+  const handlePrevImage = () => {
+    if (selectedImageIndex !== null) {
+      setSelectedImageIndex((selectedImageIndex - 1 + files.length) % files.length);
+    }
+  };
+
+  const handleCloseFullScreen = () => {
+    setIsFullScreenOpen(false);
+    setSelectedImageIndex(null);
+  };
+
+  return (
+    <>
+      {/* Main Document Modal */}
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg flex flex-col max-w-4xl w-full max-h-[90vh]">
           {/* Modal Header */}
@@ -45,19 +147,29 @@
                   files.map((file, index) => (
                     <div 
                       key={file.medf_id || index} 
-                      className="border border-gray-200 rounded-lg p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow"
+                      className="border border-gray-200 rounded-lg p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
+                      onClick={() => handleImageClick(index)}
                     >
                       <div className="mb-2">
                         <h4 className="text-sm font-medium text-gray-700 truncate">
                           {file.medf_name || `Document ${index + 1}`}
                         </h4>
                       </div>
-                      <div className="flex-grow overflow-hidden rounded-md border border-gray-200 bg-gray-50 flex items-center justify-center min-h-[250px]">
+                      <div className="flex-grow overflow-hidden rounded-md border border-gray-200 bg-gray-50 flex items-center justify-center min-h-[250px] relative">
                         <img 
                           src={file.medf_url} 
                           alt={file.medf_name || `Document ${index + 1}`} 
-                          className="w-full h-auto max-h-64 object-contain p-2" 
+                          className="w-full h-auto max-h-64 object-contain p-2 transition-transform group-hover:scale-105" 
                         />
+                        {/* Overlay with click hint */}
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <span className="text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
+                            Click to view full screen
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500 text-center">
+                        Click image to view full screen
                       </div>
                     </div>
                   ))
@@ -86,8 +198,20 @@
           </div>
         </div>
       </div>
-    );
-  };
+
+      {/* Full Screen Image Viewer */}
+      {isFullScreenOpen && selectedImageIndex !== null && (
+        <FullScreenImageViewer
+          images={files}
+          currentIndex={selectedImageIndex}
+          onClose={handleCloseFullScreen}
+          onNext={handleNextImage}
+          onPrev={handlePrevImage}
+        />
+      )}
+    </>
+  );
+};
 
   export const medicineRecordColumns: ColumnDef<any>[] = [
     {
