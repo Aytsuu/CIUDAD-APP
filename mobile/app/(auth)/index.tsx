@@ -14,6 +14,6 @@ import ResolutionPage from "@/screens/council/resolution/resolution-main";
 import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staff/garbage-pickup-request-main";
 
 export default () => {
-    return <DriverTasksMain/>
+    return <App/>
 }
  

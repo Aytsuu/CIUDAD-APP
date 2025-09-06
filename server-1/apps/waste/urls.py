@@ -74,6 +74,7 @@ urlpatterns = [
     path('garbage-pickup-completed/<str:rp_id>/', GarbagePickupRequestCompletedByRPView.as_view(), name="garbage-pickup-completed"),
     path('garbage-pickup-cancelled/<str:rp_id>/', GarbagePickupRequestCancelledByRPView.as_view(), name="garbage-pickup-cancelled"),
     path('garbage-pickup-accepted-detail/<str:garb_id>/', GarbagePickupRequestAcceptedDetailView.as_view(), name='garbage-pickup-accepted-detail'),
+    path('update-pickup-confirmation/<str:garb_id>/', UpdatePickupConfirmationView.as_view(), name='update-pickup-confirmation'),
 
     # Driver
     path('driver-garbage-pickup-tasks/', GarbagePickupRequestsByDriverView.as_view(), name='garbage-pickup-tasks'),

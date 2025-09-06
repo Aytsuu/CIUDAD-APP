@@ -7,16 +7,19 @@ import { formatTime } from "@/helpers/timeFormatter"
 import { useGetAcceptedDetailsResident } from "./queries/garbagePickupFetchQueries"
 import { ConfirmationModal } from "@/components/ui/confirmationModal"
 import { Button } from "@/components/ui/button"
+import { useUpdateGarbReqStatusResident } from "./queries/garbagePickupUpdateQueries"
 
 export default function ResidentAcceptedDetails() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const garb_id = String(params.garb_id)
   const { data: requestDetails, isPending } = useGetAcceptedDetailsResident(garb_id)
+  const {mutate: confirm} = useUpdateGarbReqStatusResident(() => {}, false)
+  
   console.log("Request Details:", requestDetails)
 
-  const handleConfirmCompletion = (id: any) => {
-    console.log(`Task with ID ${id} confirmed as completed.`)
+  const handleConfirmCompletion = (garb_id: any) => {
+    confirm(garb_id)
   }
 
   // Check if we should show the confirmation button
