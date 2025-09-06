@@ -240,7 +240,8 @@ export const generateProposalPdf = async (data: ProposalPdfData, preview = false
     data.budgetItems.forEach((item) => {
       if (item.name.trim()) {
         const amount = parseFloat(item.amount) || 0;
-        const paxCount = item.pax.trim() && item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1;
+        const paxText = item.pax.trim();
+        const paxCount = paxText ? parseInt(paxText.replace(/\D/g, '')) || 1 : 1;
         const total = paxCount * amount;
         grandTotal += total;
         yPos = addTableRow(
