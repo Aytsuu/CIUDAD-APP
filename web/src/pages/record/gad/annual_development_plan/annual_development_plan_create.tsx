@@ -467,22 +467,26 @@ export default function AnnualDevelopmentPlanCreate() {
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Quantity/Pax</label>
                     <input
-                      type="text"
+                      type="number"
                       name="gdb_pax"
                       value={currentBudgetItem.gdb_pax}
                       onChange={handleBudgetItemChange}
-                      placeholder="e.g., 50 pax"
+                      placeholder="e.g., 50"
+                      min="0"
+                      step="1"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Price (₱)</label>
                     <input
-                      type="text"
+                      type="number"
                       name="gdb_price"
                       value={currentBudgetItem.gdb_price}
                       onChange={handleBudgetItemChange}
                       placeholder="0.00"
+                      min="0"
+                      step="0.01"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     />
                   </div>
