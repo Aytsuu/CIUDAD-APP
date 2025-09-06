@@ -40,7 +40,10 @@ export type DevelopmentPlanProject = {
   dev_client: string;
   dev_issue: string;
   project_title: string;
-  participants: string[]; 
+  participants: {
+    category: string;
+    count: string | number;
+  }[]; 
   budget_items: BudgetItem[];
   dev_date: string;
 };
@@ -56,10 +59,13 @@ export type ProjectProposal = {
   projectTitle: string; 
   background: string;
   objectives: string[];
-  participants: string[]; 
+  participants: {
+    category: string;
+    count: string | number;
+  }[]; 
   date: string;
   venue: string;
-  budgetItems: BudgetItem[]; 
+  budgetItems: any[]; 
   monitoringEvaluation: string;
   signatories: {
     name: string;
@@ -110,6 +116,11 @@ export type ProjectProposalInput = {
   statusReason: string | null;
   gpr_page_size: "a4" | "letter" | "legal";
   dev: number;
+  participants?: {
+    category: string;
+    count: string | number;
+  }[];
+  budget_items?: any[];
 };
 
 export type Staff = {
@@ -198,11 +209,18 @@ export const prepareProposalPayload = (proposalData: ProjectProposalInput) => {
     gpr_is_archive: proposalData.gprIsArchive || false,
     gpr_page_size: proposalData.gpr_page_size,
     dev: proposalData.dev,
+    participants: proposalData.participants,
+    budget_items: proposalData.budget_items
   };
 
-  // Clean payload by removing null/undefined values
-  return Object.fromEntries(
-    Object.entries(payload).filter(([_, value]) => value !== null && value !== undefined)
+ return Object.fromEntries(
+    Object.entries(payload).filter(([key, value]) => {
+      // Keep participants and budget_items even if they're empty arrays
+      if (key === 'participants' || key === 'budget_items') {
+        return true;
+      }
+      return value !== null && value !== undefined;
+    })
   );
 };
 
@@ -218,6 +236,8 @@ export const prepareEditProposalPayload = (proposalData: ProjectProposalInput) =
     gpr_is_archive: proposalData.gprIsArchive || false,
     gpr_page_size: proposalData.gpr_page_size,
     dev: proposalData.dev,
+    participants: proposalData.participants,
+    budget_items: proposalData.budget_items
   };
 
   // Handle header image explicitly
