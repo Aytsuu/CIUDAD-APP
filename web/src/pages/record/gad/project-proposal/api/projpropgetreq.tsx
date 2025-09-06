@@ -148,7 +148,7 @@ export const getAllProposalLogs = async () => {
 export const getAvailableDevPlanProjects = async (year?: string) => {
   try {
     const currentYear = year || new Date().getFullYear().toString();
-    const res = await api.get(`gad/project-proposals-availability/${currentYear}/`);
+    const res = await api.get(`gad/project-proposals-available/${currentYear}/`);
     
     const data = res.data?.data ?? [];
     

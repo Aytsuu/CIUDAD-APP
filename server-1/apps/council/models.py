@@ -1,6 +1,10 @@
 from django.db import models
 from datetime import date
 from django.contrib.postgres.fields import ArrayField
+from django.utils import timezone
+from django.db.models import Max
+from datetime import date
+
 
 class CouncilScheduling(models.Model):
     ce_id = models.BigAutoField(primary_key=True)
@@ -100,8 +104,31 @@ class TemplateFile(models.Model):
     class Meta:
         db_table = 'template_file'
 
+# class Resolution(models.Model):
+#     res_num = models.CharField(primary_key=True)
+#     res_title = models.CharField(max_length=500)
+#     res_date_approved = models.DateField(default=date.today)
+#     res_area_of_focus = ArrayField(
+#         models.CharField(max_length=100),
+#         default=list,
+#         blank=True
+#     )
+#     res_is_archive = models.BooleanField(default=False)
+
+#     staff = models.ForeignKey(
+#         'administration.Staff',
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         db_column='staff_id'
+#     )
+
+#     class Meta:
+#         db_table = 'resolution'
+
+
 class Resolution(models.Model):
-    res_num = models.BigAutoField(primary_key=True)
+    res_num = models.CharField(primary_key=True)
     res_title = models.CharField(max_length=500)
     res_date_approved = models.DateField(default=date.today)
     res_area_of_focus = ArrayField(
@@ -121,7 +148,28 @@ class Resolution(models.Model):
 
     class Meta:
         db_table = 'resolution'
-
+    
+    @classmethod
+    def generate_resolution_number(cls):
+        current_year = timezone.now().year % 100
+        year_prefix = str(current_year).zfill(2)
+        
+        # Get the max resolution number for this year
+        max_res = cls.objects.filter(
+            res_num__endswith=f"-{year_prefix}"
+        ).aggregate(Max('res_num'))
+        
+        if max_res['res_num__max']:
+            try:
+                current_num = int(max_res['res_num__max'].split('-')[0])
+                next_num = current_num + 1
+            except (ValueError, IndexError):
+                next_num = 1
+        else:
+            next_num = 1
+            
+        return f"{next_num:03d}-{year_prefix}"
+    
 
 class ResolutionFile(models.Model):
     rf_id = models.BigAutoField(primary_key=True)

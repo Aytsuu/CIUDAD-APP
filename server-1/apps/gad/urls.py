@@ -9,7 +9,8 @@ urlpatterns = [
     path("gad-budget-tracker-entry/<int:gbud_num>/restore/", GADBudgetRestoreView.as_view()),
     path("gad-budget-files/", GADBudgetFileView.as_view()),
     path("gad-budget-files/<int:pk>/", GADBudgetFileDetailView.as_view()),
-    path("project-proposals-availability/<str:year>/", ProjectProposalAvailabilityView.as_view(), name='project-proposal-availability'),
+    path("project-proposals-availability/<str:year>/", ProjectProposalForBT.as_view(), name='project-proposal-availability'),
+    path("project-proposals-available/<str:year>/", ProjectProposalForProposal.as_view(), name='project-proposal-availability'),
     path("budget-logs/<str:year>/", GADBudgetLogListView.as_view(), name="gad-budget-log-list"),
     
     path('project-proposals/', ProjectProposalView.as_view(), name='project-proposal-list'),

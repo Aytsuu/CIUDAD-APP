@@ -15,12 +15,11 @@ export const ProjectProposalSchema = z.object({
   selectedDevProject: z.object({
     dev_id: z.number(),
     project_title: z.string(),
-    project_index: z.number(),
     participants: z.array(z.string()),
     budget_items: z.array(z.object({
       name: z.string(),
       pax: z.union([z.number(), z.string()]),
-      price: z.number()
+      price: DataRequirement
     })),
     dev_client: z.string().optional(),
     dev_issue: z.string().optional(),

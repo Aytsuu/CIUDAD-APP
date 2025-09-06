@@ -15,6 +15,7 @@ export const resolution_create = async (resolutionInfo: Record<string, any>) => 
         })
 
         const res = await api.post('council/resolution/',{
+            res_num: resolutionInfo.res_num,
             res_title: resolutionInfo.res_title,
             res_date_approved: resolutionInfo.res_date_approved,
             res_area_of_focus: resolutionInfo.res_area_of_focus,

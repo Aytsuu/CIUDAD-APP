@@ -16,6 +16,7 @@ export type WasteReport = {
     rep_date: string;
     rep_anonymous: boolean;
     rep_date_resolved: string;
+    rep_date_cancelled: string;
     sitio_id: number;
     sitio_name: string;
     waste_report_file: {

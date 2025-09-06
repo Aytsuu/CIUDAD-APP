@@ -30,7 +30,7 @@ export type GADBudgetEntry = {
   gbud_num?: number;
   gbud_datetime: string;
   gbud_add_notes?: string;
-
+  gbud_project_index: number;
   // Expense fields
   gbud_exp_particulars?: string;
   gbud_proposed_budget?: number;

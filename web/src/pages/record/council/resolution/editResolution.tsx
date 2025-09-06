@@ -16,7 +16,7 @@ import { useAuth } from "@/context/AuthContext";
 
 
 interface ResolutionEditFormProps {
-    res_num: number,
+    res_num: string,
     res_title: string,
     res_date_approved: string,
     res_area_of_focus: string[],
@@ -52,6 +52,7 @@ function EditResolution({ res_num, res_title, res_date_approved, res_area_of_foc
         resolver: zodResolver(resolutionFormSchema),
         mode: 'onChange',
         defaultValues: {
+            res_num: res_num,
             res_title: res_title,        
             res_date_approved: res_date_approved,
             res_area_of_focus: res_area_of_focus
