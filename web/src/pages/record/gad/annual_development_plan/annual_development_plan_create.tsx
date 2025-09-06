@@ -516,7 +516,7 @@ export default function AnnualDevelopmentPlanCreate() {
                               </button>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600">Quantity: {item.gdb_pax} × ₱{price.toFixed(2)} = ₱{total.toFixed(2)}</p>
+                          <p className="text-sm text-gray-600">Quantity: {item.gdb_pax}</p>
                         </div>
                       );
                     })}
