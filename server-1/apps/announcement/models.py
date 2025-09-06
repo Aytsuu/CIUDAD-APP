@@ -3,7 +3,7 @@ from django.db import models
 class Announcement(models.Model):
     ann_id = models.AutoField(primary_key=True)
     ann_title = models.TextField()
-    ann_details = models.TextField(max_length=255)
+    ann_details = models.TextField()
     ann_created_at = models.DateTimeField(auto_now_add=True)
     ann_start_at = models.DateTimeField(null=True, blank=True)
     ann_end_at = models.DateTimeField(null=True, blank=True)

@@ -90,10 +90,10 @@ function AnnouncementTracker() {
 
   return (
     <TooltipProvider>
-      <div className="w-full h-full p-6 bg-gray-50/50">
+      <div className="w-full h-full p-6">
         <div className="flex-col items-center mb-6">
           <h1 className="font-bold text-2xl sm:text-3xl text-gray-900 mb-2">Announcement Records</h1>
-          <p className="text-sm sm:text-base text-gray-600">Manage and view announcement records</p>
+          <p className="text-sm sm:text-base">Manage and view announcement records</p>
         </div>
         <hr className="border-gray-200 mb-8" />
 
@@ -164,48 +164,55 @@ function AnnouncementTracker() {
                         </h2>
                         <div className="flex items-center text-sm text-gray-500">
                           <Calendar className="w-4 h-4 mr-2" />
-                          Posted on {formatDate(announcement.ann_created_at)}
+                          Created on {formatDate(announcement.ann_created_at)}
                         </div>
-                      </div>
-
-                      <div className="mb-4 flex-1">
-                        <p className="text-base text-gray-700 leading-relaxed whitespace-pre-wrap break-words line-clamp-3">
-                          {announcement.ann_details}
-                        </p>
                       </div>
 
                       <div className="border-t border-gray-200 pt-3 mb-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                          <div>
-                            <div className="flex items-center mb-1">
-                              <Clock className="w-4 h-4 text-green-600 mr-2" />
-                              <span className="text-sm font-medium text-gray-700">Start At</span>
-                            </div>
-                            <p className="text-sm text-gray-900 font-medium">{formatDate(announcement.ann_start_at)}</p>
-                          </div>
-
-                          <div>
-                            <div className="flex items-center mb-1">
-                              <Clock className="w-4 h-4 text-red-600 mr-2" />
-                              <span className="text-sm font-medium text-gray-700">End At</span>
-                            </div>
-                            <p className="text-sm text-gray-900 font-medium">{formatDate(announcement.ann_end_at)}</p>
-                          </div>
-
-                          <div>
-                            <div className="flex items-center mb-1">
-                              <Calendar className="w-4 h-4 text-blue-600 mr-2" />
-                              <span className="text-sm font-medium text-gray-700">Event Period</span>
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-xs text-gray-600">
-                                <span className="font-medium">Start:</span> {formatDate(announcement.ann_event_start)}
-                              </p>
-                              <p className="text-xs text-gray-600">
-                                <span className="font-medium">End:</span> {formatDate(announcement.ann_event_end)}
+                          {announcement.ann_start_at && (
+                            <div>
+                              <div className="flex items-center mb-1">
+                                <Clock className="w-4 h-4 text-green-600 mr-2" />
+                                <span className="text-sm font-medium text-gray-700">Start At</span>
+                              </div>
+                              <p className="text-sm text-gray-900 font-medium">
+                                {formatDate(announcement.ann_start_at)}
                               </p>
                             </div>
-                          </div>
+                          )}
+
+                          {announcement.ann_end_at && (
+                            <div>
+                              <div className="flex items-center mb-1">
+                                <Clock className="w-4 h-4 text-red-600 mr-2" />
+                                <span className="text-sm font-medium text-gray-700">End At</span>
+                              </div>
+                              <p className="text-sm text-gray-900 font-medium">{formatDate(announcement.ann_end_at)}</p>
+                            </div>
+                          )}
+
+                          {(announcement.ann_event_start || announcement.ann_event_end) && (
+                            <div>
+                              <div className="flex items-center mb-1">
+                                <Calendar className="w-4 h-4 text-blue-600 mr-2" />
+                                <span className="text-sm font-medium text-gray-700">Event Period</span>
+                              </div>
+                              <div className="space-y-1">
+                                {announcement.ann_event_start && (
+                                  <p className="text-xs text-gray-600">
+                                    <span className="font-medium">Start:</span>{" "}
+                                    {formatDate(announcement.ann_event_start)}
+                                  </p>
+                                )}
+                                {announcement.ann_event_end && (
+                                  <p className="text-xs text-gray-600">
+                                    <span className="font-medium">End:</span> {formatDate(announcement.ann_event_end)}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
 
                           {(announcement.ann_to_sms || announcement.ann_to_email) && (
                             <div>
@@ -217,9 +224,6 @@ function AnnouncementTracker() {
                                       <MessageSquare className="w-3 h-3 text-gray-500 mr-1" />
                                       <span className="text-xs text-gray-600">SMS</span>
                                     </div>
-                                    <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                      Enabled
-                                    </span>
                                   </div>
                                 )}
 
@@ -229,9 +233,6 @@ function AnnouncementTracker() {
                                       <Mail className="w-3 h-3 text-gray-500 mr-1" />
                                       <span className="text-xs text-gray-600">Email</span>
                                     </div>
-                                    <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                      Enabled
-                                    </span>
                                   </div>
                                 )}
                               </div>
