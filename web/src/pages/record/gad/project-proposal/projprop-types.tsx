@@ -12,7 +12,7 @@ export type ProjectProposalLog = {
   gprlReason: string | null;
   gprlDateSubmitted: string;
   gprlStatus: ProposalStatus;
-  staffId: number | null;
+  staffId: string | null;
 };
 
 export type SupportDoc = {
@@ -75,7 +75,7 @@ export type ProjectProposal = {
   headerImage: string | null;
   gprDateCreated: string;
   gprIsArchive: boolean;
-  staffId: number | null;
+  staffId: any;
   staffName: string;
   status: ProposalStatus;
   statusReason: string | null;

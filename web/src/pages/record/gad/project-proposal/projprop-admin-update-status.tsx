@@ -23,8 +23,10 @@ import { useUpdateProjectProposalStatus } from "./queries/projprop-updatequeries
 import { ProposalStatus, SupportDoc, ProjectProposal } from "./projprop-types";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Link } from "react-router";
+import { useAuth } from "@/context/AuthContext";
 
 function AdminGADProjectProposal() {
+  const { user } = useAuth();
   const style = {
     projStat: {
       pending: "text-blue",
@@ -140,6 +142,7 @@ function AdminGADProjectProposal() {
               ...project,
               status: "Viewed", // Explicitly typed
               statusReason: "Project viewed by admin",
+              staffId: user?.staff?.staff_id || null
             };
             setSelectedProject(updatedProject);
             setIsViewDialogOpen(true);
@@ -196,7 +199,7 @@ function AdminGADProjectProposal() {
       return;
 
     updateStatusMutation.mutate(
-      { gprId: selectedProject.gprId, status: newStatus, reason },
+      { gprId: selectedProject.gprId, status: newStatus, reason,  staffId: user?.staff?.staff_id || null  },
       {
         onSuccess: () => {
           setSelectedProject((prev) =>
@@ -454,7 +457,7 @@ function AdminGADProjectProposal() {
                 <Button
                   variant="outline"
                   onClick={handleOpenStatusUpdateDialog}
-                  disabled={!selectedProject}
+                  disabled={!selectedProject || selectedProject.status === "Approved"}
                 >
                   Update Status
                 </Button>
