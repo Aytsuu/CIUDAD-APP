@@ -97,15 +97,11 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                 <th className="px-3 py-2 text-center align-bottom border border-gray-200" colSpan={4}>GAD BUDGET</th>
                 <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}>RESPONSIBLE PERSON</th>
               </tr>
-              <tr className="bg-gray-100 text-gray-700 border-b border-gray-200">
-                <th className=""></th>
-              </tr>
               <tr className="bg-blue-50 text-blue-900 font-semibold border-b border-blue-100">
-                <td className="bg-sky-100 px-3 py-2 border border-blue-200" colSpan={4}>CLIENT FOCUSED</td>
+                <td className="bg-sky-100 px-3 py-2 border border-blue-200" colSpan={1}>CLIENT FOCUSED</td>
                 <th className="bg-sky-100 px-3 py-1 text-center border border-gray-200">pax</th>
                 <th className="bg-sky-100 px-3 py-1 text-center border border-gray-200">amount (PHP)</th>
                 <th className="bg-sky-100 px-3 py-1 text-center border border-gray-200">total</th>
-                <th className="bg-sky-100"></th>
               </tr>
             </thead>
             <tbody>
@@ -134,8 +130,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                         })()}
                       </div>
                       {plan.dev_activity && Array.isArray(plan.dev_activity) && plan.dev_activity.length > 0 && (
-                        <div className="text-sm text-gray-600 mt-3">
-                         
+                        <div className="text-sm text-gray-600 mt-2">
                           <ul className="list-disc list-inside space-y-1">
                             {plan.dev_activity.map((activity: any, idx: number) => (
                               <li key={idx} className="text-xs">{activity.activity}</li>
