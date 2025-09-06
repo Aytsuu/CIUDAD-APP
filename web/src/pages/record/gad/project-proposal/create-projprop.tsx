@@ -535,7 +535,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Select Project
+                Program Title
               </label>
               <ComboboxInput
                 value={selectedDevProject?.project_title || ""}
@@ -545,18 +545,15 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                 }}
                 displayKey="project_title"
                 valueKey="dev_id"
-                placeholder="Select a project..."
+                placeholder="Select a program..."
                 emptyText="No projects found"
                 label=""
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Header Image (optional)
-              </label>
               <MediaUpload
-                title=""
+                title="Header Image (optional)"
                 description="Upload an image for the proposal header"
                 mediaFiles={mediaFiles}
                 setMediaFiles={setMediaFiles}
@@ -568,11 +565,8 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Supporting Documents (optional)
-              </label>
               <MediaUpload
-                title=""
+                title="Supporting Documents (optional)"
                 description="Upload any supporting documents for your proposal"
                 mediaFiles={supportingDocs}
                 setMediaFiles={setSupportingDocs}
