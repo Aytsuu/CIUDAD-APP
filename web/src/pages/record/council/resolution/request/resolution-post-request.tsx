@@ -6,12 +6,12 @@ import {api} from "@/api/api";
 export const resolution_create = async (resolutionInfo: Record<string, any>) => {
     try{
 
-        console.log({
+        console.log("RESOLUTION CREATED: ",{
             res_title: resolutionInfo.res_title,
             res_date_approved: resolutionInfo.res_date_approved,
             res_area_of_focus: resolutionInfo.res_area_of_focus,
             res_is_archive: false,
-            gpr_id: Number(resolutionInfo.gpr_id),
+            gpr_id: resolutionInfo.gpr_id,
             staff: resolutionInfo.staff,
         })
 
@@ -21,7 +21,7 @@ export const resolution_create = async (resolutionInfo: Record<string, any>) => 
             res_date_approved: resolutionInfo.res_date_approved,
             res_area_of_focus: resolutionInfo.res_area_of_focus,
             res_is_archive: false,
-            gpr_id: Number(resolutionInfo.gpr_id),
+            gpr_id: resolutionInfo.gpr_id,
             staff: resolutionInfo.staff,
         })
 
