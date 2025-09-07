@@ -58,4 +58,6 @@ urlpatterns=[
     # RESOLUTION SUPP DOCS
     path("resolution-supp/", ResolutionSupDocsView.as_view(), name="council-supp-docs"),
     path('resolution-supp-delete/<int:rsd_id>/', ResolutionSupDocsDetailView.as_view(), name='council-supp-detail'), 
+    #APPROVED PROPOSALS
+    path('approved-proposals/', ApprovedGADProposalsView.as_view(), name='approved-gad-proposals')
 ]

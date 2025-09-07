@@ -10,6 +10,7 @@ from datetime import datetime
 from rest_framework.permissions import AllowAny
 import logging
 from apps.treasurer.models import Purpose_And_Rates
+from apps.gad.models import ProjectProposalLog
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveAPIView
@@ -474,6 +475,20 @@ class ResolutionSupDocsDetailView(generics.RetrieveDestroyAPIView):
     queryset = ResolutionSupDocs.objects.all()
     serializer_class = ResolutionSupDocsSerializer
     lookup_field = 'rsd_id'     
+
+
+class ApprovedGADProposalsView(generics.ListAPIView):
+    serializer_class = GADProposalSerializer
+    
+    def get_queryset(self):
+        # Get only approved proposals
+        approved_logs = ProjectProposalLog.objects.filter(
+            gprl_status='Approved'
+        ).select_related('gpr__dev')
+        
+        # Get unique approved proposals
+        approved_proposal_ids = approved_logs.values_list('gpr_id', flat=True).distinct()
+        return ProjectProposal.objects.filter(gpr_id__in=approved_proposal_ids)
 
 
 class PurposeRatesListView(generics.ListCreateAPIView):

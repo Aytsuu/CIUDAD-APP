@@ -11,6 +11,7 @@ export const resolution_create = async (resolutionInfo: Record<string, any>) => 
             res_date_approved: resolutionInfo.res_date_approved,
             res_area_of_focus: resolutionInfo.res_area_of_focus,
             res_is_archive: false,
+            gpr_id: resolutionInfo.gpr_id,
             staff: resolutionInfo.staff,
         })
 
@@ -20,6 +21,7 @@ export const resolution_create = async (resolutionInfo: Record<string, any>) => 
             res_date_approved: resolutionInfo.res_date_approved,
             res_area_of_focus: resolutionInfo.res_area_of_focus,
             res_is_archive: false,
+            gpr_id: resolutionInfo.gpr_id,
             staff: resolutionInfo.staff,
         })
 

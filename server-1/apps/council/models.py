@@ -146,6 +146,14 @@ class Resolution(models.Model):
         db_column='staff_id'
     )
 
+    gpr_id = models.ForeignKey(
+        'gad.ProjectProposal',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='gpr_id'
+    )    
+
     class Meta:
         db_table = 'resolution'
     

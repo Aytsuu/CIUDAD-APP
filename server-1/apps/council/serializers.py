@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import *
 from django.apps import apps
 from apps.treasurer.models import Purpose_And_Rates
+from apps.gad.models import ProjectProposal
 from utils.supabase_client import upload_to_storage
 from apps.treasurer.serializers import FileInputSerializer
 from django.db import transaction
@@ -217,6 +218,19 @@ class ResolutionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resolution
         fields = '__all__'
+
+class GADProposalSerializer(serializers.ModelSerializer):
+    project_title = serializers.CharField(read_only=True)
+    gprl_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProjectProposal
+        fields = ['gpr_id', 'project_title', 'gprl_id']
+
+    def get_gprl_id(self, obj):
+        # Get the latest approved log ID for this proposal
+        latest_approved_log = obj.logs.filter(gprl_status='Approved').order_by('-gprl_date_approved_rejected').first()
+        return latest_approved_log.gprl_id if latest_approved_log else None
 
 
 class PurposeRatesListViewSerializer(serializers.ModelSerializer):

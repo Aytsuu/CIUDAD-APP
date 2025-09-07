@@ -727,7 +727,8 @@ function ResolutionPage() {
                                         res_title={row.original.res_title}
                                         res_date_approved={row.original.res_date_approved}
                                         res_area_of_focus={row.original.res_area_of_focus} 
-                                        resolution_files={row.original.resolution_files}        
+                                        resolution_files={row.original.resolution_files}     
+                                        gpr_id={row.original.gpr_id}   
                                         onSuccess={() => setEditingRowId(null)}  
                                     />
                                 }
