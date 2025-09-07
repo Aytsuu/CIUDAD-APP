@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { ProjectProposal, ProposalStatus } from "./projprop-types";
 
-export const StatusUpdateModal: React.FC<{
+export const ProjPropStatusUpdateModal: React.FC<{
   visible: boolean;
   project: ProjectProposal | null;
   onClose: () => void;

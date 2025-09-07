@@ -9,8 +9,6 @@ import {
   SafeAreaView,
   StatusBar,
   RefreshControl,
-  Modal,
-  TextInput,
 } from "react-native";
 import { ChevronLeft, ClipboardCheck } from "lucide-react-native";
 import {
@@ -23,9 +21,9 @@ import ScreenLayout from "@/screens/_ScreenLayout";
 import { useRouter } from "expo-router";
 import { SelectLayout } from "@/components/ui/select-layout";
 import { ProjectProposal, ProposalStatus } from "./projprop-types";
-import { StatusUpdateModal } from "./projprop-admin-modal-status";
+import { ProjPropStatusUpdateModal } from "./projprop-admin-modal-status";
 
-const AdminUpdateStatus: React.FC = () => {
+const ProjPropAdminUpdateStatus: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedProject, setSelectedProject] =
@@ -148,11 +146,11 @@ const AdminUpdateStatus: React.FC = () => {
     if (!project.budgetItems || project.budgetItems.length === 0) return sum;
 
     const projectTotal = project.budgetItems.reduce((projectSum, item) => {
-      const amount = Number.parseFloat(item.amount?.toString()) || 0;
-      const paxCount = item.pax?.includes("pax")
-        ? Number.parseInt(item.pax) || 1
+      const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
+      const paxCount = typeof item.pax === 'string' 
+        ? parseInt(item.pax.replace(/\D/g, '')) || 1 
         : 1;
-      return projectSum + paxCount * amount;
+      return projectSum + (paxCount * amount);
     }, 0);
 
     return sum + projectTotal;
@@ -178,7 +176,7 @@ const AdminUpdateStatus: React.FC = () => {
           }
           disableDocumentManagement
         />
-        <StatusUpdateModal
+        <ProjPropStatusUpdateModal
           visible={showStatusModal}
           project={selectedProject}
           onClose={() => setShowStatusModal(false)}
@@ -242,7 +240,7 @@ const AdminUpdateStatus: React.FC = () => {
     >
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      <View className="mt-2 pt-4 pb-2">
+      <View className="mt-2 pt-4 pb-2 p-3">
         <View className="mb-4">
           <SelectLayout
             options={[
@@ -331,14 +329,14 @@ const AdminUpdateStatus: React.FC = () => {
                         maximumFractionDigits: 2,
                       }).format(
                         project.budgetItems.reduce((grandTotal, item) => {
-                          const amount = item.amount || 0;
-                          const paxCount = item.pax?.includes("pax")
-                            ? parseInt(item.pax) || 1
-                            : 1;
-                          return grandTotal + paxCount * amount;
-                        }, 0)
-                      )
-                    : "N/A"}
+                          const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
+                                  const paxCount = typeof item.pax === 'string' 
+                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
+                                    : 1;
+                                  return grandTotal + (paxCount * amount);
+                                }, 0)
+                              )
+                            : "N/A" }
                 </Text>
               </View>
 
@@ -395,4 +393,4 @@ const AdminUpdateStatus: React.FC = () => {
   );
 };
 
-export default AdminUpdateStatus;
+export default ProjPropAdminUpdateStatus;

@@ -34,6 +34,19 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
   customHeaderActions,
   disableDocumentManagement = false,
 }) => {
+
+  //add early return for undefined projects
+  if (!project) {
+    return (
+      <SafeAreaView className="flex-1 bg-white justify-center items-center">
+        <Text className="text-gray-500">No project data available</Text>
+        <TouchableOpacity onPress={onBack || (() => router.back())} className="mt-4">
+          <Text className="text-blue-500">Go back</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+  
   const [activeTab, setActiveTab] = useState<"soft" | "supporting">("soft");
   const [supportDocsViewMode, setSupportDocsViewMode] = useState<
     "active" | "archived"
@@ -400,10 +413,9 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               .filter((item) => item.name && item.name.trim())
               .map((item, index) => {
                 const amount = Number.parseFloat(item.amount?.toString()) || 0;
-                const paxCount =
-                  item.pax && item.pax.trim() && item.pax.includes("pax")
-                    ? Number.parseInt(item.pax) || 1
-                    : 1;
+                const paxCount = typeof item.pax === 'string' 
+                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
+                                    : 1;
                 const total = paxCount * amount;
 
                 return (
@@ -448,10 +460,9 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                   ?.reduce((sum, item) => {
                     const amount =
                       Number.parseFloat(item.amount?.toString()) || 0;
-                    const paxCount =
-                      item.pax && item.pax.trim() && item.pax.includes("pax")
-                        ? Number.parseInt(item.pax) || 1
-                        : 1;
+                    const paxCount = typeof item.pax === 'string' 
+                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
+                                    : 1;
                     return sum + paxCount * amount;
                   }, 0)
                   .toFixed(2)}
@@ -460,7 +471,16 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
           </View>
         </View>
 
-        <View className="mb-4">
+        <View className="mb-5 mt-2">
+          <Text className="text-sm font-semibold text-gray-700 mb-1">
+            Monitoring Evaluation:
+          </Text>
+          <Text className="text-sm text-gray-800 leading-5">
+            {project.monitoringEvaluation || "No monitoring evaluation provided"}
+          </Text>
+        </View>
+
+        <View className="mb-4 mt-8">
           <View className="flex-row justify-between">
             <View className="flex-1 mr-4">
               <Text className="text-sm font-semibold text-gray-700 mb-2">

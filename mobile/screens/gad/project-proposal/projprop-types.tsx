@@ -70,7 +70,7 @@ export type Staff = {
 }
 
 export interface ProjectProposalViewProps {
-  project: ProjectProposal;
+  project?: ProjectProposal ;
   onBack?: () => void;
   customHeaderActions?: React.ReactNode;
   disableDocumentManagement?: boolean;
