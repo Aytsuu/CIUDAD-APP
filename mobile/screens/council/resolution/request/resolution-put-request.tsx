@@ -11,6 +11,7 @@ export const useUpdateResolution = async (res_num: String, resolutionInfo: Recor
             res_date_approved: resolutionInfo.res_date_approved,
             res_area_of_focus: resolutionInfo.res_area_of_focus,
             res_is_archive: false,
+            gpr_id: resolutionInfo.gpr_id,
             staff: staff,
         })
 
@@ -19,6 +20,7 @@ export const useUpdateResolution = async (res_num: String, resolutionInfo: Recor
             res_date_approved: resolutionInfo.res_date_approved,
             res_area_of_focus: resolutionInfo.res_area_of_focus,
             res_is_archive: false,
+            gpr_id: resolutionInfo.gpr_id,
             staff_id: staff,
         })
 

@@ -31,6 +31,7 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
         res_title: values.res_title,
         res_date_approved: values.res_date_approved,
         res_area_of_focus: values.res_area_of_focus,
+        gpr_id: values.gpr_id
       });
       
       // 2. Handle file updates

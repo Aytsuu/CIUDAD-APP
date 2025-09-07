@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { FormInput } from '@/components/ui/form/form-input';
+import { FormSelect } from '@/components/ui/form/form-select';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
@@ -15,7 +16,7 @@ import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema';
 import { usingUpdateResolution } from './queries/resolution-update-queries';
-
+import { useApprovedProposals } from './queries/resolution-fetch-queries';
 
 interface ResolutionCreateFormProps {
     onSuccess?: () => void; 
@@ -28,7 +29,8 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
         res_date_approved,
         res_area_of_focus,
         resolution_files,
-        resolution_supp
+        resolution_supp,
+        gpr_id,
     } = useLocalSearchParams();
 
     const parsedFiles = resolution_files ? JSON.parse(resolution_files as string) : [];
@@ -39,6 +41,10 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
         ? res_area_of_focus.split(',') 
         : [];
 
+    // Ensure gpr_id is empty string if undefined/null
+    const safeGprId = gpr_id && gpr_id !== 'undefined' && gpr_id !== 'null' 
+        ? String(gpr_id) 
+        : '';
 
     const router = useRouter();
     const [selectedDocuments, setSelectedDocuments] = useState<DocumentItem[]>(
@@ -58,6 +64,11 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
         uri: file.rsd_url
         }))
     );    
+
+    const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+
+    // Fetch mutation
+    const { data: gadProposals = [] } = useApprovedProposals();
     
     // Update mutation
     const { mutate: updateEntry, isPending } = usingUpdateResolution(() => {
@@ -66,6 +77,11 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
             router.back();
         }, 700);
     });
+
+    const proposalOptions = gadProposals.map(item => ({
+        label: item.name,
+        value: item.id,
+    }));
 
     const meetingAreaOfFocus = [
         { id: "gad", name: "GAD" },
@@ -82,11 +98,26 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
             res_title: String(res_title),        
             res_date_approved: String(res_date_approved),
             res_area_of_focus: parsedAreaOfFocus,
+            gpr_id: safeGprId // Use the safe version
         },
     });
 
+    // Watch the area of focus to show/hide proposal reference
+    const watchAreaOfFocus = form.watch("res_area_of_focus");
+
+    // Update local state when form values change
+    useEffect(() => {
+        setSelectedAreas(watchAreaOfFocus || []);
+    }, [watchAreaOfFocus]);
+
+    // Check if GAD is selected
+    const isGADSelected = selectedAreas.includes("gad");
 
     const onSubmit = (values: z.infer<typeof resolutionFormSchema>) => {
+        // Ensure gpr_id is empty string if not selected or undefined
+        if (!values.gpr_id) {
+            values.gpr_id = "";
+        }
 
         const resFiles = selectedDocuments.map((docs: any) => ({
             id: docs.id,
@@ -101,7 +132,7 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
             type: img.type,
             file: img.file
         }))
-
+      
         updateEntry({ 
             ...values, 
             resFiles,
@@ -168,7 +199,20 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
                     name="res_area_of_focus"
                     label="Select Area of Focus"
                     options={meetingAreaOfFocus}
-                />                               
+                />              
+
+                {/* GAD Proposal Reference - Only show if GAD is selected */}
+                {isGADSelected && (
+                    <View className="pt-5">
+                        <FormSelect
+                            control={form.control}
+                            name="gpr_id"
+                            label="GAD Proposal Reference"
+                            options={proposalOptions}
+                            placeholder="Select Approved Proposals"
+                        />   
+                    </View>
+                )}                                     
 
                 <View className="pt-5">
                     <Text className="text-[12px] font-PoppinsRegular pb-1">Resolution File</Text>

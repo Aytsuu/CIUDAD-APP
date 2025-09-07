@@ -177,6 +177,7 @@ import { z } from 'zod';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { FormInput } from '@/components/ui/form/form-input';
+import { FormSelect } from '@/components/ui/form/form-select';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
@@ -185,6 +186,7 @@ import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema';
 import { useCreateResolution } from './queries/resolution-add-queries';
+import { useApprovedProposals } from './queries/resolution-fetch-queries';
 import { useResolution } from './queries/resolution-fetch-queries';
 
 interface ResolutionCreateFormProps {
@@ -197,9 +199,11 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
     const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([]);
     const [resolutionType, setResolutionType] = useState<'new' | 'old'>('new');
     const [resolutionNumbers, setResolutionNumbers] = useState<string[]>([]);
+    const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
     
     // Fetch existing resolutions
     const { data: resolutionData = [] } = useResolution();
+    const { data: gadProposals = [] } = useApprovedProposals();
 
     // Create mutation
     const { mutate: createResolution, isPending } = useCreateResolution(() => {
@@ -208,6 +212,11 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
             router.back();
         }, 700);
     });
+
+    const proposalOptions = gadProposals.map(item => ({
+        label: item.name,
+        value: item.id,
+    }));
 
     const meetingAreaOfFocus = [
         { id: "gad", name: "GAD" },
@@ -224,8 +233,17 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
             res_title: "",        
             res_date_approved: "",
             res_area_of_focus: [],
+            gpr_id: ""
         },
     });
+
+    // Watch the area of focus to show/hide proposal reference
+    const watchAreaOfFocus = form.watch("res_area_of_focus");
+    
+    // Update local state when form values change
+    useEffect(() => {
+        setSelectedAreas(watchAreaOfFocus || []);
+    }, [watchAreaOfFocus]);
 
     // Extract resolution numbers from fetched data
     useEffect(() => {
@@ -235,6 +253,8 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
         }
     }, [resolutionData]);
 
+    // Check if GAD is selected
+    const isGADSelected = selectedAreas.includes("gad");
     
     const validateResolutionNumberFormat = (resNum: string): boolean => {
         const pattern = /^\d{3}-\d{2}$/;
@@ -265,6 +285,12 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
             
         }
         
+    
+        if (Number(values.gpr_id) === 0) {
+            values.gpr_id = "";
+        }
+
+        
         const resFiles = selectedDocuments.map((docs: any) => ({
             name: docs.name,
             type: docs.type,
@@ -284,6 +310,7 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
         };
 
         createResolution(allValues);
+        // console.log("RESOLUTION ON SUBMIT: ", allValues)
     };
 
     // Custom tab component for React Native
@@ -386,7 +413,20 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
                     name="res_area_of_focus"
                     label="Select Area of Focus"
                     options={meetingAreaOfFocus}
-                />                               
+                />                    
+
+                {/* GAD Proposal Reference - Only show if GAD is selected */}
+                {isGADSelected && (
+                    <View className="pt-5">
+                        <FormSelect
+                            control={form.control}
+                            name="gpr_id"
+                            label="GAD Proposal Reference"
+                            options={proposalOptions}
+                            placeholder="Select Approved Proposals"
+                        />   
+                    </View>
+                )}                        
 
                 <View className="pt-5">
                     <Text className="text-[12px] font-PoppinsRegular pb-1">Resolution File</Text>

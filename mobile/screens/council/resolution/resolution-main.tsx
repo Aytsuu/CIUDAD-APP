@@ -588,7 +588,8 @@ function ResolutionPage() {
         res_date_approved: item.res_date_approved,
         res_area_of_focus: item.res_area_of_focus,
         resolution_files: JSON.stringify(item.resolution_files || []),
-        resolution_supp: JSON.stringify(item.resolution_supp || [])
+        resolution_supp: JSON.stringify(item.resolution_supp || []),
+        gpr_id: item.gpr_id
       }
     });    
   }
