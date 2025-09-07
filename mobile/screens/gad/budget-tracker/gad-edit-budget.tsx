@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import { FormInput } from "@/components/ui/form/form-input";
-import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateAndTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useGADBudgetEntry } from "./queries/btracker-fetch";
 import { useGetGADYearBudgets } from "./queries/btracker-yearqueries";
@@ -13,21 +12,18 @@ import { useUpdateGADBudget } from "./queries/btracker-update";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import BudgetTrackerSchema, { FormValues } from "@/form-schema/gad-budget-tracker-schema";
 import PageLayout from "@/screens/_PageLayout";
-import { useAuth } from "@/contexts/AuthContext";
 import { useProjectProposalsAvailability } from "./queries/btracker-fetch";
 
 function GADViewEditEntryForm() {
-  const { user } = useAuth();
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.budYear as string;
   const gbud_num = Number(params.gbud_num) || undefined;
   const [isEditing, setIsEditing] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<MediaItem[]>([]);
-  const [showIncomeParticularsModal, setShowIncomeParticularsModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: projectProposals } = useProjectProposalsAvailability(year);
+  const [displayItems, setDisplayItems] = useState<{ name: string; pax: string; amount: number }[]>([]);
 
   // Data hooks
   const { data: yearBudgets, isLoading: yearBudgetsLoading, refetch: refetchYearBudgets } = useGetGADYearBudgets();
@@ -70,7 +66,7 @@ function GADViewEditEntryForm() {
         ? new Date(budgetEntry.gbud_datetime).toISOString().slice(0, 16)
         : new Date().toISOString().slice(0, 16);
 
-    const matchingProject = projectProposals.find(
+    const matchingProject = projectProposals?.find(
       (p) => p.dev_id === budgetEntry.dev && p.project_index === budgetEntry.gbud_project_index
     );
     const projectTitle = matchingProject?.gpr_title || budgetEntry.gbud_exp_project || "";
@@ -88,6 +84,7 @@ function GADViewEditEntryForm() {
         recordedItems = budgetEntry.gbud_exp_particulars;
       }
     }
+    setDisplayItems(recordedItems);
       
       const formValues: FormValues = {
         gbud_datetime: formattedDate,
@@ -208,26 +205,21 @@ const onSubmit = async (values: FormValues) => {
       gbudy: values.gbudy,
   };
 
-  console.log('Submitting payload:', { budgetData, files, filesToDelete }); // Debug log
-
   try {
     await updateBudget(
-      { budgetData, files, filesToDelete },
+      { gbud_num, budgetData, files, filesToDelete },
       {
         onSuccess: () => {
-          console.log('Update successful'); // Debug log
           refetchYearBudgets();
           setIsEditing(false);
           router.back();
         },
         onError: (error) => {
-          console.error("Submission error:", error); // Debug log
           setIsSubmitting(false);
         },
       }
     );
   } catch (error) {
-    console.error("Unexpected error:", error); // Debug log
     setIsSubmitting(false);
   }
 };
@@ -282,20 +274,7 @@ const onSubmit = async (values: FormValues) => {
         className="flex-1 p-4"
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-        <View className="space-y-4">
-          <View className="flex-1">
-            <FormSelect
-              control={form.control}
-              name="gbud_type"
-              label="Type of Entry"
-              options={[
-                { label: "Income", value: "Income" },
-                { label: "Expense", value: "Expense" },
-              ]}
-              disabled={true}
-            />
-          </View>
-          
+        <View className="space-y-4">  
           <View className="flex-1">
             <FormDateAndTimeInput
               control={form.control}
@@ -305,7 +284,6 @@ const onSubmit = async (values: FormValues) => {
             />
           </View>
 
-          {/* Project/Income Field */}
           <View className="flex-1 mb-4">
               <Controller
                 control={form.control}
@@ -338,7 +316,6 @@ const onSubmit = async (values: FormValues) => {
             editable={isEditing}
           />
 
-          {/* Expense Fields */}
           {(
             <>
               {/* Budget Items Section */}
@@ -348,7 +325,7 @@ const onSubmit = async (values: FormValues) => {
                 </Text>
                 {(budgetEntry.gbud_exp_particulars || []).length > 0 ? (
                   <View className="border rounded-lg border-gray-300">
-                    {budgetEntry.map((item, index)  => (
+                    {displayItems.map((item, index)  => (
                       <View
                         key={`${item.name}-${index}`}
                         className={`flex-row justify-between items-center p-3 ${
@@ -423,32 +400,6 @@ const onSubmit = async (values: FormValues) => {
           )}
         </View>
       </ScrollView>
-
-      <Modal
-        visible={showIncomeParticularsModal}
-        animationType="slide"
-        transparent={false}
-        onRequestClose={() => setShowIncomeParticularsModal(false)}
-      >
-        <View className="p-4 flex-1">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-lg font-bold">Select Income Particulars</Text>
-            <TouchableOpacity
-              onPress={() => setShowIncomeParticularsModal(false)}
-              className="bg-gray-200 px-3 py-1 rounded"
-            >
-              <Text>Close</Text>
-            </TouchableOpacity>
-          </View>
-
-          <TextInput
-            placeholder="Search income particulars..."
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            className="border border-gray-300 rounded-lg p-3 mb-4"
-          />
-        </View>
-      </Modal>
 
       {/* Footer Actions */}
       <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
