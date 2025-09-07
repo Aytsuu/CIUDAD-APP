@@ -46,7 +46,7 @@ const BudgetTrackerRecords = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("All");
   const [selectedType, setSelectedType] = useState<
-    "All" | "Income" | "Expense"
+    "All" | "Expense"
   >("All");
   const [viewFilesModalVisible, setViewFilesModalVisible] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<GADBudgetFile[]>([]);
@@ -71,7 +71,7 @@ const BudgetTrackerRecords = () => {
   const filteredData = entries.filter((entry: GADBudgetEntryUI) => {
     if (activeTab === "active" && entry.gbud_is_archive) return false;
     if (activeTab === "archive" && !entry.gbud_is_archive) return false;
-    if (selectedType !== "All" && entry.gbud_type !== selectedType)
+    if (selectedType !== "All" )
       return false;
 
     if (selectedMonth !== "All" && entry.gbud_datetime) {
@@ -82,7 +82,7 @@ const BudgetTrackerRecords = () => {
 
     if (searchQuery) {
       const searchContent =
-        `${entry.gbud_inc_particulars} ${entry.gbud_exp_particulars} ${entry.gbud_type} ${entry.gbud_amount} ${entry.gbud_add_notes}`.toLowerCase();
+        ` ${entry.gbud_exp_particulars} ${entry.gbud_amount} ${entry.gbud_add_notes}`.toLowerCase();
       return searchContent.includes(searchQuery.toLowerCase());
     }
 
@@ -129,7 +129,6 @@ const BudgetTrackerRecords = () => {
       gbud_num: entry.gbud_num.toString(),
       budYear: year,
       gbud_datetime: entry.gbud_datetime || "",
-      gbud_type: entry.gbud_type || "",
       gbud_add_notes: entry.gbud_add_notes || "",
       gbud_particulars: entry.gbud_particulars
         ? Array.isArray(entry.gbud_particulars)
@@ -147,8 +146,6 @@ const BudgetTrackerRecords = () => {
           ? entry.gbud_actual_expense.toString()
           : "",
       gbud_reference_num: entry.gbud_reference_num || "",
-      gbud_inc_amt:
-        entry.gbud_inc_amt != null ? entry.gbud_inc_amt.toString() : "",
       ...(entry.files &&
         entry.files.length > 0 && { files: JSON.stringify(entry.files) }),
     };
@@ -164,10 +161,6 @@ const BudgetTrackerRecords = () => {
       pathname: "/gad/budget-tracker/budget-tracker-log",
       params: { budYear: year },
     });
-  };
-
-  const handleTypeSelect = (option: DropdownOption) => {
-    setSelectedType(option.value as "All" | "Income" | "Expense");
   };
 
   const handleMonthSelect = (option: DropdownOption) => {
@@ -198,7 +191,7 @@ const BudgetTrackerRecords = () => {
     let balance = currentYearBudget ? Number(currentYearBudget) : 0;
 
     activeEntries.forEach((entry) => {
-      if (entry.gbud_type === "Expense" && entry.gbud_actual_expense !== null) {
+      if (entry.gbud_actual_expense !== null) {
         const amount = Number(entry.gbud_actual_expense) || 0;
         balance -= amount;
       }
@@ -212,7 +205,7 @@ const BudgetTrackerRecords = () => {
 
     return entries.reduce((total, entry) => {
       // Skip archived or non-expense entries
-      if (entry.gbud_is_archive || entry.gbud_type !== "Expense") return total;
+      if (entry.gbud_is_archive) return total;
 
       // Convert all values to numbers safely (handles strings like "0.00")
       const toNum = (val: any) => {
@@ -288,10 +281,6 @@ const BudgetTrackerRecords = () => {
         </CardHeader>
         <CardContent className="space-y-2">
           <View className="flex-row justify-between">
-            <Text className="text-gray-600">Type:</Text>
-            <Text className="font-medium">{item.gbud_type}</Text>
-          </View>
-          <View className="flex-row justify-between">
             <Text className="text-gray-600">Particulars:</Text>
             <Text>
               {item.gbud_particulars
@@ -306,14 +295,13 @@ const BudgetTrackerRecords = () => {
             <Text className="text-gray-600">Amount:</Text>
             <Text className="font-semibold">
               ₱
-              {item.gbud_type === "Expense"
-                ? (Number(item.gbud_actual_expense) === 0
+              {
+                 (Number(item.gbud_actual_expense) === 0
                     ? item.gbud_proposed_budget || 0
                     : item.gbud_actual_expense || item.gbud_proposed_budget || 0
                   ).toLocaleString("en-US", { minimumFractionDigits: 2 })
-                : (item.gbud_amount || 0).toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                  })}
+
+                  }
             </Text>
           </View>
           <View className="flex-row justify-between">
@@ -343,9 +331,6 @@ const BudgetTrackerRecords = () => {
           <TouchableOpacity onPress={() => router.back()}>
             <ChevronLeft size={24} color="#2a3a61" />
           </TouchableOpacity>
-          {/* <View className="rounded-full border-2 border-[#2a3a61] p-2 ml-2">
-              <Calendar size={20} color="#2a3a61" />
-            </View> */}
         </View>
       }
       headerTitle={<Text>{year} Budget Records</Text>}
@@ -391,17 +376,6 @@ const BudgetTrackerRecords = () => {
         }
       >
         <View className="flex-row gap-2 p-2">
-          <SelectLayout
-            options={[
-              { label: "All", value: "All" },
-              { label: "Income", value: "Income" },
-              { label: "Expense", value: "Expense" },
-            ]}
-            selectedValue={selectedType}
-            onSelect={handleTypeSelect}
-            placeholder="Type"
-            className="flex-1"
-          />
           <SelectLayout
             options={[
               { label: "All", value: "All" },

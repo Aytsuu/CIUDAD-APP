@@ -29,7 +29,7 @@ const GADBudgetTrackerMain = () => {
   )
   .sort((a, b) => parseInt(b.gbudy_year) - parseInt(a.gbudy_year));
 
-  const handleCardClick = (year: string, totalBud: number, totalExp: number, totalInc: number) => {
+  const handleCardClick = (year: string, totalBud: number, totalExp: number) => {
     router.push({
       pathname: '/gad/budget-tracker/budget-tracker-record',
       params: {
@@ -37,7 +37,6 @@ const GADBudgetTrackerMain = () => {
         budYear: year,
         totalBud: totalBud.toString(),
         totalExp: totalExp.toString(),
-        totalInc: totalInc.toString(),
       }
     });
   };
@@ -68,7 +67,7 @@ const GADBudgetTrackerMain = () => {
         
         <View className="flex-1 justify-center items-center">
           <Text className="text-red-500 text-center mb-4">
-            Failed to load income/expense data.
+            Failed to load expense data.
           </Text>
           <TouchableOpacity
             onPress={handleRefresh}
@@ -111,7 +110,6 @@ const GADBudgetTrackerMain = () => {
       <View className="space-y-4 pb-4">
         {filteredData.map((tracker) => {
           const budget = Number(tracker.gbudy_budget);
-          const income = Number(tracker.gbudy_income);
           const expense = Number(tracker.gbudy_expenses);
           const remainingBal = Number(tracker.gbudy_budget - tracker.gbudy_expenses);
           const progress = budget > 0 ? (expense / budget) * 100 : 0;
@@ -123,7 +121,6 @@ const GADBudgetTrackerMain = () => {
                 tracker.gbudy_year,
                 budget,
                 expense,
-                income
               )}
               activeOpacity={0.8}
             >
@@ -146,12 +143,6 @@ const GADBudgetTrackerMain = () => {
                     <Text className="text-gray-600">Total Budget:</Text>
                     <Text className="text-blue-600">
                       Php {budget.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between">
-                    <Text className="text-gray-600">Total Income:</Text>
-                    <Text className="text-green-600">
-                      Php {income.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </Text>
                   </View>
                   <View className="flex-row justify-between">
