@@ -4,7 +4,8 @@ export const acceptReq = async (cr_id: string) => {
     try{
         const res = await api.put(`/clerk/certificate-update-status/${cr_id}/`, {
             cr_req_status: "In Progress",
-            cr_req_payment_status: "Paid"
+            cr_req_payment_status: "Paid",
+            cr_pay_date: new Date().toISOString()
         })
         return res.data
     }catch(err){
@@ -31,7 +32,8 @@ export const acceptNonResReq = async (nrc_id: string, discountReason?: string) =
     try{
         const payload: any = {
             nrc_req_status: "In Progress",
-            nrc_req_payment_status: "Paid"
+            nrc_req_payment_status: "Paid",
+            nrc_pay_date: new Date().toISOString()
         };
         
         if (discountReason) {

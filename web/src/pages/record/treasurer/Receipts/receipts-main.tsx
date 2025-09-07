@@ -84,6 +84,17 @@ function ReceiptPage() {
         );
       }
     },
+    {
+      accessorKey: "nrc_discount_reason",
+      header: "Discount Reason",
+      cell: ({ row }) => {
+        const discountReason = row.getValue("nrc_discount_reason") as string | null | undefined;
+        if (!discountReason || discountReason === "None" || discountReason.trim() === "") {
+          return <div className="text-gray-400">—</div>;
+        }
+        return <div className="text-gray-900">{discountReason}</div>;
+      }
+    },
   ];
 
   const filterOptions = [

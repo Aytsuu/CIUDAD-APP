@@ -69,10 +69,7 @@ function ReceiptForm({
         }
     };
 
-    // Debug form state
-    console.log('Form errors:', form.formState.errors);
-    console.log('Form is valid:', form.formState.isValid);
-    console.log('Form values:', form.watch());
+  
 
     const isAlreadyPaid = pay_status === "Paid";
 
@@ -89,18 +86,8 @@ function ReceiptForm({
         <>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {/* Debug info */}
-                <div className="text-xs text-red-500">
-                {Object.keys(form.formState.errors).length > 0 && (
-                    <div>
-                    <strong>Form Errors:</strong>
-                    {Object.entries(form.formState.errors).map(([field, error]) => (
-                        <div key={field}>{field}: {error?.message}</div>
-                    ))}
-                    </div>
-                )}
-                </div>
-
+                
+            
                 {/* Warning message if already paid */}
                 {isAlreadyPaid && (
                 <Card className="border-orange-200 bg-orange-50">

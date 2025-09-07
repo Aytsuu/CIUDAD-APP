@@ -475,7 +475,7 @@ export default function AnnualDevelopmentPlanCreate() {
                       min="0"
                       step="1"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                    />
+                    />1
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Price (₱)</label>

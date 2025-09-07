@@ -13,6 +13,7 @@ export type Receipt = {
     inv_pay_method: string;
     inv_payor: string; // Added this field
     inv_change?: string | number;
+    nrc_discount_reason?: string | null;
     // Keep these if you need them separately
     payor_lname?: string;
     payor_fname?: string;
