@@ -382,35 +382,61 @@ const SupplementsSection = ({ records }: { records: ChildHealthHistoryRecord[] }
 const TabbedHistoryView = ({ recordsToDisplay }: { recordsToDisplay: ChildHealthHistoryRecord[] }) => {
   const [activeTab, setActiveTab] = useState<HistoryTab>('tt');
   
-  // Check which tabs have data
+  // Check which tabs have data with defensive checks
   const hasTTData = recordsToDisplay.some(record => record.tt_status && record.tt_status !== "N/A");
   const hasEBFData = recordsToDisplay.some(record => 
-    record.exclusive_bf_checks && record.exclusive_bf_checks.some(ebf => ebf.ebf_date && ebf.ebf_date !== "N/A")
+    Array.isArray(record.exclusive_bf_checks) && 
+    record.exclusive_bf_checks.some(ebf => ebf.ebf_date && ebf.ebf_date !== "N/A")
   );
   const hasFindingsData = recordsToDisplay.some(record => 
-    record.child_health_vital_signs.some(vital => vital.find_details && 
-      (vital.find_details.assessment_summary || vital.find_details.obj_summary || 
-       vital.find_details.subj_summary || vital.find_details.plantreatment_summary))
+    Array.isArray(record.child_health_vital_signs) && 
+    record.child_health_vital_signs.some(vital => 
+      vital.find_details && 
+      (vital.find_details.assessment_summary || 
+       vital.find_details.obj_summary || 
+       vital.find_details.subj_summary || 
+       vital.find_details.plantreatment_summary)
+    )
   );
-  const hasDisabilitiesData = recordsToDisplay.some(record => record.disabilities && record.disabilities.length > 0);
+  const hasDisabilitiesData = recordsToDisplay.some(record => 
+    Array.isArray(record.disabilities) && record.disabilities.length > 0
+  );
   const hasVitalsData = recordsToDisplay.some(record => 
-    (record.child_health_vital_signs.some(vital => vital.bm_details?.age || vital.bm_details?.weight || 
-      vital.bm_details?.height || vital.temp) || 
+    (Array.isArray(record.child_health_vital_signs) && 
+     record.child_health_vital_signs.some(vital => 
+       vital.bm_details?.age || 
+       vital.bm_details?.weight || 
+       vital.bm_details?.height || 
+       vital.temp
+     )) || 
+    (Array.isArray(record.child_health_notes) && 
      record.child_health_notes.some(note => note.chn_notes || note.followv_details))
   );
   const hasNutritionData = recordsToDisplay.some(record => 
-    record.nutrition_statuses.some(status => status.wfa || status.lhfa || status.muac || status.muac_status || status.edemaSeverity)
+    Array.isArray(record.nutrition_statuses) && 
+    record.nutrition_statuses.some(status => 
+      status.wfa || status.lhfa || status.muac || status.muac_status || status.edemaSeverity
+    )
   );
   const hasImmunizationData = recordsToDisplay.some(record => 
-    record.immunization_tracking.some(imt => imt.vachist_details?.vaccine_stock?.vaccinelist?.vac_name || 
-      imt.vachist_details?.vachist_doseNo || imt.vachist_details?.date_administered || 
-      imt.vachist_details?.vachist_status || imt.vachist_details?.vachist_age || 
-      imt.vachist_details?.follow_up_visit)
+    Array.isArray(record.immunization_tracking) && 
+    record.immunization_tracking.some(imt => 
+      imt.vachist_details?.vaccine_stock?.vaccinelist?.vac_name || 
+      imt.vachist_details?.vachist_doseNo || 
+      imt.vachist_details?.date_administered || 
+      imt.vachist_details?.vachist_status || 
+      imt.vachist_details?.vachist_age || 
+      imt.vachist_details?.follow_up_visit
+    )
   );
   const hasSupplementsData = recordsToDisplay.some(record => 
-    (record.child_health_supplements.some(sup => sup.medrec_details?.minv_details?.med_detail?.med_name) || 
-     record.supplements_statuses.some(status => status.status_type || status.birthwt || status.date_seen || 
-       status.date_given_iron || status.date_completed))
+    (Array.isArray(record.child_health_supplements) && 
+     record.child_health_supplements.some(sup => sup.medrec_details?.minv_details?.med_detail?.med_name)) || 
+    (Array.isArray(record.supplements_statuses) && 
+     record.supplements_statuses.some(status => 
+       status.status_type || status.birthwt || status.date_seen || 
+       status.date_given_iron || status.date_completed
+     ))
   );
 
   // Set initial tab to the first one with data
@@ -423,7 +449,7 @@ const TabbedHistoryView = ({ recordsToDisplay }: { recordsToDisplay: ChildHealth
     else if (hasNutritionData) setActiveTab('nutrition');
     else if (hasImmunizationData) setActiveTab('immunization');
     else if (hasSupplementsData) setActiveTab('supplements');
-  }, [recordsToDisplay]);
+  }, [hasTTData, hasEBFData, hasFindingsData, hasDisabilitiesData, hasVitalsData, hasNutritionData, hasImmunizationData, hasSupplementsData]);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -503,7 +529,7 @@ const TabbedHistoryView = ({ recordsToDisplay }: { recordsToDisplay: ChildHealth
               onPress={() => setActiveTab('vitals')}
             >
               <Text className={`font-medium ${activeTab === 'vitals' ? 'text-blue-600' : 'text-gray-500'}`}>
-                Vitals & Notes
+                Vital Signs & Notes
               </Text>
             </TouchableOpacity>
           )}
@@ -547,7 +573,6 @@ const TabbedHistoryView = ({ recordsToDisplay }: { recordsToDisplay: ChildHealth
     </View>
   );
 };
-
 const NoDataMessage = () => (
   <View className="p-6 items-center">
     <Text className="text-gray-600 text-center">

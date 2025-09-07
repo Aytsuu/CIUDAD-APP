@@ -182,7 +182,7 @@ const hasCustomIllnesses = () => {
 
   return (
     <div className="mx-auto p-4 bg-white max-w-3xl text-[10px]">
-      <div className="flex justify-between items-center mb-2 no-print"> {/* Add no-print class */}
+      <div className="flex justify-between items-center mb-1 no-print"> {/* Add no-print class */}
         <Button
           className="text-black p-1 self-start"
           variant="outline"
@@ -199,7 +199,7 @@ const hasCustomIllnesses = () => {
       {/* Wrap the content to be printed with the ref */}
       <div ref={componentRef} className="print-content">
         {/* Header */}
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex justify-between items-center mb-1">
           <div className="text-xs font-bold ">SIDE A</div>
           <div className="text-center font-bold text-sm">FAMILY PLANNING (FP) FORM 1</div>
           <div className="text-xs font-bold">ver 3.0</div>
@@ -209,7 +209,7 @@ const hasCustomIllnesses = () => {
           {/* Top Section - Two Columns */}
           <div className="flex">
             {/* Left Column - Instructions */}
-            <div className="w-2/3 border-r bg-gray-200 border-black p-2">
+            <div className="w-2/3 border-r bg-gray-200 border-black p-1">
               <div className=" text-sm mb-1 font-bold">FAMILY PLANNING CLIENT ASSESSMENT RECORD</div>
               <p className="text-xs italic">
                 Instructions for Physicians, Nurses, and Midwives: <strong>Make sure that the client is not pregnant by using the question listed in SIDE B. </strong>Completely fill out or check the required information. Refer accordingly for any abnormal history/findings for further medical evaluation.
@@ -217,7 +217,7 @@ const hasCustomIllnesses = () => {
             </div>
 
             {/* Right Column - Client Info */}
-            <div className="w-1/3 p-2 bg-gray-200">
+            <div className="w-1/3 p-1 bg-gray-200">
               <div className="flex items-center mb-1">
                 <Label className="text-xs  mr-2 whitespace-nowrap">CLIENT ID.:</Label>
                 <InputLine className="flex-1 h-4" value={recordData.client_id} />
@@ -226,12 +226,12 @@ const hasCustomIllnesses = () => {
                 <Label className="text-xs  mr-2 whitespace-nowrap">PHILHEALTH NO.:</Label>
                 <InputLine className="flex-1 h-4" value={recordData.philhealthNo} />
               </div>
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-1 mb-1">
                 <Label className="text-xs ">NHTS?</Label>
                 <YesNoCheckbox label="Yes" checked={recordData.nhts_status === true} />
                 <YesNoCheckbox label="No" checked={recordData.nhts_status === false} />
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Label className="text-xs ">4Ps:</Label>
                 <YesNoCheckbox label="Yes" checked={recordData.fourps === true} />
                 <YesNoCheckbox label="No" checked={recordData.fourps === false} />
@@ -240,8 +240,8 @@ const hasCustomIllnesses = () => {
           </div>
 
           {/* Client Details */}
-          <div className="border-t border-black border-b p-2">
-            <div className="mb-2 ">
+          <div className="border-t border-black border-b p-1">
+            <div className="mb-1 ">
               <Label className=" text-xs">NAME OF CLIENT: </Label>
               <div className="flex grid-cols-12 gap-1 mt-1">
                 <div className="col-span-2">
@@ -276,7 +276,7 @@ const hasCustomIllnesses = () => {
             </div>
 
             {/* Address, Contact Number, Civil Status - Single Row */}
-            <div className="mb-2">
+            <div className="mb-1">
               <Label className=" text-xs">ADDRESS</Label>
               <div className="flex  grid-cols-12 gap-6 mt-1">
                 <div className="col-span-3">
@@ -304,7 +304,7 @@ const hasCustomIllnesses = () => {
             </div>
 
             {/* Name of Spouse - Single Row */}
-            <div className="mb-2">
+            <div className="mb-1">
               <Label className=" text-xs">NAME OF SPOUSE:</Label>
               <div className="flex grid-cols-12 gap-5 mt-1">
                 <div className="col-span-4">
@@ -334,14 +334,14 @@ const hasCustomIllnesses = () => {
               </div>
             </div>
 
-            <div className="flex grid-cols-4 gap-9 mb-2">
+            <div className="flex grid-cols-4 gap-9 mb-1">
               <div>
                 <Label className=" text-xs">NO. OF LIVING CHILDREN:</Label>
                 <InputLine className="h-4 mt-1" value={recordData.obstetricalHistory?.numOfLivingChildren} />
               </div>
               <div>
                 <Label className=" text-xs">PLAN TO HAVE MORE CHILDREN?</Label>
-                <div className="flex gap-2 mt-1">
+                <div className="flex gap-1 mt-1">
                   <YesNoCheckbox label="Yes" checked={recordData.plan_more_children === true} />
                   <YesNoCheckbox label="No" checked={recordData.plan_more_children === false} />
                 </div>
@@ -393,8 +393,8 @@ const hasCustomIllnesses = () => {
             {/* Left Column */}
             <div className="w-1/2 border-r border-black">
               {/* Medical History */}
-              <div className="p-2">
-  <Label className=" text-xs block mb-1">I. MEDICAL HISTORY</Label>
+              <div className="p-1">
+  <Label className=" text-xs block ">I. MEDICAL HISTORY</Label>
   <div className="text-xs">
     <div>Does the client have any of the following?</div>
     {[
@@ -413,7 +413,7 @@ const hasCustomIllnesses = () => {
     ].map((item, index) => (
       <div key={index} className="flex justify-between items-center py-0.5">
         <span>• {item.label}</span>
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <YesNoCheckbox
             label="Yes"
             checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === true}
@@ -442,9 +442,9 @@ const hasCustomIllnesses = () => {
 </div>
 
               {/* Obstetrical History */}
-              <div className="border-t border-black p-2">
-                <Label className=" text-xs block mb-1">II. OBSTETRICAL HISTORY</Label>
-                <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+              <div className="border-t border-black p-1">
+                <Label className=" text-xs block">II. OBSTETRICAL HISTORY</Label>
+                <div className="grid grid-cols-2 gap-1 text-xs ">
                   <div className="flex items-center gap-1">
                     <span>Number of pregnancies:</span>
                     <span>G</span>
@@ -466,14 +466,14 @@ const hasCustomIllnesses = () => {
                     <span>Living children</span>
                   </div>
                 </div>
-                <div className="text-xs space-y-1">
+                <div className="text-xs ">
                   <div className="flex items-center gap-1">
                     <span>Date of last delivery:</span>
                     <InputLine className="inline-block w-24 h-4" value={recordData.obstetricalHistory?.lastDeliveryDate} />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <span>Type of last delivery:</span>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
                       <div className="flex items-center gap-1">
                         <input type="checkbox" checked={recordData.obstetricalHistory?.typeOfLastDelivery === 'Vaginal'} disabled className="h-3 w-3" />
                         <span>Vaginal</span>
@@ -509,19 +509,19 @@ const hasCustomIllnesses = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <div className="flex items-center gap-1">
                       <input type="checkbox" checked={recordData.obstetricalHistory?.dysmenorrhea === true} disabled className="h-3 w-3" />
                       <span>Dysmenorrhea</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <div className="flex items-center gap-1">
                       <input type="checkbox" checked={recordData.obstetricalHistory?.hydatidiformMole === true} disabled className="h-3 w-3" />
                       <span>Hydatidiform mole (within the last 12 months)</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <div className="flex items-center gap-1">
                       <input type="checkbox" checked={recordData.obstetricalHistory?.ectopicPregnancyHistory === true} disabled className="h-3 w-3" />
                       <span>History of ectopic pregnancy</span>
@@ -531,8 +531,8 @@ const hasCustomIllnesses = () => {
               </div>
 
               {/* STI */}
-              <div className="border-t border-black p-2">
-                <Label className=" text-xs block mb-1">III. RISKS FOR SEXUALLY TRANSMITTED INFECTIONS</Label>
+              <div className="border-t border-black p-1">
+                <Label className=" text-xs block">III. RISKS FOR SEXUALLY TRANSMITTED INFECTIONS</Label>
                 <div className="text-xs">
                   <div>Does the client or the client's partner have any of the following?</div>
                   {[
@@ -543,7 +543,7 @@ const hasCustomIllnesses = () => {
                   ].map((item, index) => (
                     <div key={index} className="flex justify-between items-center py-0.5">
                       <span>• {item.label}</span>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
                         <YesNoCheckbox
                           label="Yes"
                           checked={recordData.sexuallyTransmittedInfections?.[item.key] === true}
@@ -557,7 +557,7 @@ const hasCustomIllnesses = () => {
                   ))}
                   <div className="flex justify-between items-center py-0.5">
                     <span>• HIV / AIDS / Pelvic inflammatory disease</span>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
                       <YesNoCheckbox
                         label="Yes"
                         checked={recordData.sexuallyTransmittedInfections?.hiv === true}
@@ -583,7 +583,7 @@ const hasCustomIllnesses = () => {
             {/* Right Column */}
             <div className="w-1/2">
               {/* VAW Risk Assessment */}
-              <div className="p-2">
+              <div className="p-1">
                 <Label className=" text-xs block mb-1">IV. RISKS FOR VIOLENCE AGAINST WOMEN (VAW)</Label>
                 <div className="text-xs">
                   {[
@@ -593,7 +593,7 @@ const hasCustomIllnesses = () => {
                   ].map((item, index) => (
                     <div key={index} className="flex justify-between items-center py-0.5">
                       <span>• {item.label}</span>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
                         <YesNoCheckbox
                           label="Yes"
                           checked={recordData.violenceAgainstWomen?.[item.key] === true}
@@ -613,11 +613,11 @@ const hasCustomIllnesses = () => {
                 </div>
               </div>
               {/* Physical Examination - Additional Details */}
-              <div className="border-t border-black p-2">
+              <div className="border-t border-black p-1">
                 <Label className=" text-xs block mb-1">V. PHYSICAL EXAMINATION</Label>
                 <div className="text-xs space-y-2">
                   {/* Vital Signs - 2 Columns */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1">
                     <div className="flex items-center gap-1">
                       <span>Weight:</span>
                       <InputLine className="flex-1 h-4" value={recordData.weight} />
@@ -641,7 +641,7 @@ const hasCustomIllnesses = () => {
                   </div>
 
                   {/* Body Examinations - 2 Columns */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1">
                     <div> SKIN: <InputLine className="h-4" value={recordData.skinExamination} /></div>
                     <div> CONJUNCTIVA: <InputLine className="h-4" value={recordData.conjunctivaExamination} /> </div>
                     <div> NECK:<InputLine className="h-4" value={recordData.neckExamination} /> </div>
@@ -653,7 +653,7 @@ const hasCustomIllnesses = () => {
                   {/* Pelvic Examination - 2 Columns */}
                   <div className="mt-2">
                     <div className="font-semibold">PELVIC EXAMINATION (For IUD Acceptors):</div>
-                    <div className="ml-4 grid grid-cols-2 gap-2">
+                    <div className="ml-4 grid grid-cols-2 gap-1">
                       <div className="flex items-center gap-1">
                         <span>Pelvic Examination:</span>
                         <InputLine className="flex-1 h-4" value={recordData.pelvicExamination} />
@@ -662,9 +662,9 @@ const hasCustomIllnesses = () => {
                         <span>Cervical Consistency:</span>
                         <InputLine className="flex-1 h-4" value={recordData.cervicalConsistency} />
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <span>Cervical Tenderness:</span>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           <div className="flex items-center gap-1">
                             <input type="checkbox" checked={recordData.cervicalTenderness === true} disabled className="h-3 w-3" />
                             <span>Yes</span>
@@ -675,9 +675,9 @@ const hasCustomIllnesses = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <span>Adnexal mass/tenderness:</span>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           <div className="flex items-center gap-1">
                             <input type="checkbox" checked={recordData.cervicalAdnexal === true} disabled className="h-3 w-3" />
                             <span>Yes</span>
@@ -703,14 +703,14 @@ const hasCustomIllnesses = () => {
               </div>
 
               {/* Acknowledgement */}
-              <div className="border-t border-black p-2">
+              <div className="border-t border-black p-1">
                 <Label className=" text-xs block mb-1">ACKNOWLEDGEMENT:</Label>
                 <div className="text-xs">
-                  <p className="mb-2">
+                  <p className="mb-1">
                     This is to certify that the Physician/Nurse/Midwife of the clinic has fully explained to me the different methods available in family planning and I freely choose the <span className="font-semibold underline">{recordData.acknowledgement?.selectedMethod || '_______'}</span> method.
                   </p>
 
-                  <div className="grid grid-cols-2 gap-4 mb-2">
+                  <div className="grid grid-cols-2 gap-4 mb-1">
                     <div>
                       <SignatureDisplay signatureData={recordData.acknowledgement?.clientSignature} />
                       <div>Client Signature</div>
@@ -721,7 +721,7 @@ const hasCustomIllnesses = () => {
                     </div>
                   </div>
 
-                  <p className="mb-2">
+                  <p className="mb-1">
                     For WRA below 18 yrs. old:<br />
                     I hereby consent <span className="font-semibold underline">{recordData.acknowledgement?.clientName || '_______'}</span> to accept the Family Planning method
                   </p>
@@ -739,7 +739,7 @@ const hasCustomIllnesses = () => {
                 </div>
               </div>
 
-              <div className="border-t border-black p-2 text-xs">
+              <div className="border-t border-black p-1 text-xs">
                 <div className="justify-text italic gap-4">
 
                   <div className="text-xs space-y-0.5">

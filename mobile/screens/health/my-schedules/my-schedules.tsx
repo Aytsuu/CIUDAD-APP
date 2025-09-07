@@ -445,9 +445,9 @@ export default function MyAppointmentsScreen() {
                 </View>
               </View>
               {/* Action Indicator */}
-              <View className="bg-blue-600 px-5 py-3">
+              {/* <View className="bg-blue-600 px-5 py-3">
                 <Text className="text-white font-semibold text-center">View Details →</Text>
-              </View>
+              </View> */}
             </TouchableOpacity>
           )
         }}

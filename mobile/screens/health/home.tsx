@@ -6,10 +6,15 @@ import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
 import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus } from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
+import { usePendingAppointments } from "./my-schedules/pendingAppointment";
+import NotificationBadge from "./my-schedules/notifbadge";
 
 const { width } = Dimensions.get('window');
 
 const Homepage = () => {
+  // Get pending appointments count
+  const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments();
+
   const modules = [
     { name: 'Child Health Records', route: 'admin/childhealth/overall', icon: Baby },
     { name: 'Family Planning', route: 'admin/familyplanning/overall', icon: Heart },
@@ -172,8 +177,16 @@ const Homepage = () => {
         <View className="px-6 mb-8">
           <View className="flex-row justify-between items-center mb-2">
             <Text className="text-gray-800 text-xl font-PoppinsSemiBold">Book appointment</Text>
-            <TouchableOpacity className="bg-blue-700 p-1 rounded-xl" onPress={() => router.push("/my-schedules/my-schedules")}>
+            <TouchableOpacity 
+              className="bg-blue-700 p-1 rounded-xl relative" 
+              onPress={() => router.push("/my-schedules/my-schedules")}
+            >
               <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My appointments</Text>
+              {/* Notification Badge */}
+              <NotificationBadge 
+                count={pendingCount} 
+                showBadge={!isLoadingPending && pendingCount > 0} 
+              />
             </TouchableOpacity>
           </View>
 

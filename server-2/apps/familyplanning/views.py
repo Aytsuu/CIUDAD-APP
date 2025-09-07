@@ -3147,7 +3147,7 @@ def get_detailed_monthly_fp_report(request, year, month):
                     # Calculate age based on the start_date of the report period
                     age = relativedelta(start_date, patient_dob).years
                     method = fp_type_instance.fpt_method_used
-                    
+                    print("method: ",method)
                     # Increment counts if the method exists and age falls into a defined group
                     if method in counts:
                         for group, (min_age, max_age) in age_groups.items():
@@ -3157,10 +3157,6 @@ def get_detailed_monthly_fp_report(request, year, month):
                                 break # Stop after finding the correct age group
 
             return counts
-
-        # Fetch data for each client type category
-        # 'currentuser' for BOM (Balance of Month) typically refers to clients from the previous month
-        # bom_counts = get_method_counts('currentuser', start_date - relativedelta(months=1), start_date - relativedelta(days=1))
         bom_counts = get_method_counts('currentuser', start_date,end_date )
         new_counts = get_method_counts('newacceptor', start_date, end_date)
         other_counts = get_method_counts('otheracceptor', start_date, end_date)
@@ -3175,7 +3171,7 @@ def get_detailed_monthly_fp_report(request, year, month):
             "month": month,
             "year": year,
         }
-        
+        print("Report data:",report_data)
         return Response(report_data, status=status.HTTP_200_OK)
 
     except Exception as e:

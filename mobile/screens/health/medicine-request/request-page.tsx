@@ -71,7 +71,7 @@ export default function MedicineRequestScreen() {
     const firstInventory = medicine.inventory_items[0];
     
     const medicineString = JSON.stringify({
-      minv_id: firstInventory?.minv_id, // Add minv_id (numeric)
+      minv_id: firstInventory?.minv_id, 
       med_id: medicine.med_id,
       name: medicine.med_name,
       med_type: medicine.med_type,
