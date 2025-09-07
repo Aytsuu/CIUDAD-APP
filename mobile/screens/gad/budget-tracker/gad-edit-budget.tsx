@@ -7,14 +7,17 @@ import { ChevronLeft } from "lucide-react-native";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateAndTimeInput } from "@/components/ui/form/form-date-time-input";
-import { useIncomeParticulars, useGADBudgetEntry } from "./queries/btracker-fetch";
+import { useGADBudgetEntry } from "./queries/btracker-fetch";
 import { useGetGADYearBudgets } from "./queries/btracker-yearqueries";
 import { useUpdateGADBudget } from "./queries/btracker-update";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import BudgetTrackerSchema, { FormValues } from "@/form-schema/gad-budget-tracker-schema";
 import PageLayout from "@/screens/_PageLayout";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProjectProposalsAvailability } from "./queries/btracker-fetch";
 
 function GADViewEditEntryForm() {
+  const { user } = useAuth();
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.budYear as string;
@@ -24,24 +27,20 @@ function GADViewEditEntryForm() {
   const [showIncomeParticularsModal, setShowIncomeParticularsModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: projectProposals } = useProjectProposalsAvailability(year);
 
   // Data hooks
   const { data: yearBudgets, isLoading: yearBudgetsLoading, refetch: refetchYearBudgets } = useGetGADYearBudgets();
   const { data: budgetEntry, isLoading: entryLoading } = useGADBudgetEntry(gbud_num);
-  const { data: incomeParticulars = [], isLoading: incomeParticularsLoading } = useIncomeParticulars(year);
   const { mutate: updateBudget } = useUpdateGADBudget(yearBudgets || []);
 
-  // Calculate remaining balance
   const calculateRemainingBalance = (): number => {
     if (!yearBudgets || !year) return 0;
     const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
     if (!currentYearBudget) return 0;
     const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
     const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
-    const currentExpense = budgetEntry?.gbud_type === "Expense" 
-      ? Number(budgetEntry.gbud_actual_expense) || 0 
-      : 0;
-    return initialBudget - (totalExpenses - currentExpense);
+    return initialBudget - totalExpenses;
   };
 
   const remainingBalance = calculateRemainingBalance();
@@ -50,19 +49,16 @@ function GADViewEditEntryForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(BudgetTrackerSchema),
     defaultValues: {
-      gbud_type: "Expense",
       gbud_datetime: new Date().toISOString().slice(0, 16),
       gbud_add_notes: "",
-      gbud_inc_particulars: "",
-      gbud_inc_amt: 0,
       gbud_exp_project: "",
       gbud_exp_particulars: [],
       gbud_actual_expense: 0,
-      gbud_proposed_budget: 0,
-      gbud_reference_num: null,
+      gbud_reference_num: "",
       gbud_remaining_bal: 0,
       gbudy: 0,
-      gpr: null,
+      dev: 0,
+      gbud_project_index: 0,
     },
     context: { calculateRemainingBalance },
   });
@@ -70,22 +66,47 @@ function GADViewEditEntryForm() {
   // Populate form when data is loaded
   useEffect(() => {
     if (budgetEntry && yearBudgets) {
-      const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+      const formattedDate = budgetEntry.gbud_datetime
+        ? new Date(budgetEntry.gbud_datetime).toISOString().slice(0, 16)
+        : new Date().toISOString().slice(0, 16);
+
+    const matchingProject = projectProposals.find(
+      (p) => p.dev_id === budgetEntry.dev && p.project_index === budgetEntry.gbud_project_index
+    );
+    const projectTitle = matchingProject?.gpr_title || budgetEntry.gbud_exp_project || "";
+
+      let recordedItems: { name: string; pax: string; amount: number }[] = [];
+    if (budgetEntry.gbud_exp_particulars) {
+      if (typeof budgetEntry.gbud_exp_particulars === "string") {
+        try {
+          recordedItems = JSON.parse(budgetEntry.gbud_exp_particulars);
+        } catch (e) {
+          console.error("Failed to parse gbud_exp_particulars:", budgetEntry.gbud_exp_particulars);
+          recordedItems = [];
+        }
+      } else if (Array.isArray(budgetEntry.gbud_exp_particulars)) {
+        recordedItems = budgetEntry.gbud_exp_particulars;
+      }
+    }
       
       const formValues: FormValues = {
-        gbud_type: budgetEntry.gbud_type as "Income" | "Expense",
-        gbud_datetime: budgetEntry.gbud_datetime,
+        gbud_datetime: formattedDate,
         gbud_add_notes: budgetEntry.gbud_add_notes || "",
-        gbud_inc_particulars: budgetEntry.gbud_inc_particulars || "",
-        gbud_inc_amt: budgetEntry.gbud_inc_amt ? Number(budgetEntry.gbud_inc_amt) : 0,
-        gbud_exp_project: budgetEntry.gbud_exp_project || "",
-        gbud_exp_particulars: budgetEntry.gbud_exp_particulars || [],
-        gbud_proposed_budget: budgetEntry.gbud_proposed_budget ? Number(budgetEntry.gbud_proposed_budget) : 0,
-        gbud_actual_expense: budgetEntry.gbud_actual_expense ? Number(budgetEntry.gbud_actual_expense) : 0,
-        gbud_reference_num: budgetEntry.gbud_reference_num || null,
-        gbud_remaining_bal: remainingBalance,
-        gbudy: currentYearBudget?.gbudy_num || 0,
-        gpr: budgetEntry.gpr ? budgetEntry.gpr.gpr_id : null,
+        gbud_exp_project: projectTitle,
+        gbud_exp_particulars: recordedItems,
+        gbud_proposed_budget: budgetEntry.gbud_proposed_budget
+          ? Number(budgetEntry.gbud_proposed_budget)
+          : 0,
+        gbud_actual_expense: budgetEntry.gbud_actual_expense
+          ? Number(budgetEntry.gbud_actual_expense)
+          : 0,
+        gbud_reference_num: budgetEntry.gbud_reference_num || "",
+        gbud_remaining_bal: budgetEntry.gbud_remaining_bal
+          ? Number(budgetEntry.gbud_remaining_bal)
+          : 0,
+        gbudy: yearBudgets?.find((b) => b.gbudy_year === year)?.gbudy_num || 0,
+        dev: budgetEntry.dev || 0,
+        gbud_project_index: budgetEntry.gbud_project_index || 0,
       };
 
       form.reset(formValues);
@@ -119,17 +140,6 @@ function GADViewEditEntryForm() {
     }
   }, [yearBudgets, yearBudgetsLoading, year, form]);
 
-  // Validate budget fields
-  const typeWatch = form.watch("gbud_type");
-  const filteredIncomeParticulars = incomeParticulars.filter((item) =>
-    item.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleSelectIncomeParticular = (particular: string) => {
-    form.setValue("gbud_inc_particulars", particular);
-    setShowIncomeParticularsModal(false);
-    setSearchTerm("");
-  };
 
 const onSubmit = async (values: FormValues) => {
   setIsSubmitting(true);
@@ -145,16 +155,23 @@ const onSubmit = async (values: FormValues) => {
     return;
   }
 
-  if (values.gbud_type === "Expense") {
-    if ((values.gbud_actual_expense ?? 0) > remainingBalance) {
-      form.setError("gbud_actual_expense", {
-        type: "manual",
-        message: `Actual expense cannot exceed remaining balance of ₱${remainingBalance.toLocaleString()}`,
-      });
-      setIsSubmitting(false);
-      return;
+  if (values.gbud_actual_expense) {
+      const actualExpense = Number(values.gbud_actual_expense);
+      if (actualExpense > remainingBalance) {
+        form.setError("gbud_actual_expense", {
+          type: "manual",
+          message: `Actual expense exceeds remaining balance of ₱${remainingBalance.toLocaleString()}`,
+        });
+        return;
+      }
+      if (actualExpense < 0) {
+        form.setError("gbud_actual_expense", {
+          type: "manual",
+          message: `Actual expense cannot be negative`,
+        });
+        return;
+      }
     }
-  }
 
   const files = mediaFiles
     .filter(media => media.file && media.file.length > 0)
@@ -176,24 +193,19 @@ const onSubmit = async (values: FormValues) => {
     }));
 
   const budgetData = {
-    gbud_num: gbud_num,
-    gbud_type: values.gbud_type,
     gbud_datetime: new Date(values.gbud_datetime).toISOString(),
-    gbud_add_notes: values.gbud_add_notes || null,
-    ...(values.gbud_type === "Income" && {
-      gbud_inc_particulars: values.gbud_inc_particulars,
-      gbud_inc_amt: values.gbud_inc_amt,
-    }),
-    ...(values.gbud_type === "Expense" && {
-      gbud_exp_project: values.gbud_exp_project,
-      gbud_exp_particulars: values.gbud_exp_particulars,
-      gbud_actual_expense: values.gbud_actual_expense,
-      gbud_proposed_budget: values.gbud_proposed_budget,
-      gbud_reference_num: values.gbud_reference_num,
-      gbud_remaining_bal: remainingBalance - (values.gbud_actual_expense ?? 0),
-      gpr: values.gpr,
-    }),
-    gbudy: values.gbudy,
+      gbud_add_notes: values.gbud_add_notes || null,
+      ...{
+        gbud_exp_project: values.gbud_exp_project,
+        gbud_exp_particulars: values.gbud_exp_particulars,
+        gbud_proposed_budget: values.gbud_proposed_budget,
+        gbud_actual_expense: values.gbud_actual_expense,
+        gbud_reference_num: values.gbud_reference_num,
+        gbud_remaining_bal: remainingBalance - (values.gbud_actual_expense || 0),
+        dev: values.dev,
+        gbud_project_index: values.gbud_project_index,
+      },
+      gbudy: values.gbudy,
   };
 
   console.log('Submitting payload:', { budgetData, files, filesToDelete }); // Debug log
@@ -295,32 +307,6 @@ const onSubmit = async (values: FormValues) => {
 
           {/* Project/Income Field */}
           <View className="flex-1 mb-4">
-            {typeWatch === "Income" ? (
-              <Controller
-                control={form.control}
-                name="gbud_inc_particulars"
-                render={({ field, fieldState }) => (
-                  <View>
-                    <Text className="text-[12px] font-PoppinsRegular">
-                      Income Particulars
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => isEditing && setShowIncomeParticularsModal(true)}
-                      className={`border rounded-lg p-3 ${
-                        fieldState.error ? "border-red-500" : "border-gray-300"
-                      }`}
-                      disabled={!isEditing}
-                    >
-                      <Text
-                        className={field.value ? "text-black" : "text-gray-400"}
-                      >
-                        {field.value || "Select income particulars..."}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              />
-            ) : (
               <Controller
                 control={form.control}
                 name="gbud_exp_project"
@@ -340,8 +326,7 @@ const onSubmit = async (values: FormValues) => {
                     />
                   </View>
                 )}
-              />
-            )}
+              />      
           </View>
 
           {/* Description */}
@@ -353,19 +338,8 @@ const onSubmit = async (values: FormValues) => {
             editable={isEditing}
           />
 
-          {/* Income Amount */}
-          {typeWatch === "Income" && (
-            <FormInput
-              control={form.control}
-              name="gbud_inc_amt"
-              label="Income Amount"
-              keyboardType="numeric"
-              editable={isEditing}
-            />
-          )}
-
           {/* Expense Fields */}
-          {typeWatch === "Expense" && (
+          {(
             <>
               {/* Budget Items Section */}
               <View>
@@ -374,7 +348,7 @@ const onSubmit = async (values: FormValues) => {
                 </Text>
                 {(budgetEntry.gbud_exp_particulars || []).length > 0 ? (
                   <View className="border rounded-lg border-gray-300">
-                    {(budgetEntry.gbud_exp_particulars || []).map((item: any, index: number) => (
+                    {budgetEntry.map((item, index)  => (
                       <View
                         key={`${item.name}-${index}`}
                         className={`flex-row justify-between items-center p-3 ${
@@ -473,39 +447,6 @@ const onSubmit = async (values: FormValues) => {
             onChangeText={setSearchTerm}
             className="border border-gray-300 rounded-lg p-3 mb-4"
           />
-
-          {incomeParticularsLoading ? (
-            <ActivityIndicator size="small" />
-          ) : (
-            <FlatList
-              data={filteredIncomeParticulars}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => handleSelectIncomeParticular(item)}
-                  className="p-3 border-b border-gray-200"
-                >
-                  <Text>{item}</Text>
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={
-                <View className="p-3">
-                  <Text>No matching particulars found</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      form.setValue("gbud_inc_particulars", searchTerm);
-                      setShowIncomeParticularsModal(false);
-                    }}
-                    className="mt-4 bg-blue-500 p-3 rounded-lg"
-                  >
-                    <Text className="text-white text-center">
-                      Use "{searchTerm}" as new particular
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              }
-            />
-          )}
         </View>
       </Modal>
 

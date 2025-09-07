@@ -498,7 +498,7 @@ class ProjectProposalForBT(generics.ListAPIView):
                     normalized_item = {
                         'name': item_name,
                         'pax': item.get('pax', item.get('gdb_pax', 1)),
-                        'amount': item.get('price', item.get('gdb_price', 0))
+                        "amount": item.get("amount", item.get("price", item.get("gdb_price", 0))),
                     }
                     
                     if item_name in recorded_items:
@@ -512,9 +512,9 @@ class ProjectProposalForBT(generics.ListAPIView):
                     'gpr_budget_items': [{
                         'name': item.get('name', item.get('gdb_name', '')),
                         'pax': item.get('pax', item.get('gdb_pax', 1)),
-                        'amount': item.get('price', item.get('gdb_price', 0))
+                        'amount': item.get("amount", item.get("price", item.get("gdb_price", 0))),
                     } for item in budget_items if item.get('name', item.get('gdb_name', ''))],
-                    'recorded_items': list(recorded_items),
+                    'recorded_items': recorded_items,
                     'unrecorded_items': unrecorded_items,
                     'is_editable': not is_used,
                     'dev_id': dev_plan.dev_id,

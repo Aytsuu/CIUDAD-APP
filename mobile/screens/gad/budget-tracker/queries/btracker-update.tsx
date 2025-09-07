@@ -10,18 +10,16 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
 
   return useMutation({
     mutationFn: async (data: {
+      gbud_num?: number;
       budgetData: GADBudgetUpdatePayload;
       files: MediaItem[];
       filesToDelete: FileUploadPayload[];
     }) => {
-      console.log('Mutation started with data:', data); // Debug log
-      const { gbud_num } = data.budgetData;
-
-      if (typeof gbud_num !== 'number') {
-        throw new Error('Invalid budget entry ID');
+      if (!data.gbud_num) {
+        throw new Error("Budget entry number is required for update");
       }
 
-      if (data.budgetData.gbud_type === "Expense" && data.budgetData.gbud_actual_expense) {
+      if (data.budgetData.gbud_actual_expense) {
         const currentYearBudget = yearBudgets.find(
           (b) =>
             b.gbudy_year ===
@@ -41,12 +39,9 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       }
 
       if (data.filesToDelete.length > 0) {
-        console.log('Deleting files:', data.filesToDelete); // Debug log
-        await updateGADBudgetFile(gbud_num, data.filesToDelete, true);
+        await updateGADBudgetFile(data.gbud_num, data.filesToDelete, true);
       }
-
-      console.log('Updating budget entry:', data.budgetData); // Debug log
-      const updatedEntry = await updateGADBudget(gbud_num, data.budgetData);
+      const updatedEntry = await updateGADBudget(data.gbud_num, data.budgetData);
 
       if (data.files.length > 0) {
         const validFiles = data.files.filter(file => 
@@ -54,21 +49,21 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
         );
         if (validFiles.length > 0) {
           console.log('Uploading files:', validFiles); // Debug log
-          await updateGADBudgetFile(gbud_num, validFiles, false);
+          await updateGADBudgetFile(data.gbud_num, validFiles, false);
         }
       }
 
       return updatedEntry;
     },
     onSuccess: (_data, variables) => {
-      console.log('Mutation successful'); // Debug log
+      console.log('Mutation successful');
       const year = new Date(variables.budgetData.gbud_datetime).getFullYear().toString();
       queryClient.invalidateQueries({ queryKey: ['gad-budgets', year] });
       queryClient.invalidateQueries({ queryKey: ['gad-budget-entry', variables.budgetData.gbud_num] });
       toast.success('Budget entry updated successfully');
     },
     onError: (error: any) => {
-      console.error('Mutation error:', error); // Debug log
+      console.error('Mutation error:', error);
       toast.error(error.message || 'Failed to update budget entry');
     },
   });
