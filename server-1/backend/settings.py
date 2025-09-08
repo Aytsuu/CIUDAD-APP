@@ -374,6 +374,7 @@ INSTALLED_APPS = [
     
     # Third-party apps
     'rest_framework',
+    'rest_framework_simplejwt',
     'simple_history', # --- NEW
     'debug_toolbar', # --- NEW
     
@@ -418,14 +419,6 @@ MIDDLEWARE = [
 # Remove Debug Toolbar in production (DEBUG=False)
 INTERNAL_IPS = ['127.0.0.1']
 
-# ========================
-# AUTHENTICATION BACKENDS
-# ========================
-# Django's global authentication backend    
-AUTHENTICATION_BACKENDS = [
-    'apps.authentication.SupabaseAuth.SupabaseAuthentication',
-]
-
 ROOT_URLCONF = 'backend.urls'
 
 TEMPLATES = [
@@ -457,12 +450,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default='my_default_email')
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default='my_default_password')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-# ========================
-# SMS CONFIGURATION
-# ========================
-SEMAPHORE_API_KEY = config('SEMAPHORE_API_KEY', default=None)
-
 
 # ========================
 # DATABASE CONFIGURATION
@@ -518,15 +505,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # API endpoints (views that extend APIView or ViewSet).
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # 'apps.authentication.SupabaseAuth.SupabaseAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         # 'rest_framework.permissions.IsAuthenticated',
     ],
 }
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': False,  # Set to False initially for 
+    "USER_ID_FIELD": "acc_id",   # or your PK field
+    "USER_ID_CLAIM": "acc_id", 
+}
+
 # New User Model
-# AUTH_USER_MODEL = 'account.Account'
+AUTH_USER_MODEL = 'account.Account'
 
 # ========================
 # CORS SETTINGS

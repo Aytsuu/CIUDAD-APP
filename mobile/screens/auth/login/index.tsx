@@ -9,9 +9,10 @@ import IntroScreen from "./introscreen";
 import { SignupOptions } from "./SignupOptions";
 import { signInSchema } from "@/form-schema/signin-schema";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
-import { RootState, AppDispatch } from "@/redux";
+import { RootState, AppDispatch } from "@/redux/store";
 import { useToastContext } from "@/components/ui/toast";
 import z from "zod";
+import { useAuth } from "@/contexts/AuthContext";
 
 type SignInForm = z.infer<typeof signInSchema>;
 
@@ -41,9 +42,10 @@ const carousel = [
 ];
 
 export default function App() {
-  const dispatch = useDispatch<AppDispatch>();
-  const authState = useSelector((state: RootState) => state.auth, shallowEqual);
-  const { user, isAuthenticated, isLoading, error } = authState;
+  // const dispatch = useDispatch<AppDispatch>();
+  // const authState = useSelector((state: RootState) => state.auth, shallowEqual);
+  // const { user, isAuthenticated, isLoading, error } = authState;
+  const {user, isLoading, loginLoading} = useAuth();
 
   const { toast } = useToastContext();
   const router = useRouter();
@@ -54,19 +56,19 @@ export default function App() {
   const carouselRef = useRef(null);
 
   // Check if user is already authenticated
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      toast.success("Welcome back!");
-      router.replace("/(tabs)");
-    }
-  }, [isAuthenticated, user, toast, router]);
+  // useEffect(() => {
+  //   if (isAuthenticated && user) {
+  //     toast.success("Welcome back!");
+  //     router.replace("/(tabs)");
+  //   }
+  // }, [isAuthenticated, user, toast, router]);
 
-  // Handle error messages
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-  }, [error, toast]);
+  // // Handle error messages
+  // useEffect(() => {
+  //   if (error) {
+  //     toast.error(error);
+  //   }
+  // }, [error, toast]);
 
   const handleShowSignupOptions = useMemo(
     () => () => setShowSignupOptions(true),
@@ -97,7 +99,6 @@ export default function App() {
     return <IntroScreen onAnimationFinish={() => setShowIntro(false)} />;
   }
 
-  const passwordValue = getValues("password");
 
   return (
     <SafeAreaView className="flex-1 bg-gradient-to-br from-blue-500 to-blue-10">
@@ -154,10 +155,10 @@ export default function App() {
         <TouchableOpacity
           className="bg-blue-600 py-3 rounded-2xl mb-3"
           onPress={handleSignUp}
-          disabled={isLoading}
+          disabled={loginLoading}
         >
           <Text className="text-center text-white font-semibold text-lg">
-            {isLoading ? "Loading..." : "Sign Up"}
+             Sign Up
           </Text>
         </TouchableOpacity>
 
@@ -172,7 +173,7 @@ export default function App() {
           <Text className="text-sm text-gray-500">Already have an Account?</Text>
           <TouchableOpacity 
             onPress={handleLogin}
-            disabled={isLoading}
+            disabled={loginLoading}
           >
             <Text className={`text-sm text-center font-semibold ${
               isLoading ? "text-gray-400" : "text-blue-500"
@@ -186,6 +187,3 @@ export default function App() {
   );
 }
 
-function getValues(arg0: string) {
-  throw new Error("Function not implemented.");
-}

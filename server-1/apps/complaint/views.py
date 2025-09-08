@@ -32,9 +32,7 @@ class ComplaintCreateView(APIView):
                 complaint_file = Complaint_File.objects.create(
                     comp_file_name=file_data.get('name'),
                     comp_file_type=file_data.get('type', 'document'),
-                    comp_file_path=file_data.get('publicUrl'),
-                    supabase_path=file_data.get('storagePath'),
-                    file_size=file_data.get('size', 0),
+                    comp_file_url=file_data.get('storagePath'),
                     comp=complaint
                 )
                 created_files.append(complaint_file)
@@ -157,7 +155,6 @@ class ComplaintCreateView(APIView):
             ComplaintAccused.objects.create(comp=complaint, acsd=accused)
 
 class ComplaintListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
     serializer_class = ComplaintSerializer
 
     def get_queryset(self):
@@ -206,133 +203,131 @@ class ComplaintDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         serializer.save()
+        
+class ArchiveComplaintView(APIView):
 
-@api_view(['PATCH'])
-def archive_complaint(request, pk):
-    try:
-        complaint = Complaint.objects.get(pk=pk)
-        complaint.comp_is_archive = True
-        complaint.save()
-        serializer = ComplaintSerializer(complaint)
-        return Response(serializer.data)
-    except Complaint.DoesNotExist:
-        return Response(
-            {"error": "Complaint not found"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    except Exception as e:
-        return Response(
-            {"error": str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+    def patch(self, request, pk):
+        try:
+            complaint = Complaint.objects.get(pk=pk)
+            complaint.comp_is_archive = True
+            complaint.save()
+            serializer = ComplaintSerializer(complaint)
+            return Response(serializer.data)
+        except Complaint.DoesNotExist:
+            return Response(
+                {"error": "Complaint not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-
-@api_view(['GET'])
-def archived_complaints(request):
-    try:
-        complaints = Complaint.objects.filter(comp_is_archive=True)
-        serializer = ComplaintSerializer(complaints, many=True)
-        return Response(serializer.data)
-    except Exception as e:
-        return Response(
-            {"error": str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-
-def restore_complaint(request, pk):
-    try:
-        complaint = Complaint.objects.get(pk=pk, comp_is_archive=True)
-        complaint.comp_is_archive = False
-        complaint.save()
-        serializer = ComplaintSerializer(complaint)
-        return Response(serializer.data)
-    except Complaint.DoesNotExist:
-        return Response(
-            {"error": "Archived complaint not found"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    except Exception as e:
-        return Response(
-            {"error": str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-
-@api_view(['GET'])
-def search_complainants(request):
-    query = request.GET.get('q', '')
-    if not query:
-        return Response([])
+class ArchivedComplaintsView(generics.ListAPIView):
+    queryset = Complaint.objects.filter(comp_is_archive=True)
+    serializer_class = ComplaintSerializer
     
-    complainants = Complainant.objects.filter(
-        Q(cpnt_name__icontains=query) |
-        Q(cpnt_number__icontains=query) |
-        Q(add__add_barangay__icontains=query) |
-        Q(add__add_city__icontains=query) |
-        Q(add__add_province__icontains=query)
-    ).select_related('add', 'add__sitio')[:10]  # Limit to 10 results
-    
-    results = []
-    for c in complainants:
-        results.append({
-            'id': c.cpnt_id,
-            'cpnt_name': c.cpnt_name,
-            'cpnt_gender': c.cpnt_gender,
-            'cpnt_age': c.cpnt_age,
-            'cpnt_number': c.cpnt_number,
-            'cpnt_relation_to_respondent': c.cpnt_relation_to_respondent,
-            'add': {
-                'add_province': c.add.add_province,
-                'add_city': c.add.add_city,
-                'add_barangay': c.add.add_barangay,
-                'add_street': c.add.add_street,
-                'sitio': {
-                    'sitio_name': c.add.sitio.sitio_name if c.add.sitio else None
+class RestoreComplaintView(APIView):
+
+    def patch(self, request, pk):
+        try:
+            complaint = Complaint.objects.get(pk=pk, comp_is_archive=True)
+            complaint.comp_is_archive = False
+            complaint.save()
+            serializer = ComplaintSerializer(complaint)
+            return Response(serializer.data)
+        except Complaint.DoesNotExist:
+            return Response(
+                {"error": "Archived complaint not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class SearchComplainantsView(APIView):
+    def get(self, request):
+        query = request.GET.get("q", "")
+        if not query:
+            return Response([])
+
+        complainants = (
+            Complainant.objects.filter(
+                Q(cpnt_name__icontains=query)
+                | Q(cpnt_number__icontains=query)
+                | Q(add__add_barangay__icontains=query)
+                | Q(add__add_city__icontains=query)
+                | Q(add__add_province__icontains=query)
+            )
+            .select_related("add", "add__sitio")[:10]
+        )
+
+        results = [
+            {
+                "id": c.cpnt_id,
+                "cpnt_name": c.cpnt_name,
+                "cpnt_gender": c.cpnt_gender,
+                "cpnt_age": c.cpnt_age,
+                "cpnt_number": c.cpnt_number,
+                "cpnt_relation_to_respondent": c.cpnt_relation_to_respondent,
+                "add": {
+                    "add_province": c.add.add_province,
+                    "add_city": c.add.add_city,
+                    "add_barangay": c.add.add_barangay,
+                    "add_street": c.add.add_street,
+                    "sitio": {
+                        "sitio_name": c.add.sitio.sitio_name if c.add.sitio else None
+                    },
+                    "add_external_sitio": c.add.add_external_sitio,
                 },
-                'add_external_sitio': c.add.add_external_sitio
             }
-        })
-    
-    return Response(results)
+            for c in complainants
+        ]
 
-@api_view(['GET'])
-def search_accused(request):
-    query = request.GET.get('q', '')
-    print("Query Params:", request.GET)
+        return Response(results)
 
-    if not query:
-        return Response([])
-    
-    accused = Accused.objects.filter(
-        Q(acsd_name__icontains=query) |
-        Q(acsd_description__icontains=query) |
-        Q(add__add_barangay__icontains=query) |
-        Q(add__add_city__icontains=query) |
-        Q(add__add_province__icontains=query)
-    ).select_related('add', 'add__sitio')[:10]  # Limit to 10 results
-    
-    results = []
-    for a in accused:
-        results.append({
-            'id': a.acsd_id,
-            'acsd_name': a.acsd_name,
-            'acsd_age': a.acsd_age,
-            'acsd_gender': a.acsd_gender,
-            'acsd_description': a.acsd_description,
-            'add': {
-                'add_province': a.add.add_province,
-                'add_city': a.add.add_city,
-                'add_barangay': a.add.add_barangay,
-                'add_street': a.add.add_street,
-                'sitio': {
-                    'sitio_name': a.add.sitio.sitio_name if a.add.sitio else None
+class SearchAccusedView(APIView):
+    def get(self, request):
+        query = request.GET.get("q", "")
+        if not query:
+            return Response([])
+
+        accused = (
+            Accused.objects.filter(
+                Q(acsd_name__icontains=query)
+                | Q(acsd_description__icontains=query)
+                | Q(add__add_barangay__icontains=query)
+                | Q(add__add_city__icontains=query)
+                | Q(add__add_province__icontains=query)
+            )
+            .select_related("add", "add__sitio")[:10]
+        )
+
+        results = [
+            {
+                "id": a.acsd_id,
+                "acsd_name": a.acsd_name,
+                "acsd_age": a.acsd_age,
+                "acsd_gender": a.acsd_gender,
+                "acsd_description": a.acsd_description,
+                "add": {
+                    "add_province": a.add.add_province,
+                    "add_city": a.add.add_city,
+                    "add_barangay": a.add.add_barangay,
+                    "add_street": a.add.add_street,
+                    "sitio": {
+                        "sitio_name": a.add.sitio.sitio_name if a.add.sitio else None
+                    },
+                    "add_external_sitio": a.add.add_external_sitio,
                 },
-                'add_external_sitio': a.add.add_external_sitio
             }
-        })
-    
-    return Response(results)
+            for a in accused
+        ]
+
+        return Response(results)
 
 class ServiceChargeRequestCreateView(APIView):
     @transaction.atomic

@@ -8,6 +8,8 @@ import {
   ListFilterIcon,
 } from "lucide-react";
 import { Link } from "react-router";
+import { MdRequestPage } from "react-icons/md";
+import { FaRegQuestionCircle } from "react-icons/fa";
 
 type Props = {
   searchQuery: string;
@@ -54,6 +56,15 @@ export default function ComplaintFilterBar({
             >
               <ListFilterIcon size={16} className="text-gray-400" />
               <span>Filter</span>
+            </Button>
+          </Link>
+          <Link to="/complaint/request">
+            <Button
+              variant="outline"
+              className="gap-2 text-darkGray hover:text-black"
+            >
+              <FaRegQuestionCircle size={16} className="text-gray-400" />
+              <span>Request</span>
             </Button>
           </Link>
 

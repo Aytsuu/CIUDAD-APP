@@ -1,4 +1,4 @@
-import PhoneOTP from "@/screens/auth/login/phoneOTP"
+import PhoneOTP from "@/screens/auth/login/PhoneOTP"
 
 export default () => {
     return <PhoneOTP/>
