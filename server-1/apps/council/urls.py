@@ -34,8 +34,6 @@ urlpatterns=[
     # MINUTES OF MEETING
     # mobile and web
     path('minutes-of-meeting/', MinutesOfMeetingView.as_view(), name="minutes-of-meeting"),
-    path('mom-area-of-focus/', MOMAreaOfFocusView.as_view(), name='mom-area-of-focus'),
-    path('delete-mom-area-of-focus/<int:mom_id>/', DeleteMOMAreaOfFocusView.as_view(), name='delete-mom-area-of-focus'),
     path('update-minutes-of-meeting/<int:mom_id>/', UpdateMinutesOfMeetingView.as_view(), name='update-minutes-of-meeting'),
     path('delete-minutes-of-meeting/<int:mom_id>/', DeleteMinutesOfMeetingView.as_view(), name='delete-minutes-of-meeting'),
     path('mom-file/', MOMFileView.as_view(), name='mom-file'),

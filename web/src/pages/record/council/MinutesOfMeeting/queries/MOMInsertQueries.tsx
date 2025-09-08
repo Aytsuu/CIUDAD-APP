@@ -18,7 +18,6 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
     },
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['momRecords'] });
-        queryClient.invalidateQueries({ queryKey: ['momAreasOfFocus'] });
         queryClient.invalidateQueries({ queryKey: ['momFiles'] });
 
       toast.success('Meeting Minutes Created!', {

@@ -287,7 +287,6 @@ class MOMSuppDocViewSerializer(serializers.ModelSerializer):
         
 class MinutesOfMeetingSerializer(serializers.ModelSerializer):
     mom_file = serializers.SerializerMethodField(read_only=True)  # Combined field
-    areas_of_focus = serializers.SerializerMethodField(read_only=True)
     supporting_docs = MOMSuppDocViewSerializer(source='momsuppdoc_set', many=True, read_only=True)
 
     class Meta:
@@ -295,12 +294,10 @@ class MinutesOfMeetingSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_fields = [
             'mom_file',  # Replaces individual momf fields
-            'areas_of_focus',
             'supporting_docs'
         ]
         read_only_fields = [
             'mom_file',
-            'areas_of_focus',
             'supporting_docs'
         ]
 
@@ -325,10 +322,6 @@ class MinutesOfMeetingSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         return MinutesOfMeeting.objects.create(**validated_data)
 
-class MOMAreaOfFocusSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MOMAreaOfFocus
-        fields = '__all__'
 
 class MOMFileCreateSerializer(serializers.ModelSerializer):
     files = serializers.ListField( child=serializers.DictField(), write_only=True, required=False)

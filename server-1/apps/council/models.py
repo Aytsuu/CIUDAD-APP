@@ -221,31 +221,20 @@ class ResolutionSupDocs(models.Model):
         db_table = 'resolution_supp_doc'
     
 
-
 class MinutesOfMeeting(models.Model):
     mom_id = models.BigAutoField(primary_key=True)
     mom_date = models.DateField(default=date.today)
     mom_title= models.TextField(null=False)
     mom_agenda = models.TextField(null=False)
+    mom_area_of_focus = ArrayField(
+        models.CharField(max_length=100),
+        default=list,
+        blank=True
+    )
     mom_is_archive = models.BooleanField(default=False)
 
     class Meta:
-        db_table = 'minutes_of_meeting'
-
-class MOMAreaOfFocus(models.Model):
-    mof_id = models.BigAutoField(primary_key=True)
-    mof_area = models.CharField(null=False)
-    mom_id = models.ForeignKey(
-        'council.MinutesOfMeeting',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        db_column='mom_id'
-    )
-
-    class Meta:
-        db_table = 'mom_area_of_focus'    
-
+        db_table = 'minutes_of_meeting' 
 
 class MOMFile(models.Model):
     momf_id = models.BigAutoField(primary_key=True)
