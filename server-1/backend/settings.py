@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'debug_toolbar',
     'simple_history',
     
     # Local apps
@@ -97,7 +98,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.authentication.middleware.request_logging.RequestLoggingMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware', 
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware', 
     # 'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
