@@ -79,20 +79,22 @@ export const getMedicineRequestPending = async (
     throw error;
   }
 };
-
-
+// components/queries.tsx/fetch.ts
 export const getMedicineRequestPendingItems = async (
-  id: string, 
   page?: number, 
-  pageSize?: number
+  pageSize?: number,
+  search?: string,
+  dateFilter?: string
 ): Promise<any> => {
   try {
     const params = new URLSearchParams();
     if (page) params.append('page', page.toString());
     if (pageSize) params.append('page_size', pageSize.toString());
+    if (search) params.append('search', search);
+    if (dateFilter && dateFilter !== 'all') params.append('date_filter', dateFilter);
     
-    // CORRECTED: Include the id parameter in the URL
-    const url = `inventory/medreq-items-pending/${id}/${params.toString() ? `?${params.toString()}` : ''}`;
+    // CORRECTED: No ID needed in the URL
+    const url = `inventory/medreq-items-pending/${params.toString() ? `?${params.toString()}` : ''}`;
     
     const response = await api2.get(url);
     return response.data;
@@ -101,3 +103,4 @@ export const getMedicineRequestPendingItems = async (
     throw error;
   }
 };
+

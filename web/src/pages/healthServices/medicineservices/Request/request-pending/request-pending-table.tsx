@@ -1,5 +1,4 @@
 // components/medicine-request-pending-table.tsx
-import React from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -9,11 +8,10 @@ import { Link } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
-import { MedicineRequestPending } from "../types";
 import { medicineRequestPendingColumns } from "./columns";
-import { usePendingMedRequest } from "../queries.tsx/fetch";
+import { usePendingItemsMedRequest } from "../queries.tsx/fetch";
 
-export default function PendingCnfirmation() {
+export default function PendingConfirmation() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -32,14 +30,14 @@ export default function PendingCnfirmation() {
     };
   }, [searchQuery]);
 
-  const { data: apiResponse, isLoading, error, refetch } = usePendingMedRequest(
+  const { data: apiResponse, isLoading, error, refetch } = usePendingItemsMedRequest(
     currentPage,
     pageSize,
     debouncedSearch,
-    dateFilter // Pass date filter to the server
+    dateFilter
   );
 
-  // Extract data from paginated response
+  // Extract data from paginated response - CORRECTED: response has 'results' array
   const medicineRequests = apiResponse?.results || [];
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -50,7 +48,6 @@ export default function PendingCnfirmation() {
         <div className="text-red-500 text-lg mb-4">Failed to load pending medicine requests</div>
         <div className="flex gap-4">
           <Button onClick={() => refetch()}>Retry</Button>
-       
         </div>
       </div>
     );
@@ -63,7 +60,7 @@ export default function PendingCnfirmation() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input
-              placeholder="Search by ID, name, contact, or patient ID..."
+              placeholder="Search by medicine name, patient name, ID, or reason..."
               className="pl-10 bg-white w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

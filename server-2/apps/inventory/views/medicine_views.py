@@ -1420,36 +1420,44 @@ class ConfirmAllPendingItemsView(generics.UpdateAPIView):
             "updated_count": updated_count
         }, status=status.HTTP_200_OK)
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+ 
+from apps.healthProfiling.models import PersonalAddress, Sitio  ,Household   
+from apps.medicineservices.serializers import MedicineRecordCreateSerializer,MedicineRequestSerializer
+from apps.patientrecords.models import PatientRecord, Patient
+from apps.childhealthservices.models import ChildHealth_History, ChildHealthSupplements
+from apps.medicineservices.models import MedicineRecord,MedicineAllocation
+
+
+
 class MedicineRequestPendingItemsTableView(APIView):
     pagination_class = StandardResultsPagination
     
     def get(self, request, *args, **kwargs):
         try:
-            # Get the medicine request ID from URL parameters
-            medreq_id = self.kwargs.get('medreq_id')
+            # Get the search query and date filter from request parameters
+            search_query = request.GET.get('search', '').strip()
+            date_filter = request.GET.get('date_filter', 'all').strip()
             
-            # Base queryset for medicine request items
-            queryset = MedicineRequestItem.objects.all()
+            # Base queryset for medicine request items with pending status
+            queryset = MedicineRequestItem.objects.filter(medreq_id__status='pending')
             
-            # Filter by medicine request ID if provided
-            if medreq_id:
-                queryset = queryset.filter(medreq_id=medreq_id)
-            else:
-                # If no specific medreq_id provided, filter by pending status
-                queryset = queryset.filter(medreq_id__status='pending')
+            # Apply date filter if provided
+            if date_filter != 'all':
+                today = datetime.now().date()
+                
+                if date_filter == 'today':
+                    # Filter for today's requests
+                    queryset = queryset.filter(medreq_id__requested_at__date=today)
+                    
+                elif date_filter == 'this-week':
+                    # Filter for this week's requests (Monday to Sunday)
+                    start_of_week = today - timedelta(days=today.weekday())
+                    queryset = queryset.filter(medreq_id__requested_at__date__gte=start_of_week)
+                    
+                elif date_filter == 'this-month':
+                    # Filter for this month's requests
+                    start_of_month = today.replace(day=1)
+                    queryset = queryset.filter(medreq_id__requested_at__date__gte=start_of_month)
             
             # Add select_related and prefetch_related for performance
             queryset = queryset.select_related(
@@ -1464,44 +1472,62 @@ class MedicineRequestPendingItemsTableView(APIView):
                 'medreq_id__medicine_files',
             ).order_by('-medreq_id__requested_at')
             
-            # Group by med_id and prepare response data
-            medicine_groups = {}
+            # Apply search filter if provided
+            if search_query:
+                queryset = queryset.filter(
+                    # Search by medicine information
+                    Q(med__med_id__icontains=search_query) |
+                    Q(med__med_name__icontains=search_query) |
+                    Q(med__med_type__icontains=search_query) |
+                    
+                    # Search by patient information (Resident)
+                    Q(medreq_id__pat_id__rp_id__per__per_lname__icontains=search_query) |
+                    Q(medreq_id__pat_id__rp_id__per__per_fname__icontains=search_query) |
+                    Q(medreq_id__pat_id__rp_id__per__per_mname__icontains=search_query) |
+                    Q(medreq_id__pat_id__rp_id__per__per_contact__icontains=search_query) |
+                    
+                    # Search by patient information (Transient)
+                    Q(medreq_id__pat_id__trans_id__tran_lname__icontains=search_query) |
+                    Q(medreq_id__pat_id__trans_id__tran_fname__icontains=search_query) |
+                    Q(medreq_id__pat_id__trans_id__tran_mname__icontains=search_query) |
+                    Q(medreq_id__pat_id__trans_id__tran_contact__icontains=search_query) |
+                    
+                    # Search by physician information
+                    Q(medreq_id__rp_id__per__per_lname__icontains=search_query) |
+                    Q(medreq_id__rp_id__per__per_fname__icontains=search_query) |
+                    Q(medreq_id__rp_id__per__per_mname__icontains=search_query) |
+                    Q(medreq_id__rp_id__per__per_contact__icontains=search_query) |
+                    
+                    # Search by IDs
+                    Q(medreq_id__medreq_id__icontains=search_query) |
+                    Q(medreqitem_id__icontains=search_query) |
+                    Q(medreq_id__pat_id__pat_id__icontains=search_query) |
+                    Q(medreq_id__rp_id__rp_id__icontains=search_query) |
+                    
+                    # Search by reason
+                    Q(reason__icontains=search_query)
+                ).distinct()
+            
+            # Prepare response data - display all pending items
+            request_items_data = []
             
             for item in queryset:
-                med_id = None
-                med_name = "Unknown Medicine"
-                med_type = "Unknown Type"
+                # Get medicine information
+                med_id = item.med.med_id if item.med else None
+                med_name = item.med.med_name if item.med else "Unknown Medicine"
+                med_type = item.med.med_type if item.med else "Unknown Type"
                 
-                # Get medicine ID, name, and type from med field
-                if item.med:
-                    med_id = item.med.med_id
-                    med_name = item.med.med_name
-                    med_type = item.med.med_type
+                # Use the MedicineRequestSerializer to get consistent patient info
+                medicine_request_serializer = MedicineRequestSerializer(item.medreq_id)
+                serialized_request = medicine_request_serializer.data
                 
-                # Get formatted patient name
+                # Get patient name from serialized data
+                personal_info = serialized_request.get('personal_info', {})
                 patient_name = "Unknown Patient"
-                if item.medreq_id.pat_id:
-                    patient = item.medreq_id.pat_id
-                    
-                    if patient.rp_id and patient.rp_id.per:
-                        personal = patient.rp_id.per
-                        patient_name = f"{personal.per_fname} {personal.per_lname}"
-                        if personal.per_mname:
-                            patient_name = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
-                    elif patient.trans_id:
-                        transient = patient.trans_id
-                        patient_name = f"{transient.tran_fname} {transient.tran_lname}"
-                        if transient.tran_mname:
-                            patient_name = f"{transient.tran_fname} {transient.tran_mname} {transient.tran_lname}"
-                
-                if med_id not in medicine_groups:
-                    medicine_groups[med_id] = {
-                        'med_id': med_id,
-                        'med_name': med_name,
-                        'med_type': med_type,
-                        'patient_name': patient_name,
-                        'request_items': []
-                    }
+                if personal_info:
+                    patient_name = f"{personal_info.get('per_fname', '')} {personal_info.get('per_lname', '')}".strip()
+                    if personal_info.get('per_mname'):
+                        patient_name = f"{personal_info.get('per_fname', '')} {personal_info.get('per_mname', '')} {personal_info.get('per_lname', '')}".strip()
                 
                 # Get medicine files for this request
                 medicine_files = []
@@ -1515,63 +1541,45 @@ class MedicineRequestPendingItemsTableView(APIView):
                         'created_at': file.created_at
                     })
                 
-                # Get patient information
-                patient_info = {}
-                if item.medreq_id.pat_id:
-                    patient = item.medreq_id.pat_id
-                    
-                    if patient.rp_id and patient.rp_id.per:
-                        personal = patient.rp_id.per
-                        patient_info = {
-                            'pat_id': patient.pat_id,
-                            'type': 'resident',
-                            'per_fname': personal.per_fname,
-                            'per_lname': personal.per_lname,
-                            'per_mname': personal.per_mname,
-                            'per_contact': personal.per_contact,
-                            'per_dob': personal.per_dob,
-                            'per_sex': personal.per_sex
-                        }
-                    elif patient.trans_id:
-                        transient = patient.trans_id
-                        patient_info = {
-                            'pat_id': patient.pat_id,
-                            'type': 'transient',
-                            'tran_fname': transient.tran_fname,
-                            'tran_lname': transient.tran_lname,
-                            'tran_mname': transient.tran_mname,
-                            'tran_contact': transient.tran_contact,
-                            'tran_dob': transient.tran_dob,
-                            'tran_sex': transient.tran_sex
-                        }
-                
                 # No inventory details since minv_id is always null
                 inventory_info = {}
                 
                 request_item_data = {
                     'medreqitem_id': item.medreqitem_id,
+                    'med_id': med_id,
+                    'med_name': med_name,
+                    'med_type': med_type,
                     'medreqitem_qty': item.medreqitem_qty,
                     'reason': item.reason,
                     'status': item.status,
                     'inventory': inventory_info,
-                    'patient': patient_info,
+                    'patient_name': patient_name,
+                    'patient_info': {
+                        'pat_id': serialized_request.get('pat_id_value'),
+                        'type': serialized_request.get('pat_type'),
+                        'per_fname': personal_info.get('per_fname'),
+                        'per_lname': personal_info.get('per_lname'),
+                        'per_mname': personal_info.get('per_mname'),
+                        'per_suffix': personal_info.get('per_suffix'),
+                        'per_contact': personal_info.get('per_contact'),
+                        'per_dob': personal_info.get('per_dob'),
+                        'per_sex': personal_info.get('per_sex'),
+                        'address': serialized_request.get('address', {})
+                    },
                     'medicine_files': medicine_files,
                     'medreq_id': item.medreq_id.medreq_id,
                     'requested_at': item.medreq_id.requested_at,
                     'medreq_status': item.medreq_id.status
                 }
                 
-                medicine_groups[med_id]['request_items'].append(request_item_data)
-            
-            # Convert to list for pagination
-            medicine_data = list(medicine_groups.values())
+                request_items_data.append(request_item_data)
             
             # Apply pagination
             paginator = self.pagination_class()
             page_size = int(request.GET.get('page_size', paginator.page_size))
             paginator.page_size = page_size
             
-            page_data = paginator.paginate_queryset(medicine_data, request)
+            page_data = paginator.paginate_queryset(request_items_data, request)
             
             if page_data is not None:
                 response = paginator.get_paginated_response(page_data)
@@ -1585,8 +1593,8 @@ class MedicineRequestPendingItemsTableView(APIView):
             
             return Response({
                 'success': True,
-                'results': medicine_data,
-                'count': len(medicine_data)
+                'results': request_items_data,
+                'count': len(request_items_data)
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -1594,16 +1602,6 @@ class MedicineRequestPendingItemsTableView(APIView):
                 'success': False,
                 'error': f'Error fetching medicine request items: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-            
-            
-            
-
-from apps.medicineservices.serializers import MedicineRecordCreateSerializer
-from apps.patientrecords.models import PatientRecord, Patient
-from apps.childhealthservices.models import ChildHealth_History, ChildHealthSupplements
-from apps.medicineservices.models import MedicineRecord,MedicineAllocation
-
 class ChildServiceMedicineRecordView(generics.CreateAPIView):
     """
     API endpoint for bulk processing medicine requests
@@ -1844,3 +1842,7 @@ class MedicineRequestAllocationAPIView(APIView):
             return Response({
                 "error": f"An error occurred: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+            
+            
