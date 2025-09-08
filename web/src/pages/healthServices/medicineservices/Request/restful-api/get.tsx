@@ -2,15 +2,32 @@ import { api2 } from "@/api/api";
 import { MedicineRequestPendingResponse } from "../types";
 
 
-export const getMedicineRequestProcessing = async () => {
+// api.ts
+export const getMedicineRequestProcessing = async (
+  page: number = 1,
+  pageSize: number = 10,
+  search: string = "",
+  dateFilter: string = "all"
+): Promise<any> => {
   try {
+    const params = new URLSearchParams();
+    params.append("page", page.toString());
+    params.append("page_size", pageSize.toString());
+    if (search) {
+      params.append("search", search);
+    }
+    if (dateFilter && dateFilter !== "all") {
+      params.append("date_filter", dateFilter);
+    }
+
     const response = await api2.get("/medicine/medicine-request/");
     return response.data;
   } catch (error) {
-    console.error("Error fetching medicine records:", error);
+    console.error("Error fetching processing medicine requests:", error);
     throw error;
   }
 };
+
 
 export const getMedicineRequestItem = async () => {
   try {

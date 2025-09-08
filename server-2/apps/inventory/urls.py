@@ -124,7 +124,7 @@ urlpatterns = [
     
     path('medreq-items-pending/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
     path('update-medreq-item/<int:medreqitem_id>/',UpdateMedicinerequestItemView.as_view(),name='update-medicine-request-items'),
-    
+      path('medicine-allocation/', MedicineRequestAllocationAPIView.as_view(), name='medicine-allocation'),
     
     path('childmedicine/', ChildServiceMedicineRecordView.as_view(), name='medicine_request_item_detail'),
 

@@ -4,13 +4,17 @@ import { useQuery } from "@tanstack/react-query";
 import { getMedicineRequestProcessing,getMedicineRequestPending,getMedicineRequestPendingItems} from "../restful-api/get";
 
 
-export const useProcessingMedrequest = () => {
-    return useQuery({
-        queryKey: ["processingmedrequest"],
-        queryFn:()=> getMedicineRequestProcessing(),
-        
-    });
-}
+export const useProcessingMedrequest = (
+  page: number = 1, 
+  pageSize: number = 10, 
+  search: string = "", 
+  dateFilter: string = "all"
+) => {
+  return useQuery<any>({
+    queryKey: ["processingmedrequest", page, pageSize, search, dateFilter],
+    queryFn: () => getMedicineRequestProcessing(page, pageSize, search, dateFilter),
+  });
+};
 
 
 export const usePendingMedRequest = (page: number,  pageSize: number, search: string, dateFilter: string ) => {

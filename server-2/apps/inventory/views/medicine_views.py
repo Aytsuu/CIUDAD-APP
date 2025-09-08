@@ -1453,7 +1453,6 @@ class MedicineRequestPendingItemsTableView(APIView):
             
             # Add select_related and prefetch_related for performance
             queryset = queryset.select_related(
-                'minv_id', 
                 'medreq_id', 
                 'med', 
                 'medreq_id__rp_id', 
@@ -1461,8 +1460,6 @@ class MedicineRequestPendingItemsTableView(APIView):
                 'medreq_id__pat_id__rp_id',
                 'medreq_id__pat_id__trans_id',
                 'medreq_id__rp_id__per',
-                'minv_id__med_id',
-                'minv_id__inv_id',
             ).prefetch_related(
                 'medreq_id__medicine_files',
             ).order_by('-medreq_id__requested_at')
@@ -1473,17 +1470,13 @@ class MedicineRequestPendingItemsTableView(APIView):
             for item in queryset:
                 med_id = None
                 med_name = "Unknown Medicine"
+                med_type = "Unknown Type"
                 
-                # Get medicine ID and name
+                # Get medicine ID, name, and type from med field
                 if item.med:
                     med_id = item.med.med_id
                     med_name = item.med.med_name
-                    med_type = item.minv_id.med_id.med_type
-
-                elif item.minv_id and item.minv_id.med_id:
-                    med_id = item.minv_id.med_id.med_id
-                    med_name = item.minv_id.med_id.med_name
-                    med_type = item.minv_id.med_id.med_type
+                    med_type = item.med.med_type
                 
                 # Get formatted patient name
                 patient_name = "Unknown Patient"
@@ -1502,18 +1495,11 @@ class MedicineRequestPendingItemsTableView(APIView):
                             patient_name = f"{transient.tran_fname} {transient.tran_mname} {transient.tran_lname}"
                 
                 if med_id not in medicine_groups:
-                    # Get ALL available stock for this medicine (no expiry filter)
-                    available_stock = MedicineInventory.objects.filter(
-                        med_id=med_id,
-                        minv_qty_avail__gt=0
-                    ).aggregate(total_available=Sum('minv_qty_avail'))['total_available'] or 0
-                    
                     medicine_groups[med_id] = {
                         'med_id': med_id,
                         'med_name': med_name,
-                        'med_type':med_type,
-                        'patient_name': patient_name,  # Add formatted patient name here
-                        'total_available_stock': available_stock,
+                        'med_type': med_type,
+                        'patient_name': patient_name,
                         'request_items': []
                     }
                 
@@ -1559,16 +1545,8 @@ class MedicineRequestPendingItemsTableView(APIView):
                             'tran_sex': transient.tran_sex
                         }
                 
-                # Get inventory details
+                # No inventory details since minv_id is always null
                 inventory_info = {}
-                if item.minv_id:
-                    inventory_info = {
-                        'minv_id': item.minv_id.minv_id,
-                        'dosage': f"{item.minv_id.minv_dsg} {item.minv_id.minv_dsg_unit}",
-                        'form': item.minv_id.minv_form,
-                        'expiry_date': item.minv_id.inv_id.expiry_date if item.minv_id.inv_id else None,
-                        'quantity_available': item.minv_id.minv_qty_avail
-                    }
                 
                 request_item_data = {
                     'medreqitem_id': item.medreqitem_id,
@@ -1617,12 +1595,14 @@ class MedicineRequestPendingItemsTableView(APIView):
                 'error': f'Error fetching medicine request items: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-
+            
+            
+            
 
 from apps.medicineservices.serializers import MedicineRecordCreateSerializer
 from apps.patientrecords.models import PatientRecord, Patient
 from apps.childhealthservices.models import ChildHealth_History, ChildHealthSupplements
-from apps.medicineservices.models import MedicineRecord
+from apps.medicineservices.models import MedicineRecord,MedicineAllocation
 
 class ChildServiceMedicineRecordView(generics.CreateAPIView):
     """
@@ -1772,4 +1752,95 @@ class ChildServiceMedicineRecordView(generics.CreateAPIView):
             raise Exception(f"Medicine record with ID {medrec_id} not found")
             
             
+  
+class MedicineRequestAllocationAPIView(APIView):
+    
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        try:
+            medreq_id = request.data.get('medreq_id')
+            selected_medicines = request.data.get('selected_medicines', [])
             
+            if not medreq_id:
+                return Response({"error": "Medicine Request ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not selected_medicines or not isinstance(selected_medicines, list):
+                return Response({"error": "Selected medicines list is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                medicine_request = MedicineRequest.objects.get(medreq_id=medreq_id)
+            except MedicineRequest.DoesNotExist:
+                return Response({"error": "Medicine Request not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            # Process each selected medicine
+            for medicine in selected_medicines:
+                minv_id = medicine.get('minv_id')
+                medrec_qty = medicine.get('medrec_qty', 0)
+                medreqitem_id = medicine.get('medreqitem_id')
+                
+                if not minv_id or medrec_qty <= 0:
+                    continue
+                
+                try:
+                    # Get the medicine inventory
+                    medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
+                    
+                    # Check if there's enough available stock
+                    if medicine_inventory.minv_qty_avail < medrec_qty:
+                        return Response({
+                            "error": f"Insufficient stock for {medicine_inventory.med_id.med_name}. Available: {medicine_inventory.minv_qty_avail}, Requested: {medrec_qty}"
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    # Get the medicine request item if medreqitem_id is provided
+                    request_item = None
+                    if medreqitem_id:
+                        try:
+                            request_item = MedicineRequestItem.objects.get(
+                                medreqitem_id=medreqitem_id,
+                                medreq_id=medicine_request
+                            )
+                            # Update request item status to confirmed
+                            request_item.status = 'confirmed'
+                            request_item.save()
+                        except MedicineRequestItem.DoesNotExist:
+                            pass
+                    
+                    # Create MedicineAllocation only
+                    MedicineAllocation.objects.create(
+                        medreqitem=request_item,
+                        minv=medicine_inventory,
+                        allocated_qty=medrec_qty
+                    )
+                    
+                    # Update inventory - temporary deduction
+                    # Handle case where temporay_deduction might be None
+                    if medicine_inventory.temporay_deduction is None:
+                        medicine_inventory.temporay_deduction = 0
+                    medicine_inventory.temporay_deduction += medrec_qty
+                    
+                    # Also ensure minv_qty_avail is not None
+                    # if medicine_inventory.minv_qty_avail is None:
+                    #     medicine_inventory.minv_qty_avail = 0
+                    # medicine_inventory.minv_qty_avail -= medrec_qty
+                    
+                    medicine_inventory.save()
+                    
+                except MedicineInventory.DoesNotExist:
+                    return Response({
+                        "error": f"Medicine inventory with ID {minv_id} not found"
+                    }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Update the main medicine request status to "processing"
+            medicine_request.status = 'processing'
+            medicine_request.save()
+            
+            return Response({
+                "success": True,
+                "message": "Medicine allocation processed successfully",
+                "medreq_id": medreq_id
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({
+                "error": f"An error occurred: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

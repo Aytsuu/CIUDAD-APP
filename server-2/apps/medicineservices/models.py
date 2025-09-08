@@ -57,7 +57,7 @@ class MedicineRequestItem(models.Model):
     medreqitem_id = models.BigAutoField(primary_key=True)
     medreqitem_qty = models.PositiveIntegerField(default=0)
     reason = models.TextField(blank=True, null=True)  # (OP)    
-    minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_request_items')
+    minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_request_items',null=True, blank=True)
     medreq_id = models.ForeignKey('MedicineRequest', on_delete=models.CASCADE, related_name='items',db_column='medreq_id')
     med= models.ForeignKey(Medicinelist, on_delete=models.CASCADE, related_name='medicine_request_items', db_column='med_id', blank=True, null=True)
     status = models.CharField(max_length=20, default='pending') #refered  or confirm
