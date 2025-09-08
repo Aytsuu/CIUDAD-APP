@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { Clock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";

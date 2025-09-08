@@ -6,7 +6,7 @@ import { groupPositionSchema, useValidatePosition } from "@/form-schema/administ
 import { zodResolver } from "@hookform/resolvers/zod"
 import { FormInput } from "@/components/ui/form/form-input"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { CircleAlert, CircleCheck, Plus, Users, Trash2, Badge as Position } from "lucide-react"

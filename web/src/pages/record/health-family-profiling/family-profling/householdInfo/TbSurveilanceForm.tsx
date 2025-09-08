@@ -7,7 +7,7 @@ import { UseFormReturn, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button/button";
 import { Plus, Check } from "lucide-react";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
 export default function TbSurveilanceForm({

@@ -1,7 +1,7 @@
 import React from "react"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import BusinessProfileForm from "./BusinessProfileForm"
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { useLocation, useNavigate } from "react-router"
 import { formatResidents, formatSitio } from "../ProfilingFormats"
 import { useForm } from "react-hook-form"

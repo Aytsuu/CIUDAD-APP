@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useUpdateTemplate } from "../queries/reportUpdate";
 import { useGetSpecificTemplate } from "../queries/reportFetch";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { Card, CardContent } from "@/components/ui/card/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Combobox } from "@/components/ui/combobox";
 import { useGetStaffByTitle } from "../../administration/queries/administrationFetchQueries";
 import { formatStaffs } from "../../administration/AdministrationFormats";

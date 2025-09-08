@@ -6,7 +6,7 @@ import {
   Card,
   CardContent,
   CardHeader
-} from "@/components/ui/card/card";
+} from "@/components/ui/card";
 import { FileText, MapPin, MoveRight, Shield, User, UserRoundPlus } from "lucide-react";
 import { useSitioList } from "../../queries/profilingFetchQueries";
 import { formatSitio } from "../../ProfilingFormats";

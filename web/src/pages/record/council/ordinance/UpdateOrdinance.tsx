@@ -1,5 +1,5 @@
 "use client"
-import { CardTitle } from '@/components/ui/card/card.tsx';
+import { CardTitle } from '@/components/ui/card';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import {Textarea} from '@/components/ui/textarea.tsx';
 import {Button} from '@/components/ui/button/button';

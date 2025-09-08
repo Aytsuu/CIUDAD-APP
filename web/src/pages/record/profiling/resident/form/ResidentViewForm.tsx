@@ -5,7 +5,7 @@ import { useResidentForm } from "./useResidentForm"
 import { Type } from "../../ProfilingEnums"
 import { useUpdateProfile } from "../../queries/profilingUpdateQueries"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { Card } from "@/components/ui/card/card"
+import { Card } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/table/data-table"
 import { businessDetailsColumns, familyDetailsColumns, residentColumns } from "../ResidentColumns"
 import {

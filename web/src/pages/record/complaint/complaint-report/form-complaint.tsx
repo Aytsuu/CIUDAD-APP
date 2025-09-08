@@ -9,7 +9,7 @@ import { IncidentInfo } from "./incident";
 import { ProgressBar } from "@/components/progress-bar";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   ChevronLeft,
   ChevronRight,

@@ -6,7 +6,7 @@ import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from '@/components/ui/input';
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Ordinance, getAllOrdinances, deleteOrdinance } from './restful-api/OrdinanceGetAPI';
 import { getAllTemplates, deleteTemplate, OrdinanceTemplate } from './restful-api/TemplateAPI';

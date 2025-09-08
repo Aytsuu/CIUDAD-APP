@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent } from "@/components/ui/card/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { AlertCircle, CheckCircle, AlertTriangle } from "lucide-react"
 import type { NutritionalStatusType } from "@/form-schema/chr-schema/chr-schema"

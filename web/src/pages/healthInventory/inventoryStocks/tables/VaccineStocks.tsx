@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom" // Assuming react-router-dom for 
 import type { StockRecords } from "./type"
 import { useAntigenCombineStocks } from "../REQUEST/Antigen/queries/AntigenFetchQueries"
 import { toast } from "sonner"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card" // Import Card components
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card" // Import Card components
 
 export function isVaccine(record: StockRecords): record is StockRecords & { type: "vaccine" } {
   return record.type === "vaccine"
