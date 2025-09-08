@@ -24,7 +24,7 @@ export type ResidentRecord = {
   sex: string;
   dob: string;
   pwd: string;
-  rp_date_registered: string;
+  voter: "Yes" | "No" | "Link" | "Review";
   registered_by: string;
   has_account: boolean;
 };

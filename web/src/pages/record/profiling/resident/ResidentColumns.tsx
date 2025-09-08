@@ -8,6 +8,8 @@ import React from "react";
 import { formatDate } from "@/helpers/dateHelper";
 import { ResidentRecord, ResidentFamilyRecord, ResidentBusinessRecord } from "../ProfilingTypes";
 import { calculateAge } from "@/helpers/ageCalculator";
+import { useLinkToVoter } from "../queries/profilingUpdateQueries";
+import { showErrorToast } from "@/components/ui/toast";
 
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -93,15 +95,51 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     size: 60
   },
   {
-    accessorKey: "rp_date_registered",
-    header: "Date Registered",
-    cell: ({row}) => (
-      formatDate(row.original.rp_date_registered, "short")
-    )
+    accessorKey: "pwd",
+    header: "Disability"
+  },
+  {
+    accessorKey: "voter",
+    header: "Voter", 
+    cell: ({ row }) => {
+      const status = row.original.voter
+      const { mutateAsync: linkToVoter } = useLinkToVoter()
+
+      const link = () => {
+        try {
+          linkToVoter(row.original.rp_id)
+        } catch (err) {
+          showErrorToast("Failed to link resident to voter.")
+        }
+      }
+
+      switch(status) {
+        case "Link":
+          return (
+            <div className="flex justify-center">
+              <div className="bg-green-500 px-5 py-1 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={link}
+              >
+                <p className="text-white font-medium">{status}</p>
+              </div>
+            </div>
+          )
+        case "Review":
+          return (
+            <div className="flex justify-center">
+              <div className="bg-amber-500">
+                <p className="text-white font-medium">{status}</p>
+              </div>
+            </div>
+          )
+        default:
+          return status
+      }
+    }
   },
   {
     accessorKey: "completed_profiles",
-    header: "Completed Profile",
+    header: "Profile",
     cell: ({row}) => {
       const navigate = useNavigate();
       const profiles = [

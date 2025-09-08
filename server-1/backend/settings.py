@@ -212,7 +212,7 @@
 # }
 
 # # New User Model
-# # AUTH_USER_MODEL = 'account.Account'
+# AUTH_USER_MODEL = 'account.Account'
 
 # # ========================
 # # CORS SETTINGS
@@ -527,7 +527,7 @@ REST_FRAMEWORK = {
 }
 
 # New User Model
-# AUTH_USER_MODEL = 'account.Account'
+AUTH_USER_MODEL = 'account.Account'
 
 # ========================
 # CORS SETTINGS
