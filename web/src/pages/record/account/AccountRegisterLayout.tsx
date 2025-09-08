@@ -11,9 +11,7 @@ import { Mail, Lock, User, CircleUserRound } from "lucide-react"
 import { useAddAccount } from "./queries/accountAddQueries"
 import { useSafeNavigate } from "@/hooks/use-safe-navigate"
 import { Button } from "@/components/ui/button/button"
-import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import { useLocation } from "react-router"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 
@@ -30,8 +28,7 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
   const defaultValues = React.useRef(generateDefaultValues(accountFormSchema)).current
   const form = useForm<z.infer<typeof accountFormSchema>>({
     resolver: zodResolver(accountFormSchema),
-    defaultValues,
-    mode: "onChange",
+    defaultValues
   })
 
   // ==================== HANDLERS ======================

@@ -11,7 +11,7 @@ export const useLoginMutation = () => {
   return useMutation<TokenResponse, Error, LoginCredentials>({
     mutationFn: async (credentials) => {
       console.log('🔐 Attempting login...');
-      const response = await api.post('authentication/web/login/', credentials);
+      const response = await api.post('authentication/mobile/login/', credentials);
       console.log('✅ Login successful');
       return response.data;
     },
@@ -179,14 +179,14 @@ export const useVerifyEmailOTPMutation = () => {
       dispatch(clearError());
     },
     onSuccess: (data) => {
-      if (data.access_token && data.user) {
-        dispatch(setAuthData({ 
-          accessToken: data.access_token, 
-          user: data.user,
-          refreshToken: data.refresh_token 
-        }));
-        dispatch(clearOtpState());
-      }
+      // if (data.access_token && data.user) {
+      //   dispatch(setAuthData({ 
+      //     accessToken: data.access_token, 
+      //     user: data.user,
+      //     refreshToken: data.refresh_token 
+      //   }));
+      //   dispatch(clearOtpState());
+      // }
       dispatch(setLoading(false));
     },
     onError: (error: any) => {

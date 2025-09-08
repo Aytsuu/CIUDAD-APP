@@ -117,7 +117,7 @@ export default function RegistrationLayout() {
         ...(!noHouse && {houses: houseSchema.list}),
         ...(!notLivingSolo && {livingSolo: livingSoloSchema}),
         ...(!noFamily && {family: familySchema}),
-        ...(!noBusiness && {business: {...business, files: files}}),
+        ...(!noBusiness && {business: {...business, bus_status: 'Active', files: files}}),
         staff: user?.staff?.staff_id
       })
       
@@ -152,7 +152,7 @@ export default function RegistrationLayout() {
         ...(!noHouse && {houses: houseSchema.list}),
         ...(!notLivingSolo && {livingSolo: livingSoloSchema}),
         ...(!noFamily && {family: familySchema}),
-        ...(!noBusiness && {business: {...business, files: files}}),
+        ...(!noBusiness && {business: {...business, bus_status: 'Active', files: files}}),
         staff: user?.staff?.staff_id
       })
 

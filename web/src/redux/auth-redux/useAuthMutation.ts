@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAppDispatch } from "../redux";
-import { setLoading, setError, clearAuthState, clearError, clearOtpState, setAuthData, setOtpSent } from "./authSlice";
+import { setLoading, setError, clearAuthState, clearError, setAuthData, setOtpSent } from "./authSlice";
 import { queryClient } from "@/lib/queryClient";
 import api from "@/api/api";
 import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse } from "./auth-types";
@@ -86,23 +86,23 @@ export const useSendEmailOTPMutation = () => {
 export const useVerifyEmailOTPMutation = () => {
   const dispatch = useAppDispatch();
   
-  return useMutation<TokenResponse, Error, { otp: string; email: string }>({
-    mutationFn: async ({ otp, email }) => {
+  return useMutation({
+    mutationFn: async ({ otp, email } : { otp: string, email: string}) => {
       const response = await api.post('authentication/email/verifyOtp/', {
         otp,
         email,
       });
-      return response.data;
+      return response;
     },
     onMutate: () => {
       dispatch(setLoading(true));
       dispatch(clearError());
     },
-    onSuccess: (data) => {
-      if (data.access) {
-        dispatch(setAuthData({ access: data.access, user: data.user }));
-        dispatch(clearOtpState());
-      }
+    onSuccess: () => {
+      // if (data.access) {
+      //   dispatch(setAuthData({ access: data.access, user: data.user }));
+      //   dispatch(clearOtpState());
+      // }
       dispatch(setLoading(false));
     },
     onError: (error: any) => {

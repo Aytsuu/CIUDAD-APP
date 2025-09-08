@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm, ControllerRenderProps } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Lock, Phone, Mail, ArrowLeft, Shield, Users, MapPin } from "lucide-react";
+import { Eye, EyeOff, Lock, Phone, Mail, ArrowLeft, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,6 @@ import SignInSchema from "@/form-schema/sign-in-schema";
 import { useAuth } from "@/context/AuthContext";
 import SanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
 import { useNavigate } from "react-router";
 
 export default function SignIn() {

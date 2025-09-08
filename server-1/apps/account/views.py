@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
-from .serializers import UserAccountSerializer
+from .serializers import *
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -32,6 +32,10 @@ class ListOfExistingEmail(APIView):
     def get(self, request, *args, **kwargs):
         accounts = Account.objects.all()
         return  Response([acc.email for acc in accounts])
+    
+class PhoneVerificationView(generics.ListCreateAPIView):
+    serializer_class = PhoneVerificationBaseSerializer
+    queryset = PhoneVerification.objects.all()
 
 class UploadImageView(APIView):
 

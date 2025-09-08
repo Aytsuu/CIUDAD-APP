@@ -174,7 +174,7 @@ const PersonalInfoForm = ({
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <FormSelect control={control} name={`${prefix}per_edAttainment`} label="Educational Attainment" readOnly={isReadOnly} options={EDUCATIONAL_ATTAINMENT}/>
         <FormSelect control={control} name={`${prefix}per_religion`} label="Religion" options={RELIGION_OPTIONS} readOnly={isReadOnly} />
-        <FormSelect control={control} name={`${prefix}per_disability`} label="Person with Disability (Select if applicable)" options={PWD_OPTIONS} readOnly={isReadOnly} />
+        <FormSelect control={control} name={`${prefix}per_disability`} label="Disability (if applicable)" options={PWD_OPTIONS} readOnly={isReadOnly} />
       </div>
       <div className="grid grid-cols-1 gap-4">
         {

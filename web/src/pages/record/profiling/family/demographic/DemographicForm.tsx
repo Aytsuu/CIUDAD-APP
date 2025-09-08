@@ -85,7 +85,7 @@ export default function DemographicForm({
               options={[
                 { id: "owner", name: "Owner" },
                 { id: "renter", name: "Renter" },
-                { id: "other", name: "Other" },
+                { id: "sharer", name: "Sharer" },
               ]}
               readOnly={false}
             />

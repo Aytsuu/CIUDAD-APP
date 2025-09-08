@@ -12,6 +12,28 @@ import {
 } from "../restful-api/profiingPostAPI";
 import { api } from "@/api/api";
 
+export const useAddSitio = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Record<string, any>[]) => {
+      try {
+        const res = await api.post("profiling/sitio/create/", data);
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["sitioList"], (old: any[] = []) => [
+        ...old,
+        data
+      ]);
+      queryClient.invalidateQueries({queryKey: ["sitioList"]})
+    }
+  }) 
+}
+
 export const useAddAllProfile = () => {
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
@@ -148,11 +170,11 @@ export const useAddBusiness = () => {
   return useMutation({
     mutationFn: (data: Record<string, any>) => addBusiness(data),
     onSuccess: (newData) => {
-      queryClient.setQueryData(["businesses"], (old: any[] = []) => [
+      queryClient.setQueryData(["activeBusinesses"], (old: any[] = []) => [
         ...old,
         newData
       ]);
-      queryClient.invalidateQueries({queryKey: ["businesses"]});
+      queryClient.invalidateQueries({queryKey: ["activeBusinesses"]});
     },
   });
 };

@@ -50,7 +50,7 @@ export const useAuth = () => {
     async (otp: string, email: string) => {
       try {
         const result = await verifyOTPMutation.mutateAsync({ otp, email });
-        return result.user;
+        return result;
       } catch {
         return null;
       }

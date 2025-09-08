@@ -33,25 +33,31 @@ export default function IndividualScan() {
 
   const residentRegistration = async (
     per: Record<string, any>,
-    per_addresses: Record<string, any>,
     account: Record<string, any>
   ) => {
     try {
-      const personal = await addPersonal(capitalizeAllFields(per));
-      const new_addresses = await addAddress(per_addresses.list);
-      await addPersonalAddress({
-        data: new_addresses?.map((address: any) => ({
-          add: address.add_id,
-          per: personal.per_id,
-        })),
-        history_id: personal.history,
-      });
-
+      // const personal = await addPersonal(capitalizeAllFields(per));
+      // const new_addresses = await addAddress(per_addresses.list);
+      // await addPersonalAddress({
+      //   data: new_addresses?.map((address: any) => ({
+      //     add: address.add_id,
+      //     per: personal.per_id,
+      //   })),
+      //   history_id: personal.history,
+      // });
+      // console.log( {
+      //         per: capitalizeAllFields(per),
+      //         acc: account,
+      //         role: "Independent",
+      //       })
       await addRequest(
         {
           comp: [
             {
-              per: personal.per_id,
+              per: {
+                ...capitalizeAllFields(per),
+                per_id: +per.per_id
+              },
               acc: account,
               role: "Independent",
             },
@@ -136,7 +142,7 @@ export default function IndividualScan() {
         await busRespondentRegistration(per, per_addresses, account);
         break;
       default:
-        await residentRegistration(per, per_addresses, account);
+        await residentRegistration({...per, per_addresses: per_addresses.list}, account);
         break;
     }
   };
