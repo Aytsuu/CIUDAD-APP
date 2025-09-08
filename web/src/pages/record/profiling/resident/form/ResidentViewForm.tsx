@@ -7,7 +7,7 @@ import { useUpdateProfile } from "../../queries/profilingUpdateQueries"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Card } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/table/data-table"
-import { businessDetailsColumns, familyDetailsColumns, residentColumns } from "../ResidentColumns"
+import { businessDetailsColumns, familyDetailsColumns } from "../ResidentColumns"
 import {
   useFamilyMembers,
   useOwnedBusinesses,
@@ -19,7 +19,7 @@ import { formatSitio } from "../../ProfilingFormats"
 import { useAddAddress, useAddPerAddress } from "../../queries/profilingAddQueries"
 import { capitalizeAllFields } from "@/helpers/capitalize"
 import { useLoading } from "@/context/LoadingContext"
-import { Users, History, Clock, UsersRound, UserRound, Building, Eye, MoveRight } from "lucide-react"
+import { Users, History, Clock, UsersRound, UserRound, Building, MoveRight } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
 import { Label } from "@/components/ui/label"

@@ -12,8 +12,7 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal"
 import { router } from "expo-router"
 import { X } from "@/lib/icons/X"
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/redux/index";
-import { sendEmailOTP, verifyEmailOTP } from "@/redux/authSlice";
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function EmailOTP({ params } : {
   params: Record<string ,any>
@@ -25,8 +24,7 @@ export default function EmailOTP({ params } : {
   const [modalVisible, setModalVisible] = React.useState<boolean>(false)
   const [otpInput, setOtpInput] = React.useState<string[]>(["", "", "", "", "", ""])
   const { toast } = useToastContext()
-
-  const { mutateAsync: sendOTP } = useSendOTP()
+  const { sendEmailOTP,  verifyEmailOTP} = useAuth();
 
   // ====================== SIDE EFFECTS ======================
   React.useEffect(() => {
@@ -34,25 +32,24 @@ export default function EmailOTP({ params } : {
   }, [otpInput])
 
   // ====================== HANDLERS ======================
-  const verify = async () => {
-    const input = otpInput.join("")
-    try {
-      const email = getValues("accountFormSchema.email")
-      const response = await dispatch(
-        verifyEmailOTP({ email: email as string, otp: input })
-      );
-
-      if (verifyEmailOTP.fulfilled.match(response)) {
-        toast.success(response.payload.message || "Email verified successfully!");
-        setModalVisible(false);
-        params.next();
-      } else {
-        toast.error(response.payload || "OTP verification failed");
-      }
-    } catch (err) {
-      toast.error("Something went wrong while verifying OTP");
+const verify = async () => {
+  const otp = otpInput.join("")
+  try {
+    const email = getValues("accountFormSchema.email")
+    const response = await verifyEmailOTP( email, otp ) 
+    console.log("response:", response)
+    if (response) {
+      toast.success("Email verified successfully!");
+      setModalVisible(false);
+      params.next();
+    } else {
+      toast.error("OTP verification failed");
     }
+  } catch (err) {
+    toast.error("Something went wrong while verifying OTP");
   }
+}
+
 
   const send = async () => {
     if (!(await trigger("accountFormSchema.email"))) {
@@ -63,9 +60,9 @@ export default function EmailOTP({ params } : {
     try {
       setIsSubmitting(true)
       const email = getValues("accountFormSchema.email")
-      const response = await dispatch(sendEmailOTP({ email: email as string }));
+      const response = await sendEmailOTP(email);
       
-      if (sendEmailOTP.fulfilled.match(response)) {
+      if (response) {
         setModalVisible(true);
       } 
     } catch (err) {

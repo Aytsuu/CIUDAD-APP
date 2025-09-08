@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleAlert, Info, X } from "lucide-react";
+import { CheckCircle2, CircleAlert, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const showErrorToast = (message: string) => {

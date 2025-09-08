@@ -59,52 +59,53 @@ class CompositionSerializer(serializers.Serializer):
   role = serializers.CharField(write_only=True)
   acc = AccountInputSerializer(write_only=True, required=False)
 
-class RequestCreateSerializer(serializers.ModelSerializer):
-  comp = CompositionSerializer(write_only=True, many=True)
-  class Meta:
-    model = RequestRegistration
-    fields = ['comp']
+# class RequestCreateSerializer(serializers.ModelSerializer):
+#   comp = CompositionSerializer(write_only=True, many=True)
+#   class Meta:
+#     model = RequestRegistration
+#     fields = ['comp']
   
-  @transaction.atomic
-  def create(self, validated_data):
-    comp = validated_data.get('comp', None)
+#   @transaction.atomic
+#   def create(self, validated_data):
+#     comp = validated_data.get('comp', None)
       
-    if not comp or len(comp) == 0:
-        raise serializers.ValidationError("'comp' field is required")
+#     if not comp or len(comp) == 0: 
+#         raise serializers.ValidationError("'comp' field is required")
     
-    request = RequestRegistration.objects.create()
-    new_comp = []
+#     request = RequestRegistration.objects.create()
+#     new_comp = []
   
-    for data in comp:
-      try: 
-        new_data = { 
-          'rrc_fam_role': data['role'],
-          'per': self.create_personal_info(data['per']),
-          'req': request
-        } 
+#     for data in comp:
+#       try: 
+#         new_data = { 
+#           'rrc_fam_role': data['role'],
+#           'per': self.create_personal_info(data['per']),
+#           'req': request
+#         } 
         
-        if 'acc' in data:  
-          acc = data['acc']  
-          account = Account.objects.create(
-              email=acc.get('email', None),
-              phone=acc.get('phone', None),
-              username=acc['username'],
-          )
+#         # if 'acc' in data:  
+#         #   acc = data['acc']  
+#         #   account = Account.objects.create_user(
+#         #       email=acc.get('email', None),
+#         #       phone=acc.get('phone', None),
+#         #       username=acc.get('username', None),
+#         #       password=acc.get('password', None)
+#         #   )
 
-          new_data['acc'] = account
+#         #   new_data['acc'] = account
 
-      except Exception as e:
-        print(f"Error processing composition: {str(e)}")
-        raise serializers.ValidationError(str(e))
+#       except Exception as e:
+#         print(f"Error processing composition: {str(e)}")
+#         raise serializers.ValidationError(str(e))
       
-      new_comp.append(
-        RequestRegistrationComposition(**new_data)
-      )
+#       new_comp.append(
+#         RequestRegistrationComposition(**new_data)
+#       )
     
-    if len(new_comp) > 0:
-      RequestRegistrationComposition.objects.bulk_create(new_comp)
+#     if len(new_comp) > 0:
+#       RequestRegistrationComposition.objects.bulk_create(new_comp)
     
-    return request
+#     return request
 
   def create_personal_info(self, personal, staff=None):
     addresses = personal.pop("per_addresses", None)

@@ -62,7 +62,7 @@ class RequestCreateView(APIView):
                 
         if 'acc' in data:  
           acc = data['acc']  
-          account = Account.objects.create(
+          account = Account.objects.create_user(
               email=acc.get('email', None),
               phone=acc.get('phone', None),
               username=acc['username'],

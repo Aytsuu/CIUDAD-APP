@@ -5,7 +5,6 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import ViewButton from "@/components/ui/view-button";
 import { Badge } from "@/components/ui/badge";
 import React from "react";
-import { formatDate } from "@/helpers/dateHelper";
 import { ResidentRecord, ResidentFamilyRecord, ResidentBusinessRecord } from "../ProfilingTypes";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useLinkToVoter } from "../queries/profilingUpdateQueries";

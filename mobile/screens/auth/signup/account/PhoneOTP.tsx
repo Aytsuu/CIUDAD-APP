@@ -1,7 +1,7 @@
 import { useToastContext } from "@/components/ui/toast"
 import PageLayout from "@/screens/_PageLayout"
 import React from "react"
-import { ScrollView, View, Text, TouchableOpacity } from "react-native"
+import { ScrollView, View, Text, TouchableOpacity, TextInput } from "react-native"
 import OTPModal from "./OTPModal"
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext"
 import { FormInput } from "@/components/ui/form/form-input"

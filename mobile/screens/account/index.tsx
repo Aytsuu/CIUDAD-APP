@@ -10,17 +10,14 @@ import {
 import { useState } from "react";
 import ScreenLayout from "../_ScreenLayout";
 import { useRouter } from "expo-router";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState, AppDispatch } from "@/redux";
-import { logout, clearAuthState } from "@/redux/authSlice";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToastContext } from "@/components/ui/toast";
 
 export default () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
-  const dispatch = useDispatch<AppDispatch>();
-  const { user, isLoading } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
+  const { user, isLoading, logout } = useAuth();
   const { toast } = useToastContext();
 
   type AccountSectionProps = {
@@ -119,15 +116,10 @@ export default () => {
         style: "destructive",
         onPress: async () => {
           try {
-            console.log("Starting logout process...");
-            dispatch(clearAuthState());
+            await logout();
             router.replace("/(auth)");
-            dispatch(logout()).finally(() => {
-              console.log("Logout API call completed");
-            });
             toast.success("Signed out successfully");
           } catch (error) {
-            console.error("Logout error:", error);
             toast.success("Signed out successfully");
           }
         },
@@ -263,7 +255,7 @@ export default () => {
               isLoading ? "bg-gray-200" : "bg-red-50"
             }`}
             onPress={handleSignOut}
-            disabled={isLoading}
+            // disabled={isLoading}
             activeOpacity={0.7}
           >
             <Text 
