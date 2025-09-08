@@ -374,3 +374,16 @@ export const useHouseholdTable = (
     staleTime: 5000,
   });
 };
+
+// Temporary stub for Voters table to bypass TS error until API is implemented
+export const useVoterTable = (
+  page: number,
+  pageSize: number,
+  searchQuery: string
+) => {
+  return useQuery({
+    queryKey: ["votersTableData", page, pageSize, searchQuery],
+    queryFn: async () => ({ results: [], count: 0 }),
+    staleTime: 5000,
+  });
+};
