@@ -49,6 +49,13 @@ export const accountFormSchema = z.object({
       message: "Must be 11 digits (e.g., 09171234567)",
     }),
   password: z.string().min(6, "Password must be at least 6 characters long"),
+  confirm_password: z
+      .string()
+      .min(1, { message: "Please confirm your password" }),
+})
+.refine((data) => data.password === data.confirm_password, {
+  message: "Passwords do not match",
+  path: ["confirm_password"],
 });
 
 export const passwordFormSchema = z
