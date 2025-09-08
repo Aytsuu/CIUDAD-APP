@@ -5,9 +5,9 @@ import { useResidentForm } from "./useResidentForm"
 import { Type } from "../../ProfilingEnums"
 import { useUpdateProfile } from "../../queries/profilingUpdateQueries"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { Card } from "@/components/ui/card/card"
+import { Card } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/table/data-table"
-import { businessDetailsColumns, familyDetailsColumns } from "../ResidentColumns"
+import { businessDetailsColumns, familyDetailsColumns, residentColumns } from "../ResidentColumns"
 import {
   useFamilyMembers,
   useOwnedBusinesses,
@@ -19,7 +19,7 @@ import { formatSitio } from "../../ProfilingFormats"
 import { useAddAddress, useAddPerAddress } from "../../queries/profilingAddQueries"
 import { capitalizeAllFields } from "@/helpers/capitalize"
 import { useLoading } from "@/context/LoadingContext"
-import { Users, History, Clock } from "lucide-react"
+import { Users, History, Clock, UsersRound, UserRound, Building, Eye, MoveRight } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
 import { Label } from "@/components/ui/label"
@@ -27,9 +27,13 @@ import { useNavigate } from "react-router"
 import { RenderHistory } from "../../ProfilingHistory"
 import { ActivityIndicator } from "@/components/ui/activity-indicator"
 import { EmptyState } from "@/components/ui/empty-state"
+import { CardSidebar } from "@/components/ui/card-sidebar"
+import { Button } from "@/components/ui/button/button"
 
 export default function ResidentViewForm({ params }: { params: any }) {
-  // ============= STATE INITIALIZATION ===============
+  // ============= STATE INITIALIZATION =============== 
+  const currentPath = location.pathname.split("/").pop() as string
+  console.log("current path:", currentPath)
   const navigate = useNavigate();
   const { user } = useAuth()
   const { showLoading, hideLoading } = useLoading()
@@ -39,6 +43,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false)
   const [addresses, setAddresses] = React.useState<Record<string, any>[]>([])
   const [validAddresses, setValidAddresses] = React.useState<boolean[]>([])
+  const [selectedItem, setSelectedItem] = React.useState<string>(currentPath);
   const { mutateAsync: addAddress } = useAddAddress()
   const { mutateAsync: addPersonalAddress } = useAddPerAddress()
   const { data: personalInfo, isLoading: isLoadingPersonalInfo } = usePersonalInfo(params.data.residentId)
@@ -52,7 +57,6 @@ export default function ResidentViewForm({ params }: { params: any }) {
   const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } = useResidentForm(personalInfo)
   const family = familyMembers?.results || []
   const businesses = ownedBusinesses?.results || []
-  console.log(businesses)
   const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList])
 
   const validator = React.useMemo(
@@ -66,6 +70,57 @@ export default function ResidentViewForm({ params }: { params: any }) {
       ),
     [addresses],
   )
+
+  const MenuItems = [
+    {
+      id: "personal",
+      label: "Personal",
+      description: "Personal Information",
+      icon: UserRound,
+      route: "personal",
+      state: {
+        params: {
+          type: 'viewing',
+          data: {
+            residentId: params?.data.residentId,
+            familyId: params?.data.familyId
+          }
+        }
+      }
+    },
+    {
+      id: "family",
+      label: "Family",
+      description: "Family Information",
+      icon: UsersRound,
+      route: "family",
+      state: {
+        params: {
+          type: 'viewing',
+          data: {
+            residentId: params?.data.residentId,
+            familyId: params?.data.familyId
+          }
+        }
+      }
+    },
+    ...(businesses?.length > 0 ? [{
+      id: "business",
+      label: "Business",
+      description: "Business Information",
+      icon: Building,
+      route: "business",
+      state: {
+        params: {
+          type: 'viewing',
+          data: {
+            residentId: params?.data.residentId,
+            familyId: params?.data.familyId
+          }
+        }
+      }
+    }] : []) as any
+  ]
   
   // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
@@ -213,7 +268,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
     }
     return (
       <div className="flex justify-center">
-        <div className="w-full max-w-5xl mt-5 border">
+        <div className="w-full mt-5 border">
           <DataTable
             columns={familyDetailsColumns(params.data.residentId, params.data.familyId)}
             data={family}
@@ -247,8 +302,22 @@ export default function ResidentViewForm({ params }: { params: any }) {
       title="Resident Details"
       description="Information is displayed in a clear, organized, and secure manner."
     >
-      <div className="grid gap-8 max-h-[800px] overflow-y-auto">
-        <Card className="w-full p-10">
+      <div className="flex gap-4">
+        <div className="w-1/6">
+          <CardSidebar 
+            sidebarItems={MenuItems}
+            selectedItem={selectedItem}
+            setSelectedItem={setSelectedItem}
+            header={
+              <div className="flex flex-col px-5 py-3 bg-blue-100 font-semibold">
+                <span className="text-sm text-black/80 font-normal">Select a record to view</span>
+              </div>
+            }
+            
+          />
+        </div>
+        <div className="grid w-full gap-8 max-h-[800px] overflow-y-auto">
+          {currentPath == "personal" && <Card className="w-full p-10">
           <div className="pb-4 flex justify-between">
             <div>
               <h2 className="text-lg font-semibold">Personal Information</h2>
@@ -304,26 +373,42 @@ export default function ResidentViewForm({ params }: { params: any }) {
               </form>
             </Form>
           )}
-        </Card>
-
-        <Card className="w-full p-10">
-          <div className="pb-4">
-            <h2 className="text-lg font-semibold">Family</h2>
-            <p className="text-xs text-black/50">Shows family details of this resident</p>
-          </div>
-          {renderFamilyContent()}
-        </Card>
-        
-        {(!isLoadingBusinesses && (!businesses || businesses.length > 0)) &&
-          <Card className="w-full p-10">
+        </Card>}
+          
+          {currentPath == "family" && <Card className="w-full p-10">
+          <div className="flex justify-between">
             <div className="pb-4">
-              <h2 className="text-lg font-semibold">Business</h2>
-              <p className="text-xs text-black/50">Shows owned business of this resident</p>
+              <h2 className="text-lg font-semibold">Family</h2>
+              <p className="text-xs text-black/50">Shows family members of this resident</p>
             </div>
-            {renderBusinessContent()}
-          </Card>
-        }
-        
+            <Button variant={'ghost'}
+              onClick={() => {
+                navigate("/profiling/family/view", {
+                  state: {
+                    params: {
+                      fam_id: params.data.familyId
+                    }
+                  }
+                })
+              }}
+            >
+              View full details <MoveRight/>
+            </Button>
+          </div>
+            {renderFamilyContent()}
+          </Card>}
+          
+          {currentPath == "business" && (!isLoadingBusinesses && (!businesses || businesses.length > 0)) &&
+            <Card className="w-full p-10">
+              <div className="pb-4">
+                <h2 className="text-lg font-semibold">Business</h2>
+                <p className="text-xs text-black/50">Shows owned business of this resident</p>
+              </div>
+              {renderBusinessContent()}
+            </Card>
+          }
+          
+        </div>
       </div>
     </LayoutWithBack>
   )

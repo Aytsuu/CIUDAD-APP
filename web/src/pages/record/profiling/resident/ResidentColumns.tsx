@@ -137,7 +137,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     cell: ({ row }) => {
       const navigate = useNavigate();
       const handleViewClick = async () => {
-        navigate("/profiling/resident/view", {
+        navigate("/profiling/resident/view/personal", {
           state: {
             params: {
               type: 'viewing',
@@ -198,7 +198,7 @@ export const familyDetailsColumns = (residentId: string, familyId: string): Colu
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/profiling/resident/view", {
+        navigate("/profiling/resident/view/personal", {
           state: {
             params: {
               type: 'viewing',

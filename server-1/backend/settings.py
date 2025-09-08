@@ -20,8 +20,8 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 # ========================
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
 
-DEBUG = config('DEBUG', default=True, cast=bool)
-# DEBUG=False
+# DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG=True
 
 # ========================
 # SUPABASE CONFIGURATION
@@ -32,14 +32,8 @@ SUPABASE_CONFIG = {
     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY', default='service-role-dev-key'),
     'JWT_SECRET': config('SUPABASE_JWT_SECRET', default='dev-jwt-secret'),
     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID', default='local-dev-project'),
-    'JWT_ALGORITHM': 'HS256',
-    'JWT_AUDIENCE': 'authenticated',
 }
 
-SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
-SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
-SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
-SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
 SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
 SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
@@ -67,6 +61,9 @@ INSTALLED_APPS = [
     
     # Third-party apps
     'rest_framework',
+    'rest_framework_simplejwt',
+    'debug_toolbar',
+    'simple_history',
     
     # Local apps
     'apps.administration',
@@ -87,24 +84,22 @@ INSTALLED_APPS = [
     'apps.clerk',
     'backend.firebase.notifications',
     'apps.act_log',
+    
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', 
+    'django_ratelimit.middleware.RatelimitMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.authentication.middleware.AuthCheckingMiddleware',
-]
-
-AUTHENTICATION_BACKENDS = [
-    'apps.authentication.backends.SupabaseAuthBackend',
-    'django.contrib.auth.backends.ModelBackend',
+    'apps.authentication.middleware.request_logging.RequestLoggingMiddleware',
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware', 
+    # 'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -145,10 +140,6 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'OPTIONS': {
-            'connect_timeout': 5,
-            'sslmode': 'require',
-        },
         'NAME': config('DB_NAME', default='my_default_db'),
         'USER': config('DB_USER', default='my_default_user'),
         'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
@@ -182,18 +173,8 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True 
 
-# ========================
-# STATIC FILES
-# ========================
+# Static files 
 STATIC_URL = 'static/'
-if not DEBUG:
-    # Tell Django to copy static assets into a path called `staticfiles` (this is specific to Render)
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-    # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
-    # and renames the files with unique names for each version to support long-term caching
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
 DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # Default primary key field type
@@ -204,34 +185,35 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ========================
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'apps.authentication.backends.SupabaseAuthBackend',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         # 'rest_framework.permissions.IsAuthenticated',
     ],
 }
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': False,  
+    "USER_ID_FIELD": "acc_id",   
+    "USER_ID_CLAIM": "acc_id", 
+}
+
 # New User Model
-# AUTH_USER_MODEL = 'account.Account'
+AUTH_USER_MODEL = 'account.Account'
 
 # ========================
 # CORS SETTINGS
 # ========================
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "https://ciudad-app-server-1.onrender.com",
-    "http://127.0.0.1:5173",  # Add this for Vite sometimes
-]
+# CORS_ALLOWED_ORIGINS = [
+#     config('FRONTEND_URL', default='http://localhost:3000'), # replace this with the domain e.g 'https://ciudad-app.onrender.com'
+# ]
 
-ALLOWED_HOSTS = [
-    'ciudad-app-server-1.onrender.com',
-    'localhost',
-    '127.0.0.1'
-]
-
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+ALLOWED_HOSTS = ['*'] 
+CORS_ALLOW_ALL_ORIGINS = True # disable in production
+CORS_ALLOW_CREDENTIALS = True # false in production
 
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -299,19 +281,16 @@ LOGGING = {
 SCHEDULER_AUTOSTART = True
 # SCHEDULER_AUTOSTART = not DEBUG # for production
 
+
 # ========================
 # PAYMONGO
 # ========================
 PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 
 
-
-
-
-
-# # ---------------------------------------------------
-# # DEVELOPMENT SERVER
-# # ---------------------------------------------------
+# ---------------------------------------------------
+# DEVELOPMENT SERVER
+# ---------------------------------------------------
 
 # from pathlib import Path
 # from decouple import config
@@ -343,8 +322,6 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 #     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY', default='service-role-dev-key'),
 #     'JWT_SECRET': config('SUPABASE_JWT_SECRET', default='dev-jwt-secret'),
 #     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID', default='local-dev-project'),
-#     'JWT_ALGORITHM': 'HS256',
-#     'JWT_AUDIENCE': 'authenticated',
 # }
 
 # SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
@@ -374,7 +351,9 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
     
 #     # Third-party apps
 #     'rest_framework',
-#     'simple_history',
+#     'rest_framework_simplejwt',
+#     'simple_history', # --- NEW
+#     'debug_toolbar', # --- NEW
     
 #     # Local apps
 #     'apps.administration',
@@ -401,21 +380,21 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 # MIDDLEWARE = [
 #     'corsheaders.middleware.CorsMiddleware', 
 #     'django.middleware.security.SecurityMiddleware',
+#     'django_ratelimit.middleware.RatelimitMiddleware',
 #     'django.contrib.sessions.middleware.SessionMiddleware',
 #     'django.middleware.common.CommonMiddleware',
-#     'corsheaders.middleware.CorsMiddleware',
 #     'django.middleware.csrf.CsrfViewMiddleware',
 #     'django.contrib.auth.middleware.AuthenticationMiddleware',
 #     'django.contrib.messages.middleware.MessageMiddleware',
 #     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-#     'apps.authentication.middleware.AuthCheckingMiddleware',
-#     # 'simple_history.middleware.HistoryRequestMiddleware',
+#     'apps.authentication.middleware.request_logging.RequestLoggingMiddleware',
+#     'debug_toolbar.middleware.DebugToolbarMiddleware', 
+#     'simple_history.middleware.HistoryRequestMiddleware',
 # ]
 
-# AUTHENTICATION_BACKENDS = [
-#     'apps.authentication.backends.SupabaseAuthBackend',
-#     'django.contrib.auth.backends.ModelBackend',
-# ]
+# # Debug toolbar - only in DEBUG mode (shows the Debug Toolbar if the request is coming from these IP addresses)
+# # Remove Debug Toolbar in production (DEBUG=False)
+# INTERNAL_IPS = ['127.0.0.1']
 
 # ROOT_URLCONF = 'backend.urls'
 
@@ -460,6 +439,7 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 #         'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
 #         'HOST': config('DB_HOST', default='localhost'),
 #         'PORT': config('DB_PORT', default='5432'),
+#         'CONN_MAX_AGE': 0
 #     }
 # }
 
@@ -498,17 +478,28 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 # # ========================
 # # REST FRAMEWORK
 # # ========================
+# # used when DRF is used in handling API requests
+# # API endpoints (views that extend APIView or ViewSet).
 # REST_FRAMEWORK = {
 #     'DEFAULT_AUTHENTICATION_CLASSES': [
-#         'apps.authentication.backends.SupabaseAuthBackend',
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
 #     ],
 #     'DEFAULT_PERMISSION_CLASSES': [
 #         # 'rest_framework.permissions.IsAuthenticated',
 #     ],
 # }
 
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+#     'ROTATE_REFRESH_TOKENS': True,
+#     'BLACKLIST_AFTER_ROTATION': False,  # Set to False initially for 
+#     "USER_ID_FIELD": "acc_id",   # or your PK field
+#     "USER_ID_CLAIM": "acc_id", 
+# }
+
 # # New User Model
-# # AUTH_USER_MODEL = 'account.Account'
+# AUTH_USER_MODEL = 'account.Account'
 
 # # ========================
 # # CORS SETTINGS
@@ -562,6 +553,11 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 #     SECURE_CONTENT_TYPE_NOSNIFF = True
 #     SECURE_BROWSER_XSS_FILTER = True
 #     X_FRAME_OPTIONS = 'DENY'
+    
+
+# SECURE_COOKIE_HTTPONLY = True  # Prevent JavaScript access to cookies
+# SECURE_COOKIE_SECURE = True    # Only send cookies over HTTPS (set False in dev if not using HTTPS)
+# SECURE_COOKIE_SAMESITE = 'Lax'
 
 # # ========================
 # # LOGGING
@@ -580,13 +576,18 @@ PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')
 #     },
 # }
 
-
 # # ========================
 # # SCHEDULER
 # # ========================
 # SCHEDULER_AUTOSTART = True
 # # SCHEDULER_AUTOSTART = not DEBUG # for production
 
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+#         "LOCATION": "unique-snowflake",  
+#     }
+# }
 
 # # ========================
 # # PAYMONGO

@@ -2,7 +2,7 @@ import {Textarea} from '../../../../components/ui/textarea.tsx';
 import {Button} from '../../../../components/ui/button/button.tsx';
 import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form/form.tsx";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { CardTitle } from '@/components/ui/card/card.tsx';
+import { CardTitle } from '@/components/ui/card.tsx';
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     Accordion,

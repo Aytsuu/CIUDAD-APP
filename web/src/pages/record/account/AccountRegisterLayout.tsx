@@ -6,7 +6,7 @@ import type { z } from "zod"
 import { accountFormSchema } from "@/form-schema/account-schema"
 import AccountRegistrationForm from "./AccountRegistrationForm"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Mail, Lock, User, CircleUserRound } from "lucide-react"
 import { useAddAccount } from "./queries/accountAddQueries"
 import { useSafeNavigate } from "@/hooks/use-safe-navigate"
@@ -35,6 +35,16 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
   })
 
   // ==================== HANDLERS ======================
+  const handleContinue = async () => {
+    console.log(tab_params?.form.getValues().accountSchema)
+    if (!(await tab_params?.form.trigger(["accountSchema"]))) {
+      showErrorToast("Please fill out all required fields.")
+      return
+    }
+
+    tab_params?.next(true)
+  }
+
   const submit = async () => {
     setIsSubmitting(true)
 
@@ -42,7 +52,7 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
       const formIsValid = await form.trigger()
 
       if (!formIsValid) {
-        showErrorToast("Please fill out all required fields and fix any validation errors")
+        showErrorToast("Please fill out all required fields.")
         return
       }
 
@@ -106,9 +116,12 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
 
           {/* Form Content */}
           <div className="bg-white rounded-lg p-6 border border-gray-100">
-            <Form {...form}>
+            <Form {...(tab_params?.isRegistrationTab ? tab_params?.form : form)}>
               <form className="space-y-6">
-                <AccountRegistrationForm form={form} />
+                <AccountRegistrationForm 
+                  form={tab_params?.isRegistrationTab ? tab_params?.form : form} 
+                  prefix={tab_params?.isRegistrationTab ? "accountSchema." : ""}
+                />
               </form>
             </Form>
           </div>
@@ -118,21 +131,35 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
             <Button variant="ghost" className="flex-1 h-11" type="button" onClick={handleSkip} disabled={isSubmitting}>
               Skip for Now
             </Button>
+            <Button onClick={tab_params?.isRegistrationTab ? handleContinue : submit}
+              className="flex-1"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  {tab_params?.isRegistrationTab ? "Next" : "Create Account"}
+                </>
+              )}
+            </Button>
 
-            <ConfirmationModal
+            {/* <ConfirmationModal
               trigger={
                 <Button
-                  className="flex-1 h-11"
+                  className="flex-1"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      <div className="border-white border-t-transparent rounded-full animate-spin mr-2" />
                       Creating...
                     </>
                   ) : (
                     <>
-                      Create Account
+                      {tab_params?.isRegistrationTab ? "Next" : "Create Account"}
                     </>
                   )}
                 </Button>
@@ -140,8 +167,8 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
               title="Confirm Account Registration"
               description="Are you sure you want to create this account? The resident will be able to use these credentials to access their information."
               actionLabel="Yes, Create Account"
-              onClick={submit}
-            />
+              onClick={tab_params?.isRegistrationTab ? handleContinue : submit}
+            /> */}
           </div>
 
           {/* Help Section */}

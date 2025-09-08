@@ -53,15 +53,13 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     staff = obj.staff
     staff_type = staff.staff_type
     staff_id = staff.staff_id
-    
-    if staff_type == 'Barangay Staff':
-      prefix = 'B-'
-    elif staff_type == 'Health Staff':
-      prefix = 'H-'
-    else:
-      prefix = ''
-    
-    return f"{prefix}{staff_id}"
+    fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+    fam_id = fam.fam.fam_id if fam else ""
+    personal = staff.rp.per
+    staff_name = f'{personal.per_lname}, {personal.per_fname}' \
+                  f' {personal.per_mname[0]}.' if personal.per_mname else ''
+
+    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
 class FamilyCreateSerializer(serializers.ModelSerializer):
   class Meta: 

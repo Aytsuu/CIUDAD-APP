@@ -1,5 +1,5 @@
 "use client"
-import { CardTitle } from '@/components/ui/card/card.tsx';
+import { CardTitle } from '@/components/ui/card.tsx';
 import {Textarea} from '../../../../components/ui/textarea.tsx';
 import {Button} from '../../../../components/ui/button/button.tsx';
 import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form/form.tsx";

@@ -1,4 +1,6 @@
 import * as z from "zod";
+import { accountFormSchema } from "./account-schema";
+
 
 export const demographicInfoSchema = z.object({
   id: z.string().optional(), 
@@ -8,13 +10,13 @@ export const demographicInfoSchema = z.object({
 });
 
 export const personalInfoSchema = z.object({
-
   per_id: z.string().optional(),
   per_suffix: z.string(),
   per_sex: z.string().min(1, "Sex is required"),
   per_dob: z.string().min(1, "Date of Birth is required"),
   per_status: z.string().min(1, "Status is required"),
   per_religion: z.string().min(1, "Religion is required"),
+  per_addresses: z.array(z.object({})).default([]),
   
   per_lname: z.string()
     .min(1, "Last Name is required")
@@ -43,6 +45,9 @@ export const personalInfoSchema = z.object({
     .refine((val) => val.length === 11, {
       message: "Must be 11 digits (e.g., 09171234567)",
     }),
+  per_disability: z.string()
+    .refine((val) => val === "" || val.length >= 2, "Middle Name must be at least 2 letters")
+    .optional(),
 });
 export const perAddDetails = z.object({
   bloodType: z.string().optional(),
@@ -241,3 +246,24 @@ export const surveyFormSchema = z.object({
   }),
   signature: z.string().min(1, "Signature is required"),
 });
+
+export const CompleteResidentProfilingSchema = z.object({
+  personalSchema: personalInfoSchema,
+  accountSchema: accountFormSchema,
+  houseSchema: z.object({
+    list: z.array(z.object({})).default([]),
+    info: householdFormSchema
+  }),
+  livingSoloSchema: demographicInfoSchema,
+  familySchema: z.object({
+    familyId: z.string().min(1, "Family ID is required"),
+    role: z.string().min(1, "Role is required")
+  }),
+  businessSchema: z.object({
+    bus_name: z.string().min(1, 'Business Name is required'),
+    bus_gross_sales: z.string().min(1, 'Gross Sales is required'),
+    bus_street: z.string().min(1, 'Street Address is required'),
+    sitio: z.string().min(1, 'Sitio is required'),
+    files: z.array(z.object({})).default([])
+  })
+})

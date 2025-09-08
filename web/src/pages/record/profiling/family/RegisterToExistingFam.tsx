@@ -1,64 +1,52 @@
-import React from "react"
 import { Button } from "@/components/ui/button/button"
-import { LoadButton } from "@/components/ui/button/load-button"
 import { Form } from "@/components/ui/form/form"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
-import { newMemberFormSchema } from "@/form-schema/profiling-schema"
-import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { MoveLeft, Plus, Users, UserPlus, UsersRound } from "lucide-react"
-import { useForm } from "react-hook-form"
-import type { z } from "zod"
-import { useAddFamilyComposition } from "../queries/profilingAddQueries"
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
+import { MoveLeft, Users, UserPlus, UsersRound, MoveRight } from "lucide-react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
-import { capitalize } from "@/helpers/capitalize"
+import { showErrorToast } from "@/components/ui/toast"
 
 export function RegisterToExistingFam({ tab_params }: { tab_params: Record<string, any> }) {
-  // -------------------- STATE INITIALIZATION ----------------------
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
-
-  const defaultValues = generateDefaultValues(newMemberFormSchema)
-  const form = useForm<z.infer<typeof newMemberFormSchema>>({
-    resolver: zodResolver(newMemberFormSchema),
-    defaultValues,
-  })
-
-  const { mutateAsync: addFamilyComposition } = useAddFamilyComposition()
-
   // -------------------- HANDLERS ----------------------
   // Submit function
-  const submit = async () => {
-    setIsSubmitting(true)
-
-    try {
-      const formIsValid = await form.trigger()
-      if (!formIsValid) {
-        showErrorToast("Please fill out all required fields to continue")
-        return
-      }
-
-      const values = form.getValues()
-
-      await addFamilyComposition([
-        {
-          fam: values.familyId,
-          fc_role: capitalize(values.role),
-          rp: tab_params?.residentId,
-        },
-      ])
-
-      showSuccessToast("Successfully added to existing family!")
-      tab_params.next?.(true)
-    } catch (error) {
-      console.error("Error adding to family:", error)
-      showErrorToast("Failed to add to family. Please try again.")
-    } finally {
-      setIsSubmitting(false)
+  const handleContinue = async () => {
+    console.log(tab_params?.form.getValues().familySchema)
+    if (!(await tab_params?.form.trigger(["familySchema"]))) {
+      showErrorToast("Please fill out all required fields to continue")
+      return
     }
+
+    tab_params?.next(true)
+
+    // setIsSubmitting(true)
+
+    // try {
+    //   const formIsValid = await form.trigger()
+    //   if (!formIsValid) {
+    //     showErrorToast("Please fill out all required fields to continue")
+    //     return
+    //   }
+
+    //   const values = form.getValues()
+
+    //   await addFamilyComposition([
+    //     {
+    //       fam: values.familyId,
+    //       fc_role: capitalize(values.role),
+    //       rp: tab_params?.residentId,
+    //     },
+    //   ])
+
+    //   showSuccessToast("Successfully added to existing family!")
+    //   tab_params.next?.(true)
+    // } catch (error) {
+    //   console.error("Error adding to family:", error)
+    //   showErrorToast("Failed to add to family. Please try again.")
+    // } finally {
+    //   setIsSubmitting(false)
+    // }
   }
 
   // -------------------- RENDER ----------------------
@@ -101,19 +89,19 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
 
           {/* Form Content */}
           <div className="bg-white rounded-lg p-6 border border-gray-100">
-            <Form {...form}>
+            <Form {...tab_params?.form}>
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
-                  submit()
+                  handleContinue()
                 }}
                 className="space-y-6"
               >
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
                     <FormInput
-                      control={form.control}
-                      name="familyId"
+                      control={tab_params?.form.control}
+                      name="familySchema.familyId"
                       label="Family ID"
                       placeholder="Enter the existing family ID"
                     />
@@ -122,8 +110,8 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
 
                   <div className="space-y-2">
                     <FormSelect
-                      control={form.control}
-                      name="role"
+                      control={tab_params?.form.control}
+                      name="familySchema.role"
                       label="Family Role"
                       options={[
                         { id: "mother", name: "Mother" },
@@ -138,16 +126,9 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
 
                 {/* Action Button */}
                 <div className="flex justify-end pt-4">
-                  {!isSubmitting ? (
-                    <Button className="min-w-32">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add to Family
-                    </Button>
-                  ) : (
-                    <LoadButton className="min-w-32">
-                      Adding...
-                    </LoadButton>
-                  )}
+                  <Button className="min-w-32">
+                    Next <MoveRight />
+                  </Button>
                 </div>
               </form>
             </Form>

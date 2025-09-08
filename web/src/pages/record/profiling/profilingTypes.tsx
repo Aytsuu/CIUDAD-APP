@@ -22,6 +22,7 @@ export type ResidentRecord = {
   mname: string;
   suffix: string;
   sex: string;
+  pwd: string;
   rp_date_registered: string;
   registered_by: string;
   has_account: boolean;
@@ -68,7 +69,12 @@ export type FamilyRecord = {
 }
 
 export type MemberRecord = {
-  data: Record<string, any>;
+  dob: string
+  fc_role: string
+  name: string
+  rp_id: string
+  sex: string
+  status: string
 }
 
 export type HouseholdRecord = {
@@ -84,7 +90,12 @@ export type HouseholdRecord = {
 }
 
 export type HouseholdFamRecord = {
-  data: React.ReactNode
+  fam_id: string
+  fam_building: string
+  total_members: string
+  fam_indigenous: string
+  fam_date_registered: string
+  registered_by: string
 }
 
 export type SitioRecord = {
@@ -103,10 +114,10 @@ export type IndividualRequestRecord = {
   per_dob: string;
   per_status: string;
   per_contact: string;
+  per_disability: string;
   per_edAttainment: string;
   per_religion: string;
-  addresses: Record<string, any>[];
-  files: Record<string, any>[]
+  per_addresses: Record<string, any>[];
   req_date: string;
 }
 

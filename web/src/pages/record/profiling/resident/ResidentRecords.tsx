@@ -1,7 +1,7 @@
 import React from "react"
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, ClockArrowUp, FileDown, Search, Users, Loader2, CircleUserRound, House, UsersRound, Building } from "lucide-react"
 import { Link } from "react-router"

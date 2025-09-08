@@ -17,7 +17,7 @@ import { toast } from "sonner"
 import { Link } from "react-router-dom" // Assuming react-router-dom for Link
 import type { CommodityStocksRecord } from "./type"
 import { useCommodityStocks } from "../REQUEST/Commodity/queries/CommodityFetchQueries"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card" // Import Card components
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card" // Import Card components
 
 type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expired"
 

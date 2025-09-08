@@ -7,7 +7,7 @@ import type { JSX } from "react"
 import { Button } from "@/components/ui/button/button"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 interface Patient {

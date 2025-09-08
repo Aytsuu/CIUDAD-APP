@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button/button"
-import { Card, CardContent } from "@/components/ui/card/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Download,
   Star,

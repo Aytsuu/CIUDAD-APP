@@ -5,7 +5,7 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey, {
   realtime: {
     params: {
-      eventsPerSecond: 10, // This is the rate limit
+      eventsPerSecond: 10, // Rate limit
     }
   },
   auth: { 

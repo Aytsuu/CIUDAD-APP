@@ -31,7 +31,7 @@ class Assignment(models.Model):
     pos = models.ForeignKey(Position, on_delete=models.CASCADE)
     assi_date = models.DateField(default=date.today)
     staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='assignments')
-
+    
     class Meta: 
         db_table = 'assignment'
         unique_together = (('feat', 'pos'))
