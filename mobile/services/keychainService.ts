@@ -66,7 +66,7 @@ export class KeychainService {
       console.log(hasToken ? '✅ Refresh token exists' : '⚠️ No refresh token found');
       return hasToken;
     } catch (error) {
-      console.error('❌ Error checking refresh token:', error);
+      // console.error('❌ Error checking refresh token:', error);
       return false;
     }
   }

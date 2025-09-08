@@ -178,24 +178,6 @@ class MobileLoginView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Authenticate with Supabase
-            try:
-                supabase_response = supabase.auth.sign_in_with_password({
-                    "email": email,
-                    "password": password
-                })
-                supabase_user = supabase_response.user
-                logger.info(f"Supabase user: {supabase_user.email if supabase_user else 'None'}")
-                if not supabase_user or not supabase_response.session:
-                    raise Exception("Authentication failed")
-                    
-            except Exception as supabase_error:
-                logger.error(f"Supabase authentication failed: {str(supabase_error)}")
-                return Response(
-                    {'error': 'Invalid credentials'},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-
             # Check if account exists in local database
             account = Account.objects.filter(email=supabase_user.email).first()
             
@@ -222,112 +204,6 @@ class MobileLoginView(APIView):
                 {'error': 'Authentication failed'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-
-# class RefreshSessionView(APIView):
-    
-#     def post(self, request):
-#         try:
-#             # Get refresh token from HttpOnly cookie (SECURE!)
-#             refresh_token = request.COOKIES.get('refresh_token')
-            
-#             if not refresh_token:
-#                 return Response(
-#                     {'error': 'Refresh token not found. Please login again.'},
-#                     status=status.HTTP_401_UNAUTHORIZED
-#                 )
-            
-#             logger.info("Attempting to refresh session")
-            
-#             # Refresh session with Supabase
-#             try:
-#                 refresh_response = supabase.auth.refresh_session(refresh_token)
-                
-#                 if not refresh_response.session or not refresh_response.session.access_token:
-#                     logger.warning("Invalid refresh token received")
-#                     # Clear the invalid cookie
-#                     response = Response(
-#                         {'error': 'Invalid refresh token. Please login again.'},
-#                         status=status.HTTP_401_UNAUTHORIZED
-#                     )
-#                     response.delete_cookie('refresh_token')
-#                     return response
-                
-#             except Exception as refresh_error:
-#                 logger.error(f"Supabase refresh failed: {str(refresh_error)}")
-#                 # Clear the invalid cookie
-#                 response = Response(
-#                     {'error': 'Session refresh failed. Please login again.'},
-#                     status=status.HTTP_401_UNAUTHORIZED
-#                 )
-#                 response.delete_cookie('refresh_token')
-#                 return response
-            
-#             # Validate the new access token and get user data
-#             new_access_token = refresh_response.session.access_token
-            
-#             try:
-#                 user_response = supabase.auth.get_user(new_access_token)
-#                 supabase_user = user_response.user
-                
-#                 if not supabase_user:
-#                     raise Exception("Invalid user from refreshed token")
-                    
-#             except Exception as user_error:
-#                 logger.error(f"Failed to get user from refreshed token: {str(user_error)}")
-#                 return Response(
-#                     {'error': 'Invalid refreshed session'},
-#                     status=status.HTTP_401_UNAUTHORIZED
-#                 )
-            
-#             # Get updated user data from database
-#             account = Account.objects.filter(email=supabase_user.email).first()
-            
-#             if not account:
-#                 return Response(
-#                     {'error': 'Account not found'},
-#                     status=status.HTTP_404_NOT_FOUND
-#                 )
-            
-#             # Serialize and validate
-#             serializer = UserAccountSerializer(account)
-            
-#             # Check if user still has staff privileges
-#             if not serializer.data.get('staff'):
-#                 return Response(
-#                     {'error': "Staff Privileges Required"}, 
-#                     status=status.HTTP_403_FORBIDDEN
-#                 )
-            
-#             # Create successful response
-#             response_data = {
-#                 'user': serializer.data,
-#                 'access_token': new_access_token,
-#                 'message': 'Session refreshed successfully'
-#             }
-            
-#             response = Response(response_data, status=status.HTTP_200_OK)
-            
-#             # Update refresh token cookie with new refresh token
-#             response.set_cookie(
-#                 'refresh_token',
-#                 refresh_response.session.refresh_token,
-#                 max_age=60 * 60 * 24 * 7,  # 7 days
-#                 httponly=True,
-#                 secure=True,
-#                 samesite='Lax',
-#                 domain=None
-#             )
-            
-#             logger.info(f"Session refreshed successfully for user: {supabase_user.email}")
-#             return response
-                
-#         except Exception as e:
-#             logger.error(f"Refresh session error: {str(e)}", exc_info=True)
-#             return Response(
-#                 {'error': 'Failed to refresh session'},
-#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#             )
 
 class LogoutView(APIView):
     def post(self, request):

@@ -1,6 +1,6 @@
-# # ---------------------------------------------------
-# # PRODUCTION SERVER
-# # ---------------------------------------------------
+# ---------------------------------------------------
+# DEVELOPMENT SERVER
+# ---------------------------------------------------
 
 # from pathlib import Path
 # from decouple import config
@@ -20,8 +20,8 @@
 # # ========================
 # SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
 
-# DEBUG = config('DEBUG', default=True, cast=bool)
-# # DEBUG=False
+# # DEBUG = config('DEBUG', default=False, cast=bool)
+# DEBUG=True
 
 # # ========================
 # # SUPABASE CONFIGURATION
@@ -36,10 +36,6 @@
 #     'JWT_AUDIENCE': 'authenticated',
 # }
 
-# SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
-# SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
-# SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
-# SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 # SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
 # SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
 # SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
@@ -67,6 +63,7 @@
     
 #     # Third-party apps
 #     'rest_framework',
+#     'simple_history',
     
 #     # Local apps
 #     'apps.administration',
@@ -87,19 +84,21 @@
 #     'apps.clerk',
 #     'backend.firebase.notifications',
 #     'apps.act_log',
+    
 # ]
 
 # MIDDLEWARE = [
 #     'corsheaders.middleware.CorsMiddleware', 
 #     'django.middleware.security.SecurityMiddleware',
-#     'whitenoise.middleware.WhiteNoiseMiddleware', 
 #     'django.contrib.sessions.middleware.SessionMiddleware',
 #     'django.middleware.common.CommonMiddleware',
+#     'corsheaders.middleware.CorsMiddleware',
 #     'django.middleware.csrf.CsrfViewMiddleware',
 #     'django.contrib.auth.middleware.AuthenticationMiddleware',
 #     'django.contrib.messages.middleware.MessageMiddleware',
 #     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 #     'apps.authentication.middleware.AuthCheckingMiddleware',
+#     # 'simple_history.middleware.HistoryRequestMiddleware',
 # ]
 
 # AUTHENTICATION_BACKENDS = [
@@ -145,10 +144,6 @@
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
-#         'OPTIONS': {
-#             'connect_timeout': 5,
-#             'sslmode': 'require',
-#         },
 #         'NAME': config('DB_NAME', default='my_default_db'),
 #         'USER': config('DB_USER', default='my_default_user'),
 #         'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
@@ -182,18 +177,8 @@
 # USE_L10N = True
 # USE_TZ = True 
 
-# # ========================
-# # STATIC FILES
-# # ========================
+# # Static files 
 # STATIC_URL = 'static/'
-# if not DEBUG:
-#     # Tell Django to copy static assets into a path called `staticfiles` (this is specific to Render)
-#     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-#     # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
-#     # and renames the files with unique names for each version to support long-term caching
-#     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
 # DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # # Default primary key field type
@@ -217,21 +202,13 @@
 # # ========================
 # # CORS SETTINGS
 # # ========================
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://localhost:5173",
-#     "https://ciudad-app-server-1.onrender.com",
-#     "http://127.0.0.1:5173",  # Add this for Vite sometimes
-# ]
+# # CORS_ALLOWED_ORIGINS = [
+# #     config('FRONTEND_URL', default='http://localhost:3000'), # replace this with the domain e.g 'https://ciudad-app.onrender.com'
+# # ]
 
-# ALLOWED_HOSTS = [
-#     'ciudad-app-server-1.onrender.com',
-#     'localhost',
-#     '127.0.0.1'
-# ]
-
-# CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ALLOW_CREDENTIALS = True
+# ALLOWED_HOSTS = ['*'] 
+# CORS_ALLOW_ALL_ORIGINS = True # disable in production
+# CORS_ALLOW_CREDENTIALS = True # false in production
 
 # CORS_ALLOW_HEADERS = [
 #     'accept',
@@ -298,6 +275,7 @@
 # # ========================
 # SCHEDULER_AUTOSTART = True
 # # SCHEDULER_AUTOSTART = not DEBUG # for production
+
 
 # # ========================
 # # PAYMONGO
@@ -611,8 +589,6 @@ CACHES = {
         "LOCATION": "unique-snowflake",  
     }
 }
-
-
 
 # ========================
 # PAYMONGO
