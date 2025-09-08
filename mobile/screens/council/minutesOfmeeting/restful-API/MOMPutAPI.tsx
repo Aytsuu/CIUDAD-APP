@@ -23,17 +23,19 @@ export const archiveMinutesOfMeeting = async (mom_id: string) => {
     }
 }
 
-export const updateMinutesOfMeeting = async (mom_id: number, meetingTitle: string, meetingAgenda: string, meetingDate: string) => {
+export const updateMinutesOfMeeting = async (mom_id: number, meetingTitle: string, meetingAgenda: string, meetingDate: string, meetingAreaOfFocus: string[]) => {
   try {
     console.log({
         mom_title: meetingTitle,
         mom_agenda: meetingAgenda,
         mom_date: meetingDate,
-    })
+        mom_area_of_focus: meetingAreaOfFocus
+    });
     const res = await api.put(`council/update-minutes-of-meeting/${mom_id}/`, {
         mom_title: meetingTitle,
         mom_agenda:meetingAgenda,
         mom_date: meetingDate,
+        mom_area_of_focus: meetingAreaOfFocus
     });
 
     return res.data

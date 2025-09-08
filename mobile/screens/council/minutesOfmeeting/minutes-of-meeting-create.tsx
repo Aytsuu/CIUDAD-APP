@@ -87,7 +87,7 @@ export default function MOMCreate(){
                     </Button>
             }
         >
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
                 <View className="mb-8">
                     <View className="space-y-4">
 

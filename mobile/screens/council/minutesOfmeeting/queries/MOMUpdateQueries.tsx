@@ -3,8 +3,6 @@ import { restoreMinutesOfMeeting, archiveMinutesOfMeeting, deleteMOMAreas, updat
 import { useToastContext } from "@/components/ui/toast";
 import { useRouter } from "expo-router";
 import { minutesOfMeetingEditFormSchema } from "@/form-schema/council/minutesOfMeetingSchema";
-// import { MediaFileType } from "@/components/ui/multi-media-upload";
-// import { DocumentFileType } from "@/components/ui/document-upload";
 import z from "zod"
 
 export const useRestoreMinutesOfMeeting = (onSuccess?: () => void) => {
@@ -75,11 +73,7 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
 
   return useMutation({
     mutationFn: async (values: MOMData) => {
-      const res = await updateMinutesOfMeeting(values.mom_id, values.meetingTitle, values.meetingAgenda, values.meetingDate);
-
-      await deleteMOMAreas(values.mom_id);
-
-      await handleMOMAreaOfFocus(values.mom_id, values.meetingAreaOfFocus);
+      const res = await updateMinutesOfMeeting(values.mom_id, values.meetingTitle, values.meetingAgenda, values.meetingDate, values.meetingAreaOfFocus);
 
       await handleMOMFileUpdates(values.mom_id, values.files);
 
@@ -90,7 +84,6 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['momRecords'] });
       queryClient.invalidateQueries({ queryKey: ['momFiles'] });
-      queryClient.invalidateQueries({ queryKey: ['momAreasOfFocus'] });
       queryClient.invalidateQueries({ queryKey: ['momSuppDocs'] });
 
       toast.success('Minutes of Meeting updated successfully');

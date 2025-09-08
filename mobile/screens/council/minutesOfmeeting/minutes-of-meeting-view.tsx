@@ -48,7 +48,7 @@ export default function MinutesOfMeetingView() {
                 meetingTitle: item?.mom_title ?? '',
                 meetingAgenda: item?.mom_agenda ?? '',
                 meetingDate: item?.mom_date ?? '',
-                meetingAreas: JSON.stringify(item?.areas_of_focus ?? []),
+                meetingAreas: JSON.stringify(item?.mom_area_of_focus ?? []),
                 meetingFile: JSON.stringify(item?.mom_file ?? []),
                 meetingSuppDocs: JSON.stringify(item?.supporting_docs ?? []),
                 mom_id: item?.mom_id?.toString(),
@@ -83,7 +83,7 @@ export default function MinutesOfMeetingView() {
         >
             {momDetails && (
                 <>
-                    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+                    <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
                         {/* Meeting Date Section */}
 
                          <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
@@ -139,13 +139,13 @@ export default function MinutesOfMeetingView() {
                         </View>
 
                         {/* Areas of Focus Section */}
-                        {momDetails.areas_of_focus && momDetails.areas_of_focus.length > 0 && (
+                        {momDetails.mom_area_of_focus && momDetails.mom_area_of_focus.length > 0 && (
                             <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                                 <View className="flex-row items-center mb-3 gap-2">
                                     <Target size={20} color="gray"/>
                                     <Text className="text-lg font-semibold text-gray-800">Areas of Focus</Text>
                                 </View>
-                                {momDetails.areas_of_focus.map((area, index) => (
+                                {momDetails.mom_area_of_focus.map((area, index) => (
                                     <View key={index} className="flex-row items-start mb-2">
                                         <View className="w-2 h-2 rounded-full bg-blue-500 mt-2 mr-3" />
                                         <Text className="text-gray-700 text-base flex-1 leading-6">
