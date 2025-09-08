@@ -29,14 +29,12 @@ export type ResidentRecord = {
   has_account: boolean;
 };
 
-export type voterRecord = {
+export type VoterRecord = {
   voter_id: string;
-  lname: string;
-  fname: string;
-  mname: string;
-  suffix: string;
-  sex: string;
-  dob: string;
+  voter_name: string;
+  voter_address: string;
+  voter_precinct: string;
+  voter_category: string;
 }
 
 export type ResidentFamilyRecord = {
@@ -149,6 +147,7 @@ export type BusinessRecord = {
   bus_date_of_registration: string;
   bus_date_verified: string;
   rp: string;
+  br: string;
 }
 
 export type BusinessRespondent = {

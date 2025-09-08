@@ -103,11 +103,51 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     accessorKey: "completed_profiles",
     header: "Completed Profile",
     cell: ({row}) => {
+      const navigate = useNavigate();
       const profiles = [
-        {id: 'account', icon: CircleUserRound},
-        {id: 'household', icon: House, tooltip: "ID: " + row.original.household_no},
-        {id: 'family', icon: UsersRound, tooltip: "ID: " + row.original.family_no},
-        {id: 'business', icon: Building},
+        {
+          id: 'account', 
+          icon: CircleUserRound, 
+          route: {
+            create: {
+              link: "/profiling/account/create",
+              params: {}
+            },
+          }},
+        {
+          id: 'household', 
+          icon: House, 
+          tooltip: "ID: " + row.original.household_no, 
+          route: {
+            create: {
+              link: "/profiling/household"
+            },
+            view: {
+              link: "/profiling/household/view",
+              params: {
+                hh_id: row.original.household_no
+              }
+            }
+          }},
+        {
+          id: 'family', 
+          icon: UsersRound, 
+          tooltip: "ID: " + row.original.family_no, 
+          route: {
+            create: "/profiling/family",
+            view: {
+              link: "/profiling/family/view",
+              params: {
+                fam_id: row.original.family_no
+              }
+            }
+          }},
+        {
+          id: 'business', 
+          icon: Building, 
+          route: {
+            view: ""
+          }},
       ]
       const completed: any[] = [];
 
@@ -122,16 +162,26 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
             <React.Fragment key={idx}>
               {completed.includes(profile.id) ? (
                 <TooltipLayout
-                trigger={
-                  <profile.icon size={20} 
-                    className="text-blue-600"
-                  />
-                }
-                content={profile.tooltip}
-              />
+                  trigger={
+                    <profile.icon size={20} 
+                      className="text-blue-600 cursor-pointer"
+                      onClick={() => navigate(profile.route.view.link, {
+                        state: {
+                          params: profile.route.view.params
+                        }
+                      })}
+                    />
+                  }
+                  content={profile.tooltip}
+                />
               ) : (profile.id !== 'business' &&
                 <profile.icon size={20} 
-                  className="text-gray-300"
+                  className="text-gray-300 cursor-pointer"
+                  onClick={() => navigate(profile.route.create.link, {
+                    state: {
+                      params: profile.route.create.params
+                    }
+                  })}
                 />
               )}
             </React.Fragment>

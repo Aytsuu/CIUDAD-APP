@@ -155,6 +155,9 @@ export const familyMembersCol = (
     cell: ({row}) => {
       const [isChanging, setIsChanging] = React.useState<boolean>(false)
       const { mutateAsync: updateFamilyRole } = useUpdateFamilyRole() 
+      const buttonStyle = ("h-6 rounded-full bg-blue-200 shadow-none border" +
+              "border-blue-300 text-blue-700 hover:bg-blue-300" +
+              "focus-visible:ring-0")
       const role = row.original.fc_role
       const handleRoleChange = async (value: string) => {
         if(value == role?.toLowerCase()) return;
@@ -172,13 +175,13 @@ export const familyMembersCol = (
           setIsChanging(false)
         }
       }
-
+      
       return (
-        isChanging ? (<Button className="h-6">
+        isChanging ? (<Button className={buttonStyle}>
             <Loader2 className="w-5 h-5 animate-spin"/>
           </Button>) : (
           <DropdownLayout
-            trigger={<Button className="h-6">{role} </Button>}
+            trigger={<Button className={buttonStyle}>{role} </Button>}
             options={[
               {id: "mother", name: "Mother"}, 
               {id: "father", name: "Father"},

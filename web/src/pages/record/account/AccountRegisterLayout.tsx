@@ -30,8 +30,7 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
   const defaultValues = React.useRef(generateDefaultValues(accountFormSchema)).current
   const form = useForm<z.infer<typeof accountFormSchema>>({
     resolver: zodResolver(accountFormSchema),
-    defaultValues,
-    mode: "onChange",
+    defaultValues
   })
 
   // ==================== HANDLERS ======================

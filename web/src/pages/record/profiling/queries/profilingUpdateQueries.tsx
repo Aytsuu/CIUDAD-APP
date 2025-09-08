@@ -40,6 +40,7 @@ export const useUpdateFamilyRole = () => {
       queryClient.setQueryData(['familyMembers', familyId], (old: any) => ({
         ...old,
         results: old.results?.map((member: any) => {
+          console.log(member.rp_id, residentId)
           if(member.rp_id == residentId) {
             return {
               ...member,
@@ -48,8 +49,9 @@ export const useUpdateFamilyRole = () => {
           }
           return member
         })
-      })
-    )}
+      }))
+      queryClient.invalidateQueries({ queryKey: ['familyMembers', familyId]})
+    }
   })
 }
 

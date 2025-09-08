@@ -151,7 +151,7 @@ export default function FamilyRecordView() {
                           <p className="text-sm font-medium text-black/80 mt-1">{familyData?.household_no}</p>
                         </div>
                         <div className="p-3 rounded-lg border bg-gray-50/50">
-                          <Label className="text-xs font-medium text-black/50 uppercase tracking-wide">Building</Label>
+                          <Label className="text-xs font-medium text-black/50 uppercase tracking-wide">Household Occupancy</Label>
                           <p className="text-sm font-medium text-black/80 mt-1">{familyData?.fam_building}</p>
                         </div>
                       </div>

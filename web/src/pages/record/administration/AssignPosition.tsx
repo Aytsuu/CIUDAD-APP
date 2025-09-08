@@ -73,7 +73,7 @@ export default function AssignPosition({
         // Assign staff position 
         await addStaff({
           residentId: residentId, 
-          positionId: positionId,
+          positionId: positionId, 
           staffId: user?.staff?.staff_id || "",
           staffType: staffType == "Barangay Staff" ? "Barangay Staff" : "Health Staff"
 
