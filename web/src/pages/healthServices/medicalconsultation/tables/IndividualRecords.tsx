@@ -1,27 +1,28 @@
-import React, { useState, useEffect, useCallback } from "react";
+// InvMedicalConRecords.tsx
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown, Search, ChevronLeft, HeartPulse, Calendar } from "lucide-react";
+import { ArrowUpDown, Loader2, ChevronLeft, HeartPulse, Calendar } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Syringe, AlertCircle } from "lucide-react";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
-import { TableSkeleton } from "../../skeleton/table-skeleton";
 import { Patient } from "../../restful-api-patient/type";
 import { MedicalConsultationHistory } from "../types";
-import { usePatientMedicalRecords } from "../queries/fetchQueries";
-import { getMedicalConsultationColumns } from "./columns/indiv_col";
+import { useConsultationHistory } from "../queries/fetchQueries";
 import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFetchQueries";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Badge } from "@/components/ui/badge";
+import { getMedicalConsultationColumns } from "./columns/indiv_col";
 
 export default function InvMedicalConRecords() {
   const location = useLocation();
   const { params } = location.state || {};
-  const { patientData } = params || {};
+  const { patientData } = params || {}; 
+  const mode = params.mode || "";
 
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,10 +36,18 @@ export default function InvMedicalConRecords() {
     }
   }, [patientData]);
 
-  // Improved query hooks with error handling
-  const { data: medicalRecords, isLoading: isMedicalRecordsLoading, error: medicalRecordsError, isError: isMedicalRecordsError } = usePatientMedicalRecords(patientData?.pat_id);
+  // Use the consultation history hook with pagination
+  const { data: medicalRecordsResponse, isLoading: isMedicalRecordsLoading, error: medicalRecordsError, isError: isMedicalRecordsError } = useConsultationHistory(patientData?.pat_id, currentPage, pageSize);
 
   const { data: medHistoryData, isLoading: isMedHistoryLoading, error: medHistoryError, isError: isMedHistoryError } = usePrenatalPatientMedHistory(patientData?.pat_id);
+
+  // Extract data from the paginated response
+  const medicalRecords = useMemo(() => {
+    return medicalRecordsResponse?.results || medicalRecordsResponse || [];
+  }, [medicalRecordsResponse]);
+
+  const totalCount = medicalRecordsResponse?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
   const getMedicalHistoryCardsData = useCallback(() => {
     if (isMedHistoryLoading) {
@@ -141,8 +150,12 @@ export default function InvMedicalConRecords() {
     });
   }, [medicalRecords, isMedicalRecordsLoading, isMedicalRecordsError, medicalRecordsError]);
 
-  const filteredData = React.useMemo(() => {
-    return formatMedicalData().filter((record) => {
+  // Client-side filtering for search
+  const filteredData = useMemo(() => {
+    const formattedData = formatMedicalData();
+    if (!searchQuery) return formattedData;
+
+    return formattedData.filter((record) => {
       const searchText = `${record.medrec_id} 
         ${record.vital_signs.vital_bp_systolic}/${record.vital_signs.vital_bp_diastolic} 
         ${record.bmi_details.bmi} 
@@ -150,9 +163,6 @@ export default function InvMedicalConRecords() {
       return searchText.includes(searchQuery.toLowerCase());
     });
   }, [searchQuery, formatMedicalData]);
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const columns = getMedicalConsultationColumns(patientData);
 
@@ -287,21 +297,16 @@ export default function InvMedicalConRecords() {
         <div className="flex gap-2 items-center p-2">
           <Syringe className="h-6 w-6 text-blue" />
           <p className="text-sm font-medium text-gray-800 pr-2">Total Medical Consultations</p>
-          <p className="text-2xl font-bold text-gray-900">{isMedicalRecordsLoading ? "..." : formatMedicalData().length}</p>
+          <p className="text-2xl font-bold text-gray-900">{isMedicalRecordsLoading ? "..." : totalCount}</p>
         </div>
 
-        <div className="flex flex-1 justify-between items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-            <Input placeholder="Search records..." className="pl-10 w-full bg-white" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} disabled={isMedicalRecordsLoading || isMedicalRecordsError} />
-          </div>
-
+        {mode !== "doctor" && (
           <Button className="w-full sm:w-auto" disabled={isMedicalRecordsLoading || isMedicalRecordsError}>
             <Link to="/medical-consultation-form" state={{ params: { patientData, mode: "fromindivrecord" } }}>
               New Consultation Record
             </Link>
           </Button>
-        </div>
+        )}
       </div>
 
       <div className="h-full w-full rounded-md">
@@ -315,6 +320,7 @@ export default function InvMedicalConRecords() {
               onChange={(e) => {
                 const value = +e.target.value;
                 setPageSize(value >= 1 ? value : 1);
+                setCurrentPage(1); // Reset to first page when changing page size
               }}
               min="1"
               disabled={isMedicalRecordsLoading || isMedicalRecordsError}
@@ -340,23 +346,29 @@ export default function InvMedicalConRecords() {
 
         <div className="bg-white w-full overflow-x-auto">
           {isMedicalRecordsLoading ? (
-            <TableSkeleton columns={columns} rowCount={3} />
+            <>
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading medicine records...</span>
+              </div>
+            
+            </>
           ) : isMedicalRecordsError ? (
             <div className="p-4 flex items-center gap-2 text-red-500">
               <AlertCircle className="h-5 w-5" />
               <span>Failed to load medical records</span>
             </div>
           ) : (
-            <DataTable columns={columns} data={paginatedData} />
+            <DataTable columns={columns} data={filteredData} />
           )}
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            {isMedicalRecordsLoading ? "Loading records..." : isMedicalRecordsError ? "Error loading records" : `Showing ${paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-${Math.min(currentPage * pageSize, filteredData.length)} of ${filteredData.length} records`}
+            {isMedicalRecordsLoading ? "Loading records..." : isMedicalRecordsError ? "Error loading records" : `Showing ${(currentPage - 1) * pageSize + 1} to ${Math.min(currentPage * pageSize, totalCount)} of ${totalCount} records`}
           </p>
 
-          <div className="w-full sm:w-auto flex justify-center">{!isMedicalRecordsLoading && !isMedicalRecordsError && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}</div>
+          <div className="w-full sm:w-auto flex justify-center">{!isMedicalRecordsLoading && !isMedicalRecordsError && totalCount > 0 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}</div>
         </div>
       </div>
     </div>

@@ -1,14 +1,7 @@
 import { api2 } from "@/api/api";
-import { MedicineRequestPendingResponse } from "../types";
-
 
 // api.ts
-export const getMedicineRequestProcessing = async (
-  page: number = 1,
-  pageSize: number = 10,
-  search: string = "",
-  dateFilter: string = "all"
-): Promise<any> => {
+export const getMedicineRequestProcessing = async (page: number = 1, pageSize: number = 10, search: string = "", dateFilter: string = "all"): Promise<any> => {
   try {
     const params = new URLSearchParams();
     params.append("page", page.toString());
@@ -20,7 +13,7 @@ export const getMedicineRequestProcessing = async (
       params.append("date_filter", dateFilter);
     }
 
-    const response = await api2.get("/inventory/medicine-request/");
+    const response = await api2.get("/medicine/confirmed-medicine-request-table/");
     return response.data;
   } catch (error) {
     console.error("Error fetching processing medicine requests:", error);
@@ -29,38 +22,8 @@ export const getMedicineRequestProcessing = async (
 };
 
 
-export const getMedicineRequestItem = async () => {
-  try {
-    const response = await api2.get("/medicine/medicine-request-items/");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching medicine records:", error);
-    throw error;
-  }
-};
-
-
-
-export const getRequestItems = async (medreq_id: number, pat_id: string | null, rp_id: string | null) => {
-  try {
-    const params = { medreq_id, ...(pat_id && { pat_id }), ...(rp_id && { rp_id }) };
-    const response = await api2.get(`/medicine/medicine-request-items/`, { params });
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching medicine request items:", error);
-    throw error;
-  }
-};
-
-
-
 // api.ts
-export const getMedicineRequestPending = async (
-  page: number = 1,
-  pageSize: number = 10,
-  search: string = "",
-  dateFilter: string = "all"
-): Promise<any> => {
+export const getMedicineRequestPending = async (page: number = 1, pageSize: number = 10, search: string = "", dateFilter: string = "all"): Promise<any> => {
   try {
     const params = new URLSearchParams();
     params.append("page", page.toString());
@@ -71,8 +34,7 @@ export const getMedicineRequestPending = async (
     if (dateFilter && dateFilter !== "all") {
       params.append("date_filter", dateFilter);
     }
-
-    const response = await api2.get(`/inventory/medicine-request-pending/?${params.toString()}`);
+    const response = await api2.get(`/medicine/pending-medicine-request-table/?${params.toString()}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching pending medicine requests:", error);
@@ -80,20 +42,12 @@ export const getMedicineRequestPending = async (
   }
 };
 
-
-export const getMedicineRequestPendingItems = async (
-  id: string, 
-  page?: number, 
-  pageSize?: number
-): Promise<any> => {
+export const getMedicineRequestPendingItems = async (id: string, page?: number, pageSize?: number): Promise<any> => {
   try {
     const params = new URLSearchParams();
-    if (page) params.append('page', page.toString());
-    if (pageSize) params.append('page_size', pageSize.toString());
-    
-    // CORRECTED: Include the id parameter in the URL
-    const url = `inventory/medreq-items-pending/${id}/${params.toString() ? `?${params.toString()}` : ''}`;
-    
+    if (page) params.append("page", page.toString());
+    if (pageSize) params.append("page_size", pageSize.toString());
+    const url = `medicine/pending-medreq-items-table/${id}/${params.toString() ? `?${params.toString()}` : ""}`;
     const response = await api2.get(url);
     return response.data;
   } catch (error) {

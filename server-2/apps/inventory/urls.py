@@ -30,7 +30,7 @@ urlpatterns = [
     path('archive/medicinestocks/<str:inv_id>/', MedicineArchiveInventoryView.as_view(), name='archive-medicine-inventory'),
     path("medicine_stock-create/", MedicineStockCreate.as_view(), name="medicine-stock-atomic"),
     path('archive/medicinestocks-table/', ArchivedMedicineTable.as_view(), name='archived-medicine-table'),
-    path('medicine-transactions/table/',MedicineTransactionView.as_view(), name='medicine-transactions'),
+    path('medicine-transactions/table/',TableMedicineTransactionView.as_view(), name='medicine-transactions'),
 
 
 
@@ -105,10 +105,12 @@ urlpatterns = [
     path('commodity-expired-out-of-stock-detail/<str:month>/', MonthlyCommodityExpiredOutOfStockDetailAPIView.as_view(), name='commodity-expired-out-of-stock-detail'),
     
     
-    path('medicine/records/<str:month>/',MonthlyMedicineRecordsDetailAPIView.as_view(),name='medicine-monthly-records'),
-    path('medicine/summaries/', MedicineSummaryMonthsAPIView.as_view(), name='medicine-summary-montly'),
-    path('medicine-expired-out-of-stock-summary/', MedicineExpiredOutOfStockSummaryAPIView.as_view(), name='outofexpiredstocks-monthly-records'),
-    path('medicine-expired-out-of-stock-detail/<str:month>/', MonthlyMedicineExpiredOutOfStockDetailAPIView.as_view(), name='outofexpiredstocks-chart'),
+    # path('medicine/records/<str:month>/',MonthlyMedicineRecordsDetailAPIView.as_view(),name='medicine-monthly-records'),
+    # path('medicine/summaries/', MedicineSummaryMonthsAPIView.as_view(), name='medicine-summary-montly'),
+    # path('medicine-expired-out-of-stock-summary/', MedicineExpiredOutOfStockSummaryAPIView.as_view(), name='outofexpiredstocks-monthly-records'),
+    # path('medicine-expired-out-of-stock-detail/<str:month>/', MonthlyMedicineExpiredOutOfStockDetailAPIView.as_view(), name='outofexpiredstocks-chart'),
+    
+    
     path('medicine-avaiable-records/', MedicineListAvailableTable.as_view(), name='medicine-available'),
     
     path('firstaid/summaries/', FirstAidSummaryMonthsAPIView.as_view(), name='firstaid-summary-montly'),
@@ -121,16 +123,16 @@ urlpatterns = [
     path('vaccination-expired-out-of-stock-summary/', VaccinationExpiredOutOfStockSummaryAPIView.as_view(), name='vaccination-expired-out-of-stock-summary'),
     path('vaccination-expired-out-of-stock-detail/<str:month>/', MonthlyVaccinationExpiredOutOfStockDetailAPIView.as_view(), name='vaccination-expired-out-of-stock-detail'),
     
-    path('update-pending-medreq/<str:medreq_id>/',ConfirmAllPendingItemsView.as_view(), name='update-all medicine-request-pending'),
+    # path('update-pending-medreq/<str:medreq_id>/',ConfirmAllPendingItemsView.as_view(), name='update-all medicine-request-pending'),
     
-    path('medreq-items-pending/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
-    path('medicine-request-pending/', MedicineRequestPendingTableView.as_view(), name='medicine_request-pending'),
-    path('medicine-request/', MedicineRequestProcessingTableView.as_view(), name='medicine_request-processing'),
+    # path('medreq-items-pending/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
+    # path('medicine-request-pending/', MedicineRequestPendingTableView.as_view(), name='medicine_request-pending'),
+    # path('medicine-request/', MedicineRequestProcessingTableView.as_view(), name='medicine_request-processing'),
 
-    path('update-medreq-item/<int:medreqitem_id>/',UpdateMedicinerequestItemView.as_view(),name='update-medicine-request-items'),
-    path('medicine-allocation/', MedicineRequestAllocationAPIView.as_view(), name='medicine-allocation'),
+    # path('update-medreq-item/<int:medreqitem_id>/',UpdateMedicinerequestItemView.as_view(),name='update-medicine-request-items'),
+    # path('medicine-allocation/', MedicineRequestAllocationAPIView.as_view(), name='medicine-allocation'),
 
-    path('childmedicine/', ChildServiceMedicineRecordView.as_view(), name='medicine_request_item_detail'),
+    # path('childmedicine/', ChildServiceMedicineRecordView.as_view(), name='medicine_request_item_detail'),
 
 
 ] 

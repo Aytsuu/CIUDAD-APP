@@ -11,7 +11,6 @@ from apps.reports.serializers import FileInputSerializer
 from utils.supabase_client import upload_to_storage
 
 
-# ALL  medicine RECORD 
 class PatientMedicineRecordSerializer(serializers.ModelSerializer):
     medicine_count = serializers.SerializerMethodField()
     patient_details = PatientSerializer(source='*', read_only=True)
@@ -278,8 +277,7 @@ class MedicineRequestItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicineRequestItem
         fields = '__all__'
-    
-      
+     
 class Medicine_FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medicine_File

@@ -1,7 +1,8 @@
+// table-history.tsx
 import { format } from "date-fns";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/table/history-table-col";
-import { History } from "lucide-react";
+import { History, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import { MedicalConsultationHistory } from "../types";
 
@@ -11,15 +12,15 @@ export function ConsultationHistoryTable({
   currentPage,
   totalPages,
   onPaginate,
+  isLoading = false // Add isLoading prop
 }: {
   relevantHistory: MedicalConsultationHistory[];
   currentConsultationId: number | undefined;
   currentPage: number;
   totalPages: number;
   onPaginate: (page: number) => void;
+  isLoading?: boolean;
 }) {
-  const recordsPerPage = 3;
-
   const tableData = useMemo(() => {
     if (relevantHistory.length <= 0) return [];
 
@@ -87,7 +88,7 @@ export function ConsultationHistoryTable({
             record.staff_details?.rp?.per?.per_lname ?? ""
           } ${record.staff_details?.rp?.per?.per_suffix ?? ""}`.trim();
         } else {
-          rowData[recordId] = "N/A"; // Default case for any other attributes
+          rowData[recordId] = "N/A";
         }
       });
 
@@ -115,200 +116,207 @@ export function ConsultationHistoryTable({
       },
     ];
 
-    relevantHistory
-      .slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage)
-      .forEach((record) => {
-        const recordId = `record_${record.medrec_id}`;
-        const isCurrent = record.medrec_id === currentConsultationId;
+    relevantHistory.forEach((record) => {
+      const recordId = `record_${record.medrec_id}`;
+      const isCurrent = record.medrec_id === currentConsultationId;
 
-        cols.push({
-          id: recordId,
-          accessorKey: recordId,
-          header: () => {
+      cols.push({
+        id: recordId,
+        accessorKey: recordId,
+        header: () => {
+          return (
+            <div className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">
+              {isCurrent ? (
+                <span className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">
+                  {format(new Date(), "MMM d, yyyy")} (Today)
+                </span>
+              ) : (
+                format(
+                  new Date(record.created_at || Date.now()),
+                  "MMM d, yyyy"
+                )
+              )}
+            </div>
+          );
+        },
+        cell: ({ row }) => {
+          const value = row.getValue(recordId) as string;
+          const rowData = row.original;
+
+          if (rowData.attribute === "Chief Complaint") {
+            const formattedValue = value
+              ? value
+                  .split(",")
+                  .map((item) => item.trim())
+                  .filter(Boolean)
+              : [];
             return (
-              <div className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">
-                {isCurrent ? (
-                  <span className="text-black font-bold px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm">
-                    {format(new Date(), "MMM d, yyyy")} (Today)
-                  </span>
+              <div className="text-justify pr-4">
+                {formattedValue.length > 0 ? (
+                  <ul className="list-disc list-inside text-sm sm:text-base">
+                    {formattedValue.map((item, index) => (
+                      <li
+                        key={index}
+                        className="whitespace-normal break-words"
+                      >
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
-                  format(
-                    new Date(record.created_at || Date.now()),
-                    "MMM d, yyyy"
-                  )
+                  <span className="text-sm sm:text-base break-words whitespace-normal">
+                    N/A
+                  </span>
                 )}
               </div>
             );
-          },
-          cell: ({ row }) => {
-            const value = row.getValue(recordId) as string;
-            const rowData = row.original;
+          }
 
-            if (rowData.attribute === "Chief Complaint") {
-              const formattedValue = value
-                ? value
-                    .split(",")
-                    .map((item) => item.trim())
-                    .filter(Boolean)
-                : [];
-              return (
-                <div className="text-justify pr-4">
-                  {formattedValue.length > 0 ? (
-                    <ul className="list-disc list-inside text-sm sm:text-base">
-                      {formattedValue.map((item, index) => (
-                        <li
-                          key={index}
-                          className="whitespace-normal break-words"
-                        >
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span className="text-sm sm:text-base break-words whitespace-normal">
-                      N/A
-                    </span>
-                  )}
-                </div>
-              );
-            }
-
-            if (rowData.attribute === "Objective Summary") {
-              const formattedValue = value
-                ? value
-                    .split("-")
-                    .map((item) => item.trim())
-                    .filter(Boolean)
-                : [];
-              return (
-                <div className="text-justify pr-4">
-                  {formattedValue.length > 0 ? (
-                    <ul className="list-disc list-inside text-sm sm:text-base">
-                      {formattedValue.map((item, index) => (
-                        <li
-                          key={index}
-                          className="whitespace-normal break-words"
-                        >
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span className="text-sm sm:text-base break-words whitespace-normal">
-                      N/A
-                    </span>
-                  )}
-                </div>
-              );
-            }
-            if (rowData.attribute === "HT") {
-              return (
-                <div className="text-sm sm:text-base">
-                  {value
-                    ? `${
-                        parseFloat(value).toFixed(2).endsWith(".00")
-                          ? parseInt(value)
-                          : value
-                      } cm`
-                    : "N/A"}
-                </div>
-              );
-            }
-
-            if (rowData.attribute === "WT") {
-              return (
-                <div className="text-sm sm:text-base">
-                  {value
-                    ? `${
-                        parseFloat(value).toFixed(2).endsWith(".00")
-                          ? parseInt(value)
-                          : value
-                      } kg`
-                    : "N/A"}
-                </div>
-              );
-            }
-
-            if (rowData.attribute === "Diagnosis") {
-              const formattedValue = value
-                ? value
-                    .split(",")
-                    .map((item) => item.trim())
-                    .filter(Boolean)
-                : [];
-              return (
-                <div className="text-justify pr-4">
-                  {formattedValue.length > 0 ? (
-                    <ul className="list-disc list-inside text-sm sm:text-base">
-                      {formattedValue.map((item, index) => (
-                        <li
-                          key={index}
-                          className="whitespace-normal break-words"
-                        >
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span className="text-sm sm:text-base break-words whitespace-normal">
-                      N/A
-                    </span>
-                  )}
-                </div>
-              );
-            }
-
-            if (rowData.attribute === "Plan Treatment Summary") {
-              const formattedValue = value
-                ? value
-                    .split(/[-,]/)
-                    .map((item) => item.trim())
-                    .filter(Boolean)
-                : [];
-              return (
-                <div className="text-justify pr-4">
-                  {formattedValue.length > 0 ? (
-                    <ul className="list-disc list-inside text-sm sm:text-base">
-                      {formattedValue.map((item, index) => (
-                        <li
-                          key={index}
-                          className="whitespace-normal break-words"
-                        >
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span className="text-sm sm:text-base break-words whitespace-normal">
-                      N/A
-                    </span>
-                  )}
-                </div>
-              );
-            }
-            if(rowData.attribute==="bhw") {
-              return (
-                <div className="text-sm sm:text-base">
-                  {value || "N/A"}
-                </div>
-              );
-            }
-
+          if (rowData.attribute === "Objective Summary") {
+            const formattedValue = value
+              ? value
+                  .split("-")
+                  .map((item) => item.trim())
+                  .filter(Boolean)
+              : [];
             return (
-              <div className="text-sm sm:text-base  min-w-[250px]">
+              <div className="text-justify pr-4">
+                {formattedValue.length > 0 ? (
+                  <ul className="list-disc list-inside text-sm sm:text-base">
+                    {formattedValue.map((item, index) => (
+                      <li
+                        key={index}
+                        className="whitespace-normal break-words"
+                      >
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="text-sm sm:text-base break-words whitespace-normal">
+                    N/A
+                  </span>
+                )}
+              </div>
+            );
+          }
+          if (rowData.attribute === "HT") {
+            return (
+              <div className="text-sm sm:text-base">
+                {value
+                  ? `${
+                      parseFloat(value).toFixed(2).endsWith(".00")
+                        ? parseInt(value)
+                        : value
+                    } cm`
+                  : "N/A"}
+              </div>
+            );
+          }
+
+          if (rowData.attribute === "WT") {
+            return (
+              <div className="text-sm sm:text-base">
+                {value
+                  ? `${
+                      parseFloat(value).toFixed(2).endsWith(".00")
+                        ? parseInt(value)
+                        : value
+                    } kg`
+                  : "N/A"}
+              </div>
+            );
+          }
+
+          if (rowData.attribute === "Diagnosis") {
+            const formattedValue = value
+              ? value
+                  .split(",")
+                  .map((item) => item.trim())
+                  .filter(Boolean)
+              : [];
+            return (
+              <div className="text-justify pr-4">
+                {formattedValue.length > 0 ? (
+                  <ul className="list-disc list-inside text-sm sm:text-base">
+                    {formattedValue.map((item, index) => (
+                      <li
+                        key={index}
+                        className="whitespace-normal break-words"
+                      >
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="text-sm sm:text-base break-words whitespace-normal">
+                    N/A
+                  </span>
+                )}
+              </div>
+            );
+          }
+
+          if (rowData.attribute === "Plan Treatment Summary") {
+            const formattedValue = value
+              ? value
+                  .split(/[-,]/)
+                  .map((item) => item.trim())
+                  .filter(Boolean)
+              : [];
+            return (
+              <div className="text-justify pr-4">
+                {formattedValue.length > 0 ? (
+                  <ul className="list-disc list-inside text-sm sm:text-base">
+                    {formattedValue.map((item, index) => (
+                      <li
+                        key={index}
+                        className="whitespace-normal break-words"
+                      >
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="text-sm sm:text-base break-words whitespace-normal">
+                    N/A
+                  </span>
+                )}
+              </div>
+            );
+          }
+          if(rowData.attribute==="bhw") {
+            return (
+              <div className="text-sm sm:text-base">
                 {value || "N/A"}
               </div>
             );
-          },
-        });
+          }
+
+          return (
+            <div className="text-sm sm:text-base  min-w-[250px]">
+              {value || "N/A"}
+            </div>
+          );
+        },
       });
+    });
 
     return cols;
-  }, [relevantHistory, currentPage, currentConsultationId]);
+  }, [relevantHistory, currentConsultationId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
+        <p className="text-gray-600">Loading consultation history...</p>
+      </div>
+    );
+  }
 
   if (relevantHistory.length <= 1) {
     return (
-      <div className="text-center">
+      <div className="text-center py-8 border rounded-lg bg-gray-50">
         <div className="flex items-center justify-center mb-2">
           <History size={20} />
         </div>
@@ -320,15 +328,17 @@ export function ConsultationHistoryTable({
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={tableData}
-      pagination={true}
-      manualPagination={{
-        currentPage,
-        totalPages,
-        onPageChange: onPaginate,
-      }}
-    />
+    <div>
+      <DataTable
+        columns={columns}
+        data={tableData}
+        pagination={true}
+        manualPagination={{
+          currentPage,
+          totalPages,
+          onPageChange: onPaginate,
+        }}
+      />
+    </div>
   );
 }

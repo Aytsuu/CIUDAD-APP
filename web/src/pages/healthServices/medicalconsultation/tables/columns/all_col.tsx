@@ -7,10 +7,10 @@ import { MedicalRecord } from "../../types";
 
 export const getAllMedicalRecordsColumns = (): ColumnDef<MedicalRecord>[] => [
   {
-    accessorKey: "index",
-    header: "#",
+    accessorKey: "pat_id",
+    header: "Patient ID",
     cell: ({ row }) => (
-      <div className="flex justify-center w-[20px] ">{row.index + 1}</div>
+      <div className="flex justify-center ">{row.original.pat_id}</div>
     ),
   },
   {

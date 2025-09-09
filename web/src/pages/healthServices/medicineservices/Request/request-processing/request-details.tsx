@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Pill, AlertCircle, Loader2, History, Package, CheckCircle } from "lucide-react";
+import { AlertCircle, Loader2, History, Package, CheckCircle } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ import { updateMedicineRequest } from "../restful-api/update";
 import { PersonalInfoCard } from "./personal-info";
 import { useCreateMedicineAllocation } from "../queries/post";
 import { SignatureField, SignatureFieldRef } from "@/pages/healthServices/Reports/firstaid-report/signature";
+
 
 export default function MedicineRequestDetail() {
   const location = useLocation();
@@ -90,8 +91,6 @@ export default function MedicineRequestDetail() {
         pat_status: "active",
         rp_id: request.rp_id,
         personal_info: request.personal_info,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
         pat_type: "Resident"
       });
       setCurrentPatId(response.pat_id);
@@ -107,6 +106,7 @@ export default function MedicineRequestDetail() {
       setIsRegistering(false);
     }
   };
+
 
   const createMedicineMapping = () => {
     if (!medicineStocksOptions || !medicineData?.length) {
@@ -210,7 +210,7 @@ export default function MedicineRequestDetail() {
     setInitialSelectionsSet(false);
   }, [medicineData, medicineStocksOptions]);
 
-  const { mutate: createAllocation, isPending, error: createMedicineError } = useCreateMedicineAllocation();
+  const { mutate: createAllocation, isPending } = useCreateMedicineAllocation();
   const processMedicineAllocation = () => {
     // Validate that all selected medicines have required data
     const validSelectedMedicines = selectedMedicines.filter((med) => med.medreqitem_id && med.minv_id && med.medrec_qty > 0);
@@ -219,13 +219,13 @@ export default function MedicineRequestDetail() {
       console.error("No valid medicines selected for allocation");
       return;
     }
-    console.log(signature)
+    console.log(signature);
 
     const payload = {
       medreq_id: request.medreq_id,
       requested_at: request.requested_at,
       staff_id: staff_id,
-      signature:signature,
+      signature: signature,
       selected_medicines: validSelectedMedicines.map((med) => ({
         minv_id: med.original_stock_id || med.minv_id, // Use original stock ID for API
         medrec_qty: med.medrec_qty,
@@ -431,7 +431,7 @@ export default function MedicineRequestDetail() {
         <div className="flex justify-end mt-4 ">
           {/* Action Button */}
           <div className="flex justify-end mt-4">
-            <Button onClick={processMedicineAllocation} disabled={confirmedItemsCount === 0 || selectedMedicines.length === 0 || isPending || isRegistering} size="lg" className="min-w-[200px] bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400">
+            <Button onClick={processMedicineAllocation} disabled={confirmedItemsCount === 0 || selectedMedicines.length === 0 || isPending || isRegistering || !signature} size="lg" className="min-w-[200px] bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400">
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

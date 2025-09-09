@@ -16,7 +16,7 @@ interface SoapFormProps {
   MedicalConsultation: any;
   onBack: () => void;
   initialData?: any;
-  onFormDataUpdate?: (data: any) => void; // Use 'any' to be flexible
+  onFormDataUpdate?: (data: any) => void;
 }
 
 export default function SoapForm({ patientData, MedicalConsultation, onBack, initialData, onFormDataUpdate }: SoapFormProps) {
@@ -34,10 +34,14 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
   });
 
   const [examSections, setExamSections] = useState<ExamSection[]>([]);
-  // Add a ref to prevent infinite loops
   const isUpdatingFromChild = useRef(false);
 
-  const { data: medicineStocksOptions } = fetchMedicinesWithStock();
+  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock(true);
+  const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
+
+  // Get loading states from the queries
+  const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
+  const hasPhysicalExamError = sectionsQuery.isError || optionsQuery.isError;
 
   const form = useForm<SoapFormType>({
     resolver: zodResolver(soapSchema),
@@ -79,13 +83,11 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
 
   const handleSelectedMedicinesChange = useCallback(
     (updated: any[]) => {
-      // Prevent infinite loops by checking if update is from child component
       if (isUpdatingFromChild.current) {
         isUpdatingFromChild.current = false;
         return;
       }
 
-      // Deep comparison to avoid unnecessary updates
       const currentJson = JSON.stringify(selectedMedicines.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
       const updatedJson = JSON.stringify(updated.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
 
@@ -116,7 +118,6 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         medicines: updated
       });
 
-      // Only call onFormDataUpdate if it exists
       if (onFormDataUpdate) {
         const currentValues = form.getValues();
         onFormDataUpdate({
@@ -125,7 +126,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         });
       }
     },
-    [form, patientData, medicineStocksOptions, onFormDataUpdate] // Remove selectedMedicines from dependencies
+    [form, patientData, medicineStocksOptions, onFormDataUpdate, selectedMedicines]
   );
 
   const handlePageChange = useCallback((page: number) => {
@@ -164,8 +165,6 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
     [form, selectedMedicines, onFormDataUpdate]
   );
 
-  const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
-
   useEffect(() => {
     if (sectionsQuery.data && optionsQuery.data) {
       const sections: ExamSection[] = sectionsQuery.data.map((section: any) => ({
@@ -191,7 +190,6 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
   }, [sectionsQuery.data, optionsQuery.data, form]);
 
   const handleBack = useCallback(() => {
-    // Only update form data when going back
     if (onFormDataUpdate) {
       const currentValues = form.getValues();
       onFormDataUpdate({
@@ -221,6 +219,9 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         setExamSections={setExamSections}
         medicineStocksOptions={medicineStocksOptions || []}
         selectedMedicines={selectedMedicines}
+        isMedicineLoading={isMedicineLoading}
+        isPhysicalExamLoading={isPhysicalExamLoading} // Pass loading state
+        hasPhysicalExamError={hasPhysicalExamError} // Pass error state
         onSelectedMedicinesChange={handleSelectedMedicinesChange}
         currentPage={currentPage}
         onPageChange={handlePageChange}

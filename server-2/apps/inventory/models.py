@@ -185,7 +185,7 @@ class MedicineInventory(models.Model):
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_inventories', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     wasted = models.PositiveIntegerField(default=0)
-    temporay_deduction= models.PositiveIntegerField(default=0)
+    temporary_deduction= models.PositiveIntegerField(default=0)
 
     class Meta: 
         db_table = 'medicine_inventory'

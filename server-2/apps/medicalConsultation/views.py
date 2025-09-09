@@ -21,24 +21,227 @@ from apps.patientrecords.serializers.findings_serializers import FindingSerializ
 from apps.patientrecords.serializers.physicalexam_serializers import PEResultSerializer
 from apps.medicineservices.models import FindingsPlanTreatment
 from apps.childhealthservices.models import ChildHealthVitalSigns,ChildHealth_History
-
+from apps.inventory.models import MedicineInventory
+from pagination import *
+from apps.healthProfiling.models import *
 
 # ALL RECORDS
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Count, Q
+from datetime import datetime, timedelta
+
+
 class PatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = PatientMedConsultationRecordSerializer
+    pagination_class = StandardResultsPagination
+    
     def get_queryset(self):
-        return Patient.objects.annotate(
+        queryset = Patient.objects.annotate(
             medicalrec_count=Count(
                 'patient_records__medical_consultation_record',
                 filter=Q(
                     patient_records__medical_consultation_record__medrec_status='completed'
                 ),
-                distinct=True  # ✅ Prevents overcounting due to join duplicates
+                distinct=True
             )
         ).filter(
             patient_records__medical_consultation_record__medrec_status='completed'
-        ).distinct()
+        ).select_related(
+            'rp_id__per', 
+            'trans_id'
+        ).prefetch_related(
+            'rp_id__per__personaladdress_set__add__sitio',
+            'patient_records__medical_consultation_record'
+        ).distinct().order_by('-medicalrec_count')
+        
+        # Track if any filter is applied
+        filters_applied = False
+        original_count = queryset.count()
+        
+        # Combined search (patient name, patient ID, household number, and sitio)
+        search_query = self.request.query_params.get('search', '').strip()
+        sitio_search = self.request.query_params.get('sitio', '').strip()
+        
+        # Combine search and sitio parameters
+        combined_search_terms = []
+        if search_query and len(search_query) >= 2:  # Allow shorter search terms
+            combined_search_terms.append(search_query)
+        if sitio_search:
+            combined_search_terms.append(sitio_search)
+        
+        if combined_search_terms:
+            filters_applied = True
+            combined_search = ','.join(combined_search_terms)
+            queryset = self._apply_search_filter(queryset, combined_search)
+            if queryset.count() == 0 and original_count > 0:
+                return Patient.objects.none()
+        
+        # Patient type filter
+        patient_type_search = self.request.query_params.get('patient_type', '').strip()
+        if patient_type_search:
+            filters_applied = True
+            queryset = self._apply_patient_type_filter(queryset, patient_type_search)
+            if queryset.count() == 0 and original_count > 0:
+                return Patient.objects.none()
+        
+        # Status filter (could be used for medical record status)
+        status_search = self.request.query_params.get('status', '').strip()
+        if status_search:
+            filters_applied = True
+            queryset = self._apply_status_filter(queryset, status_search)
+            if queryset.count() == 0 and original_count > 0:
+                return Patient.objects.none()
+        
+        return queryset
+    
+    def _apply_search_filter(self, queryset, search_query):
+        """Search by patient name, patient ID, household number, and sitio - for both residents and transients"""
+        search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
+        if not search_terms:
+            return queryset
+        
+        name_query = Q()
+        patient_id_query = Q()
+        person_ids = set()
+        transient_ids = set()
+        
+        for term in search_terms:
+            # Search by patient name (both resident and transient)
+            name_query |= (
+                Q(rp_id__per__per_fname__icontains=term) |
+                Q(rp_id__per__per_mname__icontains=term) |
+                Q(rp_id__per__per_lname__icontains=term) |
+                Q(trans_id__tran_fname__icontains=term) |
+                Q(trans_id__tran_mname__icontains=term) |
+                Q(trans_id__tran_lname__icontains=term)
+            )
+            
+            # Search by patient ID
+            patient_id_query |= Q(pat_id__icontains=term)
+            
+            # Search by resident profile ID and transient ID
+            patient_id_query |= Q(rp_id__rp_id__icontains=term)
+            patient_id_query |= Q(trans_id__trans_id__icontains=term)
+            
 
+            
+            matching_person_ids = PersonalAddress.objects.filter(
+                Q(add__add_external_sitio__icontains=term) |
+                Q(add__sitio__sitio_name__icontains=term)
+            ).values_list('per', flat=True)
+            person_ids.update(matching_person_ids)
+            
+            # Search by sitio for transients (case-insensitive and partial match)
+            matching_transient_ids = Transient.objects.filter(
+                Q(tradd_id__tradd_sitio__icontains=term)
+            ).values_list('trans_id', flat=True)
+            transient_ids.update(matching_transient_ids)
+        
+        # Combine all search queries
+        combined_query = name_query | patient_id_query 
+        
+        if person_ids:
+            combined_query |= Q(rp_id__per__in=person_ids)
+        if transient_ids:
+            combined_query |= Q(trans_id__in=transient_ids)
+        
+        return queryset.filter(combined_query)
+    
+    def _apply_patient_type_filter(self, queryset, patient_type):
+        """Filter by patient type (Resident/Transient)"""
+        search_terms = [term.strip().lower() for term in patient_type.split(',') if term.strip()]
+        if not search_terms:
+            return queryset
+        
+        type_query = Q()
+        for term in search_terms:
+            if term in ['resident', 'transient']:
+                type_query |= Q(pat_type__iexact=term)
+        
+        return queryset.filter(type_query) if type_query else queryset
+    
+
+    
+  
+    
+    def _get_parents_info(self, pat_obj):
+        """Get parents information for a patient"""
+        parents = {}
+        
+        if pat_obj.pat_type == 'Resident' and pat_obj.rp_id:
+            try:
+                from apps.healthProfiling.models import FamilyComposition
+                current_composition = FamilyComposition.objects.filter(
+                    rp=pat_obj.rp_id
+                ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
+                
+                if current_composition:
+                    fam_id = current_composition.fam_id
+                    family_compositions = FamilyComposition.objects.filter(
+                        fam_id=fam_id
+                    ).select_related('rp', 'rp__per')
+                    
+                    for composition in family_compositions:
+                        role = composition.fc_role.lower()
+                        if role in ['mother', 'father'] and composition.rp and hasattr(composition.rp, 'per'):
+                            personal = composition.rp.per
+                            parents[role] = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
+            except Exception as e:
+                print(f"Error fetching parents info for resident {pat_obj.rp_id.rp_id}: {str(e)}")
+        
+        elif pat_obj.pat_type == 'Transient' and pat_obj.trans_id:
+            trans = pat_obj.trans_id
+            if hasattr(trans, 'mother_fname') and (trans.mother_fname or trans.mother_lname):
+                parents['mother'] = f"{trans.mother_fname or ''} {trans.mother_mname or ''} {trans.mother_lname or ''}".strip()
+            
+            if hasattr(trans, 'father_fname') and (trans.father_fname or trans.father_lname):
+                parents['father'] = f"{trans.father_fname or ''} {trans.father_mname or ''} {trans.father_lname or ''}".strip()
+        
+        return parents
+    
+    def _get_address_and_sitio(self, pat_obj):
+        """Get address and sitio information for a patient"""
+        address = "N/A"
+        sitio = "N/A"
+        
+        try:
+            if pat_obj.pat_type == 'Resident' and pat_obj.rp_id and hasattr(pat_obj.rp_id, 'per'):
+                per = pat_obj.rp_id.per
+                from apps.healthProfiling.models import PersonalAddress
+                personal_address = PersonalAddress.objects.filter(
+                    per=per
+                ).select_related('add', 'add__sitio').first()
+                
+                if personal_address and personal_address.add:
+                    address = personal_address.add.add_street or "N/A"
+                    if personal_address.add.sitio:
+                        sitio = personal_address.add.sitio.sitio_name or "N/A"
+            
+            elif pat_obj.pat_type == 'Transient' and pat_obj.trans_id:
+                trans = pat_obj.trans_id
+                if hasattr(trans, 'tradd_id') and trans.tradd_id:
+                    address = trans.tradd_id.tradd_street or "N/A"
+                    sitio = trans.tradd_id.tradd_sitio or "N/A"
+        
+        except Exception as e:
+            print(f"Error fetching address for patient {pat_obj.pat_id}: {str(e)}")
+        
+        return address, sitio
+    
+
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 # USE FOR ADDING MEDICAL RECORD
 class MedicalConsultationRecordView(generics.CreateAPIView):
@@ -55,8 +258,18 @@ class UpdateMedicalConsultationRecordView(generics.UpdateAPIView):
 
 
 # INDIVIDUAL PATIENT RECORDS
+# class ViewMedicalConsultationRecordView(generics.ListAPIView):
+#     serializer_class = MedicalConsultationRecordSerializer
+#     def get_queryset(self):
+#         pat_id = self.kwargs['pat_id']
+#         return MedicalConsultation_Record.objects.filter(
+#             patrec__pat_id=pat_id,
+#             medrec_status='completed' 
+#         ).order_by('-created_at')
 class ViewMedicalConsultationRecordView(generics.ListAPIView):
     serializer_class = MedicalConsultationRecordSerializer
+    pagination_class = StandardResultsPagination
+    
     def get_queryset(self):
         pat_id = self.kwargs['pat_id']
         return MedicalConsultation_Record.objects.filter(
@@ -231,6 +444,7 @@ class CreateMedicalConsultationView(APIView):
 from apps.medicineservices.serializers import MedicineRequestItemSerializer
 
 # ========MEDICAL CONSULTATION END SOAP FORM
+# ========MEDICAL CONSULTATION END SOAP FORM
 class SoapFormSubmissionView(APIView):
     @transaction.atomic
     def post(self, request):
@@ -274,12 +488,33 @@ class SoapFormSubmissionView(APIView):
                 med_request = med_request_serializer.save()
                 med_request_id = med_request.medreq_id
 
-                # Create MedicineRequestItem for each medicine
+                # Create MedicineRequestItem for each medicine and update inventory
                 for medicine in medicine_request_data['medicines']:
+                    minv_id = medicine.get('minv_id')
+                    requested_qty = medicine.get('medreqitem_qty', 0)
+                    
+                    # Update MedicineInventory with temporary deduction
+                    if minv_id and requested_qty > 0:
+                        try:
+                            medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
+                            
+                            # Add the requested quantity to existing temporary_deduction
+                            current_temp_deduction = medicine_inventory.temporary_deduction or 0
+                            medicine_inventory.temporary_deduction = current_temp_deduction + requested_qty
+                            medicine_inventory.save()
+                            
+                        except MedicineInventory.DoesNotExist:
+                            # Log warning or handle missing inventory
+                            return Response(
+                                {"error": f"Medicine inventory with ID {minv_id} not found"},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                    
+                    # Create the medicine request item
                     medicine_item_data = {
-                        'medreqitem_qty': medicine.get('medreqitem_qty', 0),
+                        'medreqitem_qty': requested_qty,
                         'reason': medicine.get('reason', ''),
-                        'minv_id': medicine.get('minv_id'),  # Medicine inventory ID
+                        'minv_id': minv_id,  # Medicine inventory ID
                         'med_id': medicine.get('med_id'),  # Medicine list ID
                         'medreq_id': med_request.medreq_id,  # Link to the parent request
                         'status': 'confirmed'
@@ -338,6 +573,7 @@ class SoapFormSubmissionView(APIView):
 
 
 
+
 # CHILD HEALTH SOAP FORM
 class ChildHealthSoapFormSubmissionView(APIView):
     @transaction.atomic
@@ -383,12 +619,33 @@ class ChildHealthSoapFormSubmissionView(APIView):
                 med_request = med_request_serializer.save()
                 med_request_id = med_request.medreq_id
 
-                # Create MedicineRequestItem for each medicine
+                # Create MedicineRequestItem for each medicine and update inventory
                 for medicine in medicine_request_data['medicines']:
+                    minv_id = medicine.get('minv_id')
+                    requested_qty = medicine.get('quantity', 0)  # Note: using 'quantity' key for child health
+                    
+                    # Update MedicineInventory with temporary deduction
+                    if minv_id and requested_qty > 0:
+                        try:
+                            medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
+                            
+                            # Add the requested quantity to existing temporary_deduction
+                            current_temp_deduction = medicine_inventory.temporary_deduction or 0
+                            medicine_inventory.temporary_deduction = current_temp_deduction + requested_qty
+                            medicine_inventory.save()
+                            
+                        except MedicineInventory.DoesNotExist:
+                            # Log warning or handle missing inventory
+                            return Response(
+                                {"error": f"Medicine inventory with ID {minv_id} not found"},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                    
+                    # Create the medicine request item
                     medicine_item_data = {
-                        'medreqitem_qty': medicine.get('quantity', 0),
+                        'medreqitem_qty': requested_qty,
                         'reason': medicine.get('reason', ''),
-                        'minv_id': medicine.get('minv_id'),  # Medicine inventory ID
+                        'minv_id': minv_id,  # Medicine inventory ID
                         'med_id': medicine.get('med_id'),  # Medicine list ID
                         'medreq_id': med_request.medreq_id,  # Link to the parent request
                         'status': 'confirmed'

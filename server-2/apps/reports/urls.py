@@ -8,6 +8,10 @@ from .views.chsemiannual_opt_views import YearlySemiOPTChildHealthSummariesAPIVi
 from .views.chyearly_opt_tracking_views import YearlyMonthlyOPTChildHealthReportAPIView, YearlyOPTChildHealthSummariesAPIView
 from .views.chart_views import NutritionalStatusMonthlyChart
 from .views.chnewchildren_views import MonthlyNewChildrenCountAPIView,MonthlyChildrenDetailAPIView
+from .views.medicines_views import MonthlyMedicineSummariesAPIView, MonthlyMedicineRecordsDetailAPIView, MonthlyMedicineChart
+from .views.inv_medicine_views import MonthlyMedicineRecordsDetailAPIView, MedicineSummaryMonthsAPIView, MedicineExpiredOutOfStockSummaryAPIView, MonthlyMedicineExpiredOutOfStockDetailAPIView
+
+
 urlpatterns=[
         path('healthstaff/', HealthStaffListView.as_view(), name='healthstaff-list'),
         path('update/monthly_recipient_list_report/<int:monthlyrcplist_id>/', UpdateMonthlyRCPReportDetailView.as_view(), name='healthstaff-detail'),
@@ -35,4 +39,18 @@ urlpatterns=[
         # NEW CHILDREN LIST
           path('new-monthly-children/', MonthlyNewChildrenCountAPIView.as_view(), name='monthly-children-count'),
           path('new-monthly-children-details/<str:month>/', MonthlyChildrenDetailAPIView.as_view(), name='monthly-children-detail'),
+          
+        # MEDICINE SERVICES REPORTS
+        path('medicine-records/monthly/', MonthlyMedicineSummariesAPIView.as_view(), name='monthly_medicine_records'),
+        path('medicine-reports/<str:month>/', MonthlyMedicineRecordsDetailAPIView.as_view(), name='medicine-reports'),
+        path('medicines-request/monthly/chart/<str:month>/',MonthlyMedicineChart.as_view(), name='medicines_list'),
+        
+        
+        # INVENTORY MEDICINE REPORTS
+       path('medicine/records/<str:month>/',MonthlyMedicineRecordsDetailAPIView.as_view(),name='medicine-monthly-records'),
+      path('medicine/summaries/', MedicineSummaryMonthsAPIView.as_view(), name='medicine-summary-montly'),
+      path('medicine-expired-out-of-stock-summary/', MedicineExpiredOutOfStockSummaryAPIView.as_view(), name='outofexpiredstocks-monthly-records'),
+      path('medicine-expired-out-of-stock-detail/<str:month>/', MonthlyMedicineExpiredOutOfStockDetailAPIView.as_view(), name='outofexpiredstocks-chart'),
+
+        # path('medicine/records/<str:month>/', MonthlyMedicineRecordsDetailAPIView.as_view(), name='medicine-monthly-records'),
 ]

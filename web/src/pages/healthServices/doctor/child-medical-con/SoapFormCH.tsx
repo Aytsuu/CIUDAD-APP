@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import SoapFormFields from "@/components/ui/soap-form";
 import { useAuth } from "@/context/AuthContext";
 import { usePhysicalExamQueries } from "../medical-con/queries.tsx/fetch";
@@ -10,14 +10,13 @@ import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices
 import { useSubmitSoapForm } from "./queries.tsx/soap-submission";
 import { soapSchema, SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { ExamSection } from "../types";
-import {useRef} from "react"
+
 interface SoapFormProps {
   patientData: any;
   checkupData: any;
   onBack: () => void;
   initialData?: any;
-  onFormDataUpdate?: (data: any) => void; // Use 'any' to be flexible
-
+  onFormDataUpdate?: (data: any) => void;
 }
 
 export default function SoapForm({
@@ -30,12 +29,8 @@ export default function SoapForm({
   const { user } = useAuth();
   const staff = user?.staff?.staff_id || null;
 
-
-
-  console.log("Cehck up Data", checkupData);
   const [currentPage, setCurrentPage] = useState(1);
-  const { mutate: submitSoapForm, isPending: isSubmitting } =
-    useSubmitSoapForm();
+  const { mutate: submitSoapForm, isPending: isSubmitting } = useSubmitSoapForm();
 
   const [selectedMedicines, setSelectedMedicines] = useState<any[]>(() => {
     if (initialData?.selectedMedicines?.length)
@@ -48,8 +43,15 @@ export default function SoapForm({
   });
 
   const [examSections, setExamSections] = useState<ExamSection[]>([]);
+  const isUpdating = useRef(false);
 
-  const { data: medicineStocksOptions } = fetchMedicinesWithStock();
+  // Use the medicine stocks with loading state
+  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock(true);
+  
+  // Get physical exam queries with loading states
+  const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
+  const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
+  const hasPhysicalExamError = sectionsQuery.isError || optionsQuery.isError;
 
   const form = useForm<SoapFormType>({
     resolver: zodResolver(soapSchema),
@@ -104,18 +106,13 @@ export default function SoapForm({
     };
   }, [form, selectedMedicines, onFormDataUpdate]);
 
-
-
-  const isUpdating =useRef(false)
   const handleSelectedMedicinesChange = useCallback(
     (updated: any[]) => {
-      // Prevent infinite loops by checking if update is from child component
       if (isUpdating.current) {
         isUpdating.current = false;
         return;
       }
 
-      // Deep comparison to avoid unnecessary updates
       const currentJson = JSON.stringify(selectedMedicines.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
       const updatedJson = JSON.stringify(updated.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
 
@@ -146,7 +143,6 @@ export default function SoapForm({
         medicines: updated
       });
 
-      // Only call onFormDataUpdate if it exists
       if (onFormDataUpdate) {
         const currentValues = form.getValues();
         onFormDataUpdate({
@@ -155,7 +151,7 @@ export default function SoapForm({
         });
       }
     },
-    [form, patientData, medicineStocksOptions, onFormDataUpdate] // Remove selectedMedicines from dependencies
+    [form, patientData, medicineStocksOptions, onFormDataUpdate, selectedMedicines]
   );
 
   const handlePageChange = useCallback((page: number) => {
@@ -193,8 +189,6 @@ export default function SoapForm({
     },
     [form, selectedMedicines, onFormDataUpdate]
   );
-
-  const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
 
   useEffect(() => {
     if (sectionsQuery.data && optionsQuery.data) {
@@ -259,6 +253,9 @@ export default function SoapForm({
         setExamSections={setExamSections}
         medicineStocksOptions={medicineStocksOptions || []}
         selectedMedicines={selectedMedicines}
+        isMedicineLoading={isMedicineLoading}
+        isPhysicalExamLoading={isPhysicalExamLoading}
+        hasPhysicalExamError={hasPhysicalExamError}
         onSelectedMedicinesChange={handleSelectedMedicinesChange}
         currentPage={currentPage}
         onPageChange={handlePageChange}
