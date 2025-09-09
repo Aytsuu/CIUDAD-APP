@@ -457,7 +457,7 @@ function AdminGADProjectProposal() {
                 <Button
                   variant="outline"
                   onClick={handleOpenStatusUpdateDialog}
-                  disabled={!selectedProject || selectedProject.status === "Approved"}
+                  disabled={!selectedProject || selectedProject.status === "Approved" || selectedProject.status === "Rejected" || selectedProject.status === "Amend"}
                 >
                   Update Status
                 </Button>
