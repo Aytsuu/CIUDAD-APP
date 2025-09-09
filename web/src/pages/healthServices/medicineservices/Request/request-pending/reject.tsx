@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { X, Send, AlertCircle, Forward } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
-import { useUpdateMedicineRequestItem } from "../queries.tsx/post";
+import { useUpdateMedicineRequestItem } from "../queries/post";
 import { useEffect } from "react";
 
 // Define the form schema
@@ -27,9 +27,7 @@ interface ActionModalProps {
 }
 
 // Custom Loader2 component with animated spin
-const Loader2 = ({ className = "h-4 w-4" }: { className?: string }) => (
-  <div className={`animate-spin rounded-full border-2 border-current border-t-transparent ${className}`} />
-);
+const Loader2 = ({ className = "h-4 w-4" }: { className?: string }) => <div className={`animate-spin rounded-full border-2 border-current border-t-transparent ${className}`} />;
 
 export const ActionModal = ({ isOpen, onClose, data, mode }: ActionModalProps) => {
   const { mutate: updateMedicineRequest, isPending: isSubmitting } = useUpdateMedicineRequestItem();
@@ -66,14 +64,14 @@ export const ActionModal = ({ isOpen, onClose, data, mode }: ActionModalProps) =
 
   const config = modalConfig[mode];
   const IconComponent = config.icon;
- useEffect  (() => {
-  form.setValue("reason", config.archive_reason || "");
+  useEffect(() => {
+    form.setValue("reason", config.archive_reason || "");
   }, [isOpen]);
   const handleSubmit = async (formData: ReasonFormValues) => {
     const updateData = {
       status: config.status,
-      archive_reason: config.archive_reason|| formData.reason,
-      is_archived:true
+      archive_reason: config.archive_reason || formData.reason,
+      is_archived: true
     };
 
     // Call the mutation
@@ -104,13 +102,7 @@ export const ActionModal = ({ isOpen, onClose, data, mode }: ActionModalProps) =
             <IconComponent className={`h-5 w-5 ${config.iconColor}`} />
             <h2 className="text-xl font-semibold text-gray-900">{config.title}</h2>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            className="h-8 w-8 rounded-full hover:bg-gray-100"
-            disabled={isSubmitting}
-          >
+          <Button variant="ghost" size="icon" onClick={handleClose} className="h-8 w-8 rounded-full hover:bg-gray-100" disabled={isSubmitting}>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -125,30 +117,14 @@ export const ActionModal = ({ isOpen, onClose, data, mode }: ActionModalProps) =
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <FormTextArea
-                name="reason"
-                control={form.control}
-                label=""
-                placeholder={`Enter the reason for ${mode}...`}
-                rows={10}
-              />
+              <FormTextArea name="reason" control={form.control} label="" placeholder={`Enter the reason for ${mode}...`} rows={10} />
 
               {/* Modal Footer */}
               <div className="flex gap-3 justify-end pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleClose}
-                  disabled={isSubmitting}
-                  className="min-w-[80px]"
-                >
+                <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="min-w-[80px]">
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || !form.formState.isValid}
-                  className={`min-w-[80px] ${config.buttonColor} disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
+                <Button type="submit" disabled={isSubmitting || !form.formState.isValid} className={`min-w-[80px] ${config.buttonColor} disabled:opacity-50 disabled:cursor-not-allowed`}>
                   {isSubmitting ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 text-white" />

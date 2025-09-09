@@ -121,11 +121,15 @@ urlpatterns = [
     path('vaccination-expired-out-of-stock-summary/', VaccinationExpiredOutOfStockSummaryAPIView.as_view(), name='vaccination-expired-out-of-stock-summary'),
     path('vaccination-expired-out-of-stock-detail/<str:month>/', MonthlyVaccinationExpiredOutOfStockDetailAPIView.as_view(), name='vaccination-expired-out-of-stock-detail'),
     
+    path('update-pending-medreq/<str:medreq_id>/',ConfirmAllPendingItemsView.as_view(), name='update-all medicine-request-pending'),
     
-    path('medreq-items-pending/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
+    path('medreq-items-pending/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
+    path('medicine-request-pending/', MedicineRequestPendingTableView.as_view(), name='medicine_request-pending'),
+    path('medicine-request/', MedicineRequestProcessingTableView.as_view(), name='medicine_request-processing'),
+
     path('update-medreq-item/<int:medreqitem_id>/',UpdateMedicinerequestItemView.as_view(),name='update-medicine-request-items'),
-      path('medicine-allocation/', MedicineRequestAllocationAPIView.as_view(), name='medicine-allocation'),
-    
+    path('medicine-allocation/', MedicineRequestAllocationAPIView.as_view(), name='medicine-allocation'),
+
     path('childmedicine/', ChildServiceMedicineRecordView.as_view(), name='medicine_request_item_detail'),
 
 

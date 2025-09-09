@@ -24,6 +24,7 @@ import { useState } from "react";
 import { nonPhilHealthType } from "@/form-schema/medicalConsultation/nonPhilhealthSchema";
 import { showErrorToast } from "@/components/ui/toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { FormSelect } from "@/components/ui/form/form-select";
 
 const doctors = [
   { id: "1", name: "Kimmy Mo Ma Chung" },
@@ -107,11 +108,11 @@ export default function MedicalConsultationForm() {
 
   useEffect(() => {
     if (latestVitals) {
-      form.setValue("vital_pulse", latestVitals.pulse?.toString() || "");
-      form.setValue("vital_temp", latestVitals.temperature?.toString() || "");
-      form.setValue("vital_bp_systolic", latestVitals.bp_systolic?.toString() || "");
-      form.setValue("vital_bp_diastolic", latestVitals.bp_diastolic?.toString() || "");
-      form.setValue("vital_RR", latestVitals.respiratory_rate?.toString() || "");
+      form.setValue("vital_pulse", latestVitals.pulse?.toString() ?? "");
+      form.setValue("vital_temp", latestVitals.temperature?.toString() ?? "");
+      form.setValue("vital_bp_systolic", latestVitals.bp_systolic?.toString() ?? "");
+      form.setValue("vital_bp_diastolic", latestVitals.bp_diastolic?.toString() ?? "");
+      form.setValue("vital_RR", latestVitals.respiratory_rate?.toString() ?? "");
     }
     if (previousMeasurements) {
       form.setValue("height", previousMeasurements.height ?? 0);
@@ -136,7 +137,6 @@ export default function MedicalConsultationForm() {
     if (!data.is_philhealthmember) {
       non_membersubmit.mutate({ data, currentPatient });
     } else {
-
     }
   };
 
@@ -198,8 +198,6 @@ export default function MedicalConsultationForm() {
                         </div>
                       </RadioGroup>
                     </div>
-
-                  
                   </div>
 
                   {/* Vital Signs Section */}
@@ -250,83 +248,81 @@ export default function MedicalConsultationForm() {
                     <FormTextArea control={form.control} name="medrec_chief_complaint" label="" placeholder="Enter chief complaint" className="min-h-[100px]" rows={5} />
                   </div>
 
+                  {/* Conditional PhilHealth Member Fields */}
+                  {isPhilHealthMember && (
+                    <div className="space-y-4 p-4  rounded-lg border border-green-500">
+                      <h3 className="font-medium text-green-800 mb-6">Additional PhilHealth Information</h3>
 
-
-  {/* Conditional PhilHealth Member Fields */}
-  {isPhilHealthMember && (
-                      <div className="space-y-4 p-4  rounded-lg border border-green-500">
-                        <h3 className="font-medium text-green-800 mb-6">Additional PhilHealth Information</h3>
-
-                        <div className="flex gap-4">
-                          {" "}
-                          {/* With ATCH */}
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="is_withatch" checked={form.watch("is_withatch")} onChange={(e) => form.setValue("is_withatch", e.target.checked)} className="rounded border-gray-300" />
-                            <Label htmlFor="is_withatch" className="font-normal cursor-pointer">
-                              WALK IN WITH ATC
-                            </Label>
-                          </div>
-                          {/* Is Dependent */}
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="is_dependent" checked={form.watch("is_dependent")} onChange={(e) => form.setValue("is_dependent", e.target.checked)} className="rounded border-gray-300" />
-                            <Label htmlFor="is_dependent" className="font-normal cursor-pointer">
-                              Dependent
-                            </Label>
-                          </div>
+                      <div className="flex gap-4">
+                        {" "}
+                        {/* With ATCH */}
+                        <div className="flex items-center space-x-2">
+                          <input type="checkbox" id="is_withatch" checked={form.watch("is_withatch")} onChange={(e) => form.setValue("is_withatch", e.target.checked)} className="rounded border-gray-300" />
+                          <Label htmlFor="is_withatch" className="font-normal cursor-pointer">
+                            WALK IN WITH ATC
+                          </Label>
                         </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          {/* Marital Status */}
-                          <div>
-                            <Label className="font-medium text-black/65 mb-2 mt-2 block">Marital Status</Label>
-                            <Combobox options={maritalStatusOptions} value={form.watch("marital_status")} onChange={(value) => form.setValue("marital_status", value)} placeholder="Select marital status" triggerClassName="font-normal w-full" />
-                          </div>
-
-                          {/* LMP */}
-                          <FormInput control={form.control} name="lmp" label="Last Menstrual Period (LMP)" placeholder="Enter LMP date" type="date" />
-
-                          {/* OB Score G */}
-                          <FormInput control={form.control} name="obscore_g" label="OB Score G (Gravida)" placeholder="0" type="number" />
-
-                          {/* OB Score P */}
-                          <FormInput control={form.control} name="obscore_p" label="OB Score P (Para)" placeholder="0" type="number" />
-
-                          {/* TPAL */}
-                          <FormInput control={form.control} name="tpal" label="TPAL (T-P-A-L)" placeholder="0-0-0-0" />
-
-                          {/* TT Status */}
-                          <div>
-                            <Label className="font-medium text-black/65 mb-2 block">TT Status</Label>
-                            <Combobox options={ttStatusOptions} value={form.watch("tt_status")} onChange={(value) => form.setValue("tt_status", value)} placeholder="Select TT status" triggerClassName="font-normal w-full" />
-                          </div>
-
-                          {/* OGTT Result */}
-                          <FormInput control={form.control} name="ogtt_result" label="OGTT Result" placeholder="Enter OGTT result" />
-
-                          {/* Contraceptive Used */}
-                          <div>
-                            <Label className="font-medium text-black/65 mb-2 mt-2 block">Contraceptive Used</Label>
-                            <Combobox options={contraceptiveOptions} value={form.watch("contraceptive_used")} onChange={(value) => form.setValue("contraceptive_used", value)} placeholder="Select contraceptive method" triggerClassName="font-normal w-full" />
-                          </div>
-
-                          {/* Smoking Information */}
-                          <FormInput control={form.control} name="smk_stickused_aday" label="Cigarette Sticks per Day" placeholder="Enter number of sticks" type="number" />
-
-                          <FormInput control={form.control} name="smk_yrs" label="Smoking Years" placeholder="Enter years of smoking" type="number" />
-
-                          {/* Passive Smoking */}
-                          <div className="flex items-center space-x-2 mt-8">
-                            <input type="checkbox" id="is_passive" checked={form.watch("is_passive")} onChange={(e) => form.setValue("is_passive", e.target.checked)} className="rounded border-gray-300" />
-                            <Label htmlFor="is_passive" className="font-normal cursor-pointer">
-                              Passive Smoker
-                            </Label>
-                          </div>
-
-                          {/* Alcohol Consumption */}
-                          <FormInput control={form.control} name="alchl_bottleused_aday" label="Alcohol Bottles per Day" placeholder="Enter number of bottles" type="number" />
+                        {/* Is Dependent */}
+                        <div className="flex items-center space-x-2">
+                          <input type="checkbox" id="is_dependent" checked={form.watch("is_dependent")} onChange={(e) => form.setValue("is_dependent", e.target.checked)} className="rounded border-gray-300" />
+                          <Label htmlFor="is_dependent" className="font-normal cursor-pointer">
+                            Dependent
+                          </Label>
                         </div>
                       </div>
-                    )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {/* Marital Status */}
+                        <div>
+                          <Label className="font-medium text-black/65 mb-2 mt-2 block">Marital Status</Label>
+                          <FormSelect control={form.control} name="marital_status" options={maritalStatusOptions} placeholder="Select marital status" />
+                        </div>
+
+                        {/* LMP */}
+                        <FormInput control={form.control} name="lmp" label="Last Menstrual Period (LMP)" placeholder="Enter LMP date" type="date" />
+
+                        {/* OB Score G */}
+                        <FormInput control={form.control} name="obscore_g" label="OB Score G (Gravida)" placeholder="0" type="number" />
+
+                        {/* OB Score P */}
+                        <FormInput control={form.control} name="obscore_p" label="OB Score P (Para)" placeholder="0" type="number" />
+
+                        {/* TPAL */}
+                        <FormInput control={form.control} name="tpal" label="TPAL (T-P-A-L)" placeholder="0-0-0-0" />
+
+                        {/* TT Status */}
+                        <div>
+                          <Label className="font-medium text-black/65 mb-2 block">TT Status</Label>
+                          <FormSelect control={form.control} name="tt_status" options={ttStatusOptions} placeholder="Select TT status" />
+                        </div>
+
+                        {/* OGTT Result */}
+                        <FormInput control={form.control} name="ogtt_result" label="OGTT Result" placeholder="Enter OGTT result" />
+
+                        {/* Contraceptive Used */}
+                        <div>
+                          <Label className="font-medium text-black/65 mb-2 mt-2 block">Contraceptive Used</Label>
+                          <Combobox options={contraceptiveOptions} value={form.watch("contraceptive_used")} onChange={(value: any) => form.setValue("contraceptive_used", value)} placeholder="Select contraceptive method" triggerClassName="font-normal w-full" />
+                        </div>
+
+                        {/* Smoking Information */}
+                        <FormInput control={form.control} name="smk_stickused_aday" label="Cigarette Sticks per Day" placeholder="Enter number of sticks" type="number" />
+
+                        <FormInput control={form.control} name="smk_yrs" label="Smoking Years" placeholder="Enter years of smoking" type="number" />
+
+                        {/* Passive Smoking */}
+                        <div className="flex items-center space-x-2 mt-8">
+                          <input type="checkbox" id="is_passive" checked={form.watch("is_passive")} onChange={(e) => form.setValue("is_passive", e.target.checked)} className="rounded border-gray-300" />
+                          <Label htmlFor="is_passive" className="font-normal cursor-pointer">
+                            Passive Smoker
+                          </Label>
+                        </div>
+
+                        {/* Alcohol Consumption */}
+                        <FormInput control={form.control} name="alchl_bottleused_aday" label="Alcohol Bottles per Day" placeholder="Enter number of bottles" type="number" />
+                      </div>
+                    </div>
+                  )}
                   {/* BHW and Doctor Section */}
                   <div className="flex gap-5 flex-col">
                     <FormInput control={form.control} name="bhw_assignment" label="BHW Assigned:" placeholder="BHW Assigned" />
@@ -334,8 +330,8 @@ export default function MedicalConsultationForm() {
                       <Label className="font-medium text-black/65 mb-2 block">Forward to Doctor</Label>
                       <Combobox
                         options={doctors}
-                        value={form.watch("doctor")}
-                        onChange={(value) => form.setValue("doctor", value)}
+                        value={form.watch("doctor") || ""}
+                        onChange={(value) => form.setValue("doctor", value || "")}
                         placeholder="Select doctor"
                         triggerClassName="font-normal w-full"
                         emptyMessage={

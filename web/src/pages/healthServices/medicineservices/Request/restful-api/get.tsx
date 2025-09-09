@@ -20,7 +20,7 @@ export const getMedicineRequestProcessing = async (
       params.append("date_filter", dateFilter);
     }
 
-    const response = await api2.get("/medicine/medicine-request/");
+    const response = await api2.get("/inventory/medicine-request/");
     return response.data;
   } catch (error) {
     console.error("Error fetching processing medicine requests:", error);
@@ -72,29 +72,27 @@ export const getMedicineRequestPending = async (
       params.append("date_filter", dateFilter);
     }
 
-    const response = await api2.get(`/medicine/medicine-request-pending/?${params.toString()}`);
+    const response = await api2.get(`/inventory/medicine-request-pending/?${params.toString()}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching pending medicine requests:", error);
     throw error;
   }
 };
-// components/queries.tsx/fetch.ts
+
+
 export const getMedicineRequestPendingItems = async (
+  id: string, 
   page?: number, 
-  pageSize?: number,
-  search?: string,
-  dateFilter?: string
+  pageSize?: number
 ): Promise<any> => {
   try {
     const params = new URLSearchParams();
     if (page) params.append('page', page.toString());
     if (pageSize) params.append('page_size', pageSize.toString());
-    if (search) params.append('search', search);
-    if (dateFilter && dateFilter !== 'all') params.append('date_filter', dateFilter);
     
-    // CORRECTED: No ID needed in the URL
-    const url = `inventory/medreq-items-pending/${params.toString() ? `?${params.toString()}` : ''}`;
+    // CORRECTED: Include the id parameter in the URL
+    const url = `inventory/medreq-items-pending/${id}/${params.toString() ? `?${params.toString()}` : ''}`;
     
     const response = await api2.get(url);
     return response.data;
@@ -103,4 +101,3 @@ export const getMedicineRequestPendingItems = async (
     throw error;
   }
 };
-

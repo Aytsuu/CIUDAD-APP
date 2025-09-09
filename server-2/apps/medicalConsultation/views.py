@@ -227,6 +227,9 @@ class CreateMedicalConsultationView(APIView):
             ) 
 
 
+
+from apps.medicineservices.serializers import MedicineRequestItemSerializer
+
 # ========MEDICAL CONSULTATION END SOAP FORM
 class SoapFormSubmissionView(APIView):
     @transaction.atomic
@@ -258,11 +261,35 @@ class SoapFormSubmissionView(APIView):
             med_request_id = None
             medicine_request_data = data.get('medicine_request')
             if medicine_request_data and medicine_request_data.get('medicines'):
-                med_request_serializer = MedicineRequestSerializer(data=medicine_request_data)
+                # Create MedicineRequest first
+                med_request_data = {
+                    'rp_id': medicine_request_data.get('rp_id'),  # Physician ID
+                    'pat_id': medicine_request_data.get('pat_id'),  # Patient ID
+                    'status': 'pending',
+                    'mode': medicine_request_data.get('mode', 'walk-in')
+                }
+                
+                med_request_serializer = MedicineRequestSerializer(data=med_request_data)
                 med_request_serializer.is_valid(raise_exception=True)
                 med_request = med_request_serializer.save()
                 med_request_id = med_request.medreq_id
 
+                # Create MedicineRequestItem for each medicine
+                for medicine in medicine_request_data['medicines']:
+                    medicine_item_data = {
+                        'medreqitem_qty': medicine.get('medreqitem_qty', 0),
+                        'reason': medicine.get('reason', ''),
+                        'minv_id': medicine.get('minv_id'),  # Medicine inventory ID
+                        'med_id': medicine.get('med_id'),  # Medicine list ID
+                        'medreq_id': med_request.medreq_id,  # Link to the parent request
+                        'status': 'confirmed'
+                    }
+                    
+                    medicine_item_serializer = MedicineRequestItemSerializer(data=medicine_item_data)
+                    medicine_item_serializer.is_valid(raise_exception=True)
+                    medicine_item_serializer.save()
+
+                # Link medicine request to findings
                 FindingsPlanTreatment.objects.create(
                     medreq=med_request,
                     find=finding
@@ -288,7 +315,7 @@ class SoapFormSubmissionView(APIView):
             # 5. Medical History
             if data.get('selected_illnesses'):
                 medical_history_data = [
-                    {'patrec_id': patrec_id, 'ill_id': ill_id, 'year': datetime.now().year}
+                    {'patrec_id': patrec_id, 'ill_id': ill_id, 'year': date.today().strftime('%y-%m-%d')}
                     for ill_id in data['selected_illnesses']
                 ]
                 MedicalHistory.objects.bulk_create([
@@ -308,9 +335,6 @@ class SoapFormSubmissionView(APIView):
                 {'error': 'Internal server error', 'details': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-
-
 
 
 
@@ -346,11 +370,35 @@ class ChildHealthSoapFormSubmissionView(APIView):
             med_request_id = None
             medicine_request_data = data.get("medicine_request")
             if medicine_request_data and medicine_request_data.get("medicines"):
-                med_request_serializer = MedicineRequestSerializer(data=medicine_request_data)
+                # Create MedicineRequest first
+                med_request_data = {
+                    'rp_id': medicine_request_data.get('rp_id'),  # Physician ID
+                    'pat_id': medicine_request_data.get('pat_id'),  # Patient ID
+                    'status': 'pending',
+                    'mode': medicine_request_data.get('mode', 'walk-in')
+                }
+                
+                med_request_serializer = MedicineRequestSerializer(data=med_request_data)
                 med_request_serializer.is_valid(raise_exception=True)
                 med_request = med_request_serializer.save()
                 med_request_id = med_request.medreq_id
 
+                # Create MedicineRequestItem for each medicine
+                for medicine in medicine_request_data['medicines']:
+                    medicine_item_data = {
+                        'medreqitem_qty': medicine.get('quantity', 0),
+                        'reason': medicine.get('reason', ''),
+                        'minv_id': medicine.get('minv_id'),  # Medicine inventory ID
+                        'med_id': medicine.get('med_id'),  # Medicine list ID
+                        'medreq_id': med_request.medreq_id,  # Link to the parent request
+                        'status': 'confirmed'
+                    }
+                    
+                    medicine_item_serializer = MedicineRequestItemSerializer(data=medicine_item_data)
+                    medicine_item_serializer.is_valid(raise_exception=True)
+                    medicine_item_serializer.save()
+
+                # Link medicine request to findings
                 FindingsPlanTreatment.objects.create(
                     medreq=med_request,
                     find=finding
@@ -379,7 +427,7 @@ class ChildHealthSoapFormSubmissionView(APIView):
                     MedicalHistory(
                         patrec_id=patrec_id,
                         ill_id=ill_id,
-                        year=date.today()
+                        year=date.today().strftime('%y-%m-%d')
                     )
                     for ill_id in data["selected_illnesses"]
                 ])

@@ -1,470 +1,336 @@
-import { useEffect, useState } from "react"
-import { useLocation, useNavigate } from "react-router"
-import { PatientInfoCard } from "@/components/ui/patientInfoCard"
-import { AlertCircle, Pill, Calendar, User, FileText, Eye, Clock, Hash, ChevronLeft, Loader2 } from "lucide-react"
-import { Label } from "@/components/ui/label"
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button/button"
-import { DocumentModal } from "../../tables/columns/inv-med-col"
-import { Link } from "react-router"
-import { MedicineDisplay } from "@/components/ui/medicine-display"
-import { fetchMedicinesWithStock } from "../../restful-api/fetchAPI"
-import { useCreateMedicineAllocation } from "../queries.tsx/post"
+"use client";
+
+import { useState, useEffect } from "react";
+import { DataTable } from "@/components/ui/table/data-table";
+import { Button } from "@/components/ui/button/button";
+import { Input } from "@/components/ui/input";
+import { Pill, AlertCircle, Loader2, History, Package, CheckCircle } from "lucide-react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { PatientInfoCard } from "@/components/ui/patientInfoCard";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { pendingItemsColumns } from "./columns";
+import { usePendingItemsMedRequest } from "../queries/fetch";
+import { MedicineDisplay } from "@/components/ui/medicine-display";
+import { fetchMedicinesWithStock } from "../../restful-api/fetchAPI";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { toast } from "sonner"; // Assuming you're using sonner for toast notifications
+import { useConfirmAllPendingItems } from "../queries/update";
 
 export default function MedicineRequestPendingItems() {
-  const location = useLocation()
-  const medicineRequestData = location.state?.params?.medicineRequestData
-  const navigate = useNavigate()
-  const [selectedPatientData, setSelectedPatientData] = useState<any | null>(null)
-  const [selectedMedicineRequestData, setSelectedMedicineRequestData] = useState<any | null>(null)
-  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false)
-  const [selectedFiles, setSelectedFiles] = useState<any[]>([])
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Get the medreqData from state params
+  const medreq_id = location.state?.params?.medreq_id;
+  const patientInfo = location.state?.params?.patientData;
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [medicineDisplayPage, setMedicineDisplayPage] = useState(1);
+
   
-  // Medicine display states
-  const [selectedMedicines, setSelectedMedicines] = useState<any[]>([])
-  const [medicineDisplayPage, setMedicineDisplayPage] = useState(1)
-  const [initialSelectionsSet, setInitialSelectionsSet] = useState(false)
+  // Use the existing fetchMedicinesWithStock function
+  const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
+  // Use the new mutation hook instead of useCreateMedicineAllocation
+  const { mutate: confirmAllPendingItems, isPending, error: confirmError, isSuccess } = useConfirmAllPendingItems();
 
-  // Fetch medicine stocks
-  const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock()
-  const { mutate: createAllocation, isPending, error: createMedicineError } = useCreateMedicineAllocation()
-
+  // Debounce search query
   useEffect(() => {
-    if (location.state?.params?.patientData) {
-      setSelectedPatientData(location.state.params.patientData)
-    }
-    if (location.state?.params?.medicineRequestData) {
-      setSelectedMedicineRequestData(location.state.params.medicineRequestData)
-    }
-  }, [location.state])
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 500);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
-  // Create medicine mapping for MedicineDisplay
+  // Use query with pagination parameters
+  const { data: apiResponse, isLoading, error: pendingRequestError } = usePendingItemsMedRequest(medreq_id, currentPage, pageSize);
+
+  // Extract data from paginated response
+  const medicineData = apiResponse?.results || [];
+  const totalCount = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Flatten the data for the table
+  const tableData = medicineData.flatMap((medicine: any) =>
+    medicine.request_items.map((item: any) => ({
+      ...item,
+      med_name: medicine.med_name,
+      med_type: medicine.med_type,
+      total_available_stock: medicine.total_available_stock,
+      med_id: medicine.med_id,
+      reason: item.reason || "No reason provided",
+      medreq_id: item.medreq_id
+    }))
+  );
+
+  // Create a mapping between stock medicines and pending request items
   const createMedicineMapping = () => {
-    if (!medicineStocksOptions || !selectedMedicineRequestData) return []
+    if (!medicineStocksOptions || !medicineData.length) return [];
 
-    const mappedMedicines: any = []
+    const mappedMedicines: any = [];
 
-    // Find matching stock for the current medicine request
-    const matchingStocks = medicineStocksOptions.filter((stock: any) => 
-      String(stock.med_id) === String(selectedMedicineRequestData.med_id)
-    )
+    // For each pending medicine request
+    medicineData.forEach((pendingMedicine: any) => {
+      // Find all stock entries that match this medicine
+      const matchingStocks = medicineStocksOptions.filter((stock: any) => String(stock.med_id) === String(pendingMedicine.med_id));
 
-    // Create mapping entries for each matching stock
-    matchingStocks.forEach((stock: any, stockIndex: number) => {
-      const uniqueId = `${selectedMedicineRequestData.med_id}_${stock.id}_${selectedMedicineRequestData.medreqitem_id}`
-      
-      mappedMedicines.push({
-        ...stock,
-        id: uniqueId,
-        display_id: `${selectedMedicineRequestData.med_name} (Stock ID: ${stock.id})`,
-        med_name: selectedMedicineRequestData.med_name,
-        med_type: selectedMedicineRequestData.med_type,
-        medreqitem_id: selectedMedicineRequestData.medreqitem_id,
-        requested_qty: selectedMedicineRequestData.medreqitem_qty,
-        pending_reason: selectedMedicineRequestData.reason || "No reason provided",
-        request_item: selectedMedicineRequestData,
-        original_stock_id: stock.id
-      })
-    })
+      // For each matching stock, create an entry
+      matchingStocks.forEach((stock: any, stockIndex: number) => {
+        // Get the pending items for this medicine
+        const pendingItems = pendingMedicine.request_items.filter((item: any) => item.status === "pending");
 
-    return mappedMedicines
-  }
+        // If there are pending items, create mapping entries
+        pendingItems.forEach((item: any, itemIndex: number) => {
+          const uniqueId = `${pendingMedicine.med_id}_${stock.id}_${item.medreqitem_id}`;
 
-  // Get enhanced medicine stocks
-  const enhancedMedicineStocks = createMedicineMapping()
+          mappedMedicines.push({
+            ...stock,
+            id: uniqueId, // Unique identifier for this specific stock-request combination
+            display_id: `${pendingMedicine.med_name} (Stock ID: ${stock.id})`, // For display purposes
+            med_name: pendingMedicine.med_name,
+            med_type: pendingMedicine.med_type,
+            medreqitem_id: item.medreqitem_id,
+            requested_qty: item.medreqitem_qty,
+            pending_reason: item.reason || "No reason provided",
+            request_item: item, // Store the full request item
+            pending_medicine: pendingMedicine, // Store the full pending medicine
+            original_stock_id: stock.id // Keep track of original stock ID
+          });
+        });
+      });
+    });
 
-  // Handler for medicine selection
-  const handleSelectedMedicinesChange = (updatedSelectedMedicines: any[]) => {
-    const enhancedSelectedMedicines = updatedSelectedMedicines.map((selectedMed: any) => {
-      const medicineData = enhancedMedicineStocks.find((med: any) => med.id === selectedMed.minv_id)
-      
-      if (medicineData) {
-        return {
-          ...selectedMed,
-          medreqitem_id: medicineData.medreqitem_id,
-          med_name: medicineData.med_name,
-          med_id: medicineData.med_id,
-          original_stock_id: medicineData.original_stock_id,
-          minv_id: selectedMed.minv_id,
-          reason: selectedMed.reason || medicineData.pending_reason
-        }
-      }
-      return selectedMed
-    })
+    return mappedMedicines;
+  };
 
-    setSelectedMedicines(enhancedSelectedMedicines)
-  }
+  // Get the enhanced medicine stocks with proper mapping
+  const enhancedMedicineStocks = createMedicineMapping();
 
-  // Set initial selections
-  useEffect(() => {
-    if (enhancedMedicineStocks.length > 0 && !initialSelectionsSet) {
-      const initialSelected = enhancedMedicineStocks.map((medicine: any) => ({
-        minv_id: medicine.id,
-        medrec_qty: medicine.requested_qty || 1,
-        reason: medicine.pending_reason,
-        medreqitem_id: medicine.medreqitem_id,
-        med_name: medicine.med_name,
-        med_id: medicine.med_id,
-        original_stock_id: medicine.original_stock_id
-      }))
-
-      setSelectedMedicines(initialSelected)
-      setInitialSelectionsSet(true)
-    }
-  }, [enhancedMedicineStocks, initialSelectionsSet])
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "pending":
-        return (
-          <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 font-medium">
-            <Clock className="h-3 w-3 mr-1" />
-            Pending
-          </Badge>
-        )
-      case "approved":
-        return (
-          <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-medium">
-            Approved
-          </Badge>
-        )
-      case "rejected":
-        return (
-          <Badge variant="secondary" className="bg-red-50 text-red-700 border-red-200 font-medium">
-            Rejected
-          </Badge>
-        )
-      case "referred":
-        return (
-          <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
-            Referred
-          </Badge>
-        )
-      default:
-        return <Badge variant="secondary">{status}</Badge>
-    }
-  }
-
-  const handleViewDocuments = (files: any[]) => {
-    setSelectedFiles(files)
-    setIsDocumentModalOpen(true)
-  }
+ 
+  // Calculate the actual count of pending items
+const pendingItemsCount = medicineData.reduce((count:any, medicine:any) => {
+  const pendingItems = medicine.request_items.filter((item: any) => item.status === "pending");
+  return count + pendingItems.length;
+}, 0);
 
   const processMedicineAllocation = () => {
-    const validSelectedMedicines = selectedMedicines.filter(med => 
-      med.medreqitem_id && med.minv_id && med.medrec_qty > 0
-    )
-
-    if (validSelectedMedicines.length === 0) {
-      console.error("No valid medicines selected for allocation")
-      return
+    if (!medreq_id) {
+      toast.error("Invalid Request", {
+        description: "Medicine Request ID is missing."
+      });
+      return;
     }
 
-    const payload = {
-      medreq_id: selectedMedicineRequestData?.medreq_id,
-      selected_medicines: validSelectedMedicines.map((med) => ({
-        minv_id: med.original_stock_id || med.minv_id,
-        medrec_qty: med.medrec_qty,
-        medreqitem_id: med.medreqitem_id,
-        reason: med.reason
-      }))
-    }
+    confirmAllPendingItems(medreq_id);
+  };
 
-    console.log("Allocation payload:", payload)
-    createAllocation(payload)
+  // Guard clause for missing medreq_id
+  if (!medreq_id) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              Error
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Medicine Request ID not provided</p>
+            <Button onClick={() => navigate(-1)} className="mt-4">
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (pendingRequestError || confirmError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              Error
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Error loading medicine request items</p>
+            <Button onClick={() => navigate(-1)} className="mt-4">
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <LayoutWithBack title="Medicine Request Details" description="View details of the selected medicine request">
-      <div className="space-y-6">
-        {/* Patient Information Section */}
-        {selectedPatientData ? (
-          <div className="mb-8">
-            <PatientInfoCard patient={selectedPatientData} />
-          </div>
-        ) : (
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200 p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <AlertCircle className="h-5 w-5 text-amber-600" />
+    <LayoutWithBack title="Pending Medicine Request Items" description="Review and confirm pending medicine requests">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Success Message */}
+        {isSuccess && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-green-700">
+                <CheckCircle className="h-5 w-5" />
+                <p className="font-medium">All pending items confirmed successfully!</p>
               </div>
-              <div>
-                <Label className="text-lg font-semibold text-amber-800">No Patient Selected</Label>
-                <p className="text-sm text-amber-700 mt-1">
-                  Please select a patient from the medicine records page first.
-                </p>
-              </div>
-            </div>
-          </div>
+              <p className="text-sm text-green-600 mt-1">Redirecting you back...</p>
+            </CardContent>
+          </Card>
         )}
 
-        {/* Medicine Request Details Section */}
-        {selectedMedicineRequestData ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <FileText className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Medicine Request Details</h2>
-                    <p className="text-sm text-gray-600">Request ID: {selectedMedicineRequestData.medreq_id}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Link
-                    to={`/IndivMedicineRecord`}
-                    state={{
-                      params: {
-                        patientData: location.state?.params?.patientData
-                      }
-                    }}
-                    className="text-blue-600 hover:underline text-sm"
-                  >
-                    View History
-                  </Link>
-                </div>
-              </div>
+        {/* Patient Information Card */}
+        {patientInfo ? (
+          <PatientInfoCard patient={patientInfo} />
+        ) : (
+          <Card className="border-yellow-200 bg-yellow-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-yellow-700">
+                <AlertCircle className="h-5 w-5" />
+                No Patient Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-yellow-700">Patient information not available for this request.</p>
+            </CardContent>
+          </Card>
+        )}
+
+       
+
+        {/* Pending Items Table */}
+        <Card>
+          <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+            <div>
+              <CardTitle>Pending Medicine Requests <span className="bg-red-500 text-white rounded-full text-sm px-2"> {totalCount}</span></CardTitle>
+              <CardDescription>Review pending medicine request items before confirmation</CardDescription>
             </div>
-
-            {/* Content Grid */}
-            <div className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Request Information */}
-                <div className="lg:col-span-1">
-                  <div className="bg-gray-50 rounded-lg p-5">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <Hash className="h-4 w-4 text-gray-600" />
-                      Request Information
-                    </h3>
-
-                    <div className="space-y-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Calendar className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-600 mb-1">Request Date</p>
-                          <p className="text-sm text-gray-900 font-medium">
-                            {formatDate(selectedMedicineRequestData.requested_at)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <User className="h-4 w-4 text-purple-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-600 mb-1">Current Status</p>
-                          <div>{getStatusBadge(selectedMedicineRequestData.medreq_status)}</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Hash className="h-4 w-4 text-green-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-600 mb-1">Request Item ID</p>
-                          <p className="text-sm text-gray-900 font-medium">
-                            {selectedMedicineRequestData.medreqitem_id}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Medicine Information */}
-                <div className="lg:col-span-2">
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-5 border border-green-100">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <Pill className="h-4 w-4 text-green-600" />
-                      Medicine Information
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Pill className="h-4 w-4 text-green-600" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-gray-600 mb-1">Medicine Name</p>
-                            <p className="text-base font-semibold text-gray-900">
-                              {selectedMedicineRequestData.med_name}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">ID: {selectedMedicineRequestData.med_id}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Pill className="h-4 w-4 text-teal-600" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-gray-600 mb-1">Medicine Type</p>
-                            <p className="text-sm font-medium text-gray-900">{selectedMedicineRequestData.med_type}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Pill className="h-4 w-4 text-orange-600" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-gray-600 mb-1">Quantity Requested</p>
-                            <p className="text-sm font-medium text-gray-900">{selectedMedicineRequestData.medreqitem_qty}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Documents Section */}
-                      <div className="flex items-center justify-center">
-                        {selectedMedicineRequestData.medicine_files &&
-                        selectedMedicineRequestData.medicine_files.length > 0 ? (
-                          <div className="text-center">
-                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                              <FileText className="h-8 w-8 text-blue-600" />
-                            </div>
-                            <p className="text-sm text-gray-600 mb-3">
-                              {selectedMedicineRequestData.medicine_files.length} document
-                              {selectedMedicineRequestData.medicine_files.length !== 1 ? "s" : ""} attached
-                            </p>
-                            <Button
-                              onClick={() => handleViewDocuments(selectedMedicineRequestData.medicine_files)}
-                              variant="outline"
-                              size="sm"
-                              className="flex items-center gap-2 bg-white hover:bg-blue-50 border-blue-200 text-blue-700"
-                            >
-                              <Eye className="h-4 w-4" />
-                              View Documents
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="text-center text-gray-400">
-                            <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                            <p className="text-sm">No documents attached</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Reason Section */}
-              {selectedMedicineRequestData.reason && (
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-gray-600" />
-                    Reason for Request
-                  </h3>
-                  <div className="bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg p-5 border border-gray-200">
-                    <p className="text-gray-700 leading-relaxed">{selectedMedicineRequestData.reason}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Medicine Display Section */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Select Medicine Stock</h3>
-                <MedicineDisplay
-                  medicines={enhancedMedicineStocks}
-                  initialSelectedMedicines={selectedMedicines}
-                  onSelectedMedicinesChange={handleSelectedMedicinesChange}
-                  itemsPerPage={5}
-                  currentPage={medicineDisplayPage}
-                  onPageChange={setMedicineDisplayPage}
-                  autoFillReasons={true}
-                  isLoading={isMedicinesLoading}
+            <div className="flex items-center gap-3">
+              <Link
+                to="/IndivMedicineRecord"
+                state={{
+                  params: {
+                    patientData: location.state?.params?.patientData
+                  }
+                }}
+              >
+                <Button  size="sm">
+                  <History className="h-4 w-4 mr-2" />
+                  View History
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Table Controls */}
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="pageSize" className="text-sm">
+                  Show
+                </Label>
+                <Input
+                  id="pageSize"
+                  type="number"
+                  className="w-20 h-8"
+                  value={pageSize}
+                  onChange={(e) => {
+                    const value = Math.max(1, Math.min(+e.target.value, 10)); // Ensure the value is between 1 and 10
+                    setPageSize(value);
+                    setCurrentPage(1);
+                  }}
+                  min="1"
+                  max="10"
                 />
+                <Label className="text-sm">entries</Label>
               </div>
+            </div>
 
-              {/* Process Button */}
-              {selectedMedicines.length > 0 && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <div className="flex justify-end">
-                    <Button 
-                      onClick={processMedicineAllocation}
-                      disabled={isPending}
-                      className="flex items-center gap-2"
-                    >
-                      {isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        `Process Allocation (${selectedMedicines.length} item${selectedMedicines.length !== 1 ? 's' : ''})`
-                      )}
-                    </Button>
-                  </div>
+            {/* Table Content */}
+            <div className="border rounded-lg overflow-hidden">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <span className="ml-2 text-gray-600">Loading pending items...</span>
                 </div>
+              ) : pendingRequestError ? (
+                <div className="flex items-center justify-center py-12 text-red-600">
+                  <AlertCircle className="h-8 w-8 mr-2" />
+                  <span>Error loading pending items. Please try again.</span>
+                </div>
+              ) : tableData.length === 0 ? (
+                <div className="flex items-center justify-center py-12 text-gray-500">
+                  <Package className="h-8 w-8 mr-2" />
+                  <span>{debouncedSearch ? "No items found for your search" : "No pending items found"}</span>
+                </div>
+              ) : (
+                <>
+                  <DataTable columns={pendingItemsColumns} data={tableData} />
+                  <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t bg-gray-50">
+                    <p className="text-sm text-gray-600">
+                      Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} items
+                    </p>
+                    <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                  </div>
+                </>
               )}
             </div>
-          </div>
-        ) : (
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200 p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <AlertCircle className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <Label className="text-lg font-semibold text-amber-800">No Medicine Request Data</Label>
-                <p className="text-sm text-amber-700 mt-1">No medicine request details available to display.</p>
-              </div>
-            </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
 
+        {/* Medicine Display - View Only */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Available Medicine Inventory</CardTitle>
+            <CardDescription className="pb-2">View available medicines in inventory (Read-only)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MedicineDisplay
+              medicines={enhancedMedicineStocks}
+              initialSelectedMedicines={[]} // Empty since readonly
+              onSelectedMedicinesChange={() => {}} // No-op since readonly
+              itemsPerPage={10}
+              currentPage={medicineDisplayPage}
+              onPageChange={setMedicineDisplayPage}
+              autoFillReasons={false}
+              isLoading={isMedicinesLoading}
+              readonly={true} // View-only mode
+            />
+          </CardContent>
+        </Card>
 
-         {/* Debug info - Enhanced to show more details */}
-         {selectedMedicines.length > 0 && (
-          <div className="mt-4 p-4 bg-gray-100 rounded">
-            <h4 className="font-semibold mb-2">Selected Medicines Debug Info:</h4>
-            <div className="text-sm">
-              {selectedMedicines.map((med, index) => (
-                <div key={index} className="mb-2 p-2 bg-white rounded">
-                  <div>Medicine: <span className="font-semibold text-blue-600">{med.med_name || "Unknown"}</span></div>
-                  <div>MinvId: <span className="text-gray-600">{med.minv_id}</span></div>
-                  <div>Original Stock ID: <span className="text-purple-600">{med.original_stock_id}</span></div>
-                  <div>Qty: <span className="text-green-600">{med.medrec_qty}</span></div>
-                  <div>Reason: <span className="text-orange-600">{med.reason}</span></div>
-                  <div>
-                    MedReqItem ID: <span className={med.medreqitem_id ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>{med.medreqitem_id || "N/A"}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 text-xs text-gray-500">
-              Total Enhanced Medicine Stocks: {enhancedMedicineStocks.length} | 
-              Total Stock Options: {medicineStocksOptions?.length || 0}
-            </div>
-          </div>
-        )}
-
-        {/* Document Modal */}
-        <DocumentModal
-          files={selectedFiles}
-          isOpen={isDocumentModalOpen}
-          onClose={() => setIsDocumentModalOpen(false)}
-        />
+        {/* Action Button */}
+        <div className="flex justify-end">
+          <Button onClick={processMedicineAllocation} disabled={isPending || isSuccess || pendingItemsCount === 0} size="lg" className="min-w-[200px]">
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Confirming...
+              </>
+            ) : isSuccess ? (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Confirmed
+              </>
+            ) : (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Confirm All Pending Items ({pendingItemsCount})
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </LayoutWithBack>
-  )
+  );
 }

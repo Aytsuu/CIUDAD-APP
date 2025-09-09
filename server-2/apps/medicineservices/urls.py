@@ -13,8 +13,8 @@ urlpatterns=[
         path('month-count/', MonthlyMedicineCountAPIView.as_view(), name='month-count'),
       
         path('medicine-request-items/', MedicineRequestItemView.as_view(), name='medicine_request_items'),
-        path('medicine-request/', MedicineRequestProcessingView.as_view(), name='medicine_request-processing'),
-        path('medicine-request-pending/', MedicineRequestPendingTableView.as_view(), name='medicine_request-pending'),
+        # path('medicine-request/', MedicineRequestProcessingView.as_view(), name='medicine_request-processing'),
+        # path('medicine-request-pending/', MedicineRequestPendingTableView.as_view(), name='medicine_request-pending'),
         # path('medicine-request-items-pending/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
 
         path('medicine-request/<int:medreq_id>/', DeleteUpdateMedicineRequestView.as_view(), name='medicine_request_detail'),

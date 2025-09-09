@@ -9,9 +9,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuIte
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
 import { medicineRequestPendingColumns } from "./columns";
-import { usePendingItemsMedRequest } from "../queries.tsx/fetch";
+import { usePendingMedRequest } from "../queries/fetch";
 
-export default function PendingConfirmation() {
+export default function PendingCnfirmation() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -30,14 +30,14 @@ export default function PendingConfirmation() {
     };
   }, [searchQuery]);
 
-  const { data: apiResponse, isLoading, error, refetch } = usePendingItemsMedRequest(
+  const { data: apiResponse, isLoading, error, refetch } = usePendingMedRequest(
     currentPage,
     pageSize,
     debouncedSearch,
-    dateFilter
+    dateFilter // Pass date filter to the server
   );
 
-  // Extract data from paginated response - CORRECTED: response has 'results' array
+  // Extract data from paginated response
   const medicineRequests = apiResponse?.results || [];
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -48,6 +48,7 @@ export default function PendingConfirmation() {
         <div className="text-red-500 text-lg mb-4">Failed to load pending medicine requests</div>
         <div className="flex gap-4">
           <Button onClick={() => refetch()}>Retry</Button>
+       
         </div>
       </div>
     );
@@ -60,7 +61,7 @@ export default function PendingConfirmation() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input
-              placeholder="Search by medicine name, patient name, ID, or reason..."
+              placeholder="Search by ID, name, contact, or patient ID..."
               className="pl-10 bg-white w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
