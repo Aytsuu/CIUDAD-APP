@@ -62,7 +62,7 @@ export default function PrenatalForm() {
   }, [location.state])
 
   const form = useForm<z.infer<typeof PrenatalFormSchema>>({
-    // resolver: zodResolver(PrenatalFormSchema),
+    resolver: zodResolver(PrenatalFormSchema),
     defaultValues,
   })
 
