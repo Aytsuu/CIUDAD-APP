@@ -64,7 +64,6 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
     onSuccess: () => {
         Promise.all([
         queryClient.invalidateQueries({ queryKey: ['momRecords'] }),
-        queryClient.invalidateQueries({ queryKey: ['momAreasOfFocus'] }),
         queryClient.invalidateQueries({ queryKey: ['momFiles'] }),
         ])
         

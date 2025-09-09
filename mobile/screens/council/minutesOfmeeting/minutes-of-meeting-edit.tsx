@@ -94,15 +94,6 @@ export default function MOMEdit() {
           suppDocs
         })
       }
-      // updateMOM({
-      //     mom_id,
-      //     meetingTitle: values.meetingTitle,
-      //     meetingAgenda: values.meetingAgenda,
-      //     meetingDate: values.meetingDate,
-      //     meetingAreaOfFocus: values.meetingAreaOfFocus,
-      //     documentFiles,
-      //     mediaFiles,
-      // });
     };
 
   return (
@@ -126,7 +117,7 @@ export default function MOMEdit() {
       }
       stickyFooter={true}
     >
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
         <View className="mb-8 space-y-4">
           <FormInput
             control={control}

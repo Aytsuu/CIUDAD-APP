@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import {z} from "zod"
 import { minutesOfMeetingEditFormSchema } from "@/form-schema/council/minutesOfMeetingSchema";
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 
 export const useRestoreMinutesOfMeeting = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
@@ -86,22 +88,13 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['momRecords'] });
             queryClient.invalidateQueries({ queryKey: ['momFiles'] });
-            queryClient.invalidateQueries({ queryKey: ['momAreasOfFocus'] });
 
-            toast.success('Record updated successfully', {
-                id: "updateMOM",
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
-            
+            showSuccessToast('Record updated successfully')
             onSuccess?.();
         },
         onError: (err) => {
             console.error("Error updating record:", err);
-            toast.error("Failed to update record", {
-                id: "updateMOM", 
-                duration: 2000
-            });
+            showErrorToast("Failed to update record");
         }
     });
 };

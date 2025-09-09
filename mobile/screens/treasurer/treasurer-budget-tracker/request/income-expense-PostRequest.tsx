@@ -19,7 +19,7 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
             iet_receiver: capitalize(incomeExpenseInfo.iet_receiver),
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
             exp_id:  parseInt(incomeExpenseInfo.iet_particulars),
-            staff_id: "00001250820"
+            staff_id: "00003250902"
         })
 
         const res = await api.post('treasurer/income-expense-tracking/',{
@@ -34,7 +34,7 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
             inv_num: "urlforInvNum",
             iet_receipt_image: "nothing",
             exp_id:  parseInt(incomeExpenseInfo.iet_particulars),
-            staff_id: "00001250820"
+            staff_id: "00003250902"
 
         })
 
@@ -201,7 +201,7 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
             inc_additional_notes: incomeInfo.inc_additional_notes,
             // inc_receipt_image: incomeInfo.inc_receipt_image || null,
             incp_id:  incomeInfo.inc_particulars,
-            staff_id: "00001250820"
+            staff_id: "00003250902"
         })
 
         const res = await api.post('treasurer/income-tracking/',{
@@ -214,7 +214,7 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
             // inc_transac_num: "100300",
             // inc_receipt_image: incomeInfo.inc_receipt_image || null,
             incp_id:  parseInt(incomeInfo.inc_particulars),
-            staff_id: "00001250820"
+            staff_id: "00003250902"
 
         })
 

@@ -506,10 +506,6 @@ class MinutesOfMeetingDetailView(generics.RetrieveDestroyAPIView):
     serializer_class = MinutesOfMeetingSerializer
     lookup_field = 'mom_id'
 
-class MOMAreaOfFocusView(generics.ListCreateAPIView):
-    serializer_class = MOMAreaOfFocusSerializer
-    queryset = MOMAreaOfFocus.objects.all()
-
 class MOMFileView(generics.ListCreateAPIView):
     serializer_class = MOMFileCreateSerializer
     queryset = MOMFile.objects.all()

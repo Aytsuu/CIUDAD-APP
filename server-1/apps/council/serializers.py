@@ -287,7 +287,6 @@ class MOMSuppDocViewSerializer(serializers.ModelSerializer):
         
 class MinutesOfMeetingSerializer(serializers.ModelSerializer):
     mom_file = serializers.SerializerMethodField(read_only=True)  # Combined field
-    areas_of_focus = serializers.SerializerMethodField(read_only=True)
     supporting_docs = MOMSuppDocViewSerializer(source='momsuppdoc_set', many=True, read_only=True)
 
     class Meta:
@@ -295,18 +294,17 @@ class MinutesOfMeetingSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_fields = [
             'mom_file',  # Replaces individual momf fields
-            'areas_of_focus',
             'supporting_docs'
         ]
         read_only_fields = [
             'mom_file',
-            'areas_of_focus',
             'supporting_docs'
         ]
 
     def get_mom_file(self, obj):
         try:
             mom_file = obj.momfile
+            print('MOM File', mom_file)
             return {
                 'momf_id': mom_file.momf_id,
                 'momf_url': mom_file.momf_url,
@@ -315,20 +313,9 @@ class MinutesOfMeetingSerializer(serializers.ModelSerializer):
         except MOMFile.DoesNotExist:
             return None
 
-    def get_areas_of_focus(self, obj):
-        return [
-            area.mof_area
-            for area in obj.momareaoffocus_set.all()
-            if area.mof_area
-        ]
-
     def create(self, validated_data):
         return MinutesOfMeeting.objects.create(**validated_data)
 
-class MOMAreaOfFocusSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MOMAreaOfFocus
-        fields = '__all__'
 
 class MOMFileCreateSerializer(serializers.ModelSerializer):
     files = serializers.ListField( child=serializers.DictField(), write_only=True, required=False)
@@ -368,7 +355,6 @@ class MOMFileCreateSerializer(serializers.ModelSerializer):
         if mom_files:
             return MOMFile.objects.bulk_create(mom_files)
         return []
-
 
 
 class MOMFileViewSerializer(serializers.ModelSerializer):

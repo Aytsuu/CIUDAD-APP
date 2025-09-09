@@ -28,21 +28,13 @@ export const insertMinutesOfMeeting = async (momInfo: Record<string, any>, files
             mom_date: momInfo.meetingDate,
             mom_title: momInfo.meetingTitle,
             mom_agenda: momInfo.meetingAgenda,
+            mom_area_of_focus: momInfo.meetingAreaOfFocus,
             mom_is_archive: false,
         });
 
         const momId = momResponse.data.mom_id || 0;
 
     
-        for (const areaId of momInfo.meetingAreaOfFocus) {
-            await api.post('council/mom-area-of-focus/', {
-                mom_id: momId,
-                mof_area: areaId
-            });
-        }
-        
-
-        // 3. Handle file upload if exists
         if (momId != null) {
             await createMOMFile(files, momId);
         }

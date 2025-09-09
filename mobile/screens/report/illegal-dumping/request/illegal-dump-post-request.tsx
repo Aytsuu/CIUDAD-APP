@@ -88,7 +88,7 @@ export const addWasteReport = async (reportInfo: Record<string, any>) => {
             rep_anonymous: reportInfo.rep_anonymous || "None",
             sitio_id: reportInfo.sitio_id,    
             rp_id: "00003250902",
-            staff_id: "00001250902"
+            staff_id: "00003250902"
         });        
 
         // First API call to create the report
@@ -102,7 +102,7 @@ export const addWasteReport = async (reportInfo: Record<string, any>) => {
             rep_anonymous: reportInfo.rep_anonymous,
             sitio_id: reportInfo.sitio_id,    
             rp_id: "00003250902",
-            staff_id: "00001250902"
+            staff_id: "00003250902"
         });
 
         if (wasteReportResponse.data && wasteReportResponse.data.rep_id) {

@@ -1,10 +1,8 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { restoreMinutesOfMeeting, archiveMinutesOfMeeting, deleteMOMAreas, updateMinutesOfMeeting, handleMOMAreaOfFocus, handleMOMFileUpdates, handleMOMSuppDocUpdates } from "../restful-API/MOMPutAPI";
+import { restoreMinutesOfMeeting, archiveMinutesOfMeeting,  updateMinutesOfMeeting, handleMOMFileUpdates, handleMOMSuppDocUpdates } from "../restful-API/MOMPutAPI";
 import { useToastContext } from "@/components/ui/toast";
 import { useRouter } from "expo-router";
 import { minutesOfMeetingEditFormSchema } from "@/form-schema/council/minutesOfMeetingSchema";
-// import { MediaFileType } from "@/components/ui/multi-media-upload";
-// import { DocumentFileType } from "@/components/ui/document-upload";
 import z from "zod"
 
 export const useRestoreMinutesOfMeeting = (onSuccess?: () => void) => {
@@ -75,13 +73,7 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
 
   return useMutation({
     mutationFn: async (values: MOMData) => {
-      const res = await updateMinutesOfMeeting(values.mom_id, values.meetingTitle, values.meetingAgenda, values.meetingDate);
-
-      await deleteMOMAreas(values.mom_id);
-
-      await handleMOMAreaOfFocus(values.mom_id, values.meetingAreaOfFocus);
-
-      await handleMOMFileUpdates(values.mom_id, values.files);
+      const res = await updateMinutesOfMeeting(values.mom_id, values.meetingTitle, values.meetingAgenda, values.meetingDate, values.meetingAreaOfFocus, values.files);
 
       await handleMOMSuppDocUpdates(values.mom_id, values.suppDocs)
      
@@ -90,7 +82,6 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['momRecords'] });
       queryClient.invalidateQueries({ queryKey: ['momFiles'] });
-      queryClient.invalidateQueries({ queryKey: ['momAreasOfFocus'] });
       queryClient.invalidateQueries({ queryKey: ['momSuppDocs'] });
 
       toast.success('Minutes of Meeting updated successfully');

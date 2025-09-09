@@ -485,49 +485,54 @@ function IncomeandExpenseTracking() {
             </div>
 
             <div className="mb-[1rem] flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                    <div className="relative flex-1">
+                <div className="flex flex-col sm:flex-row gap-4 w-full">
+                    <div className="relative flex-1 min-w-[100px]">
                         <Search
-                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                            size={17}
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                        size={17}
                         />
                         <Input 
-                            placeholder="Search..." 
-                            className="pl-10 w-full bg-white text-sm" 
-                            value={searchQuery}
-                            onChange={(e) => {
-                                setSearchQuery(e.target.value);
-                                setCurrentPage(1);
-                            }}
+                        placeholder="Search..." 
+                        className="pl-10 w-full bg-white text-sm" 
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1);
+                        }}
                         />
                     </div>
-                    <div className="flex flex-row gap-2 justify-center items-center">
+                    <div className="flex flex-row gap-2 justify-center items-center min-w-[180px]">
                         <SelectLayout
-                            className="bg-white" 
-                            placeholder="Month"
-                            value={selectedMonth} 
-                            options={monthOptions}
-                            onChange={(value) => {
-                                setSelectedMonth(value);
-                                setCurrentPage(1);
-                            }}
+                        className="bg-white w-full" 
+                        placeholder="Month"
+                        value={selectedMonth} 
+                        options={monthOptions}
+                        onChange={(value) => {
+                            setSelectedMonth(value);
+                            setCurrentPage(1);
+                        }}
                         />
                     </div>                            
-                </div>
+                </div>                
                 <DialogLayout
-                    trigger={<div className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white text-[13px] font-semibold px-4 py-2 rounded cursor-pointer"><Plus size={15} strokeWidth={3}></Plus>New Entry </div>}
+                    trigger={
+                    <div className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white text-[13px] font-semibold px-4 py-2 rounded cursor-pointer whitespace-nowrap shrink-0">
+                        <Plus size={15} strokeWidth={3} />
+                        New Entry
+                    </div>
+                    }
                     className="max-w-md max-h-[530px] overflow-auto p-10"
                     title="Add New Entry"
                     description="Fill in the details for your entry."
                     mainContent={
-                        <div className="w-full h-full">
-                            <IncomeandExpenseCreateForm 
-                                onSuccess={() => setIsDialogOpen(false)}
-                                year={year || new Date().getFullYear().toString()}
-                                totBud={totBud}
-                                totExp={totExp}
-                            />
-                        </div>
+                    <div className="w-full h-full">
+                        <IncomeandExpenseCreateForm 
+                        onSuccess={() => setIsDialogOpen(false)}
+                        year={year || new Date().getFullYear().toString()}
+                        totBud={totBud}
+                        totExp={totExp}
+                        />
+                    </div>
                     }
                     isOpen={isDialogOpen}
                     onOpenChange={setIsDialogOpen}

@@ -64,18 +64,18 @@ function MinutesOfMeetingPage() {
 
   // Then apply search and area filter to each subset
   const filteredActiveData = activeData.filter((record) => {
-    const matchesFilter = filter === "all" || record.areas_of_focus.includes(filter)
+    const matchesFilter = filter === "all" || record.mom_area_of_focus.includes(filter)
     const matchesSearch =
-      `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.areas_of_focus.join(" ")}`
+      `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.mom_area_of_focus.join(" ")}`
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     return matchesFilter && matchesSearch
   })
 
   const filteredArchivedData = archivedData.filter((record) => {
-    const matchesFilter = filter === "all" || record.areas_of_focus.includes(filter)
+    const matchesFilter = filter === "all" || record.mom_area_of_focus.includes(filter)
     const matchesSearch =
-      `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.areas_of_focus.join(" ")}`
+      `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.mom_area_of_focus.join(" ")}`
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     return matchesFilter && matchesSearch
@@ -144,7 +144,7 @@ function MinutesOfMeetingPage() {
                               mom_id={Number(record.mom_id)}
                               momf_id={Number(record.mom_file.momf_id)}
                               momf_url={record.mom_file.momf_url}
-                              areas_of_focus={record.areas_of_focus}
+                              areas_of_focus={record.mom_area_of_focus}
                               onSuccess={() => setEditingRowId(null)}
                             />
                           }
@@ -235,7 +235,7 @@ function MinutesOfMeetingPage() {
             <p className="text-sm font-medium text-gray-700">Areas of Focus</p>
           </div>
           <div className="flex flex-wrap gap-2 ml-8">
-            {record.areas_of_focus.map((focus: string, index: number) => (
+            {record.mom_area_of_focus.map((focus: string, index: number) => (
               <Badge key={index} variant="secondary" className={`text-sm px-3 py-1 ${getAreaFocusColor(focus)}`}>
                 {getAreaFocusDisplayName(focus)}
               </Badge>
