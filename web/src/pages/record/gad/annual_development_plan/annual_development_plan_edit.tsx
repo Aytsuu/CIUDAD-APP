@@ -296,29 +296,29 @@ export default function AnnualDevelopmentPlanEdit() {
                   {/* Gender Issue */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Gender Issue or GAD Mandate</label>
-                    <textarea 
-                      name="dev_issue"
-                      value={formData.dev_issue}
-                      onChange={handleInputChange}
+                <textarea 
+                  name="dev_issue"
+                  value={formData.dev_issue}
+                  onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
-                      placeholder="Enter gender issue or GAD mandate..."
+                  placeholder="Enter gender issue or GAD mandate..."
                       rows={4}
-                      required
-                    />
-                  </div>
+                  required
+                />
+              </div>
 
                   {/* Performance Indicator */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Performance Indicator and Target</label>
-                    <textarea 
-                      name="dev_indicator"
-                      value={formData.dev_indicator}
-                      onChange={handleInputChange}
+                <textarea 
+                  name="dev_indicator"
+                  value={formData.dev_indicator}
+                  onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
-                      placeholder="Enter performance indicators..."
+                  placeholder="Enter performance indicators..."
                       rows={4}
-                      required
-                    />
+                  required
+                />
                   </div>
                 </div>
               </div>

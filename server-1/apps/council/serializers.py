@@ -375,3 +375,53 @@ class MOMFileViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = MOMFile
         fields = '__all__'
+
+# ================================== ORDINANCE SERIALIZERS (from secretary) =================================
+
+class OrdinanceFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrdinanceFile
+        fields = ['of_id', 'of_name', 'of_type', 'of_path', 'of_url']
+
+class OrdinanceSerializer(serializers.ModelSerializer):
+    staff = serializers.PrimaryKeyRelatedField(read_only=True)
+    of_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    file = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Ordinance
+        fields = ['ord_num', 'ord_title', 'ord_date_created', 'ord_category',
+                  'ord_details', 'ord_year', 'ord_is_archive', 'staff', 'of_id', 'file',
+                  'ord_parent', 'ord_is_ammend', 'ord_ammend_ver']
+        extra_kwargs = {
+            'ord_num': {'required': False},  #
+            'ord_title': {'required': True},
+            'ord_date_created': {'required': True},
+            'ord_category': {'required': True},
+            'ord_details': {'required': True},
+            'ord_year': {'required': True},
+        }
+        
+    def get_file(self, obj):
+        """Return file information if of_id exists"""
+        if obj.of_id:
+            return {
+                'file_id': obj.of_id.of_id,
+                'file_name': obj.of_id.of_name,
+                'file_type': obj.of_id.of_type,
+                'file_url': obj.of_id.of_url,
+                'file_path': obj.of_id.of_path
+            }
+        return None
+        
+    def validate_ord_num(self, value):
+        """
+        Check that the ordinance number is unique if provided
+        """
+        if value and Ordinance.objects.filter(ord_num=value).exists():
+            raise serializers.ValidationError("An ordinance with this number already exists.")
+        return value
+        
+   
+
+

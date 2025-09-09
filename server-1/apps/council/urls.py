@@ -2,7 +2,7 @@ from django.urls import path
 from .views import *
 
 
-urlpatterns=[
+urlpatterns = [
     path("event-meeting/", CouncilSchedulingView.as_view(), name="council-event-meeting"),
     path("event-meeting/<int:ce_id>/", CouncilSchedulingDetailView.as_view(), name="council-event-meeting-detail"),
     path("event-meeting/<int:ce_id>/restore/", CouncilSchedulingRestoreView.as_view(), name="council-event-meeting-restore"),
@@ -59,5 +59,16 @@ urlpatterns=[
     path("resolution-supp/", ResolutionSupDocsView.as_view(), name="council-supp-docs"),
     path('resolution-supp-delete/<int:rsd_id>/', ResolutionSupDocsDetailView.as_view(), name='council-supp-detail'), 
     #APPROVED PROPOSALS
-    path('approved-proposals/', ApprovedGADProposalsView.as_view(), name='approved-gad-proposals')
+    path('approved-proposals/', ApprovedGADProposalsView.as_view(), name='approved-gad-proposals'),
+
+        # ================================== ORDINANCE URLS (from secretary) =================================
+    # Ordinance endpoints
+    path('ordinance/', OrdinanceListView.as_view(), name='ordinance-list'),
+    path('ordinance/<str:ord_num>/', OrdinanceDetailView.as_view(), name='ordinance-detail'),
+    path('ordinance/<str:ord_num>/archive/', OrdinanceArchiveView.as_view(), name='ordinance-archive'),
+    
+    # Ordinance file endpoints
+    path('ordinance-file/', OrdinanceFileView.as_view(), name='ordinance-file-list'),
+    path('ordinance-file/<int:of_id>/', OrdinanceFileDetailView.as_view(), name='ordinance-file-detail'),
+    
 ]

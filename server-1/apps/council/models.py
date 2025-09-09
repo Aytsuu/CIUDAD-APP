@@ -281,3 +281,103 @@ class MOMSuppDoc(models.Model):
 
     class Meta: 
         db_table = 'mom_supporting_document'
+
+class Ordinance(models.Model):
+    ord_num = models.CharField(max_length=50, unique=True, primary_key=True)
+    ord_title = models.CharField(max_length=255)
+    ord_date_created = models.DateField()
+    ord_category = models.CharField(max_length=100)
+    ord_details = models.TextField()
+    ord_year = models.IntegerField()
+    ord_is_archive = models.BooleanField(default=False)
+    ord_parent = models.CharField(max_length=50, null=True, blank=True, help_text="ord_num of the parent ordinance (if this is an amendment)")
+    ord_is_ammend = models.BooleanField(default=False, help_text="Whether this ordinance is an amendment to another")
+    ord_ammend_ver = models.IntegerField(null=True, blank=True, help_text="Version number of the amendment")
+
+    of_id = models.ForeignKey(
+        'OrdinanceFile',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='of_id',
+        to_field='of_id',
+        related_name='ordinances'
+    )
+    staff = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
+    
+    def save(self, *args, **kwargs):
+        if not self.ord_num:  # If no ordinance number provided
+            # Generate ordinance number: ORD-YYYY-XXXX
+            year = getattr(self, 'ord_year', 2024)
+            import random
+            import string
+            
+            # Generate a unique number
+            while True:
+                # Generate 4 random digits
+                random_digits = ''.join(random.choices(string.digits, k=4))
+                ord_num = f"ORD-{year}-{random_digits}"
+                
+                # Check if it's unique
+                if not Ordinance.objects.filter(ord_num=ord_num).exists():
+                    self.ord_num = ord_num
+                    break
+        
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.ord_num} - {self.ord_title}"
+
+    class Meta:
+        db_table = 'ordinance'
+        ordering = ['-ord_date_created']
+        managed = False
+
+# class OrdinanceSupplementaryDoc(models.Model):
+#     osd_id = models.AutoField(primary_key=True)
+#     osd_title = models.CharField(max_length=255)
+#     osd_is_archive = models.BooleanField(default=False)
+#     ordinance = models.ForeignKey(Ordinance, on_delete=models.CASCADE, related_name='supplementary_docs', to_field='ord_num')
+#     file = models.ForeignKey(File, on_delete=models.SET_NULL, null=True)
+
+#     def __str__(self):
+#         return f"{self.osd_title} - {self.ordinance.ord_num}"
+
+#     class Meta:
+#         db_table = 'ordinance_supp_doc'
+#         ordering = ['osd_id']
+
+# class OrdinanceTemplate(models.Model):
+#     template_id = models.AutoField(primary_key=True)
+#     title = models.CharField(max_length=255)
+#     template_body = models.TextField()
+#     with_seal = models.BooleanField(default=False)
+#     with_signature = models.BooleanField(default=False)
+#     header_media = models.ForeignKey(File, on_delete=models.SET_NULL, null=True, blank=True, related_name='template_headers')
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     is_active = models.BooleanField(default=True)
+
+#     def __str__(self):
+#         return f"{self.title}"
+
+#     class Meta:
+#         db_table = 'ordinance_template'
+#         ordering = ['-created_at']
+
+class OrdinanceFile(models.Model):
+    of_id = models.BigAutoField(primary_key=True)
+    of_name = models.CharField(max_length=255)
+    of_type = models.CharField(max_length=100, null=True, blank=True)
+    of_path = models.CharField(max_length=500, null=True, blank=True)
+    of_url = models.CharField(max_length=500)
+
+    class Meta:
+        db_table = 'ordinance_file'
+        managed = False
