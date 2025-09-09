@@ -477,14 +477,14 @@ function AttendancePage() {
             />
             <Input
               placeholder="Search"
-              className="pl-10 bg-white w-full md:w-[400px]"
+              className="pl-10 bg-white w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
           <SelectLayout
-            className="bg-white"
+            className="bg-white w-full md:w-auto"
             label=""
             placeholder="Filter"
             options={filterOptions}
