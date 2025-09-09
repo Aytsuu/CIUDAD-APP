@@ -13,8 +13,11 @@ import DriverTasksMain from "@/screens/waste/waste-garbage-pickup-request/driver
 import ResolutionPage from "@/screens/council/resolution/resolution-main";
 import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staff/garbage-pickup-request-main";
 import MinutesOfMeetingMain from "@/screens/council/minutesOfmeeting/minutes-of-meeting-main";
+import IncomeExpenseMain from "@/screens/treasurer/treasurer-budget-tracker/income-expense-main";
+import ReceiptPage from "@/screens/treasurer/receipt/receipt-main";
+
 
 export default () => {
-    return <MinutesOfMeetingMain/>
+    return <WasteIllegalDumping/>
 }
  
