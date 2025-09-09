@@ -47,6 +47,7 @@ export const personalInfoSchema = z.object({
     }),
   per_disability: z.string(),
 });
+
 export const perAddDetails = z.object({
   bloodType: z.string().optional(),
   philHealthId: z.string().optional(),

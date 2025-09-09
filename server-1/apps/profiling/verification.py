@@ -184,13 +184,13 @@ class KYCVerificationProcessor:
         text = re.sub(r'[^\w\s]', '', extracted_info['raw_text'])
         text = text.split()
         print("Cleaned text:", text)  # Debug print
-        print('dob:',extracted_info['dob'])
         
         # Name comparison (case insensitive, allow partial matches)
         first_name_match = set(user_data['fname'].split(' ')).issubset(text)
         last_name_match = set(user_data['lname'].split(' ')).issubset(text)
-        name_match = first_name_match and last_name_match
-        print(name_match)
+        middle_name_match = set(user_data['mname'].split(' ')).issubset(text) if 'mname' in user_data else True
+        name_match = first_name_match and last_name_match and middle_name_match
+        print('Name matched:', name_match)
 
         if not name_match:
             mismatches.append(f"Name mismatch: User entered '{user_data['lname']}, {user_data['fname']}'")
@@ -199,10 +199,13 @@ class KYCVerificationProcessor:
         try:
             user_dob = datetime.strptime(user_data['dob'], '%Y-%m-%d').date()
             extracted_dob = datetime.strptime(extracted_info['dob'], '%Y-%m-%d').date()
-            print(user_dob)
+            print("User dob:", user_dob)
+            print("Extracted dob:", user_dob)
+            print("DOB matched:", user_dob != extracted_dob)
             if user_dob != extracted_dob:
                 mismatches.append(f"DOB mismatch: User entered '{user_data['dob']}', "
                                 f"document shows '{extracted_info['dob']}'")
+            
         except:
             mismatches.append("Could not compare dates due to formatting issues")
         
