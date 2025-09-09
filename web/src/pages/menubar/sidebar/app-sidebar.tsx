@@ -21,41 +21,10 @@ interface BaseMenuItem {
 }
 
 // Menu items with unlimited nesting support
-const items: BaseMenuItem[] = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-  },
+const barangayItems: BaseMenuItem[] = [
   {
     title: "Calendar",
     url: "/waste-calendar-scheduling",
-  },
-  {
-    title: "Administration",
-    url: "/administration",
-  },
-  {
-    title: "Profiling",
-    url: "/",
-    items: [
-      { title: "All", url: "/profiling/all" },
-      { 
-        title: "Resident", 
-        url: "/profiling/resident",
-        items: [
-          { title: "Family", url: "/profiling/family" },
-          { title: "Household", url: "/profiling/household" },
-        ]
-      },
-      { title: "Voters", url: "/profiling/voters" },
-      {
-        title: "Business", 
-        url: "/profiling/business/record",
-        items: [
-          { title: "Respondent", url: "/profiling/business/record/respondent"}
-        ]
-      },
-    ],
   },
   {
     title: "Report",
@@ -149,71 +118,6 @@ const items: BaseMenuItem[] = [
     url: "/announcement",
   },
   {
-    title: "Services",
-    url: "/",
-    items: [
-      { title: "Administration", url: "/health-administration" },
-      { title: "Patients Record", url: "/patients-record-main" },
-      {
-        title: "Forwarded Records",
-        url: "/",
-        items: [
-          {
-            title: "Child Immunization",
-            url: "/forwarded-child-health-immunization",
-          },
-          { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
-          { title: "Step 2: Vitals Queue", url: "/forwarded-vitals-queue" },
-          {
-            title: "Medical Consultation",
-            url: "/forwarded-medical-consultation",
-          },
-        ],
-      },
-      {
-        title: "Manage Request",
-        url: "/",
-        items: [
-          {
-            title: "Medicine Request",
-            url: "/medicine-requests",
-          },
-          { title: "Medical Consultation", url: "/" },
-        ],
-      },
-      { title: "Animal Bites", url: "/Animalbite_viewing" },
-      { title: "Family Profiling", url: "/family-profiling-main" },
-      { title: "Medical Consultation Record", url: "/allMedRecords" },
-      { title: "Family Planning Record", url: "/FamPlanning_table" },
-      { title: "Maternal Record", url: "/maternalrecords" },
-      { title: "Child Health Record", url: "/all-child-health-records" },
-      { title: "Vaccination Record", url: "/VaccinationManagement" },
-      { title: "Medicine Record", url: "/all-medicine-records" },
-      { title: "Firstaid Record", url: "/all-firstaid-records" },
-      { title: "Archive", url: "/archiveMainInventoryStocks" },
-      { title: "Schedules", url: "/health-appointments" },
-      { title: "Service Scheduler", url: "/health-services/scheduler" },
-      { title: "Reports", url: "/healthcare-reports" },
-      {
-        title: "Inventory",
-        url: "/",
-        items: [
-          { title: "Inventory List", url: "/mainInventoryList" },
-          { title: "Inventory Stocks", url: "/mainInventoryStocks" },
-          { title: "Transactions List", url: "/transactionMainInventoryList" },
-        ],
-      },
-      {
-        title: "Queueing",
-        url: "/",
-        items: [
-          { title: "Patients Queue", url: "/patientsQueue" },
-          { title: "Processing Queue", url: "/processingQueue" },
-        ],
-      },
-    ],
-  },
-  {
     title: "Clerk",
     url: "/",
     items: [
@@ -226,6 +130,115 @@ const items: BaseMenuItem[] = [
     title: "Activity Log",
     url: "/record/activity-log",
 
+  },
+];
+
+// Menu items with unlimited nesting support
+const healthItems: BaseMenuItem[] = [
+  // {
+  //   title: "Dashboard",
+  //   url: "/dashboard"
+  // },
+
+  // {
+  //   title: "Administration",
+  //   url: "/administration"
+  // },
+  // {
+  //   title: "Profiling",
+  //   url: "/",
+  //   items: [
+  //     { title: "All", url: "/profiling/all" },
+  //     {
+  //       title: "Resident",
+  //       url: "/profiling/resident",
+  //       items: [
+  //         { title: "Family", url: "/profiling/family" },
+  //         { title: "Household", url: "/profiling/household" }
+  //       ]
+  //     },
+  //     { title: "Voters", url: "/profiling/voters" },
+  //     {
+  //       title: "Business",
+  //       url: "/profiling/business/record",
+  //       items: [{ title: "Respondent", url: "/profiling/business/record/respondent" }]
+  //     }
+  //   ]
+  // },
+ 
+  {
+    title: "Announcement",
+    url: "/announcement"
+  },
+ 
+  { title: "Patients Record", url: "/patients-record-main" },
+
+  {
+    title: "Services",
+    url: "/",
+    items: [
+      // {
+      //   title: "Forwarded Records",
+      //   url: "/",
+      //   anotherItems: [
+      //     {
+      //       title: "Child Immunization",
+      //       url: "/forwarded-child-health-immunization",
+      //     },
+      //     { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
+      //     { title: "Step 2: Vitals Queue  ", url: "/forwarded-vitals-queue" },
+      //     {
+      //       title: "Medical Consultaion",
+      //       url: "/forwarded-medical-consultation",
+      //     },
+      //   ],
+      // },
+      { title: "Forwarded Records", url: "/forwarded-records" },
+      { title: "Animal Bites", url: "/Animalbite_viewing" },
+      { title: "Family Profiling", url: "/family-profiling-main" },
+      { title: "Medical Consultation Record", url: "/allMedRecords" },
+      { title: "Family Planning Record", url: "/FamPlanning_table" },
+      { title: "Maternal Record", url: "/maternalrecords" },
+      { title: "Child Health Record", url: "/all-child-health-records" },
+      { title: "Vaccination Record", url: "/VaccinationManagement" },
+      { title: "Medicine Record", url: "/all-medicine-records" },
+      { title: "Firstaid Record", url: "/all-firstaid-records" },
+      { title: "Schedules", url: "/health-appointments" }
+    ]
+  },
+
+  {
+    title: "Inventory",
+    url: "/",
+    items: [
+      { title: "Inventory List", url: "/mainInventoryList" },
+      { title: "Inventory Stocks", url: "/main-inventory" }
+    ]
+  },
+  {
+    title: "Manage Request",
+    url: "/",
+    items: [
+      {
+        title: "Medicine Request",
+        url: "/medicine-requests"
+      },
+      { title: "Medical Consultation", url: "/" }
+    ]
+  },
+
+  { title: "Service Scheduler", url: "/health-services/scheduler" },
+  { title: "Reports", url: "/healthcare-reports" },
+  {
+    title: "Manage",
+    url: "/",
+    items: [
+      {
+        title: "Manage age group",
+        url: "/age-group"
+      },
+      { title: "Medical Consultation", url: "/" }
+    ]
   },
 ];
 
@@ -352,7 +365,42 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
 };
 
 export function AppSidebar({ assignedFeatures }: { assignedFeatures?: any }) {
+  const { user } = useAuth();
   const [activeItem, setActiveItem] = useState<string>("");
+
+  const items: BaseMenuItem[] = [
+    {
+      title: "Dashboard",
+      url: "/dashboard"
+    },
+
+    {
+      title: "Administration",
+      url: "/administration"
+    },
+    {
+      title: "Profiling",
+      url: "/",
+      items: [
+        { title: "All", url: "/profiling/all" },
+        {
+          title: "Resident",
+          url: "/profiling/resident",
+          items: [
+            { title: "Family", url: "/profiling/family" },
+            { title: "Household", url: "/profiling/household" }
+          ]
+        },
+        { title: "Voters", url: "/profiling/voters" },
+        {
+          title: "Business",
+          url: "/profiling/business/record",
+          items: [{ title: "Respondent", url: "/profiling/business/record/respondent" }]
+        }
+      ]
+    },
+    ...(user?.staff?.staff_type === "Barangay Staff" ? barangayItems : healthItems)
+  ]
 
   // Uncomment and modify this if you want to use assignedFeatures instead of hardcoded items
   // const dynamicItems: BaseMenuItem[] = assignedFeatures?.map((item: any) => ({

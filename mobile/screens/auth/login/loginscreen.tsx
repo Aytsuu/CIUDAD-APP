@@ -26,27 +26,35 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useToastContext } from "@/components/ui/toast";
 import GoogleIcon from "@/assets/images/google.svg";
 import { signInSchema } from "@/form-schema/signin-schema";
-import { useSelector, useDispatch, shallowEqual } from "react-redux";
-import { RootState, AppDispatch } from "@/redux";
-import { login, clearError, sendOtp } from "@/redux/authSlice";
 import { ChevronLeft } from "lucide-react-native";
+import { useAuth } from "@/contexts/AuthContext"; 
 
 type SignInForm = z.infer<typeof signInSchema>;
 
 export default function LoginScreen() {
-  const dispatch = useDispatch<AppDispatch>();
-  const authState = useSelector((state: RootState) => state.auth, shallowEqual);
-  const { user, isAuthenticated, isLoading, error } = authState;
+  const { 
+    user, 
+    isAuthenticated, 
+    isLoading, 
+    // error,
+    hasCheckedAuth,
+    otpSent,
+    email,
+    phone,
+    login,
+    sendOTP,
+    clearAuthError,
+    loginLoading,
+    otpLoading
+  } = useAuth(); 
 
   const { toast } = useToastContext();
   const router = useRouter();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showPhoneLogin, setShowPhoneLogin] = useState(false);
-  const [phone, setPhone] = useState("");
+  // const [phone, setPhone] = useState("");
 
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [phoneLoading, setPhoneLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const defaultValues = useMemo(() => generateDefaultValues(signInSchema), []);
@@ -61,9 +69,17 @@ export default function LoginScreen() {
   });
 
   const isAnyLoading = useMemo(
-    () => emailLoading || phoneLoading || googleLoading || isLoading,
-    [emailLoading, phoneLoading, googleLoading, isLoading]
+    () => loginLoading || otpLoading || googleLoading || isLoading,
+    [loginLoading, otpLoading, googleLoading, isLoading]
   );
+
+  // Handle authentication errors
+  // useEffect(() => {
+  //   if (error) {
+  //     toast.error(error);
+  //     clearAuthError(); // Clear error after showing toast
+  //   }
+  // }, [error, toast, clearAuthError]);
 
   // Redirect to main app if authenticated
   useEffect(() => {
@@ -76,7 +92,6 @@ export default function LoginScreen() {
   const handleEmailLogin = useMemo(
     () => async () => {
       try {
-        setEmailLoading(true);
         const isValid = await trigger();
 
         if (!isValid) {
@@ -88,53 +103,51 @@ export default function LoginScreen() {
         }
 
         const { email, password } = getValues();
-        const resultAction = await dispatch(login({ email, password }));
-
-        if (login.fulfilled.match(resultAction)) {
-          console.log("Login successful");
-        } else {
-          console.error("Login failed:", resultAction.payload);
+        
+        const user = await login({ email, password });
+        
+        if (user) {
+          console.log('✅ Login successful for user:', user.email);
         }
       } catch (err) {
-        toast.error("An unexpected error occurred. Please try again.");
-      } finally {
-        setEmailLoading(false);
+        console.error("Login error:", err);
+        // Error will be handled by the error useEffect above
       }
     },
-    [trigger, errors, getValues, dispatch, toast]
+    [trigger, errors, getValues, toast, login]
   );
 
   const handlePhoneContinue = useMemo(
     () => async () => {
       const phoneRegex = /^9\d{9}$/;
-      if (!phoneRegex.test(phone.trim())) {
-        toast.error(
-          "Please enter a valid mobile number starting with 9 and 10 digits long"
-        );
-        return;
-      }
+      // if (!phoneRegex.test(phone.trim())) {
+      //   toast.error(
+      //     "Please enter a valid mobile number starting with 9 and 10 digits long"
+      //   );
+      //   return;
+      // }
 
       try {
-        setPhoneLoading(true);
         const fullPhoneNumber = `63${phone}`;
-        const resultAction = await dispatch(sendOtp(fullPhoneNumber));
+        
+        // Use the sendOTP method from useAuth hook (matches document 1 pattern)
+        const success = await sendOTP(fullPhoneNumber);
 
-        if (sendOtp.fulfilled.match(resultAction)) {
+        if (success) {
           toast.success(`OTP sent to +${fullPhoneNumber}`);
           router.push({
             pathname: "/(auth)/PhoneOTP",
             params: { phoneNumber: fullPhoneNumber },
           });
         } else {
-          console.error("Send OTP failed:", resultAction.payload);
+          toast.error("Failed to send OTP. Please try again.");
         }
       } catch (err) {
+        console.error("Phone OTP error:", err);
         toast.error("An unexpected error occurred. Please try again.");
-      } finally {
-        setPhoneLoading(false);
       }
     },
-    [phone, dispatch, toast, router]
+    [phone, toast, router, sendOTP]
   );
 
   const handleGoogleLogin = useMemo(
@@ -174,14 +187,14 @@ export default function LoginScreen() {
     [router]
   );
 
-  // Show loading screen during authentication
-  if (isLoading && !emailLoading && !phoneLoading) {
+  // Show loading screen during initial authentication check
+  if (!hasCheckedAuth) {
     return (
       <SafeAreaView className="flex-1 bg-white">
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text className="text-gray-600 font-PoppinsRegular mt-4 text-[16px]">
-            Signing you in...
+            Checking authentication...
           </Text>
         </View>
       </SafeAreaView>
@@ -209,7 +222,7 @@ export default function LoginScreen() {
                 <View className="flex-row items-center justify-between">
                   <TouchableOpacity
                     onPress={handleBackToWelcome}
-                    disabled={isAnyLoading}
+                    disabled={loginLoading}
                     className="flex-row items-center"
                     activeOpacity={0.7}
                   >
@@ -246,7 +259,7 @@ export default function LoginScreen() {
                       name="email"
                       label="Email Address"
                       keyboardType="email-address"
-                      editable={!isAnyLoading}
+                      editable={!loginLoading}
                     />
                     
                     <View className="relative mb-6">
@@ -255,12 +268,12 @@ export default function LoginScreen() {
                         name="password"
                         label="Password"
                         secureTextEntry={!showPassword}
-                        editable={!isAnyLoading}
+                        editable={!loginLoading}
                       />
                       {passwordValue ? (
                         <TouchableOpacity
                           onPress={toggleShowPassword}
-                          disabled={isAnyLoading}
+                          disabled={loginLoading}
                           className="absolute right-4 top-1/2 -translate-y-2"
                         >
                           {showPassword ? (
@@ -284,15 +297,15 @@ export default function LoginScreen() {
 
                     <Button
                       className={`h-20 rounded-xl flex items-center justify-center ${
-                        emailLoading || isLoading
+                        loginLoading
                           ? "bg-gray-400"
                           : "bg-blue-600"
                       }`}
                       onPress={handleEmailLogin}
-                      disabled={isAnyLoading}
+                      disabled={loginLoading}
                     >
                       <View className="flex-row items-center justify-center h-20">
-                        {(emailLoading || isLoading) && (
+                        {loginLoading && (
                           <ActivityIndicator
                             size="small"
                             color="white"
@@ -300,7 +313,7 @@ export default function LoginScreen() {
                           />
                         )}
                         <Text className="text-white font-PoppinsSemiBold text-[14px]">
-                          {emailLoading || isLoading ? "Signing in..." : "Sign In"}
+                          {loginLoading ? "Signing in..." : "Sign In"}
                         </Text>
                       </View>
                     </Button>
@@ -318,8 +331,8 @@ export default function LoginScreen() {
                         </Text>
                       </View>
                       <TextInput
-                        value={phone}
-                        onChangeText={setPhone}
+                        // value={phone}
+                        // onChangeText={setPhone}
                         placeholder="9XX XXX XXXX"
                         keyboardType="phone-pad"
                         returnKeyType="done"
@@ -333,15 +346,15 @@ export default function LoginScreen() {
 
                     <Button
                       className={`h-14 rounded-xl flex items-center justify-center ${
-                        phoneLoading || isLoading
+                        otpLoading
                           ? "bg-gray-400"
                           : "bg-blue-600"
                       }`}
                       onPress={handlePhoneContinue}
-                      disabled={isAnyLoading}
+                      disabled={loginLoading}
                     >
                       <View className="flex-row items-center justify-center h-full">
-                        {(phoneLoading || isLoading) && (
+                        {otpLoading && (
                           <ActivityIndicator
                             size="small"
                             color="white"
@@ -349,7 +362,7 @@ export default function LoginScreen() {
                           />
                         )}
                         <Text className="text-white font-PoppinsSemiBold text-[16px]">
-                          {phoneLoading || isLoading ? "Sending..." : "Continue"}
+                          {otpLoading ? "Sending..." : "Continue"}
                         </Text>
                       </View>
                     </Button>
@@ -368,12 +381,12 @@ export default function LoginScreen() {
                 {/* Toggle between Email & Phone login */}
                 <TouchableOpacity
                   onPress={togglePhoneLogin}
-                  disabled={isAnyLoading}
+                  disabled={loginLoading}
                   className="mb-6"
                 >
                   <Text
                     className={`font-PoppinsMedium text-[14px] text-center ${
-                      isAnyLoading ? "text-gray-400" : "text-blue-600"
+                      loginLoading ? "text-gray-400" : "text-blue-600"
                     }`}
                   >
                     {showPhoneLogin
@@ -385,16 +398,16 @@ export default function LoginScreen() {
                 {/* Google Login */}
                 <TouchableOpacity
                   onPress={handleGoogleLogin}
-                  disabled={isAnyLoading}
+                  disabled={loginLoading}
                   className={`flex-row items-center justify-center border border-gray-300 rounded-xl py-4 mb-8 ${
-                    isAnyLoading ? "bg-gray-50" : "bg-white"
+                    loginLoading ? "bg-gray-50" : "bg-white"
                   }`}
                   activeOpacity={0.7}
                 >
                   <GoogleIcon
                     width={24}
                     height={24}
-                    style={{ marginRight: 12, opacity: isAnyLoading ? 0.5 : 1 }}
+                    style={{ marginRight: 12, opacity: loginLoading ? 0.5 : 1 }}
                   />
                   {googleLoading && (
                     <ActivityIndicator
@@ -421,19 +434,19 @@ export default function LoginScreen() {
                   </Text>
                   <TouchableOpacity
                     onPress={handleGoToSignup}
-                    disabled={isAnyLoading}
+                    disabled={loginLoading}
                     activeOpacity={0.6}
                     className="ml-1"
                   >
                     <Text
                       className={`font-PoppinsSemiBold text-[14px] ${
-                        isAnyLoading ? "text-gray-400" : "text-blue-600"
+                        loginLoading ? "text-gray-400" : "text-blue-600"
                       }`}
                     >
                       Sign up
                     </Text>
                   </TouchableOpacity>
-                </View>
+                  </View>
               </View>
             </View>
           </TouchableWithoutFeedback>

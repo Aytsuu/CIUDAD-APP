@@ -1,19 +1,3 @@
-import React from "react"
-import { Search, Plus, Building2, FileDown, Loader2, Clock } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button/button"
-import { Link } from "react-router"
-import { DataTable } from "@/components/ui/table/data-table"
-import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { activeColumns } from "./BusinessColumns"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { Card } from "@/components/ui/card"
-import { useDebounce } from "@/hooks/use-debounce"
-import { useLoading } from "@/context/LoadingContext"
-import { useActiveBusinesses, useModificationRequests } from "../queries/profilingFetchQueries"
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
-import { Combobox } from "@/components/ui/combobox"
-import { formatModificationRequests } from "../ProfilingFormats"
 
 export default function ActiveRecords() {
 //   // ----------------- STATE INITIALIZATION --------------------

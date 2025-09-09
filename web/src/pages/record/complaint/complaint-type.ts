@@ -33,9 +33,7 @@ export interface ComplaintFile {
   comp_file_id: number;
   comp_file_name: string;
   comp_file_type: string;
-  comp_file_path: string;
-  supabase_path: string;
-  file_size: number;
+  comp_file_url: string;
 }
 
 export interface Complaint {

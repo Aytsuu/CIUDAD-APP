@@ -152,15 +152,17 @@ class KYCVerificationProcessor:
         # Clean the text (remove special characters, normalize spaces)
         text = re.sub(r'[^\w\s,:.-]', '', text)
         text = ' '.join(text.split())  # Collapse multiple spaces
+        print(text)
         
         # Extract date of birth (flexible date parsing)
         dob = None
         date_patterns = [
             r'(?:Date of Birth|DOB|Birthday)[^\d]*([A-Za-z]+\s+\d{1,2},\s+\d{4})',  # "February 13, 1961"
-            r'(?:Date of Birth|DOB)[^\d]*(\d{4}-\d{2}-\d{2})',
-            r'(?:Date of Birth|DOB)[^\d]*(\d{2}/\d{2}/\d{4})',
-            r'([A-Za-z]+\s+\d{1,2},\s+\d{4})',  # Standalone date
-            r'(\d{8})',  # Any 8-digit sequence
+            r'(?:Date of Birth|DOB)[^\d]*(\d{4}-\d{2}-\d{2})',                      # "1961-02-13"
+            r'(?:Date of Birth|DOB)[^\d]*(\d{2}/\d{2}/\d{4})',                      # "13/02/1961"
+            r'([A-Za-z]+\s+\d{1,2}[.,]?\s+\d{4})',                                      # "February 13, 1961"
+            r'([A-Za-z]+\s+\d{1,2}\s+\d{4})',                                       # "September 1 2004"
+            r'(\d{8})',                                                             # "19610213"
         ]
 
         for pattern in date_patterns:

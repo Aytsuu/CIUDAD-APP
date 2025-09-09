@@ -2,6 +2,27 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { deleteFamilyComposition } from "../restful-api/profilingDeleteAPI"
 import { api } from "@/api/api";
 
+export const useDeleteSitio = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (sitio_id: string) => {
+      try {
+        const res = await api.delete(`profiling/sitio/${sitio_id}/delete/`);
+        return res.status;
+      } catch (err) {
+        console.error(err)
+        throw err;
+      }
+    }, 
+    onSuccess: (_, sitio_id) => { 
+      queryClient.setQueryData(["sitioList"], (old: any[] = []) => 
+        old.filter((sitio) => sitio.sitio_id !== sitio_id)
+      )
+      queryClient.invalidateQueries({ queryKey: ["sitioList"] })
+    }
+  })
+}
+
 export const useDeleteRequest = () => {
   return useMutation({
     mutationFn: async (requestId: string) => {

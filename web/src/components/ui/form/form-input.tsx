@@ -7,6 +7,7 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface FormInputProps {
   control: any;
@@ -43,7 +44,7 @@ export const FormInput = React.memo(({
         {label && <FormLabel className="text-black/70">{label}</FormLabel>}
         <FormControl>
           <Input 
-            className={className} 
+            className={cn("", className)} 
             type={type} 
             placeholder={readOnly ? "" : placeholder} 
             {...field}

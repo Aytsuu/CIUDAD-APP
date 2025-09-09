@@ -1,6 +1,6 @@
 import React from "react";
 import {  useRouter } from "expo-router";
-import AccountDetails from "../AccountDetails";
+import AccountDetails from "../account/AccountDetails";
 import PageLayout from "@/screens/_PageLayout";
 import { TouchableOpacity, Text} from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
