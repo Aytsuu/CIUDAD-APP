@@ -1289,22 +1289,7 @@ function OrdinancePage() {
                                                     </div>
                                                 )}
 
-                                                {/* Similarity Score */}
-                                                {selectedOrdinanceForAnalysis.aiAnalysisResult.similarityScore !== undefined && (
-                                                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                                                        <div className="flex items-center gap-2 mb-3">
-                                                            <h4 className="text-lg font-semibold text-gray-800">Similarity Score</h4>
-                                                        </div>
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="text-2xl font-bold text-blue-600">
-                                                                {Math.round(selectedOrdinanceForAnalysis.aiAnalysisResult.similarityScore * 100)}%
-                                                            </div>
-                                                            <div className="text-sm text-gray-600">
-                                                                Overall similarity between the compared documents
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
+                                        
 
 
                                             </div>
