@@ -42,11 +42,11 @@ class SignupView(APIView):
             resident_id = request.data.get('resident_id')
             br = request.data.get('br')
 
-            if not email or not password:
-                return Response(
-                    {'error': 'Both email and password are required'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # if not email or not password:
+            #     return Response(
+            #         {'error': 'Both email and password are required'},
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
 
             # Check if account already exists
             if Account.objects.filter(email=email).exists():
@@ -339,115 +339,26 @@ class VerifyOTPEmail(APIView):
         else:
             return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
 
-        
-class SendOTP(APIView):
-    permission_classes = [AllowAny]
 
-    def post(self, request):
-        logger.info("SendOTP called")
+def send_otp_email(request):
+    email = request.data.get('email')
+    otp = request.data.get('otp')
 
-        try:
-            phone_number = request.data.get('phone_number')
-            logger.info(f"Received phone number: {phone_number}")
-            if not phone_number:
-                return Response(
-                    {'error': 'Phone number is required'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+    if not email or not otp:
+        return Response(
+            {'error': 'Email and OTP are required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-            if not phone_number.startswith("63"):
-                phone_number = f"63{phone_number.lstrip('0')}"
-
-            payload = {
-                "apikey": settings.SEMAPHORE_API_KEY,
-                "number": phone_number,
-                "message": "Your OTP code is: %otp_code%", 
-                "code": "numeric",
-                "length": 6
-            }
-            logger.info(f"OTP SENT! Payload: {payload}")
-            try:
-                response = requests.post(
-                    "https://api.semaphore.co/api/v4/otp",
-                    data=payload
-                )
-                response.raise_for_status()
-                data = response.json()
-                logger.info(f"Semaphore OTP Response: {data}")
-            except requests.RequestException as e:
-                logger.error(f"Failed to send OTP via Semaphore: {str(e)}", exc_info=True)
-                return Response(
-                    {'error': 'Failed to send OTP'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-            return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            logger.error(f"Unexpected OTP send error: {str(e)}", exc_info=True)
-            return Response({'error': 'Failed to send OTP'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-class VerifyOTP(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        phone_number = request.data.get('phone_number')
-        otp_input = request.data.get('otp')
-
-        if not phone_number or not otp_input:
-            return Response(
-                {'error': 'Phone number and OTP are required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if not phone_number.startswith("63"):
-            phone_number = f"63{phone_number.lstrip('0')}"
-
-        payload = {
-            "apikey": settings.SEMAPHORE_API_KEY,
-            "number": phone_number,
-            "code": otp_input
-        }
-
-        try:
-            response = requests.post(
-                "https://api.semaphore.co/api/v4/otp/validate",
-                data=payload
-            )
-            response.raise_for_status()
-            data = response.json()
-            logger.info(f"Semaphore OTP Verify Response: {data}")
-
-            if data.get("status") == "success":
-                return Response({'message': 'OTP verified successfully'}, status=status.HTTP_200_OK)
-            else:
-                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
-
-        except requests.RequestException as e:
-            logger.error(f"Failed to verify OTP via Semaphore: {str(e)}", exc_info=True)
-            return Response({'error': 'Failed to verify OTP'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-
-# class send_otp_email(request):
-#     email = request.data.get('email')
-#     otp = request.data.get('otp')
-
-#     if not email or not otp:
-#         return Response(
-#             {'error': 'Email and OTP are required'},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-
-#     subject = "Your OTP Code"
-#     message = f"Your OTP code is: {otp}"
+    subject = "Your OTP Code"
+    message = f"Your OTP code is: {otp}"
     
-#     try:
-#         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
-#         return Response({'message': 'OTP sent via email'}, status=status.HTTP_200_OK)
-#     except Exception as e:
-#         logger.error(f"Failed to send OTP email: {str(e)}", exc_info=True)
-#         return Response({'error': 'Failed to send OTP email'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
+    try:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+        return Response({'message': 'OTP sent via email'}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Failed to send OTP email: {str(e)}", exc_info=True)
+        return Response({'error': 'Failed to send OTP email'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
 
 
 

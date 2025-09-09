@@ -4,6 +4,7 @@ import HomeScreen from "@/screens/home";
 import Complaint from "../(complaint)";
 // import SendEmailOTP from "@/screens/auth/signup/EmailOTP";
 import LoginScreen from "@/screens/auth/login/loginscreen";
+import IntroScreen from "@/screens/auth/login/introscreen";
 
 // Makes the Error Overlay dissapear
 import { LogBox } from 'react-native';

@@ -1,18 +1,6 @@
 import "@/global.css";
 import React, { useState, useEffect, memo, useMemo } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  Image,
-  TextInput,
-  Keyboard,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, TouchableOpacity, TouchableWithoutFeedback, Image, TextInput, Keyboard, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/button";
@@ -29,21 +17,17 @@ import { signInSchema } from "@/form-schema/signin-schema";
 import { ChevronLeft } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext"; 
 
-type SignInForm = z.infer<typeof signInSchema>;
+type SignInForm = z.infer<typeof signInSchema>;     
 
 export default function LoginScreen() {
   const { 
     user, 
     isAuthenticated, 
     isLoading, 
-    // error,
     hasCheckedAuth,
-    otpSent,
-    email,
     phone,
     login,
     sendOTP,
-    clearAuthError,
     loginLoading,
     otpLoading
   } = useAuth(); 
@@ -53,9 +37,6 @@ export default function LoginScreen() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showPhoneLogin, setShowPhoneLogin] = useState(false);
-  // const [phone, setPhone] = useState("");
-
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   const defaultValues = useMemo(() => generateDefaultValues(signInSchema), []);
   const {
@@ -66,22 +47,8 @@ export default function LoginScreen() {
   } = useForm<SignInForm>({
     resolver: zodResolver(signInSchema),
     defaultValues,
-  });
+  }); 
 
-  const isAnyLoading = useMemo(
-    () => loginLoading || otpLoading || googleLoading || isLoading,
-    [loginLoading, otpLoading, googleLoading, isLoading]
-  );
-
-  // Handle authentication errors
-  // useEffect(() => {
-  //   if (error) {
-  //     toast.error(error);
-  //     clearAuthError(); // Clear error after showing toast
-  //   }
-  // }, [error, toast, clearAuthError]);
-
-  // Redirect to main app if authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
       toast.success("Welcome!");
@@ -111,26 +78,15 @@ export default function LoginScreen() {
         }
       } catch (err) {
         console.error("Login error:", err);
-        // Error will be handled by the error useEffect above
       }
     },
     [trigger, errors, getValues, toast, login]
   );
 
-  const handlePhoneContinue = useMemo(
-    () => async () => {
-      const phoneRegex = /^9\d{9}$/;
-      // if (!phoneRegex.test(phone.trim())) {
-      //   toast.error(
-      //     "Please enter a valid mobile number starting with 9 and 10 digits long"
-      //   );
-      //   return;
-      // }
-
+  const handlePhoneContinue = useMemo(() => async () => {
       try {
         const fullPhoneNumber = `63${phone}`;
         
-        // Use the sendOTP method from useAuth hook (matches document 1 pattern)
         const success = await sendOTP(fullPhoneNumber);
 
         if (success) {
@@ -148,21 +104,6 @@ export default function LoginScreen() {
       }
     },
     [phone, toast, router, sendOTP]
-  );
-
-  const handleGoogleLogin = useMemo(
-    () => async () => {
-      setGoogleLoading(true);
-      try {
-        toast.info("Google login coming soon!");
-      } catch (err) {
-        console.error("Google login failed:", err);
-        toast.error("Google login failed");
-      } finally {
-        setGoogleLoading(false);
-      }
-    },
-    [toast]
   );
 
   const dismissKeyboard = useMemo(() => () => Keyboard.dismiss(), []);
@@ -228,10 +169,10 @@ export default function LoginScreen() {
                   >
                     <ChevronLeft 
                       size={20} 
-                      className={isAnyLoading ? "text-gray-400" : "text-slate-500"} 
+                      className={isLoading ? "text-gray-400" : "text-slate-500"} 
                     />
                     <Text className={`text-[16px] font-PoppinsMedium ml-1 ${
-                      isAnyLoading ? "text-gray-400" : "text-slate-500"
+                      isLoading ? "text-gray-400" : "text-slate-500"
                     }`}>
                     </Text>
                   </TouchableOpacity>
@@ -280,14 +221,14 @@ export default function LoginScreen() {
                             <Eye
                               size={20}
                               className={
-                                isAnyLoading ? "text-gray-400" : "text-gray-600"
+                                isLoading ? "text-gray-400" : "text-gray-600"
                               }
                             />
                           ) : (
                             <EyeOff
                               size={20}
                               className={
-                                isAnyLoading ? "text-gray-400" : "text-gray-600"
+                                isLoading ? "text-gray-400" : "text-gray-600"
                               }
                             />
                           )}
@@ -340,7 +281,7 @@ export default function LoginScreen() {
                         placeholderTextColor="#9CA3AF"
                         blurOnSubmit={true}
                         maxLength={10}
-                        editable={!isAnyLoading}
+                        editable={!isLoading}
                       />
                     </View>
 
@@ -392,38 +333,6 @@ export default function LoginScreen() {
                     {showPhoneLogin
                       ? "← Use Email instead"
                       : "Use Phone Number instead"}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Google Login */}
-                <TouchableOpacity
-                  onPress={handleGoogleLogin}
-                  disabled={loginLoading}
-                  className={`flex-row items-center justify-center border border-gray-300 rounded-xl py-4 mb-8 ${
-                    loginLoading ? "bg-gray-50" : "bg-white"
-                  }`}
-                  activeOpacity={0.7}
-                >
-                  <GoogleIcon
-                    width={24}
-                    height={24}
-                    style={{ marginRight: 12, opacity: loginLoading ? 0.5 : 1 }}
-                  />
-                  {googleLoading && (
-                    <ActivityIndicator
-                      size="small"
-                      color="#4285F4"
-                      style={{ marginRight: 8 }}
-                    />
-                  )}
-                  <Text
-                    className={`font-normal text-[16px] ${
-                      isAnyLoading ? "text-gray-400" : "text-gray-800"
-                    }`}
-                  >
-                    {googleLoading
-                      ? "Signing in..."
-                      : "Continue with Google"}
                   </Text>
                 </TouchableOpacity>
 
