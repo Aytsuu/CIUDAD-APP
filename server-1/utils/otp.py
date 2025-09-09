@@ -1,7 +1,7 @@
 import secrets
 from django.core.mail import send_mail
 
-def generate_otp(self):
+def generate_otp():
     otp = str(secrets.randbelow(10 ** 6)).zfill(6)
     return otp
 
