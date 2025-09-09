@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { updateBudgetHeader, restoreBudgetPlan, archiveBudgetPlan, updateBudgetItem } from "../restful-API/budgetPlanPutAPI";
 
-
 export const useUpdateBudgetHeader = (onSuccess: () => void) => {
     const queryClient = useQueryClient();
 

@@ -1,4 +1,3 @@
-import { Label } from "@/components/ui/label"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { DataTable } from "@/components/ui/table/data-table"
 import { HistoryTable } from "@/components/ui/table/history-table"
@@ -15,13 +14,10 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import React from "react"
-import { Button } from "@/components/ui/button/button"
-import RatesFormPage2 from "./forms/rates-form-page2"
 
 function RatesPage2() {
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
 
     // Search + Pagination
     const [searchQueryActive, setSearchQueryActive] = useState("")

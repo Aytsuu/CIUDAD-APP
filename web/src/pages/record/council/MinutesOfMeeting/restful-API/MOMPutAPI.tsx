@@ -50,7 +50,7 @@ export const updateMinutesOfMeeting = async (mom_id: number, meetingTitle: strin
             mom_date: meetingDate,
         })
 
-        if (!files[0].id.startsWith("existing-")) {
+        if (!files[0].id.startsWith("existing-") && res) {
             await updateMOMFile(files, mom_id); 
         }
 

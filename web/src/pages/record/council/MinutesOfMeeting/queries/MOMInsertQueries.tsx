@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { insertMinutesOfMeeting } from "../restful-API/MOMPostAPI";
-import { CircleCheck } from "lucide-react";
 import {minutesOfMeetingFormSchema} from "@/form-schema/council/minutesOfMeetingSchema";
 import { z } from "zod";
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 
 
 export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
@@ -20,21 +20,13 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
         queryClient.invalidateQueries({ queryKey: ['momRecords'] });
         queryClient.invalidateQueries({ queryKey: ['momFiles'] });
 
-      toast.success('Meeting Minutes Created!', {
-        id: "createMOM",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast('Meeting Minutes Created!')
       onSuccess?.();
     },
     onError: (err: Error) => {
       console.error("Error submitting meeting minutes:", err);
-      toast.error(
-        "Failed to create meeting minutes. Please check the input data and try again.",
-        { 
-          id: "createMOM",
-          duration: 2000 
-        }
+      showErrorToast(
+        "Failed to create meeting minutes. Please check the input data and try again."
       );
     }
   });
