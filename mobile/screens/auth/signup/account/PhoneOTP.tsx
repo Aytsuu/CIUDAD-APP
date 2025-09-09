@@ -81,7 +81,7 @@ export default function PhoneOTP({ params } : {
             control={control}
             name="accountFormSchema.phone"
             keyboardType="phone-pad"
-            placeholder="09XXXXXXXXX"
+            placeholder="09XX XXX XXXX"
           />
         </View>
 

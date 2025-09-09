@@ -148,7 +148,9 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
           route: {
             create: {
               link: "/profiling/account/create",
-              params: {}
+              params: {
+                residentId: row.original.rp_id
+              }
             },
           }},
         {

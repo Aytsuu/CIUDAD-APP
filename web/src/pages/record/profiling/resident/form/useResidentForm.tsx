@@ -7,10 +7,10 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useNavigate } from "react-router";
 import { Origin } from "../../ProfilingEnums";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
-import isEqual from "lodash/isEqual";
 
 export const useResidentForm = (defaultData?: any, origin?: any) => {
   const navigate = useNavigate();
+  const { isDeepStrictEqual } = require('node:util');
   const defaultValues = generateDefaultValues(personalInfoSchema);
   const form = useForm<z.infer<typeof personalInfoSchema>>({
     resolver: zodResolver(personalInfoSchema),
@@ -63,7 +63,7 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
   const checkDefaultValues = (currentValues: any, initialValues: any) => {
     const obj1 = normalize(currentValues)
     const obj2 = normalize(initialValues)
-    return isEqual(obj1, obj2)
+    return isDeepStrictEqual(obj1, obj2)
   };
 
   const handleSubmitSuccess = (message: string, redirectPath?: string, state?: any) => {

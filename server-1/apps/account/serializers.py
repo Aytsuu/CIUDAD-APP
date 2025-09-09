@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Account, PhoneVerification
-import secrets
+from utils.otp import generate_otp
 
 
 class UserAccountSerializer(serializers.ModelSerializer):
@@ -20,11 +20,7 @@ class PhoneVerificationBaseSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         instance = PhoneVerification(**validated_data)
-        instance.pv_otp = self.generate_otp()
+        instance.pv_otp = generate_otp()
         instance.save()
         return instance
-    
-    def generate_otp(self):
-        otp = str(secrets.randbelow(10 ** 6)).zfill(6)
-        return otp
     
