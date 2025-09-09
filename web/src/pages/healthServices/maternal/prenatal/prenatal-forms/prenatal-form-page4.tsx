@@ -1,20 +1,24 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useFormContext, type UseFormReturn } from "react-hook-form"
 import { Form } from "@/components/ui/form/form"
+import type { ColumnDef } from "@tanstack/react-table"
+
 import type { z } from "zod"
 
-import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import { DataTable } from "@/components/ui/table/data-table"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button/button"
-import type { ColumnDef } from "@tanstack/react-table"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { FormSelect } from "@/components/ui/form/form-select"
-import { useEffect, useState } from "react"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { Card, CardContent } from "@/components/ui/card"
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
+
+import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
+
 import { useAddPrenatalRecord } from "../../queries/maternalAddQueries"
 import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries"
 
@@ -31,6 +35,7 @@ export default function PrenatalFormFourthPq({
   const { control, setValue, getValues } = useFormContext()
   const addPrenatalRecordMutation = useAddPrenatalRecord()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
 
   // Watch values from other parts of the form to auto-fill
   const patId = form.watch("pat_id") || ""
@@ -250,7 +255,7 @@ export default function PrenatalFormFourthPq({
         return (
           <div className="text-center">
             FH: {row.original.leopoldsFindings.fundalHeight || "N/A"},<br />
-            FHB: {row.original.leopoldsFindings.fetalHeartRate || "N/A"},<br />
+            FHB: {row.original.leopoldsFindings.fetalHeartRate || "N/A"} bpm,<br />
             FP: {row.original.leopoldsFindings.fetalPosition || "N/A"}
           </div>
         )
@@ -342,7 +347,7 @@ export default function PrenatalFormFourthPq({
       <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
         <Label className="text-black text-opacity-50 italic mb-10">Page 4 of 4</Label>
         <Form {...form}>
-          <form onSubmit={handleFormSubmit}>
+          <form onSubmit={e => {e.preventDefault(); setIsConfirmOpen(true);}}>
             <h3 className="text-md font-semibold mt-2 mb-4">PRENATAL CARE</h3>
             <Card className="border rounded-md border-gray p-5">
               <CardContent>
@@ -463,11 +468,21 @@ export default function PrenatalFormFourthPq({
                 type="submit" 
                 className="mt-4 mr-4 w-[120px]"
                 disabled={isSubmitting || addPrenatalRecordMutation.isPending}
+                onClick={() => setIsConfirmOpen(true)}
               >
                 {isSubmitting || addPrenatalRecordMutation.isPending ? "Submitting..." : "Submit"}
               </Button>
             </div>
           </form>
+
+          <ConfirmationDialog
+            isOpen={isConfirmOpen}
+            onOpenChange={setIsConfirmOpen}
+            title="Prenatal Record Submission"
+            description="Are you sure you want to submit this prenatal record?"
+            onConfirm={() => handleFormSubmit(new Event("submit") as unknown as React.FormEvent)}
+          >
+          </ConfirmationDialog>
         </Form>
       </div>
     </>

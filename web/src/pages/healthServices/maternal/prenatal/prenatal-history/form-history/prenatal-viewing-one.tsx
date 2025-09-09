@@ -4,14 +4,16 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { usePrenatalRecordComplete } from "../../queries/maternalFetchQueries"
+
+import { Loader2 } from "lucide-react"
+
+import { usePrenatalRecordComplete } from "../../../queries/maternalFetchQueries"
 
 
 interface PrenatalViewingOneProps {
   pfId?: string;
 }
 
-// Keep your existing InputLine component
 export const InputLine = ({className, value}: {className: string, value?: string}) => (
   <Input 
     className={cn("w-1/2 mr-2 border-0 border-b border-black rounded-none", className)} 
@@ -19,6 +21,26 @@ export const InputLine = ({className, value}: {className: string, value?: string
     readOnly
   />
 )
+
+export const InputLineLonger = ({className, value}: {className: string, value?: string}) => (
+  <textarea 
+    className={cn("w-1/2 mr-2 border-0 border-b border-black rounded-none resize-none overflow-hidden bg-transparent", className)} 
+    value={value || ""} 
+    readOnly
+    rows={1}
+    style={{
+      minHeight: '2.5rem',
+      height: 'auto'
+    }}
+    ref={(textarea) => {
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+      }
+    }}
+  />
+);
+
 
 export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
   const { 
@@ -32,7 +54,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-32">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <Loader2 className="animate-spin h-8 w-8 mr-2">Loading records...</Loader2>
       </div>
     );
   }
@@ -53,7 +75,8 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
   // const vitalSigns = prenatalForm.vital_signs_details;
   const obstetricHistory = prenatalForm.obstetric_history;
   // const medicalHistory = prenatalForm.medical_histories || [];
-  // const previousHospitalizations = prenatalForm.previous_hospitalizations || [];
+  const previousHospitalizations = prenatalForm.previous_hospitalizations || [];
+  console.log(previousHospitalizations)
   const previousPregnancies = prenatalForm.previous_pregnancy;
   const labResults = prenatalForm.laboratory_results || [];
   const checklist = prenatalForm.checklist_data;
@@ -103,15 +126,15 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
 
   // lab results helper
   const getLabResultDisplay = (type: string) => {
-  const result = labResults.find((lab: any) => lab.lab_type === type);
-  if (!result) return "";
-  if (result.to_be_followed) return "to be followed";
-  return result.result_date || "";
-};
+    const result = labResults.find((lab: any) => lab.lab_type === type);
+    if (!result) return "";
+    if (result.to_be_followed) return "to be followed";
+    return result.result_date || "";
+  };
 
 
   return (
-    <div className="max-w-7xl mx-auto m-5 border border-gray-300">
+    <div className="flex max-w-6xl mx-auto m-5 h-[128rem] overflow-hidden border border-gray-500">
       <div className="mx-10 my-5">
         {/* Header */}
         <div>
@@ -264,7 +287,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
                 <div className="flex flex-col">
                   <div className="flex">
                     <Label className="mt-4">PREVIOUS ILLNESS:</Label>
-                    <InputLine className="w-[30vh]" value="" />
+                    <InputLineLonger className="w-[30vh]" value="" />
                   </div>
                   <div>
                     <InputLine className="w-[43vh]" value="" />
@@ -274,14 +297,28 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
                     <Label className="mt-4">PREVIOUS HOSPITALIZATION:</Label>
                   </div>
                   <div>
+                    {previousHospitalizations.length > 0 ? (
+                      previousHospitalizations.map((hospitalizations: any) => (
+                        <InputLineLonger  
+                          key={hospitalizations.pfph_id} 
+                          className="w-[43vh] text-sm break-words resize-none overflow-y-auto min-h-[3.5rem] max-h-32" 
+                          value={`(${hospitalizations.prev_hospitalization_year}) ${hospitalizations.prev_hospitalization}`} 
+                        />
+                      ))
+                    ): 
                     <InputLine className="w-[43vh]" value="" />
+                    }
+                    
                   </div>
 
                   <div className="flex">
                     <Label className="mt-4">PREVIOUS PREG. COMPLICATION: (SPECIFY) HISTORY OF</Label>
                   </div>
                   <div>
-                    <InputLine className="w-[43vh]" value="" />
+                    <InputLineLonger 
+                      className="w-[43vh] text-sm break-words resize-none overflow-y-auto min-h-[3.5rem] max-h-32" 
+                      value={prenatalForm.previous_complications} 
+                    />
                   </div>
                 </div>
             </div>
@@ -439,7 +476,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
 
               {/* 4anc visits values */}
               <div className="flex text-center items-center justify-center p-3 border border-black">
-                  <p className="text-sm font-semibold">{ancVisit.pfav_1st_tri}</p>
+                  <p className="text-xs font-semibold">{ancVisit.pfav_1st_tri}<br /></p>
               </div>
               <div className="flex text-center items-center justify-center p-2 border border-black">
                   <p className="text-xs font-semibold">{ancVisit.pfav_2nd_tri}</p>
@@ -680,7 +717,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
               <div className="flex">
                 <Checkbox 
                   className="ml-10 mr-2 mt-4" 
-                  checked={riskCodes.pforc_previous_caesarian || false} 
+                  checked={riskCodes.pforc_prev_c_section || false} 
                   disabled
                 />
                 <Label className="mr-[8rem] mt-4">PREVIOUS CAESARIAN</Label>

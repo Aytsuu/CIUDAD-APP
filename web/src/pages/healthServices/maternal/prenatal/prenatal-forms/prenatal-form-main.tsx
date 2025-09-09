@@ -16,13 +16,20 @@ import PrenatalFormThirdPg from "./prenatal-form-page3"
 import PrenatalFormFourthPq from "./prenatal-form-page4"
 
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
+import { capitalize } from "@/helpers/capitalize"
 import { useAddPrenatalRecord } from "../../queries/maternalAddQueries" 
 import type { PrenatalRecord } from "../../restful-api/maternalPOST" 
+
+
+const forceCapitalize = (str: string | null | undefined): string => {
+  if (!str || str.length === 0) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
 
 interface TTStatusRecord {
   tts_status: string
   tts_date_given: string | null
-  tts_tdap: boolean
+  // tts_tdap: boolean
 }
 
 export default function PrenatalForm() {
@@ -80,27 +87,27 @@ export default function PrenatalForm() {
 
     const spouseData = hasMeaningfulData(
       data.motherPersonalInfo.husbandLName ||
-        data.motherPersonalInfo.husbandFName ||
-        data.motherPersonalInfo.husbandMName ||
-        data.motherPersonalInfo.husbandDob,
+      data.motherPersonalInfo.husbandFName ||
+      data.motherPersonalInfo.husbandMName ||
+      data.motherPersonalInfo.husbandDob,
     )
       ? {
           spouse_type: "Husband",
-          spouse_fname: data.motherPersonalInfo.husbandFName || "",
-          spouse_mname: data.motherPersonalInfo.husbandMName || "",
-          spouse_lname: data.motherPersonalInfo.husbandLName || "",
+          spouse_fname: forceCapitalize(data.motherPersonalInfo.husbandFName) || "",
+          spouse_mname: forceCapitalize(data.motherPersonalInfo.husbandMName) || "",
+          spouse_lname: forceCapitalize(data.motherPersonalInfo.husbandLName) || "",
           spouse_dob: toNullIfEmpty(data.motherPersonalInfo.husbandDob) ?? null,
-          spouse_occupation: data.motherPersonalInfo.occupation || "N/A", 
+          spouse_occupation: capitalize(data.motherPersonalInfo.occupation) || "N/A", 
         }
       : undefined
 
     const previousPregnancyData = hasMeaningfulData(data.previousPregnancy)
       ? {
           date_of_delivery: toNullIfEmpty(data.previousPregnancy.dateOfDelivery) ?? null,
-          outcome: data.previousPregnancy.outcome || null, 
-          type_of_delivery: data.previousPregnancy.typeOfDelivery || null,
+          outcome: forceCapitalize(data.previousPregnancy.outcome) || null, 
+          type_of_delivery: forceCapitalize(data.previousPregnancy.typeOfDelivery) || null,
           babys_wt: data.previousPregnancy.babysWt ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
-          gender: data.previousPregnancy.gender || null,
+          gender: forceCapitalize(data.previousPregnancy.gender) || null,
           ballard_score: data.previousPregnancy.ballardScore ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
           apgar_score: data.previousPregnancy.apgarScore ? parseFloat(data.previousPregnancy.apgarScore.toString()) : null,
         }
@@ -123,7 +130,6 @@ export default function PrenatalForm() {
           ttStatusesArray.push({
             tts_status: record.ttStatus.trim(),
             tts_date_given: toNullIfEmpty(record.ttDateGiven) ?? null,
-            tts_tdap: record.isTDAPAdministered === false ? false : true,
           })
         }
       })
@@ -154,18 +160,16 @@ export default function PrenatalForm() {
     return {
       pat_id: data.pat_id as string, 
       patrec_type: "Prenatal",
-      pf_occupation: data.motherPersonalInfo.occupation || "",
+      pf_occupation: capitalize(data.motherPersonalInfo.occupation) || "",
       pf_lmp: toNullIfEmpty(data.presentPregnancy.pf_lmp) ?? null,
       pf_edc: toNullIfEmpty(data.presentPregnancy.pf_edc) ?? null,
-      previous_complications: data.medicalHistory.previousComplications || null,
+      previous_complications: forceCapitalize(data.medicalHistory.previousComplications) || null,
 
       spouse_data: spouseData,
 
       body_measurement: {
-        age: data.motherPersonalInfo.motherAge || null,
         weight: data.motherPersonalInfo.motherWt || null,
         height: data.motherPersonalInfo.motherHt || null,
-        // bmi: data.motherPersonalInfo.motherBMI || null,
       },
 
       obstetrical_history: {
@@ -174,7 +178,7 @@ export default function PrenatalForm() {
         obs_abortion: data.obstetricHistory?.noOfAbortion  || null,
         obs_still_birth: data.obstetricHistory?.noOfStillBirths || null,
         obs_lg_babies: data.obstetricHistory?.historyOfLBabies || null,
-        obs_lg_babies_str: data.obstetricHistory?.historyOfLBabiesStr || null,
+        obs_lg_babies_str: data.obstetricHistory?.historyOfLBabiesStr ?? false,
         obs_gravida: data.presentPregnancy.gravida || null,
         obs_para: data.presentPregnancy.para || null,
         obs_fullterm: data.presentPregnancy.fullterm || null,
@@ -192,7 +196,7 @@ export default function PrenatalForm() {
 
       previous_hospitalizations:
         data.medicalHistory.prevHospitalizationData?.map((item) => ({
-          prev_hospitalization: item.prevHospitalization ?? "",
+          prev_hospitalization: forceCapitalize(item.prevHospitalization) ?? "",
           prev_hospitalization_year: item.prevHospitalizationYr || null,
         })) || [],
 
@@ -203,8 +207,8 @@ export default function PrenatalForm() {
       lab_results_data:
         data.labResults?.labResultsData?.map((result) => ({
           lab_type: result.lab_type,
-          result_date: toNullIfEmpty(result.resultDate) ?? null, // allow null for "to be followed" cases
-          to_be_followed: result.toBeFollowed ?? false, // ensure boolean
+          result_date: toNullIfEmpty(result.resultDate) ?? null, 
+          to_be_followed: result.toBeFollowed ?? false, 
           document_path: result.documentPath || "",
           remarks: result.labRemarks || "",
           images: result.images || [],
@@ -216,7 +220,7 @@ export default function PrenatalForm() {
       followup_description: "Prenatal Follow-up Visit",
 
       checklist_data: {
-        increased_bp: data.assessmentChecklist.increasedBP ?? false, // API expects snake_case
+        increased_bp: data.assessmentChecklist.increasedBP ?? false, 
         epigastric_pain: data.assessmentChecklist.epigastricPain ?? false,
         nausea: data.assessmentChecklist.nausea ?? false,
         blurring_vision: data.assessmentChecklist.blurringOfVision ?? false,
@@ -231,7 +235,7 @@ export default function PrenatalForm() {
       },
 
       birth_plan_data: {
-        place_of_delivery_plan: data.pregnancyPlan.planPlaceOfDel || "", 
+        place_of_delivery_plan: capitalize(data.pregnancyPlan.planPlaceOfDel) || "", 
         newborn_screening_plan: data.pregnancyPlan.planNewbornScreening ?? false, 
       },
 
@@ -249,8 +253,8 @@ export default function PrenatalForm() {
           pfpc_fundal_ht: item.leopoldsFindings.fundalHeight || null,
           pfpc_fetal_hr: item.leopoldsFindings.fetalHeartRate || null,
           pfpc_fetal_pos: item.leopoldsFindings.fetalPosition || "", 
-          pfpc_complaints: item.notes.complaints || null, 
-          pfpc_advises: item.notes.advises || null, 
+          pfpc_complaints: forceCapitalize(item.notes.complaints) || null, 
+          pfpc_advises: forceCapitalize(item.notes.advises) || null, 
         })) || [],
 
       // Extract BP values from the first prenatal care entry for VitalSigns
@@ -313,7 +317,7 @@ export default function PrenatalForm() {
         "riskCodes",
         "assessedBy",
       ])
-      console.log(`Page 3 validation result: ${isValid}`)
+      console.log(`Page 3 validation result: ${isValid}`, form.getValues())
 
     } else if (pageNumber === 4) {
       isValid = await form.trigger("prenatalCare")

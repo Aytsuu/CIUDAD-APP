@@ -94,8 +94,8 @@ class PrenatalPatientBodyMeasurementView(generics.RetrieveAPIView):
 
         try:
             body_measurement_obj = BodyMeasurement.objects.filter(
-                patrec_id__pat_id=patient
-            ).select_related('patrec').order_by('-created_at').first()
+                pat_id=patient
+            ).select_related('pat').order_by('-created_at').first()
             print(f'Found body measurement for patient: {patient.pat_id}')
 
             bm_data = BodyMeasurementReadSerializer(body_measurement_obj).data
@@ -452,17 +452,47 @@ def get_latest_patient_postpartum_records(request, pat_id):
         ).order_by('-created_at').first()
 
         if not latest_record:
+            # Try to get spouse info from prenatal records if no postpartum record exists
+            spouse_info = None
+            try:
+                latest_prenatal = Prenatal_Form.objects.filter(
+                    patrec_id__pat_id=patient,
+                    spouse_id__isnull=False
+                ).select_related('spouse_id').order_by('-created_at').first()
+                
+                if latest_prenatal and latest_prenatal.spouse_id:
+                    spouse_info = {
+                        "spouse_lname": latest_prenatal.spouse_id.spouse_lname,
+                        "spouse_fname": latest_prenatal.spouse_id.spouse_fname,
+                        "spouse_mname": latest_prenatal.spouse_id.spouse_mname,
+                        "spouse_dob": latest_prenatal.spouse_id.spouse_dob,
+                    }
+            except Exception as e:
+                logger.error(f"Error fetching spouse info from prenatal: {str(e)}")
+            
             return Response({
                 'pat_id': pat_id,
                 'message': 'No postpartum records found for this patient',
-                'latest_postpartum_record': None
+                'latest_postpartum_record': None,
+                'spouse_info': spouse_info
             }, status=status.HTTP_200_OK)
+
+        # If postpartum record exists, get spouse info from it
+        spouse_info = None
+        if latest_record.spouse_id:
+            spouse_info = {
+                "spouse_lname": latest_record.spouse_id.spouse_lname,
+                "spouse_fname": latest_record.spouse_id.spouse_fname,
+                "spouse_mname": latest_record.spouse_id.spouse_mname,
+                "spouse_dob": latest_record.spouse_id.spouse_dob,
+            }
 
         serializer = PostpartumCompleteSerializer(latest_record)
         
         return Response({
             'pat_id': pat_id,
-            'latest_postpartum_record': serializer.data
+            'latest_postpartum_record': serializer.data,
+            'spouse_info': spouse_info
         }, status=status.HTTP_200_OK)
         
     except Patient.DoesNotExist:
@@ -804,8 +834,7 @@ def get_prenatal_form_complete(request, pf_id):
             'pf_obstetric_risk_code'
         ).get(pf_id=pf_id)
         
-        # Serialize the complete prenatal form data
-        serializer = PrenatalFormCompleteViewSerializer(prenatal_form)  # Use PrenatalFormCompleteViewSerializer instead
+        serializer = PrenatalFormCompleteViewSerializer(prenatal_form)  
 
         return Response({
             'prenatal_form': serializer.data

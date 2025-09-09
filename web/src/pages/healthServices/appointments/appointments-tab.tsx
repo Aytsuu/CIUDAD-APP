@@ -8,7 +8,6 @@ export default function ScheduleTab({ onTimeFrameChange } : ScheduleTabProps): J
    const [selectedTimeFrame, setSelectedTimeFrame] = useState("today");
 
 	const handleTimeFrameChange = (timeFrame: string) => {
-		console.log("Selected Time Frame:", timeFrame);
 		setSelectedTimeFrame(timeFrame);
 		onTimeFrameChange(timeFrame); 
 	};
@@ -17,7 +16,7 @@ export default function ScheduleTab({ onTimeFrameChange } : ScheduleTabProps): J
 		const baseClasses = "flex justify-center items-center cursor-pointer text-black/70 transition-colors duration-200 ease-in-out rounded-md p-2 h-[32px] w-[100px]";
 		
 		if (selectedTimeFrame === tabTimeFrame) {
-			// Active tab styles
+			// Active tab styles	
 			return `${baseClasses} bg-white shadow-md border text-blue-500`;
 		} else {
 			// Inactive tab styles

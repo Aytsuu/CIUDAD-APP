@@ -67,7 +67,7 @@ export default function PregnancyChart({ pregnancies }: PregnancyChartProps) {
 					<div className="flex flex-col text-center rounded-md border p-4 gap-2">
 						<span className="flex items-center">
 							<Clock size={16} color="green"/>
-							<h3 className="text-sm font-semibold ml-1">Active Pregnancies</h3>
+							<h3 className="text-sm font-semibold ml-1">Active Pregnancy</h3>
 						</span>
 						<div className="flex justify-center p-4">
 							<p className="text-[30px] font-bold">{activePregnancies}</p>

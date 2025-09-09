@@ -3,13 +3,16 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { Printer } from "lucide-react";
+import { Loader2, Printer } from "lucide-react";
 
-import { PrenatalHistoryTable } from "../../maternal-components/prenatalcare-history";
-import PrenatalViewingOne from "./prenatal-viewing";
-import PrenatalFormHistory from "./prenatal-form-history";
+import { PrenatalCareHistoryTable } from "../../maternal-components/prenatalcare-history";
+import PrenatalViewingOne from "./form-history/prenatal-viewing-one";
+import PrenatalFormTableHistory from "./prenatal-form-history";
+import PrenatalIndivHistoryTab from "./prenatal-indiv-history-tab";
+import PFHistoryTab from "./form-history/form-history-tab";
 
 import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries";
+import PrenatalViewingTwo from "./form-history/prenatal-viewing-two";
 
 
 interface PrenatalVisit {
@@ -39,16 +42,16 @@ export default function PrenatalIndivHistory() {
   const location = useLocation();
   const { patientData, pregnancyId, visitNumber, recordId } = location.state?.params || {};
   const [activeTab, setActiveTab] = useState("prenatalcare");
+  const [pfPageNum, setPfPageNum] = useState(1);
 
-  // Fetch real API data
-  const { 
-    data: prenatalCareData, 
-    isLoading, 
-    error 
-  } = usePrenatalPatientPrenatalCare(
-    patientData?.pat_id || "", 
-    pregnancyId || ""
-  );
+  // fetching
+  const { data: prenatalCareData, isLoading, error } = usePrenatalPatientPrenatalCare(patientData?.pat_id || "", pregnancyId || "");
+
+
+  const handlePFPageChange = (pageNum: number) => {
+    setPfPageNum(pageNum);
+  }
+
 
   // Get records up to the selected visit number
   const recordsToShow = prenatalCareData?.prenatal_records?.slice(0, visitNumber) || [];
@@ -103,17 +106,6 @@ export default function PrenatalIndivHistory() {
 
   const hasData = processedPrenatalData && processedPrenatalData.length > 0;
 
-  const getTabStyle = (tab: string) => {
-    const baseClasses = "flex justify-center items-center cursor-pointer text-black/70 transition-colors duration-200 ease-in-out rounded-md p-2";
-    
-    if (activeTab === tab) {
-      return `${baseClasses} bg-white shadow-md border text-blue-500`;
-    } else {
-      return `${baseClasses} bg-blue-50 text-gray-100 hover:bg-white/`;
-    }
-  }
-
-  // Loading state
   if (isLoading) {
     return (
       <LayoutWithBack 
@@ -121,13 +113,12 @@ export default function PrenatalIndivHistory() {
         description="Loading prenatal care history..."
       >
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <Loader2 className="animate-spin h-8 w-8 mr-2">Loading records...</Loader2>
         </div>
       </LayoutWithBack>
     );
   }
 
-  // Error state
   if (error) {
     return (
       <LayoutWithBack 
@@ -151,36 +142,40 @@ export default function PrenatalIndivHistory() {
           <Button variant="outline"><Printer/> Print</Button>
         </div>
 
-        <div className="w-full">
-          <PrenatalViewingOne pfId={recordId} />
+        <div className="w-full" defaultValue={1}>
+          <div className="flex items-center justify-center">
+            <PFHistoryTab onPageChange={handlePFPageChange} />
+          </div>
+          
         </div>
-        
-        <div className="bg-white/70 p-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className={getTabStyle("prenatalcare")} onClick={() => setActiveTab("prenatalcare")}>
-              <h2 className="font-semibold">Prenatal Care History</h2>
-            </div>
 
-            <div className={getTabStyle("prenatalform")} onClick={() => setActiveTab("prenatalform")}>
-              <h2 className="font-semibold">Prenatal Form History</h2>
-            </div>
+        {pfPageNum === 1 && (
+          <PrenatalViewingOne pfId={recordId} />
+        )}
+
+        {pfPageNum === 2 && (
+          <PrenatalViewingTwo />
+        )}
+
+        <div className="bg-white/70 pt-5 px-2">
+          <div className="flex-1 p-1 border rounded-md bg-blue-50">
+            <PrenatalIndivHistoryTab onTabChange={(tab) => setActiveTab(tab)} />
           </div>
         </div>
 
         {/* Prenatal History Table with real data */}
-        {hasData && activeTab === "prenatalcare" && (
-          <PrenatalHistoryTable data={processedPrenatalData} />
-        )}
-
-        {/* No data message */}
-        {!hasData && activeTab === "prenatalcare" && (
+        {hasData && activeTab === "prenatalcare" ? (
+          <div className="px-2">
+            <PrenatalCareHistoryTable data={processedPrenatalData} />
+          </div>
+        ):
           <div className="text-center py-8 text-gray-500">
             No prenatal care records found for this pregnancy.
           </div>
-        )}
+        }
 
         {activeTab === "prenatalform" && (
-          <PrenatalFormHistory/>
+          <PrenatalFormTableHistory/>
         )}
       </div>
     </LayoutWithBack>

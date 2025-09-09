@@ -384,7 +384,7 @@ export default function MaternalIndivRecords() {
     <LayoutWithBack title="Maternal Records" description="Manage mother's individual maternal records">
       <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
         {selectedPatient ? (
-          <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-1">
+          <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-1">
             <PatientInfoCardv2 patient={selectedPatient} />
             <PregnancyChart pregnancies={pregnancyData}/>
           </div>

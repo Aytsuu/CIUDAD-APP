@@ -79,6 +79,68 @@ export default function PostpartumFormFirstPg({
 
   const { data: latestPostpartumRecord, isLoading: latestPostpartumLoading } = useLatestPatientPostpartumRecord(selectedPatientId)
   
+  useEffect(() => {
+    if (isFromIndividualRecord && preselectedPatient) {
+      
+      setSelectedPatientId(preselectedPatient.pat_id || "")
+
+      const displayFormat = `${preselectedPatient.pat_id}, ${preselectedPatient?.personal_info?.per_lname}, ${preselectedPatient?.personal_info?.per_fname} ${preselectedPatient?.personal_info?.per_mname || ''}`.trim()
+      setSelectedPatIdDisplay(displayFormat)
+
+      handlePatientSelection(preselectedPatient, preselectedPatient.pat_id)
+    }
+  }, [isFromIndividualRecord, preselectedPatient, pregnancyId])
+
+  useEffect(() => {
+    const latestRecord = latestPostpartumRecord?.latest_postpartum_record
+
+    if (isFromIndividualRecord && !latestRecord) {
+      const spouse = latestPostpartumRecord?.spouse_info
+
+      setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname)
+      setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname)
+      setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname)
+      setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob)
+    }
+
+    if (isFromIndividualRecord && latestPostpartumRecord && latestPostpartumRecord && !latestPostpartumLoading) {
+      setValue("pregnancy_id", latestPostpartumRecord.latest_postpartum_record?.pregnancy?.pregnancy_id || "")
+
+      if (latestRecord) {
+        const spouse = latestRecord.spouse
+        const delivery = latestRecord.delivery_records?.[0]
+        const visit = latestRecord.follow_up_visits
+
+        setValue("postpartumInfo.lochialDischarges", lochialConversion(latestRecord.ppr_lochial_discharges))
+        setValue("postpartumInfo.ironSupplement", latestRecord.ppr_iron_supplement)
+        setValue("postpartumInfo.vitASupplement", latestRecord.ppr_vit_a_date_given)
+        setValue("postpartumInfo.noOfPadPerDay", latestRecord.ppr_num_of_pads)
+        setValue("postpartumInfo.mebendazole", latestRecord.ppr_mebendazole_date_given)
+        setValue("postpartumInfo.dateBfInitiated", latestRecord.ppr_date_of_bf)
+        setValue("postpartumInfo.timeBfInitiated", latestRecord.ppr_time_of_bf)
+
+        if (spouse) {
+          setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname)
+          setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname)
+          setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname)
+          setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob)
+        }
+
+        if(delivery) {
+          setValue("postpartumInfo.dateOfDelivery", delivery.ppdr_date_of_delivery)
+          setValue("postpartumInfo.timeOfDelivery", delivery.ppdr_time_of_delivery)
+          setValue("postpartumInfo.placeOfDelivery", delivery.ppdr_place_of_delivery)
+          setValue("postpartumInfo.outcome", outcomeConversion(delivery.ppdr_outcome))
+          setValue("postpartumInfo.attendedBy", delivery.ppdr_attended_by)
+        }
+
+        if(visit) {
+          setValue("postpartumInfo.nextVisitDate", visit.followv_date)
+        }
+        
+      }
+    }
+  }, [latestPostpartumRecord, latestPostpartumLoading])
 
   const handlePatientSelection = (patient: Patient | null, patientId: string) => {
     setSelectedPatIdDisplay(patientId)
@@ -114,7 +176,7 @@ export default function PostpartumFormFirstPg({
           ttStatus: "",
           ironSupplement: "",
           vitASupplement: "",
-          noOfPadPerDay: "",
+          noOfPadPerDay: 0,
           mebendazole: "",
           dateBfInitiated: "",
           timeBfInitiated: "",
@@ -228,59 +290,7 @@ export default function PostpartumFormFirstPg({
     }
   }
 
-  useEffect(() => {
-    if (isFromIndividualRecord && preselectedPatient) {
-      
-      setSelectedPatientId(preselectedPatient.pat_id || "")
-
-      const displayFormat = `${preselectedPatient.pat_id}, ${preselectedPatient?.personal_info?.per_lname}, ${preselectedPatient?.personal_info?.per_fname} ${preselectedPatient?.personal_info?.per_mname || ''}`.trim()
-      setSelectedPatIdDisplay(displayFormat)
-
-      handlePatientSelection(preselectedPatient, preselectedPatient.pat_id)
-    }
-  }, [isFromIndividualRecord, preselectedPatient, pregnancyId])
-
-  useEffect(() => {
-    const latestRecord = latestPostpartumRecord?.latest_postpartum_record
-
-    if (isFromIndividualRecord && latestPostpartumRecord && latestPostpartumRecord && !latestPostpartumLoading) {
-      setValue("pregnancy_id", latestPostpartumRecord.latest_postpartum_record?.pregnancy?.pregnancy_id || "")
-
-      if (latestRecord) {
-        const spouse = latestRecord.spouse
-        const delivery = latestRecord.delivery_records?.[0]
-        const visit = latestRecord.follow_up_visits
-
-        setValue("postpartumInfo.lochialDischarges", lochialConversion(latestRecord.ppr_lochial_discharges))
-        setValue("postpartumInfo.ironSupplement", latestRecord.ppr_iron_supplement)
-        setValue("postpartumInfo.vitASupplement", latestRecord.ppr_vit_a_date_given)
-        setValue("postpartumInfo.noOfPadPerDay", latestRecord.ppr_num_of_pads)
-        setValue("postpartumInfo.mebendazole", latestRecord.ppr_mebendazole_date_given)
-        setValue("postpartumInfo.dateBfInitiated", latestRecord.ppr_date_of_bf)
-        setValue("postpartumInfo.timeBfInitiated", latestRecord.ppr_time_of_bf)
-
-        if (spouse) {
-          setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname)
-          setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname)
-          setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname)
-          setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob)
-        }
-
-        if(delivery) {
-          setValue("postpartumInfo.dateOfDelivery", delivery.ppdr_date_of_delivery)
-          setValue("postpartumInfo.timeOfDelivery", delivery.ppdr_time_of_delivery)
-          setValue("postpartumInfo.placeOfDelivery", delivery.ppdr_place_of_delivery)
-          setValue("postpartumInfo.outcome", outcomeConversion(delivery.ppdr_outcome))
-          setValue("postpartumInfo.attendedBy", delivery.ppdr_attended_by)
-        }
-
-        if(visit) {
-          setValue("postpartumInfo.nextVisitDate", visit.followv_date)
-        }
-        
-      }
-    }
-  }, [latestPostpartumRecord, latestPostpartumLoading])
+  
 
 
   const postpartumTableColumns: ColumnDef<PostpartumTableType>[] = [
@@ -633,6 +643,7 @@ export default function PostpartumFormFirstPg({
                 label="Number of Pads per Day"
                 name="postpartumInfo.noOfPadPerDay"
                 placeholder="Number of Pads per Day"
+                type="number"
               />
               <FormDateTimeInput
                 control={form.control}

@@ -431,7 +431,7 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
         return None
 
 
-# serializer for Complete Prenatal Form
+# serializer for url /prenatal/pf_id/complete/
 class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
     # Patient details
     patient_details = serializers.SerializerMethodField()
@@ -457,7 +457,7 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prenatal_Form
         fields = [
-            'pf_id', 'pf_lmp', 'pf_edc', 'pf_occupation', 'created_at',
+            'pf_id', 'pf_lmp', 'pf_edc', 'pf_occupation', 'previous_complications', 'created_at',
             'patient_details', 'pregnancy_details', 'vital_signs_details', 
             'body_measurement_details', 'spouse_details', 'follow_up_visit_details', 'obstetric_history',
             'staff_details', 'previous_hospitalizations','previous_pregnancy', 
@@ -1098,6 +1098,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                 body_measurement = None
                 if body_measurement_data:
                     body_measurement = BodyMeasurement.objects.create(
+                        pat=patient,
                         patrec=patient_record,
                         **body_measurement_data
                     )

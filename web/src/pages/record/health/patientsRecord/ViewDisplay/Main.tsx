@@ -157,8 +157,6 @@ export default function ViewPatientRecord() {
   }
 
   const patientLinkData = useMemo(() => {
-    // console.log("Creating patientLinkData with currentPatient:", currentPatient)
-
     const linkData = {
       pat_id: currentPatient?.pat_id ?? patientId ?? "",
       pat_type: currentPatient?.pat_type ?? patientData?.patientType ?? "",
@@ -185,9 +183,6 @@ export default function ViewPatientRecord() {
         philhealth_id: currentPatient?.personal_info.philhealth_id ?? patientData?.philhealthId ?? "",
       },
     }
-
-    // console.log("Generated patientLinkData:", linkData)
-    // console.log("Address in patientLinkData:", linkData.address)
 
     return linkData
   }, [currentPatient, patientData, patientId])
@@ -372,7 +367,7 @@ export default function ViewPatientRecord() {
                 </div>
               </div>
               <div className="flex gap-2 sm:ml-auto">
-                {isTransient && activeTab === "personal" && (
+                {isTransient && activeTab === "personal" && isEditable == false && (
                   <Button onClick={handleEdit} className="gap-1 bg-buttonBlue hover:bg-buttonBlue/90">
                     <Edit className="h-4 w-4" />
                     <span className="hidden sm:inline">Edit</span>

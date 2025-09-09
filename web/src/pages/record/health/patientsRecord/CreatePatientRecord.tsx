@@ -101,7 +101,16 @@ export default function CreatePatientRecord() {
     name: `${tradd.tradd_street || ""}, ${tradd.tradd_sitio || ""}, ${tradd.tradd_barangay || ""}, ${tradd.tradd_city || ""}, ${tradd.tradd_province || ""}`.trim(),
   })) : []
 
-  const handleTransientAddressSelection = (selectedValue: string) => {
+  const handleTransientAddressSelection = (selectedValue: string | undefined) => {
+    if (!selectedValue) {
+      setSelectedTrAddId(0)
+      form.setValue("address.street", "")
+      form.setValue("address.sitio", "")
+      form.setValue("address.barangay", "")
+      form.setValue("address.city", "")
+      form.setValue("address.province", "")
+      return
+    }
     const id = Number(selectedValue)
     setSelectedTrAddId(id)
     console.log("Selected Transient Address ID: ", id)
@@ -133,49 +142,77 @@ export default function CreatePatientRecord() {
       })) || [],
   }
 
-  const handlePatientSelection = (id: string) => {
-    setSelectedResidentId(id)
-    console.log("Selected Resident ID:", id)
+  const handlePatientSelection = (id: string | undefined) => {
+    if (!id) {
+      setSelectedResidentId("");
+
+      form.setValue("lastName", "");
+      form.setValue("firstName", "");
+      form.setValue("middleName", "");
+      form.setValue("sex", "");
+      form.setValue("contact", "");
+      form.setValue("dateOfBirth", "");
+      form.setValue("patientType", "resident");
+      form.setValue("philhealthId", "");
+      form.setValue("address.street", "");
+      form.setValue("address.sitio", "");
+      form.setValue("address.barangay", "");
+      form.setValue("address.city", "");
+      form.setValue("address.province", "");
+      
+      return;
+    }
+    setSelectedResidentId(id);
+    console.log("Selected Resident ID:", id);
     const selectedPatient: ResidentProfile | undefined = persons.default.find(
       (p: ResidentProfile) => p.rp_id.toString() === id,
-    )
+    );
 
     if (selectedPatient && selectedPatient.personal_info) {
-      console.log("Selected Patient:", selectedPatient)
+      console.log("Selected Patient:", selectedPatient);
 
-      const personalInfo = selectedPatient.personal_info
+      const personalInfo = selectedPatient.personal_info;
 
       if (Array.isArray(selectedPatient?.households)) {
         console.log(
           "Household Nos:",
           selectedPatient.households.map((h) => h.hh_id),
-        )
+        );
       }
 
-      form.setValue("lastName", personalInfo.per_lname || "")
-      form.setValue("firstName", personalInfo.per_fname || "")
-      form.setValue("middleName", personalInfo.per_mname || "")
-      form.setValue("sex", personalInfo.per_sex || "")
-      form.setValue("contact", personalInfo.per_contact || "")
-      form.setValue("dateOfBirth", personalInfo.per_dob || "")
-      form.setValue("patientType", "resident")
-      form.setValue("philhealthId", personalInfo.philhealth_id || "")
+      form.setValue("lastName", personalInfo.per_lname || "");
+      form.setValue("firstName", personalInfo.per_fname || "");
+      form.setValue("middleName", personalInfo.per_mname || "");
+      form.setValue("sex", personalInfo.per_sex || "");
+      form.setValue("contact", personalInfo.per_contact || "");
+      form.setValue("dateOfBirth", personalInfo.per_dob || "");
+      form.setValue("patientType", "resident");
+      form.setValue("philhealthId", personalInfo.philhealth_id || "");
 
       if (selectedPatient.personal_info.per_addresses && selectedPatient.personal_info.per_addresses.length > 0) {
-        const address = selectedPatient.personal_info.per_addresses[0] // Get first address
+        const address = selectedPatient.personal_info.per_addresses[0]; // Get first address
 
-        form.setValue("address.street", address.add_street || "")
-        form.setValue("address.sitio", address.sitio || "")
-        form.setValue("address.barangay", address.add_barangay || "")
-        form.setValue("address.city", address.add_city || "")
-        form.setValue("address.province", address.add_province || "")
+        form.setValue("address.street", address.add_street || "");
+        form.setValue("address.sitio", address.sitio || "");
+        form.setValue("address.barangay", address.add_barangay || "");
+        form.setValue("address.city", address.add_city || "");
+        form.setValue("address.province", address.add_province || "");
       } else {
-        form.setValue("address.street", "")
-        form.setValue("address.sitio", "")
-        form.setValue("address.barangay", "")
-        form.setValue("address.city", "")
-        form.setValue("address.province", "")
+        form.setValue("address.street", "");
+        form.setValue("address.sitio", "");
+        form.setValue("address.barangay", "");
+        form.setValue("address.city", "");
+        form.setValue("address.province", "");
       }
+    } else {
+      form.setValue("lastName", "");
+      form.setValue("firstName", "");
+      form.setValue("middleName", "");
+      form.setValue("sex", "");
+      form.setValue("contact", "");
+      form.setValue("dateOfBirth", "");
+      form.setValue("patientType", "resident");
+      form.setValue("philhealthId", "");
     }
   }
 
@@ -314,70 +351,72 @@ export default function CreatePatientRecord() {
                 }}
                 className="space-y-4"
               >
-                <div className="grid grid-cols-3 gap-4 rounded-lg bg-white p-4">
-                  <div className="flex-1">
-                    <Label className="text-black/70"> </Label>
-                    <FormSelect
-                      control={form.control}
-                      name="patientType"
-                      label="Patient Type"
-                      options={[
-                        { id: "resident", name: "Resident" },
-                        { id: "transient", name: "Transient" },
-                      ]}
-                      readOnly={false}
-                    />
-                  </div>
-
-                  {patientType === "resident" && (
-                    <div>
-                      <Label className="text-black/70">Resident Selection</Label>
-                      <div className="relative mt-[6.5px]">
-                        <Combobox
-                          options={persons.formatted}
-                          value={selectedResidentId}
-                          onChange={handlePatientSelection}
-                          placeholder={residentLoading ? "Loading residents..." : "Select a resident"}
-                          triggerClassName="font-normal w-full"
-                          emptyMessage={
-                            <div className="flex flex-col gap-2 justify-center items-center">
-                              <Label className="font-normal text-[13px]">
-                                {residentLoading
-                                  ? "Loading..."
-                                  : "No residents were found without an assigned Patient ID."}
-                              </Label>
-                              <Link to="/residents/new">
-                                <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                                  Register New Resident
-                                </Label>
-                              </Link>
-                            </div>
-                          }
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {patientType === 'transient' && (
-                    <div className="flex w-full items-end">
-                      <label className="flex items-center text-[15px] font-poppins p-[9px] w-full gap-1"> <CircleAlert size={15}/> For <b>TRANSIENT</b> please fill in the needed details below.</label>
-                    </div>
-                  )}
-                </div>
+                
 
                 <CardLayout
                   title=""
                   description=""
                   content={
                   <>
-                    <div className="mb-8">
+                    <div className="mb-5">
                       <Label className="text-xl text-black">Patient Information</Label>
                       <p className="text-sm text-black/70 mb-2">Review the patient information before saving.</p>
                       <Separator className="w-full bg-gray" />
                     </div>
 
+                    <div className="grid grid-cols-3 gap-4 rounded-lg bg-white mb-8">
+                      <div className="flex-1">
+                        <Label className="text-black/70"> </Label>
+                        <FormSelect
+                          control={form.control}
+                          name="patientType"
+                          label="Patient Type"
+                          options={[
+                            { id: "resident", name: "Resident" },
+                            { id: "transient", name: "Transient" },
+                          ]}
+                          readOnly={false}
+                        />
+                      </div>
+
+                      {patientType === "resident" && (
+                        <div>
+                          <Label className="text-black/70">Resident Selection</Label>
+                          <div className="relative mt-[6.5px]">
+                            <Combobox
+                              options={persons.formatted}
+                              value={selectedResidentId}
+                              onChange={handlePatientSelection}
+                              placeholder={residentLoading ? "Loading residents..." : "Select a resident"}
+                              triggerClassName="font-normal w-full"
+                              emptyMessage={
+                                <div className="flex flex-col gap-2 justify-center items-center">
+                                  <Label className="font-normal text-[13px]">
+                                    {residentLoading
+                                      ? "Loading..."
+                                      : "No residents were found."}
+                                  </Label>
+                                  <Link to="/residents/new">
+                                    <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                                      Register New Resident
+                                    </Label>
+                                  </Link>
+                                </div>
+                              }
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {patientType === 'transient' && (
+                        <div className="flex w-full items-end">
+                          <label className="flex items-center text-[15px] font-poppins p-[9px] w-full gap-1"> <CircleAlert size={15}/> For <b>TRANSIENT</b> please fill in the needed details below.</label>
+                        </div>
+                      )}
+                    </div>
+
                     {/* personal information section - read Only if RESIDENT */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-5">
                       <FormInput control={form.control} name="lastName" label="Last Name" placeholder="Enter last name" readOnly={isResident() ? true : false} />
                       
                       <FormInput control={form.control} name="firstName" label="First Name" placeholder="Enter first name" readOnly={isResident() ? true : false} />
@@ -387,7 +426,7 @@ export default function CreatePatientRecord() {
                       <FormInput control={form.control} name="philhealthId" label="PhilHealth ID" placeholder="Enter PhilHealth ID (optional)" readOnly={isResident() ? true : false} />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                       <FormSelect
                         control={form.control}
                         name="sex"
@@ -407,7 +446,7 @@ export default function CreatePatientRecord() {
                     {/* address section - read Only if RESIDENT */}
                     {patientType === 'transient' && (
                       <>
-                        <Label className="flex text-black/70">Address Selection <p className="text-xs italic text-black/50 ml-2">[Applicable for Transient Only]</p></Label>
+                        <Label className="flex text-black/70">Address Selection <p className="text-xs italic text-black/50 ml-2"> (Transient only)</p></Label>
                         <div className="relative mb-4 mt-2">
                           <Combobox
                             options={transientAddressOpt}

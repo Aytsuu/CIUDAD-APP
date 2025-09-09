@@ -140,21 +140,17 @@ export default function ScheduleRecords() {
 
   const handleFilterChange = (filter: string) => {
     setSelectedFilter(filter)
-    setPage(1) // Reset to first page on filter change
+    setPage(1) 
   }
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
-    setPage(1) // Reset to first page
+    setPage(1) 
   }
 
   const handleTimeFrameChange = (timeFrame: string) => {
-    console.log("Received timeFrame from tab:", timeFrame)
-    console.log("Current timeFrame state before update:", timeFrame)
-
     setTimeFrame(timeFrame)
-    console.log("Time frame changed to:", timeFrame)
-    setPage(1) // Reset to first page
+    setPage(1)
   }
 
   // determine if missed 

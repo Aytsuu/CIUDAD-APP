@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { usePrenatalPatientPrenatalCare } from "../queries/maternalFetchQueries";
 
 
-interface PrenatalVisit {
+export interface PrenatalVisit {
   date: string;
   aog: string;
   weight: string;
@@ -42,22 +42,15 @@ interface TableRowConfig {
   cellClassName?: string;
 }
 
-export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTableProps) {
+export function PrenatalCareHistoryTable({ data, className = "" }: PrenatalHistoryTableProps) {
   const location = useLocation();
   const { patientData, pregnancyId, visitNumber } = location.state?.params || {}
 
-  const { 
-    data: prenatalCareData, 
-    isLoading, 
-    error 
-  } = usePrenatalPatientPrenatalCare(
-    patientData?.pat_id || "", 
-    pregnancyId || ""
-  )
+  const { data: prenatalCareData, isLoading, error } = usePrenatalPatientPrenatalCare(patientData?.pat_id || "", pregnancyId || "")
 
   const recordsToShow = prenatalCareData?.prenatal_records?.slice(0, visitNumber) || []
 
-  // transform api data to match PrenatalVisit interface
+  // matching the api structure to Prenatal Care interface
   const transformedData: PrenatalVisit[] = recordsToShow.flatMap((record: any) => 
     record.prenatal_care_entries.map((entry: any) => ({
       date: new Date(entry.pfpc_date).toLocaleDateString(),
@@ -141,12 +134,12 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
 
   const tableRows: TableRowConfig[] = [
     {
-      label: "Visit Date",
-      accessor: (visit) => visit.date,
+      label: "Date",
+      accessor: (visit) => (new Date(visit.date).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" })),
       cellClassName: "font-poppins text-sm text-center"
     },
     {
-      label: "Gestational Age (AOG)",
+      label: "AOG",
       accessor: (visit) => (
         <Badge variant="outline" className="font-poppins text-sm">
           {visit.aog}
@@ -155,7 +148,7 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
       cellClassName: "text-center"
     },
     {
-      label: "Weight",
+      label: "WT",
       accessor: (visit) => (
         <span className={`font-poppins text-sm ${
           visit.changes?.weight ? 'bg-red-100 text-red-700 px-2 py-1 rounded font-semibold' : ''
@@ -169,7 +162,7 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
       cellClassName: "font-poppins text-sm text-center"
     },
     {
-      label: "Blood Pressure",
+      label: "BP",
       accessor: (visit) => (
         <span className={`font-poppins text-sm ${
           visit.changes?.bloodPressure ? 'bg-red-100 text-red-700 px-2 py-1 rounded font-semibold' : ''
@@ -183,7 +176,7 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
       cellClassName: "font-poppins text-sm text-center"
     },
     {
-      label: "Leopold's Findings",
+      label: "Findings Leopold's Manuever",
       accessor: (visit) => (
         <div className="text-sm leading-relaxed space-y-1">
         <div>
@@ -201,7 +194,7 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
           </span>
         </div>
         <div>
-          <span className="font-medium">Position:</span>{' '}
+          <span className="font-medium">Fetal Position:</span>{' '}
           <span className={visit.changes?.fetalPosition ? 'bg-red-100 text-red-700 px-1 py-0.5 rounded font-semibold' : ''}>
             {visit.leopoldsFindings.fetalPosition}
             {visit.changes?.fetalPosition && <span className="ml-1 text-red-500">●</span>}
@@ -212,7 +205,7 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
       cellClassName: "text-center max-w-xs"
     },
     {
-      label: "Clinical Notes",
+      label: "Notes (Lab Results, Complaints, Advises)",
       accessor: (visit) => (
         <div className="text-s leading-relaxed space-y-2">
           <div className="p-2 rounded border-red-400">
@@ -233,7 +226,7 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
 
   // Keep your existing table structure - no changes
   return (
-    <Card className={`border-slate-200 shadow-sm font-poppins ${className}`}>
+    <Card className={`border-slate-300 shadow-sm font-poppins ${className}`}>
       <CardContent className="p-0">
         <div className={hasMoreVisits ? "overflow-x-auto" : ""}>
           <Table className={hasMoreVisits ? "w-max" : "w-full"}>

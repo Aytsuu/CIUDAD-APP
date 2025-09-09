@@ -339,7 +339,7 @@ export default function PersonalInfoTab({
             contentClassName="pt-0"
           />
       {isTransient && isEditable && (
-        <div className="flex justify-end mt-6 space-x-2">
+        <div className="flex justify-end mt-6 space-x-2 pb-6">
           <Button
             variant="outline"
             size="sm"

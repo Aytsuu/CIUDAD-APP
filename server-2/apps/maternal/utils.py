@@ -10,40 +10,36 @@ def handle_spouse_logic(patient, spouse_data):
     if not spouse_data:
         return None
     
-    try:
-        patient_serializer = PatientSerializer(patient)
-        spouse_info = patient_serializer.get_spouse_info(patient)
+    patient_serializer = PatientSerializer(patient)
+    spouse_info = patient_serializer.get_spouse_info(patient)
+    
+    print(f"Spouse info for patient {patient.pat_id}: {spouse_info}")
+    
+    # check if spouse exists (either in family composition or medical records)
+    if spouse_info.get('spouse_exists', False):
+        spouse_source = spouse_info.get('spouse_source', '')
+        existing_spouse_info = spouse_info.get('spouse_info', {})
         
-        print(f"Spouse info for patient {patient.pat_id}: {spouse_info}")
-        
-        # check if spouse exists (either in family composition or medical records)
-        if spouse_info.get('spouse_exists', False):
-            spouse_source = spouse_info.get('spouse_source', '')
-            existing_spouse_info = spouse_info.get('spouse_info', {})
-            
-            if spouse_source == 'family_composition':
-                # if father exists in family composition, don't create spouse
-                print("Father exists in family composition, not creating spouse")
-                return None
-            
-            elif spouse_source in ['prenatal_form', 'postpartum_record']:
-                # existing spouse in medical records
-                spouse_id = existing_spouse_info.get('spouse_id')
-                if spouse_id:
-                    existing_spouse = Spouse.objects.get(spouse_id=spouse_id)
-                    print(f"Using existing spouse from {spouse_source}: {existing_spouse.spouse_id}")
-                    return existing_spouse
-        
-        # check if spouse insertion is allowed
-        if spouse_info.get('allow_spouse_insertion', False):
-            print(f"Creating new spouse. Reason: {spouse_info.get('reason', 'Unknown')}")
-            return Spouse.objects.create(**spouse_data)
-        else:
-            print("Spouse insertion not allowed")
+        if spouse_source == 'family_composition':
+            # if father exists in family composition, don't create spouse
+            print("Father exists in family composition, not creating spouse")
             return None
-            
-    except Exception as e:
-        return (f"Error in spouse logic: {str(e)}") 
+        
+        elif spouse_source in ['prenatal_form', 'postpartum_record']:
+            # existing spouse in medical records
+            spouse_id = existing_spouse_info.get('spouse_id')
+            if spouse_id:
+                existing_spouse = Spouse.objects.get(spouse_id=spouse_id)
+                print(f"Using existing spouse from {spouse_source}: {existing_spouse.spouse_id}")
+                return existing_spouse
+    
+    # check if spouse insertion is allowed
+    if spouse_info.get('allow_spouse_insertion', False):
+        print(f"Creating new spouse. Reason: {spouse_info.get('reason', 'Unknown')}")
+        return Spouse.objects.create(**spouse_data)
+    else:
+        print("Spouse insertion not allowed")
+        return None
         # fallback: try to create spouse if there's an error
         # try:
         #     return Spouse.objects.create(**spouse_data)

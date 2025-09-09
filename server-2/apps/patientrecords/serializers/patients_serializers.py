@@ -3,7 +3,7 @@ from ..models import *
 from datetime import date
 from apps.healthProfiling.serializers.base import PersonalSerializer
 from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSerializer,HouseholdMinimalSerializer
-from apps.healthProfiling.models import FamilyComposition,Household, ResidentProfile, Personal, PersonalAddress, Address
+from apps.healthProfiling.models import FamilyComposition,Household, ResidentProfile, Personal, PersonalAddress, Address, HealthRelatedDetails, MotherHealthInfo
 from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
 from apps.maternal.models import PostpartumRecord, TT_Status, Prenatal_Form
 from apps.healthProfiling.serializers.minimal import *
@@ -39,6 +39,7 @@ class PatientSerializer(serializers.ModelSerializer):
     family = serializers.SerializerMethodField()
     family_head_info = serializers.SerializerMethodField()
     spouse_info = serializers.SerializerMethodField()
+    additional_info = serializers.SerializerMethodField()
 
     class Meta:
         model = Patient
@@ -534,6 +535,29 @@ class PatientSerializer(serializers.ModelSerializer):
                 'allow_spouse_insertion': True,
                 'reason': f'Error in medical records check: {str(e)}'
             }
+
+        
+    def get_additional_info(self, obj):
+        try:
+            additional_info = {}
+            if obj.pat_id and obj.rp_id:
+                per_ph_id = HealthRelatedDetails.objects.filter(rp=obj.rp_id)
+                mother_tt = MotherHealthInfo.objects.filter(rp=obj.rp_id)
+
+                if per_ph_id.exists() and mother_tt.exists():
+                    additional_info['philhealth_id'] = per_ph_id.per_add_philhealth_id
+                    additional_info['mother_tt_status'] = mother_tt.mhi_immun_status
+                else:
+                    additional_info['philhealth_id'] = None
+                    additional_info['mother_tt_status'] = None
+
+                return additional_info
+                
+            return None
+
+        except Exception as e:
+            print(f"Error in get_additional_info: {str(e)}")
+            return None
 
    
 class PatientRecordSerializer(serializers.ModelSerializer):

@@ -43,6 +43,16 @@ import { usePrenatalPatientMedHistory,
 import { useAddIllnessData } from "../../queries/maternalAddQueries"
 import { showErrorToast } from "@/components/ui/toast"
 
+// capitalization tailored for adding illness
+const capitalize = (str: string): string => {
+    if (!str) return '';
+    return str
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
 // age calculation for dob
 const calculateAge = (dob: string): number => {
   const birthDate = new Date(dob)
@@ -284,7 +294,7 @@ export default function PrenatalFormFirstPg({
           noOfAbortion: 0,
           noOfStillBirths: 0,
           historyOfLBabies: 0,
-          historyOfDiabetes: "",
+          historyOfDiabetes: undefined,
         },
         medicalHistory: {
           prevIllness: "",
@@ -446,7 +456,7 @@ export default function PrenatalFormFirstPg({
   const handleAddNewIllness = async (newIllness: string) => {
     try {
       const IllnessData = {
-        illname: newIllness,
+        illname: capitalize(newIllness),
       }
 
       await addIllnessMutation.mutateAsync(IllnessData)
@@ -457,7 +467,7 @@ export default function PrenatalFormFirstPg({
       setSelectedIllnessId("")
 
     } catch (error) {
-      console.error("Failed to add new illness: ", error)
+      showErrorToast("Failed to add illness")
     }
   }
 
@@ -496,6 +506,9 @@ export default function PrenatalFormFirstPg({
       setValue("motherPersonalInfo.motherHt", currBodyMeasurement.height || undefined)
     }
   }, [bodyMeasurementData, bmLoading, setValue])
+
+  const BMweight = bodyMeasurementData?.body_measurement.weight
+  const BMheight = bodyMeasurementData?.body_measurement.height
 
 
   // ph date and ph time //
@@ -1064,12 +1077,18 @@ export default function PrenatalFormFirstPg({
               </div>
 
               <div className="flex mt-5">
-                {bodyMeasurementData?.body_measurement.weight !== null && (selectedPatientId) && !bmLoading && (
+                {bodyMeasurementData?.body_measurement.weight !== null && 
+                (selectedPatientId) && !bmLoading && BMweight !== undefined && BMheight !== undefined
+                ? (
                   <span className="text-sm italic text-yellow-600">
-                    *Note: Last measurements were recorded on {phDate}
+                    Note: Last measurements were recorded on {phDate}
+                  </span>
+                ) : (
+                  <span className="text-sm italic text-gray-500">
+                    Note: No previous measurements found.
                   </span>
                 )}
-              </div>
+              </div>  
 
               {/* obstetric history */}
               <div className="border rounded-lg p-4 shadow-md mt-10">
@@ -1198,7 +1217,7 @@ export default function PrenatalFormFirstPg({
                       <div>
                         <FormTextArea
                           control={control}
-                          name="medicalHistory.prevComplications"
+                          name="medicalHistory.previousComplications"
                           label=""
                           placeholder="Enter previous complications"
                         />

@@ -21,6 +21,8 @@ import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"
 import { usePrenatalPatientFollowUpVisits, useCalculatedMissedVisits } from "../../queries/maternalFetchQueries"
+import { ScrollText } from "lucide-react"
+
 
 export default function PrenatalFormThirdPg({
   form,
@@ -33,7 +35,9 @@ export default function PrenatalFormThirdPg({
 }) {
 
   const handleNext = async () => {
-    window.scrollTo(0, 0)
+    setTimeout(() => {
+      window.scrollTo(0, 0)
+    }, 100)
 
     if (Object.keys(form.formState.errors).length === 0) {
       console.log("Form is valid, proceeding to next page")
@@ -47,7 +51,6 @@ export default function PrenatalFormThirdPg({
         firstErrorElement.scrollIntoView({ behavior: "smooth", block: "center" })
       }
     }
-    window.scrollTo(0, 0)
   }
 
   const aogWks = form.watch("followUpSchedule.aogWeeks") || undefined
@@ -70,12 +73,12 @@ export default function PrenatalFormThirdPg({
 
   const getDayName = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString("en-PH", { weekday: "long" })
+    return  date.toLocaleDateString("en-PH", { weekday: "long" })
   }
 
   const followupDate = form.watch("followUpSchedule.followUpDate")
 
-  const followupDayName = followupDate ? `is on ${getDayName(followupDate).toLocaleUpperCase()}` : ""
+  const followupDayName = followupDate ? `is on ${getDayName(followupDate)}` : ""
 
   const handleSelectedMedicinesChange = useCallback(
     (
@@ -464,7 +467,7 @@ export default function PrenatalFormThirdPg({
                     </div>
                     {followupDate && (
                       <span className="text-sm italic text-yellow-600">
-                        *Note: Next follow-up visit {followupDayName}
+                        Note: Next follow-up visit {followupDayName}
                       </span>
                     )}
                     
@@ -508,7 +511,9 @@ export default function PrenatalFormThirdPg({
                               })
                           ) : (
                             <div className="flex justify-center items-center py-4">
-                              <span className="text-sm text-gray-500">No follow-up visits found</span>
+                              <span className="flex justify-center items-center text-sm text-gray-500">
+                                <ScrollText size={30}/> No follow-up visits found
+                              </span>
                             </div>
                           )}
                         </div>
@@ -576,9 +581,12 @@ export default function PrenatalFormThirdPg({
                     </div>
                   </CardContent>
                 </Card>
+              </div>
+            </div>
 
-                {/* checklist */}
-                <Card className="border rounded-lg shadow-md flex flex-col w-full">
+            <div>
+              {/* checklist */}
+                <Card className="border rounded-lg shadow-md flex flex-col w-full mb-5">
                   <CardHeader>
                     <CardTitle className="text-md font-semibold p-5">CHECKLIST</CardTitle>
                     <Label className="ml-10">()PRE-ECLAMPSIA</Label>
@@ -605,10 +613,10 @@ export default function PrenatalFormThirdPg({
                     ))}
                   </CardContent>
                 </Card>
-              </div>
             </div>
+
             <div className="grid ">
-              <Card className=" p-4 border rounded-lg shadow-md mb-8">
+              <Card className=" p-4 border rounded-lg shadow-md mb-5">
                 <CardHeader>
                   <CardTitle className="text-md font-semibold mt-2">BIRTH PLANS</CardTitle>
                 </CardHeader>
@@ -656,7 +664,7 @@ export default function PrenatalFormThirdPg({
                 </CardContent>
               </Card>
 
-              <Card className="border rounded-lg shadow-md p-4 mb-8">
+              <Card className="border rounded-lg shadow-md p-4 mb-5">
                 <CardHeader>
                   <span className="flex flex-row items-center">
                     <CardTitle className="text-md font-semibold mt-2 mb-3 mr-2">

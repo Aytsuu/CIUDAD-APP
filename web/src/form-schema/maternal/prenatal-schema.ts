@@ -129,8 +129,8 @@ export const PrenatalFormSchema = z.object({
         noOfAbortion: positiveNumberSchema.optional(),
         noOfStillBirths: positiveNumberSchema.optional(),
         historyOfLBabies: positiveNumberSchema.optional(),
-        historyOfLBabiesStr: z.string().optional(),
-        historyOfDiabetes: z.string().optional(),
+        historyOfLBabiesStr: z.boolean().default(false),
+        historyOfDiabetes: z.boolean().default(false),
     }).optional(),
 
     // medical history
@@ -169,11 +169,11 @@ export const PrenatalFormSchema = z.object({
         ttStatus: z.string().optional(),
         ttDateGiven: z.string().optional(),
         // fullyImmunized: z.boolean().optional(),
-        isTDAPAdministered: z.boolean().optional(),
+        isTDAPAdministered: z.boolean().default(false),
         ttRecordsHistory: z.array(z.object({
           ttStatus: z.string().optional(),
           ttDateGiven: z.string().optional(),
-          isTDAPAdministered: z.boolean().optional(),
+          // isTDAPAdministered: z.boolean().optional().default(false),
           vaccineType: z.string().optional(),
         })).optional(),
     }),
@@ -256,25 +256,29 @@ export const PrenatalFormSchema = z.object({
     // guide for 4anc visits
     ancVisits: z.object({
         firstTri: dateSchema,
+        firstTriTwo: dateSchema,
         secondTri: dateSchema,
+        secondTriTwo: dateSchema,
         thirdTriOne: dateSchema,
-        thirdTriTwo: dateSchema
+        thirdTriTwo: dateSchema,
+        thirdTriThree: dateSchema,
+        thirdTriFour: dateSchema,
     }),
 
     // checklist
     assessmentChecklist: z.object({
-        increasedBP: z.boolean().optional(),
-        epigastricPain: z.boolean().optional(),
-        nausea: z.boolean().optional(),
-        blurringOfVision: z.boolean().optional(),
-        edema: z.boolean().optional(),
-        severeHeadache: z.boolean().optional(),
-        abnormalVaginalDischarges: z.boolean().optional(),
-        vaginalBleeding: z.boolean().optional(),
-        chillsFever: z.boolean().optional(),
-        diffInBreathing: z.boolean().optional(),
-        varicosities: z.boolean().optional(),
-        abdominalPain: z.boolean().optional()
+        increasedBP: z.boolean().default(false),
+        epigastricPain: z.boolean().default(false),
+        nausea: z.boolean().default(false),
+        blurringOfVision: z.boolean().default(false),
+        edema: z.boolean().default(false),
+        severeHeadache: z.boolean().default(false),
+        abnormalVaginalDischarges: z.boolean().default(false),
+        vaginalBleeding: z.boolean().default(false),
+        chillsFever: z.boolean().default(false),
+        diffInBreathing: z.boolean().default(false),
+        varicosities: z.boolean().default(false),
+        abdominalPain: z.boolean().default(false)
     }),
 
     // pregnancy plan
@@ -293,16 +297,16 @@ export const PrenatalFormSchema = z.object({
     // risk codes
     riskCodes: z.object({
         hasOneOrMoreOfTheFF: z.object({
-            prevCaesarian: z.boolean().optional(),
-            miscarriages: z.boolean().optional(),
-            postpartumHemorrhage: z.boolean().optional(),
+            prevCaesarian: z.boolean().default(false),
+            miscarriages: z.boolean().default(false),
+            postpartumHemorrhage: z.boolean().default(false),
         }),
         hasOneOrMoreOneConditions: z.object({
-            tuberculosis: z.boolean().optional(),
-            heartDisease: z.boolean().optional(),
-            diabetes: z.boolean().optional(),
-            bronchialAsthma: z.boolean().optional(),
-            goiter: z.boolean().optional()
+            tuberculosis: z.boolean().default(false),
+            heartDisease: z.boolean().default(false),
+            diabetes: z.boolean().default(false),
+            bronchialAsthma: z.boolean().default(false),
+            goiter: z.boolean().default(false)
         })
     }),
 

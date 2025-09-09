@@ -93,19 +93,28 @@ export default function PrenatalFormSecPg({
     }
   }, [ttRecords.length, form])
 
+  useEffect(() => {
+    const lmp = form.getValues("presentPregnancy.pf_lmp");
+    if (lmp) {
+      const edc = new Date(lmp);
+      edc.setFullYear(edc.getFullYear() + 1);
+      edc.setMonth(edc.getMonth() - 3);
+      edc.setDate(edc.getDate() + 7);
+      form.setValue("presentPregnancy.pf_edc", edc.toISOString().split("T")[0]);
+    }
+
+  }, [form.watch("presentPregnancy.pf_lmp")])
 
   useEffect(() => {
-    // Convert lab results to the format expected by your form schema
+    // convert lab results to the format expected by your form schema
     const convertedLabResults = convertLabResultsToSchema(labResults)
 
-    // Set the lab results in the form
     form.setValue("labResults.labResultsData", convertedLabResults)
 
-    // Validate lab results and set errors
+    // validate lab results and set errors
     const validation = validateLabResults(labResults)
     setLabErrors(validation.errors)
 
-    // Optional: Set form error if validation fails
     if (!validation.isValid) {
       form.setError("labResults", {
         type: "manual",
@@ -119,26 +128,26 @@ export default function PrenatalFormSecPg({
   const handleNext = async () => {
     window.scrollTo(0, 0) 
 
-    // Validate lab results first
+    // validate lab results first
     const labValidation = validateLabResults(labResults)
     console.log("Lab validation result:", labValidation.isValid, "Errors:", labValidation.errors)
 
     if (!labValidation.isValid) {
       console.log("Lab validation failed, preventing page transition.")
       setLabErrors(labValidation.errors)
-      // Scroll to lab results section
+      // scroll to lab results section
       const labSection = document.querySelector('[data-section="laboratory-results"]')
       if (labSection) {
         labSection.scrollIntoView({ behavior: "smooth" })
       }
-      return // Stop submission if lab results are invalid
+      return 
     }
 
-    // Get lab summary for logging/processing
+    // get lab summary for logging/processing
     const labSummary = getLabResultsSummary(labResults)
     console.log("Laboratory Results Summary: ", labSummary)
 
-    // Trigger form validation for other fields on this page
+    // other form validation on this page
     const isValid = await form.trigger(["previousPregnancy", "prenatalVaccineInfo", "presentPregnancy"])
     console.log("Page 2 RHF validation result:", isValid, "Errors:", form.formState.errors)
 
@@ -148,7 +157,7 @@ export default function PrenatalFormSecPg({
       onSubmit()
     } else {
       console.log("Form validation failed for RHF fields.")
-      // Scroll to first error
+      // scroll to first error
       const firstError = document.querySelector('[data-error="true"]')
       if (firstError) {
         firstError.scrollIntoView({ behavior: "smooth" })
@@ -263,7 +272,7 @@ export default function PrenatalFormSecPg({
               TETANUS TOXOID GIVEN: (DATE GIVEN){" "}
               <p className="flex items-center text-black/50 text-[14px] ml-2">
                 <CircleAlert size={15} className="mr-1" />
-                Note: Choose vaccine type only if administered by midwife. If not, do not select any vaccine type and
+                Note: Choose vaccine type only if administered by midwife on the day of visit. If not, do not select any vaccine type and
                 proceed to TT Status.
               </p>
             </h3>
@@ -341,60 +350,60 @@ export default function PrenatalFormSecPg({
               </div>
 
               {/* <div className="border rounded-lg p-5"> */}
-                <div>
-                  <h3 className="text-sm font-semibold"> TT Records History</h3>
-                </div>
-                <Card className="border rounded-lg bg-gray-50">
-                  <CardContent>
-                    <div className="space-y-2 mt-5 max-h-[20rem] overflow-y-auto">
-                      {ttRecords.length === 0 ? (
-                        <div className="flex justify-center items-center p-5">
-                          <span className="text-sm text-gray-500">No TT records found</span>
-                        </div>
-                      ) : (
-                        ttRecords
-                          .sort((a, b) => {
-                            // Sort by date (most recent first)
-                            const dateA = a.ttDateGiven ? new Date(a.ttDateGiven).getTime() : 0
-                            const dateB = b.ttDateGiven ? new Date(b.ttDateGiven).getTime() : 0
-                            return dateB - dateA
-                          })
-                          .map((record, index) => {
-                            const statusBadge = getTTStatusBadge(record.ttStatus)
-
-                            return (
-                              <div key={`tt-record-${index}`}
-                                className="flex justify-between items-center text-sm p-2 rounded-md border border-black/20"
-                              >
-                                <div className="flex flex-col">
-                                  <span className="text-lg font-medium">
-                                    {record.ttDateGiven 
-                                      ? new Date(record.ttDateGiven).toLocaleDateString("en-PH", {
-                                          year: "numeric",
-                                          month: "short", 
-                                          day: "numeric"
-                                        })
-                                      : "Date not set"
-                                    }
-                                  </span>
-                                  {/* {record.vaccineType && (
-                                    <span className="text-xs text-gray-500">
-                                      Vaccine: {record.vaccineType}
-                                    </span>
-                                  )} */}
-                                </div>
-                                <Badge variant={statusBadge.variant} className={statusBadge.className}>
-                                  {record.ttStatus}
-                                </Badge>
-                              </div>
-                            )
-                          })
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+              <div>
+                <h3 className="text-sm font-semibold"> TT Records History</h3>
               </div>
+              <Card className="border rounded-lg bg-gray-50">
+                <CardContent>
+                  <div className="space-y-2 mt-5 max-h-[20rem] overflow-y-auto">
+                    {ttRecords.length === 0 ? (
+                      <div className="flex justify-center items-center p-5">
+                        <span className="text-sm text-gray-500">No TT records found</span>
+                      </div>
+                    ) : (
+                      ttRecords
+                        .sort((a, b) => {
+                          // Sort by date (most recent first)
+                          const dateA = a.ttDateGiven ? new Date(a.ttDateGiven).getTime() : 0
+                          const dateB = b.ttDateGiven ? new Date(b.ttDateGiven).getTime() : 0
+                          return dateB - dateA
+                        })
+                        .map((record, index) => {
+                          const statusBadge = getTTStatusBadge(record.ttStatus)
+
+                          return (
+                            <div key={`tt-record-${index}`}
+                              className="flex justify-between items-center text-sm p-2 rounded-md border border-black/20"
+                            >
+                              <div className="flex flex-col">
+                                <span className="text-lg font-medium">
+                                  {record.ttDateGiven 
+                                    ? new Date(record.ttDateGiven).toLocaleDateString("en-PH", {
+                                        year: "numeric",
+                                        month: "short", 
+                                        day: "numeric"
+                                      })
+                                    : "Date not set"
+                                  }
+                                </span>
+                                {/* {record.vaccineType && (
+                                  <span className="text-xs text-gray-500">
+                                    Vaccine: {record.vaccineType}
+                                  </span>
+                                )} */}
+                              </div>
+                              <Badge variant={statusBadge.variant} className={statusBadge.className}>
+                                {record.ttStatus}
+                              </Badge>
+                            </div>
+                          )
+                        })
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+          </div>
           {/* </div> */}
 
           {/* present pregnancy */}
