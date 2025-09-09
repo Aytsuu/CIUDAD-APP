@@ -26,7 +26,6 @@ export default function AccountDetails({ params }: {
 
   const handleSubmit = async () => {
     const formIsValid = await trigger([
-      "accountFormSchema.username",
       "accountFormSchema.password",
       "accountFormSchema.confirmPassword"
     ])
@@ -51,7 +50,6 @@ export default function AccountDetails({ params }: {
       <View className="flex-1 px-6">
         {/* Header Section */}
         <View>
-          <Text className="text-xl font-PoppinsMedium text-gray-900 mb-2">Create Your Account</Text>
           <Text className="text-sm font-PoppinsRegular text-gray-600 leading-6 mb-4">
             Please fill in your account details to continue with the registration process.
           </Text>
@@ -60,8 +58,6 @@ export default function AccountDetails({ params }: {
         {/* Form Section */}
         <View className="space-y-6">
           <View className="space-y-4">
-            <FormInput control={control} name="accountFormSchema.username" label="Username" />
-
             <View className="relative">
               <FormInput
                 control={control}
@@ -100,18 +96,6 @@ export default function AccountDetails({ params }: {
                   <Eye className="w-5 h-5 text-gray-500" />
                 )}
               </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Password Requirements */}
-          <View className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-            <Text className="text-sm font-PoppinsMedium text-blue-900 mb-2">Password Requirements:</Text>
-            <View className="space-y-1">
-              <Text className="text-xs font-PoppinsRegular text-blue-700">• At least 6 characters long</Text>
-              <Text className="text-xs font-PoppinsRegular text-blue-700">
-                • Contains uppercase and lowercase letters
-              </Text>
-              <Text className="text-xs font-PoppinsRegular text-blue-700">• Includes at least one number</Text>
             </View>
           </View>
         </View>

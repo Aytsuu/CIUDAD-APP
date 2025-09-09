@@ -16,7 +16,7 @@ class BusinessCreateView(generics.CreateAPIView):
 
 class BRCreateUpdateView(generics.CreateAPIView):
   permission_classes = [AllowAny]
-  serializer_class = BusinessCreateUpdateSerializer
+  serializer_class = BRCreateUpdateSerializer
   queryset = BusinessRespondent.objects.all()
 
 class ActiveBusinessTableView(generics.ListAPIView):
