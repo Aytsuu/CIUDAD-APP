@@ -38,10 +38,12 @@ import { usePrenatalPatientMedHistory,
         usePatientTTStatus,
         useIllnessList,
 } from "../../queries/maternalFetchQueries"
+// import { fetchVaccinesWithStock } from "@/pages/healthServices/vaccination/queries/fetch" // temporarily paused for some reasons
 
 // create queries
 import { useAddIllnessData } from "../../queries/maternalAddQueries"
 import { showErrorToast } from "@/components/ui/toast"
+
 
 // capitalization tailored for adding illness
 const capitalize = (str: string): string => {
@@ -65,6 +67,7 @@ const calculateAge = (dob: string): number => {
   }
   return age
 }
+
 
 export default function PrenatalFormFirstPg({
   form,
@@ -101,6 +104,10 @@ export default function PrenatalFormFirstPg({
   const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("")
   const [selectedIllnessId, setSelectedIllnessId] = useState<string>("")
 
+  // for vaccine useState
+  // const [, setNextVisitDate] = useState<string | null>(null);
+  // const [nextVisitDescription, setNextVisitDescription] = useState<string | null>(null);
+
    // patient data fetching
   const { data: illnessesData, refetch: illnessesRefetch } = useIllnessList() // illness list
   const { data: medHistoryData, isLoading, error } = usePrenatalPatientMedHistory(selectedPatientId) //medical history
@@ -109,7 +116,8 @@ export default function PrenatalFormFirstPg({
   const { data: bodyMeasurementData, isLoading: bmLoading } = usePrenatalPatientBodyMeasurement(selectedPatientId) //body measurement
   const { data: ttStatusData, isLoading: ttStatusLoading } = usePatientTTStatus(selectedPatientId) //tt status
   const { data: latestPrenatalData, isLoading: latestPrenatalLoading } = useLatestPatientPrenatalRecord(isFromIndividualRecord ?  selectedPatientId : "") //latest prenatal record
-  
+  // const { data: vaccinesData, isLoading: isVacstckLoading } = fetchVaccinesWithStock(isFromIndividualRecord ? selectedPatientId : "");
+
   // add mutation hook
   const addIllnessMutation = useAddIllnessData()
 
@@ -802,6 +810,83 @@ export default function PrenatalFormFirstPg({
     //   },
     // },
   ]
+
+  // const handleVaccineChange = (value: string) => {
+  //   form.setValue("prenatalVaccineInfo.vaccineType", value);
+  //   setNextVisitDate(null);
+  //   setNextVisitDescription(null);
+  //   form.setValue("prenatalVaccineInfo.followv_date", "");
+  //   form.setValue("prenatalVaccineInfo.vacrec_totaldose", "");
+  //   setIsVaccineCompleted(false);
+  
+  //   if (value) {
+  //     const [vacStck_id, vac_id, vac_name] = value.split(",");
+  //     const selectedVaccine = vaccinesData?.default?.find((v: any) => v.vacStck_id === parseInt(vacStck_id, 10));
+  
+  //     if (selectedVaccine) {
+  //       const { vaccinelist } = selectedVaccine;
+  //       setSelectedVaccineType(vaccinelist.vac_type_choices);
+  
+  //       const currentVaccineHistory = patientVaccinationRecords?.filter((record) => record.vaccine_stock?.vaccinelist?.vac_id === Number(vac_id)) || [];
+  //       setVaccineHistory(currentVaccineHistory);
+  
+  //       let doseNumber = 1;
+  
+  //       // Always get the latest dose and increment by 1 for non-routine vaccines
+  //       if (vaccinelist.vac_type_choices !== "routine") {
+  //         const latestDose = currentVaccineHistory.length > 0 ? Math.max(...currentVaccineHistory.map((r) => Number(r.vachist_doseNo) || 0)) : 0;
+  //         doseNumber = latestDose + 1;
+  //       }
+  
+  //       form.setValue("vachist_doseNo", doseNumber);
+  
+  //       // Only set total dose for non-conditional vaccines
+  //       if (vaccinelist.vac_type_choices !== "conditional" && vaccinelist.no_of_doses) {
+  //         form.setValue("vacrec_totaldose", vaccinelist.no_of_doses.toString());
+  //       }
+  
+  //       // Check if vaccine is already completed (only for non-conditional vaccines)
+  //       const isCompleted =
+  //         vaccinelist.vac_type_choices !== "conditional" &&
+  //         currentVaccineHistory.some((record:any) => {
+  //           const recordTotalDose = record.vacrec_details?.vacrec_totaldose ? Number(record.vacrec_details.vacrec_totaldose) : 0;
+  //           const currentDose = Number(doseNumber);
+  //           return currentDose > recordTotalDose && recordTotalDose > 0;
+  //         });
+  
+  //       setIsVaccineCompleted(isCompleted);
+  
+  //       if (isCompleted) {
+  //         showErrorToast(`${vac_name} vaccine is already completed (Dose ${doseNumber} of ${vaccinelist.no_of_doses})`);
+  //         return;
+  //       }
+  
+  //       // FIXED LOGIC: Handle routine vaccines separately from other vaccine types
+  //       if (vaccinelist.vac_type_choices === "routine") {
+  //         // For routine vaccines, always calculate next visit if routine_frequency exists
+  //         if (vaccinelist.routine_frequency) {
+  //           const { interval, time_unit } = vaccinelist.routine_frequency;
+  //           const nextDate = calculateNextVisitDate(interval, time_unit, new Date().toISOString());
+  //           setNextVisitDate(nextDate.toISOString().split("T")[0]);
+  //           setNextVisitDescription(`Routine vaccination for ${vaccinelist.vac_name}`);
+  //           form.setValue("followv_date", nextDate.toISOString().split("T")[0]);
+  //         }
+  //       } else if (vaccinelist.vac_type_choices === "primary" && doseNumber < vaccinelist.no_of_doses) {
+  //         // For primary vaccines, only set next visit if there are more doses needed
+  //         if (vaccinelist.no_of_doses >= 2) {
+  //           const nextDoseInterval = vaccinelist.intervals.find((interval: any) => interval.dose_number === doseNumber + 1);
+  //           if (nextDoseInterval) {
+  //             const nextDate = calculateNextVisitDate(nextDoseInterval.interval, nextDoseInterval.time_unit, new Date().toISOString());
+  //             setNextVisitDate(nextDate.toISOString().split("T")[0]);
+  //             setNextVisitDescription(`Vaccination for ${vaccinelist.vac_name}`);
+  //             form.setValue("followv_date", nextDate.toISOString().split("T")[0]);
+  //           }
+  //         }
+  //       }
+  //       // For conditional vaccines or when all doses are complete, no follow-up date is set
+  //     }
+  //   }
+  // };
 
   // functionality to handle adding of previous illness
   const addPrevIllness = () => {

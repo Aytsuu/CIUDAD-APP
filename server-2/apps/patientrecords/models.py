@@ -171,7 +171,7 @@ class Obstetrical_History(models.Model):
     obs_abortion = models.PositiveIntegerField(null=True, blank=True)
     obs_still_birth = models.PositiveIntegerField(null=True, blank=True)
     obs_lg_babies = models.PositiveIntegerField(null=True, blank=True)
-    obs_lg_babies_str = models.CharField(null=True, blank=True)
+    obs_lg_babies_str = models.BooleanField(null=True, blank=True)
     obs_gravida = models.PositiveIntegerField(null=True, blank=True)
     obs_para = models.PositiveIntegerField(null=True, blank=True)
     obs_fullterm = models.PositiveIntegerField(null=True, blank=True)

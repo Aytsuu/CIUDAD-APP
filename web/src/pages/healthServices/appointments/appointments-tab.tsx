@@ -20,7 +20,7 @@ export default function ScheduleTab({ onTimeFrameChange } : ScheduleTabProps): J
 			return `${baseClasses} bg-white shadow-md border text-blue-500`;
 		} else {
 			// Inactive tab styles
-			return `${baseClasses} bg-blue-50 text-gray-100 hover:bg-white/`;
+			return `${baseClasses} bg-blue-50 text-gray-500 hover:text-black`;
 		}
   };
 
@@ -34,27 +34,27 @@ export default function ScheduleTab({ onTimeFrameChange } : ScheduleTabProps): J
 								className={getTabStyle("all")}
 								onClick={() => handleTimeFrameChange("all")}
 							>
-								<h2 className="text-sm font-semibold text-gray-800">All</h2>
+								<h2 className="text-sm font-semibold">All</h2>
 							</div>
 							<div
 								className={getTabStyle("today")}
 								onClick={() => handleTimeFrameChange("today")}
 							>
-								<h2 className="text-sm font-semibold text-gray-800">Today</h2>
+								<h2 className="text-sm font-semibold">Today</h2>
 							</div>
 
 							<div
 								className={getTabStyle("thisWeek")}
 								onClick={() => handleTimeFrameChange("thisWeek")}
 							>
-								<h2 className="text-sm font-semibold text-gray-800">This Week</h2>
+								<h2 className="text-sm font-semibold">This Week</h2>
 							</div>
 
 							<div
 								className={getTabStyle("thisMonth")}
 								onClick={() => handleTimeFrameChange("thisMonth")}
 							>
-								<h2 className="text-sm font-semibold text-gray-800">This Month</h2>
+								<h2 className="text-sm font-semibold">This Month</h2>
 							</div>							
 						</div>
 					</div>

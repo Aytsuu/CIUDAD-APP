@@ -289,6 +289,7 @@ export default function PrenatalFormFourthPq({
    const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    setIsConfirmOpen(false)
     setIsSubmitting(true)
     
     try {
@@ -470,7 +471,7 @@ export default function PrenatalFormFourthPq({
                 disabled={isSubmitting || addPrenatalRecordMutation.isPending}
                 onClick={() => setIsConfirmOpen(true)}
               >
-                {isSubmitting || addPrenatalRecordMutation.isPending ? "Submitting..." : "Submit"}
+                {isSubmitting ? "Submitting..." : "Submit"}
               </Button>
             </div>
           </form>

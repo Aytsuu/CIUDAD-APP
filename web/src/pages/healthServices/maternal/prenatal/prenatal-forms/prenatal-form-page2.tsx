@@ -5,12 +5,13 @@ import { useState, useEffect } from "react"
 import { CircleAlert } from "lucide-react"
 import type { z } from "zod"
 
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form" 
+import { Form } from "@/components/ui/form/form" 
+// import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form" 
 // import { Combobox } from "@/components/ui/combobox"
 import { Button } from "@/components/ui/button/button"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Checkbox } from "@/components/ui/checkbox"
+// import { Separator } from "@/components/ui/separator"
+// import { Checkbox } from "@/components/ui/checkbox"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { FormSelect } from "@/components/ui/form/form-select"
@@ -272,14 +273,13 @@ export default function PrenatalFormSecPg({
               TETANUS TOXOID GIVEN: (DATE GIVEN){" "}
               <p className="flex items-center text-black/50 text-[14px] ml-2">
                 <CircleAlert size={15} className="mr-1" />
-                Note: Choose vaccine type only if administered by midwife on the day of visit. If not, do not select any vaccine type and
-                proceed to TT Status.
+                Note: Do not forget to add a vaccination record if a <b className="pl-1">TT</b>/<b>TD</b>/<b className="pr-1">TDAP</b> is administered by midwife on the day of visit.
               </p>
             </h3>
             <div className="grid gap-3 px-5">
               <div className="flex flex-col">
-                <div className="grid mt-5 mb-5">
-                  <div className="">
+                {/* <div className="grid mt-5 mb-5"> */}
+                  {/* <div className="">
                     <div className="mb-2">
                       <Label className="flex text-black/70 items-center">Vaccine Type</Label>
                     </div>
@@ -299,9 +299,9 @@ export default function PrenatalFormSecPg({
                         </div>
                       }
                       onChange={handleVaccineChange}
-                    /> */}
-                  </div>
-                </div>
+                    />
+                  </div> */}
+                {/* </div> */}
                 <div className="grid grid-cols-2 gap-4 mt-2 mb-5">
                   <FormSelect
                     control={form.control}
@@ -322,7 +322,7 @@ export default function PrenatalFormSecPg({
                     type="date"
                   />
                 </div>
-                <div className="mt-4">
+                {/* <div className="mt-4">
                   <FormField
                     control={form.control}
                     name="prenatalVaccineInfo.isTDAPAdministered"
@@ -338,9 +338,9 @@ export default function PrenatalFormSecPg({
                       </FormItem>
                     )}
                   />
-                </div>
+                </div> */}
 
-                <Separator className="mt-8 mb-3" />
+                {/* <Separator className="mt-6 mb-3" /> */}
 
                 <div className="flex justify-end mt-2 mb-5">
                   <Button type="button" onClick={addTTRecord}>

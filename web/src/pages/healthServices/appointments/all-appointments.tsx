@@ -362,10 +362,18 @@ export default function ScheduleRecords() {
   }
 
   return (
-    <LayoutWithBack title="Scheduled Appointments" description="View patient appointment schedules">
+    <LayoutWithBack title="Scheduled Follow-up Visits" description="View patient appointment schedules">
       <div className="w-full h-full bg-white/40 p-2 flex flex-col">
-        <div className="mb-4 w-full">
-          <ScheduleTab onTimeFrameChange={handleTimeFrameChange} />
+        <div className="flex justify-between mb-4 w-full">
+          <div>
+            <ScheduleTab onTimeFrameChange={handleTimeFrameChange} />
+          </div>
+
+          <div className="flex justify-center items-center">
+            <span className="text-sm font-semibold text-center text-white bg-blue-500 rounded-lg py-2 px-3 hover:bg-blue-600 shadow-md transition-colors duration-200 ease-in-out cursor-pointer">
+              Defaulters Tracking
+            </span>
+          </div>
         </div> 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           
@@ -389,10 +397,6 @@ export default function ScheduleRecords() {
                 onChange={handleFilterChange}
               />
             </div>
-          </div>
-
-          <div className="w-full sm:w-auto">
-            {/* <Button variant="default">New Schedule</Button> */}
           </div>
         </div>
 

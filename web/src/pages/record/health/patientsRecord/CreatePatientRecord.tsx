@@ -14,19 +14,43 @@ import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
 import { Form } from "@/components/ui/form/form"
-import { generateDefaultValues } from "@/pages/record/health/patientsRecord/generateDefaultValues"
+
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
-
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { Combobox } from "@/components/ui/combobox"
 import { Label } from "@/components/ui/label"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
+
+import { generateDefaultValues } from "@/pages/record/health/patientsRecord/generateDefaultValues"
+import { capitalize } from "@/helpers/capitalize"
 
 import { useResidents, useAllTransientAddresses } from "./queries/fetch"
 import { useAddPatient } from "./queries/add"
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
+
+
+// specialize capitalizeAllFields to handle nested objects and skip IDs capitalization
+export const capitalizeAllFields = (data: any): any => {
+    if (Array.isArray(data)) {
+        return data.map(capitalizeAllFields);
+    } else if (data && typeof data === "object") {
+        const newObj: any = {};
+        for (const key in data) {
+            if (key === "pat_id" || key === "rp_id" || key === "tradd_id") {
+                newObj[key] = data[key];
+            } else if (typeof data[key] === "string") {
+                newObj[key] = capitalize(data[key]);
+            } else {
+                newObj[key] = capitalizeAllFields(data[key]);
+            }
+        }
+        return newObj;
+    }
+    return data;
+};
+
 
 interface ResidentProfile {
   rp_id: string
@@ -234,6 +258,7 @@ export default function CreatePatientRecord() {
       return false
     }
   }
+  
 
   // handles the form validation and opens the confirmation dialog
   const handleFormSubmit = async () => {
@@ -260,7 +285,9 @@ export default function CreatePatientRecord() {
   const confirmSubmit = async () => {
     const formData = form.getValues()
 
+    setIsDialogOpen(false)
     setIsSubmitting(true)
+    
     try {
       const patientType =
         formData.patientType === "resident"
@@ -309,9 +336,11 @@ export default function CreatePatientRecord() {
         }
       }
 
-      console.log("Creating patient with data:", patientData)
+      const capitalizedData = capitalizeAllFields(patientData)
 
-      const success = await handleCreatePatientId(patientData)
+      console.log("Creating patient with data:", capitalizedData)
+
+      const success = await handleCreatePatientId(capitalizedData)
 
       if (success) {
         form.reset(defaultValues)

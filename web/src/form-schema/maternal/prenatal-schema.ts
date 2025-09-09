@@ -166,9 +166,11 @@ export const PrenatalFormSchema = z.object({
     // pregnant vaccine info
     prenatalVaccineInfo: z.object({
         vaccineType: z.string().optional(),
+        followv_date: dateSchema.optional(),
+        vacrec_totaldose: positiveNumberSchema.optional(),
+
         ttStatus: z.string().optional(),
         ttDateGiven: z.string().optional(),
-        // fullyImmunized: z.boolean().optional(),
         isTDAPAdministered: z.boolean().default(false),
         ttRecordsHistory: z.array(z.object({
           ttStatus: z.string().optional(),
