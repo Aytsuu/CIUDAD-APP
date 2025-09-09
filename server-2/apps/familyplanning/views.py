@@ -3098,90 +3098,222 @@ def submit_full_family_planning_form(request):
 @api_view(['GET'])
 def get_detailed_monthly_fp_report(request, year, month):
     try:
-        start_date = date(year, month, 1)
-        end_date = start_date + relativedelta(months=1) - relativedelta(days=1)
+        # Convert year and month to integers
+        year = int(year)
+        month = int(month)
+        print(f"Processing report for year: {year}, month: {month}")
+
+        # Validate month
+        if month < 1 or month > 12:
+            return Response({"error": "Invalid month"}, status=400)
+
+        # Calculate date ranges
+        first_day = date(year, month, 1)
+        print(f"First day of month: {first_day}")
+        # Get the first day of next month
+        if month == 12:
+            next_month_first = date(year + 1, 1, 1)
+        else:
+            next_month_first = date(year, month + 1, 1)
         
-        # Define age groups
-        age_groups = {
-            '10-14': (10, 14),
-            '15-19': (15, 19),
-            '24-49': (24, 49),
+        last_day = next_month_first - timedelta(days=1)
+        previous_month_last = first_day - timedelta(days=1)
+        previous_month_first = date(previous_month_last.year, previous_month_last.month, 1)
+        print(f"Last day of month: {last_day}, Previous month last: {previous_month_last}")
+
+        # Define methods to match frontend keys
+        methods = [
+            "BTL", "NSV", "Condom", "POP", "COC", 
+            "DMPA", "Implant", "IUD-Interval", "IUD-Post Partum", 
+            "LAM", "BBT", "CMM", "STM", "SDM"
+        ]
+        
+        # Mapping from stored method names in DB to frontend keys
+        method_map = {
+            "BTL": "BTL",
+            "NSV": "NSV",
+            "Condom": "Condom",
+            "Pills - POP": "POP",
+            "Pills - COC": "COC",
+            "DMPA": "DMPA",
+            "Injectable": "DMPA",
+            "Implant": "Implant",
+            "IUD-I": "IUD-Interval",
+            "IUD-PP": "IUD-Post Partum",
+            "NFP-LAM": "LAM",
+            "NFP-BBT": "BBT",
+            "LAM": "LAM",
+            "NFP-CMM": "CMM",
+            "NFP-STM": "STM",
+            "NFP-SDM": "SDM",
         }
+        print(f"Method map defined: {method_map}")
 
-        def get_method_counts(client_type, start, end):
-            queryset = FP_type.objects.filter(
-                fprecord__created_at__range=(start, end),
-                fpt_client_type=client_type
-            ).select_related(
-                'fprecord__patrec__pat_id__rp_id__per',  # Path for Resident Patients' personal info
-                'fprecord__patrec__pat_id__trans_id'    # Path for Transient Patients' info
+        age_groups = ['10-14', '15-19', '20-49']
+        
+        def initialize_counts():
+            return {method: {age: 0 for age in age_groups + ['Total']} for method in methods}
+        
+        bom_counts = initialize_counts()
+        new_counts = initialize_counts()
+        other_counts = initialize_counts()
+        drop_outs_counts = initialize_counts()
+        print(f"Initialized counts structures for methods: {list(methods)}")
+
+        # Helper function to get age group
+        def get_age_group(dob, reference_date):
+            if not dob:
+                print(f"No DOB found for record")
+                return None
+            age = reference_date.year - dob.year - ((reference_date.month, reference_date.day) < (dob.month, dob.day))
+            print(f"Calculated age: {age} for DOB: {dob}, reference: {reference_date}")
+            if 10 <= age <= 14:
+                return '10-14'
+            elif 15 <= age <= 19:
+                return '15-19'
+            elif 20 <= age <= 49:
+                return '20-49'
+            print(f"Age {age} out of range 10-49")
+            return None
+        
+        # Get all FP records with correct prefetch
+        all_fp_records = FP_Record.objects.select_related('pat', 'pat__rp_id__per', 'pat__trans_id').prefetch_related(
+            Prefetch('fp_type_set', queryset=FP_type.objects.all(), to_attr='fp_type_list')
+        ).all()
+        print(f"Total FP records fetched: {all_fp_records.count()}")
+
+        # To track active users per method: {pat_id: method}
+        active_users = {}
+        print("Initialized active_users dictionary")
+
+        # Process records chronologically
+        bom_active = None
+        for record in all_fp_records.order_by('created_at'):
+            pat = record.pat
+            print(f"Processing record ID: {record.fprecord_id}, Created at: {record.created_at}")
+            # Get DOB handling both Resident and Transient
+            dob = (
+                pat.rp_id.per.per_dob if pat.pat_type == 'Resident' and pat.rp_id 
+                else pat.trans_id.tran_dob if pat.pat_type == 'Transient' and pat.trans_id 
+                else None
             )
+            print(f"Patient ID: {pat.pat_id}, DOB: {dob}, Patient Type: {pat.pat_type}")
+
+            if not dob:
+                print(f"Skipping record {record.fprecord_id} due to missing DOB")
+                continue
             
-            counts = {}
-            methods = [
-                 "BTL", "NSV","Condom","POP","COC","DMPA","Implant","IUD-Interval","IUD-Post Partum","LAM","BBT","CMM","STM","SDM"]
-            # Initialize counts for each method and age group
-            for method in methods:
-                counts[method] = {
-                    '10-14': 0, '15-19': 0, '24-49': 0, 'Total': 0
-                }
-
-            for fp_type_instance in queryset:
-                patient_dob = None
+            created_date = record.created_at.date()
+            print(f"Record created date: {created_date}")
+            
+            fp_type = record.fp_type_list[0] if record.fp_type_list else None
+            if not fp_type:
+                print(f"No FP type found for record {record.fprecord_id}")
+                continue
+            
+            stored_method = fp_type.fpt_method_used
+            if fp_type.fpt_other_method:
+                stored_method = fp_type.fpt_other_method
+            print(f"Stored method: {stored_method}")
+            
+            # Map to frontend method key
+            method = method_map.get(stored_method)
+            if not method:
+                print(f"No mapping found for method: {stored_method}")
+                continue  # Skip if no mapping
+            
+            client_type = fp_type.fpt_client_type
+            subtype = fp_type.fpt_subtype
+            print(f"Client type: {client_type}, Subtype: {subtype}")
+            
+            pat_id = pat.pat_id
+            
+            # Determine if this is an "Other" based on subtype
+            is_other = False
+            if client_type == 'Current User' and (subtype in ['changingmethod', 'changingclinic', 'dropoutrestart'] or not subtype):
+                is_other = True
+                client_type = 'Other'
+                print(f"Adjusted to Other due to subtype: {subtype}")
+            
+            if created_date < first_day:
+                # Before current month - update active for BOM
+                if client_type == 'Dropout':
+                    if pat_id in active_users:
+                        del active_users[pat_id]
+                        print(f"Removed dropout {pat_id} from active_users")
+                else:
+                    active_users[pat_id] = method
+                    print(f"Added {pat_id} with method {method} to active_users")
+            else:
+                # Current month or later
+                if bom_active is None:
+                    bom_active = active_users.copy()
+                    print(f"Set bom_active with {len(bom_active)} users")
                 
-                # Safely access the Patient object through the relationship chain
-                # fp_type_instance -> fprecord -> patrec -> pat_id (which is the Patient object)
-                if (fp_type_instance.fprecord and 
-                    fp_type_instance.fprecord.patrec and 
-                    fp_type_instance.fprecord.patrec.pat_id):
+                if first_day <= created_date <= last_day:
+                    # Current month actions
+                    age_group = get_age_group(dob, created_date)
+                    if not age_group:
+                        print(f"No valid age group for record {record.fprecord_id}")
+                        continue
                     
-                    patient = fp_type_instance.fprecord.patrec.pat_id
-                    
-                    # Determine patient type and retrieve Date of Birth
-                    if patient.pat_type == "Resident" and patient.rp_id and patient.rp_id.per:
-                        patient_dob = patient.rp_id.per.per_dob
-                    elif patient.pat_type == "Transient" and patient.trans_id:
-                        patient_dob = patient.trans_id.tran_dob
+                    if client_type == 'New Acceptor':
+                        new_counts[method][age_group] += 1
+                        new_counts[method]['Total'] += 1
+                        active_users[pat_id] = method
+                        print(f"Incremented new_counts for {method} in {age_group}")
+                    elif client_type == 'Other' or is_other:
+                        other_counts[method][age_group] += 1
+                        other_counts[method]['Total'] += 1
+                        active_users[pat_id] = method
+                        print(f"Incremented other_counts for {method} in {age_group}")
+                    elif client_type == 'Dropout':
+                        drop_outs_counts[method][age_group] += 1
+                        drop_outs_counts[method]['Total'] += 1
+                        if pat_id in active_users:
+                            del active_users[pat_id]
+                        print(f"Incremented drop_outs_counts for {method} in {age_group}")
+                    # If 'Current User' without subtype, do nothing (continuing, no count change)
+        
+        # If no current month records, set bom_active to active_users
+        if bom_active is None:
+            bom_active = active_users.copy()
+            print(f"No current month records, set bom_active with {len(bom_active)} users")
+        
+        # Now, count BOM using bom_active
+        for pat_id, method in bom_active.items():
+            pat = Patient.objects.get(pat_id=pat_id)
+            dob = (
+                pat.rp_id.per.per_dob if pat.pat_type == 'Resident' and pat.rp_id 
+                else pat.trans_id.tran_dob if pat.pat_type == 'Transient' and pat.trans_id 
+                else None
+            )
+            if not dob:
+                print(f"Skipping BOM count for {pat_id} due to missing DOB")
+                continue
+            age_group = get_age_group(dob, previous_month_last)
+            if age_group:
+                bom_counts[method][age_group] += 1
+                bom_counts[method]['Total'] += 1
+                print(f"Incremented bom_counts for {method} in {age_group}")
+        
+        print(f"Final bom_counts: {bom_counts}")
+        print(f"Final new_counts: {new_counts}")
+        print(f"Final other_counts: {other_counts}")
+        print(f"Final drop_outs_counts: {drop_outs_counts}")
 
-                if patient_dob:
-                    # Calculate age based on the start_date of the report period
-                    age = relativedelta(start_date, patient_dob).years
-                    method = fp_type_instance.fpt_method_used
-                    print("method: ",method)
-                    # Increment counts if the method exists and age falls into a defined group
-                    if method in counts:
-                        for group, (min_age, max_age) in age_groups.items():
-                            if min_age <= age <= max_age:
-                                counts[method][group] += 1
-                                counts[method]['Total'] += 1
-                                break # Stop after finding the correct age group
-
-            return counts
-        bom_counts = get_method_counts('currentuser', start_date,end_date )
-        new_counts = get_method_counts('newacceptor', start_date, end_date)
-        other_counts = get_method_counts('otheracceptor', start_date, end_date)
-        drop_outs_counts = get_method_counts('dropout/restart', start_date, end_date)
-
-        # Compile the final report data
-        report_data = {
+        response_data = {
             "bom_counts": bom_counts,
             "new_counts": new_counts,
             "other_counts": other_counts,
             "drop_outs_counts": drop_outs_counts,
-            "month": month,
-            "year": year,
         }
-        print("Report data:",report_data)
-        return Response(report_data, status=status.HTTP_200_OK)
-
+        
+        return Response(response_data, status=status.HTTP_200_OK)
     except Exception as e:
-        # Log the full traceback for debugging purposes
-        traceback.print_exc() 
-        return Response(
-            {"error": f"An error occurred while generating the report: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
+        import traceback
+        traceback.print_exc()
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
 @api_view(['POST'])

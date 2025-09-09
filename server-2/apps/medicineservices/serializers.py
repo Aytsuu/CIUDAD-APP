@@ -267,7 +267,11 @@ class MedicineRequestItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicineRequestItem
         fields = '__all__'
-    
+        
+# class DebugMedicineRequestItemSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = MedicineRequestItem
+#         fields = ['medreqitem_id', 'medreqitem_qty', 'reason', 'status']
       
 class Medicine_FileSerializer(serializers.ModelSerializer):
     class Meta:

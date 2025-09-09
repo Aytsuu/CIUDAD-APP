@@ -602,18 +602,63 @@ class DeleteUpdateMedicineRequestView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = "medreq_id"
     
 
- 
-class MedicineRequestItemDelete(generics.DestroyAPIView):
-    serializer_class = MedicineRequestItemSerializer
-    queryset = MedicineRequestItem.objects.all()
+class MedicineRequestItemDelete(APIView):
+    @transaction.atomic
+    def delete(self, request, medreqitem_id):
+        # logger.info(f"Received DELETE request for medreqitem_id: {medreqitem_id}")
+        try:
+            # Attempt to fetch the item
+            item = MedicineRequestItem.objects.get(medreqitem_id=medreqitem_id)
+            # logger.info(f"Successfully retrieved item: {item.medreqitem_id}, medreq_id: {item.medreq_id.medreq_id}, status: {item.status}")
+            
+            # Get the parent request
+            medicine_request = item.medreq_id
+            total_items_count = medicine_request.items.count()
+            # logger.info(f"Parent request: {medicine_request.medreq_id}, total items count: {total_items_count}")
+            
+            # Delete the specific item
+            item.delete()
+            # logger.info(f"Deleted item {item.medreqitem_id}")
+            
+            # Check if this was the last item in the request
+            remaining_items_count = medicine_request.items.count()
+            # logger.info(f"Remaining items after deletion: {remaining_items_count}")
+            
+            if remaining_items_count == 0:
+                # Delete the parent request since no items remain
+                medicine_request.delete()
+                # logger.info(f"Deleted parent request {medicine_request.medreq_id} as it had no remaining items")
+                return Response({
+                    "success": True,
+                    "message": "Medicine request item canceled successfully. Entire medicine request deleted as it was the last item."
+                }, status=status.HTTP_200_OK)
+            else:
+                # logger.info(f"Parent request {medicine_request.medreq_id} kept with {remaining_items_count} remaining items")
+                return Response({
+                    "success": True,
+                    "message": "Medicine request item canceled successfully. Other items in the request remain."
+                }, status=status.HTTP_200_OK)
         
-    def get_object(self):
-        medreqitem_id = self.kwargs['medreqitem_id']
-        return MedicineRequestItem.objects.get(medreqitem_id=medreqitem_id)
+        except MedicineRequestItem.DoesNotExist:
+            # logger.error(f"MedicineRequestItem {medreqitem_id} not found in database")
+            return Response({"error": "Medicine request item not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            # logger.error(f"Unexpected error deleting item {medreqitem_id}: {str(e)}", exc_info=True)
+            return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class UserPendingMedicineRequestItemsView(generics.ListAPIView):
+    serializer_class = MedicineRequestItemSerializer  # Use simple serializer first
+    pagination_class = StandardResultsPagination
 
+    def get_queryset(self):
+        pat_id = self.request.query_params.get("pat_id")
+        if not pat_id:
+            return MedicineRequestItem.objects.none()
 
-
+        return MedicineRequestItem.objects.filter(
+            medreq_id__pat_id=pat_id,
+            is_archived=False
+        ).order_by("-medreq_id__requested_at")
 
 
 class MedicineRequestCreateView(APIView):
@@ -1181,6 +1226,208 @@ class MedicineTotalCountAPIView(APIView):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class UserMedicineRequestsView(generics.ListAPIView):
+    serializer_class = MedicineRequestSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Get patient ID from query params
+        pat_id = 'PT20030001'
+        rp_id = self.request.query_params.get('rp_id')
+
+        print(f"DEBUG: Received pat_id={pat_id}, rp_id={rp_id}")
+
+        if not pat_id and not rp_id:
+            print("DEBUG: No pat_id or rp_id provided")
+            return MedicineRequest.objects.none()
+
+        queryset = MedicineRequest.objects.select_related(
+            'pat_id', 'rp_id'
+        ).prefetch_related(
+            Prefetch('items', queryset=MedicineRequestItem.objects.select_related(
+                'minv_id', 'minv_id__med_id', 'med'
+            ))
+        ).order_by('-requested_at')
+
+        if pat_id:
+            try:
+                # Filter by patient ID string directly since medreq_id is CharField
+                queryset = queryset.filter(pat_id=pat_id)
+                print(f"DEBUG: Filtering by pat_id={pat_id}")
+            except Exception as e:
+                print(f"DEBUG: Error filtering by pat_id: {str(e)}")
+                return MedicineRequest.objects.none()
+        elif rp_id:
+            try:
+                # Filter by resident ID
+                queryset = queryset.filter(rp_id=rp_id)
+                print(f"DEBUG: Filtering by rp_id={rp_id}")
+            except Exception as e:
+                print(f"DEBUG: Error filtering by rp_id: {str(e)}")
+                return MedicineRequest.objects.none()
+
+        result_count = queryset.count()
+        print(f"DEBUG: Found {result_count} requests")
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        try:
+            response = super().list(request, *args, **kwargs)
+            print(f"DEBUG: API Response data count: {len(response.data.get('results', []))}")
+            return response
+        except Exception as e:
+            print(f"ERROR in UserMedicineRequestsView: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error fetching medicine requests: {str(e)}',
+                'results': [],
+                'count': 0,
+                'next': None,
+                'previous': None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    
+# class UserMedicineRequestsView(generics.ListAPIView):
+#     """Get medicine requests for the current user (patient or resident)"""
+#     serializer_class = MedicineRequestSerializer
+#     pagination_class = StandardResultsPagination
+    
+#     def get_queryset(self):
+#         # Get patient ID from query params or user session
+#         pat_id = ('PR20030001')
+#         rp_id = self.request.query_params.get('rp_id')
+        
+#         print(f"DEBUG: Received pat_id={pat_id}, rp_id={rp_id}")  # Debug log
+        
+#         if not pat_id and not rp_id:
+#             print("DEBUG: No pat_id or rp_id provided")
+#             return MedicineRequest.objects.none()
+        
+#         try:
+#             queryset = MedicineRequest.objects.select_related(
+#                 'pat_id', 'rp_id'
+#             ).prefetch_related(
+#                 Prefetch('items', queryset=MedicineRequestItem.objects.select_related(
+#                     'minv_id', 'minv_id__med_id', 'med'
+#                 ))
+#             ).order_by('-requested_at')
+            
+#             if pat_id:
+#                 # Verify patient exists
+#                 try:
+#                     patient = Patient.objects.get(pat_id=pat_id)
+#                     queryset = queryset.filter(pat_id=patient)
+#                     print(f"DEBUG: Found patient {pat_id}, filtering requests")
+#                 except Patient.DoesNotExist:
+#                     print(f"DEBUG: Patient {pat_id} not found")
+#                     return MedicineRequest.objects.none()
+                    
+#             elif rp_id:
+#                 # Verify resident exists
+#                 try:
+#                     resident = ResidentProfile.objects.get(rp_id=rp_id)
+#                     queryset = queryset.filter(rp_id=resident)
+#                     print(f"DEBUG: Found resident {rp_id}, filtering requests")
+#                 except ResidentProfile.DoesNotExist:
+#                     print(f"DEBUG: Resident {rp_id} not found")
+#                     return MedicineRequest.objects.none()
+            
+#             result_count = queryset.count()
+#             print(f"DEBUG: Found {result_count} requests")
+#             return queryset
+            
+#         except Exception as e:
+#             print(f"DEBUG: Error in get_queryset: {str(e)}")
+#             return MedicineRequest.objects.none()
+    
+#     def list(self, request, *args, **kwargs):
+#         try:
+#             return super().list(request, *args, **kwargs)
+#         except Exception as e:
+#             print(f"ERROR in UserMedicineRequestsView: {str(e)}")
+#             import traceback
+#             traceback.print_exc()
+#             return Response({
+#                 'success': False,
+#                 'error': f'Error fetching medicine requests: {str(e)}',
+#                 'results': [],
+#                 'count': 0,
+#                 'next': None,
+#                 'previous': None
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+class CheckPendingMedicineRequestView(APIView):
+    def get(self, request, pat_id, med_id):
+        try:
+            try:
+                patient = Patient.objects.get(pat_id=pat_id)
+                # print(f"DEBUG: Found patient: {patient.pat_id}")
+                
+                # Check pending requests for this patient
+                pending_requests = MedicineRequest.objects.filter(
+                    Q(pat_id=patient.pat_id) | Q(rp_id=patient.rp_id.rp_id if patient.rp_id else None),
+                    # status='pending'
+                )
+                
+                # print(f"DEBUG: Found {pending_requests.count()} pending requests")
+                
+                # List all medicines in all pending requests
+                all_medicines_in_requests = set()
+                for request in pending_requests:
+                    # print(f"\nDEBUG: Request {request.medreq_id} - Status: {request.status}")
+                    
+                    for item in request.items.all():
+                        medicine_id = None
+                        medicine_name = None
+                        
+                        # SAFELY check both possible ways medicine can be stored
+                        try:
+                            # Check if medicine is linked through inventory
+                            if hasattr(item, 'minv_id') and item.minv_id and hasattr(item.minv_id, 'med_id') and item.minv_id.med_id:
+                                medicine_id = item.minv_id.med_id.med_id
+                                medicine_name = item.minv_id.med_id.med_name
+                                # print(f"  - Via Inventory: {medicine_id} - {medicine_name}")
+                        except Exception as e:
+                            print(f"  - Error accessing minv_id: {e}")
+                        
+                        try:
+                            # Check if medicine is linked directly
+                            if hasattr(item, 'med') and item.med:
+                                medicine_id = item.med.med_id
+                                medicine_name = item.med.med_name
+                                # print(f"  - Direct Medicine: {medicine_id} - {medicine_name}")
+                        except Exception as e:
+                            print(f"  - Error accessing med: {e}")
+                        
+                        if medicine_id:
+                            all_medicines_in_requests.add(f"{medicine_id} - {medicine_name}")
+                            
+                            # Check if this matches our search
+                            if str(medicine_id) == str(med_id):
+                                # print(f"  *** MATCH FOUND ***")
+                                return Response({'has_pending_request': True}, status=status.HTTP_200_OK)
+                        else:
+                            print(f"  - No medicine ID found for this item")
+                
+                # print(f"\nDEBUG: All medicines found in pending requests:")
+                # for medicine in sorted(all_medicines_in_requests):
+                #     print(f"  - {medicine}")
+                
+                # print(f"DEBUG: No pending requests found with medicine {med_id}")
+                return Response({'has_pending_request': False}, status=status.HTTP_200_OK)
+                
+            except Patient.DoesNotExist:
+                # print(f"DEBUG: Patient {pat_id} not found")
+                return Response({'has_pending_request': False}, status=status.HTTP_200_OK)
+                    
+        except Exception as e:
+            print(f"ERROR: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 class SubmitMedicineRequestView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     
@@ -1222,7 +1469,7 @@ class SubmitMedicineRequestView(APIView):
             medicine_request = MedicineRequest.objects.create(
                 pat_id=Patient.objects.get(pat_id=pat_id) if pat_id else None,
                 rp_id=ResidentProfile.objects.get(rp_id=rp_id) if rp_id else None,
-                status='pending',
+                # status='pending',
                 mode='app'
             )
             
@@ -1234,10 +1481,10 @@ class SubmitMedicineRequestView(APIView):
                 try:
                     minv_id = int(med['minv_id'])
                     medicine_inv = MedicineInventory.objects.get(minv_id=minv_id)
-                    print(f"Processing minv_id: {minv_id}, med_id: {medicine_inv.med_id.pk}")
+                    # print(f"Processing minv_id: {minv_id}, med_id: {medicine_inv.med_id.pk}")
                     request_item = MedicineRequestItem(
                         medreq_id=medicine_request,
-                        minv_id=medicine_inv,
+                        minv_id=None,
                         med=medicine_inv.med_id,  # Assign Medicinelist object
                         medreqitem_qty=med['quantity'],
                         reason=med.get('reason', ''),
@@ -1251,9 +1498,9 @@ class SubmitMedicineRequestView(APIView):
                     return Response({"error": f"Medicine with minv_id {med['minv_id']} not found"}, 
                                   status=status.HTTP_404_NOT_FOUND)
             
-            # Debug: Log request items
-            for item in request_items:
-                print(f"Creating MedicineRequestItem: medreq_id={item.medreq_id.medreq_id}, minv_id={item.minv_id.minv_id}, med_id={item.med.pk}")
+            # # Debug: Log request items
+            # for item in request_items:
+            #     print(f"Creating MedicineRequestItem: medreq_id={item.medreq_id.medreq_id}, minv_id={item.minv_id.minv_id}, med_id={item.med.pk}")
             
             MedicineRequestItem.objects.bulk_create(request_items)
             

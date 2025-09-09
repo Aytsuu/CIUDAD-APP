@@ -20,7 +20,7 @@ const Homepage = () => {
     { name: 'Family Planning', route: 'admin/familyplanning/overall', icon: Heart },
     { name: 'Animal Bites', route: 'admin/animalbites/overall', icon: Dog },
     { name: 'Maternal Records', route: '/maternal-records', icon: UserCircle },
-    { name: 'Medical Consultation', route: '/medical-consultation', icon: Stethoscope },
+    { name: 'Medical Consultation', route: '(health)/medicine-request/my-requests', icon: Stethoscope },
     { name: 'Profiling', route: 'admin/medicinerequest/medicinerequest', icon: UserRoundPlus },
     { name: 'Patients Records', route: '/admin/patientrecords/patientrecords', icon: Users },
     { name: 'Schedules', route: 'admin/schedules/all-appointment', icon: Calendar },

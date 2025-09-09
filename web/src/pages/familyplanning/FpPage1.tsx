@@ -376,7 +376,7 @@ export default function FamilyPlanningForm({
             return comGender === "both" || comGender === genderLower;
           });
         }
-
+console.log("Gender type: ",effectiveGender)
         // Format the commodities
         const formattedCommodities = filteredCommodities.map((com: { com_id: any; com_name: any; user_type: any; gender_type: any }) => ({
           id: com.com_name,  // Use name as the value that gets stored

@@ -84,16 +84,16 @@ export default function Confirmation() {
           <Text className="text-lg font-medium text-[#6B7280] text-center mb-2 px-4">
             {status === "submitted" 
               ? "Your request has been submitted for review. You'll be notified once it's processed." 
-              : `Request ID: ${medreqId}`}
+              : ""}
           </Text>
           
-          {medreqId && (
+          {/* {medreqId && (
             <View className="bg-blue-50 p-3 rounded-lg mt-4">
               <Text className="text-blue-800 text-center font-medium">
                 Request ID: {medreqId}
               </Text>
             </View>
-          )}
+          )} */}
         </Animated.View>
 
         {/* Request Summary */}

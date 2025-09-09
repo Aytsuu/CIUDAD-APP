@@ -10,7 +10,7 @@ export const getMedicinesTable = async (page?: number, pageSize?: number, search
       }
     });
 
-    console.log("Medicine API Response:", res.data);
+    // console.log("Medicine API Response:", res.data);
 
     if (res.status === 200) {
       return res.data;

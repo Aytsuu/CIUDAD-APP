@@ -11,7 +11,7 @@ class MedicineRequest(models.Model):
     requested_at = models.DateTimeField(auto_now_add=True)
     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, db_column='rp_id', related_name='medicine_requests',blank=True,null=True)
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='medicine_requests',blank=True,null=True)
-    status = models.CharField(max_length=20, default='pending')
+    # status = models.CharField(max_length=20, default='pending')
     mode = models.CharField(default='walk-in', max_length=20) #walk-in or app
     
     

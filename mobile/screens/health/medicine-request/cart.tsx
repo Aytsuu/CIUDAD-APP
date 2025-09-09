@@ -57,7 +57,7 @@ export default function CartScreen() {
       return;
     }
 
-    console.log("Processing mediaItems:", mediaItems);
+    // console.log("Processing mediaItems:", mediaItems);
     const newFiles: UploadedFile[] = mediaItems.map(item => ({
       id: item.id,
       name: item.name || `image_${Date.now()}.jpg`,
@@ -65,9 +65,9 @@ export default function CartScreen() {
       uri: item.uri,
       size: item.file ? (item.file.length * 3) / 4 : undefined,
     }));
-    console.log("Converted to UploadedFile:", newFiles);
+    // console.log("Converted to UploadedFile:", newFiles);
     const validFiles = newFiles.filter(file => checkFileSize(file.size, file.name));
-    console.log("Valid files after size check:", validFiles);
+    // console.log("Valid files after size check:", validFiles);
     validFiles.forEach(file => addUploadedFile(file));
     setShowUploadOptions(false);
   };
@@ -93,7 +93,7 @@ const handleConfirm = async () => {
     return;
   }
 
-  console.log("Cart items:", cartItems);
+  // console.log("Cart items:", cartItems);
 
   const invalidItems = cartItems.filter(item => !item.minv_id || isNaN(item.minv_id));
   if (invalidItems.length > 0) {
