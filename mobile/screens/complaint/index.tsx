@@ -22,7 +22,7 @@ import {
   Users,
 } from "lucide-react-native";
 import { getComplaintLists } from "./queries/ComplaintGetQueries";
-import DateFormatter from "@/components/DateFormatter";
+// import DateFormatter from "@/components/DateFormatter";
 import ComplaintActionsDrawer from "./ComplaintActionsDrawer";
 import { InfoModal } from "./Modals/InfoModal";
 import { ActionSelectionModal } from "./Modals/ActionSelectionModal";

@@ -31,18 +31,14 @@ export default function DependentInformation() {
     completeStep
   } = useProgressContext();
 
-  React.useEffect(() => {
-    const subscription = watch((value, {name}) => {
-      if(name === "dependentInfoSchema.list") {
-        const list = value.dependentInfoSchema?.list;
-        if(list){
-          setDependents(list as any)
-        }
-      }
-    });
+  console.log(watch("dependentInfoSchema.list"))
 
-    return () => subscription.unsubscribe();
-  }, [watch])
+  React.useEffect(() => {
+    const dependents = watch("dependentInfoSchema.list")
+    if(dependents.length > 0) {
+      setDependents(dependents)
+    }
+  }, [watch("dependentInfoSchema.list")])
 
 
   const resetNewDependentFields = () => {
@@ -55,7 +51,6 @@ export default function DependentInformation() {
     resetField("dependentInfoSchema.new.per_sex");
     resetField("dependentInfoSchema.new.per_status");
     resetField("dependentInfoSchema.new.per_religion");
-    resetField("dependentInfoSchema.new.per_occupation");
     resetField("dependentInfoSchema.new.per_edAttainment");
     resetField("dependentInfoSchema.new.per_contact");
   }

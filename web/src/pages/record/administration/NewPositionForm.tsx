@@ -14,7 +14,6 @@ import { useUpdatePosition } from "./queries/administrationUpdateQueries";
 import { renderActionButton } from "./AdministrationActionConfig";
 import { Type } from "./AdministrationEnums";
 import { usePositionGroups } from "./queries/administrationFetchQueries";
-import { FormSelect } from "@/components/ui/form/form-select";
 import { formatPositionGroups } from "./AdministrationFormats";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { Combobox } from "@/components/ui/combobox";

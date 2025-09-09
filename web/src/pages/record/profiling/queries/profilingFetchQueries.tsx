@@ -375,15 +375,28 @@ export const useHouseholdTable = (
   });
 };
 
-// Temporary stub for Voters table to bypass TS error until API is implemented
+// ================ VOTER ================ (Status: Optmizing....)
 export const useVoterTable = (
   page: number,
   pageSize: number,
   searchQuery: string
 ) => {
   return useQuery({
-    queryKey: ["votersTableData", page, pageSize, searchQuery],
-    queryFn: async () => ({ results: [], count: 0 }),
-    staleTime: 5000,
-  });
-};
+    queryKey: ["voterTable", page, pageSize, searchQuery],
+    queryFn: async () => {
+      try {
+        const res = await api.get("profiling/voter/list/table/", {
+          params: {
+            page,
+            page_size: pageSize,
+            search: searchQuery
+          }
+        });
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    }
+  })
+}

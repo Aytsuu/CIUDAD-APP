@@ -13,7 +13,7 @@ import { FileText, MapPin, User, Database, Store, Loader2, Clock, History, Check
 import { Form } from "@/components/ui/form/form"
 import { Type } from "../ProfilingEnums"
 import { useAuth } from "@/context/AuthContext"
-import { useAddBusiness, useAddBusinessRespondent, useAddPersonal } from "../queries/profilingAddQueries"
+import { useAddBusiness } from "../queries/profilingAddQueries"
 import type { MediaUploadType } from "@/components/ui/media-upload"
 import { useBusinessHistory, useBusinessInfo, useModificationRequests, useResidentsList, useSitioList } from "../queries/profilingFetchQueries"
 import { useLoading } from "@/context/LoadingContext"

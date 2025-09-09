@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { RegistationFormProvider } from "@/contexts/RegistrationFormContext";
-import { AuthProvider } from "@/contexts/AuthContext";
+// import { AuthProvider } from "@/contexts/AuthContext";
 import { ProgressProvider } from "@/contexts/ProgressContext";
 import { RegistrationTypeProvider } from "@/contexts/RegistrationTypeContext";
 import { ToastProvider } from "@/components/ui/toast";
@@ -21,7 +21,6 @@ export default () => {
   })
 
   return (
-    <AuthProvider>
       <ProgressProvider>
         <RegistrationTypeProvider>
           <RegistationFormProvider methods={methods}>
@@ -49,6 +48,5 @@ export default () => {
           </RegistationFormProvider>
         </RegistrationTypeProvider>
       </ProgressProvider>
-    </AuthProvider>
   );
 };
