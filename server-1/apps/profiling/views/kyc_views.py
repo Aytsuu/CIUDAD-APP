@@ -13,19 +13,22 @@ class KYCDocumentMatchingView(APIView):
     kyc_id = request.data.get('kyc_id', None)
     fname = request.data.get('fname', None)
     lname = request.data.get('lname', None)
+    mname = request.data.get('mname', None)
     dob = request.data.get('dob', None)
 
     if(id_image): 
       imgstr = id_image.split(';base64,')[1]
-  
+      data = {
+        'lname': lname,
+        'fname': fname,
+        'dob': dob 
+      }
+      if mname: data['mname'] = mname
+
       #Process verification
       processor = KYCVerificationProcessor()
       processed_data = processor.process_kyc_document_matching(
-        user_data={
-          'lname': lname,
-          'fname': fname,
-          'dob': dob 
-        },
+        user_data=data,
         id_image=imgstr,
         kyc_id=kyc_id
       )
