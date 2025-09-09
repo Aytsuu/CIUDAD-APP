@@ -1,9 +1,9 @@
-export const capitalize = (str: any) => {
+export const capitalize = (str: string | null): string | null => {
     if (!str) return null;
     return str
         .toLowerCase()
         .split(' ')
-        .map((word:any) => word.charAt(0).toUpperCase() + word.slice(1))
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 };
 
