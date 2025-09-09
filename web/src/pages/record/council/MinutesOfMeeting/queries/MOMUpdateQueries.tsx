@@ -86,7 +86,6 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['momRecords'] });
             queryClient.invalidateQueries({ queryKey: ['momFiles'] });
-            queryClient.invalidateQueries({ queryKey: ['momAreasOfFocus'] });
 
             toast.success('Record updated successfully', {
                 id: "updateMOM",
