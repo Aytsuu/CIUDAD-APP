@@ -1,5 +1,5 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { restoreMinutesOfMeeting, archiveMinutesOfMeeting, deleteMOMAreas, updateMinutesOfMeeting, handleMOMAreaOfFocus, handleMOMFileUpdates, handleMOMSuppDocUpdates } from "../restful-API/MOMPutAPI";
+import { restoreMinutesOfMeeting, archiveMinutesOfMeeting,  updateMinutesOfMeeting, handleMOMFileUpdates, handleMOMSuppDocUpdates } from "../restful-API/MOMPutAPI";
 import { useToastContext } from "@/components/ui/toast";
 import { useRouter } from "expo-router";
 import { minutesOfMeetingEditFormSchema } from "@/form-schema/council/minutesOfMeetingSchema";
@@ -73,9 +73,7 @@ export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
 
   return useMutation({
     mutationFn: async (values: MOMData) => {
-      const res = await updateMinutesOfMeeting(values.mom_id, values.meetingTitle, values.meetingAgenda, values.meetingDate, values.meetingAreaOfFocus);
-
-      await handleMOMFileUpdates(values.mom_id, values.files);
+      const res = await updateMinutesOfMeeting(values.mom_id, values.meetingTitle, values.meetingAgenda, values.meetingDate, values.meetingAreaOfFocus, values.files);
 
       await handleMOMSuppDocUpdates(values.mom_id, values.suppDocs)
      

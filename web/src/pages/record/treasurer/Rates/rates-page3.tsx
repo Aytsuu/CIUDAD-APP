@@ -14,13 +14,11 @@ import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import React from "react"
-import RatesFormPage3 from "./forms/rates-form-page-3"
-import { Button } from "@/components/ui/button/button"
+
 
 function RatesPage3() {
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
 
     const [searchQueryActive, setSearchQueryActive] = useState("")
     const [pageSizeActive, setPageSizeActive] =  React.useState<number>(10)
