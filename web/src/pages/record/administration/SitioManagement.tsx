@@ -13,7 +13,7 @@ export default function SitioManagement() {
   // ================== STATE INITIALIZATION ==================
   const [deleteMode, setDeleteMode] = React.useState<boolean>(false);
   const [insertMode, setInsertMode] = React.useState<boolean>(false);
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [_, setIsSubmitting] = React.useState<boolean>(false);
   const [newSitio, setNewSitio] = React.useState<Record<string, any>[]>([
     {
       sitio_id: "",
@@ -22,7 +22,7 @@ export default function SitioManagement() {
   ]);
 
   // ================== QUERIES ==================
-  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
+  const { data: sitioList, isLoading: _isLoadingSitio } = useSitioList();
   const { mutateAsync: addSitio } = useAddSitio();
   const { mutateAsync: deleteSitio } = useDeleteSitio();
 

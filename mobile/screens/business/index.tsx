@@ -12,11 +12,18 @@ import { useModificationRequests, useOwnedBusinesses } from "./queries/businessG
 import { useAuth } from "@/contexts/AuthContext"
 import { MapPin } from "@/lib/icons/MapPin"
 import { FeedbackScreen } from "@/components/ui/feedback-screen"
+import { Search } from "@/lib/icons/Search"
+import { SearchInput } from "@/components/ui/search-input"
 
 export default () => {
   // ---------------- STATE INITIALIZATION -------------------
   const { user } = useAuth();
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
+  const [searchInputVal, setSearchInputVal] = React.useState<string>('');
+  const [searchQuery, setSearchQuery] = React.useState<string>('');
+  const [showSearch, setShowSearch] = React.useState<boolean>(false);
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [pageSize, setPageSize] = React.useState<number>(20);
   const [selectedBusiness, setSelectedBusiness] = React.useState<Record<string, any> | null>(null);
   const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
   const [status, setStatus] = React.useState<"success" | "failure" | "waiting" | "message">('success');
@@ -41,6 +48,11 @@ export default () => {
   const handleAddBusiness = () => {
     router.push('/(business)/add-business')
   }
+
+  const handleSearch = React.useCallback(() => {
+    setSearchQuery(searchInputVal);
+    setCurrentPage(1);
+  }, [searchInputVal]);
 
   const handleBusinessPress = (business: Record<string, any>) => {
     if(business.bus_status === 'Pending'){
@@ -222,18 +234,34 @@ export default () => {
       </Text>}
       rightAction={
         hasBusinesses && !isLoadingBusinesses && !selectedBusiness ? (
-          <TouchableOpacity
-            onPress={handleAddBusiness}
-            className="w-10 h-10 rounded-full bg-primaryBlue items-center justify-center"
-          >
-            <Plus size={24} className="text-white" />
-          </TouchableOpacity>
+          <View>
+            <TouchableOpacity
+              onPress={handleAddBusiness}
+              className="w-10 h-10 rounded-full bg-primaryBlue items-center justify-center"
+            >
+              <Plus size={24} className="text-white" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowSearch(!showSearch)}
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            >
+              <Search size={22} className="text-gray-700" />
+            </TouchableOpacity>
+          </View>
         ) : (
           <View className="w-10 h-10" />
         )
       }
     >
       <View className="flex-1">
+        {/* Search Bar */}
+        {showSearch && (
+          <SearchInput 
+            value={searchInputVal}
+            onChange={setSearchInputVal}
+            onSubmit={handleSearch} 
+          />
+        )}
         {renderContent()}
       </View>
     </PageLayout>
