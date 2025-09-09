@@ -4,7 +4,7 @@ from django.db import transaction
 from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
 from apps.profiling.serializers.personal_serializers import PersonalBaseSerializer
 from apps.profiling.serializers.address_serializers import AddressBaseSerializer
-from apps.account.serializers import UserAccountSerializer
+from apps.account.serializers import AccountInputSerializer
 from apps.account.models import Account
 from utils.supabase_client import supabase, upload_to_storage, remove_from_storage
 from datetime import datetime
@@ -179,7 +179,7 @@ class FileInputSerializer(serializers.Serializer):
   file = serializers.CharField()
 
 class BRCreateUpdateSerializer(serializers.ModelSerializer):
-  acc = UserAccountSerializer(write_only=True, required=False)
+  acc = AccountInputSerializer(write_only=True, required=False)
 
   class Meta:
     model = BusinessRespondent

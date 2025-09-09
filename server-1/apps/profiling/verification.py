@@ -13,6 +13,7 @@ from utils.supabase_client import supabase
 from dateutil.parser import parse
 from datetime import datetime
 from facenet_pytorch import MTCNN, InceptionResnetV1
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +26,8 @@ class KYCVerificationProcessor:
         self.resnet = InceptionResnetV1(pretrained='vggface2').eval()
         self.threshold = 0.5
 
-    def process_kyc_document_matching(self, user_data, id_image, kyc_id):
+    def process_kyc_document_matching(self, user_data, id_image):
         try:
-            print(kyc_id)
             print(user_data)
 
             # Convert Django InMemoryUploadedFile to OpenCV image
@@ -41,82 +41,38 @@ class KYCVerificationProcessor:
             # Extract and verify document information
             doc_info = self._extract_document_info(id_image_cv)
             if not doc_info:
-                return {'verified': False, 'reason': 'No text extracted from document'}
+                logger.error('No text extracted from document')
+                return False
 
             personal_info = self._extract_personal_info(doc_info)
             if not personal_info:
-                return {'verified': False, 'reason': 'No personal information extracted from text'}
+                logger.error('No personal info extracted from document')
+                return False
 
             info_match = self._verify_info_match(user_data, personal_info)
             if not info_match['match']:
-                return {'verified': False, 'reason': f"Information mismatch: {info_match['mismatches']}"}
-        
-            update_data = {
-                'document_info_match': True,
-                'id_has_face': True if id_face is not None else False,
-                'id_face_embedding': self._tensor_to_storage(id_face) if id_face is not None else None
-            }
+                logger.error('Extracted Info does not match personal info')
+                return False
 
-            supabase.table('kyc_record') \
-                .update(update_data) \
-                .eq('kyc_id', kyc_id) \
-                .execute()
+            key = f'{user_data['lname']}{user_data['fname']}' \
+                  f'{user_data['mname']}' if 'mname' in user_data else ''
             
-            return {
-                'name': f"{user_data['lname'].upper()}, {user_data['fname'].upper()}",
-                'id_has_face': True if id_face is not None else False,
-                'info_match': info_match['match'],
-            }
+            cache.set(key, id_face, timeout=1800)
+            logger.info('info matched')
+            return True
 
         except Exception as e:
-            supabase.table('kyc_record') \
-                .update({'document_info_match' : False}) \
-                .eq('kyc_id', kyc_id) \
-                .execute()
-
             logger.error(f"KYC verification error: {str(e)}")
-            return {'verified': False, 'reason': f'Processing error: {str(e)}'}
+            return False
     
-    def process_kyc_face_matching(self, face_img, id_img, kyc_id):
+    def process_kyc_face_matching(self, face_img, id_img):
         face_img_cv = self._decode_image(face_img)
-
         face_img = self._face_embedding(face_img_cv)
         if face_img is None:
-            return {'verified': False, 'reason': 'No face found in live photo'}
-        
-        face_match = self._compare_faces(face_img, self._storage_to_tensor(id_img))
-        if face_match > self.threshold:
-            update_data = {
-                'face_match_score': face_match,
-                'is_verified': True
-            }
-        else: 
-            update_data = {
-                'face_match_score': face_match,
-                'is_verified': False
-            }
-
-        supabase.table('kyc_record') \
-            .update(update_data) \
-            .eq('kyc_id', kyc_id) \
-            .execute()
-
-        return {
-            'match': face_match > self.threshold,
-            'face_match_score': face_match,
-        }
-    
-    def _tensor_to_storage(self, tensor):
-        """Convert tensor to storage-friendly format"""
-        if tensor is None:
-            return None
-        return base64.b64encode(tensor.detach().numpy().tobytes()).decode('utf-8')
-    
-    def _storage_to_tensor(self, stored_data):
-        """Convert stored data back to tensor"""
-        if not stored_data:
-            return None
-        return torch.tensor(np.frombuffer(base64.b64decode(stored_data), dtype=np.float32))
+            logger.error('No face found in live photo')
+            return False
+        face_match = self._compare_faces(face_img, id_img)
+        return face_match > self.threshold
     
     def _file_to_cv2(self, django_file):
         """Convert Django InMemoryUploadedFile to OpenCV image"""
@@ -153,7 +109,8 @@ class KYCVerificationProcessor:
             r'(?:Date of Birth|DOB|Birthday)[^\d]*([A-Za-z]+\s+\d{1,2},\s+\d{4})',  # "February 13, 1961"
             r'(?:Date of Birth|DOB)[^\d]*(\d{4}-\d{2}-\d{2})',                      # "1961-02-13"
             r'(?:Date of Birth|DOB)[^\d]*(\d{2}/\d{2}/\d{4})',                      # "13/02/1961"
-            r'([A-Za-z]+\s+\d{1,2}[.,]?\s+\d{4})',                                      # "February 13, 1961"
+            r'([A-Za-z]+\s+\d{1,2}[,]?\s+\d{4})',                                   # "February 13, 1961"
+            r'([A-Za-z]+\s+\d{1,2}[.]?\s+\d{4})',                                   # "February 13. 1961"
             r'([A-Za-z]+\s+\d{1,2}\s+\d{4})',                                       # "September 1 2004"
             r'(\d{8})',                                                             # "19610213"
         ]
@@ -200,8 +157,8 @@ class KYCVerificationProcessor:
             user_dob = datetime.strptime(user_data['dob'], '%Y-%m-%d').date()
             extracted_dob = datetime.strptime(extracted_info['dob'], '%Y-%m-%d').date()
             print("User dob:", user_dob)
-            print("Extracted dob:", user_dob)
-            print("DOB matched:", user_dob != extracted_dob)
+            print("Extracted dob:", extracted_dob)
+            print("DOB matched:", user_dob == extracted_dob)
             if user_dob != extracted_dob:
                 mismatches.append(f"DOB mismatch: User entered '{user_data['dob']}', "
                                 f"document shows '{extracted_info['dob']}'")
