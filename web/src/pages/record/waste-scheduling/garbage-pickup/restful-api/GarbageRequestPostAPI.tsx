@@ -20,7 +20,7 @@ export const addDecision = async (garb_id: string, decisionInfo: {reason: string
         });
 
         const res = await api.post('/waste/pickup-request-decision/', {
-            dec_rejection_reason: decisionInfo.reason,
+            dec_reason: decisionInfo.reason,
             dec_date: getLocalISOString(), 
             garb_id: garb_id,
         });

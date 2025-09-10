@@ -26,16 +26,6 @@ export const getIncomeExpense = async (year?: number) => {
 
 
 
-// export const getIncomeData = async () => {
-//     try {
-
-//         const res = await api.get('treasurer/income-tracking/');
-//         return res.data;
-        
-//     } catch (err) {
-//         console.error(err);
-//     }
-// };
 
 export const getIncomeData = async (year?: number) => {
     try {
@@ -50,10 +40,26 @@ export const getIncomeData = async (year?: number) => {
 
 
 
+
 export const getIncomeExpenseMainCard = async () => {
     try {
 
         const res = await api.get('treasurer/income-expense-main/');
+        return res.data;
+        
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+
+
+// RETRIEVE EXPENSE LOG
+export const getExpenseLog = async (year?: number) => {
+    try {
+        const params = year ? { params: { year } } : {};
+        const res = await api.get('treasurer/expense-log/', params);
+        console.log("EXPENSE LOG PO: ", res)
         return res.data;
         
     } catch (err) {

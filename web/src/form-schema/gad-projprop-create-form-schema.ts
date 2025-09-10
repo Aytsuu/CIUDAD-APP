@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ProposalStatus } from "@/pages/record/gad/project-proposal/projprop-types";
 
 const DataRequirement = z.union([
   z.string()
@@ -11,7 +12,25 @@ const DataRequirement = z.union([
 ]).transform((val) => String(val));
 
 export const ProjectProposalSchema = z.object({
-  projectTitle: z.string().min(1, "Project Title is required"),
+  selectedDevProject: z.object({
+    dev_id: z.number(),
+    project_title: z.string(),
+    participants: z.array(
+    z.object({
+      category: z.string().min(1, "Category is required"),
+      count: z.union([z.string(), z.number()]),
+    })
+  ),
+    budget_items: z.array(z.object({
+      name: z.string(),
+      pax: z.union([z.number(), z.string()]),
+      amount: DataRequirement
+    })),
+    dev_client: z.string().optional(),
+    dev_issue: z.string().optional(),
+  }).refine(data => data.dev_id > 0, {
+    message: "Please select a development plan project"
+  }),
   background: z.string().min(1, "Background is required"),
   objectives: z
     .array(z.string().min(1, "Objective cannot be empty"))
@@ -48,4 +67,8 @@ export const ProjectProposalSchema = z.object({
   paperSize: z.enum(["a4", "letter", "legal"]),
   headerImage: z.array(z.any()).optional(),
   supportingDocs: z.array(z.any()).optional(),
+  status: z.custom<ProposalStatus>().optional(),
+  statusReason: z.string().optional(),
 });
+
+export type ProjectProposalFormValues = z.infer<typeof ProjectProposalSchema>;

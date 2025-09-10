@@ -22,6 +22,7 @@ import { useGetWasteTrucks } from './queries/wasteColFetchQueries';
 import { useGetWasteSitio } from './queries/wasteColFetchQueries';
 import { useUpdateWasteSchedule } from './queries/wasteColUpdateQueries';
 import { useUpdateCollectors } from './queries/wasteColUpdateQueries';
+import { useAuth } from "@/context/AuthContext";
 
 
 
@@ -50,14 +51,8 @@ const announcementOptions = [
 
 
 function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, wc_is_archive, sitio_id, truck_id, driver_id, collector_ids, onSuccess } : UpdateWasteColProps) {
-
-    //ADD QUERY MUTATIONS
-
-    console.log("UpdateWasteColSched props:", { wc_num, wc_date, wc_time, wc_add_info, wc_is_archive, sitio_id, truck_id, driver_id, collector_ids })
-
-
-
-
+    
+    const { user } = useAuth();
 
     //FETCH QUERY MUTATIONS
     const { data: collectors = [], isLoading: isLoadingCollectors } = useGetWasteCollectors();
@@ -125,7 +120,8 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, wc_is_archi
                     wc_num,
                     values: {
                         ...values,
-                        time: formattedTime
+                        time: formattedTime,
+                        staff: user?.staff?.staff_id 
                     }
                 }, {
                     onSuccess: () => {

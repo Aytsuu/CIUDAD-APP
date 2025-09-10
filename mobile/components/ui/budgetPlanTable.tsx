@@ -40,13 +40,6 @@ export default function MobileBudgetPlanView({ budgetData }: { budgetData: Budge
       ?.filter((d) => d.dtl_budget_category === "LDRRM Fund")
       ?.reduce((sum, d) => sum + Number(d.dtl_proposed_budget || 0), 0) || 0
 
-  const personalServiceLimit =
-    (budgetData?.plan_actual_income ?? 0) * ((budgetData?.plan_personalService_limit ?? 0) / 100)
-  const miscExpenseLimit = (budgetData?.plan_rpt_income ?? 0) * ((budgetData?.plan_miscExpense_limit ?? 0) / 100)
-  const nonOfficeLimit = (budgetData?.plan_tax_allotment ?? 0) * ((budgetData?.plan_localDev_limit ?? 0) / 100)
-  const skfundLimit = availableResources * ((budgetData?.plan_skFund_limit ?? 0) / 100)
-  const calamityfundLimit = availableResources * ((budgetData?.plan_calamityFund_limit ?? 0) / 100)
-
   const showResourcesBreakdown = () => {
     Alert.alert(
       "NET Available Resources Breakdown",
@@ -73,42 +66,15 @@ export default function MobileBudgetPlanView({ budgetData }: { budgetData: Budge
     </Card>
   )
 
-  const renderCategorySection = (
-    title: string,
-    items: BudgetPlanDetail[],
-    total: number,
-    limit?: number,
-    percentage?: number,
-    isMiscExpense?: boolean,
-    isSKFund?: boolean,
-    isCalamityFund?: boolean,
-  ) => {
-    const calculatedLimit = isMiscExpense
-      ? miscExpenseLimit
-      : isSKFund
-        ? skfundLimit
-        : isCalamityFund
-          ? calamityfundLimit
-          : limit || 0
-    const calculatedBalance = calculatedLimit - total
-
+  const renderCategorySection = (title: string, items: BudgetPlanDetail[], total: number) => {
     return (
       <Card className="mb-4 bg-white border-gray-200">
         <CardHeader className="pb-3">
-          <Text className="text-lg font-bold text-primaryBlue">
-            {title} {percentage !== undefined && `(${percentage}%)`}
-          </Text>
+          <Text className="text-lg font-bold text-primaryBlue">{title}</Text>
         </CardHeader>
         <CardContent className="pt-0">
           <View className="space-y-3">
             {items.map((item, index) => {
-              const itemTitle =
-                item.dtl_budget_item === "Extraordinary & Miscellaneous Expense" && isMiscExpense
-                  ? `${item.dtl_budget_item} (${budgetData?.plan_miscExpense_limit}%)`
-                  : item.dtl_budget_item === "Subsidy to Sangguniang Kabataan (SK) Fund" && isSKFund
-                    ? `${item.dtl_budget_item} (${budgetData?.plan_skFund_limit}%)`
-                    : item.dtl_budget_item
-
               const indentedItems = [
                 "GAD Program",
                 "Senior Citizen/ PWD Program",
@@ -126,7 +92,7 @@ export default function MobileBudgetPlanView({ budgetData }: { budgetData: Budge
                   <View className="flex-row justify-between items-start py-2">
                     <View className="flex-1 pr-4">
                       <Text className="text-sm text-gray-700 leading-5" numberOfLines={0}>
-                        {itemTitle}
+                        {item.dtl_budget_item}
                       </Text>
                     </View>
                     <View className="min-w-[120px] items-end">
@@ -152,26 +118,6 @@ export default function MobileBudgetPlanView({ budgetData }: { budgetData: Budge
                 </Text>
               </View>
             </View>
-
-            {/* Limit and Balance Section */}
-            {(limit !== undefined || isMiscExpense || isSKFund || isCalamityFund) && (
-              <View className="bg-white border border-gray-200 p-3 rounded-lg space-y-2">
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-sm font-medium text-gray-600">Limit:</Text>
-                  <Text className="text-sm font-semibold text-gray-900 min-w-[120px] text-right">
-                    {formatNumber(calculatedLimit)}
-                  </Text>
-                </View>
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-sm font-medium text-gray-600">Balance:</Text>
-                  <Text
-                    className={`text-sm font-bold min-w-[120px] text-right ${calculatedBalance >= 0 ? "text-green-600" : "text-red-600"}`}
-                  >
-                    {formatNumber(calculatedBalance)}
-                  </Text>
-                </View>
-              </View>
-            )}
           </View>
         </CardContent>
       </Card>
@@ -184,19 +130,12 @@ export default function MobileBudgetPlanView({ budgetData }: { budgetData: Budge
   const nonOfficeItems = budgetData?.details?.filter((d) => d.dtl_budget_category === "Non-Office") || []
   const calamityFundItems = budgetData?.details?.filter((d) => d.dtl_budget_category === "LDRRM Fund") || []
 
-  const hasMiscExpense = otherExpenseItems.some(
-    (item) => item.dtl_budget_item === "Extraordinary & Miscellaneous Expense",
-  )
-  const hasSKFund = otherExpenseItems.some(
-    (item) => item.dtl_budget_item === "Subsidy to Sangguniang Kabataan (SK) Fund",
-  )
-
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1 ">
+      <ScrollView className="flex-1">
         {/* Summary Cards */}
         <View className="mb-6">
-          <Text className="text-xl font-bold text-gray-900 mb-4">Budget Summary</Text>
+          {/* <Text className="text-xl font-bold text-gray-900 mb-4">Budget Summary</Text> */}
 
           {/* NET Available Resources Card */}
           <Card className="mb-4 bg-white border-gray-200">
@@ -228,111 +167,10 @@ export default function MobileBudgetPlanView({ budgetData }: { budgetData: Budge
           <Text className="text-xl font-bold text-gray-900 mb-4">Current Operating Expenditures</Text>
 
           {personalServiceItems.length > 0 &&
-            renderCategorySection(
-              "Personal Services",
-              personalServiceItems,
-              personalServiceTotal,
-              personalServiceLimit,
-              budgetData?.plan_personalService_limit,
-            )}
+            renderCategorySection("Personal Services", personalServiceItems, personalServiceTotal)}
 
-          {/* Maintenance & Other Operating Expenses */}
           {otherExpenseItems.length > 0 &&
-            (() => {
-              const miscItem = otherExpenseItems.find(
-                (item) => item.dtl_budget_item === "Extraordinary & Miscellaneous Expense",
-              )
-              const miscTotal = miscItem?.dtl_proposed_budget ?? 0
-              const miscLimit = miscExpenseLimit
-              const miscBalance = miscLimit - miscTotal
-
-              return (
-                <Card className="mb-4 bg-white border-gray-200">
-                  <CardHeader className="pb-3">
-                    <Text className="text-lg font-bold text-primaryBlue">Maintenance & Other Operating Expenses</Text>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <View className="space-y-3">
-                      {otherExpenseItems.map((item, index) => (
-                        <View key={index}>
-                          <View className="flex-row justify-between items-start py-2">
-                            <View className="flex-1 pr-4">
-                              <Text className="text-sm text-gray-700 leading-5" numberOfLines={0}>
-                                {item.dtl_budget_item}
-                              </Text>
-                            </View>
-                            <View className="min-w-[120px] items-end">
-                              <Text
-                                className="text-sm font-semibold text-gray-900 text-right"
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                              >
-                                {formatNumber(item.dtl_proposed_budget)}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                      ))}
-
-                      {/* Total Section */}
-                      <View className="border-t border-gray-200 pt-3 mt-3">
-                        <View className="flex-row justify-between items-center py-2">
-                          <Text className="text-base font-bold text-gray-900">Total:</Text>
-                          <Text className="text-base font-bold text-gray-900 min-w-[120px] text-right">
-                            {formatNumber(otherExpenseTotal)}
-                          </Text>
-                        </View>
-                      </View>
-
-                      {miscItem && (
-                        <View className="bg-white border border-gray-200 p-4 rounded-lg mt-4">
-                          <View className="space-y-4">
-                            <View>
-                              <View className="flex-row justify-between items-start mb-1">
-                                <View className="flex-1 pr-3">
-                                  <Text className="text-sm font-medium text-gray-700">
-                                    Extraordinary Expense Limit ({budgetData.plan_miscExpense_limit}%):
-                                  </Text>
-                                </View>
-                                <Text className="text-sm font-semibold text-gray-900 min-w-[120px] text-right">
-                                  {formatNumber(miscLimit)}
-                                </Text>
-                              </View>
-                            </View>
-
-                            <View>
-                              <View className="flex-row justify-between items-center">
-                                <Text className="text-sm font-medium text-gray-700">Used:</Text>
-                                <Text className="text-sm font-semibold text-gray-900 min-w-[120px] text-right">
-                                  {formatNumber(miscTotal)}
-                                </Text>
-                              </View>
-                            </View>
-
-                            <View className="border-t border-gray-200 pt-3">
-                              <View className="flex-row justify-between items-center">
-                                <Text className="text-base font-semibold text-gray-700">Remaining Balance:</Text>
-                                <Text
-                                  className={`text-base font-bold min-w-[120px] text-right ${miscBalance >= 0 ? "text-green-600" : "text-red-600"}`}
-                                >
-                                  {formatNumber(miscBalance)}
-                                </Text>
-                              </View>
-                            </View>
-
-                            <View className="mt-3 pt-2 border-t border-gray-200">
-                              <Text className="text-xs text-gray-600 italic leading-4">
-                                * Limit applies only to "Extraordinary & Miscellaneous Expense".
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                      )}
-                    </View>
-                  </CardContent>
-                </Card>
-              )
-            })()}
+            renderCategorySection("Maintenance & Other Operating Expenses", otherExpenseItems, otherExpenseTotal)}
 
           <Text className="text-xl font-bold text-gray-900 mb-4 mt-6">Capital Outlays</Text>
           {capitalOutlayItems.length > 0 &&
@@ -340,25 +178,10 @@ export default function MobileBudgetPlanView({ budgetData }: { budgetData: Budge
 
           <Text className="text-xl font-bold text-gray-900 mb-4 mt-6">Non-Office</Text>
           {nonOfficeItems.length > 0 &&
-            renderCategorySection(
-              "Local Development Fund",
-              nonOfficeItems,
-              nonOfficeTotal,
-              nonOfficeLimit,
-              budgetData?.plan_localDev_limit,
-            )}
+            renderCategorySection("Local Development Fund", nonOfficeItems, nonOfficeTotal)}
 
           {calamityFundItems.length > 0 &&
-            renderCategorySection(
-              "LDRRM Fund / Calamity Fund",
-              calamityFundItems,
-              calamityFundTotal,
-              undefined,
-              budgetData?.plan_calamityFund_limit,
-              false,
-              false,
-              true,
-            )}
+            renderCategorySection("LDRRM Fund / Calamity Fund", calamityFundItems, calamityFundTotal)}
         </View>
       </ScrollView>
     </SafeAreaView>

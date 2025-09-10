@@ -4,9 +4,13 @@
     "baseUrl": ".",
     "strict": true,
     "paths": {
-      "@/*": ["./*"],
+      "@/*": [
+        "./*"
+      ],
     },
-    "types": ["@types/eslint"],
+    "types": [
+      "@types/eslint"
+    ]
   },
   "include": [
     "**/*.ts",
@@ -16,5 +20,7 @@
     "nativewind-env.d.ts",
     "types/svg.d.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

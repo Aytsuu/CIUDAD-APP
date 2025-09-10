@@ -6,7 +6,7 @@ import z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form";
 import { useAddAnnualGrossSales } from "../queries/RatesInsertQueries"
-import { toast } from "sonner"
+import { useState } from "react"
 
 
 function RatesFormPage1({onSuccess, lastMaxRange} : {
@@ -16,6 +16,7 @@ function RatesFormPage1({onSuccess, lastMaxRange} : {
 
     const shouldLockMinRange = Number(lastMaxRange) > 0;
     const initialMinRange = shouldLockMinRange ? (Number(lastMaxRange) + 1).toString() : "";
+    const [formError, setFormError] = useState<string | null>(null);
 
     const form = useForm<z.infer<typeof AnnualGrossSalesSchema>>({
         resolver: zodResolver(AnnualGrossSalesSchema),
@@ -26,18 +27,12 @@ function RatesFormPage1({onSuccess, lastMaxRange} : {
         }
     })
     
-    const {mutate: createAnnualGrossSales} = useAddAnnualGrossSales(onSuccess)
+    const {mutate: createAnnualGrossSales, isPending} = useAddAnnualGrossSales(onSuccess)
 
     const onSubmit = (value: z.infer<typeof AnnualGrossSalesSchema>) => {
-        console.log("Values:", value); 
-         if (parseFloat(value.maxRange) <= parseFloat(value.minRange)) {
-            toast.error("Validation Error", {
-            description: "The maximum range must be greater than the minimum range",
-            action: {
-                label: "OK",
-                onClick: () => {}
-            },
-            });
+        setFormError(null);
+        if (parseFloat(value.maxRange) <= parseFloat(value.minRange)) {
+            setFormError("The maximum range must be greater than the minimum range");
             return;
         } else {
             createAnnualGrossSales(value);
@@ -94,8 +89,13 @@ function RatesFormPage1({onSuccess, lastMaxRange} : {
                         </FormItem>
                     )}></FormField>
 
+                    {formError && (
+                        <div className="text-red-500 text-xs mt-2 font-semibold">{formError}</div>
+                    )}
                     <div className="flex justify-end mt-[20px]">
-                        <Button type="submit" className="w-[100px]">Save</Button>
+                        <Button type="submit" className="w-[100px]" disabled={isPending}>
+                            {isPending ? "Saving..." : "Save"}
+                        </Button>
                     </div>
                 </div>
             </form>

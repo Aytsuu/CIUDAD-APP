@@ -15,6 +15,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import React from "react"
 
+
 function RatesPage3() {
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
@@ -152,9 +153,9 @@ function RatesPage3() {
         <div className='bg-snow w-full h-full'>
             <div className='bg-white drop-shadow rounded-lg'>
                 <div className='p-7 flex flex-col justify-end gap-7'>
-                    <div className="flex flex-row items-center">
+                    {/* <div className="flex flex-row items-center">
                         <h2 className='font-bold w-3/4'>SERVICE CHARGE:</h2>
-                    </div>
+                    </div> */}
 
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
                         <TabsList className="grid w-full grid-cols-2 max-w-xs">
@@ -200,6 +201,19 @@ function RatesPage3() {
                                             </Select>
                                         <span className="text-sm">entries</span>
                                     </div>
+
+                                    {/* <DialogLayout
+                                        trigger={<Button>+ Add</Button>}
+                                        title='Add New Range and Fee for Business Permit'
+                                        description="Set a new annual gross sales range and its associated fee for business permits."
+                                        mainContent={
+                                            <RatesFormPage3
+                                                onSuccess={() => setIsDialogOpen(false)}
+                                            />
+                                        }
+                                        isOpen={isDialogOpen}
+                                        onOpenChange={setIsDialogOpen}
+                                    /> */}
                                 </div>
 
                                 <DataTable columns={activeColumns} data={paginatedActive} />

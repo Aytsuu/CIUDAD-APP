@@ -8,8 +8,6 @@ export const minutesOfMeetingFormSchema = z.object({
     meetingDate: z.string().date(),
     // meetingDescription: z.string(),
     meetingAreaOfFocus: z.array(z.string()).nonempty("Please select at least 1 area of focus"),
-    meetingFile: z.string().url("Please insert the meeting document")
-
 });
 
 export const minutesOfMeetingEditFormSchema = z.object({
@@ -19,7 +17,5 @@ export const minutesOfMeetingEditFormSchema = z.object({
     meetingDate: z.string().date(),
     // meetingDescription: z.string(),
     meetingAreaOfFocus: z.array(z.string()).nonempty("Please select at least 1 area of focus"),
-    meetingFile: z.string().url("Please insert the meeting document").optional(),
     mom_id: z.number().default(0),
-    momf_id: z.number().default(0),
 });

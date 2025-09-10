@@ -45,7 +45,7 @@ export default function SignIn() {
       await login(credentials);
       toast.success("Successfully Logged in!");
       form.reset();
-      navigate("/home");
+      navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
       setErrorMessage(

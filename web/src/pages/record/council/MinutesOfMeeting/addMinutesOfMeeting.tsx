@@ -1,6 +1,6 @@
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { Button } from '@/components/ui/button/button.tsx';
-import { Form, FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form/form.tsx";
+import { Form, FormControl, FormItem, FormMessage} from "@/components/ui/form/form.tsx";
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input.tsx';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -17,7 +17,8 @@ export default function AddMinutesOfMeeting({onSuccess}: {
 }) {
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
-    const {mutate: addMOM} = useInsertMinutesOfMeeting(onSuccess)
+    const [fileError, setFileError] = useState<string>("");
+    const {mutate: addMOM, isPending} = useInsertMinutesOfMeeting(onSuccess)
     const form = useForm<z.infer<typeof minutesOfMeetingFormSchema>>({
         resolver: zodResolver(minutesOfMeetingFormSchema),
             defaultValues: {
@@ -25,7 +26,6 @@ export default function AddMinutesOfMeeting({onSuccess}: {
             meetingAgenda: "",
             meetingDate: "",
             meetingAreaOfFocus: [],
-            meetingFile: ""
         },
     });
 
@@ -38,19 +38,21 @@ export default function AddMinutesOfMeeting({onSuccess}: {
 
 
     const onSubmit = (values: z.infer<typeof minutesOfMeetingFormSchema>)  => {
-        console.log("Values", values);
-        console.log('Media Files:', mediaFiles)
-        addMOM({ values, mediaFiles });
+        if (!mediaFiles || mediaFiles.length === 0) {
+            setFileError("Meeting file is required.");
+            return;
+        }
+        setFileError("");
 
+        const files = mediaFiles.map((media) => ({
+                'name': media.name,
+                'type': media.type,
+                'file': media.file
+            }))    
+            
+        addMOM({ values, files });
     }
 
-    // useEffect(() => {
-    //         if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
-    //         form.setValue('meetingFile', mediaFiles[0].publicUrl);
-    //     } else {
-    //         form.setValue('meetingFile', 'no-image-url-fetched');
-    //     }
-    // }, [mediaFiles, form]);
 
     return(
        <div className="max-h-[80vh] overflow-y-auto p-4">
@@ -76,28 +78,29 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                         control={form.control}
                         name="meetingDate"
                         label="Date"
-                        type="date"    
+                        type="date"
+                        max={new Date().toISOString().split('T')[0]}
                     />
 
-                    <FormField
-                        control={form.control}
-                        name="meetingFile"
-                        render={({ }) => (
-                            <FormItem>
-                                <FormControl>
-                                    <MediaUpload
-                                        title="Meeting File"
-                                        description="Upload meeting documentation"
-                                        mediaFiles={mediaFiles}
-                                        setMediaFiles={setMediaFiles}
-                                        activeVideoId={activeVideoId}
-                                        setActiveVideoId={setActiveVideoId}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
+                    <FormItem>
+                        <FormControl>
+                            <MediaUpload
+                                title="Meeting File"
+                                description="Upload meeting documentation"
+                                mediaFiles={mediaFiles}
+                                setMediaFiles={setMediaFiles}
+                                activeVideoId={activeVideoId}
+                                setActiveVideoId={setActiveVideoId}
+                                maxFiles={1}
+                                acceptableFiles='document'
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        {fileError && (
+                            <div className="text-red-500 text-xs mt-2">{fileError}</div>
                         )}
-                    />
+                    </FormItem>
+                      
                     
                     {/* Categories Field */}
                     <FormComboCheckbox
@@ -109,8 +112,8 @@ export default function AddMinutesOfMeeting({onSuccess}: {
 
                     {/* Submit Button (Inside Dialog) */}
                     <div className="flex items-center justify-end pt-4">
-                        <Button type="submit" className="w-[100px]">
-                            Create
+                        <Button type="submit" className="w-[100px]" disabled={isPending}>
+                            {isPending ? "Submitting..." : "Submit"}
                         </Button>
                     </div>
                 </form>

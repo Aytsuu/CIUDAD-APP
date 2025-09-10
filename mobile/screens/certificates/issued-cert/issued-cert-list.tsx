@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { getIssuedCertificates, IssuedCertificate } from '@/screens/certificates/restful-api/issuedCertGetAPI'
+import { getIssuedCertificates, IssuedCertificate } from '../queries/issuedCertificateQueries'
 
 const IssuedCertList = () => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -32,14 +32,9 @@ const IssuedCertList = () => {
   }, [])
 
   const handleCertificatePress = (certificate: IssuedCertificate) => {
-    // Navigate to certificate details or open PDF
+    // Navigate to certificate details or open PDF for viewing only
     console.log('View certificate:', certificate.requester)
-    // router.push(`/certificate-details/${certificate.fileUrl}`)
-  }
-
-  const handleDownload = (certificate: IssuedCertificate) => {
-    // Handle download functionality
-    console.log('Download certificate:', certificate.fileUrl)
+    // router.push(`/certificate-details/${certificate.ic_id}`)
   }
 
   const filteredCertificates = certificates.filter(cert => {
@@ -142,7 +137,25 @@ const IssuedCertList = () => {
 
           {/* Certificate List */}
           <View className="space-y-4">
-            {filteredCertificates.length === 0 ? (
+            {loading ? (
+              <Card className="border-0 shadow-sm bg-white">
+                <CardContent className="p-8 items-center">
+                  <Ionicons name="refresh-outline" size={48} color="#9CA3AF" />
+                  <Text className="text-gray-500 text-center mt-2">
+                    Loading issued certificates...
+                  </Text>
+                </CardContent>
+              </Card>
+            ) : error ? (
+              <Card className="border-0 shadow-sm bg-white">
+                <CardContent className="p-8 items-center">
+                  <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
+                  <Text className="text-red-500 text-center mt-2">
+                    {error}
+                  </Text>
+                </CardContent>
+              </Card>
+            ) : filteredCertificates.length === 0 ? (
               <Card className="border-0 shadow-sm bg-white">
                 <CardContent className="p-8 items-center">
                   <Ionicons name="ribbon-outline" size={48} color="#9CA3AF" />
@@ -192,23 +205,20 @@ const IssuedCertList = () => {
                           </Text>
                         </View>
                         <View className="flex-row justify-between">
-                          <Text className="text-gray-500 text-sm">File Status:</Text>
+                          <Text className="text-gray-500 text-sm">Certificate ID:</Text>
                           <Text className="text-gray-900 text-sm font-medium">
-                            Available
+                            {certificate.ic_id}
                           </Text>
                         </View>
                       </View>
 
-                      <View className="flex-row justify-between mt-4 pt-4 border-t border-gray-100">
-                        <Pressable
-                          onPress={() => handleDownload(certificate)}
-                          className="flex-row items-center bg-blue-50 px-3 py-2 rounded-lg"
-                        >
-                          <Ionicons name="download-outline" size={16} color="#2563EB" />
+                      <View className="flex-row justify-end mt-4 pt-4 border-t border-gray-100">
+                        <View className="flex-row items-center bg-blue-50 px-3 py-2 rounded-lg">
+                          <Ionicons name="eye-outline" size={16} color="#2563EB" />
                           <Text className="text-blue-600 text-sm font-medium ml-1">
-                            Download
+                            View Details
                           </Text>
-                        </Pressable>
+                        </View>
                       </View>
                     </CardContent>
                   </Card>
@@ -216,8 +226,6 @@ const IssuedCertList = () => {
               ))
             )}
           </View>
-
-
         </View>
       </ScrollView>
     </View>

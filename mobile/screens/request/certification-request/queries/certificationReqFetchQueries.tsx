@@ -1,57 +1,94 @@
 import { useQuery } from "@tanstack/react-query";
-import { getPersonalCertifications, getBusinessPermitRequests } from "../restful-API/certificationReqGetAPI";
+import { getCertificates, getCertificateById, searchCertificates, getPersonalClearances, getPurposeAndRates, getAnnualGrossSales, getBusinessByResidentId } from "../restful-API/certificationReqGetAPI";
 
-export type PersonalCertification = {
-    cr_id: string;
-    req_pay_method: string;
-    req_request_date: string;
-    req_claim_date: string;
-    req_transac_id: string;
-    req_type: string;
-    req_status: string;
-    req_payment_status: string;
-    pr_id?: string;
-    ra_id?: string;
-    staff_id?: string;
-    rp: string;
+export interface PurposeAndRate {
+    pr_id: number;
+    pr_purpose: string;
+    pr_rate: number;
+    pr_category: string;
+    pr_date: string;
+    pr_is_archive: boolean;
 }
 
-export type BusinessPermitRequest = {
-    bpr_id: string;
-    req_pay_method: string;
-    req_request_date: string;
-    req_claim_date: string;
-    req_transac_id: string;
-    req_sales_proof: string;
-    req_status: string;
-    req_payment_status: string;
-    business: string;
-    ags_id?: string;
-    pr_id?: string;
-    ra_id?: string;
-    staff_id?: string;
+export interface AnnualGrossSales {
+    ags_id: number;
+    ags_minimum: number;
+    ags_maximum: number;
+    ags_rate: number;
+    ags_date: string;
+    ags_is_archive: boolean;
 }
 
-export const useGetPersonalCertifications = (residentId: string) => {
-    return useQuery<PersonalCertification[]>({
-        queryKey: ["personalCertifications", residentId],
-        queryFn: async () => {
-            const response = await getPersonalCertifications(residentId);
-            return Array.isArray(response) ? response : response?.data || [];
-        },
-        staleTime: 1000 * 60 * 30, // 30 minutes
-        enabled: !!residentId,
+// Query hooks for fetching data
+export const usePurposeAndRates = () => {
+    return useQuery<PurposeAndRate[]>({
+        queryKey: ["purpose-and-rates"],
+        queryFn: getPurposeAndRates,
     });
 };
 
-export const useGetBusinessPermitRequests = (residentId: string) => {
-    return useQuery<BusinessPermitRequest[]>({
-        queryKey: ["businessPermitRequests", residentId],
-        queryFn: async () => {
-            const response = await getBusinessPermitRequests(residentId);
-            return Array.isArray(response) ? response : response?.data || [];
-        },
-        staleTime: 1000 * 60 * 30, // 30 minutes
-        enabled: !!residentId,
+export const useAnnualGrossSales = () => {
+    return useQuery<AnnualGrossSales[]>({
+        queryKey: ["annual-gross-sales"],
+        queryFn: getAnnualGrossSales,
+    });
+};
+
+// Existing certificate queries
+export const useGetCertificates = () => {
+    return useQuery({
+        queryKey: ['certificates'],
+        queryFn: getCertificates,
+    });
+};
+
+export const useGetCertificateById = (crId: string) => {
+    return useQuery({
+        queryKey: ['certificate', crId],
+        queryFn: () => getCertificateById(crId),
+        enabled: !!crId,
+    });
+};
+
+export const useSearchCertificates = (query: string) => {
+    return useQuery({
+        queryKey: ['certificates', 'search', query],
+        queryFn: () => searchCertificates(query),
+        enabled: !!query,
+    });
+};
+
+export const useGetPersonalClearances = () => {
+    return useQuery({
+        queryKey: ['personal-clearances'],
+        queryFn: getPersonalClearances,
+    });
+};
+
+// Business types
+export interface Business {
+    bus_id: number;
+    bus_name: string;
+    bus_gross_sales: number;
+    bus_street: string;
+    sitio: string;
+    bus_date_verified: string | null;
+    bus_status: string;
+}
+
+
+export interface BusinessResponse {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: Business[];
+}
+
+
+export const useBusinessByResidentId = (rpId: string) => {
+    return useQuery<BusinessResponse>({
+        queryKey: ["business-by-resident", rpId],
+        queryFn: () => getBusinessByResidentId(rpId),
+        enabled: !!rpId, 
     });
 };

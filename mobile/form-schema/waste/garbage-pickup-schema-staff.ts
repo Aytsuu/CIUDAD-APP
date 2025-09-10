@@ -5,6 +5,11 @@ export const RejectPickupRequestSchema = z.object({
   garb_id: z.string().default('')
 });
 
+export const CancelGarbagePickupSchema = z.object({
+  reason: z.string().min(1, { message: "Reason is required." }),
+  garb_id: z.string().default('')
+});
+
 export const AcceptPickupRequestSchema = z.object({
     driver: z.string().min(1, { message: "Driver is required." }),
     collectors: z.array(z.string())

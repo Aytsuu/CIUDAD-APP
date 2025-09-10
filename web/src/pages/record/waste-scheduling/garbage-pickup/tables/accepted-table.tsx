@@ -28,6 +28,7 @@ export default function AcceptedTable() {
   const filteredData = acceptedReqData.filter((request) => {
     const matchesSitio = selectedSitio === "0" || request.sitio_name === selectedSitio
     const matchesSearch = searchQuery === "" || `
+      ${request.garb_id} 
       ${request.garb_requester} 
       ${request.garb_location} 
       ${request.garb_waste_type} 
@@ -240,6 +241,14 @@ export default function AcceptedTable() {
                     {/* Left Section - Main Info */}
                     <div className="flex-shrink-0 min-w-0 w-56">
                       <div className="space-y-2">
+                        <div>
+                          <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
+                            <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
+                              {request.garb_id}
+                            </p>
+                          </div>
+                        </div>
+
                         <div>
                           <h3 className="font-semibold text-sm text-gray-900 truncate">{request.garb_requester}</h3>
                           <p className="text-xs text-gray-500 mt-0.5">{request.sitio_name}</p>

@@ -4,33 +4,13 @@ export const updateTemplateRec = async (temp_id: number, templateInfo: Record<st
 
     try{
         console.log({
-            temp_header: templateInfo.temp_header,
-            temp_below_headerContent: templateInfo.temp_below_headerContent,
-            temp_title: templateInfo.temp_title,
-            temp_subtitle: templateInfo.temp_subtitle,
-            temp_w_sign:  templateInfo.temp_w_sign,
-            temp_w_seal: templateInfo.temp_w_seal,
-            temp_w_summon: templateInfo.temp_w_summon,
-            temp_paperSize: templateInfo.temp_paperSize,
-            temp_margin: templateInfo.temp_margin,
-            temp_filename: templateInfo.temp_filename,
-            temp_body: templateInfo.temp_body
+            temp_contact_num: templateInfo.temp_contact_number,
+            temp_email: templateInfo.temp_email
         })
 
         const res = await api.put(`council/update-template/${temp_id}/`,{
-            temp_header: templateInfo.temp_header,
-            temp_below_headerContent: templateInfo.temp_below_headerContent,
-            temp_title: templateInfo.temp_title,
-            temp_subtitle: templateInfo.temp_subtitle,
-            temp_w_sign:  templateInfo.temp_w_sign,
-            temp_w_seal: templateInfo.temp_w_seal,
-            temp_w_summon: templateInfo.temp_w_summon,
-            temp_paperSize: templateInfo.temp_paperSize,
-            temp_margin: templateInfo.temp_margin,
-            temp_filename: templateInfo.temp_filename,
-            temp_body: templateInfo.temp_body,
-            pr_id: Number(templateInfo.selectedPurposeRates),
-            staff_id: templateInfo.staff_id || null,
+            temp_contact_num: templateInfo.temp_contact_number,
+            temp_email: templateInfo.temp_email
         })
 
         return res.data;

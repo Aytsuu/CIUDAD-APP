@@ -17,8 +17,8 @@ import { SelectLayout } from "@/components/ui/select/select-layout"
 import React from "react"
 
 export default function PendingCards() {
-  const [acceptedRowId, setAcceptedRowId] = useState<number | null>(null)
-  const [rejectedRowId, setRejectedRowId] = useState<number | null>(null)
+  const [acceptedRowId, setAcceptedRowId] = useState<string | null>(null)
+  const [rejectedRowId, setRejectedRowId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSitio, setSelectedSitio] = useState("0")
   const [currentPage, setCurrentPage] = useState(1)
@@ -36,6 +36,7 @@ export default function PendingCards() {
   const filteredData = pendingReqData.filter((request) => {
     const matchesSitio = selectedSitio === "0" || request.sitio_name === selectedSitio
     const matchesSearch = searchQuery === "" || `
+      ${request.garb_id} 
       ${request.garb_requester} 
       ${request.garb_location} 
       ${request.garb_waste_type} 
@@ -158,6 +159,14 @@ export default function PendingCards() {
                     {/* Left Section - Main Info */}
                     <div className="flex-shrink-0 min-w-0 w-56">
                       <div className="space-y-2">
+                          <div>
+                            <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
+                              <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
+                                {request.garb_id}
+                              </p>
+                            </div>
+                          </div>
+
                         <div>
                           <h3 className="font-semibold text-sm text-gray-900 truncate">{request.garb_requester}</h3>
                           <p className="text-xs text-gray-500 mt-0.5">{request.sitio_name}</p>
@@ -260,8 +269,8 @@ export default function PendingCards() {
                                       onSuccess={() => setAcceptedRowId(null)}
                                     />
                                   }
-                                  isOpen={acceptedRowId === Number(request.garb_id)}
-                                  onOpenChange={(open) => setAcceptedRowId(open ? Number(request.garb_id) : null)}
+                                  isOpen={acceptedRowId === request.garb_id}
+                                  onOpenChange={(open) => setAcceptedRowId(open ? request.garb_id : null)}
                                 />
                               </div>
                             }
@@ -286,8 +295,8 @@ export default function PendingCards() {
                                       onSuccess={() => setRejectedRowId(null)}
                                     />
                                   }
-                                  isOpen={rejectedRowId === Number(request.garb_id)}
-                                  onOpenChange={(open) => setRejectedRowId(open ? Number(request.garb_id) : null)}
+                                  isOpen={rejectedRowId === request.garb_id}
+                                  onOpenChange={(open) => setRejectedRowId(open ? request.garb_id : null)}
                                 />
                               </div>
                             }

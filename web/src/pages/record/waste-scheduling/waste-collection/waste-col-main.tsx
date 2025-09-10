@@ -332,14 +332,6 @@ function WasteCollectionMain() {
         deleteWasteSchedCol(wc_num);
     };
 
-    // const handleArchive = (wc_num: number) => {
-    //     archiveWasteSchedCol(wc_num);
-    // };
-
-    // const handleRestore = (wc_num: number) => {
-    //     restoreWasteSchedCol(wc_num);
-    // };
-
     // Filter data based on selected sitio
     const filteredData = wasteCollectionData.filter(item => {
         if (selectedSitio === "0") return true; // Show all if "All Schedules" is selected

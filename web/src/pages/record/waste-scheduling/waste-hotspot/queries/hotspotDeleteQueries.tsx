@@ -3,8 +3,6 @@ import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { deleteHotspot } from "../restful-API/hotspotDeleteAPI";
 
-
-
 export const useDeleteHotspot = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
