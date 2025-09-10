@@ -2,7 +2,6 @@ import { useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { HouseholdFamRecord, HouseholdRecord } from "../ProfilingTypes";
-import { Label } from "@/components/ui/label";
 import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { Combobox } from "@/components/ui/combobox";

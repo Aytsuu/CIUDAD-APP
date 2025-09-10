@@ -71,7 +71,7 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
 
           {/* Badge centered */}
           <Badge variant="outline" className="font-medium">
-            COMP-2025-{row.original.comp_id}
+            {row.original.comp_id}
           </Badge>
         </div>
       );

@@ -113,7 +113,10 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
     }
     
     const houseInfo = tab_params?.form.getValues("houseSchema.info");
-    append(houseInfo)
+    append({
+      ...houseInfo,
+      nhts: capitalize(houseInfo.nhts)
+    })
     tab_params?.form.resetField("houseSchema.info")
   }
 

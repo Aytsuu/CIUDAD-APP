@@ -1,21 +1,11 @@
 import App from "@/screens/auth/login";
-import Business from "../(business)";
-import HomeScreen from "@/screens/home";
-import Complaint from "../(complaint)";
-import SendEmailOTP from "@/screens/auth/signup/EmailOTP";
-import LoginScreen from "@/screens/auth/login/loginscreen";
-import IndividualInformation from "@/screens/auth/signup/individual/IndividualInformation";
-import PurposeAndRatesMain from "@/screens/treasurer/rates/purpose-and-rate-main";
-import WasteIllegalDumpingResMain from "@/screens/report/illegal-dumping/resident/illegal-dump-main-res";
-import IllegalDumpCreateForm from "@/screens/report/illegal-dumping/resident/illegal-dump-create";
-import WasteIllegalDumping from "@/screens/report/illegal-dumping/staff/illegal-dump-main-staff";
-import DriverTasksMain from "@/screens/waste/waste-garbage-pickup-request/driver/garbage-pickup-tasks-main";
-import ResolutionPage from "@/screens/council/resolution/resolution-main";
-import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staff/garbage-pickup-request-main";
-import MinutesOfMeetingMain from "@/screens/council/minutesOfmeeting/minutes-of-meeting-main";
-import IncomeExpenseMain from "@/screens/treasurer/treasurer-budget-tracker/income-expense-main";
-import ReceiptPage from "@/screens/treasurer/receipt/receipt-main";
 
+// Makes the Error Overlay dissapear
+import { LogBox } from 'react-native';
+
+if (__DEV__) {
+  LogBox.ignoreAllLogs(true);
+}
 
 export default () => {
     return <WasteIllegalDumping/>

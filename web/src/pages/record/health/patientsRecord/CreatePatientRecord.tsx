@@ -14,7 +14,7 @@ import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
 import { Form } from "@/components/ui/form/form"
-import { generateDefaultValues } from "@/pages/record/health/patientsRecord/generateDefaultValues"
+import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
 

@@ -1,16 +1,19 @@
-import { api, api2 } from "@/api/api";
+import { api } from "@/api/api";
 import { capitalizeAllFields } from "@/helpers/capitalize";
 import { formatDate } from "@/helpers/dateHelper";
 
 export const addStaff = async (
   residentId: string,
   positionId: string,
-  staffId: string
+  staffId: string,
+  staffType: string
 ) => {
   try {
+
     const body = {
       staff_id: residentId,
       staff_assign_date: formatDate(new Date()),
+      staff_type: staffType,
       rp: residentId,
       pos: positionId,
       manager: staffId,

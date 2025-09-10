@@ -40,6 +40,7 @@ export const useUpdateFamilyRole = () => {
       queryClient.setQueryData(['familyMembers', familyId], (old: any) => ({
         ...old,
         results: old.results?.map((member: any) => {
+          console.log(member.rp_id, residentId)
           if(member.rp_id == residentId) {
             return {
               ...member,
@@ -48,8 +49,9 @@ export const useUpdateFamilyRole = () => {
           }
           return member
         })
-      })
-    )}
+      }))
+      queryClient.invalidateQueries({ queryKey: ['familyMembers', familyId]})
+    }
   })
 }
 
@@ -150,6 +152,24 @@ export const useUpdateAccount = () => {
       } catch (err) {
         throw err;
       }
+    }
+  })
+}
+
+export const useLinkToVoter = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (residentId: string) => {
+      try {
+        const res = await api.patch(`profiling/resident/${residentId}/link-to-voter/`);
+        return res.data;
+      } catch (err) {
+        console.error(err)
+        throw err;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["residentsTableData"]});
     }
   })
 }

@@ -45,6 +45,6 @@ class ComplaintSerializer(serializers.ModelSerializer):
         complaint_accused = ComplaintAccused.objects.filter(comp=obj).select_related('acsd__add')
         return AccusedSerializer([ca.acsd for ca in complaint_accused], many=True).data
 
-    def get_complainant(self, obj):  # Fixed method name
+    def get_complainant(self, obj): 
         complaint_complainant = ComplaintComplainant.objects.filter(comp=obj).select_related('cpnt__add')
         return ComplainantSerializer([cc.cpnt for cc in complaint_complainant], many=True).data

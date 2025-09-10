@@ -1,4 +1,5 @@
 import axios from "axios";
+import { setupApiInterceptor } from "./apiInterceptor";
 
 export const api = axios.create({
   baseURL: "http://192.168.100.8:8000",
@@ -9,10 +10,10 @@ export const api = axios.create({
   },
 });
 
-  export const api2 = axios.create({
-    baseURL: "http://192.168.1.52:8001",
-    timeout: 10000,
-  });
+export const api2 = axios.create({
+  baseURL: "http://192.168.1.52:8001",
+  timeout: 10000,
+});
 
   // Track refresh state to prevent multiple refresh attempts
   let isRefreshing = false;

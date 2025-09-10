@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm, ControllerRenderProps } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Lock, Phone, Mail, ArrowLeft, Shield, Users, MapPin } from "lucide-react";
+import { Eye, EyeOff, Lock, Phone, Mail, ArrowLeft, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,6 @@ import SignInSchema from "@/form-schema/sign-in-schema";
 import { useAuth } from "@/context/AuthContext";
 import SanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
 import { useNavigate } from "react-router";
 
 export default function SignIn() {
@@ -43,7 +42,7 @@ export default function SignIn() {
     setErrorMessage("");
 
     try {
-      await login(credentials.email, credentials.password);
+      await login(credentials);
       toast.success("Successfully Logged in!");
       form.reset();
       navigate("/home");
@@ -149,7 +148,7 @@ export default function SignIn() {
           </div>
 
           {/* Enhanced Card */}
-          <div className="bg-white/95 backdrop-blur-sm shadow-2xl rounded-2xl p-4 sm:p-6 border border-gray-200 relative overflow-hidden flex-1 max-w-md w-full">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-gray-200 relative overflow-hidden flex-1 max-w-md w-full">
             {/* Subtle background accent */}
             <div className="absolute top-0 right-0 w-16 sm:w-20 h-16 sm:h-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full -translate-y-8 sm:-translate-y-10 translate-x-8 sm:translate-x-10 opacity-50"></div>
             
@@ -306,7 +305,7 @@ export default function SignIn() {
                   type="button"
                   onClick={handlePhoneSignIn}
                   disabled={loading}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-green-400 text-sm"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg disabled:bg-green-400 text-sm"
                 >
                   <Phone className="h-4 w-4" />
                   Phone
@@ -316,7 +315,7 @@ export default function SignIn() {
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="flex-1 bg-white hover:bg-gray-50 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-medium py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-100 text-sm"
+                  className="flex-1 bg-white hover:bg-gray-50 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-medium py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg disabled:bg-gray-100 text-sm"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 24 24">
                     <path

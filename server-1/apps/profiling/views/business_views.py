@@ -8,15 +8,16 @@ from apps.account.models import Account
 from ..serializers.business_serializers import *
 from apps.pagination import StandardResultsPagination
 
-class BusRespondentCreateView(generics.CreateAPIView):
-  permission_classes = [AllowAny]
-  serializer_class = BusinessRespondentBaseSerializer
-  queryset = BusinessRespondent.objects.all()
 
 class BusinessCreateView(generics.CreateAPIView):
   permission_classes = [AllowAny]
   serializer_class = BusinessCreateUpdateSerializer
   queryset = Business.objects.all()
+
+class BRCreateUpdateView(generics.CreateAPIView):
+  permission_classes = [AllowAny]
+  serializer_class = BRCreateUpdateSerializer
+  queryset = BusinessRespondent.objects.all()
 
 class ActiveBusinessTableView(generics.ListAPIView):
   permission_classes = [AllowAny]

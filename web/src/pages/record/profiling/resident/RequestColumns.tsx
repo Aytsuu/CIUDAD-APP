@@ -151,7 +151,7 @@ export const FamilyRequestColumns: ColumnDef<FamilyRequestRecord>[] = [
       </div>
     ),
     cell: ({ row }) => (
-      <p>{calculateAge(row.original.respondent.per_dob)}</p>
+      <p>{calculateAge(row.original.respondent?.per_dob)}</p>
     )
   },
   {

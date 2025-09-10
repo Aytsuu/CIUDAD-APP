@@ -4,7 +4,6 @@ import { BsChevronLeft } from "react-icons/bs";
 import { Link, useLocation } from "react-router-dom";
 import { Complaint } from "./complaint-type";
 import {
-  FileText,
   User,
   AlertTriangle,
   FolderOpen,

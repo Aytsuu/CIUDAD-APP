@@ -3,6 +3,16 @@ from django.conf import settings
 from datetime import date
 from simple_history.models import HistoricalRecords
 
+class Voter(models.Model):
+    voter_id = models.BigAutoField(primary_key=True)
+    voter_name = models.CharField(max_length=200)
+    voter_address = models.TextField()
+    voter_category = models.CharField(max_length=5, null=True)
+    voter_precinct = models.CharField(max_length=20)
+
+    class Meta:
+        db_table = "voter"
+
 class Sitio(models.Model):
     sitio_id = models.CharField(max_length=100, primary_key=True)
     sitio_name = models.CharField(max_length=100)
@@ -95,6 +105,7 @@ class ResidentProfile(models.Model):
     rp_date_registered = models.DateField(auto_now_add=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_information')
     staff = models.ForeignKey("administration.Staff", on_delete=models.CASCADE, null=True, related_name="resident_profiles")
+    voter = models.ForeignKey(Voter, on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = 'resident_profile'
@@ -170,7 +181,12 @@ class RequestRegistrationComposition(models.Model):
 class BusinessRespondent(models.Model):
     br_id = models.BigAutoField(primary_key=True)
     br_date_registered = models.DateField(default=date.today)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    br_lname = models.CharField(max_length=50)
+    br_fname = models.CharField(max_length=50)
+    br_mname = models.CharField(max_length=50, null=True)
+    br_sex = models.CharField(max_length=10)
+    br_dob = models.DateField()
+    br_contact = models.CharField(max_length=11)
 
     class Meta:
         db_table = 'business_respondent'
@@ -237,5 +253,3 @@ class KYCRecord(models.Model):
 
     class Meta:
         db_table = 'kyc_record'
-
-    
