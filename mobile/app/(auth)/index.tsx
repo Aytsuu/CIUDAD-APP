@@ -8,6 +8,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <WasteIllegalDumping/>
+    return <App/>
 }
  

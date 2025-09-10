@@ -12,6 +12,7 @@ from .signals import archive_completed_hotspots
 from rest_framework.permissions import AllowAny
 from django.db.models import OuterRef, Subquery
 from django.db.models import Q
+from datetime import date, timedelta
 
 # Create your views here.
 #KANI 3RD
@@ -134,6 +135,45 @@ class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
         return get_object_or_404(WasteCollectionSched, wc_num=wc_num) 
 
 
+#============================= WASTE HOTSPOT ================================
+
+class UpcomingHotspotView(generics.ListAPIView):
+    serializer_class = WasteHotspotSerializer
+
+    def get_queryset(self):
+        today = date.today()
+        time_range = self.request.query_params.get('range', 'week')  # default to week
+        
+        queryset = WasteHotspot.objects.select_related(
+            'wstp_id__staff__rp__per', 
+            'sitio_id'
+        ).filter(
+            wh_is_archive=False,
+            wh_date__gte=today
+        )
+        
+        if time_range == 'today':
+            queryset = queryset.filter(wh_date=today)
+        else:  # week
+            end_of_week = today + timedelta(days=7)
+            queryset = queryset.filter(wh_date__lte=end_of_week)
+            
+        return queryset.order_by('wh_date', 'wh_start_time')
+    
+
+class UpdateHotspotView(generics.RetrieveUpdateAPIView): 
+    serializer_class = WasteHotspotSerializer
+    queryset = WasteHotspot.objects.all()
+    lookup_field = 'wh_num'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class WasteHotspotView(generics.ListCreateAPIView):
     serializer_class = WasteHotspotSerializer
 
@@ -481,6 +521,21 @@ class WatchmanView(generics.GenericAPIView):
 
         data = [watchman.to_dict() for watchman in watchmen]
         return Response(data)
+    
+# ============== GARBAGE PICKUP ================
+
+class GarbagePickupRequestAnalyticsView(APIView):
+    def get(self, request, format=None):
+        counts = {
+            'pending': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='pending').count(),
+            'accepted': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='accepted').count(),
+            'rejected': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='rejected').count(),
+            'completed': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='completed').count(),
+            'total': Garbage_Pickup_Request.objects.count()
+        }
+        
+        return Response(counts, status=status.HTTP_200_OK)
+    
 
 class GarbagePickupFileView(generics.ListCreateAPIView):
     serializer_class = GarbagePickupFileSerializer

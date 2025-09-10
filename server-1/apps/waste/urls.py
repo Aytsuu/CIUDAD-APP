@@ -25,6 +25,7 @@ urlpatterns = [
 
     # Waste Hotspot URLs
     path("waste-hotspot/", WasteHotspotView.as_view(), name="waste-hotspot-list"),
+    path('upcoming-hotspots/', UpcomingHotspotView.as_view(), name='upcoming-hotspots'),
     path("waste-watchman/", WatchmanView.as_view(), name="waste-watchman"),
     path('update-waste-hotspot/<int:wh_num>/', UpdateHotspotView.as_view(), name='update-waste-hotspot'),
     path('delete-waste-hotspot/<int:wh_num>/', DeleteHotspotView.as_view(), name='delete-waste-hotpot'),
@@ -52,6 +53,7 @@ urlpatterns = [
 
     # Garbage Pickup Urls
     # Staff and Resident
+    path('garbage-pickup-request-analytics/', GarbagePickupRequestAnalyticsView.as_view(), name='agarbage-pickup-request-analytics'),
     path('garbage-pickup-file/', GarbagePickupFileView.as_view(), name='garbage-pickup-file'),
     path('garbage-pickup-request-pending/', GarbagePickupRequestPendingView.as_view(), name='garbage-pickup-request-pending'), #retrieve pending requests
     path('garbage-pickup-request-rejected/', GarbagePickupRequestRejectedView.as_view(), name='garbage-pickup-request-rejected'), #retrieve rejected requests
