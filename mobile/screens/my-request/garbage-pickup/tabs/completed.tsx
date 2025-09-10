@@ -5,14 +5,13 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { useGetGarbageCompleteResident } from "../queries/garbagePickupFetchQueries";
-import { RootState } from "@/redux";
-import { useSelector } from "react-redux";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
 
 export default function ResidentCompleted() {
   const router = useRouter(); 
   const [searchQuery, setSearchQuery] = useState("");
-  const {user, isLoading: _isUserLoading} = useSelector((state: RootState) => state.auth)
+  const {user} = useAuth()  
   const {data: completedRequests = [], isLoading: isDataLoading} = useGetGarbageCompleteResident(user.resident.rp_id)
 
   const filteredData = completedRequests.filter((request) => {

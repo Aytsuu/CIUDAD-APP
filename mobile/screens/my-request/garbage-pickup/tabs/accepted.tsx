@@ -4,8 +4,6 @@ import { Search, Info, ChevronRight } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
-import { RootState } from "@/redux";
-import { useSelector } from "react-redux";
 import { useGetGarbageAcceptedResident } from "../queries/garbagePickupFetchQueries";
 import { router } from "expo-router";
 import { Button } from "@/components/ui/button";
@@ -13,10 +11,11 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { CheckCircle } from "lucide-react-native";
 import { formatTime } from "@/helpers/timeFormatter";
 import { useUpdateGarbReqStatusResident } from "../queries/garbagePickupUpdateQueries";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ResidentAccepted() {
   const [searchQuery, setSearchQuery] = useState("");
-  const {user, isLoading: _isUserLoading} = useSelector((state: RootState) => state.auth)
+  const {user} = useAuth()
   const {data: acceptedRequest = [], isLoading: isDataLoading} = useGetGarbageAcceptedResident(user.resident.rp_id)
   const {mutate: confirm} = useUpdateGarbReqStatusResident(() => {}, false)
 
