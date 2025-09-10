@@ -70,7 +70,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
   },
   {
     accessorKey: "fam_building",
-    header: "Building",
+    header: "Household Occupancy",
   },
   {
     accessorKey: "father",

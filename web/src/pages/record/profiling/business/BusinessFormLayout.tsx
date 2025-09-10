@@ -29,13 +29,13 @@ import ModificationRequest from "./ModificationRequest"
 import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { RenderHistory } from "../ProfilingHistory"
+import _ from 'lodash'
 
 export default function BusinessFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // --------------------- STATE INITIALIZATION -----------------------
   const navigate = useNavigate();
   const location = useLocation()
   const params = React.useMemo(() => location.state?.params || {}, [location.state])
-  const { isDeepStrictEqual } = require('node:util')
   const { user } = useAuth()
   const { safeNavigate } = useSafeNavigate();
   const { showLoading, hideLoading } = useLoading()
@@ -243,7 +243,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
             bus_status: 'Active'
           }),
           // Exclude if viewing pending 
-          ...((formType !== Type.Request && !isDeepStrictEqual(initialFiles, files)) && {
+          ...((formType !== Type.Request && !_.isEqual(initialFiles, files)) && {
             edit_files: files
           }),
           sitio: businessData.sitio.toLowerCase(),
@@ -328,12 +328,12 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
         );
         break;
       case Type.Editing:
-        if (isDeepStrictEqual(businessData, {
+        if (_.isEqual(businessData, {
           bus_name: businessInfo?.bus_name,
           bus_gross_sales: String(businessInfo?.bus_gross_sales),
           bus_street: businessInfo?.bus_street,
           sitio: businessInfo?.sitio
-        }) && isDeepStrictEqual(initialFiles, files)) {
+        }) && _.isEqual(initialFiles, files)) {
           showPlainToast('No changes made')
           return;
         }

@@ -217,7 +217,7 @@ export default function RegistrationLayout() {
           capitalizeAllFields(personal),
           account,
           houseSchema,
-          livingSoloSchema,
+          {...livingSoloSchema, householdNo: livingSoloSchema?.householdNo?.split(" ")[0]},
           familySchema,
           capitalizeAllFields(business),
           newFiles
@@ -231,7 +231,7 @@ export default function RegistrationLayout() {
           noBusiness,
           personalSchema,
           houseSchema,
-          livingSoloSchema,
+          {...livingSoloSchema, householdNo: livingSoloSchema?.householdNo?.split(" ")[0]},
           familySchema,
           business,
           newFiles

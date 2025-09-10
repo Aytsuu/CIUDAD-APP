@@ -83,6 +83,7 @@ class CompleteRegistrationView(APIView):
       staff=Staff.objects.filter(staff_id=staff).first()
 
     results = {}
+    hh = []
 
     if personal:
         per_id = personal.get("per_id", None)

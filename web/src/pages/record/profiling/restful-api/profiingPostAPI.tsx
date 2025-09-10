@@ -1,4 +1,4 @@
-import { api } from "@/api/api";
+import { api, api2 } from "@/api/api";
 import { formatDate } from "@/helpers/dateHelper";
 import { capitalize } from "@/helpers/capitalize";
 
