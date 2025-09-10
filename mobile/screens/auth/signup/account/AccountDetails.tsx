@@ -51,7 +51,7 @@ export default function AccountDetails({ params }: {
         {/* Header Section */}
         <View>
           <Text className="text-sm font-PoppinsRegular text-gray-600 leading-6 mb-4">
-            Please fill in your account details to continue with the registration process.
+            Please fill in your account password
           </Text>
         </View>
 
