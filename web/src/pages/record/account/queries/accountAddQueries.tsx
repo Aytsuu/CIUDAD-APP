@@ -1,7 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addAccount } from "../restful-api/accountPostAPI";
-import { CircleCheck, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
 
 export const useAddAccount = () => {
   const queryClient = useQueryClient();

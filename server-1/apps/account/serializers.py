@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Account
+from .models import Account, PhoneVerification
+from utils.otp import generate_otp
+
 
 class UserAccountSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,3 +13,14 @@ class UserAccountSerializer(serializers.ModelSerializer):
         user = Account.objects.create_user(**validated_data)
         return user
 
+class PhoneVerificationBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhoneVerification
+        fields = "__all__"
+
+    def create(self, validated_data):
+        instance = PhoneVerification(**validated_data)
+        instance.pv_otp = generate_otp()
+        instance.save()
+        return instance
+    

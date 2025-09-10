@@ -12,11 +12,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useToastContext } from "@/components/ui/toast";
-import GoogleIcon from "@/assets/images/google.svg";
 import { signInSchema } from "@/form-schema/signin-schema";
 import { ChevronLeft } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext"; 
+import { SignupOptions } from "./SignupOptions";
 
+const SignupOptionsMemo = memo(SignupOptions);
 type SignInForm = z.infer<typeof signInSchema>;     
 
 export default function LoginScreen() {
@@ -32,12 +33,12 @@ export default function LoginScreen() {
     otpLoading
   } = useAuth(); 
 
+  const [showSignupOptions, setShowSignupOptions] = useState(false);
   const { toast } = useToastContext();
   const router = useRouter();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showPhoneLogin, setShowPhoneLogin] = useState(false);
-
   const defaultValues = useMemo(() => generateDefaultValues(signInSchema), []);
   const {
     control,
@@ -48,6 +49,9 @@ export default function LoginScreen() {
     resolver: zodResolver(signInSchema),
     defaultValues,
   }); 
+
+  const handleSignUp = () => setShowSignupOptions(true);
+  const handleCloseSignupOptions = () => setShowSignupOptions(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -89,15 +93,15 @@ export default function LoginScreen() {
         
         const success = await sendOTP(fullPhoneNumber);
 
-        if (success) {
-          toast.success(`OTP sent to +${fullPhoneNumber}`);
-          router.push({
-            pathname: "/(auth)/PhoneOTP",
-            params: { phoneNumber: fullPhoneNumber },
-          });
-        } else {
-          toast.error("Failed to send OTP. Please try again.");
-        }
+        // if (success) {
+        //   toast.success(`OTP sent to +${fullPhoneNumber}`);
+        //   router.push({
+        //     pathname: "/(auth)/phoneOTP",
+        //     params: { phoneNumber: fullPhoneNumber },
+        //   });
+        // } else {
+        //   toast.error("Failed to send OTP. Please try again.");
+        // }
       } catch (err) {
         console.error("Phone OTP error:", err);
         toast.error("An unexpected error occurred. Please try again.");
@@ -336,13 +340,17 @@ export default function LoginScreen() {
                   </Text>
                 </TouchableOpacity>
 
+                <SignupOptionsMemo
+                visible={showSignupOptions}
+                onClose={handleCloseSignupOptions}/>
+
                 {/* Signup Option - Moved below Google login */}
                 <View className="flex-row justify-center items-center">
                   <Text className="text-gray-600 font-PoppinsRegular text-[14px]">
                     Don't have an account? 
                   </Text>
                   <TouchableOpacity
-                    onPress={handleGoToSignup}
+                    onPress={handleSignUp}
                     disabled={loginLoading}
                     activeOpacity={0.6}
                     className="ml-1"

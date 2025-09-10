@@ -11,6 +11,7 @@ from corsheaders.defaults import default_headers
 import firebase_admin
 from firebase_admin import credentials
 
+
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
@@ -173,9 +174,10 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True 
 
-# Static files 
+# # Static files 
 STATIC_URL = 'static/'
-DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
+STATC_ROOT = BASE_DIR / 'staticfiles'
+# DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -281,6 +283,12 @@ LOGGING = {
 SCHEDULER_AUTOSTART = True
 # SCHEDULER_AUTOSTART = not DEBUG # for production
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",  
+    }
+}
 
 # ========================
 # PAYMONGO

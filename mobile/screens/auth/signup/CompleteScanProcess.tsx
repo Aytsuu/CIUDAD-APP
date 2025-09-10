@@ -19,7 +19,7 @@ export default function CompleteScanProcess({params} : {params: Record<string, a
   const [phase, setPhase] = React.useState<number>(1);
   const [currentStep, setCurrentStep] = React.useState<number>(0);
   const [requestId, setRequestId] = React.useState<number | null>(null);
-  const [isCompleted, setIsCompleted] = React.useState<boolean>(false);
+  const [isCompleted, setIsCompleted] = React.useState<boolean>(false); // Temporary bypass 
   const { reset } = useRegistrationFormContext();
 
   // HANDLERS

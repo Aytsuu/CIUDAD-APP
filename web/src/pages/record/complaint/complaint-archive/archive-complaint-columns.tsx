@@ -3,7 +3,7 @@ import type { Complaint } from "../complaint-type";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import ViewButton from "@/components/ui/view-button";
-import { Archive, ArrowUpDown } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Checkbox } from "@/components/ui/checkbox";
 

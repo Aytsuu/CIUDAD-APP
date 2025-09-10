@@ -1,6 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinLengthValidator
+from django.contrib.auth.models import AbstractUser
+from datetime import datetime, timedelta
+from django.utils import timezone
+
 
 class Account(AbstractUser):
     acc_id = models.AutoField(primary_key=True, verbose_name='Account ID')
@@ -20,5 +24,20 @@ class Account(AbstractUser):
         
     def __str__(self):
         return f"{self.email} (ID: {self.acc_id})"
+
+def five_minutes_from_now():
+    return timezone.now() + timedelta(minutes=5)
+
+class PhoneVerification(models.Model):
+    pv_id = models.BigAutoField(primary_key=True)
+    pv_created_at = models.DateTimeField(auto_now_add=True)
+    pv_phone_num = models.CharField(max_length=11)
+    pv_otp = models.CharField(max_length=6, null=True)
+    pv_sent = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "phone_verification"
     
+    
+
 

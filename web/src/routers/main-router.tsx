@@ -37,7 +37,6 @@ import { summon_router } from "./summon-router";
 import { withTransition } from '@/helpers/withTransition';
 import { viewprofile_router } from "./Account-settings";
 
-import { ProtectedRoute } from "@/ProtectedRoutes";
 
 export const main_router: RouteObject[] = [
   {

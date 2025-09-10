@@ -16,7 +16,7 @@ const IntroScreen = ({ onAnimationFinish }: IntroScreenProps) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onAnimationFinish();
-    }, 20000); 
+    }, 5000); 
     return () => clearTimeout(timer);
   }, []);
 

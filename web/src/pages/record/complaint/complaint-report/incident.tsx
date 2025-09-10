@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select/select";
-import { MediaUpload } from "@/components/ui/media-upload";
 
 export const IncidentInfo = () => {
   const { control } = useFormContext();

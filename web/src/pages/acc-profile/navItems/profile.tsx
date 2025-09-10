@@ -1,6 +1,6 @@
 import type React from "react";
 import { useState, useRef } from "react";
-import { User, Camera, Loader2, Info, Cake, Mail, Building2, Heart, GraduationCap, Phone, MapPin, Home, Users, Edit3, Save, X, Settings, Shield } from "lucide-react";
+import { User, Camera, Loader2, Info, Cake, Mail, Building2, Heart, GraduationCap, Phone, MapPin, Home, Users, Edit3, Save, Settings, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";

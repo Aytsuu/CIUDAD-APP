@@ -10,6 +10,7 @@ from apps.profiling.serializers.all_record_serializers import *
 from apps.profiling.models import ResidentProfile, BusinessRespondent
 from apps.profiling.serializers.all_record_serializers import *
 from apps.administration.models import Staff
+from apps.account.models import Account
 from ..models import FamilyComposition
 from datetime import datetime
 from ..utils import *
@@ -73,7 +74,7 @@ class CompleteRegistrationView(APIView):
   def post(self, request, *args, **kwargs):
     personal = request.data.get("personal", None)
     account = request.data.get("account", None)
-    houses = request.data.get("houses", None)
+    houses = request.data.get("houses", [])
     livingSolo = request.data.get("livingSolo", None)
     family = request.data.get("family", None)
     business = request.data.get("business", None)
@@ -98,9 +99,9 @@ class CompleteRegistrationView(APIView):
           results["rp_id"] = rp.pk
 
     if account:
-        self.create_account(account, staff)
+        self.create_account(account)
 
-    if houses:
+    if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
 
     if livingSolo:
@@ -159,8 +160,9 @@ class CompleteRegistrationView(APIView):
 
     return resident_profile
 
-  def create_account(self, account, staff):
-    return
+  def create_account(self, account):
+    instance = Account.objects.create_user(**account)
+    return instance
   
   def create_household(self, houses, rp, staff):
     # data = [undefined, sitio, street]

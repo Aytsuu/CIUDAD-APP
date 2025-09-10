@@ -1,8 +1,7 @@
-import React, { useState, useMemo } from "react";
-import { Link } from "react-router";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import SidebarSkeleton from "./sidebar-skeleton";
 import {
   Sidebar,
   SidebarContent,
@@ -12,540 +11,418 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./sidebar";
+import { capitalize } from "@/helpers/capitalize";
 
-interface Feature {
-  feat_name: string;
-  feat_url: string;
-  feat_category: string;
-  feat_group: string;
+// Updated types to be more flexible
+interface BaseMenuItem {
+  title: string;
+  url?: string;
+  items?: BaseMenuItem[];   
 }
 
-interface GroupedFeatures {
-  [category: string]: Feature[];
+// Menu items with unlimited nesting support
+const barangayItems: BaseMenuItem[] = [
+  {
+    title: "Calendar",
+    url: "/waste-calendar-scheduling",
+  },
+  {
+    title: "Report",
+    url: "/",
+    items: [
+      { title: "Incident", url: "/report/incident"},
+      { title: "Acknowledgement", url: "/report/acknowledgement"},
+      { title: "Weekly Accomplishment", url: "/report/weekly-accomplishment"},
+      { title: "Securado", url: "/report/securado"}  
+    ],
+  },
+  {
+    title: "Complaint",
+    url: "/complaint",
+  },
+  {
+    title: "Team",
+    url: "/team",
+  },
+  {
+    title: "Summon & Case Tracker",
+    url: "/summon-and-case-tracking",
+  },
+  {
+    title: "GAD",
+    url: "/",
+    items: [
+      { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
+      { title: "Project Proposal", url: "/gad-project-proposal"},
+      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
+      { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
+    ],
+  },
+  {
+    title: "Council",
+    url: "/",
+    items: [
+      { title: "Council Events", url: "/calendar-page" },
+      { title: "Attendance", url: "/attendance-page" },
+      { title: "Ordinance", url: "/ord-page" },
+      { title: "Resolution", url: "/res-page" },
+      { title: "Minutes of Meeting", url: "/mom-page" },
+      { title: "Document Template", url: "/templates-main"}
+    ],
+  },
+  {
+    title: "Finance",
+    url: "/",
+    items: [
+      { title: "Budget Plan", url: "/treasurer-budget-plan" },
+      {
+        title: "Income & Expense Tracking",
+        url: "/treasurer-income-expense-main",
+      },
+      {
+        title: "Income & Disbursement",
+        url: "/treasurer-income-and-disbursement",
+      },
+      {
+        title: "Clearance Requests",
+        url: "/",
+        items: [
+          { title: "Personal & Others", url: "/treasurer-personal-and-others" },
+          { title: "Permit", url: "/treasurer-permit" },
+          { title: "Service Charge", url: "/treasurer-service-charge" },
+          { title: "Barangay Service", url: "/treasurer-barangay-service" },
+          { title: "Rates", url: "/treasurer-rates" },
+        ],
+      },
+      { title: "Receipts", url: "/treasurer-receipts" },
+    ],
+  },
+  {
+    title: "Donation",
+    url: "/donation-record",
+  },
+  {
+    title: "Illegal Dumping Reports",
+    url: "/waste-illegaldumping-report",
+  },
+  {
+    title: "Garbage Pickup Request",
+    url: "/garbage-pickup-request"
+  },
+  {
+    title: "Waste Personnel & Collection Vehicle",
+    url: "/waste-personnel",
+  },
+  {
+    title: "Announcement",
+    url: "/announcement",
+  },
+  {
+    title: "Clerk",
+    url: "/",
+    items: [
+      { title: "Certifications", url: "record/clearances/certification" },
+      { title: "Business Permits", url: "record/clearances/businesspermit" },
+      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
+    ],
+  },
+  {
+    title: "Activity Log",
+    url: "/record/activity-log",
+
+  },
+];
+
+// Menu items with unlimited nesting support
+const healthItems: BaseMenuItem[] = [
+  // {
+  //   title: "Dashboard",
+  //   url: "/dashboard"
+  // },
+
+  // {
+  //   title: "Administration",
+  //   url: "/administration"
+  // },
+  // {
+  //   title: "Profiling",
+  //   url: "/",
+  //   items: [
+  //     { title: "All", url: "/profiling/all" },
+  //     {
+  //       title: "Resident",
+  //       url: "/profiling/resident",
+  //       items: [
+  //         { title: "Family", url: "/profiling/family" },
+  //         { title: "Household", url: "/profiling/household" }
+  //       ]
+  //     },
+  //     { title: "Voters", url: "/profiling/voters" },
+  //     {
+  //       title: "Business",
+  //       url: "/profiling/business/record",
+  //       items: [{ title: "Respondent", url: "/profiling/business/record/respondent" }]
+  //     }
+  //   ]
+  // },
+ 
+  {
+    title: "Announcement",
+    url: "/announcement"
+  },
+ 
+  { title: "Patients Record", url: "/patients-record-main" },
+
+  {
+    title: "Services",
+    url: "/",
+    items: [
+      // {
+      //   title: "Forwarded Records",
+      //   url: "/",
+      //   anotherItems: [
+      //     {
+      //       title: "Child Immunization",
+      //       url: "/forwarded-child-health-immunization",
+      //     },
+      //     { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
+      //     { title: "Step 2: Vitals Queue  ", url: "/forwarded-vitals-queue" },
+      //     {
+      //       title: "Medical Consultaion",
+      //       url: "/forwarded-medical-consultation",
+      //     },
+      //   ],
+      // },
+      { title: "Forwarded Records", url: "/forwarded-records" },
+      { title: "Animal Bites", url: "/Animalbite_viewing" },
+      { title: "Family Profiling", url: "/family-profiling-main" },
+      { title: "Medical Consultation Record", url: "/allMedRecords" },
+      { title: "Family Planning Record", url: "/FamPlanning_table" },
+      { title: "Maternal Record", url: "/maternalrecords" },
+      { title: "Child Health Record", url: "/all-child-health-records" },
+      { title: "Vaccination Record", url: "/VaccinationManagement" },
+      { title: "Medicine Record", url: "/all-medicine-records" },
+      { title: "Firstaid Record", url: "/all-firstaid-records" },
+      { title: "Schedules", url: "/health-appointments" }
+    ]
+  },
+
+  {
+    title: "Inventory",
+    url: "/",
+    items: [
+      { title: "Inventory List", url: "/mainInventoryList" },
+      { title: "Inventory Stocks", url: "/main-inventory" }
+    ]
+  },
+  {
+    title: "Manage Request",
+    url: "/",
+    items: [
+      {
+        title: "Medicine Request",
+        url: "/medicine-requests"
+      },
+      { title: "Medical Consultation", url: "/" }
+    ]
+  },
+
+  { title: "Service Scheduler", url: "/health-services/scheduler" },
+  { title: "Reports", url: "/healthcare-reports" },
+  {
+    title: "Manage",
+    url: "/",
+    items: [
+      {
+        title: "Manage age group",
+        url: "/age-group"
+      },
+      { title: "Medical Consultation", url: "/" }
+    ]
+  },
+];
+
+interface MenuItemComponentProps {
+  item: BaseMenuItem;
+  activeItem: string;
+  setActiveItem: (title: string) => void;
+  level?: number;
 }
 
-export function AppSidebar() {
-  const [activeItem, setActiveItem] = useState<string>("");
-  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
-  const { user } = useAuth();
-
-  const userPermissions = useMemo(() => {
-    if (!user?.staff?.pos) {
-      return { isAdmin: false, features: [] };
+// Single recursive component that handles all nesting levels
+const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
+  item,
+  activeItem,
+  setActiveItem,
+  level = 0,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const hasSubItems = item.items && item.items.length > 0;
+  const isActive = activeItem === item.title;
+  const currentPath = location.pathname.split('/').pop() as string;
+  
+  // Auto-set active item based on current path
+  useEffect(() => {
+    if (item.url && item.url.split('/').pop() === currentPath) {
+      setActiveItem(capitalize(item.title) as string);
     }
+  }, [currentPath, item.url, item.title, setActiveItem]);
 
-    const positionTitle = user.staff.pos.pos_title;
-    const isAdmin = positionTitle === "Admin";
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     
-    if (isAdmin) {
-      return { 
-        isAdmin: true, 
-        features: user.staff.features || [] 
-      };
+    if (hasSubItems && (!item.url || item.url === '/')) {
+      // Toggle submenu for items without navigable URLs
+      setIsOpen(!isOpen);
+      setActiveItem(item.title);
+    } else if (item.url && item.url !== '/') {
+      // Navigate to URL
+      setActiveItem(item.title);
+      navigate(item.url);
     }
+  };
 
-    return { 
-      isAdmin: false, 
-      features: user.staff.features || [] 
-    };
-  }, [user]);
+  const toggleSubmenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+    setActiveItem(item.title);
+  };
 
-  // Admin static menu items (unchanged)
-  const adminItems = [
-    { title: "Dashboard", url: "/dashboard" },
-    { title: "Calendar", url: "/waste-calendar-scheduling" },
-    { title: "Administration", url: "/administration" },
+  // Calculate indentation based on nesting level
+  const indentClass = level > 0 ? `pl-${level * 4}` : '';
+  
+  // Base styles
+  const baseStyles = `flex items-center px-4 py-2.5 text-sm rounded-md cursor-pointer transition-colors ${
+    isActive
+      ? "bg-[#1273B2]/10 text-[#1273B8]"
+      : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+  }`;
+
+  if (hasSubItems) {
+    return (
+      <SidebarMenuItem>
+        <div className={`w-full ${indentClass}`}>
+          <SidebarMenuButton asChild className="w-full">
+            <React.Fragment>
+              <div className={baseStyles} onClick={handleClick}>
+                <span className="flex-1">{item.title}</span>
+                <div onClick={toggleSubmenu}>
+                  {isOpen ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </div>
+              </div>
+              {isOpen && (
+                <div className="mt-1 space-y-1">
+                  {item.items!.map((subItem, index) => (
+                    <MenuItemComponent
+                      key={`${subItem.title}-${index}`}
+                      item={subItem}
+                      activeItem={activeItem}
+                      setActiveItem={setActiveItem}
+                      level={level + 1}
+                    />
+                  ))}
+                </div>
+              )}
+            </React.Fragment>
+          </SidebarMenuButton>
+        </div>
+      </SidebarMenuItem>
+    );
+  }
+
+  // Leaf item without subitems
+  return (
+    <SidebarMenuItem>
+      <div className={indentClass}>
+        <SidebarMenuButton asChild className="w-full">
+          {item.url && item.url !== '/' ? (
+            <Link
+              to={item.url}
+              className={baseStyles}
+              onClick={() => setActiveItem(item.title)}
+            >
+              <span>{item.title}</span>
+            </Link>
+          ) : (
+            <div
+              className={baseStyles}
+              onClick={() => setActiveItem(item.title)}
+            >
+              <span>{item.title}</span>
+            </div>
+          )}
+        </SidebarMenuButton>
+      </div>
+    </SidebarMenuItem>
+  );
+};
+
+export function AppSidebar({ assignedFeatures }: { assignedFeatures?: any }) {
+  const { user } = useAuth();
+  const [activeItem, setActiveItem] = useState<string>("");
+
+  const items: BaseMenuItem[] = [
+    {
+      title: "Dashboard",
+      url: "/dashboard"
+    },
+
+    {
+      title: "Administration",
+      url: "/administration"
+    },
     {
       title: "Profiling",
       url: "/",
       items: [
         { title: "All", url: "/profiling/all" },
-        { 
-          title: "Resident", 
+        {
+          title: "Resident",
           url: "/profiling/resident",
           items: [
             { title: "Family", url: "/profiling/family" },
-            { title: "Household", url: "/profiling/household" },
+            { title: "Household", url: "/profiling/household" }
           ]
         },
+        { title: "Voters", url: "/profiling/voters" },
         {
-          title: "Business", 
+          title: "Business",
           url: "/profiling/business/record",
-          items: [
-            { title: "Respondent", url: "/profiling/business/record/respondent"}
-          ]
-        },
-      ],
+          items: [{ title: "Respondent", url: "/profiling/business/record/respondent" }]
+        }
+      ]
     },
-    {
-      title: "Report",
-      url: "/",
-      items: [
-        { title: "Incident", url: "/report/incident"},
-        { title: "Acknowledgement", url: "/report/acknowledgement"},
-        { title: "Weekly Accomplishment", url: "/report/weekly-accomplishment"},
-        { title: "Securado", url: "/report/securado"}  
-      ],
-    },
-    { title: "Complaint", url: "/complaint" },
-    { title: "Team", url: "/team" },
-    { title: "Summon & Case Tracker", url: "/summon-and-case-tracking" },
-    {
-      title: "GAD",
-      url: "/",
-      items: [
-        { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
-        { title: "Project Proposal", url: "/gad-project-proposal"},
-        { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
-        { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
-      ],
-    },
-    {
-      title: "Council",
-      url: "/",
-      items: [
-        { title: "Council Events", url: "/calendar-page" },
-        { title: "Attendance", url: "/attendance-page" },
-        { title: "Ordinance", url: "/ord-page" },
-        { title: "Resolution", url: "/res-page" },
-        { title: "Minutes of Meeting", url: "/mom-page" },
-        { title: "Document Template", url: "/templates-main"}
-      ],
-    },
-    {
-      title: "Finance",
-      url: "/",
-      items: [
-        { title: "Budget Plan", url: "/treasurer-budget-plan" },
-        { title: "Income & Expense Tracking", url: "/treasurer-income-expense-main" },
-        { title: "Income & Disbursement", url: "/treasurer-income-and-disbursement" },
-        {
-          title: "Clearance Requests",
-          url: "/",
-          items: [
-            { title: "Personal & Others", url: "/treasurer-personal-and-others" },
-            { title: "Permit", url: "/treasurer-permit" },
-            { title: "Service Charge", url: "/treasurer-service-charge" },
-            { title: "Barangay Service", url: "/treasurer-barangay-service" },
-            { title: "Rates", url: "/treasurer-rates" },
-          ],
-        },
-        { title: "Receipts", url: "/treasurer-receipts" },
-      ],
-    },
-    { title: "Donation", url: "/donation-record" },
-    { title: "Illegal Dumping Reports", url: "/waste-illegaldumping-report" },
-    { title: "Garbage Pickup Request", url: "/garbage-pickup-request" },
-    { title: "Waste Personnel & Collection Vehicle", url: "/waste-personnel" },
-    { title: "Announcement", url: "/announcement" },
-    {
-      title: "Services",
-      url: "/",
-      items: [
-        { title: "Administration", url: "/health-administration" },
-        { title: "Patients Record", url: "/patients-record-main" },
-        {
-          title: "Forwarded Records",
-          url: "/",
-          items: [
-            { title: "Child Immunization", url: "/forwarded-child-health-immunization" },
-            { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
-            { title: "Step 2: Vitals Queue", url: "/forwarded-vitals-queue" },
-            { title: "Medical Consultation", url: "/forwarded-medical-consultation" },
-          ],
-        },
-        {
-          title: "Manage Request",
-          url: "/",
-          items: [
-            { title: "Medicine Request", url: "/medicine-requests" },
-            { title: "Medical Consultation", url: "/" },
-          ],
-        },
-        { title: "Animal Bites", url: "/Animalbite_viewing" },
-        { title: "Family Profiling", url: "/family-profiling-main" },
-        { title: "Medical Consultation Record", url: "/allMedRecords" },
-        { title: "Family Planning Record", url: "/FamPlanning_table" },
-        { title: "Maternal Record", url: "/maternalrecords" },
-        { title: "Child Health Record", url: "/all-child-health-records" },
-        { title: "Vaccination Record", url: "/VaccinationManagement" },
-        { title: "Medicine Record", url: "/all-medicine-records" },
-        { title: "Firstaid Record", url: "/all-firstaid-records" },
-        { title: "Archive", url: "/archiveMainInventoryStocks" },
-        { title: "Schedules", url: "/health-appointments" },
-        { title: "Service Scheduler", url: "/health-services/scheduler" },
-        { title: "Reports", url: "/healthcare-reports" },
-        {
-          title: "Inventory",
-          url: "/",
-          items: [
-            { title: "Inventory List", url: "/mainInventoryList" },
-            { title: "Inventory Stocks", url: "/mainInventoryStocks" },
-            { title: "Transactions List", url: "/transactionMainInventoryList" },
-          ],
-        },
-        {
-          title: "Queueing",
-          url: "/",
-          items: [
-            { title: "Patients Queue", url: "/patientsQueue" },
-            { title: "Processing Queue", url: "/processingQueue" },
-          ],
-        },
-      ],
-    },
-    {
-      title: "Clerk",
-      url: "/",
-      items: [
-        { title: "Certifications", url: "record/clearances/certification" },
-        { title: "Business Permits", url: "record/clearances/businesspermit" },
-        { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
-      ],
-    },
-    { title: "Activity Log", url: "/record/activity-log" },
-  ];
+    ...(user?.staff?.staff_type === "Barangay Staff" ? barangayItems : healthItems)
+  ]
 
-  const staticItems = [
-    { label: "Dashboard", path: "/dashboard" },
-    { label: "Announcement", path: "/announcement" },
-  ];
-
-  const groupedFeatures = useMemo<GroupedFeatures>(() => {
-    const features = userPermissions.features;
-    if (!features || features.length === 0) return {};
-
-    return features.reduce((acc: GroupedFeatures, feat: Feature) => {
-      if (!feat?.feat_group) return acc;
-      
-      if (!acc[feat.feat_group]) {
-        acc[feat.feat_group] = [];
-      }
-      acc[feat.feat_group].push(feat);
-      return acc;
-    }, {} as GroupedFeatures);
-  }, [userPermissions.features]);
-
-  const toggleCategory = (category: string) => {
-    setOpenCategories(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(category)) {
-        newSet.delete(category);
-      } else {
-        newSet.add(category);
-      }
-      return newSet;
-    });
-  };
-
-  // Helper function to check if category is open
-  const isCategoryOpen = (category: string) => openCategories.has(category);
-
-  const renderAdminMenuItem = (item: any, level: number = 0) => {
-    const hasChildren = item.items && item.items.length > 0;
-    const paddingLeft = level * 16;
-    const isOpen = isCategoryOpen(item.title);
-
-    if (hasChildren) {
-      return (
-        <SidebarMenuItem key={item.title}>
-          <div
-            className={`w-full cursor-pointer rounded-md transition-colors ${
-              isOpen
-                ? "bg-[#1273B2]/10 text-[#1273B8]"
-                : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-            }`}
-            onClick={() => toggleCategory(item.title)}
-            style={{ paddingLeft: `${20 + paddingLeft}px` }}
-          >
-            <div className="flex items-center justify-between px-4 py-2 rounded-md">
-              <Link
-                to={item.url}
-                className="flex-1"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveItem(item.title);
-                }}
-              >
-                {item.title}
-              </Link>
-              {isOpen ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </div>
-          </div>
-
-          {isOpen && (
-            <div className="mt-1 space-y-1" style={{ paddingLeft: `${level === 0 ? 16 : 0}px` }}>
-              {item.items.map((subItem: any) => renderAdminMenuItem(subItem, level + 1))}
-            </div>
-          )}
-        </SidebarMenuItem>
-      );
-    }
-
-    return (
-      <SidebarMenuItem key={item.title}>
-        <SidebarMenuButton asChild className="w-full">
-          <Link
-            to={item.url}
-            className={`flex items-center px-4 py-2 text-sm rounded-md transition-colors ${
-              activeItem === item.title
-                ? "bg-[#1273B2]/10 text-[#1273B8]"
-                : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-            }`}
-            style={{ paddingLeft: `${20 + paddingLeft}px` }}
-            onClick={() => setActiveItem(item.title)}
-          >
-            <span>{item.title}</span>
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    );
-  };
-
-  // Optimized feature-based menu item renderer
-  const renderFeatureMenuItem = (feat: Feature) => {
-    // Handle special cases for Resident with sub-items
-    if (feat.feat_name.toLowerCase() === "resident") {
-      const isResidentOpen = isCategoryOpen("Resident");
-      
-      return (
-        <div key="resident">
-          <SidebarMenuButton asChild className="w-full flex items-center justify-between">
-            <div
-              className={`flex items-center w-full px-4 py-2 text-sm rounded-md cursor-pointer transition-colors ${
-                activeItem === "Resident"
-                  ? "bg-[#1273B2]/10 text-[#1273B8]"
-                  : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-              }`}
-              onClick={() => {
-                setActiveItem("Resident");
-                toggleCategory("Resident");
-              }}
-            >
-              <Link
-                to={feat.feat_url}
-                className="flex-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Resident
-              </Link>
-              {isResidentOpen ? (
-                <ChevronDown className="h-4 w-4 ml-2" />
-              ) : (
-                <ChevronRight className="h-4 w-4 ml-2" />
-              )}
-            </div>
-          </SidebarMenuButton>
-
-          {isResidentOpen && (
-            <div className="ml-4 mt-1 space-y-1">
-              <SidebarMenuButton asChild className="w-full">
-                <Link
-                  to="/profiling/family"
-                  className={`flex items-center px-4 py-2 text-sm rounded-md transition-colors ${
-                    activeItem === "Family"
-                      ? "bg-[#1273B2]/10 text-[#1273B8]"
-                      : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-                  }`}
-                  onClick={() => setActiveItem("Family")}
-                >
-                  Family
-                </Link>
-              </SidebarMenuButton>
-
-              <SidebarMenuButton asChild className="w-full">
-                <Link
-                  to="/profiling/household"
-                  className={`flex items-center px-4 py-2 text-sm rounded-md transition-colors ${
-                    activeItem === "Household"
-                      ? "bg-[#1273B2]/10 text-[#1273B8]"
-                      : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-                  }`}
-                  onClick={() => setActiveItem("Household")}
-                >
-                  Household
-                </Link>
-              </SidebarMenuButton>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // Handle special cases for Business with sub-items
-    if (feat.feat_name.toLowerCase() === "business") {
-      const isBusinessOpen = isCategoryOpen("Business");
-      
-      return (
-        <div key="business">
-          <SidebarMenuButton asChild className="w-full flex items-center justify-between">
-            <div
-              className={`flex items-center w-full px-4 py-2 text-sm rounded-md cursor-pointer transition-colors ${
-                activeItem === "Business"
-                  ? "bg-[#1273B2]/10 text-[#1273B8]"
-                  : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-              }`}
-              onClick={() => {
-                setActiveItem("Business");
-                toggleCategory("Business");
-              }}
-            >
-              <Link
-                to={feat.feat_url}
-                className="flex-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Business
-              </Link>
-              {isBusinessOpen ? (
-                <ChevronDown className="h-4 w-4 ml-2" />
-              ) : (
-                <ChevronRight className="h-4 w-4 ml-2" />
-              )}
-            </div>
-          </SidebarMenuButton>
-
-          {isBusinessOpen && (
-            <div className="ml-4 mt-1 space-y-1">
-              <SidebarMenuButton asChild className="w-full">
-                <Link
-                  to="/profiling/business/record/respondent"
-                  className={`flex items-center px-4 py-2 text-sm rounded-md transition-colors ${
-                    activeItem === "BusinessRespondent"
-                      ? "bg-[#1273B2]/10 text-[#1273B8]"
-                      : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-                  }`}
-                  onClick={() => setActiveItem("BusinessRespondent")}
-                >
-                  Respondent
-                </Link>
-              </SidebarMenuButton>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // Default feature item
-    return (
-      <SidebarMenuButton key={feat.feat_name} asChild className="w-full">
-        <Link
-          to={feat.feat_url}
-          className={`flex items-center px-4 py-2 text-sm rounded-md transition-colors ${
-            activeItem === feat.feat_name
-              ? "bg-[#1273B2]/10 text-[#1273B8]"
-              : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-          }`}
-          onClick={() => setActiveItem(feat.feat_name)}
-        >
-          <span>{feat.feat_name}</span>
-        </Link>
-      </SidebarMenuButton>
-    );
-  };
-
-if (!user) {
-    return (
-      <SidebarSkeleton/>
-    );
-  }
+  // Uncomment and modify this if you want to use assignedFeatures instead of hardcoded items
+  // const dynamicItems: BaseMenuItem[] = assignedFeatures?.map((item: any) => ({
+  //   title: item.feat.feat_name,
+  //   url: item.feat.feat_url,
+  // })) || items;
 
   return (
     <Sidebar className="border-none">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <div className="w-full h-14" />
+            <div className="w-full h-14"></div>
             <SidebarMenu>
-              {userPermissions.isAdmin ? (
-                // Render admin menu
-                adminItems.map((item) => renderAdminMenuItem(item))
-              ) : (
-                // Render feature-based menu for non-admin users
-                <>
-                  {/* Static Menu for non-admin */}
-                  {staticItems.map((item) => (
-                    <SidebarMenuItem key={item.label}>
-                      <SidebarMenuButton asChild className="w-full">
-                        <Link
-                          to={item.path}
-                          className={`flex items-center px-4 py-2 text-sm rounded-md transition-colors ${
-                            activeItem === item.label
-                              ? "bg-[#1273B2]/10 text-[#1273B8]"
-                              : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-                          }`}
-                          onClick={() => setActiveItem(item.label)}
-                        >
-                          <span>{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-
-                  {/* Dynamic Feature Groups for non-admin */}
-                  {Object.entries(groupedFeatures).map(([category, feats]) => {
-                    // Filter and modify features as needed
-                    let modifiedFeats = feats.filter(
-                      (f) =>
-                        f.feat_name.toLowerCase() !== "family" &&
-                        f.feat_name.toLowerCase() !== "household"
-                    );
-
-                    // Add "All" under Profiling if both Resident + Business exist
-                    if (
-                      category.toLowerCase() === "profiling" &&
-                      feats.some((f) => f.feat_name.toLowerCase() === "resident") &&
-                      feats.some((f) => f.feat_name.toLowerCase() === "business")
-                    ) {
-                      modifiedFeats = [
-                        {
-                          feat_name: "All",
-                          feat_url: "/profiling/all",
-                          feat_category: "Profiling",
-                          feat_group: "Profiling",
-                        },
-                        ...modifiedFeats,
-                      ];
-                    }
-
-                    const isCatOpen = isCategoryOpen(category);
-
-                    return (
-                      <SidebarMenuItem key={category}>
-                        {/* Category Toggle */}
-                        <div
-                          className={`w-full cursor-pointer rounded-md transition-colors ${
-                            isCatOpen
-                              ? "bg-[#1273B2]/10 text-[#1273B8]"
-                              : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-                          }`}
-                          onClick={() => toggleCategory(category)}
-                        >
-                          <div className="flex items-center justify-between px-4 py-2 rounded-md">
-                            <span>{category}</span>
-                            {isCatOpen ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Features inside category */}
-                        {isCatOpen && (
-                          <div className="ml-4 mt-1 space-y-1">
-                            {modifiedFeats.map((feat) => renderFeatureMenuItem(feat))}
-                          </div>
-                        )}
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </>
-              )}
+              {items.map((item, index) => (
+                <MenuItemComponent
+                  key={`${item.title}-${index}`}
+                  item={item}
+                  activeItem={activeItem}
+                  setActiveItem={setActiveItem}
+                />
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

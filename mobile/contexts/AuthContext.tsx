@@ -22,7 +22,7 @@ export const useAuth = () => {
     otpSent, 
     email, 
     phone,
-    accessToken // Access token is available in state but not used directly
+    accessToken 
   } = useAppSelector((state) => state.auth);
   
   // Mutations
@@ -54,7 +54,6 @@ export const useAuth = () => {
     checkAuth();
   }, [hasCheckedAuth, isAuthenticated, dispatch]);
 
-  // Actions (matching your web implementation exactly)
   const login = useCallback(
     async (credentials: LoginCredentials) => {
       console.log('🔐 Login attempt for:', credentials.email);
@@ -115,12 +114,12 @@ export const useAuth = () => {
     [sendEmailOTPMutation]
   );
 
-  const verifyEmailOTPAndLogin = useCallback(
-    async (otp: string, email: string) => {
+  const verifyEmailOTP = useCallback(
+    async (email: string, otp: string) => {
       console.log('🔐 Verifying Email OTP for:', email);
       try {
         const result = await verifyEmailOTPMutation.mutateAsync({ email, otp });
-        return result.user;
+        return result;
       } catch {
         return null;
       }
@@ -164,7 +163,7 @@ export const useAuth = () => {
     sendOTP,
     verifyOTP,
     sendEmailOTP,
-    verifyEmailOTPAndLogin,
+    verifyEmailOTP,
     logout,
     clearAuthError,
     clearOtpData,

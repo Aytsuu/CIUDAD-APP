@@ -44,7 +44,8 @@ export const useProfilingAllRecord = (
         console.error(err);
         throw err;
       }
-    }
+    },
+    staleTime: 5000
   })
 } 
  
@@ -373,3 +374,29 @@ export const useHouseholdTable = (
     staleTime: 5000,
   });
 };
+
+// ================ VOTER ================ (Status: Optmizing....)
+export const useVoterTable = (
+  page: number,
+  pageSize: number,
+  searchQuery: string
+) => {
+  return useQuery({
+    queryKey: ["voterTable", page, pageSize, searchQuery],
+    queryFn: async () => {
+      try {
+        const res = await api.get("profiling/voter/list/table/", {
+          params: {
+            page,
+            page_size: pageSize,
+            search: searchQuery
+          }
+        });
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    }
+  })
+}

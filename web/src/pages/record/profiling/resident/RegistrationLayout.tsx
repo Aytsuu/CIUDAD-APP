@@ -117,7 +117,7 @@ export default function RegistrationLayout() {
         ...(!noHouse && {houses: houseSchema.list}),
         ...(!notLivingSolo && {livingSolo: livingSoloSchema}),
         ...(!noFamily && {family: familySchema}),
-        ...(!noBusiness && {business: {...business, files: files}}),
+        ...(!noBusiness && {business: {...business, bus_status: 'Active', files: files}}),
         staff: user?.staff?.staff_id
       })
       
@@ -152,7 +152,7 @@ export default function RegistrationLayout() {
         ...(!noHouse && {houses: houseSchema.list}),
         ...(!notLivingSolo && {livingSolo: livingSoloSchema}),
         ...(!noFamily && {family: familySchema}),
-        ...(!noBusiness && {business: {...business, files: files}}),
+        ...(!noBusiness && {business: {...business, bus_status: 'Active', files: files}}),
         staff: user?.staff?.staff_id
       })
 
@@ -198,6 +198,7 @@ export default function RegistrationLayout() {
 
     const {per_id, ...personal} = personalSchema
     const {files, ...business} = businessSchema
+    const {confirm_password, ...account} = accountSchema
     
     const newFiles = files?.map((media: any) => ({
       name: media.name,
@@ -214,7 +215,7 @@ export default function RegistrationLayout() {
           noFamily,
           noBusiness,
           capitalizeAllFields(personal),
-          accountSchema,
+          account,
           houseSchema,
           livingSoloSchema,
           familySchema,

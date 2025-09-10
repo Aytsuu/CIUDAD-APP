@@ -15,8 +15,9 @@ import { useAuth } from "@/context/AuthContext";
 import { usePositions } from "./queries/administrationFetchQueries";
 import { formatPositions } from "./AdministrationFormats";
 import { useAddStaff } from "./queries/administrationAddQueries";
-import { useAddAllProfile, useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";
+import { useAddAllProfile } from "../profiling/queries/profilingAddQueries";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 
 export default function AssignPosition({
   personalInfoform,
@@ -63,6 +64,7 @@ export default function AssignPosition({
       
       const residentId = personalInfoform.getValues().per_id?.split(" ")[0];
       const positionId = form.getValues().assignPosition;
+      const staffType = user?.staff?.staff_type
 
       // If resident exists, assign position 
       if (residentId && residentId !== "undefined") {
@@ -71,8 +73,10 @@ export default function AssignPosition({
         // Assign staff position 
         await addStaff({
           residentId: residentId, 
-          positionId: positionId,
-          staffId: user?.staff?.staff_id || ""
+          positionId: positionId, 
+          staffId: user?.staff?.staff_id || "",
+          staffType: staffType == "Barangay Staff" ? "Barangay Staff" : "Health Staff"
+
         });
 
         deliverFeedback();
@@ -81,7 +85,7 @@ export default function AssignPosition({
         // Register resident first, then assign position (APIs handle dual database operations)
         personalInfoform.setValue("per_addresses", addresses)
         const personalInfo = personalInfoform.getValues();
-        const {per_id, ...personal} = personalInfo
+        const {per_id, ...personal} = capitalizeAllFields(personalInfo)
 
         if (!personal) {
           setIsSubmitting(false);
@@ -98,7 +102,8 @@ export default function AssignPosition({
         await addStaff({
           residentId: resident.rp_id, 
           positionId: positionId,
-          staffId: user?.staff?.staff_id || ""
+          staffId: user?.staff?.staff_id || "",
+          staffType: staffType == "Barangay Staff" ? "Barangay Staff" : "Health Staff"
         });
 
         deliverFeedback();
