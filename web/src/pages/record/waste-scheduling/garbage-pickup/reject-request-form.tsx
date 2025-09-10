@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import {z} from "zod"
 import { useAddDecision } from "./queries/GarbageRequestInsertQueries";
-
+import { useAuth } from "@/context/AuthContext";
 
 function RejectPickupForm({garb_id, onSuccess}:{
     garb_id: string;
     onSuccess?: () => void;
 }){
 
+    const {user} = useAuth();
     const{mutate: createDecision} = useAddDecision(onSuccess)
 
     const onSubmit = (value: z.infer<typeof RejectPickupRequestSchema>) => {
@@ -26,7 +27,8 @@ function RejectPickupForm({garb_id, onSuccess}:{
     const form = useForm<z.infer<typeof RejectPickupRequestSchema>>({
         resolver: zodResolver(RejectPickupRequestSchema),
         defaultValues: {
-            reason: ""
+            reason: "",
+            staaff_id: user?.staff?.staff_id
         }
     })
 

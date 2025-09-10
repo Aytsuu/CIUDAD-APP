@@ -12,6 +12,7 @@ import { useGetTrucks } from "./queries/GarbageRequestFetchQueries";
 import { useGetCollectors } from "./queries/GarbageRequestFetchQueries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAddPickupAssignmentandCollectors } from "./queries/GarbageRequestInsertQueries";
+import { useAuth } from "@/context/AuthContext";
 
 function AcceptPickupRequest({garb_id, pref_date, pref_time, onSuccess}: {
     garb_id: string;
@@ -19,6 +20,7 @@ function AcceptPickupRequest({garb_id, pref_date, pref_time, onSuccess}: {
     pref_time: string;
     onSuccess?: () => void;
 }){
+    const {user} = useAuth();
     const { mutate: addAssignmentAndCollectors} = useAddPickupAssignmentandCollectors(onSuccess)
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetTrucks();
@@ -56,6 +58,7 @@ function AcceptPickupRequest({garb_id, pref_date, pref_time, onSuccess}: {
             truck: "",
             date: pref_date,
             time: pref_time,
+            staff_id: user?.staff?.staff_id
         }
     })
 
