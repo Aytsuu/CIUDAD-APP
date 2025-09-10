@@ -21,13 +21,17 @@ export default function PhoneOTP({ params } : {
   const [modalVisible, setModalVisible] = React.useState<boolean>(false)
   const [otpInput, setOtpInput] = React.useState<string[]>(["", "", "", "", "", ""])
   const [otpValue, setOtpValue] = React.useState<string>("")
+  const [invalidOTP, setInvalidOTP] = React.useState<boolean>(false);
   const { toast } = useToastContext()
 
   const { mutateAsync: sendOTP } = useSendOTP()
 
   // ====================== SIDE EFFECTS ======================
   React.useEffect(() => {
+    if(otpInput.every((val) => val == "")) return;
+
     if (otpInput?.length == 6 && otpInput.every((val) => val !== "")) verify()
+    else setInvalidOTP(false);
   }, [otpInput])
 
   // ====================== HANDLERS ======================
@@ -39,6 +43,9 @@ export default function PhoneOTP({ params } : {
       setOtpValue("")
       toast.success("Phone number verified.")
       params.next();
+    } else {
+      setOtpInput(["", "", "", "", "", ""])
+      setInvalidOTP(true);
     }
   }
 
@@ -120,6 +127,7 @@ export default function PhoneOTP({ params } : {
         setModalVisible={setModalVisible}
         setOtp={setOtpInput}
         resendOtp={send}
+        invalid={invalidOTP}
       />
     </View>
   )

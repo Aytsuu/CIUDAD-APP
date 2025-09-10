@@ -22,6 +22,7 @@ export default function EmailOTP({ params } : {
   const { control, getValues, trigger, setValue } = useRegistrationFormContext()
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [modalVisible, setModalVisible] = React.useState<boolean>(false)
+  const [invalidOTP, setInvalidOTP] = React.useState<boolean>(false);
   const [otpInput, setOtpInput] = React.useState<string[]>(["", "", "", "", "", ""])
   const { toast } = useToastContext()
   const { sendEmailOTP,  verifyEmailOTP} = useAuth();
@@ -29,6 +30,7 @@ export default function EmailOTP({ params } : {
   // ====================== SIDE EFFECTS ======================
   React.useEffect(() => {
     if (otpInput?.length == 6 && otpInput.every((val) => val !== "")) verify()
+    else setInvalidOTP(false);
   }, [otpInput])
 
   // ====================== HANDLERS ======================
@@ -43,7 +45,8 @@ const verify = async () => {
       setModalVisible(false);
       params.next();
     } else {
-      toast.error("OTP verification failed");
+      setOtpInput(["", "", "", "", "", ""])
+      setInvalidOTP(true);
     }
   } catch (err) {
     toast.error("Something went wrong while verifying OTP");
@@ -129,6 +132,7 @@ const verify = async () => {
         setModalVisible={setModalVisible}
         setOtp={setOtpInput}
         resendOtp={send}
+        invalid={invalidOTP}
       />
     </View>
   )
