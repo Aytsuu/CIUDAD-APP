@@ -1,7 +1,22 @@
 from django.db import models
 from datetime import date
 
-# Create your models here.
+class AdministrationAbstractModel(models.Model):
+    class Meta:
+        abstract = True
+    
+    def save(self, *args, **kwargs):
+        for field in self._meta.fields:
+            if(
+                isinstance(field, (models.CharField, models.TextField))
+                and not field.primary_key
+                and field.editable
+            ):
+                val = getattr(self, field.name)
+                if isinstance(val, str):
+                    setattr(self, field.name, val.upper())
+        super().save(*args, **kwargs)
+
 class Position(models.Model):
     pos_id = models.BigAutoField(primary_key=True)    
     pos_title = models.CharField(max_length=100)
