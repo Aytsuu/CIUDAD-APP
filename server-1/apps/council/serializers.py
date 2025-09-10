@@ -288,17 +288,20 @@ class MOMSuppDocViewSerializer(serializers.ModelSerializer):
 class MinutesOfMeetingSerializer(serializers.ModelSerializer):
     mom_file = serializers.SerializerMethodField(read_only=True)  # Combined field
     supporting_docs = MOMSuppDocViewSerializer(source='momsuppdoc_set', many=True, read_only=True)
+    staff_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = MinutesOfMeeting
         fields = '__all__'
         extra_fields = [
-            'mom_file',  # Replaces individual momf fields
-            'supporting_docs'
+            'mom_file',  
+            'supporting_docs',
+            'staff_name'
         ]
         read_only_fields = [
             'mom_file',
-            'supporting_docs'
+            'supporting_docs',
+            'staff_name'
         ]
 
     def get_mom_file(self, obj):
@@ -312,6 +315,20 @@ class MinutesOfMeetingSerializer(serializers.ModelSerializer):
             }
         except MOMFile.DoesNotExist:
             return None
+        
+    def get_staff_name(self, obj):
+        if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+            per = obj.staff_id.rp.per
+
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+            
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+            
+            return full_name
 
     def create(self, validated_data):
         return MinutesOfMeeting.objects.create(**validated_data)

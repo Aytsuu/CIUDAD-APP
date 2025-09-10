@@ -1,7 +1,5 @@
 from django.db import models
 from datetime import date, datetime
-from django.core.validators import MaxValueValidator
-from django.core.validators import MaxValueValidator
 
 
 class Budget_Plan(models.Model): 
@@ -18,6 +16,13 @@ class Budget_Plan(models.Model):
     plan_balUnappropriated = models.DecimalField(max_digits=10, decimal_places=2)
     plan_issue_date = models.DateField(default=date.today)
     plan_is_archive = models.BooleanField(default=False)
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = 'budget_plan'

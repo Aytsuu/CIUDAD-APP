@@ -8,6 +8,7 @@ export const minutesOfMeetingFormSchema = z.object({
     meetingDate: z.string().date(),
     // meetingDescription: z.string(),
     meetingAreaOfFocus: z.array(z.string()).nonempty("Please select at least 1 area of focus"),
+    staff_id: z.string().default('')
 });
 
 export const minutesOfMeetingEditFormSchema = z.object({

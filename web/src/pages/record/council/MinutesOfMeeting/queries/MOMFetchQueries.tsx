@@ -21,6 +21,7 @@ export type MinutesOfMeetingRecords = {
     momf_url: string;
     momf_name: string;
   }
+  staff_name: string;
   mom_area_of_focus: string[];
   supporting_docs: SupportingDoc[];
 };
