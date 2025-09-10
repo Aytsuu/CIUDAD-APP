@@ -4,7 +4,7 @@ import { View, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions } from
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus } from "lucide-react-native";
+import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus, Venus } from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
 
 const { width } = Dimensions.get('window');
@@ -14,7 +14,7 @@ const Homepage = () => {
     { name: 'Child Health Records', route: 'admin/childhealth/overall', icon: Baby },
     { name: 'Family Planning', route: 'admin/familyplanning/overall', icon: Heart },
     { name: 'Animal Bites', route: '/admin/animalbites/overall', icon: Dog },
-    { name: 'Maternal Records', route: '/maternal-records', icon: UserCircle },
+    { name: 'Maternal Records', route: '/admin/maternal/overall', icon: Venus },
     { name: 'Medical Consultation', route: '/medical-consultation', icon: Stethoscope },
     { name: 'Profiling', route: '/admin-medicinerequest/admin-medicinerequest', icon: UserRoundPlus },
     { name: 'Patients Records', route: '/admin/patientsrecord/patientsrecord', icon: Users },

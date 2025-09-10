@@ -126,7 +126,7 @@ export default function Records() {
                   onPress={() => {
                     console.log('Navigating to record details:', record);
                     router.push({
-                      pathname: '/record-details',
+                      pathname: '../record-details',
                       params: {
                         recordId: record.id.toString(),
                         serviceType: selectedServiceValue,
@@ -183,7 +183,7 @@ export default function Records() {
                 className="bg-blue-600 rounded-lg px-6 py-3"
                 onPress={() => {
                   console.log('Navigating to schedule appointment');
-                  router.push('/schedule-appointment');
+                  router.push('../schedule-appointment');
                 }}
               >
                 <Text className="text-white font-medium">Schedule Appointment</Text>

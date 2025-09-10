@@ -47,7 +47,9 @@ export default () => {
                 <Stack.Screen name="admin/childhealth/individual" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/childhealth/overall" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/childhealth/history" options={{headerShown:false}}/>
-            
+
+                <Stack.Screen name="admin/maternal/overall" options={{ headerShown: false }} />
+                <Stack.Screen name="admin/maternal/individual" options={{ headerShown: false }} />
             </Stack>
         </QueryClientProvider>
     );

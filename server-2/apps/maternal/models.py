@@ -63,7 +63,6 @@ class Prenatal_Form(models.Model):
     pf_edc = models.DateField(null=True, blank=True)
     pf_occupation = models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='prenatal_form', db_column='pregnancy_id', null=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True) 

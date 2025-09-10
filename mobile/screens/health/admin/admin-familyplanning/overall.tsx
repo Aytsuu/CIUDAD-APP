@@ -163,7 +163,7 @@ export default function OverallFpRecordsScreen() {
             <Text className="text-sm text-gray-700 font-medium">
               {item.patient_type || "N/A"}
             </Text>
-          </View>
+          </View>\
           <View className="flex-1 ml-3">
             <Text className="text-xs text-gray-400 uppercase tracking-wide mb-1">
               Method
@@ -242,7 +242,7 @@ export default function OverallFpRecordsScreen() {
       {/* Stats Cards */}
       <View className="px-4 py-4">
         <View className="flex-row gap-3 ">
-          <View className="flex-1 bg-white rounded-2xl p-4">
+          <View className="flex-1 bg-white/70 rounded-2xl p-4">
             <Text className="text-2xl font-bold text-gray-900">
               {totalFPPatients}
             </Text>
