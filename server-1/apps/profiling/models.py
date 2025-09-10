@@ -238,18 +238,3 @@ class BusinessFile(models.Model):
 
     class Meta:
         db_table = 'business_file'
-
-class KYCRecord(models.Model):
-    kyc_id = models.BigAutoField(primary_key=True)
-    id_document_front = models.TextField(null=True, blank=True)
-    id_has_face = models.BooleanField(null=True, default=False)
-    id_face_embedding = models.BinaryField(null=True, blank=True)
-    face_photo = models.TextField(null=True, blank=True)
-    document_info_match = models.BooleanField(null=True, default=False)
-    face_match_score = models.FloatField(null=True, blank=True)
-    is_verified = models.BooleanField(null=True, default=False)
-    created_at = models.DateTimeField(null=True, auto_now_add=True)
-    updated_at = models.DateTimeField(null=True, auto_now=True)
-
-    class Meta:
-        db_table = 'kyc_record'

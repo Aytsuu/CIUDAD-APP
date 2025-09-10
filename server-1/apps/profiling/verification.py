@@ -57,7 +57,7 @@ class KYCVerificationProcessor:
             key = f'{user_data['lname']}{user_data['fname']}' \
                   f'{user_data['mname']}' if 'mname' in user_data else ''
             
-            cache.set(key, id_face, timeout=1800)
+            cache.set(key, id_face, timeout=300)
             logger.info('info matched')
             return True
 

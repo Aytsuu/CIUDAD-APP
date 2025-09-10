@@ -1,11 +1,5 @@
 import { z } from "zod";
 
-export const passwordFormat = z.string()
-  .min(8, { message: "Password must be at least 8 characters long" })
-  .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
-  .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
-  .regex(/[0-9]/, { message: "Password must contain at least one number" })
-
 export const accountFormSchema = z.object({
   email: z.string().email({ message: "Invalid email (ex. juanlitoy243@gmail.com)"}),
   phone: z.string()
@@ -44,6 +38,7 @@ export const accountFormSchema = z.object({
         });
       }
     }),
+
   confirmPassword: z.string()
     .min(1, "Confirm Password is required")
 })
@@ -58,7 +53,33 @@ export const accountUpdateSchema = z.object({
     .email({ message: "Invalid email address" })
     .optional(  ),
 
-  newPassword: passwordFormat,
+  newPassword: z.string()
+    .superRefine((val, ctx) => {
+      const errors = [];
+      
+      if (val.length < 6) {
+        errors.push("Password must be at least 6 characters long");
+      }
+      
+      if (!/[a-z]/.test(val)) {
+        errors.push("Password must contain at least one lowercase letter");
+      }
+      
+      if (!/[A-Z]/.test(val)) {
+        errors.push("Password must contain at least one uppercase letter");
+      }
+      
+      if (!/\d/.test(val)) {
+        errors.push("Password must contain at least one number");
+      }
+      
+      if (errors.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: errors.join("\n"), // Using newline instead of comma
+        });
+      }
+    }),
 
   profile_image: z
     .instanceof(File, { message: "Please upload a file" })
