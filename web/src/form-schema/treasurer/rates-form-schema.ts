@@ -16,6 +16,7 @@ export const AnnualGrossSalesSchema = z.object({
     maxRange: DataRequirement,
     minRange: DataRequirement,
     amount: DataRequirement,
+    staff_id: z.string().default('')
 })
 
 export const PurposeAndRatesSchema = z.object({

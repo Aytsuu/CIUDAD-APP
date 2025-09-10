@@ -254,6 +254,7 @@ class WasteHotspotSerializer(serializers.ModelSerializer):
     wstp_id = serializers.PrimaryKeyRelatedField(
         queryset=WastePersonnel.objects.all(),  
     )
+    staff_name = serializers.SerializerMethodField(read_only = True)
 
     class Meta:
         model = WasteHotspot
@@ -269,6 +270,21 @@ class WasteHotspotSerializer(serializers.ModelSerializer):
 
     def get_sitio(self, obj):
         return str(obj.sitio_id.sitio_name) if obj.sitio_id else ""
+    
+    def get_staff_name(self, obj):
+        if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+            per = obj.staff_id.rp.per
+
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+            
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+            
+            return full_name
+        return None      
 
 
 class WasteReportFileSerializer(serializers.ModelSerializer):

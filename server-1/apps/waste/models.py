@@ -388,6 +388,13 @@ class WasteHotspot(models.Model):
         db_column='wstp_id',
         default=None,
     )
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = 'waste_hotspot'
