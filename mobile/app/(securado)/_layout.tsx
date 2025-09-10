@@ -3,7 +3,7 @@ import { Stack } from "expo-router"
 export default () => {
   return (
     <Stack>
-      <Stack.Screen />
+      <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }}/>
     </Stack>
   )
 }

@@ -7,14 +7,11 @@ import {
   FileInput,
   ArrowUpDown,
   Search,
-  ChevronLeft,
-  ChevronRight,
   Users,
   Home,
   UserCog,
   ArrowUp,
   ArrowDown,
-  // Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
-import { Link, Link as RouterLink } from "react-router";
+import { Link } from "react-router";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -35,6 +32,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { TableSkeleton } from "@/pages/healthServices/skeleton/table-skeleton";
 
 import PatientRecordCount from "./PatientRecordCounts";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 type Report = {
   id: string;
@@ -156,139 +154,37 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <RouterLink
-        to={`/view-patients-record/${row.getValue("id")}`}
-        state={{ patientId: row.getValue("id") }}
+      <Link
+        to="/view-patients-record"
+        state={
+          { patientId: row.getValue("id"), 
+            patientData: {
+              id: row.original.id,
+              sitio: row.original.sitio,
+              lastName: row.original.lastName,
+              firstName: row.original.firstName,
+              mi: row.original.mi,
+              type: row.original.type,
+              noOfRecords: row.original.noOfRecords
+            }
+          }}
       >
         <Button variant="outline">View</Button>
-      </RouterLink>
+      </Link>
     ),
     enableSorting: false,
     enableHiding: false,
   },
 ];
 
-// Custom pagination component to replace PaginationLayout
-const CustomPagination = ({
-  currentPage,
-  totalPages,
-  onPageChange,
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) => {
-  // Calculate page numbers to display
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxPagesToShow = 5;
-
-    if (totalPages <= maxPagesToShow) {
-      // Show all pages if total is less than max to show
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Always show first page
-      pages.push(1);
-
-      // Calculate start and end of middle pages
-      let start = Math.max(2, currentPage - 1);
-      let end = Math.min(totalPages - 1, currentPage + 1);
-
-      // Adjust if we're at the beginning
-      if (currentPage <= 3) {
-        end = Math.min(totalPages - 1, 4);
-      }
-
-      // Adjust if we're at the end
-      if (currentPage >= totalPages - 2) {
-        start = Math.max(2, totalPages - 3);
-      }
-
-      // Add ellipsis after first page if needed
-      if (start > 2) {
-        pages.push(-1); // -1 represents ellipsis
-      }
-
-      // Add middle pages
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-
-      // Add ellipsis before last page if needed
-      if (end < totalPages - 1) {
-        pages.push(-2); // -2 represents ellipsis
-      }
-
-      // Always show last page
-      pages.push(totalPages);
-    }
-
-    return pages;
-  };
-
-  return (
-    <div className="flex items-center justify-center space-x-2">
-      {/* Previous button */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="h-8 w-8 p-0"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        <span className="sr-only">Previous page</span>
-      </Button>
-
-      {/* Page numbers */}
-      {getPageNumbers().map((page, index) => {
-        if (page < 0) {
-          // Render ellipsis
-          return (
-            <span key={`ellipsis-${index}`} className="px-2">
-              ...
-            </span>
-          );
-        }
-
-        return (
-          <Button
-            key={page}
-            variant={currentPage === page ? "default" : "outline"}
-            size="sm"
-            onClick={() => onPageChange(page)}
-            className="h-8 w-8 p-0"
-          >
-            {page}
-          </Button>
-        );
-      })}
-
-      {/* Next button */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="h-8 w-8 p-0"
-      >
-        <ChevronRight className="h-4 w-4" />
-        <span className="sr-only">Next page</span>
-      </Button>
-    </div>
-  );
-};
-
 const transformPatientsToReports = (patients: Patients[]): Report[] => {
   return patients.map((patient) => ({
     id: patient.pat_id.toString(),
-    sitio: patient.address?.add_sitio || "N/A",
+    sitio: patient.address?.add_sitio || "Unknown",
     lastName: patient.personal_info?.per_lname || "",
     firstName: patient.personal_info?.per_fname || "",
-    mi: patient.personal_info?.per_mname || "N/A",
-    type: patient.pat_type || "Resident", // assuming pat_type maps to resident/transient
+    mi: patient.personal_info?.per_mname || "None",
+    type: patient.pat_type || "Resident",
   }));
 };
 
@@ -302,23 +198,6 @@ export default function PatientsRecord() {
   const [filterBy, setFilterBy] = useState("");
 
   const { data: patientData, isLoading } = usePatients();
-
-  // record counts
-  // const { data: medicineCountData } = useMedicineCount(patientId ?? "")
-  //   const medicineCount = medicineCountData?.medicinerecord_count
-  //   const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")
-  //   const vaccinationCount = vaccinationCountData?.vaccination_count
-  //   const { data: firstAidCountData } = useFirstAidCount(patientId ?? "")
-  //   const firstAidCount = firstAidCountData?.firstaidrecord_count
-  //   const { data: childHealthCount } = useChildHealthRecordCount(patientId ?? "")
-  //   const childHealthCountData = childHealthCount?.childhealthrecord_count
-  //   const { data: medconCountData } = useMedConCount(patientId ?? "")
-  //   const medconCount = medconCountData?.medcon_count
-  //   const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "")
-  //   const postpartumCount = postpartumCountData
-  //   const { data: prenatalCountData } = usePatientPrenatalCount(patientId ?? "")
-  //   const prenatalCount = prenatalCountData
-    
 
   const transformedPatients = useMemo(() => {
     if (!patientData) return [];
@@ -339,7 +218,6 @@ export default function PatientsRecord() {
   const transientPercentage =
     totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
 
-  // Filter data based on search query
   useEffect(() => {
     if (!patientDataset.length) {
       setFilteredData([]);
@@ -353,7 +231,6 @@ export default function PatientsRecord() {
       return searchText.includes(searchQuery.toLowerCase());
     });
 
-    // Apply additional filters if needed
     let filteredDataTemp = filtered;
     if (filterBy === "resident") {
       filteredDataTemp = filteredDataTemp.filter((report) =>
@@ -370,7 +247,6 @@ export default function PatientsRecord() {
     setCurrentPage(1);
   }, [searchQuery, pageSize, filterBy, patientDataset]);
 
-  // Update data based on page and page size
   useEffect(() => {
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
@@ -551,7 +427,7 @@ export default function PatientsRecord() {
               </DropdownMenu>
             </div>
           </div>
-          <div className="bg-white w-full overflow-x-auto">
+          <div className="bg-white w-full h-[30rem] overflow-x-auto">
             {isLoading ? (
               <TableSkeleton columns={columns} rowCount={5} />
             ) : (
@@ -569,7 +445,7 @@ export default function PatientsRecord() {
 
             {/* Custom Pagination component instead of PaginationLayout */}
             <div className="w-full sm:w-auto flex justify-center">
-              <CustomPagination
+              <PaginationLayout
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}

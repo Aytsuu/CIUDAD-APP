@@ -39,7 +39,15 @@ export default function ScheduleDialog({
       <DialogTrigger asChild>
         <Button className="flex items-center gap-2">
           <Edit className="h-4 w-4" />
-          Edit Schedule
+          {!services.length ? (
+            <span className="text-sm">
+              Add Schedule
+            </span>
+          ) : (
+            <span className="text-sm">
+              Edit Schedule
+            </span>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">

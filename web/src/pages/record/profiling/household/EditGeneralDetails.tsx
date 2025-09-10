@@ -11,20 +11,17 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { formatResidents } from "../ProfilingFormats";
-import { toast } from "sonner";
-import { CircleAlert } from "lucide-react";
 import { householdFormSchema } from "@/form-schema/profiling-schema";
 import { useUpdateHousehold } from "../queries/profilingUpdateQueries";
+import { showErrorToast, showPlainToast, showSuccessToast } from "@/components/ui/toast";
 
 export default function EditGeneralDetails({
   residents,
   household, 
-  setHousehold,
   setIsOpenDialog,
 } : {
   residents: Record<string, any>[]
   household: Record<string, any>;
-  setHousehold: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   setIsOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const defaultValues = React.useRef(
@@ -45,13 +42,13 @@ export default function EditGeneralDetails({
   React.useEffect(() => {
     if(household) {
       const head = formattedResidents.find(
-        (res: any) => res.id.split(" ")[0] === household.head_id
+        (res: any) => res.id.split(" ")[0] === household.head?.split("-")[0]
       ); 
 
       if(head) {
         form.setValue("householdHead", head.id);
       }
-      form.setValue("nhts", household.nhts);
+      form.setValue("nhts", household.hh_nhts.toLowerCase());
       // form.setValue("address", household.);
 
     }
@@ -60,18 +57,17 @@ export default function EditGeneralDetails({
   // Check if values are not changed when saving
   const checkDefaultValues = (values: any) => {
     const isDefault = 
-      values.householdHead === household.head &&
-      values.nhts === household.nhts
+      values.householdHead?.split(" ")[0] == household.head?.split("-")[0] &&
+      values.nhts.toLowerCase() == household.hh_nhts.toLowerCase()
 
     return isDefault;
   };
 
   const save = async () => {
-    setIsSaving(true);
+    
     const formIsValid = await form.trigger();
     const head = form.watch("householdHead");
     if(!formIsValid && !head) {
-      setIsSaving(false);
       setInvalidHead(true);
       return;
     }
@@ -79,27 +75,23 @@ export default function EditGeneralDetails({
     const values = form.getValues();
 
     if(checkDefaultValues(values)) {
-      setIsSaving(false);
       setIsOpenDialog(false);
-      toast("No changes made", {
-        icon: <CircleAlert size={24} className="fill-orange-500 stroke-white" />
-      });
+      showPlainToast("No changes made");
       return;
     }
-    
-    updateHousehold({...values, hh_id: household.hh_id}, {
-        onSuccess: () => {
-          setIsSaving(false);
-          setIsOpenDialog(false);
-          setHousehold((prev) => ({
-            ...prev,
-            head_id: values.householdHead,
-            hh_nhts: values.nhts
-          }))
-        }
-      }
-    );
+
+    try {
+      setIsSaving(true);
+      await updateHousehold({ ...values, hh_id: household.hh_id });
+      setIsSaving(false);
+      setIsOpenDialog(false);
+      showSuccessToast("Successfully updated household.");
+    } catch (error) {
+      setIsSaving(false);
+      showErrorToast("Error updating household");
+    }
   }
+
 
   return (
     <Form {...form}>
@@ -117,9 +109,10 @@ export default function EditGeneralDetails({
           <Combobox
             options={formattedResidents}
             value={form.watch("householdHead")}
-            onChange={(value) => form.setValue("householdHead", value)}
+            onChange={(value) => form.setValue("householdHead", value as string)}
             placeholder="Select a household"
             triggerClassName="font-normal"
+            variant="modal"
             emptyMessage={
               <div className="flex gap-2 justify-center items-center">
                 <Label className="font-normal text-[13px]">

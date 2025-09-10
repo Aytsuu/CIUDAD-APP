@@ -5,7 +5,7 @@ import { format, startOfWeek, addDays } from "date-fns"
 import { enUS } from "date-fns/locale"
 import ScheduleCard from "../scheduler/schedule-card"
 import ScheduleDialog from "../scheduler/schedule-dialog"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { WeeklySchedule, DailySchedule } from "../scheduler/schedule-types"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { useGetServices, useGetDays, useGetScheduler } from "../scheduler/queries/schedulerFetchQueries"
@@ -113,8 +113,8 @@ export default function SchedulerMain() {
 
   return (
     <LayoutWithBack title="Service Scheduler" description="Schedule services for the week">
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto">
+      <main className="min-h-screen">
+        <div className="mx-auto">
           {/* Services Overview */}
           <div className="mb-4">
             <Card className="flex">
@@ -126,7 +126,7 @@ export default function SchedulerMain() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 mt-1">
                     {services.map((service) => (
                       <span key={service} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                         {service}

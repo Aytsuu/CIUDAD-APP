@@ -17,7 +17,9 @@ urlpatterns = [
     path('supplements/', ChildHealthSupplementsView.as_view(), name='child-health-supplements'),
     path('supplement-status/', ChildHealthSupplementStatusView.as_view(), name='child-health-supplement-status'),
     path('update-supplement-status/', UpdateChildHealthSupplementsStatusView.as_view(), name='update-child-health-supplement-status'),
-    path('nutritional-status/', NutritionalStatusView.as_view(), name='nutritional-status'),
+    path('nutritional-status/<str:pat_id>/', NutritionalStatusView.as_view(), name='nutritional-status'),
+    path('nutritional-status-monthly/', MonthlyNutritionalStatusViewChart.as_view(), name='nutritional-status-all'),
+
     path('nutritional-summary/<int:chrec_id>/',ChildHealthNutrionalStatusListView.as_view(),name='child-nutrional-status'),
    
     path('exclusive-bf-check/', ExclusiveBFCheckView.as_view(), name='exclusive-bf-check'),
@@ -30,9 +32,6 @@ urlpatterns = [
     path('child-health-records/by-patient/<str:pat_id>/', ChildHealthRecordByPatIDView.as_view(), name='pat_child_health_records'),
     path('child-immunization-status/',ChildHealthImmunizationStatusListView.as_view(), name='child-immunization-status'),
     path('child-immunization-count/', ChildHealthImmunizationCountView.as_view(), name='child-health-immunization-count'),
-    
- 
-    
     path('childhealth-totalrecords/', ChildHealthTotalCountAPIView.as_view(), name='monthly_child_health_records'),   
 
     

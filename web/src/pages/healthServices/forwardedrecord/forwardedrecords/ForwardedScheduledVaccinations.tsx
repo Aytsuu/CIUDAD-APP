@@ -160,13 +160,13 @@ export default function ForwardedScheduledVaccinationsTables() {
       cell: ({ row }) => (
         <div className="flex flex-col">
           <div className="text-sm text-gray-500">
-            {row.original.vachist_doseNo === "1"
+            {String(row.original.vachist_doseNo) === "1"
               ? "1st dose"
-              : row.original.vachist_doseNo === "2"
+              : String(row.original.vachist_doseNo) === "2"
               ? "2nd dose"
-              : row.original.vachist_doseNo === "3"
+              :String( row.original.vachist_doseNo) === "3"
               ? "3rd dose"
-              : `${row.original.vachist_doseNo || ''}th dose`}
+              : `${String(row.original.vachist_doseNo) || ''}th dose`}
           </div>
         </div>
       ),

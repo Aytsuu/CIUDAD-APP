@@ -21,18 +21,21 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     lname = serializers.CharField(source='per.per_lname')
     fname = serializers.CharField(source='per.per_fname')
     mname = serializers.SerializerMethodField()
+    suffix = serializers.CharField(source='per.per_suffix')
     sex = serializers.CharField(source='per.per_sex')
+    pwd = serializers.CharField(source="per.per_disability")
     household_no = serializers.SerializerMethodField()
     family_no = serializers.SerializerMethodField()
     business_owner = serializers.SerializerMethodField()
     has_account = serializers.SerializerMethodField()
     dob = serializers.DateField(source="per.per_dob")
     age = serializers.SerializerMethodField()
+    per_id = serializers.CharField(source="per.per_id")
 
     class Meta:
         model = ResidentProfile
-        fields = [ 'rp_id', 'rp_date_registered', 'lname', 'fname', 'mname', 'dob', 
-                  'age', 'sex', 'household_no', 'family_no', 'business_owner', 'has_account']
+        fields = [ 'rp_id', 'per_id', 'rp_date_registered', 'lname', 'fname', 'mname', 'suffix', 'dob', 
+                  'age', 'sex', 'pwd', 'household_no', 'family_no', 'business_owner', 'has_account']
     
     def get_mname(self, obj):
         return obj.per.per_mname if obj.per.per_mname else ''
@@ -54,6 +57,22 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     
     def get_has_account(self, obj):
         return hasattr(obj, 'account')
+    
+    def get_registered_by(self, obj):
+        if obj.staff:
+            staff_type = obj.staff.staff_type
+            staff_id = obj.staff.staff_id
+            
+            # Determine prefix based on staff type
+            if staff_type == "Barangay Staff":
+                prefix = "B-"
+            elif staff_type == "Health Staff":
+                prefix = "H-"
+            else:
+                prefix = ""  # Default for unknown types
+                
+            return f"{prefix}{staff_id}"
+        return "-"
     
     def get_age(self, obj):
         dob = obj.per.per_dob
@@ -132,14 +151,15 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_edAttainment = serializers.CharField(source="per.per_edAttainment")
     per_religion = serializers.CharField(source="per.per_religion")
     per_contact = serializers.CharField(source="per.per_contact")
+    per_disability = serializers.CharField(source="per.per_disability")
     per_addresses = serializers.SerializerMethodField()
     per_age = serializers.SerializerMethodField()
 
     class Meta:
         model = ResidentProfile
         fields = ['per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
-                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_addresses', 
-                  'per_age']
+                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_disability',
+                    'per_addresses', 'per_age']
         read_only_fields = fields
 
     def get_per_age(self, obj):

@@ -237,6 +237,7 @@ import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { api2 } from "@/api/api";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 export const useSubmitStep2 = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -307,6 +308,10 @@ export const useSubmitStep2 = () => {
         staff_id: staff_id
       };
 
+<<<<<<< HEAD
+=======
+      console.log("Submission Data:", submissionData); // Debugging log
+>>>>>>> frontend/feature/maternal-services
       // Make a single API call to the backend
       const response = await api2.post("/vaccination/submit-vaccination-records/", submissionData);
       return response.data;
@@ -318,18 +323,11 @@ export const useSubmitStep2 = () => {
       queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
       queryClient.invalidateQueries({ queryKey: ["vaccineStocks"] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
-
       navigate(-1);
-      toast.success("Successfully Recorded", {
-        icon: <CircleCheck size={18} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+    showSuccessToast("Successfully Recorded");
     },
     onError: (error: Error) => {
-      toast.error(`${error.message}`, {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        duration: 3000
-      });
+      showErrorToast(`${error.message}`);
     }
   });
 };

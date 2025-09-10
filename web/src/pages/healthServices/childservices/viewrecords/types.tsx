@@ -155,11 +155,11 @@ export interface PersonalInfo {
     chnotes_id: number;
     chhist_details: any;
     followv_details: FollowVDetails | null;
-    staff_details: StaffDetails;
     chn_notes: string;
     created_at: string;
     updated_at: string;
     chhist: number;
+    history:any;
     followv: number | null;
     staff: string;
   }
@@ -415,7 +415,7 @@ export interface VaccinationRecordDetails {
     child_health_supplements: CHSupplement[];
     exclusive_bf_checks: EBFCheck[];
     immunization_tracking: ImmunizationTracking[];
-        supplements_statuses: CHSSupplementStat[];
+      supplements_statuses: CHSSupplementStat[];
     nutrition_statuses: NutritionStatus[];
   }
 

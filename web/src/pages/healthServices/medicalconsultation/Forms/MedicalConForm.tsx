@@ -1,12 +1,11 @@
 "use client";
-
 import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { nonPhilHealthSchema } from "@/form-schema/medicalConsultation/nonPhilhealthSchema";
 import { Button } from "@/components/ui/button/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useLocation } from "react-router-dom";
-import { BriefcaseMedical, ChevronLeft, FilesIcon } from "lucide-react";
+import { BriefcaseMedical, ChevronLeft, FilesIcon, Heart } from "lucide-react";
 import { useEffect } from "react";
 import { FormInput } from "@/components/ui/form/form-input";
 import { PatientSearch } from "@/components/ui/patientSearch";
@@ -24,10 +23,35 @@ import { useSubmitMedicalConsultation } from "../queries/postQueries";
 import { useState } from "react";
 import { nonPhilHealthType } from "@/form-schema/medicalConsultation/nonPhilhealthSchema";
 import { showErrorToast } from "@/components/ui/toast";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const doctors = [
   { id: "1", name: "Kimmy Mo Ma Chung" },
   { id: "2", name: "Chi Chung" }
+];
+
+const maritalStatusOptions = [
+  { id: "single", name: "Single" },
+  { id: "married", name: "Married" },
+  { id: "divorced", name: "Divorced" },
+  { id: "widowed", name: "Widowed" }
+];
+
+const ttStatusOptions = [
+  { id: "T1", name: "T1" },
+  { id: "T2", name: "T2" },
+  { id: "T3", name: "T3" },
+  { id: "T4", name: "T4" },
+  { id: "T5", name: "T5" }
+];
+
+const contraceptiveOptions = [
+  { id: "pills", name: "Birth Control Pills" },
+  { id: "condom", name: "Condom" },
+  { id: "iud", name: "IUD" },
+  { id: "injection", name: "Injectable" },
+  { id: "implant", name: "Implant" },
+  { id: "none", name: "None" }
 ];
 
 export default function MedicalConsultationForm() {
@@ -43,7 +67,7 @@ export default function MedicalConsultationForm() {
   const pat_id = selectedPatientId.split(",")[0].trim() || patientData?.pat_id || "";
   const { data: latestVitals, isLoading: isVitalsLoading, error: vitalsError } = useLatestVitals(pat_id);
   const { data: previousMeasurements, isLoading: isMeasurementsLoading, error: measurementsError } = usePreviousBMI(pat_id);
-  const mutation = useSubmitMedicalConsultation();
+  const non_membersubmit = useSubmitMedicalConsultation();
 
   const form = useForm<nonPhilHealthType>({
     resolver: zodResolver(nonPhilHealthSchema),
@@ -59,9 +83,27 @@ export default function MedicalConsultationForm() {
       weight: undefined,
       medrec_chief_complaint: "",
       doctor: "",
-      staff: staff || null
+      staff: staff || null,
+      is_philhealthmember: false,
+      is_withatch: false,
+      marital_status: "N/A",
+      is_dependent: false,
+      lmp: "N/A",
+      obscore_g: "0",
+      obscore_p: "0",
+      tpal: "0-0-0-0",
+      tt_status: "N/A",
+      ogtt_result: "N/A",
+      contraceptive_used: "N/A",
+      smk_stickused_aday: "N/A",
+      smk_yrs: "N/A",
+      is_passive: false,
+      alchl_bottleused_aday: "N/A"
     }
   });
+
+  // Watch for PhilHealth membership status to conditionally show fields
+  const isPhilHealthMember = form.watch("is_philhealthmember");
 
   useEffect(() => {
     if (latestVitals) {
@@ -71,7 +113,6 @@ export default function MedicalConsultationForm() {
       form.setValue("vital_bp_diastolic", latestVitals.bp_diastolic?.toString() || "");
       form.setValue("vital_RR", latestVitals.respiratory_rate?.toString() || "");
     }
-
     if (previousMeasurements) {
       form.setValue("height", previousMeasurements.height ?? 0);
       form.setValue("weight", previousMeasurements.weight ?? 0);
@@ -91,7 +132,12 @@ export default function MedicalConsultationForm() {
     }
     const currentPatient = mode === "fromindivrecord" ? patientData : selectedPatientData;
     if (!currentPatient) return;
-    mutation.mutate({ data, currentPatient });
+
+    if (!data.is_philhealthmember) {
+      non_membersubmit.mutate({ data, currentPatient });
+    } else {
+
+    }
   };
 
   return (
@@ -126,17 +172,43 @@ export default function MedicalConsultationForm() {
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <fieldset disabled={mutation.isPending} className="space-y-6">
+                <fieldset disabled={non_membersubmit.isPending} className="space-y-6">
+                  {/* PhilHealth Membership Section */}
+                  <div className="space-y-4">
+                    <div className="space-y-3 mt-6">
+                      <Label className="font-medium text-black/65">PhilHealth Membership Status</Label>
+                      <RadioGroup
+                        value={isPhilHealthMember ? "member" : "non-member"}
+                        onValueChange={(value) => {
+                          form.setValue("is_philhealthmember", value === "member");
+                        }}
+                        className="flex flex-row gap-6"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="non-member" id="non-member" />
+                          <Label htmlFor="non-member" className="font-normal cursor-pointer">
+                            Non-Member
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="member" id="member" />
+                          <Label htmlFor="member" className="font-normal cursor-pointer">
+                            PhilHealth Member
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+
+                  
+                  </div>
+
                   {/* Vital Signs Section */}
                   <div className="space-y-4">
                     <h2 className="font-semibold text-darkBlue1 rounded-md py-2 mt-8 flex gap-2">
                       <BriefcaseMedical /> Vital Sign
                     </h2>
-
                     {isVitalsLoading ? <div className="text-sm text-gray-500 italic">Loading vitals...</div> : latestVitals?.created_at ? <div className="text-sm text-yellow-600 italic">Latest vitals recorded on: {format(new Date(latestVitals.created_at), "MMMM d, yyyy")}</div> : null}
-
                     {vitalsError && <div className="text-sm text-red-500 italic">Error loading vitals: {vitalsError.message}</div>}
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
                       <FormInput control={form.control} name="vital_pulse" label="Heart Rate (bpm)" placeholder="Adult normal: 60-100 bpm" type="number" step={1} maxLength={3} />
                       <FormInput control={form.control} name="vital_RR" label="Respiratory Rate (cpm)" placeholder="12-20 cpm" type="number" step={1} maxLength={2} />
@@ -162,10 +234,7 @@ export default function MedicalConsultationForm() {
                         <div className="text-sm text-red-500 italic">Error loading measurements: {measurementsError.message}</div>
                       ) : previousMeasurements?.created_at ? (
                         <div className="text-sm text-yellow-600 italic mb-2">Previous measurements recorded on: {format(new Date(previousMeasurements.created_at), "MMMM d, yyyy")}</div>
-                      ) : (
-                        <div className="text-sm text-gray-500 italic">No previous measurements found</div>
-                      )}
-
+                      ) : null}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormInput control={form.control} name="height" label="Height (cm)" placeholder="Enter Height" type="number" step={0.1} maxLength={6} />
                         <FormInput control={form.control} name="weight" label="Weight (kg)" placeholder="Enter Weight" type="number" step={0.1} maxLength={6} />
@@ -181,10 +250,86 @@ export default function MedicalConsultationForm() {
                     <FormTextArea control={form.control} name="medrec_chief_complaint" label="" placeholder="Enter chief complaint" className="min-h-[100px]" rows={5} />
                   </div>
 
+
+
+  {/* Conditional PhilHealth Member Fields */}
+  {isPhilHealthMember && (
+                      <div className="space-y-4 p-4  rounded-lg border border-green-500">
+                        <h3 className="font-medium text-green-800 mb-6">Additional PhilHealth Information</h3>
+
+                        <div className="flex gap-4">
+                          {" "}
+                          {/* With ATCH */}
+                          <div className="flex items-center space-x-2">
+                            <input type="checkbox" id="is_withatch" checked={form.watch("is_withatch")} onChange={(e) => form.setValue("is_withatch", e.target.checked)} className="rounded border-gray-300" />
+                            <Label htmlFor="is_withatch" className="font-normal cursor-pointer">
+                              WALK IN WITH ATC
+                            </Label>
+                          </div>
+                          {/* Is Dependent */}
+                          <div className="flex items-center space-x-2">
+                            <input type="checkbox" id="is_dependent" checked={form.watch("is_dependent")} onChange={(e) => form.setValue("is_dependent", e.target.checked)} className="rounded border-gray-300" />
+                            <Label htmlFor="is_dependent" className="font-normal cursor-pointer">
+                              Dependent
+                            </Label>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          {/* Marital Status */}
+                          <div>
+                            <Label className="font-medium text-black/65 mb-2 mt-2 block">Marital Status</Label>
+                            <Combobox options={maritalStatusOptions} value={form.watch("marital_status")} onChange={(value) => form.setValue("marital_status", value)} placeholder="Select marital status" triggerClassName="font-normal w-full" />
+                          </div>
+
+                          {/* LMP */}
+                          <FormInput control={form.control} name="lmp" label="Last Menstrual Period (LMP)" placeholder="Enter LMP date" type="date" />
+
+                          {/* OB Score G */}
+                          <FormInput control={form.control} name="obscore_g" label="OB Score G (Gravida)" placeholder="0" type="number" />
+
+                          {/* OB Score P */}
+                          <FormInput control={form.control} name="obscore_p" label="OB Score P (Para)" placeholder="0" type="number" />
+
+                          {/* TPAL */}
+                          <FormInput control={form.control} name="tpal" label="TPAL (T-P-A-L)" placeholder="0-0-0-0" />
+
+                          {/* TT Status */}
+                          <div>
+                            <Label className="font-medium text-black/65 mb-2 block">TT Status</Label>
+                            <Combobox options={ttStatusOptions} value={form.watch("tt_status")} onChange={(value) => form.setValue("tt_status", value)} placeholder="Select TT status" triggerClassName="font-normal w-full" />
+                          </div>
+
+                          {/* OGTT Result */}
+                          <FormInput control={form.control} name="ogtt_result" label="OGTT Result" placeholder="Enter OGTT result" />
+
+                          {/* Contraceptive Used */}
+                          <div>
+                            <Label className="font-medium text-black/65 mb-2 mt-2 block">Contraceptive Used</Label>
+                            <Combobox options={contraceptiveOptions} value={form.watch("contraceptive_used")} onChange={(value) => form.setValue("contraceptive_used", value)} placeholder="Select contraceptive method" triggerClassName="font-normal w-full" />
+                          </div>
+
+                          {/* Smoking Information */}
+                          <FormInput control={form.control} name="smk_stickused_aday" label="Cigarette Sticks per Day" placeholder="Enter number of sticks" type="number" />
+
+                          <FormInput control={form.control} name="smk_yrs" label="Smoking Years" placeholder="Enter years of smoking" type="number" />
+
+                          {/* Passive Smoking */}
+                          <div className="flex items-center space-x-2 mt-8">
+                            <input type="checkbox" id="is_passive" checked={form.watch("is_passive")} onChange={(e) => form.setValue("is_passive", e.target.checked)} className="rounded border-gray-300" />
+                            <Label htmlFor="is_passive" className="font-normal cursor-pointer">
+                              Passive Smoker
+                            </Label>
+                          </div>
+
+                          {/* Alcohol Consumption */}
+                          <FormInput control={form.control} name="alchl_bottleused_aday" label="Alcohol Bottles per Day" placeholder="Enter number of bottles" type="number" />
+                        </div>
+                      </div>
+                    )}
                   {/* BHW and Doctor Section */}
                   <div className="flex gap-5 flex-col">
                     <FormInput control={form.control} name="bhw_assignment" label="BHW Assigned:" placeholder="BHW Assigned" />
-
                     <div>
                       <Label className="font-medium text-black/65 mb-2 block">Forward to Doctor</Label>
                       <Combobox
@@ -206,11 +351,11 @@ export default function MedicalConsultationForm() {
 
                 {/* Form Actions */}
                 <div className="flex justify-end gap-4">
-                  <Button variant="outline" type="button" onClick={() => form.reset()} className="w-full sm:w-[150px]" disabled={mutation.isPending}>
+                  <Button variant="outline" type="button" onClick={() => form.reset()} className="w-full sm:w-[150px]" disabled={non_membersubmit.isPending}>
                     Reset Form
                   </Button>
-                  <Button type="submit" className="w-full sm:w-[150px]" disabled={(mode === "fromallrecordtable" && !selectedPatientId) || (mode === "fromindivrecord" && !patientData) || mutation.isPending}>
-                    {mutation.isPending ? (
+                  <Button type="submit" className="w-full sm:w-[150px]" disabled={(mode === "fromallrecordtable" && !selectedPatientId) || (mode === "fromindivrecord" && !patientData) || non_membersubmit.isPending}>
+                    {non_membersubmit.isPending ? (
                       <div className="flex items-center gap-2">
                         <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

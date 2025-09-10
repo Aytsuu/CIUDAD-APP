@@ -4,32 +4,56 @@ import { useEffect, useState } from "react"
 import { useFormContext, type UseFormReturn } from "react-hook-form"
 import type { ColumnDef } from "@tanstack/react-table"
 
+// all components
 import { type z } from "zod"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button/button"
 import { DataTable } from "@/components/ui/table/data-table"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import DialogLayout from "@/components/ui/dialog/dialog-layout"
+// import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
+import { Form } from "@/components/ui/form/form"
+import { FormTextArea } from "@/components/ui/form/form-text-area" 
+import { FormField, FormControl, FormItem, FormLabel } from "@/components/ui/form/form"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+
+// health components
+import { IllnessCombobox } from "../../maternal-components/illness-combobox"
 import { PatientSearch, type Patient } from "@/components/ui/patientSearch"
-import { Form } from "@/components/ui/form/form" 
 
 // icons import
-import { Trash } from "lucide-react"
 import { MdOutlineSick } from "react-icons/md"
 import { FaRegHospital } from "react-icons/fa"
 
 // schema import
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
-// queries
+// fetch queries
 import { usePrenatalPatientMedHistory, 
         usePrenatalPatientObsHistory, 
         usePrenatalPatientPrevHospitalization,
+        usePrenatalPatientBodyMeasurement,
+        useLatestPatientPrenatalRecord,
+        usePatientTTStatus,
+        useIllnessList,
 } from "../../queries/maternalFetchQueries"
-import { usePrenatalPatientBodyMeasurement } from "../../queries/maternalFetchQueries"
+// import { fetchVaccinesWithStock } from "@/pages/healthServices/vaccination/queries/fetch" // temporarily paused for some reasons
 
+// create queries
+import { useAddIllnessData } from "../../queries/maternalAddQueries"
+import { showErrorToast } from "@/components/ui/toast"
+
+
+// capitalization tailored for adding illness
+const capitalize = (str: string): string => {
+    if (!str) return '';
+    return str
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
 
 // age calculation for dob
 const calculateAge = (dob: string): number => {
@@ -44,14 +68,58 @@ const calculateAge = (dob: string): number => {
   return age
 }
 
+
 export default function PrenatalFormFirstPg({
   form,
   onSubmit,
+  isFromIndividualRecord = false,
+  preselectedPatient = null,
+  activePregnancyId = null,
 }: {
   form: UseFormReturn<z.infer<typeof PrenatalFormSchema>>
   onSubmit: () => void
+  isFromIndividualRecord?: boolean
+  preselectedPatient?: Patient | null
+  activePregnancyId?: string | null
 }) {
-  const { control, trigger, setValue, getValues, watch } = useFormContext<z.infer<typeof PrenatalFormSchema>>() // useFormContext to access the form methods
+
+
+  type previousIllness = {
+    prevIllness: string
+    prevIllnessYr?: number
+    ill_id?: number
+    created_at?: string
+  }
+
+  type previousHospitalization = {
+    prevHospitalization: string
+    prevHospitalizationYr?: number
+  }
+
+  const { control, trigger, setValue, getValues, watch } = useFormContext<z.infer<typeof PrenatalFormSchema>>()
+  const [prevIllnessData, setPrevIllnessData] = useState<previousIllness[]>([])
+  const [prevHospitalizationData, setPrevHospitalizationData] = useState<previousHospitalization[]>([])
+  // const [openRowId, setOpenRowId] = useState<string | null>(null)
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("")
+  const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("")
+  const [selectedIllnessId, setSelectedIllnessId] = useState<string>("")
+
+  // for vaccine useState
+  // const [, setNextVisitDate] = useState<string | null>(null);
+  // const [nextVisitDescription, setNextVisitDescription] = useState<string | null>(null);
+
+   // patient data fetching
+  const { data: illnessesData, refetch: illnessesRefetch } = useIllnessList() // illness list
+  const { data: medHistoryData, isLoading, error } = usePrenatalPatientMedHistory(selectedPatientId) //medical history
+  const { data: prevHospData, isLoading: prevHospLoading, error: prevHospError } = usePrenatalPatientPrevHospitalization(selectedPatientId) //previous hospitalization
+  const { data: obsHistoryData, isLoading: obsLoading } = usePrenatalPatientObsHistory(selectedPatientId) //obstetric history
+  const { data: bodyMeasurementData, isLoading: bmLoading } = usePrenatalPatientBodyMeasurement(selectedPatientId) //body measurement
+  const { data: ttStatusData, isLoading: ttStatusLoading } = usePatientTTStatus(selectedPatientId) //tt status
+  const { data: latestPrenatalData, isLoading: latestPrenatalLoading } = useLatestPatientPrenatalRecord(isFromIndividualRecord ?  selectedPatientId : "") //latest prenatal record
+  // const { data: vaccinesData, isLoading: isVacstckLoading } = fetchVaccinesWithStock(isFromIndividualRecord ? selectedPatientId : "");
+
+  // add mutation hook
+  const addIllnessMutation = useAddIllnessData()
 
   // This function will only be called by form.handleSubmit if validation passes
   const handleNext = async () => {
@@ -94,42 +162,110 @@ export default function PrenatalFormFirstPg({
       }
     }
   }
-  
-  type previousIllness = {
-    prevIllness: string
-    prevIllnessYr?: number
-  }
+ 
 
-  type previousHospitalization = {
-    prevHospitalization: string
-    prevHospitalizationYr?: number
-  }
+  // populate with the preselected patient if available
+  useEffect(() => {
+    if (isFromIndividualRecord && preselectedPatient) {
+      
+      setSelectedPatientId(preselectedPatient.pat_id)
 
-  const [prevIllnessData, setPrevIllnessData] = useState<previousIllness[]>([])
-  const [prevHospitalizationData, setPrevHospitalizationData] = useState<previousHospitalization[]>([])
-  const [openRowId, setOpenRowId] = useState<string | null>(null) // open row id
-  const [selectedPatientId, setSelectedPatientId] = useState<string>("")
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
-  const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("")
+      const displayFormat = `${preselectedPatient.pat_id}, ${preselectedPatient?.personal_info?.per_lname}, ${preselectedPatient?.personal_info?.per_fname} ${preselectedPatient?.personal_info?.per_mname || ''}`.trim()
+      setSelectedPatIdDisplay(displayFormat)
 
-   // patient data fetching
-  const { data: medHistoryData, isLoading, error } = usePrenatalPatientMedHistory(selectedPatientId)
-  const { data: prevHospData, isLoading: prevHospLoading, error: prevHospError } = usePrenatalPatientPrevHospitalization(selectedPatientId)
-  const { data: obsHistoryData, isLoading: obsLoading } = usePrenatalPatientObsHistory(selectedPatientId)
-  const { data: bodyMeasurementData, isLoading: bmLoading } = usePrenatalPatientBodyMeasurement(selectedPatientId)
-  // const { data: prevPregnancyData, isLoading: prevPregnancyLoading } = usePrenatalPatientPrevPregnancy(selectedPatientId)
+      handlePatientSelection(preselectedPatient, preselectedPatient.pat_id)
+    }
+  }, [isFromIndividualRecord, preselectedPatient, activePregnancyId])
 
 
+  // use to populate form with latest prenatal data if available 
+  useEffect(() => { 
+    const latestPF = latestPrenatalData?.latest_prenatal_form
+
+    if (isFromIndividualRecord && latestPrenatalData && !latestPrenatalLoading) {
+      setValue("pregnancy_id", latestPrenatalData.pregnancy_id || "")
+      
+      if(latestPF?.spouse_details) {
+        setValue("motherPersonalInfo.husbandLName", latestPF.spouse_details.spouse_lname || "")
+        setValue("motherPersonalInfo.husbandFName", latestPF.spouse_details.spouse_fname || "")
+        setValue("motherPersonalInfo.husbandMName", latestPF.spouse_details.spouse_mname || "")
+        setValue("motherPersonalInfo.husbandDob", latestPF.spouse_details.spouse_dob || "")
+        setValue("motherPersonalInfo.occupation", latestPF.spouse_details.spouse_occupation || "")
+      }
+
+      if (latestPF && activePregnancyId) {
+        setValue("presentPregnancy.pf_lmp", latestPF.pf_lmp || "")
+        setValue("presentPregnancy.pf_edc", latestPF.pf_edc || "")
+        setValue("followUpSchedule.aogWeeks", latestPF.prenatal_care_entries[0]?.pfpc_aog_wks || "")
+        setValue("followUpSchedule.aogDays", latestPF.prenatal_care_entries[0]?.pfpc_aog_days || "")
+
+        if (latestPF.body_measurement_details) {
+          const bodyMeasurement = latestPF.body_measurement_details
+          setValue("motherPersonalInfo.motherWt", bodyMeasurement.weight || "")
+          setValue("motherPersonalInfo.motherHt", bodyMeasurement.height || "")
+        }
+
+        if (latestPF.previous_pregnancy) {
+          const prevPregnancy = latestPF.previous_pregnancy
+          setValue("previousPregnancy.dateOfDelivery", prevPregnancy.date_of_delivery || "")
+          setValue("previousPregnancy.outcome", prevPregnancy.outcome || "")
+          setValue("previousPregnancy.typeOfDelivery", prevPregnancy.type_of_delivery || "")
+          setValue("previousPregnancy.babysWt", prevPregnancy.babys_wt || "")
+          setValue("previousPregnancy.gender", prevPregnancy.gender || "")
+          setValue("previousPregnancy.ballardScore", prevPregnancy.ballard_score || "")
+          setValue("previousPregnancy.apgarScore", prevPregnancy.apgar_score || "")
+        }
+
+        // guide for 4anc visits
+        if (latestPF.anc_visit_guide) {
+          const ancVisits = latestPF.anc_visit_guide
+          setValue("ancVisits.firstTri", ancVisits.pfav_1st_tri || "")
+          setValue("ancVisits.secondTri", ancVisits.pfav_2nd_tri || "")
+          setValue("ancVisits.thirdTriOne", ancVisits.pfav_3rd_tri_one || "")
+          setValue("ancVisits.thirdTriTwo", ancVisits.pfav_3rd_tri_two || "")
+        }
+
+        // checklist
+        if(latestPF.checklist_data) {
+          const checklist = latestPF.checklist_data
+          setValue("assessmentChecklist.increasedBP", checklist.increased_bp)
+          setValue("assessmentChecklist.epigastricPain", checklist.epigastric_pain)
+          setValue("assessmentChecklist.nausea", checklist.nausea)
+          setValue("assessmentChecklist.blurringOfVision", checklist.blurring_of_vision)
+          setValue("assessmentChecklist.edema", checklist.edema)
+          setValue("assessmentChecklist.severeHeadache", checklist.severe_headache)
+          setValue("assessmentChecklist.abnormalVaginalDischarges", checklist.abnormal_vaginal_discharges)
+          setValue("assessmentChecklist.vaginalBleeding", checklist.vaginal_bleeding)
+          setValue("assessmentChecklist.chillsFever", checklist.chills_fever)
+          setValue("assessmentChecklist.diffInBreathing", checklist.diff_in_breathing)
+          setValue("assessmentChecklist.varicosities", checklist.varicosities)
+          setValue("assessmentChecklist.abdominalPain", checklist.abdominal_pain)
+        }
+
+        // risk codes
+        if (latestPF.obstetric_risk_codes) {
+          const riskCodes = latestPF.obstetric_risk_codes
+          setValue("riskCodes.hasOneOrMoreOfTheFF.prevCaesarian", riskCodes.pforc_prev_c_section)
+          setValue("riskCodes.hasOneOrMoreOfTheFF.miscarriages", riskCodes.pforc_3_consecutive_miscarriages)
+          setValue("riskCodes.hasOneOrMoreOfTheFF.postpartumHemorrhage", riskCodes.pforc_postpartum_hemorrhage)
+        }
+
+        // birth plan
+        if (latestPF.birth_plan_details) {
+          const birthPlan = latestPF.birth_plan_details
+          setValue("pregnancyPlan.planPlaceOfDel", birthPlan.place_of_delivery_plan)
+          setValue("pregnancyPlan.planNewbornScreening", birthPlan.newborn_screening_plan)
+        }
+      }
+    }
+  }, [latestPrenatalData, latestPrenatalLoading, isFromIndividualRecord, activePregnancyId, setValue])
 
 
   const handlePatientSelection = (patient: Patient | null, patientId: string) => {
     setSelectedPatIdDisplay(patientId)
-    setSelectedPatient(patient)
-    console.log(selectedPatient)
 
     if (!patient) {
       setSelectedPatientId("")
-      setSelectedPatient(null)
 
       setValue("pat_id", "")
       setValue("motherPersonalInfo.familyNo", "N/A")
@@ -141,7 +277,7 @@ export default function PrenatalFormFirstPg({
           motherLName: "",
           motherFName: "",
           motherMName: "",
-          motherAge: undefined,
+          motherAge: "",
           motherDOB: "",
           husbandLName: "",
           husbandFName: "",
@@ -166,7 +302,7 @@ export default function PrenatalFormFirstPg({
           noOfAbortion: 0,
           noOfStillBirths: 0,
           historyOfLBabies: 0,
-          historyOfDiabetes: "",
+          historyOfDiabetes: undefined,
         },
         medicalHistory: {
           prevIllness: "",
@@ -189,7 +325,7 @@ export default function PrenatalFormFirstPg({
           vaccineType: "",
           ttStatus: "",
           ttDateGiven: "",
-          isTDAPAdministered: "",
+          isTDAPAdministered: false,
         }, 
         presentPregnancy: {
           gravida: undefined,
@@ -272,21 +408,21 @@ export default function PrenatalFormFirstPg({
       setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname || "")
       setValue("motherPersonalInfo.motherFName", personalInfo?.per_fname || "")
       setValue("motherPersonalInfo.motherMName", personalInfo?.per_mname || "")
-      setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob || ""))
+      setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob || "").toLocaleString())
       setValue("motherPersonalInfo.motherDOB", personalInfo?.per_dob || "")
 
       if (address) {
-        setValue("motherPersonalInfo.address.street", address.add_street || "")
-        setValue("motherPersonalInfo.address.sitio", address.add_sitio || "")
-        setValue("motherPersonalInfo.address.barangay", address.add_barangay || "")
-        setValue("motherPersonalInfo.address.city", address.add_city || "")
-        setValue("motherPersonalInfo.address.province", address.add_province || "")
+        setValue("motherPersonalInfo.address.street", address.add_street || "None")
+        setValue("motherPersonalInfo.address.sitio", address.add_sitio || "None")
+        setValue("motherPersonalInfo.address.barangay", address.add_barangay || "None")
+        setValue("motherPersonalInfo.address.city", address.add_city || "None")
+        setValue("motherPersonalInfo.address.province", address.add_province || "None")
       } else {
-        setValue("motherPersonalInfo.address.street", "")
-        setValue("motherPersonalInfo.address.sitio", "")
-        setValue("motherPersonalInfo.address.barangay", "")
-        setValue("motherPersonalInfo.address.city", "")
-        setValue("motherPersonalInfo.address.province", "")
+        setValue("motherPersonalInfo.address.street", "Unknown")
+        setValue("motherPersonalInfo.address.sitio", "Unknown")
+        setValue("motherPersonalInfo.address.barangay", "Unknown")
+        setValue("motherPersonalInfo.address.city", "Unknown")
+        setValue("motherPersonalInfo.address.province", "Unknown")
       }
 
       if (patientRole === "Mother") {
@@ -325,13 +461,29 @@ export default function PrenatalFormFirstPg({
     }
   }
 
+  const handleAddNewIllness = async (newIllness: string) => {
+    try {
+      const IllnessData = {
+        illname: capitalize(newIllness),
+      }
+
+      await addIllnessMutation.mutateAsync(IllnessData)
+
+      await illnessesRefetch()
+
+      setValue("medicalHistory.prevIllness", newIllness)
+      setSelectedIllnessId("")
+
+    } catch (error) {
+      showErrorToast("Failed to add illness")
+    }
+  }
 
   useEffect(() => {
     const restoreSelection = () => {
       const formPatId = form.getValues("pat_id")
 
       if (formPatId && !selectedPatientId) {
-        console.log("Restoring patient selection from form:", formPatId)
         setSelectedPatientId(formPatId)
         
         const motherFName = form.getValues("motherPersonalInfo.motherFName")
@@ -341,25 +493,16 @@ export default function PrenatalFormFirstPg({
         if (motherFName && motherLName) {
           const displayFormat = `${formPatId}, ${motherLName}, ${motherFName} ${motherMName || ''}`.trim()
           setSelectedPatIdDisplay(displayFormat)
-          console.log(selectedPatIdDisplay)
+          // console.log(selectedPatIdDisplay)
         } else {
           setSelectedPatIdDisplay(formPatId)
         }
       }
     }
 
-    const existingMedHistory = form.getValues("medicalHistory.prevIllnessData") || []
-    if (existingMedHistory.length > 0 && prevIllnessData.length === 0) {
-      setPrevIllnessData(existingMedHistory)
-    }
-
-    const existingHospData = form.getValues("medicalHistory.prevHospitalizationData") || []
-    if (existingHospData.length > 0 && prevHospitalizationData.length === 0) {
-      setPrevHospitalizationData(existingHospData)
-    }
-
     restoreSelection()
-  }, [form, selectedPatientId, prevIllnessData.length, prevHospitalizationData.length])
+
+  }, [form, selectedPatientId])
 
 
   // body measurement fetching
@@ -372,6 +515,20 @@ export default function PrenatalFormFirstPg({
     }
   }, [bodyMeasurementData, bmLoading, setValue])
 
+  const BMweight = bodyMeasurementData?.body_measurement.weight
+  const BMheight = bodyMeasurementData?.body_measurement.height
+
+
+  // ph date and ph time //
+  const created_at = bodyMeasurementData?.body_measurement?.created_at
+  const date = new Date(created_at)
+
+  const phDate = date.toLocaleDateString("en-PH", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "long",
+    day: "2-digit"
+  })
 
   // obstetric history fetching
   useEffect(() => {
@@ -402,14 +559,29 @@ export default function PrenatalFormFirstPg({
   }, [obsHistoryData, obsLoading, setValue])
 
 
+  // illness fetching
+  const getIllnessOptions = () => {
+    if(!illnessesData?.illnesses) return []
+
+    return illnessesData.illnesses.map((illness: any) => ({
+      id: illness.ill_id?.toString() || "",
+      name: illness.illname || "None"
+    }))
+  }
+
   // medical history fetching
   useEffect(() => {
     const existingFormData = form.getValues("medicalHistory.prevIllnessData") || []
     if(existingFormData.length > 0 && prevIllnessData.length === 0){
-      setPrevIllnessData(existingFormData)
+      // Ensure ill_id is never null
+      setPrevIllnessData(
+        existingFormData.map((item: any) => ({
+          ...item,
+          ill_id: item.ill_id === null ? undefined : item.ill_id,
+        }))
+      )
       return
     }
-    
 
     if (medHistoryData && !isLoading && !error) {
 
@@ -419,6 +591,7 @@ export default function PrenatalFormFirstPg({
         const mappedData = historyList.map((history: any) => ({
           prevIllness: history.illness_name || history.ill?.illname || "N/A",
           prevIllnessYr: history.year ? history.year : undefined,
+          ill_id: history.ill || null,
         }))
 
         // update only if the data has changed
@@ -432,31 +605,19 @@ export default function PrenatalFormFirstPg({
         setPrevIllnessData([])
       }
     }
-  }, [medHistoryData, isLoading, error, setValue, form, prevIllnessData])
+  }, [medHistoryData, isLoading, error, setValue, form])
 
-  const getMedicalHistoryTableData = () => {
-    if (isLoading) {
-      return []
-    }
-
-    if (error) {
-      console.error("Error fetching medical history:", error)
-      return []
-    }
-
-    const historyList = medHistoryData?.medical_history || medHistoryData || []
-
-    if (!historyList?.length) {
-      return []
-    }
-
-    const mappedData = historyList.map((history: any) => {
-      return {
-        prevIllness: history.illness_name || history.ill?.illname || "N/A",
-        prevIllnessYr: history.year ? history.year : "Not known",
-      }
-    })
-    return mappedData
+  const getPrevIllnessTableData = () => {
+    return prevIllnessData
+      .sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+        return dateB - dateA
+      })
+      .map(item => ({
+        prevIllness: item.prevIllness || "None",
+        prevIllnessYr: item.prevIllnessYr,
+      }))
   }
 
 
@@ -476,74 +637,43 @@ export default function PrenatalFormFirstPg({
           prevHospitalization: phHistory.prev_hospitalization || "None",
           prevHospitalizationYr: phHistory.prev_hospitalization_year ? phHistory.prev_hospitalization_year : undefined,
         }))
+      
+        if (JSON.stringify(mappedData) !== JSON.stringify(prevHospitalizationData) &&
+            JSON.stringify(mappedData) !== JSON.stringify(existingFormData)) {
 
-        setPrevHospitalizationData(mappedData)
-        setValue("medicalHistory.prevHospitalizationData", mappedData)
+          setPrevHospitalizationData(mappedData)
+          setValue("medicalHistory.prevHospitalizationData", mappedData)
+        }
       } else {
         setPrevHospitalizationData([])
       }
     }
-  }, [prevHospData, prevHospLoading, prevHospError, setValue, form, prevHospitalizationData])
+  }, [prevHospData, prevHospLoading, prevHospError, setValue, form])
 
-  const getPrevHospitalization = () => {
-    if (prevHospLoading) {
-      console.log("Loading previous hospitalization data...")
-      return []
-    }
-
-    if(prevHospError) {
-      console.error("Error fetching previous hospitalization data:", prevHospError)
-      return []
-    }
-
-
-    const prevHospList = prevHospData?.previous_hospitalization || prevHospData || []
-    if(!prevHospList?.length) {
-      return[]
-    }
-
-    const mappedData = prevHospList.map((phHosp: any) => {
-      return {
-        prevHospitalization: phHosp.prev_hospitalization || "None",
-        prevHospitalizationYr: phHosp.prev_hospitalization_year ? phHosp.prev_hospitalization_year : "Not known",
-      }
-    })
-    return mappedData
+  const getPrevHospitalizationTableData = () => {
+    return prevHospitalizationData.map(item => ({
+      prevHospitalization: item.prevHospitalization || "None",
+      prevHospitalizationYr: item.prevHospitalizationYr,
+    }))
   }
 
-  
-  // useEffect(() => {
-  //   const currPrevPregnancy = prevPregnancyData?.previous_pregnancy
-  //   console.log("Current Previous Pregnancy Data:", currPrevPregnancy)
+  // tt status data fetching
+  useEffect(() => {
+      const ttStatus = ttStatusData?.tt_status
+      if (ttStatus && !ttStatusLoading && ttStatus?.length > 0) {
+        const ttRecords = ttStatus?.map((tt: any) => ({
+          ttStatus: tt.tts_status,
+          ttDateGiven: tt.tts_date_given,
+          isTDAPAdministered: tt.tts_tdap === true ? true : false,
+          // vaccineType: tt.vaccine_type,
+        }))
+        setValue("prenatalVaccineInfo.ttRecordsHistory", ttRecords)
+      } else {
+        setValue("prenatalVaccineInfo.ttRecordsHistory", [])
+      }
+    }, [ttStatusData, form])
 
-  //   if(prevPregnancyData && !prevPregnancyLoading){
-  //     form.setValue("previousPregnancy.dateOfDelivery", currPrevPregnancy.date_of_delivery || "")
-  //     form.setValue("previousPregnancy.outcome", currPrevPregnancy.outcome || "")
-  //     form.setValue("previousPregnancy.typeOfDelivery", currPrevPregnancy.type_of_delivery || "")
-  //     form.setValue("previousPregnancy.babysWt", currPrevPregnancy.babys_wt || undefined)
-  //     form.setValue("previousPregnancy.gender", currPrevPregnancy.gender || "")
-  //     form.setValue("previousPregnancy.ballardScore", 
-  //       currPrevPregnancy.ballard_score !== null && currPrevPregnancy.ballard_score !== undefined 
-  //         ? Number(currPrevPregnancy.ballard_score) 
-  //         : undefined
-  //     )
-  //     form.setValue("previousPregnancy.apgarScore", 
-  //       currPrevPregnancy?.apgar_score !== null && currPrevPregnancy.apgar_score !== undefined
-  //         ? Number(currPrevPregnancy.apgar_score)
-  //         : undefined
-  //       )
-  //   } else {
-  //     form.setValue("previousPregnancy.dateOfDelivery", "")
-  //     form.setValue("previousPregnancy.outcome", "")
-  //     form.setValue("previousPregnancy.typeOfDelivery", "")
-  //     form.setValue("previousPregnancy.babysWt", 0)
-  //     form.setValue("previousPregnancy.gender", "")
-  //     form.setValue("previousPregnancy.ballardScore", undefined)
-  //     form.setValue("previousPregnancy.apgarScore", undefined)
-  //   }
-  // }, [prevPregnancyData, setValue])
-  
-
+  // illness column definition
   const illnessColumn: ColumnDef<previousIllness>[] = [
     {
       accessorKey: "prevIllness",
@@ -559,60 +689,60 @@ export default function PrenatalFormFirstPg({
       header: "Year",
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.prevIllnessYr}</div>
+          <div className="w-full truncate">{row.original.prevIllnessYr || "Not known"}</div>
         </div>
       ),
     },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => {
-        const isDialogOpen = openRowId === row.original.prevIllness // Check if this row's dialog is open
+    // {
+    //   accessorKey: "action",
+    //   header: "Action",
+    //   cell: ({ row }) => {
+    //     const isDialogOpen = openRowId === row.original.prevIllness // check if this row's dialog is open
 
-        return (
-          <div className="flex justify-center">
-            <DialogLayout
-              isOpen={isDialogOpen}
-              onOpenChange={(open) => setOpenRowId(open ? row.original.prevIllness : null)}
-              trigger={
-                <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                  <Trash className="w-4 h-4" />
-                </div>
-              }
-              className=""
-              title="Delete Record"
-              description={`Are you sure you want to delete "${row.original.prevIllness}" record?`}
-              mainContent={
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    onClick={() => setOpenRowId(null)} 
-                    variant={"outline"}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant={"destructive"}
-                    onClick={() => {
-                      const newData = prevIllnessData.filter(
-                        (item) =>
-                          item.prevIllness !== row.original.prevIllness ||
-                          item.prevIllnessYr !== row.original.prevIllnessYr,
-                      )
-                      setPrevIllnessData(newData) // Update data
-                      setValue("medicalHistory.prevIllnessData", newData)
-                      setValue("medicalHistory.prevIllness", "")
-                      setOpenRowId(null) // Close dialog
-                    }}
-                  >
-                    Confirm
-                  </Button>
-                </div>
-              }
-            />
-          </div>
-        )
-      },
-    },
+    //     return (
+    //       <div className="flex justify-center">
+    //         <DialogLayout
+    //           isOpen={isDialogOpen}
+    //           onOpenChange={(open) => setOpenRowId(open ? row.original.prevIllness : null)}
+    //           trigger={
+    //             <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+    //               <Trash className="w-4 h-4" />
+    //             </div>
+    //           }
+    //           className=""
+    //           title="Delete Record"
+    //           description={`Are you sure you want to delete "${row.original.prevIllness}" record?`}
+    //           mainContent={
+    //             <div className="flex gap-2 justify-end">
+    //               <Button
+    //                 onClick={() => setOpenRowId(null)} 
+    //                 variant={"outline"}
+    //               >
+    //                 Cancel
+    //               </Button>
+    //               <Button
+    //                 variant={"destructive"}
+    //                 onClick={() => {
+    //                   const newData = prevIllnessData.filter(
+    //                     (item) =>
+    //                       item.prevIllness !== row.original.prevIllness ||
+    //                       item.prevIllnessYr !== row.original.prevIllnessYr,
+    //                   )
+    //                   setPrevIllnessData(newData) // Update data
+    //                   setValue("medicalHistory.prevIllnessData", newData)
+    //                   setValue("medicalHistory.prevIllness", "")
+    //                   setOpenRowId(null) // Close dialog
+    //                 }}
+    //               >
+    //                 Confirm
+    //               </Button>
+    //             </div>
+    //           }
+    //         />
+    //       </div>
+    //     )
+    //   },
+    // },
   ]
 
   const hospitalizationColumn: ColumnDef<previousHospitalization>[] = [
@@ -630,71 +760,172 @@ export default function PrenatalFormFirstPg({
       header: "Year",
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.prevHospitalizationYr}</div>
+          <div className="w-full truncate">{row.original.prevHospitalizationYr || "Not known"}</div>
         </div>
       ),
     },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => {
-        const isDialogOpen = openRowId === row.original.prevHospitalization
+    // {
+    //   accessorKey: "action",
+    //   header: "Action",
+    //   cell: ({ row }) => {
+    //     const isDialogOpen = openRowId === row.original.prevHospitalization
 
-        return (
-          <div className="flex justify-center gap-2">
-            <DialogLayout
-              isOpen={isDialogOpen}
-              onOpenChange={(open) => setOpenRowId(open ? row.original.prevHospitalization : null)}
-              trigger={
-                <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                  {" "}
-                  <Trash size={16} />
-                </div>
-              }
-              className=""
-              title="Delete Record"
-              description={`Are you sure you want to delete "${row.original.prevHospitalization}" record?`}
-              mainContent={
-                <div className="flex gap-2 justify-end">
-                  <Button variant={"outline"}>Cancel</Button>
-                  <Button
-                    variant={"destructive"}
-                    onClick={() => {
-                      const newData = prevHospitalizationData.filter(
-                        (item) =>
-                          item.prevHospitalization !== row.original.prevHospitalization ||
-                          item.prevHospitalizationYr !== row.original.prevHospitalizationYr,
-                      )
-                      setPrevHospitalizationData(newData)
-                      setValue("medicalHistory.prevHospitalizationData", newData)
-                      setOpenRowId(null)
-                    }}
-                  >
-                    Confirm
-                  </Button>
-                </div>
-              }
-            />
-          </div>
-        )
-      },
-    },
+    //     return (
+    //       <div className="flex justify-center gap-2">
+    //         <DialogLayout
+    //           isOpen={isDialogOpen}
+    //           onOpenChange={(open) => setOpenRowId(open ? row.original.prevHospitalization : null)}
+    //           trigger={
+    //             <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+    //               {" "}
+    //               <Trash size={16} />
+    //             </div>
+    //           }
+    //           className=""
+    //           title="Delete Record"
+    //           description={`Are you sure you want to delete "${row.original.prevHospitalization}" record?`}
+    //           mainContent={
+    //             <div className="flex gap-2 justify-end">
+    //               <Button variant={"outline"}>Cancel</Button>
+    //               <Button
+    //                 variant={"destructive"}
+    //                 onClick={() => {
+    //                   const newData = prevHospitalizationData.filter(
+    //                     (item) =>
+    //                       item.prevHospitalization !== row.original.prevHospitalization ||
+    //                       item.prevHospitalizationYr !== row.original.prevHospitalizationYr,
+    //                   )
+    //                   setPrevHospitalizationData(newData)
+    //                   setValue("medicalHistory.prevHospitalizationData", newData)
+    //                   setOpenRowId(null)
+    //                 }}
+    //               >
+    //                 Confirm
+    //               </Button>
+    //             </div>
+    //           }
+    //         />
+    //       </div>
+    //     )
+    //   },
+    // },
   ]
+
+  // const handleVaccineChange = (value: string) => {
+  //   form.setValue("prenatalVaccineInfo.vaccineType", value);
+  //   setNextVisitDate(null);
+  //   setNextVisitDescription(null);
+  //   form.setValue("prenatalVaccineInfo.followv_date", "");
+  //   form.setValue("prenatalVaccineInfo.vacrec_totaldose", "");
+  //   setIsVaccineCompleted(false);
+  
+  //   if (value) {
+  //     const [vacStck_id, vac_id, vac_name] = value.split(",");
+  //     const selectedVaccine = vaccinesData?.default?.find((v: any) => v.vacStck_id === parseInt(vacStck_id, 10));
+  
+  //     if (selectedVaccine) {
+  //       const { vaccinelist } = selectedVaccine;
+  //       setSelectedVaccineType(vaccinelist.vac_type_choices);
+  
+  //       const currentVaccineHistory = patientVaccinationRecords?.filter((record) => record.vaccine_stock?.vaccinelist?.vac_id === Number(vac_id)) || [];
+  //       setVaccineHistory(currentVaccineHistory);
+  
+  //       let doseNumber = 1;
+  
+  //       // Always get the latest dose and increment by 1 for non-routine vaccines
+  //       if (vaccinelist.vac_type_choices !== "routine") {
+  //         const latestDose = currentVaccineHistory.length > 0 ? Math.max(...currentVaccineHistory.map((r) => Number(r.vachist_doseNo) || 0)) : 0;
+  //         doseNumber = latestDose + 1;
+  //       }
+  
+  //       form.setValue("vachist_doseNo", doseNumber);
+  
+  //       // Only set total dose for non-conditional vaccines
+  //       if (vaccinelist.vac_type_choices !== "conditional" && vaccinelist.no_of_doses) {
+  //         form.setValue("vacrec_totaldose", vaccinelist.no_of_doses.toString());
+  //       }
+  
+  //       // Check if vaccine is already completed (only for non-conditional vaccines)
+  //       const isCompleted =
+  //         vaccinelist.vac_type_choices !== "conditional" &&
+  //         currentVaccineHistory.some((record:any) => {
+  //           const recordTotalDose = record.vacrec_details?.vacrec_totaldose ? Number(record.vacrec_details.vacrec_totaldose) : 0;
+  //           const currentDose = Number(doseNumber);
+  //           return currentDose > recordTotalDose && recordTotalDose > 0;
+  //         });
+  
+  //       setIsVaccineCompleted(isCompleted);
+  
+  //       if (isCompleted) {
+  //         showErrorToast(`${vac_name} vaccine is already completed (Dose ${doseNumber} of ${vaccinelist.no_of_doses})`);
+  //         return;
+  //       }
+  
+  //       // FIXED LOGIC: Handle routine vaccines separately from other vaccine types
+  //       if (vaccinelist.vac_type_choices === "routine") {
+  //         // For routine vaccines, always calculate next visit if routine_frequency exists
+  //         if (vaccinelist.routine_frequency) {
+  //           const { interval, time_unit } = vaccinelist.routine_frequency;
+  //           const nextDate = calculateNextVisitDate(interval, time_unit, new Date().toISOString());
+  //           setNextVisitDate(nextDate.toISOString().split("T")[0]);
+  //           setNextVisitDescription(`Routine vaccination for ${vaccinelist.vac_name}`);
+  //           form.setValue("followv_date", nextDate.toISOString().split("T")[0]);
+  //         }
+  //       } else if (vaccinelist.vac_type_choices === "primary" && doseNumber < vaccinelist.no_of_doses) {
+  //         // For primary vaccines, only set next visit if there are more doses needed
+  //         if (vaccinelist.no_of_doses >= 2) {
+  //           const nextDoseInterval = vaccinelist.intervals.find((interval: any) => interval.dose_number === doseNumber + 1);
+  //           if (nextDoseInterval) {
+  //             const nextDate = calculateNextVisitDate(nextDoseInterval.interval, nextDoseInterval.time_unit, new Date().toISOString());
+  //             setNextVisitDate(nextDate.toISOString().split("T")[0]);
+  //             setNextVisitDescription(`Vaccination for ${vaccinelist.vac_name}`);
+  //             form.setValue("followv_date", nextDate.toISOString().split("T")[0]);
+  //           }
+  //         }
+  //       }
+  //       // For conditional vaccines or when all doses are complete, no follow-up date is set
+  //     }
+  //   }
+  // };
 
   // functionality to handle adding of previous illness
   const addPrevIllness = () => {
     const illness = getValues("medicalHistory.prevIllness")
-    const illnessYr = getValues("medicalHistory.prevIllnessYr")
+    const year = getValues("medicalHistory.prevIllnessYr")
 
-    console.log("Previous Illness: ", illness, "Year: ", illnessYr)
-
-    if (illness) {
-      const newData = [...prevIllnessData, { prevIllness: illness, prevIllnessYr: illnessYr }]
-      setPrevIllnessData(newData)
-      setValue("medicalHistory.prevIllnessData", newData)
-      setValue("medicalHistory.prevIllness", "")
-      setValue("medicalHistory.prevIllnessYr", undefined)
+    if (!illness.trim()) {
+      showErrorToast("Please enter an illness.")
+      return
     }
+
+    // Check for duplicates
+    const isDuplicateIllness = prevIllnessData.some(existingIllness => 
+      existingIllness.prevIllness.toLowerCase().trim() === illness.toLowerCase().trim() && 
+      existingIllness.prevIllnessYr === year
+    )
+
+    if (isDuplicateIllness) {
+      showErrorToast("This illness record already exists.")
+      return
+    }
+
+    const selectedillnessData = illnessesData?.illnesses?.find((ill:any) => ill.illname === illness)
+
+    const newIllness: previousIllness = {
+      prevIllness: illness,
+      prevIllnessYr: year || undefined,
+      ill_id: selectedillnessData?.ill_id || null
+    }
+
+    const updatedData = [...prevIllnessData, newIllness]
+    setPrevIllnessData(updatedData)
+
+    setValue("medicalHistory.prevIllnessData", updatedData)
+    
+    // clear form fields
+    setValue("medicalHistory.prevIllness", "")
+    setValue("medicalHistory.prevIllnessYr", undefined)
+    setSelectedIllnessId("")
   }
 
   // functionality to handle adding of previous hopsitalization to table
@@ -702,16 +933,30 @@ export default function PrenatalFormFirstPg({
     const hospitalization = getValues("medicalHistory.prevHospitalization")
     const hospitalizationYr = getValues("medicalHistory.prevHospitalizationYr")
 
-    if (hospitalization) {
-      const newData = [
-        ...prevHospitalizationData,
-        { prevHospitalization: hospitalization, prevHospitalizationYr: hospitalizationYr },
-      ]
-      setPrevHospitalizationData(newData)
-      setValue("medicalHistory.prevHospitalizationData", newData)
-      setValue("medicalHistory.prevHospitalization", "")
-      setValue("medicalHistory.prevHospitalizationYr", undefined)
+    if (!hospitalization?.trim()) {
+      showErrorToast("Please enter a hospitalization record.")
+      return
     }
+
+    // Check for duplicates
+    const isDuplicateHospitalization = prevHospitalizationData.some(existingHosp => 
+      existingHosp.prevHospitalization.toLowerCase().trim() === hospitalization.toLowerCase().trim() && 
+      existingHosp.prevHospitalizationYr === hospitalizationYr
+    )
+
+    if (isDuplicateHospitalization) {
+      showErrorToast("This hospitalization record already exists.")
+      return
+    }
+
+    const newData = [
+      ...prevHospitalizationData,
+      { prevHospitalization: hospitalization, prevHospitalizationYr: hospitalizationYr },
+    ]
+    setPrevHospitalizationData(newData)
+    setValue("medicalHistory.prevHospitalizationData", newData)
+    setValue("medicalHistory.prevHospitalization", "")
+    setValue("medicalHistory.prevHospitalizationYr", undefined)
   }
 
 
@@ -755,10 +1000,15 @@ export default function PrenatalFormFirstPg({
       <LayoutWithBack
         title="Prenatal Record"
         description="Fill out the prenatal record with the mother's personal information."
-      >
-        <div>
-          <PatientSearch value={selectedPatIdDisplay} onChange={setSelectedPatientId} onPatientSelect={handlePatientSelection} />
-        </div>
+      > 
+        {!isFromIndividualRecord && (
+          <div>
+            <PatientSearch 
+              value={selectedPatIdDisplay} 
+              onChange={setSelectedPatientId} 
+              onPatientSelect={handlePatientSelection} />
+          </div>
+        )}
 
         <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto mt-2">
           <Label className="text-black text-opacity-50 italic mb-10">Page 1 of 4</Label>
@@ -908,7 +1158,22 @@ export default function PrenatalFormFirstPg({
                   placeholder="BMI Category"
                   readOnly
                 />
+                
               </div>
+
+              <div className="flex mt-5">
+                {bodyMeasurementData?.body_measurement.weight !== null && 
+                (selectedPatientId) && !bmLoading && BMweight !== undefined && BMheight !== undefined
+                ? (
+                  <span className="text-sm italic text-yellow-600">
+                    Note: Last measurements were recorded on {phDate}
+                  </span>
+                ) : (
+                  <span className="text-sm italic text-gray-500">
+                    Note: No previous measurements found.
+                  </span>
+                )}
+              </div>  
 
               {/* obstetric history */}
               <div className="border rounded-lg p-4 shadow-md mt-10">
@@ -944,20 +1209,83 @@ export default function PrenatalFormFirstPg({
                       type="number"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormInput
-                      control={control}
-                      name="obstetricHistory.historyOfLBabies"
-                      label="History of Large Babies"
-                      placeholder="Enter history of large babies"
-                      type="number"
-                    />
-                    <FormInput
-                      control={control}
-                      name="obstetricHistory.historyOfDiabetes"
-                      label="History of Diabetes"
-                      placeholder="Enter history of diabetes"
-                    />
+                  <div className="grid grid-cols-2 gap-3 ">
+                    <div className="grid grid-rows-2 gap-3">
+                      <p className="text-sm font-semibold text-black/70 mt-5">History of Large Babies</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField
+                          control={form.control}
+                          name="obstetricHistory.historyOfLBabiesStr"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <RadioGroup
+                                  onValueChange={(value) => {
+                                    field.onChange(value === "yes") 
+                                  }}
+                                  value={field.value ? "yes" : "no"} 
+                                  className="flex flex-row justify-center rounded-md border p-[5px]"
+                                >
+                                  <FormItem className="mr-4">
+                                    <FormControl>
+                                      <RadioGroupItem value="yes" />
+                                    </FormControl>
+                                    <FormLabel className="ml-2">YES</FormLabel>
+                                  </FormItem>
+                                  <FormItem>
+                                    <FormControl>
+                                      <RadioGroupItem value="no" />
+                                    </FormControl>
+                                    <FormLabel className="ml-2">NO</FormLabel>
+                                  </FormItem>
+                                </RadioGroup>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormInput
+                          control={control}
+                          name="obstetricHistory.historyOfLBabies"
+                          label=""
+                          placeholder="Enter count of large babies"
+                          type="number"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-5">
+                      <FormField
+                          control={form.control}
+                          name="obstetricHistory.historyOfDiabetes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-black/70">Diabetes</FormLabel>
+                              <FormControl>
+                                <RadioGroup
+                                  onValueChange={(value) => {
+                                    field.onChange(value === "yes") 
+                                  }}
+                                  value={field.value ? "yes" : "no"} 
+                                  className="flex flex-row justify-center rounded-md border p-[5px]"
+                                >
+                                  <FormItem className="mr-4">
+                                    <FormControl>
+                                      <RadioGroupItem value="yes" />
+                                    </FormControl>
+                                    <FormLabel className="ml-2">YES</FormLabel>
+                                  </FormItem>
+                                  <FormItem>
+                                    <FormControl>
+                                      <RadioGroupItem value="no" />
+                                    </FormControl>
+                                    <FormLabel className="ml-2">NO</FormLabel>
+                                  </FormItem>
+                                </RadioGroup>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -966,7 +1294,21 @@ export default function PrenatalFormFirstPg({
               <div className="border rounded-lg p-4 shadow-md mt-10">
                 <h3 className="text-md font-semibold mt-2">MEDICAL HISTORY</h3>
                 <div className="p-4 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols- gap-6">
+                    <div className="space-y-4 border rounded-md p-4">
+                      <div className="flex flex-row items-center gap-2">
+                        <Label>Previous Pregnancy Complication:</Label>
+                      </div>
+                      <div>
+                        <FormTextArea
+                          control={control}
+                          name="medicalHistory.previousComplications"
+                          label=""
+                          placeholder="Enter previous complications"
+                        />
+                      </div>
+                    </div>
+
                     <div className="space-y-4 border rounded-md p-4 items-center">
                       <div className="flex flex-row items-center gap-2">
                         <MdOutlineSick size={25} />
@@ -974,11 +1316,24 @@ export default function PrenatalFormFirstPg({
                       </div>
                       <div className="flex gap-4 items-center">
                         <div className="flex-1">
-                          <FormInput
-                            control={control}
-                            name="medicalHistory.prevIllness"
-                            label=""
-                            placeholder="Enter Previous Illness"
+                          <IllnessCombobox
+                            options={getIllnessOptions()}
+                            value={selectedIllnessId}
+                            onChange={(value) => {
+                              setSelectedIllnessId(value)
+
+                              const selectedIllnessData = illnessesData?.illnesses?.find((illness:any) => (
+                                illness.ill_id?.toString() === value
+                              ))
+
+                              const illnessName = selectedIllnessData?.illname || value || ""
+                              setValue("medicalHistory.prevIllness", illnessName)
+                            }}
+                            placeholder="Select or add previous illness"
+                            emptyMessage="No illnesses found"
+                            allowAddNew={true}
+                            onAddNew={handleAddNewIllness}
+                            triggerClassName="w-full"
                           />
                         </div>
                         <div className="flex-1">
@@ -994,12 +1349,12 @@ export default function PrenatalFormFirstPg({
                           Add
                         </Button>
                       </div>
-                      <div className="flex bg-white w-full overflow-x-auto mt-4 h-[20rem] border rounded-lg overflow-y-auto">
-                        <DataTable columns={illnessColumn} data={getMedicalHistoryTableData()} />
+                      <div className="flex bg-white w-full overflow-x-auto mt-4 h-[15rem] border rounded-lg overflow-y-auto">
+                        <DataTable columns={illnessColumn} data={getPrevIllnessTableData()} />
                       </div>
                     </div>
 
-                    <div className="space-y-4 border rounded-md p-4 items">
+                    <div className="space-y-4 border rounded-md p-4">
                       <div className="flex flex-row items-center gap-2">
                         <FaRegHospital size={25} />
                         <Label>Previous Hospitalization</Label>
@@ -1026,8 +1381,8 @@ export default function PrenatalFormFirstPg({
                           Add
                         </Button>
                       </div>
-                      <div className="flex bg-white w-full overflow-x-auto mt-4 h-[20rem] border rounded-lg overflow-y-auto">
-                        <DataTable columns={hospitalizationColumn} data={getPrevHospitalization()} />
+                      <div className="flex bg-white w-full overflow-x-auto mt-4 h-[15rem] border rounded-lg overflow-y-auto">
+                        <DataTable columns={hospitalizationColumn} data={getPrevHospitalizationTableData()} />
                       </div>
                     </div>
                   </div>

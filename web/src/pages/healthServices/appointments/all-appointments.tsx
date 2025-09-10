@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { ArrowUpDown, Search, FileInput, AlertCircle } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuIte
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { LinearLoader } from "@/components/ui/linear-loader"
+import { useLoading } from "@/context/LoadingContext"
 
 import ScheduleTab from "./appointments-tab"
 
@@ -45,6 +45,8 @@ export default function ScheduleRecords() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [timeFrame, setTimeFrame] = useState("today");
+
+  const { showLoading, hideLoading } = useLoading();
 
   // fetch data 
   const { data: paginatedData, isLoading, error, refetch } = useAllFollowUpVisits({
@@ -125,39 +127,6 @@ export default function ScheduleRecords() {
     }).filter(Boolean) // Remove null values
   }, [paginatedData])
 
-
-  // const filteredDataByTimeFrame = (data: any) => {
-  //   const today = new Date();
-  //   const startOfWeek = new Date(today);
-  //   const endOfWeek = new Date(today);
-  //   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  //   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-  //   switch (timeFrame) {
-  //     case 'today':
-  //       return data.filter((visit: any) => new Date(visit.scheduledDate).toDateString() === today.toDateString());
-
-  //     case 'thisWeek':
-  //       startOfWeek.setDate(today.getDate() - today.getDay())
-  //       endOfWeek.setDate(startOfWeek.getDate() + 6);
-  //       return data.filter((visit: any) => {
-  //         const visitDate = new Date(visit.scheduledDate);
-  //         return visitDate >= startOfWeek && visitDate <= endOfWeek;
-  //       });
-
-  //     case 'thisMonth':
-  //       return data.filter((visit:any) => {
-  //         const visitDate = new Date(visit.scheduledDate);
-  //         return visitDate >= startOfMonth && visitDate <= endOfMonth;
-  //       })
-      
-  //     default:
-  //       return data;
-  //   }
-  // };
-
-  // const filteredTimeData = useMemo(() => filteredDataByTimeFrame(transformedData), [transformedData, timeFrame]);
-
   const totalPages = Math.ceil((paginatedData?.count || 0) / pageSize)
 
   const handlePageChange = (newPage: number) => {
@@ -171,20 +140,20 @@ export default function ScheduleRecords() {
 
   const handleFilterChange = (filter: string) => {
     setSelectedFilter(filter)
-    setPage(1) // Reset to first page on filter change
+    setPage(1) 
   }
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
-    setPage(1) // Reset to first page
+    setPage(1) 
   }
 
   const handleTimeFrameChange = (timeFrame: string) => {
     setTimeFrame(timeFrame)
-    setPage(1) // Reset to first page
+    setPage(1)
   }
 
-  // Function to determine if appointment is missed
+  // determine if missed 
   const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -338,45 +307,6 @@ export default function ScheduleRecords() {
     { id: "cancelled", name: "Cancelled" },
   ]
 
-  // Filter and search logic
-  // const filteredData = useMemo(() => {
-  //   let filtered = filteredTimeData
-
-  //   // Apply status filter
-  //   if (selectedFilter !== "All") {
-  //     filtered = filtered.filter((item:any) => {
-  //       const actualStatus = getAppointmentStatus(item.scheduledDate, item.status)
-  //       return actualStatus === selectedFilter
-  //     })
-  //   }
-
-  //   // Apply search filter
-  //   if (searchTerm) {
-  //     const searchLower = searchTerm.toLowerCase()
-  //     filtered = filtered.filter((item:any) => {
-  //       const fullName = `${item.patient.firstName} ${item.patient.middleName} ${item.patient.lastName}`.toLowerCase()
-  //       const purpose = item.purpose.toLowerCase()
-  //       const sitio = item.sitio.toLowerCase()
-  //       const type = item.type.toLowerCase()
-
-  //       return (
-  //         fullName.includes(searchLower) ||
-  //         purpose.includes(searchLower) ||
-  //         sitio.includes(searchLower) ||
-  //         type.includes(searchLower) ||
-  //         item.id.toString().includes(searchLower) ||
-  //         item.patient.patientId.toLowerCase().includes(searchLower)
-  //       )
-  //     })
-  //   }
-
-  //   return filtered
-  // }, [filteredTimeData, selectedFilter, searchTerm])
-
-  // Sort data by date (most recent first)
-  // const sortedData = [...filteredData].sort((a, b) => {
-  //   return new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime()
-  // })
 
   // Export to CSV
   const exportToCSV = () => {
@@ -407,16 +337,13 @@ export default function ScheduleRecords() {
   }
 
   // Loading state
-  if (isLoading) {
-    return (
-      <LayoutWithBack title="Schedule Records" description="Manage and view patient appointment schedules">
-        <div className="flex items-center justify-center h-64">
-          <LinearLoader/>
-          <span>Loading follow-up visits...</span>
-        </div>
-      </LayoutWithBack>
-    )
-  }
+  useEffect(() => {
+    if (isLoading) {
+      showLoading()
+    } else {
+      hideLoading()
+    }
+  }, [isLoading])
 
   // Error state
   if (error) {
@@ -435,10 +362,18 @@ export default function ScheduleRecords() {
   }
 
   return (
-    <LayoutWithBack title="Scheduled Appointments" description="View patient appointment schedules">
+    <LayoutWithBack title="Scheduled Follow-up Visits" description="View patient appointment schedules">
       <div className="w-full h-full bg-white/40 p-2 flex flex-col">
-        <div className="mb-4 w-full">
-          <ScheduleTab onTimeFrameChange={handleTimeFrameChange} />
+        <div className="flex justify-between mb-4 w-full">
+          <div>
+            <ScheduleTab onTimeFrameChange={handleTimeFrameChange} />
+          </div>
+
+          <div className="flex justify-center items-center">
+            <span className="text-sm font-semibold text-center text-white bg-blue-500 rounded-lg py-2 px-3 hover:bg-blue-600 shadow-md transition-colors duration-200 ease-in-out cursor-pointer">
+              Defaulters Tracking
+            </span>
+          </div>
         </div> 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           
@@ -462,10 +397,6 @@ export default function ScheduleRecords() {
                 onChange={handleFilterChange}
               />
             </div>
-          </div>
-
-          <div className="w-full sm:w-auto">
-            {/* <Button variant="default">New Schedule</Button> */}
           </div>
         </div>
 

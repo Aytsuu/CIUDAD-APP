@@ -11,7 +11,7 @@ import {
   User,
   UserRoundCheck,
 } from "lucide-react";
-import { AdministrationRecord } from "./administrationTypes";
+import { AdministrationRecord } from "./AdministrationTypes";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";
@@ -31,18 +31,11 @@ import { LoadButton } from "@/components/ui/button/load-button";
 import { usePositions } from "./queries/administrationFetchQueries";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
-import { useLoading } from "@/context/LoadingContext";
-import { getPersonalInfo } from "../profiling/restful-api/profilingGetAPI";
 import { formatPositions } from "./AdministrationFormats";
+import { useAuth } from "@/context/AuthContext";
+import { Spinner } from "@/components/ui/spinner";
 
 export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
-  {
-    accessorKey: "icon",
-    header: "",
-    cell: () => (
-      <UserRoundCheck size={20} className="text-green-600 w-full text-center" />
-    ),
-  },
   {
     accessorKey: "staff_id",
     header: ({ column }) => (
@@ -89,12 +82,15 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         Middle Name
         <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
       </div>
+    )
+  },
+  {
+    accessorKey: "sex",
+    header: "Sex",
+    cell: ({row}) => (
+      row.original.sex[0]?.toUpperCase()
     ),
-    cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("mname") ? row.getValue("mname") : "-"}
-      </div>
-    ),
+    size: 60
   },
   {
     accessorKey: "contact",
@@ -105,21 +101,26 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
     header: "Position",
   },
   {
-    accessorKey: "staff_assign_date",
-    header: "Date Assigned",
-  },
-  {
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => {
       const navigate = useNavigate();
-      const { showLoading, hideLoading } = useLoading();
+      const { user } = useAuth()
       const [isEditModalOpen, setIsEditModalOpen] =
         React.useState<boolean>(false);
       const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-      const { mutateAsync: updateStaff } = useUpdateStaff();
-      const { mutateAsync: deleteStaff } = useDeleteStaff();
-      const { data: positions, isLoading: isLoadingPositions } = usePositions();
+      
+      // Main database hooks (APIs handle dual database operations)
+      const { mutateAsync: updateStaff, isPending: isUpdatingMain } = useUpdateStaff();
+      const { mutateAsync: deleteStaff, isPending: isDeletingMain } = useDeleteStaff();
+      
+      const { data: positions, isLoading: isLoadingPositions } = usePositions(
+        user?.staff?.staff_type
+      );
+
+      // Combined loading states
+      const isUpdatingAny = isUpdatingMain;
+      const isDeletingAny = isDeletingMain;
 
       const defaultValues = generateDefaultValues(positionAssignmentSchema);
       const form = useForm<z.infer<typeof positionAssignmentSchema>>({
@@ -163,24 +164,17 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
       };
 
       const handleView = async () => {
-        showLoading();
-        try {
-          const personalInfo = await getPersonalInfo(row.original.staff_id);
-          navigate("/resident/view", {
-            state: {
-              params: {
-                type: 'viewing',
-                data: {
-                  personalInfo: personalInfo,
-                  residentId: row.original.staff_id,
-                  familyId: row.original.fam
-                },
-              }
-            },
-          });
-        } finally {
-          hideLoading();
-        }
+        navigate("/profiling/resident/view/personal", {
+          state: {
+            params: {
+              type: 'viewing',
+              data: {
+                residentId: row.original.staff_id,
+                familyId: row.original.fam
+              },
+            }
+          },
+        });
       }
 
       const handleEdit = () => {
@@ -215,10 +209,13 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
             return;
           }
 
+          const updateData = {
+            pos: values.assignPosition,
+          };
+
+          // Update staff position (API handles dual database update)
           await updateStaff({
-            data: {
-              pos: values.assignPosition,
-            },
+            data: updateData,
             staffId: row.original.staff_id,
           });
 
@@ -242,19 +239,27 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         }
       };
 
-      const handleDelete = () => {
-        deleteStaff(row.original.staff_id, {
-          onSuccess: () => {
-            toast("Staff has been removed", {
-              icon: (
-                <CircleCheck
-                  size={24}
-                  className="fill-green-500 stroke-white"
-                />
-              ),
-            });
-          },
-        });
+      const handleDelete = async () => {
+        try {
+          // Delete staff (API handles dual database deletion)
+          await deleteStaff(row.original.staff_id);
+
+          toast("Staff has been removed successfully", {
+            icon: (
+              <CircleCheck
+                size={24}
+                className="fill-green-500 stroke-white"
+              />
+            ),
+          });
+        } catch (error) {
+          console.error("Failed to delete staff:", error);
+          toast("Failed to remove staff. Please try again.", {
+            icon: (
+              <AlertCircle size={24} className="fill-red-500 stroke-white" />
+            ),
+          });
+        }
       };
 
       const getCurrentPositionName = () => {
@@ -274,7 +279,11 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
           <DropdownLayout
             trigger={
               <Button variant={"outline"} className="border">
-                <Ellipsis />
+                {isDeletingAny ? (
+                  <Spinner size="md" />
+                ) : (
+                  <Ellipsis />
+                )}
               </Button>
             }
             options={[
@@ -289,14 +298,14 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                 name: "Change Role",
                 icon: <Pen className="w-4 h-4" />,
                 variant: "default",
-                disabled: row.original.position.toLowerCase() === "admin"
+                disabled: row.original.position.toLowerCase() === "admin" || isUpdatingAny || isDeletingAny
               },
               {
                 id: "delete",
                 name: "Remove Staff",
                 icon: <Trash className="w-4 h-4" />,
                 variant: "delete",
-                disabled: row.original.position.toLowerCase() === "admin"
+                disabled: row.original.position.toLowerCase() === "admin" || isUpdatingAny || isDeletingAny
               }
             ]}
             onSelect={handleAction}
@@ -345,13 +354,20 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                       control={form.control}
                       name="assignPosition"
                       label="Select New Position"
-                      options={formatPositions(positions)}
+                      options={formatPositions(positions?.filter((pos: any) => !pos.is_maxed || pos.pos_id == form.watch('assignPosition')))}
                     />
 
                     {isLoadingPositions && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Loader2 size={16} className="animate-spin" />
                         Loading positions...
+                      </div>
+                    )}
+
+                    {isUpdatingAny && (
+                      <div className="flex items-center gap-2 text-sm text-blue-600">
+                        <Loader2 size={16} className="animate-spin" />
+                        Updating staff position in both databases...
                       </div>
                     )}
                   </div>
@@ -361,12 +377,12 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                       type="button"
                       variant="outline"
                       onClick={handleCloseModal}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isUpdatingAny}
                     >
                       Cancel
                     </Button>
 
-                    {!isSubmitting ? (
+                    {!isSubmitting && !isUpdatingAny ? (
                       <Button
                         type="submit"
                         disabled={
@@ -378,7 +394,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                       </Button>
                     ) : (
                       <LoadButton>
-                        Updating...
+                        {isUpdatingAny ? "Updating..." : "Processing..."}
                       </LoadButton>
                     )}
                   </div>
@@ -391,5 +407,6 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         </div>
       );
     },
+    
   },
 ];

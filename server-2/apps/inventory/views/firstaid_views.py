@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import re
 from django.db.models.functions import TruncMonth
+from calendar import monthrange
 
 
  
@@ -778,10 +779,13 @@ class FirstAidSummaryMonthsAPIView(APIView):
                 last_day = monthrange(start_date.year, start_date.month)[1]
                 end_date = start_date.replace(day=last_day)
 
-                # Filter transactions for this month
+                # Filter transactions for this month - EXCLUDE expired items
                 month_transactions = queryset.filter(
                     created_at__date__gte=start_date,
                     created_at__date__lte=end_date
+                ).exclude(
+                    # Exclude items that expired BEFORE this month
+                    finv_id__inv_id__expiry_date__lt=start_date
                 )
 
                 # Count distinct firstaid+inventory combos
@@ -817,8 +821,6 @@ class FirstAidSummaryMonthsAPIView(APIView):
                 'error': str(e),
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-  
-  
 class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
     serializer_class = FirstAidInventorySerializer
     pagination_class = StandardResultsPagination
@@ -835,14 +837,42 @@ class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
 
         inventory_summary = []
 
-        # Get all unique first aid inventory items that have transactions (using correct related_name)
-        fa_inv_items = FirstAidInventory.objects.filter(
-            firstaidtransactions__created_at__date__lte=end_date
-        ).select_related(
-            'fa_id', 'inv_id'
+        # Get unique first aid + expiry_date + inv_id combos to avoid duplicates
+        fa_expiry_inv_pairs = FirstAidTransactions.objects.filter(
+            created_at__date__lte=end_date
+        ).values_list(
+            "finv_id__fa_id",
+            "finv_id__inv_id__expiry_date",
+            "finv_id__inv_id"
         ).distinct()
 
-        for finv in fa_inv_items:
+        # Track unique combinations to avoid duplicates
+        seen_combinations = set()
+
+        for fa_id, expiry_date, inv_id in fa_expiry_inv_pairs:
+            # Skip if expiry date is before the current month (already expired)
+            if expiry_date and expiry_date < start_date:
+                continue
+                
+            # Create a unique key for this combination
+            combo_key = (fa_id, expiry_date, inv_id)
+            
+            # Skip if we've already processed this combination
+            if combo_key in seen_combinations:
+                continue
+                
+            seen_combinations.add(combo_key)
+
+            # Get the specific first aid inventory item
+            try:
+                finv = FirstAidInventory.objects.get(
+                    fa_id=fa_id,
+                    inv_id__expiry_date=expiry_date,
+                    inv_id=inv_id
+                )
+            except FirstAidInventory.DoesNotExist:
+                continue
+
             transactions = FirstAidTransactions.objects.filter(
                 finv_id=finv.finv_id
             ).order_by("created_at")
@@ -866,13 +896,12 @@ class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
                 opening_qty *= pcs_per_box
 
             # Received during the month
-            received_qty = sum(
-                self._parse_qty(t) for t in transactions.filter(
-                    created_at__date__gte=start_date,
-                    created_at__date__lte=end_date,
-                    fat_action__icontains="added"
-                )
+            monthly_transactions = transactions.filter(
+                created_at__date__gte=start_date,
+                created_at__date__lte=end_date,
+                fat_action__icontains="added"
             )
+            received_qty = sum(self._parse_qty(t) for t in monthly_transactions)
             if unit and unit.lower() == "boxes":
                 received_qty *= pcs_per_box
 
@@ -889,6 +918,19 @@ class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
             display_opening = opening_qty + received_qty
             closing_qty = display_opening - dispensed_qty
 
+            # Check if expired this month
+            expired_this_month = (finv.inv_id.expiry_date and 
+                                start_date <= finv.inv_id.expiry_date <= end_date)
+            
+            # REMOVED: Don't set closing to 0 for expired items
+            # if expired_this_month:
+            #     closing_qty = 0
+            
+            # Skip if there's no stock and it's not expiring this month
+            # Also include items that expired this month even if closing_qty <= 0
+            if closing_qty <= 0 and (not expiry_date or expiry_date > end_date) and not expired_this_month:
+                continue
+
             inventory_summary.append({
                 'finv_id': finv.finv_id,
                 'inv_id': finv.inv_id_id,
@@ -899,6 +941,7 @@ class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
                 'closing': closing_qty,
                 'unit': "pcs",
                 'expiry': finv.inv_id.expiry_date.strftime('%Y-%m-%d') if finv.inv_id.expiry_date else None,
+                'expired_this_month': expired_this_month,
             })
 
         return Response({
@@ -914,3 +957,285 @@ class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
         """Extract numeric value from fat_qty."""
         match = re.search(r'\d+', str(transaction.fat_qty))
         return int(match.group()) if match else 0
+    
+    
+# First Aid Expired/Out-of-Stock Summary API View
+class FirstAidExpiredOutOfStockSummaryAPIView(APIView):
+    pagination_class = StandardResultsPagination
+
+    def _parse_qty(self, transaction, multiply_boxes=False):
+        """Extract numeric value from fat_qty and convert boxes to pieces if needed."""
+        match = re.search(r'\d+', str(transaction.fat_qty))
+        qty_num = int(match.group()) if match else 0
+        
+        if (multiply_boxes and 
+            transaction.finv_id.finv_qty_unit and 
+            transaction.finv_id.finv_qty_unit.lower() == "boxes"):
+            pcs_per_box = transaction.finv_id.finv_pcs or 1
+            qty_num *= pcs_per_box
+            
+        return qty_num
+
+    def get(self, request):
+        try:
+            # Get distinct months from first aid transactions
+            distinct_months = FirstAidTransactions.objects.annotate(
+                month=TruncMonth('created_at')
+            ).values('month').distinct().order_by('-month')
+
+            formatted_months = []
+
+            for item in distinct_months:
+                month_date = item['month']
+                if not month_date:
+                    continue
+                    
+                month_str = month_date.strftime('%Y-%m')
+                month_name = month_date.strftime('%B %Y')
+
+                # Get the date range for this month
+                start_date = month_date.date()
+                last_day = monthrange(start_date.year, start_date.month)[1]
+                end_date = start_date.replace(day=last_day)
+                near_expiry_threshold = end_date + timedelta(days=30)
+
+                # Get all first aid inventory items that were active up to this month
+                fa_expiry_inv_pairs = FirstAidTransactions.objects.filter(
+                    created_at__date__lte=end_date
+                ).values_list(
+                    "finv_id__fa_id",
+                    "finv_id__inv_id__expiry_date",
+                    "finv_id__inv_id"
+                ).distinct()
+
+                expired_count = 0
+                out_of_stock_count = 0
+                expired_out_of_stock_count = 0
+                near_expiry_count = 0
+
+                seen_combinations = set()
+
+                for fa_id, expiry_date, inv_id in fa_expiry_inv_pairs:
+                    # Create a unique key for this combination
+                    combo_key = (fa_id, expiry_date, inv_id)
+                    if combo_key in seen_combinations:
+                        continue
+                    seen_combinations.add(combo_key)
+
+                    # Skip if no expiry date (can't be expired or near expiry)
+                    if not expiry_date:
+                        continue
+
+                    # Skip if expired BEFORE current month
+                    if expiry_date < start_date:
+                        continue
+
+                    transactions = FirstAidTransactions.objects.filter(
+                        finv_id__fa_id=fa_id,
+                        finv_id__inv_id__expiry_date=expiry_date,
+                        finv_id__inv_id=inv_id
+                    ).order_by("created_at")
+
+                    # Calculate stock levels
+                    opening_in = transactions.filter(created_at__date__lt=start_date, fat_action__icontains="added")
+                    opening_out = transactions.filter(created_at__date__lt=start_date, fat_action__icontains="deduct")
+                    opening_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in opening_in) - sum(self._parse_qty(t, multiply_boxes=False) for t in opening_out)
+
+                    monthly_transactions = transactions.filter(
+                        created_at__date__gte=start_date,
+                        created_at__date__lte=end_date
+                    )
+                    received_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in monthly_transactions.filter(fat_action__icontains="added"))
+                    dispensed_qty = sum(self._parse_qty(t, multiply_boxes=False) for t in monthly_transactions.filter(fat_action__icontains="deduct"))
+
+                    closing_qty = opening_qty + received_qty - dispensed_qty
+
+                    # Check conditions
+                    is_expired = start_date <= expiry_date <= end_date
+                    is_out_of_stock = closing_qty <= 0
+                    is_near_expiry = (end_date < expiry_date <= near_expiry_threshold) and closing_qty > 0
+
+                    if is_expired and is_out_of_stock:
+                        expired_out_of_stock_count += 1
+                    elif is_expired:
+                        expired_count += 1
+                    elif is_out_of_stock:
+                        out_of_stock_count += 1
+                    elif is_near_expiry:
+                        near_expiry_count += 1
+
+                total_problems = expired_count + out_of_stock_count + expired_out_of_stock_count + near_expiry_count
+
+                formatted_months.append({
+                    'month': month_str,
+                    'month_name': month_name,
+                    'total_problems': total_problems,
+                    'expired_count': expired_count,
+                    'out_of_stock_count': out_of_stock_count,
+                    'expired_out_of_stock_count': expired_out_of_stock_count,
+                    'near_expiry_count': near_expiry_count,
+                })
+
+            paginator = self.pagination_class()
+            page = paginator.paginate_queryset(formatted_months, request)
+            if page is not None:
+                return paginator.get_paginated_response({
+                    'success': True,
+                    'data': page,
+                    'total_months': len(formatted_months),
+                })
+
+            return Response({
+                'success': True,
+                'data': formatted_months,
+                'total_months': len(formatted_months),
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e),
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Monthly First Aid Expired/Out-of-Stock Detail API View
+class MonthlyFirstAidExpiredOutOfStockDetailAPIView(APIView):
+    pagination_class = StandardResultsPagination
+
+    def _parse_qty(self, transaction, multiply_boxes=False):
+        """Extract numeric value from fat_qty and convert boxes to pieces if needed."""
+        match = re.search(r'\d+', str(transaction.fat_qty))
+        qty_num = int(match.group()) if match else 0
+        
+        # If it's a box unit AND we need to multiply, convert to pieces
+        if (multiply_boxes and 
+            transaction.finv_id.finv_qty_unit and 
+            transaction.finv_id.finv_qty_unit.lower() == "boxes"):
+            pcs_per_box = transaction.finv_id.finv_pcs or 1
+            qty_num *= pcs_per_box
+            
+        return qty_num
+
+    def get(self, request, *args, **kwargs):
+        month_str = self.kwargs['month']  # Format: YYYY-MM
+        try:
+            year, month = map(int, month_str.split('-'))
+        except ValueError:
+            return Response({"error": "Invalid month format"}, status=400)
+
+        start_date = datetime(year, month, 1).date()
+        end_date = (start_date + relativedelta(months=1)) - timedelta(days=1)
+        near_expiry_threshold = end_date + timedelta(days=30)  # 1 month after end of current month
+
+        expired_items = []
+        out_of_stock_items = []
+        expired_out_of_stock_items = []
+        near_expiry_items = []  # New category for near expiry
+
+        # Get all first aid inventory items that were active up to this month
+        fa_expiry_inv_pairs = FirstAidTransactions.objects.filter(
+            created_at__date__lte=end_date
+        ).values_list(
+            "finv_id__fa_id",
+            "finv_id__inv_id__expiry_date",
+            "finv_id__inv_id"
+        ).distinct()
+
+        seen_combinations = set()
+
+        for fa_id, expiry_date, inv_id in fa_expiry_inv_pairs:
+            # Create a unique key for this combination
+            combo_key = (fa_id, expiry_date, inv_id)
+            if combo_key in seen_combinations:
+                continue
+            seen_combinations.add(combo_key)
+
+            # Skip if no expiry date
+            if not expiry_date:
+                continue
+
+            # Skip if expired BEFORE current month
+            if expiry_date < start_date:
+                continue
+
+            try:
+                finv = FirstAidInventory.objects.get(
+                    fa_id=fa_id,
+                    inv_id__expiry_date=expiry_date,
+                    inv_id=inv_id
+                )
+            except FirstAidInventory.DoesNotExist:
+                continue
+
+            transactions = FirstAidTransactions.objects.filter(
+                finv_id__fa_id=fa_id,
+                finv_id__inv_id__expiry_date=expiry_date,
+                finv_id__inv_id=inv_id
+            ).order_by("created_at")
+
+            # Get unit information
+            unit = finv.finv_qty_unit
+            pcs_per_box = finv.finv_pcs if unit and unit.lower() == "boxes" else 1
+
+            # Calculate stock levels - multiply boxes for added quantities
+            opening_in = transactions.filter(created_at__date__lt=start_date, fat_action__icontains="added")
+            opening_out = transactions.filter(created_at__date__lt=start_date, fat_action__icontains="deduct")
+            opening_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in opening_in) - sum(self._parse_qty(t, multiply_boxes=False) for t in opening_out)
+
+            monthly_transactions = transactions.filter(
+                created_at__date__gte=start_date,
+                created_at__date__lte=end_date
+            )
+            # Multiply boxes for received items
+            received_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in monthly_transactions.filter(fat_action__icontains="added"))
+            # Don't multiply boxes for dispensed items (they're already in pieces)
+            dispensed_qty = sum(self._parse_qty(t, multiply_boxes=False) for t in monthly_transactions.filter(fat_action__icontains="deduct"))
+
+            closing_qty = opening_qty + received_qty - dispensed_qty
+
+            # Check conditions
+            is_expired = start_date <= expiry_date <= end_date
+            is_out_of_stock = closing_qty <= 0
+            is_near_expiry = (end_date < expiry_date <= near_expiry_threshold) and closing_qty > 0
+
+            item_data = {
+                'fa_name': f"{finv.fa_id.fa_name}",
+                'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else 'No expiry',
+                'opening_stock': opening_qty,
+                'received': received_qty,
+                'dispensed': dispensed_qty,
+                'closing_stock': closing_qty,
+                'unit': 'pcs',
+                'status': 'Expired' if is_expired else 'Out of Stock' if is_out_of_stock else 'Near Expiry' if is_near_expiry else 'Active'
+            }
+
+            if is_expired and is_out_of_stock:
+                expired_out_of_stock_items.append(item_data)
+            elif is_expired:
+                expired_items.append(item_data)
+            elif is_out_of_stock:
+                out_of_stock_items.append(item_data)
+            elif is_near_expiry:
+                near_expiry_items.append(item_data)
+
+        # Combine all items (including near expiry in problem items)
+        all_problem_items = expired_items + out_of_stock_items + expired_out_of_stock_items + near_expiry_items
+
+        return Response({
+            'success': True,
+            'data': {
+                'month': month_str,
+                'summary': {
+                    'total_problems': len(all_problem_items),
+                    'expired_count': len(expired_items),
+                    'out_of_stock_count': len(out_of_stock_items),
+                    'expired_out_of_stock_count': len(expired_out_of_stock_items),
+                    'near_expiry_count': len(near_expiry_items),  # New count
+                },
+                'expired_items': expired_items,
+                'out_of_stock_items': out_of_stock_items,
+                'expired_out_of_stock_items': expired_out_of_stock_items,
+                'near_expiry_items': near_expiry_items,  # New category
+                'all_problem_items': all_problem_items
+            }
+        })

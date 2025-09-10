@@ -3,7 +3,7 @@ from ..models import *
 from datetime import date
 from apps.healthProfiling.serializers.base import PersonalSerializer
 from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSerializer,HouseholdMinimalSerializer
-from apps.healthProfiling.models import FamilyComposition,Household, ResidentProfile, Personal, PersonalAddress, Address
+from apps.healthProfiling.models import FamilyComposition,Household, ResidentProfile, Personal, PersonalAddress, Address, HealthRelatedDetails, MotherHealthInfo
 from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
 from apps.maternal.models import PostpartumRecord, TT_Status, Prenatal_Form
 from apps.familyplanning.models import FP_Record, FP_type
@@ -41,6 +41,7 @@ class PatientSerializer(serializers.ModelSerializer):
     family_head_info = serializers.SerializerMethodField()
     spouse_info = serializers.SerializerMethodField()
     family_planning_record = serializers.SerializerMethodField()
+    additional_info = serializers.SerializerMethodField()
 
     class Meta:
         model = Patient
@@ -87,6 +88,7 @@ class PatientSerializer(serializers.ModelSerializer):
                 'per_edAttainment': trans.tran_ed_attainment,
                 'per_religion': trans.tran_religion,
                 'per_contact': trans.tran_contact,
+                'philhealth_id': trans.philhealth_id,
             }
         return None
 
@@ -102,7 +104,7 @@ class PatientSerializer(serializers.ModelSerializer):
 
                 all_fam_composition = FamilyComposition.objects.filter(
                     fam_id=current_compositions.fam_id
-                ).select_related('rp_id', 'rp_id__per')
+                ).select_related('rp', 'rp__per')
                 return FCWithProfileDataSerializer(all_fam_composition, many=True, context=self.context).data
             except Exception as e:
                 print(f'Error fetching family compositions for resident {obj.rp_id.rp_id}: {str(e)}')
@@ -185,36 +187,42 @@ class PatientSerializer(serializers.ModelSerializer):
     # method to retrieve a mother's TT Status
     def get_mother_tt_status(self, mother_rp):
         try:
-            # check if mother is registered as patient
             mother_patient = Patient.objects.filter(rp_id=mother_rp, pat_type='Resident').first()
+            print(f'Checking TT Status for mother: {mother_patient}')
 
             if not mother_patient:
                 return f'TT Status not found - Not a patient'
 
-            mom_prenatal_record = PatientRecord.objects.filter(
-                pat_id=mother_patient,
-                patrec_type__icontains='Prenatal'
-            ).order_by('-created_at')
+            mom_prenatal_record = TT_Status.objects.filter(
+                pf_id__patrec_id__pat_id=mother_patient,
+                pf_id__patrec_id__patrec_type__icontains='Prenatal'
+            ).select_related(
+                'pf_id', 
+                'pf_id__patrec_id'
+            ).order_by('-tts_date_given', '-tts_id')
 
-            if not mom_prenatal_record.exists():
-                return f'TT Status not found - No prenatal record'
+            if mom_prenatal_record.exists():
+                latest_tt = mom_prenatal_record.first()
+                return latest_tt.tts_status
+            else:
+                return 'No TT Status found'
             
-            for i, pat_record in enumerate(mom_prenatal_record[:2]):
-                try:
-                    if hasattr(pat_record, 'prenatal_form') and pat_record.prenatal_form:
-                        prenatal = pat_record.prenatal_form
+            # for i, pat_record in enumerate(mom_prenatal_record):
+            #     try:
+            #         if hasattr(pat_record, 'prenatal_forms') and pat_record.prenatal_forms:
+            #             prenatal = pat_record.prenatal_forms.all()
                         
-                        tt_status_record = TT_Status.objects.filter(pf_id=prenatal).first()
-                        if tt_status_record:
-                            record_rank = "latest" if i == 0 else "previous"
-                            print(f'Found tt status in record {record_rank}')
+            #             tt_status_record = TT_Status.objects.filter(pf_id=prenatal).order_by('-tts_date_given', '-tts_id').first()
+            #             if tt_status_record:
+            #                 record_rank = "latest" if i == 0 else "previous"
+            #                 print(f'Found tt status in record {record_rank}')
 
-                            if hasattr(tt_status_record, 'tts_status'):
-                                return tt_status_record.tts_status
-                except Exception as record_error:
-                    print(f'Error fetching in record {i+1}: {str(record_error)}')   
-                    continue
-            return f'TT Status not found - No TT Status records'
+            #                 if hasattr(tt_status_record, 'tts_status'):
+            #                     return tt_status_record.tts_status
+            #     except Exception as record_error:
+            #         print(f'Error fetching in record {i+1}: {str(record_error)}')   
+            #         continue
+            # return f'TT Status not found - No TT Status records'
         
         except Exception as e:
             print(f'Error in getting mother tt status: {str(e)}')
@@ -250,7 +258,7 @@ class PatientSerializer(serializers.ModelSerializer):
 
                         # check if mother has TT status
                         if role == 'mother':
-                            tt_status = self.get_mother_tt_status(composition.rp)
+                            tt_status = self.get_mother_tt_status(composition.rp.rp_id)
                             family_heads['tt_status'] = tt_status
                 
                 return {
@@ -536,22 +544,6 @@ class PatientSerializer(serializers.ModelSerializer):
                     'spouse_info': SpouseSerializer(prental_with_spouse.spouse_id, context=self.context).data
                 }
             
-            # Check prenatal records if no postpartum spouse found
-            # patient_records = PatientRecord.objects.filter(
-            #     pat_id=obj,
-            #     patrec_type__icontains='Prenatal'
-            # )
-            
-            # for pat_record in patient_records:
-            #     if hasattr(pat_record, 'prenatal_form') and pat_record.prenatal_form:
-            #         prenatal = pat_record.prenatal_form
-            #         if hasattr(prenatal, 'spouse_id') and prenatal.spouse_id:
-            #             return {
-            #                 'spouse_exists': True,
-            #                 'spouse_source': 'prenatal_record',
-            #                 'spouse_info': SpouseSerializer(prenatal.spouse_id, context=self.context).data
-            #             }
-            
             # No spouse found in medical records
             return {
                 'spouse_exists': False,
@@ -566,6 +558,29 @@ class PatientSerializer(serializers.ModelSerializer):
                 'allow_spouse_insertion': True,
                 'reason': f'Error in medical records check: {str(e)}'
             }
+
+        
+    def get_additional_info(self, obj):
+        try:
+            additional_info = {}
+            if obj.pat_id and obj.rp_id:
+                per_ph_id = HealthRelatedDetails.objects.filter(rp=obj.rp_id)
+                mother_tt = MotherHealthInfo.objects.filter(rp=obj.rp_id)
+
+                if per_ph_id.exists() and mother_tt.exists():
+                    additional_info['philhealth_id'] = per_ph_id.per_add_philhealth_id
+                    additional_info['mother_tt_status'] = mother_tt.mhi_immun_status
+                else:
+                    additional_info['philhealth_id'] = None
+                    additional_info['mother_tt_status'] = None
+
+                return additional_info
+                
+            return None
+
+        except Exception as e:
+            print(f"Error in get_additional_info: {str(e)}")
+            return None
 
    
 class PatientRecordSerializer(serializers.ModelSerializer):

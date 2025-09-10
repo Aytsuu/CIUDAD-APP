@@ -40,6 +40,7 @@ export const addPersonal = async (data: Record<string, any>) => {
       per_edAttainment: data.per_edAttainment || null,
       per_religion: data.per_religion,
       per_contact: data.per_contact,
+      per_disability: data.per_disability || null
     }
     const res = await api.post("profiling/personal/create/", new_data);
     // await api2.post("health-profiling/personal/create/", new_data);

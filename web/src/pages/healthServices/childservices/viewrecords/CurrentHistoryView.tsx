@@ -2,7 +2,6 @@ import { useRef } from "react";
 import { format, isValid } from "date-fns";
 import { getValueByPath } from "./ChildHealthutils";
 import { VitalSignsTable } from "./tables/VitalSignsTable";
-import { NutrionaStatusTable } from "./tables/NutritionStatusTable";
 import { ChildHealthHistoryRecord } from "./types";
 import { BFCheckTable } from "./tables/BFTable";
 import { ImmunizationTable } from "./tables/ImmunizationTable";
@@ -731,12 +730,7 @@ export function PatientSummarySection({
               </div>
             </div>
 
-            <div className="no-print mt-8">
-                  <NutrionaStatusTable
-                  fullHistoryData={fullHistoryData}
-                  chhistId={chhistId}
-                  />
-                </div>
+          
           </>
         }
       />

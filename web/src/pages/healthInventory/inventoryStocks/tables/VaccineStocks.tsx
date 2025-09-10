@@ -14,7 +14,7 @@ import { useArchiveAntigenStocks } from "../REQUEST/Archive/ArchivePutQueries";
 import { getStockColumns } from "./columns/AntigenCol";
 import { useNavigate } from "react-router-dom";
 import { useAntigenCombineStocks } from "../REQUEST/Antigen/queries/AntigenFetchQueries";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { StockRecords } from "./type";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 

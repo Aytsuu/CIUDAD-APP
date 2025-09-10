@@ -13,9 +13,6 @@ export const useAddAccount = () => {
     onSuccess: (data) => {
       console.log('Account creation successful:', data);
       queryClient.invalidateQueries({queryKey: ["residents"]});
-      toast.success("Account created successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
-      });
     },
     onError: (error: any) => {
       console.error('Account creation failed:', error);
@@ -46,10 +43,6 @@ export const useAddAccount = () => {
         // Network error
         errorMessage = "Cannot connect to server. Please check if the server is running.";
       }
-      
-      toast(errorMessage, {
-        icon: <AlertCircle size={24} className="fill-red-500 stroke-white" />
-      });
     }
   })
 }

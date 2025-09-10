@@ -1,5 +1,5 @@
 import React from "react";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { BsFillPeopleFill, BsFillPersonPlusFill } from 'react-icons/bs';
 import { MdGroupWork } from "react-icons/md";
 import ParentsFormLayout from "./parent/ParentsFormLayout";
@@ -84,7 +84,7 @@ export default function FamilyProfileForm() {
           progress={calculateProgress()}
           steps={registrationSteps}
         />
-        <Card className="w-full">
+        <Card className="w-full mt-6">
           {currentStep === 1 && (
             <DemographicForm
               form={form}

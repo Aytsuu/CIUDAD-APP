@@ -11,6 +11,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@/components/ui/toast';
 import { AuthProvider } from "@/contexts/AuthContext";
 import * as NavigationBar from 'expo-navigation-bar';
+import {Provider} from "react-redux"
+import {store} from "@/redux/index"
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -49,6 +51,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={LIGHT_THEME}>
       <AuthProvider>
+        <Provider store={store}>
         <StatusBar backgroundColor="transparent" style="dark" />
         <ToastProvider>
           <QueryClientProvider client={queryClient}>
@@ -62,6 +65,10 @@ export default function RootLayout() {
               <Stack.Screen name="(request)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(securado)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(health)" options={{ headerShown: false, animation: 'fade' }} />
+<<<<<<< HEAD
+=======
+              <Stack.Screen name="animal-bites/[id]" options = {{ headerShown: false, animation: 'fade'}}/>
+>>>>>>> frontend/feature/maternal-services
               <Stack.Screen name="donation" options = {{ headerShown: false, animation: 'fade' }}/>
               <Stack.Screen name="(council)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(treasurer)" options = {{ headerShown: false, animation: 'fade' }}/>
@@ -72,6 +79,7 @@ export default function RootLayout() {
             </Stack>
           </QueryClientProvider>
         </ToastProvider>
+        </Provider>
       </AuthProvider>
       <PortalHost />
     </ThemeProvider>

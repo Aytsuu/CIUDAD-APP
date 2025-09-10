@@ -4,7 +4,7 @@ import { ARDocTemplate } from "./template/ARDocTemplate"
 import { WARDocTemplate } from "./template/WARDocTemplate"
 import { CircleAlert, CircleCheck, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLocation } from "react-router"
 import { getDateTimeFormat } from "@/helpers/dateHelper"
@@ -51,7 +51,6 @@ export default function ReportDocument() {
   const currentInfo = type === "AR" ? ARInfo : WARInfo; 
   const currentDocs = type === "AR" ? arDocs : warDocs; 
   const signed = currentInfo?.status === 'Signed' || currentDocs?.length > 0
-  console.log(currentInfo?.status)
   const formatDocs = React.useMemo(() => currentDocs?.map((doc: any) => ({
     id: doc.warf_id || doc.arf_id,
     name: doc.warf_name || doc.arf_name,

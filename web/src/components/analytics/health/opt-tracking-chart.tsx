@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, subMonths, addMonths, parseISO, isSameMonth } from "date-fns";
 import { useState } from "react";
-import { CardTitle } from "@/components/ui/card/card";
+import { CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,

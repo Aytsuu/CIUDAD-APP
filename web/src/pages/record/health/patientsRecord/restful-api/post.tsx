@@ -2,7 +2,7 @@ import { api2 } from "@/api/api"
 
 export const createPatients = async (patientData:any) => {
 	 try {
-		  const res = await api2.post("patientrecords/patient/", patientData);
+		  const res = await api2.post("patientrecords/patient/view/create/", patientData);
 		  if (res.status !== 201) {
 			   throw new Error("Failed to create patient record");
 		  }

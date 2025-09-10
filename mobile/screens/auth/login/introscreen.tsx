@@ -37,4 +37,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> frontend/feature/maternal-services

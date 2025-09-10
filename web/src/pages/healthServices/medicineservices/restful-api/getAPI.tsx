@@ -1,6 +1,36 @@
 // restful-api/Medicine/GetMedicine.js
 import {api2} from "@/api/api";
 
+
+
+
+// API function to get individual medicine records with pagination
+export const getIndividualMedicineRecords = async (
+  pat_id: string,
+  page: number,
+  pageSize: number,
+  search?: string
+): Promise<any> => {
+  try {
+    const response = await api2.get(`/medicine/medicine-records-table/${pat_id}/`, {
+      params: {
+        page,
+        page_size: pageSize,
+        search: search?.trim() || undefined
+      }
+    });
+    return response.data;
+  } catch (err) {
+    console.log(err);
+    return {
+      results: [],
+      count: 0,
+      next: null,
+      previous: null
+    };
+  }
+};
+
 export const getMedicineRecords = async () => {
   try {
     const response = await api2.get("/medicine/all-medicine-records/");

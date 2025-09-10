@@ -1,7 +1,9 @@
 from rest_framework import serializers
-from ..models import IncidentReport, ReportType
+from ..models import IncidentReport, ReportType, IncidentReportFile
 from apps.profiling.models import Address, ResidentProfile
 from apps.profiling.serializers.address_serializers import AddressBaseSerializer
+from apps.profiling.serializers.business_serializers import FileInputSerializer
+from utils.supabase_client import upload_to_storage
 import datetime
 
 class IRBaseSerializer(serializers.ModelSerializer):
@@ -39,17 +41,20 @@ class IRCreateSerializer(serializers.ModelSerializer):
   rt = serializers.PrimaryKeyRelatedField(queryset=ReportType.objects.all(), required=False, write_only=True)
   add = serializers.PrimaryKeyRelatedField(queryset=Address.objects.all(), required=False, write_only=True)
   rp = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), required=True)
+  files = FileInputSerializer(write_only=True, many=True, required=False)
    
   class Meta:
     model = IncidentReport
     fields = ['ir_add_details', 'ir_street', 'ir_sitio', 
-              'ir_type', 'ir_other_type', 'rt', 'rp', 'add']
+              'ir_type', 'ir_other_type', 'rt', 'rp', 'add',
+              'files']
 
   def create(self, validated_data):
     sitio = validated_data.pop('ir_sitio', None)
     street = validated_data.pop('ir_street', None)
     report_type = validated_data.pop('ir_type', None)
     other_report_type = validated_data.pop('ir_other_type', None)
+    files = validated_data.get('files', [])
 
     # ir_time = validated_data.get('ir_time')
     # if isinstance(ir_time, str):
@@ -97,5 +102,22 @@ class IRCreateSerializer(serializers.ModelSerializer):
         validated_data['add'] = address
 
     incident_report = IncidentReport.objects.create(**validated_data)
+
+    if files:
+      report_files = []
+      for file_data in files:
+        report_file = IncidentReportFile(
+          ir=incident_report,
+          irf_name=file_data['name'],
+          irf_type=file_data['type'],
+          irf_path=f'ir/{file_data['name']}'
+        )
+
+        url = upload_to_storage(file_data, "report-bucket", 'ir')
+        report_file.irf_url=url
+        report_files.append(report_file)
+
+      IncidentReportFile.objects.bulk_create(report_files)
+      
     return incident_report
     

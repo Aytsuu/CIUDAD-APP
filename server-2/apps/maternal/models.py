@@ -62,12 +62,14 @@ class Prenatal_Form(models.Model):
     pf_lmp = models.DateField(null=True, blank=True)
     pf_edc = models.DateField(null=True, blank=True)
     pf_occupation = models.CharField(max_length=100, null=True, blank=True)
+    previous_complications = models.TextField(null=True, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(null=True, blank=True)
 
     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='prenatal_form', db_column='pregnancy_id', null=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True) 
     spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='prenatal_form', db_column='spouse_id', null=True)
-    bm_id = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='prenatal_form', db_column='bm_id', null=True)
+    bm_id  = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='prenatal_form', db_column='bm_id', null=True)
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='prenatal_form', db_column='followv_id', null=True)
     medrec_id = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='medrec_id', null=True)
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='prenatal_form', db_column='vital_id', null=False)
@@ -184,21 +186,6 @@ class LaboratoryResultImg(models.Model):
         return f'{self.image_name}-{self.lab_id.lab_type}'
 
 
-class LabRemarks(models.Model):
-    labrem_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='lab_remarks', db_column='pf_id', null=True)
-    remarks = models.TextField(default='', blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = 'lab_remarks'
-        ordering = ['created_at']
-    
-    def __str__(self):
-        return f'Lab Remarks for: {self.pf_id.pf_id}'
-
-
 class Guide4ANCVisit(models.Model):
     pfav_id = models.BigAutoField(primary_key=True)
     pfav_1st_tri = models.DateField(null=True, blank=True)
@@ -239,7 +226,6 @@ class BirthPlan(models.Model):
     place_of_delivery_plan = models.CharField(max_length=100, default='', blank=True)
     newborn_screening_plan = models.BooleanField(blank=True, default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_birth_plan', db_column='pf_id', null=True)
 
@@ -252,6 +238,8 @@ class ObstetricRiskCode(models.Model):
     pforc_prev_c_section = models.BooleanField(default=False, help_text="Previous C-section")
     pforc_3_consecutive_miscarriages = models.BooleanField(default=False, blank=True, help_text="3 consecutive miscarriages of stillborn baby")
     pforc_postpartum_hemorrhage = models.BooleanField(default=False, blank=True, help_text="Previous postpartum hemorrhage")
+    created_at = models.DateTimeField(auto_now_add=True)
+
     pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_obstetric_risk_code', db_column='pf_id', null=True)
     
     class Meta:
@@ -269,7 +257,6 @@ class PrenatalCare(models.Model):
     pfpc_advises = models.TextField(default='', blank=True)
     pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_prenatal_care', db_column='pf_id', null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         db_table = 'pf_prenatal_care'
@@ -280,7 +267,6 @@ class PrenatalCare(models.Model):
 # ************** postpartum **************
 class PostpartumRecord(models.Model):
     ppr_id = models.CharField(primary_key=True, max_length=20, unique=True, editable=False)
-    # ppr_transferred_fr = models.CharField(max_length=100, default="Not Applicable")
     ppr_lochial_discharges = models.CharField(max_length=100)
     ppr_vit_a_date_given = models.DateField()
     ppr_num_of_pads = models.PositiveIntegerField()
@@ -289,7 +275,7 @@ class PostpartumRecord(models.Model):
     ppr_time_of_bf = models.TimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    # version_no = models.IntegerField(default=1)
+    status = models.CharField(null=True, blank=True)
 
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='postpartum_record', null=False, db_column='patrec_id')
     spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='postpartum_record', db_column='spouse_id', null=True)
@@ -311,24 +297,19 @@ class PostpartumRecord(models.Model):
         
         prefix = f'PPR{month}{year}'
         
-        # Use atomic transaction to prevent race conditions
         with transaction.atomic():
-            # Get the highest existing number for this prefix
             existing_records = PostpartumRecord.objects.filter(
                 ppr_id__startswith=prefix
             ).values_list('ppr_id', flat=True).order_by('-ppr_id')
             
             if existing_records:
-                # Extract the last 5 digits and increment
                 last_num = int(existing_records[0][-5:])
                 new_num = last_num + 1
             else:
                 new_num = 1
             
-            # Generate new ID
             new_id = f'{prefix}{str(new_num).zfill(5)}'
             
-            # Double-check if this ID exists (extra safety)
             while PostpartumRecord.objects.filter(ppr_id=new_id).exists():
                 new_num += 1
                 new_id = f'{prefix}{str(new_num).zfill(5)}'
@@ -338,36 +319,6 @@ class PostpartumRecord(models.Model):
     class Meta:
         db_table = 'postpartum_record'  
         ordering = ['created_at']
-
-
-# class PostpartumHistory(models.Model):
-#     pprh_id = models.BigAutoField(primary_key=True)
-#     ppr_id = models.ForeignKey(PostpartumRecord, on_delete=models.CASCADE, related_name='postpartum_history', db_column='ppr_id')
-
-#     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='postpartum_history', null=False, db_column='patrec_id')
-#     spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='postpartum_history', db_column='spouse_id', null=True)
-#     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='postpartum_history', db_column='vital_id', null=False)
-#     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='postpartum_history', db_column='followv_id', null=True)
-#     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='postpartum_history', db_column='pregnancy_id', null=True, blank=True)
-
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     record_no = models.CharField(max_length=150, blank=True)
-
-#     def save(self, *args, **kwargs):
-#         if not self.record_no:
-#             with transaction.atomic():
-#                 count = PostpartumHistory.objects.filter(
-#                     ppr_id=self.ppr_id
-#                 ).select_for_update().count()
-
-#                 seq_num = f'{count + 1:04d}'
-#                 self.record_no = f'{self.ppr_id.ppr_id}-{seq_num}'
-                
-#             super().save(*args, **kwargs)
-
-#     class Meta:
-#         db_table = 'postpartum_history'
-#         ordering = ['created_at']
 
 
 class PostpartumDeliveryRecord(models.Model):

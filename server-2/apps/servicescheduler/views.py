@@ -159,11 +159,21 @@ class ServiceSchedulerUpdateView(generics.UpdateAPIView):
          instance = self.get_object()
          serializer = self.get_serializer(instance, data=request.data, partial=True)
          
-         if not serializer.is_valid():
-               logger.error(f"Update validation errors: {serializer.errors}")
-               return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+         # if not serializer.is_valid():
+         #       logger.error(f"Update validation errors: {serializer.errors}")
+         #       return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
          
-         updated_instance = serializer.save()
+         # updated_instance = serializer.save()
+
+         meridiem = request.data.get('meridiem')
+         if meridiem and meridiem in ['AM', 'PM']:
+            instance.meridiem = meridiem
+            instance.save()
+         else:
+            return Response(
+               {'error': 'Invalid meridiem value. Must be AM or PM' },
+               status=status.HTTP_400_BAD_REQUEST
+            )
          
          return Response({
                'ss_id': updated_instance.ss_id,

@@ -20,7 +20,7 @@ export const getResident = async () => {
 // fetch patients
 export const getPatients = async () => {
     try {
-        const res = await api2.get("patientrecords/patient/");
+        const res = await api2.get("patientrecords/patient/view/create/");
         return res.data || []; 
     } catch (error) {
         console.error("Network Error:", error);
@@ -69,7 +69,7 @@ export const getAllFollowUpVisits = async (filters: AppointmentFilters = {}) => 
 
 	const queryString = params.toString();
 	const url = queryString 
-		? `patientrecords/follow-up-visits-all/?${queryString}/` 
+		? `patientrecords/follow-up-visits-all/?${queryString}` 
 		: "patientrecords/follow-up-visits-all/";
 
     const res = await api2.get(url)

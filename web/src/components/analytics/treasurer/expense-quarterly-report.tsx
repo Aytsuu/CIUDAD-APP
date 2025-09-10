@@ -1,5 +1,5 @@
 //LATEST BUT NOT IN PARTICULARS
-// import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card/card";
+// import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 // import { Skeleton } from "@/components/ui/skeleton";
 // import { TrendingDown } from "lucide-react";
 // import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -136,7 +136,7 @@
 
 
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useIncomeExpense } from "@/pages/record/treasurer/treasurer-income-expense-tracker/queries/treasurerQuarterlyIncExp";

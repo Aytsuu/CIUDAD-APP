@@ -26,9 +26,10 @@ import {
   transformPostpartumFormData,
   validatePostpartumFormData,
 } from "@/pages/healthServices/maternal/postpartum/postpartumFormHelpers"
-import { toast } from "sonner"
+import { showErrorToast } from "@/components/ui/toast" 
 
-// Use Patient type from PatientSearch component for compatibility
+import { useLatestPatientPostpartumRecord } from "../queries/maternalFetchQueries"
+
 import type { Patient } from "@/components/ui/patientSearch"
 
 type PostpartumTableType = {
@@ -55,22 +56,94 @@ const calculateAge = (dob: string): number => {
 export default function PostpartumFormFirstPg({
   form,
   onSubmit,
+  isFromIndividualRecord = false,
+  preselectedPatient = null,
+  pregnancyId = null
 }: {
   form: UseFormReturn<z.infer<typeof PostPartumSchema>>
   onSubmit: () => void
+  isFromIndividualRecord?: boolean
+  preselectedPatient?: Patient | null
+  pregnancyId?: string | null
 }) {
   const { setValue, getValues } = useFormContext()
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+  const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("")
   const [postpartumCareData, setPostpartumCareData] = useState<PostpartumTableType[]>([])
   const [formErrors, setFormErrors] = useState<string[]>([])
+
   const navigate = useNavigate()
 
   const addPostpartumMutation = useAddPostpartumRecord()
 
+  const { data: latestPostpartumRecord, isLoading: latestPostpartumLoading } = useLatestPatientPostpartumRecord(selectedPatientId)
+  
+  useEffect(() => {
+    if (isFromIndividualRecord && preselectedPatient) {
+      
+      setSelectedPatientId(preselectedPatient.pat_id || "")
+
+      const displayFormat = `${preselectedPatient.pat_id}, ${preselectedPatient?.personal_info?.per_lname}, ${preselectedPatient?.personal_info?.per_fname} ${preselectedPatient?.personal_info?.per_mname || ''}`.trim()
+      setSelectedPatIdDisplay(displayFormat)
+
+      handlePatientSelection(preselectedPatient, preselectedPatient.pat_id)
+    }
+  }, [isFromIndividualRecord, preselectedPatient, pregnancyId])
+
+  useEffect(() => {
+    const latestRecord = latestPostpartumRecord?.latest_postpartum_record
+
+    if (isFromIndividualRecord && !latestRecord) {
+      const spouse = latestPostpartumRecord?.spouse_info
+
+      setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname)
+      setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname)
+      setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname)
+      setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob)
+    }
+
+    if (isFromIndividualRecord && latestPostpartumRecord && latestPostpartumRecord && !latestPostpartumLoading) {
+      setValue("pregnancy_id", latestPostpartumRecord.latest_postpartum_record?.pregnancy?.pregnancy_id || "")
+
+      if (latestRecord) {
+        const spouse = latestRecord.spouse
+        const delivery = latestRecord.delivery_records?.[0]
+        const visit = latestRecord.follow_up_visits
+
+        setValue("postpartumInfo.lochialDischarges", lochialConversion(latestRecord.ppr_lochial_discharges))
+        setValue("postpartumInfo.ironSupplement", latestRecord.ppr_iron_supplement)
+        setValue("postpartumInfo.vitASupplement", latestRecord.ppr_vit_a_date_given)
+        setValue("postpartumInfo.noOfPadPerDay", latestRecord.ppr_num_of_pads)
+        setValue("postpartumInfo.mebendazole", latestRecord.ppr_mebendazole_date_given)
+        setValue("postpartumInfo.dateBfInitiated", latestRecord.ppr_date_of_bf)
+        setValue("postpartumInfo.timeBfInitiated", latestRecord.ppr_time_of_bf)
+
+        if (spouse) {
+          setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname)
+          setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname)
+          setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname)
+          setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob)
+        }
+
+        if(delivery) {
+          setValue("postpartumInfo.dateOfDelivery", delivery.ppdr_date_of_delivery)
+          setValue("postpartumInfo.timeOfDelivery", delivery.ppdr_time_of_delivery)
+          setValue("postpartumInfo.placeOfDelivery", delivery.ppdr_place_of_delivery)
+          setValue("postpartumInfo.outcome", outcomeConversion(delivery.ppdr_outcome))
+          setValue("postpartumInfo.attendedBy", delivery.ppdr_attended_by)
+        }
+
+        if(visit) {
+          setValue("postpartumInfo.nextVisitDate", visit.followv_date)
+        }
+        
+      }
+    }
+  }, [latestPostpartumRecord, latestPostpartumLoading])
+
   const handlePatientSelection = (patient: Patient | null, patientId: string) => {
-    console.log("Selected Patient:", patient)
-    console.log("Patient ID from callback:", patientId)
+    setSelectedPatIdDisplay(patientId)
 
     if (!patient) {
       setSelectedPatientId("")
@@ -103,7 +176,7 @@ export default function PostpartumFormFirstPg({
           ttStatus: "",
           ironSupplement: "",
           vitASupplement: "",
-          noOfPadPerDay: "",
+          noOfPadPerDay: 0,
           mebendazole: "",
           dateBfInitiated: "",
           timeBfInitiated: "",
@@ -125,12 +198,10 @@ export default function PostpartumFormFirstPg({
     }
 
     const actualPatientId = patient.pat_id
-    console.log("Using Patient ID:", actualPatientId)
 
     // check if patient ID is not NaN or empty
     if (!actualPatientId || actualPatientId.trim() === "" || actualPatientId.toLowerCase() === "nan") {
-      toast.error("Invalid patient ID. Please select a different patient.")
-      console.error("Invalid patient ID:", actualPatientId)
+      showErrorToast("Invalid patient ID. Please select a different patient.")
       return
     }
 
@@ -148,10 +219,8 @@ export default function PostpartumFormFirstPg({
       form.setValue("mothersPersonalInfo.motherLName", personalInfo?.per_lname || "")
       form.setValue("mothersPersonalInfo.motherFName", personalInfo?.per_fname || "")
       form.setValue("mothersPersonalInfo.motherMName", personalInfo?.per_mname || "")
-      form.setValue(
-        "mothersPersonalInfo.motherAge",
-        personalInfo?.per_dob ? String(calculateAge(personalInfo.per_dob)) : "",
-      )
+      form.setValue("mothersPersonalInfo.motherAge", personalInfo?.per_dob ? String(calculateAge(personalInfo.per_dob)) : "")
+      
       if (patientRole === 'mother') {
         if(spouse){
           form.setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
@@ -190,20 +259,39 @@ export default function PostpartumFormFirstPg({
         form.setValue("mothersPersonalInfo.address.city", address.add_city || "")
         form.setValue("mothersPersonalInfo.address.province", address.add_province || "")
       }
-
-      if (spouse) {
-        form.setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
-        form.setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
-        form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
-        form.setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "")
-      } else {
-        form.setValue("mothersPersonalInfo.husbandLName", "")
-        form.setValue("mothersPersonalInfo.husbandFName", "")
-        form.setValue("mothersPersonalInfo.husbandMName", "")
-        form.setValue("mothersPersonalInfo.husbandDob", "")
-      }
     }
   }
+
+  const outcomeConversion = (value: string) => {
+    switch (value) {
+      case "Select":
+        return "0"
+      case "Fullterm":
+        return "1"
+      case "Preterm":
+        return "2"
+      default:
+        return "0"
+    }
+  }
+
+  const lochialConversion = (value: string) => {
+    switch (value) {
+      case "Select":
+        return "0"
+      case "Lochia Rubra":
+        return "1"
+      case "Lochia Serosa":
+        return "2"
+      case "Lochia Alba":
+        return "3"
+      default:
+        return "0"
+    }
+  }
+
+  
+
 
   const postpartumTableColumns: ColumnDef<PostpartumTableType>[] = [
     {
@@ -238,7 +326,7 @@ export default function PostpartumFormFirstPg({
     },
   ]
 
-  // Date setup
+  // date setup
   const today = new Date().toLocaleDateString("en-CA")
 
   useEffect(() => {
@@ -268,7 +356,7 @@ export default function PostpartumFormFirstPg({
       { id: "3", name: "Lochia Alba" },
     ]
 
-    // Convert IDs to names
+    // convert IDs to names
     const feedingName = feedingOptions.find((option) => option.id === feeding)?.name || feeding
     const lochialName = lochialOptions.find((option) => option.id === lochialDischarges)?.name || lochialDischarges
 
@@ -284,7 +372,7 @@ export default function PostpartumFormFirstPg({
       setPostpartumCareData((prev) => [
         ...prev,
         {
-          date: date, // Use the actual date from form
+          date: date, // use the actual date from form
           lochialDischarges: lochialName,
           bp: `${systolic} / ${diastolic}`,
           feeding: feedingName,
@@ -293,7 +381,7 @@ export default function PostpartumFormFirstPg({
         },
       ])
 
-      // Clear form fields
+      // clear form fields
       form.setValue("postpartumTable.date", today)
       form.setValue("postpartumInfo.lochialDischarges", "")
       form.setValue("postpartumTable.bp.systolic", "")
@@ -302,7 +390,7 @@ export default function PostpartumFormFirstPg({
       form.setValue("postpartumTable.findings", "")
       form.setValue("postpartumTable.nursesNotes", "")
     } else {
-      toast.error("Please fill in all required fields for the assessment including lochial discharges")
+      showErrorToast("Please fill in all required fields for the assessment including lochial discharges")
     }
   }
 
@@ -314,17 +402,17 @@ export default function PostpartumFormFirstPg({
 
     if (errors.length > 0) {
       setFormErrors(errors)
-      toast.error("Please fix the form errors before submitting")
+      showErrorToast("Please fix the form errors before submitting")
       return
     }
 
     if (!selectedPatient) {
-      toast.error("Please select a patient first")
+      showErrorToast("Please select a patient first")
       return
     }
 
     if (!selectedPatientId || selectedPatientId.trim() === "" || selectedPatientId.toLowerCase() === "nan") {
-      toast.error("Invalid patient ID selected")
+      showErrorToast("Invalid patient ID selected")
       console.error("Invalid patient ID:", selectedPatientId)
       return
     }
@@ -359,10 +447,12 @@ export default function PostpartumFormFirstPg({
 
   return (
     <LayoutWithBack title="Postpartum Form" description="Fill out the postpartum form with the mother's information.">
-      <div>
-        <PatientSearch onChange={setSelectedPatientId} value={selectedPatientId} onPatientSelect={handlePatientSelection} />
-      </div>
-
+      {!isFromIndividualRecord && (
+        <div>
+          <PatientSearch onChange={setSelectedPatientId} value={selectedPatIdDisplay} onPatientSelect={handlePatientSelection} />
+        </div>
+      )}
+  
       {/* Form Errors */}
       {formErrors.length > 0 && (
         <Alert variant="destructive" className="mt-4">
@@ -553,6 +643,7 @@ export default function PostpartumFormFirstPg({
                 label="Number of Pads per Day"
                 name="postpartumInfo.noOfPadPerDay"
                 placeholder="Number of Pads per Day"
+                type="number"
               />
               <FormDateTimeInput
                 control={form.control}

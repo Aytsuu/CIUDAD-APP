@@ -32,9 +32,18 @@ import { medicineRequest } from "./medicine-request";
 import { forwardedhealthrecord_router } from "./forwardedhealthrecords";
 import { firstaid_router } from "./firstaid-router";
 import { health_schedule_routes } from "./health-schedules-router";
+<<<<<<< HEAD
 import { medicalConsultation } from "./med-consultation";
 import { summon_router } from "./summon-router";
 import { withTransition } from '@/helpers/withTransition';
+=======
+import { summon_router } from "./summon-router";
+import { withTransition } from '@/helpers/withTransition';
+import { viewprofile_router } from "./Account-settings";
+
+import { ProtectedRoute } from "@/ProtectedRoutes";
+import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
+>>>>>>> frontend/feature/maternal-services
 
 export const main_router: RouteObject[] = [
   {
@@ -94,7 +103,10 @@ export const main_router: RouteObject[] = [
       ...famplanning_route,
       ...healthinventory,
       ...medicalConsultation,
+<<<<<<< HEAD
       ...medicalConsultation,
+=======
+>>>>>>> frontend/feature/maternal-services
       ...doctorRouting,
       ...summon_router,
       ...familyProfilingRoute,
@@ -103,6 +115,8 @@ export const main_router: RouteObject[] = [
       ...forwardedhealthrecord_router,
       ...firstaid_router,
       ...health_schedule_routes,
+      ...viewprofile_router,
+      ...bhw_daily_notes_router,
     ]),
   },
 ];

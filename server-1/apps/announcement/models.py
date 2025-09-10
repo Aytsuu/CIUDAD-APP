@@ -1,27 +1,20 @@
 from django.db import models
-from datetime import date
-
 
 class Announcement(models.Model):
     ann_id = models.AutoField(primary_key=True)
     ann_title = models.TextField()
     ann_details = models.TextField(max_length=255)
-    ann_created_at = models.DateField(auto_now_add=True)
+    ann_created_at = models.DateTimeField(auto_now_add=True)
     ann_start_at = models.DateTimeField(null=True, blank=True)
     ann_end_at = models.DateTimeField(null=True, blank=True)
-    ann_type = models.CharField(
-        max_length=50,
-        choices=[
-            ('general', 'General'),
-            ('urgent', 'Urgent'),
-            ('event', 'Event'),
-        ]
-    )
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.CASCADE
-    )
-
+    ann_event_start = models.DateTimeField(null=True, blank=True)
+    ann_event_end = models.DateTimeField(null=True, blank=True)
+    ann_type = models.CharField(max_length=50)
+    ann_to_sms = models.BooleanField(default=True)
+    ann_to_email = models.BooleanField(default=True)
+    # ann_status = models.CharField(max_length=50, default="Inactive")
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
+    
     class Meta:
         db_table = 'announcement'
         ordering = ['-ann_created_at']
@@ -44,51 +37,13 @@ class AnnouncementFile(models.Model):
 
 class AnnouncementRecipient(models.Model):
     ar_id = models.AutoField(primary_key=True)
-    
-    ar_mode = models.CharField(
-        max_length=50,
-        choices=[
-            ('email', 'Email'),
-            ('sms', 'SMS'),
-        ]
-    )
 
     ann = models.ForeignKey(
         Announcement,
         on_delete=models.CASCADE,
     )
 
-    rp = models.ForeignKey(
-        'profiling.ResidentProfile',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-
-    position = models.ForeignKey(
-        'administration.Position',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-
-    ar_age = models.CharField(
-        max_length=50,
-        choices=[
-            ('youth', 'Youth'),
-            ('adult', 'Adult'),
-            ('senior', 'Senior Citizen'),
-        ],
-        null=True,
-        blank=True
-    )
+    ar_type = models.CharField(max_length=50)
 
     class Meta:
         db_table = 'announcement_recipient'

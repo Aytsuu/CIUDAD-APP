@@ -109,7 +109,7 @@ interface PregnancyDataDetails{
   }[];
   postpartum_record?: {
     ppr_id:string;
-    delivery_date: string | "N/A";
+    delivery_date: string | "Unknown";
     created_at: string;
     updated_at: string;
     postpartum_assessment?: {
@@ -137,10 +137,6 @@ export default function MaternalIndivRecords() {
     if (location.state?.params?.patientData) {
       const patientData = location.state.params.patientData
       setSelectedPatient(patientData)
-      const ageTimeCheck = patientData.personal_info.ageTime
-      console.log("Age Time: ", ageTimeCheck)
-
-      console.log("Selected patient data:", patientData)
     }
   }, [location.state])
 
@@ -170,11 +166,6 @@ export default function MaternalIndivRecords() {
 
       const currPregnancyGroup =  grouped[pregnancy.pregnancy_id]
 
-      // const aogWks = pregnancy.prenatal_care?.[0]?.pfpc_aog_wks
-      // const aogDays = pregnancy.prenatal_care?.[0]?.pfpc_aog_days
-      // const gestationalFormatted = `${aogWks} weeks ${aogDays} days`
-
-
       pregnancy.prenatal_form?.forEach((pf) => {
         const addressParts = [
           patientAddress?.add_street,
@@ -196,8 +187,8 @@ export default function MaternalIndivRecords() {
           id: pf.pf_id,
           pregnancyId: pregnancy.pregnancy_id,
           dateCreated: pf.created_at.split("T")[0],
-          address: addressParts.length > 0 ? addressParts.join(", ") : "N/A",
-          sitio: patientAddress?.add_external_sitio || patientAddress?.add_sitio || "N/A",
+          address: addressParts.length > 0 ? addressParts.join(", ") : "Not Provided",
+          sitio: patientAddress?.add_external_sitio || patientAddress?.add_sitio || "Not Provided",
           type: patientType as "Transient" | "Resident",
           recordType: "Prenatal",
           status: normalizeStatus(pregnancy.status),
@@ -225,8 +216,8 @@ export default function MaternalIndivRecords() {
           id: ppr.ppr_id,
           pregnancyId: pregnancy.pregnancy_id,
           dateCreated: ppr.created_at.split("T")[0],
-          address: addressParts.length > 0 ? addressParts.join(", ") : "N/A",
-          sitio: patientAddress?.add_sitio || "N/A",
+          address: addressParts.length > 0 ? addressParts.join(", ") : "Not Provided",
+          sitio: patientAddress?.add_sitio || "Not Provided",
           type: patientType as "Transient" | "Resident",
           recordType: "Postpartum Care",
           status: normalizeStatus(pregnancy.status),
@@ -361,6 +352,10 @@ export default function MaternalIndivRecords() {
     console.log(`Record ${recordId} of type ${recordType} marked as completed`)
   }
 
+  const handlePregnancyLossRecord = (recordId: string, recordType: "Prenatal") => {
+    console.log(`Record ${recordId} of type ${recordType} marked as pregnancy loss`)
+  }
+
   const handleRefetching = async () => {
     try {
       setIsRefetching(true);
@@ -389,7 +384,7 @@ export default function MaternalIndivRecords() {
     <LayoutWithBack title="Maternal Records" description="Manage mother's individual maternal records">
       <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
         {selectedPatient ? (
-          <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-1">
+          <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-1">
             <PatientInfoCardv2 patient={selectedPatient} />
             <PregnancyChart pregnancies={pregnancyData}/>
           </div>
@@ -437,10 +432,30 @@ export default function MaternalIndivRecords() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem>
-                  <Link to="/prenatalform" state={{ params : {pregnancyData: selectedPatient, pregnancyId: null}}}>Prenatal</Link>
+                  <Link 
+                    to="/prenatalform" 
+                    state={{ 
+                      params : {
+                        pregnancyData: selectedPatient, 
+                        pregnancyId: pregnancyGroups.find(group => group.status === "Active")?.pregnancyId || null
+                      }
+                    }}
+                  >
+                    Prenatal
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link to="/postpartumform" state={{ params : {pregnancyData: selectedPatient, pregnancyId: null}}}>Postpartum</Link>
+                  <Link 
+                    to="/postpartumform" 
+                    state={{ 
+                      params : {
+                        pregnancyData: selectedPatient, 
+                        pregnancyId: pregnancyGroups.find(group => group.status === "Completed" || group.status === "Active")?.pregnancyId || null
+                      }
+                    }}
+                  >
+                    Postpartum
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -468,6 +483,7 @@ export default function MaternalIndivRecords() {
                 getRecordTypeBadge={getRecordTypeBadge}
                 onCompletePregnancy={handleCompletePregnancy}
                 onCompleteRecord={handleCompleteRecord}
+                onPregnancyLossRecord={handlePregnancyLossRecord}
               />
             )}
           </div>
