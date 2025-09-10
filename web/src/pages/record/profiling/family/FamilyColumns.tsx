@@ -59,8 +59,8 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
       return (
         <Combobox
           options={formattedResidents}
-          value={row.original.members as any}
-          placeholder={"Search member" as string}
+          value={row.original.members}
+          placeholder="Search member"
           emptyMessage="No resident found"
           staticVal={true}
           size={400}
@@ -181,7 +181,7 @@ export const familyMembersCol = (
             <Loader2 className="w-5 h-5 animate-spin"/>
           </Button>) : (
           <DropdownLayout
-            trigger={<Button className={buttonStyle}>{role} </Button>}
+            trigger={<Button className={buttonStyle}>{role as string} </Button>}
             options={[
               {id: "mother", name: "Mother"}, 
               {id: "father", name: "Father"},
