@@ -185,7 +185,7 @@ export default function FamilyRecordView() {
                             Date Registered
                           </Label>
                           <p className="text-sm font-medium text-black/80 mt-1">
-                            {formatDate(familyData?.fam_date_registered, "long")}
+                            {formatDate(familyData?.fam_date_registered, "long" as any)}
                           </p>
                         </div>
                         <div className="p-3 rounded-lg border">{formatRegisteredBy()}</div>
