@@ -167,7 +167,7 @@ export const familyMembersCol = (
           await updateFamilyRole({
             familyId: family.fam_id,
             residentId: row.original.rp_id,
-            fc_role: capitalize(value)
+            fc_role: capitalize(value as string)
           });
           setIsChanging(false)
         }catch (err) {
