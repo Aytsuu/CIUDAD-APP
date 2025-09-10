@@ -1,23 +1,55 @@
-import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useGetAnnouncement, useDeleteAnnouncement } from './queries';
-import PageLayout from '@/screens/_PageLayout';
-import { Card } from '@/components/ui/card';
-import { ChevronLeft } from '@/lib/icons/ChevronLeft';
-import { FileText } from '@/lib/icons/FileText';
+import React from "react"
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+  TextInput,
+} from "react-native"
+import { Picker } from "@react-native-picker/picker"
+import { useRouter } from "expo-router"
+import { useGetAnnouncement, useDeleteAnnouncement } from "./queries"
+import PageLayout from "@/screens/_PageLayout"
+import { Card } from "@/components/ui/card"
+import { ChevronLeft } from "@/lib/icons/ChevronLeft"
+import { FileText } from "@/lib/icons/FileText"
+import { Calendar } from "@/lib/icons/Calendar"
+import { Clock, Bell, Mail, MessageSquare } from "lucide-react-native"
 
 export default function AnnouncementListPage() {
-  const router = useRouter();
-  const [isRefreshing, setIsRefreshing] = React.useState(false);
-  const { data: announcements = [], isLoading, refetch } = useGetAnnouncement();
-  const { mutate: deleteAnnouncement } = useDeleteAnnouncement();
+  const router = useRouter()
+  const [isRefreshing, setIsRefreshing] = React.useState(false)
+  const [search, setSearch] = React.useState("")
+  const [filter, setFilter] = React.useState("all")
+
+  const { data: announcements = [], isLoading, refetch } = useGetAnnouncement()
+  const { mutate: deleteAnnouncement } = useDeleteAnnouncement()
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await refetch();
-    setIsRefreshing(false);
-  };
+    setIsRefreshing(true)
+    await refetch()
+    setIsRefreshing(false)
+  }
+
+  const formatDate = (date: string | null) => {
+    if (!date) return null
+    try {
+      const d = new Date(date)
+      return new Intl.DateTimeFormat("en-PH", {
+        year: "numeric",
+        month: "long",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "Asia/Manila",
+      }).format(d)
+    } catch {
+      return null
+    }
+  }
 
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
@@ -31,68 +63,187 @@ export default function AnnouncementListPage() {
         Announcements will appear here once added.
       </Text>
     </View>
-  );
+  )
 
   const renderLoadingState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <ActivityIndicator size="large" color="#3B82F6" />
       <Text className="text-gray-500 mt-4">Loading announcements...</Text>
     </View>
-  );
+  )
 
-  const RenderAnnouncementCard = React.memo(({ item, index }: { item: any; index: number }) => (
-    <View key={index} className="mb-3 mx-5">
-      <Card className="p-4 bg-white shadow-sm border border-gray-100">
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() =>
-            router.push({
-              pathname: '/(announcement)/announcementview',
-              params: { ann_id: item.ann_id },
-            })
-          }
-        >
-          <View className="flex-row items-center mb-2">
-            <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-              <FileText size={20} className="text-blue-600" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-gray-900 font-semibold text-base" numberOfLines={2}>
-                {item.ann_title}
-              </Text>
-              <Text className="text-gray-500 text-sm" numberOfLines={2}>
-                {item.ann_details}
+  const RenderAnnouncementCard = React.memo(
+    ({ item, index }: { item: any; index: number }) => (
+      <View key={index} className="mb-3 mx-5">
+        <Card className="p-4 bg-white shadow-sm border border-gray-100">
+          {/* Title and Type */}
+          <View className="flex-row items-center justify-between mb-3">
+            <Text
+              className="text-gray-900 font-semibold text-lg"
+              numberOfLines={1}
+            >
+              {item.ann_title}
+            </Text>
+            <View className="bg-blue-500 px-3 py-1 rounded">
+              <Text className="text-white text-xs font-medium">
+                {item.ann_type?.toUpperCase()}
               </Text>
             </View>
-            <ChevronLeft size={20} className="text-gray-400 ml-2 rotate-180" />
           </View>
 
-          <View className="mb-2 self-start">
-            <Text className="text-gray-600 text-sm bg-gray-100 px-2 py-1 rounded-full">
-              {item.ann_type?.toUpperCase()}
-            </Text>
-          </View>
-          <View>
-            <Text className="text-gray-500 text-xs">
-              Files: {item.files?.length > 0 ? `${item.files.length} file(s)` : 'None'}
-            </Text>
-            <Text className="text-gray-500 text-xs">
-              Start: {item.ann_start_at || 'No start date'}
-            </Text>
-            <Text className="text-gray-500 text-xs">
-              End: {item.ann_end_at || 'No end date'}
-            </Text>
-          </View>
-        </TouchableOpacity>
+          {/* Created At */}
+          {item.ann_created_at && (
+            <View className="mb-3">
+              <View className="flex-row items-center">
+                <Calendar size={16} className="text-gray-500 mr-2" />
+                <Text className="text-gray-700 text-sm font-medium">
+                  Created At
+                </Text>
+              </View>
+              <Text className="ml-6 text-gray-600 text-sm">
+                {formatDate(item.ann_created_at)}
+              </Text>
+            </View>
+          )}
 
-        <TouchableOpacity
-          onPress={() => deleteAnnouncement(String(item.ann_id))}
-          className="flex-row items-center justify-center mt-3 bg-red-500 px-3 py-2 rounded-lg">
-          <Text className="text-white text-sm font-medium">Delete</Text>
-        </TouchableOpacity>
-      </Card>
-    </View>
-  ));
+          {/* General Announcement Period */}
+          {item.ann_type?.toLowerCase() === "general" && (
+            <View className="mb-3">
+              {item.ann_start_at && (
+                <View className="flex-row items-center mb-2 ml-6">
+                  <Clock size={14} className="text-gray-500 mr-2" />
+                  <Text className="text-gray-600 text-xs">Start At</Text>
+                  <Text className="text-gray-800 text-sm ml-2">
+                    {formatDate(item.ann_start_at)}
+                  </Text>
+                </View>
+              )}
+              {item.ann_end_at && (
+                <View className="flex-row items-center ml-6">
+                  <Clock size={14} className="text-gray-500 mr-2" />
+                  <Text className="text-gray-600 text-xs">End At</Text>
+                  <Text className="text-gray-800 text-sm ml-2">
+                    {formatDate(item.ann_end_at)}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Event Announcement */}
+          {item.ann_type?.toLowerCase() === "event" && (
+            <View className="mb-3">
+              {item.ann_start_at && (
+                <View className="flex-row items-center mb-2">
+                  <Clock size={14} className="text-blue-500 mr-2" />
+                  <Text className="text-gray-700 text-sm font-medium">
+                    Posted On {formatDate(item.ann_start_at)}
+                  </Text>
+                </View>
+              )}
+              {(item.ann_event_start || item.ann_event_end) && (
+                <>
+                  <View className="flex-row items-center mb-2">
+                    <Clock size={16} className="text-gray-500 mr-2" />
+                    <Text className="text-gray-700 text-sm font-medium">
+                      Event Period
+                    </Text>
+                  </View>
+                  {item.ann_event_start && (
+                    <View className="flex-row items-center mb-2 ml-6">
+                      <Clock size={14} className="text-green-500 mr-2" />
+                      <Text className="text-gray-600 text-xs">Start At</Text>
+                      <Text className="text-gray-800 text-sm ml-2">
+                        {formatDate(item.ann_event_start)}
+                      </Text>
+                    </View>
+                  )}
+                  {item.ann_event_end && (
+                    <View className="flex-row items-center ml-6">
+                      <Clock size={14} className="text-red-500 mr-2" />
+                      <Text className="text-gray-600 text-xs">End At</Text>
+                      <Text className="text-gray-800 text-sm ml-2">
+                        {formatDate(item.ann_event_end)}
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+          )}
+
+          {/* Notification Status */}
+          {(item.ann_to_sms || item.ann_to_email) && (
+            <View className="mb-3">
+              <View className="flex-row items-center mb-2">
+                <Bell size={16} className="text-gray-500 mr-2" />
+                <Text className="text-gray-700 text-sm font-medium">
+                  Notification Status
+                </Text>
+              </View>
+              <View className="ml-6 space-y-2">
+                {item.ann_to_sms && (
+                  <View className="flex-row items-center">
+                    <MessageSquare
+                      size={16}
+                      className="text-green-600 mr-2"
+                    />
+                    <Text className="text-gray-600 text-sm">SMS</Text>
+                  </View>
+                )}
+                {item.ann_to_email && (
+                  <View className="flex-row items-center">
+                    <Mail size={16} className="text-blue-600 mr-2" />
+                    <Text className="text-gray-600 text-sm">Email</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Actions */}
+          <View className="flex-row justify-between mt-3 pt-3 border-t border-gray-100">
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: "/(announcement)/announcementview",
+                  params: { ann_id: item.ann_id },
+                })
+              }
+              className="bg-blue-500 px-4 py-2 rounded-lg"
+            >
+              <Text className="text-white text-sm font-medium">View Details</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => deleteAnnouncement(String(item.ann_id))}
+              className="bg-red-500 px-4 py-2 rounded-lg"
+            >
+              <Text className="text-white text-sm font-medium">Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </Card>
+      </View>
+    )
+  )
+
+  // Search + Filter
+  const filteredAnnouncements = announcements.filter((a) => {
+    const matchesSearch =
+      a.ann_title?.toLowerCase().includes(search.toLowerCase()) ||
+      a.ann_details?.toLowerCase().includes(search.toLowerCase())
+
+    let matchesFilter = true
+    if (filter === "general")
+      matchesFilter = a.ann_type?.toLowerCase() === "general"
+    else if (filter === "event")
+      matchesFilter = a.ann_type?.toLowerCase() === "event"
+    else if (filter === "public")
+      matchesFilter = a.ann_type?.toLowerCase() === "public"
+    else if (filter === "email") matchesFilter = a.ann_to_email === true
+    else if (filter === "sms") matchesFilter = a.ann_to_sms === true
+
+    return matchesSearch && matchesFilter
+  })
 
   return (
     <PageLayout
@@ -100,9 +251,9 @@ export default function AnnouncementListPage() {
         <TouchableOpacity
           onPress={() => {
             if (router.canGoBack()) {
-              router.back();
+              router.back()
             } else {
-              router.push('/'); 
+              router.push("/")
             }
           }}
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
@@ -110,12 +261,10 @@ export default function AnnouncementListPage() {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={
-        <Text className="text-gray-900 text-[13px]">Announcements</Text>
-      }
+      headerTitle={<Text className="text-gray-900 text-[13px]">Announcements</Text>}
       rightAction={
         <TouchableOpacity
-          onPress={() => router.push('/(announcement)/announcementcreate')}
+          onPress={() => router.push("/(announcement)/announcementcreate")}
           className="w-10 h-10 rounded-full bg-blue-500 items-center justify-center"
         >
           <Text className="text-white text-xl font-bold">+</Text>
@@ -138,15 +287,35 @@ export default function AnnouncementListPage() {
           </View>
         </Card>
 
+        {/* Search + Filter */}
+        <View className="px-5 mb-4">
+          <TextInput
+            placeholder="Search announcements..."
+            value={search}
+            onChangeText={setSearch}
+            className="bg-white border border-gray-200 rounded-lg px-4 py-2 mb-2"
+          />
+          <View className="bg-white border border-gray-200 rounded-lg">
+            <Picker selectedValue={filter} onValueChange={(v) => setFilter(v)}>
+              <Picker.Item label="All" value="all" />
+              <Picker.Item label="General" value="general" />
+              <Picker.Item label="Event" value="event" />
+              <Picker.Item label="Public" value="public" />
+              <Picker.Item label="Email" value="email" />
+              <Picker.Item label="SMS" value="sms" />
+            </Picker>
+          </View>
+        </View>
+
         {/* List */}
         <View className="flex-1">
           {isLoading && !isRefreshing ? (
             renderLoadingState()
-          ) : announcements.length === 0 ? (
+          ) : filteredAnnouncements.length === 0 ? (
             renderEmptyState()
           ) : (
             <FlatList
-              data={announcements}
+              data={filteredAnnouncements}
               renderItem={({ item, index }) => (
                 <RenderAnnouncementCard item={item} index={index} />
               )}
@@ -156,7 +325,7 @@ export default function AnnouncementListPage() {
                 <RefreshControl
                   refreshing={isRefreshing}
                   onRefresh={handleRefresh}
-                  colors={['#3B82F6']}
+                  colors={["#3B82F6"]}
                 />
               }
               contentContainerStyle={{ paddingBottom: 20 }}
@@ -165,5 +334,5 @@ export default function AnnouncementListPage() {
         </View>
       </View>
     </PageLayout>
-  );
+  )
 }

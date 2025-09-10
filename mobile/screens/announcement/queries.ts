@@ -1,6 +1,10 @@
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "./api";
+import { api } from "@/api/api";
+import {
+  postAnnouncement,
+  postAnnouncementRecipient,
+  postAnnouncementFile,
+} from "./restful-api";
 
 export const useGetAnnouncement = () => {
   return useQuery({
@@ -14,17 +18,16 @@ export const useGetAnnouncement = () => {
   });
 };
 
-
 export const usePostAnnouncement = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (values: Record<string, any>) => {
-      const res = await api.post("announcement/create/", values);
-      return res.data;
-    },
+    mutationFn: (values: Record<string, any>) => postAnnouncement(values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
+    },
+    onError: (err) => {
+      console.error("Error submitting announcement:", err);
     },
   });
 };
@@ -33,26 +36,26 @@ export const usePostAnnouncementRecipient = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (values: any) => {
-      const res = await api.post("announcement/create-recipient/", values);
-      return res.data;
-    },
+    mutationFn: (values: any) => postAnnouncementRecipient(values),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recipients"] });
+      queryClient.invalidateQueries({ queryKey: ["announcement_recipients"] });
+    },
+    onError: (err) => {
+      console.error("Error submitting recipient:", err);
     },
   });
 };
 
-export const usePostAnnouncementFiles = () => {
+export const usePostAnnouncementFile = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (files: any[]) => {
-      const res = await api.post("announcement/upload-files/", files);
-      return res.data;
-    },
+    mutationFn: (files: Record<string, any>[]) => postAnnouncementFile(files),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      queryClient.invalidateQueries({ queryKey: ["announcement_files"] });
+    },
+    onError: (err) => {
+      console.error("Error uploading files:", err);
     },
   });
 };

@@ -1,16 +1,21 @@
 import React from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { useGetAnnouncement} from './queries';
+import { useGetAnnouncement } from './queries';
 import PageLayout from '@/screens/_PageLayout';
+
+function formatDate(dateString?: string | null) {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  return date.toLocaleString();
+}
 
 export default function AnnouncementViewPage() {
   const router = useRouter();
   const { ann_id } = useLocalSearchParams();
 
   const { data: announcements = [] } = useGetAnnouncement();
-
   const announcement = announcements.find((a) => a.ann_id === Number(ann_id));
 
   if (!announcement) {
@@ -34,38 +39,58 @@ export default function AnnouncementViewPage() {
       headerTitle={<Text className="text-gray-900 text-[13px]">Announcement Details</Text>}
     >
       <ScrollView contentContainerStyle={{ padding: 20 }}>
-        {/* Title */}
-        <Text className="text-2xl font-bold text-gray-900 mb-2">{announcement.ann_title}</Text>
-        <Text className="text-base text-gray-600 mb-6">{announcement.ann_details}</Text>
-
-        {/* Type and Schedule */}
+        
+        {/* Basic Information */}
         <View className="bg-white border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">
-          <Text className="text-gray-800 font-semibold mb-2">
-            Type: <Text className="font-bold">{announcement.ann_type?.toUpperCase()}</Text>
-          </Text>
-          <Text className="text-gray-600 mb-1">
-            Start: {announcement.ann_start_at || 'No start date'}
-          </Text>
-          <Text className="text-gray-600">End: {announcement.ann_end_at || 'No end date'}</Text>
+          <Text className="text-lg font-bold text-gray-900 mb-2">Basic Information</Text>
+          <Text className="text-gray-600 mb-1">Title</Text>
+          <Text className="text-gray-900 font-semibold mb-3">{announcement.ann_title}</Text>
+          
+          <Text className="text-gray-600 mb-1">Details</Text>
+          <Text className="text-gray-700 mb-3">{announcement.ann_details}</Text>
+
+          <Text className="text-gray-600 mb-1">Type</Text>
+          <Text className="text-gray-900 font-semibold">{announcement.ann_type}</Text>
         </View>
 
-        {/* Files */}
-        {announcement.files?.length > 0 && (
-          <View className="mb-6">
-            <Text className="text-lg font-bold text-gray-900 mb-4">Attached Files</Text>
-            {announcement.files.map((file: any) => (
-              <Image
-                key={file.af_id}
-                source={{ uri: file.af_url }}
-                style={{
-                  width: '100%',
-                  height: 200,
-                  borderRadius: 12,
-                  marginBottom: 16,
-                  backgroundColor: '#e5e7eb',
-                }}
-                resizeMode="cover"
-              />
+        {/* Schedule */}
+        {(announcement.ann_start_at || announcement.ann_end_at || announcement.ann_event_start || announcement.ann_event_end) && (
+          <View className="bg-white border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">
+            <Text className="text-lg font-bold text-gray-900 mb-3">Schedule</Text>
+            {announcement.ann_start_at && (
+              <Text className="text-gray-700 mb-1">Start: {formatDate(announcement.ann_start_at)}</Text>
+            )}
+            {announcement.ann_end_at && (
+              <Text className="text-gray-700 mb-1">End: {formatDate(announcement.ann_end_at)}</Text>
+            )}
+            {announcement.ann_event_start && (
+              <Text className="text-gray-700 mb-1">Event Start: {formatDate(announcement.ann_event_start)}</Text>
+            )}
+            {announcement.ann_event_end && (
+              <Text className="text-gray-700">Event End: {formatDate(announcement.ann_event_end)}</Text>
+            )}
+          </View>
+        )}
+
+        {/* Delivery Options */}
+        <View className="bg-white border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">
+          <Text className="text-lg font-bold text-gray-900 mb-3">Delivery Options</Text>
+          <Text className="text-gray-700 mb-1">
+            Send via SMS: <Text className="font-bold">{announcement.ann_to_sms ? 'Yes' : 'No'}</Text>
+          </Text>
+          <Text className="text-gray-700">
+            Send via Email: <Text className="font-bold">{announcement.ann_to_email ? 'Yes' : 'No'}</Text>
+          </Text>
+        </View>
+
+        {/* Recipients */}
+        {announcement.recipients?.length > 0 && (
+          <View className="bg-white border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">
+            <Text className="text-lg font-bold text-gray-900 mb-3">Recipients</Text>
+            {announcement.recipients.map((recipient: any) => (
+              <Text key={recipient.ar_id} className="text-gray-700 mb-1">
+                {recipient.ar_category} {recipient.ar_type ? `- ${recipient.ar_type}` : ''}
+              </Text>
             ))}
           </View>
         )}
