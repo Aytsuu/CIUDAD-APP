@@ -42,7 +42,7 @@ export const activeColumns: ColumnDef<BusinessRecord>[] = [
     accessorKey: "bus_date_verified",
     header: "Date Registered",
     cell: ({row}) => (
-      formatDate(row.original.bus_date_verified, "long")
+      formatDate(row.original.bus_date_verified, "long" as any)
     )
   },
   {

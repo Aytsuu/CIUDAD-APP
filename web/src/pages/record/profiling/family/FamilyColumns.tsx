@@ -88,7 +88,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     accessorKey: "fam_date_registered",
     header: "Date Registered",
     cell: ({row}) => (
-      formatDate(row.original.fam_date_registered, "long")
+      formatDate(row.original.fam_date_registered, "long" as any)
     )
   },
   {

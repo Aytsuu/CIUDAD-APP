@@ -211,7 +211,7 @@ export default function HouseholdRecordView() {
                               Date Registered
                             </Label>
                             <p className="text-sm font-medium text-black/80 mt-1">
-                              {formatDate(householdData?.hh_date_registered, "long") || "N/A"}
+                              {formatDate(householdData?.hh_date_registered, "long" as any) || "N/A"}
                             </p>
                           </div>
                         </div>
