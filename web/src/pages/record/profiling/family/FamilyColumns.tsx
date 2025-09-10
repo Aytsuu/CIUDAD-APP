@@ -43,7 +43,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     ),
     cell: ({ row }) => {
       const {showLoading, hideLoading} = useLoading();
-      const { data: residentsFamSpecificList, isLoading } = useResidentsFamSpecificList(row.getValue('fam_id'));
+      const { data: residentsFamSpecificList, isLoading } = useResidentsFamSpecificList(row.original.fam_id);
       const formattedResidents = React.useMemo(() => 
         formatResidents(residentsFamSpecificList)
       , [residentsFamSpecificList])
@@ -59,8 +59,8 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
       return (
         <Combobox
           options={formattedResidents}
-          value={row.getValue('members')}
-          placeholder="Search member"
+          value={row.original.members as any}
+          placeholder={"Search member" as string}
           emptyMessage="No resident found"
           staticVal={true}
           size={400}
