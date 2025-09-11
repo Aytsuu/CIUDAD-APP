@@ -15,7 +15,6 @@ export default function VerifyEmail() {
   const [codeSent, setCodeSent] = useState(false);
   const router = useRouter();
   const { toast } = useToastContext();
-  // const { verifyOtp, sendOtp } = useAuth(); // We'll add these to your AuthContext
 
   const handleSendCode = async () => {
     try {

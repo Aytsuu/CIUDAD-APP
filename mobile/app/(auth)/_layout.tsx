@@ -9,6 +9,8 @@ import { RegistationFormProvider } from "@/contexts/RegistrationFormContext";
 import { ProgressProvider } from "@/contexts/ProgressContext";
 import { RegistrationTypeProvider } from "@/contexts/RegistrationTypeContext";
 import { ToastProvider } from "@/components/ui/toast";
+import React from "react";
+import { KeychainService } from "@/services/keychainService";
 
 type RegistrationForm = z.infer<typeof RegistrationFormSchema>;
 const defaultValues = generateDefaultValues(RegistrationFormSchema)
@@ -19,6 +21,12 @@ export default () => {
     resolver: zodResolver(RegistrationFormSchema),
     defaultValues
   })
+  React.useEffect(() => {
+    (async () => {
+      await KeychainService.removeRefreshToken();
+      console.log("✅ Keychain cleared manually");
+    })();
+  }, []);
 
   return (
       <ProgressProvider>

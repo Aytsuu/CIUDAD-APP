@@ -16,8 +16,8 @@ class Account(AbstractUser):
     rp = models.OneToOneField("profiling.ResidentProfile", on_delete=models.CASCADE,null=True,related_name="account")
     br = models.OneToOneField("profiling.BusinessRespondent",on_delete=models.CASCADE,null=True,related_name="business_account")
 
-    USERNAME_FIELD = 'email' # Use email to log in
-    REQUIRED_FIELDS = [] # Username is still required
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
     
     class Meta:
         db_table = 'account'

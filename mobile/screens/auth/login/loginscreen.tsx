@@ -10,11 +10,11 @@ import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormInput } from "@/components/ui/form/form-input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToastContext } from "@/components/ui/toast";
+import ciudadLogo from "@/assets/images/CIUDADLogo.svg"
 
 export default function Login() {
   const [currentStep, setCurrentStep] = React.useState<number>(1);
   const [loginMethod, setLoginMethod] = React.useState<"phone" | "email">("phone");
-  const [password, setPassword] = React.useState("");
   const {control, getValues} = useRegistrationFormContext();
   const { login, isAuthenticated, user } = useAuth();
   const router = useRouter();
@@ -71,9 +71,8 @@ export default function Login() {
         <View className="w-10 h-10" />
       }
       headerTitle={
-        <Text className="text-gray-900 text-[13px] justify-center">
-          Login
-        </Text>
+        <View>
+        </View>
       }
       rightAction={<View className="w-10 h-10" />}
     >

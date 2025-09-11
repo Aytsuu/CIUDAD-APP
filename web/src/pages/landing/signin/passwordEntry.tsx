@@ -31,7 +31,6 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
     resolver: zodResolver(SignInSchema),
     defaultValues: {
       password: "",
-      // Set the appropriate field based on method
       ...(method === "email" ? { email: contact } : { phone: contact }),
     },
   });
@@ -45,7 +44,6 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
     setErrorMessage("");
 
     try {
-      // Create the credentials object with phone/email and password
       const credentials = {
         password: data.password,
         method,
@@ -57,47 +55,23 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
       toast.success("Successfully signed in!");
       form.reset();
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Password verification error:", error);
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Invalid password. Please try again."
-      );
+      
+      // The error message should now be properly set by the mutation
+      const errorMsg = error?.message || "Invalid password. Please try again.";
+      setErrorMessage(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatContact = (contact: string, method: "phone" | "email") => {
-    if (method === "phone") {
-      // Format phone number for display (e.g., +63 *** *** **45)
-      if (contact.length >= 4) {
-        const lastFour = contact.slice(-4);
-        const hidden = "*".repeat(contact.length - 4);
-        return `${hidden}${lastFour}`;
-      }
-      return contact;
-    } else {
-      // Format email for display (e.g., j***@gmail.com)
-      const [username, domain] = contact.split('@');
-      if (username && domain) {
-        const hiddenPart = username.length > 2 
-          ? username[0] + '*'.repeat(username.length - 2) + username[username.length - 1]
-          : username;
-        return `${hiddenPart}@${domain}`;
-      }
-      return contact;
-    }
-  };
-
   return (
-    <div className="p-6 sm:p-8 space-y-6">
+    <div className="sm:p-8 space-y-6">
       {/* Enhanced Header */}
-      <div className="text-center space-y-4">
 
         {/* Verification Status */}
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+         <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
           <div className="flex items-center justify-center gap-3">
             <CheckCircle className="h-6 w-6 text-green-600" />
             <div className="text-left">
@@ -105,19 +79,18 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
                 {method === "phone" ? "Phone Number Verified" : "Email Address Verified"}
               </p>
               <div className="flex items-center gap-2 mt-1">
-                {method === "phone" ? (
+                {/* {method === "phone" ? (
                   <Phone className="h-4 w-4 text-green-600" />
                 ) : (
                   <Mail className="h-4 w-4 text-green-600" />
-                )}
-                <span className="text-green-700 text-sm font-mono">
+                )} */}
+                {/* <span className="text-green-700 text-sm font-mono">
                   {formatContact(contact, method)}
-                </span>
+                </span> */}
               </div>
             </div>
           </div>
         </div>
-      </div>
 
       {/* Enhanced Password Form */}
       <Form {...form}>
@@ -147,7 +120,6 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
             render={({ field }: { field: ControllerRenderProps<any, any> }) => (
               <FormItem>
                 <FormLabel className="text-gray-700 font-semibold text-base flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
                   Password
                 </FormLabel>
                 <FormControl>
@@ -158,7 +130,7 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
                       placeholder="Enter your password"
                       {...field}
                       disabled={loading}
-                      className="w-full py-4 pl-12 pr-14 rounded-2xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-base"
+                      className="w-full py-4 pl-12 pr-14 rounded-md border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-base"
                     />
                     <Button
                       type="button"
@@ -191,13 +163,12 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
             </Alert>
           )}
 
-          {/* Enhanced Submit Button */}
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white font-semibold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden group"
+            className="w-full font-semibold py-4 rounded-2xl shadow-lg hover:shadow-xl relative overflow-hidden group"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 "></div>
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
@@ -206,15 +177,13 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
             ) : (
               <>
                 <Lock className="mr-3 h-5 w-5" />
-                <span>Complete Sign In</span>
+                <span>Sign In</span>
               </>
             )}
           </Button>
         </form>
       </Form>
 
-
-      {/* Additional Options */}
       <div className="text-center space-y-3">
         <Button
           type="button"
