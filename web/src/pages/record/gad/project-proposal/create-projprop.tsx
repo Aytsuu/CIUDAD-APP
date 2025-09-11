@@ -490,7 +490,7 @@ const onSubmit = async (data: ProjectProposalFormValues) => {
         throw new Error('No proposal ID returned from server');
       }
       
-      const supportDocResult = await addSupportDocMutation.mutateAsync({
+      await addSupportDocMutation.mutateAsync({
         gpr_id: gprId,
         files: newFiles,
       });

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm, ControllerRenderProps } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Lock, Phone, Mail, ArrowLeft, Shield, Sparkles } from "lucide-react";
+import { Lock, Phone, Mail, ArrowLeft, Shield, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import {Form,FormControl,FormField,FormItem,FormLabel,FormMessage} from "@/components/ui/form/form";
@@ -32,7 +32,7 @@ type SignInStep = "method-selection" | "phone-input" | "email-input" | "otp" | "
 
 export default function SignIn() {
   const navigate = useNavigate();
-  const { login, sendEmailOTP } = useAuth();
+  const { sendEmailOTP } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [signInMethod, setSignInMethod] = useState<SignInMethod>("phone");
@@ -117,8 +117,7 @@ export default function SignIn() {
 
     try {
       // Call your email OTP API here
-      const response = await sendEmailOTP(data.email);
-      
+      await sendEmailOTP(data.email);
       setVerificationData({ email: data.email });
       setCurrentStep("otp");
       setIsDialogOpen(true);

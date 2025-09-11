@@ -11,7 +11,7 @@ interface EmailOTPProps {
   onResend: () => void;
 }
 
-export default function EmailOTP({ email, onSuccess, onResend }: EmailOTPProps) {
+export default function EmailOTP({ email, onSuccess }: EmailOTPProps) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -67,7 +67,7 @@ export default function EmailOTP({ email, onSuccess, onResend }: EmailOTPProps) 
     setErrorMessage("");
 
     try {
-      const response = await verifyEmailOTP(
+      await verifyEmailOTP(
         otp,
         email, 
       );

@@ -1,14 +1,14 @@
 
-// import PendingDisplayMedicalConsultation from "@/pages/healthServices/doctor/medical-con/medcon-form";
-// import SoapForm from "@/pages/healthServices/doctor/medical-con/soap-form";
+// // import PendingDisplayMedicalConsultation from "@/pages/healthServices/doctor/medical-con/medcon-form";
+// // import SoapForm from "@/pages/healthServices/doctor/medical-con/soap-form";
 
-import MedicalConsultationFlow from "@/pages/healthServices/doctor/medical-con/multi-step-form/Main";
-export const doctorRouting = [
+// import MedicalConsultationFlow from "@/pages/healthServices/doctor/medical-con/multi-step-form/Main";
+// export const doctorRouting = [
 
 
-{
-  path:"/medical-consultation-flow",
-  element:<MedicalConsultationFlow/>
-}
+// {
+//   path:"/medical-consultation-flow",
+//   element:<MedicalConsultationFlow/>
+// }
 
-];
+// ];

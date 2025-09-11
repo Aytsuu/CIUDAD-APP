@@ -17,7 +17,7 @@ interface PasswordEntryProps {
   onSuccess: () => void;
 }
 
-export default function PasswordEntry({ userId, method, contact, onSuccess }: PasswordEntryProps) {
+export default function PasswordEntry({ method, contact, onSuccess }: PasswordEntryProps) {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");

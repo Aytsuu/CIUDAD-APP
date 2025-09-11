@@ -196,19 +196,19 @@ export const generateOrdinancePDF = async (
 };
 
 export const generateOrdinancePDFAsBlob = async (
-    templateData: TemplateData,
-    ordinanceData: Partial<OrdinanceData>
+    // templateData: TemplateData,
+    // ordinanceData: Partial<OrdinanceData>
 ): Promise<Blob> => {
     const generator = new OrdinancePDFGenerator();
-    const pdf = await generator.generateFromTemplate(templateData, ordinanceData);
+    // const pdf = await generator.generateFromTemplate(templateData, ordinanceData);
     return generator.getPDFAsBlob();
 };
 
 export const generateOrdinancePDFAsDataURL = async (
-    templateData: TemplateData,
-    ordinanceData: Partial<OrdinanceData>
+    // templateData: TemplateData,
+    // ordinanceData: Partial<OrdinanceData>
 ): Promise<string> => {
     const generator = new OrdinancePDFGenerator();
-    const pdf = await generator.generateFromTemplate(templateData, ordinanceData);
+    // const pdf = await generator.generateFromTemplate(templateData, ordinanceData);
     return generator.getPDFAsDataURL();
 }; 

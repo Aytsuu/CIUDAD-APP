@@ -592,7 +592,3 @@ CACHES = {
 #     }
 # }
 
-# # ========================
-# # PAYMONGO
-# # ========================
-# PAYMONGO_SECRET_KEY = config('PAYMONGO_SECRET_KEY')

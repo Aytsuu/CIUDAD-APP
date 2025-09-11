@@ -11,7 +11,7 @@ import FamilyRecordView from "@/pages/record/profiling/family/FamilyRecordView";
 import HouseholdRecordView from "@/pages/record/profiling/household/HouseholdRecordView";
 import BusinessFormLayout from "@/pages/record/profiling/business/BusinessFormLayout";
 import AccountRegistrationLayout from "@/pages/record/account/AccountRegisterLayout";
-import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm";
+// import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm";
 import RegistrationLayout from "@/pages/record/profiling/resident/RegistrationLayout";
 import RequestFamilyReg from "@/pages/record/profiling/resident/RequestFamilyReg";
 import PersonalHistoryView from "@/pages/record/profiling/resident/form/PersonalHistoryView";
@@ -104,7 +104,7 @@ export const profiling_router = [
   },
   {
     path: "profiling/family/family-profile-form",
-    element: <HealthFamilyForm />,
+    // element: <HealthFamilyForm />,
   },
   {
     path: "profiling/family/form/solo",
