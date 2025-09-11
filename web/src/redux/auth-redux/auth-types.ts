@@ -19,14 +19,14 @@ export interface AuthState {
 }
 
 export interface LoginCredentials {
-    email: string;
+    email?: string;
     password: string;
+    phonr?: string;
 }
 
 export interface SignupCredentials {
     email: string;
     password: string;
-    username?: string;
 }
 
 export interface TokenResponse {
