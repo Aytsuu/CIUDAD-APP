@@ -18,15 +18,13 @@ export default function CompleteScanProcess({params} : {params: Record<string, a
   // INITIALIZATION
   const [phase, setPhase] = React.useState<number>(1);
   const [currentStep, setCurrentStep] = React.useState<number>(0);
-  const [requestId, setRequestId] = React.useState<number | null>(null);
-  const [isCompleted, setIsCompleted] = React.useState<boolean>(false); // Temporary bypass 
+  const [isCompleted, setIsCompleted] = React.useState<boolean>(false);
   const { reset } = useRegistrationFormContext();
 
   // HANDLERS
-  const next = (kyc_id: number) => {
+  const next = () => {
     setPhase((prev) => prev + 1);
     setCurrentStep((prev) => prev + 1)
-    setRequestId(kyc_id);
   };
 
   const complete = () => {
@@ -71,7 +69,6 @@ export default function CompleteScanProcess({params} : {params: Record<string, a
       <View className="flex-1">
         <TakeAPhoto
           params={{
-            kyc_id: requestId,
             complete: complete
           }}
         />
@@ -79,7 +76,7 @@ export default function CompleteScanProcess({params} : {params: Record<string, a
           className="absolute right-5 mt-4 w-10 h-10 rounded-full bg-white/20 items-center justify-center"
           accessibilityLabel="Exit registration"
           onPress={() => setCurrentStep(0)}
-        >
+        > 
           <X size={20} className="text-black" />
         </TouchableOpacity>
       </View>
@@ -197,44 +194,6 @@ export default function CompleteScanProcess({params} : {params: Record<string, a
                 isCompleted={isCompleted}
                 isLast={true}
               />
-            </View>
-          </View>
-
-          {/* Tips Section */}
-          <View className="mb-8">
-            <Text className="text-lg font-semibold text-gray-900 mb-4">
-              Tips for Success
-            </Text>
-            <View className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-              <View className="flex-row items-start mb-3">
-                <CreditCard size={20} className="text-blue-600 mr-3 mt-0.5" />
-                <View className="flex-1">
-                  <Text className="text-blue-900 font-medium mb-1">
-                    ID Document Tips:
-                  </Text>
-                  <Text className="text-blue-800 text-sm leading-5">
-                    • Use a government-issued ID (driver's license, passport, etc.){"\n"}
-                    • Place on a flat, well-lit surface{"\n"}
-                    • Avoid shadows and glare{"\n"}
-                    • Ensure all text are visible
-                  </Text>
-                </View>
-              </View>
-              
-              <View className="flex-row items-start">
-                <Camera size={20} className="text-blue-600 mr-3 mt-0.5" />
-                <View className="flex-1">
-                  <Text className="text-blue-900 font-medium mb-1">
-                    Selfie Tips:
-                  </Text>
-                  <Text className="text-blue-800 text-sm leading-5">
-                    • Look directly at the camera{"\n"}
-                    • Remove sunglasses and hats{"\n"}
-                    • Ensure good lighting on your face{"\n"}
-                    • Keep a neutral expression
-                  </Text>
-                </View>
-              </View>
             </View>
           </View>
 

@@ -151,7 +151,7 @@ export default function RequestFamilyReg() {
         <CardHeader className="">
           <CardTitle>
             <p className="text-xl mb-1">Registration Request Overview</p>
-            <p className="text-[15px] font-normal opacity-80">Submitted on {formatDate(registrationData.req_date, "long")}</p>
+            <p className="text-[15px] font-normal opacity-80">Submitted on {formatDate(registrationData.req_date, "long" as any)}</p>
           </CardTitle>
         </CardHeader>
         <CardContent>

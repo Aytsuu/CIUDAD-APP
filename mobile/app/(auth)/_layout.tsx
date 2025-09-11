@@ -39,11 +39,7 @@ export default () => {
               <Stack.Screen name="registration/link/account-registration" options={{ headerShown: false, animation: 'none' }} />
               <Stack.Screen name="registration/individual/information" options={{ headerShown: false, animation: 'none' }} />
               <Stack.Screen name="registration/individual/scan" options={{ headerShown: false, animation: 'none' }} />
-              <Stack.Screen name="registration/individual/account-reg" options={{ headerShown: false, animation: 'none' }} />
-
-              {/* STACKS THAT ARE NOT BEING USED, MIGHT REMOVE THEM LATER. */}
-              <Stack.Screen name="registration/business/respondent-information" options={{ headerShown: false, animation: 'fade' }}/>
-              <Stack.Screen name="registration/business/account-registration" options={{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="registration/individual/account-reg" options={{ headerShown: false, animation: 'none' }} />     
             </Stack>
           </RegistationFormProvider>
         </RegistrationTypeProvider>

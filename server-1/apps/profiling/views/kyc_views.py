@@ -4,13 +4,12 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.core.files.base import ContentFile
 from ..verification import KYCVerificationProcessor
-from ..models import KYCRecord
+from django.core.cache import cache
 
 class KYCDocumentMatchingView(APIView):
   permission_classes = [AllowAny]
   def post(self, request):
     id_image = request.data.get('image', None)
-    kyc_id = request.data.get('kyc_id', None)
     fname = request.data.get('fname', None)
     lname = request.data.get('lname', None)
     mname = request.data.get('mname', None)
@@ -29,11 +28,10 @@ class KYCDocumentMatchingView(APIView):
       processor = KYCVerificationProcessor()
       processed_data = processor.process_kyc_document_matching(
         user_data=data,
-        id_image=imgstr,
-        kyc_id=kyc_id
+        id_image=imgstr
       )
 
-      if 'info_match' in processed_data:
+      if processed_data:
         return Response(data=processed_data,status=status.HTTP_200_OK)
       
     return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -41,22 +39,27 @@ class KYCDocumentMatchingView(APIView):
 class KYCFaceMatchingView(APIView):
   permission_classes = [AllowAny]
   def post(self, request):
-    kyc_id = request.data.get('kyc_id', None)
     face_image = request.data.get('image', None)
-    id_image = KYCRecord.objects.get(kyc_id=kyc_id)
+    fname = request.data.get('fname', None)
+    lname = request.data.get('lname', None)
+    mname = request.data.get('mname', None)
+    dob = request.data.get('dob', None)
 
-    if face_image and id_image:
+    key = f'{lname}{fname}' \
+          f'{mname}' if mname else ''
+
+    if face_image and key:
       face_imgstr = face_image.split(';base64,')[1]
-      id_imgstr = id_image.id_face_embedding
+      id_img = cache.get(key)
+      
+      if face_imgstr:
+        processor = KYCVerificationProcessor()
+        processed_data = processor.process_kyc_face_matching(
+          face_img=face_imgstr,
+          id_img=id_img
+        )
 
-      processor = KYCVerificationProcessor()
-      processed_data = processor.process_kyc_face_matching(
-        face_img=face_imgstr,
-        id_img=id_imgstr,
-        kyc_id=kyc_id
-      )
-
-      if 'match' in processed_data:
-        return Response(data=processed_data,status=status.HTTP_200_OK)
+        if processed_data:
+          return Response(data=processed_data,status=status.HTTP_200_OK)
       
     return Response(status=status.HTTP_400_BAD_REQUEST)

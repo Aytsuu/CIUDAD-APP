@@ -7,10 +7,15 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { X } from "@/lib/icons/X";
 import React from "react";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
+import BusinessRespondent from "./BusinessRespondent";
+import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
 
 export default function IndividualInformation() {
+  // ===================== STATE INITIALIZATION =====================
   const { reset } = useRegistrationFormContext();
+  const { type } = useRegistrationTypeContext();
 
+  // ===================== HANDLERS =====================
   const handleClose = React.useCallback(async () => {
     router.replace("/(auth)");
     reset();
@@ -20,6 +25,7 @@ export default function IndividualInformation() {
     router.push("/registration/individual/scan");
   }
 
+  // ===================== RENDER =====================
   return (
     <PageLayout
       leftAction={
@@ -50,13 +56,21 @@ export default function IndividualInformation() {
       }
     >
       <ScrollView>
-        <PersonalInformation
-          params={{
-            name: "personalInfoSchema",
-            buttonLabel: "Save and Continue",
-            submit: submit
-          }}
-        />
+        {type == "individual" ? (
+          <PersonalInformation
+            params={{
+              name: "personalInfoSchema",
+              buttonLabel: "Save and Continue",
+              submit: submit
+            }}
+          />
+        ) : (
+          <BusinessRespondent
+            params={{
+              submit: submit
+            }}
+          />
+        )}
       </ScrollView>
     </PageLayout>
   )

@@ -43,7 +43,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     ),
     cell: ({ row }) => {
       const {showLoading, hideLoading} = useLoading();
-      const { data: residentsFamSpecificList, isLoading } = useResidentsFamSpecificList(row.getValue('fam_id'));
+      const { data: residentsFamSpecificList, isLoading } = useResidentsFamSpecificList(row.original.fam_id);
       const formattedResidents = React.useMemo(() => 
         formatResidents(residentsFamSpecificList)
       , [residentsFamSpecificList])
@@ -59,7 +59,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
       return (
         <Combobox
           options={formattedResidents}
-          value={row.getValue('members')}
+          value={row.original.members}
           placeholder="Search member"
           emptyMessage="No resident found"
           staticVal={true}
@@ -88,7 +88,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     accessorKey: "fam_date_registered",
     header: "Date Registered",
     cell: ({row}) => (
-      formatDate(row.original.fam_date_registered, "long")
+      formatDate(row.original.fam_date_registered, "short" as any)
     )
   },
   {
@@ -181,7 +181,7 @@ export const familyMembersCol = (
             <Loader2 className="w-5 h-5 animate-spin"/>
           </Button>) : (
           <DropdownLayout
-            trigger={<Button className={buttonStyle}>{role} </Button>}
+            trigger={<Button className={buttonStyle}>{role as string} </Button>}
             options={[
               {id: "mother", name: "Mother"}, 
               {id: "father", name: "Father"},

@@ -1,13 +1,28 @@
 from django.db import models
 from datetime import date
 
-# Create your models here.
+class AdministrationAbstractModel(models.Model):
+    class Meta:
+        abstract = True
+    
+    def save(self, *args, **kwargs):
+        for field in self._meta.fields:
+            if(
+                isinstance(field, (models.CharField, models.TextField))
+                and not field.primary_key
+                and field.editable
+            ):
+                val = getattr(self, field.name)
+                if isinstance(val, str):
+                    setattr(self, field.name, val.upper())
+        super().save(*args, **kwargs)
+
 class Position(models.Model):
     pos_id = models.BigAutoField(primary_key=True)    
     pos_title = models.CharField(max_length=100)
     pos_max = models.IntegerField(default=1)
-    pos_group = models.CharField(max_length=100, null=True, default="NON-GROUPED")
-    pos_category = models.CharField(max_length=100, null=True, default="HEALTH POSITION")
+    pos_group = models.CharField(max_length=100, null=True)
+    pos_category = models.CharField(max_length=100)
     pos_is_predefined = models.BooleanField(default=False)
     staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='positions', null=True)
 
