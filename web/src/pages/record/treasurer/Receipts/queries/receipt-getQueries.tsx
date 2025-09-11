@@ -14,14 +14,14 @@ export type Receipt = {
     inv_payor: string; // Added this field
     inv_change?: string | number;
     nrc_discount_reason?: string | null;
-    // Keep these if you need them separately
+    // Keep these if needed them separately
     payor_lname?: string;
     payor_fname?: string;
 };
   
 export const useInvoiceQuery = () => {
     return useQuery<Receipt[]>({
-        queryKey: ["invoices"], // Changed to simpler key
+        queryKey: ["invoices"],
         queryFn: getInvoice,
         staleTime: 1000 * 60 * 30,
     });
