@@ -338,8 +338,8 @@ function PersonalClearance() {
                                                     requester: `${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`,
                                                     pay_status: row.original.cr_req_payment_status,
                                                     nat_col: "Certificate",
-                                                    // Show receipt collection flow (amount paid + change)
-                                                    is_resident: false,
+                                                    // Paid resident without voter_id should still be treated as resident
+                                                    is_resident: true,
                                                     voter_id: (row.original as any)?.resident_details?.voter_id ?? null
                                                 });
                                                 setIsDiscountModalOpen(false);

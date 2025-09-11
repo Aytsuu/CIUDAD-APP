@@ -44,8 +44,10 @@ function ReceiptForm({
     const { mutate: acceptNonResReq, isPending: isAcceptNonResPending} = useAcceptNonResRequest()
 
    console.log('stat', pay_status, 'staffId', staffId)
-   console.log('DEBUG voter_id value:', voter_id, 'type:', typeof voter_id, 'is_resident:', is_resident)
-   const isFree = Boolean(is_resident && voter_id !== null && voter_id !== undefined);
+   // Derive resident status defensively: certificate flow (nat_col === 'Certificate') with null voter_id should be resident (paid)
+   const effectiveIsResident = Boolean(is_resident || (nat_col === 'Certificate' && voter_id === null));
+   console.log('DEBUG voter_id value:', voter_id, 'type:', typeof voter_id, 'is_resident (prop):', is_resident, 'effectiveIsResident:', effectiveIsResident)
+   const isFree = Boolean(effectiveIsResident && voter_id !== null && voter_id !== undefined);
     const ReceiptSchema = useMemo(() => {
         return createReceiptSchema(discountedAmount || rate);
     }, [discountedAmount, rate]);
@@ -54,22 +56,41 @@ function ReceiptForm({
     const form = useForm<z.infer<typeof ReceiptSchema>>({
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
-            inv_serial_num: is_resident ? "N/A" : "", 
-            inv_amount: is_resident ? (isFree ? "0" : "150") : "",
+            inv_serial_num: effectiveIsResident ? "N/A" : "", 
+            inv_amount: effectiveIsResident ? (isFree ? "0" : (rate || "0")) : "",
             inv_nat_of_collection: nat_col,
             id: id.toString(), 
+            cr_id: effectiveIsResident ? id.toString() : undefined,
+            nrc_id: !effectiveIsResident ? id.toString() : undefined,
         }
     });
 
     const onSubmit = async () => {
         
         try {
-            if (is_resident){
+            console.log('[Receipt onSubmit] context:', { id, is_resident, effectiveIsResident, voter_id, isFree, nat_col, staffId, purpose, rate });
+            if (effectiveIsResident){
+                console.log('[Receipt onSubmit] calling acceptReq (resident) with cr_id:', id);
                 await acceptReq(id)
             } else {
                 // For non-resident requests, use the acceptNonResReq mutation
+                console.log('[Receipt onSubmit] calling acceptNonResReq (non-resident) with nrc_id:', id, 'discountReason:', discountReason);
                 await acceptNonResReq({nrc_id: id, discountReason: discountReason})
             }
+            // Create invoice after status update
+            const values = form.getValues();
+            const payload: any = {
+                inv_date: new Date().toISOString(),
+                inv_amount: parseFloat(values.inv_amount || (discountedAmount || rate || '0')),
+                inv_nat_of_collection: values.inv_nat_of_collection,
+                inv_serial_num: values.inv_serial_num || 'N/A',
+                cr_id: effectiveIsResident ? id.toString() : undefined,
+                nrc_id: !effectiveIsResident ? Number(id) : undefined,
+            };
+            Object.keys(payload).forEach((k) => (payload[k] === undefined || payload[k] === '') && delete payload[k]);
+            console.log('[Receipt onSubmit] creating invoice with payload:', payload);
+            await receipt(payload as any);
+
             console.log('Receipt mutation called successfully');
         } catch (error) {
             console.error('Error in onSubmit:', error);

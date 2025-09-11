@@ -44,14 +44,22 @@ export const addReceipt = async (data: Record<string, any>) => {
                 console.error('Error status:', updateError.response?.status);
                 // Continue with receipt creation even if status update fails
             }
-        } else if (data.nrc_id && data.nrc_id.trim() !== "") {
-            // Update personal request status (existing logic)
-            const updateStatus = await api.put(`/clerk/update-personal-req-status/${data.nrc_id}/`, {
+        } else if (data.nrc_id && String(data.nrc_id).trim() !== "") {
+            // Update non-resident request status
+            const updateStatus = await api.put(`/clerk/update-personal-req-status/${Number(data.nrc_id)}/`, {
                 nrc_req_status: "In Progress",
                 nrc_req_payment_status: "Paid",
                 nrc_pay_date: new Date().toISOString()
             });
-            console.log('Personal request status updated:', updateStatus.data);
+            console.log('Non-resident personal request status updated:', updateStatus.data);
+        } else if (data.cr_id && String(data.cr_id).trim() !== "") {
+            // Update resident certificate status
+            const updateStatus = await api.put(`/clerk/certificate-update-status/${data.cr_id}/`, {
+                cr_req_status: "In Progress",
+                cr_req_payment_status: "Paid",
+                cr_pay_date: new Date().toISOString()
+            });
+            console.log('Resident certificate status updated:', updateStatus.data);
         } else {
             console.warn('No valid ID provided for status update - skipping status update');
         }   
@@ -63,19 +71,20 @@ export const addReceipt = async (data: Record<string, any>) => {
 
 export const addPersonalReceipt = async (data: Record<string, any>) => {
     try{
-        const updateStatus = await api.put(`/clerk/update-personal-req-status/${data.id}/`, {
+        const updateStatus = await api.put(`/clerk/update-personal-req-status/${Number(data.id)}/`, {
             nrc_req_status: "In Progress",
             nrc_req_payment_status: "Paid",
             nrc_pay_date: new Date().toISOString()
         })
 
-        const payload = {
+        const payload: any = {
                     inv_date: new Date().toISOString(),
                     inv_amount: parseFloat(data.inv_amount),
                     inv_nat_of_collection: data.inv_nat_of_collection,
                     inv_serial_num: data.inv_serial_num,
-                    nrc_id: data.nrc_id || null, // Make optional for business clearance
-                    bpr_id: data.bpr_id || null, // Add business permit request ID
+                    nrc_id: data.nrc_id ? Number(data.nrc_id) : null,
+                    bpr_id: data.bpr_id ? Number(data.bpr_id) : null,
+                    cr_id: data.cr_id ? String(data.cr_id) : null,
                 };
                 
                 console.log('API Payload:', payload);
