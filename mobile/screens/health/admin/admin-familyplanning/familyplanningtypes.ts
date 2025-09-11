@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 
 export type PatientInfo = {
   pat_id: string;
@@ -186,6 +187,7 @@ export type Acknowledgement = {
 
 // Comprehensive Family Planning Record Detail
 export type FamilyPlanningRecordDetail = {
+  fprecord: ReactNode;
   fprecord_id: number;
   client_id?: string;
   fourps: boolean;

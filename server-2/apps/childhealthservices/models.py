@@ -120,10 +120,16 @@ class NutritionalStatus(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     edemaSeverity= models.CharField(max_length=100, default="None")  # Edema severity
     muac_status = models.CharField(max_length=100, blank=True, null=True)  # Status of MUAC
+    remarks = models.TextField(blank=True, null=True)  # Additional remarks
+    is_opt = models.BooleanField(default=False)  # Indicates if the vital sign is optional
+
+    
     bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_histories')
     # chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chhist_id')
     # chvital=models.ForeignKey(ChildHealthVitalSigns, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chvital_id')
     pat = models.ForeignKey(Patient,on_delete=models.CASCADE, related_name='child_health_histories' )
+   
+  
     class Meta:
         db_table = 'nutritional_status'
         

@@ -386,11 +386,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-<<<<<<< HEAD
-import { useInvoiceQuery, type Receipt } from "./queries/receipt-getQueries";
-=======
 import { useInvoiceQuery, Receipt } from "../queries/receipt-getQueries";
->>>>>>> frontend/feature/maternal-services
 
 function ReceiptPage() {
   const { data: fetchedData = [], isLoading } = useInvoiceQuery();

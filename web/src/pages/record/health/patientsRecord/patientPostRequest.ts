@@ -1,5 +1,5 @@
-import type { PatientRecordFormValues } from "@/pages/record/health/patientsRecord/patients-record-schema"
 import { showErrorToast } from "@/components/ui/toast";
+import type { PatientRecordFormValues } from "@/pages/record/health/patientsRecord/patients-record-schema"
 
 export const personal = async (data: PatientRecordFormValues) => {
   try {

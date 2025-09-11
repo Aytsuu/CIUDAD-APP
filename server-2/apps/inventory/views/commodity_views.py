@@ -537,9 +537,9 @@ class CommodityArchiveInventoryView(APIView):
             staff=None  # None for system action
         )
 
-# ===========================TRANSACTION ==========================================
 
-class CommodityTransactionView(APIView):
+# ===========================TRANSACTION ==========================================
+class CommodityTransactionTableView(APIView):
     pagination_class = StandardResultsPagination
     
     def get(self, request):
@@ -619,6 +619,8 @@ class CommodityTransactionView(APIView):
                 'success': False,
                 'error': f'Error fetching commodity transactions: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 # ===========================COMMODITY ARCHIVED TABLE==============================
 class ArchivedCommodityTable(APIView):

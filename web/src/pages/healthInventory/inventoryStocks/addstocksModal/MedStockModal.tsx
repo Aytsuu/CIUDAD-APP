@@ -32,9 +32,9 @@ export default function AddMedicineStock() {
       qty: undefined,
       unit: "boxes",
       pcs: undefined,
-      expiry_date:"",
-      staff:staff,
-      inv_type:"Medicine"
+      expiry_date: "",
+      staff: staff,
+      inv_type: "Medicine"
     }
   });
 
@@ -74,17 +74,14 @@ export default function AddMedicineStock() {
                 <Combobox
                   options={medicineOptions?.formatted || []}
                   value={
-                    // Find the formatted option that matches the stored medicineID
-                    medicineOptions?.formatted?.find((option: any) => 
-                      option.id.startsWith(form.watch("medicineID") + ',')
-                    )?.id || ''
+                    medicineOptions?.formatted?.find(
+                      (option: any) => option.id.startsWith(form.watch("medicineID") + ",") // Note: comma instead of ','
+                    )?.id || ""
                   }
                   onChange={(value) => {
-                    // Extract only the medicineID from the concatenated value
-                    const medId = value.split(',')[0]; // Get the first part before the comma
-                    form.setValue("medicineID", medId);
-                    
-                    // Update category when medicine is selected
+                    const medId = (value ?? "").split(",")[0]; // Make sure this matches your data format
+                    form.setValue("medicineID", medId || "");
+
                     const selectedMedicine = medicineOptions?.default.find((med: any) => med.med_id === medId);
                     if (selectedMedicine) {
                       form.setValue("category", selectedMedicine.catlist || "");
@@ -100,10 +97,7 @@ export default function AddMedicineStock() {
             <FormInput control={form.control} name="category" label="Category" readOnly />
 
             <FormDateTimeInput control={form.control} name="expiry_date" label="Expiry Date" type="date" />
-
           </div>
-
-         
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <FormInput control={form.control} name="dosage" label="Dosage" placeholder="Dsg" type="number" />

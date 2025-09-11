@@ -37,15 +37,14 @@ class PerAddressesBaseSerializer(serializers.ModelSerializer):
     fields = "__all__"
 
 class PerAddressListSerializer(serializers.ModelSerializer):
-  sitio = serializers.SerializerMethodField()
+  add_sitio = serializers.SerializerMethodField()
   add_street = serializers.CharField(source="add.add_street")
-  add_id = serializers.IntegerField(source='add.add_id')
 
   class Meta: 
     model = PersonalAddress
-    fields = ['per', 'add_id', 'sitio', "add_street"]
+    fields = ['per', 'add', 'add_sitio', "add_street"]
 
-  def get_sitio(self, obj):
+  def get_add_sitio(self, obj):
     if obj.add.sitio:
       return obj.add.sitio.sitio_name
     return ''

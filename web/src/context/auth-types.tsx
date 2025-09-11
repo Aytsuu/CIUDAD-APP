@@ -17,6 +17,7 @@ export interface User {
   profile_image?: string | null;
   resident?: Record<string, any>;
   staff?: Record<string, any>;
+  department?: string;
 }
 
 export interface AuthContextType {
@@ -32,6 +33,7 @@ export interface AuthContextType {
     username?: string
   ) => Promise<{ requiresConfirmation?: boolean }>;
   refreshSession: () => Promise<void>;
+  clearError: () => void;
 
   sendEmailOTP: (email: string) => Promise<any>;
   verifyEmailOTPAndLogin: (otp: string, email: string) => Promise<User>;

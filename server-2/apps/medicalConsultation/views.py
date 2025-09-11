@@ -227,7 +227,7 @@ class CreateMedicalConsultationView(APIView):
             ) 
 
 
-# SOAP FORM
+# ========MEDICAL CONSULTATION END SOAP FORM
 class SoapFormSubmissionView(APIView):
     @transaction.atomic
     def post(self, request):
@@ -237,10 +237,8 @@ class SoapFormSubmissionView(APIView):
             medrec_id = data.get('medrec_id') or None
             patrec_id = data.get('patrec_id') or None
 
-            print("👉 Raw request data:", request.data)
-            print("👉 Parsed IDs:", {"staff_id": staff_id, "medrec_id": medrec_id, "patrec_id": patrec_id})
-
-            # ✅ only enforce medrec_id and patrec_id as required
+            
+            #  only enforce medrec_id and patrec_id as required
             if not all([medrec_id, patrec_id]):
                 raise ValidationError("Missing required fields: medrec_id and patrec_id")
 

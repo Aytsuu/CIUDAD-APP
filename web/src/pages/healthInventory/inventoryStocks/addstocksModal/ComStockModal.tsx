@@ -83,7 +83,7 @@ export default function AddCommodityStock() {
                   options={commodityOptions?.formatted || []}
                   value={commodityOptions?.formatted?.find((option: any) => option.id.startsWith(form.watch("com_id") + ","))?.id || ""}
                   onChange={(value) => {
-                    const comId = value.split(",")[0]; // Get the first part before the comma
+                    const comId = (value ?? "").split(",")[0]; // Get the first part before the comma
                     form.setValue("com_id", comId);
 
                     // Update user_type when commodity is selected

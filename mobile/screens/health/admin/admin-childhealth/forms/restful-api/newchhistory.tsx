@@ -14,7 +14,6 @@ import { updateSupplementStatus,updateCHHistory } from "./updateAPI";
 import { processMedicineRequest } from "./createAPI";
 import { AddRecordArgs } from "../muti-step-form/types";
 import { useQueryClient } from "@tanstack/react-query";
-import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
 
 export async function updateChildHealthRecord({
   submittedData,
@@ -462,33 +461,33 @@ export async function updateChildHealthRecord({
 
 
 
-// src/hooks/useChildHealthRecordMutation.ts
-import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+// // src/hooks/useChildHealthRecordMutation.ts
+// import { useMutation } from "@tanstack/react-query";
+// import { useNavigate } from "react-router-dom";
+// import { toast } from "sonner";
 
-export const useUpdateChildHealthRecordMutation = () => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+// export const useUpdateChildHealthRecordMutation = () => {
+//   const navigate = useNavigate();
+//   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: updateChildHealthRecord,
-    onSuccess: (data) => {
-      const { chrec_id } = data;
-      console.log("Child health record updated successfully result :", data);
-      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
-      queryClient.invalidateQueries({queryKey: ["childHealthHistory", chrec_id],
-      });
-      toast.success("Child health record created successfully!");
-      navigate(-1);
-    },
-    onError: (error: unknown) => {
-      console.error("Failed to update child health record:", error);
-      toast.error(
-        `Operation Failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-    },
-  });
-};
+//   return useMutation({
+//     mutationFn: updateChildHealthRecord,
+//     onSuccess: (data) => {
+//       const { chrec_id } = data;
+//       console.log("Child health record updated successfully result :", data);
+//       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+//       queryClient.invalidateQueries({queryKey: ["childHealthHistory", chrec_id],
+//       });
+//       toast.success("Child health record created successfully!");
+//       navigate(-1);
+//     },
+//     onError: (error: unknown) => {
+//       console.error("Failed to update child health record:", error);
+//       toast.error(
+//         `Operation Failed: ${
+//           error instanceof Error ? error.message : "Unknown error"
+//         }`
+//       );
+//     },
+//   });
+// };

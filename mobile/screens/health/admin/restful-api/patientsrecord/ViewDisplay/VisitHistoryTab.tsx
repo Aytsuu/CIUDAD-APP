@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import CardLayout from "@/components/ui/card/card-layout";
 import { format } from "date-fns";
 import { CheckCircle, Clock } from "lucide-react";
+import React from "react";
 
 interface VisitHistoryTabProps {
   completedData: any;

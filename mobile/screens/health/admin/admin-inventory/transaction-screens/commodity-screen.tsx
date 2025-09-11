@@ -5,29 +5,34 @@ import type { CommodityRecords, ApiItemWithStaff } from "../types"; // Adjust pa
 import { SearchInput } from "@/components/ui/search-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCommodityTransactions } from "../restful-api/transaction/fetchqueries";
+import { formatDate } from "@/helpers/dateHelpers";
 
 export default function CommodityListScreen() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
 
-  const { data: commodities, isLoading: isLoadingCommodities } = useCommodityTransactions();
+  const { data: commodities, isLoading: isLoadingCommodities } = useCommodityTransactions(
+    currentPage,
+    pageSize,
+    searchQuery
+  );
 
   const formatCommodityData = React.useCallback((): CommodityRecords[] => {
     if (!commodities) return [];
-    return commodities.map((commodity: ApiItemWithStaff) => {
+    return commodities.results.map((commodity: ApiItemWithStaff) => {
       const staffFirstName = commodity.staff_detail?.rp?.per?.per_fname || "";
       const staffLastName = commodity.staff_detail?.rp?.per?.per_lname || "";
       const staffFullName = `${staffFirstName} ${staffLastName}`.trim();
 
       return {
-        inv_id: commodity?.cinv_detail?.inv_detail?.inv_id,
+        // inv_id: commodity?.cinv_detail?.inv_detail?.inv_id,
         comt_id: commodity.comt_id,
         com_name: commodity.com_name,
         comt_qty: commodity.comt_qty,
         comt_action: commodity.comt_action,
         staff: staffFullName || String(commodity.staff),
-        created_at: commodity.created_at,
+        created_at: formatDate(commodity.created_at),
       } as CommodityRecords;
     });
   }, [commodities]);

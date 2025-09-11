@@ -49,7 +49,8 @@ class Transient(models.Model):
     father_mname = models.CharField(max_length=100, null=True, blank=True)
     father_age = models.CharField(max_length=100, null=True, blank=True)
     father_dob = models.DateField(null=True, blank=True)
-    philhealth_id = models.CharField(max_length=100, null=True, blank=True)
+
+
 
     class Meta:
         db_table = 'transient'
@@ -199,13 +200,12 @@ class FollowUpVisit(models.Model):
 
 class Spouse(models.Model):
     spouse_id = models.BigAutoField(primary_key=True)
-    spouse_type = models.CharField(max_length=10, default= "",null=True, blank=True)
-    spouse_lname = models.CharField(max_length=50, default="",null=True, blank=True)
-    spouse_fname = models.CharField(max_length=50, default="",null=True, blank=True)
-    spouse_mname = models.CharField(max_length=50, default="",null=True, blank=True)
-    # spouse_occupation = models.CharField(max_length=50, default="")
-    spouse_occupation = models.CharField(max_length=50, default="", null=True, blank=True)
-    spouse_dob = models.DateField(null=True, blank=True)
+    spouse_type = models.CharField(max_length=10)
+    spouse_lname = models.CharField(max_length=50, default="")
+    spouse_fname = models.CharField(max_length=50, default="")
+    spouse_mname = models.CharField(max_length=50, default="")
+    spouse_occupation = models.CharField(max_length=50)
+    spouse_dob = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     # updated_at = models.DateTimeField(auto_now=True)
     class Meta:
@@ -268,7 +268,7 @@ class MedicalHistory(models.Model):
 class Diagnosis(models.Model):
     diag_id = models.BigAutoField(primary_key=True)
     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='diagnosis', null=True,db_column='find_id')
-    ill =models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='diagnosis', null=True,db_column='medhist_id')
+    medhist =models.ForeignKey(MedicalHistory, on_delete=models.CASCADE, related_name='diagnosis', null=True,db_column='medhist_id')
     class Meta:
         db_table = 'diagnosis'   
      
@@ -352,19 +352,3 @@ class PatientDisablity(models.Model):
 
     class Meta:
         db_table = 'patient_disability_history'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

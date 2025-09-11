@@ -76,21 +76,6 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
         return Response({"detail": "Bulk create successful", "count": len(instances)},
             status=status.HTTP_201_CREATED
         )
-    
-class FamilyMemberDeleteView(generics.DestroyAPIView):
-    serializer_class = FamilyCompositionBaseSerializer
-    queryset = FamilyComposition.objects.all()
-
-    def delete(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-        
-    def get_object(self):
-        fam = self.kwargs.get('fam')
-        rp = self.kwargs.get('rp')
-        obj = get_object_or_404(FamilyComposition, fam=fam, rp=rp)
-        return obj
 
 class FamilyRoleUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = FamilyCompositionBaseSerializer
@@ -110,14 +95,4 @@ class FamilyRoleUpdateView(generics.RetrieveUpdateAPIView):
         obj = get_object_or_404(FamilyComposition, fam=fam, rp=rp)
         return obj
 
-class RespondentsInfoCreateView(generics.CreateAPIView):
-    queryset = RespondentsInfo.objects.all()
-    serializer_class = RespondentsInfoSerializer
-
-class MotherHealthInfoView(generics.CreateAPIView, generics.RetrieveUpdateAPIView):
-    queryset = MotherHealthInfo.objects.all()
-    serializer_class = MotherHealthInfoSerializer
-
-class MotherHealthInfoListView(generics.ListCreateAPIView):
-    queryset = MotherHealthInfo.objects.all()
-    serializer_class = MotherHealthInfoSerializer
+    

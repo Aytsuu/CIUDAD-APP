@@ -1,13 +1,13 @@
-// src/screens/InventoryTransactionMainScreen.tsx
+
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // For persistence
 import { Pill, Syringe, Package, HeartPulse, ArrowLeft, ChevronLeft } from "lucide-react-native"; // Using lucide-react-native for icons
+import { router } from "expo-router";
 import AntigenListScreen from "./transaction-screens/antigen-screen";
 import CommodityListScreen from "./transaction-screens/commodity-screen";
 import FirstAidListScreen from "./transaction-screens/firstaid-screen";
 import MedicineListScreen from "./transaction-screens/medicine-screen";
-import { router } from "expo-router";
 
 export default function InventoryTransactionMainScreen() {
   // Retrieve the selected view from local storage, default to "medicine"

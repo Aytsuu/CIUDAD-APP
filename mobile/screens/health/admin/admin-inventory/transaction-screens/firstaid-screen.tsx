@@ -12,17 +12,17 @@ export default function FirstAidListScreen() {
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
 
-  const { data: firstAidData, isLoading: isLoadingFirstAid } = useFirstAidTransactions();
+  const { data: firstAidData, isLoading: isLoadingFirstAid } = useFirstAidTransactions(currentPage,pageSize,searchQuery);
 
   const formatFirstAidData = React.useCallback((): FirstAidRecords[] => {
     if (!firstAidData) return [];
-    return firstAidData.map((firstAid: ApiItemWithStaff) => {
+    return firstAidData.results.map((firstAid: ApiItemWithStaff) => {
       const staffFirstName = firstAid.staff_detail?.rp?.per?.per_fname || "";
       const staffLastName = firstAid.staff_detail?.rp?.per?.per_lname || "";
       const staffFullName = `${staffFirstName} ${staffLastName}`.trim();
 
       return {
-        inv_id: firstAid.finv_details?.inv_detail?.inv_id,
+        // inv_id: firstAid.finv_details?.inv_detail?.inv_id,
         fat_id: firstAid.fat_id,
         fa_name: firstAid.fa_name,
         fdt_qty: firstAid.fat_qty,
@@ -88,7 +88,7 @@ export default function FirstAidListScreen() {
           {item.fa_name}
         </Text>
         <View className="bg-blue-100 px-2 py-1 rounded-full">
-          <Text className="text-blue-700 text-xs font-medium">ID: {item.inv_id}</Text>
+          <Text className="text-blue-700 text-xs font-medium">ID: {item.fat_id}</Text>
         </View>
       </View>
 

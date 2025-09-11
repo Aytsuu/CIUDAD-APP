@@ -45,7 +45,7 @@ export default function ViewPatientRecord() {
   const { patientId } = location.state || {}
 
   const { data: patientsData, error, isError } = usePatientDetails(patientId ?? "")
-  const { data: rawChildHealthRecords } = useChildHealthRecords(patientId);
+  const { data: rawChildHealthRecords, isLoading: isLoadingChildHealthRecords } = useChildHealthRecords(patientId);
   const { data: medicineCountData } = useMedicineCount(patientId ?? "")
   const medicineCount = medicineCountData?.medicinerecord_count
   const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")

@@ -29,13 +29,9 @@ import { signInSchema } from "@/form-schema/signin-schema";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
 import { RootState, AppDispatch } from "@/redux";
 import { login, clearError, sendOtp } from "@/redux/authSlice";
-<<<<<<< HEAD
-
-=======
->>>>>>> frontend/feature/maternal-services
 import CiudadLogo from "@/assets/images/CIUDADLogo.svg";
 
-type SignInForm = z.infer<typeof signInSchema>;
+// import CiudadLogo from "@/assets/images/CIUDADLogo.svg";
 
 const SignupOptionsMemo = memo(SignupOptions);
 

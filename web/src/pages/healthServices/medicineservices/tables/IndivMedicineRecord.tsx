@@ -48,30 +48,12 @@ export default function IndivMedicineRecords() {
     }
   }, [location.state]);
 
-<<<<<<< HEAD
-  // Fetch medicine records
-  const {
-    data: medicineRecords,
-    isLoading,
-  } = useQuery({
-    queryKey: ["patientMedicineDetails", patientData.pat_id],
-    queryFn: async () => {
-      const response = await api2.get(
-        `/medicine/indiv-medicine-record/${patientData.pat_id}/`
-      );
-      return response.data;
-    },
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-=======
   // Debounce search query
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchQuery);
       setCurrentPage(1); // Reset to first page when search changes
     }, 500);
->>>>>>> frontend/feature/maternal-services
 
     return () => {
       clearTimeout(handler);

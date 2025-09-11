@@ -1,71 +1,60 @@
-"use client"
+"use client";
 
-import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, Loader2, TrendingUp } from "lucide-react"
-import { Button } from "@/components/ui/button/button"
-import { format, parseISO } from "date-fns"
-import { useState } from "react"
+import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, Loader2, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button/button";
+import { format, parseISO } from "date-fns";
+import { useState } from "react";
 
 interface NutritionalStatusData {
-  nutstat_id: number
-  bm_details: {
-    bm_id: number
-    height: string
-    weight: string
-    created_at: string
-    patrec: number
-    staff: null
-  }
-  wfa: string
-  lhfa: string
-  wfl: string
-  muac: string
-  created_at: string
-  edemaSeverity: string
-  muac_status: string
-  bm: number
-  pat: string
+  bm_id: number;
+  height: string;
+  weight: string;
+  patrec: number;
+  staff: null;
+
+  wfa: string;
+  lhfa: string;
+  wfl: string;
+  muac: string;
+  created_at: string;
+  edemaSeverity: string;
+  muac_status: string;
+  bm: number;
+  pat: string;
 }
 
 interface GrowthChartProps {
-  data: NutritionalStatusData[]
-  isLoading?: boolean
-  error?: any
+  data: NutritionalStatusData[];
+  isLoading?: boolean;
+  error?: any;
 }
 
 export function GrowthChart({ data = [], isLoading, error }: GrowthChartProps) {
   const [selectedMetrics, setSelectedMetrics] = useState({
     height: true,
-    weight: true,
-  })
+    weight: true
+  });
 
   // Transform data for the chart
   const chartData = data
     .map((item) => ({
       date: format(parseISO(item.created_at), "MMM dd"),
       fullDate: item.created_at,
-      height: Number.parseFloat(item.bm_details.height),
-      weight: Number.parseFloat(item.bm_details.weight),
+      height: Number.parseFloat(item.height),
+      weight: Number.parseFloat(item.weight),
       wfa: item.wfa,
       lhfa: item.lhfa,
       wfl: item.wfl,
-      edemaSeverity: item.edemaSeverity,
+      edemaSeverity: item.edemaSeverity
     }))
-    .sort((a, b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime())
+    .sort((a, b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime());
 
-  const CustomTooltip = ({
-    active,
-    payload,
-    label,
-  }: {
-    active?: boolean
-    payload?: any[]
-    label?: string
-  }) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload
+      const data = payload[0].payload;
       return (
         <div className="bg-white p-4 shadow-md rounded-md border border-gray-200">
           <p className="font-semibold mb-2">{label}</p>
@@ -86,17 +75,17 @@ export function GrowthChart({ data = [], isLoading, error }: GrowthChartProps) {
             {data.edemaSeverity !== "None" && <p className="text-xs text-orange-600">Edema: {data.edemaSeverity}</p>}
           </div>
         </div>
-      )
+      );
     }
-    return null
-  }
+    return null;
+  };
 
   const toggleMetric = (metric: "height" | "weight") => {
     setSelectedMetrics((prev) => ({
       ...prev,
-      [metric]: !prev[metric],
-    }))
-  }
+      [metric]: !prev[metric]
+    }));
+  };
 
   if (error) {
     return (
@@ -114,7 +103,7 @@ export function GrowthChart({ data = [], isLoading, error }: GrowthChartProps) {
           </Alert>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -128,21 +117,11 @@ export function GrowthChart({ data = [], isLoading, error }: GrowthChartProps) {
       <CardContent className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 mt-4">
-            <Button
-              variant={selectedMetrics.height ? "default" : "outline"}
-              size="sm"
-              onClick={() => toggleMetric("height")}
-              className="flex items-center gap-2 bg-sky-100 text-blue-600 hover:bg-slate-200"
-            >
+            <Button variant={selectedMetrics.height ? "default" : "outline"} size="sm" onClick={() => toggleMetric("height")} className="flex items-center gap-2 bg-sky-100 text-blue-600 hover:bg-slate-200">
               <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
               Height (cm)
             </Button>
-            <Button
-              variant={selectedMetrics.weight ? "default" : "outline"}
-              size="sm"
-              onClick={() => toggleMetric("weight")}
-              className="flex items-center gap-2"
-            >
+            <Button variant={selectedMetrics.weight ? "default" : "outline"} size="sm" onClick={() => toggleMetric("weight")} className="flex items-center gap-2">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               Weight (kg)
             </Button>
@@ -166,48 +145,14 @@ export function GrowthChart({ data = [], isLoading, error }: GrowthChartProps) {
               <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#666" />
-                <YAxis
-                  yAxisId="left"
-                  orientation="left"
-                  tick={{ fontSize: 12 }}
-                  stroke="#666"
-                  label={{ value: "Height (cm)", angle: -90, position: "insideLeft" }}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  tick={{ fontSize: 12 }}
-                  stroke="#666"
-                  label={{ value: "Weight (kg)", angle: 90, position: "insideRight" }}
-                />
+                <YAxis yAxisId="left" orientation="left" tick={{ fontSize: 12 }} stroke="#666" label={{ value: "Height (cm)", angle: -90, position: "insideLeft" }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} stroke="#666" label={{ value: "Weight (kg)", angle: 90, position: "insideRight" }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
 
-                {selectedMetrics.height && (
-                  <Line
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="height"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: "#3b82f6", strokeWidth: 2 }}
-                    name="Height (cm)"
-                  />
-                )}
+                {selectedMetrics.height && <Line yAxisId="left" type="monotone" dataKey="height" stroke="#3b82f6" strokeWidth={2} dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }} activeDot={{ r: 6, stroke: "#3b82f6", strokeWidth: 2 }} name="Height (cm)" />}
 
-                {selectedMetrics.weight && (
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="weight"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: "#10b981", strokeWidth: 2 }}
-                    name="Weight (kg)"
-                  />
-                )}
+                {selectedMetrics.weight && <Line yAxisId="right" type="monotone" dataKey="weight" stroke="#10b981" strokeWidth={2} dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }} activeDot={{ r: 6, stroke: "#10b981", strokeWidth: 2 }} name="Weight (kg)" />}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -225,15 +170,11 @@ export function GrowthChart({ data = [], isLoading, error }: GrowthChartProps) {
             </div>
             <div className="text-center">
               <p className="text-sm text-gray-500">Growth Period</p>
-              <p className="text-lg font-semibold text-gray-700">
-                {chartData.length > 1
-                  ? `${format(parseISO(chartData[0].fullDate), "MMM yyyy")} - ${format(parseISO(chartData[chartData.length - 1].fullDate), "MMM yyyy")}`
-                  : format(parseISO(chartData[0].fullDate), "MMM yyyy")}
-              </p>
+              <p className="text-lg font-semibold text-gray-700">{chartData.length > 1 ? `${format(parseISO(chartData[0].fullDate), "MMM yyyy")} - ${format(parseISO(chartData[chartData.length - 1].fullDate), "MMM yyyy")}` : format(parseISO(chartData[0].fullDate), "MMM yyyy")}</p>
             </div>
           </div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

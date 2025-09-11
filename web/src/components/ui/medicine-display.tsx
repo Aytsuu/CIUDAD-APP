@@ -1,12 +1,12 @@
 "use client"
-
 import { useState, useMemo, useCallback, useEffect } from "react"
 import { Input } from "@/components/ui/input"
-import { Package, ChevronLeft, ChevronRight, Search, Loader2 } from "lucide-react"
+import { Package, ChevronLeft, ChevronRight, Search, Loader2, Info } from "lucide-react"
 import { StockBadge } from "@/components/ui/stock-badge"
 import { Button } from "@/components/ui/button/button"
 import { isNearExpiry, isLowStock } from "@/helpers/StocksAlert"
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export interface Medicine {
   id: string
@@ -18,6 +18,8 @@ export interface Medicine {
   med_type: string
   expiry?: string | null
   pcs_per_box?: number
+  inv_id?: string
+  preFilledReason?: string
 }
 
 interface MedicineDisplayProps {
@@ -31,6 +33,9 @@ interface MedicineDisplayProps {
   itemsPerPage?: number
   currentPage: number
   onPageChange: (page: number) => void
+  isLoading?: boolean
+  autoFillReasons?: boolean
+  readOnlyReasons?: boolean
 }
 
 export const MedicineDisplay = ({
@@ -40,30 +45,30 @@ export const MedicineDisplay = ({
   itemsPerPage = 5,
   currentPage,
   onPageChange,
+  isLoading = false,
+  autoFillReasons = true,
+  readOnlyReasons = false,
 }: MedicineDisplayProps) => {
   const [internalSelectedMedicines, setInternalSelectedMedicines] = useState(initialSelectedMedicines)
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Move the medicine fetching logic inside the component
-  const { data:medicineStocksOptions, isLoading } = fetchMedicinesWithStock()
-  const medicines = propMedicines || medicineStocksOptions || []
+  const medicines = propMedicines || []
 
-  // Sync internal state with props
   useEffect(() => {
     setInternalSelectedMedicines(initialSelectedMedicines)
   }, [initialSelectedMedicines])
 
-  // Filter medicines based on search query
   const filteredMedicines = useMemo(() => {
     if (!searchQuery.trim()) return medicines
     const lowerQuery = searchQuery.toLowerCase()
     return medicines.filter(
       (medicine) =>
-        medicine.name.toLowerCase().includes(lowerQuery) || medicine.dosage.toLowerCase().includes(lowerQuery),
+        medicine.name.toLowerCase().includes(lowerQuery) || 
+        medicine.dosage.toLowerCase().includes(lowerQuery) ||
+        (medicine.inv_id && medicine.inv_id.toLowerCase().includes(lowerQuery))
     )
   }, [medicines, searchQuery])
 
-  // Adjust pagination based on filtered medicines
   const totalPages = Math.ceil(filteredMedicines.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const currentMedicines = useMemo(
@@ -71,7 +76,6 @@ export const MedicineDisplay = ({
     [filteredMedicines, startIndex, itemsPerPage],
   )
 
-  // Reset to page 1 when search query changes
   useEffect(() => {
     onPageChange(1)
   }, [searchQuery, onPageChange])
@@ -80,7 +84,6 @@ export const MedicineDisplay = ({
     (updater: (prev: typeof internalSelectedMedicines) => typeof internalSelectedMedicines) => {
       setInternalSelectedMedicines((prev) => {
         const updated = updater(prev)
-        // Schedule the callback to avoid state updates during render
         setTimeout(() => onSelectedMedicinesChange(updated), 0)
         return updated
       })
@@ -89,19 +92,20 @@ export const MedicineDisplay = ({
   )
 
   const handleMedicineSelection = useCallback(
-    (minv_id: string, isChecked: boolean) => {
+    (minv_id: string, isChecked: boolean, preFilledReason?: string) => {
       updateSelectedMedicines((prev) => {
         if (isChecked) {
           const medicineExists = prev.some((med) => med.minv_id === minv_id)
           if (!medicineExists) {
-            return [...prev, { minv_id, medrec_qty: 1, reason: "" }]
+            const reason = autoFillReasons && preFilledReason ? preFilledReason : ""
+            return [...prev, { minv_id, medrec_qty: 1, reason }]
           }
           return prev
         }
         return prev.filter((med) => med.minv_id !== minv_id)
       })
     },
-    [updateSelectedMedicines],
+    [updateSelectedMedicines, autoFillReasons]
   )
 
   const handleQuantityChange = useCallback(
@@ -127,7 +131,7 @@ export const MedicineDisplay = ({
   }
 
   const PaginationControls = () => (
-    <div className="flex items-center justify-between px-6 py-3 ">
+    <div className="flex items-center justify-between px-6 py-3">
       <div className="text-sm text-gray-500">
         Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredMedicines.length)} of{" "}
         {filteredMedicines.length} medicines
@@ -158,41 +162,43 @@ export const MedicineDisplay = ({
     </div>
   )
 
-  // Loading skeleton row component
   const LoadingRow = () => (
     <tr className="animate-pulse">
       <td className="px-6 py-4 text-center whitespace-nowrap">
         <div className="flex items-center justify-center">
-          <div className="h-4 w-4 rounded"></div>
+          <div className="h-4 w-4 rounded bg-gray-200"></div>
         </div>
+      </td>
+      <td className="px-6 py-4 text-center">
+        <div className="h-4 rounded w-20 mx-auto bg-gray-200"></div>
       </td>
       <td className="px-6 py-4 text-center">
         <div className="flex items-center gap-3 justify-center">
           <div>
-            <div className="h-4 rounded w-32 mb-2"></div>
-            <div className="h-3 rounded w-24"></div>
+            <div className="h-4 rounded w-32 mb-2 bg-gray-200"></div>
+            <div className="h-3 rounded w-24 bg-gray-200"></div>
           </div>
         </div>
       </td>
       <td className="px-2 py-4 text-center">
-        <div className="h-3 rounded w-20 mx-auto mb-1"></div>
-        <div className="h-3 rounded w-16 mx-auto"></div>
+        <div className="h-3 rounded w-20 mx-auto mb-1 bg-gray-200"></div>
+        <div className="h-3 rounded w-16 mx-auto bg-gray-200"></div>
       </td>
       <td className="px-6 py-4 text-center whitespace-nowrap">
-        <div className="h-6 rounded-full w-16 mx-auto"></div>
+        <div className="h-6 rounded-full w-16 mx-auto bg-gray-200"></div>
       </td>
       <td className="px-6 py-4 text-center whitespace-nowrap">
-        <div className="h-8 rounded w-20 mx-auto"></div>
+        <div className="h-8 rounded w-20 mx-auto bg-gray-200"></div>
       </td>
       <td className="px-6 py-4 text-center w-64">
-        <div className="h-8 rounded w-full"></div>
+        <div className="h-8 rounded w-full bg-gray-200"></div>
       </td>
     </tr>
   )
 
   return (
-    <div className="lg:block bg-white rounded-xl shadow-sm border border-gray-200 mx-3">
-      <div className="px-6 py-4 border-b border-gray-200 ">
+    <div className="lg:block bg-white rounded-xl shadow-sm border border-gray-200">
+      <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
             <Package className="h-5 w-5 text-gray-600" />
@@ -232,6 +238,9 @@ export const MedicineDisplay = ({
                 Select
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Inventory ID
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Medicine Details
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -248,17 +257,27 @@ export const MedicineDisplay = ({
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Reason
+                {autoFillReasons && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3 w-3 ml-1 inline-block text-gray-400 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Reasons are automatically filled from the request</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {isLoading ? (
-              // Show loading skeleton rows
               Array.from({ length: itemsPerPage }).map((_, index) => <LoadingRow key={`loading-${index}`} />)
             ) : currentMedicines.length === 0 ? (
-              // Show no medicines found only when not loading
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
+                <td colSpan={8} className="px-6 py-12 text-center">
                   <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                   <h3 className="text-base font-medium text-gray-900 mb-2">
                     {searchQuery.trim() ? "No medicines found" : "No medicines available"}
@@ -271,13 +290,14 @@ export const MedicineDisplay = ({
                 </td>
               </tr>
             ) : (
-              // Show actual medicine data
               currentMedicines.map((medicine) => {
                 const isSelected = internalSelectedMedicines.some((m) => m.minv_id === medicine.id)
                 const selectedMedicine = internalSelectedMedicines.find((m) => m.minv_id === medicine.id)
                 const nearExpiry = medicine.expiry ? isNearExpiry(medicine.expiry) : false
                 const lowStock = isLowStock(medicine.avail, medicine.unit, medicine.pcs_per_box || 0)
-
+                const hasPreFilledReason = autoFillReasons && !!medicine.preFilledReason
+                const isReasonReadOnly = readOnlyReasons && hasPreFilledReason
+                
                 return (
                   <tr
                     key={medicine.id}
@@ -290,10 +310,15 @@ export const MedicineDisplay = ({
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={(e) => handleMedicineSelection(medicine.id, e.target.checked)}
+                          onChange={(e) => handleMedicineSelection(medicine.id, e.target.checked, medicine.preFilledReason)}
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2"
                           disabled={medicine.avail <= 0}
                         />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="text-sm font-mono text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                        {medicine.inv_id || medicine.id}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -308,7 +333,7 @@ export const MedicineDisplay = ({
                     </td>
                     <td className="px-6 py-4 text-center whitespace-nowrap">
                       <div className="text-sm text-gray-600">{medicine.med_type}</div>
-                      </td>
+                    </td>
                     <td className="px-2 py-4 text-center">
                       <div>
                         <div className="text-sm text-gray-600">Expiry Date: {medicine.expiry || "N/A"}</div>
@@ -384,14 +409,25 @@ export const MedicineDisplay = ({
                     </td>
                     <td className="px-6 py-4 text-center w-64">
                       {isSelected && (
-                        <Input
-                          type="text"
-                          className="border border-gray-300 rounded-lg px-3 py-1 w-[300px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Enter reason for prescription..."
-                          value={selectedMedicine?.reason || ""}
-                          onChange={(e) => handleReasonChange(medicine.id, e.target.value)}
-                          disabled={medicine.avail <= 0}
-                        />
+                        <div className="flex flex-col items-center">
+                          <Input
+                            type="text"
+                            className={`border border-gray-300 rounded-lg px-3 py-1 w-[300px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                              isReasonReadOnly ? "bg-gray-100" : ""
+                            }`}
+                            placeholder="Enter reason for prescription..."
+                            value={selectedMedicine?.reason || ""}
+                            onChange={(e) => handleReasonChange(medicine.id, e.target.value)}
+                            disabled={medicine.avail <= 0 || isReasonReadOnly}
+                            readOnly={isReasonReadOnly}
+                          />
+                          {hasPreFilledReason && (
+                            <div className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                              <Info className="h-3 w-3" />
+                              Reason pre-filled from request
+                            </div>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -406,4 +442,4 @@ export const MedicineDisplay = ({
   )
 }
 
-export default MedicineDisplay;
+export default MedicineDisplay

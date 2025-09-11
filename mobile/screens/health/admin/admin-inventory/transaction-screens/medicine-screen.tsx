@@ -5,19 +5,18 @@ import type { MedicineRecords, ApiItemWithStaff } from "../types";
 import { SearchInput } from "@/components/ui/search-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMedicineTransactions } from "../restful-api/transaction/fetchqueries";
-// import { useNavigation } from '@react-navigation/native'; // If using React Navigation
 
 export default function MedicineListScreen() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10); // Still useful for pagination
   const [currentPage, setCurrentPage] = React.useState(1);
-  // const navigation = useNavigation(); // If using React Navigation
 
-  const { data: medicines, isLoading: isLoadingMedicines } = useMedicineTransactions();
+  const { data: medicinesData, isLoading: isLoadingMedicines } = useMedicineTransactions(currentPage,pageSize,searchQuery);
 
   const formatMedicineData = React.useCallback((): MedicineRecords[] => {
-    if (!medicines) return [];
-    return medicines.map((medicine: ApiItemWithStaff) => {
+    if (!medicinesData || !medicinesData.results) return [];
+    
+    return medicinesData.results.map((medicine: ApiItemWithStaff) => {
       const staffFirstName = medicine.staff_detail?.rp?.per?.per_fname || "";
       const staffLastName = medicine.staff_detail?.rp?.per?.per_lname || "";
       const staffFullName = `${staffFirstName} ${staffLastName}`.trim();
@@ -25,10 +24,10 @@ export default function MedicineListScreen() {
       return {
         mdt_id: medicine.mdt_id,
         med_detail: {
-          med_name: medicine.med_name,
-          minv_dsg: medicine.minv_detail?.minv_dsg,
-          minv_dsg_unit: medicine.minv_detail?.minv_dsg_unit,
-          minv_form: medicine.minv_detail?.minv_form,
+          med_name: medicine.med_detail.med_name,
+          minv_dsg: medicine.med_detail.minv_dsg,
+          minv_dsg_unit: medicine.med_detail.minv_dsg,
+          minv_form: medicine.med_detail.minv_form,
         },
         inv_id: medicine.minv_detail?.inv_detail?.inv_id,
         mdt_qty: medicine.mdt_qty,
@@ -37,7 +36,7 @@ export default function MedicineListScreen() {
         created_at: medicine.created_at,
       };
     });
-  }, [medicines]);
+  }, [medicinesData]);
 
   const filteredMedicines = React.useMemo(() => {
     const formattedData = formatMedicineData();
@@ -77,10 +76,10 @@ export default function MedicineListScreen() {
     >
       <View className="flex-row justify-between items-start mb-2">
         <Text className="font-semibold text-lg text-gray-800 flex-1 pr-2">
-          {item.med_detail.med_name}
+          {item.med_detail?.med_name}
         </Text>
         <View className="bg-blue-100 px-2 py-1 rounded-full">
-          <Text className="text-blue-700 text-xs font-medium">ID: {item.inv_id}</Text>
+          <Text className="text-blue-700 text-xs font-medium">ID: {item.mdt_id}</Text>
         </View>
       </View>
 
@@ -100,7 +99,7 @@ export default function MedicineListScreen() {
         <Text className="text-gray-500 text-xs">Date created: {new Date(item.created_at).toLocaleDateString()}
         </Text>
         <Text className="text-gray-500 text-xs">
-          {item.med_detail.minv_dsg} {item.med_detail.minv_dsg_unit} ({item.med_detail.minv_form})
+          Dosage: {item.med_detail.minv_dsg} {item.med_detail.minv_form}
         </Text>
       </View>
     </TouchableOpacity>

@@ -11,7 +11,11 @@ class MedicineRequest(models.Model):
     requested_at = models.DateTimeField(auto_now_add=True)
     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, db_column='rp_id', related_name='medicine_requests',blank=True,null=True)
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='medicine_requests',blank=True,null=True)
-    status = models.CharField(max_length=20, default='pending')
+    # status = models.CharField(max_length=20, default='pending')
+    mode = models.CharField(default='walk-in', max_length=20) #walk-in or app
+    
+    
+    
    
     def __str__(self):
         return f"MedicineRequest #{self.medreq_id}"
@@ -57,6 +61,9 @@ class MedicineRequestItem(models.Model):
     medreq_id = models.ForeignKey('MedicineRequest', on_delete=models.CASCADE, related_name='items',db_column='medreq_id')
     med= models.ForeignKey(Medicinelist, on_delete=models.CASCADE, related_name='medicine_request_items', db_column='med_id', blank=True, null=True)
     status = models.CharField(max_length=20, default='pending') #refered  or confirm
+    is_archived = models.BooleanField(default=False)
+    archive_reason = models.TextField(blank=True, null=True)  
+    
 
 
     def __str__(self):

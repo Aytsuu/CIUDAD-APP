@@ -20,6 +20,101 @@ from apps.reports.serializers import *
 from pagination import *
 from django.db.models import Q, Prefetch
 from utils import *  # Assuming you have this
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.core.files.storage import default_storage
+from django.conf import settings
+import os
+import uuid
+
+class MedicineRequestDetailUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class = MedicineRequestSerializer # Use the same serializer as above
+    queryset = MedicineRequest.objects.all()
+    lookup_field = 'medreq_id'
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        new_status = request.data.get('status')
+        staff_id = request.data.get('staff_id') # Staff confirming/referring
+        referral_reason = request.data.get('referral_reason') # Reason for referral/decline
+
+        if not new_status:
+            raise ValidationError({"error": "New status is required."})
+
+        if new_status not in ['confirmed', 'referred', 'declined']:
+            raise ValidationError({"error": "Invalid status. Must be 'confirmed', 'referred', or 'declined'."})
+
+        if new_status == 'referred' and not referral_reason:
+            raise ValidationError({"error": "Referral reason is required for 'referred' status."})
+
+        staff_instance = None
+        if staff_id:
+            try:
+                staff_instance = Staff.objects.get(staff_id=staff_id)
+            except Staff.DoesNotExist:
+                raise ValidationError({"error": f"Staff with ID {staff_id} not found."})
+
+        # Update the main MedicineRequest status
+        instance.status = new_status
+        instance.save()
+
+        # Process individual medicine records based on the new status
+        for item_record in instance.medicine_records.all(): # Assuming related_name='medicine_records'
+            if new_status == 'confirmed':
+                # Deduct from inventory and update status for each item
+                if item_record.minv_id.minv_qty_avail < item_record.medrec_qty:
+                    # This should ideally be checked before confirming, but as a safeguard
+                    raise ValidationError(f"Insufficient stock for {item_record.minv_id.med_id.med_name}. Cannot confirm.")
+
+                item_record.minv_id.minv_qty_avail -= item_record.medrec_qty
+                item_record.minv_id.save()
+
+                # Create MedicineTransaction for deduction
+                mdt_qty = f"{item_record.medrec_qty} {item_record.minv_id.minv_qty_unit or 'pcs'}"
+                MedicineTransactions.objects.create(
+                    mdt_qty=mdt_qty,
+                    mdt_action="deducted",
+                    staff=staff_instance,
+                    minv_id=item_record.minv_id
+                )
+                item_record.status = 'fulfilled'
+                item_record.fulfilled_at = timezone.now()
+
+            elif new_status == 'referred':
+                item_record.status = 'referred'
+                # You might want to store the referral reason on the individual item too, or just on the main request
+                # For now, let's assume the main request's referral_reason covers all items.
+                # If you need to store it per item, add a 'referral_reason' field to MedicineRecord.
+            elif new_status == 'declined':
+                item_record.status = 'declined'
+                # No inventory changes needed for decline
+
+            item_record.save()
+
+        # If referred, create a FindingsPlanTreatment entry for the doctor
+        if new_status == 'referred':
+            # You might need to create a 'Finding' first if it's not already linked
+            # For simplicity, let's assume a generic Finding or create one if needed.
+            # This part depends on how your 'Finding' and 'FindingsPlanTreatment' models are used.
+            # If 'Finding' is a general medical finding, you might create one.
+            # If it's specific to a patient's visit, you might link to an existing one.
+            # For a doctor's referral, a new 'Finding' might be appropriate.
+
+            # Example: Create a new Finding for the referral
+            new_finding = Finding.objects.create(
+                assessment_summary=f"Medicine request referred: {referral_reason}",
+                obj_summary="Patient requested medicine.",
+                subj_summary="Patient reported symptoms/reason for request.",
+                plantreatment_summary="Referred to doctor for further assessment and prescription."
+            )
+            FindingsPlanTreatment.objects.create(
+                medreq=instance,
+                find=new_finding,
+                # created_at is auto_now_add
+            )
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PatientMedicineRecordsView(generics.ListAPIView):
@@ -154,9 +249,243 @@ class GetMedRecordCountView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-
-# MEDICINE REQUEST WEB
-class MedicineRequestView(generics.ListCreateAPIView):
+# MEDICINE REQUEST PENDING
+class MedicineRequestPendingTableView(generics.ListCreateAPIView):
+    serializer_class = MedicineRequestSerializer
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        # Get the search query and date filter from request parameters
+        search_query = self.request.GET.get('search', '').strip()
+        date_filter = self.request.GET.get('date_filter', 'all').strip()
+        
+        # Base queryset for pending medicine requests
+        queryset = MedicineRequest.objects.filter(status='pending').select_related(
+            'pat_id', 'rp_id', 'pat_id__rp_id', 'pat_id__trans_id',
+            'pat_id__rp_id__per',  # Resident patient personal info
+            'rp_id__per',  # Requesting physician personal info
+        ).prefetch_related(
+            'items',  # Medicine request items
+            'items__minv_id',  # Medicine inventory
+            'items__minv_id__med_id',  # Medicine details
+            'items__med',  # Alternative medicine reference
+            'pat_id__rp_id__per__personaladdress_set__add',  # Patient addresses
+            'pat_id__rp_id__per__personaladdress_set__add__sitio',  # Patient sitios
+            'rp_id__per__personaladdress_set__add',  # Physician addresses
+            'rp_id__per__personaladdress_set__add__sitio',  # Physician sitios
+        ).order_by('-requested_at')
+        
+        # Apply search filter if provided
+        if search_query:
+            queryset = queryset.filter(
+                # Search by patient information (Resident)
+                Q(pat_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(pat_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(pat_id__rp_id__per__per_mname__icontains=search_query) |
+                Q(pat_id__rp_id__per__per_contact__icontains=search_query) |
+                
+                # Search by patient information (Transient)
+                Q(pat_id__trans_id__tran_lname__icontains=search_query) |
+                Q(pat_id__trans_id__tran_fname__icontains=search_query) |
+                Q(pat_id__trans_id__tran_mname__icontains=search_query) |
+                Q(pat_id__trans_id__tran_contact__icontains=search_query) |
+                
+                # Search by physician information
+                Q(rp_id__per__per_lname__icontains=search_query) |
+                Q(rp_id__per__per_fname__icontains=search_query) |
+                Q(rp_id__per__per_mname__icontains=search_query) |
+                Q(rp_id__per__per_contact__icontains=search_query) |
+                
+                # Search by IDs
+                Q(medreq_id__icontains=search_query) |
+                Q(pat_id__pat_id__icontains=search_query) |
+                Q(rp_id__rp_id__icontains=search_query) |
+                
+                # Search by medicine names in items
+                Q(items__minv_id__med_id__med_name__icontains=search_query) |
+                Q(items__med__med_name__icontains=search_query) |
+                
+                # Search by patient address information
+                Q(pat_id__rp_id__per__personaladdress__add__add_province__icontains=search_query) |
+                Q(pat_id__rp_id__per__personaladdress__add__add_city__icontains=search_query) |
+                Q(pat_id__rp_id__per__personaladdress__add__add_barangay__icontains=search_query) |
+                Q(pat_id__rp_id__per__personaladdress__add__add_street__icontains=search_query) |
+                Q(pat_id__rp_id__per__personaladdress__add__sitio__sitio_name__icontains=search_query) |
+                Q(pat_id__rp_id__per__personaladdress__add__add_external_sitio__icontains=search_query) |
+                
+                # Search by physician address information
+                Q(rp_id__per__personaladdress__add__add_province__icontains=search_query) |
+                Q(rp_id__per__personaladdress__add__add_city__icontains=search_query) |
+                Q(rp_id__per__personaladdress__add__add_barangay__icontains=search_query) |
+                Q(rp_id__per__personaladdress__add__add_street__icontains=search_query) |
+                Q(rp_id__per__personaladdress__add__sitio__sitio_name__icontains=search_query) |
+                Q(rp_id__per__personaladdress__add__add_external_sitio__icontains=search_query) |
+                
+                # Search by household and family information
+                Q(pat_id__rp_id__respondents_info__fam__fam_id__icontains=search_query) |
+                Q(pat_id__rp_id__respondents_info__fam__hh__hh_id__icontains=search_query) |
+                Q(rp_id__respondents_info__fam__fam_id__icontains=search_query) |
+                Q(rp_id__respondents_info__fam__hh__hh_id__icontains=search_query)
+            ).distinct()
+        
+        # Apply date filter if provided
+        if date_filter != 'all':
+            today = datetime.now().date()
+            
+            if date_filter == 'today':
+                # Filter for today's requests
+                queryset = queryset.filter(requested_at__date=today)
+                
+            elif date_filter == 'this-week':
+                # Filter for this week's requests (Monday to Sunday)
+                start_of_week = today - timedelta(days=today.weekday())
+                queryset = queryset.filter(requested_at__date__gte=start_of_week)
+                
+            elif date_filter == 'this-month':
+                # Filter for this month's requests
+                start_of_month = today.replace(day=1)
+                queryset = queryset.filter(requested_at__date__gte=start_of_month)
+        
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response({
+                'success': True,
+                'results': serializer.data,
+                'count': len(serializer.data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error fetching medicine requests: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+class MedicineRequestPendingItemsTableView(generics.ListAPIView):
+    """
+    Get medicine request items for a specific medicine request (by medreq_id)
+    where the parent medicine request status is 'pending'
+    with pagination and comprehensive search functionality
+    """
+    serializer_class = MedicineRequestItemSerializer
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        # Get the medicine request ID from URL parameters
+        medreq_id = self.kwargs.get('medreq_id')
+        
+        # Get the search query from request parameters
+        search_query = self.request.GET.get('search', '').strip()
+        
+        # Base queryset for medicine request items
+        queryset = MedicineRequestItem.objects.all()
+        
+        # Filter by medicine request ID if provided
+        if medreq_id:
+            queryset = queryset.filter(medreq_id=medreq_id)
+        else:
+            # If no specific medreq_id provided, filter by pending status
+            queryset = queryset.filter(medreq_id__status='pending')
+        
+        # Add select_related and prefetch_related for performance
+        queryset = queryset.select_related(
+            'minv_id', 'medreq_id', 'med', 'medreq_id__rp_id', 'medreq_id__pat_id',
+            'medreq_id__rp_id__per',  # Add resident profile personal info
+            'medreq_id__pat_id__per',  # Add patient personal info
+        ).prefetch_related(
+            'minv_id__med_id',
+            'medreq_id__rp_id__per__personaladdress_set__add',  # Prefetch addresses
+            'medreq_id__pat_id__per__personaladdress_set__add',  # Prefetch patient addresses
+        ).order_by('-medreq_id__requested_at')
+        
+        # Apply search filter if provided
+        if search_query:
+            queryset = queryset.filter(
+                # Search by patient personal information
+                Q(medreq_id__pat_id__per__per_lname__icontains=search_query) |
+                Q(medreq_id__pat_id__per__per_fname__icontains=search_query) |
+                Q(medreq_id__pat_id__per__per_mname__icontains=search_query) |
+                Q(medreq_id__pat_id__per__per_contact__icontains=search_query) |
+                
+                # Search by resident profile personal information
+                Q(medreq_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(medreq_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(medreq_id__rp_id__per__per_mname__icontains=search_query) |
+                Q(medreq_id__rp_id__per__per_contact__icontains=search_query) |
+                
+                # Search by resident profile ID
+                Q(medreq_id__rp_id__rp_id__icontains=search_query) |
+                
+                # Search by patient ID
+                Q(medreq_id__pat_id__pat_id__icontains=search_query) |
+                
+                # Search by medicine information
+                Q(med__med_name__icontains=search_query) |
+                Q(minv_id__med_id__med_name__icontains=search_query) |
+                
+                # Search by medicine request ID
+                Q(medreq_id__medreq_id__icontains=search_query) |
+                
+                # Search by address information (patient)
+                Q(medreq_id__pat_id__per__personaladdress__add__add_province__icontains=search_query) |
+                Q(medreq_id__pat_id__per__personaladdress__add__add_city__icontains=search_query) |
+                Q(medreq_id__pat_id__per__personaladdress__add__add_barangay__icontains=search_query) |
+                Q(medreq_id__pat_id__per__personaladdress__add__add_street__icontains=search_query) |
+                Q(medreq_id__pat_id__per__personaladdress__add__sitio__sitio_name__icontains=search_query) |
+                Q(medreq_id__pat_id__per__personaladdress__add__add_external_sitio__icontains=search_query) |
+                
+                # Search by address information (resident profile)
+                Q(medreq_id__rp_id__per__personaladdress__add__add_province__icontains=search_query) |
+                Q(medreq_id__rp_id__per__personaladdress__add__add_city__icontains=search_query) |
+                Q(medreq_id__rp_id__per__personaladdress__add__add_barangay__icontains=search_query) |
+                Q(medreq_id__rp_id__per__personaladdress__add__add_street__icontains=search_query) |
+                Q(medreq_id__rp_id__per__personaladdress__add__sitio__sitio_name__icontains=search_query) |
+                Q(medreq_id__rp_id__per__personaladdress__add__add_external_sitio__icontains=search_query) |
+                
+                # Search by household and family information
+                Q(medreq_id__pat_id__respondents_info__fam__fam_id__icontains=search_query) |
+                Q(medreq_id__pat_id__respondents_info__fam__hh__hh_id__icontains=search_query) |
+                Q(medreq_id__rp_id__respondents_info__fam__fam_id__icontains=search_query) |
+                Q(medreq_id__rp_id__respondents_info__fam__hh__hh_id__icontains=search_query)
+            ).distinct()  # Use distinct to avoid duplicate results
+        
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response({
+                'success': True,
+                'results': serializer.data,
+                'count': len(serializer.data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching medicine request items: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+     
+#=========== MEDICINE REQUEST WEB PROCESSING --REQ THROUGH DOCTORS END =========
+class MedicineRequestProcessingView(generics.ListCreateAPIView):
     serializer_class = MedicineRequestSerializer
 
     def get_queryset(self):
@@ -273,26 +602,63 @@ class DeleteUpdateMedicineRequestView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = "medreq_id"
     
 
- 
-class MedicineRequestItemDelete(generics.DestroyAPIView):
-    serializer_class = MedicineRequestItemSerializer
-    queryset = MedicineRequestItem.objects.all()
+class MedicineRequestItemDelete(APIView):
+    @transaction.atomic
+    def delete(self, request, medreqitem_id):
+        # logger.info(f"Received DELETE request for medreqitem_id: {medreqitem_id}")
+        try:
+            # Attempt to fetch the item
+            item = MedicineRequestItem.objects.get(medreqitem_id=medreqitem_id)
+            # logger.info(f"Successfully retrieved item: {item.medreqitem_id}, medreq_id: {item.medreq_id.medreq_id}, status: {item.status}")
+            
+            # Get the parent request
+            medicine_request = item.medreq_id
+            total_items_count = medicine_request.items.count()
+            # logger.info(f"Parent request: {medicine_request.medreq_id}, total items count: {total_items_count}")
+            
+            # Delete the specific item
+            item.delete()
+            # logger.info(f"Deleted item {item.medreqitem_id}")
+            
+            # Check if this was the last item in the request
+            remaining_items_count = medicine_request.items.count()
+            # logger.info(f"Remaining items after deletion: {remaining_items_count}")
+            
+            if remaining_items_count == 0:
+                # Delete the parent request since no items remain
+                medicine_request.delete()
+                # logger.info(f"Deleted parent request {medicine_request.medreq_id} as it had no remaining items")
+                return Response({
+                    "success": True,
+                    "message": "Medicine request item canceled successfully. Entire medicine request deleted as it was the last item."
+                }, status=status.HTTP_200_OK)
+            else:
+                # logger.info(f"Parent request {medicine_request.medreq_id} kept with {remaining_items_count} remaining items")
+                return Response({
+                    "success": True,
+                    "message": "Medicine request item canceled successfully. Other items in the request remain."
+                }, status=status.HTTP_200_OK)
         
-    def get_object(self):
-        medreqitem_id = self.kwargs['medreqitem_id']
-        return MedicineRequestItem.objects.get(medreqitem_id=medreqitem_id)
+        except MedicineRequestItem.DoesNotExist:
+            # logger.error(f"MedicineRequestItem {medreqitem_id} not found in database")
+            return Response({"error": "Medicine request item not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            # logger.error(f"Unexpected error deleting item {medreqitem_id}: {str(e)}", exc_info=True)
+            return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class UserPendingMedicineRequestItemsView(generics.ListAPIView):
+    serializer_class = MedicineRequestItemSerializer  # Use simple serializer first
+    pagination_class = StandardResultsPagination
 
+    def get_queryset(self):
+        pat_id = self.request.query_params.get("pat_id")
+        if not pat_id:
+            return MedicineRequestItem.objects.none()
 
-
-
-
-
-
-
-
-
-
+        return MedicineRequestItem.objects.filter(
+            medreq_id__pat_id=pat_id,
+            is_archived=False
+        ).order_by("-medreq_id__requested_at")
 
 
 class MedicineRequestCreateView(APIView):
@@ -375,7 +741,7 @@ class MedicineRequestCreateView(APIView):
                         med_type = med_data.get('med_type', 'Over The Counter')
                         
                         # Only associate files with prescription medicines
-                        if med_type.lower() == 'prescription':
+                        if med_type == 'Prescription':
                             uploaded_files.extend(
                                 serializer._upload_files(
                                     files, 
@@ -860,3 +1226,454 @@ class MedicineTotalCountAPIView(APIView):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class UserMedicineRequestsView(generics.ListAPIView):
+    serializer_class = MedicineRequestSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Get patient ID from query params
+        pat_id = 'PT20030001'
+        rp_id = self.request.query_params.get('rp_id')
+
+        print(f"DEBUG: Received pat_id={pat_id}, rp_id={rp_id}")
+
+        if not pat_id and not rp_id:
+            print("DEBUG: No pat_id or rp_id provided")
+            return MedicineRequest.objects.none()
+
+        queryset = MedicineRequest.objects.select_related(
+            'pat_id', 'rp_id'
+        ).prefetch_related(
+            Prefetch('items', queryset=MedicineRequestItem.objects.select_related(
+                'minv_id', 'minv_id__med_id', 'med'
+            ))
+        ).order_by('-requested_at')
+
+        if pat_id:
+            try:
+                # Filter by patient ID string directly since medreq_id is CharField
+                queryset = queryset.filter(pat_id=pat_id)
+                print(f"DEBUG: Filtering by pat_id={pat_id}")
+            except Exception as e:
+                print(f"DEBUG: Error filtering by pat_id: {str(e)}")
+                return MedicineRequest.objects.none()
+        elif rp_id:
+            try:
+                # Filter by resident ID
+                queryset = queryset.filter(rp_id=rp_id)
+                print(f"DEBUG: Filtering by rp_id={rp_id}")
+            except Exception as e:
+                print(f"DEBUG: Error filtering by rp_id: {str(e)}")
+                return MedicineRequest.objects.none()
+
+        result_count = queryset.count()
+        print(f"DEBUG: Found {result_count} requests")
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        try:
+            response = super().list(request, *args, **kwargs)
+            print(f"DEBUG: API Response data count: {len(response.data.get('results', []))}")
+            return response
+        except Exception as e:
+            print(f"ERROR in UserMedicineRequestsView: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error fetching medicine requests: {str(e)}',
+                'results': [],
+                'count': 0,
+                'next': None,
+                'previous': None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    
+# class UserMedicineRequestsView(generics.ListAPIView):
+#     """Get medicine requests for the current user (patient or resident)"""
+#     serializer_class = MedicineRequestSerializer
+#     pagination_class = StandardResultsPagination
+    
+#     def get_queryset(self):
+#         # Get patient ID from query params or user session
+#         pat_id = ('PR20030001')
+#         rp_id = self.request.query_params.get('rp_id')
+        
+#         print(f"DEBUG: Received pat_id={pat_id}, rp_id={rp_id}")  # Debug log
+        
+#         if not pat_id and not rp_id:
+#             print("DEBUG: No pat_id or rp_id provided")
+#             return MedicineRequest.objects.none()
+        
+#         try:
+#             queryset = MedicineRequest.objects.select_related(
+#                 'pat_id', 'rp_id'
+#             ).prefetch_related(
+#                 Prefetch('items', queryset=MedicineRequestItem.objects.select_related(
+#                     'minv_id', 'minv_id__med_id', 'med'
+#                 ))
+#             ).order_by('-requested_at')
+            
+#             if pat_id:
+#                 # Verify patient exists
+#                 try:
+#                     patient = Patient.objects.get(pat_id=pat_id)
+#                     queryset = queryset.filter(pat_id=patient)
+#                     print(f"DEBUG: Found patient {pat_id}, filtering requests")
+#                 except Patient.DoesNotExist:
+#                     print(f"DEBUG: Patient {pat_id} not found")
+#                     return MedicineRequest.objects.none()
+                    
+#             elif rp_id:
+#                 # Verify resident exists
+#                 try:
+#                     resident = ResidentProfile.objects.get(rp_id=rp_id)
+#                     queryset = queryset.filter(rp_id=resident)
+#                     print(f"DEBUG: Found resident {rp_id}, filtering requests")
+#                 except ResidentProfile.DoesNotExist:
+#                     print(f"DEBUG: Resident {rp_id} not found")
+#                     return MedicineRequest.objects.none()
+            
+#             result_count = queryset.count()
+#             print(f"DEBUG: Found {result_count} requests")
+#             return queryset
+            
+#         except Exception as e:
+#             print(f"DEBUG: Error in get_queryset: {str(e)}")
+#             return MedicineRequest.objects.none()
+    
+#     def list(self, request, *args, **kwargs):
+#         try:
+#             return super().list(request, *args, **kwargs)
+#         except Exception as e:
+#             print(f"ERROR in UserMedicineRequestsView: {str(e)}")
+#             import traceback
+#             traceback.print_exc()
+#             return Response({
+#                 'success': False,
+#                 'error': f'Error fetching medicine requests: {str(e)}',
+#                 'results': [],
+#                 'count': 0,
+#                 'next': None,
+#                 'previous': None
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+class CheckPendingMedicineRequestView(APIView):
+    def get(self, request, pat_id, med_id):
+        try:
+            try:
+                patient = Patient.objects.get(pat_id=pat_id)
+                # print(f"DEBUG: Found patient: {patient.pat_id}")
+                
+                # Check pending requests for this patient
+                pending_requests = MedicineRequest.objects.filter(
+                    Q(pat_id=patient.pat_id) | Q(rp_id=patient.rp_id.rp_id if patient.rp_id else None),
+                    # status='pending'
+                )
+                
+                # print(f"DEBUG: Found {pending_requests.count()} pending requests")
+                
+                # List all medicines in all pending requests
+                all_medicines_in_requests = set()
+                for request in pending_requests:
+                    # print(f"\nDEBUG: Request {request.medreq_id} - Status: {request.status}")
+                    
+                    for item in request.items.all():
+                        medicine_id = None
+                        medicine_name = None
+                        
+                        # SAFELY check both possible ways medicine can be stored
+                        try:
+                            # Check if medicine is linked through inventory
+                            if hasattr(item, 'minv_id') and item.minv_id and hasattr(item.minv_id, 'med_id') and item.minv_id.med_id:
+                                medicine_id = item.minv_id.med_id.med_id
+                                medicine_name = item.minv_id.med_id.med_name
+                                # print(f"  - Via Inventory: {medicine_id} - {medicine_name}")
+                        except Exception as e:
+                            print(f"  - Error accessing minv_id: {e}")
+                        
+                        try:
+                            # Check if medicine is linked directly
+                            if hasattr(item, 'med') and item.med:
+                                medicine_id = item.med.med_id
+                                medicine_name = item.med.med_name
+                                # print(f"  - Direct Medicine: {medicine_id} - {medicine_name}")
+                        except Exception as e:
+                            print(f"  - Error accessing med: {e}")
+                        
+                        if medicine_id:
+                            all_medicines_in_requests.add(f"{medicine_id} - {medicine_name}")
+                            
+                            # Check if this matches our search
+                            if str(medicine_id) == str(med_id):
+                                # print(f"  *** MATCH FOUND ***")
+                                return Response({'has_pending_request': True}, status=status.HTTP_200_OK)
+                        else:
+                            print(f"  - No medicine ID found for this item")
+                
+                # print(f"\nDEBUG: All medicines found in pending requests:")
+                # for medicine in sorted(all_medicines_in_requests):
+                #     print(f"  - {medicine}")
+                
+                # print(f"DEBUG: No pending requests found with medicine {med_id}")
+                return Response({'has_pending_request': False}, status=status.HTTP_200_OK)
+                
+            except Patient.DoesNotExist:
+                # print(f"DEBUG: Patient {pat_id} not found")
+                return Response({'has_pending_request': False}, status=status.HTTP_200_OK)
+                    
+        except Exception as e:
+            print(f"ERROR: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class SubmitMedicineRequestView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+    
+    @transaction.atomic
+    def post(self, request):
+        try:
+            data = request.data
+            # Handle medicines as array or single string
+            medicines_data = data.get('medicines', '[]')
+            if isinstance(medicines_data, list):
+                print("Warning: medicines received as array, taking first element")
+                medicines_data = medicines_data[0]
+            medicines = json.loads(medicines_data)
+            files = request.FILES.getlist('files', [])
+            
+            # # Log received data
+            # print("Received data:", dict(data))
+            # print("Received files:", files)
+            # print("Medicines:", medicines)
+            
+            if not medicines:
+                return Response({"error": "At least one medicine is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            requires_prescription = any(med.get('med_type', '') == 'Prescription' for med in medicines)
+            if requires_prescription and not files:
+                return Response({"error": "Prescription document is required for prescription medicines"}, 
+                              status=status.HTTP_400_BAD_REQUEST)
+            
+            pat_id = data.get('pat_id')
+            if isinstance(pat_id, list):
+                print("Warning: pat_id received as array, taking first element")
+                pat_id = pat_id[0]
+            rp_id = data.get('rp_id')
+            
+            if not pat_id and not rp_id:
+                return Response({"error": "Either patient ID or resident ID must be provided"}, 
+                              status=status.HTTP_400_BAD_REQUEST)
+            
+            medicine_request = MedicineRequest.objects.create(
+                pat_id=Patient.objects.get(pat_id=pat_id) if pat_id else None,
+                rp_id=ResidentProfile.objects.get(rp_id=rp_id) if rp_id else None,
+                # status='pending',
+                mode='app'
+            )
+            
+            request_items = []
+            for med in medicines:
+                if 'minv_id' not in med:
+                    return Response({"error": f"minv_id is required for each medicine"}, 
+                                  status=status.HTTP_400_BAD_REQUEST)
+                try:
+                    minv_id = int(med['minv_id'])
+                    medicine_inv = MedicineInventory.objects.get(minv_id=minv_id)
+                    # print(f"Processing minv_id: {minv_id}, med_id: {medicine_inv.med_id.pk}")
+                    request_item = MedicineRequestItem(
+                        medreq_id=medicine_request,
+                        minv_id=None,
+                        med=medicine_inv.med_id,  # Assign Medicinelist object
+                        medreqitem_qty=med['quantity'],
+                        reason=med.get('reason', ''),
+                        status='pending'
+                    )
+                    request_items.append(request_item)
+                except ValueError:
+                    return Response({"error": f"Invalid minv_id: {med['minv_id']} must be a number"}, 
+                                  status=status.HTTP_400_BAD_REQUEST)
+                except MedicineInventory.DoesNotExist:
+                    return Response({"error": f"Medicine with minv_id {med['minv_id']} not found"}, 
+                                  status=status.HTTP_404_NOT_FOUND)
+            
+            # # Debug: Log request items
+            # for item in request_items:
+            #     print(f"Creating MedicineRequestItem: medreq_id={item.medreq_id.medreq_id}, minv_id={item.minv_id.minv_id}, med_id={item.med.pk}")
+            
+            MedicineRequestItem.objects.bulk_create(request_items)
+            
+            uploaded_files = []
+            if files:
+                try:
+                    # Convert Django file objects to the format expected by the serializer
+                    file_data_list = []
+                    for file in files:
+                        # Read file content and convert to base64 data URL format
+                        file_content = file.read()
+                        import base64
+                        base64_content = base64.b64encode(file_content).decode('utf-8')
+                        data_url = f"data:{file.content_type};base64,{base64_content}"
+                        
+                        file_data_list.append({
+                            'name': file.name,
+                            'type': file.content_type,
+                            'file': data_url
+                        })
+                    
+                    # Use the Medicine_FileSerializer to upload files to Supabase
+                    serializer = Medicine_FileSerializer(context={'request': request})
+                    uploaded_files = serializer._upload_files(
+                        file_data_list, 
+                        medreq_instance=medicine_request  # Associate with the medicine request, not the item
+                    )
+                    
+                    print(f"Successfully uploaded {len(uploaded_files)} files to Supabase")
+                    
+                except Exception as e:
+                    print(f"Error uploading files to Supabase: {str(e)}")
+                    # If file upload fails, we might want to roll back the transaction
+                    raise Exception(f"File upload failed: {str(e)}")
+            
+            return Response({
+                "success": True,
+                "medreq_id": medicine_request.medreq_id,
+                "message": "Medicine request submitted successfully",
+                "files_uploaded": len(uploaded_files)
+            }, status=status.HTTP_201_CREATED)
+            
+        except (Patient.DoesNotExist, ResidentProfile.DoesNotExist) as e:
+            return Response({"error": "Patient or resident not found"}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            print(f"Internal server error: {str(e)}")
+            return Response({"error": f"Internal server error: {str(e)}"}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Admin Management Views
+class PendingMedicineRequestsView(generics.ListAPIView):
+    serializer_class = MedicineRequestSerializer
+    
+    def get_queryset(self):
+        return MedicineRequest.objects.filter(status='pending').prefetch_related(
+            'items', 'items__minv_id', 'items__minv_id__med_id'
+        ).order_by('-requested_at')
+
+
+class MedicineRequestDetailView(generics.RetrieveAPIView):
+    serializer_class = MedicineRequestSerializer
+    queryset = MedicineRequest.objects.all()
+    lookup_field = 'medreq_id'
+
+
+class UpdateMedicineRequestStatusView(APIView):
+    @transaction.atomic
+    def patch(self, request, medreq_id):
+        try:
+            new_status = request.data.get('status')
+            doctor_notes = request.data.get('doctor_notes', '')
+            
+            if not new_status:
+                return Response({"error": "Status is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate status
+            valid_statuses = ['pending', 'confirmed', 'referred_to_doctor', 'declined', 'ready_for_pickup', 'completed']
+            if new_status not in valid_statuses:
+                return Response({"error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"}, 
+                              status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get the medicine request
+            medicine_request = MedicineRequest.objects.get(medreq_id=medreq_id)
+            
+            # Update status
+            medicine_request.status = new_status
+            
+            # If referred to doctor, add notes
+            if new_status == 'referred_to_doctor' and doctor_notes:
+                # You might want to store this in a separate model or add a field to MedicineRequest
+                medicine_request.notes = doctor_notes
+            
+            medicine_request.save()
+            
+            # If confirmed, update inventory and create medicine records
+            if new_status == 'confirmed':
+                self._process_confirmed_request(medicine_request)
+            
+            return Response({
+                "success": True,
+                "message": f"Request status updated to {new_status}",
+                "medreq_id": medreq_id
+            }, status=status.HTTP_200_OK)
+            
+        except MedicineRequest.DoesNotExist:
+            return Response({"error": "Medicine request not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": f"Internal server error: {str(e)}"}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _process_confirmed_request(self, medicine_request):
+        """Process a confirmed medicine request by updating inventory and creating records"""
+        # Get all items in this request
+        request_items = medicine_request.items.all()
+        
+        for item in request_items:
+            try:
+                # Check if enough stock is available
+                if item.minv_id.minv_qty_avail < item.medreqitem_qty:
+                    raise Exception(f"Insufficient stock for {item.minv_id.med_id.med_name}. "
+                                  f"Available: {item.minv_id.minv_qty_avail}, Requested: {item.medreqitem_qty}")
+                
+                # Update inventory
+                item.minv_id.minv_qty_avail -= item.medreqitem_qty
+                item.minv_id.save()
+                
+                # Create medicine transaction
+                MedicineTransactions.objects.create(
+                    mdt_qty=f"-{item.medreqitem_qty}",
+                    mdt_action="request_fulfillment",
+                    minv_id=item.minv_id,
+                    staff=request.user.staff if hasattr(request.user, 'staff') else None
+                )
+                
+                # Update item status to confirmed
+                item.status = 'confirmed'
+                item.save()
+                
+            except Exception as e:
+                # Log error but continue with other items
+                print(f"Error processing item {item.medreqitem_id}: {str(e)}")
+                continue
+
+
+# React Native Query Functions (for your frontend)
+# These would be in your API service file, not in views.py
+
+# For getting pending requests (admin)
+class AdminMedicineRequestsView(generics.ListAPIView):
+    serializer_class = MedicineRequestSerializer
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        status_filter = self.request.query_params.get('status', 'pending')
+        search_query = self.request.query_params.get('search', '')
+        
+        queryset = MedicineRequest.objects.select_related(
+            'pat_id', 'rp_id'
+        ).prefetch_related(
+            'items', 'items__minv_id', 'items__minv_id__med_id',
+            'items__medicine_files'
+        )
+        
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        if search_query:
+            queryset = queryset.filter(
+                Q(pat_id__pat_id__icontains=search_query) |
+                Q(rp_id__rp_id__icontains=search_query) |
+                Q(items__minv_id__med_id__med_name__icontains=search_query)
+            ).distinct()
+        
+        return queryset.order_by('-requested_at')

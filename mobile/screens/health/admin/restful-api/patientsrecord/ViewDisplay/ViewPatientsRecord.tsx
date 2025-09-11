@@ -1,29 +1,24 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, Edit, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema";
 import { useParams } from "react-router";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAnimalBiteCount, usePatientDetails } from "../queries/patientsFetchQueries";
-import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries";
-import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount";
-import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries";
 import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv";
-import { toast } from "sonner";
-import { useUpdatePatient } from "../queries/patientsUpdateQueries";
-import CardLayout from "@/components/ui/card/card-layout";
 import PersonalInfoTab from "./PersonalInfoTab";
 import Records from "./Records";
 import VisitHistoryTab from "./VisitHistoryTab";
-import { getAnimalBiteCount } from "../restful-api/patientsGetAPI";
+import { useToastContext } from "@/components/ui/toast";
+import { useVaccinationCount } from "@/screens/health/vaccination/queries/VacCount";
+import { Button } from "react-native";
+import { patientRecordSchema } from "../../../admin-patientsrecord/patients-record-schema";
+import { usePatientDetails } from "../queries/fetch";
+import { useUpdatePatient } from "../queries/update";
 
 interface PatientData {
   pat_id: string;
@@ -70,7 +65,7 @@ export default function ViewPatientRecord() {
   const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
   const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
   const updatePatientData = useUpdatePatient();
-
+const { toast } = useToastContext();
   const currentPatient = useMemo(() => {
     if (!patientsData || !patientId) return null;
     if ("pat_id" in patientsData && patientsData.pat_id === patientId) {

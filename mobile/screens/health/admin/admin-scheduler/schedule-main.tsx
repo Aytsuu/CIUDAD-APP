@@ -6,6 +6,9 @@ import { useGetServices,useGetScheduler,useGetDays } from "./queries/schedulerFe
 import { DailySchedule, WeeklySchedule } from "./schedule-types"
 import ScheduleDialog from "./schedule-dialog"
 import ScheduleCard from "./schedule-card"
+import PageLayout from "@/screens/_PageLayout"
+import { router } from "expo-router"
+import { ChevronLeft } from "lucide-react-native"
 
 const LayoutWithBack: React.FC<{ title: string; description: string; children: React.ReactNode }> = ({ title, description, children }) => {
   return (
@@ -174,9 +177,21 @@ export default function SchedulerMain() {
 
 
   return (
-      <ScrollView className="flex-1 bg-gray-50 p-4 mt-10">
+      <PageLayout
+          leftAction={
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
+            >
+              <ChevronLeft size={24} className="text-slate-700" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text className="text-slate-900 text-[13px]">Weekly Schedules</Text>}
+          rightAction={<View className="w-10 h-10" />}
+        >
+      <ScrollView className="flex-1 bg-gray-50 p-4">
         {/* Services Overview */}
-        <View className="mb-4">
+        <View className="mb-4 p-2">
           {/* Card */}
           <View className="flex-row bg-white rounded-lg shadow-md overflow-hidden">
             <View className="flex-1 p-4">
@@ -240,5 +255,6 @@ export default function SchedulerMain() {
           )}
         </View>
       </ScrollView>
+      </PageLayout>
   )
 }

@@ -1,11 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-<<<<<<< HEAD
-  baseURL: "http://192.168.213.137:8000", 
-=======
-  baseURL: "http://192.168.209.172:8000",
->>>>>>> frontend/feature/maternal-services
+  baseURL: "http://192.168.1.13:8000", 
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -13,9 +9,8 @@ export const api = axios.create({
   timeout: 10000, // 10 second timeout
 });
 
-<<<<<<< HEAD
 export const api2 = axios.create({
-  baseURL: "http://192.168.213.137:8001",
+  baseURL: "http://192.168.1.13:8001",
   timeout: 10000,
 });
 
@@ -105,19 +100,6 @@ export const api2 = axios.create({
 
   let currentAccessToken: string | null = null;
 
-=======
-  export const api2 = axios.create({
-    baseURL: "http://192.168.1.52:8001",
-    timeout: 10000,
-  });
-
-  // Track refresh state to prevent multiple refresh attempts
-  let isRefreshing = false;
-  let refreshPromise: Promise<string | null> | null = null;
-
-  let currentAccessToken: string | null = null;
-
->>>>>>> frontend/feature/maternal-services
   // Function to set access token (called from AuthContext)
   export const setAccessToken = (token: string | null) => {
     currentAccessToken = token;

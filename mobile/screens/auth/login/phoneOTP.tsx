@@ -123,8 +123,4 @@ export default function PhoneOTP() {
       </View>
     </PageLayout>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> frontend/feature/maternal-services

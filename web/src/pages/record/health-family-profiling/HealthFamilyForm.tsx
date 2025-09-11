@@ -767,9 +767,4 @@ export default function HealthFamilyForm() {
 
     </LayoutWithBack>
   );
-<<<<<<< HEAD
 }
-=======
-}
-
->>>>>>> frontend/feature/maternal-services

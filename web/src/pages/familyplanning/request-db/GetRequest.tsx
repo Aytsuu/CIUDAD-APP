@@ -3,6 +3,7 @@ import axios from "axios"
 
 export interface IndividualFPRecordDetail {
   patient_id: any
+
   fprecord: any
   patrec_id: string
   fprecord_id: number

@@ -1,398 +1,269 @@
-"use client"
-
-import { View, ScrollView, TouchableOpacity, TextInput, RefreshControl, ActivityIndicator, Modal } from "react-native"
-import { Search, Filter, Clock, User, Calendar, Phone, MapPin, FileText, CheckCircle, Send, Eye, MessageCircle, AlertCircle, ArrowLeft } from "lucide-react-native"
-import { Text } from "@/components/ui/text"
-import { Button } from "@/components/ui/button"
-import * as React from "react"
+import { useState } from "react"
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Alert, Modal, RefreshControl } from "react-native"
 import { router } from "expo-router"
+import { ArrowLeft, Search, Filter, Eye, CheckCircle, XCircle, Clock, User, Pill, Calendar, MapPin, Phone, ChevronLeft } from "lucide-react-native"
+import { useProcessingMedrequest } from "./Request/queries.tsx/fetch"
+import PageLayout from "@/screens/_PageLayout"
+
+// Updated types for the medicine request data
+interface MedicineRequest {
+  medreq_id: string;
+  requested_at: string;
+  status: string;
+  mode: string;
+  pat_id: string;
+  rp_id: any;
+  pat_type: string;
+  pat_id_value: string;
+  address: {
+    add_street: string;
+    add_barangay: string;
+    add_city: string;
+    add_province: string;
+    add_sitio: string;
+    full_address: string;
+  };
+  personal_info: {
+    per_fname: string;
+    per_lname: string;
+    per_mname: string;
+    per_suffix: string;
+    per_dob: string;
+    per_sex: string;
+    per_status: string;
+    per_edAttainment: string;
+    per_religion: string;
+    per_contact: string;
+  };
+  total_quantity: number;
+  items?: Array<{
+    minv_id: {
+      med_id: {
+        med_name: string;
+        med_type: string;
+      };
+      minv_dsg?: string;
+      minv_form?: string;
+    };
+    medreqitem_qty: number;
+    reason?: string;
+  }>;
+  medicine_files?: Array<{
+    medf_url: string;
+    medf_name: string;
+  }>;
+}
 
 export default function AdminMedicineRequests() {
-  const [selectedStatus, setSelectedStatus] = React.useState('all')
-  const [searchQuery, setSearchQuery] = React.useState('')
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [refreshing, setRefreshing] = React.useState(false)
-  const [selectedRequest, setSelectedRequest] = React.useState(null)
-  const [showDetailsModal, setShowDetailsModal] = React.useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
+  const [selectedRequest, setSelectedRequest] = useState<MedicineRequest | null>(null)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [filterStatus, setFilterStatus] = useState<string>('all')
 
-  // Sample data - Replace with actual database fetch
-  const sampleRequests = [
-    {
-      id: 1,
-      requestId: "REQ-2024-001",
-      user: {
-        name: "Maria Santos",
-        phone: "+63 912 345 6789",
-        address: "123 Rizal Street, Cebu City",
-        age: 34,
-        emergencyContact: "+63 912 345 6790"
-      },
-      medicines: [
-        { name: "Paracetamol 500mg" },
-        { name: "Amoxicillin 250mg" }
-      ],
-      symptoms: "Fever, headache, and body aches for 3 days",
-      requestDate: "2024-01-15T10:30:00Z",
-      status: "pending",
+  const { data: fetchedRequests, isLoading: isFetching, error, refetch } = useProcessingMedrequest()
 
-      notes: "Patient has been experiencing symptoms for 3 days",
-      lastUpdated: "2024-01-15T10:30:00Z"
-    },
-    {
-      id: 2,
-      requestId: "REQ-2024-002",
-      user: {
-        name: "Juan Dela Cruz",
-        phone: "+63 923 456 7890",
-        address: "456 Colon Street, Cebu City",
-        age: 28,
-        emergencyContact: "+63 923 456 7891"
-      },
-      medicines: [
-        { name: "Insulin Glargine", quantity: 2, unit: "vials" },
-        { name: "Blood glucose strips", quantity: 50, unit: "pieces" }
-      ],
-      symptoms: "Diabetic patient running low on medication",
-      requestDate: "2024-01-14T15:45:00Z",
-      status: "confirmed",
+  const requests: MedicineRequest[] = fetchedRequests?.results || fetchedRequests || []
 
-      notes: "Regular diabetic patient, needs immediate attention",
-      lastUpdated: "2024-01-14T16:00:00Z",
-      confirmedBy: "Dr. Smith",
-      confirmedDate: "2024-01-14T16:00:00Z"
-    },
-    {
-      id: 3,
-      requestId: "REQ-2024-003",
-      user: {
-        name: "Ana Garcia",
-        phone: "+63 934 567 8901",
-        address: "789 Lahug, Cebu City",
-        age: 42,
-        emergencyContact: "+63 934 567 8902"
-      },
-      medicines: [
-        { name: "Lisinopril 10mg" }
-      ],
-      symptoms: "Hypertension maintenance medication",
-      requestDate: "2024-01-13T09:15:00Z",
-      status: "referred",
-      notes: "Regular maintenance for hypertension",
-      lastUpdated: "2024-01-13T14:20:00Z",
-      referredTo: "Cebu General Hospital",
-      referralDate: "2024-01-13T14:20:00Z",
-      referralReason: "Requires specialist consultation"
-    },
-    {
-      id: 4,
-      requestId: "REQ-2024-004",
-      user: {
-        name: "Pedro Lim",
-        phone: "+63 945 678 9012",
-        address: "321 IT Park, Cebu City",
-        age: 55,
-        emergencyContact: "+63 945 678 9013"
-      },
-      medicines: [
-        { name: "Aspirin 80mg" },
-        { name: "Atorvastatin 20mg" }
-      ],
-      symptoms: "Chest pain and shortness of breath",
-      requestDate: "2024-01-12T20:30:00Z",
-      status: "pending",
-      notes: "Experiencing chest pain, possible cardiac issue",
-      lastUpdated: "2024-01-12T20:30:00Z"
-    }
-  ]
-
-  const statusOptions = [
-    { id: 'all', name: 'All Requests', color: '#6B7280', count: sampleRequests.length },
-    { id: 'pending', name: 'Pending', color: '#F59E0B', count: sampleRequests.filter(r => r.status === 'pending').length },
-    { id: 'confirmed', name: 'Confirmed', color: '#10B981', count: sampleRequests.filter(r => r.status === 'confirmed').length },
-    { id: 'referred', name: 'Referred', color: '#3B82F6', count: sampleRequests.filter(r => r.status === 'referred').length }
-  ]
-
-  // Filter requests
-  const filteredRequests = React.useMemo(() => {
-    let filtered = sampleRequests
-
-    if (selectedStatus !== 'all') {
-      filtered = filtered.filter(request => request.status === selectedStatus)
-    }
-
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(request =>
-        request.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.requestId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.medicines.some(med => med.name.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    }
-
-    return filtered.sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate))
-  }, [selectedStatus, searchQuery])
-
-  const handleConfirmRequest = async (requestId) => {
-    // Implement confirm logic
-    console.log(`Confirming request ${requestId}`)
-    // API call to confirm request
+  // Handle refresh
+  const onRefresh = () => {
+    setRefreshing(true)
+    refetch().finally(() => setRefreshing(false))
   }
 
-  const handleReferRequest = async (requestId) => {
-    // Implement referral logic
-    console.log(`Referring request ${requestId}`)
-    // API call to refer request
+  // Filter requests based on search and status
+  const filteredRequests = requests.filter(request => {
+    const matchesSearch = searchQuery === '' || 
+      request.medreq_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.personal_info.per_fname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.personal_info.per_lname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.personal_info.per_contact.includes(searchQuery)
+
+    const matchesStatus = filterStatus === 'all' || request.status === filterStatus
+
+    return matchesSearch && matchesStatus
+  })
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-500'
+      case 'confirmed': return 'bg-green-500'
+      case 'referred': return 'bg-blue-500'
+      case 'declined': return 'bg-red-500'
+      case 'processing': return 'bg-purple-500'
+      default: return 'bg-gray-500'
+    }
   }
 
-  const formatDate = (dateString: any) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending': return <Clock size={16} color="#fff" />
+      case 'confirmed': return <CheckCircle size={16} color="#fff" />
+      case 'referred': return <Eye size={16} color="#fff" />
+      case 'declined': return <XCircle size={16} color="#fff" />
+      default: return <Clock size={16} color="#fff" />
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
       month: 'short',
       day: 'numeric',
-      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     })
   }
 
-  const getTimeElapsed = (dateString) => {
-    const now = new Date()
-    const requestDate = new Date(dateString)
-    const diffHours = Math.floor((now - requestDate) / (1000 * 60 * 60))
+  const getPatientName = (request: MedicineRequest) => {
+    const { per_fname, per_lname, per_mname, per_suffix } = request.personal_info;
+    let name = `${per_fname} ${per_mname || ''} ${per_lname}`.trim();
+    if (per_suffix) {
+      name += ` ${per_suffix}`;
+    }
+    return name;
+  }
 
-    if (diffHours < 1) return 'Just now'
-    if (diffHours < 24) return `${diffHours}h ago`
-    const diffDays = Math.floor(diffHours / 24)
-    return `${diffDays} days ago`
+  const getPatientContact = (request: MedicineRequest) => {
+    return request.personal_info.per_contact || 'No contact info';
+  }
+
+  const getPatientTypeDisplay = (patType: string) => {
+    switch (patType) {
+      case 'Resident': return 'Resident';
+      case 'Transient': return 'Visitor';
+      default: return patType;
+    }
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView className="flex-1 bg-white justify-center items-center">
+        <Text className="text-red-500 text-lg">Error loading requests</Text>
+        {/* <TouchableOpacity onPress={refetch} className="bg-blue-500 px-4 py-2 rounded mt-4"> */}
+          {/* <Text className="text-white">Retry</Text> */}
+        {/* </TouchableOpacity> */}
+      </SafeAreaView>
+    )
   }
 
   return (
-    <View className="flex-1 bg-[#ffffff]">
+    <PageLayout
+              leftAction={
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+                >
+                  <ChevronLeft size={24} className="text-gray-700" />
+                </TouchableOpacity>
+              }
+              headerTitle={<Text className="text-gray-900 text-[13px]">All requests</Text>}
+               rightAction={<View className="w-10 h-10" />}
+            >
       {/* Header */}
-      <View className="bg-white px-4 pt-12 pb-4 shadow-sm">
-        <TouchableOpacity 
-                      onPress={() => router.back()}
-                      className="bg-white/20 p-2 rounded-full"
-                    >
-                      <ArrowLeft size={24} color="#fff" />
-                    </TouchableOpacity>
-
-        {/* Header Padding */}
-        <View className="pt-2 px-4 bg-[#F8FAFC]">
-          <View className="flex-row items-center justify-between mb-4">
-            <View>
-              <Text className="text-2xl font-PoppinsBold font-bold text-[#263D67]">
-                Requests
-              </Text>
-              <Text className="text-sm font-PoppinsRegular text-[#6B7280]">
-                {filteredRequests.length} requests found
-              </Text>
-            </View>
-          </View>
-
-
-        </View>
+      <View className="bg-white px-4 py-4 border-b border-gray-200">
+      
 
         {/* Search Bar */}
-        <View className="flex-row items-center bg-gray-100 rounded-xl p-2 mb-4">
+        <View className="flex-row items-center bg-gray-100 rounded-xl px-3 py-2 mt-3">
           <Search size={20} color="#6B7280" />
           <TextInput
-            className="flex-1 ml-3 text-[#263D67] font-PoppinsRegular"
-            placeholder="Search"
-            placeholderTextColor="#9CA3AF"
+            className="flex-1 ml-2 text-gray-700"
+            placeholder="Search by request ID, patient name..."
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
 
         {/* Status Filter */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View className="flex-row space-x-3">
-            {statusOptions.map((status) => {
-              const isSelected = selectedStatus === status.id
-              return (
-                <TouchableOpacity
-                  key={status.id}
-                  onPress={() => setSelectedStatus(status.id)}
-                  className={`flex-row items-center px-4 py-2 rounded-full ${isSelected ? 'bg-[#263D67]' : 'bg-white border border-gray-200'
-                    }`}
-                >
-                  <View
-                    className="w-2 h-2 rounded-full mr-2"
-                    style={{ backgroundColor: isSelected ? 'white' : status.color }}
-                  />
-                  <Text className={`font-PoppinsMedium text-sm ${isSelected ? 'text-white' : 'text-[#263D67]'
-                    }`}>
-                    {status.name} ({status.count})
-                  </Text>
-                </TouchableOpacity>
-              )
-            })}
-          </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3">
+          <TouchableOpacity
+            onPress={() => setFilterStatus('all')}
+            className={`px-4 py-2 rounded-full mr-2 ${filterStatus === 'all' ? 'bg-blue-500' : 'bg-gray-200'}`}
+          >
+            <Text className={filterStatus === 'all' ? 'text-white' : 'text-gray-700'}>All</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setFilterStatus('pending')}
+            className={`px-4 py-2 rounded-full mr-2 ${filterStatus === 'pending' ? 'bg-yellow-500' : 'bg-gray-200'}`}
+          >
+            <Text className={filterStatus === 'pending' ? 'text-white' : 'text-gray-700'}>Pending</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setFilterStatus('processing')}
+            className={`px-4 py-2 rounded-full mr-2 ${filterStatus === 'processing' ? 'bg-purple-500' : 'bg-gray-200'}`}
+          >
+            <Text className={filterStatus === 'processing' ? 'text-white' : 'text-gray-700'}>Processing</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setFilterStatus('confirmed')}
+            className={`px-4 py-2 rounded-full mr-2 ${filterStatus === 'confirmed' ? 'bg-green-500' : 'bg-gray-200'}`}
+          >
+            <Text className={filterStatus === 'confirmed' ? 'text-white' : 'text-gray-700'}>Confirmed</Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
 
       {/* Requests List */}
       <ScrollView
-        className="flex-1 px-4 py-4"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { }} />
-        }
-        showsVerticalScrollIndicator={false}
+        className="flex-1"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        contentContainerClassName="p-4"
       >
-        {filteredRequests.length === 0 ? (
-          <View className="items-center justify-center py-20">
-            <FileText size={48} color="#D1D5DB" />
-            <Text className="text-xl font-PoppinsSemiBold text-[#6B7280] mt-4">No requests found</Text>
-            <Text className="text-[#9CA3AF] font-PoppinsRegular mt-2 text-center">
-              Try adjusting your search or filter criteria
-            </Text>
+        {isFetching ? (
+          <ActivityIndicator size="large" color="#3B82F6" className="my-8" />
+        ) : filteredRequests.length === 0 ? (
+          <View className="items-center justify-center py-12">
+            <Text className="text-gray-500 text-lg">No requests found</Text>
+            {searchQuery && (
+              <Text className="text-gray-400 mt-2">Try adjusting your search</Text>
+            )}
           </View>
         ) : (
-          <View className="pb-4">
-            {filteredRequests.map((request) => (
-              <View key={request.id} className="bg-white rounded-xl p-4 mb-3 shadow-sm">
-                {/* Request Header */}
-                <View className="flex-row items-start justify-between mb-3">
-                  <View className="flex-1">
-                    <View className="flex-row items-center mb-1">
-                      <Text className="text-lg font-PoppinsSemiBold text-[#263D67]">
-                        {request.user.name}
-                      </Text>
-
-                    </View>
-                    <Text className="text-sm font-PoppinsRegular text-[#6B7280] mb-1">
-                      Request ID: {request.requestId}
-                    </Text>
-                    <Text className="text-xs font-PoppinsRegular text-[#9CA3AF]">
-                      {getTimeElapsed(request.requestDate)} • {formatDate(request.requestDate)}
-                    </Text>
-                  </View>
-
-                  <View
-                    className="px-3 py-1 rounded-full"
-                    style={{
-                      backgroundColor: `${statusOptions.find(s => s.id === request.status)?.color}20`
-                    }}
-                  >
-                    <Text
-                      className="text-xs font-PoppinsMedium capitalize"
-                      style={{
-                        color: statusOptions.find(s => s.id === request.status)?.color
-                      }}
-                    >
-                      {request.status}
-                    </Text>
-                  </View>
+          filteredRequests.map((request) => (
+            <TouchableOpacity
+              key={request.medreq_id}
+              onPress={() => {
+                setSelectedRequest(request)
+                setShowDetailsModal(true)
+              }}
+              className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100"
+            >
+              <View className="flex-row justify-between items-start mb-3">
+                <View className="flex-1">
+                  <Text className="text-lg font-semibold text-gray-800">#{request.medreq_id}</Text>
+                  <Text className="text-gray-600 text-sm">{formatDate(request.requested_at)}</Text>
                 </View>
-
-                {/* Patient Info */}
-                <View className="bg-gray-50 rounded-lg p-3 mb-3">
-                  <View className="flex-row items-center mb-2">
-                    <User size={14} color="#6B7280" />
-                    <Text className="text-sm font-PoppinsMedium text-[#263D67] ml-2">
-                      Age: {request.user.age}
-                    </Text>
-                    <Phone size={14} color="#6B7280" className="ml-4" />
-                    <Text className="text-sm font-PoppinsRegular text-[#6B7280] ml-2">
-                      {request.user.phone}
-                    </Text>
-                  </View>
-                  <View className="flex-row items-start">
-                    <MapPin size={14} color="#6B7280" className="mt-0.5" />
-                    <Text className="text-sm font-PoppinsRegular text-[#6B7280] ml-2 flex-1">
-                      {request.user.address}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Medicines Requested */}
-                <View className="mb-3">
-                  <Text className="text-sm font-PoppinsSemiBold text-[#263D67] mb-2">
-                    Medicines Requested:
+                <View className={`px-3 py-1 rounded-full flex-row items-center ${getStatusColor(request.status)}`}>
+                  {getStatusIcon(request.status)}
+                  <Text className="text-white text-xs font-medium ml-1 capitalize">
+                    {request.status}
                   </Text>
-                  {request.medicines.map((medicine, index) => (
-                    <View key={index} className="flex-row justify-between items-center py-1">
-                      <Text className="text-sm font-PoppinsRegular text-[#263D67] flex-1">
-                        {medicine.name}
-                      </Text>
-                      <Text className="text-sm font-PoppinsMedium text-[#6B7280]">
-                        {medicine.quantity} {medicine.unit}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-
-                {/* Symptoms */}
-                <View className="mb-4">
-                  <Text className="text-sm font-PoppinsSemiBold text-[#263D67] mb-1">
-                    Symptoms/Condition:
-                  </Text>
-                  <Text className="text-sm font-PoppinsRegular text-[#6B7280]">
-                    {request.symptoms}
-                  </Text>
-                </View>
-
-                {/* Additional Info for Confirmed/Referred */}
-                {request.status === 'confirmed' && (
-                  <View className="bg-green-50 rounded-lg p-3 mb-3">
-                    <Text className="text-sm font-PoppinsMedium text-green-700">
-                      ✓ Confirmed by {request.confirmedBy} on {formatDate(request.confirmedDate)}
-                    </Text>
-                  </View>
-                )}
-
-                {request.status === 'referred' && (
-                  <View className="bg-blue-50 rounded-lg p-3 mb-3">
-                    <Text className="text-sm font-PoppinsMedium text-blue-700">
-                      📋 Referred to {request.referredTo}
-                    </Text>
-                    <Text className="text-xs font-PoppinsRegular text-blue-600 mt-1">
-                      Reason: {request.referralReason}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Action Buttons */}
-                <View className="flex-row justify-between items-center">
-                  <TouchableOpacity
-                    onPress={() => {
-                      setSelectedRequest(request)
-                      setShowDetailsModal(true)
-                    }}
-                    className="flex-row items-center bg-gray-100 px-3 py-2 rounded-lg"
-                  >
-                    <Eye size={14} color="#6B7280" />
-                    <Text className="text-sm font-PoppinsMedium text-[#6B7280] ml-2">
-                      View Details
-                    </Text>
-                  </TouchableOpacity>
-
-                  {request.status === 'pending' && (
-                    <View className="flex-row space-x-2">
-                      <TouchableOpacity
-                        onPress={() => handleReferRequest(request.id)}
-                        className="flex-row items-center bg-blue-500 px-4 py-2 rounded-lg"
-                      >
-                        <Send size={14} color="white" />
-                        <Text className="text-sm font-PoppinsMedium text-white ml-2">
-                          Refer
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => handleConfirmRequest(request.id)}
-                        className="flex-row items-center bg-green-500 px-4 py-2 rounded-lg"
-                      >
-                        <CheckCircle size={14} color="white" />
-                        <Text className="text-sm font-PoppinsMedium text-white ml-2">
-                          Confirm
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
                 </View>
               </View>
-            ))}
-          </View>
+
+              <View className="mb-3">
+                <View className="flex-row items-center mb-1">
+                  <User size={16} color="#6B7280" />
+                  <Text className="text-gray-700 ml-2 font-medium">{getPatientName(request)}</Text>
+                </View>
+                <View className="flex-row items-center">
+                  <Text className="text-gray-500 text-xs bg-gray-100 px-2 py-1 rounded-full">
+                    {getPatientTypeDisplay(request.pat_type)}
+                  </Text>
+                  <Text className="text-gray-500 text-xs ml-2">{request.personal_info.per_contact}</Text>
+                </View>
+              </View>
+
+              <View className="flex-row justify-between items-center">
+                <Text className="text-gray-500 text-xs">Total Items: {request.total_quantity}</Text>
+                <TouchableOpacity className="flex-row items-center">
+                  <Eye size={16} color="#3B82F6" />
+                  <Text className="text-blue-600 text-sm ml-1">View Details</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          ))
         )}
       </ScrollView>
 
@@ -400,538 +271,88 @@ export default function AdminMedicineRequests() {
       <Modal
         visible={showDetailsModal}
         animationType="slide"
-        transparent={true}
         onRequestClose={() => setShowDetailsModal(false)}
       >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl max-h-[80%]">
-            <View className="p-4 border-b border-gray-200">
-              <View className="w-12 h-1 bg-gray-300 rounded-full self-center mb-4" />
-              <Text className="text-xl font-PoppinsBold text-[#263D67] text-center">
-                Request Details
-              </Text>
-            </View>
+        <SafeAreaView className="flex-1 bg-white">
+          {selectedRequest && (
+            <>
+              <View className="px-4 py-4 border-b border-gray-200">
+                <View className="flex-row items-center">
+                  <TouchableOpacity onPress={() => setShowDetailsModal(false)} className="p-2 mr-2">
+                    <ArrowLeft size={24} color="#333" />
+                  </TouchableOpacity>
+                  <Text className="text-xl font-bold text-gray-800">Request Details</Text>
+                </View>
+              </View>
 
-            {selectedRequest && (
-              <ScrollView className="p-4">
-                <View className="space-y-4">
-                  <View>
-                    <Text className="text-sm font-PoppinsSemiBold text-[#263D67] mb-2">
-                      Patient Information
-                    </Text>
-                    <View className="bg-gray-50 rounded-lg p-3">
-                      <Text className="font-PoppinsMedium text-[#263D67]">{selectedRequest.user.name}</Text>
-                      <Text className="text-sm text-[#6B7280]">Age: {selectedRequest.user.age}</Text>
-                      <Text className="text-sm text-[#6B7280]">Phone: {selectedRequest.user.phone}</Text>
-                      <Text className="text-sm text-[#6B7280]">Emergency: {selectedRequest.user.emergencyContact}</Text>
-                      <Text className="text-sm text-[#6B7280]">Address: {selectedRequest.user.address}</Text>
+              <ScrollView className="flex-1 p-4">
+                {/* Request Info */}
+                <View className="bg-gray-50 rounded-2xl p-4 mb-4">
+                  <Text className="text-lg font-semibold text-gray-800 mb-3">Request Information</Text>
+                  <View className="space-y-2">
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Request ID:</Text>
+                      <Text className="text-gray-800 font-medium">#{selectedRequest.medreq_id}</Text>
+                    </View>
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Status:</Text>
+                      <View className={`px-3 py-1 rounded-full ${getStatusColor(selectedRequest.status)}`}>
+                        <Text className="text-white text-xs font-medium capitalize">
+                          {selectedRequest.status}
+                        </Text>
+                      </View>
+                    </View>
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Requested At:</Text>
+                      <Text className="text-gray-800">{formatDate(selectedRequest.requested_at)}</Text>
+                    </View>
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Mode:</Text>
+                      <Text className="text-gray-800 capitalize">{selectedRequest.mode}</Text>
                     </View>
                   </View>
+                </View>
 
-                  <View>
-                    <Text className="text-sm font-PoppinsSemiBold text-[#263D67] mb-2">
-                      Medical Information
-                    </Text>
-                    <View className="bg-gray-50 rounded-lg p-3">
-                      <Text className="text-sm text-[#263D67] mb-2">
-                        <Text className="font-PoppinsSemiBold">Symptoms: </Text>
-                        {selectedRequest.symptoms}
+                {/* Patient Info */}
+                <View className="bg-gray-50 rounded-2xl p-4 mb-4">
+                  <Text className="text-lg font-semibold text-gray-800 mb-3">Patient Information</Text>
+                  <View className="space-y-3">
+                    <View className="flex-row items-center">
+                      <User size={16} color="#6B7280" />
+                      <Text className="text-gray-800 ml-2 font-medium">{getPatientName(selectedRequest)}</Text>
+                    </View>
+                    
+                    <View className="flex-row items-center">
+                      <Phone size={16} color="#6B7280" />
+                      <Text className="text-gray-800 ml-2">{getPatientContact(selectedRequest)}</Text>
+                    </View>
+                    
+                    <View className="flex-row items-center">
+                      <Calendar size={16} color="#6B7280" />
+                      <Text className="text-gray-800 ml-2">
+                        {selectedRequest.personal_info.per_dob} • {selectedRequest.personal_info.per_sex}
                       </Text>
-                      <Text className="text-sm text-[#263D67]">
-                        <Text className="font-PoppinsSemiBold">Notes: </Text>
-                        {selectedRequest.notes}
+                    </View>
+                    
+                    <View className="flex-row items-center">
+                      <MapPin size={16} color="#6B7280" />
+                      <Text className="text-gray-800 ml-2 flex-1">{selectedRequest.address.full_address}</Text>
+                    </View>
+                    
+                    <View className="bg-blue-50 rounded-xl p-2">
+                      <Text className="text-blue-800 text-xs">
+                        Patient Type: {getPatientTypeDisplay(selectedRequest.pat_type)} • ID: {selectedRequest.pat_id_value}
                       </Text>
                     </View>
                   </View>
                 </View>
-              </ScrollView>
-            )}
 
-            <View className="p-4 border-t border-gray-200">
-              <Button
-                className="bg-[#263D67] py-3 rounded-xl"
-                onPress={() => setShowDetailsModal(false)}
-              >
-                <Text className="text-white font-PoppinsMedium">Close</Text>
-              </Button>
-            </View>
-          </View>
-        </View>
+                {/* Add other sections for medicines and files if they exist in your data */}
+              </ScrollView>
+            </>
+          )}
+        </SafeAreaView>
       </Modal>
-    </View>
+      </PageLayout>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import { View, ScrollView, TouchableOpacity, TextInput, RefreshControl, ActivityIndicator, Modal, Alert } from "react-native"
-// import { Search, Filter, Clock, User, Calendar, Phone, MapPin, FileText, CheckCircle, Send, Eye, MessageCircle, AlertCircle, ArrowLeft } from "lucide-react-native"
-// import { Text } from "@/components/ui/text"
-// import { Button } from "@/components/ui/button"
-// import * as React from "react"
-// import { router } from "expo-router"
-// import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; // Import React Query hooks
-
-// // Base URL for your Django backend API
-// // *** IMPORTANT: Replace with your actual Django backend IP and port for local development ***
-// // On Android emulator, often 10.0.2.2 points to your host machine's localhost.
-// // On iOS simulator, localhost or your machine's local IP works.
-// const API_BASE_URL = 'http://192.168.1.XXX:8000/api'; // Example: 'http://192.168.1.100:8000/api'
-
-// // Helper function for API calls (optional, but good practice)
-// const fetcher = async (url, options = {}) => {
-//   const response = await fetch(url, options);
-//   if (!response.ok) {
-//     const errorData = await response.json();
-//     throw new Error(errorData.detail || 'Something went wrong');
-//   }
-//   return response.json();
-// };
-
-// export default function AdminMedicineRequests() {
-//   const [selectedStatus, setSelectedStatus] = React.useState('all');
-//   const [searchQuery, setSearchQuery] = React.useState('');
-//   const [selectedRequest, setSelectedRequest] = React.useState(null);
-//   const [showDetailsModal, setShowDetailsModal] = React.useState(false);
-
-//   const queryClient = useQueryClient(); // Get the query client instance
-
-//   // --- React Query for fetching Medicine Requests ---
-//   const { data: medicineRequests, isLoading, isError, error, refetch, isRefetching } = useQuery({
-//     queryKey: ['medicineRequests'], // Unique key for this query
-//     queryFn: () => fetcher(`${API_BASE_URL}/medicine-requests/`), // Function to fetch the data
-//     // Optional: Configure caching, refetching behavior
-//     staleTime: 1000 * 60 * 5, // Data is considered fresh for 5 minutes
-//     cacheTime: 1000 * 60 * 10, // Data will stay in cache for 10 minutes
-//   });
-
-//   // Handle errors from the query
-//   React.useEffect(() => {
-//     if (isError) {
-//       console.error("Error fetching medicine requests:", error);
-//       Alert.alert("Error", `Failed to fetch medicine requests: ${error.message}. Please try again later.`);
-//     }
-//   }, [isError, error]);
-
-//   // --- React Query Mutations for Confirm/Refer Actions ---
-
-//   const confirmMutation = useMutation({
-//     mutationFn: (requestId) => fetcher(`${API_BASE_URL}/medicine-requests/${requestId}/confirm/`, { method: 'POST' }),
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ['medicineRequests'] }); // Invalidate and refetch 'medicineRequests' after success
-//       Alert.alert("Success", "Medicine request confirmed successfully!");
-//     },
-//     onError: (mutationError) => {
-//       console.error("Error confirming request:", mutationError);
-//       Alert.alert("Error", `Failed to confirm request: ${mutationError.message || 'Unknown error'}`);
-//     },
-//   });
-
-//   const referMutation = useMutation({
-//     mutationFn: ({ requestId, referredTo, referralReason }) => fetcher(`${API_BASE_URL}/medicine-requests/${requestId}/refer/`, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify({ referred_to: referredTo, referral_reason: referralReason }),
-//     }),
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ['medicineRequests'] }); // Invalidate and refetch 'medicineRequests'
-//       Alert.alert("Success", "Medicine request referred successfully!");
-//     },
-//     onError: (mutationError) => {
-//       console.error("Error referring request:", mutationError);
-//       Alert.alert("Error", `Failed to refer request: ${mutationError.message || 'Unknown error'}`);
-//     },
-//   });
-
-//   // Derived data based on fetched requests
-//   const actualMedicineRequests = medicineRequests || []; // Use empty array if data is not yet loaded
-
-//   const statusOptions = [
-//     { id: 'all', name: 'All Requests', color: '#6B7280', count: actualMedicineRequests.length },
-//     { id: 'pending', name: 'Pending', color: '#F59E0B', count: actualMedicineRequests.filter(r => r.status === 'pending').length },
-//     { id: 'confirmed', name: 'Confirmed', color: '#10B981', count: actualMedicineRequests.filter(r => r.status === 'confirmed').length },
-//     { id: 'referred', name: 'Referred', color: '#3B82F6', count: actualMedicineRequests.filter(r => r.status === 'referred').length }
-//   ];
-
-//   const filteredRequests = React.useMemo(() => {
-//     let filtered = actualMedicineRequests;
-
-//     if (selectedStatus !== 'all') {
-//       filtered = filtered.filter(request => request.status === selectedStatus);
-//     }
-
-//     if (searchQuery.trim()) {
-//       filtered = filtered.filter(request =>
-//         request.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//         request.requestId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//         request.medicines.some(med => med.name.toLowerCase().includes(searchQuery.toLowerCase()))
-//       );
-//     }
-
-//     return filtered.sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate));
-//   }, [selectedStatus, searchQuery, actualMedicineRequests]);
-
-//   const handleConfirmRequest = (requestId) => {
-//     confirmMutation.mutate(requestId);
-//   };
-
-//   const handleReferRequest = (requestId) => {
-//     // For a real scenario, you'd prompt for referredTo and referralReason
-//     Alert.prompt(
-//       "Refer Request",
-//       "Enter referral details (e.g., Hospital Name, Reason)",
-//       [
-//         {
-//           text: "Cancel",
-//           style: "cancel",
-//         },
-//         {
-//           text: "Refer",
-//           onPress: (text) => {
-//             const [referredTo, referralReason] = text.split(',').map(s => s.trim());
-//             referMutation.mutate({ requestId, referredTo: referredTo || 'Not specified', referralReason: referralReason || 'Not specified' });
-//           },
-//         },
-//       ],
-//       'plain-text'
-//     );
-//   };
-
-//   const formatDate = (dateString: any) => {
-//     if (!dateString) return '';
-//     const date = new Date(dateString);
-//     return date.toLocaleDateString('en-US', {
-//       month: 'short',
-//       day: 'numeric',
-//       year: 'numeric',
-//       hour: '2-digit',
-//       minute: '2-digit'
-//     });
-//   };
-
-//   const getTimeElapsed = (dateString) => {
-//     if (!dateString) return 'N/A';
-//     const now = new Date();
-//     const requestDate = new Date(dateString);
-//     const diffHours = Math.floor((now.getTime() - requestDate.getTime()) / (1000 * 60 * 60));
-
-//     if (diffHours < 1) return 'Just now';
-//     if (diffHours < 24) return `${diffHours}h ago`;
-//     const diffDays = Math.floor(diffHours / 24);
-//     return `${diffDays} days ago`;
-//   };
-
-//   return (
-//     <View className="flex-1 bg-[#ffffff]">
-//       {/* Header */}
-//       <View className="bg-white px-4 pt-12 pb-4 shadow-sm">
-//         <TouchableOpacity
-//           onPress={() => router.back()}
-//           className="p-2 rounded-full"
-//         >
-//           <ArrowLeft size={24} color="#000" />
-//         </TouchableOpacity>
-
-//         <View className="pt-2 px-4 bg-[#F8FAFC]">
-//           <View className="flex-row items-center justify-between mb-4">
-//             <View>
-//               <Text className="text-2xl font-PoppinsBold font-bold text-[#263D67]">
-//                 Requests
-//               </Text>
-//               <Text className="text-sm font-PoppinsRegular text-[#6B7280]">
-//                 {filteredRequests.length} requests found
-//               </Text>
-//             </View>
-//           </View>
-//         </View>
-
-//         {/* Search Bar */}
-//         <View className="flex-row items-center bg-gray-100 rounded-xl p-2 mb-4">
-//           <Search size={20} color="#6B7280" />
-//           <TextInput
-//             className="flex-1 ml-3 text-[#263D67] font-PoppinsRegular"
-//             placeholder="Search"
-//             placeholderTextColor="#9CA3AF"
-//             value={searchQuery}
-//             onChangeText={setSearchQuery}
-//           />
-//         </View>
-
-//         {/* Status Filter */}
-//         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-//           <View className="flex-row space-x-3">
-//             {statusOptions.map((status) => {
-//               const isSelected = selectedStatus === status.id;
-//               return (
-//                 <TouchableOpacity
-//                   key={status.id}
-//                   onPress={() => setSelectedStatus(status.id)}
-//                   className={`flex-row items-center px-4 py-2 rounded-full ${isSelected ? 'bg-[#263D67]' : 'bg-white border border-gray-200'
-//                     }`}
-//                 >
-//                   <View
-//                     className="w-2 h-2 rounded-full mr-2"
-//                     style={{ backgroundColor: isSelected ? 'white' : status.color }}
-//                   />
-//                   <Text className={`font-PoppinsMedium text-sm ${isSelected ? 'text-white' : 'text-[#263D67]'
-//                     }`}>
-//                     {status.name} ({status.count})
-//                   </Text>
-//                 </TouchableOpacity>
-//               );
-//             })}
-//           </View>
-//         </ScrollView>
-//       </View>
-
-//       {/* Requests List */}
-//       {(isLoading || isRefetching || confirmMutation.isPending || referMutation.isPending) && actualMedicineRequests.length === 0 ? (
-//         <View className="flex-1 items-center justify-center">
-//           <ActivityIndicator size="large" color="#263D67" />
-//           <Text className="mt-4 text-[#263D67]">Loading requests...</Text>
-//         </View>
-//       ) : (
-//         <ScrollView
-//           className="flex-1 px-4 py-4"
-//           refreshControl={
-//             <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
-//           }
-//           showsVerticalScrollIndicator={false}
-//         >
-//           {filteredRequests.length === 0 ? (
-//             <View className="items-center justify-center py-20">
-//               <FileText size={48} color="#D1D5DB" />
-//               <Text className="text-xl font-PoppinsSemiBold text-[#6B7280] mt-4">No requests found</Text>
-//               <Text className="text-[#9CA3AF] font-PoppinsRegular mt-2 text-center">
-//                 Try adjusting your search or filter criteria
-//               </Text>
-//             </View>
-//           ) : (
-//             <View className="pb-4">
-//               {filteredRequests.map((request) => (
-//                 <View key={request.id} className="bg-white rounded-xl p-4 mb-3 shadow-sm">
-//                   {/* Request Header */}
-//                   <View className="flex-row items-start justify-between mb-3">
-//                     <View className="flex-1">
-//                       <View className="flex-row items-center mb-1">
-//                         <Text className="text-lg font-PoppinsSemiBold text-[#263D67]">
-//                           {request.user.name}
-//                         </Text>
-//                       </View>
-//                       <Text className="text-sm font-PoppinsRegular text-[#6B7280] mb-1">
-//                         Request ID: {request.requestId}
-//                       </Text>
-//                       <Text className="text-xs font-PoppinsRegular text-[#9CA3AF]">
-//                         {getTimeElapsed(request.requestDate)} • {formatDate(request.requestDate)}
-//                       </Text>
-//                     </View>
-
-//                     <View
-//                       className="px-3 py-1 rounded-full"
-//                       style={{
-//                         backgroundColor: `${statusOptions.find(s => s.id === request.status)?.color}20`
-//                       }}
-//                     >
-//                       <Text
-//                         className="text-xs font-PoppinsMedium capitalize"
-//                         style={{
-//                           color: statusOptions.find(s => s.id === request.status)?.color
-//                         }}
-//                       >
-//                         {request.status}
-//                       </Text>
-//                     </View>
-//                   </View>
-
-//                   {/* Patient Info */}
-//                   <View className="bg-gray-50 rounded-lg p-3 mb-3">
-//                     <View className="flex-row items-center mb-2">
-//                       <User size={14} color="#6B7280" />
-//                       <Text className="text-sm font-PoppinsMedium text-[#263D67] ml-2">
-//                         Age: {request.user.age}
-//                       </Text>
-//                       <Phone size={14} color="#6B7280" className="ml-4" />
-//                       <Text className="text-sm font-PoppinsRegular text-[#6B7280] ml-2">
-//                         {request.user.phone}
-//                       </Text>
-//                     </View>
-//                     <View className="flex-row items-start">
-//                       <MapPin size={14} color="#6B7280" className="mt-0.5" />
-//                       <Text className="text-sm font-PoppinsRegular text-[#6B7280] ml-2 flex-1">
-//                         {request.user.address}
-//                       </Text>
-//                     </View>
-//                   </View>
-
-//                   {/* Medicines Requested */}
-//                   <View className="mb-3">
-//                     <Text className="text-sm font-PoppinsSemiBold text-[#263D67] mb-2">
-//                       Medicines Requested:
-//                     </Text>
-//                     {request.medicines.map((medicine, index) => (
-//                       <View key={index} className="flex-row justify-between items-center py-1">
-//                         <Text className="text-sm font-PoppinsRegular text-[#263D67] flex-1">
-//                           {medicine.medicine.name}
-//                         </Text>
-//                         <Text className="text-sm font-PoppinsMedium text-[#6B7280]">
-//                           {medicine.quantity} {medicine.unit}
-//                         </Text>
-//                       </View>
-//                     ))}
-//                   </View>
-
-//                   {/* Symptoms */}
-//                   <View className="mb-4">
-//                     <Text className="text-sm font-PoppinsSemiBold text-[#263D67] mb-1">
-//                       Symptoms/Condition:
-//                     </Text>
-//                     <Text className="text-sm font-PoppinsRegular text-[#6B7280]">
-//                       {request.symptoms}
-//                     </Text>
-//                   </View>
-
-//                   {/* Additional Info for Confirmed/Referred */}
-//                   {request.status === 'confirmed' && (
-//                     <View className="bg-green-50 rounded-lg p-3 mb-3">
-//                       <Text className="text-sm font-PoppinsMedium text-green-700">
-//                         ✓ Confirmed by {request.confirmedBy} on {formatDate(request.confirmedDate)}
-//                       </Text>
-//                     </View>
-//                   )}
-
-//                   {request.status === 'referred' && (
-//                     <View className="bg-blue-50 rounded-lg p-3 mb-3">
-//                       <Text className="text-sm font-PoppinsMedium text-blue-700">
-//                         📋 Referred to {request.referredTo}
-//                       </Text>
-//                       <Text className="text-xs font-PoppinsRegular text-blue-600 mt-1">
-//                         Reason: {request.referralReason}
-//                       </Text>
-//                     </View>
-//                   )}
-
-//                   {/* Action Buttons */}
-//                   <View className="flex-row justify-between items-center">
-//                     <TouchableOpacity
-//                       onPress={() => {
-//                         setSelectedRequest(request);
-//                         setShowDetailsModal(true);
-//                       }}
-//                       className="flex-row items-center bg-gray-100 px-3 py-2 rounded-lg"
-//                     >
-//                       <Eye size={14} color="#6B7280" />
-//                       <Text className="text-sm font-PoppinsMedium text-[#6B7280] ml-2">
-//                         View Details
-//                       </Text>
-//                     </TouchableOpacity>
-
-//                     {request.status === 'pending' && (
-//                       <View className="flex-row space-x-2">
-//                         <TouchableOpacity
-//                           onPress={() => handleReferRequest(request.id)}
-//                           className="flex-row items-center bg-blue-500 px-4 py-2 rounded-lg"
-//                           disabled={referMutation.isPending || confirmMutation.isPending}
-//                         >
-//                           <Send size={14} color="white" />
-//                           <Text className="text-sm font-PoppinsMedium text-white ml-2">
-//                             Refer
-//                           </Text>
-//                         </TouchableOpacity>
-//                         <TouchableOpacity
-//                           onPress={() => handleConfirmRequest(request.id)}
-//                           className="flex-row items-center bg-green-500 px-4 py-2 rounded-lg"
-//                           disabled={confirmMutation.isPending || referMutation.isPending}
-//                         >
-//                           <CheckCircle size={14} color="white" />
-//                           <Text className="text-sm font-PoppinsMedium text-white ml-2">
-//                             Confirm
-//                           </Text>
-//                         </TouchableOpacity>
-//                       </View>
-//                     )}
-//                   </View>
-//                 </View>
-//               ))}
-//             </View>
-//           )}
-//         </ScrollView>
-//       )}
-
-//       {/* Details Modal (remains largely the same) */}
-//       <Modal
-//         visible={showDetailsModal}
-//         animationType="slide"
-//         transparent={true}
-//         onRequestClose={() => setShowDetailsModal(false)}
-//       >
-//         <View className="flex-1 bg-black/50 justify-end">
-//           <View className="bg-white rounded-t-3xl max-h-[80%]">
-//             <View className="p-4 border-b border-gray-200">
-//               <View className="w-12 h-1 bg-gray-300 rounded-full self-center mb-4" />
-//               <Text className="text-xl font-PoppinsBold text-[#263D67] text-center">
-//                 Request Details
-//               </Text>
-//             </View>
-
-//             {selectedRequest && (
-//               <ScrollView className="p-4">
-//                 <View className="space-y-4">
-//                   <View>
-//                     <Text className="text-sm font-PoppinsSemiBold text-[#263D67] mb-2">
-//                       Patient Information
-//                     </Text>
-//                     <View className="bg-gray-50 rounded-lg p-3">
-//                       <Text className="font-PoppinsMedium text-[#263D67]">{selectedRequest.user.name}</Text>
-//                       <Text className="text-sm text-[#6B7280]">Age: {selectedRequest.user.age}</Text>
-//                       <Text className="text-sm text-[#6B7280]">Phone: {selectedRequest.user.phone}</Text>
-//                       <Text className="text-sm text-[#6B7280]">Emergency: {selectedRequest.user.emergencyContact}</Text>
-//                       <Text className="text-sm text-[#6B7280]">Address: {selectedRequest.user.address}</Text>
-//                     </View>
-//                   </View>
-
-//                   <View>
-//                     <Text className="text-sm font-PoppinsSemiBold text-[#263D67] mb-2">
-//                       Medical Information
-//                     </Text>
-//                     <View className="bg-gray-50 rounded-lg p-3">
-//                       <Text className="text-sm text-[#263D67] mb-2">
-//                         <Text className="font-PoppinsSemiBold">Symptoms: </Text>
-//                         {selectedRequest.symptoms}
-//                       </Text>
-//                       <Text className="text-sm text-[#263D67]">
-//                         <Text className="font-PoppinsSemiBold">Notes: </Text>
-//                         {selectedRequest.notes}
-//                       </Text>
-//                     </View>
-//                   </View>
-//                 </View>
-//               </ScrollView>
-//             )}
-
-//             <View className="p-4 border-t border-gray-200">
-//               <Button
-//                 className="bg-[#263D67] py-3 rounded-xl"
-//                 onPress={() => setShowDetailsModal(false)}
-//               >
-//                 <Text className="text-white font-PoppinsMedium">Close</Text>
-//               </Button>
-//             </View>
-//           </View>
-//         </View>
-//       </Modal>
-//     </View>
-//   );
-// }

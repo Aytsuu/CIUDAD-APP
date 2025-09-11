@@ -8,7 +8,7 @@ import { Loader2, Search, ChevronLeft, Folder } from "lucide-react"
 import { toast } from "sonner"
 import { useLoading } from "@/context/LoadingContext"
 import { useOPTYears } from "./queries/fetch"
-import { MonthInfoCard } from "../month-folder-comonent"
+import { MonthInfoCard } from "../month-folder-component"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 
 export default function YearlyJanDecOPTRecords() {

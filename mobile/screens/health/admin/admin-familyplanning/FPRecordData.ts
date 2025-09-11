@@ -6,13 +6,14 @@ export interface FPRecordData {
   dateOfBirth: string;
   age?: string;
   occupation?: string;
-  address?: string;
-  houseNumber?: string;
+  address?:{
+    houseNumber?: string;
+    street?: string;
+    barangay?: string;
+    province?: string;
+    municipality?: string;
+  };
   fp_assessment?: any;
-  street?: string;
-  barangay?: string;
-  municipality?: string;
-  province?: string;
   educationalAttainment?: string;
   philhealthNo?: string;
   nhts_status?: boolean;

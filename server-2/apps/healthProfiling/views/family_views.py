@@ -1,6 +1,5 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from django.db.models import Prefetch, Q, Count, Value, CharField, Subquery, OuterRef, F
 from django.db.models.functions import Coalesce, Concat
 from ..serializers.family_serializers import *
@@ -27,7 +26,7 @@ class FamilyTableView(generics.ListCreateAPIView):
 
         )
 
-        queryset = Family.objects.select_related('staff', 'hh__add__sitio').prefetch_related(
+        queryset = Family.objects.select_related('staff').prefetch_related(
             Prefetch('family_compositions', queryset=family_compositions)
         ).annotate(
             members=Count('family_compositions'),
@@ -65,11 +64,7 @@ class FamilyTableView(generics.ListCreateAPIView):
             'fam_id',
             'fam_date_registered',
             'fam_building',
-            'fam_indigenous',
             'staff__staff_id',
-            'staff__staff_type',
-            'hh__hh_id',
-            'hh__add__sitio__sitio_name',
         )
 
         search_query = self.request.query_params.get('search', '').strip()
@@ -121,12 +116,3 @@ class FamilyUpdateView(generics.RetrieveUpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class VerifyFamily(APIView):
-    def post(self, request, *args, **kwargs):
-      fam_id = request.data.get('fam_id')
-      exists = Family.objects.filter(fam_id=fam_id).first()
-
-      if exists:
-         return Response(status=status.HTTP_200_OK)
-      
-      return Response(status=status.HTTP_404_NOT_FOUND)

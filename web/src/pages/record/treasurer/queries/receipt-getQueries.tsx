@@ -1,9 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-<<<<<<< HEAD:web/src/pages/record/treasurer/Receipts/queries/receipt-getQueries.tsx
-import { getInvoice } from "../request/receipt-get-request";
-=======
 import { getInvoice } from "../Receipts/request/receipt-get-request";
->>>>>>> frontend/feature/maternal-services:web/src/pages/record/treasurer/queries/receipt-getQueries.tsx
 
 export type Receipt = {
     inv_num: number;
@@ -24,4 +20,4 @@ export const useInvoiceQuery = () => {
         queryFn: getInvoice,
         staleTime: 1000 * 60 * 30,
     });
-}
+};

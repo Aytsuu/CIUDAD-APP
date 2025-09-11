@@ -13,15 +13,18 @@ import {
 import { getAllPatients, getPatientById, createPatient } from "../api/get-api"
 
 import { submitAnimalBiteReferral } from "./postrequest"
+import { useToastContext } from "@/components/ui/toast"
+
+
 
 export const useAllPatients = () => {
+  
   return useQuery({
     queryKey: ["all-patients"],
     queryFn: getAllPatients,
     staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }
-
 export const usePatient = (patientId: string) => {
   return useQuery({
     queryKey: ["patient", patientId],
@@ -121,6 +124,7 @@ export const usePatientRecordsByReferralId = (referralId: string) => {
 // NEW: Mutation hook for submitting animal bite referrals
 export const useSubmitAnimalBiteReferralMutation = () => {
   const queryClient = useQueryClient()
+  const { toast } = useToastContext();
   return useMutation({
     mutationFn: submitAnimalBiteReferral,
     onSuccess: () => {
@@ -137,6 +141,7 @@ export const useSubmitAnimalBiteReferralMutation = () => {
 
 export const useSubmitAnimalBiteReferral = () => {
   const queryClient = useQueryClient()
+  const { toast } = useToastContext();
   return useMutation({
     mutationFn: submitAnimalBiteReferral,
     onSuccess: () => {
@@ -156,6 +161,7 @@ export const useSubmitAnimalBiteReferral = () => {
 
 export const useRefreshAllData = () => {
   const queryClient = useQueryClient()
+  const { toast } = useToastContext();
   return useMutation({
     mutationFn: async () => {
       // These functions are now updated to fetch appropriate data as per get-api.tsx

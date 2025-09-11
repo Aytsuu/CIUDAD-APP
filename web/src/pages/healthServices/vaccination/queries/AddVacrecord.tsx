@@ -249,9 +249,9 @@ export const useSubmitStep2 = () => {
       signature,
       pat_id,
       form,
-      form2,
+      // form2,
       vacStck_id,
-      vac_id,
+      // vac_id,
       vac_name,
       expiry_date,
       followUpData,
@@ -308,10 +308,7 @@ export const useSubmitStep2 = () => {
         staff_id: staff_id
       };
 
-<<<<<<< HEAD
-=======
       console.log("Submission Data:", submissionData); // Debugging log
->>>>>>> frontend/feature/maternal-services
       // Make a single API call to the backend
       const response = await api2.post("/vaccination/submit-vaccination-records/", submissionData);
       return response.data;

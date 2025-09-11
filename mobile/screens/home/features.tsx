@@ -29,19 +29,11 @@ export const features: FeatureType[] = [
     icon: <Blotter width={30} height={30}/>,
     route: "/(complaint)"
   },
-<<<<<<< HEAD
   { 
     name: "Profiling",
     icon: <Profiling width={30} height={30}/>,
     route: "/(profiling)"
   },
-=======
-  // { 
-  //   name: "Profiling",
-  //   icon: <Profiling width={30} height={30}/>,
-  //   route: "/(profiling)"
-  // },
->>>>>>> frontend/feature/maternal-services
   {
     name: "Business",
     icon: <Business width={30} height={30}/>,
@@ -50,17 +42,9 @@ export const features: FeatureType[] = [
   {
     name: "Health",
     icon: <Health width={30} height={30}/>,
-<<<<<<< HEAD
     route: "/(health)"
   },
-  {
-    name: "Securado",
-    icon: <Securado width={30} height={30}/>,
-    route: "/(securado)"
-=======
-    route: ""
->>>>>>> frontend/feature/maternal-services
-  },
+ 
   {
     name: "Securado",
     icon: <Securado width={30} height={30}/>,

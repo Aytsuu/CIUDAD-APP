@@ -6,7 +6,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
 import { useVaccinationExpiredOutOfStockSummary } from "./queries/fetch";
-import { MonthInfoCard } from "../../../month-folder-comonent";
+import { MonthInfoCard } from "../../../month-folder-component";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 

@@ -33,18 +33,3 @@ class FamilyCompositionBulkCreateSerializer(serializers.ModelSerializer):
     model = FamilyComposition
     fields = '__all__'
     read_only_fields = ['fc_id']
-
-class RespondentsInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RespondentsInfo
-        fields = '__all__'
-
-class HealthRelatedDetailsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HealthRelatedDetails
-        fields = '__all__'
-
-class MotherHealthInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MotherHealthInfo
-        fields = '__all__'

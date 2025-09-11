@@ -9,6 +9,7 @@ import { updateSupplementStatus, updateCHHistory } from "./updateAPI";
 import { processMedicineRequest } from "./createAPI";
 import { AddRecordArgs } from "../muti-step-form/types";
 import { useQueryClient } from "@tanstack/react-query";
+import { useToastContext } from "@/components/ui/toast";
 
 export async function updateChildHealthRecord({
   submittedData,
@@ -22,7 +23,7 @@ export async function updateChildHealthRecord({
   const old_chhist = originalRecord?.chhist_id;
   const old_chrec_id = originalChrecDetails.chrec_id;
   const old_patrec_id = originalPatrecDetails.patrec_id;
-
+const { toast } = useToastContext();
   if (!submittedData.pat_id) {
     throw new Error("Patient ID is required");
   }
@@ -217,29 +218,29 @@ export async function updateChildHealthRecord({
 }
 
 // src/hooks/useChildHealthRecordMutation.ts
-import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+// import { useMutation } from "@tanstack/react-query";
+// import { useNavigate } from "react-router-dom";
+// import { useToastContext } from "@/components/ui/toast";
 
-export const useImmunizationChildHealthRecordMutation = () => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+// export const useImmunizationChildHealthRecordMutation = () => {
+//   const navigate = useNavigate();
+//   const queryClient = useQueryClient();
+// const { toast } = useToastContext();
+//   return useMutation({
+//     mutationFn: updateChildHealthRecord,
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] }); // Update with your query key
 
-  return useMutation({
-    mutationFn: updateChildHealthRecord,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] }); // Update with your query key
-
-      toast.success("Child health record created successfully!");
-      navigate(-1);
-    },
-    onError: (error: unknown) => {
-      console.error("Failed to update child health record:", error);
-      toast.error(
-        `Operation Failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-    },
-  });
+//       toast.success("Child health record created successfully!");
+//       navigate(-1);
+//     },
+//     onError: (error: unknown) => {
+//       console.error("Failed to update child health record:", error);
+//       toast.error(
+//         `Operation Failed: ${
+//           error instanceof Error ? error.message : "Unknown error"
+//         }`
+//       );
+//     },
+//   });
 };

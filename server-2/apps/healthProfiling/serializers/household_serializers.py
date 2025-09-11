@@ -23,18 +23,9 @@ class HouseholdListSerialzer(serializers.ModelSerializer):
           (f" {name.per_mname[0]}." if name.per_mname else "")
   
   def get_registered_by(self, obj):
-    staff = obj.staff
-    staff_type = staff.staff_type
-    staff_id = staff.staff_id
-    
-    if staff_type == 'Barangay Staff':
-      prefix = 'B-'
-    elif staff_type == 'Health Staff':
-      prefix = 'H-'
-    else:
-      prefix = ''
-    
-    return f"{prefix}{staff_id}"
+    info = obj.staff.rp.per
+    return f"{info.per_lname}, {info.per_fname}" + \
+        (f" {info.per_mname[0]}." if info.per_mname else "")
 
 class HouseholdTableSerializer(serializers.ModelSerializer):
   total_families = serializers.SerializerMethodField()
@@ -45,6 +36,7 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
   head_id = serializers.CharField(source='rp.rp_id')
   date_registered = serializers.DateField(source='hh_date_registered')
   registered_by = serializers.SerializerMethodField()
+
 
   class Meta:
     model = Household
@@ -60,18 +52,9 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
         (f" {info.per_mname[0]}." if info.per_mname else "")
   
   def get_registered_by(self, obj):
-    staff = obj.staff
-    staff_type = staff.staff_type
-    staff_id = staff.staff_id
-    
-    if staff_type == 'Barangay Staff':
-      prefix = 'B-'
-    elif staff_type == 'Health Staff':
-      prefix = 'H-'
-    else:
-      prefix = ''
-    
-    return f"{prefix}{staff_id}"
+    info = obj.staff.rp.per
+    return f"{info.per_lname}, {info.per_fname}" + \
+        (f" {info.per_mname[0]}." if info.per_mname else "")
   
 class HouseholdCreateSerializer(serializers.ModelSerializer):
   class Meta:

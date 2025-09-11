@@ -65,10 +65,6 @@ export default function RootLayout() {
               <Stack.Screen name="(request)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(securado)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(health)" options={{ headerShown: false, animation: 'fade' }} />
-<<<<<<< HEAD
-=======
-              <Stack.Screen name="animal-bites/[id]" options = {{ headerShown: false, animation: 'fade'}}/>
->>>>>>> frontend/feature/maternal-services
               <Stack.Screen name="donation" options = {{ headerShown: false, animation: 'fade' }}/>
               <Stack.Screen name="(council)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(treasurer)" options = {{ headerShown: false, animation: 'fade' }}/>

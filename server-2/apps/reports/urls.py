@@ -7,6 +7,7 @@ from .views.chopt_formplus_views import MonthlyOPTChildHealthSummariesAPIView, M
 from .views.chsemiannual_opt_views import YearlySemiOPTChildHealthSummariesAPIView,SemiAnnualOPTChildHealthReportAPIView
 from .views.chyearly_opt_tracking_views import YearlyMonthlyOPTChildHealthReportAPIView, YearlyOPTChildHealthSummariesAPIView
 from .views.chart_views import NutritionalStatusMonthlyChart
+from .views.chnewchildren_views import MonthlyNewChildrenCountAPIView,MonthlyChildrenDetailAPIView
 urlpatterns=[
         path('healthstaff/', HealthStaffListView.as_view(), name='healthstaff-list'),
         path('update/monthly_recipient_list_report/<int:monthlyrcplist_id>/', UpdateMonthlyRCPReportDetailView.as_view(), name='healthstaff-detail'),
@@ -29,4 +30,9 @@ urlpatterns=[
         
         #CHARTS
         path('nutritional-status/monthly-detail/<str:month>/', NutritionalStatusMonthlyChart.as_view(), name='nutritional-status-monthly-detail'),
+        
+        
+        # NEW CHILDREN LIST
+          path('new-monthly-children/', MonthlyNewChildrenCountAPIView.as_view(), name='monthly-children-count'),
+          path('new-monthly-children-details/<str:month>/', MonthlyChildrenDetailAPIView.as_view(), name='monthly-children-detail'),
 ]

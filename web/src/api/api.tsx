@@ -1,5 +1,14 @@
 import axios from "axios";
 
+export const api = axios.create({
+  baseURL: "http://localhost:8000",
+ 
+});
+export const api2 = axios.create({
+  baseURL: "http://localhost:8001",
+  
+});
+
 // export const api = axios.create({
 //   baseURL: import.meta.env.VITE_API_URL,
 //   withCredentials: true,
@@ -17,28 +26,6 @@ import axios from "axios";
 //     "Accept": "application/json",
 //   },
 // });
-
-export const api = axios.create({
-  baseURL: "http://localhost:8000",
-<<<<<<< HEAD
- 
-=======
-  withCredentials: true, 
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
->>>>>>> frontend/feature/maternal-services
-});
-export const api2 = axios.create({
-  baseURL: "http://localhost:8001",
-<<<<<<< HEAD
-  
-=======
->>>>>>> frontend/feature/maternal-services
-});
-
-
 
 // Track refresh state to prevent multiple refresh attempts
 let isRefreshing = false;
@@ -69,12 +56,7 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${currentAccessToken}`;
     }
 
-<<<<<<< HEAD
-    return Promise.reject(error);
-  }
-=======
     return config;
   },
   (error) => Promise.reject(error)
->>>>>>> frontend/feature/maternal-services
 );

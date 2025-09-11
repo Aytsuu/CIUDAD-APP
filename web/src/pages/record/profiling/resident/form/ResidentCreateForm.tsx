@@ -19,7 +19,7 @@ import {
   MoveRight,
 } from "lucide-react";
 import { showErrorToast } from "@/components/ui/toast";
-import { formatResidents, formatSitio } from "../../ProfilingFormats";
+import { formatResidents, formatSitio } from "../../profilingFormats";
 import { Button } from "@/components/ui/button/button";
 
 const DEFAULT_ADDRESS = [
@@ -140,46 +140,6 @@ export default function ResidentCreateForm({ params }: {
       return;
     }
 
-<<<<<<< HEAD
-    try {
-      const personalInfo = capitalizeAllFields(form.getValues());
-      // Safely get staff_id with proper type checking
-      const staffId = user?.staff?.staff_id;
-
-      if (!staffId) {
-        throw new Error("Staff information not available");
-      }
-
-      const resident = await addResidentAndPersonal({
-        personalInfo: personalInfo,
-        staffId: staffId
-      });
-
-      const new_addresses = await addAddress(addresses)
-
-      await addPersonalAddress({
-        data: new_addresses?.map((address: any) => ({
-          add: address.add_id,
-          per: resident.per.per_id,
-        })),
-        history_id: resident.per.history
-      })
-      
-      showSuccessToast('Successfully registered new resident!')
-      if (params?.isRegistrationTab) {
-        params.setResidentId(resident.rp_id);
-        params.setAddresses(new_addresses);
-        params?.next();
-      }
-      setIsSubmitting(false);
-      form.reset(defaultValues);
-
-    } catch (err) {
-      setIsSubmitting(false);
-      showErrorToast(
-        err instanceof Error ? err.message : "An error occurred"
-      );
-=======
     params?.next(true)
   }
 
@@ -189,7 +149,6 @@ export default function ResidentCreateForm({ params }: {
     if (!(await form.trigger())) {
       showErrorToast("Please fill out all required fields");
       return;
->>>>>>> frontend/feature/maternal-services
     }
 
     if (!validateAddresses(addresses)) {

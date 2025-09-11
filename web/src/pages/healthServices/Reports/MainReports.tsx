@@ -47,6 +47,13 @@ export default function HealthcareReports() {
       bgColor: "bg-gradient-to-br from-red-50 to-rose-50",
       description: "Monthly report of first aid recipients",
       link: "/monthly-firstaid-records"
+    },
+    {
+      title: "New Children 0-5 Years Old List",
+      icon: <Users className="w-6 h-6 text-yellow-600" />,
+      bgColor: "bg-gradient-to-br from-yellow-50 to-amber-50",
+      description: "Monthly report of newly registered children aged 0-5 years old",
+      link: "/monthly-new-children-records"
     }
   ];
 

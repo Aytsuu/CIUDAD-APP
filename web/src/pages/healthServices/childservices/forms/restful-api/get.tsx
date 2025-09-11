@@ -36,7 +36,7 @@ export const getChildHealthHistory = async (chrec: string) => {
 
 export const getNutritionalStatus = async (id: string) => {
   try {
-    const response = await api2.get(`/child-health/nutritional-status/${id}/`);
+    const response = await api2.get(`/patientrecords/body-measurements/${id}/`);
     return response.data;
   } catch (err) {
     console.error(err);

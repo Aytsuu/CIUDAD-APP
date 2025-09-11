@@ -1,11 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
-import {getImzSup} from "../../restful-api/Antigen/ImzFetchAPI";
+import { getImzSupTables, getImzSuplist } from "../../restful-api/Antigen/antigenFetchAPI";
 
-export const useImmunization = () => {
+export const useImzSupTable = (page:number , pageSize: number , search?: string)=> {
     return useQuery({
-        queryKey: ["immunizationsupplies"],
-        queryFn: getImzSup,
-        refetchOnMount: true,
-        staleTime: 0,
+      queryKey: ["ImzSupplies", page, pageSize, search],
+      queryFn: () => getImzSupTables(page, pageSize, search),
+      refetchOnMount: true,
+      staleTime: 0,
     });
-};
+  };
+
+export const useImzSupList = () => {
+  return useQuery({
+    queryKey: ["ImzSuppliesList"],
+    queryFn: getImzSuplist,
+    refetchOnMount: true,
+    staleTime: 0,
+  });
+}

@@ -1,17 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
-	addScheduler, 
+import {
+	addScheduler,
 	addService,
 	addDay
- } from "../restful-api/schedulerPostAPI";
- import { useToastContext } from "@/components/ui/toast"
+} from "../restful-api/schedulerPostAPI";
+import { useToastContext } from "@/components/ui/toast"
 
-import { CircleCheck } from "lucide-react";
-import { Check } from "lucide-react-native";
+import { queryClient } from "@/screens/gad/project-proposal/api/query-provider";
 
-const { toast } = useToastContext();
 export const useAddService = () => {
-	const queryClient = useQueryClient();
+	const { toast } = useToastContext();
 	return useMutation({
 		mutationFn: addService,
 		onSuccess: (service) => {
@@ -31,14 +29,14 @@ export const useAddService = () => {
 
 export const useAddDay = () => {
 	const queryClient = useQueryClient();
-const { toast } = useToastContext();
+	const { toast } = useToastContext();
 	return useMutation({
 		mutationFn: addDay,
 		onSuccess: (day) => {
 			queryClient.invalidateQueries({
 				queryKey: ['days']
 			}),
-			toast.success("New day created successfully");
+				toast.success("New day created successfully");
 			console.log("Successfully added day ID: ", day)
 		},
 		onError: (error: Error) => {
@@ -50,7 +48,7 @@ const { toast } = useToastContext();
 
 export const useAddScheduler = () => {
 	const queryClient = useQueryClient();
-
+	const { toast } = useToastContext();
 	return useMutation({
 		mutationFn: addScheduler,
 		onSuccess: (ss_id) => {

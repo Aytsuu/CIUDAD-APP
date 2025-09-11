@@ -18,6 +18,7 @@ from apps.childhealthservices.models import *
 from apps.childhealthservices.serializers import *
 from ..utils import *
 from apps.patientrecords.models import *
+from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasurementSerializer
 from apps.healthProfiling.models import *
 from pagination import *
 from apps.inventory.models import * 
@@ -252,8 +253,8 @@ class OPTSummaryAllMonths(APIView):
     def get(self, request):
         try:
             # Base queryset with all necessary relations - now including both residents and transients
-            queryset = NutritionalStatus.objects.all().select_related(
-                'bm', 'bm__patrec', 'bm__patrec__pat_id', 'pat',
+            queryset = BodyMeasurement.objects.filter(is_opt=True).select_related(
+                 'pat',
                 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
             ).annotate(
                 # Use Case/When to get gender from both resident and transient
@@ -291,9 +292,9 @@ class OPTSummaryAllMonths(APIView):
             monthly_data = queryset.annotate(
                 month=TruncMonth('created_at')
             ).values('month').annotate(
-                record_count=Count('nutstat_id'),
-                male_count=Count('nutstat_id', filter=Q(sex='Male')),
-                female_count=Count('nutstat_id', filter=Q(sex='Female'))
+                record_count=Count('bm_id'),
+                male_count=Count('bm_id', filter=Q(sex='Male')),
+                female_count=Count('bm_id', filter=Q(sex='Female'))
             ).order_by('-month')
 
             formatted_data = []
@@ -344,7 +345,7 @@ class OPTSummaryAllMonths(APIView):
 
 
 class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
-    serializer_class = NutritionalStatusSerializerBase
+    serializer_class = BodyMeasurementSerializer
     pagination_class = None
 
     AGE_BUCKETS = [
@@ -374,12 +375,13 @@ class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
                 end_date = timezone.make_aware(datetime(year + 1, 1, 1))
             end_date -= timedelta(microseconds=1)
         except ValueError:
-            return NutritionalStatus.objects.none()
+            return BodyMeasurement.objects.none()
 
         # REMOVED the filter to include both residents and transients
-        queryset = NutritionalStatus.objects.filter(
+        queryset = BodyMeasurement.objects.filter(
             created_at__gte=start_date,
-            created_at__lte=end_date
+            created_at__lte=end_date,
+            is_opt=True
         ).annotate(
             # Use Case/When to get gender from both resident and transient
             sex=Case(
@@ -389,7 +391,7 @@ class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
                 output_field=CharField()
             )
         ).select_related(
-            'bm', 'bm__patrec', 'pat',
+           'pat',
             'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
         )
 

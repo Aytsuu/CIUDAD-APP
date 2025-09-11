@@ -49,18 +49,9 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     return "-"
 
   def get_registered_by(self, obj):
-    staff = obj.staff
-    staff_type = staff.staff_type
-    staff_id = staff.staff_id
-    
-    if staff_type == 'Barangay Staff':
-      prefix = 'B-'
-    elif staff_type == 'Health Staff':
-      prefix = 'H-'
-    else:
-      prefix = ''
-    
-    return f"{prefix}{staff_id}"
+    info = obj.staff.rp.per
+    return f"{info.per_lname}, {info.per_fname}" + \
+          (f" {info.per_mname[0]}." if info.per_mname else "")
   
 class FamilyCreateSerializer(serializers.ModelSerializer):
   class Meta: 
@@ -106,18 +97,9 @@ class FamilyListSerializer(serializers.ModelSerializer):
     return FamilyComposition.objects.filter(fam=obj).count()
   
   def get_registered_by(self, obj):
-    staff = obj.staff
-    staff_type = staff.staff_type
-    staff_id = staff.staff_id
-    
-    if staff_type == 'Barangay Staff':
-      prefix = 'B-'
-    elif staff_type == 'Health Staff':
-      prefix = 'H-'
-    else:
-      prefix = ''
-    
-    return f"{prefix}{staff_id}"
+    info = obj.staff.rp.per
+    return f"{info.per_lname}, {info.per_fname}" + \
+          (f" {info.per_mname[0]}." if info.per_mname else "")
 
 
 

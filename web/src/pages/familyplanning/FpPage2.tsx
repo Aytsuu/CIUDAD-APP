@@ -1,3 +1,4 @@
+// FpPage2.tsx
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -46,6 +47,7 @@ export default function FamilyPlanningForm2({
   mode = "create",
 }: Page2Props) {
   const isReadOnly = mode === "view"
+  const isFemale = formData.gender === "Female"
 
   // NEW: State for selected illnesses
   const [selectedIllnesses, setSelectedIllnesses] = useState<number[]>([])
@@ -73,7 +75,7 @@ export default function FamilyPlanningForm2({
     api2.get(`/familyplanning/last-previous-pregnancy/${formData.pat_id}`)
       .then(response => {
         const { last_delivery_date, last_delivery_type } = response.data;
-        
+
         // Set the values in your form
         if (last_delivery_date) {
           form.setValue("obstetricalHistory.lastDeliveryDate", last_delivery_date);
@@ -233,7 +235,7 @@ export default function FamilyPlanningForm2({
     const updatedData = {
       ...data,
       medicalHistory,
-      selectedIllnessIds: selectedIllnesses, 
+      selectedIllnessIds: selectedIllnesses,
       customDisabilityDetails: data.medicalHistory?.disabilityDetails || null,
     }
 
@@ -373,10 +375,9 @@ export default function FamilyPlanningForm2({
                 )}
               </div>
 
-              {/* Obstetrical History Section - ORIGINAL CODE PRESERVED */}
-              <div className="border-l-4 pl-5">
+              <div className={`border-l-4 pl-5 ${!isFemale && "opacity-50 pointer-events-none"}`}>
                 <Label className="text-lg font-bold mb-3">II. OBSTETRICAL HISTORY</Label>
-
+                {/* All the fields within this div will now be disabled */}
                 {/* Number of Pregnancies */}
                 <div className="grid grid-cols-6 mt-5">
                   <FormField
@@ -393,7 +394,7 @@ export default function FamilyPlanningForm2({
                             type="number"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
-                            readOnly={isReadOnly}
+                            readOnly={isReadOnly || !isFemale}
                           />
                         </FormControl>
                         <FormMessage />
@@ -414,7 +415,7 @@ export default function FamilyPlanningForm2({
                             type="number"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
-                            readOnly={isReadOnly}
+                            readOnly={isReadOnly || !isFemale}
                           />
                         </FormControl>
                         <FormMessage />
@@ -435,7 +436,7 @@ export default function FamilyPlanningForm2({
                             className=" w-[80px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
-                            readOnly={isReadOnly}
+                            readOnly={isReadOnly || !isFemale}
                           />
                         </FormControl>
                         <FormMessage />
@@ -456,7 +457,7 @@ export default function FamilyPlanningForm2({
                             className=" w-[80px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
-                            readOnly={isReadOnly}
+                            readOnly={isReadOnly || !isFemale}
                           />
                         </FormControl>
                         <FormMessage />
@@ -477,7 +478,7 @@ export default function FamilyPlanningForm2({
                             className="w-[80px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
-                            readOnly={isReadOnly}
+                            readOnly={isReadOnly || !isFemale}
                           />
                         </FormControl>
                         <FormMessage />
@@ -498,7 +499,7 @@ export default function FamilyPlanningForm2({
                             className="w-[80px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
-                            readOnly={isReadOnly}
+                            readOnly={isReadOnly || !isFemale}
                           />
                         </FormControl>
                         <FormMessage />
@@ -516,7 +517,7 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Date of last delivery</Label>
                         <FormControl>
-                          <Input {...field} type="date" className="w-[150px]" readOnly={isReadOnly} />
+                          <Input {...field} type="date" className="w-[150px]" readOnly={isReadOnly || !isFemale} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -535,7 +536,7 @@ export default function FamilyPlanningForm2({
                             <Checkbox
                               checked={field.value === "Vaginal"}
                               onCheckedChange={() => field.onChange("Vaginal")}
-                              disabled={isReadOnly}
+                              disabled={isReadOnly || !isFemale}
                             />
                           </FormControl>
                           <Label>Vaginal</Label>
@@ -543,7 +544,7 @@ export default function FamilyPlanningForm2({
                             <Checkbox
                               checked={field.value === "Cesarean Section"} // Keep this as "Cesarean Section"
                               onCheckedChange={() => field.onChange("Cesarean Section")} // Change this to "Cesarean Section"
-                              disabled={isReadOnly}
+                              disabled={isReadOnly || !isFemale}
                             />
                           </FormControl>
                           <Label>Cesarean Section</Label>
@@ -563,7 +564,7 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Last menstrual period</Label>
                         <FormControl>
-                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly} />
+                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -577,7 +578,7 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Previous menstrual period</Label>
                         <FormControl>
-                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly} />
+                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -603,7 +604,7 @@ export default function FamilyPlanningForm2({
                                   checked={field.value === flow}
                                   onChange={() => field.onChange(flow)}
                                   className="w-4 h-4"
-                                  disabled={isReadOnly}
+                                  disabled={isReadOnly || !isFemale}
                                 />
                               </FormControl>
                               <Label htmlFor={`flow-${flow.toLowerCase()}`}>
@@ -627,7 +628,7 @@ export default function FamilyPlanningForm2({
                   render={({ field }) => (
                     <FormItem className="mt-4">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly} />
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly || !isFemale} />
                       </FormControl>
                       <Label className="ml-2">Dysmenorrhea</Label>
                       <FormMessage />
@@ -641,7 +642,7 @@ export default function FamilyPlanningForm2({
                   render={({ field }) => (
                     <FormItem className="mt-2">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly} />
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly || !isFemale} />
                       </FormControl>
                       <Label className="ml-2">Hydatidiform mole (within the last 12 months)</Label>
                       <FormMessage />
@@ -655,7 +656,7 @@ export default function FamilyPlanningForm2({
                   render={({ field }) => (
                     <FormItem className="mt-2">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly} />
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly || !isFemale} />
                       </FormControl>
                       <Label className="ml-2">History of ectopic pregnancy</Label>
                       <FormMessage />

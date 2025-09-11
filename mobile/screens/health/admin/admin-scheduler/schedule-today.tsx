@@ -1,18 +1,9 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
-import { format } from "date-fns";
-import { useGetScheduler, useGetServices } from "./queries/schedulerFetchQueries";
-
-// Define interfaces for type safety
-interface Service {
-  service_name: string;
-}
-
-interface SchedulerGetData {
-  day: string;
-  service_name: string;
-  meridiem: "AM" | "PM";
-}
+// schedule-today.tsx (temporary test version)
+import React, { useEffect, useState, useMemo } from 'react';
+import { View, Text as RNText, TouchableOpacity, ActivityIndicator } from 'react-native'; // Use raw RN Text
+import { format } from 'date-fns';
+import { useGetScheduler, useGetServices } from './queries/schedulerFetchQueries';
+import { useRouter } from 'expo-router';
 
 interface ServiceTimeSlots {
   AM: boolean;
@@ -23,22 +14,17 @@ interface DailySchedule {
   [serviceName: string]: ServiceTimeSlots;
 }
 
-interface TodayScheduleWidgetProps {
-  onViewWeeklySchedule?: () => void;
-}
-
-interface UseQueryResult<T> {
-  data: T;
-  isLoading: boolean;
-  error: Error | null;
-}
-
-export default function TodayScheduleWidget({ onViewWeeklySchedule }: TodayScheduleWidgetProps) {
+export default function TodayScheduleWidget({ onViewWeeklySchedule }: { onViewWeeklySchedule?: () => void }) {
+  const router = useRouter();
   const { data: servicesData = [], isLoading: servicesLoading, error: servicesError } = useGetServices();
   const { data: schedulersData = [], isLoading: schedulersLoading, error: schedulersError } = useGetScheduler();
 
   const [dailySchedule, setDailySchedule] = useState<DailySchedule>({});
   const [services, setServices] = useState<string[]>([]);
+
+  const handleViewWeeklySchedule = () => {
+    router.push('/admin/scheduler/schedule-weekly');
+  };
 
   useEffect(() => {
     if (servicesData.length > 0) {
@@ -50,15 +36,13 @@ export default function TodayScheduleWidget({ onViewWeeklySchedule }: TodaySched
   useEffect(() => {
     if (servicesData.length > 0) {
       const today = new Date();
-      const todayDayName = format(today, "EEEE");
+      const todayDayName = format(today, 'EEEE');
       const currentDaily: DailySchedule = {};
 
-      // Initialize all services for today
       servicesData.forEach((service) => {
         currentDaily[service.service_name] = { AM: false, PM: false };
       });
 
-      // Populate schedule based on today's entries
       schedulersData.forEach((scheduler) => {
         if (scheduler.day === todayDayName && currentDaily[scheduler.service_name]) {
           currentDaily[scheduler.service_name][scheduler.meridiem] = true;
@@ -78,53 +62,49 @@ export default function TodayScheduleWidget({ onViewWeeklySchedule }: TodaySched
 
   if (servicesLoading || schedulersLoading) {
     return (
-      <View className="flex-1 justify-center items-center">
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#3B82F6" />
-        <Text className="mt-2 text-base text-gray-700">Loading today's schedule...</Text>
+        <RNText style={{ marginTop: 8, fontSize: 16, color: '#374151' }}>Loading...</RNText>
       </View>
     );
   }
 
   if (servicesError || schedulersError) {
     return (
-      <View className="flex-1 justify-center items-center p-4 bg-red-50 rounded-lg">
-        <Text className="text-base text-red-600 text-center">Unable to load today's schedule.</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16, backgroundColor: '#FEF2F2', borderRadius: 8 }}>
+        <RNText style={{ fontSize: 16, color: '#DC2626', textAlign: 'center' }}>Unable to load schedule.</RNText>
         <TouchableOpacity
-          className="mt-4 bg-blue-600 py-2 px-4 rounded-lg"
-          onPress={() => {
-            // Trigger refetch (assuming hooks support refetch)
-            // Replace with actual refetch logic if available
-          }}
-          accessibilityLabel="Retry loading schedule"
+          style={{ marginTop: 16, backgroundColor: '#2563EB', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8 }}
+          onPress={() => {}}
         >
-          <Text className="text-white text-base font-bold">Retry</Text>
+          <RNText style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>Retry</RNText>
         </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View className="bg-white rounded-lg mx-0.5 my-0.5 shadow-md shadow-black/20 elevation-3">
-      <View className="p-4 border-b border-gray-200">
-        <Text className="text-xl font-bold text-gray-800">Today's Schedule</Text>
-        <Text className="text-sm text-gray-600 mt-1">{format(new Date(), "EEEE, MMM d")}</Text>
+    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 8, margin: 2, elevation: 3 }}>
+      <View style={{ padding: 14, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' }}>
+        <RNText style={{ fontSize: 20, fontWeight: 'bold', color: '#1F2937' }}>Today's Schedule</RNText>
+        <RNText style={{ fontSize: 14, color: '#4B5563', marginTop: 4 }}>{format(new Date(), 'EEEE, MMM d')}</RNText>
       </View>
-      <View className="p-4">
+      <View style={{ padding: 14 }}>
         {scheduledServices.length > 0 ? (
-          <View className="mb-2">
+          <View style={{ marginBottom: 8 }}>
             {scheduledServices.map((serviceName) => {
               const serviceTimeSlots: ServiceTimeSlots = dailySchedule[serviceName] || { AM: false, PM: false };
               const activeSlots: string[] = [];
-              if (serviceTimeSlots.AM) activeSlots.push("AM");
-              if (serviceTimeSlots.PM) activeSlots.push("PM");
+              if (serviceTimeSlots.AM) activeSlots.push('AM');
+              if (serviceTimeSlots.PM) activeSlots.push('PM');
 
               return (
-                <View key={serviceName} className="flex-col mb-2">
-                  <Text className="text-base font-medium text-gray-800">{serviceName}</Text>
-                  <View className="flex-row mt-1">
+                <View key={serviceName} style={{ marginBottom: 8 }}>
+                  <RNText style={{ fontSize: 16, fontWeight: '500', color: '#1F2937' }}>{serviceName}</RNText>
+                  <View style={{ flexDirection: 'row', marginTop: 4 }}>
                     {activeSlots.map((slot) => (
-                      <View key={slot} className="bg-blue-100 rounded-full px-2 py-1 mr-1">
-                        <Text className="text-xs font-bold text-blue-600">{slot}</Text>
+                      <View key={slot} style={{ backgroundColor: '#DBEAFE', borderRadius: 9999, paddingVertical: 4, paddingHorizontal: 8, marginRight: 4 }}>
+                        <RNText style={{ fontSize: 12, fontWeight: 'bold', color: '#2563EB' }}>{slot}</RNText>
                       </View>
                     ))}
                   </View>
@@ -133,14 +113,13 @@ export default function TodayScheduleWidget({ onViewWeeklySchedule }: TodaySched
             })}
           </View>
         ) : (
-          <Text className="text-sm text-gray-600 text-center mb-2">No services scheduled for today.</Text>
+          <RNText style={{ fontSize: 14, color: '#4B5563', textAlign: 'center', marginBottom: 8 }}>No services scheduled for today.</RNText>
         )}
         <TouchableOpacity
-          className="bg-blue-600 py-3 px-5 rounded-lg items-center mt-2"
-          onPress={onViewWeeklySchedule}
-          accessibilityLabel="View weekly schedule"
+          style={{ backgroundColor: '#2563EB', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', marginTop: 8 }}
+          onPress={handleViewWeeklySchedule}
         >
-          <Text className="text-white text-base font-bold">View Weekly Schedule</Text>
+          <RNText style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>View Weekly Schedule</RNText>
         </TouchableOpacity>
       </View>
     </View>

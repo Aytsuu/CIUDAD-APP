@@ -55,7 +55,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
 
   const abnormalDischarge = form.watch("sexuallyTransmittedInfections.abnormalDischarge")
   const patientGender = formData.gender
-
+  console.log("Gender: ",patientGender)
   useEffect(() => {
     if (!abnormalDischarge) {
       form.setValue("sexuallyTransmittedInfections.dischargeFrom", undefined)

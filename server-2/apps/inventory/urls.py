@@ -47,7 +47,7 @@ urlpatterns = [
     
     path("commodity-stock-table/",CommodityStockTableView.as_view(),name="commodity-stock-view"),
     path('archive/commoditystocks-table/', ArchivedCommodityTable.as_view(), name='archived-commodity-table'),
-    path('commodity-transactions/table/',CommodityTransactionView.as_view(), name='commodity-transactions'),
+    path('commodity-transactions/table/',CommodityTransactionTableView.as_view(), name='commodity-transactions'),
     
 
     path("firstaidlist/", FirstAidListView.as_view(), name="firstaidlist"),
@@ -121,4 +121,6 @@ urlpatterns = [
     path('vaccination-expired-out-of-stock-summary/', VaccinationExpiredOutOfStockSummaryAPIView.as_view(), name='vaccination-expired-out-of-stock-summary'),
     path('vaccination-expired-out-of-stock-detail/<str:month>/', MonthlyVaccinationExpiredOutOfStockDetailAPIView.as_view(), name='vaccination-expired-out-of-stock-detail'),
     
+    
+    path('medreq-items-pending/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
 ] 

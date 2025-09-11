@@ -638,10 +638,10 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         elif pat_obj.pat_type == 'Transient' and pat_obj.trans_id:
             trans = pat_obj.trans_id
             if trans.mother_fname or trans.mother_lname:
-                parents['mother'] = f"{trans.mother_fname} {trans.mother_mname} {trans.mother_lname}".strip()
+                parents['mother'] = f"{trans.mother_fname} {trans.mother_mname or ''} {trans.mother_lname}".strip()
             
             if trans.father_fname or trans.father_lname:
-                parents['father'] = f"{trans.father_fname} {trans.father_mname} {trans.father_lname}".strip()
+                parents['father'] = f"{trans.father_fname} {trans.father_mname or ''} {trans.father_lname}".strip()
         
         return parents
 
@@ -653,6 +653,15 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                 try:
                     ns_obj = queryset_objects[i]
                     pat = entry.get('patient_details', {})
+                          # Get child name from pat_details.personal_info
+                    pat_details = entry.get('pat_details', {})
+                    personal_info = pat_details.get('personal_info', {})
+                    
+                    child_fname = personal_info.get('per_fname', '')
+                    child_mname = personal_info.get('per_mname', '')
+                    child_lname = personal_info.get('per_lname', '')
+                    child_name = f"{child_fname} {child_mname} {child_lname}".strip()
+
                     
                     # Get address information for both residents and transients
                     address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(ns_obj.pat)
@@ -693,7 +702,7 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
 
                     report_entry = {
                         'household_no': household_no,  # Now using the same logic as PatientSerializer
-                        'child_name': f"{pat.get('first_name', '')} {pat.get('middle_name', '')} {pat.get('last_name', '')}",
+                        'child_name': child_name,
                         'sex': sex,  # Now properly set based on patient type
                         'date_of_birth': dob,  # Now properly set based on patient type
                         'age_in_months': age_in_months,

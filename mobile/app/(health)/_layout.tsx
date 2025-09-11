@@ -1,15 +1,18 @@
 // app/_layout.tsx
 import { Stack } from "expo-router";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; // Import these
+import { AuthProvider } from "@/screens/health/familyplanning/useAuth";
+import AdminRequestsScreen from "@/screens/health/medicine-request/admin-requests";
+import RequestDetailScreen from "@/screens/health/medicine-request/request-detail";
 
 // Create a client for React Query outside the component to avoid re-creation on re-renders
 const queryClient = new QueryClient();
 
 export default () => {
     return (
-<<<<<<< HEAD
         // Wrap your entire Stack navigator with QueryClientProvider
         <QueryClientProvider client={queryClient}>
+            <AuthProvider>
             <Stack>
                 <Stack.Screen name="medconsultation/med-landing" options={{ headerShown: false }} />
                 <Stack.Screen name="medconsultation/consultationpage" options={{ headerShown: false }} />
@@ -48,27 +51,20 @@ export default () => {
                 <Stack.Screen name="admin/childhealth/individual" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/childhealth/overall" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/childhealth/history" options={{headerShown:false}}/>
+                <Stack.Screen name="admin/schedules/all-appointment" options={{headerShown:false}}/>
 
-                <Stack.Screen name="admin/maternal/overall" options={{ headerShown: false }} />
-                <Stack.Screen name="admin/maternal/individual" options={{ headerShown: false }} />
+                <Stack.Screen name="family-planning/fp-dashboard" options={{headerShown:false}}/>
+                <Stack.Screen name="family-planning/fp-details" options={{headerShown:false}}/>
+                <Stack.Screen name="my-schedules/my-schedules" options={{headerShown:false}}/>
+            
+            
+                <Stack.Screen name="medicine-request/request-details" options={{headerShown: false}}/>
+                <Stack.Screen name="medicine-request/admin-request" options={{headerShown: false}}/>
+                <Stack.Screen name="animalbite/my-records" options={{headerShown: false}}/>
+                <Stack.Screen name="medicine-request/my-requests" options={{headerShown: false}}/>
+            
             </Stack>
+            </AuthProvider>
         </QueryClientProvider>
-=======
-        <Stack>
-            <Stack.Screen name="maternal/maternal-landing" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="medconsultation/med-landing" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="appointments/schedules" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="my-records/all-records" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="family-planning/familyplanning" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="family-planning/famplanning" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="medicine-request/request-page" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="medicine-request/cart" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="medicine-request/med-request" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="medicine-request/confirmation" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="animalbite/animalbite" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="medicine-request/details" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }} />
-        </Stack>
->>>>>>> frontend/feature/maternal-services
     );
 }

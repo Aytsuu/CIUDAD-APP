@@ -6,7 +6,6 @@ from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSeria
 from apps.healthProfiling.models import FamilyComposition,Household, ResidentProfile, Personal, PersonalAddress, Address, HealthRelatedDetails, MotherHealthInfo
 from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
 from apps.maternal.models import PostpartumRecord, TT_Status, Prenatal_Form
-from apps.familyplanning.models import FP_Record, FP_type
 from apps.healthProfiling.serializers.minimal import *
 from .spouse_serializers import SpouseSerializer
 
@@ -46,27 +45,6 @@ class PatientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patient
         fields = '__all__'
-
-    def get_family_planning_record(self, obj):
-        try:
-            fp_record = FP_Record.objects.filter(pat_id=obj).order_by('-created_at').first()
-
-            if fp_record:
-                # Find the FP_type associated with the record
-                fp_type = FP_type.objects.filter(fprecord_id=fp_record).first()
-                if fp_type:
-                    return {
-                        'has_fp_record': True,
-                        'fp_method': fp_type.fpt_method_used,
-                        'client_type': fp_type.fpt_client_type
-                    }
-
-            return {'has_fp_record': False}
-        except Exception as e:
-            # You might want to log this error instead of returning it in the response
-            print(f'Error checking family planning record: {str(e)}')
-            return {'has_fp_record': False, 'error': str(e)}
-
 
     def get_personal_info(self, obj):
         # Resident personal data
