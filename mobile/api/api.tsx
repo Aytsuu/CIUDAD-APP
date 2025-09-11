@@ -2,7 +2,7 @@ import axios from "axios";
 import { setupApiInterceptor } from "./apiInterceptor";
 
 export const api = axios.create({
-  baseURL: "http://192.168.100.8:8000",
+  baseURL: "http://192.168.209.172:8000",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -15,20 +15,6 @@ export const api2 = axios.create({
   timeout: 10000,
 });
 
-  // Track refresh state to prevent multiple refresh attempts
-  let isRefreshing = false;
-  let refreshPromise: Promise<string | null> | null = null;
+setupApiInterceptor(api)
 
-  let currentAccessToken: string | null = null;
-
-  // Function to set access token (called from AuthContext)
-  export const setAccessToken = (token: string | null) => {
-    currentAccessToken = token;
-    
-    // Update axios default header immediately
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete api.defaults.headers.common['Authorization'];
-    }
-  };
+export default api;

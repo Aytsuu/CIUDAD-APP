@@ -2,13 +2,9 @@ import { z } from 'zod'
 
 const SignInSchema = z.object({
 
-    email: z.string().min(1, { message: ""}),
-    password: z.string().min(1, { message: ""})
-
+    email: z.string().min(1, { message: "Email is required" }).optional(),
+    password: z.string().min(1, { message: ""}),
+    phone: z.string().min(1, {message: ""}).optional()
 });
-
-export const SignInSchema2 = z.object({
-    phone_number: z.string().min(1, {message: ""})
-})
 
 export default SignInSchema;

@@ -1,457 +1,145 @@
 import "@/global.css";
-import React, { useState, useEffect, memo, useMemo } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  Image,
-  TextInput,
-  Keyboard,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+import PageLayout from "@/screens/_PageLayout";
+import { router, useRouter } from "expo-router";
+import React, { useEffect } from "react";
+import { TouchableOpacity, View, Text, ScrollView, Alert } from "react-native";
+import PhoneOTP from "../signup/account/PhoneOTP";
+import EmailOTP from "../signup/account/EmailOTP";
+import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormInput } from "@/components/ui/form/form-input";
-import { Eye } from "@/lib/icons/Eye";
-import { EyeOff } from "@/lib/icons/EyeOff";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToastContext } from "@/components/ui/toast";
-import GoogleIcon from "@/assets/images/google.svg";
-import { signInSchema } from "@/form-schema/signin-schema";
-import { ChevronLeft } from "lucide-react-native";
-import { useAuth } from "@/contexts/AuthContext"; 
 
-type SignInForm = z.infer<typeof signInSchema>;
-
-export default function LoginScreen() {
-  const { 
-    user, 
-    isAuthenticated, 
-    isLoading, 
-    // error,
-    hasCheckedAuth,
-    otpSent,
-    email,
-    phone,
-    login,
-    sendOTP,
-    clearAuthError,
-    loginLoading,
-    otpLoading
-  } = useAuth(); 
-
-  const { toast } = useToastContext();
+export default function Login() {
+  const [currentStep, setCurrentStep] = React.useState<number>(1);
+  const [loginMethod, setLoginMethod] = React.useState<"phone" | "email">("phone");
+  const [password, setPassword] = React.useState("");
+  const {control, getValues} = useRegistrationFormContext();
+  const { login, isAuthenticated, user } = useAuth();
   const router = useRouter();
+  const {toast} = useToastContext();
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showPhoneLogin, setShowPhoneLogin] = useState(false);
-  // const [phone, setPhone] = useState("");
+  const handleOTPVerified = () => {
+    setCurrentStep(2);
+  };
 
-  const [googleLoading, setGoogleLoading] = useState(false);
-
-  const defaultValues = useMemo(() => generateDefaultValues(signInSchema), []);
-  const {
-    control,
-    trigger,
-    getValues,
-    formState: { errors },
-  } = useForm<SignInForm>({
-    resolver: zodResolver(signInSchema),
-    defaultValues,
-  });
-
-  const isAnyLoading = useMemo(
-    () => loginLoading || otpLoading || googleLoading || isLoading,
-    [loginLoading, otpLoading, googleLoading, isLoading]
-  );
-
-  // Handle authentication errors
-  // useEffect(() => {
-  //   if (error) {
-  //     toast.error(error);
-  //     clearAuthError(); // Clear error after showing toast
-  //   }
-  // }, [error, toast, clearAuthError]);
-
-  // Redirect to main app if authenticated
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if(isAuthenticated && user){
       toast.success("Welcome!");
-      router.replace("/(tabs)");
+      router.replace("/(tabs)")
+    } 
+  }, [user, isAuthenticated]);
+
+  const handleLogin = () => {
+    const values = getValues();
+    const {accountFormSchema} = values
+    const response = login({
+      ...(loginMethod == "phone" ? { 
+        phone: accountFormSchema.phone
+      } :
+    {
+      email: accountFormSchema.email
+    }),
+  
+      password: accountFormSchema.password,
+    });
+
+    if(!response){
+      Alert.alert("Error", "Incorrect password");
     }
-  }, [isAuthenticated, user, toast, router]);
-
-  const handleEmailLogin = useMemo(
-    () => async () => {
-      try {
-        const isValid = await trigger();
-
-        if (!isValid) {
-          if (errors.email)
-            toast.error(errors.email.message ?? "Invalid email");
-          if (errors.password)
-            toast.error(errors.password.message ?? "Invalid password");
-          return;
-        }
-
-        const { email, password } = getValues();
-        
-        const user = await login({ email, password });
-        
-        if (user) {
-          console.log('✅ Login successful for user:', user.email);
-        }
-      } catch (err) {
-        console.error("Login error:", err);
-        // Error will be handled by the error useEffect above
-      }
-    },
-    [trigger, errors, getValues, toast, login]
-  );
-
-  const handlePhoneContinue = useMemo(
-    () => async () => {
-      const phoneRegex = /^9\d{9}$/;
-      // if (!phoneRegex.test(phone.trim())) {
-      //   toast.error(
-      //     "Please enter a valid mobile number starting with 9 and 10 digits long"
-      //   );
-      //   return;
-      // }
-
-      try {
-        const fullPhoneNumber = `63${phone}`;
-        
-        // Use the sendOTP method from useAuth hook (matches document 1 pattern)
-        const success = await sendOTP(fullPhoneNumber);
-
-        if (success) {
-          toast.success(`OTP sent to +${fullPhoneNumber}`);
-          router.push({
-            pathname: "/(auth)/PhoneOTP",
-            params: { phoneNumber: fullPhoneNumber },
-          });
-        } else {
-          toast.error("Failed to send OTP. Please try again.");
-        }
-      } catch (err) {
-        console.error("Phone OTP error:", err);
-        toast.error("An unexpected error occurred. Please try again.");
-      }
-    },
-    [phone, toast, router, sendOTP]
-  );
-
-  const handleGoogleLogin = useMemo(
-    () => async () => {
-      setGoogleLoading(true);
-      try {
-        toast.info("Google login coming soon!");
-      } catch (err) {
-        console.error("Google login failed:", err);
-        toast.error("Google login failed");
-      } finally {
-        setGoogleLoading(false);
-      }
-    },
-    [toast]
-  );
-
-  const dismissKeyboard = useMemo(() => () => Keyboard.dismiss(), []);
-  
-  const toggleShowPassword = useMemo(
-    () => () => setShowPassword(!showPassword),
-    [showPassword]
-  );
-  
-  const togglePhoneLogin = useMemo(
-    () => () => setShowPhoneLogin(!showPhoneLogin),
-    [showPhoneLogin]
-  );
-
-  const handleBackToWelcome = useMemo(
-    () => () => router.back(),
-    [router]
-  );
-
-  const handleGoToSignup = useMemo(
-    () => () => router.push("/(auth)"),
-    [router]
-  );
-
-  // Show loading screen during initial authentication check
-  if (!hasCheckedAuth) {
-    return (
-      <SafeAreaView className="flex-1 bg-white">
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text className="text-gray-600 font-PoppinsRegular mt-4 text-[16px]">
-            Checking authentication...
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const passwordValue = getValues("password");
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView
+    <PageLayout
+      leftAction={
+        currentStep == 2 ?
+        <TouchableOpacity
+          onPress={() => {
+            if (currentStep > 1) {
+              setCurrentStep((prev) => prev - 1);
+            } else {
+              router.back();
+            }
+          }}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          accessibilityLabel="Go back"
+        > 
+          <ChevronLeft size={24} className="text-gray-700" />
+        </TouchableOpacity>
+        : 
+        <View className="w-10 h-10" />
+      }
+      headerTitle={
+        <Text className="text-gray-900 text-[13px] justify-center">
+          Login
+        </Text>
+      }
+      rightAction={<View className="w-10 h-10" />}
+    >
+      <ScrollView
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        overScrollMode="never"
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView
-          className="flex-1"
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1 }}
-        >
-          <TouchableWithoutFeedback onPress={dismissKeyboard}>
-            <View className="flex-1 px-6">
-              {/* Header with Back Button */}
-             <View className=" pt-4 pb-8">
-                <View className="flex-row items-center justify-between">
-                  <TouchableOpacity
-                    onPress={handleBackToWelcome}
-                    disabled={loginLoading}
-                    className="flex-row items-center"
-                    activeOpacity={0.7}
-                  >
-                    <ChevronLeft 
-                      size={20} 
-                      className={isAnyLoading ? "text-gray-400" : "text-slate-500"} 
-                    />
-                    <Text className={`text-[16px] font-PoppinsMedium ml-1 ${
-                      isAnyLoading ? "text-gray-400" : "text-slate-500"
-                    }`}>
-                    </Text>
-                  </TouchableOpacity>
-                  <View />
-                </View>
-              </View>
 
-              {/* Main Header */}
-              <View className="items-center mb-12">
-                <Text className="text-[32px] font-PoppinsBold text-gray-900 mb-2">
-                  Welcome Back
-                </Text>
-                <Text className="text-[16px] font-PoppinsRegular text-gray-600">
-                  Sign in to your account
-                </Text>
-              </View>
+        {currentStep === 1 && (
+          <View className="flex-1">
+            {loginMethod === "phone" ? (
+              <PhoneOTP
+                params={{
+                  next: handleOTPVerified,
+                  signin: true,
+                  switch: () => setLoginMethod("email")
+                }}
+              />
+            ) : (
+              <EmailOTP
+                params={{
+                  next: handleOTPVerified,
+                  signin: true,
+                  switch: () => {
+                    setLoginMethod("phone")
+                  }
+                }}
+              />
+            )}
+          </View>
+        )}
 
-              {/* Login Forms */}
-              <View className="flex-1">
-                {!showPhoneLogin ? (
-                  // Email Login Form
-                  <View className="mb-6">
-                    <FormInput
-                      control={control}
-                      name="email"
-                      label="Email Address"
-                      keyboardType="email-address"
-                      editable={!loginLoading}
-                    />
-                    
-                    <View className="relative mb-6">
-                      <FormInput
-                        control={control}
-                        name="password"
-                        label="Password"
-                        secureTextEntry={!showPassword}
-                        editable={!loginLoading}
-                      />
-                      {passwordValue ? (
-                        <TouchableOpacity
-                          onPress={toggleShowPassword}
-                          disabled={loginLoading}
-                          className="absolute right-4 top-1/2 -translate-y-2"
-                        >
-                          {showPassword ? (
-                            <Eye
-                              size={20}
-                              className={
-                                isAnyLoading ? "text-gray-400" : "text-gray-600"
-                              }
-                            />
-                          ) : (
-                            <EyeOff
-                              size={20}
-                              className={
-                                isAnyLoading ? "text-gray-400" : "text-gray-600"
-                              }
-                            />
-                          )}
-                        </TouchableOpacity>
-                      ) : null}
-                    </View>
+        {currentStep === 2 && (
+          <View className="flex-1 px-5 pt-10">
+            <Text className="text-gray-600 mb-8">
+              Please enter your account password to complete login
+            </Text>
 
-                    <Button
-                      className={`h-20 rounded-xl flex items-center justify-center ${
-                        loginLoading
-                          ? "bg-gray-400"
-                          : "bg-blue-600"
-                      }`}
-                      onPress={handleEmailLogin}
-                      disabled={loginLoading}
-                    >
-                      <View className="flex-row items-center justify-center h-20">
-                        {loginLoading && (
-                          <ActivityIndicator
-                            size="small"
-                            color="white"
-                            style={{ marginRight: 8 }}
-                          />
-                        )}
-                        <Text className="text-white font-PoppinsSemiBold text-[14px]">
-                          {loginLoading ? "Signing in..." : "Sign In"}
-                        </Text>
-                      </View>
-                    </Button>
-                  </View>
-                ) : (
-                  // Phone Login Form
-                  <View className="mb-6">
-                    <Text className="font-normal text-black/80 mb-3 text-[13px]">
-                      Mobile Number
-                    </Text>
-                    <View className="flex-row mb-6">
-                      <View className="bg-gray-50 border border-gray-300 rounded-l-xl px-4 py-4 border-r-0 justify-center">
-                        <Text className="text-gray-800 font-PoppinsMedium text-[16px]">
-                          +63
-                        </Text>
-                      </View>
-                      <TextInput
-                        // value={phone}
-                        // onChangeText={setPhone}
-                        placeholder="9XX XXX XXXX"
-                        keyboardType="phone-pad"
-                        returnKeyType="done"
-                        className="flex-1 font-PoppinsRegular text-[16px] text-gray-800 bg-gray-50 border border-gray-300 rounded-r-xl px-4 py-4"
-                        placeholderTextColor="#9CA3AF"
-                        blurOnSubmit={true}
-                        maxLength={10}
-                        editable={!isAnyLoading}
-                      />
-                    </View>
-
-                    <Button
-                      className={`h-14 rounded-xl flex items-center justify-center ${
-                        otpLoading
-                          ? "bg-gray-400"
-                          : "bg-blue-600"
-                      }`}
-                      onPress={handlePhoneContinue}
-                      disabled={loginLoading}
-                    >
-                      <View className="flex-row items-center justify-center h-full">
-                        {otpLoading && (
-                          <ActivityIndicator
-                            size="small"
-                            color="white"
-                            style={{ marginRight: 8 }}
-                          />
-                        )}
-                        <Text className="text-white font-PoppinsSemiBold text-[16px]">
-                          {otpLoading ? "Sending..." : "Continue"}
-                        </Text>
-                      </View>
-                    </Button>
-                  </View>
-                )}
-
-                {/* Divider */}
-                <View className="flex-row items-center my-8">
-                  <View className="flex-1 h-[1px] bg-gray-300" />
-                  <Text className="mx-4 text-gray-500 font-PoppinsRegular text-[14px]">
-                    or
-                  </Text>
-                  <View className="flex-1 h-[1px] bg-gray-300" />
-                </View>
-
-                {/* Toggle between Email & Phone login */}
-                <TouchableOpacity
-                  onPress={togglePhoneLogin}
-                  disabled={loginLoading}
-                  className="mb-6"
-                >
-                  <Text
-                    className={`font-PoppinsMedium text-[14px] text-center ${
-                      loginLoading ? "text-gray-400" : "text-blue-600"
-                    }`}
-                  >
-                    {showPhoneLogin
-                      ? "← Use Email instead"
-                      : "Use Phone Number instead"}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Google Login */}
-                <TouchableOpacity
-                  onPress={handleGoogleLogin}
-                  disabled={loginLoading}
-                  className={`flex-row items-center justify-center border border-gray-300 rounded-xl py-4 mb-8 ${
-                    loginLoading ? "bg-gray-50" : "bg-white"
-                  }`}
-                  activeOpacity={0.7}
-                >
-                  <GoogleIcon
-                    width={24}
-                    height={24}
-                    style={{ marginRight: 12, opacity: loginLoading ? 0.5 : 1 }}
-                  />
-                  {googleLoading && (
-                    <ActivityIndicator
-                      size="small"
-                      color="#4285F4"
-                      style={{ marginRight: 8 }}
-                    />
-                  )}
-                  <Text
-                    className={`font-normal text-[16px] ${
-                      isAnyLoading ? "text-gray-400" : "text-gray-800"
-                    }`}
-                  >
-                    {googleLoading
-                      ? "Signing in..."
-                      : "Continue with Google"}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Signup Option - Moved below Google login */}
-                <View className="flex-row justify-center items-center">
-                  <Text className="text-gray-600 font-PoppinsRegular text-[14px]">
-                    Don't have an account? 
-                  </Text>
-                  <TouchableOpacity
-                    onPress={handleGoToSignup}
-                    disabled={loginLoading}
-                    activeOpacity={0.6}
-                    className="ml-1"
-                  >
-                    <Text
-                      className={`font-PoppinsSemiBold text-[14px] ${
-                        loginLoading ? "text-gray-400" : "text-blue-600"
-                      }`}
-                    >
-                      Sign up
-                    </Text>
-                  </TouchableOpacity>
-                  </View>
-              </View>
+            <View className="mb-6">
+              <FormInput
+                control={control}
+                name="accountFormSchema.password"
+                label="Password"
+                secureTextEntry
+              />
             </View>
-          </TouchableWithoutFeedback>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+            <TouchableOpacity
+              className="bg-blue-600 py-4 rounded-xl mb-4"
+              onPress={handleLogin}
+            >
+              <Text className="text-white font-semibold text-center text-lg">
+                Sign In
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity className="py-3">
+              <Text className="text-blue-600 text-center font-medium">
+                Forgot Password?
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </ScrollView>
+    </PageLayout>
   );
 }

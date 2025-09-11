@@ -15,8 +15,6 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     
     # OTP endpoints
-    path('send-otp/', SendOTP.as_view(), name='send-otp'),
-    path('verify-otp/', VerifyOTP.as_view(), name='verify-otp'),
     path('email/sendOtp/', SendOTPEmail.as_view(), name='email-send-otp'),
     path('email/verifyOtp/', VerifyOTPEmail.as_view(), name='email-verify-otp'),
 ]

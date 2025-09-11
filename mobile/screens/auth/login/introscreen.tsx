@@ -1,6 +1,11 @@
 import React, { useEffect } from "react";
 import { View, StyleSheet } from "react-native";
-import StrokePop from "@/assets/animated/StrokePop.json"
+import StrokePop from "@/assets/animated/StrokePop.json";
+import Popup from "@/assets/animated/PopUp.json";
+import CircletoMap from "@/assets/animated/CircletoMap.json";
+import MaptoMap from "@/assets/animated/MaptoMap.json";
+import SlideUpBrush from "@/assets/animated/SlideUpBrush.json";
+import PaintBrush from "@/assets/animated/PaintBrush.json";
 import LottieView from "lottie-react-native";
 
 interface IntroScreenProps {
@@ -11,16 +16,17 @@ const IntroScreen = ({ onAnimationFinish }: IntroScreenProps) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onAnimationFinish();
-    }, 4000); 
+    }, 5000); 
     return () => clearTimeout(timer);
   }, []);
 
   return (
     <View style={styles.container}>
       <LottieView
-        source={StrokePop}
+        source={CircletoMap}
         autoPlay
-        loop={false}
+        speed={0.5}
+        loop={true}
         onAnimationFinish={onAnimationFinish}
         style={{ width: 300, height: 300 }}
       />

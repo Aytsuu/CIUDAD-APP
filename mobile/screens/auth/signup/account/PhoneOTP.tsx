@@ -1,76 +1,86 @@
-import { useToastContext } from "@/components/ui/toast"
-import PageLayout from "@/screens/_PageLayout"
-import React from "react"
-import { ScrollView, View, Text, TouchableOpacity, TextInput } from "react-native"
-import OTPModal from "./OTPModal"
-import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext"
-import { FormInput } from "@/components/ui/form/form-input"
-import { Button } from "@/components/ui/button"
-import { useSendOTP } from "../../queries/authPostQueries"
-import { ChevronLeft } from "@/lib/icons/ChevronLeft"
-import { ConfirmationModal } from "@/components/ui/confirmationModal"
-import { router } from "expo-router"
-import { X } from "@/lib/icons/X"
+import { useToastContext } from "@/components/ui/toast";
+import PageLayout from "@/screens/_PageLayout";
+import React from "react";
+import {
+  ScrollView,
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
+import OTPModal from "./OTPModal";
+import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
+import { FormInput } from "@/components/ui/form/form-input";
+import { Button } from "@/components/ui/button";
+import { useSendOTP } from "../../queries/authPostQueries";
+import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+import { ConfirmationModal } from "@/components/ui/confirmationModal";
+import { router } from "expo-router";
+import { X } from "@/lib/icons/X";
 
-export default function PhoneOTP({ params } : {
-  params: Record<string ,any>
-}) {
+export default function PhoneOTP({ params }: { params: Record<string, any> }) {
   // ====================== STATE INITIALIZATION ======================
-  const { control, getValues, trigger, watch } = useRegistrationFormContext()
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
-  const [modalVisible, setModalVisible] = React.useState<boolean>(false)
-  const [otpInput, setOtpInput] = React.useState<string[]>(["", "", "", "", "", ""])
-  const [otpValue, setOtpValue] = React.useState<string>("")
+  const { control, getValues, trigger, watch } = useRegistrationFormContext();
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [modalVisible, setModalVisible] = React.useState<boolean>(false);
+  const [otpInput, setOtpInput] = React.useState<string[]>([
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]);
+  const [otpValue, setOtpValue] = React.useState<string>("");
   const [invalidOTP, setInvalidOTP] = React.useState<boolean>(false);
-  const { toast } = useToastContext()
+  const { toast } = useToastContext();
 
-  const { mutateAsync: sendOTP } = useSendOTP()
+  const { mutateAsync: sendOTP } = useSendOTP();
 
   // ====================== SIDE EFFECTS ======================
   React.useEffect(() => {
-    if(otpInput.every((val) => val == "")) return;
+    if (otpInput.every((val) => val == "")) return;
 
-    if (otpInput?.length == 6 && otpInput.every((val) => val !== "")) verify()
+    if (otpInput?.length == 6 && otpInput.every((val) => val !== "")) verify();
     else setInvalidOTP(false);
-  }, [otpInput])
+  }, [otpInput]);
 
   // ====================== HANDLERS ======================
   const verify = () => {
-    const input = otpInput.join("")
+    const input = otpInput.join("");
     if (input === otpValue) {
-      setModalVisible(false)
-      setOtpInput(["", "", "", "", "", ""])
-      setOtpValue("")
-      toast.success("Phone number verified.")
+      setModalVisible(false);
+      setOtpInput(["", "", "", "", "", ""]);
+      setOtpValue("");
+      toast.success("Phone number verified.");
       params.next();
     } else {
-      setOtpInput(["", "", "", "", "", ""])
+      setOtpInput(["", "", "", "", "", ""]);
       setInvalidOTP(true);
     }
-  }
+  };
 
   const send = async () => {
     if (!(await trigger("accountFormSchema.phone"))) {
-      toast.error("Failed to send. Please try again.")
-      return
+      toast.error("Failed to send. Please try again.");
+      return;
     }
 
     try {
-      setIsSubmitting(true)
-      const phone = getValues("accountFormSchema.phone")
+      setIsSubmitting(true);
+      const phone = getValues("accountFormSchema.phone");
       const verification = await sendOTP({
         pv_phone_num: phone,
-      })
+      });
 
-      setOtpValue(verification.pv_otp)
-      setModalVisible(true)
-
+      setOtpValue(verification.pv_otp);
+      setModalVisible(true);
     } catch (err) {
-      toast.error("Failed to send. Please try again.")
+      toast.error("Failed to send. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   // ====================== RENDER ======================
   return (
@@ -83,7 +93,9 @@ export default function PhoneOTP({ params } : {
 
       <View className="px-6 py-4">
         <View className="mb-6">
-          <Text className="text-sm font-medium text-gray-700 mb-3">Phone Number</Text>
+          <Text className="text-sm font-medium text-gray-700 mb-3">
+            Phone Number
+          </Text>
           <FormInput
             control={control}
             name="accountFormSchema.phone"
@@ -93,7 +105,9 @@ export default function PhoneOTP({ params } : {
         </View>
 
         <Button
-          className={`bg-primaryBlue native:h-[45px] py-4 rounded-lg ${isSubmitting ? "opacity-70" : ""}`}
+          className={`bg-primaryBlue native:h-[45px] py-4 rounded-lg ${
+            isSubmitting ? "opacity-70" : ""
+          }`}
           onPress={send}
           disabled={isSubmitting}
         >
@@ -103,23 +117,39 @@ export default function PhoneOTP({ params } : {
         </Button>
       </View>
 
+      <View className="flex-row items-center justify-center mt-8 gap-1">
+        {params.signin && 
+          <>
+            <TouchableOpacity onPress={() => params?.switch()}>
+              <Text className="text-primaryBlue text-sm">
+                Use Email
+              </Text>
+            </TouchableOpacity>
+          </>
+        }
+      </View>
+
       <OTPModal
         otp={otpInput}
         modalVisible={modalVisible && otpValue !== ""}
         description={
           <View className="mb-4">
             <Text className="text-center text-gray-600 text-sm leading-relaxed">
-              Enter the 6-digit code sent to your phone number <Text className="font-medium text-gray-600 text-sm">{watch("accountFormSchema.phone")}</Text>
+              Enter the 6-digit code sent to your phone number{" "}
+              <Text className="font-medium text-gray-600 text-sm">
+                {watch("accountFormSchema.phone")}
+              </Text>
             </Text>
             <View className="flex-row gap-1 items-center justify-center my-3">
-              
               <TouchableOpacity
                 onPress={() => {
-                  setModalVisible(false)
-                  setOtpValue("")
+                  setModalVisible(false);
+                  setOtpValue("");
                 }}
               >
-                <Text className="text-center text-primaryBlue text-sm font-medium">Change Number</Text>
+                <Text className="text-center text-primaryBlue text-sm font-medium">
+                  Change Number
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -130,5 +160,5 @@ export default function PhoneOTP({ params } : {
         invalid={invalidOTP}
       />
     </View>
-  )
+  );
 }
