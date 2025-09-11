@@ -20,11 +20,9 @@ from django.core.mail import send_mail
 import requests
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from utils.otp import generate_otp
 
 logger = logging.getLogger(__name__)
-
-def generate_otp(length=6):
-    return str(random.randint(10**(length-1), (10**length)-1))
 
 def send_otp_email(email, otp):
     subject = "Your OTP Code"
