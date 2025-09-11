@@ -38,12 +38,12 @@ jobs:
               /pages/record/health
               generateDefaultValues.ts  <--- Delete file (redundant, already have this file in /helpers folder)
 
-              /components/ui (mobile)
+              /components/ui
               card.tsx                  <--- Remove
 
               /pages/record/profiling   <--- Make sure all files are upper case, as it will overwrite the existing files in master.
 
-              /components/ui/card (web)
+              /components/ui/card
               card.tsx                  <--- Transfer outside, from /components/ui/card to /components/ui ... keep only card-layout inside
 
               check BUILD ERROR FOR PRODUCTION in the issues page, fix bugs on files under your module`

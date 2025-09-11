@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from ..serializers.resident_profile_serializers import *
 from django.db.models import Prefetch, Q
@@ -7,6 +8,7 @@ from apps.pagination import *
 from apps.account.models import *
 
 class ResidentProfileTableView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentProfileTableSerializer
     pagination_class = StandardResultsPagination
 
@@ -37,7 +39,8 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
           'per__per_mname',
           'per__per_sex',
           'per__per_suffix',
-          'per__per_dob'
+          'per__per_dob',
+          'per__per_disability',
         )
 
         search_query = self.request.query_params.get('search', '').strip()
@@ -56,8 +59,8 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
                         Q(per__per_lname__icontains=part) |
                         Q(per__per_fname__icontains=part) |
                         Q(per__per_mname__icontains=part) |
-                        Q(per__per_suffix__icontains=part) 
-
+                        Q(per__per_suffix__icontains=part) |
+                        Q(per__per_disability__icontains=part)
                     )
                 
                 queryset = queryset.filter(
@@ -68,15 +71,18 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
         return queryset.order_by('rp_id')
     
 class ResidentPersonalCreateView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentPersonalCreateSerializer
     queryset = ResidentProfile.objects.all()
 
 class ResidentPersonalInfoView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentPersonalInfoSerializer
     queryset=ResidentProfile.objects.all()
     lookup_field='rp_id'
 
 class ResidentProfileListWithOptions(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentProfileListSerializer
     
     def get_queryset(self):
@@ -111,6 +117,7 @@ class ResidentProfileListWithOptions(generics.ListAPIView):
         return ResidentProfile.objects.all()
     
 class ResidentProfileFamSpecificListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentProfileListSerializer
     
     def get_queryset(self):
@@ -119,10 +126,11 @@ class ResidentProfileFamSpecificListView(generics.ListAPIView):
 
 # For verification in link registration
 class LinkRegVerificationView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
         rp_id = request.data.get('rp_id', None)
         personal_info = request.data.get('personal_info', None)
-
+        print(personal_info)
         if rp_id:
             exists = ResidentProfile.objects.filter(rp_id=rp_id).first()
             if exists:
@@ -151,3 +159,23 @@ class LinkRegVerificationView(APIView):
             return Response(data=data, status=status.HTTP_200_OK)
             
         return Response(status=status.HTTP_404_NOT_FOUND)
+
+class LinkVoterView(generics.UpdateAPIView):
+    serializer_class = ResidentProfileBaseSerializer
+    queryset = ResidentProfile.objects.all()
+    lookup_field = "rp_id"
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        name = f'{instance.per.per_lname.upper()}, {instance.per.per_fname.upper()}' \
+                f'{" " + instance.per.per_mname.upper() if instance.per.per_mname else ""}'
+        print(name)
+        retrieved = {
+            "voter": Voter.objects.filter(voter_name=name).first().voter_id
+        }
+        print(retrieved)
+        serializer = self.get_serializer(instance, data=retrieved, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)

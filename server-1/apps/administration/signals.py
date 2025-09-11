@@ -5,7 +5,7 @@ from .models import Staff
 
 @receiver(post_save, sender=Staff)
 def handle_waste_personnel(sender, instance, created, **kwargs):
-    if hasattr(instance, 'pos') and instance.pos.pos_group.lower() == "waste personnel":
+    if hasattr(instance, 'pos') and instance.pos.pos_group and instance.pos.pos_group.lower() == "waste personnel":
         if created:
             WastePersonnel.objects.create(staff=instance)
         else:

@@ -113,7 +113,7 @@ export default function LinkVerification() {
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-5">
+        <View className="px-6">
           {/* Header Section */}
           <View className="mb-6 border-b border-gray-100 pb-4">
             <View className="items-center">

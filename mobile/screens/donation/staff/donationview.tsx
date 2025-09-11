@@ -14,8 +14,8 @@ import {
   useGetDonations,
   useUpdateDonation,
   useGetPersonalList,
-} from "./queries";
-import { Donation } from "../don-types";
+} from "./donation-queries";
+import { Donation } from "../donation-types";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
@@ -64,12 +64,6 @@ const DonationView = () => {
 
   const donCategory = watch("don_category");
   const isMonetary = donCategory === "Monetary Donations";
-
-  useEffect(() => {
-    if (isMonetary && isEditing) {
-      setValue("don_item_name", "");
-    }
-  }, [isMonetary, isEditing, setValue]);
 
   const handleSave = async (formData: any) => {
     if (!donation) return;

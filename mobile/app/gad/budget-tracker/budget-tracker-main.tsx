@@ -2,7 +2,7 @@
 
 // // export default GADBudgetTrackerMain;
 
-import GADBudgetTrackerMain from "@/screens/gad/budget-tracker/main-card";
+import GADBudgetTrackerMain from "@/screens/gad/budget-tracker/gad-btracker-main-card";
 
 // Default export renders the component for the route
 export default function BudgetTrackerMainRoute() {

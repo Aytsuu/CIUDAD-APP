@@ -15,14 +15,17 @@ import { useAuth } from "@/context/AuthContext";
 import { usePositions } from "./queries/administrationFetchQueries";
 import { formatPositions } from "./AdministrationFormats";
 import { useAddStaff } from "./queries/administrationAddQueries";
-import { useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";
+import { useAddAllProfile } from "../profiling/queries/profilingAddQueries";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 
 export default function AssignPosition({
   personalInfoform,
+  addresses,
   close,
 }: {
   personalInfoform: UseFormReturn<z.infer<typeof personalInfoSchema>>;
+  addresses: any;
   close: () => void;
 }) {
   // ============= STATE INITIALIZATION ===============
@@ -34,11 +37,10 @@ export default function AssignPosition({
   );
   
   // Hooks for dual database operations (APIs handle both databases)
-  const {mutateAsync: addResidentAndPersonal} = useAddResidentAndPersonal();
+  const { mutateAsync: addAllProfile } = useAddAllProfile();
   const {mutateAsync: addStaff} = useAddStaff();
   
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const personalDefaults = generateDefaultValues(personalInfoSchema)
   const defaultValues = generateDefaultValues(positionAssignmentSchema)
   const form = useForm<z.infer<typeof positionAssignmentSchema>>({
     resolver: zodResolver(positionAssignmentSchema),
@@ -62,6 +64,7 @@ export default function AssignPosition({
       
       const residentId = personalInfoform.getValues().per_id?.split(" ")[0];
       const positionId = form.getValues().assignPosition;
+      const staffType = user?.staff?.staff_type
 
       // If resident exists, assign position 
       if (residentId && residentId !== "undefined") {
@@ -70,32 +73,37 @@ export default function AssignPosition({
         // Assign staff position 
         await addStaff({
           residentId: residentId, 
-          positionId: positionId,
-          staffId: user?.staff?.staff_id || ""
+          positionId: positionId, 
+          staffId: user?.staff?.staff_id || "",
+          staffType: staffType == "Barangay Staff" ? "Barangay Staff" : "Health Staff"
+
         });
 
         deliverFeedback();
 
       } else {
         // Register resident first, then assign position (APIs handle dual database operations)
+        personalInfoform.setValue("per_addresses", addresses)
         const personalInfo = personalInfoform.getValues();
+        const {per_id, ...personal} = capitalizeAllFields(personalInfo)
 
-        if (!personalInfo) {
+        if (!personal) {
           setIsSubmitting(false);
           return;
         }
         
         // Register resident (API handles both databases)
-        const resident = await addResidentAndPersonal({
-          personalInfo: personalInfo,
-          staffId: user?.staff?.staff_id || ""
+        const resident = await addAllProfile({
+          personal: personal,
+          staff: user?.staff?.staff_id
         });
 
         // Then assign position (API handles both databases)
         await addStaff({
           residentId: resident.rp_id, 
           positionId: positionId,
-          staffId: user?.staff?.staff_id || ""
+          staffId: user?.staff?.staff_id || "",
+          staffType: staffType == "Barangay Staff" ? "Barangay Staff" : "Health Staff"
         });
 
         deliverFeedback();
@@ -110,7 +118,7 @@ export default function AssignPosition({
   const deliverFeedback = () => {
     // Clear forms
     form.setValue("assignPosition", "");
-    personalInfoform.reset(personalDefaults);
+    personalInfoform.reset();
     close();
     setIsSubmitting(false);
     

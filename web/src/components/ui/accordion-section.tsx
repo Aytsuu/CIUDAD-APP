@@ -4,7 +4,7 @@ import {
     AccordionTrigger,
     AccordionContent,
   } from "@/components/ui/accordion";
-  import { Card, CardContent } from "@/components/ui/card/card";
+  import { Card, CardContent } from "@/components/ui/card";
   import { ReactNode } from "react";
   
   interface AccordionSectionProps {

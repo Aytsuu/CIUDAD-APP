@@ -2,7 +2,7 @@ import type { Hotspot } from "../waste-hotspot/queries/hotspotFetchQueries"
 import type { EventDetailColumn } from "@/components/ui/calendar/EventCalendar"
 import { type WasteCollectionSchedFull } from "../waste-collection/queries/wasteColFetchQueries"
 import { formatTime } from "@/helpers/timeFormatter"
-import { CouncilEvent } from "../../council/Calendar/ce-att-types"
+import { CouncilEvent } from "../../council/Calendar/councilEventTypes"
 import format from "date-fns/format"
 
 export const hotspotColumns: EventDetailColumn<Hotspot>[] = [

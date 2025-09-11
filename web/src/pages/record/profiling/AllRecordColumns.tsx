@@ -73,7 +73,7 @@ export const allRecordColumns: ColumnDef<AllRecordCombined>[] = [
     accessorKey: 'date_registered',
     header: "Date Registered",
     cell: ({row}) => (
-      formatDate(row.original.date_registered, "long")
+      formatDate(row.original.date_registered, "long" as any)
     )
   },
   {
@@ -82,7 +82,7 @@ export const allRecordColumns: ColumnDef<AllRecordCombined>[] = [
     cell: ({row}) => {
       const navigate = useNavigate();
       const route = row.original.type === 'Resident' ? 
-                  "/profiling/resident/view" :
+                  "/profiling/resident/view/personal" :
                   "/profiling/business/record/respondent/details"
       const handleViewClick = async () => {
         navigate(route, {

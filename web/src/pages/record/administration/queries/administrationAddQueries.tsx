@@ -1,7 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addPosition, addStaff, assignFeature, setPermission } from "../restful-api/administrationPostAPI";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { api } from "@/api/api";
 import { api2 } from "@/api/api";
@@ -51,11 +49,12 @@ export const useAddStaff = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({residentId, positionId, staffId} : {
+    mutationFn: ({residentId, positionId, staffId, staffType} : {
       residentId: string;
       positionId: string;
       staffId: string;
-    }) => addStaff(residentId, positionId, staffId),
+      staffType: string;
+    }) => addStaff(residentId, positionId, staffId, staffType),
     onSuccess: (newData) => {
 
       if(!newData) return;
@@ -66,11 +65,6 @@ export const useAddStaff = () => {
       ]);
 
       queryClient.invalidateQueries({queryKey: ['staffs']})
-
-      // Deliver feedback
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
 
       navigate(-1)
     }

@@ -5,8 +5,10 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import ViewButton from "@/components/ui/view-button";
 import { Badge } from "@/components/ui/badge";
 import React from "react";
-import { formatDate } from "@/helpers/dateHelper";
 import { ResidentRecord, ResidentFamilyRecord, ResidentBusinessRecord } from "../ProfilingTypes";
+import { calculateAge } from "@/helpers/ageCalculator";
+import { useLinkToVoter } from "../queries/profilingUpdateQueries";
+import { showErrorToast } from "@/components/ui/toast";
 
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -83,22 +85,108 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     ),
     size: 60
   },
-  {
-    accessorKey: "rp_date_registered",
-    header: "Date Registered",
+    {
+    accessorKey: "age",
+    header: "Age",
     cell: ({row}) => (
-      formatDate(row.original.rp_date_registered, "long")
-    )
+      calculateAge(row.original.dob )
+    ),
+    size: 60
+  },
+  {
+    accessorKey: "pwd",
+    header: "Disability"
+  },
+  {
+    accessorKey: "voter",
+    header: "Voter", 
+    cell: ({ row }) => {
+      const status = row.original.voter
+      const { mutateAsync: linkToVoter } = useLinkToVoter()
+
+      const link = () => {
+        try {
+          linkToVoter(row.original.rp_id)
+        } catch (err) {
+          showErrorToast("Failed to link resident to voter.")
+        }
+      }
+
+      switch(status) {
+        case "Link":
+          return (
+            <div className="flex justify-center">
+              <div className="bg-green-500 px-5 py-1 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={link}
+              >
+                <p className="text-white font-medium">{status}</p>
+              </div>
+            </div>
+          )
+        case "Review":
+          return (
+            <div className="flex justify-center">
+              <div className="bg-amber-500">
+                <p className="text-white font-medium">{status}</p>
+              </div>
+            </div>
+          )
+        default:
+          return status
+      }
+    }
   },
   {
     accessorKey: "completed_profiles",
-    header: "Completed Profile",
+    header: "Profile",
     cell: ({row}) => {
+      const navigate = useNavigate();
       const profiles = [
-        {id: 'account', icon: CircleUserRound},
-        {id: 'household', icon: House, tooltip: "ID: " + row.original.household_no},
-        {id: 'family', icon: UsersRound, tooltip: "ID: " + row.original.family_no},
-        {id: 'business', icon: Building},
+        {
+          id: 'account', 
+          icon: CircleUserRound, 
+          route: {
+            create: {
+              link: "/profiling/account/create",
+              params: {
+                residentId: row.original.rp_id
+              }
+            },
+          }},
+        {
+          id: 'household', 
+          icon: House, 
+          tooltip: "ID: " + row.original.household_no, 
+          route: {
+            create: {
+              link: "/profiling/household"
+            },
+            view: {
+              link: "/profiling/household/view",
+              params: {
+                hh_id: row.original.household_no
+              }
+            }
+          }},
+        {
+          id: 'family', 
+          icon: UsersRound, 
+          tooltip: "ID: " + row.original.family_no, 
+          route: {
+            create: "/profiling/family",
+            view: {
+              link: "/profiling/family/view",
+              params: {
+                fam_id: row.original.family_no
+              }
+            }
+          }},
+        {
+          id: 'business', 
+          icon: Building, 
+          route: {
+            view: ""
+          }},
       ]
       const completed: any[] = [];
 
@@ -113,16 +201,26 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
             <React.Fragment key={idx}>
               {completed.includes(profile.id) ? (
                 <TooltipLayout
-                trigger={
-                  <profile.icon size={20} 
-                    className="text-blue-600"
-                  />
-                }
-                content={profile.tooltip}
-              />
+                  trigger={
+                    <profile.icon size={20} 
+                      className="text-blue-600 cursor-pointer"
+                      onClick={() => navigate(profile.route.view.link, {
+                        state: {
+                          params: profile.route.view.params
+                        }
+                      })}
+                    />
+                  }
+                  content={profile.tooltip}
+                />
               ) : (profile.id !== 'business' &&
                 <profile.icon size={20} 
-                  className="text-gray-300"
+                  className="text-gray-300 cursor-pointer"
+                  onClick={() => navigate(profile.route.create.link, {
+                    state: {
+                      params: profile.route.create.params
+                    }
+                  })}
                 />
               )}
             </React.Fragment>
@@ -137,7 +235,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     cell: ({ row }) => {
       const navigate = useNavigate();
       const handleViewClick = async () => {
-        navigate("/profiling/resident/view", {
+        navigate("/profiling/resident/view/personal", {
           state: {
             params: {
               type: 'viewing',
@@ -198,7 +296,7 @@ export const familyDetailsColumns = (residentId: string, familyId: string): Colu
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/profiling/resident/view", {
+        navigate("/profiling/resident/view/personal", {
           state: {
             params: {
               type: 'viewing',

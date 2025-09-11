@@ -5,7 +5,7 @@ import { formatTimestamp } from "@/helpers/timestampformatter"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card/card"
+import { Card } from "@/components/ui/card"
 import { useGetGarbageRejectRequest } from "../queries/GarbageRequestFetchQueries"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
@@ -22,6 +22,7 @@ export default function RejectedTable() {
   const filteredData = rejectedReqData.filter((request) => {
     const matchesSitio = selectedSitio === "0" || request.sitio_name === selectedSitio
     const matchesSearch = searchQuery === "" || `
+      ${request.garb_id} 
       ${request.garb_requester} 
       ${request.garb_location} 
       ${request.garb_waste_type} 
@@ -29,6 +30,7 @@ export default function RejectedTable() {
       ${request.dec_reason}
       ${request.dec_date}
       ${request.sitio_name}
+      ${request.staff_name}
     `.toLowerCase().includes(searchQuery.toLowerCase())
     
     return matchesSitio && matchesSearch
@@ -144,6 +146,15 @@ export default function RejectedTable() {
                     {/* Left Section - Main Info */}
                     <div className="flex-shrink-0 min-w-0 w-56">
                       <div className="space-y-2">
+
+                        <div>
+                          <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
+                            <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
+                              {request.garb_id}
+                            </p>
+                          </div>
+                        </div>
+
                         <div>
                           <h3 className="font-semibold text-sm text-gray-900 truncate">{request.garb_requester}</h3>
                           <p className="text-xs text-gray-500 mt-0.5">{request.sitio_name}</p>
@@ -174,6 +185,12 @@ export default function RejectedTable() {
                             {formatTimestamp(request.dec_date || "")}
                           </p>
                         </div>
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Rejected By</p>
+                          <p className="text-xs font-medium text-gray-900 mt-0.5">
+                            {request.staff_name}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
@@ -182,7 +199,7 @@ export default function RejectedTable() {
                       <div className="h-full">
                         <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Rejection Reason</p>
                         <div className="bg-gray-50 rounded-lg p-2 h-full min-h-[60px]">
-                          <p className="text-xs text-red-600 leading-relaxed whitespace-pre-wrap">
+                          <p className="text-xs text-red-600 leading-relaxed whitespace-pre-wrap font-bold">
                             {request.dec_reason}
                           </p>
                         </div>

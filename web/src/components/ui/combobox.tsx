@@ -59,11 +59,22 @@ export const Combobox =
     }
   }, [open, variant, size])
 
+  // Handle selection with proper event handling
+  const handleSelect = React.useCallback((currentValue: string) => {
+    // Prevent event bubbling that might interfere with Dialog
+    const newValue = currentValue === value ? undefined : currentValue
+    onChange?.(newValue)
+    setOpen(false)
+  }, [value, onChange])
+
   const triggerButton = customTrigger ? (
     <div
       role="combobox"
       aria-expanded={open}
-      onClick={() => setOpen(true)}
+      onClick={(e) => {
+        e.stopPropagation()
+        setOpen(true)
+      }}
     >
       {customTrigger}
     </div>
@@ -72,9 +83,13 @@ export const Combobox =
       ref={triggerRef}
       variant="outline"
       role="combobox"
+      type="button"
       aria-expanded={open}
       className={cn("h-15 justify-between text-black/80", triggerClassName)}
-      onClick={() => setOpen(true)}
+      onClick={(e) => {
+        e.stopPropagation()
+        setOpen(true)
+      }}
     > 
       {!staticVal ? (
         <>
@@ -101,11 +116,9 @@ export const Combobox =
             <CommandItem
               key={option.id}
               value={option.id}
-              onSelect={(currentValue) => {
-                onChange && onChange(currentValue === value ? undefined : currentValue)
-                setOpen(false)
-              }}
+              onSelect={handleSelect}
               className="flex items-center cursor-pointer"
+              onMouseDown={(e) => e.preventDefault()}
             >
               <Check
                 className={cn("mr-2 h-4 w-4 flex-shrink-0", value === option.id ? "opacity-100" : "opacity-0")}
@@ -132,14 +145,22 @@ export const Combobox =
       <>
         {triggerButton}
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTitle>
+          <DialogTitle hidden>    
           </DialogTitle>
           <DialogContent 
             className={cn("sm:max-w-[425px] p-0", contentClassName)}
             style={{
               width: width ? `${width}px` : "min(100vw - 16px, 30rem)",
               maxWidth: "calc(100vw - 16px)",
+              zIndex: 100, // Higher z-index than parent dialog
             }}
+            onPointerDownOutside={(e) => {
+              const target = e.target as HTMLElement
+              if (target.closest('[cmdk-root]')) {
+                e.preventDefault()
+              }
+            }}
+            onEscapeKeyDown={() => setOpen(false)}
           >
             {modalTitle && (
               <DialogHeader className="px-4 py-3 border-b">
@@ -155,7 +176,7 @@ export const Combobox =
     )
   }
 
-  // Default popover variant
+  // Default popover variant with improved event handling for dialogs
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -167,11 +188,25 @@ export const Combobox =
         style={{
           width: width ? `${width}px` : "min(100vw - 16px, 30rem)",
           maxWidth: "calc(100vw - 16px)",
+          zIndex: 100, // Higher z-index to appear above dialogs
         }}
+        onPointerDownOutside={(e) => {
+          const target = e.target as HTMLElement
+          if (target.closest('[cmdk-root]')) {
+            e.preventDefault()
+          }
+        }}
+        onFocusOutside={(e) => {
+          const target = e.target as HTMLElement
+          if (target.closest('[cmdk-root]')) {
+            e.preventDefault()
+          }
+        }}
+        // Prevent auto-focus that might conflict with dialog
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         {commandContent}
       </PopoverContent>
     </Popover>
   )
 }
-

@@ -12,22 +12,18 @@ import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { useUpdateFamily } from "../queries/profilingUpdateQueries";
-import { useUpdateFamilyHealth } from "../../health-family-profiling/family-profling/queries/profilingUpdateQueries";
 import { formatHouseholds } from "../ProfilingFormats";
-import { toast } from "sonner";
-import { CircleAlert, CircleCheck } from "lucide-react";
 import { capitalize } from "@/helpers/capitalize";
+import { showErrorToast, showPlainToast, showSuccessToast } from "@/components/ui/toast";
 
 export default function EditGeneralDetails({
   familyData, 
   households, 
   setIsOpenDialog,
-  setFamily
 } : {
   familyData: Record<string, any>
   households: any[];
   setIsOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
-  setFamily: React.Dispatch<React.SetStateAction<any[]>>;
 }) {
   const defaultValues = React.useRef(
     generateDefaultValues(demographicInfoSchema)
@@ -39,16 +35,16 @@ export default function EditGeneralDetails({
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false);
   const [isSaving, setIsSaving] = React.useState<boolean>(false);
   const { mutateAsync: updateFamily } = useUpdateFamily(); 
-  const { mutateAsync: updateFamilyHealth } = useUpdateFamilyHealth();
   const formattedHouseholds = React.useMemo(() => 
     formatHouseholds(households), [households]
   );
 
   React.useEffect(() => {
     if(familyData) {
+      console.log("has family data")
       form.setValue("householdNo", familyData.household_no)
-      form.setValue("building", familyData.fam_building)
-      form.setValue("indigenous", familyData.fam_indigenous)
+      form.setValue("building", familyData.fam_building.toLowerCase())
+      form.setValue("indigenous", familyData.fam_indigenous.toLowerCase())
     }
   }, [familyData])
 
@@ -56,30 +52,27 @@ export default function EditGeneralDetails({
   const checkDefaultValues = (values: any) => {
     const isDefault = 
       values.householdNo === familyData.household_no &&
-      values.building === familyData.fam_building &&
-      values.indigenous === familyData.fam_indigenous
+      values.building.toLowerCase() === familyData.fam_building.toLowerCase() &&
+      values.indigenous.toLowerCase() === familyData.fam_indigenous.toLowerCase()
 
     return isDefault;
   };
 
   const save = async () => {
-    setIsSaving(true);
     const formIsValid = await form.trigger();
     const householdNo = form.watch("householdNo");
     if(!formIsValid && !householdNo) {
-      setIsSaving(false);
       setInvalidHousehold(true);
       return;
     }
 
     const values = form.getValues();
-
+    console.log('familyData:', familyData)
+    console.log('values:', values)
+    
     if(checkDefaultValues(values)) {
-      setIsSaving(false);
       setIsOpenDialog(false);
-      toast("No changes made", {
-        icon: <CircleAlert size={24} className="fill-orange-500 stroke-white" />
-      });
+      showPlainToast("No changes made");
       return;
     }
 
@@ -91,34 +84,18 @@ export default function EditGeneralDetails({
     }
 
     try {
-      await Promise.all([
-        updateFamily({
-          data: data,
-          familyId: familyData.fam_id,
-          oldHouseholdId: familyData.household_no
-        }),
-        updateFamilyHealth({
-          data: data,
-          familyId: familyData.fam_id,
-          oldHouseholdId: familyData.household_no
-        })
-      ]);
+      setIsSaving(true);
+      await updateFamily({
+        data: data,
+        familyId: familyData.fam_id,
+      })
+
       setIsSaving(false);
       setIsOpenDialog(false);
-      setFamily((prev: any) => ({
-        ...prev,
-        fam_building: capitalize(values.building),
-        fam_indigenous: capitalize(values.indigenous),
-        household_no: values.householdNo
-      }));
-      toast("Record updated successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
-      });
+      showSuccessToast("Record updated successfully");
     } catch (error) {
       setIsSaving(false);
-      toast("Failed to update record", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
-      });
+      showErrorToast("Failed to update record");
     }
   }
 
@@ -141,6 +118,8 @@ export default function EditGeneralDetails({
             onChange={(value) => form.setValue("householdNo", value as string)}
             placeholder="Select a household"
             triggerClassName="font-normal"
+            variant="modal" // Use modal variant for better dialog compatibility
+            modalTitle="Select Household"
             emptyMessage={
               <div className="flex gap-2 justify-center items-center">
                 <Label className="font-normal text-[13px]">

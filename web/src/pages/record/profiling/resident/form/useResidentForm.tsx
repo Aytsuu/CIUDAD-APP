@@ -7,14 +7,14 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useNavigate } from "react-router";
 import { Origin } from "../../ProfilingEnums";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
-import isEqual from "lodash/isEqual";
+import _ from 'lodash'
 
 export const useResidentForm = (defaultData?: any, origin?: any) => {
   const navigate = useNavigate();
   const defaultValues = generateDefaultValues(personalInfoSchema);
   const form = useForm<z.infer<typeof personalInfoSchema>>({
     resolver: zodResolver(personalInfoSchema),
-    // defaultValues,
+    defaultValues,
   });
 
   React.useEffect(() => {
@@ -40,6 +40,8 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
       { key: "per_religion", value: resident?.per_religion || "" },
       { key: "per_edAttainment", value: resident?.per_edAttainment || "" },
       { key: "per_contact", value: resident?.per_contact || "" },
+      { key: "per_disability", value: resident?.per_disability || "" },
+      { key: "per_addresses", value: resident?.per_addresses || [] },
     ];
 
     fields.map((f: any) => {
@@ -61,7 +63,7 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
   const checkDefaultValues = (currentValues: any, initialValues: any) => {
     const obj1 = normalize(currentValues)
     const obj2 = normalize(initialValues)
-    return isEqual(obj1, obj2)
+    return _.isEqual(obj1, obj2)
   };
 
   const handleSubmitSuccess = (message: string, redirectPath?: string, state?: any) => {

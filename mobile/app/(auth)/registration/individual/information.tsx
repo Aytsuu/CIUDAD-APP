@@ -3,3 +3,5 @@ import IndividualInformation from "@/screens/auth/signup/individual/IndividualIn
 export default () => {
     return <IndividualInformation />
 }
+
+

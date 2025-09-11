@@ -1,43 +1,3 @@
-// import React from "react";
-// import {
-//     FormField,
-//     FormItem,
-//     FormLabel,
-//     FormControl,
-//     FormMessage,
-//   } from "@/components/ui/form/form";
-// import { Input } from "@/components/ui/input";
-// import { Control, FieldValues, Path } from "react-hook-form";
-
-// // Reusable Form Input Component
-// export const FormInput = React.memo(({ control, name, label, placeholder, type="text", readOnly, className }: 
-//     { control: any; name: string; label?: string; placeholder?: string; type?:string; readOnly?: boolean; className?: string }
-//   ) => (
-//     <FormField
-//       control={control}
-//       name={name}
-//       render={({ field }) => (
-//         <FormItem className={className}>
-//           {label && <FormLabel className="text-black/70">{label}</FormLabel>}
-//           <FormControl>
-//             <Input className={className} type={type} placeholder={placeholder} {...field} readOnly={readOnly}
-//             onKeyDown={(e) => {
-//               // Prevent non-numeric key presses (except Backspace, Tab, etc.)
-//               if (
-//                 !/[0-9]/.test(e.key) && 
-//                 !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key) && 
-//                 type === 'number'
-//               ) {
-//                 e.preventDefault();
-//               }
-//             }}/>
-//           </FormControl>
-//           <FormMessage />
-//         </FormItem>
-//       )}
-//     />
-//   ));
-
 import React from "react";
 import {
   FormField,
@@ -47,6 +7,7 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface FormInputProps {
   control: any;
@@ -83,9 +44,9 @@ export const FormInput = React.memo(({
         {label && <FormLabel className="text-black/70">{label}</FormLabel>}
         <FormControl>
           <Input 
-            className={className} 
+            className={cn("", className)} 
             type={type} 
-            placeholder={placeholder} 
+            placeholder={readOnly ? "" : placeholder} 
             {...field}
             value={field.value ?? ''}
             readOnly={readOnly}
@@ -117,7 +78,7 @@ export const FormInput = React.memo(({
               let value = e.target.value;
               
               if (type === 'number') {
-                value = value.replace(/[^0-9.-]/g, '');
+                value = value.replace(/[^0-9.]/g, '');
                 
                 const parts = value.split('.');
                 if (parts.length > 2) {

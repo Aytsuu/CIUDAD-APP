@@ -11,13 +11,20 @@ from .views.business_views import *
 from .views.analytics_views import *
 from .views.kyc_views import *
 from .views.all_record_views import *
+from .views.voter_views import *
 
 urlpatterns = [
     # All record (combined record of resident and business respondents)
     path("all/", AllRecordTableView.as_view(), name="all-record"),
+    path("complete/registration/", CompleteRegistrationView.as_view(), name="complete-registration"),
+
+    #Voter Urls
+    path("voter/list/table/", VoterTableView.as_view(), name="voter-list"),
 
     # Sitio Urls
     path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
+    path("sitio/create/", SitioCreateView.as_view(), name="sitio-create"),
+    path("sitio/<str:sitio_id>/delete/", SitioDeleteView.as_view(), name="sitio-delete"),
 
     # Address Urls
     path("address/create/", AddressBulkCreateView.as_view(), name="create-address"),
@@ -46,7 +53,7 @@ urlpatterns = [
     # Househould Urls
     path("household/list/", HouseholdListView.as_view(), name="household-list"),
     path("household/list/table/", HouseholdTableView.as_view(), name="household-table"),
-    path("household/<str:hh_id>/data/", HouseholdListView.as_view(), name="household-details"),
+    path("household/<str:hh_id>/data/", HouseholdDataView.as_view(), name="household-details"),
     path("household/create/", HouseholdCreateView.as_view(), name="create-household"),
     path("household/update/<str:hh_id>/", HouseholdUpdateView.as_view(), name="upadate-household"),
 
@@ -57,6 +64,7 @@ urlpatterns = [
     path("resident/personal/<str:rp_id>/", ResidentPersonalInfoView.as_view(), name="resident-personal-info"),
     path("resident/exclude/fam/<str:fam_id>/", ResidentProfileListWithOptions.as_view(), name="resident-list-with exclusions"),
     path("resident/fam/<str:fam>/list/", ResidentProfileFamSpecificListView.as_view(), name="resident-list-fam"),
+    path("resident/<str:rp_id>/link-to-voter/", LinkVoterView.as_view(), name="link-to-voter"),
 
     # Request Urls
     path("request/list/table/", RequestTableView.as_view(), name="request-list-table"),
@@ -70,7 +78,7 @@ urlpatterns = [
     path("business/pending/list/table/", PendingBusinessTableView.as_view(), name="business-pending-list"),
     path("business/respondent/list/table/", BusinessRespondentTableView.as_view(), name="business-respondent-list"),
     path("business/create/", BusinessCreateView.as_view(), name="business-create"),
-    path("business/create-respondent/", BusRespondentCreateView.as_view(), name="business-create-respondent"),
+    path("business/respondent/create/", BRCreateUpdateView.as_view(), name="create-business-respondent"),
     path("business/<int:bus_id>/info/", BusinessInfoView.as_view(), name="business-data"),
     path("business/respondent/<int:br_id>/info/", BusinessRespondentInfoView.as_view(), name="business-respondent-data"),
     path("business/<int:bus_id>/update/", BusinessUpdateView.as_view(), name="business-update"),

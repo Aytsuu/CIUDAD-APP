@@ -13,8 +13,10 @@ import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { ClerkDonateCreateFormProps } from "./donation-types";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
+import { useAuth } from "@/context/AuthContext";
 
 function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
+  const { user } = useAuth();
   const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({
     resolver: zodResolver(ClerkDonateCreateSchema),
     defaultValues: {
@@ -25,6 +27,7 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
       don_description: "",
       don_category: "",
       don_date: new Date().toISOString().split("T")[0],
+      staff: user?.staff?.staff_id || null,
     },
   });
 
@@ -63,7 +66,7 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
       <div className="grid gap-4">
         <Form {...form}>
           <form
-            onSubmit={(e) => e.preventDefault()} // Prevent default form submission
+            onSubmit={(e) => e.preventDefault()}
             className="flex flex-col gap-4"
           >
             <ComboboxInput
@@ -113,7 +116,6 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
               readOnly={false}
             />
 
-            {/* Item Name - Changes to select when category is Monetary Donations */}
             {isMonetary ? (
               <FormSelect
                 control={form.control}

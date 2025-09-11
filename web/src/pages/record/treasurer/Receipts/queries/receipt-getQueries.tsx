@@ -12,14 +12,16 @@ export type Receipt = {
     inv_nat_of_collection: string;
     inv_pay_method: string;
     inv_payor: string; // Added this field
-    // Keep these if you need them separately
+    inv_change?: string | number;
+    nrc_discount_reason?: string | null;
+    // Keep these if needed them separately
     payor_lname?: string;
     payor_fname?: string;
 };
   
 export const useInvoiceQuery = () => {
     return useQuery<Receipt[]>({
-        queryKey: ["invoices"], // Changed to simpler key
+        queryKey: ["invoices"],
         queryFn: getInvoice,
         staleTime: 1000 * 60 * 30,
     });

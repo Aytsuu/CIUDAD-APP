@@ -5,7 +5,7 @@ import { positionFormSchema, useValidatePosition } from "@/form-schema/administr
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormInput } from "@/components/ui/form/form-input";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { Users, Badge, Info } from "lucide-react";
 import { useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
@@ -14,7 +14,6 @@ import { useUpdatePosition } from "./queries/administrationUpdateQueries";
 import { renderActionButton } from "./AdministrationActionConfig";
 import { Type } from "./AdministrationEnums";
 import { usePositionGroups } from "./queries/administrationFetchQueries";
-import { FormSelect } from "@/components/ui/form/form-select";
 import { formatPositionGroups } from "./AdministrationFormats";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { Combobox } from "@/components/ui/combobox";

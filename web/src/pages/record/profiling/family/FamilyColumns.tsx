@@ -1,40 +1,18 @@
 import { useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CircleAlert, CircleCheck, CircleMinus, Loader2 } from "lucide-react";
+import { ArrowUpDown, Loader2 } from "lucide-react";
 import { FamilyRecord, MemberRecord } from "../ProfilingTypes";
-import { Label } from "@/components/ui/label";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { useDeleteFamilyComposition } from "../queries/profilingDeleteQueries";
 import React from "react";
-import { toast } from "sonner";
-import { useLoading } from "@/context/LoadingContext";
-import { getFamilyData, getFamilyMembers, getHouseholdList, getPersonalInfo } from "../restful-api/profilingGetAPI";
-import { Badge } from "@/components/ui/badge";
-import { Combobox } from "@/components/ui/combobox";
+import { useLoading } from "@/context/LoadingContext";import { Combobox } from "@/components/ui/combobox";
 import { useResidentsFamSpecificList } from "../queries/profilingFetchQueries";
 import { formatResidents } from "../ProfilingFormats";
 import ViewButton from "@/components/ui/view-button";
+import { formatDate } from "@/helpers/dateHelper";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
-import { capitalize } from "@/helpers/capitalize";
 import { useUpdateFamilyRole } from "../queries/profilingUpdateQueries";
-import { formatDate } from "@/helpers/dateHelper";
-
-// Reusables
-// -----------------------------------------------------------------------------------------------------------------------------------------------------------
-
-const CardContainer = ({ children }: { children: React.ReactNode }) => (
-  <div className="w-full border shadow-md flex px-4 py-2 rounded-lg">
-    {children}
-  </div>
-);
-
-const InfoCell = ({ value, className = '' }: { value: string | number | React.ReactNode; className?: string }) => (
-  <div className={`w-full flex flex-col items-start gap-1 ${className}`}>
-    <Label className="text-black/70">{value}</Label>
-  </div>
-);
+import { capitalize } from "@/helpers/capitalize";
 
 // Define the columns for family data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -65,7 +43,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     ),
     cell: ({ row }) => {
       const {showLoading, hideLoading} = useLoading();
-      const { data: residentsFamSpecificList, isLoading } = useResidentsFamSpecificList(row.getValue('fam_id'));
+      const { data: residentsFamSpecificList, isLoading } = useResidentsFamSpecificList(row.original.fam_id);
       const formattedResidents = React.useMemo(() => 
         formatResidents(residentsFamSpecificList)
       , [residentsFamSpecificList])
@@ -81,7 +59,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
       return (
         <Combobox
           options={formattedResidents}
-          value={row.getValue('members')}
+          value={row.original.members}
           placeholder="Search member"
           emptyMessage="No resident found"
           staticVal={true}
@@ -110,56 +88,26 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     accessorKey: "fam_date_registered",
     header: "Date Registered",
     cell: ({row}) => (
-      formatDate(row.original.fam_date_registered, "long")
+      formatDate(row.original.fam_date_registered, "short" as any)
     )
-  },
-  {
-    accessorKey: "registered_by",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Registered By
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const registeredBy = row.getValue("registered_by") as string;
-      return (
-        <div className="text-center">
-          {registeredBy || "-"}
-        </div>
-      );
-    },
   },
   {
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => {
       const navigate = useNavigate();
-      const { showLoading, hideLoading } = useLoading();
-
       const handleViewClick = async () => {
-        showLoading();
-        try {
-          const familyData = await getFamilyData(row.original.fam_id);
-          const members = await getFamilyMembers(row.original.fam_id);
-          const households = await getHouseholdList();
-          navigate("/profiling/family/view", {
-            state: {
-              params: {
-                family: {
-                  ...familyData,
-                  members: members
-                },
-                households: households
-              }
+        // const familyData = await getFamilyData(row.original.fam_id);
+        // const members = await getFamilyMembers(row.original.fam_id);
+        // const households = await getHouseholdList();
+        navigate("/profiling/family/view", {
+          state: {
+            params: {
+              fam_id: row.original.fam_id,
             }
-          })
-        } finally {
-          hideLoading();
-        }
+          }
+        })
+
       }
 
       return (
@@ -171,146 +119,104 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const familyViewColumns = (
-  family: Record<string, any>,
-  setComposition: React.Dispatch<React.SetStateAction<any>>
+export const familyMembersCol = (
+  family: Record<string, any>
 ): ColumnDef<MemberRecord>[] => [
   {
-    accessorKey: "data",
-    header: "",
-    cell: ({ row }) => {
-      const navigate = useNavigate();
-      const data = row.getValue("data") as any;
-      const { showLoading, hideLoading } = useLoading();
-      const { mutateAsync: updateFamilyRole } = useUpdateFamilyRole();
-      const [role, setRole] = React.useState<string | null>(data.fc_role);
-
-      const handleViewClick = async () => {
-        showLoading();
-        try {
-          const personalInfo = await getPersonalInfo(data.rp_id);
-            navigate("/profiling/resident/view", {
-              state: {
-                params: {
-                  type: 'viewing',
-                  data: {
-                    personalInfo: personalInfo,
-                    residentId: data.rp_id,
-                    familyId: family.fam_id,
-                  },
-                }
-              }
-            });
-        } finally {
-          hideLoading();
-        }
-      }
-
+    accessorKey: "rp_id",
+    header: "Resident ID"
+  },
+  {
+    accessorKey: "name",
+    header: "Name"
+  },
+  {
+    accessorKey: "sex",
+    header: "Sex"
+  },
+  {
+    accessorKey: "age",
+    header: "Age",
+    cell: ({row}) => (
+      calculateAge(row.original.dob)
+    )
+  },
+  {
+    accessorKey: "status",
+    header: "Status"
+  },
+  {
+    accessorKey: "dob",
+    header: "Date of Birth"
+  },
+  {
+    accessorKey: "fc_role",
+    header: "Role",
+    cell: ({row}) => {
+      const [isChanging, setIsChanging] = React.useState<boolean>(false)
+      const { mutateAsync: updateFamilyRole } = useUpdateFamilyRole() 
+      const buttonStyle = ("h-6 rounded-full bg-blue-200 shadow-none border" +
+              "border-blue-300 text-blue-700 hover:bg-blue-300" +
+              "focus-visible:ring-0")
+      const role = row.original.fc_role
       const handleRoleChange = async (value: string) => {
-        if (value !== role?.toLowerCase()) {
-          const newRole = capitalize(value);
-          setRole(newRole);
-          try {
-            await updateFamilyRole({ familyId: family.fam_id, residentId: data.rp_id, fc_role: newRole })
-          } catch (error) {
-            setRole(data.fc_role);
-            throw error;
-          }
+        if(value == role?.toLowerCase()) return;
+
+        try {
+          setIsChanging(true)
+          await updateFamilyRole({
+            familyId: family.fam_id,
+            residentId: row.original.rp_id,
+            fc_role: capitalize(value as string)
+          });
+          setIsChanging(false)
+        }catch (err) {
+          console.error(err)
+          setIsChanging(false)
         }
       }
-
+      
       return (
-        <CardContainer>
-          <div className="w-full grid grid-cols-9 items-center justify-center">
-            <InfoCell value={<Badge className="bg-black/10 text-black/80 hover:bg-black/10">{data.rp_id}</Badge>}/>
-            <InfoCell 
-              value={data.name}  
-              className="col-span-2"
-            />
-            <InfoCell value={data.sex} />
-            <InfoCell value={calculateAge(data.dob)}/>
-            <InfoCell value={data.dob} /> 
-            <InfoCell value={data.status} />
-            <InfoCell value={
-              <DropdownLayout
-                  trigger={<Button className="w-full h-6">{role} </Button>}
-                  options={[
-                    {id: "mother", name: "Mother"}, 
-                    {id: "father", name: "Father"},
-                    {id: "guardian", name: "Guardian"},
-                    {id: "dependent" , name: "Dependent"},
-                  ]}
-                  onSelect={handleRoleChange}
-                />
-            } 
-            />
-          </div>
-          
-          <div className="w-1/12 flex justify-end items-center">
-            <ViewButton onClick={handleViewClick} />
-          </div>
-        </CardContainer>
-      );
-    },
+        isChanging ? (<Button className={buttonStyle}>
+            <Loader2 className="w-5 h-5 animate-spin"/>
+          </Button>) : (
+          <DropdownLayout
+            trigger={<Button className={buttonStyle}>{role as string} </Button>}
+            options={[
+              {id: "mother", name: "Mother"}, 
+              {id: "father", name: "Father"},
+              {id: "guardian", name: "Guardian"},
+              {id: "dependent" , name: "Dependent"},
+            ]}
+            onSelect={handleRoleChange}
+          />
+        )
+      )
+    }
   },
   {
     accessorKey: "action",
-    header: "",
-    cell: ({ row }) => {
-      const data = row.getValue("data") as any;
-      const familyMembers = data;
-      const residentId = data.rp_id;
-      const [isRemoving, setIsRemoving] = React.useState<boolean>(false);
-      const { mutateAsync: deleteFamilyComposition, isPending: isDeleting } = useDeleteFamilyComposition();
+    header: "Action",
+    cell: ({row}) => {
+      const navigate = useNavigate()
 
-      const remove = async () => {
-        setIsRemoving(true);
-        
-        // Cancel if member(s) doesn't exceed 1
-        if(familyMembers.length === 1) {
-          setIsRemoving(false);
-          toast('Family must have atleast 1 member(s)', {
-           icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-          })
-          return;
-        }
-
-        await deleteFamilyComposition({
-          familyId: family.fam_id,
-          residentId: residentId
+      const handleViewClick = () => {
+        console.log('clicked')
+        navigate("/profiling/resident/view/personal", {
+          state: {
+            params: {
+              type: 'viewing',
+              data: {
+                residentId: row.original.rp_id,
+                familyId: family.fam_id,
+              },
+            }
+          }
         });
-
-        if(!isDeleting) {
-          setIsRemoving(false);
-          toast("A member has been removed successfully", {
-            icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
-          })
-
-          setComposition((prev: any) => 
-            prev.filter((p: any) => p.rp_id !== residentId)
-          )
-        }
-
-      };
+      }
 
       return (
-        <div className="flex justify-center items-center">
-          {!isRemoving ? (<ConfirmationModal 
-            trigger= {
-              <CircleMinus 
-                size={27}
-                className="fill-red-500 stroke-white cursor-pointer"
-              />
-            }
-            title="Confirm Removal"
-            description="Are you sure you want to remove this member?"
-            actionLabel="Confirm"
-            onClick={remove}
-            variant="destructive"
-          />) : (
-            <Loader2 className="animate-spin "/>
-          )}
-        </div>
+        <ViewButton onClick={handleViewClick} />
       )
     }
   }

@@ -1,55 +1,39 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
-import {
-  type ComplaintFormData,
-  complaintFormSchema,
-} from "@/form-schema/complaint-schema";
+import {type ComplaintFormData, complaintFormSchema} from "@/form-schema/complaint-schema";
 import { ReviewInfo } from "./review";
 import { ComplainantInfo } from "./complainant";
 import { AccusedInfo } from "./accused";
 import { IncidentInfo } from "./incident";
-import { DocumentUploaded } from "./document";
 import { ProgressBar } from "@/components/progress-bar";
 import { toast } from "sonner";
-import { api } from "@/api/api";
 import { Button } from "@/components/ui/button/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   ChevronLeft,
   ChevronRight,
   Send,
   FileText,
   AlertTriangle,
-  Search,
   User,
   Users,
   MapPin,
-  Paperclip,
   Eye,
-  HelpCircle,
+  Info,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { BsChevronLeft } from "react-icons/bs";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
-import { useDebounce } from "@/hooks/use-debounce";
-import {
-  searchComplainants,
-  searchAccused,
-} from "../restful-api/complaint-api";
+import { usePostComplaint } from "../api-operations/queries/complaintPostQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
 export const ComplaintForm = () => {
   const [step, setStep] = useState(1);
+  const postComplaint = usePostComplaint();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showSearchResults, setShowSearchResults] = useState(false);
-
   const [showIntroModal, setShowIntroModal] = useState(() => {
     return localStorage.getItem("hideIntroDialog") !== "true";
   });
@@ -58,7 +42,6 @@ export const ComplaintForm = () => {
   const { user } = useAuth();
   const { send } = useNotifications();
   const navigate = useNavigate();
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const methods = useForm<ComplaintFormData>({
     resolver: zodResolver(complaintFormSchema),
@@ -75,102 +58,6 @@ export const ComplaintForm = () => {
       documents: [],
     },
   });
-
-  // Search effect
-  useEffect(() => {
-    const performSearch = async () => {
-      if (!debouncedSearchQuery.trim()) {
-        setSearchResults([]);
-        return;
-      }
-
-      setIsSearching(true);
-      try {
-        let results;
-        if (step === 1) {
-          results = await searchComplainants(debouncedSearchQuery);
-        } else if (step === 2) {
-          results = await searchAccused(debouncedSearchQuery);
-        }
-        setSearchResults(results || []);
-      } catch (error) {
-        console.error("Search error:", error);
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    };
-
-    performSearch();
-  }, [debouncedSearchQuery, step]);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    setShowSearchResults(true);
-  };
-
-  const handleResultClick = (result: any) => {
-    if (step === 1) {
-      // Auto-fill complainant fields
-      methods.setValue(`complainant.0.fullName`, result.cpnt_name || "");
-      methods.setValue(`complainant.0.gender`, result.cpnt_gender || "");
-      methods.setValue(`complainant.0.age`, result.cpnt_age || "");
-      methods.setValue(`complainant.0.contactNumber`, result.cpnt_number || "");
-      methods.setValue(
-        `complainant.0.relation_to_respondent`,
-        result.cpnt_relation_to_respondent || ""
-      );
-      // Address fields
-      methods.setValue(
-        `complainant.0.address.province`,
-        result.add?.add_province || ""
-      );
-      methods.setValue(
-        `complainant.0.address.city`,
-        result.add?.add_city || ""
-      );
-      methods.setValue(
-        `complainant.0.address.barangay`,
-        result.add?.add_barangay || ""
-      );
-      methods.setValue(
-        `complainant.0.address.street`,
-        result.add?.add_street || ""
-      );
-      methods.setValue(
-        `complainant.0.address.sitio`,
-        result.add?.sitio?.sitio_name || result.add?.add_external_sitio || ""
-      );
-    } else if (step === 2) {
-      // Auto-fill accused fields
-      methods.setValue(`accused.0.alias`, result.acsd_name || "");
-      methods.setValue(`accused.0.age`, result.acsd_age || "");
-      methods.setValue(`accused.0.gender`, result.acsd_gender || "");
-      methods.setValue(`accused.0.description`, result.acsd_description || "");
-      // Address fields
-      methods.setValue(
-        `accused.0.address.province`,
-        result.add?.add_province || ""
-      );
-      methods.setValue(`accused.0.address.city`, result.add?.add_city || "");
-      methods.setValue(
-        `accused.0.address.barangay`,
-        result.add?.add_barangay || ""
-      );
-      methods.setValue(
-        `accused.0.address.street`,
-        result.add?.add_street || ""
-      );
-      methods.setValue(
-        `accused.0.address.sitio`,
-        result.add?.sitio?.sitio_name || result.add?.add_external_sitio || ""
-      );
-    }
-
-    setSearchQuery("");
-    setSearchResults([]);
-    setShowSearchResults(false);
-  };
 
   const nextStep = async () => {
     const fields = stepFields[step];
@@ -266,11 +153,10 @@ export const ComplaintForm = () => {
         }
       }
 
-      await api.post("complaint/create/", formData);
+      await postComplaint.mutateAsync(formData);
       await handleSendAlert();
 
       toast.success("Complaint submitted successfully");
-      // methods.reset();
       setTimeout(() => {
         navigate("/complaint");
       }, 1000);
@@ -285,7 +171,6 @@ export const ComplaintForm = () => {
     }
   };
 
-  // Fixed dialog handlers
   const handleDismissIntro = () => {
     if (dontShowAgain) {
       localStorage.setItem("hideIntroDialog", "true");
@@ -293,7 +178,6 @@ export const ComplaintForm = () => {
     setShowIntroModal(false);
   };
 
-  // Manual trigger function to show dialog
   const showIntroManually = () => {
     setShowIntroModal(true);
   };
@@ -320,36 +204,25 @@ export const ComplaintForm = () => {
     1: ["complainant"],
     2: ["accused"],
     3: ["incident"],
-    4: ["documents"],
+    4: ["review"],
   };
 
   const steps = [
     {
       number: 1,
       title: "Complainant",
-      description: "(Nagrereklamo)",
+      description: "Nagrereklamo",
       icon: User,
     },
-    {
-      number: 2,
-      title: "Respondent",
-      description: "(Isinasakdal)",
-      icon: Users,
-    },
+    { number: 2, title: "Respondent", description: "Isinasakdal", icon: Users },
     {
       number: 3,
       title: "Incident",
-      description: "(Detalye ng Reklamo)",
+      description: "Detalye ng Reklamo",
       icon: MapPin,
     },
     {
       number: 4,
-      title: "Documents",
-      description: "Supplemental materials to support your complaint",
-      icon: Paperclip,
-    },
-    {
-      number: 5,
       title: "Review",
       description: "Confirm the accuracy of your complaint details",
       icon: Eye,
@@ -358,11 +231,10 @@ export const ComplaintForm = () => {
 
   return (
     <div className="max-h-screen">
-      {/* Main Content */}
       <div className="flex-1">
-        <Card className="overflow-hidden h-full">
-          <CardHeader className="flex flex-row items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-4">
+        <Card className="overflow-hidden h-full border-none p-0 m-0">
+          <CardHeader className="flex flex-row items-center justify-between py-4">
+            <div className="flex items-center gap-2">
               <Button
                 className="text-black p-2 flex items-center justify-center"
                 variant="outline"
@@ -372,11 +244,27 @@ export const ComplaintForm = () => {
                 </Link>
               </Button>
               <div>
-                <h2 className="text-2xl font-bold text-darkBlue2">
-                  Barangay Complaint Form
-                </h2>
-                <p className="text-black/70 font-normal text-base italic">
-                  (Pormularyo ng Reklamo)
+                <div className="flex items-center gap-x-2">
+                  <h2 className="text-2xl font-bold text-darkBlue2">
+                    Barangay Complaint Form
+                  </h2>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={showIntroManually}
+                    className="p-0 h-auto w-auto 
+                                  rounded-full
+                               text-blue-500 
+                               hover:text-white 
+                               hover:bg-blue-500 
+                               transition-colors duration-200"
+                  >
+                    <Info/>
+                  </Button>
+                </div>
+                <p className="text-black/70 font-normal text-sm">
+                  Ensure all complaint details are complete and accurate to
+                  facilitate proper action by the barangay.
                 </p>
               </div>
             </div>
@@ -385,160 +273,70 @@ export const ComplaintForm = () => {
           <ProgressBar
             steps={steps}
             currentStep={step}
-            showDescription={false}
+            showDescription={true}
           />
 
-          <CardContent className="p-6 sm:p-8">
-            <div className="flex flex-row items-center justify-between px-6 py-4">
-              <div className="flex items-center gap-x-2">
-                <div>
-                  <h2 className="text-2xl font-semibold text-darkBlue2">
-                    {steps[step - 1].title}
-                  </h2>
-                  <p className="text-black/70 font-normal text-base italic mt-1">
-                    {steps[step - 1].description}
-                  </p>
-                </div>
+          <CardContent className="mt-4">
+            <FormProvider {...methods}>
+              <div className="mb-8">
+                {step === 1 && <ComplainantInfo />}
+                {step === 2 && <AccusedInfo />}
+                {step === 3 && <IncidentInfo />}
+                {step === 4 && <ReviewInfo />}
               </div>
 
-              {(step === 1 || step === 2) && (
-                <div className="relative w-96">
-                  <Search
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                    size={18}
-                  />
-                  <Input
-                    placeholder={step === 1 ? "Search..." : "Search..."}
-                    className="pl-10 pr-4 h-10 border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-white transition-all duration-200 rounded-lg w-full"
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    onFocus={() => setShowSearchResults(true)}
-                  />
-
-                  {showSearchResults &&
-                    (searchResults.length > 0 || isSearching) && (
-                      <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 max-h-60 overflow-auto">
-                        {isSearching ? (
-                          <div className="px-4 py-2 text-sm text-gray-500">
-                            Searching...
-                          </div>
-                        ) : searchResults.length === 0 ? (
-                          <div className="px-4 py-2 text-sm text-gray-500">
-                            No results found
-                          </div>
-                        ) : (
-                          searchResults.map((result) => (
-                            <div
-                              key={result.id}
-                              className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                              onClick={() => handleResultClick(result)}
-                            >
-                              {step === 1 ? (
-                                <>
-                                  <div className="font-medium">
-                                    {result.cpnt_name}
-                                  </div>
-                                  <div className="text-gray-500">
-                                    {result.add?.add_barangay},{" "}
-                                    {result.add?.add_city}
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="font-medium">
-                                    {result.acsd_name}
-                                  </div>
-                                  <div className="text-gray-500">
-                                    {result.acsd_description}
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    )}
-                </div>
-              )}
-            </div>
-
-            <FormProvider {...methods}>
-              <div>
-                <div className="mb-8">
-                  {step === 1 && <ComplainantInfo />}
-                  {step === 2 && <AccusedInfo />}
-                  {step === 3 && <IncidentInfo />}
-                  {step === 4 && <DocumentUploaded />}
-                  {step === 5 && <ReviewInfo />}
+              <div className="flex flex-col sm:flex-row justify-between items-center pt-6 border-t gap-4">
+                <div className="w-full sm:w-auto">
+                  {step > 1 && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={prevStep}
+                      className="w-full sm:w-auto flex items-center gap-2 text-darkGray hover:bg-blue-500 hover:text-white"
+                    >
+                      <ChevronLeft className="w-4 h-4" /> Previous
+                    </Button>
+                  )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row justify-between items-center pt-6 border-t gap-4">
-                  <div className="w-full sm:w-auto">
-                    {step > 1 && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={prevStep}
-                        className="w-full sm:w-auto flex items-center gap-2 text-darkGray"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                        Previous
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="w-full sm:w-auto">
-                    {step < 5 ? (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={nextStep}
-                        className="w-full sm:w-auto flex items-center gap-2 text-darkGray"
-                      >
-                        Next
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={handleSubmitClick}
-                        className="w-full sm:w-auto flex items-center gap-2 text-darkGray"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            Submitting...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-4 h-4" />
-                            Submit Complaint
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
+                <div className="w-full sm:w-auto">
+                  {step < 4 ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={nextStep}
+                      className="w-full sm:w-auto flex items-center gap-2 text-darkGray hover:bg-blue-500 hover:text-white"
+                    >
+                      Next <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleSubmitClick}
+                      className="w-full sm:w-auto flex items-center gap-2 text-darkGray"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" /> Submit Complaint
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
             </FormProvider>
           </CardContent>
         </Card>
-        <div className="flex justify-end mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={showIntroManually}
-            className="text-blue-600 hover:text-blue-800"
-          >
-            <HelpCircle className="w-4 h-4 mr-1" />
-            Help
-          </Button>
-        </div>
       </div>
 
-      {/* Fixed Intro Dialog */}
+      {/* Intro Dialog */}
       <DialogLayout
         isOpen={showIntroModal}
         onOpenChange={setShowIntroModal}
@@ -566,7 +364,6 @@ export const ComplaintForm = () => {
               </div>
             </div>
 
-
             <div className="flex justify-between pt-4 border-t">
               <div className="flex items-center space-x-2 pt-2">
                 <input
@@ -583,7 +380,7 @@ export const ComplaintForm = () => {
                   Don't show this again
                 </label>
               </div>
-              <Button onClick={() => setShowIntroModal(false)}>Continue</Button>
+              <Button onClick={handleDismissIntro}>Continue</Button>
             </div>
           </div>
         }
@@ -635,8 +432,7 @@ export const ComplaintForm = () => {
                   </>
                 ) : (
                   <>
-                    <FileText className="w-4 h-4 mr-2" />
-                    Confirm & Submit
+                    <FileText className="w-4 h-4 mr-2" /> Confirm & Submit
                   </>
                 )}
               </Button>

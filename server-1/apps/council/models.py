@@ -1,7 +1,10 @@
 from django.db import models
 from datetime import date
 from django.contrib.postgres.fields import ArrayField
-from apps.file.models import File
+from django.utils import timezone
+from django.db.models import Max
+from datetime import date
+
 
 class CouncilScheduling(models.Model):
     ce_id = models.BigAutoField(primary_key=True)
@@ -65,34 +68,67 @@ class CouncilAttendance(models.Model):
 
 class Template(models.Model):
     temp_id = models.BigAutoField(primary_key=True)
-    temp_header = models.CharField(max_length=200)
-    # temp_below_headerContent = models.CharField(max_length=999, null=True, blank=True)
-    temp_below_headerContent = models.TextField(null=True, blank=True) 
-    temp_title = models.CharField(max_length=200)
-    temp_subtitle = models.CharField(max_length=200, null=True, blank=True)
-    temp_w_sign = models.BooleanField(default=False)
-    temp_w_seal = models.BooleanField(default=False)
-    temp_w_summon = models.BooleanField(default=False)
-    temp_paperSize = models.CharField(max_length=100)
-    temp_margin = models.CharField(max_length=100)
-    temp_filename = models.CharField(max_length=100)
-    temp_body = models.TextField(null=True, blank=True) 
-    temp_is_archive = models.BooleanField(default=False)
-    
-    pr_id = models.ForeignKey(
-        'treasurer.Purpose_And_Rates',
-        on_delete=models.CASCADE,
+    temp_contact_num = models.CharField(max_length=200)
+    temp_email = models.CharField(null=True, blank=True) 
+
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        db_column='pr_id'
-    )    
+        db_column='staff_id'
+    ) 
 
     class Meta:
         db_table = 'template'
 
 
+
+class TemplateFile(models.Model):
+    tf_id = models.BigAutoField(primary_key=True)
+    tf_name = models.CharField(max_length=500)
+    tf_type = models.CharField(max_length=500)
+    tf_path = models.CharField(max_length=500)
+    tf_url = models.CharField(max_length=500)
+    tf_logoType = models.CharField(max_length=500)
+ 
+    temp_id = models.ForeignKey(
+        Template,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='template_files',
+        db_column='temp_id'
+    )   
+
+    class Meta:
+        db_table = 'template_file'
+
+# class Resolution(models.Model):
+#     res_num = models.CharField(primary_key=True)
+#     res_title = models.CharField(max_length=500)
+#     res_date_approved = models.DateField(default=date.today)
+#     res_area_of_focus = ArrayField(
+#         models.CharField(max_length=100),
+#         default=list,
+#         blank=True
+#     )
+#     res_is_archive = models.BooleanField(default=False)
+
+#     staff = models.ForeignKey(
+#         'administration.Staff',
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         db_column='staff_id'
+#     )
+
+#     class Meta:
+#         db_table = 'resolution'
+
+
 class Resolution(models.Model):
-    res_num = models.BigAutoField(primary_key=True)
+    res_num = models.CharField(primary_key=True)
     res_title = models.CharField(max_length=500)
     res_date_approved = models.DateField(default=date.today)
     res_area_of_focus = ArrayField(
@@ -110,9 +146,38 @@ class Resolution(models.Model):
         db_column='staff_id'
     )
 
+    gpr_id = models.ForeignKey(
+        'gad.ProjectProposal',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='gpr_id'
+    )    
+
     class Meta:
         db_table = 'resolution'
-
+    
+    @classmethod
+    def generate_resolution_number(cls):
+        current_year = timezone.now().year % 100
+        year_prefix = str(current_year).zfill(2)
+        
+        # Get the max resolution number for this year
+        max_res = cls.objects.filter(
+            res_num__endswith=f"-{year_prefix}"
+        ).aggregate(Max('res_num'))
+        
+        if max_res['res_num__max']:
+            try:
+                current_num = int(max_res['res_num__max'].split('-')[0])
+                next_num = current_num + 1
+            except (ValueError, IndexError):
+                next_num = 1
+        else:
+            next_num = 1
+            
+        return f"{next_num:03d}-{year_prefix}"
+    
 
 class ResolutionFile(models.Model):
     rf_id = models.BigAutoField(primary_key=True)
@@ -156,31 +221,25 @@ class ResolutionSupDocs(models.Model):
         db_table = 'resolution_supp_doc'
     
 
-
 class MinutesOfMeeting(models.Model):
     mom_id = models.BigAutoField(primary_key=True)
     mom_date = models.DateField(default=date.today)
     mom_title= models.TextField(null=False)
     mom_agenda = models.TextField(null=False)
+    mom_area_of_focus = ArrayField(
+        models.CharField(max_length=100),
+        default=list,
+        blank=True
+    )
     mom_is_archive = models.BooleanField(default=False)
-
-    class Meta:
-        db_table = 'minutes_of_meeting'
-
-class MOMAreaOfFocus(models.Model):
-    mof_id = models.BigAutoField(primary_key=True)
-    mof_area = models.CharField(null=False)
-    mom_id = models.ForeignKey(
-        'council.MinutesOfMeeting',
+    staff_id = models.ForeignKey(
+        'administration.Staff',
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        db_column='mom_id'
+        db_column='staff_id'
     )
 
     class Meta:
-        db_table = 'mom_area_of_focus'    
-
+        db_table = 'minutes_of_meeting' 
 
 class MOMFile(models.Model):
     momf_id = models.BigAutoField(primary_key=True)
@@ -188,7 +247,7 @@ class MOMFile(models.Model):
     momf_type = models.CharField(max_length=100)
     momf_path = models.CharField(max_length=500)
     momf_url = models.CharField(max_length=500)
-    mom_id = models.ForeignKey(
+    mom_id = models.OneToOneField(
         'council.MinutesOfMeeting',
         on_delete=models.CASCADE,
         null=True,
@@ -217,8 +276,6 @@ class MOMSuppDoc(models.Model):
     class Meta: 
         db_table = 'mom_supporting_document'
 
-
-# Ordinance Models (moved from secretary app)
 class Ordinance(models.Model):
     ord_num = models.CharField(max_length=50, unique=True, primary_key=True)
     ord_title = models.CharField(max_length=255)
@@ -227,44 +284,94 @@ class Ordinance(models.Model):
     ord_details = models.TextField()
     ord_year = models.IntegerField()
     ord_is_archive = models.BooleanField(default=False)
-    file = models.ForeignKey(File, on_delete=models.SET_NULL, null=True)
-    staff = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, null=True)
+    ord_parent = models.CharField(max_length=50, null=True, blank=True, help_text="ord_num of the parent ordinance (if this is an amendment)")
+    ord_is_ammend = models.BooleanField(default=False, help_text="Whether this ordinance is an amendment to another")
+    ord_ammend_ver = models.IntegerField(null=True, blank=True, help_text="Version number of the amendment")
 
+    of_id = models.ForeignKey(
+        'OrdinanceFile',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='of_id',
+        to_field='of_id',
+        related_name='ordinances'
+    )
+    staff = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
+    
+    def save(self, *args, **kwargs):
+        if not self.ord_num:  # If no ordinance number provided
+            # Generate ordinance number: ORD-YYYY-XXXX
+            year = getattr(self, 'ord_year', 2024)
+            import random
+            import string
+            
+            # Generate a unique number
+            while True:
+                # Generate 4 random digits
+                random_digits = ''.join(random.choices(string.digits, k=4))
+                ord_num = f"ORD-{year}-{random_digits}"
+                
+                # Check if it's unique
+                if not Ordinance.objects.filter(ord_num=ord_num).exists():
+                    self.ord_num = ord_num
+                    break
+        
+        super().save(*args, **kwargs)
+    
     def __str__(self):
         return f"{self.ord_num} - {self.ord_title}"
 
     class Meta:
         db_table = 'ordinance'
         ordering = ['-ord_date_created']
+        managed = False
 
-class OrdinanceSupplementaryDoc(models.Model):
-    osd_id = models.AutoField(primary_key=True)
-    osd_title = models.CharField(max_length=255)
-    osd_is_archive = models.BooleanField(default=False)
-    ordinance = models.ForeignKey(Ordinance, on_delete=models.CASCADE, related_name='supplementary_docs', to_field='ord_num')
-    file = models.ForeignKey(File, on_delete=models.SET_NULL, null=True)
+# class OrdinanceSupplementaryDoc(models.Model):
+#     osd_id = models.AutoField(primary_key=True)
+#     osd_title = models.CharField(max_length=255)
+#     osd_is_archive = models.BooleanField(default=False)
+#     ordinance = models.ForeignKey(Ordinance, on_delete=models.CASCADE, related_name='supplementary_docs', to_field='ord_num')
+#     file = models.ForeignKey(File, on_delete=models.SET_NULL, null=True)
 
-    def __str__(self):
-        return f"{self.osd_title} - {self.ordinance.ord_num}"
+#     def __str__(self):
+#         return f"{self.osd_title} - {self.ordinance.ord_num}"
+
+#     class Meta:
+#         db_table = 'ordinance_supp_doc'
+#         ordering = ['osd_id']
+
+# class OrdinanceTemplate(models.Model):
+#     template_id = models.AutoField(primary_key=True)
+#     title = models.CharField(max_length=255)
+#     template_body = models.TextField()
+#     with_seal = models.BooleanField(default=False)
+#     with_signature = models.BooleanField(default=False)
+#     header_media = models.ForeignKey(File, on_delete=models.SET_NULL, null=True, blank=True, related_name='template_headers')
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     is_active = models.BooleanField(default=True)
+
+#     def __str__(self):
+#         return f"{self.title}"
+
+#     class Meta:
+#         db_table = 'ordinance_template'
+#         ordering = ['-created_at']
+
+class OrdinanceFile(models.Model):
+    of_id = models.BigAutoField(primary_key=True)
+    of_name = models.CharField(max_length=255)
+    of_type = models.CharField(max_length=100, null=True, blank=True)
+    of_path = models.CharField(max_length=500, null=True, blank=True)
+    of_url = models.CharField(max_length=500)
 
     class Meta:
-        db_table = 'ordinance_supp_doc'
-        ordering = ['osd_id']
-
-class OrdinanceTemplate(models.Model):
-    template_id = models.AutoField(primary_key=True)
-    title = models.CharField(max_length=255)
-    template_body = models.TextField()
-    with_seal = models.BooleanField(default=False)
-    with_signature = models.BooleanField(default=False)
-    pdf_url = models.URLField(max_length=500, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    is_active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return f"{self.title}"
-
-    class Meta:
-        db_table = 'ordinance_template'
-        ordering = ['-created_at']
+        db_table = 'ordinance_file'
+        managed = False

@@ -6,6 +6,7 @@ const editAnnualGrossSales = async (ags_id: string, grossSales: {
   minRange: string;
   maxRange: string;
   amount: string;
+  staff_id: string;
 }) => {
     try {
         await api.patch(`treasurer/update-annual-gross-sales/${ags_id}/`, {
@@ -17,6 +18,7 @@ const editAnnualGrossSales = async (ags_id: string, grossSales: {
         ags_rate: parseFloatSafe(grossSales.amount),
         ags_date: new Date().toISOString(),
         ags_is_archive: false,
+        staff_id: grossSales.staff_id
         };
 
         console.log("Creating new record:", newRecord);
@@ -34,6 +36,7 @@ const editPurposeAndRate = async (pr_id: string, purposeAndRate: {
   purpose: string;
   amount: string;
   category: string;
+  staff_id: string;
 }) => {
     try {
         await api.patch(`treasurer/update-purpose-and-rate/${pr_id}/`, {
@@ -46,17 +49,14 @@ const editPurposeAndRate = async (pr_id: string, purposeAndRate: {
           pr_category: capitalize(purposeAndRate.category),
           pr_date: new Date().toISOString(),
           pr_is_archive: false,
+          staff_id: purposeAndRate.staff_id
         };
 
         console.log("Creating new record:", newRecord);
 
         const res = await api.post('treasurer/purpose-and-rate/', newRecord);
 
-        await api.patch(`council/update-template-pr-id/`, {
-          old_pr_id: pr_id,
-          new_pr_id: res.data.pr_id,
-        });
-
+      
         return res.data.pr_id;
   } catch (error) {
     console.error("Error in editAnnualGrossSales:", error);

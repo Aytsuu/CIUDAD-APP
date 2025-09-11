@@ -9,54 +9,68 @@ import {
 } from "@/components/ui/dialog/dialog";
 import {
   useAddProjectProposal,
-  // useAddSupportDocument,
-} from "./queries/addqueries";
+  useAddSupportDocument,
+} from "./queries/projprop-addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import { useGetStaffList } from "./queries/fetchqueries";
+import {
+  useGetStaffList,
+  useGetAvailableDevPlanProjects,
+} from "./queries/projprop-fetchqueries";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
-import { ProjectProposalSchema } from "@/form-schema/gad-projprop-create-form-schema";
+import {
+  ProjectProposalSchema,
+  ProjectProposalFormValues,
+} from "@/form-schema/gad-projprop-create-form-schema";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { Form } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import z from "zod";
 import { useGADBudgets } from "../budget-tracker/queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "../budget-tracker/queries/BTYearQueries";
 import { generateProposalPdf } from "./personalized-compo/pdfGenerator";
-import { Signatory, ProjectProposalFormProps } from "./projprop-types";
+import {
+  Signatory,
+  ProjectProposalFormProps,
+  ProjectProposalInput,
+  FileInput,
+  SupportDoc,
+} from "./projprop-types";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
+import { useAuth } from "@/context/AuthContext";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
+  onSuccess,
   existingProposal,
 }) => {
+  const { user } = useAuth();
+  const { data: availableProjects = [], isLoading: _isProjectsLoading } =
+    useGetAvailableDevPlanProjects();
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [supportingDocs, setSupportingDocs] = useState<MediaUploadType>([]);
-  const [headerImageUrl, _setHeaderImageUrl] = useState<string | null>(null);
   const [pdfPreview, setPdfPreview] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  // const addSupportDocMutation = useAddSupportDocument();
+  const [_errorMessage, setErrorMessage] = useState<string | null>(null);
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const addMutation = useAddProjectProposal();
+  const addSupportDocMutation = useAddSupportDocument();
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [selectedDevProject, setSelectedDevProject] = useState<any>(null);
 
-  const {
-    data: budgetEntries = [],
-    isLoading: isBudgetLoading,
-  } = useGADBudgets(new Date().getFullYear().toString());
+  const { data: budgetEntries = [], isLoading: isBudgetLoading } =
+    useGADBudgets(new Date().getFullYear().toString());
   const { data: yearBudgets } = useGetGADYearBudgets();
   const currentYear = new Date().getFullYear().toString();
   const currentYearBudget = yearBudgets?.find(
     (budget) => budget.gbudy_year === currentYear
   )?.gbudy_budget;
+  
 
   const latestExpenseWithBalance = budgetEntries
     .filter(
-      (entry) =>
-        entry.gbud_type === "Expense" &&
-        !entry.gbud_is_archive &&
-        entry.gbud_remaining_bal != null
+      (entry) => !entry.gbud_is_archive && entry.gbud_remaining_bal != null
     )
     .sort(
       (a, b) =>
@@ -74,10 +88,15 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     ? Number(currentYearBudget)
     : 0;
 
-  const form = useForm<z.infer<typeof ProjectProposalSchema>>({
+  const form = useForm<ProjectProposalFormValues>({
     resolver: zodResolver(ProjectProposalSchema),
     defaultValues: {
-      projectTitle: "",
+      selectedDevProject: {
+        dev_id: 0,
+        project_title: "",
+        participants: [],
+        budget_items: [],
+      },
       background: "",
       objectives: [""],
       participants: [{ category: "", count: "0" }],
@@ -85,18 +104,130 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
       venue: "",
       budgetItems: [{ name: "", pax: "", amount: "0" }],
       monitoringEvaluation: "",
-      signatories: [{ name: "", position: "", type: "prepared" }],
+      signatories: [
+        { name: "", position: "", type: "prepared" },
+        { name: "", position: "Treasurer", type: "approved" },
+      ],
       paperSize: "letter",
       headerImage: [],
       supportingDocs: [],
+      status: "Pending",
+      statusReason: "",
     },
   });
 
-  const { control, setValue, watch, handleSubmit } = form;
+  useEffect(() => {
+    const userStaff = user?.staff;
+    const userFullName = userStaff?.rp?.per
+      ? `${userStaff.rp.per.per_fname} ${userStaff.rp.per.per_lname}`.trim()
+      : user?.username || "";
+    const userPosition = userStaff?.pos?.pos_title || "Staff";
+    const treasurer = staffList.find((s) => s.position === "Treasurer");
+    const treasurerName = treasurer?.full_name || "";
 
-  const projectTitle = watch("projectTitle");
-  const background = watch("background");
+    if (!isStaffLoading && staffList.length > 0) {
+      if (existingProposal) {
+        const existingDevProject = availableProjects.find(
+          (p) => p.dev_id === existingProposal.devId
+        ) || {
+          dev_id: existingProposal.devId || 0,
+          project_title: existingProposal.projectTitle || "",
+          participants: existingProposal.participants || [],
+          budget_items: existingProposal.budgetItems || [],
+        };
+
+        setSelectedDevProject(existingDevProject);
+
+        form.reset({
+          selectedDevProject: existingDevProject,
+          background: existingProposal.background || "",
+          objectives: existingProposal.objectives?.length
+            ? existingProposal.objectives
+            : [""],
+          participants: existingProposal.participants?.length
+            ? existingProposal.participants.map((p: any) => ({
+                category: typeof p === "string" ? p : p.category || p,
+                count: typeof p === "object" ? String(p.count || 0) : "0",
+              }))
+            : [{ category: "", count: "0" }],
+          date: existingProposal.date || "",
+          venue: existingProposal.venue || "",
+          budgetItems: existingProposal.budgetItems?.length
+            ? existingProposal.budgetItems.map((b: any) => ({
+                name: b.name,
+                pax: String(b.pax || ""),
+                amount: String( b.amount || 0),
+              }))
+            : [{ name: "", pax: "", amount: "0" }],
+          monitoringEvaluation: existingProposal.monitoringEvaluation || "",
+          signatories: existingProposal.signatories?.length
+            ? existingProposal.signatories
+            : [
+                {
+                  name: userFullName,
+                  position: userPosition,
+                  type: "prepared",
+                },
+                {
+                  name: treasurerName,
+                  position: "Treasurer",
+                  type: "approved",
+                },
+              ],
+          paperSize: existingProposal.paperSize || "letter",
+          headerImage: existingProposal.headerImage
+            ? [existingProposal.headerImage]
+            : [],
+          supportingDocs: existingProposal.supportDocs || [],
+          status: existingProposal.status || "Pending",
+          statusReason: existingProposal.statusReason || "",
+        });
+      } else {
+        form.reset({
+          ...form.getValues(),
+          signatories: [
+            { name: userFullName, position: userPosition, type: "prepared" },
+            { name: treasurerName, position: "Treasurer", type: "approved" },
+          ],
+        });
+      }
+      setMediaFiles(
+        existingProposal?.headerImage
+          ? [
+              {
+                id: "existing",
+                name:
+                  existingProposal.headerImage.split("/").pop() ||
+                  "header-image.jpg",
+                type: "image/jpeg",
+                file: existingProposal.headerImage,
+                url: existingProposal.headerImage,
+              },
+            ]
+          : []
+      );
+      setSupportingDocs(
+        existingProposal?.supportDocs?.map((doc: SupportDoc) => ({
+          id: `doc-${doc.psd_id}`,
+          name: doc.psd_name,
+          type: doc.psd_type,
+          file: doc.psd_url,
+          url: doc.psd_url,
+        })) || []
+      );
+    }
+  }, [isStaffLoading, staffList, user, existingProposal, form]);
+
+  useEffect(() => {
+    return () => {
+      if (pdfPreview) URL.revokeObjectURL(pdfPreview);
+    };
+  }, [pdfPreview]);
+
+  const { control, setValue, watch } = form;
+  const watchedSelectedDevProject = watch("selectedDevProject");
   const objectives = watch("objectives");
+  const background = watch("background");
   const participants = watch("participants");
   const date = watch("date");
   const venue = watch("venue");
@@ -104,6 +235,14 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const monitoringEvaluation = watch("monitoringEvaluation");
   const signatories = watch("signatories");
   const paperSize = watch("paperSize");
+
+  const proposedBudget = budgetItems.reduce(
+    (sum: number, item: { name: string; pax: string; amount: string }) => {
+      const pax = parseInt(item.pax) || 1;
+      return sum + (parseInt(item.amount) || 0) * pax;
+    },
+    0
+  );
 
   const participantCategories = [
     "Women",
@@ -118,55 +257,117 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     "GAD Staff",
   ];
 
+  // In handleProjectSelect function, replace the form.setValue call with:
+  const handleProjectSelect = (projectId?: string) => {
+    const selectedProject = availableProjects.find(
+      (project) => project.dev_id.toString() === projectId
+    );
+
+    if (selectedProject) {
+      setSelectedDevProject(selectedProject);
+
+      // Use setValue without immediate validation to avoid blocking
+      setValue("selectedDevProject", selectedProject as any);
+
+      // Auto-populate form fields with development plan data
+      if (
+        selectedProject.participants &&
+        selectedProject.participants.length > 0
+      ) {
+        const formattedParticipants = selectedProject.participants.map(
+          (participant: string | any) => {
+            if (typeof participant === "string") {
+              return { category: participant, count: "0" };
+            } else if (
+              typeof participant === "object" &&
+              participant !== null
+            ) {
+              return {
+                category: participant.category || participant.name || "",
+                count: participant.count ? String(participant.count) : "0",
+              };
+            }
+            return { category: "", count: "0" };
+          }
+        );
+        setValue("participants", formattedParticipants);
+      }
+
+      if (
+        selectedProject.budget_items &&
+        selectedProject.budget_items.length > 0
+      ) {
+        const formattedBudgetItems = selectedProject.budget_items.map(
+          (item: any) => ({
+            name: item.name || "",
+            pax: item.pax ? String(item.pax) : "1",
+            amount: item.amount
+              ? String(item.amount)
+              : "0",
+          })
+        );
+        setValue("budgetItems", formattedBudgetItems);
+      }
+    }
+  };
+
   const addParticipant = () => {
-    const newParticipants = [...participants, { category: "", count: "0" }];
-    setValue("participants", newParticipants);
+    setValue("participants", [...participants, { category: "", count: "0" }]);
   };
 
   const removeParticipant = (index: number) => {
     if (participants.length > 1) {
-      const newParticipants = [...participants];
-      newParticipants.splice(index, 1);
-      setValue("participants", newParticipants);
+      setValue(
+        "participants",
+        participants.filter(
+          (_: { category: string; count: string }, i: number) => i !== index
+        )
+      );
     }
   };
 
   const addBudgetItem = () => {
-    const newItems = [...budgetItems, { name: "", pax: "", amount: "0" }];
-    setValue("budgetItems", newItems);
+    setValue("budgetItems", [
+      ...budgetItems,
+      { name: "", pax: "", amount: "0" },
+    ]);
   };
 
   const removeBudgetItem = (index: number) => {
     if (budgetItems.length > 1) {
-      const newItems = [...budgetItems];
-      newItems.splice(index, 1);
-      setValue("budgetItems", newItems);
+      setValue(
+        "budgetItems",
+        budgetItems.filter(
+          (_: { name: string; pax: string; amount: string }, i: number) =>
+            i !== index
+        )
+      );
     }
   };
 
   const addObjective = () => {
-    const newObjectives = [...objectives, ""];
-    setValue("objectives", newObjectives);
+    setValue("objectives", [...objectives, ""]);
   };
 
   const removeObjective = (index: number) => {
     if (objectives.length > 1) {
-      const newObjectives = [...objectives];
-      newObjectives.splice(index, 1);
-      setValue("objectives", newObjectives);
+      setValue(
+        "objectives",
+        objectives.filter((_: string, i: number) => i !== index)
+      );
     }
   };
 
   const addSignatory = (type: "prepared" | "approved") => {
-    const newSignatories = [...signatories, { name: "", position: "", type }];
-    setValue("signatories", newSignatories);
+    setValue("signatories", [...signatories, { name: "", position: "", type }]);
   };
 
   const removeSignatory = (index: number) => {
     if (signatories.length > 1) {
-      const newSignatories = [...signatories];
-      newSignatories.splice(index, 1);
-      setValue("signatories", newSignatories);
+      setValue(
+        "signatories",
+        signatories.filter((_: Signatory, i: number) => i !== index)
+      );
     }
   };
 
@@ -186,7 +387,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     try {
       const pdfUrl = await generateProposalPdf(
         {
-          projectTitle,
+          projectTitle: watchedSelectedDevProject?.project_title || "",
           background,
           objectives,
           participants,
@@ -196,17 +397,15 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
           monitoringEvaluation,
           signatories,
           paperSize,
-          headerImage: headerImageUrl,
+          headerImage: mediaFiles[0]?.url || null,
         },
         preview
       );
-
       if (preview && pdfUrl) {
         setPdfPreview(pdfUrl);
         setIsPreviewOpen(true);
       }
     } catch (error) {
-      console.error("Error generating PDF:", error);
       setErrorMessage("Failed to generate PDF preview. Please try again.");
     }
   };
@@ -216,206 +415,180 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     setIsPreviewOpen(false);
   };
 
-  const handleSave = async (_data: z.infer<typeof ProjectProposalSchema>) => {
-    // try {
-    //   setErrorMessage(null);
+const onSubmit = async (data: ProjectProposalFormValues) => {
+  
+  if (proposedBudget > availableBudget) {
+    setErrorMessage(
+      `Proposed budget (₱${proposedBudget.toLocaleString()}) exceeds available budget (₱${availableBudget.toLocaleString()})`
+    );
+    return;
+  }
 
-    //   const headerImage =
-    //     mediaFiles[0]?.publicUrl || mediaFiles[0]?.previewUrl || null;
+  const formattedParticipants = data.participants
+    .filter(p => p.category.trim() !== "")
+    .map(p => ({
+      category: p.category,
+      count: parseInt(p.count) || 0
+    }));
+  
+  const formattedBudgetItems = data.budgetItems
+    .filter(item => item.name.trim() !== "")
+    .map(item => ({
+      name: item.name,
+      pax: item.pax || "1",
+      amount: parseFloat(item.amount) || 0
+    }));
 
-    //   const validSupportDocs = supportingDocs.filter(
-    //     (doc) =>
-    //       doc.status === "uploaded" &&
-    //       doc.publicUrl &&
-    //       doc.storagePath &&
-    //       doc.file?.name &&
-    //       doc.file?.type
-    //   );
+  try {
+    setErrorMessage(null);
+    let gpr_header_img: string | null = null;
 
-    //   const proposalData = {
-    //     projectTitle: data.projectTitle,
-    //     background: data.background,
-    //     objectives: data.objectives.filter((obj) => obj.trim() !== ""),
-    //     participants: data.participants.filter((p) => p.category.trim() !== ""),
-    //     date: data.date,
-    //     venue: data.venue,
-    //     budgetItems: data.budgetItems.filter((item) => item.name.trim() !== ""),
-    //     monitoringEvaluation: data.monitoringEvaluation,
-    //     signatories: data.signatories.filter((s) => s.name.trim() !== ""),
-    //     gpr_header_img: headerImage,
-    //     paperSize: paperSize,
-    //     staff_id: null,
-    //   };
-
-    //   const proposalResponse = await addMutation.mutateAsync(proposalData);
-
-    //   if (validSupportDocs.length > 0) {
-    //     await Promise.all(
-    //       validSupportDocs.map((doc) => {
-    //         const fileData = {
-    //           psd_url: doc.publicUrl!,
-    //           psd_path: doc.storagePath!,
-    //           psd_name: doc.file.name,
-    //           psd_type: doc.file.type,
-    //         };
-    //         return addSupportDocMutation.mutateAsync({
-    //           gprId: proposalResponse.gprId,
-    //           fileData,
-    //         });
-    //       })
-    //     );
-    //   }
-
-    //   form.reset();
-    //   setMediaFiles([]);
-    //   setSupportingDocs([]);
-    //   setHeaderImageUrl(null);
-    //   onSuccess();
-    // } catch (error) {
-    //   console.error("Error in handleSave:", error);
-    //   setErrorMessage(
-    //     "Failed to save proposal. Please check the form data and try again."
-    //   );
-    // }
-  };
-
-  useEffect(() => {
-    if (existingProposal) {
-      const suppDocs =
-        existingProposal.gprSuppDocs?.map((url: string) => ({
-          id: `img-${Math.random().toString(36).substr(2, 9)}`,
-          type: "image" as const,
-          publicUrl: url,
-          status: "uploaded" as const,
-          previewUrl: url,
-          file: new File([], url.split("/").pop() || "image.jpg"),
-        })) || [];
-
-      setSupportingDocs(suppDocs);
-
-      // if (existingProposal?.gpr_header_img) {
-      //   setHeaderImageUrl(existingProposal.gpr_header_img);
-      //   setMediaFiles([
-      //     {
-      //       id: "existing",
-      //       type: "image",
-      //       file: new File([], "existing.jpg"),
-      //       publicUrl: existingProposal.gpr_header_img,
-      //       status: "uploaded",
-      //       previewUrl: existingProposal.gpr_header_img,
-      //     },
-      //   ]);
-      // }
+    if (mediaFiles.length > 0 && mediaFiles[0].file) {
+      if (mediaFiles[0].file.startsWith("data:")) {
+        gpr_header_img = mediaFiles[0].file;
+      } else {
+        gpr_header_img = mediaFiles[0].file;
+      }
     }
-  }, [existingProposal]);
 
-  useEffect(() => {
-    return () => {
-      if (headerImageUrl && headerImageUrl.startsWith("blob:"))
-        URL.revokeObjectURL(headerImageUrl);
-      if (pdfPreview) URL.revokeObjectURL(pdfPreview);
+    const proposalData: ProjectProposalInput = {
+      gprId: existingProposal?.gprId,
+      gpr_background: data.background,
+      gpr_objectives: data.objectives.filter((obj: string) => obj.trim() !== ""),
+      gpr_date: data.date,
+      gpr_venue: data.venue,
+      gpr_monitoring: data.monitoringEvaluation,
+      gpr_signatories: data.signatories.filter((s: Signatory) => s.name.trim() !== ""),
+      gpr_header_img,
+      staffId: user?.staff?.staff_id || null,
+      gprIsArchive: existingProposal?.gprIsArchive || false,
+      status: data.status || "Pending",
+      statusReason: data.statusReason || null,
+      gpr_page_size: data.paperSize,
+      dev: data.selectedDevProject.dev_id,
+      participants: formattedParticipants,
+      budget_items: formattedBudgetItems
     };
-  }, [headerImageUrl, pdfPreview]);
+
+
+    // Create the proposal
+    const proposalResponse = await addMutation.mutateAsync(proposalData);
+
+    // Handle supporting documents using the returned ID
+    const newFiles: FileInput[] = supportingDocs
+      .filter((doc) => !!doc.file && !existingProposal?.supportDocs?.some((sd: SupportDoc) => sd.psd_url === doc.url))
+      .map((doc) => ({
+        name: doc.name,
+        type: doc.type,
+        file: doc.file as string,
+      }));
+
+
+    if (newFiles.length > 0) {
+      const gprId = proposalResponse.gprId || proposalResponse.gpr_id;
+      if (!gprId) {
+        throw new Error('No proposal ID returned from server');
+      }
+      
+      const supportDocResult = await addSupportDocMutation.mutateAsync({
+        gpr_id: gprId,
+        files: newFiles,
+      });
+    }
+
+    form.reset();
+    setMediaFiles([]);
+    setSupportingDocs([]);
+    onSuccess();
+
+  } catch (error: any) {
+    let errorMessage = "Failed to save proposal. Please check the form data and try again.";
+    
+    if (error.response?.data) {
+      if (typeof error.response.data === 'string') {
+        errorMessage = error.response.data;
+      } else if (error.response.data.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response.data.detail) {
+        errorMessage = error.response.data.detail;
+      } else {
+        errorMessage = JSON.stringify(error.response.data, null, 2);
+      }
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    setErrorMessage(errorMessage);
+  }
+};
 
   return (
     <div className="container mx-auto px-4 sm:px-6 max-w-2xl md:max-w-3xl lg:max-w-4xl">
-      {errorMessage && (
-        <div className="mb-4 p-2 sm:p-4 bg-red-100 text-red-700 rounded">
-          {errorMessage}
-        </div>
-      )}
       <div className="mb-6">
         <label className="block text-sm font-medium mb-2">Paper Size</label>
         <div className="flex flex-wrap gap-4">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="paperSize"
-              checked={paperSize === "a4"}
-              onChange={() => {
-                setValue("paperSize", "a4");
-              }}
-            />
-            A4
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="paperSize"
-              checked={paperSize === "letter"}
-              onChange={() => {
-                setValue("paperSize", "letter");
-              }}
-            />
-            Letter
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="paperSize"
-              checked={paperSize === "legal"}
-              onChange={() => {
-                setValue("paperSize", "legal");
-              }}
-            />
-            Legal
-          </label>
+          {["a4", "letter", "legal"].map((size) => (
+            <label key={size} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="paperSize"
+                checked={paperSize === size}
+                onChange={() =>
+                  setValue("paperSize", size as "a4" | "letter" | "legal")
+                }
+              />
+              {size.charAt(0).toUpperCase() + size.slice(1)}
+            </label>
+          ))}
         </div>
       </div>
 
       <Form {...form}>
         <form
-          onSubmit={handleSubmit(handleSave)}
+          onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-col gap-6"
         >
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Header Image (optional)
+                Program Title
               </label>
+              <ComboboxInput
+                value={selectedDevProject?.project_title || ""}
+                options={availableProjects}
+                onSelect={(_value, item) => {
+                  handleProjectSelect(item?.dev_id.toString());
+                }}
+                displayKey="project_title"
+                valueKey="dev_id"
+                placeholder="Select a program..."
+                emptyText="No projects found"
+                label=""
+              />
+            </div>
+
+            <div>
               <MediaUpload
-                title=""
+                title="Header Image (optional)"
                 description="Upload an image for the proposal header"
                 mediaFiles={mediaFiles}
+                setMediaFiles={setMediaFiles}
                 activeVideoId={activeVideoId}
-                setMediaFiles={(filesOrUpdater) => {
-                  setMediaFiles((prev) => {
-                    const newFiles =
-                      typeof filesOrUpdater === "function"
-                        ? filesOrUpdater(prev)
-                        : filesOrUpdater;
-                    // const imageUrl =
-                    //   newFiles[0]?.publicUrl || newFiles[0]?.previewUrl || null;
-                    // setHeaderImageUrl(imageUrl);
-                    return newFiles;
-                  });
-                }}
                 setActiveVideoId={setActiveVideoId}
                 maxFiles={1}
+                acceptableFiles="image"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Supporting Documents (optional)
-              </label>
               <MediaUpload
-                title=""
+                title="Supporting Documents (optional)"
                 description="Upload any supporting documents for your proposal"
                 mediaFiles={supportingDocs}
-                activeVideoId={activeVideoId}
                 setMediaFiles={setSupportingDocs}
+                activeVideoId={activeVideoId}
                 setActiveVideoId={setActiveVideoId}
-              />
-            </div>
-
-            <div>
-              <FormInput
-                control={control}
-                name="projectTitle"
-                label="Project Title"
-                placeholder="Enter project title"
-                type="text"
+                acceptableFiles="all"
               />
             </div>
 
@@ -434,7 +607,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                 Objectives
               </label>
               <div className="space-y-2">
-                {objectives.map((_, index) => (
+                {objectives.map((_objective: string, index: number) => (
                   <div
                     key={index}
                     className="flex flex-col sm:flex-row gap-2 items-center"
@@ -450,7 +623,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                       type="button"
                       variant="destructive"
                       size="sm"
-                      className="mt-2"
                       onClick={() => removeObjective(index)}
                       disabled={objectives.length <= 1}
                     >
@@ -475,38 +647,43 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                 Participants
               </label>
               <div className="space-y-2">
-                {participants.map((_, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"
-                  >
-                    <FormSelect
-                      control={control}
-                      name={`participants.${index}.category`}
-                      label=""
-                      options={participantCategories.map((cat) => ({
-                        id: cat,
-                        name: cat,
-                      }))}
-                    />
-                    <FormInput
-                      control={control}
-                      name={`participants.${index}.count`}
-                      label=""
-                      placeholder="Count"
-                      type="number"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeParticipant(index)}
-                      disabled={participants.length <= 1}
+                {participants.map(
+                  (
+                    _participant: { category: string; count: string },
+                    index: number
+                  ) => (
+                    <div
+                      key={index}
+                      className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"
                     >
-                      <X size={16} />
-                    </Button>
-                  </div>
-                ))}
+                      <FormSelect
+                        control={control}
+                        name={`participants.${index}.category`}
+                        label=""
+                        options={participantCategories.map((cat) => ({
+                          id: cat,
+                          name: cat,
+                        }))}
+                      />
+                      <FormInput
+                        control={control}
+                        name={`participants.${index}.count`}
+                        label=""
+                        placeholder="Count"
+                        type="number"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removeParticipant(index)}
+                        disabled={participants.length <= 1}
+                      >
+                        <X size={16} />
+                      </Button>
+                    </div>
+                  )
+                )}
                 <Button
                   type="button"
                   onClick={addParticipant}
@@ -520,23 +697,19 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <FormDateTimeInput
-                  control={control}
-                  name="date"
-                  label="Date"
-                  type="date"
-                />
-              </div>
-              <div>
-                <FormInput
-                  control={control}
-                  name="venue"
-                  label="Venue"
-                  placeholder="e.g. CEBU CITY HALL, PLAZA SUGBO"
-                  type="text"
-                />
-              </div>
+              <FormDateTimeInput
+                control={control}
+                name="date"
+                label="Date"
+                type="date"
+              />
+              <FormInput
+                control={control}
+                name="venue"
+                label="Venue"
+                placeholder="e.g. CEBU CITY HALL, PLAZA SUGBO"
+                type="text"
+              />
             </div>
 
             <div>
@@ -549,7 +722,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                   <span>Available Funds:</span>
                   {isBudgetLoading ? (
                     <span className="text-gray-500">Loading...</span>
-                  ) : availableBudget != null ? (
+                  ) : (
                     <span className="font-mono text-red-500">
                       ₱
                       {availableBudget.toLocaleString("en-US", {
@@ -557,8 +730,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                         maximumFractionDigits: 2,
                       })}
                     </span>
-                  ) : (
-                    <span className="text-gray-500">No expense records</span>
                   )}
                 </div>
               </div>
@@ -569,44 +740,48 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                   <span>Amount</span>
                   <span>Action</span>
                 </div>
-                {budgetItems.map((_, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center"
-                  >
-                    <FormInput
-                      control={control}
-                      name={`budgetItems.${index}.name`}
-                      label=""
-                      placeholder="Item name"
-                      type="text"
-                    />
-                    <FormInput
-                      control={control}
-                      name={`budgetItems.${index}.pax`}
-                      label=""
-                      placeholder="e.g. 73 pax"
-                      type="text"
-                    />
-                    <FormInput
-                      control={control}
-                      name={`budgetItems.${index}.amount`}
-                      label=""
-                      placeholder="Amount"
-                      type="number"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => removeBudgetItem(index)}
-                      disabled={budgetItems.length <= 1}
+                {budgetItems.map(
+                  (
+                    _budgetItem: { name: string; pax: string; amount: string },
+                    index: number
+                  ) => (
+                    <div
+                      key={index}
+                      className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center"
                     >
-                      <X size={16} />
-                    </Button>
-                  </div>
-                ))}
+                      <FormInput
+                        control={control}
+                        name={`budgetItems.${index}.name`}
+                        label=""
+                        placeholder="Item name"
+                        type="text"
+                      />
+                      <FormInput
+                        control={control}
+                        name={`budgetItems.${index}.pax`}
+                        label=""
+                        placeholder="e.g. 73 pax"
+                        type="text"
+                      />
+                      <FormInput
+                        control={control}
+                        name={`budgetItems.${index}.amount`}
+                        label=""
+                        placeholder="Amount"
+                        type="number"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removeBudgetItem(index)}
+                        disabled={budgetItems.length <= 1}
+                      >
+                        <X size={16} />
+                      </Button>
+                    </div>
+                  )
+                )}
                 <Button
                   type="button"
                   onClick={addBudgetItem}
@@ -617,6 +792,18 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                   Add Budget Item
                 </Button>
               </div>
+              {proposedBudget > 0 && (
+                <div className="mt-4 flex justify-between">
+                  <span className="font-medium text-blue-800">Proposed Budget:</span>
+                  <span
+                    className={
+                      proposedBudget > availableBudget ? "text-red-500" : "text-blue-800"
+                    }
+                  >
+                    ₱{proposedBudget.toLocaleString()}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div>
@@ -636,10 +823,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                 </label>
                 <div className="space-y-2">
                   {signatories
-                    .filter((s) => s.type === "prepared")
-                    .map((sig) => {
+                    .filter((s: Signatory) => s.type === "prepared")
+                    .map((sig: Signatory, _index: number) => {
                       const globalIndex = signatories.findIndex(
-                        (s) => s === sig
+                        (s: Signatory) => s === sig
                       );
                       return (
                         <div
@@ -653,31 +840,29 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                             label=""
                             placeholder="Select staff..."
                             emptyText="No staff found. Enter name manually."
-                            onSelect={(value, item) => {
+                            onSelect={(value, item) =>
                               updateSignatory(
                                 globalIndex,
                                 "name",
                                 value,
                                 item?.position
-                              );
-                            }}
-                            onCustomInput={(value) => {
-                              updateSignatory(globalIndex, "name", value);
-                            }}
+                              )
+                            }
+                            onCustomInput={(value) =>
+                              updateSignatory(globalIndex, "name", value)
+                            }
                             displayKey="full_name"
                             valueKey="staff_id"
                             additionalDataKey="position"
                           />
-                          <div className="flex-1">
-                            <FormInput
-                              control={control}
-                              name={`signatories.${globalIndex}.position`}
-                              label=""
-                              placeholder=""
-                              type="text"
-                              className="p-0"
-                            />
-                          </div>
+                          <FormInput
+                            control={control}
+                            name={`signatories.${globalIndex}.position`}
+                            label=""
+                            placeholder=""
+                            type="text"
+                            className="p-0"
+                          />
                           <Button
                             type="button"
                             variant="destructive"
@@ -708,10 +893,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                 </label>
                 <div className="space-y-2">
                   {signatories
-                    .filter((s) => s.type === "approved")
-                    .map((sig) => {
+                    .filter((s: Signatory) => s.type === "approved")
+                    .map((sig: Signatory, _index: number) => {
                       const globalIndex = signatories.findIndex(
-                        (s) => s === sig
+                        (s: Signatory) => s === sig
                       );
                       return (
                         <div
@@ -725,31 +910,29 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                             label=""
                             placeholder="Select staff..."
                             emptyText="No staff found. Enter name manually."
-                            onSelect={(value, item) => {
+                            onSelect={(value, item) =>
                               updateSignatory(
                                 globalIndex,
                                 "name",
                                 value,
                                 item?.position
-                              );
-                            }}
-                            onCustomInput={(value) => {
-                              updateSignatory(globalIndex, "name", value);
-                            }}
+                              )
+                            }
+                            onCustomInput={(value) =>
+                              updateSignatory(globalIndex, "name", value)
+                            }
                             displayKey="full_name"
                             valueKey="staff_id"
                             additionalDataKey="position"
                           />
-                          <div className="flex-1">
-                            <FormInput
-                              control={control}
-                              name={`signatories.${globalIndex}.position`}
-                              label=""
-                              placeholder=""
-                              type="text"
-                              className="p-0"
-                            />
-                          </div>
+                          <FormInput
+                            control={control}
+                            name={`signatories.${globalIndex}.position`}
+                            label=""
+                            placeholder=""
+                            type="text"
+                            className="p-0"
+                          />
                           <Button
                             type="button"
                             variant="destructive"
@@ -785,13 +968,29 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
               >
                 Preview
               </Button>
-              <Button
-                type="submit"
-                className="w-full sm:w-auto items-center gap-2"
-                disabled={addMutation.isPending}
-              >
-                {addMutation.isPending ? "Saving..." : "Save"}
-              </Button>
+              <ConfirmationModal
+                trigger={
+                  <Button
+                    type="button"
+                    className="w-full sm:w-auto items-center gap-2"
+                    disabled={
+                      addMutation.isPending ||
+                      Object.keys(form.formState.errors).length > 0 ||
+                      proposedBudget > availableBudget
+                    }
+                  >
+                    {addMutation.isPending ? "Saving..." : "Save"}
+                  </Button>
+                }
+                title="Confirm Save"
+                description="Are you sure you want to save this project proposal?"
+                actionLabel="Confirm"
+                onClick={() => {
+                  form.handleSubmit(onSubmit)();
+                }}
+                open={isConfirmModalOpen}
+                onOpenChange={setIsConfirmModalOpen}
+              />
             </div>
           </div>
         </form>

@@ -2,6 +2,7 @@ import {api} from '@/api/api'
 import { parseFloatSafe } from '@/helpers/floatformatter';
 import { BudgetHeaderUpdate, ProcessedOldBudgetDetail } from '../budgetPlanInterfaces';
 
+
 export const budget_plan = async (budgetInfo: Record<string, any>) => {
     try {
         console.log({
@@ -15,7 +16,8 @@ export const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_other_income: parseFloatSafe(budgetInfo.plan_other_income), 
             plan_budgetaryObligations: parseFloatSafe(budgetInfo.plan_budgetaryObligations),
             plan_balUnappropriated: parseFloatSafe(budgetInfo.plan_balUnappropriated),
-            plan_issue_date: new Date().toISOString().split('T')[0], 
+            plan_issue_date: new Date().toISOString().split('T')[0],
+            staff_id: budgetInfo.staff_id 
         });
 
         const res = await api.post('treasurer/budget-plan/', {
@@ -31,6 +33,7 @@ export const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_balUnappropriated: parseFloatSafe(budgetInfo.plan_balUnappropriated),
             plan_issue_date: new Date().toISOString().split('T')[0],
             plan_is_archive: false,
+            staff_id: budgetInfo.staff_id 
         });
 
         return res.data.plan_id;

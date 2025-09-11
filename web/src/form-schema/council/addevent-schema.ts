@@ -1,4 +1,3 @@
-// form-schema/council/addevent-schema.ts
 import { z } from "zod";
 
 const AddEventFormSchema = z.object({
@@ -13,6 +12,7 @@ const AddEventFormSchema = z.object({
     name: z.string().min(1, "Name is required"),
     designation: z.string().min(1, "Designation is required")
   })).optional(),
+  staff: z.string().optional().nullable(),
 });
 
 export default AddEventFormSchema;

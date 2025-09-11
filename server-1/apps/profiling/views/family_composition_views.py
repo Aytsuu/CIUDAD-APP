@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from ..serializers.family_composition_serializers import *
@@ -7,6 +8,7 @@ from ..models import *
 from apps.pagination import *
 
 class FamilyCompositionCreateView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = FamilyCompositionBaseSerializer
     queryset = FamilyComposition.objects.all()
 
@@ -20,6 +22,7 @@ class FamilyCompositionCreateView(generics.CreateAPIView):
     
 
 class FamilyMembersListView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = FamilyCompositionExtendedSerializer
     pagination_class = StandardResultsPagination
 
@@ -43,6 +46,7 @@ class FamilyMembersListView(generics.ListCreateAPIView):
         ).distinct()
 
 class FamilyIDView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = FCFetchFamIDSerializer
     lookup_field = 'rp'
 
@@ -53,6 +57,7 @@ class FamilyIDView(generics.ListAPIView):
         ).distinct()
 
 class FamilyCompositionBulkCreateView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = FamilyCompositionBulkCreateSerializer
     queryset = FamilyComposition.objects.all()
 
@@ -62,22 +67,22 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
 
         # Prepare model instances
-        instances = [
+        for item in serializer.validated_data:
+            existing = FamilyComposition.objects.filter(rp=item['rp'], fc_role='INDEPENDENT').first()
+            if existing:
+                existing.delete()
             FamilyComposition(**item)
-            for item in serializer.validated_data
-        ]
+
 
         created_instances = FamilyComposition.objects.bulk_create(instances)
 
-        if len(created_instances) > 0 and created_instances[0].pk is not None:
+        if len(created_instances) > 0:
             response_serializer = FamilyCompositionExtendedSerializer(created_instances, many=True)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-        
-        return Response({"detail": "Bulk create successful", "count": len(instances)},
-            status=status.HTTP_201_CREATED
-        )
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 class FamilyMemberDeleteView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = FamilyCompositionBaseSerializer
     queryset = FamilyComposition.objects.all()
 
@@ -93,6 +98,7 @@ class FamilyMemberDeleteView(generics.DestroyAPIView):
         return obj
 
 class FamilyRoleUpdateView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = FamilyCompositionBaseSerializer
     queryset = FamilyComposition.objects.all()
     

@@ -2,7 +2,10 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { restoreMinutesOfMeeting, archiveMinutesOfMeeting, updateMinutesOfMeeting } from "../restful-API/MOMPutAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { MediaUploadType } from "@/components/ui/media-upload";
+import {z} from "zod"
+import { minutesOfMeetingEditFormSchema } from "@/form-schema/council/minutesOfMeetingSchema";
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 
 export const useRestoreMinutesOfMeeting = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
@@ -62,49 +65,36 @@ export const useArchiveMinutesOfMeeting = (onSuccess?: () => void) => {
     })
 }
 
+
+
+export type MOMFileType = {
+    id: string;
+    name: string;
+    type: string;
+    file: string | undefined;
+}
+
+type MOMData = z.infer<typeof minutesOfMeetingEditFormSchema> & {
+    files: MOMFileType[]
+}
+
 export const useUpdateMinutesOfMeeting = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({
-            mom_id,
-            momf_id,
-            values,
-            mediaFiles
-        }: {
-            mom_id: number;
-            momf_id: number;
-            values: {
-                meetingTitle: string;
-                meetingAgenda: string;
-                meetingDate: string;
-                meetingAreaOfFocus: string[];
-                meetingFile: string[];
-            };
-            mediaFiles: MediaUploadType;
-        }) => updateMinutesOfMeeting(mom_id, momf_id, values, mediaFiles),
+        mutationFn: async (values: MOMData) => updateMinutesOfMeeting(values.mom_id, values.meetingTitle, values.meetingAgenda, values.meetingDate, values.meetingAreaOfFocus, values.files),
         onMutate: () => {
-            toast.loading("Updating record...", { id: "updateMOM" });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['momRecords'] });
             queryClient.invalidateQueries({ queryKey: ['momFiles'] });
-            queryClient.invalidateQueries({ queryKey: ['momAreasOfFocus'] });
 
-            toast.success('Record updated successfully', {
-                id: "updateMOM",
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
-            
+            showSuccessToast('Record updated successfully')
             onSuccess?.();
         },
         onError: (err) => {
             console.error("Error updating record:", err);
-            toast.error("Failed to update record", {
-                id: "updateMOM",
-                duration: 2000
-            });
+            showErrorToast("Failed to update record");
         }
     });
 };

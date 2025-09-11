@@ -23,11 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select/select";
-import { Card } from "@/components/ui/card/card";
+import { Card } from "@/components/ui/card";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLoading } from "@/context/LoadingContext";
 import { useAuth } from "@/context/AuthContext";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import SitioManagement from "./SitioManagement";
 
 export default function AdministrationRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -110,6 +112,15 @@ export default function AdministrationRecords() {
                   { id: "excel", name: "Export as Excel" },
                   { id: "pdf", name: "Export as PDF" },
                 ]}
+              />
+
+              <DialogLayout 
+                trigger={<Button variant={"outline"}>
+                  Sitio
+                </Button>}
+                title="Sitio"
+                description="List of Sitio in Barangay San Roque (CIUDAD)"
+                mainContent={<SitioManagement/>}
               />
 
               <Link

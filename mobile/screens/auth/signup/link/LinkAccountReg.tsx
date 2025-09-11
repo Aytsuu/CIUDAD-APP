@@ -1,12 +1,13 @@
 import React from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import AccountDetails from "../AccountDetails";
+import AccountDetails from "../account/AccountDetails";
 import { useAddAccount } from "../../queries/authPostQueries";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { View, Text } from "react-native";
 import { Button } from "@/components/ui/button";
+import AccountSetup from "../account/AccountSetup";
 
 export default function LinkAccountReg() {
   const router = useRouter();
@@ -18,28 +19,36 @@ export default function LinkAccountReg() {
   const [feedbackMessage, setFeedbackMessage] = React.useState<string>('');
   const [status, setStatus] = React.useState<"success" | "failure" | "waiting" | "message">("success");
 
-  const submit = () => {
+  const submit = async () => {
     setIsSubmitting(true);
     setStatus('waiting');
     setShowFeedback(true)
     const values = getValues('accountFormSchema')
 
     try {
-      addAccount({
+      console.log({
         username: values.username,
-        email: values.email,
+        ...(values.email !== "" && {email: values.email}),
+        phone: values.phone,
         password: values.password,
         resident_id: rp_id 
-      }, {
-        onSuccess: () => {
-          setShowFeedback(false);
-          setTimeout(() => {
-            setStatus('success');
-            setShowFeedback(true);
-          }, 0);
-        }
+      })
+      await addAccount({
+        username: values.username,
+        ...(values.email !== "" && {email: values.email}),
+        phone: values.phone,
+        password: values.password,
+        resident_id: rp_id 
       });
-    } catch (err) {
+      
+      setShowFeedback(false);
+      setTimeout(() => {
+        setStatus("success")
+        reset()
+        setShowFeedback(true);
+        setIsSubmitting(false);
+      }, 0);
+    } catch(err) {
       setShowFeedback(false);
       setTimeout(() => {
         setStatus("failure");
@@ -68,6 +77,7 @@ export default function LinkAccountReg() {
       <View className="flex-1 justify-end">
         <View className="flex-row gap-3">
           <Button variant={"outline"} className={`flex-1 rounded-xl native:h-[45px]`}
+            onPress={() => router.replace('/(auth)')}
           >
             <Text className="text-gray-600 text-base font-semibold">
               Cancel
@@ -105,7 +115,9 @@ export default function LinkAccountReg() {
   
   return (
     <>
-      <AccountDetails submit={submit}/>
+      <AccountSetup params={{
+        next: () => submit()
+      }}/>
       <LoadingModal
         visible={isSubmitting}
       />

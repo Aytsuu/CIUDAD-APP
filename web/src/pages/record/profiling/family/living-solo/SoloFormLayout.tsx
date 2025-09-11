@@ -4,7 +4,7 @@ import { demographicInfoSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { zodResolver } from "@hookform/resolvers/zod"
 import LivingSoloForm from "./LivingSoloForm"
-import { formatHouseholds, formatResidents } from "../../ProfilingFormats"
+import { formatHouseholds, formatOwnedHouses, formatResidents } from "../../ProfilingFormats"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import {
   User,
@@ -20,9 +20,7 @@ import { useAddFamily, useAddFamilyComposition } from "../../queries/profilingAd
 import { useHouseholdsList, useResidentsList } from "../../queries/profilingFetchQueries"
 import { useLoading } from "@/context/LoadingContext"
 import { useSafeNavigate } from "@/hooks/use-safe-navigate"
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button/button"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
@@ -53,13 +51,23 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   const [invalidResident, setInvalidResident] = React.useState<boolean>(false)
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
   const [buildingReadOnly, setBuildingReadOnly] = React.useState<boolean>(false)
-
-  const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList])
-  const formattedHouseholds = React.useMemo(() => formatHouseholds(householdsList), [householdsList])
+  const [selectOwnedHouses, setSelectOwnedHouses] = React.useState<boolean>(false);
+  const formattedResidents = formatResidents(residentsList)
+  const formattedHouseholds = formatHouseholds(householdsList)
 
   const isLoading = isLoadingHouseholds || isLoadingResidents
 
   // ==================== SIDE EFFECTS ======================
+  React.useEffect(() => {
+    if(selectOwnedHouses) {
+      tab_params?.form.setValue("livingSoloSchema.building", "Owner")
+      setBuildingReadOnly(true);
+    } else {
+      tab_params?.form.resetField("livingSoloSchema.building")
+      setBuildingReadOnly(false);
+    }
+  }, [selectOwnedHouses])
+  
   React.useEffect(() => {
     if (isLoading) {
       showLoading()
@@ -69,22 +77,21 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   }, [isLoading, showLoading, hideLoading])
 
   React.useEffect(() => {
-    if (tab_params?.residentId) {
-      form.setValue("id", tab_params?.residentId)
-    }
-  }, [tab_params, form])
-
-  React.useEffect(() => {
-    const householdNo = form.watch("householdNo")?.split(" ")[0]
+    const householdNo = tab_params?.isRegistrationTab ? tab_params?.form.watch("livingSoloSchema.householdNo") : form.watch("householdNo")?.split(" ")[0]
     const residentId = form.watch("id")?.split(" ")[0]
     let building = ""
+    console.log(residentId)
+    console.log(householdNo)
+    console.log(householdsList)
 
     if (householdNo && residentId && householdsList) {
       const ownedHouseholds = householdsList.filter((household: any) => {
-        if (household.head_id === residentId) {
+        if (household.head.split("-")[0] == residentId) {
           return household.hh_id
         }
       })
+
+      console.log(ownedHouseholds)
 
       building = ownedHouseholds.some((household: any) => household.hh_id === householdNo) ? "owner" : ""
 
@@ -98,6 +105,23 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   }, [form.watch("householdNo"), form.watch("id"), householdsList, form])
 
   // ==================== HANDLERS ======================
+  const handleContinue = async () => {
+    const householdId = tab_params?.form.getValues("livingSoloSchema.householdNo")
+    if (!(await tab_params?.form.trigger(["livingSoloSchema"]))) {
+      if (!householdId) setInvalidHousehold(true)
+      showErrorToast("Please fill out all required fields to continue.")
+      return
+    }
+
+    if (!householdId) {
+      showErrorToast("Please fill out all required fields to continue.")
+      setInvalidHousehold(true)
+      return
+    }
+
+    tab_params?.next(true)
+  }
+
   const submit = async () => {
     setIsSubmitting(true)
     setInvalidResident(false)
@@ -146,25 +170,8 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   }
 
   // ==================== RENDER HELPERS ======================
-  const renderLoadingSkeleton = () => (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-40" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-28" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-    </div>
-  )
-
   const MainContent = (
-    <Form {...form}>
+    <Form {...(tab_params?.isRegistrationTab ? tab_params?.form : form)}>
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -172,21 +179,21 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
         }}
         className="space-y-6"
       >
-        {isLoading && !tab_params?.isRegistrationTab ? (
-          renderLoadingSkeleton()
-        ) : (
-          <LivingSoloForm
-            isRegistrationTab={tab_params?.isRegistrationTab}
-            buildingReadOnly={buildingReadOnly}
-            residents={formattedResidents}
-            households={formattedHouseholds}
-            isSubmitting={isSubmitting}
-            invalidResident={invalidResident}
-            invalidHousehold={invalidHousehold}
-            form={form}
-            onSubmit={submit}
-          />
-        )}
+        <LivingSoloForm
+          isRegistrationTab={tab_params?.isRegistrationTab}
+          prefix={tab_params?.isRegistrationTab ? "livingSoloSchema." : ""}
+          buildingReadOnly={buildingReadOnly}
+          residents={formattedResidents}
+          households={formattedHouseholds}
+          isSubmitting={isSubmitting}
+          invalidResident={invalidResident}
+          invalidHousehold={invalidHousehold}
+          form={tab_params?.isRegistrationTab ? tab_params?.form : form}
+          ownedHouses={formatOwnedHouses(tab_params?.form.getValues("houseSchema.list"))}
+          selectOwnedHouses={selectOwnedHouses}
+          setSelectOwnedHouses={setSelectOwnedHouses}
+          onSubmit={submit}
+        />
       </form>
     </Form>
   )
@@ -231,7 +238,16 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
           <Separator />
 
           {/* Form Content */}
-          <div className="bg-white rounded-lg p-6 border border-gray-100">{MainContent}</div>
+          <div className="bg-white rounded-lg p-6">
+            {MainContent}
+            <div className="flex justify-end mt-8">
+              <Button onClick={handleContinue}>
+                Next <MoveRight/>
+              </Button>
+            </div>
+          </div>
+
+          <Separator />
 
           {/* Help Section */}
           <div className="text-center pt-4">

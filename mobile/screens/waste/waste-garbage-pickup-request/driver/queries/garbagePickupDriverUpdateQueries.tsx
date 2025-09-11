@@ -1,6 +1,6 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { updateGarbageRequestStatus } from "../restful-API/garbagePickupDriverPutAPI";
+import { updateGarbageRequestStatus } from "../restful-API/garbagePickupStaffPutAPI";
 import { useToastContext } from "@/components/ui/toast";
 
 export const useUpdateGarbageRequestStatus = (onSuccess?: () => void) => {

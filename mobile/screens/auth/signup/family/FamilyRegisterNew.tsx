@@ -206,7 +206,7 @@ export default function FamilyRegisterNew() {
   const submit = async () => {
     if (!canSubmit) return;
     
-    setIsSubmitting(true);
+    // setIsSubmitting(true);
     setStatus('waiting');
     setShowFeedback(true);
 
@@ -231,42 +231,57 @@ export default function FamilyRegisterNew() {
       ].map((info: any) => {
         const {role, ...per} = info;
         return JSON.stringify(per) === JSON.stringify(personalInfoSchema) ? 
-          { per: per, role: role, acc: account } : 
-          { per: per, role: role }
+          {
+             per: {
+              ...per,
+              per_addresses: per.per_addresses.list,
+              per_id: +per.per_id
+            }, 
+          
+            role: role, 
+            acc: account 
+          } : { 
+            per: {
+              ...per,
+              per_addresses: per.per_addresses.list,
+              per_id: +per.per_id
+            }, 
+            role: role 
+          }
 
       }).filter((info) => info.per.per_contact !== "")
 
-      const request_info = [];
+      // const request_info = [];
     
-      for (const item of data) {
-        const { per_addresses, ...per } = item.per;
+      // for (const item of data) {
+      //   const { per_addresses, ...per } = item.per;
         
-        // Add personal info
-        const personal = await addPersonal(capitalizeAllFields(per));
+      //   // Add personal info
+      //   const personal = await addPersonal(capitalizeAllFields(per));
 
-        // Add addresses
-        const addresses = await addAddress(per_addresses.list);
+      //   // Add addresses
+      //   const addresses = await addAddress(per_addresses.list);
 
-        // Link addresses to personal
-        await addPersonalAddress({
-          data: addresses.map((address: any) => ({
-            add: address.add_id,
-            per: personal.per_id,
-          })),
-          history_id: personal.history
-        });
+      //   // Link addresses to personal
+      //   await addPersonalAddress({
+      //     data: addresses.map((address: any) => ({
+      //       add: address.add_id,
+      //       per: personal.per_id,
+      //     })),
+      //     history_id: personal.history
+      //   });
 
-        // Build the result object
-        const result = {
-          ...item,
-          per: personal.per_id
-        };
+      //   // Build the result object
+      //   const result = {
+      //     ...item,
+      //     per: personal.per_id
+      //   };
 
-        request_info.push(result);
-      }
+      //   request_info.push(result);
+      // }
 
       addRequest({
-        comp: request_info
+        comp: data
       }, {
         onSuccess: () => {
           setShowFeedback(false);
@@ -283,6 +298,8 @@ export default function FamilyRegisterNew() {
         setShowFeedback(true);
         setIsSubmitting(false);
       }, 0);
+    } finally {
+      // setIsSubmitting(false);
     }
   }
 
@@ -362,109 +379,107 @@ export default function FamilyRegisterNew() {
   }
 
   return (
-    <>
-      <PageLayout
-        leftAction={
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-            accessibilityLabel="Go back"
-          >
-            <ChevronLeft size={24} className="text-gray-700" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text className="text-gray-900 text-[13px]">Family Registration</Text>}
-        rightAction={
-          <ConfirmationModal
-            title="Exit Registration"
-            description="Are you sure you want to exit? Your progress will be lost."
-            trigger={
-              <TouchableOpacity
-                className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-                accessibilityLabel="Exit registration"
-              >
-                <X size={20} className="text-gray-700" />
-              </TouchableOpacity>
-            }
-            variant="destructive"
-            onPress={handleClose}
-          />
-        }
-      >
-        <ScrollView
-          className="flex-1 px-4"
-          showsHorizontalScrollIndicator={false}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}
+    <PageLayout
+      leftAction={
+        <TouchableOpacity
+          onPress={handleClose}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          accessibilityLabel="Go back"
         >
-          <View className="mb-6">
-            <Text className="text-lg font-semibold text-gray-900 mb-2">
-              Complete Your Registration
-            </Text>
-            <Text className="text-sm text-gray-600">
-              {`${requiredStepsCompleted} of ${totalRequiredSteps} Required Step${totalRequiredSteps > 1 ? "s": ""} Completed`}
-            </Text>
-            
-            <View className="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <Animated.View
-                className="h-full bg-blue-500 rounded-full"
-                style={animatedProgressStyle}
-              />
-            </View>
-          </View>
-
-          <View className="mb-6">
-            {stepItems.map((stepItem) => (
-              <StepItem
-                key={stepItem.id}
-                step={stepItem}
-                isCompleted={stepItem.isCompleted}
-                onPress={() => handleStepPress(stepItem as any)}
-              />
-            ))}
-          </View>
-
-          <View className="bg-blue-50 p-4 rounded-lg mb-4">
-            <Text className="text-sm text-blue-800 font-medium mb-1">
-              Need Help?
-            </Text>
-            <Text className="text-sm text-blue-700">
-              Complete each required step and at least one parent information (Father, Mother, or Guardian). Optional steps can be completed later.
-            </Text>
-          </View>
-
-          <View className="py-6 bg-white border-t border-gray-100">
-            <ConfirmationModal 
-              trigger={
-                <Button 
-                  className={`native:h-[56px] w-full rounded-xl shadow-lg ${
-                    canSubmit ? 'bg-primaryBlue' : 'bg-gray-300'
-                  }`}
-                  disabled={!canSubmit}
-                >
-                  <Text className={`font-PoppinsSemiBold text-[16px] ${
-                    canSubmit ? 'text-white' : 'text-gray-500'
-                  }`}>
-                    Continue
-                  </Text>
-                </Button>
-              }
-
-              title="Confirm Submission"
-              description="Please double check the information you provided before confirming."
-              onPress={submit}
+          <ChevronLeft size={24} className="text-gray-700" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-gray-900 text-[13px]">Family Registration</Text>}
+      rightAction={
+        <ConfirmationModal
+          title="Exit Registration"
+          description="Are you sure you want to exit? Your progress will be lost."
+          trigger={
+            <TouchableOpacity
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+              accessibilityLabel="Exit registration"
+            >
+              <X size={20} className="text-gray-700" />
+            </TouchableOpacity>
+          }
+          variant="destructive"
+          onPress={handleClose}
+        />
+      }
+    >
+      <ScrollView
+        className="flex-1 px-6"
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
+        <View className="mb-6">
+          <Text className="text-lg font-semibold text-gray-900 mb-2">
+            Complete Your Registration
+          </Text>
+          <Text className="text-sm text-gray-600">
+            {`${requiredStepsCompleted} of ${totalRequiredSteps} Required Step${totalRequiredSteps > 1 ? "s": ""} Completed`}
+          </Text>
+          
+          <View className="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <Animated.View
+              className="h-full bg-blue-500 rounded-full"
+              style={animatedProgressStyle}
             />
-            {/* Terms and Privacy */}
-            <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-4 leading-4">
-              By continuing, you agree to our <Text className="text-primaryBlue font-PoppinsMedium">Terms of Service</Text>{" "}
-              and <Text className="text-primaryBlue font-PoppinsMedium">Privacy Policy</Text>
-            </Text>
           </View>
-        </ScrollView>
-      </PageLayout>
+        </View>
+
+        <View className="mb-6">
+          {stepItems.map((stepItem) => (
+            <StepItem
+              key={stepItem.id}
+              step={stepItem}
+              isCompleted={stepItem.isCompleted}
+              onPress={() => handleStepPress(stepItem as any)}
+            />
+          ))}
+        </View>
+
+        <View className="bg-blue-50 p-4 rounded-lg mb-4">
+          <Text className="text-sm text-blue-800 font-medium mb-1">
+            Need Help?
+          </Text>
+          <Text className="text-sm text-blue-700">
+            Complete each required step and at least one parent information (Father, Mother, or Guardian). Optional steps can be completed later.
+          </Text>
+        </View>
+
+        <View className="py-6 bg-white border-t border-gray-100">
+          <ConfirmationModal 
+            trigger={
+              <Button 
+                className={`native:h-[56px] w-full rounded-xl shadow-lg ${
+                  canSubmit ? 'bg-primaryBlue' : 'bg-gray-300'
+                }`}
+                disabled={!canSubmit}
+              >
+                <Text className={`font-PoppinsSemiBold text-[16px] ${
+                  canSubmit ? 'text-white' : 'text-gray-500'
+                }`}>
+                  Continue
+                </Text>
+              </Button>
+            }
+
+            title="Confirm Submission"
+            description="Please double check the information you provided before confirming."
+            onPress={submit}
+          />
+          {/* Terms and Privacy */}
+          <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-4 leading-4">
+            By continuing, you agree to our <Text className="text-primaryBlue font-PoppinsMedium">Terms of Service</Text>{" "}
+            and <Text className="text-primaryBlue font-PoppinsMedium">Privacy Policy</Text>
+          </Text>
+        </View>
+      </ScrollView>
       <LoadingModal 
         visible={isSubmitting}
       />
-    </>
+    </PageLayout>
   );
 }

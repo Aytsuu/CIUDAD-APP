@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Plus, Download, Users, FileDown, Loader2 } from "lucide-react"
+import { Search, Plus, Download, Users, FileDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { DataTable } from "@/components/ui/table/data-table"
@@ -10,9 +10,10 @@ import { Link } from "react-router"
 import { useHouseholdTable } from "../queries/profilingFetchQueries"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Card } from "@/components/ui/card/card"
+import { Card } from "@/components/ui/card"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function HouseholdRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -127,8 +128,8 @@ export default function HouseholdRecords() {
           {/* Loading State */}
           {isLoading && (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-              <span className="ml-2 text-gray-600">Loading households...</span>
+              <Spinner size="lg" />
+              <span className="ml-4 text-gray-600">Loading households...</span>
             </div>
           )}
 

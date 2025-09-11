@@ -5,9 +5,7 @@ import { Button } from "@/components/ui/button/button";
 import ParentsForm from "./ParentsForm";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { DependentRecord } from "../../ProfilingTypes";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import { CircleAlert } from "lucide-react";
+import { showErrorToast } from "@/components/ui/toast";
 
 export default function ParentsFormLayout({
   form,
@@ -30,6 +28,7 @@ export default function ParentsFormLayout({
   onSubmit: () => void;
   back: () => void;
 }) {
+  const [activeTab, setActiveTab] = React.useState("mother");
 
   const submit = React.useCallback(() => {
     const isValid = Object.values(selectedParents).some(
@@ -39,22 +38,15 @@ export default function ParentsFormLayout({
     if (isValid) {
       onSubmit();
     } else {
-      toast("Must have atleast one parent", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        style: {
-          border: '1px solid rgb(225, 193, 193)',
-          padding: '16px',
-          color: '#b91c1c',
-          background: '#fef2f2',
-        },
-      });
+      showErrorToast("Must have atleast one parent")
     }
   }, [selectedParents]);
 
-  return (
-    <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">
-      <div className="space-y-6">
-        {/* Mother's Information */}
+  const tabs = [
+    {
+      id: "mother",
+      label: "Mother",
+      component: (
         <ParentsForm
           residents={residents}
           form={form}
@@ -64,10 +56,12 @@ export default function ParentsFormLayout({
           prefix="motherInfo"
           title="Mother's Information"
         />
-
-        <Separator />
-
-        {/* Father's Information */}
+      )
+    },
+    {
+      id: "father",
+      label: "Father",
+      component: (
         <ParentsForm
           residents={residents}
           form={form}
@@ -77,10 +71,12 @@ export default function ParentsFormLayout({
           prefix="fatherInfo"
           title="Father's Information"
         />
-
-        <Separator />
-
-        {/* Guardian's Information */}
+      )
+    },
+    {
+      id: "guardian",
+      label: "Guardian",
+      component: (
         <ParentsForm
           residents={residents}
           form={form}
@@ -90,8 +86,37 @@ export default function ParentsFormLayout({
           prefix="guardInfo"
           title="Guardian's Information"
         />
+      )
+    }
+  ];
+
+  return (
+    <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">
+      {/* Compact Tab Navigation - Top Left */}
+      <div className="mb-6">
+        <div className="flex space-x-1 bg-gray-100 p-1 rounded-md w-fit">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-3 py-1.5 text-sm font-medium rounded transition-colors ${
+                activeTab === tab.id
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
+      {/* Tab Content */}
+      <div className="flex-1 space-y-6">
+        {tabs.find(tab => tab.id === activeTab)?.component}
+      </div>
+
+      {/* Navigation Buttons */}
       <div className="mt-8 flex justify-end gap-2 sm:gap-3">
         <Button variant="outline" className="w-full sm:w-32" onClick={back}>
           Prev

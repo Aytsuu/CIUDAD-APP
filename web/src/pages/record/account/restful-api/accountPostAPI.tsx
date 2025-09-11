@@ -5,6 +5,7 @@ export const addAccount = async (accountInfo: Record<string, string>, residentId
     const response = await api.post('authentication/signup/', {
       username: accountInfo.username,
       email: accountInfo.email,
+      phone: accountInfo.phone,
       password: accountInfo.password,
       resident_id: residentId 
     });

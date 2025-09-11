@@ -62,7 +62,7 @@ class ARFileCreateView(generics.CreateAPIView):
             ar=ar,
             arf_name=file_data['name'],
             arf_type=file_data['type'],
-            arf_path=f'ar/{file_data['name']}'
+          arf_path=f"ar/{file_data['name']}"
           )
           url = upload_to_storage(file_data, 'report-bucket', 'ar')
           file.arf_url = url

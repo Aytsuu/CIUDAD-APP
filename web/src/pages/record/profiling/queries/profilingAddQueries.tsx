@@ -1,6 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import {
   addAddress,
   addBusiness,
@@ -13,6 +11,42 @@ import {
   addResidentAndPersonal,
 } from "../restful-api/profiingPostAPI";
 import { api } from "@/api/api";
+
+export const useAddSitio = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Record<string, any>[]) => {
+      try {
+        const res = await api.post("profiling/sitio/create/", data);
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["sitioList"], (old: any[] = []) => [
+        ...old,
+        data
+      ]);
+      queryClient.invalidateQueries({queryKey: ["sitioList"]})
+    }
+  }) 
+}
+
+export const useAddAllProfile = () => {
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        const res = await api.post("profiling/complete/registration/", data);
+        return res.data;
+      } catch (err) {
+        console.error(err)
+        throw err;
+      }
+    }
+  })
+}
 
 export const useAddPersonal = () => {
   return useMutation({
@@ -77,63 +111,22 @@ export const useAddFamily = () => {
 
 export const useAddFamilyComposition = () => {
   const queryClient = useQueryClient();
-    
   return useMutation({
     mutationFn: (data: Record<string, any>[]) => addFamilyComposition(data),
-    onSuccess: () => {
-      // const {familyId, role, residentId} = variables;
-
-      // // Update family compositions list
-      // queryClient.setQueryData(['familyCompositions'], (old: any[] = []) => [...old, newData]);
-
-      // // Update the families list (if you have one)
-      // queryClient.setQueryData(['families'], (old: any[] = []) => {
-      //   return old.map(family => {
-      //     if (family.fam_id === familyId) {
-      //       return {
-      //         ...family,
-      //         family_compositions: [
-      //           ...(family.family_compositions || []),
-      //           newData
-      //         ]
-      //       };
-      //     }
-
-      //     return family;
-      //   });
-      // });
-
-      // // Update residents list
-      // queryClient.setQueryData(['residents'], (oldResidents: any[] = []) => {
-      //   return oldResidents.map(resident => {
-      //     if(resident.rp_id === residentId) {
-      //       return {
-      //         ...resident,
-      //         family_compositions: [
-      //           ...(resident.family_compositions || []),
-      //           { 
-      //             fc_role: role, 
-      //             fam: { 
-      //               fam_id: familyId,
-      //               hh: {
-      //                 hh_id: newData.fam?.hh?.hh_id,
-      //                 sitio: newData.fam?.hh?.sitio
-      //               },
-      //             } 
-      //           },
-      //         ],
-      //       }
-      //     }
-
-      //     return resident
-      //   })}
-      // );
-
-      
-      // Invalidate queries to ensure fresh data is fetched if needed
-      queryClient.invalidateQueries({queryKey: ['familyCompositions']});
-      queryClient.invalidateQueries({ queryKey: ["families"] });
-      queryClient.invalidateQueries({queryKey: ['residents']});
+    onSuccess: (data, variables) => {
+      const { familyId } = variables[0];
+      queryClient.setQueryData(['familyMembers', familyId], (old: any) => {
+        if (!old || !old.results) return old;
+        return {
+          ...old,
+          results: [
+            ...old.results,
+            ...(Array.isArray(data) ? data : [data])
+          ]
+        };
+      });
+      queryClient.invalidateQueries({ queryKey: ['familyMembers', familyId] });
+      queryClient.invalidateQueries({ queryKey: ['residents'] });
     }
   });
 };
@@ -177,11 +170,11 @@ export const useAddBusiness = () => {
   return useMutation({
     mutationFn: (data: Record<string, any>) => addBusiness(data),
     onSuccess: (newData) => {
-      queryClient.setQueryData(["businesses"], (old: any[] = []) => [
+      queryClient.setQueryData(["activeBusinesses"], (old: any[] = []) => [
         ...old,
         newData
       ]);
-      queryClient.invalidateQueries({queryKey: ["businesses"]});
+      queryClient.invalidateQueries({queryKey: ["activeBusinesses"]});
     },
   });
 };

@@ -34,6 +34,7 @@ export interface TruckData {
   truck_status: TruckStatus;
   truck_last_maint: string;
   truck_is_archive?: boolean;
+  staff?: string;
 }
 
 export interface Personal {

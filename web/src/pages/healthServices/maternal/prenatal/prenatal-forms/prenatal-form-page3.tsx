@@ -14,7 +14,7 @@ import { FormInput } from "@/components/ui/form/form-input"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card" // Added Card imports
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card" // Added Card imports
 
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"

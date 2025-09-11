@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getResolution } from "../request/resolution-get-request";
+import { getApprovedProposals } from "../request/resolution-get-request";
 
 export interface ResolutionData{
     res_num: number;
@@ -16,6 +17,7 @@ export interface ResolutionData{
         rsd_url: string;
         rsd_name: string;
     }[];    
+    gpr_id: number;
 }
 
 export const useResolution = () => {
@@ -24,4 +26,30 @@ export const useResolution = () => {
         queryFn: () => getResolution(),
         staleTime: 1000 * 60 * 30,
     });
+};
+
+
+
+//Fetch Approved Proposals
+export interface ProposalOption {
+  id: string;
+  name: string;
+}
+
+export const useApprovedProposals = () => {
+  return useQuery<ProposalOption[]>({
+    queryKey: ["gadProposals"],
+    queryFn: async () => {
+      const response = await getApprovedProposals();
+      const items = Array.isArray(response) ? response : response?.data;
+
+      if (!items) return [];
+
+      return items.map((item: any) => ({
+        id: item.gpr_id?.toString() || "",
+        name: item.project_title || "Untitled Proposal",
+      }));
+    },
+    staleTime: 1000 * 60 * 30,
+  });
 };

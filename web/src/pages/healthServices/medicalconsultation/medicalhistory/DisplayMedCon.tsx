@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button/button";
 import {
   Card,
   CardContent,
-} from "@/components/ui/card/card";
+} from "@/components/ui/card";
 import { ChevronLeft, Stethoscope } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo, useCallback } from "react";

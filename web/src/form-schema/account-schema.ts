@@ -37,9 +37,51 @@ export const AccountUpdateSchema = z.object({
 });
 
 export const accountFormSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters long"),
+  email: z.string(),
+  phone: z.string()
+    .min(1, "Contact is required")
+    .regex(
+      /^09\d{9}$/,
+      "Must be a valid mobile number (e.g., 09171234567)"
+    )
+    .refine((val) => val.length === 11, {
+      message: "Must be 11 digits (e.g., 09171234567)",
+    }),
+  password: z.string()
+    .superRefine((val, ctx) => {
+      const errors = [];
+      
+      if (val.length < 6) {
+        errors.push("Password must be at least 6 characters long");
+      }
+      
+      if (!/[a-z]/.test(val)) {
+        errors.push("Password must contain at least one lowercase letter");
+      }
+      
+      if (!/[A-Z]/.test(val)) {
+        errors.push("Password must contain at least one uppercase letter");
+      }
+      
+      if (!/\d/.test(val)) {
+        errors.push("Password must contain at least one number");
+      }
+      
+      if (errors.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: errors.join("\n"), // Using newline instead of comma
+        });
+      }
+    }),
+
+  confirm_password: z
+      .string()
+      .min(1, { message: "Please confirm your password" }),
+})
+.refine((data) => data.password === data.confirm_password, {
+  message: "Passwords do not match",
+  path: ["confirm_password"],
 });
 
 export const passwordFormSchema = z
@@ -47,18 +89,32 @@ export const passwordFormSchema = z
     old_password: z
       .string()
       .min(1, { message: "Current password is required" }),
-    new_password: z
-      .string()
-      .min(8, { message: "Password must be at least 8 characters" })
-      .regex(/[A-Z]/, {
-        message: "Password must contain at least one uppercase letter",
-      })
-      .regex(/[a-z]/, {
-        message: "Password must contain at least one lowercase letter",
-      })
-      .regex(/[0-9]/, { message: "Password must contain at least one number" })
-      .regex(/[^A-Za-z0-9]/, {
-        message: "Password must contain at least one special character",
+    new_password: z.string()
+      .superRefine((val, ctx) => {
+        const errors = [];
+        
+        if (val.length < 6) {
+          errors.push("Password must be at least 6 characters long");
+        }
+        
+        if (!/[a-z]/.test(val)) {
+          errors.push("Password must contain at least one lowercase letter");
+        }
+        
+        if (!/[A-Z]/.test(val)) {
+          errors.push("Password must contain at least one uppercase letter");
+        }
+        
+        if (!/\d/.test(val)) {
+          errors.push("Password must contain at least one number");
+        }
+        
+        if (errors.length > 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: errors.join("\n"), // Using newline instead of comma
+          });
+        }
       }),
     confirm_password: z
       .string()

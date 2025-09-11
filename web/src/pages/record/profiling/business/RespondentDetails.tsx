@@ -1,6 +1,6 @@
 import React from "react"
 import { Form } from "@/components/ui/form/form"
-import { Card } from "@/components/ui/card/card"
+import { Card } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/table/data-table"
 import { capitalizeAllFields } from "@/helpers/capitalize"
 import { useLoading } from "@/context/LoadingContext"

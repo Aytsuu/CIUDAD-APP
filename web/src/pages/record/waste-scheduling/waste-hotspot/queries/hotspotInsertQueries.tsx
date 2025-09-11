@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addHotspot } from "../restful-API/hotspotPostAPI";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import z from "zod"
 import { WasteHotspotSchema } from "@/form-schema/waste-hots-form-schema";
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 
 export const useAddHotspot = (onSuccess?: () => void) => {
         const queryClient = useQueryClient();
@@ -14,21 +14,12 @@ export const useAddHotspot = (onSuccess?: () => void) => {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['hotspots'] }),
 
-                toast.loading('Creating Schedule...', {id: "createhotspot"});
-        
-                toast.success('Schedule Created!', {
-                    id: "createhotspot",
-                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                    duration: 2000
-                });
+                showSuccessToast('Schedule Created!')
                 onSuccess?.()
             },
             onError: (err) => {
                 console.error("Error submitting record:", err);
-                toast.error(
-                    "Failed to submit record. Please check the input data and try again.",
-                    { duration: 2000 }
-                );
+                showErrorToast("Failed to submit record. Please check the input data and try again.");
             }
         })
 }

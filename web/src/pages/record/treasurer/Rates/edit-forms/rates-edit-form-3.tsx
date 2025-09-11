@@ -22,7 +22,7 @@ function RatesEditFormPage3({pr_id, pr_purpose, pr_rate, onSuccess}: {
         }
     })
 
-    const {mutate: editPurposeRate} = useEditPurposeAndRate(onSuccess)
+    const {mutate: editPurposeRate, isPending} = useEditPurposeAndRate(onSuccess)
 
     const onSubmit = (value: z.infer<typeof PurposeAndRatesEditSchema>) => {
         console.log(value); 
@@ -63,7 +63,9 @@ function RatesEditFormPage3({pr_id, pr_purpose, pr_rate, onSuccess}: {
                     )}></FormField>
 
                     <div className="flex justify-end mt-[20px]">
-                        <Button type="submit" className="w-[100px]">Save</Button>
+                        <Button type="submit" className="w-[100px]" disabled={isPending}>
+                            {isPending ? "Saving..." : "Save"}
+                        </Button>
                     </div>
                 </div>
             </form>

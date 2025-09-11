@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleAlert, Info, X } from "lucide-react";
+import { CheckCircle2, CircleAlert, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const showErrorToast = (message: string) => {
@@ -11,7 +11,7 @@ export const showErrorToast = (message: string) => {
       background: "#fef2f2",
     },
     action: {
-      label: <X size={18} className="text-white"/>,
+      label: <X size={18} className="text-black/30 hover:text-black/70 transition-colors"/>,
       onClick: () => toast.dismiss()
     },
     actionButtonStyle: {
@@ -32,7 +32,7 @@ export const showSuccessToast = (message: string) => {
       background: "#f0fdf4",
     },
     action: {
-      label: <X size={18} className="text-white"/>,
+      label: <X size={18} className="text-black"/>,
       onClick: () => toast.dismiss()
     },
     actionButtonStyle: {
@@ -45,11 +45,10 @@ export const showSuccessToast = (message: string) => {
 
 export const showPlainToast = (message: string) => {
   toast(message, {
-    icon: <Info size={24} className="fill-white stroke-[#4b4b4b]"/>,
     style: {
       padding: "16px",
       color: "#ffffff",
-      background: "#4b4b4b"
+      background: "#5b5b5b"
     },
     action: {
       label: <X size={18} className="text-white"/>,
