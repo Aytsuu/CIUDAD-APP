@@ -1,5 +1,5 @@
 import { useState } from "react";
-import SignIn from "@/pages/landing/Signin";
+import SignIn from "@/pages/landing/signin/Signin";
 import ForgotPassword from "@/pages/landing/ForgotPass";
 
 type ForgotPasswordStep = 'forgot-email' | 'forgot-verification' | 'forgot-reset' | 'forgot-success';

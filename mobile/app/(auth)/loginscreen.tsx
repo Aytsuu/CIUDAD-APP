@@ -1,5 +1,5 @@
-import LoginScreen from "@/screens/auth/login/loginscreen"
+import Login from "@/screens/auth/login/loginscreen"
 
 export default () => {
-    return <LoginScreen/>
+    return <Login/>
 }
