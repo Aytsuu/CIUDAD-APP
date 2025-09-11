@@ -79,7 +79,7 @@ class SignupView(APIView):
                 account = Account.objects.create_user(
                     email=email,
                     phone=phone,
-                    username=username or email.split('@')[0],
+                    username=phone,
                     password=password,
                     rp=resident_profile,
                     br=business_respondent
