@@ -1,22 +1,19 @@
 import '@/global.css';
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Button } from '@/components/ui/button';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { FormInput } from "@/components/ui/form/form-input";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import IllegalDumpResSchema from '@/form-schema/waste/waste-illegal-dump-res';
-import { Form, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import z from "zod";
-import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormSingleCheckbox } from '@/components/ui/form/form-single-checkbox';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
-import { useEffect, useState } from 'react';
 import { useGetWasteSitio } from '../queries/illegal-dump-fetch-queries';
 import { useAddWasteReport } from '../queries/illegal-dum-add-queries';
 
