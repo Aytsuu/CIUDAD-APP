@@ -7,13 +7,13 @@ export const CertificateFormSchema = z.object({
     req_request_date: z.string().min(1, "Request date is required"),
     req_claim_date: z.string().min(1, "Claim date is required"),
     req_type: z.enum(["clearance", "indigency", "residency", "business"]),
+    req_purpose: z.string().min(1, "Purpose is required"),
     req_status: z.enum(["Pending", "Approved", "Rejected", "Completed"]),
     req_payment_status: z.enum(["Unpaid", "Paid", "Partial"]),
     req_transac_id: z.string().optional(),
     pr_id: z.string().optional(),
     ra_id: z.string().optional(),
-    staff_id: z.string().optional(),
-    rp: z.string().optional(),
+    rp_id: z.string().optional(),
 });
 
 export const IssuedCertificateFormSchema = z.object({

@@ -5,7 +5,6 @@ import {
     SearchCertificateSchema 
 } from "@/form-schema/certificates/certificate-schema";
 
-// Types for API responses
 export interface Certificate {
     cr_id: string;
     resident_details: {
@@ -27,7 +26,6 @@ export interface Certificate {
         inv_nat_of_collection: string;
     };
 }
-
 // Fetch certificates
 export const getCertificates = async (): Promise<Certificate[]> => {
     try {

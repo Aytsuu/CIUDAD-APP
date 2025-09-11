@@ -12,6 +12,7 @@ import IncomeExpenseMain from "@/pages/record/treasurer/treasurer-income-expense
 import IncomeandDisbursementView from "@/pages/record/treasurer/treasurer-income-and-disbursement/treasurer-income-and-disbursement-monitoring-main";
 import ReceiptPage from "@/pages/record/treasurer/Receipts/receipts-main";
 import BudgetPlanParent from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanParent";
+import ExpenseLogMain from "@/pages/record/treasurer/treasurer-income-expense-tracker/expense-income-log/treasurer-expense-log-main";
 
 export const treasurer_router = [
    {
@@ -67,7 +68,7 @@ export const treasurer_router = [
         element: <ReceiptPage/>
     },
     {
-        path: 'treasurer-receipts',
-        element: <ReceiptPage/>
-    },
+        path: 'treasurer-expense-log',
+        element: <ExpenseLogMain/>
+    },    
 ]

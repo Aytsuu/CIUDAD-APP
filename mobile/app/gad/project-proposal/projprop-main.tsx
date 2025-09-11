@@ -1,4 +1,4 @@
-import ProjectProposalList from "@/screens/gad/project-proposal/project-proposal-main"
+import ProjectProposalList from "@/screens/gad/project-proposal/projprop-main"
 
 export default () => {
     return <ProjectProposalList />

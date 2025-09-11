@@ -7,13 +7,18 @@ import { useUpdateResolution } from "../request/resolution-put-request";
 import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema.ts';
 
 
-
-
+type FileData = {
+    id: string;
+    name: string;
+    type: string;
+    file?: string;
+};
 
 
 type ExtendedResolutionUpdateValues = z.infer<typeof resolutionFormSchema> & {
-  mediaFiles: any[];
-  res_num: number;
+  files: FileData[]; 
+  res_num: String;
+  staff: string;
 };
 
 export const usingUpdateResolution = (onSuccess?: () => void) => {
@@ -26,10 +31,12 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
         res_title: values.res_title,
         res_date_approved: values.res_date_approved,
         res_area_of_focus: values.res_area_of_focus,
+        gpr_id: values.gpr_id || null,
+        staff: values.staff
       });
       
       // Handle file updates
-      await handleResolutionFileUpdates(values.res_num, values.mediaFiles);
+      await handleResolutionFileUpdates(values.res_num, values.files);
       
       return values.res_num;
     },
@@ -56,7 +63,7 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
 
 
 
-const handleResolutionFileUpdates = async (res_num: number, mediaFiles: any[]) => {
+const handleResolutionFileUpdates = async (res_num: String, mediaFiles: any[]) => {
   try {
     // Get current files from server
     const currentFilesRes = await api.get(`council/resolution-file/?res_num=${res_num}`);
@@ -78,10 +85,11 @@ const handleResolutionFileUpdates = async (res_num: number, mediaFiles: any[]) =
     await Promise.all(filesToAdd.map(file =>
       api.post('council/resolution-file/', {
         res_num,
-        rf_name: file.file?.name || `file-${Date.now()}`,
-        rf_type: file.type,
-        rf_path: file.storagePath || '',
-        rf_url: file.publicUrl
+        files: [{
+          name: file.name,
+          type: file.type,
+          file: file.file // The actual file object
+        }]
       })
     ));
   } catch (err) {

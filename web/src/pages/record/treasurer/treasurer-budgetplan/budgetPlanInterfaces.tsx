@@ -12,6 +12,8 @@ export type BudgetPlan = {
     plan_balUnappropriated: number;
     plan_issue_date?: string;
     plan_is_archive?: boolean,
+    staff_id: string;
+    staff_name?: string;
     details?: BudgetPlanDetail[];
 }
 

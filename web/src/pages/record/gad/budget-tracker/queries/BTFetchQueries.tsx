@@ -2,28 +2,26 @@ import { useQuery } from "@tanstack/react-query";
 import {
     fetchGADBudgets,
     fetchGADBudgetEntry,
-    fetchIncomeParticulars,
-    fetchExpenseParticulars,
-    fetchGADBudgetFile,
-    fetchGADBudgetFiles
+    fetchGADBudgetFile, fetchBudgetLog,
+    fetchGADBudgetFiles, fetchProjectProposalsAvailability
 } from "../requestAPI/BTGetRequest";
 
-import { GADBudgetEntryUI, GADBudgetEntry, DevelopmentBudgetItem, GADBudgetFile } from "../budget-tracker-types";
+import { GADBudgetEntryUI, GADBudgetEntry, GADBudgetFile, ProjectProposal, BudgetLogTable } from "../budget-tracker-types";
 
 const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
-//   console.log("Transforming Entry:", entry);
   return {
     ...entry,
-    gbud_particulars: entry.gbud_type === 'Income' 
-      ? entry.gbud_inc_particulars || null
-      : entry.gbud_exp_particulars || null,
-    gbud_amount: entry.gbud_type === 'Income'
-      ? entry.gbud_inc_amt ? Number(entry.gbud_inc_amt) : null
-      : entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null
+    gbud_particulars:  entry.gbud_exp_particulars || undefined,
+    gbud_amount: entry.gbud_actual_expense ? Number(entry.gbud_actual_expense) : null,
+    gbud_exp_particulars: entry.gbud_exp_particulars
+      ? Array.isArray(entry.gbud_exp_particulars) 
+        ? entry.gbud_exp_particulars 
+        : undefined
+      : undefined,
+    files: entry.files || [],
   };
 };
 
-// React Query hooks
 export const useGADBudgets = (year?: string) => {
     return useQuery({
         queryKey: ['gad-budgets', year],
@@ -44,23 +42,6 @@ export const useGADBudgetEntry = (gbud_num?: number) => {
     });
 };
 
-export const useIncomeParticulars = (year?: string) => {
-    return useQuery({
-        queryKey: ['income-particulars', year],
-        queryFn: () => fetchIncomeParticulars(year || ''),
-        enabled: !!year,
-        staleTime: 1000 * 60 * 30,
-    });
-};
-
-export const useExpenseParticulars = () => {
-    return useQuery<DevelopmentBudgetItem[]>({
-        queryKey: ['expense-particulars'],
-        queryFn: fetchExpenseParticulars,
-        staleTime: 1000 * 60 * 60 * 24,
-    });
-};
-
 export const useGADBudgetFiles = () => {
     return useQuery<GADBudgetFile[]>({
         queryKey: ['gad-budget-files'],
@@ -76,4 +57,22 @@ export const useGADBudgetFile = (gbf_id?: number) => {
         enabled: !!gbf_id,
         staleTime: 1000 * 60 * 15, 
     });
+};
+
+export const useProjectProposalsAvailability = (year?: string) => {
+  return useQuery<ProjectProposal[], Error>({
+    queryKey: ["projectProposalsAvailability", year],
+    queryFn: () => fetchProjectProposalsAvailability(year || ""),
+    enabled: !!year,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useGADBudgetLogs = (year: string) => {
+  return useQuery<BudgetLogTable[], Error>({
+    queryKey: ["gadBudgetLogs", year],
+    queryFn: () => fetchBudgetLog(year),
+    enabled: !!year,
+    staleTime: 1000 * 60 * 5,
+  });
 };

@@ -106,7 +106,7 @@ const ComplaintListScreen = () => {
 
   const renderItem = useCallback(
     ({ item, index }: { item: any; index: number }) => {
-      const currentDate = DateFormatter.monthYear(item.comp_datetime);
+      const currentDate = monthYear(item.comp_datetime);
       const prevItem = index > 0 ? stableData[index - 1] : null;
       const prevDate = prevItem
         ? DateFormatter.monthYear(prevItem.comp_datetime)

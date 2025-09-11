@@ -30,6 +30,7 @@ export const useDeleteIncomeExpense = () => {
     onSuccess: () => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['incomeExpense'] });
+      queryClient.invalidateQueries({ queryKey: ['expense_log'] });
       
       // Show success toast
       toast.success("Expense Entry Deleted", {
@@ -50,39 +51,6 @@ export const useDeleteIncomeExpense = () => {
 
 
 
-// ARCHIVE or RESTORE EXPENSE
-// interface ExpenseData {
-//   iet_num: number;
-//   iet_is_archive: boolean; // Adjust to string if needed
-// }
-
-// export const useArchiveOrRestoreExpense = (onSuccess?: () => void) => {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: async ({ iet_num, iet_is_archive }: ExpenseData) => {
-//       return archiveOrRestoreExpense(iet_num, { iet_is_archive });
-//     },
-//     onSuccess: (_, { iet_is_archive }: ExpenseData) => {
-
-//       toast.loading(iet_is_archive ? 'Archiving entry...' : 'Restoring entry...', { id: 'updateWasteReport' });
-
-//       toast.success(iet_is_archive ? 'Successfully archived entry' : 'Successfully restored entry', {
-//         id: 'updateWasteReport',
-//         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-//         duration: 5000,
-//       });
-
-//       queryClient.invalidateQueries({ queryKey: ['incomeExpense'] });
-
-//       if (onSuccess) onSuccess();
-//     },
-//     onError: (err: any) => {
-//       console.error('Error archiving entry:', err);
-//       toast.error(err.message || 'Failed to archive entry');
-//     },
-//   });
-// };
 
 
 
@@ -137,6 +105,7 @@ export const useArchiveOrRestoreExpense = (onSuccess?: () => void) => {
       queryClient.invalidateQueries({ queryKey: ['incomeExpense'] });
       queryClient.invalidateQueries({ queryKey: ['budgetItems'] });
       queryClient.invalidateQueries({ queryKey: ['income_expense_card'] });
+      queryClient.invalidateQueries({ queryKey: ['expense_log'] });
 
       if (onSuccess) onSuccess();
     },

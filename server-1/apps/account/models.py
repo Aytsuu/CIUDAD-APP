@@ -8,35 +8,22 @@ from django.utils import timezone
 
 class Account(AbstractUser):
     acc_id = models.AutoField(primary_key=True, verbose_name='Account ID')
-    email = models.EmailField(unique=True,blank=False,null=True, verbose_name='Email Address' )    
-    username = models.CharField(max_length=100,unique=True,blank=False,null=False,validators=[MinLengthValidator(3)])
+    email = models.EmailField(unique=True,blank=True,null=True, verbose_name='Email Address' )    
+    username = models.CharField(max_length=100,unique=True,blank=True,null=True,validators=[MinLengthValidator(3)])
     profile_image = models.URLField( max_length=500,blank=True, null=True,default='https://isxckceeyjcwvjipndfd.supabase.co/storage/v1/object/public/userimage//sanRoqueLogo.svg')
-    phone = models.CharField(max_length=15, unique=True, blank=True, null=False, verbose_name='Phone Number' )
+    phone = models.CharField(max_length=11, unique=True, blank=True, null=False, verbose_name='Phone Number' )
     
     rp = models.OneToOneField("profiling.ResidentProfile", on_delete=models.CASCADE,null=True,related_name="account")
     br = models.OneToOneField("profiling.BusinessRespondent",on_delete=models.CASCADE,null=True,related_name="business_account")
 
-    USERNAME_FIELD = 'email' # Use email to log in
-    REQUIRED_FIELDS = ['username'] # Username is still required
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = [] 
     
     class Meta:
         db_table = 'account'
         
     def __str__(self):
         return f"{self.email} (ID: {self.acc_id})"
-    
-    
-class OTPLog(models.Model):
-    phone = models.CharField(max_length=15)
-    otp = models.CharField(max_length=6)
-    expires_at = models.DateTimeField()
-    created_at = models.DateTimeField(auto_now_add=True)    
-    
-    def is_valid(self, otp_input):
-        return self.otp == otp_input and datetime.now() < self.expires_at
-
-def five_minutes_from_now():
-    return timezone.now() + timedelta(minutes=5)
 
 class PhoneVerification(models.Model):
     pv_id = models.BigAutoField(primary_key=True)

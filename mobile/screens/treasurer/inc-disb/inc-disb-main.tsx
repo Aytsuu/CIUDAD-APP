@@ -19,7 +19,7 @@ import {
   usePermanentDeleteDisbursementImage,
   usePermanentDeleteDisbursementFolder,
   usePermanentDeleteIncomeFolder,
-} from "./queries";
+} from "./inc-disb-queries";
 import { formatDate } from "@/helpers/dateHelpers";
 import PageLayout from "@/screens/_PageLayout";
 import { IncomeImage, DisbursementImage, Album, ImageItem } from "./inc-disc-types";
@@ -142,11 +142,22 @@ const IncomeandDisbursementMain = () => {
 
     if (searchQuery) {
       result = result.filter((album) => {
+        // Get description from the first image
+        const firstImageDesc = album.images.length > 0 
+          ? album.images[0].type === "income" 
+            ? (album.images[0] as IncomeImage).inf_desc || ""
+            : (album.images[0] as DisbursementImage).dis_desc || ""
+          : "";
+
         const searchableText = [
           String(album.id),
           album.inf_name || "",
           album.dis_name || "",
-        ].join(" ").toLowerCase();
+          firstImageDesc,
+        ]
+          .join(" ")
+          .toLowerCase();
+        
         return searchableText.includes(searchQuery.toLowerCase());
       });
     }
@@ -566,12 +577,12 @@ const IncomeandDisbursementMain = () => {
                       onError={() => console.log("Image failed to load")}
                       style={{ width: screenWidth * 0.9, height: screenHeight * 0.8 }}
                     />
-                    <View className="mt-2 flex-row justify-end gap-1 absolute bottom-2 right-2">
+                    <View className="mt-2 bg-red-500 p-1 rounded-md flex-row justify-end gap-1 absolute bottom-2 right-2">
                       {viewMode === "active" && (
                         <ConfirmationModal
                           trigger={
                             <TouchableOpacity>
-                              <Archive size={20} color="red" />
+                              <Archive size={20} color='white'/>
                             </TouchableOpacity>
                           }
                           title="Archive Image"

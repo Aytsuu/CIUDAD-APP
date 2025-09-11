@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, ScrollView, KeyboardAvoidingView, ActivityIndicator, Text } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,7 +9,7 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import ScreenLayout from "@/screens/_ScreenLayout";
 import TruckFormSchema from '@/form-schema/waste-truck-schema';
 import { ChevronLeft } from 'lucide-react-native';
-import { useAddTruck } from './queries';
+import { useAddTruck } from './waste-personnel-truck-queries';
 import { TruckFormValues } from './waste-personnel-types';
 
 export default function WasteTruckCreate() {
@@ -27,7 +27,7 @@ export default function WasteTruckCreate() {
   });
 
   const onSubmit = (data: TruckFormValues) => {
-    addTruck(data); // Trigger the mutation
+    addTruck(data);
   };
 
   return (

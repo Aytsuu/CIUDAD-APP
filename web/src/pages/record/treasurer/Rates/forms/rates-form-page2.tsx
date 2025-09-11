@@ -15,7 +15,7 @@ function RatesFormPage2({onSuccess}: {onSuccess?: () => void}){
         defaultValues: {
             purpose: "",
             amount: "",
-            category: "Personal and Others"
+            category: "Personal"
         }
     });
 

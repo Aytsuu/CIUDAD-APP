@@ -11,12 +11,12 @@ import {
   useDeleteAttendanceSheet,
   useArchiveAttendanceSheet,
   useRestoreAttendanceSheet,
-} from "../Calendar/queries/delqueries";
+} from "../Calendar/queries/councilEventdelqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import Attendees from "./Attendees";
-import {useGetCouncilEvents, useGetAttendanceSheets} from "../Calendar/queries/fetchqueries";
-import { CouncilEvent, AttendanceSheet, AttendanceRecord } from "../Calendar/ce-att-types";
+import {useGetCouncilEvents, useGetAttendanceSheets} from "../Calendar/queries/councilEventfetchqueries";
+import { CouncilEvent, AttendanceSheet, AttendanceRecord } from "../Calendar/councilEventTypes";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { HistoryTable } from "@/components/ui/table/history-table";
 
@@ -51,7 +51,7 @@ const ArchiveTabActions = ({
                   row.original.sheets.map((sheet, index) => (
                     <div key={sheet.att_id} className="mb-4">
                       {sheet.att_file_url ? (
-                        <div className="relative flex flex-row items-end gap-2">
+                        <div className="relative flex flex-row items-end gap-1">
                           <div className="flex-1">
                             <img
                               src={sheet.att_file_url}
@@ -64,7 +64,7 @@ const ArchiveTabActions = ({
                             trigger={
                               <ConfirmationModal
                                 trigger={
-                                  <div className="w-6 h-6 cursor-pointer text-gray-500 hover:text-green-500 transition-colors">
+                                  <div className="cursor-pointer rounded text-white bg-green-500 p-1 transition-colors">
                                     <ArchiveRestore size={16} />
                                   </div>
                                 }
@@ -87,7 +87,7 @@ const ArchiveTabActions = ({
                             trigger={
                               <ConfirmationModal
                                 trigger={
-                                  <div className="w-6 h-6 cursor-pointer text-gray-500 hover:text-red-500 transition-colors">
+                                  <div className="cursor-pointer rounded text-white bg-red-500 p-1 transition-colors">
                                     <Trash2 size={16} />
                                   </div>
                                 }
@@ -227,7 +227,7 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
                                 trigger={
                                   <ConfirmationModal
                                     trigger={
-                                      <div className="w-6 h-6 cursor-pointer text-gray-500 hover:text-yellow-500 transition-colors">
+                                      <div className="p-1 cursor-pointer rounded text-white bg-red-500 transition-colors">
                                         <Archive size={16} />
                                       </div>
                                     }
@@ -477,14 +477,14 @@ function AttendancePage() {
             />
             <Input
               placeholder="Search"
-              className="pl-10 bg-white w-full md:w-[400px]"
+              className="pl-10 bg-white w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
           <SelectLayout
-            className="bg-white"
+            className="bg-white w-full md:w-auto"
             label=""
             placeholder="Filter"
             options={filterOptions}

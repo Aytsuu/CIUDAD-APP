@@ -7,7 +7,7 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useNavigate } from "react-router";
 import { Origin } from "../../ProfilingEnums";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
-import isEqual from "lodash/isEqual";
+import _ from 'lodash'
 
 export const useResidentForm = (defaultData?: any, origin?: any) => {
   const navigate = useNavigate();
@@ -63,7 +63,7 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
   const checkDefaultValues = (currentValues: any, initialValues: any) => {
     const obj1 = normalize(currentValues)
     const obj2 = normalize(initialValues)
-    return isEqual(obj1, obj2)
+    return _.isEqual(obj1, obj2)
   };
 
   const handleSubmitSuccess = (message: string, redirectPath?: string, state?: any) => {

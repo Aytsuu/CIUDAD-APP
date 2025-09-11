@@ -79,11 +79,13 @@ class CompleteRegistrationView(APIView):
     family = request.data.get("family", None)
     business = request.data.get("business", None)
     staff = request.data.get("staff", None)
+    
 
     if staff:
       staff=Staff.objects.filter(staff_id=staff).first()
 
     results = {}
+    hh = []
 
     if personal:
         per_id = personal.get("per_id", None)
@@ -99,7 +101,7 @@ class CompleteRegistrationView(APIView):
           results["rp_id"] = rp.pk
 
     if account:
-        self.create_account(account)
+        self.create_account(account, rp)
 
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
@@ -160,8 +162,12 @@ class CompleteRegistrationView(APIView):
 
     return resident_profile
 
-  def create_account(self, account):
-    instance = Account.objects.create_user(**account)
+  def create_account(self, account, rp):
+    instance = Account.objects.create_user(
+      **account,
+      rp=rp,
+      username=account['phone']
+    )
     return instance
   
   def create_household(self, houses, rp, staff):
@@ -196,7 +202,7 @@ class CompleteRegistrationView(APIView):
       fam_indigenous=livingSolo["indigenous"],
       fam_building=livingSolo["building"],
       hh=hh[int(household_no)] if is_owned_selected else \
-        Household.objects.get(hh_id=livingSolo["householdNo"]),
+        Household.objects.get(hh_id=household_no),
       staff=staff
     )
 

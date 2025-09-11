@@ -15,6 +15,7 @@ import { budgetWithLimits, budgetWithoutLimits } from "../budgetItemDefinition";
 import z from "zod";
 import CreateBudgetPlanWithoutLimits from "./budgetWithoutLimitsForm";
 import CreateBudgetWithLimits from "./budgetWithLimitsForm";
+import { useAuth } from "@/context/AuthContext";
 
 type Props = {
   headerData: any;
@@ -44,6 +45,7 @@ const styles = {
 
 function BudgetPlanMainForm({ headerData, onBack, formData, updateFormData, totalBudgetObli, balUnapp, beyondLimit }: Props) {
   const year = new Date().getFullYear();
+  const {user} = useAuth();
   const totalBudgetToast = useRef<string | number | null>(null);
   const [totalBudgetObligations, setTotalBudgetObligations] = useState(totalBudgetObli);
   const [balUnappropriated, setBalUnappropriated] = useState(balUnapp);
@@ -150,6 +152,7 @@ function BudgetPlanMainForm({ headerData, onBack, formData, updateFormData, tota
       plan_budgetaryObligations: totalBudgetObligations,
       plan_balUnappropriated: balUnappropriated,
       plan_issue_date: new Date().toISOString().split('T')[0],
+      staff_id: user?.staff?.staff_id
     };
 
     const budgetDetails: BudgetPlanDetail[] = [];
