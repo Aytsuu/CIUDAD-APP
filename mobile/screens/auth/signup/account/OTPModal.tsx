@@ -7,6 +7,7 @@ export default function OTPModal({
   otp,
   modalVisible,
   description,
+  invalid,
   setOtp,
   setModalVisible,
   resendOtp,
@@ -15,6 +16,7 @@ export default function OTPModal({
   otp: any[]
   modalVisible: boolean
   description?: React.ReactNode
+  invalid: boolean
   setOtp: React.Dispatch<React.SetStateAction<any[]>>
   setModalVisible: React.Dispatch<React.SetStateAction<boolean>>
   resendOtp: () => void
@@ -36,6 +38,12 @@ export default function OTPModal({
       otpRefs.current[index - 1]?.focus();
     }
   };
+
+  React.useEffect(() => {
+    if(invalid) {
+      otpRefs.current[0]?.focus();
+    }
+  }, [invalid])
   
   return (
     <SafeAreaView>
@@ -65,9 +73,9 @@ export default function OTPModal({
                 />
               ))}
             </View>
-
+            {invalid && <Text className="text-red-500 text-xs">Incorrect verification code. Please try again.</Text>}
             <TouchableOpacity
-              className="flex-row justify-center items-center"
+              className="flex-row justify-center items-center mt-6 mb-4"
               onPress={resendOtp}
             >
               <RefreshCcw size={18} color="#3B82F6" />

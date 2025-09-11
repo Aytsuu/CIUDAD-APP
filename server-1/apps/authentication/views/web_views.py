@@ -100,18 +100,32 @@ class SignupView(APIView):
             )
 
 class WebLoginView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         email = request.data.get("email")
+        phone = request.data.get("phone")
         password = request.data.get("password")
 
-        if not email or not password:
+        if (not email and not phone) or not password:
             return Response(
-                {"error": "Both email and password are required"},
+                {"error": "Email or phone and password are required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # ✅ Authenticate user
-        user = authenticate(request, email=email, password=password)
+        user = None
+        if phone:
+            # Lookup user by phone
+            user = Account.objects.filter(phone=phone).first()
+            if user is None or not user.check_password(password):
+                return Response(
+                    {"error": "Invalid phone or password"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+        else:
+            
+            user = authenticate(request, username=email, password=password)
 
         if user is None:
             return Response(
@@ -140,12 +154,12 @@ class WebLoginView(APIView):
         # ✅ Generate tokens
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
-        
+
         res = JsonResponse(
             {
                 "message": "Login successful",
-                "access": str(access), 
-                "user": serializer.data, 
+                "access": str(access),
+                "user": serializer.data,
             },
             status=status.HTTP_200_OK,
         )
@@ -168,10 +182,26 @@ class MobileLoginView(APIView):
         try:
             logger.info("MobileLoginView called")
             email = request.data.get('email')
+            phone = request.data.get('phone')
             password = request.data.get('password')
-
+            
             # Authenticate using Django's built-in system
-            user = authenticate(request, username=email, password=password)
+            if not email:
+                logger.info(f"Authenticating with phone: {phone}")
+                user = Account.objects.filter(phone=phone).first()
+                if user is None:
+                    return Response(
+                        {'error': 'Invalid phone or password'},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
+                if not user.check_password(password):
+                    return Response(
+                        {'error': 'Invalid phone or password'},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
+            else: 
+                logger.info(f"Authenticating with email: {email}")
+                user = authenticate(request, username=email, password=password)
 
             if not user:
                 return Response(
@@ -241,45 +271,6 @@ class VerifyOTPEmail(APIView):
         logger.info("EMAIL IS HERE")
         email = request.data.get('email')
         otp_input = request.data.get('otp')
-        
-        cached_otp = cache.get(email)
-        logger.info(f"CACHED OTP:  {cached_otp}")
-        logger.info(f"OTP INPUT:  {otp_input}")
-        
-        if cached_otp is None:
-            return Response(
-                {'error': 'OTP has expired or was never sent'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if cached_otp == otp_input:
-            # cache.delete(email)  # Clear the OTP after successful verification
-            # account = Account.objects.filter(email=email).first()
-            
-            # if not account:
-            #     return Response(
-            #         {'error': 'Account not found'},
-            #         status=status.HTTP_404_NOT_FOUND
-            #     )
-            
-            # # Serialize and validate
-            # serializer = UserAccountSerializer(account)
-            # logger.info(f"OTP verified successfully for email: {email}")
-            return Response({
-                'success': True,
-                # 'user': serializer.data,
-                # 'refresh_token': request.COOKIES.get('refresh_token'),
-                'message': 'OTP verified successfully', }, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
-
-class VerifyOTPEmail(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        logger.info("EMAIL IS HERE")
-        email = request.data.get('email')
-        otp_input = request.data.get('otp')
 
         if not email or not otp_input:
             return Response(
@@ -298,9 +289,6 @@ class VerifyOTPEmail(APIView):
             )
 
         if cached_otp == otp_input:
-            # Optionally clear OTP after verification
-            # cache.delete(email)
-
             account = Account.objects.filter(email=email).first()
             
             response_data = {
@@ -320,26 +308,25 @@ class VerifyOTPEmail(APIView):
             return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-def send_otp_email(request):
-    email = request.data.get('email')
-    otp = request.data.get('otp')
+# def send_otp_email(request):
+#     email = request.data.get('email')
+#     otp = request.data.get('otp')
 
-    if not email or not otp:
-        return Response(
-            {'error': 'Email and OTP are required'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+#     if not email or not otp:
+#         return Response(
+#             {'error': 'Email and OTP are required'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
 
-    subject = "Your OTP Code"
-    message = f"Your OTP code is: {otp}"
+#     subject = "Your OTP Code"
+#     message = f"Your OTP code is: {otp}"
     
-    try:
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
-        return Response({'message': 'OTP sent via email'}, status=status.HTTP_200_OK)
-    except Exception as e:
-        logger.error(f"Failed to send OTP email: {str(e)}", exc_info=True)
-        return Response({'error': 'Failed to send OTP email'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
-
+#     try:
+#         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+#         return Response({'message': 'OTP sent via email'}, status=status.HTTP_200_OK)
+#     except Exception as e:
+#         logger.error(f"Failed to send OTP email: {str(e)}", exc_info=True)
+#         return Response({'error': 'Failed to send OTP email'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
 
 
 class CookieTokenObtainPairView(TokenObtainPairView):

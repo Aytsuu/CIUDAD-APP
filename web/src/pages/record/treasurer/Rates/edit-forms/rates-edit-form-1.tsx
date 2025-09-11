@@ -25,7 +25,7 @@ function RatesEditFormPage1({ags_id, ags_minimum, ags_maximum, ags_rate, onSucce
         }
     })
     
-    const {mutate: editAnnualGrossSales} = useEditAnnualGrossSales(onSuccess)
+    const {mutate: editAnnualGrossSales, isPending} = useEditAnnualGrossSales(onSuccess)
 
     const onSubmit = (value: z.infer<typeof AnnualGrossSalesEditSchema>) => {
         console.log("Values:", value); 
@@ -79,7 +79,9 @@ function RatesEditFormPage1({ags_id, ags_minimum, ags_maximum, ags_rate, onSucce
                     )}></FormField>
 
                     <div className="flex justify-end mt-[20px]">
-                        <Button type="submit" className="w-[100px]">Save</Button>
+                        <Button type="submit" className="w-[100px]" disabled={isPending}>
+                            {isPending ? "Saving..." : "Save"}
+                        </Button>
                     </div>
                 </div>
             </form>

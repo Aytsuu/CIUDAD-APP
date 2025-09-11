@@ -6,7 +6,6 @@ export default function AccountRegistrationForm({form, prefix = ""} : {
 
   return (
     <div className="grid gap-4">
-      <FormInput control={form.control} name={`${prefix}username`} label="Username" placeholder="Enter username"/>
       <FormInput control={form.control} name={`${prefix}email`} label="Email" placeholder="Enter email (optional)"/>
       <FormInput control={form.control} name={`${prefix}phone`} label="Phone Number" placeholder="Enter phone number" type="number"/>
       <FormInput control={form.control} name={`${prefix}password`} label="Password" placeholder="Enter password" type="password"/>

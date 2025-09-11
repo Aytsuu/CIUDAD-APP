@@ -1,10 +1,16 @@
 import { api } from "@/api/api";
+import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { addAssCollector } from "../request/wasteColPostRequest";
 import { updateWasteColData } from "../request/wasteColPutRequest";
+import WasteColSchedSchema from "@/form-schema/waste-col-form-schema";
 
+
+type ExtendedWasteColSchema = z.infer<typeof WasteColSchedSchema> & {
+  staff: string;
+};
 
 
 // Update the mutation hooks
@@ -12,7 +18,7 @@ export const useUpdateWasteSchedule = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ wc_num, values }: { wc_num: number, values: any }) =>
+    mutationFn: ({ wc_num, values }: { wc_num: number, values: ExtendedWasteColSchema }) =>
       updateWasteColData(wc_num, values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });

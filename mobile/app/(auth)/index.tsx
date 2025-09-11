@@ -1,6 +1,3 @@
-import Business from "../(business)";
-import HomeScreen from "@/screens/home";
-import Complaint from "../(complaint)";
 import App from "@/screens/auth/login";
 import LoginScreen from "@/screens/auth/login/loginscreen";
 import IntroScreen from "@/screens/auth/login/introscreen";

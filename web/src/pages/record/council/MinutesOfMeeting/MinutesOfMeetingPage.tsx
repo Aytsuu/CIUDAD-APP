@@ -14,8 +14,8 @@ import { useRestoreMinutesOfMeeting, useArchiveMinutesOfMeeting } from "./querie
 import { useDeleteMinutesofMeeting } from "./queries/MOMDeleteQueries"
 import EditMinutesOfMeeting from "./editMinutesOfMeeting"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { Card } from "@/components/ui/card"
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { formatDate } from "@/helpers/dateHelper"
 
 function MinutesOfMeetingPage() {
   const [filter, _setFilter] = useState<string>("all")
@@ -64,18 +64,18 @@ function MinutesOfMeetingPage() {
 
   // Then apply search and area filter to each subset
   const filteredActiveData = activeData.filter((record) => {
-    const matchesFilter = filter === "all" || record.areas_of_focus.includes(filter)
+    const matchesFilter = filter === "all" || record.mom_area_of_focus.includes(filter)
     const matchesSearch =
-      `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.areas_of_focus.join(" ")}`
+      `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.mom_area_of_focus.join(" ")}`
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     return matchesFilter && matchesSearch
   })
 
   const filteredArchivedData = archivedData.filter((record) => {
-    const matchesFilter = filter === "all" || record.areas_of_focus.includes(filter)
+    const matchesFilter = filter === "all" || record.mom_area_of_focus.includes(filter)
     const matchesSearch =
-      `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.areas_of_focus.join(" ")}`
+      `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.mom_area_of_focus.join(" ")}`
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     return matchesFilter && matchesSearch
@@ -105,7 +105,7 @@ function MinutesOfMeetingPage() {
             <CardTitle className="text-xl font-semibold text-gray-900 leading-tight mb-2">{record.mom_title}</CardTitle>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Calendar size={16} />
-              <span>{record.mom_date}</span>
+              <span>{formatDate(record.mom_date, true)}</span>
             </div>
           </div>
           <div className="flex gap-2 flex-shrink-0">
@@ -113,7 +113,7 @@ function MinutesOfMeetingPage() {
               <TooltipLayout
                 trigger={
                   <a
-                    href={record.file_url}
+                    href={record.mom_file.momf_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 p-2.5 rounded-lg cursor-pointer flex items-center justify-center transition-colors"
@@ -142,9 +142,9 @@ function MinutesOfMeetingPage() {
                               mom_agenda={record.mom_agenda}
                               mom_date={record.mom_date}
                               mom_id={Number(record.mom_id)}
-                              file_id={Number(record.file_id)}
-                              file_url={record.file_url}
-                              areas_of_focus={record.areas_of_focus}
+                              momf_id={Number(record.mom_file.momf_id)}
+                              momf_url={record.mom_file.momf_url}
+                              areas_of_focus={record.mom_area_of_focus}
                               onSuccess={() => setEditingRowId(null)}
                             />
                           }
@@ -235,7 +235,7 @@ function MinutesOfMeetingPage() {
             <p className="text-sm font-medium text-gray-700">Areas of Focus</p>
           </div>
           <div className="flex flex-wrap gap-2 ml-8">
-            {record.areas_of_focus.map((focus: string, index: number) => (
+            {record.mom_area_of_focus.map((focus: string, index: number) => (
               <Badge key={index} variant="secondary" className={`text-sm px-3 py-1 ${getAreaFocusColor(focus)}`}>
                 {getAreaFocusDisplayName(focus)}
               </Badge>
@@ -261,17 +261,18 @@ function MinutesOfMeetingPage() {
                 title="Supporting Documents"
                 description="These are files attached to this meeting record"
                 mainContent={
-                  <div className="flex flex-col gap-4 p-5">
+                  <div className="flex flex-col gap-4">
                     {record.supporting_docs.map((file) => (
-                      <div key={file.momsp_id} className="border p-3 rounded-md">
+                      <div key={file.momsp_id} className="border p-2 rounded-md">
                         <a 
                           href={file.momsp_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+                          className="text-primary hover:text-blue-800 flex items-center gap-2"
                         >
-                          <FileInput size={16} />
-                          Image {file.momsp_name}
+                          <span className="truncate max-w-[500px] block" title={file.momsp_name}>
+                            Image {file.momsp_name}
+                          </span>
                         </a>
                       </div>
                     ))}
@@ -310,10 +311,10 @@ function MinutesOfMeetingPage() {
 
       <div className="rounded-lg">
         {/* Header with Search and Create Button */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-6">
           <div className="flex items-center space-x-2">
             <h2 className="text-lg font-medium text-gray-800">
-              {activeSubTab === "active" ? "Active Records" : "Archived Records"} (
+              {activeSubTab === "active" ? "Active Records" : "Inactive Records"} (
               {activeSubTab === "active" ? filteredActiveData.length : filteredArchivedData.length})
             </h2>
           </div>
@@ -355,7 +356,7 @@ function MinutesOfMeetingPage() {
               <TabsTrigger value="active">Records</TabsTrigger>
               <TabsTrigger value="all">
                 <div className="flex items-center gap-2">
-                  <Archive size={16} /> Archive
+                  <Archive size={16} /> Inactive
                 </div>
               </TabsTrigger>
             </TabsList>
@@ -392,8 +393,8 @@ function MinutesOfMeetingPage() {
               ) : (
                 <div className="text-center py-12">
                   <Archive className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No archived records</h3>
-                  <p className="mt-1 text-sm text-gray-500">Archived records will appear here.</p>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No inactive records</h3>
+                  <p className="mt-1 text-sm text-gray-500">Inactive records will appear here.</p>
                 </div>
               )}
             </div>

@@ -1,79 +1,87 @@
-import { useToastContext } from "@/components/ui/toast"
-import PageLayout from "@/screens/_PageLayout"
-import React from "react"
-import { ScrollView, View, Text, TouchableOpacity } from "react-native"
-import OTPModal from "./OTPModal"
-import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext"
-import { FormInput } from "@/components/ui/form/form-input"
-import { Button } from "@/components/ui/button"
-import { useSendOTP } from "../../queries/authPostQueries"
-import { ChevronLeft } from "@/lib/icons/ChevronLeft"
-import { ConfirmationModal } from "@/components/ui/confirmationModal"
-import { router } from "expo-router"
-import { X } from "@/lib/icons/X"
-import { useAuth } from "@/contexts/AuthContext"
+import { useToastContext } from "@/components/ui/toast";
+import PageLayout from "@/screens/_PageLayout";
+import React from "react";
+import { ScrollView, View, Text, TouchableOpacity } from "react-native";
+import OTPModal from "./OTPModal";
+import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
+import { FormInput } from "@/components/ui/form/form-input";
+import { Button } from "@/components/ui/button";
+import { useSendOTP } from "../../queries/authPostQueries";
+import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+import { ConfirmationModal } from "@/components/ui/confirmationModal";
+import { router } from "expo-router";
+import { X } from "@/lib/icons/X";
+import { useAuth } from "@/contexts/AuthContext";
 
-export default function EmailOTP({ params } : {
-  params: Record<string ,any>
-}) {
+export default function EmailOTP({ params }: { params: Record<string, any> }) {
   // ====================== STATE INITIALIZATION ======================
-  const { control, getValues, trigger, setValue } = useRegistrationFormContext()
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
-  const [modalVisible, setModalVisible] = React.useState<boolean>(false)
-  const [otpInput, setOtpInput] = React.useState<string[]>(["", "", "", "", "", ""])
-  const { toast } = useToastContext()
-  const { sendEmailOTP,  verifyEmailOTP} = useAuth();
+  const { control, getValues, trigger, setValue } =
+    useRegistrationFormContext();
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [modalVisible, setModalVisible] = React.useState<boolean>(false);
+  const [invalidOTP, setInvalidOTP] = React.useState<boolean>(false);
+  const [otpInput, setOtpInput] = React.useState<string[]>([
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]);
+  const { toast } = useToastContext();
+  const { sendEmailOTP, verifyEmailOTP } = useAuth();
 
   // ====================== SIDE EFFECTS ======================
   React.useEffect(() => {
-    if (otpInput?.length == 6 && otpInput.every((val) => val !== "")) verify()
-  }, [otpInput])
+    if (otpInput?.length == 6 && otpInput.every((val) => val !== "")) verify();
+    else setInvalidOTP(false);
+  }, [otpInput]);
 
   // ====================== HANDLERS ======================
-const verify = async () => {
-  const otp = otpInput.join("")
-  try {
-    const email = getValues("accountFormSchema.email")
-    const response = await verifyEmailOTP( email, otp ) 
-    console.log("response:", response)
-    if (response) {
-      toast.success("Email verified successfully!");
-      setModalVisible(false);
-      params.next();
-    } else {
-      toast.error("OTP verification failed");
+  const verify = async () => {
+    const otp = otpInput.join("");
+    try {
+      const email = getValues("accountFormSchema.email");
+      const response = await verifyEmailOTP(email, otp);
+      console.log("response:", response);
+      if (response) {
+        toast.success("Email verified successfully!");
+        setModalVisible(false);
+        params.next();
+      } else {
+        setOtpInput(["", "", "", "", "", ""]);
+        setInvalidOTP(true);
+      }
+    } catch (err) {
+      toast.error("Something went wrong while verifying OTP");
     }
-  } catch (err) {
-    toast.error("Something went wrong while verifying OTP");
-  }
-}
-
+  };
 
   const send = async () => {
     if (!(await trigger("accountFormSchema.email"))) {
-      toast.error("Failed to send. Please try again.")
-      return
+      toast.error("Failed to send. Please try again.");
+      return;
     }
 
     try {
-      setIsSubmitting(true)
-      const email = getValues("accountFormSchema.email")
+      setIsSubmitting(true);
+      const email = getValues("accountFormSchema.email");
       const response = await sendEmailOTP(email);
-      
+
       if (response) {
         setModalVisible(true);
-      } 
+      }
     } catch (err) {
-      toast.error("Failed to send. Please try again.")
+      toast.error("Failed to send. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const skip = () => {
     setValue("accountFormSchema.email", "");
     params.next();
-  }
+  };
 
   // ====================== RENDER ======================
   return (
@@ -86,7 +94,9 @@ const verify = async () => {
 
       <View className="px-6 py-4">
         <View className="mb-6">
-          <Text className="text-sm font-medium text-gray-700 mb-3">Email Address</Text>
+          <Text className="text-sm font-medium text-gray-700 mb-3">
+            Email Address
+          </Text>
           <FormInput
             control={control}
             name="accountFormSchema.email"
@@ -95,7 +105,9 @@ const verify = async () => {
         </View>
 
         <Button
-          className={`bg-primaryBlue native:h-[45px] py-4 rounded-lg ${isSubmitting ? "opacity-70" : ""}`}
+          className={`bg-primaryBlue native:h-[45px] py-4 rounded-lg ${
+            isSubmitting ? "opacity-70" : ""
+          }`}
           onPress={send}
           disabled={isSubmitting}
         >
@@ -105,12 +117,20 @@ const verify = async () => {
         </Button>
 
         <View className="flex-row items-center justify-center mt-8 gap-1">
-          <Text className="text-sm">Don't have email?</Text>
-          <TouchableOpacity
-            onPress={skip}
-          >
-            <Text className="text-primaryBlue text-sm">Skip Email</Text>
-          </TouchableOpacity>
+          {params.signin ? (
+            <>
+              <TouchableOpacity onPress={() => params.switch()}>
+                <Text className="text-primaryBlue text-sm">Use Mobile Number</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text className="text-sm">Don't have email?</Text>
+              <TouchableOpacity onPress={skip}>
+                <Text className="text-primaryBlue text-sm">Skip Email</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
 
@@ -127,7 +147,8 @@ const verify = async () => {
         setModalVisible={setModalVisible}
         setOtp={setOtpInput}
         resendOtp={send}
+        invalid={invalidOTP}
       />
     </View>
-  )
+  );
 }

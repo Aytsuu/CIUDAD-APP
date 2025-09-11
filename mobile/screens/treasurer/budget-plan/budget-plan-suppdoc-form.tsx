@@ -1,6 +1,5 @@
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { View, SafeAreaView, TouchableOpacity, Text } from 'react-native';
-import MultiImageUploader, { MediaFileType } from '@/components/ui/multi-media-upload';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import z from "zod"
@@ -8,11 +7,50 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import MediaPicker, {MediaItem} from '@/components/ui/media-picker';
+import { FormTextArea } from '@/components/ui/form/form-text-area';
+import { useAddBudgetPlanSuppDoc } from './queries/budgetPlanInsertQueries';
+import { useLocalSearchParams } from 'expo-router';
+
+const BudgetPlanSuppDocSchema = z.object({
+    description: z.string().min(1, "Description is required"),
+});
 
 export default function CreateBudgetPlanSuppDocs (){
     const router = useRouter();
-    const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
-    
+    const params = useLocalSearchParams();
+    const plan_id = params.plan_id as string;
+    const [selectedImages, setSelectedImages] = useState<MediaItem[]>([]);
+    const [formError, setFormError] = useState<string | null>(null);
+    const {mutate: addSuppDoc, isPending} = useAddBudgetPlanSuppDoc()
+
+    const { control,  handleSubmit,   formState: { errors },  setValue } = useForm({
+        resolver: zodResolver(BudgetPlanSuppDocSchema),
+        defaultValues: {
+            description: "",
+        },
+    });
+
+    const onSubmit = (values: z.infer<typeof BudgetPlanSuppDocSchema>) => {
+        setFormError(null);
+        if (selectedImages.length === 0) {
+            setFormError("Supporting document is required.");
+            return;
+        }else {
+            
+            const files = selectedImages.map((media) => ({
+                name: media.name,
+                type: media.type,
+                file: media.file
+            }))
+            
+            addSuppDoc({
+                plan_id: Number(plan_id),
+                file: files,
+                description: values.description
+            });
+        }
+    }
 
     return (
         <_ScreenLayout
@@ -23,14 +61,11 @@ export default function CreateBudgetPlanSuppDocs (){
             }
             headerBetweenAction={<Text className="text-[13px]">Upload Supporting Documents</Text>}
             showExitButton={false}
-            // loading={isPending}
+            loading={isPending}
             loadingMessage='Uploading Supporting Documents...'
             stickyFooter={true}
             footer={
-                <Button
-                    // onPress={handleSubmit(onSubmit)}
-                    className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
-                    >
+                <Button onPress={handleSubmit(onSubmit)} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"  >
                     <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
                 </Button>
             }
@@ -38,26 +73,26 @@ export default function CreateBudgetPlanSuppDocs (){
             <SafeAreaView>
                 <View className="mb-3 mt-3">
                 <Text className="text-[12px] font-PoppinsRegular pb-1">Add Supporting Documents for the Budget Plan</Text>
-                    {/* {errors.garb_image && (
-                <Text className="text-red-500 text-xs">
-                    {errors.garb_image.message}
-                </Text>
-                )} */}
-                <MultiImageUploader
-                    mediaFiles={mediaFiles}
-                    setMediaFiles={setMediaFiles}
-                    maxFiles={1}
-                />
+                <MediaPicker
+                    selectedImages={selectedImages}
+                    setSelectedImages={setSelectedImages}
+                    multiple={false}
+                    maxImages={1}
+                /> 
+                {formError && (
+                    <Text className="text-red-500 text-xs">
+                        {formError}
+                    </Text>
+                )}
                 </View>
+
+                <FormTextArea
+                    control={control}
+                    name="description"
+                    label='Description'
+                    placeholder='Add description'
+                />
                 
-                {/* <View className="pt-4 pb-8 bg-white border-t border-gray-100 px-4">
-                    <Button
-                    // onPress={handleSubmit(onSubmit)}
-                    className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
-                    >
-                    <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
-                    </Button>
-                </View> */}
             </SafeAreaView>
         </_ScreenLayout>
     )

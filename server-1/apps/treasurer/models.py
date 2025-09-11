@@ -1,5 +1,7 @@
 from django.db import models
-from datetime import date
+from datetime import date, datetime
+from django.core.validators import MaxValueValidator
+from django.core.validators import MaxValueValidator
 
 
 class Budget_Plan(models.Model): 
@@ -33,7 +35,7 @@ class Budget_Plan_Detail(models.Model):
 class BudgetPlan_File(models.Model):
     bpf_id = models.BigAutoField(primary_key=True)
     bpf_upload_date = models.DateTimeField(auto_now_add=True)
-    bpf_description = models.CharField(max_length=500   )
+    bpf_description = models.CharField(max_length=500)
     bpf_type = models.CharField(max_length=100, null=True)
     bpf_name = models.CharField(max_length=255, null=True)
     bpf_path = models.CharField(max_length=500, null=True)
@@ -170,22 +172,40 @@ class Disbursement_Image(models.Model):
     class Meta:
         db_table = "disbursement_image"
 
+#======================================================================================
 
 class Invoice(models.Model):
-    inv_num=models.BigAutoField(primary_key=True)
-    inv_serial_num=models.CharField(max_length=100)
+    inv_num=models.BigAutoField(primary_key=True)  
+    inv_serial_num=models.CharField(max_length=100)  
     inv_date=models.DateTimeField(default=date.today)
     inv_amount=models.DecimalField(max_digits=10, decimal_places=2)
     inv_nat_of_collection=models.CharField(max_length=250)
-    cr_id = models.ForeignKey(
-        'clerk.ClerkCertificate', 
+    inv_status=models.CharField(max_length=50, default='Pending')  # Added missing field
+    inv_change=models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    
+
+    bpr_id = models.ForeignKey(
+        'clerk.BusinessPermitRequest', 
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True, 
+        related_name='bussinesspermit_files', 
+        db_column='bpr_id'
+    )
+
+    nrc_id = models.ForeignKey(
+        'clerk.NonResidentCertificateRequest',
         on_delete=models.CASCADE, 
-        db_column='cr_id'
+        db_column='nrc_id',
+        null=True,
+        blank=True,
+        related_name='treasurer_invoices' 
     )
     # sr_id = FK sad siya
 
     class Meta:
         db_table = 'invoice'
+        managed = False
 
 #======================================================================================
 
@@ -220,6 +240,25 @@ class Income_Expense_Tracking(models.Model):
 
     class Meta:
         db_table = "income_expense_tracking"
+
+
+class Expense_Log(models.Model):
+    el_id = models.BigAutoField(primary_key = True)
+    el_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2)
+    el_actual_expense = models.DecimalField(max_digits=10, decimal_places=2)
+    el_return_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    el_datetime = models.DateTimeField(null=True)
+
+    iet_num = models.ForeignKey(
+        Income_Expense_Tracking,
+        on_delete=models.CASCADE,
+        null=True, 
+        blank=True,
+        db_column='iet_num'
+    )
+
+    class Meta: 
+        db_table = 'expense_log'    
 
 
 class Income_Particular(models.Model):

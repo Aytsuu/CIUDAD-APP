@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
-import { Search } from "lucide-react";
+import { Search,} from "lucide-react";
 import { Link } from "react-router";
+
 import AnnualDevelopmentPlanView from './annual_development_plan_view.tsx';
 import { getAnnualDevPlanYears } from "./restful-api/annualGetAPI";
 
@@ -11,6 +12,7 @@ function AnnualDevelopmentPlan(){
     const [openedYear, setOpenedYear] = useState<number | null>(null);
     const [years, setYears] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [search, setSearch] = useState("");
     const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -88,7 +90,12 @@ function AnnualDevelopmentPlan(){
                                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                                 size={17}
                             />
-                            <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" />
+                            <Input 
+                                placeholder="Search..." 
+                                className="pl-10 w-full bg-white text-sm" 
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
                         </div>
                   </div>
                 <div className="">
@@ -105,7 +112,7 @@ function AnnualDevelopmentPlan(){
                     ) : years.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-center px-6">
                             {/* Empty State Icon */}
-                            <div className="mb-6">
+                            <div className="mb-10 mt-10">
                                 <div className="relative">
                                     <div className="w-24 h-24 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-full flex items-center justify-center mb-4">
                                         <svg 
@@ -122,27 +129,20 @@ function AnnualDevelopmentPlan(){
                                             />
                                         </svg>
                                     </div>
-                                    {/* Decorative elements */}
-                                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full opacity-60"></div>
-                                    <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-green-400 rounded-full opacity-60"></div>
+                                   
                                 </div>
                             </div>
-                            
-                            {/* Main Message */}
-                            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                        
+                            <h3 className="text-xl font-semibold text-gray-800">
                                 No Annual Development Plans Found
                             </h3>
                             
-                                                         {/* Description */}
-                             <p className="text-gray-600 mb-8 max-w-md leading-relaxed">
-                                 
-                             </p>
                             
                                                          
                         </div>
                     ) : (
                         <div className="w-full flex flex-row items-start">
-                            {years.map(year => (
+                            {(search ? years.filter(y => String(y).includes(search.trim())) : years).map(year => (
                                 <div key={year} onContextMenu={e => handleContextMenu(e, year)} className="flex flex-col items-center group cursor-pointer mx-8 select-none">
                                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-2 group-hover:scale-105 transition-transform">
                                         <rect x="3" y="6" width="18" height="14" rx="2" fill="#FFE082"/>

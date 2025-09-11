@@ -19,7 +19,7 @@ import GADAddEntryForm from "./budget-tracker-create-form";
 import { Input } from "@/components/ui/input";
 import GADEditEntryForm from "./budget-tracker-edit-form";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
@@ -40,7 +40,7 @@ function BudgetTracker() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState("All");
-  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [selectedFilter] = useState("All");
   const [activeTab, setActiveTab] = useState("active");
   const { year: gbudy_year } = useParams<{ year: string }>();
   const { data: yearBudgets } = useGetGADYearBudgets();
@@ -113,19 +113,10 @@ function BudgetTracker() {
     const month = entry.gbud_datetime?.slice(5, 7);
     const matchesMonth = selectedMonth === "All" || month === selectedMonth;
     const matchesFilter =
-      selectedFilter === "All" || entry.gbud_type === selectedFilter;
+      selectedFilter === "All";
 
-    const matchesSearch = `${entry.gbud_inc_particulars} ${
-      entry.gbud_exp_particulars
-    } ${entry.gbud_type} ${
-      entry.gbud_inc_amt ||
-      entry.gbud_proposed_budget ||
-      entry.gbud_actual_expense
-    } ${entry.gbud_add_notes}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
 
-    return matchesMonth && matchesFilter && matchesSearch;
+    return matchesMonth && matchesFilter;
   });
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -134,12 +125,12 @@ function BudgetTracker() {
     currentPage * pageSize
   );
 
-  const calculateTotalProposedWithoutActual = () => {
+    const calculateTotalProposedWithoutActual = () => {
     if (!budgetEntries || budgetEntries.length === 0) return 0;
 
     return budgetEntries.reduce((total, entry) => {
       // Skip archived or non-expense entries
-      if (entry.gbud_is_archive || entry.gbud_type !== "Expense") return total;
+      if (entry.gbud_is_archive) return total;
 
       // Convert all values to numbers safely (handles strings like "0.00")
       const toNum = (val: any) => {
@@ -150,10 +141,6 @@ function BudgetTracker() {
 
       const actual = toNum(entry.gbud_actual_expense);
       const proposed = toNum(entry.gbud_proposed_budget);
-
-      // Include if:
-      // 1. Actual is either undefined/null OR equals 0 (as number)
-      // 2. Proposed exists and is not 0
       const shouldInclude =
         (actual === undefined || actual === null || actual === 0) &&
         proposed !== undefined &&
@@ -166,33 +153,36 @@ function BudgetTracker() {
       return total;
     }, 0);
   };
-  
-const getLatestRemainingBalance = (): number => {
-  // If no entries, return the initial budget
-  if (!budgetEntries || budgetEntries.length === 0) {
-    return currentYearBudget ? Number(currentYearBudget) : 0;
-  }
 
-  // Filter active (unarchived) entries
-  const activeEntries = budgetEntries.filter((entry) => !entry.gbud_is_archive);
-
-  // If no active entries, return initial budget
-  if (activeEntries.length === 0) {
-    return currentYearBudget ? Number(currentYearBudget) : 0;
-  }
-
-  // Calculate balance from scratch using only gbud_actual_expense
-  let balance = currentYearBudget ? Number(currentYearBudget) : 0;
-
-  activeEntries.forEach((entry) => {
-    if (entry.gbud_type === "Expense" && entry.gbud_actual_expense !== null) {
-      const amount = Number(entry.gbud_actual_expense) || 0;
-      balance -= amount;
+  const getLatestRemainingBalance = (): number => {
+    // If no entries, return the initial budget
+    if (!budgetEntries || budgetEntries.length === 0) {
+      return currentYearBudget ? Number(currentYearBudget) : 0;
     }
-  });
 
-  return balance;
-};
+    // Filter active (unarchived) entries
+    const activeEntries = budgetEntries.filter(
+      (entry) => !entry.gbud_is_archive
+    );
+
+    // If no active entries, return initial budget
+    if (activeEntries.length === 0) {
+      return currentYearBudget ? Number(currentYearBudget) : 0;
+    }
+
+    // Calculate balance from scratch using only gbud_actual_expense
+    let balance = currentYearBudget ? Number(currentYearBudget) : 0;
+
+    activeEntries.forEach((entry) => {
+      if ( entry.gbud_actual_expense !== null) {
+        const amount = Number(entry.gbud_actual_expense) || 0;
+        balance -= amount;
+      }
+    });
+
+    return balance;
+  };
+
   const columns: ColumnDef<GADBudgetEntry>[] = [
     {
       accessorKey: "gbud_datetime",
@@ -212,17 +202,34 @@ const getLatestRemainingBalance = (): number => {
       ),
     },
     {
-      accessorKey: "gbud_type",
-      header: "Type",
-    },
-    {
       id: "particulars",
       header: "Particular",
       cell: ({ row }) => {
-        const particulars =
-          row.original.gbud_inc_particulars ||
-          row.original.gbud_exp_particulars;
-        return <div>{particulars}</div>;
+        const { gbud_exp_particulars } = row.original;
+        let displayParticulars = "";
+
+        if (gbud_exp_particulars && typeof gbud_exp_particulars === 'string') {
+          try {
+            const parsed = JSON.parse(gbud_exp_particulars);
+            if (Array.isArray(parsed)) {
+              displayParticulars = parsed
+                .map((item: { name: string; pax: string; amount: number }) => item.name)
+                .join(", ") || "No items";
+            } else {
+              displayParticulars = gbud_exp_particulars;
+            }
+          } catch (e) {
+            displayParticulars = gbud_exp_particulars;
+          }
+        } else if (Array.isArray(gbud_exp_particulars)) {
+          displayParticulars = gbud_exp_particulars
+            .map((item: { name: string; pax: string; amount: number }) => item.name)
+            .join(", ") || "No items";
+        } else {
+          displayParticulars = "No particulars";
+        }
+
+        return <div>{displayParticulars}</div>;
       },
     },
     {
@@ -230,8 +237,6 @@ const getLatestRemainingBalance = (): number => {
       header: "Amount",
       cell: ({ row }) => {
         const {
-          gbud_type,
-          gbud_inc_amt,
           gbud_actual_expense,
           gbud_proposed_budget,
         } = row.original;
@@ -239,14 +244,9 @@ const getLatestRemainingBalance = (): number => {
           val !== undefined && val !== null ? +val : undefined;
 
         let amount: number = 0;
-
-        if (gbud_type === "Income") {
-          amount = num(gbud_inc_amt) ?? 0;
-        } else {
           const actual = num(gbud_actual_expense);
           const proposed = num(gbud_proposed_budget);
           amount = actual && actual > 0 ? actual : proposed ?? 0;
-        }
         return <div>Php {amount.toFixed(2)}</div>;
       },
     },
@@ -261,7 +261,7 @@ const getLatestRemainingBalance = (): number => {
 
         return (
           <div className="flex justify-center gap-2">
-            {entry.gbud_type === "Expense" &&
+            {
             (!hasReferenceNum || !hasFiles) ? (
               <span className="text-red-500">
                 Missing
@@ -417,64 +417,29 @@ const getLatestRemainingBalance = (): number => {
           <div className="ml-2">{gbudy_year || "N/A"}</div>
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
-          Manage and view income and expense records for year {gbudy_year}.
+          Manage and view expense records for year {gbudy_year}.
         </p>
       </div>
       <hr className="border-gray mb-6 sm:mb-6" />
 
       <div className="flex flex-row gap-5 mb-5 flex-wrap">
         <div className="flex flex-row gap-2">
-          <Label className="w-35 text-md">Budget:</Label>
-          <Label className="text-red-500 text-md font-bold">
+          <Label className="w-35 text-md">Whole Year Budget:</Label>
+          <Label className="text-blue text-md font-bold">
             Php {formattedBudget}
           </Label>
         </div>
         <div className="flex flex-row gap-2">
-          <Label className="w-35 text-md">Remaining:</Label>
+          <Label className="w-35 text-md">Remaining Balance:</Label>
           <Label className="text-green-600 text-md font-bold">
             Php {getLatestRemainingBalance()}
           </Label>
         </div>
         <div className="flex flex-row gap-2">
           <Label className="w-35 text-md">Pending Expenses:</Label>
-          <Label className="text-yellow-600 text-md font-bold">
+          <Label className="text-red-500 text-md font-bold">
             Php {calculateTotalProposedWithoutActual()}
           </Label>
-        </div>
-      </div>
-
-      <div className="flex justify-center mb-9">
-        <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
-          <button
-            onClick={() => setSelectedFilter("All")}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-              selectedFilter === "All"
-                ? "bg-primary text-white shadow"
-                : "text-gray-700 hover:bg-white"
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setSelectedFilter("Income")}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-              selectedFilter === "Income"
-                ? "bg-primary text-white shadow"
-                : "text-gray-700 hover:bg-white"
-            }`}
-          >
-            Income
-          </button>
-          <button
-            onClick={() => setSelectedFilter("Expense")}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-              selectedFilter === "Expense"
-                ? "bg-primary text-white shadow"
-                : "text-gray-700 hover:bg-white"
-            }`}
-          >
-            Expense
-          </button>
         </div>
       </div>
 
@@ -509,6 +474,11 @@ const getLatestRemainingBalance = (): number => {
               }}
             />
           </div>
+          <Link to={`/gad-budget-log/${gbudy_year}`}>
+            <Button variant="link" className="mr-1 w-20 underline text-sky-600">
+              View Logs
+            </Button>
+          </Link>
         </div>
         <div>
           <DialogLayout
@@ -607,33 +577,53 @@ const getLatestRemainingBalance = (): number => {
         mainContent={
           <div className="flex-1 overflow-y-auto space-y-6">
             {selectedRowFiles && selectedRowFiles.length > 0 ? (
-              selectedRowFiles.map((file, index) => (
-                <div key={file.gbf_id} className="flex flex-col items-center">
-                  {file.gbf_type?.startsWith("image/") && file.gbf_url ? (
-                    <img
-                      src={file.gbf_url}
-                      alt={file.gbf_name || `Document ${index + 1}`}
-                      className="max-h-[70vh] max-w-full object-contain mx-auto"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "/placeholder-image.png";
-                      }}
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg text-center">
-                      <p className="mt-2 text-sm text-gray-600">
-                        {file.gbf_name || "No file name"}
-                      </p>
-                      <p className="mt-2 text-sm text-red-500">
-                        Image preview not available
-                      </p>
-                    </div>
-                  )}
-                  <p className="mt-2 text-sm text-gray-500">
-                    {file.gbf_name || `Document ${index + 1}`}
-                  </p>
-                </div>
-              ))
+              selectedRowFiles.map((file, index) => {
+                // Infer type and name if missing
+                const inferredType =
+                  file.gbf_url?.includes(".jpg") ||
+                  file.gbf_url?.includes(".jpeg")
+                    ? "image/jpeg"
+                    : file.gbf_url?.includes(".png")
+                    ? "image/png"
+                    : "application/octet-stream";
+                const inferredName =
+                  file.gbf_url?.split("/").pop() || `Document ${index + 1}`;
+
+                return (
+                  <div key={file.gbf_id} className="flex flex-col items-center">
+                    {(inferredType.startsWith("image/") || !file.gbf_type) &&
+                    file.gbf_url ? (
+                      <img
+                        src={file.gbf_url}
+                        alt={file.gbf_name || inferredName}
+                        className="max-h-[70vh] max-w-full object-contain mx-auto"
+                        onError={(e) => {
+                          console.error("Image load failed:", {
+                            url: file.gbf_url,
+                            inferredType,
+                            inferredName,
+                          });
+                          (e.target as HTMLImageElement).src =
+                            "/placeholder-image.png";
+                        }}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg text-center">
+                        <p className="mt-2 text-sm text-gray-600">
+                          {file.gbf_name || inferredName}
+                        </p>
+                        <p className="mt-2 text-sm text-red-500">
+                          Image preview not available (Type:{" "}
+                          {file.gbf_type || inferredType})
+                        </p>
+                      </div>
+                    )}
+                    <p className="mt-2 text-sm text-gray-500">
+                      {file.gbf_name || inferredName}
+                    </p>
+                  </div>
+                );
+              })
             ) : (
               <p className="text-gray-500 text-center py-8">
                 No supporting documents available.

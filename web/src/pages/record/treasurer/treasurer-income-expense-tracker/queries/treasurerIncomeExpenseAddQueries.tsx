@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { income_expense_tracking } from "../request/income-ExpenseTrackingPostRequest";
 import { income_tracking } from "../request/income-ExpenseTrackingPostRequest";
 import { income_expense_file_create } from "../request/income-ExpenseTrackingPostRequest";
+import { expense_log } from "../request/income-ExpenseTrackingPostRequest";
 import { updateIncomeExpenseMain } from "../request/income-ExpenseTrackingPostRequest";
 import { updateIncomeMain } from "../request/income-ExpenseTrackingPostRequest";
 import { updateExpenseParticular } from "../request/income-ExpenseTrackingPostRequest";
@@ -97,14 +98,21 @@ import { z } from "zod";
 //     }
 //   });
 // };
-
+type FileData = {
+    name: string;
+    type: string;
+    file: string;
+};
 
 type ExtendedIncomeExpense = z.infer<typeof IncomeExpenseFormSchema> & {
+  returnAmount: number;
   totalBudget: number;
   totalExpense: number;
   years: number;
   proposedBud: number;
   particularId: number;
+  files: FileData[]; 
+  staff: string;
 };
 
 
@@ -117,38 +125,23 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
       const iet_num = await income_expense_tracking(values);
       
       // 2. Create all file entries in parallel
-      // if (values.iet_receipt_image?.length) {
-      //   await Promise.all(
-      //     values.iet_receipt_image.map(file => 
-      //       income_expense_file_create({
-      //         iet_num,
-      //         file_data: file
-      //       })
-      //     )
-      //   );
-      // }
-
-      if (values.iet_receipt_image && values.iet_receipt_image.length > 0) {
-        // Filter out any invalid files before processing
-        const validFiles = values.iet_receipt_image.filter(file => 
-          file && (file.url || file.path) && file.name
+      if (values.files && values.files.length > 0) {
+        await Promise.all(
+          values.files.map(file => 
+            income_expense_file_create({
+              iet_num,
+              file_data: {
+                name: file.name,
+                type: file.type,
+                file: file.file
+              }
+            }).catch(error => {
+              console.error("Error creating file entry:", error);
+              return null;
+            })
+          )
         );
-        
-        if (validFiles.length > 0) {
-          await Promise.all(
-            validFiles.map(file => 
-              income_expense_file_create({
-                iet_num,
-                file_data: file
-              }).catch(error => {
-                console.error("Error creating file entry:", error);
-                // Continue with other files even if one fails
-                return null;
-              })
-            )
-          );
-        }
-      }      
+      }    
       
       //3. Update main for the expenses
       await updateIncomeExpenseMain(values.years, {
@@ -156,11 +149,20 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
         totalExpense: values.totalExpense,
       });
 
-
+      //4. Update Expense particular
       await updateExpenseParticular(values.particularId, {
         years: values.years,
         exp_proposed_budget: values.proposedBud,
       });
+
+      //5. Add new expense log
+      if(values.returnAmount > 0){
+        await expense_log(iet_num, {
+          returnAmount: values.returnAmount,
+          el_proposed_budget: values.iet_amount,
+          el_actual_expense: values.iet_actual_amount
+        });
+      }
       
       return iet_num;
     },  
@@ -169,6 +171,7 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
       queryClient.invalidateQueries({ queryKey: ['incomeExpense'] });
       queryClient.invalidateQueries({ queryKey: ['budgetItems'] });
       queryClient.invalidateQueries({ queryKey: ['income_expense_card'] });
+      queryClient.invalidateQueries({ queryKey: ['expense_log'] });
 
       toast.loading("Creating entry...", { id: "createExpense" });
       
@@ -229,6 +232,7 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
 type ExtendedIncomeValues = z.infer<typeof IncomeFormSchema> & {
   totalIncome: number;
   year: number;
+  staff: string;
 };
 
 

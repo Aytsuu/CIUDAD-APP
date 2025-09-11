@@ -6,6 +6,7 @@ export type DonationInput = {
   don_category: string;
   don_description?: string;
   don_date: string;
+  staff?: string | null;
 };
 
 export type Donation = {
