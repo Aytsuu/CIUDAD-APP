@@ -9,6 +9,7 @@ import { createReceiptSchema } from "@/form-schema/receipt-schema";
 import { useAcceptRequest, useAcceptNonResRequest } from "./queries/personalClearanceUpdateQueries";
 import { useAddPersonalReceipt } from "../Receipts/queries/receipts-insertQueries";
 import { useMemo } from "react";
+import { useAuth } from '@/context/AuthContext';
 
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
 function ReceiptForm({
@@ -19,6 +20,7 @@ function ReceiptForm({
     pay_status,
     nat_col,
     is_resident,
+    voter_id,
     onSuccess,
     discountedAmount,
     discountReason
@@ -30,15 +32,20 @@ function ReceiptForm({
     pay_status: string;
     nat_col: string;
     is_resident: boolean;
+    voter_id?: string | number | null;
     onSuccess: () => void;
     discountedAmount?: string;
     discountReason?: string;
 }){
+    const { user } = useAuth();
+    const staffId = user?.staff?.staff_id;
     const { mutate: receipt, isPending} = useAddPersonalReceipt(onSuccess)
     const { mutate: acceptReq, isPending: isAcceptPending} = useAcceptRequest()
     const { mutate: acceptNonResReq, isPending: isAcceptNonResPending} = useAcceptNonResRequest()
 
-   console.log('stat', pay_status)
+   console.log('stat', pay_status, 'staffId', staffId)
+   console.log('DEBUG voter_id value:', voter_id, 'type:', typeof voter_id, 'is_resident:', is_resident)
+   const isFree = Boolean(is_resident && voter_id !== null && voter_id !== undefined);
     const ReceiptSchema = useMemo(() => {
         return createReceiptSchema(discountedAmount || rate);
     }, [discountedAmount, rate]);
@@ -48,7 +55,7 @@ function ReceiptForm({
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
             inv_serial_num: is_resident ? "N/A" : "", 
-            inv_amount: is_resident ? "150" : "",
+            inv_amount: is_resident ? (isFree ? "0" : "150") : "",
             inv_nat_of_collection: nat_col,
             id: id.toString(), 
         }
@@ -118,11 +125,11 @@ function ReceiptForm({
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Payment Status</label>
-                        <p className="text-base text-green-600 font-semibold mt-1">{pay_status}</p>
+                        <p className="text-base text-green-600 font-semibold mt-1">{isFree ? 'Free (Registered Voter)' : pay_status}</p>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Amount</label>
-                        <p className="text-base text-primary font-semibold mt-1">{`₱${rate}`}</p>
+                        <p className="text-base text-primary font-semibold mt-1">{`₱${isFree ? '0' : rate}`}</p>
                     </div>
                     </div>
                 </CardContent>
@@ -141,18 +148,19 @@ function ReceiptForm({
                         )}
                     </div>
                     
-                    {/* Discount Button */}
-                    <Button 
-                        type="button"
-                        variant="outline"
-                        disabled={isAlreadyPaid}
-                        className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
-                        onClick={() => {
-                            onSuccess(); // Hide the create receipt form
-                        }}
-                    >
-                        Apply Discount
-                    </Button>
+                    {/* Discount Button (hidden for free/voter requests) */}
+                    {!isFree && !isAlreadyPaid && (
+                        <Button 
+                            type="button"
+                            variant="outline"
+                            className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
+                            onClick={() => {
+                                onSuccess(); // Hide the create receipt form
+                            }}
+                        >
+                            Apply Discount
+                        </Button>
+                    )}
                 </div>
 
                 {/* Only show these fields if NOT resident */}

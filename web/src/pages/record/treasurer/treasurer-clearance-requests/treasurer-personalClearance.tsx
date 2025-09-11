@@ -4,12 +4,13 @@ import { Input } from "@/components/ui/input";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { ReceiptText, ArrowUpDown, Search, FileInput, User, Users, CircleCheck, Ban } from 'lucide-react';
+import { ReceiptText, ArrowUpDown, Search, User, Users, CircleCheck, Ban } from 'lucide-react';
 import { useState, useEffect } from "react";
+// import { useAuth } from '@/context/AuthContext';
 import PersonalClearanceForm from "./treasurer-personalClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import DiscountAuthorizationForm from "./treasurer-discount-form";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
+// Removed unused DropdownMenu imports
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetNonResidentCertReq, type NonResidentReq, usegetResidentCertReq, type ResidentReq } from "./queries/CertClearanceFetchQueries";
@@ -17,6 +18,8 @@ import DeclineRequestForm from "./declineForm";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 function PersonalClearance() {
+    // const { user } = useAuth();
+
     const [currentPage, setCurrentPage] = useState(1); 
     const [pageSize, setPageSize] = useState(10);
     const [activeTab, setActiveTab] = useState<"paid" | "unpaid" | "declined">("unpaid");
@@ -34,6 +37,7 @@ function PersonalClearance() {
         pay_status: string;
         nat_col: string;
         is_resident: boolean;
+        voter_id?: number | string | null;
     } | null>(null);
 
     const {data: nonResidentClearanceRequests = [], isLoading: nonResidentLoading, error: nonResidentError} = useGetNonResidentCertReq();
@@ -260,7 +264,9 @@ function PersonalClearance() {
                 </div>
             ),
             cell: ({ row }) => {
-                const value = row.original.purpose ? Number(row.original.purpose.pr_rate) : 0;
+                const isFree = Boolean((row.original as any)?.resident_details?.voter_id);
+                const raw = row.original.purpose ? Number(row.original.purpose.pr_rate) : 0;
+                const value = isFree ? 0 : raw;
                 return (
                     <span className="text-green-600 font-semibold">
                         ₱{value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -289,52 +295,84 @@ function PersonalClearance() {
             {
                 accessorKey: "action",
                 header: "Action",
-                cell: ({ row }: { row: Row<ResidentReq> }) => (
-                    <div className="flex justify-center gap-1">
-                        <TooltipLayout
-                            trigger={
-                                <div 
-                                    className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"
-                                    onClick={() => {
-                                        setCurrentReceipt({
-                                            id: row.original.cr_id,
-                                            purpose: row.original.purpose?.pr_purpose,
-                                            rate: row.original.purpose?.pr_rate,
-                                            requester: `${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`,
-                                            pay_status: row.original.cr_req_payment_status,
-                                            nat_col: "Certificate",
-                                            is_resident: true
-                                        });
-                                        // Ensure discount modal is closed when opening receipt
-                                        setIsDiscountModalOpen(false);
-                                        setAppliedDiscountAmount(undefined);
-                                        setIsReceiptModalOpen(true);
-                                    }}
-                                >
-                                    <CircleCheck size={16} color="green"/>
-                                </div>
-                            }
-                            content="Accept Request"
-                        />
-
-                        <DialogLayout
-                            trigger={
-                                 <Button variant="destructive" size="sm">
-                                    Decline
-                                </Button>
-                            }
-                            title="Decline Request"
-                            description="Add a reason for declining."
-                            mainContent={
-                                <DeclineRequestForm
-                                    id = {row.original.cr_id}
-                                    isResident={true}
-                                    onSuccess={() => setIsDialogOpen(false)}
+                cell: ({ row }: { row: Row<ResidentReq> }) => {
+                    const isFree = Boolean((row.original as any)?.resident_details?.voter_id);
+                    return (
+                        <div className="flex justify-center gap-1">
+                            {isFree ? (
+                                <TooltipLayout
+                                    trigger={
+                                        <div 
+                                            className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"
+                                            onClick={() => {
+                                                setCurrentReceipt({
+                                                    id: row.original.cr_id,
+                                                    purpose: row.original.purpose?.pr_purpose,
+                                                    rate: "0",
+                                                    requester: `${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`,
+                                                    pay_status: row.original.cr_req_payment_status,
+                                                    nat_col: "Certificate",
+                                                    is_resident: true,
+                                                    voter_id: (row.original as any)?.resident_details?.voter_id ?? null
+                                                });
+                                                setIsDiscountModalOpen(false);
+                                                setAppliedDiscountAmount(undefined);
+                                                setIsReceiptModalOpen(true);
+                                            }}
+                                        >
+                                            <CircleCheck size={16} color="green"/>
+                                        </div>
+                                    }
+                                    content="Accept (Free)"
                                 />
-                            }
-                        />
-                    </div>
-                ),
+                            ) : (
+                                <TooltipLayout
+                                    trigger={
+                                        <div 
+                                            className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"
+                                            onClick={() => {
+                                                setCurrentReceipt({
+                                                    id: row.original.cr_id,
+                                                    purpose: row.original.purpose?.pr_purpose,
+                                                    rate: row.original.purpose?.pr_rate,
+                                                    requester: `${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`,
+                                                    pay_status: row.original.cr_req_payment_status,
+                                                    nat_col: "Certificate",
+                                                    // Show receipt collection flow (amount paid + change)
+                                                    is_resident: false,
+                                                    voter_id: (row.original as any)?.resident_details?.voter_id ?? null
+                                                });
+                                                setIsDiscountModalOpen(false);
+                                                setAppliedDiscountAmount(undefined);
+                                                setIsReceiptModalOpen(true);
+                                            }}
+                                        >
+                                            <ReceiptText size={16} />
+                                        </div>
+                                    }
+                                    content="Create Receipt"
+                                />
+                            )}
+
+                            <DialogLayout
+                                trigger={
+                                    <Button variant="destructive" size="sm">
+                                        Decline
+                                    </Button>
+                                }
+                                title="Decline Request"
+                                description="Add a reason for declining."
+                                mainContent={
+                                    <DeclineRequestForm
+                                        id = {row.original.cr_id}
+                                        isResident={true}
+                                        onSuccess={() => setIsDialogOpen(false)}
+                                    />
+                                }
+                            />
+                        </div>
+                    );
+                },
             }
         ] : []),
         ...(activeTab === "declined" ? [
@@ -475,21 +513,6 @@ function PersonalClearance() {
                              </div>
                          </div>
 
-                         <div>
-                             <DropdownMenu>
-                                 <DropdownMenuTrigger asChild>
-                                     <Button variant="outline">
-                                         <FileInput className="mr-2" />
-                                         Export
-                                     </Button>
-                                 </DropdownMenuTrigger>
-                                 <DropdownMenuContent>
-                                     <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                                     <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                                     <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                                 </DropdownMenuContent>
-                             </DropdownMenu>                    
-                         </div>
                      </div>    
 
                     {isLoading ? (

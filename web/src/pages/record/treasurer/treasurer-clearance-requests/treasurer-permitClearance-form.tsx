@@ -26,6 +26,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
     const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const queryClient = useQueryClient();
+    const staffId = user?.staff?.staff_id as string | undefined;
     
     
     // Add error handling for the queries
@@ -108,18 +109,19 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         try {
             setIsSubmitting(true);
             
-          
-            const staffId = "00006250722"; // Hardcoded staff ID
-            
+            if (!staffId) {
+                toast.error("Missing staff ID. Please re-login and try again.");
+                return;
+            }
+
             const payload = {
-                ...values,
-                staff: staffId  
+                ...values
             };
             
             console.log("Permit Clearance Data:", payload);
             
          
-            await createPermitClearance(payload);
+            await createPermitClearance(payload, staffId);
             console.log("Permit clearance created successfully");
             
             toast.success("Permit clearance created successfully!");

@@ -1,27 +1,12 @@
 import { api } from "@/api/api";
 
-// Annual gross sales options for permit clearances
-// export const annualGrossSales = [
-//     { id: "1", name: " P 50,000.00 and below P 100,000.00" },
-//     { id: "2", name: "P 100,001.00 and below  P 200,000.00" },
-//     { id: "3", name: "P 200,001.00 and below P 500,000.00" },
-//     { id: "4", name: "P 500,001.00 and below P 1,000,000.00" },
-//     { id: "5", name: "P 1,000,001.00 and below P 2,000,000.00" },
-//     { id: "6", name: "P 2,000,001.00 and below P 5,000,000.00" },
-//     { id: "7", name: "P 5,000,001.00 and below P 10,000,000.00" },
-//     { id: "8", name: "P 10,000,001.00 and above" },
-// ];
-
 // Create permit clearance
-export const createPermitClearance = async (payload: any) => {
+export const createPermitClearance = async (payload: any, staffId: string) => {
     try {
         // Generate a unique bpr_id (max 10 characters)
         const timestamp = Date.now().toString();
         const randomPart = Math.random().toString(36).substring(2, 3).toUpperCase();
         const bpr_id = `BPR${timestamp.slice(-6)}${randomPart}`;
-        
-        // For now, use a hardcoded staff ID that should exist in the database
-        const staffId = "00001250819"; // Hardcoded staff ID
         
         const clearancePayload = {
             bpr_id: bpr_id,

@@ -151,7 +151,8 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             if obj.rp_id and getattr(obj.rp_id, "per", None):
                 return {
                     'per_fname': obj.rp_id.per.per_fname,
-                    'per_lname': obj.rp_id.per.per_lname
+                    'per_lname': obj.rp_id.per.per_lname,
+                    'voter_id': getattr(obj.rp_id, 'voter_id', None)
                 }
             return None
         except Exception as e:
