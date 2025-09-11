@@ -772,7 +772,7 @@ class IncomeExpenseFileDetailView(generics.RetrieveDestroyAPIView):
 class Annual_Gross_SalesView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Annual_Gross_SalesSerializers
-    queryset = Annual_Gross_Sales.objects.all()
+    queryset = Annual_Gross_Sales.objects.all().order_by('-ags_date')
 
 class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
     permission_classes = [AllowAny]
@@ -792,7 +792,7 @@ class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
 class Purpose_And_RatesView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
-    queryset = Purpose_And_Rates.objects.all()
+    queryset = Purpose_And_Rates.objects.all().order_by('-pr_date')
 
 
 class DeleteUpdate_Purpose_And_RatesView(generics.UpdateAPIView):

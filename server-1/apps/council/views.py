@@ -499,7 +499,7 @@ class PurposeRatesListView(generics.ListCreateAPIView):
 
 class MinutesOfMeetingView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
-    queryset = MinutesOfMeeting.objects.all()
+    queryset = MinutesOfMeeting.objects.all().order_by('-mom_date')
 
 class MinutesOfMeetingDetailView(generics.RetrieveDestroyAPIView):
     queryset = MinutesOfMeeting.objects.all()
