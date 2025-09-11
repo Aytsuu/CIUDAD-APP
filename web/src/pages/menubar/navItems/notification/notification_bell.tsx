@@ -6,24 +6,24 @@ import { Bell, CheckCheck, Clock, AlertCircle, MessageSquare, Heart, Star, MoreH
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Notification } from '@/context/auth-types'
 
-const getNotificationIcon = (type: string) => {
-  switch (type) {
-    case 'message':
-      return <MessageSquare className="h-4 w-4 text-blue-500" />
-    case 'success':
-      return <CheckCheck className="h-4 w-4 text-green-500" />
-    case 'reminder':
-      return <Clock className="h-4 w-4 text-yellow-500" />
-    case 'like':
-      return <Heart className="h-4 w-4 text-red-500" />
-    case 'alert':
-      return <AlertCircle className="h-4 w-4 text-orange-500" />
-    case 'follow':
-      return <Star className="h-4 w-4 text-purple-500" />
-    default:
-      return <Bell className="h-4 w-4 text-gray-500" />
-  }
-}
+// const getNotificationIcon = (type: string) => {
+//   switch (type) {
+//     case 'message':
+//       return <MessageSquare className="h-4 w-4 text-blue-500" />
+//     case 'success':
+//       return <CheckCheck className="h-4 w-4 text-green-500" />
+//     case 'reminder':
+//       return <Clock className="h-4 w-4 text-yellow-500" />
+//     case 'like':
+//       return <Heart className="h-4 w-4 text-red-500" />
+//     case 'alert':
+//       return <AlertCircle className="h-4 w-4 text-orange-500" />
+//     case 'follow':
+//       return <Star className="h-4 w-4 text-purple-500" />
+//     default:
+//       return <Bell className="h-4 w-4 text-gray-500" />
+//   }
+// }
 
 const formatTimeAgo = (dateString: string | number | Date) => {
   const now = new Date()

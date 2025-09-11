@@ -5,7 +5,7 @@ import BarangayCouncil from '@/pages/landing/BarangayCouncil';
 import MobileApp from '@/pages/landing/MobileApp';
 import { RouteObject } from 'react-router';
 import Health from '@/pages/landing/Health';
-import ForgotPassword from '@/pages/landing/ForgotPass';
+// import ForgotPassword from '@/pages/landing/ForgotPass';
 import Services from '@/pages/landing/services';
 import About from '@/pages/landing/about';
 import Home from '@/pages/landing/home';
@@ -57,7 +57,7 @@ export const landing_router: RouteObject[] = [
     element: <AuthLayout />, 
     children: [
       { path: "sign-in", element: <SignIn /> },
-      { path: "forgot-password", element: <ForgotPassword /> }
+      // { path: "forgot-password", element: <ForgotPassword /> }
     ]
   }
 ];
