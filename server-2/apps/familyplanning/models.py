@@ -142,7 +142,23 @@ class FP_Pelvic_Exam(models.Model):
         return f"Pelvic Exam for FP Record {self.fprecord_id}"
     
     
-    
+class FP_MedicalHistory(models.Model):
+    fp_md_id = models.BigAutoField(primary_key=True)
+    fprecord = models.ForeignKey(
+        FP_Record,
+        on_delete=models.CASCADE,
+        related_name='medical_history_snapshots'
+    )
+    medhist = models.ForeignKey(
+        'patientrecords.MedicalHistory',
+        on_delete=models.CASCADE,
+        related_name='fp_snapshots'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "famplan_medhistory"
+            
 class FP_Acknowledgement(models.Model):
     ack_id = models.AutoField(primary_key=True)
     ack_client_name = models.CharField(max_length=50)

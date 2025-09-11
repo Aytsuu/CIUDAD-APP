@@ -136,6 +136,11 @@ const IndividualFamPlanningTable: React.FC = () => {
     });
   };
 
+  // Helper function to check if a record is selected
+  const isRecordSelected = (record: IndividualFPRecordDetail) => {
+    return selectedRecords.some((selected) => selected.fprecord === record.fprecord);
+  };
+
   const handleAddFollowUp = (record: IndividualFPRecordDetail) => {
   if (!record.fprecord) {
     toast.error("Record ID not found for follow-up.");
@@ -221,16 +226,46 @@ const IndividualFamPlanningTable: React.FC = () => {
     (() => [
       {
         id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-            aria-label="Select all"
-          />
-        ),
+        header: ({ table }) => {
+          // Get all visible rows in current table
+          const visibleRows = table.getRowModel().rows;
+          const allSelected = visibleRows.length > 0 && visibleRows.every(row => isRecordSelected(row.original));
+          const someSelected = visibleRows.some(row => isRecordSelected(row.original));
+          
+          return (
+            <Checkbox
+              checked={allSelected}
+              ref={(ref) => {
+                if (ref) ref.indeterminate = someSelected && !allSelected;
+              }}
+              onCheckedChange={(value) => {
+                if (value) {
+                  // Select all visible rows (with 5 record limit)
+                  const remainingSlots = 5 - selectedRecords.length;
+                  const toSelect = visibleRows
+                    .filter(row => !isRecordSelected(row.original))
+                    .slice(0, remainingSlots)
+                    .map(row => row.original);
+                  
+                  if (toSelect.length + selectedRecords.length > 5) {
+                    toast.warning("You can select a maximum of 5 records for comparison.");
+                  }
+                  setSelectedRecords(prev => [...prev, ...toSelect]);
+                } else {
+                  // Deselect all visible rows
+                  const visibleRecordIds = visibleRows.map(row => row.original.fprecord);
+                  setSelectedRecords(prev => 
+                    prev.filter(record => !visibleRecordIds.includes(record.fprecord))
+                  );
+                }
+              }}
+              aria-label="Select all"
+            />
+          );
+        },
         cell: ({ row }) => (
           <Checkbox
-            checked={row.getIsSelected()}
+            checked={isRecordSelected(row.original)}
             onCheckedChange={(value) => handleCheckboxChange(row.original, !!value)}
             aria-label="Select row"
           />
@@ -264,14 +299,14 @@ const IndividualFamPlanningTable: React.FC = () => {
       },
 {
   accessorKey: "subtype",
-  header: "Subtype",
+  header: "Subtype of Client",
   cell: ({ row }) => {
     return row.original.subtype || "N/A";
   },
 },
       {
         accessorKey: "dateOfFollowUp",
-        header: "Date of Follow-Up",
+        header: "Next Follow-up Visit",
         cell: ({ row }) => formatDate(row.original.dateOfFollowUp || ""),
       },
       {
@@ -309,7 +344,7 @@ const IndividualFamPlanningTable: React.FC = () => {
         ),
       },
     ],
-    [navigate]
+    [navigate, selectedRecords, isRecordSelected] // Added dependencies
   );
 
   if (isLoadingFPRecords || isLoadingPatientInfo) {
@@ -348,7 +383,7 @@ const IndividualFamPlanningTable: React.FC = () => {
             disabled={selectedRecords.length < 2}
             className="text-white"
           >
-            <LayoutList className="h-5 w-5 mr-2" /> Compare Records
+            <LayoutList className="h-5 w-5 mr-2" /> Compare Records ({selectedRecords.length})
           </Button>
           <Button
             onClick={() => handleCreateNewRecord({ gender: patientInfoForCard?.personal_info.per_sex || "Unknown" })}

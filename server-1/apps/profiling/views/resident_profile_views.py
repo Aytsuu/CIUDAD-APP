@@ -130,7 +130,7 @@ class LinkRegVerificationView(APIView):
     def post(self, request, *args, **kwargs):
         rp_id = request.data.get('rp_id', None)
         personal_info = request.data.get('personal_info', None)
-
+        print(personal_info)
         if rp_id:
             exists = ResidentProfile.objects.filter(rp_id=rp_id).first()
             if exists:
@@ -159,3 +159,23 @@ class LinkRegVerificationView(APIView):
             return Response(data=data, status=status.HTTP_200_OK)
             
         return Response(status=status.HTTP_404_NOT_FOUND)
+
+class LinkVoterView(generics.UpdateAPIView):
+    serializer_class = ResidentProfileBaseSerializer
+    queryset = ResidentProfile.objects.all()
+    lookup_field = "rp_id"
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        name = f'{instance.per.per_lname.upper()}, {instance.per.per_fname.upper()}' \
+                f'{" " + instance.per.per_mname.upper() if instance.per.per_mname else ""}'
+        print(name)
+        retrieved = {
+            "voter": Voter.objects.filter(voter_name=name).first().voter_id
+        }
+        print(retrieved)
+        serializer = self.get_serializer(instance, data=retrieved, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)

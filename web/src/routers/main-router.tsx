@@ -57,17 +57,17 @@ export const main_router: RouteObject[] = [
       ...administration_router,
       ...profiling_router,
       ...report_router,
-      // ...complaint_router.map((route) => ({
-      //   ...route,
-      //   element: (
-      //     <ProtectedRoute
-      //       requiredPosition="tanod"
-      //       alternativePositions={["admin", "Emergency Response Head", "Barangay Captain"]}
-      //     >
-      //       {route.element}
-      //     </ProtectedRoute>
-      //   ),
-      // })),
+      ...complaint_router.map((route) => ({
+        ...route,
+        // element: (
+        //   <ProtectedRoute
+        //     requiredPosition="tanod"
+        //     alternativePositions={["Admin", "Emergency Response Head", "Barangay Captain"]}
+        //   >
+        //     {route.element}
+        //   </ProtectedRoute>
+        // ),
+      })),
       ...complaint_router,
       ...ord_router,
       ...res_router,

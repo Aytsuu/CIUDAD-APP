@@ -227,10 +227,13 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
             )
 
         if per:
-          personal = Personal(**per)
-          personal._history_user=validated_data["staff"]
-          personal.save()
-          br = BusinessRespondent.objects.create(per=personal)
+          # personal = Personal(**per)
+          # personal._history_user=validated_data["staff"]
+          # personal.save()
+          br = BusinessRespondent.objects.create(
+            **per,
+            staff = validated_data["staff"]
+          )
 
         # Handle respondent/rp/br logic
         business_instance = self._create_business_instance(

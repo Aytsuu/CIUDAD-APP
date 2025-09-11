@@ -148,7 +148,22 @@ export default function FamilyPlanningForm({
     }
   }, [isPatientPreSelected])
 
-  const handlePatientSelection = async (id: string) => {
+  const [isAgeInvalid, setIsAgeInvalid] = useState(false);
+
+  const age = form.watch("age");
+
+  useEffect(() => {
+    if (age) {
+      if (age < 10 || age > 49) {
+        setIsAgeInvalid(true);
+        toast.warning("Patient's age is outside the recommended range (10-49 years) for family planning services. Proceed with caution or select another patient.");
+      } else {
+        setIsAgeInvalid(false);
+      }
+    }
+  }, [age]);
+
+  const handlePatientSelection = async (id: string | undefined) => {
     if (!id) {
       toast.error("Please select a valid patient");
       return;
@@ -541,7 +556,7 @@ console.log("Gender type: ",effectiveGender)
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <FormInput control={form.control} name="client_id" label="CLIENT ID:" {...inputProps} />
-              <FormInput control={form.control} name="philhealthNo" label="PHILHEALTH NO:" {...inputProps} />
+              <FormInput control={form.control} name="philhealthNo" label="PHILHEALTH NO:" {...inputProps}  readOnly={true} />
 
               <FormField
                 control={form.control}
@@ -651,6 +666,7 @@ console.log("Gender type: ",effectiveGender)
                 name="educationalAttainment"
                 label="Education Attainment"
                 {...inputProps}
+                readOnly={true}
               />
               <FormInput
                 control={form.control}
@@ -972,7 +988,6 @@ console.log("Gender type: ",effectiveGender)
                   const isValid = await form.trigger()
                   if (isValid) {
                     const currentValues = form.getValues()
-                    // Check if method has changed from the original
                     if (originalMethod && currentValues.methodCurrentlyUsed && currentValues.methodCurrentlyUsed !== originalMethod) {
                       toast.error("You cannot change the contraceptive method in this record. Please create a new record if you want to switch methods.")
                       return
@@ -983,9 +998,11 @@ console.log("Gender type: ",effectiveGender)
                     }
                     updateFormData(currentValues)
                     onNext2()
+                  } else if (isAgeInvalid){
+                    toast.error("Age is outside the allowed range for family planning");
                   }
                 }}
-                disabled={isReadOnly}
+                disabled={isReadOnly || isAgeInvalid}
               >
                 Next
               </Button>

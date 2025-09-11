@@ -5,6 +5,7 @@ import { Text } from "@/components/ui/text"
 import { Link, router, useLocalSearchParams } from "expo-router"
 import { format } from "date-fns"
 import { usePatientRecordsByPatId } from "./db-request/get-query"
+import PageLayout from "@/screens/_PageLayout"
 
 
 type PatientRecordDetail = {
@@ -97,10 +98,10 @@ export default function AnimalBiteIndividualScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-blue-50">
-        <View className="bg-white p-8 rounded-2xl items-center shadow-sm">
+    
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text className="mt-4 text-gray-600 font-medium">Loading patient records...</Text>
-        </View>
+        
       </View>
     )
   }
@@ -146,19 +147,19 @@ export default function AnimalBiteIndividualScreen() {
   }
 
   return (
+     <PageLayout
+           leftAction={
+             <TouchableOpacity
+               onPress={() => router.back()}
+               className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
+             >
+               <ChevronLeft size={24} className="text-slate-700" />
+             </TouchableOpacity>
+           }
+           headerTitle={<Text className="text-slate-900 text-[13px]">Animal Bite Records</Text>}
+           rightAction={<View className="w-10 h-10" />}
+         >
     <View className="flex-1 bg-blue-50">
-      {/* Header */}
-      <View className="bg-white shadow-sm">
-        <View className="flex-row items-center p-4 pt-12">
-           <TouchableOpacity onPress={() => router.back()} className="p-2">
-                               <ArrowLeft size={24} color="#333" />
-                             </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-xl font-bold text-gray-800">Animal Bites Record</Text>
-          </View>
-        </View>
-      </View>
-
       <ScrollView
         className="flex-1"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -344,5 +345,6 @@ export default function AnimalBiteIndividualScreen() {
 </View>
       </ScrollView>
     </View>
+  </PageLayout>
   )
 }

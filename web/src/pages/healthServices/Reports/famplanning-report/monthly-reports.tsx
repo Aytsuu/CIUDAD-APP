@@ -9,7 +9,7 @@ const methods = [
 
 type Method = typeof methods[number];
 
-type AgeGroup = '10-14' | '15-19' | '24-49' | 'Total';
+type AgeGroup = '10-14' | '15-19' | '20-49' | 'Total';
 
 const methodDisplayNames: Record<Method, string> = {
     "BTL": "a. BTL",
@@ -63,13 +63,13 @@ const ReportPage = () => {
 
     const calculateColumnTotals = () => {
         const totals = {
-            bom: { '10-14': 0, '15-19': 0, '24-49': 0, Total: 0 },
-            new: { '10-14': 0, '15-19': 0, '24-49': 0, Total: 0 },
-            other: { '10-14': 0, '15-19': 0, '24-49': 0, Total: 0 },
-            dropout: { '10-14': 0, '15-19': 0, '24-49': 0, Total: 0 },
-            eom: { '10-14': 0, '15-19': 0, '24-49': 0, Total: 0 },
-            newAcceptors: { '10-14': 0, '15-19': 0, '24-49': 0, Total: 0 },
-            totalDemand: { '10-14': 0, '15-19': 0, '24-49': 0, Total: 0 }
+            bom: { '10-14': 0, '15-19': 0, '20-49': 0, Total: 0 },
+            new: { '10-14': 0, '15-19': 0, '20-49': 0, Total: 0 },
+            other: { '10-14': 0, '15-19': 0, '20-49': 0, Total: 0 },
+            dropout: { '10-14': 0, '15-19': 0, '20-49': 0, Total: 0 },
+            eom: { '10-14': 0, '15-19': 0, '20-49': 0, Total: 0 },
+            newAcceptors: { '10-14': 0, '15-19': 0, '20-49': 0, Total: 0 },
+            totalDemand: { '10-14': 0, '15-19': 0, '20-49': 0, Total: 0 }
         };
 
         methods.forEach((method) => {
@@ -81,25 +81,25 @@ const ReportPage = () => {
             const eom = {
                 '10-14': (bom['10-14'] || 0) + (new_['10-14'] || 0) + (other['10-14'] || 0) - (dropout['10-14'] || 0),
                 '15-19': (bom['15-19'] || 0) + (new_['15-19'] || 0) + (other['15-19'] || 0) - (dropout['15-19'] || 0),
-                '24-49': (bom['24-49'] || 0) + (new_['24-49'] || 0) + (other['24-49'] || 0) - (dropout['24-49'] || 0),
+                '20-49': (bom['20-49'] || 0) + (new_['20-49'] || 0) + (other['20-49'] || 0) - (dropout['20-49'] || 0),
                 'Total': (bom['Total'] || 0) + (new_['Total'] || 0) + (other['Total'] || 0) - (dropout['Total'] || 0),
             };
             
             const newAcceptors = {
                 '10-14': (new_['10-14'] || 0) + (other['10-14'] || 0),
                 '15-19': (new_['15-19'] || 0) + (other['15-19'] || 0),
-                '24-49': (new_['24-49'] || 0) + (other['24-49'] || 0),
+                '20-49': (new_['20-49'] || 0) + (other['20-49'] || 0),
                 'Total': (new_['Total'] || 0) + (other['Total'] || 0),
             };
             
             const totalDemand = {
                 '10-14': (eom['10-14'] || 0) + (newAcceptors['10-14'] || 0),
                 '15-19': (eom['15-19'] || 0) + (newAcceptors['15-19'] || 0),
-                '24-49': (eom['24-49'] || 0) + (newAcceptors['24-49'] || 0),
+                '20-49': (eom['20-49'] || 0) + (newAcceptors['20-49'] || 0),
                 'Total': (eom['Total'] || 0) + (newAcceptors['Total'] || 0),
             };
 
-            const ageGroups: AgeGroup[] = ['10-14', '15-19', '24-49', 'Total'];
+            const ageGroups: AgeGroup[] = ['10-14', '15-19', '20-49', 'Total'];
             ageGroups.forEach(ageGroup => {
                 totals.bom[ageGroup] += bom[ageGroup] || 0;
                 totals.new[ageGroup] += new_[ageGroup] || 0;
@@ -251,7 +251,7 @@ const handlePrint = () => {
                                 <React.Fragment key={groupIndex}>
                                     <th className="border border-black p-1 age-col">10-14</th>
                                     <th className="border border-black p-1 age-col">15-19</th>
-                                    <th className="border border-black p-1 age-col">24-49</th>
+                                    <th className="border border-black p-1 age-col">20-49</th>
                                     <th className="border border-black p-1 age-col">Total</th>
                                 </React.Fragment>
                             ))}
@@ -268,21 +268,21 @@ const handlePrint = () => {
                             const eom = {
                                 '10-14': (bom['10-14'] || 0) + (new_['10-14'] || 0) + (other['10-14'] || 0) - (dropout['10-14'] || 0),
                                 '15-19': (bom['15-19'] || 0) + (new_['15-19'] || 0) + (other['15-19'] || 0) - (dropout['15-19'] || 0),
-                                '24-49': (bom['24-49'] || 0) + (new_['24-49'] || 0) + (other['24-49'] || 0) - (dropout['24-49'] || 0),
+                                '20-49': (bom['20-49'] || 0) + (new_['20-49'] || 0) + (other['20-49'] || 0) - (dropout['20-49'] || 0),
                                 'Total': (bom['Total'] || 0) + (new_['Total'] || 0) + (other['Total'] || 0) - (dropout['Total'] || 0),
                             };
                             
                             const newAcceptors = {
                                 '10-14': (new_['10-14'] || 0) + (other['10-14'] || 0),
                                 '15-19': (new_['15-19'] || 0) + (other['15-19'] || 0),
-                                '24-49': (new_['24-49'] || 0) + (other['24-49'] || 0),
+                                '20-49': (new_['20-49'] || 0) + (other['20-49'] || 0),
                                 'Total': (new_['Total'] || 0) + (other['Total'] || 0),
                             };
                             
                             const totalDemand = {
                                 '10-14': (eom['10-14'] || 0) + (newAcceptors['10-14'] || 0),
                                 '15-19': (eom['15-19'] || 0) + (newAcceptors['15-19'] || 0),
-                                '24-49': (eom['24-49'] || 0) + (newAcceptors['24-49'] || 0),
+                                '20-49': (eom['20-49'] || 0) + (newAcceptors['20-49'] || 0),
                                 'Total': (eom['Total'] || 0) + (newAcceptors['Total'] || 0),
                             };
 
@@ -291,31 +291,31 @@ const handlePrint = () => {
                                     <td className="border border-black p-1 font-semibold method-col text-left">{methodDisplayNames[method] || method}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(bom['10-14'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(bom['15-19'])}</td>
-                                    <td className="border border-black p-1 text-center age-col">{formatValue(bom['24-49'])}</td>
+                                    <td className="border border-black p-1 text-center age-col">{formatValue(bom['20-49'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(bom['Total'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(new_['10-14'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(new_['15-19'])}</td>
-                                    <td className="border border-black p-1 text-center age-col">{formatValue(new_['24-49'])}</td>
+                                    <td className="border border-black p-1 text-center age-col">{formatValue(new_['20-49'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(new_['Total'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(other['10-14'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(other['15-19'])}</td>
-                                    <td className="border border-black p-1 text-center age-col">{formatValue(other['24-49'])}</td>
+                                    <td className="border border-black p-1 text-center age-col">{formatValue(other['20-49'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(other['Total'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(dropout['10-14'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(dropout['15-19'])}</td>
-                                    <td className="border border-black p-1 text-center age-col">{formatValue(dropout['24-49'])}</td>
+                                    <td className="border border-black p-1 text-center age-col">{formatValue(dropout['20-49'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(dropout['Total'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(eom['10-14'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(eom['15-19'])}</td>
-                                    <td className="border border-black p-1 text-center age-col">{formatValue(eom['24-49'])}</td>
+                                    <td className="border border-black p-1 text-center age-col">{formatValue(eom['20-49'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(eom['Total'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(newAcceptors['10-14'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(newAcceptors['15-19'])}</td>
-                                    <td className="border border-black p-1 text-center age-col">{formatValue(newAcceptors['24-49'])}</td>
+                                    <td className="border border-black p-1 text-center age-col">{formatValue(newAcceptors['20-49'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(newAcceptors['Total'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(totalDemand['10-14'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(totalDemand['15-19'])}</td>
-                                    <td className="border border-black p-1 text-center age-col">{formatValue(totalDemand['24-49'])}</td>
+                                    <td className="border border-black p-1 text-center age-col">{formatValue(totalDemand['20-49'])}</td>
                                     <td className="border border-black p-1 text-center age-col">{formatValue(totalDemand['Total'])}</td>
                                 </tr>
                             );
@@ -325,31 +325,31 @@ const handlePrint = () => {
                             <td className="border border-black p-1 method-col text-left">m. Total Current Users</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.bom['10-14'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.bom['15-19'])}</td>
-                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.bom['24-49'])}</td>
+                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.bom['20-49'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.bom['Total'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.new['10-14'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.new['15-19'])}</td>
-                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.new['24-49'])}</td>
+                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.new['20-49'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.new['Total'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.other['10-14'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.other['15-19'])}</td>
-                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.other['24-49'])}</td>
+                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.other['20-49'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.other['Total'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.dropout['10-14'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.dropout['15-19'])}</td>
-                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.dropout['24-49'])}</td>
+                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.dropout['20-49'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.dropout['Total'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.eom['10-14'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.eom['15-19'])}</td>
-                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.eom['24-49'])}</td>
+                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.eom['20-49'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.eom['Total'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.newAcceptors['10-14'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.newAcceptors['15-19'])}</td>
-                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.newAcceptors['24-49'])}</td>
+                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.newAcceptors['20-49'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.newAcceptors['Total'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.totalDemand['10-14'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.totalDemand['15-19'])}</td>
-                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.totalDemand['24-49'])}</td>
+                            <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.totalDemand['20-49'])}</td>
                             <td className="border border-black p-1 text-center age-col">{formatValue(columnTotals.totalDemand['Total'])}</td>
                         </tr>
                     </tbody>

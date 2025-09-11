@@ -9,6 +9,13 @@ import SignatureCanvas from "react-signature-canvas"
 import { page5Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
 
+const getPhilippineDate = (): string => {
+  const now = new Date();
+  // Convert to Philippine time (UTC+8)
+  const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+  return phTime.toISOString().split('T')[0];
+};
+
 type FamilyPlanningMethod =
   | "COC"
   | "IUD-Interval"
@@ -26,30 +33,30 @@ type FamilyPlanningMethod =
   | "Others"
   | "DMPA"
   | "Lactating Amenorrhea"
-  | "Bilateral Tubal Ligation"
+  | "BTL"
   | "Vasectomy"
 
 
 const methodLabels: Record<string, string> = {
-  coc: "COC",
-  "iud-interval": "IUD-Interval",
-  "iud-postpartum": "IUD-Post Partum",
-  "bom/cmm": "BOM/CMM",
-  lam: "LAM",
+  COC: "COC",
+  "IUD-Interval": "IUD-Interval",
+  "IUD-Post Partum": "IUD-Post Partum",
+  "BOM/CMM": "BOM/CMM",
+  LAM: "LAM",
   BBT: "BBT",
-  pop: "POP",
+  POP: "POP",
   SDM: "SDM",
-  injectable: "Injectable",
+  Injectable: "Injectable",
   STM: "STM",
-  implant: "Implant",
-  condom: "Condom",
+  Implant: "Implant",
+  Condom: "Condom",
   Others: "Others",
-  pills: "Pills",
-  dmpa: "DMPA",
-  lactating: "Lactating Amenorrhea",
-  bilateral: "Bilateral Tubal Ligation",
-  vasectomy: "Vasectomy",
-  others: "Others",
+  Pills: "Pills",
+  DMPA: "DMPA",
+  // lactating: "Lactating Amenorrhea",
+  BTL: "BTL",
+  Vasectomy: "Vasectomy",
+  // others: "Others",
 }
 
 // Helper function to map method values between pages
@@ -62,18 +69,18 @@ const mapMethodFromPage1 = (methodFromPage1: string,otherMethod?: string): strin
     "IUD-Post Partum": "IUD-Post Partum",
     Implant: "Implant",
     Condom: "Condom",
-    "Lactating Amenorrhea": "Lactating Amenorrhea",
-    "Bilateral Tubal Ligation": "Bilateral Tubal Ligation",
+    // "Lactating Amenorrhea": "Lactating Amenorrhea",
+    "BTL": "BTL",
     Vasectomy: "Vasectomy",
     COC: "COC",
     POP: "POP",
     Injectable: "Injectable",
     "BOM/CMM": "BOM/CMM",
-    bbt: "BBT",
-    stm: "STM",
-    sdm: "SDM",
+    BBT: "BBT",
+    STM: "STM",
+    SDM: "SDM",
     LAM: "LAM",
-    others: "Others",
+    Others: "Others",
   }
  if (methodFromPage1 === "Others" && otherMethod) {
     return otherMethod;
@@ -115,17 +122,17 @@ export default function FamilyPlanningForm5({
     acknowledgement: {
       selectedMethod: getSelectedMethodFromPage1(),
       clientSignature: formData?.acknowledgement?.clientSignature || "",
-      clientSignatureDate: formData?.acknowledgement?.clientSignatureDate || new Date().toISOString().split("T")[0],
+      clientSignatureDate: getPhilippineDate(),
       clientName: formData?.acknowledgement?.clientName || "", // This will now be auto-populated
       guardianName: formData?.acknowledgement?.guardianName || "", 
       guardianSignature: formData?.acknowledgement?.guardianSignature || "",
-      guardianSignatureDate: formData?.acknowledgement?.guardianSignatureDate || new Date().toISOString().split("T")[0],
+      guardianSignatureDate: getPhilippineDate(),
     },
   }
   const form = useForm({
     defaultValues,
     mode: "onChange",
-    // resolver: zodResolver(page5Schema),
+    resolver: zodResolver(page5Schema),
   })
   useEffect(() => {
     if (formData?.acknowledgement?.clientName) {

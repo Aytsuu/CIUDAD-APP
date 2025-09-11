@@ -349,6 +349,14 @@ const pendingCount = requests?.filter(r => r.status.toLowerCase() === 'pending')
 
   const renderTabBar = () => (
     <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+       <TouchableOpacity
+        onPress={() => setActiveTab('all')}
+        className={`flex-1 items-center py-2 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
+      >
+        <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
+          All ({totalCount})
+        </Text>
+      </TouchableOpacity>
       <TouchableOpacity
         onPress={() => setActiveTab('pending')}
         className={`flex-1 items-center py-2 ${activeTab === 'pending' ? 'border-b-2 border-blue-600' : ''}`}
@@ -373,14 +381,7 @@ const pendingCount = requests?.filter(r => r.status.toLowerCase() === 'pending')
           Completed ({completedCount})
         </Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => setActiveTab('all')}
-        className={`flex-1 items-center py-2 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
-      >
-        <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
-          All ({totalCount})
-        </Text>
-      </TouchableOpacity>
+     
     </View>
   );
 
@@ -413,12 +414,12 @@ const pendingCount = requests?.filter(r => r.status.toLowerCase() === 'pending')
               You haven't made any medicine requests yet. Start by requesting the medicines you need.
             </Text>
             {/* Optional: Button to navigate to medicine request form */}
-            {/* <TouchableOpacity
-              onPress={() => router.push('/medicine-request-form')}
+            <TouchableOpacity
+              onPress={() => router.push('/medicine-request/med-request')}
               className="bg-blue-600 px-6 py-3 rounded-lg"
             >
               <Text className="text-white font-medium">Request Medicine</Text>
-            </TouchableOpacity> */}
+            </TouchableOpacity>
           </View>
         ) : (
           <View className="p-4">

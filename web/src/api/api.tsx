@@ -1,8 +1,12 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "http://localhost:8000",
- 
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true, 
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
 });
 export const api2 = axios.create({
   baseURL: "http://localhost:8001",
@@ -61,3 +65,4 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+export default api;

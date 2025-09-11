@@ -10,7 +10,7 @@ export const accountFormSchema = z.object({
   username: z.string()
     .min(1, "Username is required")
     .min(6, "Username must be atleast 6 letters"),
-  email: z.string().optional(),
+  email: z.string().email({ message: "Invalid email (ex. juanlitoy243@gmail.com)"}),
   phone: z.string()
     .min(1, "Contact is required")
     .regex(
@@ -85,7 +85,6 @@ export const personalInfoSchema = z.object({
   per_religion: z.string().min(1, "Religion is required"),
   per_contact: z.string().min(1, "Contact is required"),
   per_disability: z.string(),
-  per_occupation: z.string(),
   per_addresses: z.object({
     list: z.array(addressSchema).default([]),
     new: addressSchema

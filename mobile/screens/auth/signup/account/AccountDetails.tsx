@@ -8,13 +8,11 @@ import { EyeOff } from "@/lib/icons/EyeOff"
 import { FormInput } from "@/components/ui/form/form-input"
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext"
 import { useToast } from "@/hooks/use-toast"
-import { useAddAccount } from "../queries/authPostQueries"
-import { useGetAccountEmailList } from "../queries/authFetchQueries"
+import { useAddAccount } from "../../queries/authPostQueries"
+import { useGetAccountEmailList } from "../../queries/authFetchQueries"
 
-export default function AccountDetails({
-  submit,
-}: {
-  submit: () => void
+export default function AccountDetails({ params }: {
+  params: Record<string, any>
 }) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
@@ -27,26 +25,30 @@ export default function AccountDetails({
   const { data: accEmailList, isLoading } = useGetAccountEmailList()
 
   const handleSubmit = async () => {
-    const formIsValid = await trigger(["accountFormSchema"])
+    const formIsValid = await trigger([
+      "accountFormSchema.username",
+      "accountFormSchema.password",
+      "accountFormSchema.confirmPassword"
+    ])
 
     if (!formIsValid) {
       return
     }
-    const email = getValues("accountFormSchema.email")
-    if (email !== "" && accEmailList?.includes(email)) {
-      setError("accountFormSchema.email", {
-        type: "manual",
-        message: "Email is already in use",
-      })
-      return
-    }
+    // const email = getValues("accountFormSchema.email")
+    // if (email !== "" && accEmailList?.includes(email)) {
+    //   setError("accountFormSchema.email", {
+    //     type: "manual",
+    //     message: "Email is already in use",
+    //   })
+    //   return
+    // }
 
-    submit()
+    params.next()
   }
 
   return (
     <ScrollView className="flex-1" showsHorizontalScrollIndicator={false} showsVerticalScrollIndicator={false}>
-      <View className="flex-1 px-5">
+      <View className="flex-1 px-6">
         {/* Header Section */}
         <View>
           <Text className="text-xl font-PoppinsMedium text-gray-900 mb-2">Create Your Account</Text>
@@ -59,13 +61,6 @@ export default function AccountDetails({
         <View className="space-y-6">
           <View className="space-y-4">
             <FormInput control={control} name="accountFormSchema.username" label="Username" />
-            <FormInput
-              control={control}
-              name="accountFormSchema.email"
-              label="Email Address (Optional)"
-              keyboardType="email-address"
-            />
-            <FormInput control={control} name="accountFormSchema.phone" label="Phone Number" keyboardType="phone-pad" />
 
             <View className="relative">
               <FormInput
@@ -112,7 +107,7 @@ export default function AccountDetails({
           <View className="bg-blue-50 border border-blue-100 rounded-xl p-4">
             <Text className="text-sm font-PoppinsMedium text-blue-900 mb-2">Password Requirements:</Text>
             <View className="space-y-1">
-              <Text className="text-xs font-PoppinsRegular text-blue-700">• At least 8 characters long</Text>
+              <Text className="text-xs font-PoppinsRegular text-blue-700">• At least 6 characters long</Text>
               <Text className="text-xs font-PoppinsRegular text-blue-700">
                 • Contains uppercase and lowercase letters
               </Text>

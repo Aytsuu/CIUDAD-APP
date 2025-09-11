@@ -37,7 +37,7 @@ export default function MedicineRequestScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   // Fetch medicines using react-query
   const { data: fetchedMedicines, isLoading, isError, error } = useMedicines(currentPage, pageSize, searchQuery);
-  const userId = "PT20230001";
+  const userId = "PT20030001";
   
   useEffect(() => {
     const checkPendingRequests = async () => {

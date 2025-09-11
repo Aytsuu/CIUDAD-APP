@@ -170,11 +170,11 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                             ))}
                           </div>
                         </FormControl>
-                        {abnormalDischarge && patientGender && (
+                        {/* {abnormalDischarge && patientGender && (
                           <p className="text-sm text-gray-500 mt-1">
                             Automatically set based on patient's gender ({patientGender})
                           </p>
-                        )}
+                        )} */}
                       </FormItem>
                     )}
                   />

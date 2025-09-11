@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from django.db import transaction  # For atomic operations if needed
-from django.db.models import Count, Max, OuterRef, Subquery, Sum # Import Sum for aggregation
+from django.db.models import Exists, Sum, Q, Min, F, Case, When, DateField, Subquery, Value, OuterRef
 from django.utils import timezone
 from datetime import date, timedelta
 from .models import *
@@ -127,62 +127,6 @@ def map_reason_display(reason):
     }
     return reason_map.get(reason)  # Fallback to title case
 
-# @api_view(['POST'])
-# def create_medical_history_records(request):
-#     """
-#     Create medical history records for selected illnesses
-#     """
-#     try:
-#         data = request.data
-#         patrec_id = data.get('patrec_id')
-#         selected_illness_ids = data.get('selected_illness_ids', [])
-        
-#         if not patrec_id:
-#             return Response(
-#                 {'error': 'patrec_id is required'}, 
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-        
-#         # Get the patient record
-#         try:
-#             patient_record = PatientRecord.objects.get(patrec_id=patrec_id)
-#         except PatientRecord.DoesNotExist:
-#             return Response(
-#                 {'error': 'Patient record not found'}, 
-#                 status=status.HTTP_404_NOT_FOUND
-#             )
-        
-#         # Clear existing medical history for this patient record (optional)
-#         # MedicalHistory.objects.filter(patrec=patient_record).delete()
-        
-#         # Create new medical history records for selected illnesses
-#         created_records = []
-#         for illness_id in selected_illness_ids:
-#             try:
-#                 illness = Illness.objects.get(ill_id=illness_id)
-#                 medical_history = MedicalHistory.objects.create(
-#                     ill=illness,
-#                     patrec=patient_record
-#                 )
-#                 created_records.append({
-#                     'medhist_id': medical_history.medhist_id,
-#                     'illness_name': illness.illname,
-#                     'illness_code': illness.ill_code
-#                 })
-#             except Illness.DoesNotExist:
-#                 continue
-        
-#         return Response({
-#             'message': f'Created {len(created_records)} medical history records',
-#             'records': created_records
-#         }, status=status.HTTP_201_CREATED)
-        
-#     except Exception as e:
-#         return Response(
-#             {'error': f'Error creating medical history: {str(e)}'}, 
-#             status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#         )
-
 @api_view(['GET'])
 def get_patient_medical_history(request, patrec_id):
     try:
@@ -241,33 +185,37 @@ def get_body_measurements(request, pat_id):
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
-def get_or_create_illness(illname, ill_description, ill_code_prefix="FP"):
+
+def get_or_create_illness(illname, ill_description="", ill_code_prefix="FP"):
     try:
-        illness = Illness.objects.get(illname=illname)
-        return illness
+        return Illness.objects.get(illname=illname)
     except Illness.DoesNotExist:
-      
-        result = Illness.objects.filter(ill_code__startswith=ill_code_prefix).aggregate(Max('ill_code'))
-        max_ill_code = result['ill_code__max'] # Corrected key
-        # --- FIX ENDS HERE ---
-        
-        new_code_num = 1
-        if max_ill_code:
+        # Wrap in a transaction to avoid race conditions
+        with transaction.atomic():
+            result = Illness.objects.filter(ill_code__startswith=ill_code_prefix).aggregate(Max('ill_code'))
+            max_ill_code = result['ill_code__max']
+            
+            new_code_num = 1
+            if max_ill_code:
+                try:
+                    current_num = int(max_ill_code[len(ill_code_prefix):])
+                    new_code_num = current_num + 1
+                except (ValueError, IndexError):
+                    logger.warning(f"Could not parse number from max_ill_code: {max_ill_code}. Resetting to 1.")
+            
+            new_ill_code = f"{ill_code_prefix}{str(new_code_num).zfill(3)}"
+            
             try:
-                current_num_str = max_ill_code[len(ill_code_prefix):]
-                current_num = int(current_num_str)
-                new_code_num = current_num + 1
-            except (ValueError, IndexError):
-                logger.warning(f"Could not parse number from max_ill_code: {max_ill_code}. Starting new_code_num from 1.")
-                new_code_num = 1 
-        new_ill_code = f"{ill_code_prefix}{str(new_code_num).zfill(3)}"
-        illness = Illness.objects.create(
-            illname=illname,
-            ill_description= "",
-            ill_code=new_ill_code
-        )
-        logger.info(f"Created new Illness: {illness.illname} with code {illness.ill_code}")
-        return illness
+                illness = Illness.objects.create(
+                    illname=illname,
+                    ill_description=ill_description,
+                    ill_code=new_ill_code
+                )
+                logger.info(f"Created new Illness: {illness.illname} ({illness.ill_code})")
+                return illness
+            except IntegrityError:
+                # If another process created it first, just fetch it now
+                return Illness.objects.get(illname=illname)
     
 def calculate_age_from_dob(dob_string):
     if not dob_string:
@@ -672,9 +620,6 @@ def get_filtered_commodity_list(request):
 
 @api_view(['GET'])
 def get_commodity_stock(request, commodity_name):
-    """
-    Fetches the available stock quantity for a given commodity name.
-    """
     try:
         # Find the commodity in CommodityList by its name
         commodity = CommodityList.objects.get(com_name=commodity_name)
@@ -1196,6 +1141,20 @@ def get_latest_fp_record_for_patient(request, patient_id):
             {"error": f"Error fetching latest complete FP record for patient: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+def map_income_display(income):
+    """Map income IDs to human-readable labels"""
+    income_map = {
+        "lower": "Lower than 5,000",
+        "5,000-10,000": "5,000-10,000",
+        "10,000-30,000": "10,000-30,000",
+        "30,000-50,000": "30,000-50,000",
+        "50,000-80,000": "50,000-80,000",
+        "80,000-100,000": "80,000-100,000",
+        "100,000-200,000": "100,000-200,000",
+        "higher": "Higher than 200,000",
+    }
+    return income_map.get(income, income.title() if income else "")
+
 @api_view(["GET"])
 def get_complete_fp_record(request, fprecord_id):
     try:
@@ -1218,7 +1177,9 @@ def get_complete_fp_record(request, fprecord_id):
         complete_data["fprecord"] = fp_record.fprecord_id
         complete_data["plan_more_children"] = fp_record.plan_more_children
         complete_data["occupation"] = fp_record.occupation or "N/A"  # Set once
-        complete_data["avg_monthly_income"] = fp_record.avg_monthly_income or "N/A"
+        complete_data["avg_monthly_income"] =  map_income_display(fp_record.avg_monthly_income) or ""  # Original ID
+        complete_data["avg_monthly_income_display"] = map_income_display(fp_record.avg_monthly_income) or ""  # Display value
+        
         print("Initial occupation set:", complete_data["occupation"])  # Debug
         complete_data["contact"] = ""
         complete_data["religion"] = ""
@@ -1473,12 +1434,12 @@ def get_complete_fp_record(request, fprecord_id):
             display_values = get_physical_exam_display_values(physical_exam_serialized_data)
             complete_data["fp_physical_exam"] = physical_exam_serialized_data
             complete_data.update({
-               "skinExamination": display_values["skinExamination"],
-                "conjunctivaExamination": display_values["conjunctivaExamination"],
-                "neckExamination": display_values["neckExamination"],
-                "breastExamination": display_values["breastExamination"],
-                "abdomenExamination": display_values["abdomenExamination"],
-                "extremitiesExamination": display_values["extremitiesExamination"],
+               "skinExamination": physical_exam_serialized_data.get("skin_exam"),
+                "conjunctivaExamination": physical_exam_serialized_data.get("conjunctiva_exam"),
+                "neckExamination": physical_exam_serialized_data.get("neck_exam"),
+                "breastExamination": physical_exam_serialized_data.get("breast_exam"),
+                "abdomenExamination": physical_exam_serialized_data.get("abdomen_exam"),
+                "extremitiesExamination": physical_exam_serialized_data.get("extremities_exam"),
             })
             if fp_physical_exam.bm:
                 body_measurement_data = BodyMeasurementSerializer(fp_physical_exam.bm).data
@@ -1545,6 +1506,7 @@ def get_complete_fp_record(request, fprecord_id):
         try:
             fp_acknowledgement = FP_Acknowledgement.objects.get(fprecord_id=fp_record)
             acknowledgement_serialized_data = AcknowledgementSerializer(fp_acknowledgement).data
+            
             complete_data["fp_acknowledgement"] = acknowledgement_serialized_data
             complete_data["acknowledgement"] = {
                 "selectedMethod": acknowledgement_serialized_data.get("ack_client_method_choice")
@@ -1590,96 +1552,66 @@ def get_complete_fp_record(request, fprecord_id):
                 "using_contraceptive": False,
             }
         # Fetch Medical History
-        try:
-            patient_record = fp_record.patrec
-            
-            # Fetch all MedicalHistory records ordered by created_at (latest first)
-            medical_history_records = MedicalHistory.objects.filter(
-                patrec=patient_record
-            ).select_related('ill').order_by('-created_at')
-            
-            # Initialize medicalHistory with all False values
-            complete_data["medicalHistory"] = {
-                "severeHeadaches": False,
-                "strokeHeartAttackHypertension": False,
-                "hematomaBruisingBleeding": False,
-                "breastCancerHistory": False,
-                "severeChestPain": False,
-                "cough": False,
-                "jaundice": False,
-                "unexplainedVaginalBleeding": False,
-                "abnormalVaginalDischarge": False,
-                "phenobarbitalOrRifampicin": False,
-                "smoker": False,
-                "disability": False,
-                "disabilityDetails": ""
-            }
-            
-            # Get the LATEST record for each illness (current state)
-            current_illnesses = {}
-            for history in medical_history_records:
-                if history.ill_id not in current_illnesses:
-                    current_illnesses[history.ill_id] = history
-            
-            # Populate the current medical history state
-            selected_illness_ids = []
-            medical_history_data = []
-            
-            for ill_id, history in current_illnesses.items():
-                medical_history_data.append({
-                    'medhist_id': history.medhist_id,
-                    'ill_id': history.ill.ill_id,
-                    'illname': history.ill.illname,
-                    'ill_code': history.ill.ill_code,
-                    'created_at': history.created_at.isoformat() if history.created_at else None
-                })
-                selected_illness_ids.append(history.ill.ill_id)
-                
-                # Map to checkbox fields
-                checkbox_name = get_checkbox_name_from_illness(history.ill.illname)
-                if checkbox_name and checkbox_name in complete_data["medicalHistory"]:
-                    complete_data["medicalHistory"][checkbox_name] = True
-                elif history.ill.illname.lower().startswith("disability") or history.ill.illname.lower().startswith("others"):
-                    complete_data["medicalHistory"]["disability"] = True
-                    if hasattr(history, 'disability_details'):
-                        complete_data["medicalHistory"]["disabilityDetails"] = history.disability_details or ""
-            
-            # Store historical records for comparison (all records)
-            historical_data = []
-            for history in medical_history_records:
-                historical_data.append({
-                    'medhist_id': history.medhist_id,
-                    'ill_id': history.ill.ill_id,
-                    'illname': history.ill.illname,
-                    'ill_code': history.ill.ill_code,
-                    'created_at': history.created_at.isoformat() if history.created_at else None,
-                    'is_current': history.ill_id in current_illnesses and current_illnesses[history.ill_id].medhist_id == history.medhist_id
-                })
-            
-            complete_data["medical_history_records"] = medical_history_data
-            complete_data["selectedIllnessIds"] = selected_illness_ids
-            complete_data["historical_medical_history"] = historical_data
+        fp_medical_history_links = FP_MedicalHistory.objects.filter(
+        fprecord=fp_record
+        ).select_related("medhist", "medhist__ill").order_by("created_at")
 
-        except Exception as e:
-            print(f"Error fetching medical history: {e}")
-            complete_data["medical_history_records"] = []
-            complete_data["selectedIllnessIds"] = []
-            complete_data["historical_medical_history"] = []
-            complete_data["medicalHistory"] = {
-                "severeHeadaches": False,
-                "strokeHeartAttackHypertension": False,
-                "hematomaBruisingBleeding": False,
-                "breastCancerHistory": False,
-                "severeChestPain": False,
-                "cough": False,
-                "jaundice": False,
-                "unexplainedVaginalBleeding": False,
-                "abnormalVaginalDischarge": False,
-                "phenobarbitalOrRifampicin": False,
-                "smoker": False,
-                "disability": False,
-                "disabilityDetails": ""
-            }
+        # Build current medical history data (only for this FP record)
+        current_medical_history_data = []
+        current_selected_illness_ids = []
+
+        # Initialize the medicalHistory dictionary
+        complete_data["medicalHistory"] = {
+            "severeHeadaches": False,
+            "strokeHeartAttackHypertension": False,
+            "hematomaBruisingBleeding": False,
+            "breastCancerHistory": False,
+            "severeChestPain": False,
+            "cough": False,
+            "jaundice": False,
+            "unexplainedVaginalBleeding": False,
+            "abnormalVaginalDischarge": False,
+            "phenobarbitalOrRifampicin": False,
+            "smoker": False,
+            "disability": False,
+            "disabilityDetails": ""
+        }
+
+        for link in fp_medical_history_links:
+            history = link.medhist
+            current_medical_history_data.append({
+                "medhist_id": history.medhist_id,
+                "ill_id": history.ill.ill_id,
+                "illname": history.ill.illname,
+                "ill_code": history.ill.ill_code,
+                "created_at": history.created_at.isoformat() if history.created_at else None
+            })
+            current_selected_illness_ids.append(history.ill.ill_id)
+
+            # Dynamically mark checkboxes
+            checkbox_name = get_checkbox_name_from_illness(history.ill.illname)
+            if checkbox_name and checkbox_name in complete_data["medicalHistory"]:
+                complete_data["medicalHistory"][checkbox_name] = True
+            elif history.ill.illname.lower().startswith("disability") or history.ill.illname.lower().startswith("others"):
+                complete_data["medicalHistory"]["disability"] = True
+                if hasattr(history, 'disability_details'):
+                    complete_data["medicalHistory"]["disabilityDetails"] = history.disability_details or ""
+
+        # If you still want to show ALL historical medical history for the patient (optional)
+        historical_data = []
+        for history in MedicalHistory.objects.filter(patrec=fp_record.patrec).select_related("ill").order_by("-created_at"):
+            historical_data.append({
+                "medhist_id": history.medhist_id,
+                "ill_id": history.ill.ill_id,
+                "illname": history.ill.illname,
+                "ill_code": history.ill.ill_code,
+                "created_at": history.created_at.isoformat() if history.created_at else None,
+                "is_current": history.medhist_id in [link.medhist_id for link in fp_medical_history_links]
+            })
+
+        complete_data["medical_history_records"] = current_medical_history_data
+        complete_data["selectedIllnessIds"] = current_selected_illness_ids
+        complete_data["historical_medical_history"] = historical_data
 
         current_patrec_id = fp_record.patrec_id
         current_method = fp_type.fpt_method_used if fp_type else None
@@ -1968,7 +1900,8 @@ def get_complete_fp_record_data(request, fprecord_id):
         complete_data["fprecord"] = fp_record.fprecord_id
         complete_data["plan_more_children"] = fp_record.plan_more_children
         complete_data["occupation"] = fp_record.occupation or "N/A"  # Set once
-        complete_data["avg_monthly_income"] = fp_record.avg_monthly_income or "N/A"
+        complete_data["avg_monthly_income"] =  map_income_display(fp_record.avg_monthly_income) or ""  # Original ID
+        complete_data["avg_monthly_income_display"] = map_income_display(fp_record.avg_monthly_income) or ""  # Display value
         complete_data["contact"] = ""
         complete_data["religion"] = ""
         
@@ -2335,92 +2268,66 @@ def get_complete_fp_record_data(request, fprecord_id):
                 "using_contraceptive": False,
             }
 
-        # Fetch Medical History
-        try:
-            patient_record = fp_record.patrec
-            # Fetch all MedicalHistory records for this patrec_id, ordered by created_at (latest first)
-            medical_history_records = MedicalHistory.objects.filter(patrec=patient_record).select_related('ill').order_by('-created_at')
-            
-            medical_history_data = []
-            selected_illness_ids = []
-            
-            # Initialize the medicalHistory dictionary
-            complete_data["medicalHistory"] = {
-                "severeHeadaches": False,
-                "strokeHeartAttackHypertension": False,
-                "hematomaBruisingBleeding": False,
-                "breastCancerHistory": False,
-                "severeChestPain": False,
-                "cough": False,
-                "jaundice": False,
-                "unexplainedVaginalBleeding": False,
-                "abnormalVaginalDischarge": False,
-                "phenobarbitalOrRifampicin": False,
-                "smoker": False,
-                "disability": False,
-                "disabilityDetails": ""
-            }
+        fp_medical_history_links = FP_MedicalHistory.objects.filter(
+        fprecord=fp_record
+        ).select_related("medhist", "medhist__ill").order_by("created_at")
 
-            # Track processed ill_ids to get the latest record per illness
-            seen_ill_ids = set()
-            for history in medical_history_records:
-                if history.ill_id not in seen_ill_ids:
-                    medical_history_data.append({
-                        'medhist_id': history.medhist_id,
-                        'ill_id': history.ill.ill_id,
-                        'illname': history.ill.illname,
-                        'ill_code': history.ill.ill_code,
-                        'created_at': history.created_at.isoformat() if history.created_at else None
-                    })
-                    selected_illness_ids.append(history.ill.ill_id)
-                    seen_ill_ids.add(history.ill_id)
+        # Build current medical history data (only for this FP record)
+        current_medical_history_data = []
+        current_selected_illness_ids = []
 
-                    # Use the dynamic mapping function
-                    checkbox_name = get_checkbox_name_from_illness(history.ill.illname)
-                    if checkbox_name and checkbox_name in complete_data["medicalHistory"]:
-                        complete_data["medicalHistory"][checkbox_name] = True
-                    elif history.ill.illname.lower().startswith("disability") or history.ill.illname.lower().startswith("others"):
-                        complete_data["medicalHistory"]["disability"] = True
-                        if hasattr(history, 'disability_details'):
-                            complete_data["medicalHistory"]["disabilityDetails"] = history.disability_details or ""
+        # Initialize the medicalHistory dictionary
+        complete_data["medicalHistory"] = {
+            "severeHeadaches": False,
+            "strokeHeartAttackHypertension": False,
+            "hematomaBruisingBleeding": False,
+            "breastCancerHistory": False,
+            "severeChestPain": False,
+            "cough": False,
+            "jaundice": False,
+            "unexplainedVaginalBleeding": False,
+            "abnormalVaginalDischarge": False,
+            "phenobarbitalOrRifampicin": False,
+            "smoker": False,
+            "disability": False,
+            "disabilityDetails": ""
+        }
 
-            complete_data["medical_history_records"] = medical_history_data
-            complete_data["selectedIllnessIds"] = selected_illness_ids
+        for link in fp_medical_history_links:
+            history = link.medhist
+            current_medical_history_data.append({
+                "medhist_id": history.medhist_id,
+                "ill_id": history.ill.ill_id,
+                "illname": history.ill.illname,
+                "ill_code": history.ill.ill_code,
+                "created_at": history.created_at.isoformat() if history.created_at else None
+            })
+            current_selected_illness_ids.append(history.ill.ill_id)
 
-            # Include all historical records for comparison (all records except the latest per ill_id)
-            historical_data = []
-            for history in medical_history_records:
-                if history.ill_id in seen_ill_ids:
-                    historical_data.append({
-                        'medhist_id': history.medhist_id,
-                        'ill_id': history.ill.ill_id,
-                        'illname': history.ill.illname,
-                        'ill_code': history.ill.ill_code,
-                        'created_at': history.created_at.isoformat() if history.created_at else None
-                    })
-            complete_data["historical_medical_history"] = historical_data
+            # Dynamically mark checkboxes
+            checkbox_name = get_checkbox_name_from_illness(history.ill.illname)
+            if checkbox_name and checkbox_name in complete_data["medicalHistory"]:
+                complete_data["medicalHistory"][checkbox_name] = True
+            elif history.ill.illname.lower().startswith("disability") or history.ill.illname.lower().startswith("others"):
+                complete_data["medicalHistory"]["disability"] = True
+                if hasattr(history, 'disability_details'):
+                    complete_data["medicalHistory"]["disabilityDetails"] = history.disability_details or ""
 
-        except Exception as e:
-            print(f"Error fetching medical history: {e}")
-            complete_data["medical_history_records"] = []
-            complete_data["selectedIllnessIds"] = []
-            complete_data["historical_medical_history"] = []
-            complete_data["medicalHistory"] = {
-                "severeHeadaches": False,
-                "strokeHeartAttackHypertension": False,
-                "hematomaBruisingBleeding": False,
-                "breastCancerHistory": False,
-                "severeChestPain": False,
-                "cough": False,
-                "jaundice": False,
-                "unexplainedVaginalBleeding": False,
-                "abnormalVaginalDischarge": False,
-                "phenobarbitalOrRifampicin": False,
-                "smoker": False,
-                "disability": False,
-                "disabilityDetails": ""
-            }
+        # If you still want to show ALL historical medical history for the patient (optional)
+        historical_data = []
+        for history in MedicalHistory.objects.filter(patrec=fp_record.patrec).select_related("ill").order_by("-created_at"):
+            historical_data.append({
+                "medhist_id": history.medhist_id,
+                "ill_id": history.ill.ill_id,
+                "illname": history.ill.illname,
+                "ill_code": history.ill.ill_code,
+                "created_at": history.created_at.isoformat() if history.created_at else None,
+                "is_current": history.medhist_id in [link.medhist_id for link in fp_medical_history_links]
+            })
 
+        complete_data["medical_history_records"] = current_medical_history_data
+        complete_data["selectedIllnessIds"] = current_selected_illness_ids
+        complete_data["historical_medical_history"] = historical_data
         # Fetch FP_Assessment_Record
         try:
             fp_physical_exam = FP_Physical_Exam.objects.select_related('vital').get(fprecord_id=fp_record)
@@ -2571,11 +2478,80 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
     logger.info(f"Created FP Record with ID: {fprecord_id} linked to patrec_id: {patrec_id}")
     print(f"DEBUG: FP Record created with ID: {fprecord_id} linked to patrec_id: {patrec_id}")
 
-    # 3. Create Medical History Records
+   # 3. Create Medical History Records (ALWAYS CREATE NEW RECORDS FOR COMPLETE HISTORY)
+    # selected_illness_ids = data.get("selectedIllnessIds", [])
+    # custom_disability_details = data.get("customDisabilityDetails")
+    # print("Custom: ", custom_disability_details)
+
+    # # Handle case where selectedIllnessIds might be a comma-separated string
+    # if isinstance(selected_illness_ids, str):
+    #     try:
+    #         selected_illness_ids = [int(id_str.strip()) for id_str in selected_illness_ids.split(',') if id_str.strip()]
+    #     except ValueError:
+    #         selected_illness_ids = []
+    #         logger.warning("Failed to parse selectedIllnessIds as comma-separated integers")
+
+    # print("Selected illness IDs for this visit:", selected_illness_ids)
+
+    # # Handle custom disability
+    # if custom_disability_details:
+    #     custom_illness_description = f"User-specified disability: {custom_disability_details}"
+    #     custom_illness_instance = get_or_create_illness(
+    #         illname=custom_disability_details,
+    #         ill_description=custom_illness_description,
+    #         ill_code_prefix="FP"
+    #     )
+    #     if custom_illness_instance.ill_id not in selected_illness_ids:
+    #         selected_illness_ids.append(custom_illness_instance.ill_id)
+    #     logger.info(f"Handled custom disability: {custom_illness_instance.illname}")
+
+    # current_patient_record = PatientRecord.objects.get(patrec_id=fp_record_data["patrec"])
+
+    # # Get previous medical history for comparison
+    # previous_medical_histories = MedicalHistory.objects.filter(
+    #     patrec=current_patient_record
+    # ).order_by('-created_at')
+
+    # previous_illness_ids = set()
+    # for history in previous_medical_histories:
+    #     if history.ill_id not in previous_illness_ids:
+    #         previous_illness_ids.add(history.ill_id)
+
+    # # ALWAYS CREATE NEW RECORDS FOR ALL SELECTED ILLNESSES IN THIS VISIT
+    # for illness_id in selected_illness_ids:
+    #     illness_instance = get_object_or_404(Illness, ill_id=illness_id)
+    #     MedicalHistory.objects.create(
+    #         ill=illness_instance,
+    #         patrec=current_patient_record
+    #     )
+    #     logger.info(f"Created MedicalHistory record for illness ID: {illness_id}")
+
+    # # Log changes for tracking
+    # current_illness_set = set(selected_illness_ids)
+    # newly_added = current_illness_set - previous_illness_ids
+    # removed = previous_illness_ids - current_illness_set
+    # unchanged = current_illness_set.intersection(previous_illness_ids)
+
+    # logger.info(f"Medical History Changes - Added: {len(newly_added)}, Removed: {len(removed)}, Unchanged: {len(unchanged)}")
+    # if newly_added:
+    #     logger.info(f"Newly added illnesses: {newly_added}")
+    # if removed:
+    #     logger.info(f"Removed illnesses: {removed}")
+
+    current_fp_record = fp_record_instance
+    current_patient_record = patient_record_instance
+
+    # 3. Handle illnesses + snapshots
     selected_illness_ids = data.get("selectedIllnessIds", [])
     custom_disability_details = data.get("customDisabilityDetails")
-    print("Custom: ",custom_disability_details)
-    
+
+    if isinstance(selected_illness_ids, str):
+        try:
+            selected_illness_ids = [int(i.strip()) for i in selected_illness_ids.split(',') if i.strip()]
+        except ValueError:
+            selected_illness_ids = []
+            logger.warning("Failed to parse selectedIllnessIds as comma-separated integers")
+
     if custom_disability_details:
         custom_illness_description = f"User-specified disability: {custom_disability_details}"
         custom_illness_instance = get_or_create_illness(
@@ -2585,45 +2561,41 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
         )
         if custom_illness_instance.ill_id not in selected_illness_ids:
             selected_illness_ids.append(custom_illness_instance.ill_id)
-        logger.info(f"Handled custom disability: {custom_illness_instance.illname}")
 
-    current_patient_record = PatientRecord.objects.get(patrec_id=fp_record_data["patrec"])
+    existing_snapshot_medhist_ids = FP_MedicalHistory.objects.filter(
+        fprecord=current_fp_record
+    ).values_list("medhist_id", flat=True)
 
-    # Get current illnesses to compare with new selection
-    current_medical_histories = MedicalHistory.objects.filter(
-        patrec=current_patient_record
-    ).order_by('-created_at')
+    current_illness_set = set(
+        MedicalHistory.objects.filter(medhist_id__in=existing_snapshot_medhist_ids)
+        .values_list("ill_id", flat=True)
+    )
 
-    current_illness_ids = set()
-    for history in current_medical_histories:
-        if history.ill_id not in current_illness_ids:
-            current_illness_ids.add(history.ill_id)
-
-    # Convert to sets for comparison
-    current_illness_set = set(current_illness_ids)
     new_illness_set = set(selected_illness_ids)
 
-    # Create records only for NEWLY selected illnesses
     newly_selected = new_illness_set - current_illness_set
     removed_illnesses = current_illness_set - new_illness_set
 
+    for illness_id in newly_selected:
+        illness_instance = get_object_or_404(Illness, ill_id=illness_id)
+        medhist = MedicalHistory.objects.create(
+            ill=illness_instance,
+            patrec=current_patient_record
+        )
+        FP_MedicalHistory.objects.create(
+            fprecord=current_fp_record,
+            medhist=medhist
+        )
+
+    logger.info(f"Medical History Changes for FP Record {current_fp_record.fprecord_id} - Added: {len(newly_selected)}, Removed: {len(removed_illnesses)}")
     if newly_selected:
-        for illness_id in newly_selected:
-            illness_instance = get_object_or_404(Illness, ill_id=illness_id)
-            MedicalHistory.objects.create(
-                ill=illness_instance,
-                patrec=current_patient_record
-            )
-        logger.info(f"Created {len(newly_selected)} new MedicalHistory records.")
-
-    # For removed illnesses, we don't create new records (they remain in history)
+        logger.info(f"New illnesses added: {newly_selected}")
     if removed_illnesses:
-        logger.info(f"Removed {len(removed_illnesses)} illnesses from current selection: {removed_illnesses}")
+        logger.info(f"Removed illnesses: {removed_illnesses}")
 
-    # If no changes, log it
-    if not newly_selected and not removed_illnesses:
-        logger.info("No changes to medical history.")
-        
+    # return fp_record_instance
+
+
     # 4. Create FP Type
     fp_type_data = {
         "fpt_client_type": data.get("typeOfClient") or "New Acceptor",
@@ -2793,45 +2765,38 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
     risk_vaw_serializer.save()
     logger.info("Created FP_RiskVaw.")
 
-    # 9. Handle Body Measurement (Update or Create)
+    # 9. Handle Body Measurement (ALWAYS CREATE NEW RECORD FOR HISTORY)
     bm_id = None
     current_weight = data.get("weight")
     current_height = data.get("height")
 
-    existing_bm = BodyMeasurement.objects.filter(patrec=patient_record_instance).order_by('-created_at').first()
+    # Always create a new BodyMeasurement record for historical tracking
+    bm_data = {
+        "weight": float(current_weight) if current_weight is not None else 0,
+        "height": float(current_height) if current_height is not None else 0,
+        "age": data.get("age") or 0,
+        "patrec": patrec_id,
+        "pat": patient_record_instance.pat_id.pat_id,
+    }
 
-    if existing_bm:
-        weight_changed = current_weight is not None and float(current_weight) != existing_bm.weight
-        height_changed = current_height is not None and float(current_height) != existing_bm.height
+    print("BM data: ", bm_data)
+    bm_serializer = BodyMeasurementSerializer(data=bm_data)
+    bm_serializer.is_valid(raise_exception=True)
+    new_bm = bm_serializer.save()
+    bm_id = new_bm.bm_id
 
-        if weight_changed or height_changed:
-            bm_data = {
-                "weight": float(current_weight) if current_weight is not None else existing_bm.weight,
-                "height": float(current_height) if current_height is not None else existing_bm.height,
-                "age": data.get("age") or 0,
-                "patrec": existing_bm.patrec.patrec_id if existing_bm.patrec else None,
-            }
-            bm_serializer = BodyMeasurementSerializer(instance=existing_bm, data=bm_data, partial=True)
-            bm_serializer.is_valid(raise_exception=True)
-            updated_bm = bm_serializer.save()
-            bm_id = updated_bm.bm_id
-            logger.info(f"Updated existing BodyMeasurement with ID: {bm_id}")
-        else:
-            bm_id = existing_bm.bm_id
-            logger.info(f"Reusing existing BodyMeasurement with ID: {bm_id} (no changes)")
+    # Get previous measurement for comparison logging
+    previous_bm = BodyMeasurement.objects.filter(
+        patrec=patient_record_instance
+    ).exclude(bm_id=bm_id).order_by('-created_at').first()
+
+    if previous_bm:
+        weight_change = float(current_weight) - float(previous_bm.weight) if current_weight is not None else 0
+        height_change = float(current_height) - float(previous_bm.height) if current_height is not None else 0
+        logger.info(f"Created new BodyMeasurement with ID: {bm_id}. Previous: W={previous_bm.weight}, H={previous_bm.height}. Change: W={weight_change}, H={height_change}")
     else:
-        bm_data = {
-            "weight": float(current_weight) if current_weight is not None else 0,
-            "height": float(current_height) if current_height is not None else 0,
-            "age": data.get("age") or 0,
-            "patrec": patrec_id,
-        }
-        bm_serializer = BodyMeasurementSerializer(data=bm_data)
-        bm_serializer.is_valid(raise_exception=True)
-        new_bm = bm_serializer.save()
-        bm_id = new_bm.bm_id
-        logger.info(f"Created new BodyMeasurement with ID: {bm_id}")
-
+        logger.info(f"Created first BodyMeasurement with ID: {bm_id}")
+    
     # 10. Create Vital Signs
     vital_bp_systolic = "N/A"
     vital_bp_diastolic = "N/A"
@@ -2966,10 +2931,15 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
         else:
             logger.info(f"No previous follow-up visit found for patrec_id: {patient_record_instance.patrec_id} to mark as completed.")
         # Create the NEW Follow-up Visit for the current record
+        date_of_follow_up = latest_record.get("dateOfFollowUp")
+        if not date_of_follow_up or date_of_follow_up == "":
+            # Set a default date or handle differently
+            date_of_follow_up = timezone.now().date()  # Or use today's date as default
+
         follow_up_data = {
-            "patrec": patrec_id, # Link to the determined patrec_id
-            "followv_date": latest_record.get("dateOfFollowUp") or None,
-            "followv_status": "pending", # New follow-up starts as pending
+            "patrec": patrec_id,
+            "followv_date": date_of_follow_up,
+            "followv_status": "pending",
             "followv_description": "Family Planning Follow up",
         }
         follow_up_serializer = FollowUpVisitSerializer(data=follow_up_data)
@@ -3094,228 +3064,213 @@ def submit_full_family_planning_form(request):
             status=status.HTTP_400_BAD_REQUEST
         )
         
-        
 @api_view(['GET'])
 def get_detailed_monthly_fp_report(request, year, month):
     try:
-        # Convert year and month to integers
-        year = int(year)
-        month = int(month)
-        print(f"Processing report for year: {year}, month: {month}")
-
-        # Validate month
-        if month < 1 or month > 12:
-            return Response({"error": "Invalid month"}, status=400)
-
-        # Calculate date ranges
-        first_day = date(year, month, 1)
-        print(f"First day of month: {first_day}")
-        # Get the first day of next month
-        if month == 12:
-            next_month_first = date(year + 1, 1, 1)
-        else:
-            next_month_first = date(year, month + 1, 1)
+        # Define month range
+        month_start = date(year, month, 1)
+        next_month = month_start + relativedelta(months=1)
+        month_end = next_month - timedelta(days=1)
         
-        last_day = next_month_first - timedelta(days=1)
-        previous_month_last = first_day - timedelta(days=1)
-        previous_month_first = date(previous_month_last.year, previous_month_last.month, 1)
-        print(f"Last day of month: {last_day}, Previous month last: {previous_month_last}")
+        # Previous month range
+        prev_month_start = month_start - relativedelta(months=1)
+        prev_month_end = month_start - timedelta(days=1)
 
-        # Define methods to match frontend keys
-        methods = [
-            "BTL", "NSV", "Condom", "POP", "COC", 
-            "DMPA", "Implant", "IUD-Interval", "IUD-Post Partum", 
-            "LAM", "BBT", "CMM", "STM", "SDM"
-        ]
-        
-        # Mapping from stored method names in DB to frontend keys
-        method_map = {
-            "BTL": "BTL",
-            "NSV": "NSV",
-            "Condom": "Condom",
-            "Pills - POP": "POP",
-            "Pills - COC": "COC",
-            "DMPA": "DMPA",
-            "Injectable": "DMPA",
-            "Implant": "Implant",
-            "IUD-I": "IUD-Interval",
-            "IUD-PP": "IUD-Post Partum",
-            "NFP-LAM": "LAM",
-            "NFP-BBT": "BBT",
-            "LAM": "LAM",
-            "NFP-CMM": "CMM",
-            "NFP-STM": "STM",
-            "NFP-SDM": "SDM",
-        }
-        print(f"Method map defined: {method_map}")
+        # Define methods and age groups
+        methods = ["BTL", "NSV", "Condom", "POP", "COC", "DMPA", "Implant", "IUD-Interval", "IUD-Post Partum", "LAM", "BBT", "CMM", "STM", "SDM"]
+        age_groups = ['10-14', '15-19', '20-49', 'Total']
 
-        age_groups = ['10-14', '15-19', '20-49']
-        
-        def initialize_counts():
-            return {method: {age: 0 for age in age_groups + ['Total']} for method in methods}
-        
-        bom_counts = initialize_counts()
-        new_counts = initialize_counts()
-        other_counts = initialize_counts()
-        drop_outs_counts = initialize_counts()
-        print(f"Initialized counts structures for methods: {list(methods)}")
+        # Initialize count dictionaries
+        bom_counts = {method: {age: 0 for age in age_groups} for method in methods}
+        new_counts = {method: {age: 0 for age in age_groups} for method in methods}
+        other_counts = {method: {age: 0 for age in age_groups} for method in methods}
+        drop_outs_counts = {method: {age: 0 for age in age_groups} for method in methods}
+        prev_month_new_counts = {method: {age: 0 for age in age_groups} for method in methods}
 
-        # Helper function to get age group
-        def get_age_group(dob, reference_date):
-            if not dob:
-                print(f"No DOB found for record")
-                return None
-            age = reference_date.year - dob.year - ((reference_date.month, reference_date.day) < (dob.month, dob.day))
-            print(f"Calculated age: {age} for DOB: {dob}, reference: {reference_date}")
-            if 10 <= age <= 14:
-                return '10-14'
-            elif 15 <= age <= 19:
-                return '15-19'
-            elif 20 <= age <= 49:
-                return '20-49'
-            print(f"Age {age} out of range 10-49")
-            return None
-        
-        # Get all FP records with correct prefetch
-        all_fp_records = FP_Record.objects.select_related('pat', 'pat__rp_id__per', 'pat__trans_id').prefetch_related(
-            Prefetch('fp_type_set', queryset=FP_type.objects.all(), to_attr='fp_type_list')
-        ).all()
-        print(f"Total FP records fetched: {all_fp_records.count()}")
+        today = date.today()
 
-        # To track active users per method: {pat_id: method}
-        active_users = {}
-        print("Initialized active_users dictionary")
+        for method in methods:
+            for age_group in age_groups:
+                # DOB annotation (handles Resident/Transient)
+                dob_annotation = Case(
+                    When(pat__pat_type='Resident', then=F('pat__rp_id__per__per_dob')),
+                    When(pat__pat_type='Transient', then=F('pat__trans_id__tran_dob')),
+                    default=None,
+                    output_field=DateField()
+                )
 
-        # Process records chronologically
-        bom_active = None
-        for record in all_fp_records.order_by('created_at'):
-            pat = record.pat
-            print(f"Processing record ID: {record.fprecord_id}, Created at: {record.created_at}")
-            # Get DOB handling both Resident and Transient
-            dob = (
-                pat.rp_id.per.per_dob if pat.pat_type == 'Resident' and pat.rp_id 
-                else pat.trans_id.tran_dob if pat.pat_type == 'Transient' and pat.trans_id 
-                else None
-            )
-            print(f"Patient ID: {pat.pat_id}, DOB: {dob}, Patient Type: {pat.pat_type}")
-
-            if not dob:
-                print(f"Skipping record {record.fprecord_id} due to missing DOB")
-                continue
-            
-            created_date = record.created_at.date()
-            print(f"Record created date: {created_date}")
-            
-            fp_type = record.fp_type_list[0] if record.fp_type_list else None
-            if not fp_type:
-                print(f"No FP type found for record {record.fprecord_id}")
-                continue
-            
-            stored_method = fp_type.fpt_method_used
-            if fp_type.fpt_other_method:
-                stored_method = fp_type.fpt_other_method
-            print(f"Stored method: {stored_method}")
-            
-            # Map to frontend method key
-            method = method_map.get(stored_method)
-            if not method:
-                print(f"No mapping found for method: {stored_method}")
-                continue  # Skip if no mapping
-            
-            client_type = fp_type.fpt_client_type
-            subtype = fp_type.fpt_subtype
-            print(f"Client type: {client_type}, Subtype: {subtype}")
-            
-            pat_id = pat.pat_id
-            
-            # Determine if this is an "Other" based on subtype
-            is_other = False
-            if client_type == 'Current User' and (subtype in ['changingmethod', 'changingclinic', 'dropoutrestart'] or not subtype):
-                is_other = True
-                client_type = 'Other'
-                print(f"Adjusted to Other due to subtype: {subtype}")
-            
-            if created_date < first_day:
-                # Before current month - update active for BOM
-                if client_type == 'Dropout':
-                    if pat_id in active_users:
-                        del active_users[pat_id]
-                        print(f"Removed dropout {pat_id} from active_users")
+                # Age filter
+                if age_group != 'Total':
+                    if age_group == '10-14':
+                        dob_gt = today - relativedelta(years=15)
+                        dob_lte = today - relativedelta(years=10)
+                    elif age_group == '15-19':
+                        dob_gt = today - relativedelta(years=20)
+                        dob_lte = today - relativedelta(years=15)
+                    elif age_group == '20-49':
+                        dob_gt = today - relativedelta(years=50)
+                        dob_lte = today - relativedelta(years=20)
+                    age_filter = Q(dob__gt=dob_gt, dob__lte=dob_lte)
                 else:
-                    active_users[pat_id] = method
-                    print(f"Added {pat_id} with method {method} to active_users")
-            else:
-                # Current month or later
-                if bom_active is None:
-                    bom_active = active_users.copy()
-                    print(f"Set bom_active with {len(bom_active)} users")
+                    age_filter = Q()
+
+                # 1. Get new acceptors from PREVIOUS month (these will be part of BOM for current month)
+                prev_month_new_query = FP_Record.objects.annotate(
+                    dob=dob_annotation,
+                    first_record_date=Min('pat__fp_records__created_at'),
+                    has_current=Exists(
+                        FP_Record.objects.filter(
+                            pat__pat_id=OuterRef('pat__pat_id'),
+                            created_at__range=(prev_month_start, prev_month_end),
+                            fp_type__fpt_client_type__iexact='currentuser'
+                        )
+                    )
+                ).filter(
+                    created_at__range=(prev_month_start, prev_month_end),
+                    fp_type__fpt_client_type__iexact='newacceptor',
+                    fp_type__fpt_method_used__iexact=method,
+                    first_record_date=F('created_at'),
+                    has_current=False
+                ).filter(
+                    age_filter
+                ).values('pat__pat_id').distinct().count()
+                prev_month_new_counts[method][age_group] = prev_month_new_query
+
+                # 2. BOM: Previous month's active users + previous month's new acceptors
+                # Get active users from before previous month (carryover)
+                bom_carryover_subquery = Subquery(
+                    FP_Record.objects.filter(
+                        pat__pat_id=OuterRef('pat__pat_id'),
+                        created_at__lt=prev_month_start
+                    ).order_by('-created_at').values('fprecord_id')[:1]
+                )
                 
-                if first_day <= created_date <= last_day:
-                    # Current month actions
-                    age_group = get_age_group(dob, created_date)
-                    if not age_group:
-                        print(f"No valid age group for record {record.fprecord_id}")
-                        continue
-                    
-                    if client_type == 'New Acceptor':
-                        new_counts[method][age_group] += 1
-                        new_counts[method]['Total'] += 1
-                        active_users[pat_id] = method
-                        print(f"Incremented new_counts for {method} in {age_group}")
-                    elif client_type == 'Other' or is_other:
-                        other_counts[method][age_group] += 1
-                        other_counts[method]['Total'] += 1
-                        active_users[pat_id] = method
-                        print(f"Incremented other_counts for {method} in {age_group}")
-                    elif client_type == 'Dropout':
-                        drop_outs_counts[method][age_group] += 1
-                        drop_outs_counts[method]['Total'] += 1
-                        if pat_id in active_users:
-                            del active_users[pat_id]
-                        print(f"Incremented drop_outs_counts for {method} in {age_group}")
-                    # If 'Current User' without subtype, do nothing (continuing, no count change)
-        
-        # If no current month records, set bom_active to active_users
-        if bom_active is None:
-            bom_active = active_users.copy()
-            print(f"No current month records, set bom_active with {len(bom_active)} users")
-        
-        # Now, count BOM using bom_active
-        for pat_id, method in bom_active.items():
-            pat = Patient.objects.get(pat_id=pat_id)
-            dob = (
-                pat.rp_id.per.per_dob if pat.pat_type == 'Resident' and pat.rp_id 
-                else pat.trans_id.tran_dob if pat.pat_type == 'Transient' and pat.trans_id 
-                else None
-            )
-            if not dob:
-                print(f"Skipping BOM count for {pat_id} due to missing DOB")
-                continue
-            age_group = get_age_group(dob, previous_month_last)
-            if age_group:
-                bom_counts[method][age_group] += 1
-                bom_counts[method]['Total'] += 1
-                print(f"Incremented bom_counts for {method} in {age_group}")
-        
-        print(f"Final bom_counts: {bom_counts}")
-        print(f"Final new_counts: {new_counts}")
-        print(f"Final other_counts: {other_counts}")
-        print(f"Final drop_outs_counts: {drop_outs_counts}")
+                bom_carryover_query = FP_Record.objects.annotate(
+                    dob=dob_annotation,
+                    latest_fp_record_id=bom_carryover_subquery
+                ).filter(
+                    fprecord_id__isnull=False,
+                    fprecord_id=F('latest_fp_record_id'),
+                    fp_type__fpt_method_used__iexact=method
+                ).filter(
+                    age_filter
+                ).annotate(
+                    has_dropout=Exists(
+                        FP_Assessment_Record.objects.filter(
+                            fprecord_id=OuterRef('fprecord_id'),
+                            followv__followv_status__iexact='dropout',
+                            followv__followv_date__lt=prev_month_start
+                        )
+                    )
+                ).filter(
+                    has_dropout=False
+                ).values('pat__pat_id').distinct().count()
+
+                # BOM = Carryover from before previous month + New acceptors from previous month
+                bom_counts[method][age_group] = bom_carryover_query + prev_month_new_query
+
+                # 3. NEW: Current month new acceptors
+                new_query = FP_Record.objects.annotate(
+                    dob=dob_annotation,
+                    first_record_date=Min('pat__fp_records__created_at'),
+                    has_current=Exists(
+                        FP_Record.objects.filter(
+                            pat__pat_id=OuterRef('pat__pat_id'),
+                            created_at__range=(month_start, month_end),
+                            fp_type__fpt_client_type__iexact='currentuser'
+                        )
+                    )
+                ).filter(
+                    created_at__range=(month_start, month_end),
+                    fp_type__fpt_client_type__iexact='newacceptor',
+                    fp_type__fpt_method_used__iexact=method,
+                    first_record_date=F('created_at'),
+                    has_current=False
+                ).filter(
+                    age_filter
+                ).values('pat__pat_id').distinct().count()
+                new_counts[method][age_group] = new_query
+
+                # 4. OTHER: Current users with previous records in current month
+                other_query = FP_Record.objects.annotate(
+                    dob=dob_annotation,
+                    first_record_date=Min('pat__fp_records__created_at')
+                ).filter(
+                    created_at__range=(month_start, month_end),
+                    fp_type__fpt_client_type__iexact='currentuser',
+                    fp_type__fpt_method_used__iexact=method,
+                    first_record_date__lt=F('created_at')
+                ).filter(
+                    age_filter
+                ).values('pat__pat_id').distinct().count()
+                other_counts[method][age_group] = other_query
+
+                # 5. DROP-OUTS: Dropouts in current month
+                dropout_query = FP_Assessment_Record.objects.annotate(
+                    dob=Case(
+                        When(fprecord__pat__pat_type='Resident', then=F('fprecord__pat__rp_id__per__per_dob')),
+                        When(fprecord__pat__pat_type='Transient', then=F('fprecord__pat__trans_id__tran_dob')),
+                        default=None,
+                        output_field=DateField()
+                    )
+                ).filter(
+                    followv__followv_status__iexact='dropout',
+                    followv__followv_date__range=(month_start, month_end),
+                    fprecord__fp_type__fpt_method_used__iexact=method
+                ).filter(
+                    age_filter
+                ).values('fprecord__pat__pat_id').distinct().count()
+                drop_outs_counts[method][age_group] = dropout_query
 
         response_data = {
-            "bom_counts": bom_counts,
-            "new_counts": new_counts,
-            "other_counts": other_counts,
-            "drop_outs_counts": drop_outs_counts,
+            'bom_counts': bom_counts,
+            'new_counts': new_counts,
+            'other_counts': other_counts,
+            'drop_outs_counts': drop_outs_counts,
+            'prev_month_new_counts': prev_month_new_counts,  # For verification
         }
-        
-        return Response(response_data, status=status.HTTP_200_OK)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        traceback.print_exc()
+        return Response({"detail": f"Error generating report: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+def get_monthly_fp_list(request):
+    try:
+        # Get distinct year-month combinations from FP_Record
+        monthly_data = FP_Record.objects.annotate(
+            year=ExtractYear('created_at'),
+            month=ExtractMonth('created_at')
+        ).values('year', 'month').distinct().order_by('-year', '-month')
+
+        response_data = []
+        for entry in monthly_data:
+            year, month = entry['year'], entry['month']
+            # Count records for the month
+            month_start = date(year, month, 1)
+            next_month = month_start + relativedelta(months=1)
+            month_end = next_month - timedelta(days=1)
+            record_count = FP_Record.objects.filter(
+                created_at__range=(month_start, month_end)
+            ).count()
+
+            response_data.append({
+                'month': f"{year}-{month:02d}",  # Format as YYYY-MM
+                'record_count': record_count,
+                'records': []  # Optionally include record IDs if needed
+            })
+
+        return Response({'data': response_data}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        traceback.print_exc()
+        return Response(
+            {"detail": f"Error fetching monthly list: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+            
 @api_view(['POST'])
 def submit_follow_up_family_planning_form(request):
     data = request.data

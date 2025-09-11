@@ -103,7 +103,7 @@ const ReferralSlip: React.FC<{ record: PatientRecordDetail }> = ({ record }) => 
                 </div>
             </div>
             <div className="flex justify-end p-4 bg-gray-100 border-t rounded-b-lg">
-                <Button onClick={handlePrint} className="text-white"><Printer size={16} className="mr-2"/>Print / Save as PDF</Button>
+                <Button onClick={handlePrint} className="text-white"><Printer size={16} className="mr-2"/>Print</Button>
             </div>
             
         </div>

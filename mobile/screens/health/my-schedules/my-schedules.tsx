@@ -298,8 +298,8 @@ export default function MyAppointmentsScreen() {
             </TouchableOpacity>
           }
           headerTitle={<Text className="text-gray-900 text-[13px]">My Appointments</Text>}
-          rightAction={ <TouchableOpacity onPress={() => setShowFilters(!showFilters)} className="p-3 bg-blue-600 rounded-2xl shadow-sm">
-              <Filter size={20} color="#FFFFFF" />
+          rightAction={ <TouchableOpacity onPress={() => setShowFilters(!showFilters)} className="p-2">
+              <Filter size={20} color="blue" />
             </TouchableOpacity>}
         >
     <View className="flex-1 bg-gray-100">

@@ -7,7 +7,8 @@ import FamilyPlanningPage from "@/pages/familyplanning/main"
 import FamilyPlanningHistoryPage from "@/pages/familyplanning/FamilyPlanningHistoryPage"
 import MultiRecordComparisonPage from "@/pages/familyplanning/ComparisonPage"
 import FamilyPlanningView2 from "@/pages/familyplanning/ViewPage2"
-import ReportPage from "@/pages/healthServices/Reports/famplanning-report/test"
+import ReportPage from "@/pages/healthServices/Reports/famplanning-report/monthly-reports"
+import MonthlyFamilyPlanningReports from "@/pages/healthServices/Reports/famplanning-report/main-page"
 
 
 export const famplanning_route = [
@@ -18,6 +19,10 @@ export const famplanning_route = [
   {
     path: "/familyplanning/monthlyreport",
     element: <ReportPage/>
+  },
+  {
+    path: "/familyplanning/report",
+    element: <MonthlyFamilyPlanningReports/>
   },
   {
     path: "/FamPlanning_table",

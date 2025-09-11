@@ -92,9 +92,20 @@ export default function FamilyPlanningForm2({
 
   // NEW: Convert the old boolean medical history to selected illness IDs
   useEffect(() => {
-    if (illnesses.length > 0 && formData.medicalHistory) {
-      const selected: number[] = []
+      if (illnesses.length > 0 && formData.medicalHistory) {
+    const selected: number[] = []
+    const medicalHistoryData = formData.medicalHistory
 
+    // First, check for any existing selected illness IDs from the backend
+    if (formData.selectedIllnessIds) {
+      const idsFromBackend = typeof formData.selectedIllnessIds === 'string' 
+        ? formData.selectedIllnessIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+        : Array.isArray(formData.selectedIllnessIds) 
+          ? formData.selectedIllnessIds 
+          : []
+      
+      selected.push(...idsFromBackend)
+    }
       // Map the old boolean fields to illness IDs
       const medicalHistoryMapping: Record<string, string> = {
         severeHeadaches: "Severe headaches / migraine",
@@ -122,7 +133,7 @@ export default function FamilyPlanningForm2({
 
       setSelectedIllnesses(selected)
     }
-  }, [illnesses, formData.medicalHistory])
+  }, [illnesses, formData.medicalHistory, formData.selectedIllnessIds])
 
   // NEW: Handle illness selection toggle
   const handleIllnessToggle = (illnessId: number, checked: boolean) => {
@@ -231,11 +242,10 @@ export default function FamilyPlanningForm2({
       }
     })
 
-    // NEW: Store selected illness IDs for later use in medical history creation
     const updatedData = {
       ...data,
       medicalHistory,
-      selectedIllnessIds: selectedIllnesses,
+      selectedIllnessIds: selectedIllnesses.join(","),
       customDisabilityDetails: data.medicalHistory?.disabilityDetails || null,
     }
 
@@ -250,7 +260,7 @@ export default function FamilyPlanningForm2({
     // NEW: Include selected illness IDs when saving
     const dataToSave = {
       ...currentValues,
-      selectedIllnessIds: selectedIllnesses,
+      selectedIllnessIds: selectedIllnesses.join(',')
     }
 
     console.log("Saving current form data:", dataToSave)
@@ -300,41 +310,7 @@ export default function FamilyPlanningForm2({
                       </div>
                     </div>
                   ))
-                  :
-                  medicalHistoryOptions.map((item) => (
-                    <FormField
-                      key={item.name}
-                      control={form.control}
-                      name={`medicalHistory.${item.name}`}
-                      render={({ field }) => (
-                        <FormItem className="flex justify-between items-center">
-                          <Label className="mt-6">■ {item.label}</Label>
-                          <div className="flex space-x-7">
-                            <div className="flex items-center space-x-2">
-                              <FormControl>
-                                <Checkbox
-                                  checked={!!field.value}
-                                  onCheckedChange={field.onChange}
-                                  disabled={isReadOnly}
-                                />
-                              </FormControl>
-                              <Label>Yes</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <FormControl>
-                                <Checkbox
-                                  checked={!field.value}
-                                  onCheckedChange={() => field.onChange(false)}
-                                  disabled={isReadOnly}
-                                />
-                              </FormControl>
-                              <Label>No</Label>
-                            </div>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  ))}
+                  :  " "}
 
                 <div className="flex justify-between items-center mb-4">
                   <Label className="flex-1">■ Others</Label>
@@ -517,7 +493,8 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Date of last delivery</Label>
                         <FormControl>
-                          <Input {...field} type="date" className="w-[150px]" readOnly={isReadOnly || !isFemale} />
+                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale} 
+                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -542,7 +519,7 @@ export default function FamilyPlanningForm2({
                           <Label>Vaginal</Label>
                           <FormControl>
                             <Checkbox
-                              checked={field.value === "Cesarean Section"} // Keep this as "Cesarean Section"
+                              checked={field.value === "Cesarean section"} // Keep this as "Cesarean Section"
                               onCheckedChange={() => field.onChange("Cesarean Section")} // Change this to "Cesarean Section"
                               disabled={isReadOnly || !isFemale}
                             />
@@ -564,7 +541,13 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Last menstrual period</Label>
                         <FormControl>
-                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale} />
+                          <Input 
+                            {...field}
+                            type="date" 
+                            className=" w-[150px]" 
+                            readOnly={isReadOnly || !isFemale}
+                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -578,7 +561,8 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Previous menstrual period</Label>
                         <FormControl>
-                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale} />
+                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale} 
+                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -685,7 +669,7 @@ export default function FamilyPlanningForm2({
                   // NEW: Include selected illness IDs when moving to next page
                   const dataToUpdate = {
                     ...currentValues,
-                    selectedIllnessIds: selectedIllnesses,
+                    selectedIllnessIds: selectedIllnesses.join(','),
                     customDisabilityDetails: currentValues.medicalHistory?.disabilityDetails || null,
                   }
                   updateFormData(dataToUpdate)

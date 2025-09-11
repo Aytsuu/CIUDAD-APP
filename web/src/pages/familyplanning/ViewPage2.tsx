@@ -1,4 +1,4 @@
-import React from "react";
+
 import { useRef } from "react"; // Import useRef
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
@@ -6,23 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getFPCompleteRecord } from "@/pages/familyplanning/request-db/GetRequest";
 import type { FormData } from "@/form-schema/FamilyPlanningSchema";
-import { Input } from "@/components/ui/input";
-// import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { useReactToPrint } from "react-to-print"; // Import ReactToPrint
-
-interface InputLineProps {
-  className?: string;
-  value: string | number | boolean | undefined;
-}
-
-const InputLine: React.FC<InputLineProps> = ({ className, value }) => (
-  <Input
-    className={cn("border-0 border-b border-black rounded-none w-full px-2 py-1 h-4", className)}
-    readOnly
-    value={value !== undefined && value !== null ? String(value) : ""}
-  />
-);
 
 const pregnancyQuestions = [
   { text: "Did you have a baby less than six (6) months ago, are you fully or nearly fully breastfeeding, and have you had no menstrual period since then?", key: "breastfeeding" },

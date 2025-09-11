@@ -45,7 +45,7 @@ const INCOME_OPTIONS = [
   { id: "higher", name: "Higher than 200,000" },
 ];
 
-const getIncomeName = (incomeId) => {
+const getIncomeName = (incomeId: any) => {
   const option = INCOME_OPTIONS.find((opt) => opt.id === incomeId);
   return option ? option.name : incomeId || 'N/A';
 };
@@ -87,71 +87,71 @@ const FamilyPlanningView: React.FC = () => {
   })
 
 
- // More precise filtering with exact condition names
-const getCustomIllnesses = () => {
-  const illnesses = [];
-  
-  // Exact names of standard conditions (as they appear in the checklist)
-  const exactStandardConditions = [
-    "severe headaches / migraine",
-    "history of stroke / heart attack / hypertension",
-    "non-traumatic hematoma / frequent bruising or gum bleeding",
-    "current or history of breast cancer / breast mass",
-    "severe chest pain",
-    "cough for more than 14 days",
-    "jaundice",
-    "unexplained vaginal bleeding",
-    "abnormal vaginal discharge",
-    "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)",
-    "Is the client a SMOKER?",
-    "With Disability?"
-  ];
+  // More precise filtering with exact condition names
+  const getCustomIllnesses = () => {
+    const illnesses = [];
 
-  // Add disability details if available and not empty
-  if (recordData.medicalHistory?.disabilityDetails && recordData.medicalHistory.disabilityDetails.trim() !== "") {
-    const disabilityDetail = recordData.medicalHistory.disabilityDetails.trim();
-    // Check if it's not an exact standard condition
-    const isExactStandard = exactStandardConditions.some(condition => 
-      condition.toLowerCase() === disabilityDetail.toLowerCase()
-    );
-    if (!isExactStandard) {
-      illnesses.push(disabilityDetail);
-    }
-  }
-  
-  // Add medical history records (filter out exact standard conditions)
-  if (recordData?.medical_history_records) {
-    recordData?.medical_history_records.forEach(record => {
-      const isExactStandard = exactStandardConditions.some(condition => 
-        condition.toLowerCase() === record.illname.toLowerCase()
+    // Exact names of standard conditions (as they appear in the checklist)
+    const exactStandardConditions = [
+      "severe headaches / migraine",
+      "history of stroke / heart attack / hypertension",
+      "non-traumatic hematoma / frequent bruising or gum bleeding",
+      "current or history of breast cancer / breast mass",
+      "severe chest pain",
+      "cough for more than 14 days",
+      "jaundice",
+      "unexplained vaginal bleeding",
+      "abnormal vaginal discharge",
+      "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)",
+      "Is the client a SMOKER?",
+      "With Disability?"
+    ];
+
+    // Add disability details if available and not empty
+    if (recordData.medicalHistory?.disabilityDetails && recordData.medicalHistory.disabilityDetails.trim() !== "") {
+      const disabilityDetail = recordData.medicalHistory.disabilityDetails.trim();
+      // Check if it's not an exact standard condition
+      const isExactStandard = exactStandardConditions.some(condition =>
+        condition.toLowerCase() === disabilityDetail.toLowerCase()
       );
       if (!isExactStandard) {
-        illnesses.push(record.illname);
+        illnesses.push(disabilityDetail);
       }
-    });
-  }
-  
-  // Add historical medical records (filter out exact standard conditions)
-  if (recordData?.historical_medical_history) {
-    recordData?.historical_medical_history
-      .filter(record => record.is_current)
-      .forEach(record => {
-        const isExactStandard = exactStandardConditions.some(condition => 
+    }
+
+    // Add medical history records (filter out exact standard conditions)
+    if (recordData?.medical_history_records) {
+      recordData?.medical_history_records.forEach(record => {
+        const isExactStandard = exactStandardConditions.some(condition =>
           condition.toLowerCase() === record.illname.toLowerCase()
         );
         if (!isExactStandard) {
           illnesses.push(record.illname);
         }
       });
-  }
-  
-  return illnesses;
-};
+    }
 
-// Helper function to check if custom illnesses exist
-const hasCustomIllnesses = () => {
-  return getCustomIllnesses().length > 0;
-};
+    // Add historical medical records (filter out exact standard conditions)
+    // if (recordData?.historical_medical_history) {
+    //   recordData?.historical_medical_history
+    //     .filter(record => record.is_current)
+    //     .forEach(record => {
+    //       const isExactStandard = exactStandardConditions.some(condition =>
+    //         condition.toLowerCase() === record.illname.toLowerCase()
+    //       );
+    //       if (!isExactStandard) {
+    //         illnesses.push(record.illname);
+    //       }
+    //     });
+    // }
+
+    return illnesses;
+  };
+
+  // Helper function to check if custom illnesses exist
+  const hasCustomIllnesses = () => {
+    return getCustomIllnesses().length > 0;
+  };
 
   if (isLoading) {
     return <div className="text-center py-8">Loading record details...</div>
@@ -359,7 +359,7 @@ const hasCustomIllnesses = () => {
               <InputLine className="col-span-4" value={recordData.typeOfClient} />
               {recordData.typeOfClient === "Current User" && (
                 <>
-                  <Label className=" col-span-2 mt-0">Sub Type of Client:</Label>
+                  <Label className=" col-span-2 mt-0">Subtype of Client:</Label>
                   <InputLine className="col-span-4" value={recordData.subTypeOfClient} />
                 </>
               )}
@@ -394,52 +394,72 @@ const hasCustomIllnesses = () => {
             <div className="w-1/2 border-r border-black">
               {/* Medical History */}
               <div className="p-1">
-  <Label className=" text-xs block ">I. MEDICAL HISTORY</Label>
-  <div className="text-xs">
-    <div>Does the client have any of the following?</div>
-    {[
-      { label: "severe headaches / migraine", key: "severeHeadaches" },
-      { label: "history of stroke / heart attack / hypertension", key: "strokeHeartAttackHypertension" },
-      { label: "non-traumatic hematoma / frequent bruising or gum bleeding", key: "hematomaBruisingBleeding" },
-      { label: "current or history of breast cancer / breast mass", key: "breastCancerHistory" },
-      { label: "severe chest pain", key: "severeChestPain" },
-      { label: "cough for more than 14 days", key: "cough" },
-      { label: "jaundice", key: "jaundice" },
-      { label: "unexplained vaginal bleeding", key: "unexplainedVaginalBleeding" },
-      { label: "abnormal vaginal discharge", key: "abnormalVaginalDischarge" },
-      { label: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)", key: "phenobarbitalOrRifampicin" },
-      { label: "Is the client a SMOKER?", key: "smoker" },
-      { label: "With Disability?", key: "disability" },
-    ].map((item, index) => (
-      <div key={index} className="flex justify-between items-center py-0.5">
-        <span>• {item.label}</span>
-        <div className="flex gap-1">
-          <YesNoCheckbox
-            label="Yes"
-            checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === true}
-          />
-          <YesNoCheckbox
-            label="No"
-            checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === false}
-          />
-        </div>
-      </div>
-    ))}
-    
-    {/* Display custom illnesses in a single input line below the disability checkbox */}
-    {hasCustomIllnesses() && (
-      <div className=" mt-1">
-        <div className="flex items-center gap-1">
-          <p className="italic text-xs">Specify other illness/disability:</p>
-          <InputLine 
-            className="flex-1 h-4" 
-            value={getCustomIllnesses().join(', ')} 
-          />
-        </div>
-      </div>
-    )}
-  </div>
-</div>
+                <Label className="text-xs block">I. MEDICAL HISTORY</Label>
+                <div className="text-xs">
+                  <div>Does the client have any of the following?</div>
+                  {[
+                    { label: "severe headaches / migraine", key: "severeHeadaches" },
+                    { label: "history of stroke / heart attack / hypertension", key: "strokeHeartAttackHypertension" },
+                    { label: "non-traumatic hematoma / frequent bruising or gum bleeding", key: "hematomaBruisingBleeding" },
+                    { label: "current or history of breast cancer / breast mass", key: "breastCancerHistory" },
+                    { label: "severe chest pain", key: "severeChestPain" },
+                    { label: "cough for more than 14 days", key: "cough" },
+                    { label: "jaundice", key: "jaundice" },
+                    { label: "unexplained vaginal bleeding", key: "unexplainedVaginalBleeding" },
+                    { label: "abnormal vaginal discharge", key: "abnormalVaginalDischarge" },
+                    { label: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)", key: "phenobarbitalOrRifampicin" },
+                    { label: "Is the client a SMOKER?", key: "smoker" },
+                  ].map((item, index) => (
+                    <div key={index} className="flex justify-between items-center py-0.5">
+                      <span>• {item.label}</span>
+                      <div className="flex gap-1">
+                        <YesNoCheckbox
+                          label="Yes"
+                          checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === true}
+                        />
+                        <YesNoCheckbox
+                          label="No"
+                          checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === false}
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* With Disability checkbox - automatically checked if custom illnesses exist */}
+                  <div className="flex justify-between items-center py-0.5">
+                    <span>• With Disability?</span>
+                    <div className="flex gap-1">
+                      <YesNoCheckbox
+                        label="Yes"
+                        checked={
+                          recordData.medicalHistory?.disability === true ||
+                          hasCustomIllnesses()
+                        }
+                      />
+                      <YesNoCheckbox
+                        label="No"
+                        checked={
+                          recordData.medicalHistory?.disability === false &&
+                          !hasCustomIllnesses()
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Display custom illnesses in a single input line below the disability checkbox */}
+                  {(hasCustomIllnesses()) && (
+                    <div className="mt-1">
+                      <div className="flex items-center gap-1">
+                        <p className="italic text-xs">If YES, please specify:</p>
+                        <InputLine
+                          className="flex-1 h-4"
+                          value={getCustomIllnesses().join(', ')}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Obstetrical History */}
               <div className="border-t border-black p-1">

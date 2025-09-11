@@ -119,7 +119,7 @@ export default function AdministrationRecords() {
                   Sitio
                 </Button>}
                 title="Sitio"
-                description="List of Sitio in Barangay San Roque (Ciudad)"
+                description="List of Sitio in Barangay San Roque (CIUDAD)"
                 mainContent={<SitioManagement/>}
               />
 

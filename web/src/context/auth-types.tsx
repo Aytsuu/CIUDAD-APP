@@ -3,7 +3,7 @@ export type UserPosition =
   | "medical_officer"
   | "treasurer"
   | "clerk"
-  | "admin"
+  | "Admin"
   | "supervisor"
   | "tanod"
   | "Emergency Response Head"
@@ -11,7 +11,6 @@ export type UserPosition =
 
 export interface User {
   acc_id?: string;
-  supabase_id: string;
   username: string;
   email: string;
   profile_image?: string | null;
@@ -40,8 +39,8 @@ export interface AuthContextType {
   otpSent: boolean;
   email: string | null;
   // // New Google methods
-  loginWithGoogle: () => Promise<void>;
-  handleGoogleCallback: () => Promise<void>;
+  // loginWithGoogle: () => Promise<void>;
+  // handleGoogleCallback: () => Promise<void>;
 }
 
 // Notification types
