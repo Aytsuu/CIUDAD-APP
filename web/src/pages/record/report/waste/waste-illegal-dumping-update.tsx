@@ -4,6 +4,8 @@ import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { useState } from "react";
 import { useUpdateWasteReport } from "./queries/waste-ReportUpdateQueries";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+
 
 interface WasteReportResolvedProps{
     rep_id: number
@@ -12,6 +14,7 @@ interface WasteReportResolvedProps{
 }
 
 function WasteReportResolved( { rep_id, is_resolve, onSuccess  }: WasteReportResolvedProps){
+    const { user } = useAuth();    
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
 
@@ -31,7 +34,8 @@ function WasteReportResolved( { rep_id, is_resolve, onSuccess  }: WasteReportRes
         // Prepare the update data
         const updateData = {
             rep_status: "resolved",
-            files: files
+            files: files,
+            staff_id: user?.staff?.staff_id
         };
         
         updateRep(updateData);
