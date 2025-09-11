@@ -8,15 +8,15 @@ from django.utils import timezone
 
 class Account(AbstractUser):
     acc_id = models.AutoField(primary_key=True, verbose_name='Account ID')
-    email = models.EmailField(unique=True,blank=False,null=True, verbose_name='Email Address' )    
+    email = models.EmailField(unique=True,blank=True,null=True, verbose_name='Email Address' )    
     username = models.CharField(max_length=100,unique=True,blank=True,null=True,validators=[MinLengthValidator(3)])
     profile_image = models.URLField( max_length=500,blank=True, null=True,default='https://isxckceeyjcwvjipndfd.supabase.co/storage/v1/object/public/userimage//sanRoqueLogo.svg')
-    phone = models.CharField(max_length=15, unique=True, blank=True, null=False, verbose_name='Phone Number' )
+    phone = models.CharField(max_length=11, unique=True, blank=True, null=False, verbose_name='Phone Number' )
     
     rp = models.OneToOneField("profiling.ResidentProfile", on_delete=models.CASCADE,null=True,related_name="account")
     br = models.OneToOneField("profiling.BusinessRespondent",on_delete=models.CASCADE,null=True,related_name="business_account")
 
-    USERNAME_FIELD = 'email' # Use email to log in
+    USERNAME_FIELD = 'phone' # Use email to log in
     REQUIRED_FIELDS = [] # Username is still required
     
     class Meta:

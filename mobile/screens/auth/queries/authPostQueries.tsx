@@ -72,6 +72,7 @@ export const useAddBusinessRespondent = () => {
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       try {
+        console.log(data)
         const res = await api.post('profiling/business/respondent/create/', data);
         return res.data;
       } catch (err ) {

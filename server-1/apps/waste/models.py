@@ -176,6 +176,14 @@ class WasteTruck(models.Model):
     )
     truck_last_maint = models.DateField(default=date.today)
     truck_is_archive = models.BooleanField(default=False) 
+    
+    staff = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = 'truck'

@@ -18,8 +18,10 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { TruckStatus, TruckData } from "./waste-personnel-types";
+import { useAuth } from "@/context/AuthContext";
 
 const TruckManagement = () => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [truckViewMode, setTruckViewMode] = useState<"active" | "archive">("active");
   const [currentTruck, setCurrentTruck] = useState<TruckData | null>(null);
@@ -40,6 +42,7 @@ const TruckManagement = () => {
       truck_capacity: "",
       truck_status: "Operational",
       truck_last_maint: new Date().toISOString().split("T")[0],
+      staff: user?.staff?.staff_id || "00001250909",
     },
   });
 
@@ -59,6 +62,7 @@ const TruckManagement = () => {
     const parsedValues = {
       ...values,
       truck_capacity: String(values.truck_capacity).replace(/,/g, ""),
+      staff: user?.staff?.staff_id || "00001250909",
     };
 
     if (currentTruck) {

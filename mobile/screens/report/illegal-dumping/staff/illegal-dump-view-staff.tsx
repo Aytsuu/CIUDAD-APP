@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { View, Text, Image, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { X } from "lucide-react-native";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
