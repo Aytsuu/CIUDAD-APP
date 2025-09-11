@@ -28,7 +28,7 @@ import { waste_router } from './waste-router';
 // import { vaccination } from './vaccination';
 // import { childHealthServices } from './childHealthServices';
 import { gad_router } from './gad-router';
-import { bites_route } from './AnimalBite-router';
+// import { bites_route } from './AnimalBite-router';
 import { announcement_route } from './Announcement-router';
 // import { famplanning_route } from './FamilyPlanning-router';
 // import { doctorRouting } from './doctor-router';
@@ -73,7 +73,7 @@ export const main_router: RouteObject[] = [
       // ...vaccination,
       // ...childHealthServices,
       ...gad_router,
-      ...bites_route,
+      // ...bites_route,
       ...announcement_route,
       // ...famplanning_route,
       // ...healthinventory,
