@@ -206,6 +206,14 @@ class Invoice(models.Model):
         blank=True,
         related_name='treasurer_invoices' 
     )
+    cr_id = models.ForeignKey(
+        'clerk.ClerkCertificate',
+        on_delete=models.CASCADE, 
+        db_column='cr_id',
+        null=True,
+        blank=True,
+        related_name='treasurer_invoices' 
+    )
     # sr_id = FK sad siya
 
     class Meta:

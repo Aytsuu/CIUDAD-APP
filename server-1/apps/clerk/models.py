@@ -60,7 +60,6 @@ class NonResidentCertificateRequest(models.Model):
 class IssuedCertificate(models.Model):
     ic_id = models.BigAutoField(primary_key=True)
     ic_date_of_issuance = models.DateField()
-    ic_file = models.TextField(null=True, blank=True)
     certificate = models.ForeignKey(ClerkCertificate, on_delete=models.CASCADE, db_column='cr_id', null=True, blank = True)
     nonresidentcert = models.ForeignKey(NonResidentCertificateRequest, on_delete=models.CASCADE, db_column='nrc_id', null = True, blank = True)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
