@@ -2,9 +2,9 @@ import { z } from "zod";
 import { usePositions } from "@/pages/record/administration/queries/administrationFetchQueries";
 
 export const useValidatePosition = () => {
-  const { data: positions } = usePositions();
+  const { data: positions } = usePositions('Barangay Position');
 
-  const isPositionUnique = (title: string) => {
+  const isPositionUnique = (title: string) => { 
     if (!positions) false;
     return positions.some((position: any) => position.pos_title === title);
   };
