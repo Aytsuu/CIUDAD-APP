@@ -300,15 +300,11 @@
 import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Search, FileInput, CircleAlert } from 'lucide-react';
-import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
+import { ArrowUpDown, Search } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useIncomeExpense, type IncomeExpense } from "../queries/treasurerIncomeExpenseFetchQueries";
 import { useExpenseLog, type ExpenseLog} from "../queries/treasurerIncomeExpenseFetchQueries";
 import { useLocation } from "react-router-dom";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";

@@ -309,6 +309,14 @@ class Pickup_Request_Decision(models.Model):
         on_delete=models.CASCADE,
         db_column='garb_id' 
     )
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
+    
 
     class Meta:
         db_table = 'pickup_request_decision'
@@ -332,7 +340,6 @@ class Pickup_Assignment(models.Model):
         on_delete=models.CASCADE,
         db_column='garb_id' 
     )
-
     class Meta:
         db_table = 'pickup_assignment'
 

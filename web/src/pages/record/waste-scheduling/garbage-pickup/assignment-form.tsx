@@ -21,7 +21,7 @@ function AcceptPickupRequest({garb_id, pref_date, pref_time, onSuccess}: {
     onSuccess?: () => void;
 }){
     const {user} = useAuth();
-    const { mutate: addAssignmentAndCollectors} = useAddPickupAssignmentandCollectors(onSuccess)
+    const { mutate: addAssignmentAndCollectors, isPending} = useAddPickupAssignmentandCollectors(onSuccess)
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetTrucks();
     const { data: collectors = [], isLoading: isLoadingCollectors } = useGetCollectors();
@@ -119,7 +119,9 @@ function AcceptPickupRequest({garb_id, pref_date, pref_time, onSuccess}: {
                     />
 
                     <div className="flex justify-end mt-[20px]">
-                        <Button type="submit">Confirm</Button>  
+                        <Button type="submit" disabled={isPending}>
+                            {isPending? 'Submitting...' : 'Submit'}
+                        </Button>  
                     </div>
                 </form>
             </Form>

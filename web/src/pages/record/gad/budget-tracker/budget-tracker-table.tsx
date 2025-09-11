@@ -425,7 +425,7 @@ function BudgetTracker() {
       <div className="flex flex-row gap-5 mb-5 flex-wrap">
         <div className="flex flex-row gap-2">
           <Label className="w-35 text-md">Whole Year Budget:</Label>
-          <Label className="text-blue text-md font-bold">
+          <Label className="text-[#2563EB] text-md font-bold">
             Php {formattedBudget}
           </Label>
         </div>
