@@ -163,17 +163,6 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
     ),
   },
   {
-    accessorKey: "comp_status",
-    header: "Status",
-    cell: ({ row }) => {
-      return (
-        <div>
-          <Badge className=""></Badge>
-        </div>
-      );
-    },
-  },
-  {
     accessorKey: "actions",
     header: "Action",
     cell: ({ row }) => {
