@@ -1,23 +1,33 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/api/api";
 import {
+  getAnnouncementRequest,
+  getAnnouncementRecipientRequest,
   postAnnouncement,
   postAnnouncementRecipient,
   postAnnouncementFile,
+  deleteAnnouncement,
 } from "./restful-api";
 
+// Fetch all announcements
 export const useGetAnnouncement = () => {
   return useQuery({
     queryKey: ["announcements"],
-    queryFn: async () => {
-      const response = await api.get("announcement/list/");
-      const data = response.data?.data ?? response.data ?? [];
-      return Array.isArray(data) ? data : [];
-    },
+    queryFn: getAnnouncementRequest,
     staleTime: 1000 * 60 * 5,
   });
 };
 
+// Fetch recipients for a given announcement
+export const useGetAnnouncementRecipient = (ann_id: number) => {
+  return useQuery({
+    queryKey: ["announcementRecipients", ann_id],
+    queryFn: () => getAnnouncementRecipientRequest(ann_id),
+    enabled: !!ann_id,
+    staleTime: 5000,
+  });
+};
+
+// Create new announcement
 export const usePostAnnouncement = () => {
   const queryClient = useQueryClient();
 
@@ -32,13 +42,19 @@ export const usePostAnnouncement = () => {
   });
 };
 
+// Add recipients (bulk)
 export const usePostAnnouncementRecipient = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (values: any) => postAnnouncementRecipient(values),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["announcement_recipients"] });
+    mutationFn: (recipients: Record<string, any>[]) =>
+      postAnnouncementRecipient({ recipients }),
+    onSuccess: (_, variables) => {
+      if (variables.length && variables[0].ann_id) {
+        queryClient.invalidateQueries({
+          queryKey: ["announcementRecipients", variables[0].ann_id],
+        });
+      }
     },
     onError: (err) => {
       console.error("Error submitting recipient:", err);
@@ -46,13 +62,18 @@ export const usePostAnnouncementRecipient = () => {
   });
 };
 
+// Upload files
 export const usePostAnnouncementFile = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (files: Record<string, any>[]) => postAnnouncementFile(files),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["announcement_files"] });
+    onSuccess: (_, variables) => {
+      if (variables.length && variables[0].ann_id) {
+        queryClient.invalidateQueries({
+          queryKey: ["announcementFiles", variables[0].ann_id],
+        });
+      }
     },
     onError: (err) => {
       console.error("Error uploading files:", err);
@@ -60,14 +81,12 @@ export const usePostAnnouncementFile = () => {
   });
 };
 
+// Delete announcement
 export const useDeleteAnnouncement = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (ann_id: string) => {
-      const res = await api.delete(`announcement/announcements/${ann_id}/`);
-      return res.data;
-    },
+    mutationFn: (ann_id: string) => deleteAnnouncement(ann_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
     },
