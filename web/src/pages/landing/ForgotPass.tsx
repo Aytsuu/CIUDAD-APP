@@ -104,7 +104,7 @@ export default function ForgotPassword() {
     }
   };
 
-  const handleResetPassword = async (data: ResetPasswordFormData) => {
+  const handleResetPassword = async () => {
     setLoading(true);
     setErrorMessage("");
     try {

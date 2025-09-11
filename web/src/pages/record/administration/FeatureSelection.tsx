@@ -243,6 +243,7 @@ export default function FeatureSelection({
                                   handleSelectAllInCategory(categoryFeatures, !isAllSelected)
                                 }}
                                 variant={isAllSelected ? "destructive" : ""}
+                                actionLabel="Confirm"
                               />
                             )}
                           </div>

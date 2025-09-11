@@ -97,6 +97,7 @@ export default function SitioManagement() {
                 description="Are you sure you want to delete this sitio? Once confirmed, it cannot be undone."
                 variant="destructive"
                 onClick={() => remove(sitio.sitio_id)}
+                actionLabel="Confirm"
               />
             )}
           </div>

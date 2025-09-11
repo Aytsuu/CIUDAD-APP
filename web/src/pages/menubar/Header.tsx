@@ -1,6 +1,6 @@
 import ciudadLogo from "@/assets/images/ciudad_logo.svg"
 import AccountProfile from "./navItems/user/accountProfile";
-import { NotificationBell } from "./navItems/notification/notification_bell";
+// import { NotificationBell } from "./navItems/notification/notification_bell";
 import { useNavigate } from "react-router";
 
 export function Header() {
@@ -20,7 +20,7 @@ export function Header() {
         
 
         <div className="flex items-center space-x-4">
-          <NotificationBell />
+          {/* <NotificationBell /> */}
           <AccountProfile />
         </div>
       </header>

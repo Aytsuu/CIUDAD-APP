@@ -12,8 +12,8 @@ import { CouncilEventsSidebar } from "@/components/analytics/council/ce-event-si
 import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
 import { WastePersonnelCards } from "@/components/analytics/waste/wastepersonnel-analytics-queries";
 import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report";
-import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
-import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/icome-quartertly-report";
+// import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
+// import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/icome-quartertly-report";
 import { GargbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { WasteActivitySidebar } from "@/components/analytics/waste/waste-activities-sidebar";
 
@@ -39,12 +39,12 @@ export default function Dashboard() {
             <StaffAttendanceRankingChart />
             <GADQuarterlyBudgetChart />
           </div>
-          <div className="grid">
+          {/* <div className="grid">
             <IncomeExpenseQuarterlyChart />
           </div>
           <div className="grid">
             <IncomeQuarterlyChart />
-          </div>
+          </div> */}
         </div>
         <div className="grid gap-2">
           <ProfilingSidebar />

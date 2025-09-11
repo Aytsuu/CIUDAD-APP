@@ -99,7 +99,6 @@ const barangayItems: BaseMenuItem[] = [
   },
   {
     title: "Certificate and Clearances",
-    subItems: true,
     url: "/",
     items: [
       { title: "Certifications", url: "record/clearances/certification" },
@@ -374,7 +373,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
   );
 };
 
-export function AppSidebar({ assignedFeatures }: { assignedFeatures?: any }) {
+export function AppSidebar() {
   const { user } = useAuth();
   const [activeItem, setActiveItem] = useState<string>("");
 

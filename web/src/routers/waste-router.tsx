@@ -1,5 +1,5 @@
 import WasteIllegalDumping from "@/pages/record/report/waste/waste-illegal-dumping";
-import WasteMainScheduling from "@/pages/record/waste-scheduling/waste-main-sched-page";
+// import WasteMainScheduling from "@/pages/record/waste-scheduling/waste-main-sched-page";
 import WastePersonnel from "@/pages/record/waste-scheduling/waste-personnel/waste-personnel-truck";
 import GarbagePickupRequestMain from "@/pages/record/waste-scheduling/garbage-pickup/garbage-pickup-request-main";
 
@@ -7,7 +7,7 @@ import GarbagePickupRequestMain from "@/pages/record/waste-scheduling/garbage-pi
 export const waste_router = [
     {
       path: '/waste-calendar-scheduling',
-      element: <WasteMainScheduling/>
+      // element: <WasteMainScheduling/>
     },
     {
       path: '/waste-illegaldumping-report',
