@@ -37,6 +37,7 @@ export default function CompletedTable() {
       ${request.conf_staff_conf_date}
       ${request.conf_resident_conf_date}
       ${request.sitio_name}
+      ${request.staff_name}
     `.toLowerCase().includes(searchQuery.toLowerCase())
     
     return matchesSitio && matchesSearch && request.conf_staff_conf === true
@@ -254,7 +255,7 @@ export default function CompletedTable() {
                             {request.conf_staff_conf_date && ` (${formatTimestamp(request.conf_staff_conf_date)})`}
                           </p>
                         </div>
-                         <div>
+                        <div>
                           <p className="text-xs text-gray-500 uppercase tracking-wide">Resident</p>
                           <p
                             className={`text-xs font-medium mt-0.5 ${request.conf_resident_conf ? "text-green-600" : "text-red-600"}`}
@@ -264,6 +265,14 @@ export default function CompletedTable() {
                               ` (${formatTimestamp(request.conf_resident_conf_date)})`}
                           </p>
                         </div>
+                        {request.staff_name && (
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Accepted & Assigned By</p>
+                            <p className="text-xs font-medium text-gray-900 mt-0.5">
+                              {request.staff_name}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
 

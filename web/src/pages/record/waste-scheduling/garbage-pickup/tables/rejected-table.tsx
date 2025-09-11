@@ -30,6 +30,7 @@ export default function RejectedTable() {
       ${request.dec_reason}
       ${request.dec_date}
       ${request.sitio_name}
+      ${request.staff_name}
     `.toLowerCase().includes(searchQuery.toLowerCase())
     
     return matchesSitio && matchesSearch
@@ -182,6 +183,12 @@ export default function RejectedTable() {
                           <p className="text-xs text-gray-500 uppercase tracking-wide">Date Rejected</p>
                           <p className="text-xs font-medium text-gray-900 mt-0.5">
                             {formatTimestamp(request.dec_date || "")}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Rejected By</p>
+                          <p className="text-xs font-medium text-gray-900 mt-0.5">
+                            {request.staff_name}
                           </p>
                         </div>
                       </div>
