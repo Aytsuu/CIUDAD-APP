@@ -50,7 +50,7 @@ const announcementOptions = [
 ];
 
 
-function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, wc_is_archive, sitio_id, truck_id, driver_id, collector_ids, onSuccess } : UpdateWasteColProps) {
+function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, truck_id, driver_id, collector_ids, onSuccess } : UpdateWasteColProps) {
     
     const { user } = useAuth();
 

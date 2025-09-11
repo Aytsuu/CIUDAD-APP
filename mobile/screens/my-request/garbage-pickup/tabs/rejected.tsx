@@ -4,13 +4,12 @@ import { X, Search, Info } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
-import { RootState } from "@/redux";
-import { useSelector } from "react-redux";
 import { useGetGarbageRejectedResident } from "../queries/garbagePickupFetchQueries";
 import { formatTime } from "@/helpers/timeFormatter";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ResidentRejected() {
-  const {user, isLoading: isUserLoading} = useSelector((state: RootState)=> state.auth)
+  const {user} = useAuth()  
   const { data: rejectedRequests = [], isLoading: isDataLoading} = useGetGarbageRejectedResident(user.resident.rp_id)
   const [searchQuery, setSearchQuery] = useState("");
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);

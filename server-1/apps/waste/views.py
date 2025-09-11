@@ -565,8 +565,22 @@ class GarbagePickupRequestRejectedView(generics.ListAPIView):
     
 class GarbagePickupRequestAcceptedView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestAcceptedSerializer
+    
     def get_queryset(self):
-        queryset = Garbage_Pickup_Request.objects.all()
+        queryset = Garbage_Pickup_Request.objects.select_related(
+            'rp', 'rp__per', 'gprf', 'sitio_id'
+        ).prefetch_related(
+            'pickup_request_decision_set',
+            'pickup_request_decision_set__staff_id',
+            'pickup_request_decision_set__staff_id__rp',
+            'pickup_request_decision_set__staff_id__rp__per',
+            'pickup_assignment_set',
+            'pickup_assignment_set__truck_id',
+            'pickup_assignment_set__wstp_id',
+            'pickup_assignment_set__assignment_collector_set',
+            'pickup_assignment_set__assignment_collector_set__wstp_id',
+        )
+        
         status = self.request.query_params.get('status', None)
         
         if status:

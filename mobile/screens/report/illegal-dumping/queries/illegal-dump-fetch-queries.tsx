@@ -64,11 +64,4 @@ export const useWasteReport = (rp_id?: string) => {
 
 
 
-//Retrieving Waste reports for resident
-// export const useWasteResidentReport = (rp_id?: string) => {
-//     return useQuery<WasteReport[]>({
-//         queryKey: ["wastereport", rp_id],
-//         queryFn: () => getWasteResReport(rp_id), // Wrap in arrow function
-//         staleTime: 1000 * 60 * 30, // 30 minutes stale time
-//     });
-// };
+

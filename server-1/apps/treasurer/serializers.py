@@ -23,6 +23,7 @@ class Budget_Plan_DetailSerializer(serializers.ModelSerializer):
 
 class BudgetPlanSerializer(serializers.ModelSerializer):
     details = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField(read_only = True)
 
     class Meta:
         model = Budget_Plan
@@ -30,7 +31,20 @@ class BudgetPlanSerializer(serializers.ModelSerializer):
 
     def get_details(self, obj):
         return Budget_Plan_DetailSerializer(obj.budget_detail.all(), many=True).data
-    
+
+    def get_staff_name(self, obj):
+        if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+            per = obj.staff_id.rp.per
+
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+            
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+            
+            return full_name
 
 class BudgetPlanFileCreateSerializer(serializers.ModelSerializer):
     files = FileInputSerializer(write_only=True, required=False, many=True)
@@ -355,18 +369,51 @@ class Income_Expense_MainSerializers(serializers.ModelSerializer):
         fields = '__all__'
 
 
-# ===========================================================================
+# ==================== ANNUAL GROSS SALES & PURPOSE AND RATES ================
 
 class Annual_Gross_SalesSerializers(serializers.ModelSerializer):
+    staff_name = serializers.SerializerMethodField(read_only = True)
+
     class Meta:
         model= Annual_Gross_Sales
         fields= '__all__'
 
+    def get_staff_name(self, obj):
+        if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+            per = obj.staff_id.rp.per
+
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+            
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+            
+            return full_name
+        return None      
 
 class Purpose_And_RatesSerializers(serializers.ModelSerializer):
+    staff_name = serializers.SerializerMethodField(read_only = True)
+
     class Meta:
         model = Purpose_And_Rates
         fields= '__all__'
+
+    def get_staff_name(self, obj):
+        if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+            per = obj.staff_id.rp.per
+
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+            
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+            
+            return full_name
+        return None      
 
 
 # class InvoiceSerializers(serializers.ModelSerializer):

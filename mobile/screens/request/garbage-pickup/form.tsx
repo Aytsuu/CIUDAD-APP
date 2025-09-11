@@ -16,11 +16,10 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useGetSitio } from './queries/garbagePickupResidentFetchQueries';
 import { useAddaGarbagePickupRequest } from './queries/garbagePickupResidentInsertQueries';
-import { RootState } from '@/redux';
-import { useSelector } from 'react-redux';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function GarbagePickupForm() {
-  const {user, isLoading} = useSelector((state: RootState) => state.auth)
+  const {user} = useAuth()  
   const router = useRouter();
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
   const { data: fetchedSitio = [], isLoading: isLoadingSitio } = useGetSitio();
@@ -64,7 +63,7 @@ export default function GarbagePickupForm() {
     addRequest({values, files})
   };
 
-  if (isLoading || isLoadingSitio) {
+  if (isLoadingSitio) {
     return (
       <_ScreenLayout>
         <View className="flex-1 items-center justify-center">
@@ -84,7 +83,7 @@ export default function GarbagePickupForm() {
         </TouchableOpacity>
       }
       headerBetweenAction={<Text className="text-[13px]">Request a Garbage Pickup</Text>}
-      loading={isLoading || isPending}
+      loading={isPending}
       loadingMessage='Loading...'
     >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>

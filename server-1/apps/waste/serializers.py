@@ -254,6 +254,7 @@ class WasteHotspotSerializer(serializers.ModelSerializer):
     wstp_id = serializers.PrimaryKeyRelatedField(
         queryset=WastePersonnel.objects.all(),  
     )
+    staff_name = serializers.SerializerMethodField(read_only = True)
 
     class Meta:
         model = WasteHotspot
@@ -269,6 +270,21 @@ class WasteHotspotSerializer(serializers.ModelSerializer):
 
     def get_sitio(self, obj):
         return str(obj.sitio_id.sitio_name) if obj.sitio_id else ""
+    
+    def get_staff_name(self, obj):
+        if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+            per = obj.staff_id.rp.per
+
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+            
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+            
+            return full_name
+        return None      
 
 
 class WasteReportFileSerializer(serializers.ModelSerializer):
@@ -448,6 +464,7 @@ class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
     dec_reason = serializers.SerializerMethodField()
     file_url = serializers.SerializerMethodField()
     sitio_name = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField(read_only = True)
 
     class Meta:
         model = Garbage_Pickup_Request
@@ -465,6 +482,7 @@ class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
             'dec_reason',
             'file_url',
             'sitio_name',
+            'staff_name'
         ]
 
     def get_garb_requester(self, obj):
@@ -495,6 +513,26 @@ class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
     
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
+    
+    def get_staff_name(self, obj):
+        try:
+            decision = Pickup_Request_Decision.objects.get(garb_id=obj)
+            if decision.staff_id and decision.staff_id.rp and decision.staff_id.rp.per:
+                per = decision.staff_id.rp.per
+                
+                full_name = f"{per.per_lname}, {per.per_fname}"
+                
+                if per.per_mname:
+                    full_name += f" {per.per_mname}"
+                
+                if per.per_suffix:
+                    full_name += f" {per.per_suffix}"
+                
+                return full_name
+        except Pickup_Request_Decision.DoesNotExist:
+            pass
+        
+        return None   
 
 class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
     garb_requester = serializers.SerializerMethodField()
@@ -507,6 +545,7 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
     assignment_collector_ids = serializers.SerializerMethodField()
     file_url = serializers.SerializerMethodField()
     sitio_name = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField(read_only = True)
 
     class Meta:
         model = Garbage_Pickup_Request
@@ -525,7 +564,8 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
             'pickup_assignment_id',         
             'assignment_collector_ids',    
             'file_url',
-            'sitio_name'
+            'sitio_name',
+            'staff_name'
         ]
 
 
@@ -638,6 +678,26 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
     
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
+    
+    def get_staff_name(self, obj):
+        try:
+            decision = Pickup_Request_Decision.objects.get(garb_id=obj)
+            if decision.staff_id and decision.staff_id.rp and decision.staff_id.rp.per:
+                per = decision.staff_id.rp.per
+                
+                full_name = f"{per.per_lname}, {per.per_fname}"
+                
+                if per.per_mname:
+                    full_name += f" {per.per_mname}"
+                
+                if per.per_suffix:
+                    full_name += f" {per.per_suffix}"
+                
+                return full_name
+        except Pickup_Request_Decision.DoesNotExist:
+            pass
+        
+        return None
 
 
 class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
@@ -647,6 +707,7 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
     file_url = serializers.SerializerMethodField()
     sitio_name = serializers.SerializerMethodField()    
     dec_date = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField(read_only = True)
 
     class Meta:
         model = Garbage_Pickup_Request
@@ -661,6 +722,7 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
             'assignment_info',
             'file_url',
             'sitio_name',
+            'staff_name'
         ]
 
     def get_garb_requester(self, obj):
@@ -741,6 +803,27 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
     
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
+    
+    def get_staff_name(self, obj):
+        try:
+            decision = Pickup_Request_Decision.objects.get(garb_id=obj)
+            if decision.staff_id and decision.staff_id.rp and decision.staff_id.rp.per:
+                per = decision.staff_id.rp.per
+                
+                full_name = f"{per.per_lname}, {per.per_fname}"
+                
+                if per.per_mname:
+                    full_name += f" {per.per_mname}"
+                
+                if per.per_suffix:
+                    full_name += f" {per.per_suffix}"
+                
+                return full_name
+        except Pickup_Request_Decision.DoesNotExist:
+            pass
+        
+        return None_name
+        return None      
 
 class ResidentAcceptedPickupRequestsSerializer(serializers.ModelSerializer):
     garb_requester = serializers.SerializerMethodField()
@@ -749,6 +832,7 @@ class ResidentAcceptedPickupRequestsSerializer(serializers.ModelSerializer):
     file_url = serializers.SerializerMethodField()
     sitio_name = serializers.SerializerMethodField()
     dec_date = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField(read_only  =True)
 
     class Meta:
         model = Garbage_Pickup_Request
@@ -764,7 +848,8 @@ class ResidentAcceptedPickupRequestsSerializer(serializers.ModelSerializer):
             'confirmation_info',
             'file_url',
             'sitio_name',
-            'dec_date'
+            'dec_date',
+            'staff_name'
         ]
 
     def get_garb_requester(self, obj):
@@ -832,6 +917,21 @@ class ResidentAcceptedPickupRequestsSerializer(serializers.ModelSerializer):
     
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
+    
+    def get_staff_name(self, obj):
+        if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+            per = obj.staff_id.rp.per
+
+            full_name = f"{per.per_lname}, {per.per_fname}"
+
+            if per.per_mname:
+                full_name += f" {per.per_mname}"
+            
+            if per.per_suffix:
+                full_name += f" {per.per_suffix}"
+            
+            return full_name
+        return None      
 
 
 class ResidentCompletedPickupRequestSerializer(serializers.ModelSerializer):

@@ -133,6 +133,10 @@ function RatesPage4() {
             accessorKey: "pr_date",
             header: "Date Added/Updated",
             cell: ({ row }) => formatTimestamp(row.original.pr_date)
+        },
+        {
+            accessorKey: "staff_name",
+            header: "Updated By"
         }
     ]
 

@@ -14,7 +14,8 @@ export const useEditAnnualGrossSales = (onSuccess?: () => void) => {
             editAnnualGrossSales(values.ags_id, { 
                 minRange: values.minRange,
                 maxRange: values.maxRange,
-                amount: values.amount
+                amount: values.amount,
+                staff_id: values.staff_id
             }),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['grossSales'] });
@@ -38,7 +39,8 @@ export const useEditPurposeAndRate = (onSuccess?: () => void) => {
             editPurposeAndRate(values.pr_id, { 
                 purpose: values.purpose,
                 amount: values.amount,
-                category: values.category
+                category: values.category,
+                staff_id: values.staff_id
             }),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['purposeRates'] });

@@ -148,6 +148,7 @@ export default function ModificationRequest({ data } : {
                   title="Confirm Approval"
                   description="Review the changes thoroughly before proceeding. Once approved, this action cannot be reversed."
                   onClick={handleApprove}
+                  actionLabel="Confirm"
                 />
 
                 <Button
