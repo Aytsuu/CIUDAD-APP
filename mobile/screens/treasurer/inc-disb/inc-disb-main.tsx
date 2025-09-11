@@ -142,11 +142,22 @@ const IncomeandDisbursementMain = () => {
 
     if (searchQuery) {
       result = result.filter((album) => {
+        // Get description from the first image
+        const firstImageDesc = album.images.length > 0 
+          ? album.images[0].type === "income" 
+            ? (album.images[0] as IncomeImage).inf_desc || ""
+            : (album.images[0] as DisbursementImage).dis_desc || ""
+          : "";
+
         const searchableText = [
           String(album.id),
           album.inf_name || "",
           album.dis_name || "",
-        ].join(" ").toLowerCase();
+          firstImageDesc,
+        ]
+          .join(" ")
+          .toLowerCase();
+        
         return searchableText.includes(searchQuery.toLowerCase());
       });
     }

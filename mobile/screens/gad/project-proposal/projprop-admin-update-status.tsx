@@ -30,7 +30,7 @@ const ProjPropAdminUpdateStatus: React.FC = () => {
     useState<ProjectProposal | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageSize] = useState(5); 
+  const [pageSize] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
 
   const {
@@ -85,7 +85,7 @@ const ProjPropAdminUpdateStatus: React.FC = () => {
     setRefreshing(false);
   };
 
-    const handleViewLogs = () => {
+  const handleViewLogs = () => {
     router.push({
       pathname: "/gad/project-proposal/projprop-logs",
     });
@@ -146,11 +146,15 @@ const ProjPropAdminUpdateStatus: React.FC = () => {
     if (!project.budgetItems || project.budgetItems.length === 0) return sum;
 
     const projectTotal = project.budgetItems.reduce((projectSum, item) => {
-      const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
-      const paxCount = typeof item.pax === 'string' 
-        ? parseInt(item.pax.replace(/\D/g, '')) || 1 
-        : 1;
-      return projectSum + (paxCount * amount);
+      const amount =
+        typeof item.amount === "string"
+          ? parseFloat(item.amount) || 0
+          : item.amount || 0;
+      const paxCount =
+        typeof item.pax === "string"
+          ? parseInt(item.pax.replace(/\D/g, "")) || 1
+          : 1;
+      return projectSum + paxCount * amount;
     }, 0);
 
     return sum + projectTotal;
@@ -158,7 +162,39 @@ const ProjPropAdminUpdateStatus: React.FC = () => {
 
   const router = useRouter();
 
+  // if (selectedProject) {
+  //   return (
+  //     <>
+  //       <ProjectProposalView
+  //         project={detailedProject || selectedProject}
+  //         onBack={handleBackPress}
+  //         customHeaderActions={
+  //           <TouchableOpacity
+  //             className="ml-2 bg-primaryBlue px-4 py-2 rounded-lg"
+  //             onPress={handleUpdateStatusPress}
+  //           >
+  //             <Text className="text-white font-medium text-sm">
+  //               Update Status
+  //             </Text>
+  //           </TouchableOpacity>
+  //         }
+  //         disableDocumentManagement
+  //       />
+  //       <ProjPropStatusUpdateModal
+  //         visible={showStatusModal}
+  //         project={selectedProject}
+  //         onClose={() => setShowStatusModal(false)}
+  //         onUpdate={handleStatusUpdate}
+  //         isLoading={isUpdatingStatus}
+  //       />
+  //     </>
+  //   );
+  // }
+
   if (selectedProject) {
+    const disabledStatuses = ["Approved", "Rejected", "Amend"];
+    const isStatusDisabled = disabledStatuses.includes(selectedProject.status);
+
     return (
       <>
         <ProjectProposalView
@@ -166,8 +202,11 @@ const ProjPropAdminUpdateStatus: React.FC = () => {
           onBack={handleBackPress}
           customHeaderActions={
             <TouchableOpacity
-              className="ml-2 bg-primaryBlue px-4 py-2 rounded-lg"
-              onPress={handleUpdateStatusPress}
+              className={`ml-2 px-4 py-2 rounded-lg ${
+                isStatusDisabled ? "bg-gray-400" : "bg-primaryBlue"
+              }`}
+              onPress={isStatusDisabled ? undefined : handleUpdateStatusPress}
+              disabled={isStatusDisabled}
             >
               <Text className="text-white font-medium text-sm">
                 Update Status
@@ -186,7 +225,6 @@ const ProjPropAdminUpdateStatus: React.FC = () => {
       </>
     );
   }
-
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white">
@@ -329,14 +367,21 @@ const ProjPropAdminUpdateStatus: React.FC = () => {
                         maximumFractionDigits: 2,
                       }).format(
                         project.budgetItems.reduce((grandTotal, item) => {
-                          const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
-                                  const paxCount = typeof item.pax === 'string' 
-                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
-                                    : 1;
-                                  return grandTotal + (paxCount * amount);
-                                }, 0)
-                              )
-                            : "N/A" }
+                          const amount =
+                            typeof item.amount === "string"
+                              ? parseFloat(item.amount) || 0
+                              : item.amount || 0;
+                          const paxCount =
+                            typeof item.pax === "string"
+                              ? parseInt(item.pax) ||
+                                (item.pax.includes("pax")
+                                  ? parseInt(item.pax) || 1
+                                  : 1)
+                              : 1;
+                          return grandTotal + paxCount * amount;
+                        }, 0)
+                      )
+                    : "N/A"}
                 </Text>
               </View>
 
