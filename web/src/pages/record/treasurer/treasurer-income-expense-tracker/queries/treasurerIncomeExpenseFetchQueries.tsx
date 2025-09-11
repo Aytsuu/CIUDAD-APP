@@ -112,13 +112,7 @@ export type Income = {
     staff_name: string;
 };
 
-// export const useIncomeData = () => {
-//     return useQuery<Income[]>({
-//         queryKey: ["income"],
-//         queryFn: getIncomeData,
-//         staleTime: 1000 * 60 * 30, // 30 minutes stale time
-//     });
-// };
+
 
 export const useIncomeData = (year?: number) => {
     return useQuery<Income[]>({
