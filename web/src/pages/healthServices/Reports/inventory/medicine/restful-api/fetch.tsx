@@ -15,7 +15,7 @@ export const getMedicineMonths = async (
     params.append('page', page.toString());
     params.append('page_size', pageSize.toString());
 
-    const response = await api2.get<MedicineMonthsResponse>(`/inventory/medicine/summaries/?${params.toString()}`);
+    const response = await api2.get<MedicineMonthsResponse>(`/reports/medicine/summaries/?${params.toString()}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching medicine months:", error);
@@ -30,7 +30,7 @@ export const getMonthlyMedicineRecords = async (
   searchQuery?: string
 ): Promise<MedicineMonthlyDetailResponse> => {
   try {
-    const response = await api2.get<MedicineMonthlyDetailResponse>(`/inventory/medicine/records/${month}/`, {
+    const response = await api2.get<MedicineMonthlyDetailResponse>(`/reports/medicine/records/${month}/`, {
       params: {
         page,
         page_size: pageSize,

@@ -1,19 +1,18 @@
 import { api2 } from "@/api/api";
-import { OPTYearlyDetailResponse,OPTYearsResponse } from "../types";
 
 
 export const getOPTYears = async (
     page: number,
     pageSize: number,
     searchQuery?: string
-  ): Promise<OPTYearsResponse> => {
+  ): Promise<any> => {
     try {
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
       params.append('page', page.toString());
       params.append('page_size', pageSize.toString());
   
-      const response = await api2.get<OPTYearsResponse>(
+      const response = await api2.get<any>(
         `/reports/opt-tracking/yearly-summaries/?${params.toString()}`
       );
       return response.data;
@@ -28,9 +27,9 @@ export const getYearlyOPTRecords = async (
   pageSize: number,
   sitio?: string,
   nutritional_status?: string,
-): Promise<OPTYearlyDetailResponse> => {
+): Promise<any> => {
   try {
-    const response = await api2.get<OPTYearlyDetailResponse>(
+    const response = await api2.get<any>(
       `/reports/opt-tracking/yearly-report/${year}/`,
       {
         params: {

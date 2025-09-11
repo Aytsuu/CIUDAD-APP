@@ -8,13 +8,13 @@ import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmMo
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { useSubmitCommodityStock } from "../REQUEST/Commodity/queries/CommodityPostQueries";
+import { useSubmitCommodityStock } from "../REQUEST/Commodity/queries/post-queries";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Combobox } from "@/components/ui/combobox";
-import { fetchCommodity } from "../REQUEST/Commodity/queries/CommodityFetchQueries";
+import { fetchCommodity } from "../REQUEST/Commodity/queries/fetch-queries";
 
 export default function AddCommodityStock() {
   const { user } = useAuth();

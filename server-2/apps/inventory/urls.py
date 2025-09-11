@@ -31,6 +31,7 @@ urlpatterns = [
     path("medicine_stock-create/", MedicineStockCreate.as_view(), name="medicine-stock-atomic"),
     path('archive/medicinestocks-table/', ArchivedMedicineTable.as_view(), name='archived-medicine-table'),
     path('medicine-transactions/table/',TableMedicineTransactionView.as_view(), name='medicine-transactions'),
+    path('medicine-deduct/', MedicineDeduct.as_view(), name='medicine-deduct'),
 
 
 
@@ -48,6 +49,7 @@ urlpatterns = [
     path("commodity-stock-table/",CommodityStockTableView.as_view(),name="commodity-stock-view"),
     path('archive/commoditystocks-table/', ArchivedCommodityTable.as_view(), name='archived-commodity-table'),
     path('commodity-transactions/table/',CommodityTransactionTableView.as_view(), name='commodity-transactions'),
+    path('commodity-deduct/', CommodityDeduct.as_view(), name='commodity-deduct'),
     
 
     path("firstaidlist/", FirstAidListView.as_view(), name="firstaidlist"),
@@ -62,6 +64,7 @@ urlpatterns = [
     path("first-aid-stock-table/",FirstAidStockTableView.as_view(),name="first-aid-stocks-table"),
     path('archive/firstaidstocks-table/', ArchivedFirstAidTable.as_view(), name='archived-firstaid-table'),
     path('firstaid-transactions/table/',FirstAidTransactionView.as_view(), name='firstaid-transactions'),
+    path('firstaid-deduct/', FirstAidDeduct.as_view(), name='firstaid-deduct'),
      
    
 
@@ -123,6 +126,11 @@ urlpatterns = [
     path('vaccination-expired-out-of-stock-summary/', VaccinationExpiredOutOfStockSummaryAPIView.as_view(), name='vaccination-expired-out-of-stock-summary'),
     path('vaccination-expired-out-of-stock-detail/<str:month>/', MonthlyVaccinationExpiredOutOfStockDetailAPIView.as_view(), name='vaccination-expired-out-of-stock-detail'),
     
+    
+    # WASTED
+     path('waste/vaccine/<int:vacStck_id>/', VaccineWasteView.as_view(), name='vaccine-waste'),
+    path('waste/supply/<int:imzStck_id>/', SupplyWasteView.as_view(), name='supply-waste'),
+
     # path('update-pending-medreq/<str:medreq_id>/',ConfirmAllPendingItemsView.as_view(), name='update-all medicine-request-pending'),
     
     # path('medreq-items-pending/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),

@@ -21,12 +21,7 @@ export const useVaccinationMutation = () => {
   const navigate = useNavigate();
 
   const mutation = useMutation({
-    mutationFn: async ({ 
-      vaccination, 
-      previousVaccination, 
-      followUpData,
-      patientId
-    }: VaccinationMutationParams) => {
+    mutationFn: async ({ vaccination, previousVaccination, followUpData, patientId }: VaccinationMutationParams) => {
       console.log("Mutation called with:", {
         vaccinationId: vaccination?.vachist_id,
         previousVaccinationId: previousVaccination?.vachist_id,
@@ -47,15 +42,21 @@ export const useVaccinationMutation = () => {
 
       // Update current vaccination's follow-up if it exists
       if (vaccination?.follow_up_visit && followUpData) {
-        console.log("Updating current vaccination follow-up with data:", followUpData);
-        
-        await updateFollowUpVisit({
-          followv_id: String(vaccination.follow_up_visit.followv_id),
-          followv_date: followUpData.followv_date,
-          followv_status: followUpData.followv_status,
-          followv_description: followUpData.followv_description
-        });
-        console.log("Current vaccination follow-up updated successfully");
+        const hasChanges = vaccination.follow_up_visit.followv_date !== followUpData.followv_date || vaccination.follow_up_visit.followv_status !== followUpData.followv_status || vaccination.follow_up_visit.followv_description !== followUpData.followv_description;
+
+        if (hasChanges) {
+          console.log("Updating current vaccination follow-up with data:", followUpData);
+
+          await updateFollowUpVisit({
+            followv_id: String(vaccination.follow_up_visit.followv_id),
+            followv_date: followUpData.followv_date,
+            followv_status: followUpData.followv_status,
+            followv_description: followUpData.followv_description
+          });
+          console.log("Current vaccination follow-up updated successfully");
+        } else {
+          console.log("No changes detected in follow-up data. Skipping update.");
+        }
       }
 
       // Update vaccination history status
@@ -65,19 +66,19 @@ export const useVaccinationMutation = () => {
         vachist_status: "completed"
       });
 
-      return { success: true,patientId};
+      return { success: true, patientId };
     },
     onSuccess: (result) => {
       // Invalidate relevant queries
       const { patientId } = result;
       console.log("Invalidating queries for patient:", patientId);
-  
+
       queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords", patientId] });
       queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
       queryClient.invalidateQueries({ queryKey: ["followupVaccines", patientId] });
       queryClient.invalidateQueries({ queryKey: ["vaccineStocks"] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
-      navigate(-1)
+      navigate(-1);
 
       showSuccessToast("Vaccination status updated successfully.");
     },

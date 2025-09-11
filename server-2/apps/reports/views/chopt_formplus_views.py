@@ -15,19 +15,16 @@ from apps.patientrecords.models import *
 from apps.healthProfiling.models import *
 from pagination import *
 from apps.inventory.models import * 
-from apps.childhealthservices.serializers import NutritionalStatusSerializerBase
-
-
-
+from apps.patientrecords.serializers.bodymesurement_serializers import *
 
 class MonthlyOPTChildHealthSummariesAPIView(APIView):
     pagination_class = StandardResultsPagination
 
     def get(self, request):
         try:
-            # Include both residents and transients
-            queryset = NutritionalStatus.objects.all().select_related(
-                'bm', 'pat', 'pat__rp_id', 'pat__trans_id'  # Added pat__trans_id for transient data
+            # Include both residents and transients, filter for OPT records only
+            queryset = BodyMeasurement.objects.filter(is_opt=True).select_related(
+                 'pat', 'pat__rp_id', 'pat__trans_id'  # Added pat__trans_id for transient data
             ).order_by('-created_at')
 
             # Search query (month name or year)
@@ -56,7 +53,7 @@ class MonthlyOPTChildHealthSummariesAPIView(APIView):
             monthly_data = queryset.annotate(
                 month=TruncMonth('created_at')
             ).values('month').annotate(
-                record_count=Count('nutstat_id')
+                record_count=Count('bm_id')  # Changed from 'nutstat_id' to 'bm_id'
             ).order_by('-month')
 
             formatted_data = []
@@ -98,303 +95,10 @@ class MonthlyOPTChildHealthSummariesAPIView(APIView):
             
             
    
-# class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
-#     serializer_class = OPTTrackingSerializer
-#     pagination_class = StandardResultsPagination
 
-#     def get_queryset(self):
-#         month = self.kwargs.get('month')
-#         try:
-#             year, month_num = map(int, month.split('-'))
-#             start_date = datetime(year, month_num, 1)
-#             end_date = datetime(year, month_num + 1, 1) if month_num < 12 else datetime(year + 1, 1, 1)
-#             end_date -= timedelta(microseconds=1)
-#         except ValueError:
-#             return ChildHealthVitalSigns.objects.none()
-
-#         queryset = ChildHealthVitalSigns.objects.filter(
-#             bm__created_at__gte=start_date,
-#             bm__created_at__lte=end_date
-#         ).select_related(
-#             'bm', 'chhist', 'chhist__chrec', 'chhist__chrec__patrec',
-#             'chhist__chrec__patrec__pat_id', 'chhist__chrec__patrec__pat_id__rp_id',
-#             'chhist__chrec__patrec__pat_id__rp_id__per', 'chhist__chrec__patrec__pat_id__trans_id',
-#             'chhist__chrec__patrec__pat_id__trans_id__tradd_id'
-#         ).prefetch_related(
-#             'nutritional_status',
-#             Prefetch(
-#                 'chhist__chrec__patrec__pat_id__rp_id__per__personaladdress_set',
-#                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio'),
-#                 to_attr='prefetched_personal_addresses'
-#             ),
-#             Prefetch(
-#                 'chhist__chrec__patrec__pat_id__rp_id__household_set',
-#                 queryset=Household.objects.select_related('add', 'add__sitio'),
-#                 to_attr='prefetched_households'
-#             )
-#         ).order_by('bm__created_at')
-
-#         # Track if any filter is applied
-#         filters_applied = False
-#         original_count = queryset.count()
-
-#         # Combined search (child/patient name, family number, and sitio)
-#         search_query = self.request.query_params.get('search', '').strip()
-#         sitio_search = self.request.query_params.get('sitio', '').strip()
-        
-#         # Combine search and sitio parameters
-#         combined_search_terms = []
-#         if search_query and len(search_query) >= 3:
-#             combined_search_terms.append(search_query)
-#         if sitio_search:
-#             combined_search_terms.append(sitio_search)
-        
-#         if combined_search_terms:
-#             filters_applied = True
-#             combined_search = ','.join(combined_search_terms)
-#             queryset = self._apply_search_filter(queryset, combined_search)
-#             if queryset.count() == 0 and original_count > 0:
-#                 return ChildHealthVitalSigns.objects.none()
-
-#         # Nutritional status search
-#         nutritional_search = self.request.query_params.get('nutritional_status', '').strip()
-#         if nutritional_search:
-#             filters_applied = True
-#             queryset = self._apply_nutritional_search(queryset, nutritional_search)
-#             if queryset.count() == 0 and original_count > 0:
-#                 return ChildHealthVitalSigns.objects.none()
-
-#         # Age range filter
-#         age_range = self.request.query_params.get('age_range', '').strip()
-#         if age_range:
-#             filters_applied = True
-#             queryset = self._apply_age_filter(queryset, age_range)
-#             if not queryset and original_count > 0:  # _apply_age_filter returns a list
-#                 return ChildHealthVitalSigns.objects.none()
-
-#         return queryset
-
-#     def _apply_search_filter(self, queryset, search_query):
-#         """Search by child/patient name, family number, and sitio"""
-#         search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
-#         if not search_terms:
-#             return queryset
-
-#         name_query = Q()
-#         family_no_query = Q()
-#         person_ids = set()
-#         transient_ids = set()
-
-#         for term in search_terms:
-#             # Search by child/patient name (both resident and transient)
-#             name_query |= (
-#                 Q(chhist__chrec__patrec__pat_id__rp_id__per__per_fname__icontains=term) |
-#                 Q(chhist__chrec__patrec__pat_id__rp_id__per__per_mname__icontains=term) |
-#                 Q(chhist__chrec__patrec__pat_id__rp_id__per__per_lname__icontains=term) |
-#                 Q(chhist__chrec__patrec__pat_id__trans_id__tran_fname__icontains=term) |
-#                 Q(chhist__chrec__patrec__pat_id__trans_id__tran_mname__icontains=term) |
-#                 Q(chhist__chrec__patrec__pat_id__trans_id__tran_lname__icontains=term)
-#             )
-
-#             # Search by family number
-#             family_no_query |= Q(chhist__chrec__family_no__icontains=term)
-
-#             # Search by sitio for residents (case-insensitive and partial match)
-#             matching_person_ids = PersonalAddress.objects.filter(
-#                 Q(add__add_external_sitio__icontains=term) |
-#                 Q(add__sitio__sitio_name__icontains=term)
-#             ).values_list('per', flat=True)
-#             person_ids.update(matching_person_ids)
-
-#             # Search by sitio for transients (case-insensitive and partial match)
-#             matching_transient_ids = Transient.objects.filter(
-#                 Q(tradd_id__tradd_sitio__icontains=term)
-#             ).values_list('trans_id', flat=True)
-#             transient_ids.update(matching_transient_ids)
-
-#         # Combine all search queries
-#         combined_query = name_query | family_no_query
-        
-#         if person_ids:
-#             combined_query |= Q(chhist__chrec__patrec__pat_id__rp_id__per__in=person_ids)
-#         if transient_ids:
-#             combined_query |= Q(chhist__chrec__patrec__pat_id__trans_id__in=transient_ids)
-
-#         return queryset.filter(combined_query)
-
-#     def _apply_nutritional_search(self, queryset, search_query):
-#         """Search by nutritional status"""
-#         search_terms = [term.strip().lower() for term in search_query.split(',') if term.strip()]
-#         if not search_terms:
-#             return queryset
-
-#         status_query = Q()
-#         for term in search_terms:
-#             status_query |= (
-#                 Q(nutritional_status__wfa__iexact=term) |
-#                 Q(nutritional_status__lhfa__iexact=term) |
-#                 Q(nutritional_status__wfl__iexact=term) |
-#                 Q(nutritional_status__muac_status__iexact=term)
-#             )
-        
-#         return queryset.filter(status_query)
-
-#     def _calculate_age_in_months(self, dob, reference_date):
-#         """
-#         Calculate age in months based on date of birth and reference date (bm.created_at)
-#         Similar to how it's done in the supplements report
-#         """
-#         try:
-#             if not dob or not reference_date:
-#                 return 0
-            
-#             # Convert reference_date to date if it's datetime
-#             if hasattr(reference_date, 'date'):
-#                 reference_date = reference_date.date()
-            
-#             # Convert dob to date if it's datetime
-#             if hasattr(dob, 'date'):
-#                 dob = dob.date()
-                
-#             # Calculate age in months
-#             age_months = (reference_date.year - dob.year) * 12 + (reference_date.month - dob.month)
-            
-#             # Adjust if the day hasn't been reached yet in the current month
-#             if reference_date.day < dob.day:
-#                 age_months -= 1
-                
-#             return max(0, age_months)  # Ensure non-negative age
-            
-#         except (AttributeError, TypeError, ValueError) as e:
-#             print(f"Error calculating age: {e}")
-#             return 0
-
-#     def _apply_age_filter(self, queryset, age_range):
-#         """Apply age range filter to queryset"""
-#         try:
-#             min_age, max_age = map(int, age_range.split('-'))
-#             filtered_data = []
-#             for obj in queryset:
-#                 # Get patient's date of birth
-#                 pat_id = obj.chhist.chrec.patrec.pat_id
-#                 dob = None
-                
-#                 if pat_id.pat_type == 'Resident' and hasattr(pat_id, 'rp_id') and pat_id.rp_id:
-#                     dob = pat_id.rp_id.per.per_dob
-#                 elif pat_id.pat_type == 'Transient' and hasattr(pat_id, 'trans_id') and pat_id.trans_id:
-#                     dob = pat_id.trans_id.tran_dob
-                
-#                 # Get BM created_at date
-#                 bm_created_at = obj.bm.created_at if obj.bm else None
-                
-#                 # Calculate age in months
-#                 age_months = self._calculate_age_in_months(dob, bm_created_at)
-                
-#                 if min_age <= age_months <= max_age:
-#                     filtered_data.append(obj)
-#             return filtered_data
-#         except ValueError:
-#             return queryset
-
-#     def _format_report_data(self, data, queryset_objects=None):
-#         report_data = []
-        
-#         if queryset_objects:
-#             for i, entry in enumerate(data):
-#                 try:
-#                     vs_obj = queryset_objects[i]
-#                     vs = entry['vital_signs']
-#                     chist = entry['chist_details']
-#                     patrec = chist['chrec_details']['patrec_details']['pat_details']
-
-#                     address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(vs_obj.chhist.chrec.patrec.pat_id)
-
-#                     # Get patient's date of birth and BM created_at date
-#                     pat_id = vs_obj.chhist.chrec.patrec.pat_id
-#                     dob = None
-                    
-#                     if pat_id.pat_type == 'Resident' and hasattr(pat_id, 'rp_id') and pat_id.rp_id:
-#                         dob = pat_id.rp_id.per.per_dob
-#                     elif pat_id.pat_type == 'Transient' and hasattr(pat_id, 'trans_id') and pat_id.trans_id:
-#                         dob = pat_id.trans_id.tran_dob
-                    
-#                     # Get BM created_at date
-#                     bm_created_at = vs_obj.bm.created_at if vs_obj.bm else None
-                    
-#                     # Calculate age in months using the new method
-#                     age_in_months = self._calculate_age_in_months(dob, bm_created_at)
-
-#                     # Format parents information
-#                     parents = {}
-#                     family_info = patrec.get('family_head_info', {})
-#                     if family_info.get('has_mother'):
-#                         mother = family_info['family_heads']['mother']['personal_info']
-#                         parents['mother'] = f"{mother['per_fname']} {mother['per_mname']} {mother['per_lname']}"
-#                     if family_info.get('has_father'):
-#                         father = family_info['family_heads']['father']['personal_info']
-#                         parents['father'] = f"{father['per_fname']} {father['per_mname']} {father['per_lname']}"
-
-#                     # Format nutritional status
-#                     nutritional_status = {}
-#                     if vs.get('nutritional_status'):
-#                         ns = vs['nutritional_status']
-#                         nutritional_status = {
-#                             'wfa': ns.get('wfa'),
-#                             'lhfa': ns.get('lhfa'),
-#                             'wfl': ns.get('wfl'),
-#                             'muac': ns.get('muac'),
-#                             'edema': ns.get('edemaSeverity'),
-#                             'muac_status': ns.get('muac_status')
-#                         }
-
-#                     report_entry = {
-#                         'household_no': chist['chrec_details'].get('family_no', 'N/A'),
-#                         'child_name': f"{patrec['personal_info']['per_fname']} {patrec['personal_info']['per_mname']} {patrec['personal_info']['per_lname']}",
-#                         'sex': patrec['personal_info']['per_sex'],
-#                         'date_of_birth': patrec['personal_info']['per_dob'],
-#                         'age_in_months': age_in_months,  # Now calculated correctly
-#                         'parents': parents,
-#                         'address': address,
-#                         'sitio': sitio,
-#                         'transient': is_transient,
-#                         'date_of_weighing': vs['bm_details']['created_at'][:10] if vs.get('bm_details') else None,
-#                         'age_at_weighing': vs['bm_details']['age'] if vs.get('bm_details') else None,
-#                         'weight': vs['bm_details']['weight'] if vs.get('bm_details') else None,
-#                         'height': vs['bm_details']['height'] if vs.get('bm_details') else None,
-#                         'nutritional_status': nutritional_status,
-#                         'type_of_feeding': chist['chrec_details'].get('type_of_feeding')
-#                     }
-
-#                     report_data.append(report_entry)
-#                 except Exception as e:
-#                     print(f"Error formatting report entry {i}: {e}")
-#                     continue
-
-#         return {
-#             'month': self.kwargs['month'],
-#             'total_entries': len(report_data),
-#             'report_data': report_data
-#         }
-
-#     def list(self, request, *args, **kwargs):
-#         queryset = self.filter_queryset(self.get_queryset())
-#         page = self.paginate_queryset(queryset)
-
-#         if page is not None:
-#             serializer = self.get_serializer(page, many=True)
-#             return self.get_paginated_response(self._format_report_data(serializer.data, page))
-
-#         serializer = self.get_serializer(queryset, many=True)
-#         return Response(self._format_report_data(serializer.data, queryset))
-
-
-
-
-
-
-
+# NOW THE REFACTORED API VIEW USING THE REUSABLE FUNCTIONS
 class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
-    serializer_class = NutritionalStatusSerializerBase
+    serializer_class = BodyMeasurementSerializer
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
@@ -405,14 +109,15 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
             end_date = datetime(year, month_num + 1, 1) if month_num < 12 else datetime(year + 1, 1, 1)
             end_date -= timedelta(microseconds=1)
         except ValueError:
-            return NutritionalStatus.objects.none()
+            return BodyMeasurement.objects.none()
 
-        # Include both residents and transients (removed pat_type filter)
-        queryset = NutritionalStatus.objects.filter(
+        # Include both residents and transients
+        queryset = BodyMeasurement.objects.filter(
             created_at__gte=start_date,
-            created_at__lte=end_date
+            created_at__lte=end_date,
+            is_opt=True
         ).select_related(
-            'bm', 'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
+            'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
         ).prefetch_related(
             Prefetch(
                 'pat__rp_id__per__personaladdress_set',
@@ -444,216 +149,38 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         if combined_search_terms:
             filters_applied = True
             combined_search = ','.join(combined_search_terms)
-            queryset = self._apply_search_filter(queryset, combined_search)
+            queryset = apply_search_filter_to_body_measurement(queryset, combined_search)
             if queryset.count() == 0 and original_count > 0:
-                return NutritionalStatus.objects.none()
+                return BodyMeasurement.objects.none()
 
         # Nutritional status search
         nutritional_search = self.request.query_params.get('nutritional_status', '').strip()
         if nutritional_search:
             filters_applied = True
-            queryset = self._apply_nutritional_search(queryset, nutritional_search)
+            queryset = apply_nutritional_search_to_body_measurement(queryset, nutritional_search)
             if queryset.count() == 0 and original_count > 0:
-                return NutritionalStatus.objects.none()
+                return BodyMeasurement.objects.none()
 
         # Age range filter
         age_range = self.request.query_params.get('age_range', '').strip()
         if age_range:
             filters_applied = True
-            queryset = self._apply_age_filter(queryset, age_range)
-            if not queryset and original_count > 0:  # _apply_age_filter returns a list
-                return NutritionalStatus.objects.none()
+            queryset = apply_age_filter_to_body_measurement(queryset, age_range)
+            if not queryset and original_count > 0:
+                return BodyMeasurement.objects.none()
 
         return queryset
 
-    def _apply_search_filter(self, queryset, search_query):
-        """Search by child/patient name, family number, and sitio - for both residents and transients"""
-        search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
-        if not search_terms:
-            return queryset
-
-        name_query = Q()
-        family_no_query = Q()
-        person_ids = set()
-        transient_ids = set()
-
-        for term in search_terms:
-            # Search by child/patient name (both resident and transient)
-            name_query |= (
-                Q(pat__rp_id__per__per_fname__icontains=term) |
-                Q(pat__rp_id__per__per_mname__icontains=term) |
-                Q(pat__rp_id__per__per_lname__icontains=term) |
-                Q(pat__trans_id__tran_fname__icontains=term) |
-                Q(pat__trans_id__tran_mname__icontains=term) |
-                Q(pat__trans_id__tran_lname__icontains=term)
-            )
-
-            # Search by family number (Note: NutritionalStatus doesn't have direct family_no)
-            # You might need to adjust this based on your data model
-            # family_no_query |= Q(pat__family_no__icontains=term)  # Adjust if needed
-
-            # Search by sitio for residents (case-insensitive and partial match)
-            matching_person_ids = PersonalAddress.objects.filter(
-                Q(add__add_external_sitio__icontains=term) |
-                Q(add__sitio__sitio_name__icontains=term)
-            ).values_list('per', flat=True)
-            person_ids.update(matching_person_ids)
-
-            # Search by sitio for transients (case-insensitive and partial match)
-            matching_transient_ids = Transient.objects.filter(
-                Q(tradd_id__tradd_sitio__icontains=term)
-            ).values_list('trans_id', flat=True)
-            transient_ids.update(matching_transient_ids)
-
-        # Combine all search queries
-        combined_query = name_query | family_no_query
-        
-        if person_ids:
-            combined_query |= Q(pat__rp_id__per__in=person_ids)
-        if transient_ids:
-            combined_query |= Q(pat__trans_id__in=transient_ids)
-
-        return queryset.filter(combined_query)
-
-    def _apply_nutritional_search(self, queryset, search_query):
-        """Search by nutritional status"""
-        search_terms = [term.strip().lower() for term in search_query.split(',') if term.strip()]
-        if not search_terms:
-            return queryset
-
-        status_query = Q()
-        for term in search_terms:
-            status_query |= (
-                Q(wfa__iexact=term) |        # Direct field access
-                Q(lhfa__iexact=term) |       # Direct field access
-                Q(wfl__iexact=term) |        # Direct field access
-                Q(muac_status__iexact=term)  # Direct field access
-            )
-        
-        return queryset.filter(status_query)
-
-    def _calculate_age_in_months(self, dob, reference_date):
-        """
-        Calculate age in months based on date of birth and reference date (created_at)
-        """
-        try:
-            if not dob or not reference_date:
-                return 0
-            
-            # Convert reference_date to date if it's datetime
-            if hasattr(reference_date, 'date'):
-                reference_date = reference_date.date()
-            
-            # Convert dob to date if it's datetime
-            if hasattr(dob, 'date'):
-                dob = dob.date()
-                
-            # Calculate age in months
-            age_months = (reference_date.year - dob.year) * 12 + (reference_date.month - dob.month)
-            
-            # Adjust if the day hasn't been reached yet in the current month
-            if reference_date.day < dob.day:
-                age_months -= 1
-                
-            return max(0, age_months)
-            
-        except (AttributeError, TypeError, ValueError) as e:
-            print(f"Error calculating age: {e}")
-            return 0
-
-    def _apply_age_filter(self, queryset, age_range):
-        """Apply age range filter to queryset"""
-        try:
-            min_age, max_age = map(int, age_range.split('-'))
-            filtered_data = []
-            for obj in queryset:
-                # Get patient's date of birth - both residents and transients
-                pat = obj.pat
-                dob = None
-                
-                if pat.pat_type == 'Resident' and hasattr(pat, 'rp_id') and pat.rp_id:
-                    dob = pat.rp_id.per.per_dob
-                elif pat.pat_type == 'Transient' and hasattr(pat, 'trans_id') and pat.trans_id:
-                    dob = pat.trans_id.tran_dob
-                
-                # Get created_at date
-                created_at = obj.created_at
-                
-                # Calculate age in months
-                age_months = self._calculate_age_in_months(dob, created_at)
-                
-                if min_age <= age_months <= max_age:
-                    filtered_data.append(obj)
-            return filtered_data
-        except ValueError:
-            return queryset
-
-    def _get_household_no(self, pat_obj):
-        """
-        Get household number for a patient based on the reference PatientSerializer logic
-        """
-        if pat_obj.pat_type == 'Resident' and pat_obj.rp_id:
-            try:
-                # Get the most recent family composition for this resident
-                current_composition = FamilyComposition.objects.filter(
-                    rp=pat_obj.rp_id
-                ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
-                
-                if current_composition:
-                    return str(current_composition.fam_id.fam_no) if hasattr(current_composition.fam_id, 'fam_no') else 'N/A'
-            except Exception as e:
-                print(f"Error fetching household number for resident {pat_obj.rp_id.rp_id}: {str(e)}")
-        
-        return 'N/A'
-
-    def _get_parents_info(self, pat_obj):
-        """
-        Get parents information for a patient based on the reference PatientSerializer logic
-        """
-        parents = {}
-        
-        if pat_obj.pat_type == 'Resident' and pat_obj.rp_id:
-            try:
-                # Get family head info similar to PatientSerializer
-                current_composition = FamilyComposition.objects.filter(
-                    rp=pat_obj.rp_id
-                ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
-                
-                if current_composition:
-                    fam_id = current_composition.fam_id
-                    
-                    # Get all family members in the same family
-                    family_compositions = FamilyComposition.objects.filter(
-                        fam_id=fam_id
-                    ).select_related('rp', 'rp__per')
-                    
-                    for composition in family_compositions:
-                        role = composition.fc_role.lower()
-                        if role in ['mother', 'father'] and composition.rp and hasattr(composition.rp, 'per'):
-                            personal = composition.rp.per
-                            parents[role] = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
-            except Exception as e:
-                print(f"Error fetching parents info for resident {pat_obj.rp_id.rp_id}: {str(e)}")
-        
-        elif pat_obj.pat_type == 'Transient' and pat_obj.trans_id:
-            trans = pat_obj.trans_id
-            if trans.mother_fname or trans.mother_lname:
-                parents['mother'] = f"{trans.mother_fname} {trans.mother_mname or ''} {trans.mother_lname}".strip()
-            
-            if trans.father_fname or trans.father_lname:
-                parents['father'] = f"{trans.father_fname} {trans.father_mname or ''} {trans.father_lname}".strip()
-        
-        return parents
-
-    def _format_report_data(self, data, queryset_objects=None):
+    def format_body_measurement_report_data(self, data, queryset_objects, month=None):
+        """Format BodyMeasurement data for report output"""
         report_data = []
         
         if queryset_objects:
             for i, entry in enumerate(data):
                 try:
-                    ns_obj = queryset_objects[i]
+                    bm_obj = queryset_objects[i]
                     pat = entry.get('patient_details', {})
-                          # Get child name from pat_details.personal_info
+                    # Get child name from pat_details.personal_info
                     pat_details = entry.get('pat_details', {})
                     personal_info = pat_details.get('personal_info', {})
                     
@@ -664,10 +191,10 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
 
                     
                     # Get address information for both residents and transients
-                    address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(ns_obj.pat)
+                    address, sitio, is_transient = get_patient_address(bm_obj.pat)
 
                     # Get patient's date of birth, sex, and created_at date
-                    pat_obj = ns_obj.pat
+                    pat_obj = bm_obj.pat
                     dob = None
                     sex = None
                     
@@ -679,43 +206,43 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                         sex = pat_obj.trans_id.tran_sex
                     
                     # Get created_at date
-                    created_at = ns_obj.created_at
+                    created_at = bm_obj.created_at
                     
                     # Calculate age in months
-                    age_in_months = self._calculate_age_in_months(dob, created_at)
+                    age_in_months = calculate_age_in_months(dob, created_at)
 
                     # Get household number using the same logic as PatientSerializer
-                    household_no = self._get_household_no(pat_obj)
+                    household_no = get_household_no(pat_obj)
 
                     # Get parents information using the same logic as PatientSerializer
-                    parents = self._get_parents_info(pat_obj)
+                    parents = get_parents_info(pat_obj)
 
                     # Format nutritional status (direct from the object)
                     nutritional_status = {
-                        'wfa': ns_obj.wfa,
-                        'lhfa': ns_obj.lhfa,
-                        'wfl': ns_obj.wfl,
-                        'muac': ns_obj.muac,
-                        'edema': ns_obj.edemaSeverity,
-                        'muac_status': ns_obj.muac_status
+                        'wfa': bm_obj.wfa,
+                        'lhfa': bm_obj.lhfa,
+                        'wfl': bm_obj.wfl,
+                        'muac': bm_obj.muac,
+                        'edema': bm_obj.edemaSeverity,
+                        'muac_status': bm_obj.muac_status
                     }
 
                     report_entry = {
-                        'household_no': household_no,  # Now using the same logic as PatientSerializer
+                        'household_no': household_no,
                         'child_name': child_name,
-                        'sex': sex,  # Now properly set based on patient type
-                        'date_of_birth': dob,  # Now properly set based on patient type
+                        'sex': sex,
+                        'date_of_birth': dob,
                         'age_in_months': age_in_months,
-                        'parents': parents,  # Now using the same logic as PatientSerializer
+                        'parents': parents,
                         'address': address,
                         'sitio': sitio,
                         'transient': is_transient,
                         'date_of_weighing': entry.get('created_at', '')[:10],
                         'age_at_weighing': age_in_months,
-                        'weight': entry.get('bm_details', {}).get('weight'),
-                        'height': entry.get('bm_details', {}).get('height'),
+                        'weight': entry.get('weight'),
+                        'height': entry.get('height'),
                         'nutritional_status': nutritional_status,
-                        'type_of_feeding': 'N/A'  # You might need to adjust this
+                        'type_of_feeding': 'N/A'
                     }
 
                     report_data.append(report_entry)
@@ -723,11 +250,15 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                     print(f"Error formatting report entry {i}: {e}")
                     continue
 
-        return {
-            'month': self.kwargs['month'],
+        result = {
             'total_entries': len(report_data),
             'report_data': report_data
         }
+        
+        if month:
+            result['month'] = month
+            
+        return result
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -735,7 +266,9 @@ class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
 
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(self._format_report_data(serializer.data, page))
+            formatted_data = self.format_body_measurement_report_data(serializer.data, page, self.kwargs['month'])
+            return self.get_paginated_response(formatted_data)
 
         serializer = self.get_serializer(queryset, many=True)
-        return Response(self._format_report_data(serializer.data, queryset))
+        formatted_data = self.format_body_measurement_report_data(serializer.data, queryset, self.kwargs['month'])
+        return Response(formatted_data)

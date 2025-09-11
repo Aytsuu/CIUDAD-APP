@@ -75,7 +75,7 @@ export const initialFormData: FormData = {
   address: "",
   landmarks: "",
   dateNewbornScreening: "",
-  disabilityTypes: [],
+  disabilityTypes:"",
   edemaSeverity: "None",
   BFdates: [],
   vitalSigns: [],

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -20,10 +20,8 @@ export default function MedicineList() {
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [medToDelete, setMedToDelete] = useState<string | null>(null);
   const [showMedicineModal, setShowMedicineModal] = useState(false);
-  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const [selectedMedicine, setSelectedMedicine] = useState<MedicineRecords | null>(null);
-  
- 
 
   // Debounce search input
   useEffect(() => {
@@ -35,20 +33,10 @@ export default function MedicineList() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const columns = Medcolumns(
-    setMedToDelete, 
-    setIsDeleteConfirmationOpen, 
-    setSelectedMedicine, 
-    setModalMode, 
-    setShowMedicineModal
-  );
-  
-  const { data: medicineData, isLoading: isLoadingMedicines, error } = useMedicines(
-    currentPage, 
-    pageSize, 
-    searchQuery.trim() ? searchQuery.trim() : undefined
-  );
-  
+  const columns = Medcolumns(setMedToDelete, setIsDeleteConfirmationOpen, setSelectedMedicine, setModalMode, setShowMedicineModal);
+
+  const { data: medicineData, isLoading: isLoadingMedicines, error } = useMedicines(currentPage, pageSize, searchQuery.trim() ? searchQuery.trim() : undefined);
+
   // Debug: Log API response
   useEffect(() => {
     console.log("Medicine Data Response:", medicineData);
@@ -59,10 +47,10 @@ export default function MedicineList() {
 
   const formatMedicineData = useCallback((): MedicineRecords[] => {
     console.log("Formatting medicine data:", medicineData);
-    
+
     // Handle different response formats
     let medicineResults = [];
-    
+
     if (medicineData?.results) {
       // Standard Django REST framework format
       medicineResults = medicineData.results;
@@ -73,13 +61,13 @@ export default function MedicineList() {
       // Handle the nested format you're currently getting
       medicineResults = medicineData.results.results;
     }
-    
+
     return medicineResults.map((medicine: any) => ({
       id: medicine.med_id,
       medicineName: medicine.med_name,
       cat_id: medicine.cat,
       cat_name: medicine.catlist || "N/A",
-      med_type: medicine.med_type || "N/A",
+      med_type: medicine.med_type || "N/A"
     }));
   }, [medicineData]);
 
@@ -100,26 +88,26 @@ export default function MedicineList() {
         return {
           totalCount: medicineData.results.count,
           totalPages: medicineData.results.total_pages || Math.ceil(medicineData.results.count / pageSize),
-          currentPage: medicineData.results.current_page || currentPage,
+          currentPage: medicineData.results.current_page || currentPage
         };
       }
-      
+
       // Standard Django REST framework format
       return {
         totalCount: medicineData.count || 0,
         totalPages: Math.ceil((medicineData.count || 0) / pageSize),
-        currentPage: currentPage,
+        currentPage: currentPage
       };
     }
     return {
       totalCount: 0,
       totalPages: 0,
-      currentPage: 1,
+      currentPage: 1
     };
   }, [medicineData, pageSize, currentPage]);
 
   const handleAddNew = () => {
-    setModalMode('add');
+    setModalMode("add");
     setSelectedMedicine(null);
     setShowMedicineModal(true);
   };
@@ -138,16 +126,8 @@ export default function MedicineList() {
       <div className="hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative w-full">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-              size={17}
-            />
-            <Input
-              placeholder="Search medicine name..."
-              className="pl-10 bg-white w-full"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+            <Input placeholder="Search medicine name..." className="pl-10 bg-white w-full" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
           </div>
         </div>
         <Button onClick={handleAddNew}>
@@ -182,7 +162,7 @@ export default function MedicineList() {
             options={[
               { id: "", name: "Export as CSV" },
               { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" },
+              { id: "", name: "Export as PDF" }
             ]}
           />
         </div>
@@ -205,41 +185,23 @@ export default function MedicineList() {
             <DataTable columns={columns} data={displayData} />
           )}
         </div>
-        
+
         {displayData.length > 0 && (
           <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
             <p className="text-xs sm:text-sm text-darkGray">
-              Showing {((currentPage - 1) * pageSize) + 1}-
-              {Math.min(currentPage * pageSize, paginationInfo.totalCount)} of{" "}
-              {paginationInfo.totalCount} rows
+              Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, paginationInfo.totalCount)} of {paginationInfo.totalCount} rows
             </p>
-            {paginationInfo.totalPages > 1 && (
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={paginationInfo.totalPages}
-                onPageChange={handlePageChange}
-              />
-            )}
+            {paginationInfo.totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={paginationInfo.totalPages} onPageChange={handlePageChange} />}
           </div>
         )}
       </div>
 
-      <ConfirmationDialog
-        isOpen={isDeleteConfirmationOpen}
-        onOpenChange={setIsDeleteConfirmationOpen}
-        onConfirm={handleDelete}
-        title="Delete Medicine"
-        description="Are you sure you want to delete this medicine? This action cannot be undone."
-      />
+      <ConfirmationDialog isOpen={isDeleteConfirmationOpen} onOpenChange={setIsDeleteConfirmationOpen} onConfirm={handleDelete} title="Delete Medicine" description="Are you sure you want to delete this medicine? This action cannot be undone." />
 
       {showMedicineModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <MedicineModal
-              mode={modalMode}
-              initialData={selectedMedicine ?? undefined}
-              onClose={() => setShowMedicineModal(false)}
-            />
+            <MedicineModal mode={modalMode} initialData={selectedMedicine ?? undefined} onClose={() => setShowMedicineModal(false)} />
           </div>
         </div>
       )}

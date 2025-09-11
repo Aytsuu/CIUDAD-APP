@@ -4,15 +4,13 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
 import { ChildDetailsSchema, type FormData } from "@/form-schema/chr-schema/chr-schema"
-import { Button } from "@/components/ui/button/button" // Corrected import path
+import { Button } from "@/components/ui/button/button"
 import { Baby, Calendar, ChevronLeft, Trash2, Plus, Pencil, Check } from "lucide-react"
-import { DisabilityComponent } from "@/components/ui/add-search-disability"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import CardLayout from "@/components/ui/card/card-layout"
 import { type_of_feeding_options } from "./options"
 import {Page2Props} from "./types"
-
 
 export default function ChildHRPage2({
   onPrevious,
@@ -20,7 +18,7 @@ export default function ChildHRPage2({
   updateFormData,
   formData,
   historicalBFdates,
-  patientHistoricalDisabilities, // Destructure the prop
+  patientHistoricalDisabilities,
   mode,
 }: Page2Props) {
   const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord"
@@ -30,8 +28,8 @@ export default function ChildHRPage2({
     mode: "onChange",
     defaultValues: {
       ...formData,
-      disabilityTypes: formData.disabilityTypes || [],
-      BFdates: formData.BFdates || [], // Initialized here
+      disabilityTypes: formData.disabilityTypes || "",
+      BFdates: formData.BFdates || [],
       dateNewbornScreening: formData.dateNewbornScreening || "",
       type_of_feeding: formData.type_of_feeding || "",
       tt_status: formData.tt_status || "",
@@ -44,8 +42,18 @@ export default function ChildHRPage2({
   const [currentBFDate, setCurrentBFDate] = useState<string>("")
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
-  // Extract historical disability IDs for the DisabilityComponent
-  const historicalDisabilityIds = patientHistoricalDisabilities.map((d) => d.disability_details.disability_id)
+  // Hardcoded disability options
+  const disabilityOptions = [
+    { id: "none", name: "No Disability" },
+    { id: "visual", name: "Visual Impairment" },
+    { id: "hearing", name: "Hearing Impairment" },
+    { id: "physical", name: "Physical Disability" },
+    { id: "intellectual", name: "Intellectual Disability" },
+    { id: "mental", name: "Mental Health Condition" },
+    { id: "speech", name: "Speech and Language Disability" },
+    { id: "multiple", name: "Multiple Disabilities" },
+    { id: "other", name: "Other Disability" },
+  ]
 
   // Debug form state
   useEffect(() => {
@@ -54,10 +62,7 @@ export default function ChildHRPage2({
     console.log("Form values:", getValues())
   }, [errors, isValid, getValues])
 
-  // Removed the useEffect that was resetting the form based on formData changes.
-  // The `defaultValues` in `useForm` handles initial population.
-
-  // Update parent form data on change - This is crucial for persistence
+  // Update parent form data on change
   useEffect(() => {
     const subscription = watch((value) => {
       updateFormData(value as Partial<FormData>)
@@ -70,7 +75,7 @@ export default function ChildHRPage2({
       console.log("Submitting form with data:", data)
       const finalData = {
         ...data,
-        disabilityTypes: data.disabilityTypes || [],
+        disabilityTypes: data.disabilityTypes || "",
       }
       updateFormData(finalData)
       onNext()
@@ -82,11 +87,9 @@ export default function ChildHRPage2({
   // Helper to format date from YYYY-MM to "Month YYYY"
   const formatMonthYear = (dateString: string) => {
     if (!dateString) return ""
-    // If it's already in "Month YYYY" format, return as is
     if (dateString.includes(" ")) {
       return dateString
     }
-    // Assuming dateString is YYYY-MM
     const [year, month] = dateString.split("-")
     if (!year || !month) return ""
     const date = new Date(Number.parseInt(year), Number.parseInt(month) - 1, 1)
@@ -98,18 +101,8 @@ export default function ChildHRPage2({
   const convertToYYYYMM = (formattedDate: string) => {
     if (!formattedDate) return ""
     const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
     ]
     const parts = formattedDate.split(" ")
     if (parts.length === 2) {
@@ -129,33 +122,22 @@ export default function ChildHRPage2({
       return
     }
     try {
-      // Convert to consistent format
       const formattedDate = formatMonthYear(currentBFDate)
-      console.log("Formatted date:", formattedDate)
-      // Get current dates from form
       const currentDates = getValues("BFdates") || []
-      console.log("Current BF dates:", currentDates)
-      // Check for duplicates
       if (editingIndex === null && currentDates.includes(formattedDate)) {
-        console.log("Duplicate date detected")
         alert("This date has already been added")
         return
       }
-      // Update dates array
       const updatedDates =
         editingIndex !== null
           ? currentDates.map((date, i) => (i === editingIndex ? formattedDate : date))
           : [...currentDates, formattedDate]
-      console.log("Updated dates:", updatedDates)
-      // Update form state
       setValue("BFdates", updatedDates, {
         shouldValidate: true,
         shouldDirty: true,
       })
-      // Reset editing state
       setEditingIndex(null)
       setCurrentBFDate("")
-      console.log("BF dates updated successfully")
     } catch (error) {
       console.error("Error adding BF date:", error)
     }
@@ -164,7 +146,6 @@ export default function ChildHRPage2({
   const handleEditDate = (index: number) => {
     const currentBFDates = getValues("BFdates") || []
     const dateToEdit = currentBFDates[index]
-    // Convert the stored "Month YYYY" format back to YYYY-MM for the input field
     setCurrentBFDate(convertToYYYYMM(dateToEdit))
     setEditingIndex(index)
   }
@@ -191,14 +172,13 @@ export default function ChildHRPage2({
     const currentFormData = getValues()
     updateFormData({
       ...currentFormData,
-      disabilityTypes: currentFormData.disabilityTypes || [],
+      disabilityTypes: currentFormData.disabilityTypes || "",
     })
     onPrevious()
   }
 
   return (
     <>
-     
       <Form {...form}>
         <form
           onSubmit={handleSubmit(handleNext, (errors) => {
@@ -209,7 +189,7 @@ export default function ChildHRPage2({
         >
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column - Medical Information (sidebar-like) */}
+            {/* Left Column - Medical Information */}
             <div className="space-y-6">
               {/* Newborn Screening Card */}
               <CardLayout
@@ -255,7 +235,7 @@ export default function ChildHRPage2({
                     <FormField
                       control={control}
                       name="BFdates"
-                      render={({ }) => (
+                      render={() => (
                         <FormItem>
                           <FormLabel>Breastfeeding Check Dates</FormLabel>
                           {/* Add/Edit Date Section */}
@@ -432,28 +412,14 @@ export default function ChildHRPage2({
                         </ul>
                       </div>
                     )}
-                    <FormLabel className="text-sm font-medium leading-none text-gray-700 mb-4 block">
-                      Does the child have any known disabilities?
-                    </FormLabel>
-                    <div className="mt-4">
-                      <FormField
-                        control={form.control}
-                        name="disabilityTypes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <DisabilityComponent
-                              selectedDisabilities={field.value || []}
-                              onDisabilitySelectionChange={(selected) => {
-                                field.onChange(selected);
-                              }}
-                              isRequired={false}
-                              historicalDisabilityIds={historicalDisabilityIds}
-                            />
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    
+                    {/* Replaced DisabilityComponent with FormSelect */}
+                    <FormSelect
+                      control={form.control}
+                      name="disabilityTypes"
+                      label="Does the child have any known disabilities?"
+                      options={disabilityOptions}
+                    />
                   </div>
                 }
               />
@@ -482,7 +448,6 @@ export default function ChildHRPage2({
           </div>
         </form>
       </Form>
-  
     </>
   )
 }

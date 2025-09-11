@@ -5,7 +5,7 @@ import { nonPhilHealthSchema } from "@/form-schema/medicalConsultation/nonPhilhe
 import { Button } from "@/components/ui/button/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useLocation } from "react-router-dom";
-import { BriefcaseMedical, ChevronLeft, FilesIcon, Heart } from "lucide-react";
+import { BriefcaseMedical, ChevronLeft, FilesIcon } from "lucide-react";
 import { useEffect } from "react";
 import { FormInput } from "@/components/ui/form/form-input";
 import { PatientSearch } from "@/components/ui/patientSearch";
@@ -25,38 +25,11 @@ import { nonPhilHealthType } from "@/form-schema/medicalConsultation/nonPhilheal
 import { showErrorToast } from "@/components/ui/toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { FormSelect } from "@/components/ui/form/form-select";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { ttStatusOptions,doctors,contraceptiveOptions,maritalStatusOptions } from "./options";
 
-const doctors = [
-  { id: "1", name: "Kimmy Mo Ma Chung" },
-  { id: "2", name: "Chi Chung" }
-];
-
-const maritalStatusOptions = [
-  { id: "single", name: "Single" },
-  { id: "married", name: "Married" },
-  { id: "divorced", name: "Divorced" },
-  { id: "widowed", name: "Widowed" }
-];
-
-const ttStatusOptions = [
-  { id: "T1", name: "T1" },
-  { id: "T2", name: "T2" },
-  { id: "T3", name: "T3" },
-  { id: "T4", name: "T4" },
-  { id: "T5", name: "T5" }
-];
-
-const contraceptiveOptions = [
-  { id: "pills", name: "Birth Control Pills" },
-  { id: "condom", name: "Condom" },
-  { id: "iud", name: "IUD" },
-  { id: "injection", name: "Injectable" },
-  { id: "implant", name: "Implant" },
-  { id: "none", name: "None" }
-];
 
 export default function MedicalConsultationForm() {
-  const navigate = useNavigate();
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData, mode } = params || {};
@@ -131,29 +104,14 @@ export default function MedicalConsultationForm() {
       showErrorToast("Please select a patient first");
       return;
     }
-    const currentPatient = mode === "fromindivrecord" ? patientData : selectedPatientData;
-    if (!currentPatient) return;
-
     if (!data.is_philhealthmember) {
-      non_membersubmit.mutate({ data, currentPatient });
+      non_membersubmit.mutate({ data });
     } else {
     }
   };
 
   return (
-    <>
-      {/* Header and navigation */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <Button className="text-black p-2 mb-2 self-start" variant={"outline"} onClick={() => navigate(-1)}>
-          <ChevronLeft />
-        </Button>
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Medical Consultation</h1>
-          <p className="text-xs sm:text-sm text-darkGray">{mode === "fromindivrecord" ? "Add new medical consultation and view patient information" : "Manage and view patients information"}</p>
-        </div>
-      </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
-
+    <LayoutWithBack title="Medical Consultation" description="Fill out the medical consultation details">
       {/* Main form content */}
       <CardLayout
         title=""
@@ -369,6 +327,6 @@ export default function MedicalConsultationForm() {
           </>
         }
       />
-    </>
+    </LayoutWithBack>
   );
 }

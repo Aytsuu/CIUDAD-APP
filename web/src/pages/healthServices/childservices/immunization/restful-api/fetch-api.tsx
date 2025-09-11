@@ -1,4 +1,4 @@
-import { getVaccineList } from "@/pages/healthInventory/InventoryList/restful-api/Antigen/fetchAPI";
+import { getVaccineList } from "@/pages/healthInventory/InventoryList/restful-api/Antigen/fetch-api";
 // services/vaccineService.ts
 
 

@@ -756,6 +756,86 @@ class ArchivedCommodityTable(APIView):
             
             
             
+        
+            
+class CommodityDeduct(APIView):
+    def post(self,request,*args, **kwargs):
+        try:
+            data = request.data.get('data', {})
+            record = request.data.get('record', {})
+            cinv_id = record.get('id')
+            deduct_qty = int(data.get('wastedAmount', 0))
+            action = "Deducted"
+            staff_id = data.get('staff_id')
+            print("Deducting quantity:", deduct_qty)     
+            print("From inventory ID:", cinv_id)
+            
+            if not cinv_id or deduct_qty <= 0:
+                return Response({
+                    'error': 'Invalid cinv_id or deduct_qty'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Fetch the medicine inventory
+            commodity_inventory = get_object_or_404(CommodityInventory, cinv_id=cinv_id)
+            
+            if commodity_inventory.cinv_qty_avail < deduct_qty:
+                return Response({
+                    'error': 'Deduct quantity exceeds available stock'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Deduct the quantity
+            commodity_inventory.cinv_qty_avail -= deduct_qty
+            commodity_inventory.updated_at = timezone.now()
+            commodity_inventory.save()
+            
+            # Prepare quantity string for transaction
+            if commodity_inventory.cinv_qty_unit and commodity_inventory.cinv_qty_unit.lower() == "boxes":
+                            qty_string = f"{deduct_qty} pc/s"
+            else:
+                qty_string = f"{deduct_qty} {commodity_inventory.cinv_qty_unit or 'units'}"
+
+            # Create transaction record
+            CommodityTransaction.objects.create(
+                comt_qty=qty_string,
+                comt_action=action,
+                cinv_id=commodity_inventory,
+                staff_id=staff_id if staff_id else None  # Set to None if not provided
+            )
+            
+            return Response({
+                'success': True,
+                'message': f'Successfully deducted {deduct_qty} from inventory {cinv_id}',
+                'new_available_stock': commodity_inventory.cinv_qty_avail
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                'error': f'Error deducting stock: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
             
             
 

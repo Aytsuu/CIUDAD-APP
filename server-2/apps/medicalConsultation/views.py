@@ -7,7 +7,7 @@ from datetime import datetime
 from django.db.models import Count, Q
 from apps.patientrecords.models import Patient,PatientRecord
 from apps.patientrecords.models import *
-from .utils import get_medcon_record_count
+from .utils import *
 from django.db.models import Count, Q
 from django.db import transaction
 from datetime import date
@@ -31,6 +31,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Count, Q
 from datetime import datetime, timedelta
+
 
 
 class PatientMedConsultationRecordView(generics.ListAPIView):
@@ -74,7 +75,7 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         if combined_search_terms:
             filters_applied = True
             combined_search = ','.join(combined_search_terms)
-            queryset = self._apply_search_filter(queryset, combined_search)
+            queryset = apply_patient_search_filter(queryset, combined_search)
             if queryset.count() == 0 and original_count > 0:
                 return Patient.objects.none()
         
@@ -82,7 +83,7 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         patient_type_search = self.request.query_params.get('patient_type', '').strip()
         if patient_type_search:
             filters_applied = True
-            queryset = self._apply_patient_type_filter(queryset, patient_type_search)
+            queryset = apply_patient_type_filter(queryset, patient_type_search)
             if queryset.count() == 0 and original_count > 0:
                 return Patient.objects.none()
         
@@ -96,153 +97,24 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         
         return queryset
     
-    def _apply_search_filter(self, queryset, search_query):
-        """Search by patient name, patient ID, household number, and sitio - for both residents and transients"""
-        search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
-        if not search_terms:
-            return queryset
-        
-        name_query = Q()
-        patient_id_query = Q()
-        person_ids = set()
-        transient_ids = set()
-        
-        for term in search_terms:
-            # Search by patient name (both resident and transient)
-            name_query |= (
-                Q(rp_id__per__per_fname__icontains=term) |
-                Q(rp_id__per__per_mname__icontains=term) |
-                Q(rp_id__per__per_lname__icontains=term) |
-                Q(trans_id__tran_fname__icontains=term) |
-                Q(trans_id__tran_mname__icontains=term) |
-                Q(trans_id__tran_lname__icontains=term)
-            )
-            
-            # Search by patient ID
-            patient_id_query |= Q(pat_id__icontains=term)
-            
-            # Search by resident profile ID and transient ID
-            patient_id_query |= Q(rp_id__rp_id__icontains=term)
-            patient_id_query |= Q(trans_id__trans_id__icontains=term)
-            
-
-            
-            matching_person_ids = PersonalAddress.objects.filter(
-                Q(add__add_external_sitio__icontains=term) |
-                Q(add__sitio__sitio_name__icontains=term)
-            ).values_list('per', flat=True)
-            person_ids.update(matching_person_ids)
-            
-            # Search by sitio for transients (case-insensitive and partial match)
-            matching_transient_ids = Transient.objects.filter(
-                Q(tradd_id__tradd_sitio__icontains=term)
-            ).values_list('trans_id', flat=True)
-            transient_ids.update(matching_transient_ids)
-        
-        # Combine all search queries
-        combined_query = name_query | patient_id_query 
-        
-        if person_ids:
-            combined_query |= Q(rp_id__per__in=person_ids)
-        if transient_ids:
-            combined_query |= Q(trans_id__in=transient_ids)
-        
-        return queryset.filter(combined_query)
-    
-    def _apply_patient_type_filter(self, queryset, patient_type):
-        """Filter by patient type (Resident/Transient)"""
-        search_terms = [term.strip().lower() for term in patient_type.split(',') if term.strip()]
-        if not search_terms:
-            return queryset
-        
-        type_query = Q()
-        for term in search_terms:
-            if term in ['resident', 'transient']:
-                type_query |= Q(pat_type__iexact=term)
-        
-        return queryset.filter(type_query) if type_query else queryset
-    
-
-    
-  
-    
-    def _get_parents_info(self, pat_obj):
-        """Get parents information for a patient"""
-        parents = {}
-        
-        if pat_obj.pat_type == 'Resident' and pat_obj.rp_id:
-            try:
-                from apps.healthProfiling.models import FamilyComposition
-                current_composition = FamilyComposition.objects.filter(
-                    rp=pat_obj.rp_id
-                ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
-                
-                if current_composition:
-                    fam_id = current_composition.fam_id
-                    family_compositions = FamilyComposition.objects.filter(
-                        fam_id=fam_id
-                    ).select_related('rp', 'rp__per')
-                    
-                    for composition in family_compositions:
-                        role = composition.fc_role.lower()
-                        if role in ['mother', 'father'] and composition.rp and hasattr(composition.rp, 'per'):
-                            personal = composition.rp.per
-                            parents[role] = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
-            except Exception as e:
-                print(f"Error fetching parents info for resident {pat_obj.rp_id.rp_id}: {str(e)}")
-        
-        elif pat_obj.pat_type == 'Transient' and pat_obj.trans_id:
-            trans = pat_obj.trans_id
-            if hasattr(trans, 'mother_fname') and (trans.mother_fname or trans.mother_lname):
-                parents['mother'] = f"{trans.mother_fname or ''} {trans.mother_mname or ''} {trans.mother_lname or ''}".strip()
-            
-            if hasattr(trans, 'father_fname') and (trans.father_fname or trans.father_lname):
-                parents['father'] = f"{trans.father_fname or ''} {trans.father_mname or ''} {trans.father_lname or ''}".strip()
-        
-        return parents
-    
-    def _get_address_and_sitio(self, pat_obj):
-        """Get address and sitio information for a patient"""
-        address = "N/A"
-        sitio = "N/A"
-        
-        try:
-            if pat_obj.pat_type == 'Resident' and pat_obj.rp_id and hasattr(pat_obj.rp_id, 'per'):
-                per = pat_obj.rp_id.per
-                from apps.healthProfiling.models import PersonalAddress
-                personal_address = PersonalAddress.objects.filter(
-                    per=per
-                ).select_related('add', 'add__sitio').first()
-                
-                if personal_address and personal_address.add:
-                    address = personal_address.add.add_street or "N/A"
-                    if personal_address.add.sitio:
-                        sitio = personal_address.add.sitio.sitio_name or "N/A"
-            
-            elif pat_obj.pat_type == 'Transient' and pat_obj.trans_id:
-                trans = pat_obj.trans_id
-                if hasattr(trans, 'tradd_id') and trans.tradd_id:
-                    address = trans.tradd_id.tradd_street or "N/A"
-                    sitio = trans.tradd_id.tradd_sitio or "N/A"
-        
-        except Exception as e:
-            print(f"Error fetching address for patient {pat_obj.pat_id}: {str(e)}")
-        
-        return address, sitio
-    
-
+    def _apply_status_filter(self, queryset, status):
+        """Filter by status - keep this in view if it's specific to this view"""
+        # Implement your status filter logic here
+        return queryset.filter(patient_records__medical_consultation_record__medrec_status=status)
     
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         
         if page is not None:
+            # You can add parents info and address to serialized data if needed
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
+    
+    
 # USE FOR ADDING MEDICAL RECORD
 class MedicalConsultationRecordView(generics.CreateAPIView):
     serializer_class = MedicalConsultationRecordSerializer
@@ -407,7 +279,7 @@ class CreateMedicalConsultationView(APIView):
             bm = BodyMeasurement.objects.create(
                 height=float(data.get("height", 0)),
                 weight=float(data.get("weight", 0)),
-                patrec=patrec,
+                pat=pat_id,
                 staff=staff,
             )
 

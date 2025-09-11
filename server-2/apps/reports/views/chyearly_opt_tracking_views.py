@@ -138,7 +138,6 @@ class YearlyOPTChildHealthSummariesAPIView(APIView):
 
 
 
-
 class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
     """
     API View to get monthly nutritional status report for a specific year
@@ -147,21 +146,6 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
     """
     serializer_class = BodyMeasurementSerializer
     pagination_class = StandardResultsPagination
-
-    def _calculate_age_in_months(self, dob, reference_date):
-        try:
-            if not dob or not reference_date:
-                return 0
-            if hasattr(reference_date, 'date'):
-                reference_date = reference_date.date()
-            if hasattr(dob, 'date'):
-                dob = dob.date()
-            age_months = (reference_date.year - dob.year) * 12 + (reference_date.month - dob.month)
-            if reference_date.day < dob.day:
-                age_months -= 1
-            return max(0, age_months)
-        except:
-            return 0
 
     def get_queryset(self):
         year = self.kwargs.get('year')
@@ -174,13 +158,11 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         end_date = datetime(year, 12, 31, 23, 59, 59)
 
         # Get all records for the year (not just latest per child) - both residents and transients
-        records = BodyMeasurement.objects.filter(
+        queryset = BodyMeasurement.objects.filter(
             created_at__range=(start_date, end_date),
             is_opt=True,
-        
-            # Removed pat__pat_type='Resident' filter
         ).select_related(
-        'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
+            'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
         ).prefetch_related(
             Prefetch(
                 'pat__rp_id__per__personaladdress_set',
@@ -198,7 +180,7 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         filtered_records = []
         seen_children = set()
         
-        for record in records:
+        for record in queryset:
             if record.created_at:
                 pat = record.pat
                 dob = None
@@ -209,23 +191,20 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                 elif pat.pat_type == 'Transient' and hasattr(pat, 'trans_id') and pat.trans_id:
                     dob = pat.trans_id.tran_dob
 
-                age_months = self._calculate_age_in_months(dob, record.created_at)
+                age_months = calculate_age_in_months(dob, record.created_at)
                 
-                # Filter for children aged 0-23 months (changed from 0-71)
-                if 0 <= age_months <= 23:  # Age range 0-23 months
+                # Filter for children aged 0-23 months
+                if 0 <= age_months <= 23:
                     child_id = pat.pat_id
                     if child_id not in seen_children:
                         seen_children.add(child_id)
                     filtered_records.append(record)
 
-        return self._apply_filters(filtered_records)
-
-    def _apply_filters(self, records):
-        # Track if any filter is applied
-        filters_applied = False
-        original_count = len(records)
-
-        # Combined search (child/patient name, family number, and sitio)
+        # Convert back to queryset for filtering
+        record_ids = [record.bm_id for record in filtered_records]
+        filtered_queryset = BodyMeasurement.objects.filter(bm_id__in=record_ids)
+        
+        # Apply search filters using the reusable function
         search_query = self.request.query_params.get('search', '').strip()
         sitio_search = self.request.query_params.get('sitio', '').strip()
         
@@ -237,138 +216,15 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
             combined_search_terms.append(sitio_search)
         
         if combined_search_terms:
-            filters_applied = True
             combined_search = ','.join(combined_search_terms)
-            records = self._apply_search_filter(records, combined_search)
-            if len(records) == 0 and original_count > 0:
-                return []
+            filtered_queryset = apply_search_filter_to_body_measurement(filtered_queryset, combined_search)
 
         # Nutritional status filter
         nutritional_search = self.request.query_params.get('body_measurement', '').strip()
         if nutritional_search:
-            filters_applied = True
-            records = self._apply_nutritional_search(records, nutritional_search)
-            if len(records) == 0 and original_count > 0:
-                return []
+            filtered_queryset = apply_nutritional_search_to_body_measurement(filtered_queryset, nutritional_search)
 
-        return records
-
-    def _apply_search_filter(self, records, search_query):
-        """Search by child/patient name, family number, and sitio - both residents and transients"""
-        search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
-        if not search_terms:
-            return records
-
-        filtered_records = []
-        
-        for record in records:
-            pat = record.pat
-            match_found = False
-            
-            for term in search_terms:
-                # Check child name - both residents and transients
-                if pat.pat_type == 'Resident' and hasattr(pat, 'rp_id') and pat.rp_id:
-                    per = pat.rp_id.per
-                    if (term.lower() in per.per_fname.lower() or 
-                        term.lower() in per.per_mname.lower() or 
-                        term.lower() in per.per_lname.lower()):
-                        match_found = True
-                        break
-                elif pat.pat_type == 'Transient' and hasattr(pat, 'trans_id') and pat.trans_id:
-                    trans = pat.trans_id
-                    if (term.lower() in trans.tran_fname.lower() or 
-                        term.lower() in trans.tran_mname.lower() or 
-                        term.lower() in trans.tran_lname.lower()):
-                        match_found = True
-                        break
-                
-                # Check family number (adjust if you have this data)
-                # family_no = ... # Add logic if you have family number data
-                
-                # Check sitio
-                address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(pat)
-                if sitio and term.lower() in sitio.lower():
-                    match_found = True
-                    break
-            
-            if match_found:
-                filtered_records.append(record)
-
-        return filtered_records
-
-    def _apply_nutritional_search(self, records, search_query):
-        """Search by nutritional status"""
-        search_terms = [term.strip().lower() for term in search_query.split(',') if term.strip()]
-        if not search_terms:
-            return records
-        
-        filtered_records = []
-        for record in records:
-            for term in search_terms:
-                if (record.wfa and term in record.wfa.lower()) or \
-                   (record.lhfa and term in record.lhfa.lower()) or \
-                   (record.wfl and term in record.wfl.lower()) or \
-                   (record.muac_status and term in record.muac_status.lower()):
-                    filtered_records.append(record)
-                    break
-        return filtered_records
-
-    def _get_household_no(self, pat_obj):
-        """
-        Get household number for a patient based on the reference PatientSerializer logic
-        """
-        if pat_obj.pat_type == 'Resident' and pat_obj.rp_id:
-            try:
-                # Get the most recent family composition for this resident
-                current_composition = FamilyComposition.objects.filter(
-                    rp=pat_obj.rp_id
-                ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
-                
-                if current_composition:
-                    return str(current_composition.fam_id.fam_no) if hasattr(current_composition.fam_id, 'fam_no') else 'N/A'
-            except Exception as e:
-                print(f"Error fetching household number for resident {pat_obj.rp_id.rp_id}: {str(e)}")
-        
-        return 'N/A'
-
-    def _get_parents_info(self, pat_obj):
-        """
-        Get parents information for a patient based on the reference PatientSerializer logic
-        """
-        parents = {}
-        
-        if pat_obj.pat_type == 'Resident' and pat_obj.rp_id:
-            try:
-                # Get family head info similar to PatientSerializer
-                current_composition = FamilyComposition.objects.filter(
-                    rp=pat_obj.rp_id
-                ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
-                
-                if current_composition:
-                    fam_id = current_composition.fam_id
-                    
-                    # Get all family members in the same family
-                    family_compositions = FamilyComposition.objects.filter(
-                        fam_id=fam_id
-                    ).select_related('rp', 'rp__per')
-                    
-                    for composition in family_compositions:
-                        role = composition.fc_role.lower()
-                        if role in ['mother', 'father'] and composition.rp and hasattr(composition.rp, 'per'):
-                            personal = composition.rp.per
-                            parents[role] = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
-            except Exception as e:
-                print(f"Error fetching parents info for resident {pat_obj.rp_id.rp_id}: {str(e)}")
-        
-        elif pat_obj.pat_type == 'Transient' and pat_obj.trans_id:
-            trans = pat_obj.trans_id
-            if trans.mother_fname or trans.mother_lname:
-                parents['mother'] = f"{trans.mother_fname} {trans.mother_mname} {trans.mother_lname}".strip()
-            
-            if trans.father_fname or trans.father_lname:
-                parents['father'] = f"{trans.father_fname} {trans.father_mname} {trans.father_lname}".strip()
-        
-        return parents
+        return filtered_queryset
 
     def _format_monthly_report_data(self, data, queryset_objects=None):
         children_data = {}
@@ -387,11 +243,12 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
 
             for i, entry in enumerate(data):
                 try:
-                    ns_obj = queryset_objects[i]
+                    bm_obj = queryset_objects[i]  # Changed from ns_obj to bm_obj
 
                     # Get child ID for grouping
-                    child_id = ns_obj.pat.pat_id
-                         # Get child name from pat_details.personal_info
+                    child_id = bm_obj.pat.pat_id
+                    
+                    # Get child name from pat_details.personal_info
                     pat_details = entry.get('pat_details', {})
                     personal_info = pat_details.get('personal_info', {})
                     
@@ -402,10 +259,10 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
 
                     # Initialize child data if not exists
                     if child_id not in children_data:
-                        address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(ns_obj.pat)
+                        address, sitio, is_transient = get_patient_address(bm_obj.pat)
 
                         # Get patient's date of birth and sex
-                        pat_obj = ns_obj.pat
+                        pat_obj = bm_obj.pat
                         dob = None
                         sex = None
                         
@@ -416,19 +273,19 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                             dob = pat_obj.trans_id.tran_dob
                             sex = pat_obj.trans_id.tran_sex
 
-                        # Get household number using the same logic as PatientSerializer
-                        household_no = self._get_household_no(pat_obj)
+                        # Get household number using reusable function
+                        household_no = get_household_no(pat_obj)
 
-                        # Get parents information using the same logic as PatientSerializer
-                        parents = self._get_parents_info(pat_obj)
+                        # Get parents information using reusable function
+                        parents = get_parents_info(pat_obj)
 
                         children_data[child_id] = {
                             'child_id': child_id,
-                            'household_no': household_no,  # Now using the same logic as PatientSerializer
+                            'household_no': household_no,
                             'child_name': child_name,
-                            'sex': sex,  # Now properly set based on patient type
-                            'date_of_birth': dob,  # Now properly set based on patient type
-                            'parents': parents,  # Now using the same logic as PatientSerializer
+                            'sex': sex,
+                            'date_of_birth': dob,
+                            'parents': parents,
                             'address': address,
                             'sitio': sitio,
                             'transient': is_transient,
@@ -449,8 +306,8 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                         }
 
                     # Get measurement month
-                    if ns_obj.created_at:
-                        month = ns_obj.created_at.month
+                    if bm_obj.created_at:
+                        month = bm_obj.created_at.month
                         month_name = [
                             'january', 'february', 'march', 'april', 'may', 'june',
                             'july', 'august', 'september', 'october', 'november', 'december'
@@ -458,22 +315,23 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
 
                         # Calculate age at weighing
                         dob = None
-                        pat_obj = ns_obj.pat
+                        pat_obj = bm_obj.pat
                         if pat_obj.pat_type == 'Resident' and hasattr(pat_obj, 'rp_id') and pat_obj.rp_id:
                             dob = pat_obj.rp_id.per.per_dob
                         elif pat_obj.pat_type == 'Transient' and hasattr(pat_obj, 'trans_id') and pat_obj.trans_id:
                             dob = pat_obj.trans_id.tran_dob
                         
-                        age_months = self._calculate_age_in_months(dob, ns_obj.created_at)
+                        age_months = calculate_age_in_months(dob, bm_obj.created_at)
 
                         # Format nutritional status
                         body_measurement = {
-                            'wfa': ns_obj.wfa,
-                            'lhfa': ns_obj.lhfa,
-                            'wfl': ns_obj.wfl,
-                            'muac': ns_obj.muac,
-                            'edema': ns_obj.edemaSeverity,
-                            'muac_status': ns_obj.muac_status
+                            'wfa': bm_obj.wfa,
+                            'lhfa': bm_obj.lhfa,
+                            'wfl': bm_obj.wfl,
+                            'muac': bm_obj.muac,
+                            'edema': bm_obj.edemaSeverity,
+                            'muac_status': bm_obj.muac_status,
+                            'remarks': bm_obj.remarks
                         }
 
                         # Update monthly data
@@ -484,7 +342,7 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                             'weight': entry.get('weight'),
                             'height': entry.get('height'),
                             'body_measurement': body_measurement,
-                            'type_of_feeding': 'N/A'  # Adjust if you have this data
+                            'type_of_feeding': 'N/A'
                         }
 
                 except Exception as e:

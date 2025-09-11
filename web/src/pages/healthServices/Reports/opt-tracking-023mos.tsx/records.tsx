@@ -15,22 +15,7 @@ import { toast } from "sonner"
 import { useYearlyOPTRecords } from "./queries/fetch"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
-
-    return () => {
-      clearTimeout(handler)
-    }
-  }, [value, delay])
-
-  return debouncedValue
-}
+import { useDebounce } from "@/hooks/use-debounce"
 
 type Quarter = "Q1" | "Q2" | "Q3"
 
@@ -122,7 +107,7 @@ export default function QuarterlyOPTDetails() {
   const currentQuarterConfig = quarterConfig[selectedQuarter]
 
   const prepareExportData = useCallback(() => {
-    return records.map((item) => {
+    return records.map((item:any) => {
       const exportItem: Record<string, string | number | null> = {
         "Child ID": item.child_id || "N/A",
         "Household No": item.household_no || "N/A",
@@ -145,9 +130,9 @@ export default function QuarterlyOPTDetails() {
         exportItem[`${monthName} Weighing Date`] = monthData?.date_of_weighing || "N/A"
         exportItem[`${monthName} Weight (kg)`] = monthData?.weight || "N/A"
         exportItem[`${monthName} Height (cm)`] = monthData?.height || "N/A"
-        exportItem[`${monthName} WFA Status`] = monthData?.nutritional_status?.wfa || "N/A"
-        exportItem[`${monthName} LHFA Status`] = monthData?.nutritional_status?.lhfa || "N/A"
-        exportItem[`${monthName} WFL Status`] = monthData?.nutritional_status?.wfl || "N/A"
+        exportItem[`${monthName} WFA Status`] = monthData?.body_measurement?.wfa || "N/A"
+        exportItem[`${monthName} LHFA Status`] = monthData?.body_measurement?.lhfa || "N/A"
+        exportItem[`${monthName} WFL Status`] = monthData?.body_measurement?.wfl || "N/A"
         exportItem[`${monthName} Feeding Type`] = monthData?.type_of_feeding || "N/A"
       })
 
@@ -492,7 +477,7 @@ export default function QuarterlyOPTDetails() {
                     </tr>
                   </thead>
                   <tbody>
-                    {records.map((item, index) => (
+                    {records.map((item:any, index:any) => (
                       <>
                         {/* WFA Row */}
                         <tr key={`${index}-wfa`} className="hover:bg-gray-50">
@@ -521,7 +506,7 @@ export default function QuarterlyOPTDetails() {
                                 </td>
                                 <td className="border border-black p-1 text-left">
                                   WFA:
-                                  <span className="ml-1 font-bold">{monthData?.nutritional_status?.wfa || ""}</span>
+                                  <span className="ml-1 font-bold">{monthData?.body_measurement?.wfa || ""}</span>
                                 </td>
                               </React.Fragment>
                             )
@@ -535,7 +520,7 @@ export default function QuarterlyOPTDetails() {
                             return (
                               <td key={`${month.key}-lhfa`} className="border border-black p-1 text-left">
                                 L/HFA:
-                                <span className="ml-1 font-bold">{monthData?.nutritional_status?.lhfa || ""}</span>
+                                <span className="ml-1 font-bold">{monthData?.body_measurement?.lhfa || ""}</span>
                               </td>
                             )
                           })}
@@ -548,21 +533,20 @@ export default function QuarterlyOPTDetails() {
                             return (
                               <td key={`${month.key}-wfl`} className="border border-black p-1 text-left">
                                 WFL/Ht:
-                                <span className="ml-1 font-bold">{monthData?.nutritional_status?.wfl || ""}</span>
+                                <span className="ml-1 font-bold">{monthData?.body_measurement?.wfl || ""}</span>
                               </td>
                             )
                           })}
                         </tr>
-
-                        {/* Remarks Row */}
                         <tr key={`${index}-remarks`} className="hover:bg-gray-50">
                           {currentQuarterConfig.months.map((month) => {
-                            const monthData = item.monthly_data[month.key]
-                            return (
-                              <td key={`${month.key}-remarks`} className="border border-black p-1 text-left">
-                                Remarks: {""}
-                              </td>
-                            )
+                          const monthData = item.monthly_data[month.key]
+                          return (
+                            <td key={`${month.key}-remarks`} className="border border-black p-1 text-left">
+                            Remarks:
+                            <span className="ml-1 font-bold">{monthData?.body_measurement?.remarks || ""}</span>
+                            </td>
+                          )
                           })}
                         </tr>
                       </>

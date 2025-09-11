@@ -142,7 +142,7 @@ export const createFollowUpVisit = async (data: Record<string, any>) => {
 export const processMedicineRequest = async (data: Record<string, any>): Promise<any> => {
   try {
     console.log("Sending data to /inventory/childmedicine/:", data);
-    const res = await api2.post("/inventory/childmedicine/", data);
+    const res = await api2.post("/medicine/childmedicine/", data);
     if (!res.data || !res.data.results || !Array.isArray(res.data.results)) {
       throw new Error("Failed to create child medicine record: Missing or invalid response data");
     }

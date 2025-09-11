@@ -20,8 +20,8 @@
     createVaccinationRecord,
     createVaccinationHistory,
   } from "../../../vaccination/restful-api/post";
-  import { createimmunizationRecord } from "../restful-api/postAPI";
-  import { updateVaccineStock } from "@/pages/healthInventory/inventoryStocks/REQUEST/Antigen/restful-api/VaccinePutAPI";
+  import { createimmunizationRecord } from "../restful-api/post-api";
+  import { updateVaccineStock } from "@/pages/healthInventory/inventoryStocks/REQUEST/Antigen/restful-api/put";
   import { showSuccessToast } from "@/components/ui/toast";
   import { showErrorToast } from "@/components/ui/toast";
   import { useNavigate } from "react-router";

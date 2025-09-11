@@ -1,19 +1,13 @@
 // REQUEST/Archive/ArchivepatchQueries.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api2 } from "@/api/api";
-import { showErrorToast, showSuccessToast } from '@/components/ui/toast';
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
-
-
-export const useArchiveCommodityStocks= () => {
+export const useArchiveCommodityStocks = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ inv_id, isExpired, hasAvailableStock }: { 
-      inv_id: string; 
-      isExpired: boolean; 
-      hasAvailableStock: boolean; 
-    }) => {
+    mutationFn: async ({ inv_id, isExpired, hasAvailableStock }: { inv_id: string; isExpired: boolean; hasAvailableStock: boolean }) => {
       try {
         const response = await api2.patch(`inventory/archive/commoditystocks/${inv_id}/`, {
           is_expired: isExpired,
@@ -25,32 +19,24 @@ export const useArchiveCommodityStocks= () => {
         throw error;
       }
     },
-    
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["commodityStocks"] });
-      showSuccessToast  ("Successfully archived the item.");
+      showSuccessToast("Successfully archived the item.");
     },
-    
+
     onError: (error: Error) => {
       console.error("Error archiving commodity inventory:", error.message);
-      showErrorToast("Failed to archive the item.")
+      showErrorToast("Failed to archive the item.");
     }
   });
 };
 
-
-
-
-
 export const useArchiveAntigenStocks = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ inv_id, isExpired, hasAvailableStock }: { 
-      inv_id: string; 
-      isExpired: boolean; 
-      hasAvailableStock: boolean; 
-    }) => {
+    mutationFn: async ({ inv_id, isExpired, hasAvailableStock }: { inv_id: string; isExpired: boolean; hasAvailableStock: boolean }) => {
       try {
         const response = await api2.patch(`inventory/archive/antigen/${inv_id}/`, {
           is_expired: isExpired,
@@ -62,29 +48,24 @@ export const useArchiveAntigenStocks = () => {
         throw error;
       }
     },
-    
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["commodityStocks"] });
+      queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
+      showSuccessToast("Archived successfully");
     },
-    
+
     onError: (error: Error) => {
       console.error("Error archiving commodity inventory:", error.message);
     }
   });
 };
 
-
-
-
 export const useArchiveFirstAidInventory = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ inv_id, isExpired, hasAvailableStock }: { 
-      inv_id: string; 
-      isExpired: boolean; 
-      hasAvailableStock: boolean; 
-    }) => {
+    mutationFn: async ({ inv_id, isExpired, hasAvailableStock }: { inv_id: string; isExpired: boolean; hasAvailableStock: boolean }) => {
       try {
         const response = await api2.patch(`inventory/archive/firstaidstocks/${inv_id}/`, {
           is_expired: isExpired,
@@ -96,32 +77,22 @@ export const useArchiveFirstAidInventory = () => {
         throw error;
       }
     },
-    
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["firstAidStocks"] });
     },
-    
+
     onError: (error: Error) => {
       console.error("Error archiving first aid inventory:", error.message);
     }
   });
 };
 
-
-
 export const useArchiveMedicineStocks = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ 
-      inv_id, 
-      isExpired, 
-      hasAvailableStock 
-    }: { 
-      inv_id: string; 
-      isExpired: boolean; 
-      hasAvailableStock: boolean; 
-    }) => {
+    mutationFn: async ({ inv_id, isExpired, hasAvailableStock }: { inv_id: string; isExpired: boolean; hasAvailableStock: boolean }) => {
       try {
         const response = await api2.patch(`inventory/archive/medicinestocks/${inv_id}/`, {
           is_expired: isExpired,
@@ -133,11 +104,11 @@ export const useArchiveMedicineStocks = () => {
         throw error;
       }
     },
-    
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
     },
-    
+
     onError: (error: Error) => {
       console.error("Error archiving medicine inventory:", error.message);
     }

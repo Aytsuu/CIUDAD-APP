@@ -2,7 +2,6 @@ import { getMedicineStocks } from "./getAPI"; // Your API function
 import { useQuery } from '@tanstack/react-query';
 
 
-// hooks/useMedicineStocks.ts
 export const fetchMedicinesWithStock = (is_temp?:boolean) => {
   return useQuery({
     queryKey: ['medicineStocks'],

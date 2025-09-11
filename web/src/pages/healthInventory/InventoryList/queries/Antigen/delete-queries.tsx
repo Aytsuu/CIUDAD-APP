@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { handleDeleteAntigen } from "../../restful-api/Antigen/deleteAPI";
+import { handleDeleteAntigen } from "../../restful-api/Antigen/delete-api";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 export const useDeleteAntigen = () => {

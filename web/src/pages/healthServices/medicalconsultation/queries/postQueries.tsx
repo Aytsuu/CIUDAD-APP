@@ -8,14 +8,10 @@ import { useNavigate } from "react-router";
 export const useSubmitMedicalConsultation = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
-  
     return useMutation({
-      mutationFn: async ({ data, currentPatient }: { data: any; currentPatient: any;  }) => {
-       
+      mutationFn: async ({ data }: { data: any;  }) => {
         console.log("Submitting medical consultation data:", data);
-        const response = await api2.post("/medical-consultation/create-medical-consultation-record-step1/", 
-          data
-        );
+        const response = await api2.post("/medical-consultation/create-medical-consultation-record-step1/",  data);
         return response.data;
       },
       onSuccess: () => {
@@ -25,8 +21,7 @@ export const useSubmitMedicalConsultation = () => {
       },
       onError: (error: any) => {
         console.error(error);
-        if (axios.isAxiosError(error) && error.response) {
-          showErrorToast(`Error: ${error.response.data.error || "Something went wrong"}`);
+        if (axios.isAxiosError(error) && error.response) {showErrorToast(`Error: ${error.response.data.error || "Something went wrong"}`);
         } else {
           toast.error(error.message || "Error setting up request.");
         }

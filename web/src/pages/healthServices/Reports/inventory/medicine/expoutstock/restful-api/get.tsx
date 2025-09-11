@@ -12,7 +12,7 @@ export const getMedicineExpiredOutOfStockSummary = async (
       params.append('page_size', pageSize.toString());
   
       const response = await api2.get<MedicineExpiredOutOfStockSummaryResponse>(
-        `/inventory/medicine-expired-out-of-stock-summary/?${params.toString()}`
+        `/reports/medicine-expired-out-of-stock-summary/?${params.toString()}`
       );
       return response.data;
     } catch (error) {
@@ -26,7 +26,7 @@ export const getMedicineExpiredOutOfStockSummary = async (
   ): Promise<MedicineExpiredOutOfStockDetailResponse> => {
     try {
       const response = await api2.get<MedicineExpiredOutOfStockDetailResponse>(
-        `/inventory/medicine-expired-out-of-stock-detail/${month}/`
+        `/reports/medicine-expired-out-of-stock-detail/${month}/`
       );
       return response.data;
     } catch (error) {

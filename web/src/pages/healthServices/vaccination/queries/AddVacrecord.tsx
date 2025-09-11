@@ -231,10 +231,8 @@
 //   return followUpVisit.followv_id;
 // };
 
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleAlert, CircleCheck } from "lucide-react";
+
 import { useNavigate } from "react-router";
 import { api2 } from "@/api/api";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
@@ -249,9 +247,7 @@ export const useSubmitStep2 = () => {
       signature,
       pat_id,
       form,
-      // form2,
       vacStck_id,
-      // vac_id,
       vac_name,
       expiry_date,
       followUpData,
@@ -286,24 +282,19 @@ export const useSubmitStep2 = () => {
           assignto: data.assignto,
           followv_date: form.getValues("followv_date")
         },
-        form2_data: assignmentOption === "self" ? {
-          bpsystolic: form2.getValues("bpsystolic"),
-          bpdiastolic: form2.getValues("bpdiastolic"),
-          temp: form2.getValues("temp"),
-          o2: form2.getValues("o2"),
-          pr: form2.getValues("pr")
-        } : {},
+
         signature: signature,
         pat_id: pat_id,
         vacStck_id: vacStck_id,
-        vac_id: vac_id,
         vac_name: vac_name,
         expiry_date: expiry_date,
-        follow_up_data: followUpData ? {
-          followv_date: followUpData.followv_date,
-          followv_status: followUpData.followv_status,
-          followv_description: followUpData.followv_description
-        } : undefined,
+        follow_up_data: followUpData
+          ? {
+              followv_date: followUpData.followv_date,
+              followv_status: followUpData.followv_status,
+              followv_description: followUpData.followv_description
+            }
+          : undefined,
         vaccination_history: vaccinationHistory,
         staff_id: staff_id
       };
@@ -321,7 +312,7 @@ export const useSubmitStep2 = () => {
       queryClient.invalidateQueries({ queryKey: ["vaccineStocks"] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
       navigate(-1);
-    showSuccessToast("Successfully Recorded");
+      showSuccessToast("Successfully Recorded");
     },
     onError: (error: Error) => {
       showErrorToast(`${error.message}`);

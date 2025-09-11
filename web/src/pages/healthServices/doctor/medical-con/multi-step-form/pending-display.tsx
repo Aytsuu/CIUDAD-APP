@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button/button";
-import { ChevronRight, Stethoscope } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useMemo } from "react";
-
 import CurrentConsultationCard from "@/pages/healthServices/medicalconsultation/medicalhistory/current-medrec";
+
 
 interface PendingDisplayMedicalConsultationProps {
   patientData: any;
@@ -19,6 +19,7 @@ export default function PendingDisplayMedicalConsultation({ patientData, Medical
   return (
     <div className="">
       <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">Page 1 of 2</div>
+
 
       <div>
         {/* Current Consultation Card */}

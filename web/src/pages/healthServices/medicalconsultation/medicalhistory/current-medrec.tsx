@@ -294,11 +294,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           <Printer /> Print
         </Button>
 
-        <Link to="/invMedicalRecord" state={{ params: { patientData, mode: "doctor" } }}>
-          <Button className="flex gap-2 items-center text-white">
-            <History className="w-4 h-4" /> View History
-          </Button>
-        </Link>
+       
       </div>
 
       {/* Content to be printed */}
