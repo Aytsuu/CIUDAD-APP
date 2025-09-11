@@ -1,7 +1,7 @@
 import { useState } from "react"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { Button } from "@/components/ui/button/button"
-import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, FileInput, Calendar, FileText,Tag,} from "lucide-react"
+import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, FileInput, Calendar, FileText ,Tag, User} from "lucide-react"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -66,7 +66,7 @@ function MinutesOfMeetingPage() {
   const filteredActiveData = activeData.filter((record) => {
     const matchesFilter = filter === "all" || record.mom_area_of_focus.includes(filter)
     const matchesSearch =
-      `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.mom_area_of_focus.join(" ")}`
+      `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.staff_name} ${record.mom_area_of_focus.join(" ")}`
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     return matchesFilter && matchesSearch
@@ -75,7 +75,7 @@ function MinutesOfMeetingPage() {
   const filteredArchivedData = archivedData.filter((record) => {
     const matchesFilter = filter === "all" || record.mom_area_of_focus.includes(filter)
     const matchesSearch =
-      `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.mom_area_of_focus.join(" ")}`
+      `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.staff_name} ${record.mom_area_of_focus.join(" ")}`
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     return matchesFilter && matchesSearch
@@ -103,9 +103,20 @@ function MinutesOfMeetingPage() {
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1">
             <CardTitle className="text-xl font-semibold text-gray-900 leading-tight mb-2">{record.mom_title}</CardTitle>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Calendar size={16} />
-              <span>{formatDate(record.mom_date, true)}</span>
+            <div className="flex flex-row gap-4">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                 <Calendar size={16} />
+                 <span>{formatDate(record.mom_date, true)}</span>
+              </div>
+              <div>
+                {record.staff_name && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                     <User size={14} />
+                     {/* <span className="font-medium">Created by:</span> */}
+                     <span>{record.staff_name}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex gap-2 flex-shrink-0">

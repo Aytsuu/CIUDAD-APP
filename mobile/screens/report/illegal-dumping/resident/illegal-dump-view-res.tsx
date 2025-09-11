@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { X } from "lucide-react-native";
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
@@ -176,31 +176,6 @@ export default function WasteIllegalDumpingResDetails() {
                 onPress={handleResubmit}
               />              
             ) : (
-              // <ConfirmationModal
-              //   trigger={
-              //     <TouchableOpacity
-              //       className={"py-4 rounded-md mt-4 items-center bg-red-500"}
-              //       disabled={isCancelled || isPending}
-              //     >
-              //       {isPending ? (
-              //         <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              //           <ActivityIndicator 
-              //             size="small" 
-              //             color="white" 
-              //             style={{marginRight: 8}}
-              //           />
-              //           <Text className="text-white font-medium">Loading...</Text>
-              //         </View>
-              //       ) : (
-              //         <Text className="text-white font-medium text-md">Cancel </Text>
-              //       )}                                    
-              //     </TouchableOpacity>
-              //   }
-              //   title="Cancel Report"
-              //   description="Are you sure you want to cancel this report?"
-              //   actionLabel="Confirm"
-              //   onPress={handleSubmitResolution}
-              // />  
               
               <TouchableOpacity
                 disabled={isCancelled || isPending}
@@ -386,7 +361,7 @@ export default function WasteIllegalDumpingResDetails() {
                                         color="white" 
                                         style={{marginRight: 8}}
                                       />
-                                      <Text className="text-white font-medium">Submitting...</Text>
+                                      <Text className="text-white font-medium">Loading...</Text>
                                     </View>
                                   ) : (
                                     <Text className="text-white font-medium">Submit</Text>

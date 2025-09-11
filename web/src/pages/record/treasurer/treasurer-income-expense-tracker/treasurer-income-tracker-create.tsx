@@ -1,16 +1,11 @@
 import { Input } from "@/components/ui/input";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
-import { Combobox } from "@/components/ui/combobox";
-import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpenseFetchQueries";
-import { useIncomeParticular, type IncomeParticular } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useIncomeParticular } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useCreateIncome } from "./queries/treasurerIncomeExpenseAddQueries";
 import IncomeFormSchema from "@/form-schema/treasurer/income-tracker-schema";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";

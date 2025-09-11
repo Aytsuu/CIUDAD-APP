@@ -36,6 +36,7 @@ export default function AcceptedTable() {
       ${request.garb_additional_notes} 
       ${request.dec_date}
       ${request.sitio_name}
+      ${request.staff_name}
     `.toLowerCase().includes(searchQuery.toLowerCase())
     
     return matchesSitio && matchesSearch
@@ -284,6 +285,14 @@ export default function AcceptedTable() {
                             <p className="text-xs text-gray-500 uppercase tracking-wide">Scheduled Date</p>
                             <p className="text-xs font-medium text-gray-900 mt-0.5">
                               {request.assignment_info.pick_date}
+                            </p>
+                          </div>
+                        )}
+                        {request.staff_name && (
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Accepted & Assigned By</p>
+                            <p className="text-xs font-medium text-gray-900 mt-0.5">
+                              {request.staff_name}
                             </p>
                           </div>
                         )}

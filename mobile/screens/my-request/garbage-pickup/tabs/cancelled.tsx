@@ -5,14 +5,13 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { formatTime } from "@/helpers/timeFormatter";
-import { RootState } from "@/redux";
-import { useSelector } from "react-redux";
 import { useGetGarbageCancelledResident } from "../queries/garbagePickupFetchQueries";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 export default function ResidentCancelled() {
   const [searchQuery, setSearchQuery] = useState("");
-  const {user, isLoading: isUserLoading} = useSelector((state: RootState) => state.auth)
+  const {user} = useAuth()  
   const { data: cancelledRequest = [], isLoading: isDataLoading} = useGetGarbageCancelledResident(user.resident.rp_id)
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState("");

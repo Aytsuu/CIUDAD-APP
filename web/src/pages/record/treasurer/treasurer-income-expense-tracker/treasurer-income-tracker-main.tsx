@@ -19,7 +19,6 @@ import { useIncomeData, type Income } from "./queries/treasurerIncomeExpenseFetc
 import { useDeleteIncome, useArchiveOrRestoreIncome } from "./queries/treasurerIncomeExpenseDeleteQueries";
 import { Link } from "react-router-dom";
 import { NavLink } from "react-router-dom";
-import { useParams } from 'react-router-dom';
 import { useLocation } from "react-router-dom";
 import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 

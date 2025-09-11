@@ -7,6 +7,8 @@ export type Album = {
   is_archive: boolean; 
   inf_name?: string;
   dis_name?: string;
+  inf_desc?: string;
+  dis_desc?: string;
 };
 
 export type ImageItem =

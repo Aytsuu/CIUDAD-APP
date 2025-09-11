@@ -7,13 +7,13 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form";
 import { useAddAnnualGrossSales } from "../queries/RatesInsertQueries"
 import { useState } from "react"
-
+import { useAuth } from "@/context/AuthContext"
 
 function RatesFormPage1({onSuccess, lastMaxRange} : {
     lastMaxRange: number | string;
     onSuccess?: () => void;
 }){
-
+    const {user} = useAuth();
     const shouldLockMinRange = Number(lastMaxRange) > 0;
     const initialMinRange = shouldLockMinRange ? (Number(lastMaxRange) + 1).toString() : "";
     const [formError, setFormError] = useState<string | null>(null);
@@ -23,7 +23,8 @@ function RatesFormPage1({onSuccess, lastMaxRange} : {
         defaultValues:{
             maxRange: "",
             minRange: initialMinRange,
-            amount: ""
+            amount: "",
+            staff_id: user?.staff?.staff_id
         }
     })
     

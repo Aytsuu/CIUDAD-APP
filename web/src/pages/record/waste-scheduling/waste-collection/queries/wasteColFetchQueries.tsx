@@ -103,32 +103,6 @@ export const useGetWasteSitio = () => {
 
 
 
-//Retrieve Full data for Waste Collection
-// export type WasteCollectionSchedFull = {
-//     wc_num: string;
-//     wc_date: string;
-//     wc_time: string;
-//     wc_add_info: string;
-//     wc_is_archive: boolean;
-//     staff: number;
-//     waste_assignments: {
-//         was_id: number;
-//         sitio: { id: number; name: string } | null;
-//         truck: number | null;
-//         staff: number | null;
-//         wstp: { id: number; name: string } | null;
-//         waste_collectors: { id: number; name: string }[];
-//     }[];
-// };
-
-// export const useGetWasteCollectionSchedFull = () => {
-//     return useQuery<WasteCollectionSchedFull[]>({
-//         queryKey: ["wasteCollectionSchedFull"],
-//         queryFn: getWasteCollectionSchedFull,
-//         staleTime: 1000 * 60 * 30,
-//     });
-// };
-
 
 
 

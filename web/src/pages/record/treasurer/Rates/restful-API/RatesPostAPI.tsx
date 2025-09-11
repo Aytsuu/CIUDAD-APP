@@ -10,6 +10,7 @@ const addAnnualGrossSales = async (grossSales: Record<string, any>) => {
             ags_rate: parseFloatSafe(grossSales.amount),
             ags_date: new Date().toISOString(),
             ags_is_archive: false,
+            staff_id: grossSales.staff_id
         })
 
         const res = await api.post('treasurer/annual-gross-sales/', {
@@ -18,6 +19,7 @@ const addAnnualGrossSales = async (grossSales: Record<string, any>) => {
             ags_rate: parseFloatSafe(grossSales.amount),
             ags_date: new Date().toISOString(),
             ags_is_archive: false,
+            staff_id: grossSales.staff_id
         });
 
         return res.data.ags_id;
@@ -35,6 +37,7 @@ const addPurposeAndRate = async (purposeAndRate: Record<string, any>) => {
             pr_category: purposeAndRate.category,
             pr_date: new Date().toISOString(),
             pr_is_archive: false,
+            staff_id: purposeAndRate.staff_id
         })
 
         const res = await api.post('treasurer/purpose-and-rate/', {
@@ -43,6 +46,7 @@ const addPurposeAndRate = async (purposeAndRate: Record<string, any>) => {
             pr_category: purposeAndRate.category,
             pr_date: new Date().toISOString(),
             pr_is_archive: false,
+            staff_id: purposeAndRate.staff_id
         })
         return res.data.pr_id;
     } catch(error){

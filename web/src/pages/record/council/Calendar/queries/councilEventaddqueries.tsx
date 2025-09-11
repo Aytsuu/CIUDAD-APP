@@ -29,7 +29,7 @@ export const useAddAttendee = () => {
   
   return useMutation({
     mutationFn: (attendeeData: AttendeeInput) => postAttendee(attendeeData),
-    onSuccess: (atn_id) => {
+    onSuccess: (_atn_id) => {
       queryClient.invalidateQueries({ queryKey: ["councilEvents"] });
     },
   });
