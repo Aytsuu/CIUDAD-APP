@@ -10,7 +10,7 @@ import { CertificationRequestSchema } from "@/form-schema/certificates/certifica
 import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import _ScreenLayout from '@/screens/_ScreenLayout';
-import { RootState } from '@/redux';
+import { RootState } from '@/redux/store';
 
 const CertPermit: React.FC = () => {
   const router = useRouter();

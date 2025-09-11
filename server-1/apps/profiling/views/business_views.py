@@ -16,8 +16,24 @@ class BusinessCreateView(generics.CreateAPIView):
 
 class BRCreateUpdateView(generics.CreateAPIView):
   permission_classes = [AllowAny]
-  serializer_class = BRCreateUpdateSerializer
+  serializer_class = BusinessRespondentBaseSerializer
   queryset = BusinessRespondent.objects.all()
+
+  def create(self, request, *args, **kwargs):
+    acc = request.data.pop("acc", None)
+    serializer = self.get_serializer(data=request.data)
+    
+    if serializer.is_valid():
+      respondent = serializer.save()
+    
+    if acc and respondent:
+      Account.objects.create_user(
+        **acc,
+        br = respondent,
+        username=acc['phone']
+      )
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ActiveBusinessTableView(generics.ListAPIView):
   permission_classes = [AllowAny]

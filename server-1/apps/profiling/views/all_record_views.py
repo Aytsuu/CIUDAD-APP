@@ -101,7 +101,7 @@ class CompleteRegistrationView(APIView):
           results["rp_id"] = rp.pk
 
     if account:
-        self.create_account(account)
+        self.create_account(account, rp)
 
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
@@ -162,8 +162,12 @@ class CompleteRegistrationView(APIView):
 
     return resident_profile
 
-  def create_account(self, account):
-    instance = Account.objects.create_user(**account)
+  def create_account(self, account, rp):
+    instance = Account.objects.create_user(
+      **account,
+      rp=rp,
+      username=account['phone']
+    )
     return instance
   
   def create_household(self, houses, rp, staff):

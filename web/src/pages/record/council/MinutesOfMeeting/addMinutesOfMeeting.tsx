@@ -10,11 +10,12 @@ import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useState } from 'react';
 import { useInsertMinutesOfMeeting } from './queries/MOMInsertQueries';
-
+import { useAuth } from '@/context/AuthContext';
 
 export default function AddMinutesOfMeeting({onSuccess}: {
     onSuccess?: () => void;
 }) {
+    const {user}  = useAuth();
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
     const [fileError, setFileError] = useState<string>("");
@@ -26,6 +27,7 @@ export default function AddMinutesOfMeeting({onSuccess}: {
             meetingAgenda: "",
             meetingDate: "",
             meetingAreaOfFocus: [],
+            staff_id: user?.staff?.staff_id
         },
     });
 
@@ -49,7 +51,7 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                 'type': media.type,
                 'file': media.file
             }))    
-            
+        
         addMOM({ values, files });
     }
 

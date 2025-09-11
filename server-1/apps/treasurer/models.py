@@ -1,7 +1,5 @@
 from django.db import models
 from datetime import date, datetime
-from django.core.validators import MaxValueValidator
-from django.core.validators import MaxValueValidator
 
 
 class Budget_Plan(models.Model): 
@@ -18,6 +16,13 @@ class Budget_Plan(models.Model):
     plan_balUnappropriated = models.DecimalField(max_digits=10, decimal_places=2)
     plan_issue_date = models.DateField(default=date.today)
     plan_is_archive = models.BooleanField(default=False)
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = 'budget_plan'
@@ -339,6 +344,7 @@ class Income_Expense_Main(models.Model):
     class Meta:
         db_table = "income_expense_main"
 
+# ================= ANNUAL GROSS SALES & PURPOSE AND RATES ================
 
 class Annual_Gross_Sales(models.Model):
     ags_id= models.BigAutoField(primary_key=True)
@@ -347,6 +353,13 @@ class Annual_Gross_Sales(models.Model):
     ags_rate=models.DecimalField(max_digits=10, decimal_places=2)
     ags_date=models.DateTimeField(default=date.today)
     ags_is_archive=models.BooleanField(default=False)
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = 'annual_gross_sales'
@@ -359,6 +372,13 @@ class Purpose_And_Rates(models.Model):
     pr_category=models.CharField(max_length=100)
     pr_date=models.DateTimeField(default=date.today)
     pr_is_archive=models.BooleanField(default=False)
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = 'purpose_and_rate'

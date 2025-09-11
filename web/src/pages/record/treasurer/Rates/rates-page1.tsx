@@ -92,7 +92,7 @@ function RatesPage1() {
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
-                    Date Updated
+                    Date Created/Updated
                     <ArrowUpDown size={14} />
                 </div>
             ),
@@ -157,6 +157,10 @@ function RatesPage1() {
 
     const historyColumns: ColumnDef<AnnualGrossSales>[] = [
         ...sharedColumns,
+        {
+            accessorKey: "staff_name",
+            header: "Created/Updated By"
+        },
         {
             accessorKey: "ags_is_archive",
             header: "Status",

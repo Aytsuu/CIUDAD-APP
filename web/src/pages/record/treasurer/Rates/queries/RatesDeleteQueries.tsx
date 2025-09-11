@@ -2,8 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { deleteAnnualGrossSales, deletePurposeAndRate } from "../restful-API/RatesDeleteAPI";
-import { showSuccessToast } from "@/components/ui/toast";
-import { showErrorToast } from "@/components/ui/toast";
 
 export const useDeleteAnnualGrossSales = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();

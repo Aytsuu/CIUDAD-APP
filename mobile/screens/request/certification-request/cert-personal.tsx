@@ -8,7 +8,7 @@ import { useAddPersonalCertification } from "./queries/certificationReqInsertQue
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
 import { usePurposeAndRates, type PurposeAndRate } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, type DropdownOption } from "@/components/ui/select-layout";
-import { RootState } from '@/redux';
+import { RootState } from '@/redux/store';
 
 const CertForm: React.FC = () => {
   const router = useRouter();
@@ -56,6 +56,12 @@ const CertForm: React.FC = () => {
       return;
     }
     const selectedPurposeId = purposeData.find(p => p.pr_purpose === personalType)?.pr_id;
+    const selectedPurpose = purposeData.find(p => p.pr_purpose === personalType);
+    
+    
+    const isEligibleForFreeCert = user?.resident?.voter_id !== null && user?.resident?.voter_id !== undefined;
+    const reqAmount = isEligibleForFreeCert ? 0 : (selectedPurpose?.pr_rate || 0);
+    
     addPersonalCert.mutate({
       cert_type: "personal",
       requester: user?.resident?.rp_id || "", 
@@ -114,17 +120,6 @@ const CertForm: React.FC = () => {
         </View>
       )}
 
-      {/* Back Button */}
-      <View className="flex-row items-center mb-6">
-        <TouchableOpacity 
-          onPress={() => router.back()} 
-          className="bg-white rounded-full w-10 h-10 items-center justify-center shadow-sm border border-gray-100"
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chevron-back" size={20} color="#374151" />
-        </TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900 ml-3">Submit Request</Text>
-      </View>
 
       
 
@@ -159,16 +154,36 @@ const CertForm: React.FC = () => {
 
       {/* Amount Display - Moved below form fields */}
       {personalType && (
-        <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 mt-4">
-            <Text className="text-green-800 text-sm font-medium mb-1">Amount to be Paid:</Text>
-            <Text className="text-green-700 text-lg font-bold">
+        <View className={`rounded-lg p-4 mb-6 mt-4 ${
+          user?.resident?.voter_id ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'
+        }`}>
+          <View className="flex-row items-center mb-2">
+            <Ionicons 
+              name={user?.resident?.voter_id ? "checkmark-circle" : "information-circle"} 
+              size={16} 
+              color={user?.resident?.voter_id ? "#059669" : "#2563EB"} 
+            />
+            <Text className={`text-sm font-medium ml-2 ${user?.resident?.voter_id ? 'text-green-800' : 'text-blue-800'}`}>
+              Amount to be Paid:
+            </Text>
+          </View>
+          <Text className={`text-lg font-bold ${
+            user?.resident?.voter_id ? 'text-green-700' : 'text-blue-700'
+          }`}>
             {(() => {
+              // Check if user has voter_id for free certificate (only residents with non-null voter_id get free)
+              const isEligibleForFreeCert = user?.resident?.voter_id !== null && user?.resident?.voter_id !== undefined;
+              
+              if (isEligibleForFreeCert) {
+                return '₱0 (FREE)';
+              } else {
                 const selectedPurpose = purposeData.find(p => p.pr_purpose === personalType);
                 return selectedPurpose ? `₱${selectedPurpose.pr_rate.toLocaleString()}` : '₱0';
+              }
             })()}
-            </Text>
+          </Text>
         </View>
-    )}
+      )}
 
       {/* Submit Button */}
       <TouchableOpacity

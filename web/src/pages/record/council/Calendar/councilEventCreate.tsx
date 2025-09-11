@@ -17,8 +17,10 @@ import { useGetStaffList } from "./queries/councilEventfetchqueries";
 import { formatDate } from "@/helpers/dateHelper";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { SchedEventFormProps } from "./councilEventTypes";
+import { useAuth } from "@/context/AuthContext";
 
 function SchedEventForm({ onSuccess }: SchedEventFormProps) {
+  const { user } = useAuth();
   const [selectedAttendees, setSelectedAttendees] = useState<{ name: string; designation: string }[]>([]);
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [ceId, setCeId] = useState<number | null>(null);
@@ -85,7 +87,7 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
       ce_type: values.eventCategory,
       ce_description: values.eventDescription,
       ce_is_archive: false,
-      staff_id: null,
+      staff: user?.staff?.staff_id || null,
     };
 
     addEvent(eventData, {

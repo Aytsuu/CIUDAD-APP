@@ -17,12 +17,14 @@ export const AnnualGrossSalesEditSchema = z.object({
     maxRange: DataRequirement,
     minRange: DataRequirement,
     amount: DataRequirement,
-    ags_id: z.string().default('')
+    ags_id: z.string().default(''),
+    staff_id: z.string().default('')
 })
 
 export const PurposeAndRatesEditSchema = z.object({
     purpose: z.string().nonempty('This field is required').default(''),
     amount: DataRequirement,
     category: z.string().nonempty('This field is required').default(''),
-    pr_id: z.string().default('')
+    pr_id: z.string().default(''),
+    staff_id: z.string().default('')
 })

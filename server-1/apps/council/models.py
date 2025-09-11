@@ -232,6 +232,11 @@ class MinutesOfMeeting(models.Model):
         blank=True
     )
     mom_is_archive = models.BooleanField(default=False)
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.CASCADE,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = 'minutes_of_meeting' 

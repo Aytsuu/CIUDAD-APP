@@ -68,39 +68,6 @@ const CertChoices = () => {
           </TouchableOpacity>
         ))}
       </View>
-
-      <View className="flex-1">
-        {menuItem.map((item: any, index: number) => (
-          <TouchableOpacity
-            key={index}
-            className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
-            activeOpacity={0.7}
-            onPress={() => router.push(item.route)}
-          >
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center flex-1">
-                <View className="bg-gray-50 rounded-lg p-3 mr-4">
-                  <Ionicons name={item.icon} size={24} color="#22314A" />
-                </View>
-
-                <View className="flex-1">
-                  <Text className="text-gray-900 font-semibold text-base">
-                    {item.title}
-                  </Text>
-
-                  <Text className="text-gray-500 text-sm mt-1">
-                    {item.description}
-                  </Text>
-                </View>
-              </View>
-
-              <View className="ml-2">
-                <ChevronRight className="text-gray-400" size={20} />
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
     </_ScreenLayout>
   );
 };

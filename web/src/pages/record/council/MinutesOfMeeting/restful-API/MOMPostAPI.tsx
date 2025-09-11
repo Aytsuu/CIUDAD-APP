@@ -30,6 +30,7 @@ export const insertMinutesOfMeeting = async (momInfo: Record<string, any>, files
             mom_agenda: momInfo.meetingAgenda,
             mom_area_of_focus: momInfo.meetingAreaOfFocus,
             mom_is_archive: false,
+            staff_id: momInfo.staff_id
         });
 
         const momId = momResponse.data.mom_id || 0;

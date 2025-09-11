@@ -14,6 +14,7 @@ import { useGetWatchman } from './queries/hotspotFetchQueries';
 import { useGetSitio } from './queries/hotspotFetchQueries';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAddHotspot } from './queries/hotspotInsertQueries';
+import { useAuth } from '@/context/AuthContext';
 
 const announcementOptions = [
     { id: "all", label: "All" },
@@ -28,6 +29,7 @@ const announcementOptions = [
 function WasteHotSched({onSuccess}: {
     onSuccess?: () => void;
 }) {
+    const {user} = useAuth();
     const {mutate: addHotspotAssignment} = useAddHotspot(onSuccess);
     const {data : fetchedWatchman = [], isLoading: isLoadingWatchman} = useGetWatchman();
     const {data: fetchedSitio = [], isLoading: isLoadingSitio} = useGetSitio();
@@ -51,6 +53,7 @@ function WasteHotSched({onSuccess}: {
             sitio: '', 
             selectedAnnouncements: [], 
             watchman: '',
+            staff_id: user?.staff?.staff_id
         },
     });
 

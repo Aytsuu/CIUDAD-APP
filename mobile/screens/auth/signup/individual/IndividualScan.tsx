@@ -70,7 +70,6 @@ export default function IndividualScan() {
     account: Record<string, any>
   ) => {
     try {
-
       await addBusinessRespondent({
         ...respondent,
         acc: account
