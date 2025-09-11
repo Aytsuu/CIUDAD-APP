@@ -47,7 +47,16 @@ export type Purpose = {
 export const getIssuedCertificates = async (): Promise<IssuedCertificate[]> => {
   try {
     const res = await api.get('/clerk/issued-certificates/');
-    return (res.data || []) as IssuedCertificate[];
+    const raw = (res.data || []) as any[];
+    // Normalize: backend may return either serialized fields (requester, purpose, dateIssued)
+    // or raw model fields (ic_date_of_issuance, etc.). Map to UI shape.
+    return raw.map((item: any) => ({
+      ic_id: String(item.ic_id ?? ''),
+      requester: item.requester ?? item.requester_name ?? '',
+      dateIssued: item.dateIssued ?? item.ic_date_of_issuance ?? '',
+      purpose: item.purpose ?? item.pr_purpose ?? '',
+      original_certificate: item.original_certificate,
+    }));
   } catch (err) {
     const error = err as AxiosError;
     if (error.response?.status === 500) {

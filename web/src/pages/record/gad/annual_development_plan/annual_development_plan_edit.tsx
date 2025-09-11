@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useGetAnnualDevPlanById, useUpdateAnnualDevPlan } from "./queries/annualDevPlanFetchQueries";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 const getClientOptions = () => (
   <>
@@ -30,6 +31,8 @@ export default function AnnualDevelopmentPlanEdit() {
   const navigate = useNavigate();
   const { devId } = useParams();
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const staffId = user?.staff?.staff_id as string | undefined;
   const [formData, setFormData] = useState({
     dev_date: "",
     dev_client: "",
@@ -159,7 +162,8 @@ export default function AnnualDevelopmentPlanEdit() {
       if (!devId) {
         throw new Error("No development plan ID provided");
       }
-      await updateMutation.mutateAsync({ devId: parseInt(devId), formData, budgetItems });
+      const nextForm = staffId ? { ...formData, staff: staffId } : formData;
+      await updateMutation.mutateAsync({ devId: parseInt(devId), formData: nextForm, budgetItems });
       toast.success("Annual development plan updated successfully!");
       navigate(-1);
     } catch (error) {

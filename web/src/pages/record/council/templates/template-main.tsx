@@ -1127,6 +1127,7 @@ interface RequestProps {
   isNonResident?: boolean;
   businessName?: string;
   Signatory?: string | null;
+  showAddDetails?: boolean; // ako gi add kay makita ang add details nga button sa cert
 }
 
 type Template = {
@@ -1151,7 +1152,7 @@ type Template = {
 }
 
 
-function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issuedDate, businessName, Signatory, specificPurpose} : RequestProps ) {
+function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issuedDate, businessName, Signatory, specificPurpose, showAddDetails = true} : RequestProps ) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -2147,7 +2148,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
         </div>
         
         {/* Edit/Add Details Button */}
-        {templates.length > 0 ? (
+        {showAddDetails && (templates.length > 0 ? (
           <DialogLayout
             trigger={''
               // <Button className="w-full sm:w-auto">
@@ -2189,7 +2190,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
             isOpen={isDialogOpen}
             onOpenChange={setIsDialogOpen}
           />
-        )}
+        ))}
       </div>
     
 

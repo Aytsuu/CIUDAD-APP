@@ -9,6 +9,7 @@ import { getStaffList } from "./restful-api/annualGetAPI";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GADAnnualDevPlanCreateSchema, type GADAnnualDevPlanCreateInput } from "@/form-schema/gad-annual-dev-plan-create-shema";
+import { useAuth } from "@/context/AuthContext";
 
 const getClientOptions = () => (
   <>
@@ -27,6 +28,8 @@ const getClientOptions = () => (
 export default function AnnualDevelopmentPlanCreate() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const staffId = user?.staff?.staff_id as string | undefined;
   
   const form = useForm<GADAnnualDevPlanCreateInput>({
     resolver: zodResolver(GADAnnualDevPlanCreateSchema),
@@ -40,7 +43,7 @@ export default function AnnualDevelopmentPlanCreate() {
       dev_indicator: "",
       dev_budget_items: "0",
       dev_gad_budget: "0",
-      staff: "",
+      staff: staffId || "",
     }
   });
   const [budgetItems, setBudgetItems] = useState<{gdb_name: string, gdb_pax: string, gdb_price: string}[]>([]);
@@ -179,7 +182,7 @@ export default function AnnualDevelopmentPlanCreate() {
       const resPersonsArray = selectedStaff.map(s => s.position);
       const { dev_gad_budget, ...formData } = data; // Remove dev_gad_budget as it's not part of the API
       await createMutation.mutateAsync({ 
-        formData: formData as any, // Type assertion to match AnnualDevPlanFormData
+        formData: (staffId ? { ...formData, staff: staffId } : formData) as any, // include staff if available
         budgetItems: budgetItems as BudgetItemType[], 
         resPersons: resPersonsArray 
       });

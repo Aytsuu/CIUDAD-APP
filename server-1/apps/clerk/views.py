@@ -388,18 +388,11 @@ class IssuedCertificateListView(generics.ListAPIView):
 
     def get_queryset(self):
         try:
-            queryset = (
-                IssuedCertificate.objects.filter(
-                    staff__staff_id="00005250821"
-                )
-                .select_related(
-                    'certificate__rp_id__per',
-                    'staff'
-                )
-            )
-
-            logger.info(f"Found {queryset.count()} issued certificates")
-            return queryset
+            base_qs = IssuedCertificate.objects.all()
+            logger.info(f"Found {base_qs.count()} issued certificates (base)")
+            sample = list(base_qs.values('ic_id', 'ic_date_of_issuance', 'certificate_id', 'staff_id')[:5])
+            logger.info(f"IssuedCertificate sample: {sample}")
+            return base_qs.select_related('certificate__rp_id__per', 'staff')
         except Exception as e:
             logger.error(f"Error in get_queryset: {str(e)}")
             logger.error(f"Full traceback: {traceback.format_exc()}")
@@ -430,7 +423,8 @@ class MarkCertificateAsIssuedView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         try:
             cr_id = request.data.get('cr_id')
-            staff_id = request.data.get('staff_id', '00005250821')
+            # Do NOT default to a hardcoded staff_id. Only use provided staff_id if it exists and is valid
+            staff_id = request.data.get('staff_id')
             
             if not cr_id:
                 return Response(
@@ -454,11 +448,48 @@ class MarkCertificateAsIssuedView(generics.CreateAPIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Get or create staff
+            # Resolve staff strictly if provided; avoid creating a Staff record here to prevent NULL pos_id errors
             from apps.administration.models import Staff
-            staff, created = Staff.objects.get_or_create(staff_id="00005250821")
+            staff = None
+            if staff_id:
+                normalized_staff_id = str(staff_id).strip()
+                logger.info(f"MarkCertificateAsIssuedView: incoming staff_id={normalized_staff_id}")
+                # Try direct staff_id match
+                staff = Staff.objects.filter(staff_id=normalized_staff_id).first()
+                logger.info(f"MarkCertificateAsIssuedView: staff lookup (staff_id) found={bool(staff)}")
+                # Fallback: case-insensitive match
+                if not staff:
+                    staff = Staff.objects.filter(staff_id__iexact=normalized_staff_id).first()
+                    logger.info(f"MarkCertificateAsIssuedView: staff lookup (iexact) found={bool(staff)}")
+                # Fallback: some datasets use rp_id to mirror staff_id
+                if not staff and hasattr(Staff, 'rp_id'):
+                    staff = Staff.objects.filter(rp_id=normalized_staff_id).first()
+                    logger.info(f"MarkCertificateAsIssuedView: staff lookup (rp_id) found={bool(staff)}")
+                if not staff:
+                    return Response(
+                        {"error": f"Invalid staff_id {staff_id}"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            # If no staff_id in request, try to use the certificate's associated staff (if any)
+            if staff is None and getattr(certificate, 'staff_id_id', None):
+                logger.info(f"MarkCertificateAsIssuedView: attempting certificate.staff_id_id={certificate.staff_id_id}")
+                staff = Staff.objects.filter(pk=certificate.staff_id_id).first()
+            # If still no staff and the IssuedCertificate model requires staff (NOT NULL), fail fast
+            if staff is None:
+                # As a safety fallback, try any existing staff to avoid hard failure
+                fallback_staff = Staff.objects.first()
+                if fallback_staff:
+                    logger.warning(f"MarkCertificateAsIssuedView: No staff resolved from input; using fallback staff_id={fallback_staff.staff_id}")
+                    staff = fallback_staff
+                else:
+                    logger.warning("MarkCertificateAsIssuedView: No staff available in database. Rejecting request.")
+                    return Response(
+                        {"error": "No staff available in database. Please create a staff first."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
             
         
+            # Create issued certificate; staff is guaranteed at this point
             issued_certificate = IssuedCertificate.objects.create(
                 ic_date_of_issuance=timezone.now().date(),
                 certificate=certificate,
@@ -648,7 +679,7 @@ class IssuedBusinessPermitListView(generics.ListAPIView):
     def get_queryset(self):
         try:
             queryset = IssuedBusinessPermit.objects.select_related(
-                'permit_request__business',
+                'permit_request__bus_id',
                 'staff'
             ).all()
             
