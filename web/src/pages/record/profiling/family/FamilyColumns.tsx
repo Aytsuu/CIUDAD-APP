@@ -51,6 +51,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
       React.useEffect(() => {
         if(isLoading) {
           showLoading();
+          
         } else {
           hideLoading();
         }
