@@ -273,37 +273,21 @@ const items: BarangayBaseMenuItem[] = [
   },
  
   { title: "Patients Record", url: "/patients-record-main" },
-
+  { title: "Forwarded Records", url: "/forwarded-records" },
   {
     title: "Services",
     url: "/",
     items: [
-      // {
-      //   title: "Forwarded Records",
-      //   url: "/",
-      //   anotherItems: [
-      //     {
-      //       title: "Child Immunization",
-      //       url: "/forwarded-child-health-immunization",
-      //     },
-      //     { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
-      //     { title: "Step 2: Vitals Queue  ", url: "/forwarded-vitals-queue" },
-      //     {
-      //       title: "Medical Consultaion",
-      //       url: "/forwarded-medical-consultation",
-      //     },
-      //   ],
-      // },
-      { title: "Forwarded Records", url: "/forwarded-records" },
+      
       { title: "Animal Bites", url: "/Animalbite_viewing" },
-      { title: "Family Profiling", url: "/family-profiling-main" },
-      { title: "Medical Consultation Record", url: "/allMedRecords" },
-      { title: "Family Planning Record", url: "/FamPlanning_table" },
-      { title: "Maternal Record", url: "/maternalrecords" },
-      { title: "Child Health Record", url: "/all-child-health-records" },
-      { title: "Vaccination Record", url: "/VaccinationManagement" },
-      { title: "Medicine Record", url: "/all-medicine-records" },
-      { title: "Firstaid Record", url: "/all-firstaid-records" },
+      // { title: "Family Profiling", url: "/family-profiling-main" },=-=------- 000
+      { title: "Medical Consultation", url: "/allMedRecords" },
+      { title: "Family Planning", url: "/FamPlanning_table" },
+      { title: "Maternal", url: "/maternalrecords" },
+      { title: "Child Health", url: "/all-child-health-records" },
+      { title: "Vaccination", url: "/VaccinationManagement" },
+      { title: "Medicine", url: "/all-medicine-records" },
+      { title: "Firstaid", url: "/all-firstaid-records" },
       { title: "Schedules", url: "/health-appointments" }
     ]
   },
@@ -335,7 +319,7 @@ const items: BarangayBaseMenuItem[] = [
     url: "/",
     items: [
       {
-        title: "Manage age group",
+        title: "Age Group",
         url: "/age-group"
       },
       { title: "Medical Consultation", url: "/" }

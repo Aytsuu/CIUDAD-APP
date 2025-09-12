@@ -19,6 +19,7 @@ import { PatientInfoCardv2 } from "@/pages/healthServices/maternal/maternal-comp
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { PregnancyAccordion } from "../maternal/maternal-components/maternal-records-accordion"
 import PregnancyChart from "./maternal-components/pregnancy-chart"
+import PregnancyVisitTracker from "./maternal-components/8anc-visit-chart"
 
 import { usePregnancyDetails } from "./queries/maternalFetchQueries"
 
@@ -384,9 +385,12 @@ export default function MaternalIndivRecords() {
     <LayoutWithBack title="Maternal Records" description="Manage mother's individual maternal records">
       <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
         {selectedPatient ? (
-          <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-1">
+          <div className="mb-5 gap-1">
             <PatientInfoCardv2 patient={selectedPatient} />
-            <PregnancyChart pregnancies={pregnancyData}/>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <PregnancyChart pregnancies={pregnancyData}/>
+              <PregnancyVisitTracker pregnancies={pregnancyData}/>
+            </div>
           </div>
         ) : (
           <div className="mb-5 rounded">
