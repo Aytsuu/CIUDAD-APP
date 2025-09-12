@@ -13,7 +13,7 @@ export const updateMedicineRequest = async (medreq_id: any, data: any) => {
 
   export const confirmAllPendingItems = async (medreq_id: string) => {
     try {
-      const response = await api2.patch(`inventory/update-pending-medreq/${medreq_id}/`);
+      const response = await api2.patch(`medicine/update-pending-medreq/${medreq_id}/`);
       return response.data;
     } catch (error) {
       console.error("Error confirming pending items:", error);
