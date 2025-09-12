@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function ResidentRejected() {
   const {user} = useAuth()  
-  const { data: rejectedRequests = [], isLoading: isDataLoading} = useGetGarbageRejectedResident(user.resident.rp_id)
+  const { data: rejectedRequests = [], isLoading: isDataLoading} = useGetGarbageRejectedResident(user?.resident?.rp_id)
   const [searchQuery, setSearchQuery] = useState("");
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState("");
