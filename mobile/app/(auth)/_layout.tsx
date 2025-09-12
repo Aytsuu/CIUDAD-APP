@@ -21,12 +21,12 @@ export default () => {
     resolver: zodResolver(RegistrationFormSchema),
     defaultValues
   })
-  React.useEffect(() => {
-    (async () => {
-      await KeychainService.removeRefreshToken();
-      console.log("✅ Keychain cleared manually");
-    })();
-  }, []);
+  // React.useEffect(() => {
+  //   (async () => {
+  //     await KeychainService.removeRefreshToken();
+  //     console.log("✅ Keychain cleared manually");
+  //   })();
+  // }, []);
 
   return (
       <ProgressProvider>
