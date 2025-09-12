@@ -67,7 +67,7 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
   };
 
   return (
-    <div className="sm:p-8 space-y-6">
+    <div className="space-y-6">
       {/* Enhanced Header */}
 
         {/* Verification Status */}
@@ -190,7 +190,6 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
           variant="ghost"
           className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium text-sm"
           onClick={() => {
-            // Handle forgot password
             toast.info("Forgot password functionality coming soon!");
           }}
         >

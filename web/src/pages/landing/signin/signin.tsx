@@ -188,7 +188,7 @@ export default function SignIn() {
   const renderPhoneLoginContent = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-medium text-gray-900">
+        <h2 className="text-xl font-poppins text-gray-900">
           Login to your account
         </h2>
         <p className="text-gray-600">
@@ -283,11 +283,11 @@ export default function SignIn() {
   const renderEmailLoginContent = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-medium text-gray-900">
+        <h2 className="text-xl font-poppins text-gray-900">
           Login to your account
         </h2>
         <p className="text-gray-600">
-          Enter your email below to login to your account
+          Enter your number below to login to your account
         </p>
       </div>
 
