@@ -36,6 +36,8 @@ urlpatterns = [
     path('childhealth-totalrecords/', ChildHealthTotalCountAPIView.as_view(), name='monthly_child_health_records'),   
 
     
-    
-   
+    #updated post create backed
+    path('create-new-record/', CompleteChildHealthRecordAPIView.as_view(), name='create-child-health'),
+    path('create-update-new-chhistory/', UpdateChildHealthRecordAPIView.as_view(), name='create-child-health-history'),
   ]
+

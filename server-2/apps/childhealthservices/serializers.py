@@ -8,7 +8,6 @@ from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasu
 from apps.patientrecords.serializers.findings_serializers import FindingSerializer
 from apps.medicineservices.serializers import MedicineRequestSerializer
 from apps.vaccination.serializers import VaccinationHistorySerializerBase
-from apps.patientrecords.serializers.disability_serializers import PatientDisablitySerializerBase
 from apps.medicineservices.serializers import MedicineRecordSerializerMinimal
 
 
@@ -102,8 +101,6 @@ class NutritionalStatusSerializerBase(serializers.ModelSerializer):
         extra_fields = ['patient_details', 'gender']
 
    
-   
-        
 
 class ChildHealthVitalSignsSerializer(serializers.ModelSerializer):
     find_details = FindingSerializer(source='find', read_only=True)
@@ -153,14 +150,12 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
     exclusive_bf_checks = ExclusiveBFCheckSerializer(many=True, read_only=True)
     immunization_tracking = ChildHealthImmunizationHistorySerializer(many=True, read_only=True)
     supplements_statuses =ChildHealthSupplementStatusSerializer(many=True, read_only=True)
-    disabilities = serializers.SerializerMethodField()  # 🔷 ADD THIS
 
 
     class Meta:
         model = ChildHealth_History
         fields = [
             'chhist_id',            
-            'disabilities', 
             'created_at',
             'tt_status',
             'status',
@@ -176,11 +171,7 @@ class ChildHealthHistoryFullSerializer(serializers.ModelSerializer):
 
 
 
-    def get_disabilities(self, obj): 
-        patrec = obj.chrec.patrec
-        disabilities = patrec.patient_disabilities.all()
-        return PatientDisablitySerializerBase(disabilities, many=True).data
-
+  
 class ChildHealthrecordSerializerFull(serializers.ModelSerializer):
     child_health_histories = ChildHealthHistoryFullSerializer(many=True, read_only=True)
     class Meta:

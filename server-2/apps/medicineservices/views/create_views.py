@@ -113,7 +113,7 @@ class  CreateMedicineRequestView(APIView):
                     # Create medicine transaction
                     medicine_transaction = MedicineTransactions.objects.create(
                         mdt_qty=mdt_qty,
-                        mdt_action="deducted",
+                        mdt_action="Deducted",
                         staff=staff_instance,
                         minv_id=medicine_inv
                     )
@@ -313,7 +313,7 @@ class CreateChildServiceMedicineRecordView(generics.CreateAPIView):
             # Create medicine transaction
             MedicineTransactions.objects.create(
                 mdt_qty=mdt_qty,
-                mdt_action="deducted",
+                mdt_action="Deducted",
                 staff=staff_instance,
                 minv_id=medicine_inv
             )
@@ -436,7 +436,7 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                     
                     medicine_transaction = MedicineTransactions.objects.create(
                         mdt_qty=mdt_qty,
-                        mdt_action="deducted",
+                        mdt_action="Deducted",
                         staff=staff_instance,
                         minv_id=medicine_inventory,
                     )

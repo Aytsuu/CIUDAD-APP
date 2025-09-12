@@ -73,20 +73,29 @@ export default function ChildHealthRecordForm() {
   const { data: childHealthRecord, isLoading: isRecordLoading, error: recordError } = useChildHealthHistory(chrecId);
 
   // Track completed steps based on current page
-  useEffect(() => {
-    const newCompletedSteps = [];
-    if (currentPage > 1) newCompletedSteps.push(1);
-    if (currentPage > 2) newCompletedSteps.push(2);
-    if (currentPage > 3) newCompletedSteps.push(3);
-    setCompletedSteps(newCompletedSteps);
-  }, [currentPage]);
+ // Replace your useEffect with this
+useEffect(() => {
+  // When moving forward, mark the previous step as completed
+  if (currentPage > 1) {
+    setCompletedSteps(prev => {
+      const newCompletedSteps = [...prev];
+      // Add the previous step if it's not already marked as completed
+      if (!newCompletedSteps.includes(currentPage - 1)) {
+        newCompletedSteps.push(currentPage - 1);
+      }
+      return newCompletedSteps;
+    });
+  }
+}, [currentPage]);
 
-  const handleStepClick = (stepId: number) => {
-    // Only allow navigation to steps that are completed or current
-    if (stepId <= currentPage || completedSteps.includes(stepId)) {
-      setCurrentPage(stepId);
-    }
-  };
+// Update your handleStepClick function to this:
+const handleStepClick = (stepId: number) => {
+  // Allow navigation to any step that is completed or is the current step
+  if (stepId <= currentPage || completedSteps.includes(stepId)) {
+    setCurrentPage(stepId);
+  }
+};
+
 
   const getLatestNoteForRecord = (notesArray: any[]) => {
     if (!notesArray || notesArray.length === 0) return null;
@@ -160,7 +169,6 @@ export default function ChildHealthRecordForm() {
       address: patient?.address?.full_address || "",
       landmarks: chrecDetails?.landmarks || "",
       dateNewbornScreening: chrecDetails.newborn_screening || "",
-      disabilityTypes: chhistRecord.disability_types || [],
       edemaSeverity: chhistRecord.edemaSeverity || "None",
       BFdates: chhistRecord.BFdates || [],
       vitalSigns: chhistRecord.vitalSigns || [],
@@ -203,16 +211,7 @@ export default function ChildHealthRecordForm() {
         const allHistoricalBFdates: string[] = [];
         const allHistoricalSupplementStatuses: CHSSupplementStat[] = [];
         const allImmunizationTracking: ImmunizationTracking[] = [];
-        const allPatientHistoricalDisabilities: {
-          id: number;
-          pd_id: number;
-          status: string;
-          disability_details: {
-            disability_id: number;
-            disability_name: string;
-            created_at: string;
-          };
-        }[] = [];
+       
 
         chrecRecord.child_health_histories?.forEach((history: any) => {
           const latestNote = getLatestNoteForRecord(history.child_health_notes || []);
@@ -303,15 +302,7 @@ export default function ChildHealthRecordForm() {
             })) || [];
           allHistoricalSupplementStatuses.push(...supplementStatusesFromHistory);
 
-          // Process disabilities
-          const disabilitiesFromHistory =
-            history.disabilities?.map((d: any) => ({
-              id: d.disability_details?.disability_id || "",
-              pd_id: Number(d.pd_id) || "",
-              status: d.status || "active",
-              disability_details: d.disability_details
-            })) || [];
-          allPatientHistoricalDisabilities.push(...disabilitiesFromHistory);
+         
         });
 
         setImmunizationTracking(allImmunizationTracking);
@@ -320,7 +311,6 @@ export default function ChildHealthRecordForm() {
         setHistoricalNutritionalStatus(allHistoricalNutritionalStatuses);
         setHistoricalBFdates(allHistoricalBFdates);
         setHistoricalSupplementStatuses(allHistoricalSupplementStatuses);
-        setPatientHistoricalDisabilities(allPatientHistoricalDisabilities);
 
         const selectedChhistRecord = chrecRecord.child_health_histories?.find((history: any) => history.chhist_id === Number.parseInt(chhistId));
         if (!selectedChhistRecord) {
@@ -329,13 +319,6 @@ export default function ChildHealthRecordForm() {
 
         setApiData(selectedChhistRecord);
 
-        const disabilitiesForSelectedRecord =
-          selectedChhistRecord.disabilities?.map((d: any) => ({
-            id: d.disability_details?.disability_id || "",
-            pd_id: Number(d.pd_id) || "",
-            status: d.status || "active"
-          })) || [];
-        setOriginalDisabilityRecords(disabilitiesForSelectedRecord);
 
         const latestNote = getLatestNoteForRecord(selectedChhistRecord.child_health_notes || []);
         setLatestHistoricalNoteContent(latestNote?.chn_notes || "");
@@ -409,7 +392,6 @@ export default function ChildHealthRecordForm() {
           staff: staffId || null,
           todaysHistoricalRecord: historicalVitalSigns.find((vital) => isToday(vital.date)),
           originalRecord: apiData,
-          originalDisabilityRecords: originalDisabilityRecords
         });
       }
 
@@ -498,7 +480,7 @@ export default function ChildHealthRecordForm() {
               />
             )}
             {currentPage === 2 && (
-              <ChildHRPage2 onPrevious={() => setCurrentPage(1)} onNext={() => setCurrentPage(3)} updateFormData={updateFormData} formData={formData} historicalBFdates={historicalBFdates} patientHistoricalDisabilities={patientHistoricalDisabilities} mode={mode || "newchildhealthrecord"} />
+              <ChildHRPage2 onPrevious={() => setCurrentPage(1)} onNext={() => setCurrentPage(3)} updateFormData={updateFormData} formData={formData} historicalBFdates={historicalBFdates} />
             )}
             {currentPage === 3 && <ChildHRPage3 onPrevious={() => setCurrentPage(2)} onNext={() => setCurrentPage(4)} immunizationTracking={immunizationTracking} />}
             {currentPage === 4 && (

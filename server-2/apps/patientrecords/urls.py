@@ -68,8 +68,8 @@ urlpatterns = [
 
     #DISABLITY
     
-    path('disability/', ListDisabilityView.as_view(), name='list-disability'),
-    path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
+    # path('disability/', ListDisabilityView.as_view(), name='list-disability'),
+    # path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
    
     # HEALTH STAFF
 

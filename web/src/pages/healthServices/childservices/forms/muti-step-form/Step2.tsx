@@ -5,12 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
 import { ChildDetailsSchema, type FormData } from "@/form-schema/chr-schema/chr-schema"
 import { Button } from "@/components/ui/button/button"
-import { Baby, Calendar, ChevronLeft, Trash2, Plus, Pencil, Check } from "lucide-react"
+import { Baby, Calendar, ChevronLeft, Trash2, Plus, Pencil } from "lucide-react"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import CardLayout from "@/components/ui/card/card-layout"
 import { type_of_feeding_options } from "./options"
-import {Page2Props} from "./types"
+import { Page2Props } from "./types"
 
 export default function ChildHRPage2({
   onPrevious,
@@ -18,17 +18,14 @@ export default function ChildHRPage2({
   updateFormData,
   formData,
   historicalBFdates,
-  patientHistoricalDisabilities,
-  mode,
+  
 }: Page2Props) {
-  const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord"
 
   const form = useForm<FormData>({
     resolver: zodResolver(ChildDetailsSchema),
     mode: "onChange",
     defaultValues: {
       ...formData,
-      disabilityTypes: formData.disabilityTypes || "",
       BFdates: formData.BFdates || [],
       dateNewbornScreening: formData.dateNewbornScreening || "",
       type_of_feeding: formData.type_of_feeding || "",
@@ -41,19 +38,6 @@ export default function ChildHRPage2({
   const BFdates = watch("BFdates")
   const [currentBFDate, setCurrentBFDate] = useState<string>("")
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
-
-  // Hardcoded disability options
-  const disabilityOptions = [
-    { id: "none", name: "No Disability" },
-    { id: "visual", name: "Visual Impairment" },
-    { id: "hearing", name: "Hearing Impairment" },
-    { id: "physical", name: "Physical Disability" },
-    { id: "intellectual", name: "Intellectual Disability" },
-    { id: "mental", name: "Mental Health Condition" },
-    { id: "speech", name: "Speech and Language Disability" },
-    { id: "multiple", name: "Multiple Disabilities" },
-    { id: "other", name: "Other Disability" },
-  ]
 
   // Debug form state
   useEffect(() => {
@@ -73,47 +57,11 @@ export default function ChildHRPage2({
   const handleNext = async (data: FormData) => {
     try {
       console.log("Submitting form with data:", data)
-      const finalData = {
-        ...data,
-        disabilityTypes: data.disabilityTypes || "",
-      }
-      updateFormData(finalData)
+      updateFormData(data)
       onNext()
     } catch (error) {
       console.error("Form submission error:", error)
     }
-  }
-
-  // Helper to format date from YYYY-MM to "Month YYYY"
-  const formatMonthYear = (dateString: string) => {
-    if (!dateString) return ""
-    if (dateString.includes(" ")) {
-      return dateString
-    }
-    const [year, month] = dateString.split("-")
-    if (!year || !month) return ""
-    const date = new Date(Number.parseInt(year), Number.parseInt(month) - 1, 1)
-    if (isNaN(date.getTime())) return ""
-    return date.toLocaleString("default", { month: "long", year: "numeric" })
-  }
-
-  // Helper to convert "Month YYYY" to YYYY-MM for input type="month"
-  const convertToYYYYMM = (formattedDate: string) => {
-    if (!formattedDate) return ""
-    const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ]
-    const parts = formattedDate.split(" ")
-    if (parts.length === 2) {
-      const monthIndex = monthNames.indexOf(parts[0])
-      const year = parts[1]
-      if (monthIndex !== -1) {
-        const monthNum = (monthIndex + 1).toString().padStart(2, "0")
-        return `${year}-${monthNum}`
-      }
-    }
-    return ""
   }
 
   const handleAddDate = () => {
@@ -122,16 +70,15 @@ export default function ChildHRPage2({
       return
     }
     try {
-      const formattedDate = formatMonthYear(currentBFDate)
       const currentDates = getValues("BFdates") || []
-      if (editingIndex === null && currentDates.includes(formattedDate)) {
+      if (editingIndex === null && currentDates.includes(currentBFDate)) {
         alert("This date has already been added")
         return
       }
       const updatedDates =
         editingIndex !== null
-          ? currentDates.map((date, i) => (i === editingIndex ? formattedDate : date))
-          : [...currentDates, formattedDate]
+          ? currentDates.map((date, i) => (i === editingIndex ? currentBFDate : date))
+          : [...currentDates, currentBFDate]
       setValue("BFdates", updatedDates, {
         shouldValidate: true,
         shouldDirty: true,
@@ -146,7 +93,7 @@ export default function ChildHRPage2({
   const handleEditDate = (index: number) => {
     const currentBFDates = getValues("BFdates") || []
     const dateToEdit = currentBFDates[index]
-    setCurrentBFDate(convertToYYYYMM(dateToEdit))
+    setCurrentBFDate(dateToEdit)
     setEditingIndex(index)
   }
 
@@ -170,10 +117,7 @@ export default function ChildHRPage2({
 
   const handlePrevious = () => {
     const currentFormData = getValues()
-    updateFormData({
-      ...currentFormData,
-      disabilityTypes: currentFormData.disabilityTypes || "",
-    })
+    updateFormData(currentFormData)
     onPrevious()
   }
 
@@ -182,7 +126,7 @@ export default function ChildHRPage2({
       <Form {...form}>
         <form
           onSubmit={handleSubmit(handleNext, (errors) => {
-            console.error("Form validation errors:", errors);
+            console.error("Form validation errors:", errors)
           })}
           className="space-y-8"
           noValidate
@@ -375,54 +319,21 @@ export default function ChildHRPage2({
                 ]}
               />
             </div>
-            {/* Right Column - Disability Information */}
-            <div className="space-y-6">
-              <CardLayout
-                title={
-                  <div className="flex items-center gap-2 text-lg text-gray-800">
-                    <Check className="h-5 w-5 text-green-600" />
-                    Disability Assessment
-                  </div>
-                }
-                description=""
-                content={
-                  <div className="p-4">
-                    {/* Display Historical Disabilities */}
-                    {patientHistoricalDisabilities && patientHistoricalDisabilities.length > 0 && (
-                      <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <Check className="h-4 w-4" />
-                          Patient's Historical Disabilities
-                        </h3>
-                        <ul className="space-y-2">
-                          {Array.from(
-                            new Map(
-                              patientHistoricalDisabilities
-                                .filter((d) => d.disability_details)
-                                .map((d) => [d.disability_details.disability_id, d]),
-                            ).values(),
-                          ).map((disability, index) => (
-                            <li key={index} className="flex items-center gap-2 text-sm text-gray-700">
-                              <span className="font-medium">{disability.disability_details.disability_name}</span>
-                              <span className="text-xs text-gray-500">
-                                (Added: {new Date(disability.disability_details.created_at).toLocaleDateString()})
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {/* Replaced DisabilityComponent with FormSelect */}
-                    <FormSelect
-                      control={form.control}
-                      name="disabilityTypes"
-                      label="Does the child have any known disabilities?"
-                      options={disabilityOptions}
-                    />
-                  </div>
-                }
-              />
+
+
+
+            <div>
+
+              Notes para add on
+
+              -Newborn Initiated on breastfeeding within 1 hour after birth
+
+            <span>
+              Newborn Screening 
+              -referred
+              -done
+              -with results
+              -with positive results</span>
             </div>
           </div>
           {/* Navigation Buttons */}

@@ -42,24 +42,23 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
 
   const handleStepClick = (stepId: number) => {
     if (allowClickNavigation && onStepClick) {
-      // Allow navigation to any step that is current or previous
-      if (stepId <= currentStep || completedSteps.includes(stepId)) {
+      // Allow navigation to any completed step or any step before the current one
+      if (completedSteps.includes(stepId) || stepId <= currentStep) {
         onStepClick(stepId);
       }
     }
   };
 
   const isStepClickable = (stepId: number) => {
-    return allowClickNavigation && (stepId <= currentStep || completedSteps.includes(stepId));
+    return allowClickNavigation && (completedSteps.includes(stepId) || stepId <= currentStep);
   };
 
   return (
     <div className="w-full max-w-4xl mx-auto mb-8">
       <div className="flex items-center justify-between">
         {steps.map((step, index) => {
-          const isCompleted = completedSteps.includes(step.id) || step.id < currentStep;
+          const isCompleted = completedSteps.includes(step.id);
           const isCurrent = step.id === currentStep;
-          // const isUpcoming = step.id > currentStep;
           const isClickable = isStepClickable(step.id);
           
           return (
@@ -139,7 +138,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
                   className={`
                     flex-1 h-0.5 mx-4 transition-colors duration-300
                     ${
-                      step.id < currentStep
+                      completedSteps.includes(step.id) || step.id < currentStep
                         ? 'bg-blue-600'
                         : 'bg-gray-300'
                     }

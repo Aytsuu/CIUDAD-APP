@@ -39,7 +39,6 @@ export const BasicInfoSchema = z.object({
 })
 
 export const ChildDetailsSchema = z.object({
-  disabilityTypes: z.string().optional(),
   type_of_feeding: z.string().min(1, "required"),
   BFdates: z.array(z.string()).optional(),
   dateNewbornScreening: z.string().min(1, "required").optional(),
