@@ -1,19 +1,16 @@
 from rest_framework import serializers
+from .models import SummonDateAvailability, SummonTimeAvailability
 from .models import *
+from .models import NonResidentCertificateRequest
 from apps.complaint.models import Complaint, ComplaintComplainant, ComplaintAccused, Complaint_File, Complainant, Accused
 from apps.complaint.serializers import ComplaintSerializer
 from apps.profiling.models import ResidentProfile, FamilyComposition
-from apps.file.models import File
+from apps.administration.models import Staff
+from apps.treasurer.models import Invoice
 from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
-
-# File and Invoice Serializers
-class FileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = File
-        fields = ['file_id', 'file_name', 'file_type', 'file_path', 'file_url']
 
 class InvoiceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,16 +31,8 @@ class BusinessSerializer(serializers.ModelSerializer):
             'bus_id',
             'bus_name',
             'bus_gross_sales',
-            'bus_respondentLname', 
-            'bus_respondentFname',  
-            'bus_respondentMname',
-            'bus_respondentSex',
-            'bus_respondentDob',
-            'bus_date_registered',
             'staff_id',
             'add_id',
-            'bus_respondentAddress',
-            'bus_respondentContact',
         ]
 
 # Address Serializers
@@ -76,16 +65,14 @@ class AddressDetailsSerializer(serializers.ModelSerializer):
 
 # Certificate Serializers
 class IssuedCertificateSerializer(serializers.ModelSerializer):
-    file_details = FileSerializer(source='file', read_only=True)
     requester = serializers.SerializerMethodField()
     purpose = serializers.SerializerMethodField()
-    fileUrl = serializers.SerializerMethodField()
     dateIssued = serializers.DateField(source='ic_date_of_issuance', format="%Y-%m-%d")
 
     def get_requester(self, obj):
         try:
-            if obj.certificate and obj.certificate.rp and obj.certificate.rp.per:
-                person = obj.certificate.rp.per
+            if obj.certificate and obj.certificate.rp_id and getattr(obj.certificate.rp_id, "per", None):
+                person = obj.certificate.rp_id.per
                 return f"{person.per_fname} {person.per_lname}"
             return "Unknown"
         except Exception as e:
@@ -94,36 +81,77 @@ class IssuedCertificateSerializer(serializers.ModelSerializer):
 
     def get_purpose(self, obj):
         try:
-            if obj.certificate and obj.certificate.req_type:
-                return obj.certificate.req_type
+            if obj.certificate and obj.certificate.pr_id:
+                return obj.certificate.pr_id.pr_purpose
             return "Not specified"
         except Exception as e:
             logger.error(f"Error getting purpose: {str(e)}")
             return "Not specified"
 
-    def get_fileUrl(self, obj):
-        try:
-            if obj.file:
-                return obj.file.file_url
-            return None
-        except Exception as e:
-            logger.error(f"Error getting file URL: {str(e)}")
-            return None
-
     class Meta:
         model = IssuedCertificate
-        fields = ['ic_id', 'dateIssued', 'requester', 'purpose', 'fileUrl', 'file_details']
+        fields = ['ic_id', 'dateIssued', 'requester', 'purpose']
+
+
+class CertificateStatusUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClerkCertificate
+        fields = ['cr_req_status', 'cr_date_completed', 'cr_req_payment_status', 'cr_reason',
+                  'cr_date_rejected'
+            ] 
+
+# class NonResidentCertReqSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = NonResidentCertificateRequest
+#         fields= '__all__'
+
+class NonResidentCertReqSerializer(serializers.ModelSerializer):
+    purpose = serializers.SerializerMethodField()
+    amount = serializers.DecimalField(source="pr_id.pr_rate", max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = NonResidentCertificateRequest
+        fields = [
+            "nrc_id",
+            "nrc_req_date",
+            "nrc_req_status",
+            "nrc_req_payment_status",
+            "nrc_pay_date",
+            "nrc_requester",
+            "nrc_address",
+            "nrc_birthdate",
+            "pr_id",    
+            "purpose",   
+            "amount",
+            "nrc_discount_reason",   
+        ]
+
+    def get_purpose(self, obj):
+        if obj.pr_id:
+            return {
+                "pr_purpose": obj.pr_id.pr_purpose,
+                "pr_rate": str(obj.pr_id.pr_rate)  #
+            }
+        return None
+    
+class NonResidentCertReqUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NonResidentCertificateRequest
+        fields = ["nrc_req_status", "nrc_req_payment_status", "nrc_pay_date", "nrc_date_completed", "nrc_discount_reason"]
+
 
 class ClerkCertificateSerializer(serializers.ModelSerializer):
     resident_details = serializers.SerializerMethodField()
     invoice = serializers.SerializerMethodField()
+    purpose = serializers.SerializerMethodField()
+    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(),  required=False, allow_null=True)
 
     def get_resident_details(self, obj):
         try:
-            if obj.rp and obj.rp.per:
+            if obj.rp_id and getattr(obj.rp_id, "per", None):
                 return {
-                    'per_fname': obj.rp.per.per_fname,
-                    'per_lname': obj.rp.per.per_lname
+                    'per_fname': obj.rp_id.per.per_fname,
+                    'per_lname': obj.rp_id.per.per_lname
                 }
             return None
         except Exception as e:
@@ -132,65 +160,232 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
 
     def get_invoice(self, obj):
         try:
-            invoice = obj.clerk_invoices.first()
+            invoice = getattr(obj, "treasurer_invoices", None)
             if invoice:
-                return InvoiceSerializer(invoice).data
+                invoice = invoice.first()
+                return InvoiceSerializer(invoice).data if invoice else None
             return None
         except Exception as e:
             logger.error(f"Error getting invoice: {str(e)}")
+            return None
+
+    def get_purpose(self, obj):
+        try:
+            if obj.pr_id:
+                return {
+                    "pr_purpose": obj.pr_id.pr_purpose,
+                    "pr_rate": obj.pr_id.pr_rate
+                }
+            return None
+        except Exception as e:
+            logger.error(f"Error getting purpose and rate: {str(e)}")
             return None
 
     class Meta:
         model = ClerkCertificate
         fields = [
             'cr_id',
-            'rp',
+            'rp_id',
             'resident_details',
-            'req_type',
-            'req_request_date',
-            'req_claim_date',
-            'req_payment_status',
-            'req_pay_method',
-            'req_transac_id',
+            'purpose',
+            'cr_req_request_date',
+            'cr_date_completed',
+            'cr_date_rejected',
+            'cr_reason',
+            'cr_req_payment_status',
             'pr_id',
-            'ra_id',
-            'staff_id',
-            'req_status',
-            'invoice'
+            'cr_req_status',
+            'invoice',
+            'staff_id'
         ]
+
 
 # Business Permit Serializers
 class BusinessPermitSerializer(serializers.ModelSerializer):
-    permit_req_no = serializers.CharField(source='bpr_id')
-    business_details = BusinessSerializer(source='business', read_only=True)
-    issued_permit = serializers.SerializerMethodField()
-
-    def get_issued_permit(self, obj):
-        try:
-            issued_permit = IssuedBusinessPermit.objects.get(permit_request=obj)
-            return IssuedBusinessPermitSerializer(issued_permit).data
-        except IssuedBusinessPermit.DoesNotExist:
-            return None
+    business_name = serializers.SerializerMethodField()
+    business_address = serializers.SerializerMethodField()  # Changed to SerializerMethodField
+    business_gross_sales = serializers.SerializerMethodField()
+    requestor = serializers.SerializerMethodField()
+    purpose = serializers.SerializerMethodField()  # New field to get purpose from pr_id
+    amount_to_pay = serializers.SerializerMethodField()  # New field for amount to be paid
 
     class Meta:
         model = BusinessPermitRequest
         fields = [
-            'permit_req_no',
-            'business_details',
-            'req_sales_proof',
-            'req_pay_method',
+            'bpr_id',
             'req_request_date',
-            'req_claim_date',
+            'req_sales_proof',
             'req_status',
             'req_payment_status',
-            'req_transac_id',
-            'issued_permit'
+            'ags_id',
+            'bus_id',
+            'pr_id',
+            'rp_id',
+            'staff_id',
+            'business_name',
+            'business_address',
+            'business_gross_sales',
+            'requestor',
+            'purpose',
+            'amount_to_pay',
+            'req_amount',  # Add req_amount field
         ]
 
+    def get_business_name(self, obj):
+        try:
+            # First try to get from the new bus_permit_name field
+            if obj.bus_permit_name:
+                return obj.bus_permit_name
+            # Fallback to bus_id if available
+            return obj.bus_id.bus_name if obj.bus_id and hasattr(obj.bus_id, 'bus_name') else ""
+        except Exception:
+            return ""
+
+    def get_business_gross_sales(self, obj):
+        try:
+            return obj.bus_id.bus_gross_sales if obj.bus_id and hasattr(obj.bus_id, 'bus_gross_sales') else ""
+        except Exception:
+            return ""
+
+    def get_business_address(self, obj):
+        try:
+            # First try to get from the new bus_permit_address field
+            if obj.bus_permit_address:
+                return obj.bus_permit_address
+            # Fallback to bus_id if available
+            if obj.bus_id and hasattr(obj.bus_id, 'add_id') and obj.bus_id.add_id:
+                # Fetch the actual address using the Address model
+                try:
+                    address_obj = Address.objects.get(add_id=obj.bus_id.add_id)
+                    # Format the address similar to the Address model's __str__ method
+                    sitio = address_obj.sitio.sitio_name if address_obj.sitio else address_obj.add_external_sitio
+                    if sitio:
+                        return f"{sitio}, {address_obj.add_street}, Barangay {address_obj.add_barangay}, {address_obj.add_city}, {address_obj.add_province}"
+                    else:
+                        return f"{address_obj.add_street}, Barangay {address_obj.add_barangay}, {address_obj.add_city}, {address_obj.add_province}"
+                except Address.DoesNotExist:
+                    return "Address not found"
+            return "No address"
+        except Exception as e:
+            return f"Address error: {str(e)}"
+
+    def get_requestor(self, obj):
+        try:
+            if obj.rp_id and getattr(obj.rp_id, 'per', None):
+                return f"{obj.rp_id.per.per_fname} {obj.rp_id.per.per_lname}"
+            return ''
+        except Exception:
+            return ''
+
+    def get_purpose(self, obj):
+        return obj.pr_id.pr_purpose if obj.pr_id else ""
+
+    def get_amount_to_pay(self, obj):
+        try:
+            # First check if req_amount is already set (this is the stored amount)
+            if hasattr(obj, 'req_amount') and obj.req_amount:
+                return float(obj.req_amount)
+            
+            # If req_amount is not set, fetch from ags_id
+            if obj.ags_id:
+                # Import Annual_Gross_Sales model to fetch the actual object
+                from apps.treasurer.models import Annual_Gross_Sales
+                try:
+                    ags_obj = Annual_Gross_Sales.objects.get(ags_id=obj.ags_id)
+                    return float(ags_obj.ags_rate) if ags_obj.ags_rate else 0.0
+                except Annual_Gross_Sales.DoesNotExist:
+                    return 0.0
+            return 0.0
+        except Exception as e:
+            print(f"Error getting amount_to_pay: {str(e)}")
+            return 0.0
+
+class BusinessPermitCreateSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = BusinessPermitRequest
+        fields = [
+            'bpr_id',
+            'req_request_date',
+            'req_sales_proof',
+            'req_status',
+            'req_payment_status',
+            'ags_id',
+            'bus_id',
+            'pr_id',
+            'rp_id',
+            'staff_id',
+            'req_amount',  
+            'bus_permit_name',  
+            'bus_permit_address',  
+        ]
+        extra_kwargs = {
+            'bpr_id': {'required': False},
+            'req_status': {'required': False, 'default': 'Pending'},
+            'req_payment_status': {'required': False, 'default': 'Unpaid'},
+            'ags_id': {'required': False, 'allow_null': True},
+            'pr_id': {'required': False, 'allow_null': True},
+            'staff_id': {'required': False, 'allow_null': True},
+            'bus_id': {'required': False, 'allow_null': True},
+            'rp_id': {'required': False, 'allow_null': True},
+            'req_amount': {'required': False},  # Make req_amount optional
+        }
+
+    def create(self, validated_data):
+        # Generate bpr_id if not provided
+        if 'bpr_id' not in validated_data or not validated_data['bpr_id']:
+            import time
+            # Generate a numeric ID using timestamp
+            validated_data['bpr_id'] = int(time.time() * 1000) % 100000000  # 8-digit number
+        
+        # Fetch ags_id from annual gross sales table based on gross_sales
+        if 'req_sales_proof' in validated_data and validated_data['req_sales_proof']:
+            try:
+                from apps.treasurer.models import Annual_Gross_Sales
+                gross_sales_range = validated_data['req_sales_proof']
+                print(f"Processing gross_sales_range: {gross_sales_range}")
+                
+                # Parse the range (e.g., "1000.00 - 2000.00")
+                if ' - ' in gross_sales_range:
+                    min_val, max_val = gross_sales_range.split(' - ')
+                    min_val = float(min_val.replace('₱', '').replace(',', ''))
+                    max_val = float(max_val.replace('₱', '').replace(',', ''))
+                    print(f"Parsed values - min: {min_val}, max: {max_val}")
+                    
+                    # Find matching annual gross sales record
+                    ags_record = Annual_Gross_Sales.objects.filter(
+                        ags_minimum=min_val,
+                        ags_maximum=max_val,
+                        ags_is_archive=False
+                    ).first()
+                    
+                    print(f"Query result: {ags_record}")
+                    
+                    if ags_record:
+                        validated_data['ags_id'] = ags_record  # Assign the instance, not the ID
+                        # Store the amount to be paid in req_amount field
+                        validated_data['req_amount'] = float(ags_record.ags_rate) if ags_record.ags_rate else 0.0
+                        print(f"Found ags_id: {ags_record.ags_id} for range {gross_sales_range}, amount: {validated_data['req_amount']}")
+                    else:
+                        print(f"No ags_id found for range {gross_sales_range}")
+                        # Let's also check what records exist in the table
+                        all_records = Annual_Gross_Sales.objects.filter(ags_is_archive=False)[:5]
+                        print(f"Sample records in table: {[(r.ags_minimum, r.ags_maximum, r.ags_id) for r in all_records]}")
+                else:
+                    print(f"Invalid gross sales format: {gross_sales_range}")
+            except Exception as e:
+                print(f"Error fetching ags_id: {str(e)}")
+                import traceback
+                print(f"Traceback: {traceback.format_exc()}")
+                # Continue without ags_id if there's an error
+        
+        # Create the BusinessPermitRequest
+        permit_request = BusinessPermitRequest.objects.create(**validated_data)
+        
+        return permit_request
+
 class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
-    file_details = FileSerializer(source='file', read_only=True)
     business_name = serializers.SerializerMethodField()
-    fileUrl = serializers.SerializerMethodField()
     dateIssued = serializers.DateField(source='ibp_date_of_issuance', format="%Y-%m-%d")
 
     def get_business_name(self, obj):
@@ -202,18 +397,9 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
             logger.error(f"Error getting business name: {str(e)}")
             return "Unknown"
 
-    def get_fileUrl(self, obj):
-        try:
-            if obj.file:
-                return obj.file.file_url
-            return None
-        except Exception as e:
-            logger.error(f"Error getting file URL: {str(e)}")
-            return None
-
     class Meta:
         model = IssuedBusinessPermit
-        fields = ['ibp_id', 'dateIssued', 'business_name', 'fileUrl', 'file_details']
+        fields = ['ibp_id', 'dateIssued', 'business_name']
 
 # Complaint-related Serializers
 class CaseSuppDocSerializer(serializers.ModelSerializer):
@@ -251,6 +437,16 @@ class CaseActivitySerializer(serializers.ModelSerializer):
     
     def get_formatted_hearing_datetime(self, obj):
         return datetime.combine(obj.ca_hearing_date, obj.ca_hearing_time).strftime("%B %d, %Y at %I:%M %p")
+
+class SummonDateAvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SummonDateAvailability
+        fields = '__all__'
+
+class SummonTimeAvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SummonTimeAvailability
+        fields = '__all__'
 
 class AccusedDetailsSerializer(serializers.ModelSerializer):
     address = AddressDetailsSerializer(source='add')
@@ -356,3 +552,5 @@ class FileActionRequestSerializer(serializers.ModelSerializer):
             'file_action_file',
             'comp'
         ]
+
+

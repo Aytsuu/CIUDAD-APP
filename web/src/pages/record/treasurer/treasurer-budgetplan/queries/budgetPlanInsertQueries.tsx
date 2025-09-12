@@ -1,9 +1,9 @@
 import z from "zod"
-import { toast } from "sonner"
 import { budget_plan, budget_plan_details, addBudgetPlanSuppDoc } from "../restful-API/budgetPlanPostAPI"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { BudgetPlan } from "../budgetPlanInterfaces"
-import { CircleCheck } from "lucide-react"
+import { showSuccessToast } from "@/components/ui/toast"
+import { showErrorToast } from "@/components/ui/toast"
 
 
 const BudgetPlanDetailSchema = z.object({
@@ -22,7 +22,6 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
             newBudgetHeader: BudgetPlan;
             newBudgetDetails: z.infer<typeof BudgetPlanDetailSchema>[];
         }) => {
-            // toast.loading("Submitting Budget Plan...", { id: "budgetPlan" });
 
             try {
                 const validatedDetails = values.newBudgetDetails.map(detail => {
@@ -40,27 +39,21 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
                 await budget_plan_details(validatedDetails, planId);
                 return planId;
             } catch (error) {
-                toast.dismiss("budgetPlan");
+                showErrorToast("Failed to create budget plan");
                 throw error;
             }
         },
         onSuccess: (planId) => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
-            
-            toast.success('Budget Plan created successfully', {
-                id: "budgetPlan", 
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
+
+            showSuccessToast('Budget Plan created successfully')
 
             
             if (onSuccess) onSuccess(planId);
             window.location.href = "/treasurer-budget-plan";
         },
-        onError: (error) => {
-            toast.error(error.message || 'Failed to create budget plan', {
-                id: "budgetPlan"
-            });
+        onError: () => {
+            showErrorToast('Failed to create budget plan');
         }
     });
 };
@@ -79,20 +72,13 @@ export const useAddBudgetPlanSuppDoc = (onSuccess?: () => void) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlanFiles'] });
-            
-            toast.success('Documents uploaded successfully!', {
-                id: "uploadBudgetDocs",
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
+
+            showSuccessToast('Documents uploaded successfully!')
             onSuccess?.();
         },
         onError: (err: Error) => {
             console.error("Upload error:", err);
-            toast.error(
-                err.message || "Failed to upload documents. Please try again.",
-                { id: "uploadBudgetDocs", duration: 2000 }
-            );
+            showErrorToast( "Failed to upload documents. Please try again.")
         }
     });
 };

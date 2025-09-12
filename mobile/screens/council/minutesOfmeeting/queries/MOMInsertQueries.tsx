@@ -1,9 +1,21 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { insertMinutesOfMeeting, createMOMFile, addSuppDoc } from "../restful-API/MOMPostAPI";
-import { minutesOfMeetingFormSchema } from "@/form-schema/council/minutesOfMeetingSchema";
 import { z } from "zod";
 import { useToastContext } from "@/components/ui/toast";
 import { useRouter } from "expo-router";
+import { minutesOfMeetingFormSchema } from "@/form-schema/council/minutesOfMeetingSchema";
+
+
+type FileData = {
+    name: string| undefined;
+    type: string | undefined;
+    file?: string | undefined;
+};
+
+type MOMFullData= z.infer<typeof minutesOfMeetingFormSchema> & {
+  files: FileData[]; 
+  suppDocs: FileData[]; 
+};
 
 
 export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
@@ -12,45 +24,46 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (values: z.infer<typeof minutesOfMeetingFormSchema>) => {
+    mutationFn: async (values: MOMFullData) => {
         const mom_id = await  insertMinutesOfMeeting(values);
 
-          if (values.meetingFile?.length) {
+          if (values.files?.length) {
             await Promise.all(
-              values.meetingFile.map(file => 
+              values.files.map(file => 
                 createMOMFile({
                   mom_id,
-                  file_data: file
+                  file_data: {
+                    name: file.name,
+                    type: file.type,
+                    file: file.file
+                  }
                 })
               )
             );
           }
           
-          if (values.meetingSuppDoc && values.meetingSuppDoc.length > 0) {
-                const validFiles = values.meetingSuppDoc.filter(file => 
-                  file && (file.uri || file.path) && file.name
-                );
-                
-                if (validFiles.length > 0) {
-                  await Promise.all(
-                    validFiles.map(file => 
+          if (values.suppDocs && values.suppDocs.length > 0) {
+                await Promise.all(
+                    values.suppDocs.map(file => 
                       addSuppDoc({
                         mom_id,
-                        file_data: file
+                        file_data: {
+                          name: file.name,
+                          type: file.type,
+                          file: file.file
+                        }
                       }).catch(error => {
                         console.error("Error creating file entry:", error);
                         return null;
                       })
                     )
                   );
-                }
               }      
         
     },
     onSuccess: () => {
         Promise.all([
         queryClient.invalidateQueries({ queryKey: ['momRecords'] }),
-        queryClient.invalidateQueries({ queryKey: ['momAreasOfFocus'] }),
         queryClient.invalidateQueries({ queryKey: ['momFiles'] }),
         ])
         

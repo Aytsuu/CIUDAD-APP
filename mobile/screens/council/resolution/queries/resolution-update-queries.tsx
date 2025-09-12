@@ -5,10 +5,19 @@ import {api} from "@/api/api";
 import { useUpdateResolution } from "../request/resolution-put-request";
 import resolutionFormSchema from "@/form-schema/council/resolutionFormSchema";
 
+
+type FileData = {
+    id: string;
+    name: string;
+    type: string;
+    file?: string;
+};
+
+
 type ExtendedResolutionUpdateValues = z.infer<typeof resolutionFormSchema> & {
-  documentFiles: any[];
-  mediaFiles: any[];
-  res_num: number;
+  resFiles: FileData[];
+  resSuppDocs: FileData[];
+  res_num: String;
 };
 
 export const usingUpdateResolution = (onSuccess?: () => void) => {
@@ -22,13 +31,14 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
         res_title: values.res_title,
         res_date_approved: values.res_date_approved,
         res_area_of_focus: values.res_area_of_focus,
+        gpr_id: values.gpr_id
       });
       
       // 2. Handle file updates
-      await handleResolutionFileUpdates(values.res_num, values.documentFiles);
+      await handleResolutionFileUpdates(values.res_num, values.resFiles);
 
       // 3. Handle Supp Docs updates
-      await handleSuppDocUpdates(values.res_num, values.mediaFiles);
+      await handleSuppDocUpdates(values.res_num, values.resSuppDocs);
       
       return values.res_num;
     },
@@ -50,7 +60,7 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
 
 
 
-const handleResolutionFileUpdates = async (res_num: number, mediaFiles: any[]) => {
+const handleResolutionFileUpdates = async (res_num: String, mediaFiles: any[]) => {
   try {
     // Get current files from server
     const currentFilesRes = await api.get(`council/resolution-file/?res_num=${res_num}`);
@@ -73,10 +83,11 @@ const handleResolutionFileUpdates = async (res_num: number, mediaFiles: any[]) =
     await Promise.all(filesToAdd.map(file => {
       const payload = {
         res_num: res_num,
-        rf_name: file.name || `file-${Date.now()}`,
-        rf_type: file.type,
-        rf_path: file.path || file.storagePath || '',
-        rf_url: file.publicUrl || file.uri
+        files: [{
+          name: file.name,
+          type: file.type,
+          file: file.file // The actual file object
+        }]
       };
       return api.post('council/resolution-file/', payload);
     }));
@@ -88,7 +99,7 @@ const handleResolutionFileUpdates = async (res_num: number, mediaFiles: any[]) =
 
 
 
-const handleSuppDocUpdates = async (res_num: number, mediaFiles: any[]) => {
+const handleSuppDocUpdates = async (res_num: String, mediaFiles: any[]) => {
   try {
     // Get current files from server
     const currentFilesRes = await api.get(`council/resolution-supp/?res_num=${res_num}`);
@@ -110,10 +121,11 @@ const handleSuppDocUpdates = async (res_num: number, mediaFiles: any[]) => {
     await Promise.all(filesToAdd.map(file =>
       api.post('council/resolution-supp/', {
         res_num,
-        rsd_name: file.file?.name || `file-${Date.now()}`,
-        rsd_type: file.type,
-        rsd_path: file.path || '',
-        rsd_url: file.publicUrl
+        files: [{
+          name: file.name,
+          type: file.type,
+          file: file.file // The actual file object
+        }]
       })
     ));
   } catch (err) {

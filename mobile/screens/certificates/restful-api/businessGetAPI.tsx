@@ -5,7 +5,7 @@ import {
     SearchCertificateSchema 
 } from "@/form-schema/certificates/certificate-schema";
 
-// Types for API responses
+
 export interface BusinessPermit {
     bp_id: string;
     business_name: string;

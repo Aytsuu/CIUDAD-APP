@@ -9,6 +9,7 @@ export const WasteHotspotSchema = z.object({
     sitio:z.string().nonempty("Sitio is required"),
     selectedAnnouncements: z.array(z.string()).optional(),
     watchman: z.string().nonempty("Watchman is required"),
+    staff_id: z.string().default('')
 });
 
 export const WasteHotspotEditSchema = z.object({

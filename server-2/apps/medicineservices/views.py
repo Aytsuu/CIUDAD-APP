@@ -26,96 +26,6 @@ from django.conf import settings
 import os
 import uuid
 
-class MedicineRequestDetailUpdateView(generics.RetrieveUpdateAPIView):
-    serializer_class = MedicineRequestSerializer # Use the same serializer as above
-    queryset = MedicineRequest.objects.all()
-    lookup_field = 'medreq_id'
-
-    @transaction.atomic
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        new_status = request.data.get('status')
-        staff_id = request.data.get('staff_id') # Staff confirming/referring
-        referral_reason = request.data.get('referral_reason') # Reason for referral/decline
-
-        if not new_status:
-            raise ValidationError({"error": "New status is required."})
-
-        if new_status not in ['confirmed', 'referred', 'declined']:
-            raise ValidationError({"error": "Invalid status. Must be 'confirmed', 'referred', or 'declined'."})
-
-        if new_status == 'referred' and not referral_reason:
-            raise ValidationError({"error": "Referral reason is required for 'referred' status."})
-
-        staff_instance = None
-        if staff_id:
-            try:
-                staff_instance = Staff.objects.get(staff_id=staff_id)
-            except Staff.DoesNotExist:
-                raise ValidationError({"error": f"Staff with ID {staff_id} not found."})
-
-        # Update the main MedicineRequest status
-        instance.status = new_status
-        instance.save()
-
-        # Process individual medicine records based on the new status
-        for item_record in instance.medicine_records.all(): # Assuming related_name='medicine_records'
-            if new_status == 'confirmed':
-                # Deduct from inventory and update status for each item
-                if item_record.minv_id.minv_qty_avail < item_record.medrec_qty:
-                    # This should ideally be checked before confirming, but as a safeguard
-                    raise ValidationError(f"Insufficient stock for {item_record.minv_id.med_id.med_name}. Cannot confirm.")
-
-                item_record.minv_id.minv_qty_avail -= item_record.medrec_qty
-                item_record.minv_id.save()
-
-                # Create MedicineTransaction for deduction
-                mdt_qty = f"{item_record.medrec_qty} {item_record.minv_id.minv_qty_unit or 'pcs'}"
-                MedicineTransactions.objects.create(
-                    mdt_qty=mdt_qty,
-                    mdt_action="deducted",
-                    staff=staff_instance,
-                    minv_id=item_record.minv_id
-                )
-                item_record.status = 'fulfilled'
-                item_record.fulfilled_at = timezone.now()
-
-            elif new_status == 'referred':
-                item_record.status = 'referred'
-                # You might want to store the referral reason on the individual item too, or just on the main request
-                # For now, let's assume the main request's referral_reason covers all items.
-                # If you need to store it per item, add a 'referral_reason' field to MedicineRecord.
-            elif new_status == 'declined':
-                item_record.status = 'declined'
-                # No inventory changes needed for decline
-
-            item_record.save()
-
-        # If referred, create a FindingsPlanTreatment entry for the doctor
-        if new_status == 'referred':
-            # You might need to create a 'Finding' first if it's not already linked
-            # For simplicity, let's assume a generic Finding or create one if needed.
-            # This part depends on how your 'Finding' and 'FindingsPlanTreatment' models are used.
-            # If 'Finding' is a general medical finding, you might create one.
-            # If it's specific to a patient's visit, you might link to an existing one.
-            # For a doctor's referral, a new 'Finding' might be appropriate.
-
-            # Example: Create a new Finding for the referral
-            new_finding = Finding.objects.create(
-                assessment_summary=f"Medicine request referred: {referral_reason}",
-                obj_summary="Patient requested medicine.",
-                subj_summary="Patient reported symptoms/reason for request.",
-                plantreatment_summary="Referred to doctor for further assessment and prescription."
-            )
-            FindingsPlanTreatment.objects.create(
-                medreq=instance,
-                find=new_finding,
-                # created_at is auto_now_add
-            )
-
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 class PatientMedicineRecordsView(generics.ListAPIView):
     serializer_class = PatientMedicineRecordSerializer
@@ -602,49 +512,6 @@ class DeleteUpdateMedicineRequestView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = "medreq_id"
     
 
-class MedicineRequestItemDelete(APIView):
-    @transaction.atomic
-    def delete(self, request, medreqitem_id):
-        # logger.info(f"Received DELETE request for medreqitem_id: {medreqitem_id}")
-        try:
-            # Attempt to fetch the item
-            item = MedicineRequestItem.objects.get(medreqitem_id=medreqitem_id)
-            # logger.info(f"Successfully retrieved item: {item.medreqitem_id}, medreq_id: {item.medreq_id.medreq_id}, status: {item.status}")
-            
-            # Get the parent request
-            medicine_request = item.medreq_id
-            total_items_count = medicine_request.items.count()
-            # logger.info(f"Parent request: {medicine_request.medreq_id}, total items count: {total_items_count}")
-            
-            # Delete the specific item
-            item.delete()
-            # logger.info(f"Deleted item {item.medreqitem_id}")
-            
-            # Check if this was the last item in the request
-            remaining_items_count = medicine_request.items.count()
-            # logger.info(f"Remaining items after deletion: {remaining_items_count}")
-            
-            if remaining_items_count == 0:
-                # Delete the parent request since no items remain
-                medicine_request.delete()
-                # logger.info(f"Deleted parent request {medicine_request.medreq_id} as it had no remaining items")
-                return Response({
-                    "success": True,
-                    "message": "Medicine request item canceled successfully. Entire medicine request deleted as it was the last item."
-                }, status=status.HTTP_200_OK)
-            else:
-                # logger.info(f"Parent request {medicine_request.medreq_id} kept with {remaining_items_count} remaining items")
-                return Response({
-                    "success": True,
-                    "message": "Medicine request item canceled successfully. Other items in the request remain."
-                }, status=status.HTTP_200_OK)
-        
-        except MedicineRequestItem.DoesNotExist:
-            # logger.error(f"MedicineRequestItem {medreqitem_id} not found in database")
-            return Response({"error": "Medicine request item not found."}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            # logger.error(f"Unexpected error deleting item {medreqitem_id}: {str(e)}", exc_info=True)
-            return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserPendingMedicineRequestItemsView(generics.ListAPIView):
     serializer_class = MedicineRequestItemSerializer  # Use simple serializer first
@@ -1428,6 +1295,113 @@ class CheckPendingMedicineRequestView(APIView):
             traceback.print_exc()
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+    # __________________________________________________________________________________________________________________________________________________
+
+
+class MedicineRequestItemCancel(APIView):
+    def patch(self, request, medreqitem_id):
+        try:
+            item = MedicineRequestItem.objects.get(medreqitem_id=medreqitem_id)
+            archive_reason = request.data.get('archive_reason')
+            if not archive_reason:
+                return Response({"error": "Archive reason is required"}, status=status.HTTP_400_BAD_REQUEST)
+            item.status = 'cancelled'
+            item.is_archived = True
+            item.archive_reason = archive_reason
+            item.save()
+            return Response({"success": True, "message": "Item cancelled successfully"}, status=status.HTTP_200_OK)
+        except MedicineRequestItem.DoesNotExist:
+            return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class MedicineRequestDetailUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class = MedicineRequestSerializer
+    queryset = MedicineRequest.objects.all()
+    lookup_field = 'medreq_id'
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        new_status = request.data.get('status')
+        staff_id = request.data.get('staff_id')
+        referral_reason = request.data.get('referral_reason')
+
+        if not new_status:
+            raise ValidationError({"error": "New status is required."})
+
+        if new_status not in ['confirmed', 'referred', 'declined']:
+            raise ValidationError({"error": "Invalid status. Must be 'confirmed', 'referred', or 'declined'."})
+
+        if new_status == 'referred' and not referral_reason:
+            raise ValidationError({"error": "Referral reason is required for 'referred' status."})
+
+        staff_instance = None
+        if staff_id:
+            try:
+                staff_instance = Staff.objects.get(staff_id=staff_id)
+            except Staff.DoesNotExist:
+                raise ValidationError({"error": f"Staff with ID {staff_id} not found."})
+
+        # Process each MedicineRequestItem
+        for item_record in instance.items.all():  # Changed from medicine_records to items
+            if new_status == 'confirmed':
+                if item_record.minv_id and item_record.minv_id.minv_qty_avail < item_record.medreqitem_qty:
+                    raise ValidationError(f"Insufficient stock for {item_record.med.med_name}. Cannot confirm.")
+
+                if item_record.minv_id:
+                    item_record.minv_id.minv_qty_avail -= item_record.medreqitem_qty
+                    item_record.minv_id.save()
+
+                    # Create MedicineTransaction
+                    mdt_qty = f"{item_record.medreqitem_qty} {item_record.minv_id.minv_qty_unit or 'pcs'}"
+                    MedicineTransactions.objects.create(
+                        mdt_qty=mdt_qty,
+                        mdt_action="deducted",
+                        staff=staff_instance,
+                        minv_id=item_record.minv_id
+                    )
+
+                item_record.status = 'fulfilled'
+                # Create MedicineRecord for fulfilled item
+                MedicineRecord.objects.create(
+                    medrec_qty=item_record.medreqitem_qty,
+                    reason=item_record.reason,
+                    fulfilled_at=timezone.now(),
+                    patrec_id=instance.pat_id.patient_records.first() if instance.pat_id else None,
+                    minv_id=item_record.minv_id,
+                    medreq_id=instance,
+                    staff=staff_instance
+                )
+
+            elif new_status == 'referred':
+                item_record.status = 'referred'
+                item_record.archive_reason = referral_reason  # Store reason in item
+
+            elif new_status == 'declined':
+                item_record.status = 'declined'
+                item_record.archive_reason = referral_reason or "Declined by staff"
+
+            item_record.save()
+
+        # Create FindingsPlanTreatment for referred items
+        if new_status == 'referred':
+            new_finding = Finding.objects.create(
+                assessment_summary=f"Medicine request referred: {referral_reason}",
+                obj_summary="Patient requested medicine.",
+                subj_summary="Patient reported symptoms/reason for request.",
+                plantreatment_summary="Referred to doctor for further assessment and prescription."
+            )
+            FindingsPlanTreatment.objects.create(
+                medreq=instance,
+                find=new_finding,
+            )
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
 class SubmitMedicineRequestView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     
@@ -1503,7 +1477,7 @@ class SubmitMedicineRequestView(APIView):
             #     print(f"Creating MedicineRequestItem: medreq_id={item.medreq_id.medreq_id}, minv_id={item.minv_id.minv_id}, med_id={item.med.pk}")
             
             MedicineRequestItem.objects.bulk_create(request_items)
-            
+            print(f"Created request at: {medicine_request.requested_at}")
             uploaded_files = []
             if files:
                 try:
@@ -1551,7 +1525,6 @@ class SubmitMedicineRequestView(APIView):
             return Response({"error": f"Internal server error: {str(e)}"}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 # Admin Management Views
 class PendingMedicineRequestsView(generics.ListAPIView):
     serializer_class = MedicineRequestSerializer
@@ -1574,78 +1547,80 @@ class UpdateMedicineRequestStatusView(APIView):
         try:
             new_status = request.data.get('status')
             doctor_notes = request.data.get('doctor_notes', '')
-            
+
             if not new_status:
                 return Response({"error": "Status is required"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Validate status
+
             valid_statuses = ['pending', 'confirmed', 'referred_to_doctor', 'declined', 'ready_for_pickup', 'completed']
             if new_status not in valid_statuses:
                 return Response({"error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"}, 
                               status=status.HTTP_400_BAD_REQUEST)
-            
-            # Get the medicine request
-            medicine_request = MedicineRequest.objects.get(medreq_id=medreq_id)
-            
-            # Update status
-            medicine_request.status = new_status
-            
-            # If referred to doctor, add notes
-            if new_status == 'referred_to_doctor' and doctor_notes:
-                # You might want to store this in a separate model or add a field to MedicineRequest
-                medicine_request.notes = doctor_notes
-            
-            medicine_request.save()
-            
-            # If confirmed, update inventory and create medicine records
-            if new_status == 'confirmed':
-                self._process_confirmed_request(medicine_request)
-            
+
+            try:
+                medicine_request = MedicineRequest.objects.get(medreq_id=medreq_id)
+            except MedicineRequest.DoesNotExist:
+                return Response({"error": "Medicine request not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            # Process each item
+            request_items = medicine_request.items.all()
+            for item in request_items:
+                try:
+                    if new_status == 'confirmed':
+                        if item.minv_id and item.minv_id.minv_qty_avail < item.medreqitem_qty:
+                            raise Exception(f"Insufficient stock for {item.med.med_name}. "
+                                          f"Available: {item.minv_id.minv_qty_avail}, Requested: {item.medreqitem_qty}")
+                        
+                        if item.minv_id:
+                            item.minv_id.minv_qty_avail -= item.medreqitem_qty
+                            item.minv_id.save()
+                            
+                            MedicineTransactions.objects.create(
+                                mdt_qty=f"-{item.medreqitem_qty}",
+                                mdt_action="request_fulfillment",
+                                minv_id=item.minv_id,
+                                staff=request.user.staff if hasattr(request.user, 'staff') else None
+                            )
+                        
+                        item.status = 'confirmed'
+                        MedicineRecord.objects.create(
+                            medrec_qty=item.medreqitem_qty,
+                            reason=item.reason,
+                            fulfilled_at=timezone.now(),
+                            patrec_id=medicine_request.pat_id.patient_records.first() if medicine_request.pat_id else None,
+                            minv_id=item.minv_id,
+                            medreq_id=medicine_request,
+                            staff=request.user.staff if hasattr(request.user, 'staff') else None
+                        )
+                    
+                    elif new_status == 'referred_to_doctor':
+                        item.status = 'referred_to_doctor'
+                        item.archive_reason = doctor_notes or "Referred to doctor"
+                    
+                    elif new_status == 'declined':
+                        item.status = 'declined'
+                        item.archive_reason = doctor_notes or "Declined by staff"
+                    
+                    elif new_status == 'ready_for_pickup':
+                        item.status = 'ready_for_pickup'
+                    
+                    elif new_status == 'completed':
+                        item.status = 'completed'
+                    
+                    item.save()
+
+                except Exception as e:
+                    print(f"Error processing item {item.medreqitem_id}: {str(e)}")
+                    continue
+
             return Response({
                 "success": True,
-                "message": f"Request status updated to {new_status}",
+                "message": f"Request items status updated to {new_status}",
                 "medreq_id": medreq_id
             }, status=status.HTTP_200_OK)
-            
-        except MedicineRequest.DoesNotExist:
-            return Response({"error": "Medicine request not found"}, status=status.HTTP_404_NOT_FOUND)
+
         except Exception as e:
             return Response({"error": f"Internal server error: {str(e)}"}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    def _process_confirmed_request(self, medicine_request):
-        """Process a confirmed medicine request by updating inventory and creating records"""
-        # Get all items in this request
-        request_items = medicine_request.items.all()
-        
-        for item in request_items:
-            try:
-                # Check if enough stock is available
-                if item.minv_id.minv_qty_avail < item.medreqitem_qty:
-                    raise Exception(f"Insufficient stock for {item.minv_id.med_id.med_name}. "
-                                  f"Available: {item.minv_id.minv_qty_avail}, Requested: {item.medreqitem_qty}")
-                
-                # Update inventory
-                item.minv_id.minv_qty_avail -= item.medreqitem_qty
-                item.minv_id.save()
-                
-                # Create medicine transaction
-                MedicineTransactions.objects.create(
-                    mdt_qty=f"-{item.medreqitem_qty}",
-                    mdt_action="request_fulfillment",
-                    minv_id=item.minv_id,
-                    staff=request.user.staff if hasattr(request.user, 'staff') else None
-                )
-                
-                # Update item status to confirmed
-                item.status = 'confirmed'
-                item.save()
-                
-            except Exception as e:
-                # Log error but continue with other items
-                print(f"Error processing item {item.medreqitem_id}: {str(e)}")
-                continue
-
 
 # React Native Query Functions (for your frontend)
 # These would be in your API service file, not in views.py

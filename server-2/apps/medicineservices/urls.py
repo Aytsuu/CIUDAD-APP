@@ -24,10 +24,9 @@ urlpatterns=[
         path('medicine-records/monthly/', MonthlyMedicineSummariesAPIView.as_view(), name='monthly_medicine_records'),
         path('medicine-reports/<str:month>/', MonthlyMedicineRecordsDetailAPIView.as_view(), name='medicine-reports'),
         path('medicines-request/monthly/chart/<str:month>/', MonthlyMedicineChart.as_view(), name='medicines_list'),
-         
-        path('delete-medicine-request-item/<int:medreqitem_id>/', MedicineRequestItemDelete.as_view(), name="delete-medicine-request-item"),
-         
-         
+
+        path('cancel-medicine-request-item/<int:medreqitem_id>/', MedicineRequestItemCancel.as_view(), name="cancel-medicine-request-item"),
+
         path('submit-request/', SubmitMedicineRequestView.as_view(), name='submit-medicine-request'),
     
     # Admin management endpoints
@@ -42,8 +41,5 @@ urlpatterns=[
 
         path("user-pending-items/", UserPendingMedicineRequestItemsView.as_view(), name="user-pending-medicine-items"),
         # path("medicine/delete-medicine-request-item/<int:medreqitem_id>/", MedicineRequestItemDelete.as_view(), name="delete-medicine-request-item"),
-
-
-        
-
+ 
    ]

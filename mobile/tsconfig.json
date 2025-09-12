@@ -4,9 +4,13 @@
     "baseUrl": ".",
     "strict": true,
     "paths": {
-      "@/*": ["./*"],
+      "@/*": [
+        "./*"
+      ],
     },
-    "types": ["@types/eslint"],
+    "types": [
+      "@types/eslint"
+    ]
   },
   "include": [
     "**/*.ts",

@@ -204,5 +204,3 @@ function WasteColCreate() {
 }
 
 export default WasteColCreate;
-
-

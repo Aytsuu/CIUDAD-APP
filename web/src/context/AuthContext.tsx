@@ -46,7 +46,7 @@ export const useAuth = () => {
     [sendOTPMutation]
   );
 
-  const verifyEmailOTPAndLogin = useCallback(
+  const verifyEmailOTP = useCallback(
     async (otp: string, email: string) => {
       try {
         const result = await verifyOTPMutation.mutateAsync({ otp, email });
@@ -84,7 +84,7 @@ export const useAuth = () => {
     login,
     signUp,
     sendEmailOTP,
-    verifyEmailOTPAndLogin,
+    verifyEmailOTP,
     logout,
     clearAuthError,
     clearOtpData,

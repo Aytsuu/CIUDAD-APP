@@ -12,8 +12,8 @@ import {
 } from "react-native";
 import { Plus, ChevronLeft } from "lucide-react-native";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useGetDonations} from "./queries";
-import { Donation } from "../don-types";
+import { useGetDonations} from "./donation-queries";
+import { Donation } from "../donation-types";
 import { useRouter } from "expo-router";
 import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "@/screens/_PageLayout";

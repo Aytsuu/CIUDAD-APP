@@ -2,26 +2,26 @@ import { api } from "@/api/api";
 
 export const createMOMFile = async (data: { mom_id: number;
     file_data: {
-        name: string;
-        type: string;
-        path: string;
-        uri: string;
+        name: string | undefined;
+        type: string | undefined;
+        file: string | undefined;
 }}) => {
-        console.log({
+       
+        const payload = {
             mom_id: data.mom_id,
-            momf_name: data.file_data.name,
-            momf_type: data.file_data.type,
-            momf_path: data.file_data.path,
-            momf_url: data.file_data.uri
-        })
+            files: [{
+                name: data.file_data.name,
+                type: data.file_data.type,
+                file: data.file_data.file 
+            }]
+        };
 
-        const res = await api.post('council/mom-file/', {
-            mom_id: data.mom_id,
-            momf_name: data.file_data.name,
-            momf_type: data.file_data.type,
-            momf_path: data.file_data.path,
-            momf_url: data.file_data.uri
-        });
+        console.log(payload)
+
+        const res = await api.post('council/mom-file/', payload);
+
+        return res.data;
+
     }
 
 export const insertMinutesOfMeeting = async (momInfo: Record<string, any>) => {
@@ -31,6 +31,7 @@ export const insertMinutesOfMeeting = async (momInfo: Record<string, any>) => {
             mom_date: momInfo.meetingDate,
             mom_title: momInfo.meetingTitle,
             mom_agenda: momInfo.meetingAgenda,
+            mom_area_of_focus: momInfo.meetingAreaOfFocus,  
             mom_is_archive: false,
         })
 
@@ -38,18 +39,9 @@ export const insertMinutesOfMeeting = async (momInfo: Record<string, any>) => {
             mom_date: momInfo.meetingDate,
             mom_title: momInfo.meetingTitle,
             mom_agenda: momInfo.meetingAgenda,
+            mom_area_of_focus: momInfo.meetingAreaOfFocus,  
             mom_is_archive: false,
         });
-
-        const momId = momResponse.data.mom_id;
-
-    
-        for (const areaId of momInfo.meetingAreaOfFocus) {
-            await api.post('council/mom-area-of-focus/', {
-                mom_id: momId,
-                mof_area: areaId
-            });
-        }
 
         return momResponse.data.mom_id;
     } catch (error) {
@@ -60,26 +52,23 @@ export const insertMinutesOfMeeting = async (momInfo: Record<string, any>) => {
 
 export const addSuppDoc = async(data: { mom_id: number;
     file_data: {
-        name: string;
-        type: string;
-        path: string;
-        uri: string;
+        name: string | undefined;
+        type: string | undefined;
+        file: string | undefined;
 }}) => {
 
-    console.log({
+    const payload = {
         mom_id: data.mom_id,
-        momsp_name: data.file_data.name,
-        momsp_type: data.file_data.type,
-        momsp_path: data.file_data.path,
-        momsp_url: data.file_data.uri
-    })
+        suppDocs: [{
+            name: data.file_data.name,
+            type: data.file_data.type,
+            file: data.file_data.file // The actual file object
+        }]
+    };
 
-    const res = await api.post('council/mom-supp-doc/', {
-        mom_id: data.mom_id,
-        momsp_name: data.file_data.name,
-        momsp_type: data.file_data.type,
-        momsp_path: data.file_data.path,
-        momsp_url: data.file_data.uri
-    });
+    console.log(payload)
+    const res = await api.post('council/mom-supp-doc/', payload);
+
+    return res.data;
 
 }

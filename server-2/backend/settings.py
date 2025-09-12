@@ -401,7 +401,7 @@ INSTALLED_APPS = [
     'apps.familyplanning',
     'apps.animalbites',
     # 'apps.account',
-    'apps.authentication',
+    # 'apps.authentication',
     'apps.patientrecords',
 
     'backend.firebase.notifications',
@@ -414,7 +414,7 @@ INSTALLED_APPS = [
     'apps.childhealthservices',
     'apps.servicescheduler',
     'apps.reports',
-    'apps.file',
+    # 'apps.file',
     "simple_history",
 
 ]

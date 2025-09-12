@@ -24,32 +24,14 @@ export default function IndividualScan() {
   const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
   const [feedbackMessage, setFeedbackMessage] = React.useState<string>('');
   const [status, setStatus] = React.useState<"success" | "failure" | "waiting" | "message">("success");
-  const { mutateAsync: addPersonal } = useAddPersonal();
-  const { mutateAsync: addAddress } = useAddAddress();
-  const { mutateAsync: addPersonalAddress } = useAddPerAddress();
   const { mutateAsync: addRequest } = useAddRequest();
   const { mutateAsync: addBusinessRespondent } = useAddBusinessRespondent();
-  const { mutateAsync: addAccount } = useAddAccount();
 
   const residentRegistration = async (
     per: Record<string, any>,
     account: Record<string, any>
   ) => {
     try {
-      // const personal = await addPersonal(capitalizeAllFields(per));
-      // const new_addresses = await addAddress(per_addresses.list);
-      // await addPersonalAddress({
-      //   data: new_addresses?.map((address: any) => ({
-      //     add: address.add_id,
-      //     per: personal.per_id,
-      //   })),
-      //   history_id: personal.history,
-      // });
-      // console.log( {
-      //         per: capitalizeAllFields(per),
-      //         acc: account,
-      //         role: "Independent",
-      //       })
       await addRequest(
         {
           comp: [
@@ -84,40 +66,21 @@ export default function IndividualScan() {
   };
 
   const busRespondentRegistration = async (
-    per: Record<string, any>,
-    per_addresses: Record<string, any>,
+    respondent: Record<string, any>,
     account: Record<string, any>
   ) => {
     try {
-      const personal = await addPersonal({ ...capitalizeAllFields(per) });
-      const new_addresses = await addAddress(per_addresses.list);
-      await addPersonalAddress({
-        data: new_addresses?.map((address: any) => ({
-          add: address.add_id,
-          per: personal.per_id,
-        })),
-        history_id: personal.history,
+      await addBusinessRespondent({
+        ...respondent,
+        acc: account
       });
 
-      const respondent = await addBusinessRespondent({
-        per: personal.per_id,
-      });
+      setShowFeedback(false);
+      setTimeout(() => {
+        setStatus("success");
+        setShowFeedback(true); 
+      }, 0)
 
-      await addAccount(
-        {
-          ...account,
-          br: respondent.br_id,
-        },
-        {
-          onSuccess: () => {
-            setShowFeedback(false);
-            setTimeout(() => {
-              setStatus("success");
-              setShowFeedback(true); 
-            }, 0)
-          },
-        }
-      );
     } catch (error) {
       setShowFeedback(false);
       setTimeout(() => {
@@ -133,13 +96,13 @@ export default function IndividualScan() {
     setStatus('waiting');
     setShowFeedback(true);
 
-    const { accountFormSchema, personalInfoSchema } = getValues();
+    const { accountFormSchema, personalInfoSchema, businessRespondent } = getValues();
     const { per_addresses, ...per } = personalInfoSchema;
     const { confirmPassword, ...account } = accountFormSchema;
 
     switch (type) {
       case "business":
-        await busRespondentRegistration(per, per_addresses, account);
+        await busRespondentRegistration({...businessRespondent, br_contact: account.phone}, account);
         break;
       default:
         await residentRegistration({...per, per_addresses: per_addresses.list}, account);

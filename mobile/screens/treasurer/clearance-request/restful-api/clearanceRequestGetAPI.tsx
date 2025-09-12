@@ -1,9 +1,5 @@
 import { api } from "@/api/api";
 import { AxiosError } from "axios";
-import { 
-    ClearanceRequestByIdSchema, 
-    SearchClearanceRequestSchema 
-} from "@/form-schema/treasurer/clearance-request-schema";
 
 // Types for API responses
 export interface ClearanceRequest {
@@ -58,11 +54,8 @@ export const getClearanceRequests = async (): Promise<ClearanceRequest[]> => {
 // Fetch clearance request by ID
 export const getClearanceRequestById = async (crId: string): Promise<ClearanceRequest> => {
     try {
-        // Validate input
-        const validatedData = ClearanceRequestByIdSchema.parse({ cr_id: crId });
-        
-        console.log(`Making request to /clerk/certificate/${validatedData.cr_id}/`);
-        const res = await api.get(`/clerk/certificate/${validatedData.cr_id}/`);
+        console.log(`Making request to /clerk/certificate/${crId}/`);
+        const res = await api.get(`/clerk/certificate/${crId}/`);
         console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
@@ -76,11 +69,8 @@ export const getClearanceRequestById = async (crId: string): Promise<ClearanceRe
 // Search clearance requests
 export const searchClearanceRequests = async (query: string): Promise<ClearanceRequest[]> => {
     try {
-        // Validate input
-        const validatedData = SearchClearanceRequestSchema.parse({ query });
-        
-        console.log(`Making search request to /clerk/certificate/?search=${validatedData.query}`);
-        const res = await api.get(`/clerk/certificate/?search=${encodeURIComponent(validatedData.query)}`);
+        console.log(`Making search request to /clerk/certificate/?search=${query}`);
+        const res = await api.get(`/clerk/certificate/?search=${encodeURIComponent(query)}`);
         console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
@@ -103,33 +93,6 @@ export const updatePaymentStatus = async (crId: string, paymentStatus: string): 
     } catch (err) {
         const error = err as AxiosError;
         console.error('Error updating payment status:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
-        throw error;
-    }
-};
-
-// Get payment statistics
-export const getPaymentStatistics = async (): Promise<any> => {
-    try {
-        console.log('Making request to /clerk/certificate/');
-        const res = await api.get('/clerk/certificate/');
-        console.log('API Response:', res.data);
-        
-        // Calculate statistics from the data
-        const data = res.data || [];
-        const statistics = {
-            total_requests: data.length,
-            paid_requests: data.filter((item: any) => item.req_payment_status === 'Paid').length,
-            unpaid_requests: data.filter((item: any) => item.req_payment_status === 'Unpaid').length,
-            partial_requests: data.filter((item: any) => item.req_payment_status === 'Partial').length,
-            overdue_requests: data.filter((item: any) => item.req_payment_status === 'Overdue').length,
-            pending_requests: data.filter((item: any) => item.req_status === 'Pending').length
-        };
-        
-        return statistics;
-    } catch (err) {
-        const error = err as AxiosError;
-        console.error('Error fetching payment statistics:', error);
         console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }

@@ -1,0 +1,185 @@
+import { api } from "@/api/api";
+
+export const getProjectProposals = async (status?: string) => {
+  try {
+    const url = status 
+      ? `gad/project-proposals/?status=${status}&is_archive=false`
+      : 'gad/project-proposals/?is_archive=false';
+    const res = await api.get(url);
+    const data = res.data?.data ?? res.data ?? [];
+    
+    const proposalsWithData = await Promise.all(
+      (Array.isArray(data) ? data : []).map(async (proposal: any) => {
+        const gprId = proposal.gpr_id || proposal.gprId;
+        try {
+          const [logsRes, suppDocsRes] = await Promise.all([
+            api.get(`gad/project-proposals/${gprId}/logs/`),
+            api.get(`gad/project-proposals/${gprId}/support-docs/`, {
+              params: { is_archive: false }
+            })
+          ]);
+          return transformProposalWithData(proposal, logsRes.data, suppDocsRes.data);
+        } catch (err) {
+          return transformProposalWithData(proposal, [], []);
+        }
+      })
+    );
+    
+    return proposalsWithData;
+  } catch (err) {
+    return [];
+  }
+};
+
+export const getProjectProposal = async (gprId: number) => {
+  try {
+    const [proposalRes, logsRes, suppDocsRes] = await Promise.all([
+      api.get(`gad/project-proposals/${gprId}/`),
+      api.get(`gad/project-proposals/${gprId}/logs/`),
+      api.get(`gad/project-proposals/${gprId}/support-docs/`, {
+        params: { is_archive: false }
+      })
+    ]);
+    return transformProposalWithData(proposalRes.data, logsRes.data, suppDocsRes.data);
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getStaffList = async () => {
+  try {
+    const res = await api.get('gad/api/staff/');
+    const data = res.data?.data ?? res.data ?? [];
+    return data.map((staff: any) => ({
+      staff_id: staff.staff_id,
+      full_name: staff.full_name,
+      position: staff.position,
+    }));
+  } catch (err) {
+    return [];
+  }
+};
+
+export const getSupportDocs = async (proposalId: number) => {
+  try {
+    const res = await api.get(`gad/project-proposals/${proposalId}/support-docs/`, {
+      params: { is_archive: false }
+    });
+    const data = res.data?.data ?? res.data ?? [];
+    return data.map((doc: any) => ({
+      psd_id: doc.psd_id ?? 0,
+      psd_url: doc.psd_url ?? '',
+      psd_name: doc.psd_name ?? 'Unknown',
+      psd_type: doc.psd_type ?? 'application/octet-stream',
+      psd_path: doc.psd_path ?? '',
+      psd_is_archive: doc.psd_is_archive ?? false
+    }));
+  } catch (err) {
+    return [];
+  }
+};
+
+const transformProposalWithData = (proposal: any, logs: any[], suppDocs: any[]) => {
+  const transformed = {
+    gprId: proposal.gprId ?? proposal.gpr_id ?? 0,
+    projectTitle: proposal.gprTitle ?? proposal.gpr_title ?? 'Untitled',
+    background: proposal.gprBackground ?? proposal.gpr_background ?? 'No background provided',
+    objectives: proposal.gprObjectives ?? proposal.gpr_objectives ?? [],
+    participants: proposal.gprParticipants ?? proposal.gpr_participants ?? [],
+    date: proposal.gprDate ?? proposal.gpr_date ?? new Date().toISOString(),
+    venue: proposal.gprVenue ?? proposal.gpr_venue ?? 'No venue provided',
+     budgetItems: (proposal.gprBudgetItems || proposal.gpr_budget_items || []).map((item: any) => ({
+      name: item.name || '',
+      pax: item.pax || '',
+      amount: item.amount || item.price || 0 
+    })),
+    monitoringEvaluation: proposal.gprMonitoring ?? proposal.gpr_monitoring ?? '',
+    signatories: proposal.gprSignatories ?? proposal.gpr_signatories ?? [],
+    headerImage: proposal.gprHeaderImage ?? proposal.gprHeaderImg ?? proposal.gpr_header_img ?? null,
+    gprDateCreated: proposal.gprCreated ?? proposal.gpr_created ?? new Date().toISOString(),
+    gprIsArchive: proposal.gprIsArchive ?? proposal.gpr_is_archive ?? false,
+    status: proposal.status ? 
+      proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1).toLowerCase() : 'Pending',
+    statusReason: null,
+    statusDate: proposal.statusDate ?? proposal.date_approved_rejected ?? null,
+    staffId: proposal.staffId ?? proposal.staff ?? null,
+    staffName: proposal.staffName ?? proposal.staff_name ?? 'Unknown',
+    logs: (logs || []).map(log => ({
+      gprlId: log.gprl_id,
+      gprlDateApprovedRejected: log.gprl_date_approved_rejected,
+      gprlReason: log.gprl_reason,
+      gprlDateSubmitted: log.gprl_date_submitted,
+      gprlStatus: log.gprl_status,
+      staffId: log.staff
+    })),
+    supportDocs: (suppDocs || []).map(doc => {
+      return {
+        psd_id: doc.psd_id ?? 0,
+        psd_url: doc.psd_url ?? '',
+        psd_name: doc.psd_name ?? 'Unknown',
+        psd_type: doc.psd_type ?? 'application/octet-stream',
+        psd_is_archive: doc.psd_is_archive ?? false
+      };
+    }),
+    paperSize: proposal.gprPageSize ?? proposal.gpr_page_size ?? 'letter',
+    devId: proposal.devId ?? proposal.dev_id ?? proposal.dev?.dev_id ?? 0,
+    projectIndex: proposal.projectIndex ?? proposal.gpr_project_index ?? 0,
+    devDetails: proposal.devDetails ?? proposal.dev_details ?? (proposal.dev ? {
+      dev_id: proposal.dev.dev_id,
+      dev_project: proposal.dev.dev_project,
+      dev_gad_items: proposal.dev.dev_gad_items,
+      dev_res_person: proposal.dev.dev_res_person,
+      dev_indicator: proposal.dev.dev_indicator,
+      dev_client: proposal.dev.dev_client,
+      dev_issue: proposal.dev.dev_issue,
+      dev_date: proposal.dev.dev_date
+    } : undefined)
+  };
+
+  if (logs?.length > 0) {
+    const validLogs = logs.filter(log => log.gprl_date_approved_rejected);
+    const latestLog = validLogs.length > 0
+      ? [...validLogs].sort((a, b) => 
+          new Date(b.gprl_date_approved_rejected).getTime() - new Date(a.gprl_date_approved_rejected).getTime()
+        )[0]
+      : logs[0];
+    transformed.statusReason = latestLog.gprl_reason || null;
+    transformed.status = latestLog.gprl_status || transformed.status;
+  }
+  
+  return transformed;
+};
+
+export const getAllProposalLogs = async () => {
+  try {
+    const res = await api.get(`gad/project-proposal-logs/all/`);
+    return res.data?.data ?? res.data ?? [];
+  } catch (err) {
+    console.error('API error:', err);
+    return [];
+  }
+};
+
+
+export const getAvailableDevPlanProjects = async (year?: string) => {
+  try {
+    const currentYear = year || new Date().getFullYear().toString();
+    const res = await api.get(`gad/project-proposals-available/${currentYear}/`);
+    
+    const data = res.data?.data ?? [];
+    
+    return data.map((project: any) => ({
+      dev_id: project.dev_id,
+      dev_client: project.dev_client,
+      dev_issue: project.dev_issue,
+      project_title: project.project_title,
+      // Remove project_index from here
+      participants: project.participants || [],
+      budget_items: project.budget_items || [],
+      dev_date: project.dev_date,
+    }));
+  } catch (err) {
+    console.error('Error fetching available development plan projects:', err);
+    return [];
+  }
+};

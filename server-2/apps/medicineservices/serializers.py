@@ -320,3 +320,4 @@ class Medicine_FileSerializer(serializers.ModelSerializer):
             print("No valid files to upload")
         
         return med_files
+    

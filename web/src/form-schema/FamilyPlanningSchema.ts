@@ -15,6 +15,7 @@ const isWeekend = (date: Date): boolean => {
   const day = date.getDay()
   return day === 0 || day === 6 // Sunday = 0, Saturday = 6
 }
+
 export const ServiceProvisionRecordSchema = z.object({
   dateOfVisit: z.string().min(1, "Date of visit is required"),
   methodAccepted: z.string().optional(),

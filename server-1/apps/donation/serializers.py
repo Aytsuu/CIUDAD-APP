@@ -2,14 +2,6 @@ from rest_framework import serializers
 from .models import *
 from django.apps import apps
 
-# class DonationSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Donation
-#         fields = '__all__'
-#         extra_kwargs = {
-#             'don_num': {'read_only': True} 
-#         }
-
 Personal = apps.get_model('profiling', 'Personal')
 
 class PersonalSerializer(serializers.ModelSerializer):
@@ -37,7 +29,6 @@ class DonationSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'don_num': {'read_only': True},
             'per_id': {'required': False, 'write_only': True},
-            'staff': {'required': False, 'write_only': True},
             'don_description': {'required': False, 'allow_null': True, 'allow_blank': True}
         }
 
@@ -60,8 +51,3 @@ class DonationSerializer(serializers.ModelSerializer):
         if validated_data.get('don_donor') == "Anonymous":
             validated_data['per_id'] = None
         return super().update(instance, validated_data)
-
-class OnlineDonationSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = OnlineDonation
-    fields = '__all__'

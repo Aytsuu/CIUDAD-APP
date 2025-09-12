@@ -238,10 +238,9 @@ export {
   handleTimeout
 };
 
-// Additional state variables you might need:
 const [email, setEmail] = useState('');
 const [resetToken, setResetToken] = useState(null);
-const [_currentStep, setCurrentStep] = useState('email'); // 'email' | 'verification' | 'reset' | 'success'
+const [_currentStep, setCurrentStep] = useState('email'); 
 const [_loading, setLoading] = useState(false);
 const [_errorMessage, setErrorMessage] = useState('');
-const [_successMessage, setSuccessMessage] = useState(''); // Optional for success notifications
+const [_successMessage, setSuccessMessage] = useState(''); 

@@ -14,7 +14,8 @@ export const MediaUpload = ({
   maxFiles,
   viewMode = 'grid',
   acceptableFiles = 'all',
-  onRemoveMedia
+  onRemoveMedia,
+  hideRemoveButton = false
 }: {
   title: string;
   description: string;
@@ -25,7 +26,8 @@ export const MediaUpload = ({
   maxFiles?: number;
   viewMode?: 'grid' | 'list';
   acceptableFiles?: "all" | "document" | "image" | "video";
-  onRemoveMedia?: (id: string) => void
+  onRemoveMedia?: (id: string) => void;
+  hideRemoveButton?: boolean;
 }) => {
   
   const { handleFileChange, handleRemoveMedia } = useInstantFileUpload({
@@ -34,9 +36,8 @@ export const MediaUpload = ({
     setMediaFiles,
     setActiveVideoId
   });
-  // For list view
+
   const handleOpenDocument = (url: string) => { 
-    // Open document in new tab
     window.open(url, '_blank');
   };
 
@@ -73,7 +74,6 @@ export const MediaUpload = ({
       </div>
 
       {viewMode === 'grid' ? (
-        // Grid View
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
           {mediaFiles.map((media) => (
             <div key={media.id} className="relative group">
@@ -118,14 +118,16 @@ export const MediaUpload = ({
                 {getFileIcon(media.type)}
               </div>
 
-              <div
-                onClick={() => handleRemoveMedia(media.id)}
-                className="absolute top-2 left-2 bg-red-500 text-white rounded-full p-1 
-                          opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                aria-label="Remove media"
-              >
-                <X size={16} />
-              </div>
+              {!hideRemoveButton && (
+                <div
+                  onClick={() => handleRemoveMedia(media.id)}
+                  className="absolute top-2 left-2 bg-red-500 text-white rounded-full p-1 
+                            opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  aria-label="Remove media"
+                >
+                  <X size={16} />
+                </div>
+              )}
             </div>
           ))}
 
@@ -149,11 +151,9 @@ export const MediaUpload = ({
           </div>
         </div>
       ) : (
-        // List View
         <div className="space-y-2 mb-4">
           {mediaFiles.map((media) => (
             <div key={media.id} className="group flex items-center gap-3 p-3 border border-gray-200 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
-              {/* Preview/Icon */}
               <div className="flex-shrink-0 w-12 h-12 bg-gray-200 rounded overflow-hidden flex items-center justify-center">
                 {media.type.split("/")[0] === "video" ? (
                   <div className="relative w-full h-full">
@@ -182,7 +182,6 @@ export const MediaUpload = ({
                 )}
               </div>
 
-              {/* File Info */}
               <div className="flex-grow min-w-0 cursor-pointer"
                 onClick={() => handleOpenDocument(media.url as string)}
               >
@@ -196,7 +195,6 @@ export const MediaUpload = ({
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex-shrink-0 flex items-center gap-2">
                 {media.type.split("/")[0] === "video" && (
                   <button
@@ -207,21 +205,22 @@ export const MediaUpload = ({
                     <Play size={16} />
                   </button>
                 )}
-                <button
-                  onClick={() => {
-                    handleRemoveMedia(media.id)
-                    onRemoveMedia && onRemoveMedia(media.id)
-                  }}
-                  className="p-1 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                  aria-label="Remove media"
-                >
-                  <X size={16} />
-                </button>
+                {!hideRemoveButton && (
+                  <button
+                    onClick={() => {
+                      handleRemoveMedia(media.id)
+                      onRemoveMedia && onRemoveMedia(media.id)
+                    }}
+                    className="p-1 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                    aria-label="Remove media"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
             </div>
           ))}
 
-          {/* Add Media Button for List View */}
           <div
             onClick={!isMaxFilesReached ? handleAddMediaClick : undefined}
             className={cn(
@@ -253,7 +252,6 @@ export const MediaUpload = ({
         </div>
       )}
 
-      {/* Hidden file input */}
       <input
         type="file"
         ref={fileInputRef}

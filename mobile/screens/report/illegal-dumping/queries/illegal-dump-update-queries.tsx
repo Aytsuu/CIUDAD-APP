@@ -3,52 +3,15 @@ import { useQuery, useMutation, useQueryClient  } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
 import { updateWasteReport } from "../request/illegal-dump-put-request";
 import { uploadResolvedImage } from "../request/illegal-dump-put-request";
-
-// interface UpdateWasteReportData {
-//   rep_status: string;
-//   rep_resolved_img?: string;
-// }
+import { updateWasteResReport } from "../request/illegal-dump-put-request";
 
 
-// export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => {
-//   const queryClient = useQueryClient();
-//   const {toast} = useToastContext();
-
-//   return useMutation({
-//     mutationFn: async (data: UpdateWasteReportData) => {
-//         return updateWasteReport(rep_id, data)
-//     },
-//    onSuccess: () => {
-
-//       toast.success('Waste Report Updated');
-      
-//       // Invalidate any related queries if needed
-//       queryClient.invalidateQueries({ queryKey: ["wastereport"] });
-      
-//       if (onSuccess) onSuccess();
-//     },
-//     onError: (err) => {
-//       console.error("Error updating report:", err);
-//       toast.error("Failed to update report");
-//     }
-
-//   });
-// };
-
-
-
-
-interface UpdateWasteReportData {
-  rep_status: string;
-  rep_resolved_img?: string;
-}
-
-interface ResolvedImage {
+// =========================================== STAFF =============================
+type FileData = {
     name: string;
     type: string;
-    path: string;
-    url: string;
-}
+    file: string;
+};
 
 
 export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => {
@@ -58,29 +21,31 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
   return useMutation({
     mutationFn: async (values: { 
       rep_status: string;
-      rep_resolved_img?: ResolvedImage[] 
+      files?: FileData[] 
     }) => {
       // 1. Update the main report status and date
       await updateWasteReport(rep_id, {
         rep_status: values.rep_status,
       });
       
-      console.log("GAWAS SA QUERY: ", values.rep_resolved_img)
       // 2. Upload all resolution images in parallel (if any)
-      if (values.rep_resolved_img && values.rep_resolved_img.length > 0) {
-        console.log("NISUD SA QUERY: ", values.rep_resolved_img)
+      if (values.files && values.files.length > 0) {
         await Promise.all(
-          values.rep_resolved_img.map(image => 
+          values.files.map(file => 
             uploadResolvedImage({
               rep_id,
-              wrsf_name: image.name,
-              wrsf_type: image.type,
-              wrsf_path: image.path,
-              wrsf_url: image.url
+              file_data: {
+                name: file.name,
+                type: file.type,
+                file: file.file
+              }
+            }).catch(error => {
+              console.error("Error creating file entry:", error);
+              return null;
             })
           )
         );
-      }
+      }  
       
       return rep_id;
     },  
@@ -97,6 +62,45 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
       console.error("Error updating waste report:", err);
       toast.error(
         "Failed to update report. Please try again.",
+      );
+    }
+  });
+};
+
+
+
+// =========================================== RESIDENT ========================================
+
+export const useUpdateWasteResReport = (rep_id: number, onSuccess?: () => void) => {
+  const queryClient = useQueryClient();
+  const {toast} = useToastContext();  
+
+  return useMutation({
+    mutationFn: async (values: { 
+      rep_status: string;
+      rep_cancel_reason: string | undefined;
+    }) => {
+
+      await updateWasteResReport(rep_id, {
+        rep_status: values.rep_status,
+        rep_cancel_reason: values.rep_cancel_reason
+      });
+      
+      return rep_id;
+    },  
+    onSuccess: () => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['wastereport'] });
+            
+      // Show success toast
+      toast.success('Report is cancelled successfully');
+
+      if (onSuccess) onSuccess();
+    },
+    onError: (err) => {
+      console.error("Error in cancelling waste report:", err);
+      toast.error(
+        "Failed to cancel report. Please try again.",
       );
     }
   });

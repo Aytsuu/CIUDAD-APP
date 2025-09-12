@@ -4,6 +4,8 @@ from django.db import transaction
 from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
 from apps.profiling.serializers.personal_serializers import PersonalBaseSerializer
 from apps.profiling.serializers.address_serializers import AddressBaseSerializer
+from apps.account.serializers import AccountInputSerializer
+from apps.account.models import Account
 from utils.supabase_client import supabase, upload_to_storage, remove_from_storage
 from datetime import datetime
 import logging
@@ -29,6 +31,7 @@ class BusinessModificationBaseSerializer(serializers.ModelSerializer):
   class Meta:
     model = BusinessModification
     fields = '__all__'
+
 class BusinessHistoryBaseSerializer(serializers.ModelSerializer):
   history_user_name = serializers.SerializerMethodField()
   history_date = serializers.DateTimeField(format='%Y-%m-%d %I:%M:%S %p')

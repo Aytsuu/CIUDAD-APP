@@ -73,7 +73,7 @@ export const allRecordColumns: ColumnDef<AllRecordCombined>[] = [
     accessorKey: 'date_registered',
     header: "Date Registered",
     cell: ({row}) => (
-      formatDate(row.original.date_registered, "long")
+      formatDate(row.original.date_registered, "long" as any)
     )
   },
   {

@@ -1,36 +1,16 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { addCertificationRequest, submitPermitCertificationWithBusiness } from "../restful-API/certificationReqPostAPI";
+import { addCertificationRequest } from "../restful-API/certificationReqPostAPI";
 import { useRouter } from "expo-router";
 import { useToastContext } from "@/components/ui/toast";
 import { useAuth } from "@/contexts/AuthContext";
-import z from "zod";
-
-// Schema for personal certification request
-const personalCertificationSchema = z.object({
-    cert_type: z.literal('personal'),
-    cert_category: z.string().min(1, "Certification category is required"),
-    claim_date: z.string().min(1, "Claim date is required"),
-    payment_mode: z.string().min(1, "Payment mode is required"),
-    pr_id: z.string().optional(),
-});
-
-// Schema for business permit request
-const businessPermitSchema = z.object({
-    cert_type: z.literal('permit'),
-    business_name: z.string().min(1, "Business name is required"),
-    business_address: z.string().min(1, "Business address is required"),
-    gross_sales: z.string().min(1, "Annual gross sales is required"),
-    claim_date: z.string().min(1, "Claim date is required"),
-    payment_mode: z.string().min(1, "Payment mode is required"),
-    business_existence_image: z.array(z.any()).optional(),
-    gross_sales_image: z.array(z.any()).optional(),
-});
-
-// Union schema for both types
-export const certificationRequestSchema = z.discriminatedUnion('cert_type', [
-    personalCertificationSchema,
-    businessPermitSchema
-]);
+import { 
+    PersonalCertificationSchema, 
+    BusinessPermitSchema, 
+    CertificationRequestSchema,
+    type PersonalCertificationFormData,
+    type BusinessPermitFormData,
+    type CertificationRequestFormData
+} from "@/form-schema/certificates/certification-request-schema";
 
 export const useAddPersonalCertification = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
@@ -39,8 +19,17 @@ export const useAddPersonalCertification = (onSuccess?: () => void) => {
     const { user } = useAuth();
 
     return useMutation({
-        mutationFn: (values: z.infer<typeof personalCertificationSchema>) => 
-            addCertificationRequest(values, user?.staff?.staff_id),
+        mutationFn: (values: PersonalCertificationFormData) => {
+            
+            const apiPayload = {
+                cert_type: values.cert_type,
+                cert_category: values.purposes[0], 
+                payment_mode: values.payment_mode || "not-specified", 
+                requester: values.requester,
+                pr_id: values.pr_id // Pass the purpose ID
+            };
+            return addCertificationRequest(apiPayload);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['personalCertifications'] });
             queryClient.invalidateQueries({ queryKey: ['businessPermitRequests'] });
@@ -63,8 +52,8 @@ export const useAddBusinessPermit = (onSuccess?: () => void) => {
     const { user } = useAuth();
 
     return useMutation({
-        mutationFn: (values: z.infer<typeof businessPermitSchema>) => 
-            submitPermitCertificationWithBusiness(values, user?.staff?.staff_id),
+        mutationFn: (values: BusinessPermitFormData) => 
+            addCertificationRequest(values, "00003250722"),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['personalCertifications'] });
             queryClient.invalidateQueries({ queryKey: ['businessPermitRequests'] });
@@ -88,12 +77,8 @@ export const useAddCertificationRequest = (onSuccess?: () => void) => {
     const { user } = useAuth();
 
     return useMutation({
-        mutationFn: (values: z.infer<typeof certificationRequestSchema>) => {
-            if (values.cert_type === 'personal') {
-                return addCertificationRequest(values, user?.staff?.staff_id);
-            } else {
-                return submitPermitCertificationWithBusiness(values, user?.staff?.staff_id);
-            }
+        mutationFn: (values: CertificationRequestFormData) => {
+            return addCertificationRequest(values, "00003250722");
         },
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['personalCertifications'] });
@@ -113,3 +98,23 @@ export const useAddCertificationRequest = (onSuccess?: () => void) => {
         }
     });
 };
+
+export const useAddBusinessClearance = () => {
+  return useMutation({
+    mutationFn: (data: BusinessPermitFormData) => addBusinessClearance(data),
+    onSuccess: (data) => {
+      console.log("Business clearance request submitted successfully:", data);
+    },
+    onError: (error) => {
+      console.error("Error submitting business clearance request:", error);
+    },
+  });
+};
+
+// Export schemas for use in components
+export { 
+    PersonalCertificationSchema, 
+    BusinessPermitSchema, 
+    CertificationRequestSchema 
+};
+

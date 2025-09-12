@@ -14,45 +14,34 @@ import {
 export const variants: Record<string, string> = {
   default: "",
   destructive: "bg-red-500 hover:bg-red-500/90",
+};
+
+interface ConfirmationModalProps {
+  trigger?: React.ReactNode;
+  title: string;
+  description: string;
+  actionLabel: string;
+  type?: string;
+  variant?: string;
+  onClick?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function ConfirmationModal({
   trigger,
   title,
   description,
-  actionLabel="Confirm",
+  actionLabel,
   type,
   variant,
   onClick,
-  onClose
-}: {
-  trigger: React.ReactNode;
-  title: string;
-  description: string | React.ReactNode;
-  actionLabel?: string;
-  type?: string;
-  variant?: string;
-  onClick?: () => void;
-  onClose?: () => void;
-}) {
-  const [open, setOpen] = React.useState(false);
-
-  const handleActionClick = async () => {
-    try {
-      if (onClick) {
-        await onClick();
-      }
-    } finally {
-      setOpen(false);
-      if (onClose) {
-        onClose();
-      }
-    }
-  };
-
+  open,
+  onOpenChange,
+}: ConfirmationModalProps) {
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      {trigger && <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
@@ -62,7 +51,7 @@ export function ConfirmationModal({
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             type={(type as "button" | "submit" | "reset") || "button"}
-            onClick={handleActionClick}
+            onClick={onClick}
             className={variants[variant ?? variants.default]}
           >
             {actionLabel}

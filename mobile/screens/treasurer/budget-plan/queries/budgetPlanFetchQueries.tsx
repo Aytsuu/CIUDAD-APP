@@ -51,6 +51,7 @@ export type BudgetPlanSuppDoc = {
   bpf_url: string;
   bpf_name: string;
   bpf_upload_date: string;
+  bpf_description: string;
 }
 
 export const useGetBudgetPlanSuppDoc = (plan_id: string) => {

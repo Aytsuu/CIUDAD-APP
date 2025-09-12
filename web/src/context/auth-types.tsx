@@ -38,9 +38,6 @@ export interface AuthContextType {
   verifyEmailOTPAndLogin: (otp: string, email: string) => Promise<User>;
   otpSent: boolean;
   email: string | null;
-  // // New Google methods
-  // loginWithGoogle: () => Promise<void>;
-  // handleGoogleCallback: () => Promise<void>;
 }
 
 // Notification types

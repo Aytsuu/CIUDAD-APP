@@ -1,4 +1,3 @@
-import { Label } from "@/components/ui/label"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { DataTable } from "@/components/ui/table/data-table"
 import { HistoryTable } from "@/components/ui/table/history-table"
@@ -47,7 +46,7 @@ function RatesPage2() {
         return { filtered, paginated, total }
     }
 
-    const personalAndOthersData = fetchedData.filter(row => row.pr_category === "Personal And Others")
+    const personalAndOthersData = fetchedData.filter(row => row.pr_category === "Personal")
 
     const { filtered: _filteredActive, paginated: paginatedActive, total: totalActive } =
         filterAndPaginate(personalAndOthersData.filter(row => !row.pr_is_archive), searchQueryActive, currentPageActive, pageSizeActive)
@@ -130,6 +129,10 @@ function RatesPage2() {
         {
             accessorKey: "pr_date", header: "Date Added/Updated",
             cell: ({ row }) => formatTimestamp(row.original.pr_date)
+        },
+        {
+            accessorKey: "staff_name",
+            header: "Updated By"
         }
     ]
 
@@ -148,12 +151,14 @@ function RatesPage2() {
         <div className='bg-snow w-full h-full'>
             <div className='bg-white drop-shadow rounded-lg'>
                 <div className='p-7 flex flex-col justify-end gap-7'>
-                    <div className="flex flex-row items-center">
+                    {/* <div className="flex flex-row items-center">
                         <div className='flex flex-col gap-4 w-3/4'>
                             <h2 className='font-bold'>BARANGAY CLEARANCE FOR PERSONAL AND OTHER PURPOSES:</h2>
                             <Label>- For non-residents</Label>
                         </div>
-                    </div>
+                    </div> */}
+
+                    
 
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
                         <TabsList className="grid w-full grid-cols-2 max-w-xs">
@@ -199,6 +204,19 @@ function RatesPage2() {
                                             </Select>
                                         <span className="text-sm">entries</span>
                                     </div>
+
+                                    {/* <DialogLayout
+                                        trigger={<Button>+ Add</Button>}
+                                        title='Add New Range and Fee for Business Permit'
+                                        description="Set a new annual gross sales range and its associated fee for business permits."
+                                        mainContent={
+                                            <RatesFormPage2
+                                                onSuccess={() => setIsDialogOpen(false)}
+                                            />
+                                        }
+                                        isOpen={isDialogOpen}
+                                        onOpenChange={setIsDialogOpen}
+                                    /> */}
                                 </div>
 
                                 <DataTable columns={activeColumns} data={paginatedActive} />

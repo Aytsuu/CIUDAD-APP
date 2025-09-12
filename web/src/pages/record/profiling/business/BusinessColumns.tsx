@@ -42,7 +42,7 @@ export const activeColumns: ColumnDef<BusinessRecord>[] = [
     accessorKey: "bus_date_verified",
     header: "Date Registered",
     cell: ({row}) => (
-      formatDate(row.original.bus_date_verified, "long")
+      formatDate(row.original.bus_date_verified, "long" as any)
     )
   },
   {
@@ -103,7 +103,7 @@ export const pendingColumns: ColumnDef<BusinessRecord>[] = [
     accessorKey: "bus_date_of_registration",
     header: "Date Submitted",
     cell: ({row}) => (
-      formatDate(row.original.bus_date_of_registration, "long")
+      formatDate(row.original.bus_date_of_registration, "long" as any)
     )
   },
   {
@@ -193,7 +193,7 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
     accessorKey: "br_date_registered",
     header: "Date Regitered",
     cell: ({row}) => (
-      formatDate(row.original.br_date_registered, "long")
+      formatDate(row.original.br_date_registered, "long" as any)
     )
   },
   {

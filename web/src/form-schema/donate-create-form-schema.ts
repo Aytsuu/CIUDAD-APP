@@ -19,6 +19,7 @@ const ClerkDonateCreateSchema = z.object({
   don_description: z.string().optional(),
   don_category: z.string().min(1, "Category is required"),
   don_date: z.string().min(1, "Donation date is required"),
+  staff: z.string().optional().nullable(),
 });
 
 export default ClerkDonateCreateSchema;

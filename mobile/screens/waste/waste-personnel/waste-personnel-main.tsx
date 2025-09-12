@@ -29,7 +29,7 @@ import {
   usePersonnel,
   useDeleteTruck,
   useRestoreTruck,
-} from "./queries";
+} from "./waste-personnel-truck-queries";
 import  { PersonnelItem, TruckData, SearchFormValues, Role, SearchFormSchema } from "./waste-personnel-types";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import PageLayout from "@/screens/_PageLayout";

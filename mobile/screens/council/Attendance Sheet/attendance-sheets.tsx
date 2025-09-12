@@ -28,22 +28,19 @@ import {
   useAddAttendee,
   useUpdateAttendee,
   useAddAttendanceSheet,
-} from "../ce-events/queries";
+} from "../ce-events/ce-att-queries";
 import { useLocalSearchParams } from "expo-router";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToastContext } from "@/components/ui/toast";
-import ScreenLayout from "@/screens/_ScreenLayout";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { Button } from "@/components/ui/button";
-import MultiImageUploader, {
-  MediaFileType,
-} from "@/components/ui/multi-media-upload";
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useRouter } from "expo-router";
 import { Attendee } from "../ce-events/ce-att-typeFile";
-
+import PageLayout from "@/screens/_PageLayout";
 
 // ============ MARK ATTENDANCE ==============
 
@@ -237,7 +234,7 @@ const MarkAttendance = ({ ceId }: { ceId: number }) => {
                 })}
               </View>
             </ScrollView>
-            <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
+            <View className=" bg-white border-t border-gray-200 px-4 py-4">
               <ConfirmationModal
                 trigger={
                   <Button className="bg-primaryBlue py-3 rounded-lg">
@@ -268,8 +265,6 @@ const MarkAttendance = ({ ceId }: { ceId: number }) => {
   );
 };
 
-
-
 // ============ ATTENDANCE SHEETS ==============
 
 const AttendanceSheets = () => {
@@ -278,8 +273,9 @@ const AttendanceSheets = () => {
   const [modalTab, setModalTab] = useState<"view" | "mark">("view");
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
   const [zoomModalVisible, setZoomModalVisible] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [zoomedImage, setZoomedImage] = useState("");
-  const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
+  const [selectedImages, setSelectedImages] = useState<MediaItem[]>([]);
   const router = useRouter();
   const parsedCeId = Number(ceId) || 0;
 
@@ -294,7 +290,6 @@ const AttendanceSheets = () => {
   const restoreSheet = useRestoreAttendanceSheet();
   const deleteSheet = useDeleteAttendanceSheet();
   const addAttendanceSheet = useAddAttendanceSheet();
-  const { toast } = useToastContext();
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
@@ -304,28 +299,21 @@ const AttendanceSheets = () => {
   };
 
   const handleAddAttendanceSheet = async () => {
-    if (mediaFiles.length === 0) {
-      toast.error("Please upload at least one file");
-      return;
-    }
-
+    if (isUploading) return;
+    setIsUploading(true); 
+    
     try {
-      await Promise.all(
-        mediaFiles.map((file) =>
-          addAttendanceSheet.mutateAsync({
-            ce_id: parsedCeId,
-            att_file_name: file.name,
-            att_file_path: file.path,
-            att_file_url: file.publicUrl,
-            att_file_type: file.type,
-          })
-        )
-      );
+      await addAttendanceSheet.mutateAsync({
+        ceId: parsedCeId,
+        files: selectedImages,
+      });
+      setSelectedImages([]);
       setUploadModalVisible(false);
-      setMediaFiles([]);
-      toast.success("Sheets uploaded successfully");
+      await refetch();
     } catch (error) {
-      toast.error("Failed to upload sheets");
+      console.error("Upload failed:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -339,19 +327,14 @@ const AttendanceSheets = () => {
   };
 
   return (
-    <ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
+          <ChevronLeft size={30} color="black" />
         </TouchableOpacity>
       }
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
     >
-      <View className="flex-1 p-2">
+      <ScrollView className="flex-1 p-2">
         <Tabs value={modalTab} onValueChange={handleTabChange}>
           <TabsList className="flex-row bg-white px-4 pb-4">
             <TabsTrigger
@@ -422,15 +405,11 @@ const AttendanceSheets = () => {
                 </Text>
               </View>
             ) : (
-              <ScrollView
-                className="px-4"
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                  />
-                }
-              >
+              <View className="px-4">
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                />
                 {filteredSheets.map((sheet) => (
                   <Card key={sheet.att_id} className="mb-4">
                     <CardContent>
@@ -486,7 +465,7 @@ const AttendanceSheets = () => {
                     </CardContent>
                   </Card>
                 ))}
-              </ScrollView>
+              </View>
             )}
           </TabsContent>
 
@@ -508,26 +487,57 @@ const AttendanceSheets = () => {
               </TouchableOpacity>
             </View>
 
-            <MultiImageUploader
-              mediaFiles={mediaFiles}
-              setMediaFiles={setMediaFiles}
-              maxFiles={10}
+            <MediaPicker
+              selectedImages={selectedImages}
+              setSelectedImages={setSelectedImages}
+              multiple={true}
+              maxImages={10}
+              editable={true}
             />
 
             <View className="flex-row space-x-2 mt-4 gap-2">
-              <Button
-                className="flex-1 bg-gray-300"
+              <TouchableOpacity
+                className={`flex-1 py-3 rounded-lg flex-row justify-center items-center ${
+                  isUploading ? "bg-gray-200" : "bg-gray-300"
+                }`}
                 onPress={() => setUploadModalVisible(false)}
+                disabled={isUploading}
               >
-                <Text className="text-gray-800">Cancel</Text>
-              </Button>
-              <Button
-                className="flex-1 bg-primaryBlue"
+                <Text
+                  className={`text-base font-medium ${
+                    isUploading ? "text-gray-400" : "text-gray-800"
+                  }`}
+                >
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className={`flex-1 py-3 rounded-lg flex-row justify-center items-center ${
+                  isUploading || selectedImages.length === 0
+                    ? "bg-primaryBlue/50"
+                    : "bg-primaryBlue"
+                }`}
                 onPress={handleAddAttendanceSheet}
-                disabled={mediaFiles.length === 0}
+                disabled={selectedImages.length === 0 || isUploading}
               >
-                <Text className="text-white">Upload</Text>
-              </Button>
+                {isUploading ? (
+                  <>
+                    <Loader2
+                      size={20}
+                      color="white"
+                      className="animate-spin mr-2"
+                    />
+                    <Text className="text-white text-base font-medium">
+                      Uploading...
+                    </Text>
+                  </>
+                ) : (
+                  <Text className="text-white text-base font-medium">
+                    Upload
+                  </Text>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         </Modal>
@@ -555,8 +565,8 @@ const AttendanceSheets = () => {
             />
           </View>
         </Modal>
-      </View>
-    </ScreenLayout>
+      </ScrollView>
+    </PageLayout>
   );
 };
 

@@ -1,4 +1,4 @@
-export const initialFormData1 = {
+ export const initialFormData1 = {
     honorariaOfficials: "",
     cashOfficials: "",
     midBonusOfficials: "",

@@ -9,6 +9,6 @@ export const getbudgetyearreq = async () => {
             : [];
         return filteredData;
     } catch (err) {
-        return [];  // Always return an array
+        return []; 
     }
 };

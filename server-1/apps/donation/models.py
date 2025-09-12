@@ -1,49 +1,15 @@
 from django.db import models
 from datetime import date
-from django.conf import settings
 import uuid
-
-class OnlineDonation(models.Model):
-    PAYMENT_CHOICES = [
-        ('gcash', 'GCash'),
-        ('card', 'Credit/Debit Card'),
-    ]
-
-    od_transaction_id = models.CharField(max_length=100, unique=True)
-    od_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    od_payment_channel = models.CharField(max_length=20, choices=PAYMENT_CHOICES)
-
-    account = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
-    od_date_created = models.DateTimeField(auto_now_add=True)
-    od_payment_details = models.JSONField()
-
-    class Meta:
-        db_table = 'online_donation'
 
 class Donation(models.Model):
     don_num = models.CharField(primary_key=True, unique=True)
     
     def save(self, *args, **kwargs):
         if not self.don_num:  # If no ID provided
-            if self.od_transaction:  # PayMongo case
-                self.don_num = self.od_transaction.od_transaction_id
-            else:  # Manual donation case
-                self.don_num = f"DON-{uuid.uuid4().hex[:10].upper()}"
+            self.don_num = f"DON-{uuid.uuid4().hex[:10].upper()}"
         super().save(*args, **kwargs)
-
-    od_transaction = models.OneToOneField(
-        OnlineDonation,
-        on_delete=models.CASCADE,
-        related_name='donation',
-        null=True,
-        blank=True,
-        db_column='od_transaction_id'
-    )
+        
     don_item_name = models.CharField(max_length=100, default='')
     don_donor = models.CharField(max_length=100, default='Anonymous')
     don_qty = models.IntegerField(default=1)
@@ -55,7 +21,8 @@ class Donation(models.Model):
         'administration.Staff',
         on_delete=models.SET_NULL,
         null=True,
-        blank=True
+        blank=True,
+        db_column='staff_id'
     )
 
     class Meta:

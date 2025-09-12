@@ -9,6 +9,7 @@ export const createAnnualDevPlan = async (data: any) => {
       dev_client: data.clientFocused,
       dev_issue: data.genderIssue,
       dev_project: data.gadProgram,
+      dev_activity: data.gadActivity ? JSON.stringify(data.gadActivity) : null,
       dev_res_person: data.responsiblePerson,
       dev_indicator: data.performanceIndicator,
       dev_gad_budget: data.price ? parseFloat(data.price) : 0,
