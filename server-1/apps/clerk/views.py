@@ -11,16 +11,11 @@ from rest_framework.permissions import AllowAny
 import uuid
 import logging
 import traceback
-
 from .serializers import *
 from apps.complaint.models import Complainant, Accused, ComplaintAccused
 from apps.treasurer.models import Invoice
 from apps.act_log.utils import create_activity_log
 from .models import (
-    ServiceChargeRequest,
-    CaseActivity,
-    CaseSuppDoc,
-    ServiceChargeRequestFile,
     SummonDateAvailability,
     SummonTimeAvailability,
     ClerkCertificate,
@@ -33,27 +28,27 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 
-class ServiceChargeRequestView(generics.ListCreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = ServiceChargeRequestSerializer
+# class ServiceChargeRequestView(generics.ListCreateAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = ServiceChargeRequestSerializer
 
-    def get_queryset(self):
-        queryset = ServiceChargeRequest.objects.filter(
-            sr_payment_status="Paid", 
-            sr_type="Summon"
-        ).select_related(
-            'comp'
-        )
+#     def get_queryset(self):
+#         queryset = ServiceChargeRequest.objects.filter(
+#             sr_payment_status="Paid", 
+#             sr_type="Summon"
+#         ).select_related(
+#             'comp'
+#         )
         
-        # Only apply prefetch_related if there are records with complaints
-        if queryset.filter(comp__isnull=False).exists():
-            queryset = queryset.prefetch_related(
-                Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
-                Prefetch('comp__complaintaccused_set', queryset=ComplaintAccused.objects.select_related('acsd')),
-                'file_action_file'
-            )
+#         # Only apply prefetch_related if there are records with complaints
+#         if queryset.filter(comp__isnull=False).exists():
+#             queryset = queryset.prefetch_related(
+#                 Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
+#                 Prefetch('comp__complaintaccused_set', queryset=ComplaintAccused.objects.select_related('acsd')),
+#                 'file_action_file'
+#             )
         
-        return queryset.order_by('-sr_req_date')
+#         return queryset.order_by('-sr_req_date')
 
 # class FileActionrequestView(generics.ListCreateAPIView):
 #     serializer_class = FileActionRequestSerializer
@@ -162,18 +157,18 @@ class ServiceChargeRequestView(generics.ListCreateAPIView):
 #             return Response(serializer.data, status=status.HTTP_200_OK)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UpdateServiceChargeRequestView(generics.UpdateAPIView):
-    serializer_class = ServiceChargeRequestSerializer
-    queryset = ServiceChargeRequest.objects.all()
-    lookup_field = 'sr_id'
+# class UpdateServiceChargeRequestView(generics.UpdateAPIView):
+#     serializer_class = ServiceChargeRequestSerializer
+#     queryset = ServiceChargeRequest.objects.all()
+#     lookup_field = 'sr_id'
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     def update(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 # class ServiceChargeRequestFileView(generics.ListCreateAPIView):
 #     serializer_class = ServiceChargeRequestFileSerializer

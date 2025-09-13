@@ -1,8 +1,10 @@
 from django.db import models
-from django.core.validators import MaxValueValidator
 from django.utils import timezone
 from datetime import datetime, date
-from datetime import timedelta
+
+def default_due_date():
+    return timezone.now().date() + timezone.timedelta(days=7)
+spay_due_date = models.DateField(default=default_due_date)
 
 
 class ClerkCertificate(models.Model):
@@ -175,40 +177,102 @@ class Address(models.Model):
     def __str__(self):
         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
 
-# Complaint Models
+
+
+# ====================== MIGHT DELETE THIS LATER ============================
+# Service Charge Request Models
+# class ServiceChargeRequest(models.Model):
+#     sr_id = models.BigAutoField(primary_key=True)
+#     sr_code = models.CharField(max_length=10, blank=True, null=True) 
+#     sr_req_date = models.DateTimeField(default=datetime.now)
+#     sr_status = models.CharField(null=True, blank=True)
+#     sr_payment_status = models.CharField(null=True, blank=True)
+#     sr_type = models.CharField(null=True, blank=True)
+#     sr_decision_date = models.DateTimeField(null=True, blank=True)
+#     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
+#     staff_id = models.ForeignKey('staff.Administration', on_delete=models.SET_NULL, null = True, blank = True, db_column='staff_id')
+    # parent_summon = models.ForeignKey(
+    #     'self',
+    #     null=True, blank=True,
+    #     on_delete=models.SET_NULL,
+    #     related_name='escalated_file_actions'
+    # )
+    # file_action_file = models.OneToOneField(
+    #     'ServiceChargeRequestFile', null=True, blank=True,
+    #     on_delete=models.SET_NULL,  
+    #     related_name='file_action'
+    # )
+
+    # class Meta:
+    #     db_table = 'service_charge_request'
+
+# class ServiceChargeRequestFile(models.Model):
+#     srf_id = models.BigAutoField(primary_key=True)
+#     srf_name = models.CharField(max_length=255)
+#     srf_type = models.CharField(max_length=100, null=True, blank=True)
+#     srf_path = models.CharField(max_length=500, null=True, blank=True)
+#     srf_url = models.CharField(max_length=500)
+    
+#     class Meta:
+#         db_table = 'service_charge_request_file'
 
 
 
+# # Case Activity Models
+# class CaseActivity(models.Model):
+#     ca_id = models.BigAutoField(primary_key=True)
+#     ca_reason = models.CharField(max_length=100)
+#     ca_hearing_date = models.DateField(null=False)
+#     ca_hearing_time = models.TimeField(null=False)
+#     ca_mediation = models.CharField(max_length=255)
+#     ca_date_of_issuance = models.DateTimeField(default=datetime.now)
+#     sr = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, related_name='case')
+#     srf = models.ForeignKey('ServiceChargeRequestFile', on_delete=models.CASCADE, null=True, related_name='case_file')
+
+#     class Meta:
+#         db_table = 'case_activity'
+
+# class CaseSuppDoc(models.Model):
+#     csd_id = models.BigAutoField(primary_key=True)
+#     csd_name = models.CharField(max_length=255)
+#     csd_type = models.CharField(max_length=100)
+#     csd_path = models.CharField(max_length=500)
+#     csd_url = models.CharField(max_length=500)
+#     csd_description = models.TextField(null=False)
+#     csd_upload_date = models.DateTimeField(default=datetime.now)
+#     ca_id = models.ForeignKey('CaseActivity', on_delete=models.CASCADE, null=True, db_column="ca_id", related_name="supporting_docs")
+
+#     class Meta:
+#         db_table = 'case_activity_supp_doc'
+
+# =========================================================
 
 # Service Charge Request Models
 class ServiceChargeRequest(models.Model):
     sr_id = models.BigAutoField(primary_key=True)
     sr_code = models.CharField(max_length=10, blank=True, null=True) 
+    sr_type = models.CharField(max_length = 250, null=True, blank=True)
     sr_req_date = models.DateTimeField(default=datetime.now)
-    sr_status = models.CharField(null=True, blank=True)
-    sr_payment_status = models.CharField(null=True, blank=True)
-    sr_type = models.CharField(null=True, blank=True)
-    sr_decision_date = models.DateTimeField(null=True, blank=True)
-    comp = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
-    parent_summon = models.ForeignKey(
-        'self',
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
-        related_name='escalated_file_actions'
-    )
-    file_action_file = models.OneToOneField(
-        'ServiceChargeRequestFile', null=True, blank=True,
-        on_delete=models.SET_NULL,  
-        related_name='file_action'
-    )
+    sr_req_status = models.CharField(max_length = 250)
+    sr_case_status = models.CharField(max_length = 250)
+    comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
+    staff_id = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, null = True, blank = True, db_column='staff_id')
 
     class Meta:
         db_table = 'service_charge_request'
 
+class ServiceChargeDecision(models.Model):
+    scd_id = models.BigAutoField(primary_key=True)
+    scd_decision_date = models.DateTimeField(default=datetime.now)
+    scd_reason = models.TextField(null = True, blank = True)
+    sr_id = models.OneToOneField('ServiceChargeRequest', db_column = 'sr_id', on_delete=models.CASCADE, null = True, blank = True)
+
+    class Meta:
+        db_table = 'service_charge_decision'
+
 class SummonDateAvailability(models.Model):
     sd_id = models.BigAutoField(primary_key=True)
     sd_date = models.DateField(default=date.today)
-
 
     class Meta:
         db_table = 'summon_date_availability'
@@ -217,7 +281,6 @@ class SummonDateAvailability(models.Model):
 class SummonTimeAvailability(models.Model):
     st_id = models.BigAutoField(primary_key=True)
     st_start_time = models.TimeField()
-    st_end_time = models.TimeField()
     st_is_booked = models.BooleanField(default=False)
     sd = models.ForeignKey('SummonDateAvailability', on_delete=models.CASCADE, null=True, related_name='time_availability')
 
@@ -225,41 +288,32 @@ class SummonTimeAvailability(models.Model):
         db_table = 'summon_time_availability'
         managed = False
 
-class ServiceChargeRequestFile(models.Model):
-    srf_id = models.BigAutoField(primary_key=True)
-    srf_name = models.CharField(max_length=255)
-    srf_type = models.CharField(max_length=100, null=True, blank=True)
-    srf_path = models.CharField(max_length=500, null=True, blank=True)
-    srf_url = models.CharField(max_length=500)
+class ServiceChargePaymentRequest(models.Model):
+    spay_id = models.BigAutoField(primary_key=True)
+    spay_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    spay_status = models.CharField(max_length=200)
+    spay_due_date = models.DateField(default = default_due_date())
+    spay_date_paid = models.DateTimeField(null = True, blank = True)
+    sr_id = models.OneToOneField('ServiceChargeRequest', on_delete=models.CASCADE, db_column='sr_id')
+
+    class Meta:
+        db_table = 'service_charge_payment_request'
+
+
+class SummonSchedule(models.Model):
+    ss_id = models.BigAutoField(primary_key=True)
+    ss_mediation_level = models.CharField(max_length=500)
+    ss_is_rescheduled = models.BooleanField(default=False)
+    ss_reason = models.TextField()
+    st_id = models.ForeignKey('SummonTimeAvailability', db_column='st_id', on_delete=models.SET_NULL, null = True, blank = True)
+    sd_id = models.ForeignKey('SummonDateAvailability', db_column='sd_id', on_delete=models.SET_NULL, null = True, blank = True)
+
+    class Meta:
+        db_table = 'summon_schedule'
+
+
+
+
+
     
-    class Meta:
-        db_table = 'service_charge_request_file'
 
-
-
-# Case Activity Models
-class CaseActivity(models.Model):
-    ca_id = models.BigAutoField(primary_key=True)
-    ca_reason = models.CharField(max_length=100)
-    ca_hearing_date = models.DateField(null=False)
-    ca_hearing_time = models.TimeField(null=False)
-    ca_mediation = models.CharField(max_length=255)
-    ca_date_of_issuance = models.DateTimeField(default=datetime.now)
-    sr = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, related_name='case')
-    srf = models.ForeignKey('ServiceChargeRequestFile', on_delete=models.CASCADE, null=True, related_name='case_file')
-
-    class Meta:
-        db_table = 'case_activity'
-
-class CaseSuppDoc(models.Model):
-    csd_id = models.BigAutoField(primary_key=True)
-    csd_name = models.CharField(max_length=255)
-    csd_type = models.CharField(max_length=100)
-    csd_path = models.CharField(max_length=500)
-    csd_url = models.CharField(max_length=500)
-    csd_description = models.TextField(null=False)
-    csd_upload_date = models.DateTimeField(default=datetime.now)
-    ca_id = models.ForeignKey('CaseActivity', on_delete=models.CASCADE, null=True, db_column="ca_id", related_name="supporting_docs")
-
-    class Meta:
-        db_table = 'case_activity_supp_doc'
