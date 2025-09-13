@@ -11,7 +11,6 @@ const getClientOptions = () => (
     <option value="">Select client</option>
     <option value="Women">Women</option>
     <option value="LGBTQIA+">LGBTQIA+</option>
-    <option value="Responsible Person">Responsible Person</option>
     <option value="Senior">Senior</option>
     <option value="PWD">PWD</option>
     <option value="Solo Parent">Solo Parent</option>
