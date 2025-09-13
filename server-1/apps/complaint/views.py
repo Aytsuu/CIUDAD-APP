@@ -19,6 +19,7 @@ from django.utils import timezone
 import uuid
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
+from datetime import date
 
 logger = logging.getLogger(__name__)
 
@@ -342,9 +343,10 @@ class ServiceChargeRequestCreateView(APIView):
             service_request = ServiceChargeRequest.objects.create(
                 comp=complaint,
                 sr_code=sr_code,
-                sr_status="Ongoing", 
+                sr_case_status="Ongoing", 
+                sr_req_status = "Pending",
+                sr_req_date = timezone.now().date(),
                 sr_type="Summon",
-                sr_payment_status="Unpaid"
             )
 
             return Response({
