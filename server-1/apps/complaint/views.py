@@ -335,25 +335,39 @@ class ServiceChargeRequestCreateView(APIView):
     def post(self, request, comp_id):
         try:
             complaint = Complaint.objects.get(comp_id=comp_id)
+            logger.info(f"Found complaint: {complaint.comp_id}")
 
-            case_id = f"{complaint.comp_id:03}"
+            sr_count = ServiceChargeRequest.objects.count() + 1
             year_suffix = timezone.now().year % 100
-            sr_code = f"{case_id}-{year_suffix:02}"
+            sr_code = f"{sr_count:03d}-{year_suffix:02d}"
+            
+            logger.info(f"Generated SR Code: {sr_code}")
             
             service_request = ServiceChargeRequest.objects.create(
-                comp=complaint,
+                comp_id=complaint,
                 sr_code=sr_code,
-                sr_case_status="Ongoing", 
-                sr_req_status = "Pending",
-                sr_req_date = timezone.now().date(),
+                sr_req_status="Ongoing", 
                 sr_type="Summon",
+                sr_case_status="Unpaid",
+                sr_req_date=timezone.now()
             )
-
+            
+            logger.info(f"Created service request: {service_request.sr_code}")
+            
             return Response({
                 'sr_id': service_request.sr_id,
                 'sr_code': service_request.sr_code,
                 'status': 'success',
                 'message': 'Service charge request created successfully'
             }, status=status.HTTP_201_CREATED)
+            
+        except Complaint.DoesNotExist:
+            logger.error(f"Complaint not found: {comp_id}")
+            return Response({
+                'error': 'Complaint not found'
+            }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-           return Response({'error': 'Complaint not found'}, status=404)
+            logger.error(f"Error creating service request: {str(e)}")
+            return Response({
+                'error': f'An error occurred: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

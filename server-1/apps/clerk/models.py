@@ -282,7 +282,7 @@ class SummonTimeAvailability(models.Model):
     st_id = models.BigAutoField(primary_key=True)
     st_start_time = models.TimeField()
     st_is_booked = models.BooleanField(default=False)
-    sd = models.ForeignKey('SummonDateAvailability', on_delete=models.CASCADE, null=True, related_name='time_availability')
+    sd_id = models.ForeignKey('SummonDateAvailability', on_delete=models.CASCADE, null=True, related_name='time_availability')
 
     class Meta:
         db_table = 'summon_time_availability'

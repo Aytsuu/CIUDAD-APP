@@ -402,6 +402,37 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
         model = IssuedBusinessPermit
         fields = ['ibp_id', 'dateIssued', 'business_name']
 
+class SummonDateAvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SummonDateAvailability
+        fields = '__all__'
+
+class SummonTimeAvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SummonTimeAvailability
+        fields = '__all__'
+
+class AccusedDetailsSerializer(serializers.ModelSerializer):
+    address = AddressDetailsSerializer(source='add')
+    
+    class Meta:
+        model = Accused
+        fields = [
+            'acsd_id', 
+            'acsd_name',
+            'acsd_age',
+            'acsd_gender',
+            'acsd_description',
+            'address'
+        ]
+
+
+class ServiceChargeRequests(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceChargeRequest
+        fields = '__all__'
+# ============================ MIGHT DELETE THESE LATER ==============================
+
 # Complaint-related Serializers
 # class CaseSuppDocSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -438,32 +469,6 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
     
 #     def get_formatted_hearing_datetime(self, obj):
 #         return datetime.combine(obj.ca_hearing_date, obj.ca_hearing_time).strftime("%B %d, %Y at %I:%M %p")
-
-class SummonDateAvailabilitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SummonDateAvailability
-        fields = '__all__'
-
-class SummonTimeAvailabilitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SummonTimeAvailability
-        fields = '__all__'
-
-class AccusedDetailsSerializer(serializers.ModelSerializer):
-    address = AddressDetailsSerializer(source='add')
-    
-    class Meta:
-        model = Accused
-        fields = [
-            'acsd_id', 
-            'acsd_name',
-            'acsd_age',
-            'acsd_gender',
-            'acsd_description',
-            'address'
-        ]
-
-
 
 # Service Charge Request Serializers
 # class ServiceChargeRequestSerializer(serializers.ModelSerializer):
