@@ -12,7 +12,6 @@ class CouncilScheduling(models.Model):
     ce_place = models.CharField(max_length=100)
     ce_date = models.DateField(default=date.today)
     ce_time = models.TimeField()
-    ce_type = models.CharField(max_length=100)
     ce_description = models.CharField(max_length=500)
     ce_is_archive = models.BooleanField(default=False)
     

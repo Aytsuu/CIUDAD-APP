@@ -5,7 +5,6 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
-import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
@@ -35,14 +34,11 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
       eventTitle: "",
       eventDate: "",
       roomPlace: "",
-      eventCategory: undefined,
       eventTime: "",
       eventDescription: "",
       staffAttendees: [],
     },
   });
-
-  const eventCategory = form.watch("eventCategory");
 
   const staffOptions = useMemo(() => {
     return staffList.map((staff) => ({
@@ -84,7 +80,6 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
       ce_place: values.roomPlace,
       ce_date: formatDate(values.eventDate),
       ce_time: formattedTime,
-      ce_type: values.eventCategory,
       ce_description: values.eventDescription,
       ce_is_archive: false,
       staff: user?.staff?.staff_id || null,
@@ -93,7 +88,8 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
     addEvent(eventData, {
       onSuccess: (ce_id) => {
         setCeId(ce_id);
-        if (eventCategory === "meeting" && values.staffAttendees.length > 0) {
+        // Always add attendees since everything is now a meeting
+        if (values.staffAttendees.length > 0) {
           values.staffAttendees.forEach((staffId) => {
             const staff = staffList.find(
               (s) => s.staff_id.toLowerCase() === staffId.toLowerCase()
@@ -169,26 +165,13 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormSelect
-                control={form.control}
-                name="eventCategory"
-                label="Event Category"
-                options={[
-                  { id: "meeting", name: "Meeting" },
-                  { id: "activity", name: "Activity" },
-                ]}
-                readOnly={false}
-              />
-
-              <FormInput
-                control={form.control}
-                name="roomPlace"
-                label="Room / Place"
-                placeholder="Enter Room / Place"
-                readOnly={false}
-              />
-            </div>
+            <FormInput
+              control={form.control}
+              name="roomPlace"
+              label="Room / Place"
+              placeholder="Enter Room / Place"
+              readOnly={false}
+            />
 
             <FormTextArea
               control={form.control}
@@ -198,87 +181,65 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
               readOnly={false}
             />
 
-            {eventCategory === "meeting" && (
-              <div>
-                <h1 className="flex justify-center font-bold text-[20px] text-[#394360] py-4">
-                  ATTENDEES
-                </h1>
+            {/* Always show attendees section */}
+            <div>
+              <h1 className="flex justify-center font-bold text-[20px] text-[#394360] py-4">
+                ATTENDEES
+              </h1>
 
-                <FormComboCheckbox
-                  control={form.control}
-                  name="staffAttendees"
-                  label="BARANGAY STAFF"
-                  options={staffOptions}
-                />
-              </div>
-            )}
+              <FormComboCheckbox
+                control={form.control}
+                name="staffAttendees"
+                label="BARANGAY STAFF"
+                options={staffOptions}
+              />
+            </div>
           </div>
 
           <div className="mt-4 flex justify-end gap-3">
-            {eventCategory === "activity" ? (
-              <ConfirmationModal
-                trigger={
-                  <Button
-                    type="button"
-                    className=""
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Saving..." : "Save"}
-                  </Button>
-                }
-                title="Save Event"
-                description="Proceed to scheduling the event?"
-                actionLabel="Confirm"
-                onClick={form.handleSubmit(handleSubmitEvent)}
-              />
-            ) : (
-              <>
-                <DialogLayout
-                  trigger={
-                    <Button
-                      type="button"
-                      className="bg-white text-black hover:bg-gray-100"
-                      onClick={handlePreview}
-                    >
-                      Preview
-                    </Button>
-                  }
-                  className="w-full max-w-[1000px] h-full flex flex-col overflow-auto scrollbar-custom"
-                  title="Attendance Sheet Preview"
-                  description="Review the attendance sheet before downloading"
-                  mainContent={
-                    <AttendanceSheetView
-                      ce_id={ceId}
-                      selectedAttendees={selectedAttendees}
-                      activity={form.watch("eventTitle")}
-                      date={form.watch("eventDate")}
-                      time={form.watch("eventTime")}
-                      place={form.watch("roomPlace")}
-                      category={form.watch("eventCategory")}
-                      description={form.watch("eventDescription")}
-                      onConfirm={handleConfirmPreview}
-                    />
-                  }
-                  isOpen={isPreviewOpen}
-                  onOpenChange={setIsPreviewOpen}
+            <DialogLayout
+              trigger={
+                <Button
+                  type="button"
+                  className="bg-white text-black hover:bg-gray-100"
+                  onClick={handlePreview}
+                >
+                  Preview
+                </Button>
+              }
+              className="w-full max-w-[1000px] h-full flex flex-col overflow-auto scrollbar-custom"
+              title="Attendance Sheet Preview"
+              description="Review the attendance sheet before downloading"
+              mainContent={
+                <AttendanceSheetView
+                  ce_id={ceId}
+                  selectedAttendees={selectedAttendees}
+                  activity={form.watch("eventTitle")}
+                  date={form.watch("eventDate")}
+                  time={form.watch("eventTime")}
+                  place={form.watch("roomPlace")}
+                  description={form.watch("eventDescription")}
+                  onConfirm={handleConfirmPreview}
                 />
-               <ConfirmationModal
-                  trigger={
-                    <Button
-                      type="button"
-                      className=""
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Saving..." : "Save"}
-                    </Button>
-                  }
-                  title="Save Event"
-                  description="Proceed to scheduling the event?"
-                  actionLabel="Confirm"
-                  onClick={form.handleSubmit(handleSubmitEvent)}
-                />
-              </>
-            )}
+              }
+              isOpen={isPreviewOpen}
+              onOpenChange={setIsPreviewOpen}
+            />
+            <ConfirmationModal
+              trigger={
+                <Button
+                  type="button"
+                  className=""
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Saving..." : "Save"}
+                </Button>
+              }
+              title="Save Event"
+              description="Proceed to scheduling the event?"
+              actionLabel="Confirm"
+              onClick={form.handleSubmit(handleSubmitEvent)}
+            />
           </div>
         </form>
       </Form>
