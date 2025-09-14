@@ -78,3 +78,14 @@ export const getServiceChargeRequestList = async () => {
     }
 }
 
+
+export const getComplaintDetails = async (comp_id: string) => {
+    try{
+        const res = await api.get(`/complaint/${comp_id}/`)
+
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+

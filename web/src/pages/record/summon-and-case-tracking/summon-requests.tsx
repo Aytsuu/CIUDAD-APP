@@ -5,13 +5,14 @@ import { formatTimestamp } from "@/helpers/timestampformatter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, ChevronRight } from "lucide-react";
+import { Search, ChevronRight, CheckCircle, XCircle } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import React from "react";
 import { Button } from "@/components/ui/button/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { ComplaintRecordForSummon } from "./complaint-record";
 
 export default function SummonRequests() {
     const { data: summonReq = [], isLoading } = useGetServiceChargeRequestList();
@@ -95,7 +96,7 @@ export default function SummonRequests() {
                 const complaint = row.original.comp_id || [];
                 return (
                     <DialogLayout
-                        className="w-[90vw] h-[90vh] max-w-[1800px] max-h-[1200px]"
+                        className="w-[90vw] h-[80vh] max-w-[1800px] max-h-[1000px]"
                         trigger={
                             <Button className="flex items-center gap-2 text-primary bg-white shadow-none hover:bg-white group">
                                 <span className="text-sm font-medium group-hover:text-primary">View</span>
@@ -106,8 +107,28 @@ export default function SummonRequests() {
                         }
                         title="Complaint Record"
                         description = "Full details of the complaint filed."
-                        mainContent={
-                            <div>
+                            mainContent={
+                            <div className="flex flex-col h-full">
+                                {/* Action Buttons */}
+                                <div className="flex justify-end gap-3 mb-4 p-4 bg-gray-50 rounded-lg">
+                                    <Button 
+                                        variant="outline" 
+                                        className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-2"
+                                    >
+                                        <XCircle className="h-4 w-4" />
+                                        Reject Request
+                                    </Button>
+                                    <Button 
+                                        className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                                    >
+                                        <CheckCircle className="h-4 w-4" />
+                                        Accept Request
+                                    </Button>
+                                </div>
+                                
+                                <div className="overflow-y-auto flex-1 pr-2">
+                                    <ComplaintRecordForSummon comp_id={complaint}/>
+                                </div>
                             </div>
                         }
                     />
