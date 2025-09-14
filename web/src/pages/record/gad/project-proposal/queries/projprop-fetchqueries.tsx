@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { getProjectProposals, getProjectProposal, getStaffList, getSupportDocs, getAllProposalLogs, getAvailableDevPlanProjects } from "../api/projpropgetreq";
-import { ProjectProposal, SupportDoc, Staff, ProposalLog, DevelopmentPlanProject } from "../projprop-types";
+import { getProjectProposals, getProjectProposal, getStaffList, getSupportDocs, getAvailableDevPlanProjects } from "../api/projpropgetreq";
+import { ProjectProposal, SupportDoc, Staff, DevelopmentPlanProject } from "../projprop-types";
 
-export const useGetProjectProposals = (status?: string, options = {}) => {
+export const useGetProjectProposals = (options = {}) => {
   return useQuery<ProjectProposal[], Error>({
     queryKey: ["projectProposals", status],
     queryFn: () => getProjectProposals(status),
@@ -40,15 +40,6 @@ export const useGetSupportDocs = (proposalId: number, options = {}) => {
   });
 };
 
-
-export const useGetAllProposalLogs = (options = {}) => {
-  return useQuery<ProposalLog[], Error>({
-    queryKey: ["allProjectProposalLogs"],
-    queryFn: getAllProposalLogs,
-    staleTime: 1000 * 60 * 60,
-    ...options,
-  });
-};
 
 export const useGetAvailableDevPlanProjects = (year?: string, options = {}) => {
   return useQuery<DevelopmentPlanProject[], Error>({

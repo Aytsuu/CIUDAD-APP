@@ -247,61 +247,37 @@ class GADBudgetLogSerializer(serializers.ModelSerializer):
         """Returns the current actual expense from the related budget entry"""
         return obj.gbudl_budget_entry.gbud_actual_expense
         
-class ProjectProposalLogSerializer(serializers.ModelSerializer):
-    staff_details = StaffSerializer(source='staff', read_only=True)
-    gpr_title = serializers.SerializerMethodField()  # Changed to SerializerMethodField
-    gpr_id = serializers.IntegerField(source='gpr.gpr_id', read_only=True)
-    
-    class Meta:
-        model = ProjectProposalLog
-        fields = [
-            'gprl_id',
-            'gpr_id',
-            'gpr_title',   
-            'gprl_date_approved_rejected',
-            'gprl_reason',
-            'gprl_date_submitted',
-            'gprl_status',
-            'staff',
-            'staff_details',
-            'gpr'
-        ]
-        extra_kwargs = {
-            'gprl_id': {'read_only': True},
-            'gprl_date_approved_rejected': {'read_only': True}
-        }
-    
-    def get_gpr_title(self, obj):
-        """Get title from the development plan via ProjectProposal"""
-        try:
-            # Access the development plan through the project proposal
-            if obj.gpr and obj.gpr.dev:
-                # Try to get the project title from the development plan
-                return obj.gpr.project_title  # This uses the property method from ProjectProposal
-            return "No Title Available"
-        except AttributeError:
-            return "Title Not Found"
-
 
 class ProjectProposalSerializer(serializers.ModelSerializer):
-    status = serializers.SerializerMethodField()
-    logs = ProjectProposalLogSerializer(many=True, read_only=True)
     gpr_header_img = serializers.JSONField(write_only=True, required=False, allow_null=True)
     dev_details = serializers.SerializerMethodField()
     project_title = serializers.SerializerMethodField()
-    participants = serializers.SerializerMethodField()
-    budget_items = serializers.SerializerMethodField()
     participants = serializers.JSONField(required=False)
     budget_items = serializers.JSONField(required=False)
     
-    def get_status(self, obj):
-        return obj.current_status
+    def to_internal_value(self, data):
+        # Map selectedDevProject to dev if needed
+        if 'selectedDevProject' in data and 'dev' not in data:
+            data['dev'] = data['selectedDevProject']
+        return super().to_internal_value(data)
     
     def get_dev_details(self, obj):
         """Get development plan details for this proposal, with parsed dev_project and dev_indicator"""
-        if obj.dev:
+        # Get dev data from either model instance or dictionary
+        dev_data = None
+        if hasattr(obj, 'dev'):
+            dev_data = obj.dev
+        elif isinstance(obj, dict) and 'dev' in obj:
+            dev_data = obj['dev']
+        
+        if dev_data:
             # --- Parse dev_project ---
-            dev_project_raw = obj.dev.dev_project
+            dev_project_raw = None
+            if hasattr(dev_data, 'dev_project'):
+                dev_project_raw = dev_data.dev_project
+            elif isinstance(dev_data, dict):
+                dev_project_raw = dev_data.get('dev_project')
+            
             try:
                 dev_project = json.loads(dev_project_raw) if dev_project_raw else {}
             except (ValueError, TypeError):
@@ -309,53 +285,123 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
 
             # --- Parse dev_indicator ---
             parsed_indicators = []
-            if obj.dev.dev_indicator:
-                for entry in obj.dev.dev_indicator:
-                    # Check if entry is already a dictionary (parsed format)
-                    if isinstance(entry, dict):
-                        # Entry is already in the expected format
-                        parsed_indicators.append({
-                            "category": entry.get("category", ""),
-                            "count": entry.get("count", None)
-                        })
-                    elif isinstance(entry, str):
-                        # Entry is a string that needs to be parsed
-                        # Split entries by commas, e.g. "LGBTQIA+ (5 participants), Erpat (5 participants)"
-                        parts = [p.strip() for p in entry.split(",") if p.strip()]
-                        for part in parts:
-                            match = re.match(r'^(.*?)\s*\((\d+)\s*participants?\)$', part)
-                            if match:
-                                category, count = match.groups()
-                                parsed_indicators.append({"category": category.strip(), "count": int(count)})
-                            else:
-                                parsed_indicators.append({"category": part, "count": None})
-                    else:
-                        # Handle other types by converting to string representation
-                        parsed_indicators.append({"category": str(entry), "count": None})
+            dev_indicator = []
+            
+            if hasattr(dev_data, 'dev_indicator'):
+                dev_indicator = dev_data.dev_indicator or []
+            elif isinstance(dev_data, dict):
+                dev_indicator = dev_data.get('dev_indicator', [])
+            
+            for entry in dev_indicator:
+                if isinstance(entry, dict):
+                    parsed_indicators.append({
+                        "category": entry.get("category", ""),
+                        "count": entry.get("count", None)
+                    })
+                elif isinstance(entry, str):
+                    parts = [p.strip() for p in entry.split(",") if p.strip()]
+                    for part in parts:
+                        match = re.match(r'^(.*?)\s*\((\d+)\s*participants?\)$', part)
+                        if match:
+                            category, count = match.groups()
+                            parsed_indicators.append({"category": category.strip(), "count": int(count)})
+                        else:
+                            parsed_indicators.append({"category": part, "count": None})
+                else:
+                    parsed_indicators.append({"category": str(entry), "count": None})
 
             return {
-                'dev_id': obj.dev.dev_id,
+                'dev_id': dev_data.dev_id if hasattr(dev_data, 'dev_id') else dev_data.get('dev_id'),
                 'dev_project': dev_project,
-                'dev_gad_items': obj.dev.dev_gad_items,
-                'dev_res_person': obj.dev.dev_res_person,
+                'dev_gad_items': dev_data.dev_gad_items if hasattr(dev_data, 'dev_gad_items') else dev_data.get('dev_gad_items', []),
+                'dev_res_person': dev_data.dev_res_person if hasattr(dev_data, 'dev_res_person') else dev_data.get('dev_res_person', []),
                 'dev_indicator': parsed_indicators,
-                'dev_client': obj.dev.dev_client,
-                'dev_issue': obj.dev.dev_issue,
-                'dev_date': obj.dev.dev_date
+                'dev_client': dev_data.dev_client if hasattr(dev_data, 'dev_client') else dev_data.get('dev_client'),
+                'dev_issue': dev_data.dev_issue if hasattr(dev_data, 'dev_issue') else dev_data.get('dev_issue'),
+                'dev_date': dev_data.dev_date if hasattr(dev_data, 'dev_date') else dev_data.get('dev_date')
             }
         return None
 
     def get_project_title(self, obj):
         """Get project title from development plan"""
-        return obj.project_title
-    
+        # Get dev data from either model instance or dictionary
+        dev_data = None
+        if hasattr(obj, 'dev'):
+            dev_data = obj.dev
+        elif isinstance(obj, dict) and 'dev' in obj:
+            dev_data = obj['dev']
+        
+        if dev_data:
+            dev_project = None
+            if hasattr(dev_data, 'dev_project'):
+                dev_project = dev_data.dev_project
+            elif isinstance(dev_data, dict):
+                dev_project = dev_data.get('dev_project')
+            
+            if dev_project:
+                try:
+                    projects = json.loads(dev_project) if dev_project else {}
+                    if isinstance(projects, list) and projects:
+                        return projects[0] if isinstance(projects[0], str) else "Untitled Project"
+                    elif isinstance(projects, str):
+                        return projects
+                except (json.JSONDecodeError, TypeError):
+                    return dev_project
+        return "Untitled Project"
+
     def get_participants(self, obj):
         """Get participants from development plan indicators"""
-        return obj.participants
-    
+        # Get dev data from either model instance or dictionary
+        dev_data = None
+        if hasattr(obj, 'dev'):
+            dev_data = obj.dev
+        elif isinstance(obj, dict) and 'dev' in obj:
+            dev_data = obj['dev']
+        
+        if dev_data:
+            dev_indicator = []
+            if hasattr(dev_data, 'dev_indicator'):
+                dev_indicator = dev_data.dev_indicator or []
+            elif isinstance(dev_data, dict):
+                dev_indicator = dev_data.get('dev_indicator', [])
+            
+            result = []
+            for entry in dev_indicator:
+                if isinstance(entry, dict):
+                    category = str(entry.get("category", "")).strip()
+                    count = entry.get("count")
+                    try:
+                        count = int(count)
+                    except (ValueError, TypeError):
+                        count = None
+                    result.append({"category": category, "count": count})
+                elif isinstance(entry, str):
+                    parts = [p.strip() for p in entry.split(",") if p.strip()]
+                    for part in parts:
+                        match = re.match(r'^(.*?)\s*\((\d+)\s*participants?\)$', part)
+                        if match:
+                            category, count = match.groups()
+                            result.append({"category": category.strip(), "count": int(count)})
+                        else:
+                            result.append({"category": part, "count": None})
+            return result
+        return []
+
     def get_budget_items(self, obj):
         """Get budget items from development plan"""
-        return obj.budget_items
+        # Get dev data from either model instance or dictionary
+        dev_data = None
+        if hasattr(obj, 'dev'):
+            dev_data = obj.dev
+        elif isinstance(obj, dict) and 'dev' in obj:
+            dev_data = obj['dev']
+        
+        if dev_data:
+            if hasattr(dev_data, 'dev_gad_items'):
+                return dev_data.dev_gad_items
+            elif isinstance(dev_data, dict):
+                return dev_data.get('dev_gad_items', [])
+        return []
     
     def validate_gpr_header_img(self, value):
         if value is None:
@@ -440,30 +486,94 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance):
-        data = super().to_representation(instance)
-        return {
-            'gprId': data['gpr_id'],
-            'gprTitle': instance.project_title,  
-            'gprBackground': data['gpr_background'],
-            'gprDate': data['gpr_date'],
-            'gprVenue': data['gpr_venue'],
-            'gprMonitoring': data['gpr_monitoring'],
-            'gprHeaderImage': instance.gpr_header_img if instance.gpr_header_img else None,
-            'gprDateCreated': data['gpr_created'],
-            'gprIsArchive': data['gpr_is_archive'],
-            'gprObjectives': data['gpr_objectives'],
-            'gprParticipants': instance.participants, 
-            'gprBudgetItems': instance.budget_items,   
-            'gprSignatories': data['gpr_signatories'],
-            'gpr_page_size': data['gpr_page_size'],
-            'status': data['status'],
-            'staffId': data.get('staff'),
-            'staffName': data.get('staff_name', 'Unknown'),
-            'logs': data['logs'],
-            'devId': data.get('dev'),
-            'devDetails': data['dev_details'],
-            'gbudId': data.get('gbud'),
-        }
+        # Check if instance is a dictionary (during validation) or a model instance
+        if isinstance(instance, dict):
+            # During validation phase - return minimal data
+            staff_value = instance.get('staff')
+            staff_id = None
+            
+            # Extract staff ID from different possible formats
+            if isinstance(staff_value, dict):
+                staff_id = staff_value.get('staff_id')
+            elif hasattr(staff_value, 'staff_id'):
+                staff_id = staff_value.staff_id
+            elif isinstance(staff_value, (int, str)):
+                staff_id = staff_value
+            
+            # Extract dev ID from different possible formats
+            dev_value = instance.get('dev')
+            dev_id = None
+            if isinstance(dev_value, dict):
+                dev_id = dev_value.get('dev_id')
+            elif hasattr(dev_value, 'dev_id'):
+                dev_id = dev_value.dev_id
+            elif isinstance(dev_value, (int, str)):
+                dev_id = dev_value
+                
+            return {
+                'gprId': instance.get('gpr_id'),
+                'gprTitle': self.get_project_title(instance),
+                'gprBackground': instance.get('gpr_background'),
+                'gprDate': instance.get('gpr_date'),
+                'gprVenue': instance.get('gpr_venue'),
+                'gprMonitoring': instance.get('gpr_monitoring'),
+                'gprHeaderImage': instance.get('gpr_header_img'),
+                'gprDateCreated': instance.get('gpr_created'),
+                'gprIsArchive': instance.get('gpr_is_archive'),
+                'gprObjectives': instance.get('gpr_objectives'),
+                'gprParticipants': self.get_participants(instance), 
+                'gprBudgetItems': self.get_budget_items(instance),   
+                'gprSignatories': instance.get('gpr_signatories'),
+                'staffId': staff_id,
+                'staffName': 'Unknown',
+                'devId': dev_id,  # Use the extracted dev ID, not the DevelopmentPlan object
+                'devDetails': self.get_dev_details(instance),
+                'gbudId': instance.get('gbud'),
+            }
+        else:
+            # During read operations - instance is a model instance
+            data = super().to_representation(instance)
+            
+            # Extract staff ID from different possible formats
+            staff_value = data.get('staff')
+            staff_id = None
+            if isinstance(staff_value, dict):
+                staff_id = staff_value.get('staff_id')
+            elif hasattr(staff_value, 'staff_id'):
+                staff_id = staff_value.staff_id
+            elif isinstance(staff_value, (int, str)):
+                staff_id = staff_value
+            
+            # Extract dev ID from different possible formats
+            dev_value = data.get('dev')
+            dev_id = None
+            if isinstance(dev_value, dict):
+                dev_id = dev_value.get('dev_id')
+            elif hasattr(dev_value, 'dev_id'):
+                dev_id = dev_value.dev_id
+            elif isinstance(dev_value, (int, str)):
+                dev_id = dev_value
+                
+            return {
+                'gprId': instance.gpr_id,
+                'gprTitle': self.get_project_title(instance),
+                'gprBackground': data.get('gpr_background'),
+                'gprDate': data.get('gpr_date'),
+                'gprVenue': data.get('gpr_venue'),
+                'gprMonitoring': data.get('gpr_monitoring'),
+                'gprHeaderImage': instance.gpr_header_img if instance.gpr_header_img else None,
+                'gprDateCreated': data.get('gpr_created'),
+                'gprIsArchive': data.get('gpr_is_archive'),
+                'gprObjectives': data.get('gpr_objectives'),
+                'gprParticipants': self.get_participants(instance), 
+                'gprBudgetItems': self.get_budget_items(instance),   
+                'gprSignatories': data.get('gpr_signatories'),
+                'staffId': staff_id,
+                'staffName': data.get('staff_name', 'Unknown'),
+                'devId': dev_id,  # Use the extracted dev ID, not the DevelopmentPlan object
+                'devDetails': data.get('dev_details'),
+                'gbudId': data.get('gbud'),
+            }
 
     class Meta:
         model = ProjectProposal
@@ -471,7 +581,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             'gpr_id', 'gpr_background', 'gpr_date', 'gpr_venue',
             'gpr_monitoring', 'gpr_header_img', 'gpr_created', 'gpr_is_archive',
             'gpr_objectives', 'gpr_signatories', 'project_title', 'budget_items',
-            'staff', 'status', 'logs', 'gpr_page_size', 'gbud', 'dev', 'dev_details', 'participants'
+            'staff', 'gbud', 'dev', 'dev_details', 'participants'
         ]
         extra_kwargs = {
             'gpr_id': {'read_only': True},
@@ -480,7 +590,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
             'gpr_header_img': {'write_only': True},
             'dev': {'required': True},
         }
-
+        
 class ProposalSuppDocSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProposalSuppDoc
