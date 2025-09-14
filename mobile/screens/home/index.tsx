@@ -13,14 +13,15 @@ import { features } from "./features";
 import { useRouter } from "expo-router";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { useSelector, useDispatch } from "react-redux";
-import { RootState, AppDispatch } from "@/redux";
+// import { RootState, AppDispatch } from "@/redux";
 import PageLayout from "../_PageLayout";
 import React from "react";
 import ShowMore from '@/assets/icons/features/showmore.svg'
 import ShowLess from '@/assets/icons/features/showless.svg'
 import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
 import Video from 'react-native-video'
-import { SafeAreaView } from "react-native-safe-area-context";
+// import { SafeAreaView } from "react-native-safe-area-context"
+import { AppDispatch, RootState } from "@/redux/store";
 
 const styles = StyleSheet.create({
   container: {
@@ -140,7 +141,7 @@ export default function HomeScreen() {
   };
 
   const RenderPage = React.memo(() => (
-    <View className="flex-1 mb-16">
+    <View className="flex-1 mb-16 pt-6">
       <View className="px-5 flex-1 justify-center">
         {/* <Text className="font-PoppinsSemiBold text-lg text-blue-500"></Text> */}
         <Ciudad width={80} height={70}/>
@@ -172,7 +173,7 @@ export default function HomeScreen() {
       </ScrollView>
 
       {/* Features Section */}
-      <Card className="p-5 bg-white rounded-none border-b border-border">
+      <Card className="p-6 bg-white rounded-none border-b border-border">
         <View className="mb-6">
           <Text className="text-lg font-semibold text-gray-900">
             Features
@@ -189,7 +190,7 @@ export default function HomeScreen() {
       </Card>
 
       {/* What's New Section */}
-      <View className="px-5 py-6">
+      <View className="px-6 py-6">
         <View className="mb-6">
           <Text className="text-xl font-semibold text-gray-900">
             What's New For You
@@ -260,7 +261,10 @@ export default function HomeScreen() {
   ))  
 
   return (
-    <PageLayout showHeader={false}>
+    <PageLayout
+      showHeader={false}
+      wrapScroll={false}
+    >
       <FlatList 
         maxToRenderPerBatch={1}
         showsVerticalScrollIndicator={false}
