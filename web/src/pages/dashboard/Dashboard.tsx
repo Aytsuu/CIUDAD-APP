@@ -7,7 +7,6 @@ import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { DonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
 import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar";
-import { ProjPropPendingSectionCards } from "@/components/analytics/gad/projprop-section-cards";
 import { CouncilEventsSidebar } from "@/components/analytics/council/ce-event-sidebar";
 import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
 import { WastePersonnelCards } from "@/components/analytics/waste/wastepersonnel-analytics-queries";
@@ -30,7 +29,6 @@ export default function Dashboard() {
             <ProfilingSectionCards />
             <ReportSectionCards />
             <DonationSectionCards />
-            <ProjPropPendingSectionCards />
             <WastePersonnelCards />
             <GargbagePickupSectionCards/>
           </div>

@@ -10,7 +10,7 @@ from datetime import datetime
 from rest_framework.permissions import AllowAny
 import logging
 from apps.treasurer.models import Purpose_And_Rates
-from apps.gad.models import ProjectProposalLog
+# from apps.gad.models import ProjectProposalLog
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveAPIView

@@ -108,11 +108,8 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
         { name: "", position: "", type: "prepared" },
         { name: "", position: "Treasurer", type: "approved" },
       ],
-      paperSize: "letter",
       headerImage: [],
       supportingDocs: [],
-      status: "Pending",
-      statusReason: "",
     },
   });
 
@@ -174,13 +171,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                   type: "approved",
                 },
               ],
-          paperSize: existingProposal.paperSize || "letter",
           headerImage: existingProposal.headerImage
             ? [existingProposal.headerImage]
             : [],
           supportingDocs: existingProposal.supportDocs || [],
-          status: existingProposal.status || "Pending",
-          statusReason: existingProposal.statusReason || "",
         });
       } else {
         form.reset({
@@ -234,7 +228,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const budgetItems = watch("budgetItems");
   const monitoringEvaluation = watch("monitoringEvaluation");
   const signatories = watch("signatories");
-  const paperSize = watch("paperSize");
 
   const proposedBudget = budgetItems.reduce(
     (sum: number, item: { name: string; pax: string; amount: string }) => {
@@ -396,7 +389,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
           budgetItems,
           monitoringEvaluation,
           signatories,
-          paperSize,
           headerImage: mediaFiles[0]?.url || null,
         },
         preview
@@ -416,13 +408,23 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   };
 
 const onSubmit = async (data: ProjectProposalFormValues) => {
+   console.log("Form submitted with data:", data);
+  console.log("Media files:", mediaFiles);
+  console.log("Supporting docs:", supportingDocs);
+  console.log("Media files length:", mediaFiles.length);
+  console.log("Supporting docs length:", supportingDocs.length);
   
-  if (proposedBudget > availableBudget) {
-    setErrorMessage(
-      `Proposed budget (₱${proposedBudget.toLocaleString()}) exceeds available budget (₱${availableBudget.toLocaleString()})`
-    );
-    return;
+  // Check if files have the expected structure
+  if (mediaFiles.length > 0) {
+    console.log("First media file:", mediaFiles[0]);
+    console.log("Media file has file property:", !!mediaFiles[0].file);
   }
+  
+  if (supportingDocs.length > 0) {
+    console.log("First supporting doc:", supportingDocs[0]);
+    console.log("Supporting doc has file property:", !!supportingDocs[0].file);
+  }
+  
 
   const formattedParticipants = data.participants
     .filter(p => p.category.trim() !== "")
@@ -462,9 +464,6 @@ const onSubmit = async (data: ProjectProposalFormValues) => {
       gpr_header_img,
       staffId: user?.staff?.staff_id || null,
       gprIsArchive: existingProposal?.gprIsArchive || false,
-      status: data.status || "Pending",
-      statusReason: data.statusReason || null,
-      gpr_page_size: data.paperSize,
       dev: data.selectedDevProject.dev_id,
       participants: formattedParticipants,
       budget_items: formattedBudgetItems
@@ -524,25 +523,6 @@ const onSubmit = async (data: ProjectProposalFormValues) => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 max-w-2xl md:max-w-3xl lg:max-w-4xl">
-      <div className="mb-6">
-        <label className="block text-sm font-medium mb-2">Paper Size</label>
-        <div className="flex flex-wrap gap-4">
-          {["a4", "letter", "legal"].map((size) => (
-            <label key={size} className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="paperSize"
-                checked={paperSize === size}
-                onChange={() =>
-                  setValue("paperSize", size as "a4" | "letter" | "legal")
-                }
-              />
-              {size.charAt(0).toUpperCase() + size.slice(1)}
-            </label>
-          ))}
-        </div>
-      </div>
-
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -975,8 +955,7 @@ const onSubmit = async (data: ProjectProposalFormValues) => {
                     className="w-full sm:w-auto items-center gap-2"
                     disabled={
                       addMutation.isPending ||
-                      Object.keys(form.formState.errors).length > 0 ||
-                      proposedBudget > availableBudget
+                      Object.keys(form.formState.errors).length > 0
                     }
                   >
                     {addMutation.isPending ? "Saving..." : "Save"}

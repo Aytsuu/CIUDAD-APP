@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState} from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -7,12 +7,10 @@ import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
-import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
 import AddEventFormSchema from "@/form-schema/council/addevent-schema";
 import AttendanceSheetView from "./AttendanceSheetView";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useAddCouncilEvent, useAddAttendee } from "./queries/councilEventaddqueries";
-import { useGetStaffList } from "./queries/councilEventfetchqueries";
 import { formatDate } from "@/helpers/dateHelper";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { SchedEventFormProps } from "./councilEventTypes";
@@ -24,9 +22,9 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [ceId, setCeId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [numberOfRows, setNumberOfRows] = useState<number>(0);
   const { mutate: addEvent } = useAddCouncilEvent();
   const { mutate: addAttendee } = useAddAttendee();
-  const { data: staffList = []} = useGetStaffList();
 
   const form = useForm<z.infer<typeof AddEventFormSchema>>({
     resolver: zodResolver(AddEventFormSchema),
@@ -36,37 +34,8 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
       roomPlace: "",
       eventTime: "",
       eventDescription: "",
-      staffAttendees: [],
     },
   });
-
-  const staffOptions = useMemo(() => {
-    return staffList.map((staff) => ({
-      id: staff.staff_id,
-      name: staff.full_name,
-    }));
-  }, [staffList]);
-
-  const staffAttendees = form.watch("staffAttendees");
-
-  const selectedAttendeeDetails = useMemo(() => {
-    const details = staffAttendees.map((staffId) => {
-      const staff = staffList.find(
-        (s) => s.staff_id.toLowerCase() === staffId.toLowerCase()
-      );
-      return {
-        name: staff ? staff.full_name : `Unknown (ID: ${staffId})`,
-        designation: staff
-          ? staff.position_title || "No Designation"
-          : "No Designation",
-      };
-    });
-    return details;
-  }, [staffAttendees, staffList]);
-
-  useEffect(() => {
-    setSelectedAttendees(selectedAttendeeDetails);
-  }, [selectedAttendeeDetails]);
 
   const handleSubmitEvent = async (
     values: z.infer<typeof AddEventFormSchema>
@@ -88,24 +57,20 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
     addEvent(eventData, {
       onSuccess: (ce_id) => {
         setCeId(ce_id);
-        // Always add attendees since everything is now a meeting
-        if (values.staffAttendees.length > 0) {
-          values.staffAttendees.forEach((staffId) => {
-            const staff = staffList.find(
-              (s) => s.staff_id.toLowerCase() === staffId.toLowerCase()
-            );
+        // Add empty attendee rows based on the number specified
+        if (numberOfRows > 0) {
+          for (let i = 0; i < numberOfRows; i++) {
             addAttendee({
-              staff_id: staff ? staff.staff_id : null,
+              staff_id: null,
               atn_present_or_absent: "Present",
               ce_id: ce_id,
-              atn_name: staff ? staff.full_name : "Unknown",
-              atn_designation: staff
-                ? staff.position_title || "No Designation"
-                : "No Designation",
+              atn_name: "",
+              atn_designation: "",
             });
-          });
+          }
         }
         form.reset();
+        setNumberOfRows(0);
         setIsSubmitting(false);
         if (onSuccess) onSuccess();
       },
@@ -132,6 +97,18 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
   const handleConfirmPreview = () => {
     setIsPreviewOpen(false);
     handleSave();
+  };
+
+  const handleNumberOfRowsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0;
+    setNumberOfRows(value);
+    
+    // Generate empty attendees based on the number of rows
+    const emptyAttendees = Array.from({ length: value }, () => ({
+      name: "",
+      designation: "",
+    }));
+    setSelectedAttendees(emptyAttendees);
   };
 
   return (
@@ -181,18 +158,29 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
               readOnly={false}
             />
 
-            {/* Always show attendees section */}
+            {/* Number of rows input instead of staff selection */}
             <div>
               <h1 className="flex justify-center font-bold text-[20px] text-[#394360] py-4">
                 ATTENDEES
               </h1>
 
-              <FormComboCheckbox
-                control={form.control}
-                name="staffAttendees"
-                label="BARANGAY STAFF"
-                options={staffOptions}
-              />
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Expected number of attendees
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={numberOfRows}
+                  onChange={handleNumberOfRowsChange}
+                  className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter number of rows needed"
+                />
+                <p className="text-sm text-gray-500">
+                  This will create empty rows for attendees to fill out manually
+                </p>
+              </div>
             </div>
           </div>
 

@@ -94,7 +94,6 @@ const barangayItems: BaseMenuItem[] = [
         ],
       },
       { title: "Receipts", url: "/treasurer-receipts" },
-      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
     ],
   },
   {
