@@ -7,11 +7,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table/table";
-import { ChildHealthHistoryRecord } from "../types";
 import { format, isValid } from "date-fns";
 
 interface SupplementStatusTableProps {
-  fullHistoryData: ChildHealthHistoryRecord[];
+  fullHistoryData: any[];
   chhistId: string;
 }
 
@@ -25,18 +24,25 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
   );
 
   return (
-    <div className="border overflow-hidden mb-6">
-      <div className="font-semibold bg-gray-100 p-2 border-b">
-        Health Monitoring
-      </div>
+    <div className="border border-black mb-6">
       <Table className="border-collapse [&_tr:hover]:bg-inherit">
-        <TableHeader className="bg-gray-50">
+        <TableHeader>
           <TableRow className="hover:bg-inherit">
-            <TableHead className="w-[120px] border-r">Date Seen</TableHead>
-            <TableHead className="border-r">Anemic/BirthWt</TableHead>
-            <TableHead className="border-r">Birth Weight</TableHead>
-            <TableHead className="border-r">Iron Given</TableHead>
-            <TableHead className="border-r">Date Completed</TableHead>
+            <TableHead className="w-[120px] border-r border-b border-black text-black bg-white">
+              Date Seen
+            </TableHead>
+            <TableHead className="border-r border-b border-black text-black bg-white">
+              Anemic/BirthWt
+            </TableHead>
+            <TableHead className="border-r border-b border-black text-black bg-white">
+              Birth Weight
+            </TableHead>
+            <TableHead className="border-r border-b border-black text-black bg-white">
+              Iron Given
+            </TableHead>
+            <TableHead className="border-b border-black text-black bg-white">
+              Date Completed
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -44,7 +50,7 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
             <TableRow className="hover:bg-inherit">
               <TableCell
                 colSpan={5}
-                className="text-center text-gray-600 py-4 border-r hover:bg-inherit"
+                className="text-center text-gray-600 py-4 border-b border-black"
               >
                 No supplement given.
               </TableCell>
@@ -53,7 +59,7 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
             fullHistoryData
               .flatMap(
                 (record) =>
-                  record.supplements_statuses?.map((status) => ({
+                  record.supplements_statuses?.map((status: any) => ({
                     record,
                     status,
                   })) || []
@@ -71,11 +77,9 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
                   new Date(a.status.date_seen).getTime() -
                   new Date(b.status.date_seen).getTime()
               )
-              .map(({ record, status }, index) => {
+              .map(({ record, status }, index, array) => {
                 const isCurrentRecord = record.chhist_id === chhistId;
-                // const supplement = record.child_health_supplements?.find(
-                //   (s) => s.chsupplement_id === status.chsupplement
-                // );
+                const isLastRow = index === array.length - 1;
 
                 return (
                   <TableRow
@@ -84,12 +88,12 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
                       isCurrentRecord ? "font-medium" : ""
                     }`}
                   >
-                    <TableCell className="border-r">
+                    <TableCell className={`border-r border-black ${!isLastRow ? 'border-b' : ''}`}>
                       {status.date_seen && isValid(new Date(status.date_seen))
                         ? format(new Date(status.date_seen), "MMM dd, yyyy")
                         : "N/A"}
                     </TableCell>
-                    <TableCell className="border-r">
+                    <TableCell className={`border-r border-black ${!isLastRow ? 'border-b' : ''}`}>
                       <span
                         className={`px-2 py-1 rounded text-xs ${
                           status.status_type === "completed"
@@ -102,14 +106,14 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
                         {status.status_type || "N/A"}
                       </span>
                     </TableCell>
-                    <TableCell className="border-r">
+                    <TableCell className={`border-r border-black ${!isLastRow ? 'border-b' : ''}`}>
                       {status.birthwt
                         ? status.birthwt.toString().endsWith(".00")
                           ? `${status.birthwt.toString().slice(0, -3)} kg`
                           : `${status.birthwt} kg`
                         : "N/A"}
                     </TableCell>
-                    <TableCell className="border-r">
+                    <TableCell className={`border-r border-black ${!isLastRow ? 'border-b' : ''}`}>
                       {status.date_given_iron &&
                       isValid(new Date(status.date_given_iron))
                         ? format(
@@ -118,7 +122,7 @@ export const SupplementStatusTable: React.FC<SupplementStatusTableProps> = ({
                           )
                         : "Not given"}
                     </TableCell>
-                    <TableCell className="border-r">
+                    <TableCell className={`${!isLastRow ? 'border-b border-black' : ''}`}>
                       {status.date_completed &&
                       isValid(new Date(status.date_completed))
                         ? format(

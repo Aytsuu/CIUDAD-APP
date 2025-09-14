@@ -7,12 +7,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table/table";
-import { ChildHealthHistoryRecord } from "../types";
 import { format, isValid } from "date-fns";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator"; // Import the helper
 
 interface VitalSignsTableProps {
-  fullHistoryData: ChildHealthHistoryRecord[];
+  fullHistoryData: any[];
   chhistId: string;
 }
 
@@ -21,30 +20,44 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
   chhistId,
 }) => {
   // Helper function to extract DOB from the nested record structure
-  const extractDOBFromRecord = (record: ChildHealthHistoryRecord): string => {
+  const extractDOBFromRecord = (record: any): string => {
     return record?.chrec_details?.patrec_details?.pat_details?.personal_info?.per_dob || "";
   };
 
   return (
-    <div className="border  overflow-hidden">
+    <div className="border border-black mb-6">
       <Table className="border-collapse [&_tr:hover]:bg-inherit">
-        <TableHeader className="bg-gray-100">
+        <TableHeader>
           <TableRow className="hover:bg-inherit">
-            <TableHead className="w-[100px] border-r">Date</TableHead>
-            <TableHead className="border-r">Age</TableHead>
-            <TableHead className="border-r">Weight (kg)</TableHead>
-            <TableHead className="border-r">Height (cm)</TableHead>
-            <TableHead className="border-r">Temp (°C)</TableHead>
-            <TableHead className="border-r">Findings</TableHead>
-            <TableHead className="border-r">Notes</TableHead>
+            <TableHead className="w-[100px] border-r border-b border-black text-black bg-white">
+              Date
+            </TableHead>
+            <TableHead className="border-r border-b border-black text-black bg-white">
+              Age
+            </TableHead>
+            <TableHead className="border-r border-b border-black text-black bg-white">
+              Weight (kg)
+            </TableHead>
+            <TableHead className="border-r border-b border-black text-black bg-white">
+              Height (cm)
+            </TableHead>
+            <TableHead className="border-r border-b border-black text-black bg-white">
+              Temp (°C)
+            </TableHead>
+            <TableHead className="border-r border-b border-black text-black bg-white">
+              Findings
+            </TableHead>
+            <TableHead className="border-b border-black text-black bg-white">
+              Notes
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {fullHistoryData.length === 0 ? (
             <TableRow className="hover:bg-inherit">
               <TableCell
-                colSpan={10}
-                className="text-center text-gray-600 py-4 border-r hover:bg-inherit"
+                colSpan={7}
+                className="text-center text-black py-4 border-b border-black"
               >
                 No vital signs records available.
               </TableCell>
@@ -64,8 +77,9 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
                   new Date(a.created_at).getTime() -
                   new Date(b.created_at).getTime()
               )
-              .map((record) => {
+              .map((record, index, array) => {
                 const isCurrentRecord = record.chhist_id === chhistId;
+                const isLastRow = index === array.length - 1;
                 const vitalSigns = record.child_health_vital_signs?.[0] || {};
                 const bmDetails = vitalSigns.bm_details || {};
                 const childDOB = extractDOBFromRecord(record); // Extract DOB
@@ -104,27 +118,27 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
                       isCurrentRecord ? "font-medium" : ""
                     }`}
                   >
-                    <TableCell className="border-r">
+                    <TableCell className={`border-r border-black text-black ${!isLastRow ? 'border-b' : ''}`}>
                       {record.created_at && isValid(new Date(record.created_at))
                         ? format(new Date(record.created_at), "MMM dd, yyyy")
                         : "N/A"}
                     </TableCell>
-                    <TableCell className="border-r">
+                    <TableCell className={`border-r border-black text-black ${!isLastRow ? 'border-b' : ''}`}>
                       {/* Replace bmDetails.age with calculated age */}
                       {childDOB && record.created_at
                         ? calculateAgeFromDOB(childDOB, record.created_at).ageString
                         : "N/A"}
                     </TableCell>
-                    <TableCell className="border-r">
+                    <TableCell className={`border-r border-black text-black ${!isLastRow ? 'border-b' : ''}`}>
                       {bmDetails.weight || "N/A"}
                     </TableCell>
-                    <TableCell className="border-r">
+                    <TableCell className={`border-r border-black text-black ${!isLastRow ? 'border-b' : ''}`}>
                       {bmDetails.height || "N/A"}
                     </TableCell>
-                    <TableCell className="border-r">
+                    <TableCell className={`border-r border-black text-black ${!isLastRow ? 'border-b' : ''}`}>
                       {vitalSigns.temp || "N/A"}
                     </TableCell>
-                    <TableCell className="border-r w-[200px] max-w-[300px] text-xs">
+                    <TableCell className={`border-r border-black w-[200px] max-w-[300px] text-xs text-black ${!isLastRow ? 'border-b' : ''}`}>
                       {vitalSigns.find_details ? (
                         <>
                           {vitalSigns.find_details.subj_summary && (
@@ -180,7 +194,7 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
                         </>
                       ) : null}
                     </TableCell>
-                    <TableCell className="min-w-[200px] max-w-[300px] border-r hover:bg-inherit">
+                    <TableCell className={`min-w-[200px] max-w-[300px] text-black ${!isLastRow ? 'border-b border-black' : ''}`}>
                       <div>
                         {/* Main Note */}
                         {latestNoteContent ? (
@@ -191,9 +205,9 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
 
                         {/* Follow-up Section */}
                         {(followUpDescription || followUpDate) && (
-                          <div className="border-t pt-2 mt-2">
+                          <div className="border-t border-black pt-2 mt-2">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs font-medium text-gray-600">
+                              <span className="text-xs font-medium text-black">
                                 Follow-up:
                               </span>
                               <span
@@ -210,22 +224,21 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
                             </div>
 
                             {followUpDescription && (
-                              <p className="text-xs text-gray-600 break-words">
+                              <p className="text-xs text-black break-words">
                                 {followUpDescription
                                   .split("|")
                                   .map((part, i) => (
                                     <span key={i}>
                                       {part.trim()}
                                       {i <
-                                        followUpDescription.split("|").length -
-                                          1 && <br />}
+                                        followUpDescription.split("|").length - 1 && <br />}
                                     </span>
                                   ))}
                               </p>
                             )}
 
                             {followUpDate && (
-                              <p className="text-xs text-gray-600 mt-1">
+                              <p className="text-xs text-black mt-1">
                                 <span className="font-medium">Date:</span>{" "}
                                 {followUpDate}
                               </p>

@@ -83,7 +83,7 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         edemaSeverity: submittedData.edemaSeverity,
 
         // Breastfeeding dates
-        BFdates: submittedData.BFdates,
+        BFchecks: submittedData.BFchecks,
 
         // Medicines
         medicines: submittedData.medicines?.map((med) => ({

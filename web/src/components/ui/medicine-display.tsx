@@ -5,7 +5,6 @@ import { Package, ChevronLeft, ChevronRight, Search, Loader2, Info, Eye } from "
 import { StockBadge } from "@/components/ui/stock-badge"
 import { Button } from "@/components/ui/button/button"
 import { isNearExpiry, isLowStock } from "@/helpers/StocksAlert"
-import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export interface Medicine {

@@ -1,5 +1,4 @@
 // components/HealthHistoryTable.tsx
-import { ChildHealthHistoryRecord, FieldConfig } from "@/pages/healthServices/childservices/viewrecords/types";
 import { getValueByPath, getDiffClass } from "@/pages/healthServices/childservices/viewrecords/ChildHealthutils";
 import { format, isValid } from "date-fns";
 import {
@@ -12,7 +11,6 @@ import {
   Pill,
 } from "lucide-react";
 import {
-  disabilitiesFields,
   exclusiveBfCheckFields,
   findingsFields,
   immunizationTrackingFields,
@@ -25,7 +23,7 @@ import {
 import React from "react";
 
 interface HealthHistoryTableProps {
-  recordsToDisplay: ChildHealthHistoryRecord[];
+  recordsToDisplay: any[];
   chhistId: string;
   supplementStatusesFields: any[];
 }
@@ -33,7 +31,7 @@ interface HealthHistoryTableProps {
 interface TableSection {
   title: string;
   icon: JSX.Element;
-  fields: FieldConfig[];
+  fields: any[];
 }
 
 export function HealthHistoryTable({
@@ -57,11 +55,7 @@ export function HealthHistoryTable({
       icon: <User className="h-4 w-4" />,
       fields: findingsFields,
     },
-    {
-      title: "Disabilities",
-      icon: <AlertTriangle className="h-4 w-4" />,
-      fields: disabilitiesFields,
-    },
+
     {
       title: "Vital Signs & Notes",
       icon: <HeartPulse className="h-4 w-4" />,
@@ -80,8 +74,8 @@ export function HealthHistoryTable({
   ];
 
   const renderCellValue = (
-    field: FieldConfig,
-    record: ChildHealthHistoryRecord,
+    field: any,
+    record: any,
     recordIndex: number
   ) => {
     const valueInCurrentColumn = getValueByPath(record, field.path);
@@ -244,7 +238,7 @@ export function HealthHistoryTable({
 
 // Updated HealthHistoryAccordions component to use table
 interface HealthHistoryAccordionsProps {
-  recordsToDisplay: ChildHealthHistoryRecord[];
+  recordsToDisplay: any[];
   chhistId: string;
   supplementStatusesFields: any[];
 }

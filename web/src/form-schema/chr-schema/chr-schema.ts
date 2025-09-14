@@ -38,11 +38,22 @@ export const BasicInfoSchema = z.object({
   landmarks: z.string().optional(),
 })
 
+export const BFCheckSchema = z.object({
+  ebf_id: z.number().optional(),
+  ebf_date: z.string().min(1, "Date is required"),
+  created_at: z.string().optional(),
+  chhist: z.number().optional(),
+});
+
 export const ChildDetailsSchema = z.object({
   type_of_feeding: z.string().min(1, "required"),
   BFdates: z.array(z.string()).optional(),
+  BFchecks: z.array(BFCheckSchema).optional(), // New field for BF checks with IDs
+
   dateNewbornScreening: z.string().min(1, "required").optional(),
   tt_status: z.string().min(1, "required"),
+  newbornInitiatedbf: z.boolean().default(false),
+  nbscreening_result: z.string().optional(),
 })
 
 export const MedicineRequestSchema = z.object({
@@ -189,3 +200,4 @@ export type NutritionalStatusType = z.infer<typeof NutritionalStatusSchema>
 export type VaccineType = z.infer<typeof VaccinesSchema>
 export type VaccineRecord = z.infer<typeof vaccineRecordSchema>
 export type ExistingVaccineRecord = z.infer<typeof existingVaccineRecordSchema>
+export type BFCheck = z.infer<typeof BFCheckSchema>;

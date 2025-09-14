@@ -4,8 +4,8 @@ import PendingDisplayChildHealthRecord from "./Step1";
 import Immunization from "./Step2";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
-import { Loader2 } from "lucide-react";
-import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
+import {  Loader2 } from "lucide-react";
+
 import { VitalSignType, VaccineRecord, ExistingVaccineRecord } from "../../../../form-schema/ImmunizationSchema";
 import { useVaccinesListImmunization } from "./queries/fetchQueries";
 import { getVaccinationRecordById } from "../../vaccination/restful-api/get";
@@ -16,16 +16,20 @@ import { useFollowupChildHealthandVaccines } from "../../vaccination/queries/fet
 import { useLoading } from "@/context/LoadingContext";
 import { fetchVaccinesWithStock } from "../../vaccination/queries/fetch";
 
+
+
 export default function ChildImmunization() {
   const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
+
   const { ChildHealthRecord } = location.state || {};
-  const pat_id = ChildHealthRecord?.chrec_details?.patrec_details?.pat_id?.toString() || "";
-  const pat_dob = ChildHealthRecord?.chrec_details?.patrec_details?.pat_details?.personal_info?.per_dob || "";
+  console.log("sample",ChildHealthRecord)
+  const pat_id = ChildHealthRecord?.record?.chrec_details?.patrec_details?.pat_id?.toString() || "";
+  const pat_dob = ChildHealthRecord?.record?.chrec_details?.patrec_details?.pat_details?.personal_info?.per_dob || "";
   const { showLoading, hideLoading } = useLoading();
   const [historicalVitalSigns, setHistoricalVitalSigns] = useState<VitalSignType[]>([]);
   const [historicalNotes, setHistoricalNotes] = useState<any[]>([]);
-  const [fullHistoryData, setFullHistoryData] = useState<ChildHealthHistoryRecord[]>([]);
+  const [fullHistoryData, setFullHistoryData] = useState<any[]>([]);
   const [showVaccineList, setShowVaccineList] = useState<boolean>(false);
   const [vaccines, setVaccines] = useState<VaccineRecord[]>([]);
   const [existingVaccines, setExistingVaccines] = useState<ExistingVaccineRecord[]>([]);
@@ -37,7 +41,7 @@ export default function ChildImmunization() {
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } = useUnvaccinatedVaccines(pat_id, pat_dob);
   const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } = usePatientVaccinationDetails(pat_id);
   const { data: followUps = [], isLoading: followupLoading } = useFollowupChildHealthandVaccines(pat_id);
-  const { data: historyData, isLoading: isChildLoading, isError, refetch } = useChildHealthHistory(ChildHealthRecord?.chrec);
+  const { data: historyData, isLoading: isChildLoading, isError, refetch } = useChildHealthHistory(ChildHealthRecord?.record?.chrec);
   const isLoading = isChildLoading || isVaccinesLoading || isVaccinesListLoading || isUnvaccinatedLoading || isCompleteVaccineLoading || followupLoading;
 
   useEffect(() => {
@@ -65,7 +69,7 @@ export default function ChildImmunization() {
 
   useEffect(() => {
     if (historyData) {
-      const sortedHistory = (historyData[0]?.child_health_histories || []).sort((a: ChildHealthHistoryRecord, b: ChildHealthHistoryRecord) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const sortedHistory = (historyData[0]?.child_health_histories || []).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setFullHistoryData(sortedHistory);
 
@@ -125,6 +129,9 @@ export default function ChildImmunization() {
     setHistoricalVitalSigns(updatedVitalSigns);
   }, []);
 
+
+
+
   return (
     <LayoutWithBack title="Immunization" description="Manage immunization records for the child">
       {isLoading ? (
@@ -137,6 +144,9 @@ export default function ChildImmunization() {
           )}
         </div>
       ) : (
+
+        <>
+      
         <CardLayout
           cardClassName="px-6"
           title=""
@@ -168,6 +178,7 @@ export default function ChildImmunization() {
             </>
           }
         />
+        </>
       )}
     </LayoutWithBack>
   );

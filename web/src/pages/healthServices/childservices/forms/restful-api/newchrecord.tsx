@@ -72,8 +72,7 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
         edemaSeverity: submittedData.edemaSeverity,
 
         // Breastfeeding dates
-        BFdates: submittedData.BFdates,
-
+        BFchecks: submittedData.BFchecks,
         // Medicines
         medicines: submittedData.medicines,
 

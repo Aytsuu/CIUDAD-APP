@@ -75,8 +75,11 @@ export const initialFormData: FormData = {
   address: "",
   landmarks: "",
   dateNewbornScreening: "",
+  newbornInitiatedbf: false,
+  nbscreening_result: "",
   edemaSeverity: "None",
   BFdates: [],
+  BFchecks:[],
   vitalSigns: [],
   medicines: [],
   anemic: {
@@ -194,16 +197,22 @@ setNewVitalSigns: React.Dispatch<React.SetStateAction<VitalSignType[]>>;
 }
 
 
+export interface BFCheck {
+  ebf_id?: number;
+  ebf_date: string;
+  created_at?: string;
+  chhist?: number;
+}
 
 
 
 export type Page2Props = {
-onPrevious: () => void
-onNext: () => void
-updateFormData: (data: Partial<FormData>) => void
-formData: FormData
-historicalBFdates: string[]
-
+onPrevious: () => void;
+onNext: () => void;
+updateFormData: (data: Partial<FormData>) => void;
+formData: FormData;
+historicalBFChecks: BFCheck[];// Add this new prop
+mode: "newchildhealthrecord" | "addnewchildhealthrecord";
 }
 
 

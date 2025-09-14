@@ -44,3 +44,12 @@ export const getNutritionalStatus = async (id: string) => {
 
   }
 };
+export const getNextufc = async () => {
+  try {
+    const response = await api2.get(`/child-health/next-ufcno/`);
+    return response.data;
+  } catch (err) {
+    console.error("Error fetching next UFC number:", err);
+    throw err;
+  }
+};

@@ -1,12 +1,11 @@
 import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, ChevronRight, Edit } from "lucide-react"; // Added Edit icon
+import {  ChevronRight, Edit } from "lucide-react"; // Added Edit icon
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Baby, History } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 import { HealthHistoryTable } from "../../childservices/viewrecords/health-history-table";
-import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
 import { getSupplementStatusesFields } from "../../childservices/viewrecords/config";
 import { PatientSummarySection } from "../../childservices/viewrecords/CurrentHistoryView";
 import { useChildHealthHistory } from "../../childservices/forms/queries/fetchQueries";
@@ -37,13 +36,13 @@ export default function PendingDisplayMedicalConsultation({
     isLoading 
   } = useChildHealthHistory(chrecId);
 
-  const [fullHistoryData, setFullHistoryData] = useState<ChildHealthHistoryRecord[]>([]);
-  const [latestRecord, setLatestRecord] = useState<ChildHealthHistoryRecord | null>(null);
+  const [fullHistoryData, setFullHistoryData] = useState<any[]>([]);
+  const [latestRecord, setLatestRecord] = useState<any | null>(null);
 
   useEffect(() => {
     if (historyData) {
       const sortedHistory = (historyData[0]?.child_health_histories || [])
-        .sort((a: ChildHealthHistoryRecord, b: ChildHealthHistoryRecord) =>
+        .sort((a: any, b: any) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
       
@@ -60,7 +59,7 @@ export default function PendingDisplayMedicalConsultation({
   // Edit button functionality
   const navigateToUpdateLatest = () => {
     if (latestRecord) {
-      navigate("/child-health-record/addnewchildhealthrecord", {
+      navigate("/child-health-record/form", {
         state: {
           params: {
             chhistId: chhistId,

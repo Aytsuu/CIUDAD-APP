@@ -39,5 +39,8 @@ urlpatterns = [
     #updated post create backed
     path('create-new-record/', CompleteChildHealthRecordAPIView.as_view(), name='create-child-health'),
     path('create-update-new-chhistory/', UpdateChildHealthRecordAPIView.as_view(), name='create-child-health-history'),
+    path('immunization-save/',SaveImmunizationDataAPIView.as_view(),name='save-immunization-data'),
+    path('next-ufcno/',NextUFCNumberAPIView.as_view(),name='next-ufc-number')
   ]
 
+F

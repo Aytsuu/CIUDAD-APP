@@ -32,13 +32,14 @@ export default function InvChildHealthRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } = useUnvaccinatedVaccines(ChildHealthRecord?.pat_id, ChildHealthRecord.dob);
   const { data: followUps = [], isLoading: followupLoading } = useFollowupChildHealthandVaccines(ChildHealthRecord?.pat_id);
-  const { data: historyData = [], isLoading: childHistoryLoading, isError, error } = useChildHealthHistory(childData.chrec_id);
+  const { data: historyData = [], isLoading: childHistoryLoading, isError, error } = useChildHealthHistory(childData.chrec_id || "");
   const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } = usePatientVaccinationDetails(ChildHealthRecord?.pat_id);
-  const { data: nutritionalStatusData = [] , isLoading:isGrowthLoading, isError: isgrowthError} = useNutriotionalStatus(ChildHealthRecord?.pat_id);
+  const { data: nutritionalStatusData = [], isLoading: isGrowthLoading, isError: isgrowthError } = useNutriotionalStatus(ChildHealthRecord?.pat_id);
   const isLoading = followupLoading || isUnvaccinatedLoading || isCompleteVaccineLoading || childHistoryLoading;
 
+  console.log("chhh", ChildHealthRecord.chrec_id);
   useEffect(() => {
-    if (!ChildHealthRecord || !ChildHealthRecord.chrec_id) {
+    if (!ChildHealthRecord.chrec_id) {
       console.error("ChildHealthRecord or chrec_id is missing from location state.");
     }
   }, [ChildHealthRecord, navigate]);
@@ -51,9 +52,6 @@ export default function InvChildHealthRecords() {
     }
   }, [isLoading]);
 
-  if (!ChildHealthRecord || !ChildHealthRecord.chrec_id) {
-    return <div className="w-full h-full flex items-center justify-center text-red-500">Error: Child health record data is missing or incomplete.</div>;
-  }
   // In your processedHistoryData useMemo
   const processedHistoryData = useMemo(() => {
     if (!historyData || historyData.length === 0) return [];
@@ -110,7 +108,7 @@ export default function InvChildHealthRecords() {
       }
 
       return {
-        chrec_id: mainRecord.chrec_id,
+        chrec_id: mainRecord.chrec,
         patrec: mainRecord.patrec_id,
         status: record.status || "N/A",
         chhist_id: record.chhist_id,
@@ -171,7 +169,7 @@ export default function InvChildHealthRecords() {
 
   const navigateToUpdateLatest = () => {
     if (latestRecord) {
-      navigate("/child-health-record/addnewchildhealthrecord", {
+      navigate("/child-health-record/form", {
         state: {
           params: {
             chhistId: latestRecord.chhist_id,
@@ -230,8 +228,7 @@ export default function InvChildHealthRecords() {
         </div>
       )}
 
-      <GrowthChart data={nutritionalStatusData} isLoading={isGrowthLoading} error={isgrowthError}  />
-     
+      <GrowthChart data={nutritionalStatusData} isLoading={isGrowthLoading} error={isgrowthError} />
 
       <div className="h-full w-full rounded-md mt-4">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
@@ -241,7 +238,6 @@ export default function InvChildHealthRecords() {
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div className="flex gap-2">
-           
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
@@ -256,22 +252,19 @@ export default function InvChildHealthRecords() {
               </DropdownMenuContent>
             </DropdownMenu>
             <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
-        {latestRecord && (
-          <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
-            {isLatestRecordImmunizationOrCheckup ? (
-              <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
-                <span className="text-sm font-medium">{latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}</span>
-              </div>
-            ) : (
-              <Button onClick={navigateToUpdateLatest}>New record</Button>
-            )}
+              {latestRecord && (
+                <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
+                  {isLatestRecordImmunizationOrCheckup ? (
+                    <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
+                      <span className="text-sm font-medium">{latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}</span>
+                    </div>
+                  ) : (
+                    <Button onClick={navigateToUpdateLatest}>New record</Button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-            
-          </div>
-
-          
         </div>
 
         <div className="bg-white w-full overflow-x-auto">

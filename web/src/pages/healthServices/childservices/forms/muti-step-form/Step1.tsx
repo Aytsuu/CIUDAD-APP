@@ -12,44 +12,25 @@ import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { BasicInfoSchema } from "@/form-schema/chr-schema/chr-schema";
 import { ChevronRight } from "lucide-react";
 import type { Page1Props } from "./types";
-import {  ChildInfoSection } from "../sections/child-info-section";
+import { ChildInfoSection } from "../sections/child-info-section";
 import { MotherInfoSection } from "../sections/mother-info-section";
 import { FatherInfoSection } from "../sections/father-info-section";
 import { AddressSection } from "../sections/address-section";
-import { 
-  populatePatientData, 
-  updateAgeFields 
-} from "../sections/child-info-utils";
-
-export default function ChildHRPage1({
-  onNext,
-  updateFormData,
-  formData,
-  mode,
-  selectedPatient,
-  setSelectedPatient,
-  selectedPatientId,
-  setSelectedPatientId,
-}: Page1Props) {
+import { populatePatientData, updateAgeFields } from "../sections/child-info-utils";
+import { useNextufcno } from "../queries/fetchQueries";
+export default function ChildHRPage1({ onNext, updateFormData, formData, mode, selectedPatient, setSelectedPatient, selectedPatientId, setSelectedPatientId }: Page1Props) {
   const isAddNewMode = mode === "addnewchildhealthrecord";
 
   const form = useForm<FormData>({
     resolver: zodResolver(BasicInfoSchema),
     mode: "onChange",
-    defaultValues: formData,
+    defaultValues: formData
   });
 
-  const {
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-    control,
-    formState,
-    setError,
-    clearErrors,
-  } = form;
+  const { handleSubmit, watch, setValue, reset, control, formState, setError, clearErrors } = form;
+  const {data: nextUfcData} = useNextufcno();
 
+  
   const { isSubmitting } = formState;
   const residenceType = watch("residenceType");
   const isTransient = residenceType === "Transient";
@@ -70,7 +51,7 @@ export default function ChildHRPage1({
       if (!placeOfDeliveryLocation || placeOfDeliveryLocation.trim() === "") {
         setError("placeOfDeliveryLocation", {
           type: "required",
-          message: "Location is required when HC is selected",
+          message: "Location is required when HC is selected"
         });
       } else {
         clearErrors("placeOfDeliveryLocation");
@@ -93,6 +74,7 @@ export default function ChildHRPage1({
     setSelectedPatientId(patientId);
     reset(populatePatientData(patient));
     updateFormData(populatePatientData(patient));
+    form.setValue("ufcNo", nextUfcData || "");
   };
 
   const onSubmitForm = async (data: FormData) => {
@@ -100,7 +82,7 @@ export default function ChildHRPage1({
       if (data.placeOfDeliveryType === "HC" && !data.placeOfDeliveryLocation?.trim()) {
         setError("placeOfDeliveryLocation", {
           type: "required",
-          message: "Location is required when HC is selected",
+          message: "Location is required when HC is selected"
         });
         return;
       }
@@ -122,20 +104,11 @@ export default function ChildHRPage1({
 
   return (
     <>
-    
       <Form {...form}>
         {!isAddNewMode && (
           <div className="flex items-center justify-between gap-3 mb-10 w-full">
             <div className="flex-1">
-              <PatientSearch
-                onPatientSelect={handlePatientSelect}
-                className="w-full"
-                value={selectedPatientId}
-                onChange={setSelectedPatientId}
-                ischildren={true}
-                
-
-              />
+              <PatientSearch onPatientSelect={handlePatientSelect} className="w-full" value={selectedPatientId} onChange={setSelectedPatientId} ischildren={true} />
             </div>
           </div>
         )}
@@ -143,63 +116,21 @@ export default function ChildHRPage1({
         <form onSubmit={handleFormSubmit} className="space-y-6" noValidate>
           <div className="flex w-full flex-wrap gap-4">
             <div className="flex justify-end gap-4 w-full">
-              <FormInput
-                control={control}
-                name="residenceType"
-                label="Residence Type"
-                type="text"
-                readOnly={isAddNewMode || !!selectedPatient}
-                className="w-[200px]"
-              />
+              <FormInput control={control} name="residenceType" label="Residence Type" type="text" readOnly={isAddNewMode || !!selectedPatient} className="w-[200px]" />
             </div>
             <div className="flex justify-end gap-4 w-full">
-              <FormInput
-                control={control}
-                name="familyNo"
-                label="Family No:"
-                type="text"
-                readOnly={isAddNewMode || (!isTransient && !!selectedPatient)}
-                className="w-[200px]"
-              />
-              <FormInput
-                control={control}
-                name="ufcNo"
-                label="UFC No:"
-                type="text"
-                readOnly={isAddNewMode || !!selectedPatient}
-                className="w-[200px]"
-              />
+              <FormInput control={control} name="familyNo" label="Family No:" type="text" className="w-[200px]" />
+              <FormInput control={control} name="ufcNo" label="UFC No:" type="text" className="w-[200px]" />
             </div>
           </div>
 
-          <ChildInfoSection 
-            control={control} 
-            isAddNewMode={isAddNewMode} 
-            selectedPatient={selectedPatient} 
-            isTransient={isTransient}
-            placeOfDeliveryType={placeOfDeliveryType}
-          />
+          <ChildInfoSection control={control} isAddNewMode={isAddNewMode} selectedPatient={selectedPatient} isTransient={isTransient} placeOfDeliveryType={placeOfDeliveryType} />
 
-          <MotherInfoSection 
-            control={control} 
-            isAddNewMode={isAddNewMode} 
-            selectedPatient={selectedPatient} 
-            isTransient={isTransient}
-          />
+          <MotherInfoSection control={control} isAddNewMode={isAddNewMode} selectedPatient={selectedPatient} isTransient={isTransient} />
 
-          <FatherInfoSection 
-            control={control} 
-            isAddNewMode={isAddNewMode} 
-            selectedPatient={selectedPatient} 
-            isTransient={isTransient}
-          />
+          <FatherInfoSection control={control} isAddNewMode={isAddNewMode} selectedPatient={selectedPatient} isTransient={isTransient} />
 
-          <AddressSection 
-            control={control} 
-            isAddNewMode={isAddNewMode} 
-            selectedPatient={selectedPatient} 
-            isTransient={isTransient}
-          />
+          <AddressSection control={control} isAddNewMode={isAddNewMode} selectedPatient={selectedPatient} isTransient={isTransient} />
 
           <div className="flex justify-end">
             <Button type="submit" className="flex items-center gap-2 px-6">

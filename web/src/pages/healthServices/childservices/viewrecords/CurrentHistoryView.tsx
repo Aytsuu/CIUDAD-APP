@@ -1,19 +1,22 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { format, isValid } from "date-fns";
 import { getValueByPath } from "./ChildHealthutils";
 import { VitalSignsTable } from "./tables/VitalSignsTable";
-import { ChildHealthHistoryRecord } from "./types";
 import { BFCheckTable } from "./tables/BFTable";
 import { ImmunizationTable } from "./tables/ImmunizationTable";
 import { SupplementStatusTable } from "./tables/SupplementStatusTable";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { Button } from "@/components/ui/button/button";
-import { Printer } from "lucide-react";
+import { Printer, Download, Eye } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 
+// Import jsPDF
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+
 interface PatientSummarySectionProps {
-  recordsToDisplay: ChildHealthHistoryRecord[];
-  fullHistoryData: ChildHealthHistoryRecord[];
+  recordsToDisplay: any[];
+  fullHistoryData: any[];
   chhistId: string;
 }
 
@@ -23,262 +26,62 @@ export function PatientSummarySection({
   chhistId,
 }: PatientSummarySectionProps) {
   const printRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   if (recordsToDisplay.length === 0) return null;
 
-  const handlePrint = () => {
+  // New function to generate PDF using jsPDF and open in new tab
+  const generatePDF = async () => {
     if (!printRef.current) return;
+    
+    setIsGeneratingPDF(true);
+    
+    try {
+      const element = printRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff"
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: [215.9, 330.2] // Long bond paper size (8.5 x 13 inches)
+      });
 
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
+      const imgWidth = 190; // mm
+      const pageHeight = 320; // mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 10;
 
-    const printContent = printRef.current.innerHTML;
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Child Health Record</title>
-          <style>
-            /* Print styles optimized for long bond paper (8.5 x 13 inches) */
-            @page {
-              size: 8.5in 13in; /* Long bond paper dimensions */
-              margin: 0.1in; /* Standard margins */
-            }
+      // Add additional pages if content is longer than one page
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
 
-            * {
-              font-size: 9pt !important;
-              line-height: 1.2 !important;
-              color: black !important;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-              box-sizing: border-box !important;
-            }
-
-            body {
-              background: white !important;
-              margin: 0 !important;
-              padding: 0.5in !important;
-              font-family: Arial, sans-serif !important;
-            }
-
-            /* Page break handling */
-            .print-page {
-              page-break-before: auto !important;
-              page-break-after: auto !important;
-              page-break-inside: avoid !important;
-            }
-
-            .print-section {
-              page-break-inside: avoid !important;
-              margin-bottom: 8pt !important;
-            }
-
-            /* Maintain existing div structure */
-            .bg-white {
-              background: white !important;
-              box-shadow: none !important;
-              border: none !important;
-            }
-
-            h2 {
-              font-size: 10pt !important;
-              font-weight: bold !important;
-              color: black !important;
-              text-align: center !important;
-              margin-bottom: 8pt !important;
-            }
-
-            p {
-              font-size: 9pt !important;
-              color: black !important;
-              margin: 2pt 0 !important;
-            }
-
-            strong {
-              font-weight: bold !important;
-              color: black !important;
-            }
-
-            .underline {
-              text-decoration: underline !important;
-              color: black !important;
-            }
-
-            /* Maintain flex layouts */
-            .flex {
-              display: flex !important;
-            }
-
-            .flex-col {
-              flex-direction: column !important;
-            }
-
-            .flex-row {
-              flex-direction: row !important;
-            }
-
-            .justify-between {
-              justify-content: space-between !important;
-            }
-
-            .justify-end {
-              justify-content: flex-end !important;
-            }
-
-            .items-center {
-              align-items: center !important;
-            }
-
-            .space-x-2 > * + * {
-              margin-left: 4pt !important;
-            }
-
-            .space-y-2 > * + * {
-              margin-top: 4pt !important;
-            }
-
-            .space-y-4 > * + * {
-              margin-top: 8pt !important;
-            }
-
-            .gap-10 {
-              gap: 10pt !important;
-            }
-
-            /* Width controls for main layout */
-            .lg\\:w-\\[50\\%\\] {
-              width: 50% !important;
-              flex: 0 0 50% !important;
-            }
-
-            .w-full {
-              width: 100% !important;
-            }
-
-            /* Margins and padding adjustments */
-            .mb-8 {
-              margin-bottom: 6pt !important;
-            }
-
-            .mb-10 {
-              margin-bottom: 8pt !important;
-            }
-
-            .mb-4 {
-              margin-bottom: 4pt !important;
-            }
-
-            .mb-2 {
-              margin-bottom: 2pt !important;
-            }
-
-            .mt-4 {
-              margin-top: 4pt !important;
-            }
-
-            .mt-5 {
-              margin-top: 5pt !important;
-            }
-
-            .ml-4 {
-              margin-left: 8pt !important;
-            }
-
-            .p-14 {
-              padding: 8pt !important;
-            }
-
-            /* Table styling */
-            table {
-              width: 100% !important;
-              border-collapse: collapse !important;
-              font-size: 8pt !important;
-              margin: 4pt 0 !important;
-            }
-
-            th, td {
-              border: 1px solid black !important;
-              padding: 2pt 4pt !important;
-              font-size: 8pt !important;
-              color: black !important;
-            }
-
-            th {
-              background-color: #f0f0f0 !important;
-              font-weight: bold !important;
-            }
-
-            /* Overflow handling */
-            .overflow-x-auto {
-              overflow: visible !important;
-            }
-
-            /* Remove any background colors and shadows */
-            .bg-white, .shadow-sm, .rounded-lg {
-              background: white !important;
-              box-shadow: none !important;
-              border-radius: 0 !important;
-            }
-
-            /* Ensure proper display of immunization section */
-            .lg\\:flex-row {
-              flex-direction: row !important;
-            }
-
-            /* Text alignment */
-            .text-center {
-              text-align: center !important;
-            }
-
-            .text-xl {
-              font-size: 10pt !important;
-            }
-
-            .font-bold {
-              font-weight: bold !important;
-            }
-
-            .block {
-              display: block !important;
-            }
-
-            /* Hide buttons in print */
-            button {
-              display: none !important;
-            }
-
-            /* Ensure proper spacing */
-            .print-full-width {
-              width: 100% !important;
-            }
-
-           .print-table-container {
-  page-break-inside: avoid !important;
-  break-inside: avoid !important;
-}
-
-            .print-table-title {
-              font-weight: bold !important;
-              margin-bottom: 4pt !important;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="print-page">
-            ${printContent}
-          </div>
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-
-    // Wait for content to load then print
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+      // Instead of saving, open in new tab
+      const pdfBlob = pdf.output('blob');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      window.open(pdfUrl, '_blank');
+      
+      // Clean up the URL object after use
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   return (
@@ -287,18 +90,23 @@ export function PatientSummarySection({
         cardClassName="px-4"
         content={
           <>
-            {/* Main Content - This is what will be printed */}
+            {/* Print/Export Controls */}
             <div className="no-print mb-4 justify-end flex items-center space-x-2">
+             
+              
               <Button
-                onClick={handlePrint}
+                onClick={generatePDF}
                 variant="outline"
-                className="flex gap-2 py-2 px-4 rounded border border-zinc-400"
+                disabled={isGeneratingPDF}
+                className="flex gap-2 py-2 px-4 rounded border border-zinc-400 bg-blue-50 hover:bg-blue-100"
               >
-                <Printer /> Print
+                <Eye /> {isGeneratingPDF ? "Generating..." : "View PDF"}
               </Button>
             </div>
 
+            {/* Content to be printed/exported */}
             <div ref={printRef}>
+              {/* Your existing content */}
               <div className="print-section">
                 <h2 className="text-xl font-bold text-gray-800 text-center mb-10">
                   CHILD HEALTH RECORD
@@ -725,12 +533,8 @@ export function PatientSummarySection({
                     chhistId={chhistId}
                   />
                 </div>
-
-              
               </div>
             </div>
-
-          
           </>
         }
       />

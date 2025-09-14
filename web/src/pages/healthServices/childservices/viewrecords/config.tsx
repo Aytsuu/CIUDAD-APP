@@ -1,15 +1,6 @@
 import { format, isValid, isSameDay } from "date-fns";
-import {
-  Disability,
-  CHNotes,
-  CHSupplement,
-  EBFCheck,
-  CHSSupplementStat,
-  ChildHealthHistoryRecord,
-  FieldConfig,
-} from "./types";
 
-export const recordOverviewFields: FieldConfig[] = [
+export const recordOverviewFields: any[] = [
   // { label: "Record ID", path: ["chhist_id"] },
   // {
   //   label: "Created At",
@@ -23,7 +14,7 @@ export const recordOverviewFields: FieldConfig[] = [
 
 
 
-const formatSupplement = (supplement: CHSupplement): string => {
+const formatSupplement = (supplement: any): string => {
   const medDetails = supplement.medrec_details?.minv_details;
   if (!medDetails) return "N/A";
   const name = medDetails.med_detail?.med_name || "Unknown Medicine";
@@ -36,7 +27,7 @@ const formatSupplement = (supplement: CHSupplement): string => {
 };
 
 
-export const childPersonalInfoFields: FieldConfig[] = [
+export const childPersonalInfoFields: any[] = [
   {
     label: "Patient ID",
     path: ["chrec_details", "patrec_details", "pat_details", "pat_id"],
@@ -105,7 +96,7 @@ export const childPersonalInfoFields: FieldConfig[] = [
   },
 ];
 
-export const familyHeadInfoFields: FieldConfig[] = [
+export const familyHeadInfoFields: any[] = [
   {
     label: "Mother's Name",
     path: [
@@ -169,23 +160,9 @@ export const familyHeadInfoFields: FieldConfig[] = [
   },
 ];
 
-export const disabilitiesFields: FieldConfig[] = [
-  {
-    label: "Disabilities",
-    path: ["disabilities"],
-    format: (val: Disability[]) =>
-      val && val.length > 0
-        ? val
-            .map(
-              (d: Disability) =>
-                d.disability_details?.disability_name || "Unknown"
-            )
-            .join(", ")
-        : "No disabilities recorded",
-  },
-];
 
-export const vitalSignsFields: FieldConfig[] = [
+
+export const vitalSignsFields: any[] = [
   {
     label: "Age",
     path: ["child_health_vital_signs", "0", "bm_details", "age"],
@@ -205,7 +182,7 @@ export const vitalSignsFields: FieldConfig[] = [
 ];
 
 
-export const findingsFields: FieldConfig[] = [
+export const findingsFields: any[] = [
   {
     label: "Assessment Summary",
     path: ["child_health_vital_signs", "0", "find_details", "assessment_summary"],
@@ -310,7 +287,7 @@ export const findingsFields: FieldConfig[] = [
 ];
 
 
-export const nutritionStatusesFields: FieldConfig[] = [
+export const nutritionStatusesFields: any[] = [
   { label: "Weight-for-Age (WFA)", path: ["nutrition_statuses", "0", "wfa"] },
   {
     label: "Length/Height-for-Age (LHFA)",
@@ -327,11 +304,11 @@ export const nutritionStatusesFields: FieldConfig[] = [
 
 
 
-export const notesFields: FieldConfig[] = [
+export const notesFields: any[] = [
   {
     label: "Clinical Notes",
     path: ["child_health_notes"],
-    format: (val: CHNotes[]) => {
+    format: (val: any[]) => {
       if (!val || val.length === 0) {
         return [
           <div key="no-notes" className="text-center" style={{ color: '#374151' }}>
@@ -430,7 +407,7 @@ export const notesFields: FieldConfig[] = [
   {
     label: "Follow-ups",
     path: ["child_health_notes"],
-    format: (val: CHNotes[]) => {
+    format: (val: any[]) => {
       if (!val || val.length === 0) {
         return [
           <div key="no-followups" className="text-center" style={{ color: '#374151' }}>
@@ -478,11 +455,11 @@ export const notesFields: FieldConfig[] = [
 
 
 
-export const supplementsFields: FieldConfig[] = [
+export const supplementsFields: any[] = [
   {
     label: "Supplements",
     path: ["child_health_supplements"],
-    format: (val: CHSupplement[]) => {
+    format: (val: any[]) => {
       if (!val || val.length === 0) {
         return [
           <div key="no-supplements" className="text-center">
@@ -525,7 +502,7 @@ export const supplementsFields: FieldConfig[] = [
   },
 ];
 
-const formatDosage = (supplement: CHSupplement): string => {
+const formatDosage = (supplement: any): string => {
   const medDetails = supplement.medrec_details?.minv_details;
   if (!medDetails) return "N/A";
   return medDetails.minv_dsg
@@ -533,13 +510,13 @@ const formatDosage = (supplement: CHSupplement): string => {
     : "N/A";
 };
 
-export const exclusiveBfCheckFields: FieldConfig[] = [
+export const exclusiveBfCheckFields: any[] = [
   {
     label: "EBF Check Dates",
     path: ["exclusive_bf_checks"],
-    format: (val) =>
+    format: (val:any) =>
       val && val.length > 0
-        ? val.map((ebf: EBFCheck) => ({
+        ? val.map((ebf: any) => ({
             date:
               ebf.ebf_date && isValid(new Date(ebf.ebf_date))
                 ? format(new Date(ebf.ebf_date), "PPP")
@@ -550,7 +527,7 @@ export const exclusiveBfCheckFields: FieldConfig[] = [
   },
 ];
 
-export const immunizationTrackingFields: FieldConfig[] = [
+export const immunizationTrackingFields: any[] = [
   {
     label: "Immunizations",
     path: ["immunization_tracking"],
@@ -617,12 +594,12 @@ export const immunizationTrackingFields: FieldConfig[] = [
 
 
 export const getSupplementStatusesFields = (
-  fullHistoryData: ChildHealthHistoryRecord[]
-): FieldConfig[] => [
+  fullHistoryData: any[]
+): any[] => [
   {
     label: "Supplement Statuses",
     path: ["supplements_statuses"],
-    format: (val, record) => {
+    format: (val:any, record:any) => {
       if (!record)
         return [<span key="no-status">No supplement statuses recorded</span>];
 
@@ -630,10 +607,10 @@ export const getSupplementStatusesFields = (
       const directStatuses = val && val.length > 0 ? val : [];
 
       // Find statuses from other records where updated_at matches this record's created_at and date_completed is not null
-      const matchingStatuses: CHSSupplementStat[] = [];
+      const matchingStatuses: any[] = [];
       fullHistoryData.forEach((otherRecord) => {
         if (otherRecord.chhist_id !== record.chhist_id) {
-          otherRecord.supplements_statuses.forEach((status) => {
+          otherRecord.supplements_statuses.forEach((status:any) => {
             if (
               status.updated_at &&
               record.created_at &&
@@ -657,7 +634,7 @@ export const getSupplementStatusesFields = (
       if (allStatuses.length === 0)
         return [<span key="no-status">No supplement statuses recorded</span>];
 
-      return allStatuses.map((status: CHSSupplementStat, index: number) => {
+      return allStatuses.map((status: any, index: number) => {
         // const statusUpdatedAt =
         //   status?.updated_at && isValid(new Date(status.updated_at))
         //     ? format(new Date(status.updated_at), "PPP")

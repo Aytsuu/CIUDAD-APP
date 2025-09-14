@@ -17,7 +17,7 @@ import { NutritionalStatusCalculator } from "../../../../../components/ui/nutrit
 import { calculateCurrentAge } from "@/helpers/ageCalculator";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Salad, Pill, Loader2, AlertTriangle, HeartPulse, ChevronLeft } from "lucide-react";
+import {  Pill, Loader2, AlertTriangle, HeartPulse, ChevronLeft } from "lucide-react";
 import { useMemo, useEffect, useState } from "react";
 import { z } from "zod";
 import { createHistoricalNutritionalStatusColumns, createHistoricalVitalSignsColumns, createHistoricalMedicineColumns, createHistoricalSupplementStatusColumns } from "./columns";

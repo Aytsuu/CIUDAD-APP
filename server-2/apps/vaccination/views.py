@@ -413,7 +413,7 @@ class VaccinationSubmissionView(APIView):
             # Create new vaccination record
             vaccination_record = VaccinationRecord.objects.create(
                 patrec_id=patient_record,
-                vacrec_totaldose=""
+                vacrec_totaldose=1
             )
         
         # Create vital signs if self-assignment

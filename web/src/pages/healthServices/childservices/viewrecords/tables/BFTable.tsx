@@ -5,11 +5,10 @@ import {
   TableCell,
   TableRow,
 } from "@/components/ui/table/table";
-import { ChildHealthHistoryRecord } from "../types";
 import { format, isValid, isBefore, isSameDay } from "date-fns";
 
 interface BFCheckTableProps {
-  fullHistoryData: ChildHealthHistoryRecord[];
+  fullHistoryData: any[];
   chhistId: string;
 }
 
@@ -22,8 +21,8 @@ export const BFCheckTable: React.FC<BFCheckTableProps> = ({
   
   if (!currentRecord) {
     return (
-      <div className="border overflow-hidden">
-        <Table>
+      <div className="border border-black mb-6">
+        <Table className="border-collapse">
           <TableBody>
             <TableRow>
               <TableCell className="text-center text-gray-500 p-3">
@@ -37,7 +36,7 @@ export const BFCheckTable: React.FC<BFCheckTableProps> = ({
   }
 
   const currentRecordDate = new Date(currentRecord.created_at);
-
+  
   // Extract and filter BF checks - only from current and previous records
   const filteredBfChecks = fullHistoryData
     .flatMap(record => {
@@ -45,7 +44,7 @@ export const BFCheckTable: React.FC<BFCheckTableProps> = ({
       
       // Only include records that are on or before the current record date
       if (isBefore(recordDate, currentRecordDate) || isSameDay(recordDate, currentRecordDate)) {
-        return record.exclusive_bf_checks?.map(bfCheck => ({
+        return record.exclusive_bf_checks?.map((bfCheck: any) => ({
           recordDate,
           bfCheck,
           bfDate: bfCheck.ebf_date && isValid(new Date(bfCheck.ebf_date))
@@ -62,44 +61,44 @@ export const BFCheckTable: React.FC<BFCheckTableProps> = ({
     .sort((a, b) => a.recordDate.getTime() - b.recordDate.getTime());
 
   return (
-    <div className="border overflow-hidden">
-      <Table className="border-collapse [&_tr:hover]:bg-inherit">
+    <div className="border border-black mb-6">
+      <Table className="border-collapse">
         <TableBody>
           {/* Created At Dates Row */}
-          <TableRow className="border-b hover:bg-inherit">
-            <TableCell className="font-medium bg-gray-100 border-r p-3 w-32">
+          <TableRow>
+            <TableCell className="font-medium border-r border-b border-black p-3 w-32 bg-white">
               Created At
             </TableCell>
             {filteredBfChecks.length > 0 ? (
               filteredBfChecks.map((check, index) => (
                 <TableCell 
                   key={`created-${index}`} 
-                  className={`border-r p-3 last:border-r-0 ${
-                    check.isCurrentRecord ? " font-medium" : ""
-                  }`}
+                  className={`border-b border-black p-3 ${
+                    index < filteredBfChecks.length - 1 ? 'border-r' : ''
+                  } ${check.isCurrentRecord ? "font-medium" : ""}`}
                 >
                   {check.createdAt}
                 </TableCell>
               ))
             ) : (
-              <TableCell colSpan={1} className="text-center text-gray-500 p-3">
+              <TableCell colSpan={1} className="text-center text-gray-500 p-3 border-b border-black">
                 No BF checks available
               </TableCell>
             )}
           </TableRow>
-
+          
           {/* BF Dates Row */}
           <TableRow>
-            <TableCell className="font-medium bg-gray-100 border-r p-3 w-32">
+            <TableCell className="font-medium  border-r border-black p-3 w-32">
               BF Dates
             </TableCell>
             {filteredBfChecks.length > 0 ? (
               filteredBfChecks.map((check, index) => (
                 <TableCell 
                   key={`bfdate-${index}`} 
-                  className={`border-r p-3 last:border-r-0 hover:bg-inherit ${
-                    check.isCurrentRecord ? " font-medium" : ""
-                  }`}
+                  className={`p-3 ${
+                    index < filteredBfChecks.length - 1 ? 'border-r border-black' : ''
+                  } ${check.isCurrentRecord ? "font-medium" : ""}`}
                 >
                   {check.bfDate}
                 </TableCell>
@@ -110,8 +109,6 @@ export const BFCheckTable: React.FC<BFCheckTableProps> = ({
               </TableCell>
             )}
           </TableRow>
-
-        
         </TableBody>
       </Table>
     </div>
