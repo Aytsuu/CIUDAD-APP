@@ -20,6 +20,8 @@ export default function SummonRequests() {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = React.useState<number>(10);
     const [selectedIncident, setSelectedIncident] = useState<string>("0");
+    const [editingRowId, setEditingRowId] = useState<number | null>(null);
+
     
     console.log('fetchedData:', summonReq);
 
@@ -109,28 +111,18 @@ export default function SummonRequests() {
                         description = "Full details of the complaint filed."
                             mainContent={
                             <div className="flex flex-col h-full">
-                                {/* Action Buttons */}
-                                <div className="flex justify-end gap-3 mb-4 p-4 bg-gray-50 rounded-lg">
-                                    <Button 
-                                        variant="outline" 
-                                        className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-2"
-                                    >
-                                        <XCircle className="h-4 w-4" />
-                                        Reject Request
-                                    </Button>
-                                    <Button 
-                                        className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
-                                    >
-                                        <CheckCircle className="h-4 w-4" />
-                                        Accept Request
-                                    </Button>
-                                </div>
-                                
                                 <div className="overflow-y-auto flex-1 pr-2">
-                                    <ComplaintRecordForSummon comp_id={complaint}/>
+                                    <ComplaintRecordForSummon 
+                                        comp_id={complaint} 
+                                        sr_id={row.original.sr_id}
+                                        onSuccess={() => setEditingRowId(null)}
+                                    />
                                 </div>
                             </div>
+                            
                         }
+                        isOpen={editingRowId == Number(row.original.sr_id)}
+                        onOpenChange={(open) => setEditingRowId(open? Number(row.original.sr_id): null)}
                     />
                 );
             },

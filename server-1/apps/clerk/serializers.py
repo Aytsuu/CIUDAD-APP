@@ -402,6 +402,7 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
         model = IssuedBusinessPermit
         fields = ['ibp_id', 'dateIssued', 'business_name']
 
+# ================== SERVICE CHARGE SERIALIZERS =========================
 class SummonDateAvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
         model = SummonDateAvailability
@@ -426,8 +427,13 @@ class AccusedDetailsSerializer(serializers.ModelSerializer):
             'address'
         ]
 
+class SummonRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceChargeRequest
+        fields = '__all__'
 
-class ServiceChargeRequestSerializer(serializers.ModelSerializer):
+
+class ServiceChargeRequestListSerializer(serializers.ModelSerializer):
     complainant_names = serializers.SerializerMethodField()
     incident_type = serializers.SerializerMethodField()
     accused_names = serializers.SerializerMethodField()
@@ -471,6 +477,11 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
                 print(f"Error getting accused: {e}")
                 return []
         return []
+    
+class ServiceChargeDecisionSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = ServiceChargeDecision
+        fields = '__all__'
 # ============================ MIGHT DELETE THESE LATER ==============================
 
 # Complaint-related Serializers

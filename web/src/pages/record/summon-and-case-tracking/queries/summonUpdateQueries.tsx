@@ -1,7 +1,7 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { resolveCase, escalateCase, updateSuppDoc } from "../requestAPI/summonPutAPI";
+import { resolveCase, escalateCase, updateSuppDoc, acceptSummonRequest, rejectSummonRequest } from "../requestAPI/summonPutAPI";
 import type { MediaUploadType } from "@/components/ui/media-upload";
 
 export const useResolveCase = (onSuccess?: () => void) => {
@@ -103,4 +103,59 @@ export const useUpdateSuppDoc = (onSuccess?: () => void) => {
     }
   });
 };
+
+export const useAcceptRequest = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient()
+
+     return useMutation({
+        mutationFn: (sr_id: string) => acceptSummonRequest(sr_id),
+        onMutate: () =>{
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['serviceChargeList'] })
+            toast.success('Request Accepted', {
+                id: "acceptReq",
+                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                duration: 2000
+            });
+            
+            onSuccess?.();
+        },
+        onError: (err) => {
+            console.error("Error in accepting request:", err);
+            toast.error("Failed to accept request.", {
+            id: "acceptReq",
+            duration: 2000
+            });
+        }
+    })
+}
+
+
+export const useRejectRequest = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient()
+
+     return useMutation({
+        mutationFn: (values: {sr_id: string, reason: string}) => rejectSummonRequest(values.sr_id, values.reason),
+        onMutate: () =>{
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['serviceChargeList'] })
+            toast.success('Request Rejected', {
+                id: "rejectReq",
+                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                duration: 2000
+            });
+            
+            onSuccess?.();
+        },
+        onError: (err) => {
+            console.error("Error in rejecting request:", err);
+            toast.error("Failed to reject request.", {
+            id: "rejectReq",
+            duration: 2000
+            });
+        }
+    })
+}
 

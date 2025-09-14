@@ -190,8 +190,8 @@ logger = logging.getLogger(__name__)
 #         )
 #         return queryset
 
-class ServiceChargeRequestView(generics.ListAPIView):
-    serializer_class = ServiceChargeRequestSerializer
+class ServiceChargeRequestListView(generics.ListAPIView):
+    serializer_class = ServiceChargeRequestListSerializer
     
     def get_queryset(self):
         queryset = ServiceChargeRequest.objects.filter(
@@ -202,6 +202,24 @@ class ServiceChargeRequestView(generics.ListAPIView):
             'comp_id__complaintaccused_set__acsd'
         )
         return queryset
+    
+class UpdateSummonRequestView(generics.UpdateAPIView):
+    serializer_class = SummonRequestSerializer
+    queryset = ServiceChargeRequest.objects.all()
+    lookup_field = 'sr_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class ServiceChargeDecisionView(generics.ListCreateAPIView):
+    serializer_class = ServiceChargeDecisionSerializer
+    queryset = ServiceChargeDecision.objects.all()
 
 class SummonDateAvailabilityView(generics.ListCreateAPIView):
     serializer_class = SummonDateAvailabilitySerializer

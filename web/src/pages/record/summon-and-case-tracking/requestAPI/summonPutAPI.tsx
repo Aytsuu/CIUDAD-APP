@@ -64,3 +64,38 @@ export const updateSuppDoc = async (values: {csd_id: string; description: string
   //   throw err;
   // }
 }
+
+export const acceptSummonRequest = async(sr_id: string) => {
+    try{
+        const res = await api.put(`clerk/update-summon-request/${sr_id}/`, {
+            sr_req_status: "Accepted"
+        })
+
+        if(res){
+            await api.post('clerk/service-charge-decision/',{
+                scd_decision_date: new Date().toISOString(),
+                sr_id: sr_id
+            })
+        }
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const rejectSummonRequest = async(sr_id: string, reason: string) => {
+    try{
+        const res = await api.put(`clerk/update-summon-request/${sr_id}/`, {
+            sr_req_status: "Rejected",
+        })
+
+        if(res){
+            await api.post('clerk/service-charge-decision/',{
+                scd_decision_date: new Date().toISOString(),
+                scd_reason: reason,
+                sr_id: sr_id
+            })
+        }
+    }catch(err){
+        console.error(err)
+    }
+}
