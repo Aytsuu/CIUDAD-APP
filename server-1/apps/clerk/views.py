@@ -27,7 +27,7 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
-
+# ==================== MIGHT DELETE LATER ========================
 # class ServiceChargeRequestView(generics.ListCreateAPIView):
 #     permission_classes = [AllowAny]
 #     serializer_class = ServiceChargeRequestSerializer
@@ -173,6 +173,35 @@ logger = logging.getLogger(__name__)
 # class ServiceChargeRequestFileView(generics.ListCreateAPIView):
 #     serializer_class = ServiceChargeRequestFileSerializer
 #     queryset = ServiceChargeRequestFile.objects.all()
+# =======================================================
+
+# class ServiceChargeRequestView(generics.ListAPIView):
+#     serializer_class = ServiceChargeRequestSerializer
+    
+#     def get_queryset(self):
+#         queryset = ServiceChargeRequest.objects.filter(
+#             sr_req_status='Pending',
+#             sr_type = 'Summon'  
+#         ).select_related(
+#             'comp_id'
+#         ).prefetch_related(
+#             'comp_id__complainant',
+#             'comp_id__accused'
+#         )
+#         return queryset
+
+class ServiceChargeRequestView(generics.ListAPIView):
+    serializer_class = ServiceChargeRequestSerializer
+    
+    def get_queryset(self):
+        queryset = ServiceChargeRequest.objects.filter(
+            sr_req_status='Pending',
+            sr_type='Summon'
+        ).select_related('comp_id').prefetch_related(
+            'comp_id__complaintcomplainant_set__cpnt',
+            'comp_id__complaintaccused_set__acsd'
+        )
+        return queryset
 
 class SummonDateAvailabilityView(generics.ListCreateAPIView):
     serializer_class = SummonDateAvailabilitySerializer

@@ -427,10 +427,50 @@ class AccusedDetailsSerializer(serializers.ModelSerializer):
         ]
 
 
-class ServiceChargeRequests(serializers.ModelSerializer):
+class ServiceChargeRequestSerializer(serializers.ModelSerializer):
+    complainant_names = serializers.SerializerMethodField()
+    incident_type = serializers.SerializerMethodField()
+    accused_names = serializers.SerializerMethodField()
+    
     class Meta:
         model = ServiceChargeRequest
-        fields = '__all__'
+        fields = [
+            'sr_id', 
+            'sr_type', 
+            'sr_req_date', 
+            'sr_req_status', 
+            'sr_case_status', 
+            'comp_id', 
+            'staff_id', 
+            'complainant_names', 
+            'incident_type', 
+            'accused_names'
+        ]
+    
+    def get_complainant_names(self, obj):
+        if obj.comp_id:
+            try:
+                complainants = obj.comp_id.complaintcomplainant_set.select_related('cpnt').all()
+                return [cc.cpnt.cpnt_name for cc in complainants]
+            except Exception as e:
+                print(f"Error getting complainants: {e}")
+                return []
+        return []
+    
+    def get_incident_type(self, obj):
+        if obj.comp_id:
+            return getattr(obj.comp_id, 'comp_incident_type', None)
+        return None
+    
+    def get_accused_names(self, obj):
+        if obj.comp_id:
+            try:
+                accused_list = obj.comp_id.complaintaccused_set.select_related('acsd').all()
+                return [ca.acsd.acsd_name for ca in accused_list]
+            except Exception as e:
+                print(f"Error getting accused: {e}")
+                return []
+        return []
 # ============================ MIGHT DELETE THESE LATER ==============================
 
 # Complaint-related Serializers

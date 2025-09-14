@@ -69,3 +69,12 @@ export const getSummonTimeSlots = async(sd_id: number) => {
 }
 
 
+export const getServiceChargeRequestList = async () => {
+    try{
+        const res = await api.get('clerk/service-charge-request-list/')
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+

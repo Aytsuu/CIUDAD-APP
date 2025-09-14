@@ -132,58 +132,6 @@ function SummonTrackingView() {
     })
   }
 
-  // const BlotterReport = () => (
-  //   <div className="space-y-6">
-  //     <Card className="w-full bg-white p-6 shadow-sm">
-  //       <h3 className="font-semibold text-lg text-darkBlue2 mb-4">Blotter Report Summary</h3>
-  //       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-  //         <div>
-  //           <Label className="text-sm text-gray-500 font-normal mb-2 block">Report Date</Label>
-  //           <p className="text-lg font-medium text-gray-800">
-  //             {caseDetails?.sr_date_filed ? formatTimestamp(caseDetails.sr_date_filed) : "N/A"}
-  //           </p>
-  //         </div>
-  //         <div>
-  //           <Label className="text-sm text-gray-500 font-normal mb-2 block">Case Status</Label>
-  //           <p className="text-lg font-medium text-gray-800">{caseDetails?.sr_status || "N/A"}</p>
-  //         </div>
-  //         <div>
-  //           <Label className="text-sm text-gray-500 font-normal mb-2 block">Incident Location</Label>
-  //           <p className="text-lg font-medium text-gray-800">
-  //             {caseDetails?.complaint?.comp_incident_location || "N/A"}
-  //           </p>
-  //         </div>
-  //         <div>
-  //           <Label className="text-sm text-gray-500 font-normal mb-2 block">Incident Date</Label>
-  //           <p className="text-lg font-medium text-gray-800">
-  //             {caseDetails?.complaint?.comp_incident_date
-  //               ? formatTimestamp(caseDetails.complaint.comp_incident_date)
-  //               : "N/A"}
-  //           </p>
-  //         </div>
-  //       </div>
-  //     </Card>
-
-  //     <Card className="w-full bg-white p-6 shadow-sm">
-  //       <h3 className="font-semibold text-lg text-darkBlue2 mb-4">Incident Details</h3>
-  //       <div className="space-y-4">
-  //         <div>
-  //           <Label className="text-sm text-gray-500 font-normal mb-2 block">Description</Label>
-  //           <p className="text-gray-700 leading-relaxed">
-  //             {caseDetails?.complaint?.comp_description || "No description available"}
-  //           </p>
-  //         </div>
-  //         <div>
-  //           <Label className="text-sm text-gray-500 font-normal mb-2 block">Allegation</Label>
-  //           <p className="text-gray-700 leading-relaxed">
-  //             {caseDetails?.complaint?.comp_allegation || "No allegation specified"}
-  //           </p>
-  //         </div>
-  //       </div>
-  //     </Card>
-  //   </div>
-  // )
-
   return (
     <div className="w-full h-full">
       <div className="overflow-y-auto h-full">

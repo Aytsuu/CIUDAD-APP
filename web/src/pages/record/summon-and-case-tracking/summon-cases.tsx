@@ -363,7 +363,7 @@ function SummonCases(){
     });
 
     return(
-        <div className="w-full">
+        <div className="w-full mt-2">
             {/* Search and Filter */}
             <div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full">

@@ -2,6 +2,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { FileText, Calendar, Scale } from "lucide-react"
 import SummonCases from "./summon-cases"
 import SummonCalendar from "./summonCalendar"
+import SummonRequests from "./summon-requests"
 
 export default function SummonTabs() {
   return (
@@ -22,7 +23,7 @@ export default function SummonTabs() {
       </div>
 
       {/* Tabs Section with Content */}
-      <div className="flex-1 flex flex-col min-h-0"> {/* Added min-h-0 for proper flex scrolling */}
+      <div className="flex-1 flex flex-col min-h-0"> 
         <Tabs defaultValue="summon-requests" className="w-full h-full flex flex-col">
           {/* Tabs List - Fixed */}
           <div className="flex-shrink-0">
@@ -52,31 +53,9 @@ export default function SummonTabs() {
           </div>
 
           {/* Tab Content - Scrollable area */}
-          <div className="flex-1 overflow-y-auto mt-4"> {/* Added mt-4 for spacing below tabs */}
-            <TabsContent value="summon-requests" className="m-0 h-full">
-              <div className="bg-card p-6 rounded-lg border shadow-sm h-full">
-                <div className="flex items-center gap-3 mb-4">
-                  <FileText className="h-6 w-6 text-primary" />
-                  <h3 className="text-xl font-semibold text-card-foreground">Summon Requests</h3>
-                </div>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  View, create, and manage all summon requests. Track status, assign cases, and generate official documents.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-background p-4 rounded border">
-                    <div className="text-2xl font-bold text-primary">24</div>
-                    <div className="text-sm text-muted-foreground">Pending Requests</div>
-                  </div>
-                  <div className="bg-background p-4 rounded border">
-                    <div className="text-2xl font-bold text-secondary">12</div>
-                    <div className="text-sm text-muted-foreground">In Progress</div>
-                  </div>
-                  <div className="bg-background p-4 rounded border">
-                    <div className="text-2xl font-bold text-accent">8</div>
-                    <div className="text-sm text-muted-foreground">Completed Today</div>
-                  </div>
-                </div>
-              </div>
+          <div className="flex-1 overflow-y-auto mt-4"> 
+            <TabsContent value="summon-requests" className="m-0">
+              <SummonRequests/>
             </TabsContent>
 
             <TabsContent value="calendar" className="m-0 h-full">

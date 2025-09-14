@@ -12,6 +12,7 @@ urlpatterns = [
     # path('delete-case-supp-doc/<int:csd_id>/', DeleteCaseSuppDocView.as_view(), name='delete-case-supp-doc'),
     # path('update-case-supp-doc/<int:csd_id>/', UpdateCaseSuppDocView.as_view(), name='update-case-supp-doc'),
     # path('service-charge-request-file/', ServiceChargeRequestFileView.as_view(), name='service-charge-request-file'),
+    path('service-charge-request-list/', ServiceChargeRequestView.as_view(), name='service=-charge-request-list'),
     path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),
     path('delete-summon-date/<int:sd_id>/', DeleteSummonDateAvailability.as_view(), name='delete-summon-date'),
     path('summon-time-availability/', SummonTimeAvailabilityView.as_view(), name='summon-time-availability'),
