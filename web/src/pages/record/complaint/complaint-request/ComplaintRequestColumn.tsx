@@ -2,55 +2,78 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { Complaint } from "../complaint-type";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
-import { usePostArchiveComplaint } from "../api-operations/queries/complaintPostQueries";
 import {
   UserCheck2,
   ArrowUpDown,
   MoreHorizontal,
   File,
   ArchiveIcon,
+  Check,
+  X,
 } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Checkbox } from "@/components/ui/checkbox";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { RaiseIssueDialog } from "../RaiseIssueDialog";
 
 const getStatusBadgeProps = (status: string) => {
   switch (status?.toLowerCase()) {
-    case 'pending':
+    case "pending":
       return {
         className: "bg-red-100 text-red-800 hover:bg-red-200 border-red-300",
-        variant: "secondary" as const
+        variant: "secondary" as const,
       };
-    case 'filed':
+    case "filed":
       return {
-        className: "bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-300",
-        variant: "secondary" as const
+        className:
+          "bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-300",
+        variant: "secondary" as const,
       };
-    case 'raised':
+    case "raised":
       return {
-        className: "bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-300",
-        variant: "secondary" as const
+        className:
+          "bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-300",
+        variant: "secondary" as const,
       };
-    case 'processing':
+    case "processing":
       return {
-        className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300",
-        variant: "secondary" as const
+        className:
+          "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300",
+        variant: "secondary" as const,
       };
-    case 'settled':
+    case "settled":
       return {
-        className: "bg-green-100 text-green-800 hover:bg-green-200 border-green-300",
-        variant: "secondary" as const
+        className:
+          "bg-green-100 text-green-800 hover:bg-green-200 border-green-300",
+        variant: "secondary" as const,
+      };
+    case "rejected":
+      return {
+        className:
+          "bg-red-100 text-red-800 hover:bg-red-200 border-red-300",
+        variant: "secondary" as const,
       };
     default:
       return {
-        className: "bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-300",
-        variant: "secondary" as const
+        className:
+          "bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-300",
+        variant: "secondary" as const,
       };
   }
 };
 
-export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
+interface RequestComplaintColumnsProps {
+  data: Complaint[];
+  onRejectComplaint?: (complaintId: string) => void;
+  onAcceptComplaint?: (complaintId: string) => void;
+  onArchiveComplaint?: (complaintId: string) => void;
+}
+
+export const requestComplaintColumns = ({
+  data,
+  onRejectComplaint,
+  onAcceptComplaint,
+  onArchiveComplaint,
+}: RequestComplaintColumnsProps): ColumnDef<Complaint>[] => [
   {
     id: "select",
     header: ({ table }) => {
@@ -100,8 +123,8 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
           {/* Icon on the far left */}
           <div className="absolute left-2">
             <TooltipLayout
-              trigger={<UserCheck2 className="text-green-500" size={20} />}
-              content="Filed"
+              trigger={<UserCheck2 className="text-orange-500" size={20} />}
+              content="Pending"
             />
           </div>
 
@@ -149,7 +172,6 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
       );
     },
   },
-
   {
     accessorKey: "accused_persons",
     header: ({ column }) => (
@@ -204,7 +226,6 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
     cell: ({ row }) => {
       const status = row.getValue("comp_status") as string;
       const badgeProps = getStatusBadgeProps(status);
-      
       return (
         <div className="flex justify-center">
           <Badge 
@@ -215,14 +236,13 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
           </Badge>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "actions",
     header: "Action",
     cell: ({ row }) => {
       const complaint = row.original;
-      const archiveComplaint = usePostArchiveComplaint();
 
       const options = [
         {
@@ -239,14 +259,28 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
           ),
         },
         {
-          id: "raise",
-          name: <RaiseIssueDialog complaintId={complaint.comp_id} />,
+          id: "accept",
+          name: (
+            <div className="flex items-center gap-2 text-green-600 hover:text-green-700">
+              <Check size={16} />
+              Accept
+            </div>
+          ),
+        },
+        {
+          id: "reject",
+          name: (
+            <div className="flex items-center gap-2 text-red-600 hover:text-red-700">
+              <X size={16} />
+              Reject
+            </div>
+          ),
         },
         {
           id: "archive",
           name: (
-            <div className="flex items-center gap-2">
-              <ArchiveIcon size={16} className="text-darkGray" />
+            <div className="flex items-center gap-2 text-orange-600 hover:text-orange-700">
+              <ArchiveIcon size={16} />
               Archive
             </div>
           ),
@@ -254,9 +288,25 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
       ];
 
       const handleSelect = (id: string) => {
-        if (id === "archive") {
-          archiveComplaint.mutateAsync(String(complaint.comp_id))
-          console.log("Archive:", complaint.comp_id);
+        switch (id) {
+          case "accept":
+            if (onAcceptComplaint) {
+              onAcceptComplaint(String(complaint.comp_id));
+            }
+            console.log("Accept:", complaint.comp_id);
+            break;
+          case "reject":
+            if (onRejectComplaint) {
+              onRejectComplaint(String(complaint.comp_id));
+            }
+            console.log("Reject:", complaint.comp_id);
+            break;
+          case "archive":
+            if (onArchiveComplaint) {
+              onArchiveComplaint(String(complaint.comp_id));
+            }
+            console.log("Archive:", complaint.comp_id);
+            break;
         }
       };
 

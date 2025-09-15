@@ -183,25 +183,14 @@ class Address(models.Model):
 
 # Service Charge Request Models
 class ServiceChargeRequest(models.Model):
-    sr_id = models.BigAutoField(primary_key=True)
+    sr_id = models.CharField(primary_key=True, max_length = 200)
     sr_code = models.CharField(max_length=10, blank=True, null=True) 
+    sr_type = models.CharField(max_length = 250, null=True, blank=True)
     sr_req_date = models.DateTimeField(default=datetime.now)
-    sr_status = models.CharField(null=True, blank=True)
-    sr_payment_status = models.CharField(null=True, blank=True)
-    sr_type = models.CharField(null=True, blank=True)
-    sr_decision_date = models.DateTimeField(null=True, blank=True)
-    comp = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
-    parent_summon = models.ForeignKey(
-        'self',
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
-        related_name='escalated_file_actions'
-    )
-    file_action_file = models.OneToOneField(
-        'ServiceChargeRequestFile', null=True, blank=True,
-        on_delete=models.SET_NULL,  
-        related_name='file_action'
-    )
+    sr_req_status = models.CharField(max_length = 250)
+    sr_case_status = models.CharField(max_length = 250)
+    comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
+    staff_id = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, null = True, blank = True, db_column='staff_id')
 
     class Meta:
         db_table = 'service_charge_request'

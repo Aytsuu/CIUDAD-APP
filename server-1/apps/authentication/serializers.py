@@ -20,7 +20,6 @@ class UserAccountSerializer(serializers.ModelSerializer):
         model = Account
         fields = [
             'acc_id',
-            # 'supabase_id',
             'username',
             'email',
             'profile_image',

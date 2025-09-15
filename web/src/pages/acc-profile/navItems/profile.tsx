@@ -10,9 +10,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/context/AuthContext";
 import { updateProfilePicture } from "../api-operations/restful-api/accountApi";
 import sanRoqueLogo  from "@/assets/images/sanRoqueLogo.svg"
+import { useDispatch } from "react-redux";
 
 export default function Profile() {
   const { user } = useAuth();
+  const dispatch = useDispatch();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [editMode, setEditMode] = useState({
@@ -44,12 +46,17 @@ export default function Profile() {
     const loadingToast = toast.loading("Uploading profile picture...");
 
     try {
-      await updateProfilePicture(file);
+      const response = await updateProfilePicture(file);
+
+      // await dispatch(updateProfilePicture({
+      //   profile_image: response.profile_image
+      // }));
+
+
       toast.dismiss(loadingToast);
       toast.success("Profile picture updated");
     } catch (error: any) {
       setUploadError(error.message || "Upload failed");
-      toast.dismiss(loadingToast);
       toast.error("Upload failed");
     } finally {
       setIsUploading(false);
@@ -335,7 +342,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.per?.per_ed_attainment}
+                    {user?.resident?.per?.per_edAttainment}
                   </div>
                 </div>
               </div>

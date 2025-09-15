@@ -1,25 +1,41 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
-import {
-  PlusCircle,
-  Search,
-  Archive,
-  X,
-  ListFilterIcon,
-} from "lucide-react";
+import { PlusCircle, Search, Archive, X, ListFilterIcon } from "lucide-react";
 import { Link } from "react-router";
 import { FaRegQuestionCircle } from "react-icons/fa";
+
+type ButtonConfig = {
+  filter?: boolean;
+  request?: boolean;
+  archived?: boolean;
+  newReport?: boolean;
+  rejected?: boolean;
+  requestCount?: number;
+  archivedCount?: number;
+  rejectedCount?: number;
+};
 
 type Props = {
   searchQuery: string;
   setSearchQuery: (value: string) => void;
   timeFilter: string | null;
   setTimeFilter: (value: string | null) => void;
+  buttons?: ButtonConfig;
 };
 
 export default function ComplaintFilterBar({
   searchQuery,
   setSearchQuery,
+  buttons = {
+    filter: true,
+    request: true,
+    archived: true,
+    newReport: true,
+    rejected: false,
+    requestCount: 0,
+    archivedCount: 0,
+    rejectedCount: 0,
+  }
 }: Props) {
   const clearSearch = () => setSearchQuery("");
 
@@ -48,43 +64,71 @@ export default function ComplaintFilterBar({
           )}
         </div>
         <div className="flex gap-2">
-          <Link to="/complaint/archive">
-            <Button
-              variant="outline"
-              className="gap-2 text-darkGray hover:text-black"
-            >
-              <ListFilterIcon size={16} className="text-gray-400" />
-              <span>Filter</span>
-            </Button>
-          </Link>
-          <Link to="/complaint/request">
-            <Button
-              variant="outline"
-              className="gap-2 text-darkGray hover:text-black"
-            >
-              <FaRegQuestionCircle size={16} className="text-gray-400" />
-              <span>Request</span>
-            </Button>
-          </Link>
+          {buttons.filter && (
+            <Link to="/complaint/filter">
+              <Button
+                variant="outline"
+                className="gap-2 text-darkGray hover:text-black"
+              >
+                <ListFilterIcon size={16} className="text-gray-400" />
+                <span>Filter</span>
+              </Button>
+            </Link>
+          )}
+          
+          {buttons.request && (
+            <Link to="/complaint/request">
+              <Button
+                variant="outline"
+                className="gap-2 text-darkGray hover:text-black"
+              >
+                <FaRegQuestionCircle size={16} className="text-gray-400" />
+                <span>Request</span>
+                <span className="h-5 w-5 rounded-full bg-red-500 text-white">
+                  {buttons.requestCount || 0}
+                </span>
+              </Button>
+            </Link>
+          )}
 
-          <Link to="/complaint/archive">
-            <Button
-              variant="outline"
-              className="gap-2 text-darkGray hover:text-black"
-            >
-              <Archive size={16} className="text-gray-400" />
-              <span>Archived</span>
-              <span className="h-5 w-5 rounded-full bg-red-500 text-white">
-                {0}
-              </span>
-            </Button>
-          </Link>
-          <Link to="/complaint/report" className="sm:ml-auto">
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs hover:shadow-sm transition-all duration-200 flex items-center gap-2 h-9 px-4 rounded-lg">
-              <PlusCircle />
-              <span className="hidden sm:inline">New Report</span>
-            </Button>
-          </Link>
+          {buttons.rejected && (
+            <Link to="/complaint/rejected">
+              <Button
+                variant="outline"
+                className="gap-2 text-darkGray hover:text-black"
+              >
+                <X size={16} className="text-gray-400" />
+                <span>Rejected</span>
+                <span className="h-5 w-5 rounded-full bg-red-500 text-white">
+                  {buttons.rejectedCount || 0}
+                </span>
+              </Button>
+            </Link>
+          )}
+
+          {buttons.archived && (
+            <Link to="/complaint/archive">
+              <Button
+                variant="outline"
+                className="gap-2 text-darkGray hover:text-black"
+              >
+                <Archive size={16} className="text-gray-400" />
+                <span>Archived</span>
+                <span className="h-5 w-5 rounded-full bg-red-500 text-white">
+                  {buttons.archivedCount || 0}
+                </span>
+              </Button>
+            </Link>
+          )}
+          
+          {buttons.newReport && (
+            <Link to="/complaint/report" className="sm:ml-auto">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs hover:shadow-sm transition-all duration-200 flex items-center gap-2 h-9 px-4 rounded-lg">
+                <PlusCircle />
+                <span className="hidden sm:inline">New Report</span>
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </div>

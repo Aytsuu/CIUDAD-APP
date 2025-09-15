@@ -44,6 +44,7 @@ export interface Complaint {
   comp_category: string;
   comp_created_at: string;
   comp_is_archive: boolean;
+  comp_status: string;
   complainant: Complainant[];
   accused_persons: Accused[];
   complaint_file?: ComplaintFile[];

@@ -10,7 +10,6 @@ import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormInput } from "@/components/ui/form/form-input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToastContext } from "@/components/ui/toast";
-import ciudadLogo from "@/assets/images/CIUDADLogo.svg"
 
 export default function Login() {
   const [currentStep, setCurrentStep] = React.useState<number>(1);
@@ -27,26 +26,27 @@ export default function Login() {
   useEffect(() => {
     if(isAuthenticated && user){
       toast.success("Welcome!");
-      router.replace("/(tabs)")
+      router.replace("/(tabs)");
     } 
-  }, [user, isAuthenticated]);
+  }, [user, isAuthenticated, router, toast]);
 
-  const handleLogin = () => {
-    const values = getValues();
-    const {accountFormSchema} = values
-    const response = login({
-      ...(loginMethod == "phone" ? { 
-        phone: accountFormSchema.phone
-      } :
-    {
-      email: accountFormSchema.email
-    }),
-  
-      password: accountFormSchema.password,
-    });
-
-    if(!response){
-      Alert.alert("Error", "Incorrect password");
+  const handleLogin = async () => {
+    try {
+      const values = getValues();
+      const {accountFormSchema} = values;
+      
+      const result = await login({
+        ...(loginMethod == "phone" ? { 
+          phone: accountFormSchema.phone
+        } : {
+          email: accountFormSchema.email
+        }),
+        password: accountFormSchema.password,
+      });
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert("Error", "Incorrect password or login failed");
     }
   };
 

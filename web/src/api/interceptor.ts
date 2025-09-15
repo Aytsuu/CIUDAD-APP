@@ -21,6 +21,22 @@ const processQueue = (error: any, token: string | null = null) => {
 export const setupApiInterceptor = (apiInstance: typeof api) => {
     apiInstance.defaults.withCredentials = true;
 
+    // Request Interceptor before the server is called
+    // apiInstance.interceptors.request.use(
+    //     (config) => {
+    //         const state = store.getState();
+    //         const token = state.auth.accessToken;
+
+    //         if(token) {
+    //             config.headers.Authorization = `Bearer ${token}`;
+    //         }
+
+    //         return config;
+    //     },
+    //     (error) => {return Promise.reject(error);}
+    // )
+    
+    // Response Interceptor this is after calling the server
     apiInstance.interceptors.response.use(
         (response) => response,
         async(error) => {

@@ -1,6 +1,11 @@
 from django.urls import path, include
 from django.conf import settings
 from .views.web_views import *
+from .views.login_view import *
+from .views.email_view import *
+from .views.forgot_password_view import *
+from .views.phone_view import *
+from .views.logout_view import *
 
 urlpatterns = [
     
@@ -15,8 +20,8 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     
     # OTP endpoints
-    path('email/sendOtp/', SendOTPEmail.as_view(), name='email-send-otp'),
-    path('email/verifyOtp/', VerifyOTPEmail.as_view(), name='email-verify-otp'),
+    path('email/sendOtp/', LogInEmailOTPView.as_view(), name='email-send-otp'),
+    path('email/verifyOtp/', ValidateEmailOTPView.as_view(), name='email-verify-otp'),
 ]
 
 
