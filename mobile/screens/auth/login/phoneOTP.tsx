@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { useToastContext } from "@/components/ui/toast";
 import { useAuth } from "@/contexts/AuthContext";
 import PageLayout from "@/screens/_PageLayout";

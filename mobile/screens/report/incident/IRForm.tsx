@@ -9,7 +9,7 @@ import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import MediaPicker, { type MediaItem } from "@/components/ui/media-picker"
 import { Input } from "@/components/ui/input"
 import { useAddIncidentReport } from "../queries/reportAdd"
@@ -26,7 +26,7 @@ import axios from "axios"
 import { useAuth } from "@/contexts/AuthContext"
 import { LoadingState } from "@/components/ui/loading-state"
 import { LoadingModal } from "@/components/ui/loading-modal"
-import { SubmitButton } from "@/components/ui/submit-button"
+import { SubmitButton } from "@/components/ui/button/submit-button"
 
 type IncidentReport = z.infer<typeof IncidentReportSchema>
 

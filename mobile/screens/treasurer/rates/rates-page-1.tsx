@@ -9,7 +9,7 @@ import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useDeleteAnnualGrossSales } from './queries/ratesDeleteQueries';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 
 export default function RatesPage1() {
   const router = useRouter();

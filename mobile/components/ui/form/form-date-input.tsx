@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import { Control, Controller } from 'react-hook-form';
 import { Calendar } from '@/lib/icons/Calendar';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Button } from '../button';
+import { Button } from '../button/button';
 
 interface DatePickerProps {
   control: Control<any>;

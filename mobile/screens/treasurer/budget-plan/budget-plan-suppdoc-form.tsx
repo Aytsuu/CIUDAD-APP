@@ -6,7 +6,7 @@ import z from "zod"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import MediaPicker, {MediaItem} from '@/components/ui/media-picker';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { useAddBudgetPlanSuppDoc } from './queries/budgetPlanInsertQueries';

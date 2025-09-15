@@ -1,6 +1,6 @@
 import { ActivityIndicator, Text } from "react-native"
-import { Button } from "./button"
 import { CheckCircle } from "@/lib/icons/CheckCircle"
+import { Button } from "./button"
 
 export const SubmitButton = ({
   submittingLabel = "Submitting...",
@@ -17,7 +17,7 @@ export const SubmitButton = ({
     <Button
       onPress={handleSubmit}
       disabled={isSubmitting}
-      className={`min-h-[56px] rounded-full flex-row items-center justify-center ${
+      className={`min-h-[50px] rounded-full flex-row items-center justify-center ${
         isSubmitting ? "bg-gray-400" : "bg-primaryBlue"
       }`}
     >

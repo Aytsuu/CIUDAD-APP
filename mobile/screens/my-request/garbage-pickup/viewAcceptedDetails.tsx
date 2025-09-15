@@ -6,7 +6,7 @@ import { formatTimestamp } from "@/helpers/timestampformatter"
 import { formatTime } from "@/helpers/timeFormatter"
 import { useGetAcceptedDetailsResident } from "./queries/garbagePickupFetchQueries"
 import { ConfirmationModal } from "@/components/ui/confirmationModal"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { useUpdateGarbReqStatusResident } from "./queries/garbagePickupUpdateQueries"
 
 export default function ResidentAcceptedDetails() {
