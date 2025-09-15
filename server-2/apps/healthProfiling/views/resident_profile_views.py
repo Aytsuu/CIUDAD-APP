@@ -75,11 +75,6 @@ class ResidentPersonalCreateView(generics.CreateAPIView):
     serializer_class = ResidentPersonalCreateSerializer
     queryset = ResidentProfile.objects.all()
 
-class ResidentProfileCreateView(generics.CreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = ResidentProfileBaseSerializer
-    queryset = ResidentProfile.objects.all()
-
 class ResidentPersonalInfoView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = ResidentPersonalInfoSerializer

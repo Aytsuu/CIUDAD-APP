@@ -13,7 +13,7 @@ from apps.administration.models import Staff
 from ..models import FamilyComposition
 from datetime import datetime
 from ..utils import *
-from utils.supabase_client import upload_to_storage
+# from utils.supabase_client import upload_to_storage
 
 
 class AllRecordTableView(generics.GenericAPIView):

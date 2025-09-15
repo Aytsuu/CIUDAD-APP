@@ -65,7 +65,6 @@ urlpatterns = [
     # Resident Urls
     path("resident/", ResidentProfileListWithOptions.as_view(), name="resident-details"),
     path("resident/list/table/", ResidentProfileTableView.as_view(), name="residents-table"),
-    path("resident/create/", ResidentProfileCreateView.as_view(), name="resident-create"),
     path("resident/create/combined/", ResidentPersonalCreateView.as_view(), name="resident-combined-create"),
     path("resident/personal/<str:rp_id>/", ResidentPersonalInfoView.as_view(), name="resident-personal-info"),
     path("resident/exclude/fam/<str:fam_id>/", ResidentProfileListWithOptions.as_view(), name="resident-list-with exclusions"),
