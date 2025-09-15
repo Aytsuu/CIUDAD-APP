@@ -69,9 +69,18 @@ export const getSummonTimeSlots = async(sd_id: number) => {
 }
 
 
-export const getServiceChargeRequestList = async () => {
+export const getSummonReqPendingList = async () => {
     try{
-        const res = await api.get('clerk/service-charge-request-list/')
+        const res = await api.get('clerk/service-charge-pending-list/')
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const getSummonReqRejectedList = async () => {
+    try{
+        const res = await api.get('clerk/service-charge-rejected-list/')
         return res.data
     }catch(err){
         console.error(err)

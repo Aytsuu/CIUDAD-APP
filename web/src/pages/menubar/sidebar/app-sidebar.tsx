@@ -46,7 +46,12 @@ const barangayItems: BaseMenuItem[] = [
   },
   {
     title: "Summon & Case Tracker",
-    url: "/summon-and-case-tracking",
+    url: "/",
+    items: [
+      { title: "Request List", url: "/request-list"},
+      { title: "Summon Calendar", url: "/summon-calendar"},
+      { title: "Cases", url: "/summon-cases"},
+    ]
   },
   {
     title: "GAD",
@@ -98,7 +103,6 @@ const barangayItems: BaseMenuItem[] = [
   },
   {
     title: "Certificate and Clearances",
-    subItems: true,
     url: "/",
     items: [
       { title: "Certifications", url: "record/clearances/certification" },

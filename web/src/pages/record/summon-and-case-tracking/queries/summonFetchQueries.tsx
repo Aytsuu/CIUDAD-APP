@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getServiceChargeRequest, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, getSummonTimeSlots, getServiceChargeRequestList, getComplaintDetails} from "../requestAPI/summonGetAPI";
+import { getServiceChargeRequest, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, 
+    getSummonTimeSlots, getSummonReqPendingList, getComplaintDetails, getSummonReqRejectedList} from "../requestAPI/summonGetAPI";
 
 export type ServiceChargeRequest = {
     sr_id: string;
@@ -151,7 +152,7 @@ export const useGetSummonTimeSlots = (sd_id: number) => {
     })
 }
 
-export type ServiceChargeRequestList = {
+export type SummonReqPendingList = {
     sr_id: string;
     sr_req_date: string;
     comp_id: string;
@@ -160,10 +161,29 @@ export type ServiceChargeRequestList = {
     accused_names: string [];
 }
 
-export const useGetServiceChargeRequestList = () => {
-    return useQuery<ServiceChargeRequestList[]>({
-        queryKey: ['serviceChargeList'],
-        queryFn: getServiceChargeRequestList,
+export const useGetSummonReqPendingList = () => {
+    return useQuery<SummonReqPendingList[]>({
+        queryKey: ['summonPendingReq'],
+        queryFn: getSummonReqPendingList,
+        staleTime: 5000
+    })
+}
+
+export type SummonReqRejectedList = {
+    sr_id: string;
+    sr_req_date: string;
+    comp_id: string;
+    complainant_names: string[]
+    incident_type: string;
+    accused_names: string [];
+    rejection_reason: string;
+    decision_date: string;
+}
+
+export const useGetSummonReqRejectedList = () => {
+    return useQuery<SummonReqRejectedList[]>({
+        queryKey: ['summonRejectedReq'],
+        queryFn: getSummonReqRejectedList,
         staleTime: 5000
     })
 }

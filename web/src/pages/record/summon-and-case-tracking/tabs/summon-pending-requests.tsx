@@ -1,29 +1,29 @@
 import { DataTable } from "@/components/ui/table/data-table";
-import { useGetServiceChargeRequestList } from "./queries/summonFetchQueries";
+import { useGetSummonReqPendingList } from "../queries/summonFetchQueries";
 import { ColumnDef } from "@tanstack/react-table";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, ChevronRight, CheckCircle, XCircle } from "lucide-react";
+import { Search, ChevronRight } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import React from "react";
 import { Button } from "@/components/ui/button/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { ComplaintRecordForSummon } from "./complaint-record";
+import { ComplaintRecordForSummon } from "../complaint-record";
 
-export default function SummonRequests() {
-    const { data: summonReq = [], isLoading } = useGetServiceChargeRequestList();
+export default function SummonPendingReqs() {
+    const { data: pendingReq = [], isLoading } = useGetSummonReqPendingList();
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = React.useState<number>(10);
     const [selectedIncident, setSelectedIncident] = useState<string>("0");
-    const [editingRowId, setEditingRowId] = useState<number | null>(null);
+    const [editingRowId, setEditingRowId] = useState<string | null>(null);
 
     
-    console.log('fetchedData:', summonReq);
+    console.log('fetchedData:', pendingReq);
 
     // Filter and paginate function
     const filterAndPaginate = (rows: any[], search: string, page: number, pageSize: number) => {
@@ -44,7 +44,7 @@ export default function SummonRequests() {
 
     // Apply filtering and pagination
     const { filtered: _filteredData, paginated: paginatedData, total: totalItems } = filterAndPaginate(
-        summonReq, 
+        pendingReq, 
         searchQuery, 
         currentPage, 
         pageSize
@@ -114,15 +114,15 @@ export default function SummonRequests() {
                                 <div className="overflow-y-auto flex-1 pr-2">
                                     <ComplaintRecordForSummon 
                                         comp_id={complaint} 
-                                        sr_id={row.original.sr_id}
+                                        sr_id={String(row.original.sr_id)}
                                         onSuccess={() => setEditingRowId(null)}
                                     />
                                 </div>
                             </div>
                             
                         }
-                        isOpen={editingRowId == Number(row.original.sr_id)}
-                        onOpenChange={(open) => setEditingRowId(open? Number(row.original.sr_id): null)}
+                        isOpen={editingRowId == row.original.sr_id}
+                        onOpenChange={(open) => setEditingRowId(open? row.original.sr_id: null)}
                     />
                 );
             },
@@ -141,82 +141,84 @@ export default function SummonRequests() {
     }
 
     return (
-        <div className="mt-3 w-full bg-white p-4 rounded-lg shadow">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-4 mb-4">
-                <div className="flex-1 flex flex-col sm:flex-row gap-4 w-full">
-                    <div className="relative flex-1 max-w-[500px]">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                        <Input 
-                            placeholder="Search..." 
-                            className="pl-10 w-full bg-white text-sm"
-                            value={searchQuery}
-                            onChange={(e) => {
-                                setSearchQuery(e.target.value);
-                                setCurrentPage(1);
-                            }}
-                        />
-                    </div>
-                    
-                    <div className="w-full sm:w-[250px]">
-                        <SelectLayout
-                            className="w-full bg-white"
-                            placeholder="Filter by Incident Type"
-                            options={[
-                                { id: "0", name: "All Incident Types" },
-                                ...Array.from(new Set(summonReq.map(item => item.incident_type)))
-                                    .filter(name => name)
-                                    .map((name) => ({ id: name, name }))
-                            ]}
-                            value={selectedIncident}
-                            label=""
-                            onChange={(value) => {
-                                setSelectedIncident(value);
-                                setCurrentPage(1);
-                            }}
-                        />
+        <div>
+            <div className="mt-3 w-full bg-white p-4 rounded-lg shadow">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-4 mb-4">
+                    <div className="flex-1 flex flex-col sm:flex-row gap-4 w-full">
+                        <div className="relative flex-1 max-w-[500px]">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+                            <Input 
+                                placeholder="Search..." 
+                                className="pl-10 w-full bg-white text-sm"
+                                value={searchQuery}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                            />
+                        </div>
+                        
+                        <div className="w-full sm:w-[250px]">
+                            <SelectLayout
+                                className="w-full bg-white"
+                                placeholder="Filter by Incident Type"
+                                options={[
+                                    { id: "0", name: "All Incident Types" },
+                                    ...Array.from(new Set(pendingReq.map(item => item.incident_type)))
+                                        .filter(name => name)
+                                        .map((name) => ({ id: name, name }))
+                                ]}
+                                value={selectedIncident}
+                                label=""
+                                onChange={(value) => {
+                                    setSelectedIncident(value);
+                                    setCurrentPage(1);
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            {/* Page Size Selector */}
-            <div className="flex items-center gap-2 justify-end mb-4">
-                <span className="text-sm">Show</span>
-                <Select 
-                    value={pageSize.toString()} 
-                    onValueChange={(value) => {
-                        setPageSize(Number.parseInt(value));
-                        setCurrentPage(1);
-                    }}
-                >
-                    <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="5">5</SelectItem>
-                        <SelectItem value="10">10</SelectItem>
-                        <SelectItem value="25">25</SelectItem>
-                        <SelectItem value="50">50</SelectItem>
-                        <SelectItem value="100">100</SelectItem>
-                    </SelectContent>
-                </Select>
-                <span className="text-sm">entries</span>
-            </div>
-            
-            <DataTable columns={columns} data={paginatedData} />
-            
-            {/* Pagination */}
-            <div className="flex flex-col sm:flex-row justify-between items-center text-sm mt-4 gap-4">
-                <p className="text-gray-600">
-                    Showing {(currentPage - 1) * pageSize + 1}-
-                    {Math.min(currentPage * pageSize, totalItems)} of {totalItems} rows
-                </p>
-                {totalItems > 0 && (
-                    <PaginationLayout
-                        currentPage={currentPage}
-                        totalPages={Math.ceil(totalItems / pageSize)}
-                        onPageChange={setCurrentPage}
-                    />
-                )}
+                
+                {/* Page Size Selector */}
+                <div className="flex items-center gap-2 justify-end mb-4">
+                    <span className="text-sm">Show</span>
+                    <Select 
+                        value={pageSize.toString()} 
+                        onValueChange={(value) => {
+                            setPageSize(Number.parseInt(value));
+                            setCurrentPage(1);
+                        }}
+                    >
+                        <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="5">5</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="25">25</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                            <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <span className="text-sm">entries</span>
+                </div>
+                
+                <DataTable columns={columns} data={paginatedData} />
+                
+                {/* Pagination */}
+                <div className="flex flex-col sm:flex-row justify-between items-center text-sm mt-4 gap-4">
+                    <p className="text-gray-600">
+                        Showing {(currentPage - 1) * pageSize + 1}-
+                        {Math.min(currentPage * pageSize, totalItems)} of {totalItems} rows
+                    </p>
+                    {totalItems > 0 && (
+                        <PaginationLayout
+                            currentPage={currentPage}
+                            totalPages={Math.ceil(totalItems / pageSize)}
+                            onPageChange={setCurrentPage}
+                        />
+                    )}
+                </div>
             </div>
         </div>
     );

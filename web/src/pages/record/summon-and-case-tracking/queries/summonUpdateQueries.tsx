@@ -112,7 +112,7 @@ export const useAcceptRequest = (onSuccess?: () => void) => {
         onMutate: () =>{
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['serviceChargeList'] })
+            queryClient.invalidateQueries({ queryKey: ['summonPendingReq'] })
             toast.success('Request Accepted', {
                 id: "acceptReq",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -140,7 +140,7 @@ export const useRejectRequest = (onSuccess?: () => void) => {
         onMutate: () =>{
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['serviceChargeList'] })
+            queryClient.invalidateQueries({ queryKey: ['summonPendingReq'] })
             toast.success('Request Rejected', {
                 id: "rejectReq",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,

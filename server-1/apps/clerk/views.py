@@ -190,8 +190,8 @@ logger = logging.getLogger(__name__)
 #         )
 #         return queryset
 
-class ServiceChargeRequestListView(generics.ListAPIView):
-    serializer_class = ServiceChargeRequestListSerializer
+class SummonRequestPendingListView(generics.ListAPIView):
+    serializer_class = SummonRequestPendingListSerializer
     
     def get_queryset(self):
         queryset = ServiceChargeRequest.objects.filter(
@@ -200,6 +200,20 @@ class ServiceChargeRequestListView(generics.ListAPIView):
         ).select_related('comp_id').prefetch_related(
             'comp_id__complaintcomplainant_set__cpnt',
             'comp_id__complaintaccused_set__acsd'
+        )
+        return queryset
+    
+class SummonRequestRejectedListView(generics.ListAPIView):
+    serializer_class = SummonRequestRejectedListSerializer
+    
+    def get_queryset(self):
+        queryset = ServiceChargeRequest.objects.filter(
+            sr_req_status__iexact='Rejected',
+            sr_type='Summon'
+        ).select_related('comp_id').prefetch_related(
+            'servicechargedecision_set',  
+            'comp_id__complaintcomplainant_set__cpnt',  
+            'comp_id__complaintaccused_set__acsd' 
         )
         return queryset
     

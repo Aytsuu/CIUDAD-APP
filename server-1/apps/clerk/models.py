@@ -249,7 +249,7 @@ class Address(models.Model):
 
 # Service Charge Request Models
 class ServiceChargeRequest(models.Model):
-    sr_id = models.BigAutoField(primary_key=True)
+    sr_id = models.CharField(primary_key=True, max_length = 200)
     sr_code = models.CharField(max_length=10, blank=True, null=True) 
     sr_type = models.CharField(max_length = 250, null=True, blank=True)
     sr_req_date = models.DateTimeField(default=datetime.now)

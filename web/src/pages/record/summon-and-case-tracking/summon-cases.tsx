@@ -363,9 +363,24 @@ function SummonCases(){
     });
 
     return(
-        <div className="w-full mt-2">
-            {/* Search and Filter */}
-            <div>
+         <div className="w-full h-full flex flex-col">
+            {/* Header Section - Fixed height */}
+            <div className="flex-shrink-0">
+                <div className="flex flex-col gap-3 mb-3">
+                    <div className="flex flex-row gap-4">
+                        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
+                        Summon Cases
+                        </h1>
+                    </div>
+                    <p className="text-xs sm:text-sm text-darkGray">
+                        View, manage, and track the status of summon cases.
+                    </p>
+                </div>
+                <hr className="border-gray mb-7 sm:mb-8" />
+            </div>
+
+            {/* Search and Filter - Fixed height */}
+            <div className="flex-shrink-0 mb-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full">
                     {/* Search */}
                     <div className="relative w-full sm:w-auto sm:flex-1 max-w-2xl">
@@ -396,99 +411,99 @@ function SummonCases(){
                 </div>
             </div>
 
-            {/* Cards Area - This will be scrolled by the parent */}
-            <div className="mt-4">
-                {isLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[...Array(4)].map((_, index) => (
-                            <div key={index} className="p-4 border rounded-lg">
-                                <Skeleton className="h-8 w-1/3 mb-4" />
-                                <div className="space-y-3">
-                                    <Skeleton className="h-4 w-full" />
-                                    <Skeleton className="h-4 w-2/3" />
-                                    <Skeleton className="h-4 w-3/4" />
-                                    <Skeleton className="h-4 w-1/2" />
+            {/* Cards Area - This will scroll independently */}
+            <div className="flex-1 overflow-y-auto">
+                    {isLoading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[...Array(4)].map((_, index) => (
+                                <div key={index} className="p-4 border rounded-lg">
+                                    <Skeleton className="h-8 w-1/3 mb-4" />
+                                    <div className="space-y-3">
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-2/3" />
+                                        <Skeleton className="h-4 w-3/4" />
+                                        <Skeleton className="h-4 w-1/2" />
+                                    </div>
+                                    <Skeleton className="h-16 w-full mt-4" />
                                 </div>
-                                <Skeleton className="h-16 w-full mt-4" />
-                            </div>
-                        ))}
-                    </div>
-                ) : filteredData.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-10">
-                        <p className="text-gray-500 text-lg">No summons or cases found</p>
-                        <p className="text-sm text-gray-400 mt-2">
-                            {searchTerm ? `No results for "${searchTerm}"` : "Try changing your filters"}
-                        </p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-6"> 
-                        {filteredData.map((item: ServiceChargeRequest) => (
-                            <Link 
-                                key={item.sr_id}
-                                to='/summon-and-case-view'  
-                                state={{ sr_id: item.sr_id }} 
-                                className="hover:shadow-lg transition-shadow"
-                            >
-                                <CardLayout
-                                    title={
-                                        <div className="flex flex-row">
-                                            <div className="flex justify-between items-center w-full">
-                                                <p className="text-primary flex items-center font-semibold text-xl mb-2">
-                                                    No. {item.sr_code}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    }
-                                    content={
-                                        <div className="flex flex-col gap-2">
-                                            <div className={styles.cardInfoRow}>
-                                                <p className={styles.cardContent}>Complainant: </p>
-                                                <p className={styles.cardInfo}>{item.complainant_name}</p>
-                                            </div>
-                                            
-                                            <div className={styles.cardInfoRow}>
-                                                <p className={styles.cardContent}>Accused: </p>
-                                                <p className={styles.cardInfo}>
-                                                    {Array.isArray(item.accused_names) 
-                                                    ? item.accused_names.join(', ') 
-                                                    : item.accused_names}
-                                                </p>
-                                            </div>
-
-                                            <div className={styles.cardInfoRow}>
-                                                <p className={styles.cardContent}>Incident Type: </p>
-                                                <p className={styles.cardInfo}>{item.incident_type}</p>
-                                            </div>
-
-                                            <div className={styles.cardInfoRow}>
-                                                <p className={styles.cardContent}>Status: </p>
-                                                <p className={`${styles.cardInfo} ${getStatusColor(item.status)}`}>
-                                                    {item.status || "Unknown"}
-                                                </p>
-                                            </div>
-
-                                            {(item.status === "Resolved" || item.status === "Escalated") && item.decision_date && (
-                                                <div className={styles.cardInfoRow}>
-                                                    <p className={styles.cardContent}>Decision Date: </p>
-                                                    <p className={styles.cardInfo}>
-                                                        {formatTimestamp(item.decision_date)}
+                            ))}
+                        </div>
+                    ) : filteredData.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-10">
+                            <p className="text-gray-500 text-lg">No summons or cases found</p>
+                            <p className="text-sm text-gray-400 mt-2">
+                                {searchTerm ? `No results for "${searchTerm}"` : "Try changing your filters"}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-6"> 
+                            {filteredData.map((item: ServiceChargeRequest) => (
+                                <Link 
+                                    key={item.sr_id}
+                                    to='/view-case'  
+                                    state={{ sr_id: item.sr_id }} 
+                                    className="hover:shadow-lg transition-shadow"
+                                >
+                                    <CardLayout
+                                        title={
+                                            <div className="flex flex-row">
+                                                <div className="flex justify-between items-center w-full">
+                                                    <p className="text-primary flex items-center font-semibold text-xl mb-2">
+                                                        No. {item.sr_code}
                                                     </p>
                                                 </div>
-                                            )}
-                                        </div>
-                                    }
-                                    description={
-                                        <div className="mb-5">
-                                            <p>{item.allegation}</p>
-                                        </div>
-                                    }  
-                                />
-                            </Link>  
-                        ))}
-                    </div>
-                )}
+                                            </div>
+                                        }
+                                        content={
+                                            <div className="flex flex-col gap-2">
+                                                <div className={styles.cardInfoRow}>
+                                                    <p className={styles.cardContent}>Complainant: </p>
+                                                    <p className={styles.cardInfo}>{item.complainant_name}</p>
+                                                </div>
+                                                
+                                                <div className={styles.cardInfoRow}>
+                                                    <p className={styles.cardContent}>Accused: </p>
+                                                    <p className={styles.cardInfo}>
+                                                        {Array.isArray(item.accused_names) 
+                                                        ? item.accused_names.join(', ') 
+                                                        : item.accused_names}
+                                                    </p>
+                                                </div>
+
+                                                <div className={styles.cardInfoRow}>
+                                                    <p className={styles.cardContent}>Incident Type: </p>
+                                                    <p className={styles.cardInfo}>{item.incident_type}</p>
+                                                </div>
+
+                                                <div className={styles.cardInfoRow}>
+                                                    <p className={styles.cardContent}>Status: </p>
+                                                    <p className={`${styles.cardInfo} ${getStatusColor(item.status)}`}>
+                                                        {item.status || "Unknown"}
+                                                    </p>
+                                                </div>
+
+                                                {(item.status === "Resolved" || item.status === "Escalated") && item.decision_date && (
+                                                    <div className={styles.cardInfoRow}>
+                                                        <p className={styles.cardContent}>Decision Date: </p>
+                                                        <p className={styles.cardInfo}>
+                                                            {formatTimestamp(item.decision_date)}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        }
+                                        description={
+                                            <div className="mb-5">
+                                                <p>{item.allegation}</p>
+                                            </div>
+                                        }  
+                                    />
+                                </Link>  
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
-        </div>
     )
 }
 

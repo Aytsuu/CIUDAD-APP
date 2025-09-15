@@ -17,9 +17,7 @@ export function ComplaintRecordForSummon({ comp_id, sr_id, onSuccess }: {comp_id
   const {mutate: acceptReq, isPending: isAcceptPending} = useAcceptRequest(onSuccess)
   const {mutate: rejectReq, isPending: isRejectPending} = useRejectRequest(onSuccess)
 
-  console.log('sr', sr_id)
-
-
+  console.log('Complaint:', complaintDetails)
   const handleAccept = (sr_id: string) => {
     acceptReq(sr_id)
   }
