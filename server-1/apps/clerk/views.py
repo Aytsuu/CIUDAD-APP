@@ -23,6 +23,7 @@ from .models import (
     BusinessPermitRequest,
     IssuedBusinessPermit,
     Business,
+    ServiceChargeRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -1079,3 +1080,18 @@ class ClearanceRequestView(generics.CreateAPIView):
                 'error': str(e),
                 'detail': 'An error occurred while updating business permit request status'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ---------------------- Treasurer: Service Charge Requests ----------------------
+class ServiceChargeTreasurerListView(generics.ListAPIView):
+    serializer_class = ServiceChargeTreasurerListSerializer
+
+    def get_queryset(self):
+        # Pending or Paid service charges for Summon cases; adjust filters as needed
+        qs = ServiceChargeRequest.objects.filter(
+            sr_type='Summon'
+        ).select_related('comp_id').prefetch_related(
+            'comp_id__complaintcomplainant_set__cpnt',
+            'comp_id__complaintaccused_set__acsd'
+        ).order_by('-sr_req_date')
+        return qs

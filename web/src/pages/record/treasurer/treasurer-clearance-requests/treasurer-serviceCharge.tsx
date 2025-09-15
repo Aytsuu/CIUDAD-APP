@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/ui/table/data-table";
+import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Trash, FileInput, ReceiptText, Search } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -8,6 +9,9 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import { Button } from "@/components/ui/button/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
+import { useTreasurerServiceCharges } from "./queries/serviceChargeQueries";
+import type { ServiceCharge } from "./restful-api/serviceChargeGetAPI";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 
 export const columns: ColumnDef<ServiceCharge>[] = [
@@ -46,7 +50,7 @@ export const columns: ColumnDef<ServiceCharge>[] = [
     },
     { accessorKey: "action", 
         header: "Action",
-        cell: ({}) =>(
+        cell: ({ row }) =>(
           <div className="flex justify-center gap-1">
               <TooltipLayout
               trigger={
@@ -56,7 +60,21 @@ export const columns: ColumnDef<ServiceCharge>[] = [
                     title="Create Receipt"
                     description="Enter the serial number to generate a receipt."
                     mainContent={
-                        <ReceiptForm/>
+                        (() => {
+                          const sc = row.original as ServiceCharge;
+                          return (
+                            <ReceiptForm
+                              id={String(sc.caseNo)}
+                              purpose={sc.reason}
+                              rate={"0"}
+                              requester={sc.name}
+                              pay_status={"Unpaid"}
+                              nat_col={"Service Charge"}
+                              is_resident={false}
+                              onSuccess={() => {}}
+                            />
+                          );
+                        })()
                     } 
                   />
               } content="Create Receipt"/>
@@ -75,32 +93,20 @@ export const columns: ColumnDef<ServiceCharge>[] = [
 ];
 
 
-type ServiceCharge ={
-    caseNo: number,
-    name: string,
-    address1: string,
-    respondent: string,
-    address2: string,
-    reason: string,
-    reqDate: string,
-};
-
-
-export const ServiceChargeRecords: ServiceCharge[]= [
-    {
-        caseNo: 123456,
-        name: "Name",
-        address1: "Address",
-        respondent: "Respondent Name",
-        address2: "Respondent Address",
-        reason: "Reason",
-        reqDate: "MM-DD-YYYY"
-    }
-];
-
-
 function ServiceCharge(){
-    const data = ServiceChargeRecords;
+    const { data = [], isLoading } = useTreasurerServiceCharges();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+
+    const totalPages = useMemo(() => {
+        return Math.max(1, Math.ceil((data?.length || 0) / pageSize));
+    }, [data, pageSize]);
+
+    const paginatedData = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        return (data || []).slice(start, end);
+    }, [data, currentPage, pageSize]);
 
     return(
         <div className="w-full h-full">
@@ -127,7 +133,14 @@ function ServiceCharge(){
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6">
                         <div className="flex gap-x-2 items-center">
                             <p className="text-xs sm:text-sm">Show</p>
-                            <Input type="number" className="w-14 h-8" defaultValue="10" />
+                            <Input type="number" className="w-14 h-8" value={pageSize}
+                                onChange={(e) => {
+                                    const val = parseInt(e.target.value || '10', 10);
+                                    const safe = isNaN(val) || val <= 0 ? 10 : val;
+                                    setPageSize(safe);
+                                    setCurrentPage(1);
+                                }}
+                            />
                             <p className="text-xs sm:text-sm">Entries</p>
                         </div>
 
@@ -148,16 +161,32 @@ function ServiceCharge(){
                         </div>
                     </div>
 
-                    <DataTable columns={columns} data={data}></DataTable>
+                    {isLoading ? (
+                        <div className="p-6 text-sm text-darkGray">Loading service charges...</div>
+                    ) : paginatedData.length === 0 ? (
+                        <div className="p-6 text-sm text-darkGray">No service charge records found.</div>
+                    ) : (
+                        <DataTable columns={columns} data={paginatedData}></DataTable>
+                    )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0">
                     <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                        Showing 1-10 of 150 rows
+                        {(() => {
+                            const total = data?.length || 0;
+                            const start = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+                            const end = Math.min(total, currentPage * pageSize);
+                            return `Showing ${start}-${end} of ${total} rows`;
+                        })()}
                     </p>
 
                     <div className="w-full sm:w-auto flex justify-center">
-                        {/* <PaginationLayout className="" /> */}
+                        <PaginationLayout
+                            className=""
+                            totalPages={totalPages}
+                            currentPage={currentPage}
+                            onPageChange={(p) => setCurrentPage(p)}
+                        />
                     </div>
                 </div>  
             </div>

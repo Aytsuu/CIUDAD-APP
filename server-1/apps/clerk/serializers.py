@@ -620,6 +620,69 @@ class ServiceChargePaymentRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceChargePaymentRequest
         fields = '__all__'
+
+
+# ================== TREASURER: SERVICE CHARGE LIST =========================
+class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
+    caseNo = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+    address1 = serializers.SerializerMethodField()
+    respondent = serializers.SerializerMethodField()
+    address2 = serializers.SerializerMethodField()
+    reason = serializers.SerializerMethodField()
+    reqDate = serializers.DateTimeField(source='sr_req_date', format="%Y-%m-%d", read_only=True)
+
+    class Meta:
+        model = ServiceChargeRequest
+        fields = [
+            'caseNo',
+            'name',
+            'address1',
+            'respondent',
+            'address2',
+            'reason',
+            'reqDate',
+        ]
+
+    def _get_first_complainant(self, obj):
+        if obj.comp_id:
+            try:
+                cc = obj.comp_id.complaintcomplainant_set.select_related('cpnt').first()
+                return cc.cpnt if cc else None
+            except Exception:
+                return None
+        return None
+
+    def _get_first_accused(self, obj):
+        if obj.comp_id:
+            try:
+                ca = obj.comp_id.complaintaccused_set.select_related('acsd').first()
+                return ca.acsd if ca else None
+            except Exception:
+                return None
+        return None
+
+    def get_caseNo(self, obj):
+        return getattr(obj.comp_id, 'comp_id', None)
+
+    def get_name(self, obj):
+        cpnt = self._get_first_complainant(obj)
+        return getattr(cpnt, 'cpnt_name', None) if cpnt else None
+
+    def get_address1(self, obj):
+        cpnt = self._get_first_complainant(obj)
+        return getattr(cpnt, 'cpnt_address', None) if cpnt else None
+
+    def get_respondent(self, obj):
+        acsd = self._get_first_accused(obj)
+        return getattr(acsd, 'acsd_name', None) if acsd else None
+
+    def get_address2(self, obj):
+        acsd = self._get_first_accused(obj)
+        return getattr(acsd, 'acsd_address', None) if acsd else None
+
+    def get_reason(self, obj):
+        return getattr(obj.comp_id, 'comp_allegation', None) if obj.comp_id else None
 # ============================ MIGHT DELETE THESE LATER ==============================
 
 # Complaint-related Serializers
