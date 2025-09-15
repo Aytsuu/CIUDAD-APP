@@ -71,11 +71,11 @@ export const addReceipt = async (data: Record<string, any>) => {
 
 export const addPersonalReceipt = async (data: Record<string, any>) => {
     try{
-        const updateStatus = await api.put(`/clerk/update-personal-req-status/${Number(data.id)}/`, {
-            nrc_req_status: "In Progress",
-            nrc_req_payment_status: "Paid",
-            nrc_pay_date: new Date().toISOString()
-        })
+        // const updateStatus = await api.put(`/clerk/update-personal-req-status/${Number(data.id)}/`, {
+        //     nrc_req_status: "In Progress",
+        //     nrc_req_payment_status: "Paid",
+        //     nrc_pay_date: new Date().toISOString()
+        // })
 
         const payload: any = {
                     inv_date: new Date().toISOString(),
