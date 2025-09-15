@@ -6,11 +6,9 @@ import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ReceiptText, ArrowUpDown, Search, User, Users, CircleCheck, Ban } from 'lucide-react';
 import { useState, useEffect } from "react";
-// import { useAuth } from '@/context/AuthContext';
 import PersonalClearanceForm from "./treasurer-personalClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import DiscountAuthorizationForm from "./treasurer-discount-form";
-// Removed unused DropdownMenu imports
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetNonResidentCertReq, type NonResidentReq, usegetResidentCertReq, type ResidentReq } from "./queries/CertClearanceFetchQueries";

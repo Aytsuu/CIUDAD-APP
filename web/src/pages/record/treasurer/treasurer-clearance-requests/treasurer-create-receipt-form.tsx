@@ -157,7 +157,7 @@ function ReceiptForm({
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Request Type</label>
-                        <p className="text-base text-gray-900 font-medium mt-1">{nat_col}</p>
+                        <p className="text-base text-gray-900 font-medium mt-1">{nat_col === 'Service Charge' ? 'Summon' : nat_col}</p>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Purpose</label>
@@ -299,5 +299,6 @@ function ReceiptForm({
 }
 
 export default ReceiptForm;
+
 
 
