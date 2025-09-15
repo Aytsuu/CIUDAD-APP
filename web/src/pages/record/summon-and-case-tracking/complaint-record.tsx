@@ -11,7 +11,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 
-export function ComplaintRecordForSummon({ comp_id, sr_id, onSuccess }: {comp_id: string, sr_id?: string, onSuccess?: () => void}) {
+export function ComplaintRecordForSummon({ comp_id, sr_id, isPending, onSuccess }: {comp_id: string, sr_id?: string, isPending?: boolean, onSuccess?: () => void}) {
   const {data: complaintDetails, isLoading, error} = useGetComplaintDetails(comp_id)
   const [reason, setReason] = useState("")
   const {mutate: acceptReq, isPending: isAcceptPending} = useAcceptRequest(onSuccess)
@@ -50,9 +50,10 @@ export function ComplaintRecordForSummon({ comp_id, sr_id, onSuccess }: {comp_id
   }
 
   return (
-    <div className="space-y-6 max-h-[calc(90vh-100px)] overflow-y-auto">
+    <div className="space-y-6 max-h-[calc(90vh-100px)] overflow-y-auto h-full">
       {/* Action Buttons */}
-      <div className="flex justify-end gap-3 mb-4 p-4 bg-gray-50 rounded-lg">
+      {isPending? (
+        <div className="flex justify-end gap-3 mb-4 p-4 bg-gray-50 rounded-lg">
           <DialogLayout
               trigger={
                 <Button variant="outline" className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-2" disabled={isAcceptPending || isRejectPending}>
@@ -88,6 +89,8 @@ export function ComplaintRecordForSummon({ comp_id, sr_id, onSuccess }: {comp_id
               onClick={() => handleAccept(sr_id || '')}
           />
       </div>
+      ): null}
+      
       {/* Header */}
       <Card className="border-l-4 border-l-primary">
         <CardHeader>

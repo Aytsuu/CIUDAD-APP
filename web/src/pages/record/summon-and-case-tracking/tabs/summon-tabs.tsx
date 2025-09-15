@@ -1,6 +1,7 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import SummonPendingReqs from "./summon-pending-requests"
 import SummonRejectedReq from "./summon-rejected-request"
+import SummonAcceptedReq from "./summon-accepted-request"
 
 export default function SummonReqTabs() {
   return (
@@ -54,10 +55,10 @@ export default function SummonReqTabs() {
             </TabsContent>
 
             <TabsContent value="accepted" className="m-0 h-full">
-              {/* <SummonCalendar/> */}
+              <SummonAcceptedReq/>
             </TabsContent>
 
-            <TabsContent value="rejected" className="m-0 h-full">
+            <TabsContent value="rejected" className="m-0">
               <SummonRejectedReq/>
             </TabsContent>
           </div>

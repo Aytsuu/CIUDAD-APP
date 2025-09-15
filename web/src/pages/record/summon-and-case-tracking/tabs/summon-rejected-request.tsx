@@ -16,6 +16,8 @@ import { ComplaintRecordForSummon } from "../complaint-record";
 
 export default function SummonRejectedReq() {
     const { data: rejectedReq = [], isLoading } = useGetSummonReqRejectedList();
+
+    console.log('Rejected:', rejectedReq)
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = React.useState<number>(10);
@@ -60,6 +62,15 @@ export default function SummonRejectedReq() {
                 </span>
             ),
         },
+            {
+            accessorKey: "comp_id ",
+            header: "Complaint No.",
+            cell: ({ row }) => (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+                    {row.original.comp_id}
+                </span>
+            ),
+        },
         {
             accessorKey: "sr_req_date",
             header: "Date Requested",
@@ -69,18 +80,18 @@ export default function SummonRejectedReq() {
             accessorKey: "complainant_names",
             header: "Complainant/s",
         },
-        { 
-            accessorKey: "accused_names", 
-            header: "Respondent/s",
-            cell: ({ row }) => (
-                <div>
-                    {Array.isArray(row.original.accused_names) 
-                        ? row.original.accused_names.join(", ")
-                        : row.original.accused_names
-                    }
-                </div>
-            )
-        },
+        // { 
+        //     accessorKey: "accused_names", 
+        //     header: "Respondent/s",
+        //     cell: ({ row }) => (
+        //         <div>
+        //             {Array.isArray(row.original.accused_names) 
+        //                 ? row.original.accused_names.join(", ")
+        //                 : row.original.accused_names
+        //             }
+        //         </div>
+        //     )
+        // },
         {
             accessorKey: "incident_type",
             header: "Incident Type",
@@ -89,6 +100,15 @@ export default function SummonRejectedReq() {
                     {row.original.incident_type}
                 </span>
             ),
+        },
+        {
+            accessorKey: "decision_date",
+            header: "Date Rejected",
+            cell: ({ row }) => formatTimestamp(row.original.decision_date),
+        },
+        {
+            accessorKey: "rejection_reason",
+            header: "Reason",
         },
         {
             // View Button
@@ -101,25 +121,25 @@ export default function SummonRejectedReq() {
                         className="w-[90vw] h-[80vh] max-w-[1800px] max-h-[1000px]"
                         trigger={
                             <Button className="flex items-center gap-2 text-primary bg-white shadow-none hover:bg-white group">
-                                <span className="text-sm font-medium group-hover:text-primary">View</span>
+                                <span className="text-sm font-medium group-hover:text-primary">View Complaint</span>
                                 <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
                                     <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />
                                 </div>
                             </Button>
                         }
                         title="Complaint Record"
-                        description = "Full details of the complaint filed."
-                            mainContent={
-                            <div className="flex flex-col h-full">
-                                <div className="overflow-y-auto flex-1 pr-2">
+                        description="Full details of the complaint filed."
+                        mainContent={
+                            <div className="flex flex-col h-full overflow-y-hidden">
+                                <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
                                     <ComplaintRecordForSummon 
                                         comp_id={complaint} 
                                         sr_id={String(row.original.sr_id)}
                                         onSuccess={() => setEditingRowId(null)}
+                                        isPending={false}
                                     />
                                 </div>
                             </div>
-                            
                         }
                         isOpen={editingRowId == row.original.sr_id}
                         onOpenChange={(open) => setEditingRowId(open? row.original.sr_id: null)}

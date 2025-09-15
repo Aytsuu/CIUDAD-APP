@@ -211,11 +211,15 @@ class SummonRequestRejectedListView(generics.ListAPIView):
             sr_req_status__iexact='Rejected',
             sr_type='Summon'
         ).select_related('comp_id').prefetch_related(
-            'servicechargedecision_set',  
+            'servicechargedecision',  
             'comp_id__complaintcomplainant_set__cpnt',  
             'comp_id__complaintaccused_set__acsd' 
         )
         return queryset
+    
+class ServiceChargePaymentRequestView(generics.ListCreateAPIView):
+    serializer_class = ServiceChargePaymentRequestSerializer
+    queryset = ServiceChargePaymentRequest.objects.all()
     
 class UpdateSummonRequestView(generics.UpdateAPIView):
     serializer_class = SummonRequestSerializer

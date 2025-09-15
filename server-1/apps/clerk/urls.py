@@ -16,6 +16,7 @@ urlpatterns = [
     path('service-charge-rejected-list/', SummonRequestRejectedListView.as_view(), name='service=-charge-rejected-list'),
     path('update-summon-request/<str:sr_id>/', UpdateSummonRequestView.as_view(), name='update-summon-request'),
     path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
+    path('service-charge-payment-request/', ServiceChargePaymentRequestView.as_view(), name='service-charge-payment-req'),
     path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),
     path('delete-summon-date/<int:sd_id>/', DeleteSummonDateAvailability.as_view(), name='delete-summon-date'),
     path('summon-time-availability/', SummonTimeAvailabilityView.as_view(), name='summon-time-availability'),

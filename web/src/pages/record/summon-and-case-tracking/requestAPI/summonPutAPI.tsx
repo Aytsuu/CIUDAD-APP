@@ -76,7 +76,15 @@ export const acceptSummonRequest = async(sr_id: string) => {
                 scd_decision_date: new Date().toISOString(),
                 sr_id: sr_id
             })
+
+            await api.post('clerk/service-charge-payment-request/', {
+                spay_amount: 150.00,
+                spay_status: "Pending",
+                sr_id: sr_id
+            })
         }
+        return res.data
+        
     }catch(err){
         console.error(err)
     }
