@@ -1,8 +1,6 @@
 from django.db import models
-from django.db.models import Q, ExpressionWrapper, F, DateTimeField
 from datetime import date, datetime
-from django.core.validators import MaxValueValidator
-from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
 def current_time():
     return datetime.now().time()
@@ -17,8 +15,6 @@ class WasteEvent(models.Model):
     we_description = models.CharField(max_length=200, null=True)
     we_organizer = models.CharField(max_length=100, null=True)
     we_invitees = models.CharField(max_length=100, null=True)
-    we_is_archive = models.BooleanField(default=False)
-    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
     
     class Meta:
         db_table = 'waste_event'
@@ -32,18 +28,17 @@ class WasteCollectionStaff(models.Model):
 
 class WasteReport(models.Model):
     rep_id = models.BigAutoField(primary_key=True)
-    # rep_image = models.CharField(default="none", null=True, blank=True)
     rep_matter = models.CharField(default="none")
     rep_location = models.CharField(default="none")
     rep_add_details = models.CharField(max_length=200, null=True)
     rep_violator = models.CharField(default="none")
-    # rep_complainant = models.CharField(default="none")
     rep_anonymous = models.BooleanField(default=False)
     rep_contact = models.CharField(default="none")
     rep_status = models.CharField(max_length=100, default="pending")
+    rep_cancel_reason =  models.CharField(max_length=200, null=True)
     rep_date = models.DateTimeField(null=True)
     rep_date_resolved = models.DateTimeField(null=True)
-    # rep_resolved_img = models.CharField(null=True, blank=True)
+    rep_date_cancelled = models.DateTimeField(null=True)
 
     sitio_id = models.ForeignKey(
         'profiling.Sitio', 
@@ -68,6 +63,7 @@ class WasteReport(models.Model):
         blank=True,
         db_column='staff_id'
     )
+
 
 
 
@@ -180,6 +176,14 @@ class WasteTruck(models.Model):
     )
     truck_last_maint = models.DateField(default=date.today)
     truck_is_archive = models.BooleanField(default=False) 
+    
+    staff = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
 
     class Meta:
         db_table = 'truck'
@@ -217,11 +221,23 @@ class WasteCollector(models.Model):
 
     class Meta:
         db_table = 'waste_collector'
-        
+
+
+class GarbagePickupRequestFile(models.Model):
+    gprf_id = models.BigAutoField(primary_key=True)
+    gprf_name = models.CharField(max_length=255)
+    gprf_type = models.CharField(max_length=100)
+    gprf_path = models.CharField(max_length=500)
+    gprf_url = models.CharField(max_length=500)
+
+    class Meta:
+        db_table = 'garbage_pickup_request_file'
+
+
 class Garbage_Pickup_Request(models.Model):
-    garb_id = models.BigAutoField(primary_key=True)
-    garb_location = models.CharField(max_length=20, null=False)
-    garb_waste_type = models.CharField(max_length=20, null=False)
+    garb_id = models.CharField(primary_key=True, max_length=15, editable=False)
+    garb_location = models.CharField(max_length=250, null=False)
+    garb_waste_type = models.CharField(max_length=250, null=False)
     garb_pref_date = models.DateField(default=date.today)
     garb_pref_time = models.TimeField(default=current_time)
     garb_req_status = models.CharField(max_length=20, null=False)
@@ -234,12 +250,12 @@ class Garbage_Pickup_Request(models.Model):
         blank=True,
     )
     
-    file = models.ForeignKey(
-        'file.File',
+    gprf = models.ForeignKey(
+        'GarbagePickupRequestFile',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        db_column='file_id'
+        db_column='gprf_id'
     )
     
     sitio_id = models.ForeignKey(
@@ -253,18 +269,62 @@ class Garbage_Pickup_Request(models.Model):
     class Meta:
         db_table = 'garbage_pickup_request'
 
+    def save(self, *args, **kwargs):
+        if not self.garb_id:
+            self.garb_id = self.generate_custom_id()
+        super().save(*args, **kwargs)
+
+    def generate_custom_id(self):
+        current_year = datetime.now().year % 100  
+        year_suffix = f"-{current_year:02d}"
+        
+        try:
+            current_year_ids = Garbage_Pickup_Request.objects.filter(
+                garb_id__endswith=year_suffix
+            )
+            
+            if current_year_ids.exists():
+                max_id = 0
+                for obj in current_year_ids:
+                    try:
+                        numeric_part = obj.garb_id[3:8] 
+                        numeric_value = int(numeric_part)
+                        if numeric_value > max_id:
+                            max_id = numeric_value
+                    except (ValueError, IndexError):
+                        continue
+                
+                next_number = max_id + 1
+            else:
+                next_number = 0
+                
+        except ObjectDoesNotExist:
+            next_number = 0
+        
+        number_part = f"{next_number:05d}"
+        
+        return f"GPR{number_part}{year_suffix}"
+
     def get_resident_name(self):
         return str(self.rp.per) if self.rp and self.rp.per else "Unknown"
     
 class Pickup_Request_Decision(models.Model):
     dec_id = models.BigAutoField(primary_key=True)
-    dec_rejection_reason = models.TextField(null=True, blank=True)
+    dec_reason = models.TextField(null=True, blank=True)
     dec_date = models.DateTimeField(default=datetime.now)
     garb_id = models.ForeignKey(
         Garbage_Pickup_Request,
         on_delete=models.CASCADE,
         db_column='garb_id' 
     )
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
+    )
+    
 
     class Meta:
         db_table = 'pickup_request_decision'
@@ -288,7 +348,6 @@ class Pickup_Assignment(models.Model):
         on_delete=models.CASCADE,
         db_column='garb_id' 
     )
-
     class Meta:
         db_table = 'pickup_assignment'
 
@@ -343,6 +402,13 @@ class WasteHotspot(models.Model):
         on_delete=models.CASCADE,
         db_column='wstp_id',
         default=None,
+    )
+    staff_id = models.ForeignKey(
+        'administration.Staff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='staff_id'
     )
 
     class Meta:

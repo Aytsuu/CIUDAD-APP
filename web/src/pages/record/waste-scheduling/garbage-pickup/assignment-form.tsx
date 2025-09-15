@@ -12,6 +12,7 @@ import { useGetTrucks } from "./queries/GarbageRequestFetchQueries";
 import { useGetCollectors } from "./queries/GarbageRequestFetchQueries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAddPickupAssignmentandCollectors } from "./queries/GarbageRequestInsertQueries";
+import { useAuth } from "@/context/AuthContext";
 
 function AcceptPickupRequest({garb_id, pref_date, pref_time, onSuccess}: {
     garb_id: string;
@@ -19,7 +20,8 @@ function AcceptPickupRequest({garb_id, pref_date, pref_time, onSuccess}: {
     pref_time: string;
     onSuccess?: () => void;
 }){
-    const { mutate: addAssignmentAndCollectors} = useAddPickupAssignmentandCollectors(onSuccess)
+    const {user} = useAuth();
+    const { mutate: addAssignmentAndCollectors, isPending} = useAddPickupAssignmentandCollectors(onSuccess)
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetTrucks();
     const { data: collectors = [], isLoading: isLoadingCollectors } = useGetCollectors();
@@ -56,6 +58,7 @@ function AcceptPickupRequest({garb_id, pref_date, pref_time, onSuccess}: {
             truck: "",
             date: pref_date,
             time: pref_time,
+            staff_id: user?.staff?.staff_id
         }
     })
 
@@ -116,7 +119,9 @@ function AcceptPickupRequest({garb_id, pref_date, pref_time, onSuccess}: {
                     />
 
                     <div className="flex justify-end mt-[20px]">
-                        <Button type="submit">Confirm</Button>  
+                        <Button type="submit" disabled={isPending}>
+                            {isPending? 'Submitting...' : 'Submit'}
+                        </Button>  
                     </div>
                 </form>
             </Form>

@@ -41,6 +41,7 @@ export const getGarbageCompletedTasks = async (driver_id: string) => {
             garb_requester: item.garb_requester ?? 'Unknown',
             garb_location: item.garb_location ?? '',
             garb_waste_type: item.garb_waste_type ?? '',
+            dec_date: item.dec_date || null,
             conf_resident_conf_date: item.confirmation_info?.conf_resident_conf_date ?? null,
             conf_staff_conf_date: item.confirmation_info?.conf_staff_conf_date ?? null,
             conf_resident_conf: item.confirmation_info?.conf_resident_conf ?? null,

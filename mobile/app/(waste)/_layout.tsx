@@ -9,7 +9,11 @@ export default () => {
                 <Stack.Screen name="waste-personnel/waste-truck-create" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="waste-personnel/waste-truck-edit" options={{ headerShown: false, animation: 'fade' }} />
 
+                <Stack.Screen name="illegal-dumping/resident/illegal-dump-res-main" options={{ headerShown: false, animation: 'fade' }} />  
                 <Stack.Screen name="illegal-dumping/resident/illegal-dump-res-create" options={{ headerShown: false, animation: 'fade' }} />   
+                <Stack.Screen name="illegal-dumping/resident/illegal-dump-res-resubmit" options={{ headerShown: false, animation: 'fade' }} />                  
+                <Stack.Screen name="illegal-dumping/resident/illegal-dump-view-res" options={{ headerShown: false, animation: 'fade' }} />                                   
+
                 <Stack.Screen name="illegal-dumping/staff/illegal-dump-main-staff" options={{ headerShown: false, animation: 'fade' }} />    
                 <Stack.Screen name="illegal-dumping/staff/illegal-dump-view-staff" options={{ headerShown: false, animation: 'fade' }} />  
                 
@@ -25,7 +29,8 @@ export default () => {
                 <Stack.Screen name="garbage-pickup/resident/garbage-pickup-create" options={{ headerShown: false, animation: 'fade' }} /> 
                 
                 <Stack.Screen name="waste-hotspot/waste-hotspot-create" options={{ headerShown: false, animation: 'fade' }} /> 
-                <Stack.Screen name="waste-hotspot/waste-hotspot-edit" options={{ headerShown: false, animation: 'fade' }} />            
+                <Stack.Screen name="waste-hotspot/waste-hotspot-edit" options={{ headerShown: false, animation: 'fade' }} />        
+
             </Stack>
         </ToastProvider>
     );

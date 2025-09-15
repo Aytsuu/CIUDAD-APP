@@ -16,7 +16,7 @@ import { useGetDonations } from "./queries/donationFetchQueries";
 import { Button } from "@/components/ui/button/button";
 
 function DonationTracker() {
-  const [_data] = useState<Donations[]>([]);
+  const [data] = useState<Donations[]>([]);
   // const [loading, setLoading] = useState(true);
   const [error] = useState<string | null>(null); 
   const [isDialogOpen, setIsDialogOpen] = useState(false);

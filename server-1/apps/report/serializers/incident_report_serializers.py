@@ -110,7 +110,7 @@ class IRCreateSerializer(serializers.ModelSerializer):
           ir=incident_report,
           irf_name=file_data['name'],
           irf_type=file_data['type'],
-          irf_path=f'ir/{file_data['name']}'
+          irf_path = f"ir/{file_data['name']}"
         )
 
         url = upload_to_storage(file_data, "report-bucket", 'ir')

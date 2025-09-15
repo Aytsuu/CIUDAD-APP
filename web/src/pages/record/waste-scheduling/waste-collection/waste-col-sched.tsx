@@ -19,6 +19,7 @@ import { useGetWasteTrucks } from './queries/wasteColFetchQueries';
 import { useGetWasteSitio } from './queries/wasteColFetchQueries';
 import { useCreateWasteSchedule } from './queries/wasteColAddQueries';
 import { useAssignCollectors } from './queries/wasteColAddQueries';
+import { useAuth } from "@/context/AuthContext";
 
 
 
@@ -39,9 +40,11 @@ const announcementOptions = [
 
 function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
+    const { user } = useAuth();
+
     //ADD QUERY MUTATIONS
     const { mutate: createSchedule } = useCreateWasteSchedule();
-    const { mutate: assignCollectors } = useAssignCollectors();
+    const { mutate: assignCollectors, isPending } = useAssignCollectors();
 
 
 
@@ -99,7 +102,8 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
         createSchedule({
             ...values,
-            time: formattedTime
+            time: formattedTime,
+            staff: user?.staff?.staff_id
         }, {
             onSuccess: (wc_num) => {
                 assignCollectors({
@@ -236,8 +240,8 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
-                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto">
-                        Schedule
+                    <Button type="submit" className="hover:bg-blue hover:opacity-[95%] w-full sm:w-auto" disabled={isPending}>
+                        {isPending ? "Submitting..." : "Schedule"}
                     </Button>
                 </div>
             </form>

@@ -79,14 +79,16 @@ export type AttendanceSheet = {
   staff_id: string | null;
 };
 
-export type AttendanceSheetInput = {
+export interface AttendanceSheetInput {
   ce_id: number;
   att_file_name: string;
   att_file_path: string;
-  att_file_url: string | undefined;
+  att_file_url: string;
   att_file_type: string;
-  staff_id?: string | null;
-};
+  staff_id?: number | null;
+  att_id?: number; 
+  file?: string;  
+}
 
 export type AttendanceRecord = {
   ceId: number;
@@ -113,6 +115,14 @@ export interface AttendanceRecords {
   sheets: any[];
 }
 
+export interface UploadFile {
+  name: string;
+  type: string;
+  file: string; // Required for upload
+  path: string;
+}
+
 export type UpdateEventFormValues = z.infer<typeof UpdateEventFormSchema>;
 export type EventFormValues = UpdateEventFormValues;
 export type EventCategory = "meeting" | "activity" | undefined;
+

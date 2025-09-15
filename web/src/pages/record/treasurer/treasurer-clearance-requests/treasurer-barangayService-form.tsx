@@ -19,7 +19,7 @@ function BarangayServiceForm(){
         defaultValues: {
             serialNo: "",
             requestor: "",
-            purposes: []
+            purposes: []    
         },
     });
 

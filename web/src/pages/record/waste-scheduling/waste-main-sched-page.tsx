@@ -11,7 +11,7 @@ import {
   wasteColColumns,
   councilEventColumns,
 } from "./event-columns/event-cols";
-import { useGetCouncilEvents } from "../council/Calendar/queries/fetchqueries";
+import { useGetCouncilEvents } from "../council/Calendar/queries/councilEventfetchqueries";
 import { useQuery } from "@tanstack/react-query";
 import { getWasteEvents } from "./waste-event/queries/wasteEventQueries";
 import WasteEventSched from "./waste-event/waste-event-sched";

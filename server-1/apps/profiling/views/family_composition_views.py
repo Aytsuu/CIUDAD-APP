@@ -65,14 +65,13 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
-
+        instances = []
         # Prepare model instances
         for item in serializer.validated_data:
             existing = FamilyComposition.objects.filter(rp=item['rp'], fc_role='INDEPENDENT').first()
             if existing:
                 existing.delete()
-            FamilyComposition(**item)
-
+            instances.append(FamilyComposition(**item))
 
         created_instances = FamilyComposition.objects.bulk_create(instances)
 

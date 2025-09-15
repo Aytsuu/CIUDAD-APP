@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingDown } from "lucide-react";
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Progress } from "@/components/ui/progress";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,6 @@ export function GADQuarterlyBudgetChart() {
   // Find current year's data
   const yearlySummary = yearlyData?.find(y => y.gbudy_year === currentYear) || {
     gbudy_budget: 0,
-    gbudy_income: 0,
     gbudy_expenses: 0
   };
 
@@ -62,14 +61,10 @@ export function GADQuarterlyBudgetChart() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Yearly Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="border rounded-lg p-4">
             <Label className="text-muted-foreground">Total Budget</Label>
             <div className="text-2xl font-bold">₱{yearlySummary.gbudy_budget.toLocaleString()}</div>
-          </div>
-          <div className="border rounded-lg p-4">
-            <Label className="text-muted-foreground">Total Income</Label>
-            <div className="text-2xl font-bold text-[#2563EB]">₱{yearlySummary.gbudy_income.toLocaleString()}</div>
           </div>
           <div className="border rounded-lg p-4">
             <Label className="text-muted-foreground">Total Expenses</Label>
@@ -116,7 +111,6 @@ export function GADQuarterlyBudgetChart() {
                   labelFormatter={(label) => `${label} Quarter`}
                 />
                 <Legend />
-                <Bar dataKey="income" fill="#2563EB" name="Income" />
                 <Bar dataKey="expense" fill="#f87171" name="Expense" />
               </BarChart>
             </ResponsiveContainer>
@@ -127,17 +121,13 @@ export function GADQuarterlyBudgetChart() {
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center">
                     <h3 className="font-medium">{quarter.name} Quarter</h3>
-                    <span className={`text-sm font-medium ${
+                    {/* <span className={`text-sm font-medium ${
                       quarter.net >= 0 ? 'text-green-500' : 'text-red-500'
                     }`}>
                       {quarter.net >= 0 ? '+' : ''}₱{Math.abs(quarter.net).toLocaleString()}
-                    </span>
+                    </span> */}
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex items-center text-[#2563EB]">
-                      <TrendingUp className="h-4 w-4 mr-1" />
-                      <span>₱{quarter.income.toLocaleString()}</span>
-                    </div>
                     <div className="flex items-center text-red-500">
                       <TrendingDown className="h-4 w-4 mr-1" />
                       <span>₱{quarter.expense.toLocaleString()}</span>

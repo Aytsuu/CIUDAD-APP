@@ -3,3 +3,4 @@ import IndividualAccountReg from "@/screens/auth/signup/individual/IndividualAcc
 export default () => {
   return <IndividualAccountReg />
 }
+

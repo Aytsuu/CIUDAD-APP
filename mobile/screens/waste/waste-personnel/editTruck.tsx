@@ -11,14 +11,14 @@ import TruckFormSchema from '@/form-schema/waste-truck-schema';
 import { ChevronLeft } from 'lucide-react-native';
 import { TruckFormValues } from './waste-personnel-types';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
-import { useGetTruckById, useUpdateTruck } from './queries';
+import { useGetTruckById, useUpdateTruck } from './waste-personnel-truck-queries';
 import { Button } from '@/components/ui/button'; 
 
 export default function WasteTruckEdit() {
   const router = useRouter();
   const { id } = useLocalSearchParams(); 
   const [isEditing, setIsEditing] = useState(false); 
-  const idValue = Array.isArray(id) ? id[0] : id; // Handle string or string[] case
+  const idValue = Array.isArray(id) ? id[0] : id;
   const { data: truck, isLoading: isTruckLoading, error } = useGetTruckById(idValue);
   const { mutate: updateTruck, isPending: isSubmitting } = useUpdateTruck(() => {
     setIsEditing(false); 

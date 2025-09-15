@@ -8,7 +8,6 @@ import TruckManagement from "./waste-truck-form";
 
 const WastePersonnelDashboard = () => {
   const [activeTab, setActiveTab] = useState<PersonnelCategory>("Watchman");
-  
   const {
     data: trucks = [],
     isLoading: isTrucksLoading,
@@ -23,15 +22,20 @@ const WastePersonnelDashboard = () => {
 
   const normalizePosition = (title: string) => {
     const lower = title.toLowerCase();
-    if (lower.includes("Watchman") || lower.includes("watchmen")) return "Watchman";
-    if (lower.includes("Waste Driver") || lower.includes("truck driver")) return "Waste Driver";
-    if (lower.includes("Waste Collector") || lower.includes("waste collectors")) return "Waste Collector";
+    if (lower.includes("Watchman") || lower.includes("watchmen"))
+      return "Watchman";
+    if (lower.includes("Waste Driver") || lower.includes("truck driver"))
+      return "Waste Driver";
+    if (lower.includes("Waste Collector") || lower.includes("waste collectors"))
+      return "Waste Collector";
     return title;
   };
 
   const personnelData: PersonnelData = {
     Watchman: personnel
-      .filter((p) => normalizePosition(p.staff.position?.title || "") === "Watchman")
+      .filter(
+        (p) => normalizePosition(p.staff.position?.title || "") === "Watchman"
+      )
       .map((p) => ({
         id: p.wstp_id.toString(),
         name: `${p.staff.profile.personal?.fname || ""} ${
@@ -43,7 +47,10 @@ const WastePersonnelDashboard = () => {
         contact: p.staff.profile.personal?.contact || "N/A",
       })),
     "Waste Driver": personnel
-      .filter((p) => normalizePosition(p.staff.position?.title || "") === "Waste Driver")
+      .filter(
+        (p) =>
+          normalizePosition(p.staff.position?.title || "") === "Waste Driver"
+      )
       .map((p) => ({
         id: p.wstp_id.toString(),
         name: `${p.staff.profile.personal?.fname || ""} ${
@@ -55,7 +62,10 @@ const WastePersonnelDashboard = () => {
         contact: p.staff.profile.personal?.contact || "N/A",
       })),
     "Waste Collector": personnel
-      .filter((p) => normalizePosition(p.staff.position?.title || "") === "Waste Collector")
+      .filter(
+        (p) =>
+          normalizePosition(p.staff.position?.title || "") === "Waste Collector"
+      )
       .map((p) => ({
         id: p.wstp_id.toString(),
         name: `${p.staff.profile.personal?.fname || ""} ${
@@ -127,49 +137,68 @@ const WastePersonnelDashboard = () => {
       <hr className="border-gray mb-6 sm:mb-8" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {(["Watchman", "Waste Driver", "Waste Collector", "Trucks"] as PersonnelCategory[]).map(
-          (category) => (
-            <CardLayout
-              key={category}
-              content={
-                <div className="flex flex-col items-start gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${getCategoryColor(category)}`}>
-                      {getCategoryIcon(category)}
-                    </div>
-                    <span className="text-2xl font-semibold">
-                      {category === "Trucks"
-                        ? trucks.filter((t) => !t.truck_is_archive).length
-                        : personnelData[category].length}
-                    </span>
+        {(
+          [
+            "Watchman",
+            "Waste Driver",
+            "Waste Collector",
+            "Trucks",
+          ] as PersonnelCategory[]
+        ).map((category) => (
+          <CardLayout
+            key={category}
+            content={
+              <div className="flex flex-col items-start gap-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`p-2 rounded-lg ${getCategoryColor(category)}`}
+                  >
+                    {getCategoryIcon(category)}
                   </div>
-                  <div>
-                    <h3 className="font-medium">{category}</h3>
+                  <span className="text-2xl font-semibold">
+                    {category === "Trucks"
+                      ? trucks.filter((t) => !t.truck_is_archive).length
+                      : personnelData[category].length}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-medium">{category}</h3>
+                  {/* Only show status container if there are items OR if it's Trucks category */}
+                  {(category === "Trucks" ||
+                    personnelData[category].length > 0) && (
                     <div
                       className={`flex items-center gap-1 text-sm ${
-                        category === "Trucks" ? "text-purple-600" : "text-green-600"
+                        category === "Trucks"
+                          ? "text-purple-600"
+                          : "text-green-600"
                       }`}
                     >
                       <span
                         className={`h-2 w-2 rounded-full ${
-                          category === "Trucks" ? "bg-purple-500" : "bg-green-500"
+                          category === "Trucks"
+                            ? "bg-purple-500"
+                            : "bg-green-500"
                         }`}
                       ></span>
                       <span>
                         {category === "Trucks"
                           ? `Operational: ${
-                              trucks.filter((t) => t.truck_status === "Operational" && t.truck_is_archive === false).length
+                              trucks.filter(
+                                (t) =>
+                                  t.truck_status === "Operational" &&
+                                  t.truck_is_archive === false
+                              ).length
                             }`
                           : "Active"}
                       </span>
                     </div>
-                  </div>
+                  )}
                 </div>
-              }
-              cardClassName="border rounded-lg shadow-sm hover:shadow-md transition-shadow"
-            />
-          )
-        )}
+              </div>
+            }
+            cardClassName="border rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          />
+        ))}
       </div>
 
       <div className="mt-8">
@@ -179,21 +208,26 @@ const WastePersonnelDashboard = () => {
 
         <div className="flex justify-center mb-6">
           <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
-            {(["Watchman", "Waste Driver", "Waste Collector", "Trucks"] as PersonnelCategory[]).map(
-              (category) => (
-                <button
-                  key={category}
-                  onClick={() => setActiveTab(category)}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                    activeTab === category
-                      ? "bg-primary text-white shadow"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  {category}
-                </button>
-              )
-            )}
+            {(
+              [
+                "Watchman",
+                "Waste Driver",
+                "Waste Collector",
+                "Trucks",
+              ] as PersonnelCategory[]
+            ).map((category) => (
+              <button
+                key={category}
+                onClick={() => setActiveTab(category)}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                  activeTab === category
+                    ? "bg-primary text-white shadow"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -210,7 +244,9 @@ const WastePersonnelDashboard = () => {
                   <div className="flex items-center gap-3">
                     <div
                       className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                        getCategoryColor(activeTab).replace("text", "bg").split(" ")[0]
+                        getCategoryColor(activeTab)
+                          .replace("text", "bg")
+                          .split(" ")[0]
                       } ${
                         getCategoryColor(activeTab).includes("text")
                           ? getCategoryColor(activeTab).split(" ")[1]

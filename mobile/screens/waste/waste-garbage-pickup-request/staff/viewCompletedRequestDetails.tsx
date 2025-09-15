@@ -19,13 +19,13 @@ export default function ViewCompletedRequestDetails() {
           <ChevronLeft size={30} className="text-black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Completed Request Details</Text>}
+      headerBetweenAction={<Text className="text-[13px]">Request Details</Text>}
       showBackButton={false}
       showExitButton={false}
       loading={isPending}
       loadingMessage="Loading..."
     >
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}>
+      <ScrollView className="flex-1 p-4">
         {/* Request Info Card */}
         <View className="bg-white rounded-lg p-4 mb-4 border border-gray-200">
           <Text className="font-bold text-lg mb-2">Request Information</Text>

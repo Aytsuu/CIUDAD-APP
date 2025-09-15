@@ -1,5 +1,5 @@
-export const capitalize = (str: string | null): string | null => {
-    if (!str) return null;
+export const capitalize = (str: string | null | undefined): string | undefined => {
+    if (!str) return undefined;
     return str
         .toLowerCase()
         .split(' ')

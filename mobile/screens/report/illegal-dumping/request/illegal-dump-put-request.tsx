@@ -1,5 +1,8 @@
 import { api } from "@/api/api";
 
+
+// =========================================== STAFF ========================================================
+
 export const updateWasteReport = async (rep_id: number, wasteReportInfo: Record<string, any>) => {
 
     try{
@@ -26,30 +29,56 @@ export const updateWasteReport = async (rep_id: number, wasteReportInfo: Record<
 
 
 
-interface UploadResolvedImageParams {
+export const uploadResolvedImage = async (data: {
   rep_id: number;
-  wrsf_name: string;
-  wrsf_type: string;
-  wrsf_path: string;
-  wrsf_url: string;
+  file_data: {
+    name: string;
+    type: string;
+    file: any;
+  };
+}) => {
+  try {
+    // Create the payload that matches your serializer's _upload_files method
+    const payload = {
+      rep_id: data.rep_id,
+      files: [{
+        name: data.file_data.name,
+        type: data.file_data.type,
+        file: data.file_data.file // The actual file object
+      }]
+    };
+
+    const res = await api.post('waste/waste-rep-rslv-file/', payload);
+    return res.data;
+  } catch (err) {
+    console.error(`Failed to create file ${data.file_data.name}:`, err);
+    throw err;
+  }
 }
 
-export const uploadResolvedImage = async (params: UploadResolvedImageParams) => {
 
-    console.log("NI SUD SA REQ: ",{
-        rep_id: params.rep_id,
-        wrsf_name: params.wrsf_name,
-        wrsf_type: params.wrsf_type,
-        wrsf_path: params.wrsf_path,
-        wrsf_url: params.wrsf_url,
-    })
+// ==================================================== RESIDENT =============================================
 
-  const response = await api.post('waste/waste-rep-rslv-file/', {
-    rep_id: params.rep_id,
-    wrsf_name: params.wrsf_name,
-    wrsf_type: params.wrsf_type,
-    wrsf_path: params.wrsf_path,
-    wrsf_url: params.wrsf_url,
-  });
-  return response.data;
-};
+// Resident Cancel Report
+export const updateWasteResReport = async (rep_id: number, wasteReportInfo: Record<string, any>) => {
+
+    try{
+        const currentTimestamp = new Date().toISOString();
+
+        console.log("REPORT DATA REQ: ",{
+            rep_status: wasteReportInfo.rep_status,
+            rep_cancel_reason: wasteReportInfo.rep_cancel_reason
+        })
+
+        const res = await api.put(`waste/update-waste-report/${rep_id}/`,{
+            rep_status: wasteReportInfo.rep_status,
+            rep_cancel_reason: wasteReportInfo.rep_cancel_reason,
+            rep_date_cancelled: currentTimestamp
+        })
+
+        return res.data;
+    }
+    catch (err){
+        console.error(err);
+    }
+}
