@@ -810,6 +810,42 @@ class DeleteUpdate_Purpose_And_RatesView(generics.UpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+class PurposeAndRateByParamsView(APIView):
+    def get(self, request):
+        pr_purpose = request.query_params.get('pr_purpose')
+        pr_category = request.query_params.get('pr_category')
+        pr_is_archive = request.query_params.get('pr_is_archive')
+        
+        # Validation and query logic same as above
+        if not all([pr_purpose, pr_category, pr_is_archive]):
+            return Response(
+                {'error': 'All parameters are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            pr_is_archive_bool = pr_is_archive.lower() == 'true' if isinstance(pr_is_archive, str) else bool(pr_is_archive)
+        except:
+            return Response(
+                {'error': 'Invalid pr_is_archive value'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            purpose_rate = Purpose_And_Rates.objects.get(
+                pr_purpose=pr_purpose,
+                pr_category=pr_category,
+                pr_is_archive=pr_is_archive_bool
+            )
+            serializer = Purpose_And_RatesSerializers(purpose_rate)
+            return Response(serializer.data)
+            
+        except Purpose_And_Rates.DoesNotExist:
+            return Response(
+                {'error': 'Record not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
 
 #---------------  RECEIPTS
 

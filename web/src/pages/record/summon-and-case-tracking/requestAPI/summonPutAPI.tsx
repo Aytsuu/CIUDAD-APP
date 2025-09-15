@@ -67,8 +67,17 @@ export const updateSuppDoc = async (values: {csd_id: string; description: string
 
 export const acceptSummonRequest = async(sr_id: string) => {
     try{
+
         const res = await api.put(`clerk/update-summon-request/${sr_id}/`, {
             sr_req_status: "Accepted"
+        })
+
+         const response = await api.get('/treasurer/get-pr-id/', {
+                params: {
+                    pr_purpose: "Summons",
+                    pr_category: "Service Charge", 
+                    pr_is_archive: false
+                }
         })
 
         if(res){
@@ -79,8 +88,8 @@ export const acceptSummonRequest = async(sr_id: string) => {
 
             await api.post('clerk/service-charge-payment-request/', {
                 spay_amount: 150.00,
-                spay_status: "Pending",
-                sr_id: sr_id
+                spay_status: "Unpaid",
+                sr_id: response.data.pr_id
             })
         }
         return res.data

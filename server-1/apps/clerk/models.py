@@ -290,11 +290,11 @@ class SummonTimeAvailability(models.Model):
 
 class ServiceChargePaymentRequest(models.Model):
     spay_id = models.BigAutoField(primary_key=True)
-    spay_amount = models.DecimalField(max_digits=10, decimal_places=2)
     spay_status = models.CharField(max_length=200)
     spay_due_date = models.DateField(default = default_due_date())
     spay_date_paid = models.DateTimeField(null = True, blank = True)
     sr_id = models.OneToOneField('ServiceChargeRequest', on_delete=models.CASCADE, db_column='sr_id')
+    pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete = models.SET_NULL, db_column='pr_id', null = True, blank = True)
 
     class Meta:
         db_table = 'service_charge_payment_request'
