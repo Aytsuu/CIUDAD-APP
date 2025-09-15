@@ -7,6 +7,8 @@ import AnnaualDevelopmentPlanTable from "@/pages/record/gad/annual_development_p
 import GADBudgetLogTable from "@/pages/record/gad/budget-tracker/budget-log";
 import AnnualDevelopmentPlanEdit from "@/pages/record/gad/annual_development_plan/annual_development_plan_edit";
 import AnnualDevelopmentPlanCreate from "@/pages/record/gad/annual_development_plan/annual_development_plan_create";
+import GADActivityCalendar from "@/pages/record/gad/activity/gadActivityCalendar";
+
 
 export const gad_router = [
   {
@@ -37,12 +39,16 @@ export const gad_router = [
     path: "/gad-annual-development-plan-table",
     element: <AnnaualDevelopmentPlanTable />,
   },
-   {
-        path: '/gad-annual-development-plan/create',
-        element: <AnnualDevelopmentPlanCreate/>
-    },
-    {
-        path: '/gad-annual-development-plan/edit/:devId',
-        element: <AnnualDevelopmentPlanEdit/>
-    },
+  {
+    path: '/gad-annual-development-plan/create',
+    element: <AnnualDevelopmentPlanCreate/>
+  },
+  {
+    path: '/gad-annual-development-plan/edit/:devId',
+    element: <AnnualDevelopmentPlanEdit/>
+  },
+  {
+    path: '/gad-activity',
+    element: <GADActivityCalendar/>
+  },
 ];
