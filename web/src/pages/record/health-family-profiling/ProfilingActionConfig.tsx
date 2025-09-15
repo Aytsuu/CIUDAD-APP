@@ -3,42 +3,52 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
 import AssignPosition from "../administration/AssignPosition";
-import { Pen } from "lucide-react";
+import { Check, Pen } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 // Configuration Object
 export const buttonConfig = (
   form: any,
+  addresses: any,
   isAssignmentOpen: boolean,
+  isAllowSubmit: boolean,
   setIsAssignmentOpen: (value: boolean) => void,
-  setFormType: (value: Type) => void,
-  submit: () => void
+  setFormType: React.Dispatch<React.SetStateAction<Type>> | undefined,
+  submit: () => void,
 ) => ({
   [Origin.Administration]: {
     [Type.Viewing]: null, // No button for viewing in administration
     default: (
-      <DialogLayout
-        trigger={<Button className="px-12">Finish</Button>}
-        title="Position Assignment"
-        description="Assign a position to complete the registration"
+      isAllowSubmit ? (<DialogLayout
+        trigger={<Button className="px-12">
+          <Check />
+          Finish
+        </Button>}
         mainContent={
           <AssignPosition
             close={() => {
               setIsAssignmentOpen(false);
             }}
             personalInfoform={form}
+            addresses={addresses}
           />
         }
         isOpen={isAssignmentOpen}
         onOpenChange={setIsAssignmentOpen}
-      />
+        className="p-0"
+      />) : (
+        <Button type="submit" className="px-12">
+          <Check />
+          Finish
+        </Button>
+      )
     ),
   },
   defaultOrigin: {
     [Type.Viewing]: (
       <Button
         onClick={() => {
-          setFormType(Type.Editing);
+          setFormType && setFormType(Type.Editing);
         }}
       >
         <Pen size={24} /> Edit
@@ -50,27 +60,26 @@ export const buttonConfig = (
           className="w-full sm:w-32"
           variant={"outline"}
           onClick={() => {
-            setFormType(Type.Viewing);
+            setFormType && setFormType(Type.Viewing);
           }}
+          type="button"
         >
           Cancel
         </Button>
         <Button className="w-full sm:w-32" type="submit">
+          <Check/>
           Save
         </Button>
       </div>
     ),
     [Type.Request]: (
       <div className="flex gap-2">
-        <Button
-          type="button"
-          className="w-full sm:w-32 text-red-500 hover:text-red-500"
-          variant={"outline"}
-        >
-          Reject
-        </Button>
         <ConfirmationModal
-          trigger={<Button className="w-full sm:w-32"> Approve </Button>}
+          trigger={<Button className="w-full"> 
+            <Check/>
+            Approve Request
+          </Button>
+          }
           title="Confirm Approval"
           description="Do you wish to proceed approving this request?"
           actionLabel="Confirm"
@@ -79,13 +88,18 @@ export const buttonConfig = (
       </div>
     ),
     default: (
-      <ConfirmationModal
-        trigger={<Button className="w-full sm:w-32"> Register </Button>}
+      <div className="flex gap-2">
+        <ConfirmationModal
+        trigger={<Button className="w-full"> 
+          <Check/>
+          Create Record 
+        </Button>}
         title="Confirm Registration"
         description="Do you wish to proceed with the registration?"
         actionLabel="Confirm"
         onClick={submit}
       />
+      </div>
     ),
   },
 });
@@ -95,33 +109,38 @@ type OriginKeys = keyof ReturnType<typeof buttonConfig>;
 
 export const renderActionButton = ({
   form,
+  addresses,
   isAssignmentOpen,
   formType,
-  origin,
+  origin="defaultOrigin",
   isSubmitting,
+  isAllowSubmit,
   setIsAssignmentOpen,
   setFormType,
   submit,
 }: {
   form?: any;
+  addresses?: any;
   isAssignmentOpen?: boolean;
   formType: Type;
-  origin: OriginKeys;
+  origin?: OriginKeys;
   isSubmitting: boolean;
+  isAllowSubmit?: boolean;  
   setIsAssignmentOpen?: (value: boolean) => void;
-  setFormType: (value: Type) => void;
+  setFormType?: React.Dispatch<React.SetStateAction<Type>>;
   submit: () => void;
 }) => {
   const config = buttonConfig(
     form,
+    addresses,
     isAssignmentOpen || false,
+    isAllowSubmit || false,
     setIsAssignmentOpen || (() => {}),
     setFormType,
-    submit
+    submit,
   );
   const originConfig = config[origin] || config.defaultOrigin;
-  const button =
-    originConfig[formType as keyof typeof originConfig] || originConfig.default;
+  const button = originConfig[formType as keyof typeof originConfig] || originConfig.default;
 
   // Add loading state to the button
   if (isSubmitting) {

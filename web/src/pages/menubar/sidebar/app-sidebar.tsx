@@ -99,7 +99,7 @@ const barangayItems: BaseMenuItem[] = [
   },
   {
     title: "Certificate and Clearances",
-    subItems: true,
+
     url: "/",
     items: [
       { title: "Certifications", url: "record/clearances/certification" },

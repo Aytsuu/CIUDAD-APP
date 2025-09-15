@@ -231,7 +231,7 @@ export default function RegistrationLayout() {
           noBusiness,
           personalSchema,
           houseSchema,
-          livingSoloSchema,
+          {...livingSoloSchema, householdNo: livingSoloSchema?.householdNo?.split(" ")[0]},
           familySchema,
           business,
           newFiles

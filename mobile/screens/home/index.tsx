@@ -13,7 +13,7 @@ import { features } from "./features";
 import { useRouter } from "expo-router";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { useSelector, useDispatch } from "react-redux";
-import { RootState, AppDispatch } from "@/redux";
+import { RootState, AppDispatch } from "@/redux/store";
 import PageLayout from "../_PageLayout";
 import React from "react";
 import ShowMore from '@/assets/icons/features/showmore.svg'

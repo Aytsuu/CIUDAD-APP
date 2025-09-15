@@ -21,8 +21,9 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# # SECURITY WARNING: don't run with debug turned on in production!
+# DEBUG = False
+DEBUG=True
 
 # ========================
 # SUPABASE CONFIGURATION
@@ -33,9 +34,11 @@ SUPABASE_CONFIG = {
     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY', default='service-role-dev-key'),
     'JWT_SECRET': config('SUPABASE_JWT_SECRET', default='dev-jwt-secret'),
     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID', default='local-dev-project'),
-    'JWT_ALGORITHM': 'HS256',
-    'JWT_AUDIENCE': 'authenticated',
 }
+SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
+SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 
 # Application definition
 
@@ -306,6 +309,11 @@ LOGGING = {
 #     'JWT_ALGORITHM': 'HS256',
 #     'JWT_AUDIENCE': 'authenticated',
 # }
+
+# # Individual SUPABASE settings for compatibility with utils/supabase_client.py
+# SUPABASE_URL = config('SUPABASE_URL')
+# SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY')
+# SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET')
 
 # # ========================
 # # FIREBASE CONFIGURATION

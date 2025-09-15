@@ -82,7 +82,6 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
             return "Link"
         return "No"
 
-
 class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
     per = PersonalBaseSerializer()
     per_id = serializers.IntegerField(write_only=True, allow_null=True, required=False)
