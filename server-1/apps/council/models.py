@@ -233,7 +233,9 @@ class MinutesOfMeeting(models.Model):
     mom_is_archive = models.BooleanField(default=False)
     staff_id = models.ForeignKey(
         'administration.Staff',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         db_column='staff_id'
     )
 

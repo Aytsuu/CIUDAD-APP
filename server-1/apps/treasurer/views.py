@@ -825,7 +825,7 @@ class InvoiceView(generics.ListCreateAPIView):
     queryset = Invoice.objects.select_related(
         'bpr_id__rp_id__per',  # For business permit requests
         'nrc_id',              # For non-resident certificate requests
-        'cr_id__rp__per'       # For resident certificates
+        'cr_id__rp_id__per'       # For resident certificates
     ).all()
 
 
