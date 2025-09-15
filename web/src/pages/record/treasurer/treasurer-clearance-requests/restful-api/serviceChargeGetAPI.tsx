@@ -9,6 +9,7 @@ export type ServiceCharge = {
   address2: string;
   reason: string;
   reqDate: string;
+  status?: string;
 };
 
 export async function getTreasurerServiceCharges(): Promise<ServiceCharge[]> {
