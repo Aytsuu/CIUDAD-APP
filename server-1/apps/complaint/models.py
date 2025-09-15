@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+from django.db.models import Max
+
 
 class Complainant(models.Model):
     cpnt_id = models.BigAutoField(primary_key=True)

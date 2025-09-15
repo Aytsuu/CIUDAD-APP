@@ -41,8 +41,6 @@ class SignupView(APIView):
             resident_id = request.data.get('resident_id')
             br = request.data.get('br')
 
-
-
             # Check if account already exists
             if Account.objects.filter(email=email).exists():
                 return Response(
@@ -97,213 +95,108 @@ class SignupView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class WebLoginView(APIView):
-    permission_classes = [AllowAny]
+# class MobileLoginView(APIView):
+#     permission_classes = [AllowAny]
 
-    def post(self, request):
-        email = request.data.get("email")
-        phone = request.data.get("phone")
-        password = request.data.get("password")
-
-        if (not email and not phone) or not password:
-            return Response(
-                {"error": "Email or phone and password are required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # ✅ Authenticate user
-        user = None
-        if phone:
-            # Lookup user by phone
-            user = Account.objects.filter(phone=phone).first()
-            if user is None or not user.check_password(password):
-                return Response(
-                    {"error": "Invalid phone or password"},
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
-        else:
+#     def post(self, request):
+#         try:
+#             logger.info("MobileLoginView called")
+#             email = request.data.get('email')
+#             phone = request.data.get('phone')
+#             password = request.data.get('password')
             
-            user = authenticate(request, username=email, password=password)
+#             # Authenticate using Django's built-in system
+#             if not email:
+#                 logger.info(f"Authenticating with phone: {phone}")
+#                 user = Account.objects.filter(phone=phone).first()
+#                 if user is None:
+#                     return Response(
+#                         {'error': 'Invalid phone or password'},
+#                         status=status.HTTP_401_UNAUTHORIZED
+#                     )
+#                 if not user.check_password(password):
+#                     return Response(
+#                         {'error': 'Invalid phone or password'},
+#                         status=status.HTTP_401_UNAUTHORIZED
+#                     )
+#             else: 
+#                 logger.info(f"Authenticating with email: {email}")
+#                 user = authenticate(request, username=email, password=password)
 
-        if user is None:
-            return Response(
-                {"error": "Invalid email or password"},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+#             if not user:
+#                 return Response(
+#                     {'error': 'Invalid email or password'},
+#                     status=status.HTTP_401_UNAUTHORIZED
+#                 )
 
-        # ✅ Serialize user
-        serializer = UserAccountSerializer(user)
+#             # Serialize user data
+#             serializer = UserAccountSerializer(user)
 
-        # ✅ Check if user has resident profile
-        if not serializer.data.get("resident"):
-            return Response(
-                {"error": "Resident Profile Required"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+#             return Response({
+#                 'user': serializer.data,
+#                 'message': 'Login successful'
+#             })
 
-        # ✅ Check staff privileges
-        staff_data = serializer.data.get("staff")
-        if not staff_data:
-            return Response(
-                {"error": "Staff Privileges Required. Contact administrator."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+#         except Exception as e:
+#             logger.error(f"Login error: {str(e)}", exc_info=True)
+#             return Response(
+#                 {'error': 'Authentication failed'},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )
 
-        # ✅ Generate tokens
-        refresh = RefreshToken.for_user(user)
-        access = refresh.access_token
-
-        res = JsonResponse(
-            {
-                "message": "Login successful",
-                "access": str(access),
-                "user": serializer.data,
-            },
-            status=status.HTTP_200_OK,
-        )
-
-        res.set_cookie(
-            key="refresh_token",
-            value=str(refresh),
-            httponly=True,
-            secure=True,        # ❗ set False if testing on http://localhost
-            samesite="Strict",  # or "Lax" if frontend/backend are on different domains
-            max_age=7 * 24 * 60 * 60,  # 1 week
-        )
-
-        return res
+# class SendOTPEmail(APIView):
+#     permission_classes = [AllowAny]
     
-class MobileLoginView(APIView):
-    permission_classes = [AllowAny]
+#     def post(self, request):
+#         email = request.data.get('email')       
 
-    def post(self, request):
-        try:
-            logger.info("MobileLoginView called")
-            email = request.data.get('email')
-            phone = request.data.get('phone')
-            password = request.data.get('password')
-            
-            # Authenticate using Django's built-in system
-            if not email:
-                logger.info(f"Authenticating with phone: {phone}")
-                user = Account.objects.filter(phone=phone).first()
-                if user is None:
-                    return Response(
-                        {'error': 'Invalid phone or password'},
-                        status=status.HTTP_401_UNAUTHORIZED
-                    )
-                if not user.check_password(password):
-                    return Response(
-                        {'error': 'Invalid phone or password'},
-                        status=status.HTTP_401_UNAUTHORIZED
-                    )
-            else: 
-                logger.info(f"Authenticating with email: {email}")
-                user = authenticate(request, username=email, password=password)
-
-            if not user:
-                return Response(
-                    {'error': 'Invalid email or password'},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-
-            # Serialize user data
-            serializer = UserAccountSerializer(user)
-
-            return Response({
-                'user': serializer.data,
-                'message': 'Login successful'
-            })
-
-        except Exception as e:
-            logger.error(f"Login error: {str(e)}", exc_info=True)
-            return Response(
-                {'error': 'Authentication failed'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-class LogoutView(APIView):
-    def post(self, request):
-        try: 
-            refresh_token = request.COOKIES.get('refresh_token')
-            if refresh_token:
-                logger.info("Found refresh token, proceeding to logout")
-            
-            response = Response({
-                "message": "Logout successful"
-            }, status=status.HTTP_200_OK)
-            
-            # Clear the refresh token cookie
-            response.delete_cookie(
-                key="refresh_token",
-                domain=None,
-                samesite="Lax",
-            )
-            
-            logger.info("User logged out successfully")
-            return response
-        except Exception as e:
-            logger.error(f"Logout error: {str(e)}", exc_info=True)
-            response =  Response(
-                {'error': 'Logout failed'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-            response.delete_cookie("refresh_token")
-            return response
-
-class SendOTPEmail(APIView):
-    permission_classes = [AllowAny]
+#         otp = generate_otp()
+#         cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
+#         send_otp_email(email, otp)
+#         return Response({'message': 'OTP sent via email'}, status=status.HTTP_200_OK)   
     
-    def post(self, request):
-        email = request.data.get('email')       
+# class VerifyOTPEmail(APIView):
+#     permission_classes = [AllowAny]
 
-        otp = generate_otp()
-        cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
-        send_otp_email(email, otp)
-        return Response({'message': 'OTP sent via email'}, status=status.HTTP_200_OK)   
-    
-class VerifyOTPEmail(APIView):
-    permission_classes = [AllowAny]
+#     def post(self, request):
+#         logger.info("EMAIL IS HERE")
+#         email = request.data.get('email')
+#         otp_input = request.data.get('otp')
 
-    def post(self, request):
-        logger.info("EMAIL IS HERE")
-        email = request.data.get('email')
-        otp_input = request.data.get('otp')
+#         if not email or not otp_input:
+#             return Response(
+#                 {'error': 'Email and OTP are required'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
 
-        if not email or not otp_input:
-            return Response(
-                {'error': 'Email and OTP are required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        cached_otp = cache.get(email)
-        logger.info(f"CACHED OTP:  {cached_otp}")
-        logger.info(f"OTP INPUT:  {otp_input}")
+#         cached_otp = cache.get(email)
+#         logger.info(f"CACHED OTP:  {cached_otp}")
+#         logger.info(f"OTP INPUT:  {otp_input}")
         
-        if cached_otp is None:
-            return Response(
-                {'error': 'OTP has expired or was never sent'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+#         if cached_otp is None:
+#             return Response(
+#                 {'error': 'OTP has expired or was never sent'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
 
-        if cached_otp == otp_input:
-            account = Account.objects.filter(email=email).first()
+#         if cached_otp == otp_input:
+#             account = Account.objects.filter(email=email).first()
             
-            response_data = {
-                'success': True,
-                'message': 'OTP verified successfully',
-                'user': None,  # default to None if no account exists
-                'refresh_token': request.COOKIES.get('refresh_token')
-            }
+#             response_data = {
+#                 'success': True,
+#                 'message': 'OTP verified successfully',
+#                 'user': None,  # default to None if no account exists
+#                 'refresh_token': request.COOKIES.get('refresh_token')
+#             }
 
-            if account:
-                serializer = UserAccountSerializer(account)
-                response_data['user'] = serializer.data
+#             if account:
+#                 serializer = UserAccountSerializer(account)
+#                 response_data['user'] = serializer.data
 
-            logger.info(f"OTP verified successfully for email: {email}")
-            return Response(response_data, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+#             logger.info(f"OTP verified successfully for email: {email}")
+#             return Response(response_data, status=status.HTTP_200_OK)
+#         else:
+#             return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # def send_otp_email(request):
@@ -332,16 +225,31 @@ class CookieTokenObtainPairView(TokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
     
     def post(self, request, *args, **kwargs):
-        print("Incoming data:", request.data)
         response = super().post(request, *args, **kwargs)
         data = response.data
         email = data.get('email')
         refresh = data.get('refresh')
         access = data.get('access')
         
-        res = JsonResponse({'access': access})
         logger.info(email)
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.user
+        
+        if not getattr(user, "rp", None):
+            return Response({'error': 'Resident Profile required. Contact administrator.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        if not getattr(user, "staff", None):
+            return Response({'error': 'Staff Privileges required. Contact administrator.'}, status=status.HTTP_403_FORBIDDEN)   
+        
         logger.info(f"Tokens generated - Access: {'Yes' if access else 'No'}, Refresh: {'Yes' if refresh else 'No'}")
+        
+        res = JsonResponse({'access': access,
+                            'user': UserAccountSerializer(user).data,
+                            'message': 'Login successful'}, 
+                           status=status.HTTP_200_OK)
+        
         if refresh:
             res.set_cookie(
                 key="refresh_token",

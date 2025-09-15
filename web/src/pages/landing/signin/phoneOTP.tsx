@@ -119,18 +119,18 @@ export default function PhoneOTP({ phone, serverOtp, onSuccess, onResend }: Phon
     }
   };
 
-  const formatPhoneNumber = (phone: string) => {
-    // Format phone number for display (e.g., +63 *** *** **45)
-    if (phone.length >= 4) {
-      const lastFour = phone.slice(-4);
-      const hidden = "*".repeat(phone.length - 4);
-      return `${hidden}${lastFour}`;
-    }
-    return phone;
-  };
+  // const formatPhoneNumber = (phone: string) => {
+  //   // Format phone number for display (e.g., +63 *** *** **45)
+  //   if (phone.length >= 4) {
+  //     const lastFour = phone.slice(-4);
+  //     const hidden = "*".repeat(phone.length - 4);
+  //     return `${hidden}${lastFour}`;
+  //   }
+  //   return phone;
+  // };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -140,7 +140,7 @@ export default function PhoneOTP({ phone, serverOtp, onSuccess, onResend }: Phon
           Enter the 6-digit code sent to
         </p>
         <p className="font-semibold text-gray-900">
-          {formatPhoneNumber(phone)}
+          {phone}
         </p>
       </div>
 
@@ -211,11 +211,6 @@ export default function PhoneOTP({ phone, serverOtp, onSuccess, onResend }: Phon
             <p className="text-gray-500 text-sm">
               Resend available in {timer}s
             </p>
-            {timer > 45 && (
-              <p className="text-xs text-gray-400">
-                Please wait to prevent spam
-              </p>
-            )}
           </div>
         )}
       </div>

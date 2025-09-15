@@ -1,3 +1,11 @@
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from apps.account.models import Account
+import logging
+
+logger = logging.getLogger(__name__)
+
 class ChangePasswordView(APIView):
     
     def post(self, request):

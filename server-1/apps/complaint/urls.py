@@ -1,5 +1,9 @@
 from django.urls import path
-from .views import *
+from .view import *
+from .views.update_complaint_view import *
+# from .views.archive_complaint_view import *
+# from .views.search_complaint_view import *
+# from .views.create_complaint_view import *
 
 urlpatterns = [
     
@@ -16,6 +20,9 @@ urlpatterns = [
     path('complainant/search/', SearchComplainantsView.as_view(), name='search-complainants'),
     path('accused/search/', SearchAccusedView.as_view(), name='search-accused'),
 
+    # Update
+    path('<int:comp_id>/update/', ComplaintUpdateView.as_view(), name='complaint-update'),
+    
     # Sending the blotter to the ServiceChargeRequest
-    path('<int:comp_id>/issue-raise/', ServiceChargeRequestCreateView.as_view(), name='complaint-issue-raise'),
+    path('<int:comp_id>/raiseissue/', ServiceChargeRequestCreateView.as_view(), name='complaint-issue-raise'),
 ]
