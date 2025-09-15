@@ -287,22 +287,6 @@ class ServiceChargeRequestCreateView(APIView):
 
             sr_count = ServiceChargeRequest.objects.count() + 1
             year_suffix = timezone.now().year % 100
-<<<<<<< HEAD:server-1/apps/complaint/views.py
-            sr_code = f"{sr_count:03d}-{year_suffix:02d}"
-            
-            logger.info(f"Generated SR Code: {sr_code}")
-            
-            service_request = ServiceChargeRequest.objects.create(
-                comp_id=complaint,
-                sr_code=sr_code,
-                sr_req_status="Ongoing", 
-                sr_type="Summon",
-                sr_case_status="Unpaid",
-                sr_req_date=timezone.now()
-            )
-            
-            logger.info(f"Created service request: {service_request.sr_code}")
-=======
             sr_id = f"SR{sr_count:03d}-{year_suffix:02d}"
             
             logger.info(f"Generated SR Code: {sr_id}")
@@ -317,7 +301,6 @@ class ServiceChargeRequestCreateView(APIView):
             )
             
             logger.info(f"Created service request: {service_request.sr_id}")
->>>>>>> Accountv4:server-1/apps/complaint/view.py
             
             return Response({
                 'sr_id': service_request.sr_id,
@@ -334,8 +317,4 @@ class ServiceChargeRequestCreateView(APIView):
             logger.error(f"Error creating service request: {str(e)}")
             return Response({
                 'error': f'An error occurred: {str(e)}'
-<<<<<<< HEAD:server-1/apps/complaint/views.py
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-=======
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
->>>>>>> Accountv4:server-1/apps/complaint/view.py
