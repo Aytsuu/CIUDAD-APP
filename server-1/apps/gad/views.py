@@ -1,16 +1,15 @@
-from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from .models import *
 from .serializers import *
-from django.db.models import OuterRef, Subquery, Count, Q
 from django.apps import apps
 from django.utils import timezone
 from rest_framework.permissions import AllowAny
 from django.db.models.functions import ExtractYear
 import logging
 from rest_framework.views import APIView
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -158,43 +157,80 @@ class ProjectProposalView(generics.ListCreateAPIView):
         return queryset
 
 
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
-        # Validate required fields for new structure
-        dev_id = request.data.get('dev')
-        
-        if not dev_id:
-            return Response(
-                {"error": "Development plan (dev) is required"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
         try:
-            # Validate that the dev plan exists and has the specified project
-            dev_plan = DevelopmentPlan.objects.get(pk=dev_id)
-            projects = dev_plan.dev_project if isinstance(dev_plan.dev_project, list) else [dev_plan.dev_project] if dev_plan.dev_project else []
-                
-            # Check if proposal already exists for this dev plan + project index
-            existing_proposal = ProjectProposal.objects.filter(
-                dev_id=dev_id,
-                gpr_is_archive=False
-            ).exists()
+            logger.info(f"Creating project proposal with data: {request.data}")
             
-            if existing_proposal:
+            # Validate required fields for new structure
+            dev_id = request.data.get('dev')
+            
+            if not dev_id:
+                logger.error("Development plan (dev) is required but not provided")
                 return Response(
-                    {"error": "A proposal already exists for this development plan project"}, 
+                    {"error": "Development plan (dev) is required"}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
                 
-        except DevelopmentPlan.DoesNotExist:
+            try:
+                # Validate that the dev plan exists
+                dev_plan = DevelopmentPlan.objects.get(pk=dev_id)
+                logger.info(f"Found development plan: {dev_plan.dev_id}")
+                
+                # Check if proposal already exists for this dev plan
+                existing_proposal = ProjectProposal.objects.filter(
+                    dev_id=dev_id,
+                    gpr_is_archive=False
+                ).exists()
+                
+                if existing_proposal:
+                    logger.warning(f"Proposal already exists for dev plan {dev_id}")
+                    return Response(
+                        {"error": "A proposal already exists for this development plan project"}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                    
+            except DevelopmentPlan.DoesNotExist:
+                logger.error(f"Development plan with id {dev_id} does not exist")
+                return Response(
+                    {"error": f"Development plan with id {dev_id} does not exist"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create the serializer and validate
+            serializer = self.get_serializer(data=request.data)
+            if not serializer.is_valid():
+                logger.error(f"Serializer validation failed: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Save the instance
+            try:
+                instance = serializer.save()
+                logger.info(f"Successfully created proposal with ID: {instance.gpr_id}")
+                
+                # Verify the instance was actually saved
+                saved_instance = ProjectProposal.objects.get(pk=instance.gpr_id)
+                logger.info(f"Verified saved instance: {saved_instance.gpr_id}")
+                
+            except Exception as save_error:
+                logger.error(f"Error saving proposal: {str(save_error)}", exc_info=True)
+                return Response(
+                    {"error": f"Failed to save proposal: {str(save_error)}"}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            headers = self.get_success_headers(serializer.data)
+            response_data = serializer.data
+            logger.info(f"Returning response data: {response_data}")
+            
+            return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
+            
+        except Exception as e:
+            logger.error(f"Unexpected error in create method: {str(e)}", exc_info=True)
             return Response(
-                {"error": f"Development plan with id {dev_id} does not exist"}, 
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": f"Internal server error: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 class ProjectProposalDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ProjectProposal.objects.all().select_related('staff')

@@ -27,6 +27,7 @@ export const ProjectProposalSchema = z.object({
     })),
     dev_client: z.string().optional(),
     dev_issue: z.string().optional(),
+    dev_date: z.string().optional(),
   }).refine(data => data.dev_id > 0, {
     message: "Please select a development plan project"
   }),
@@ -42,7 +43,7 @@ export const ProjectProposalSchema = z.object({
       })
     )
     .min(1, "At least one participant category is required"),
-  date: z.string().min(1, "Date is required"),
+  date: z.string().min(1, "Date is required"), 
   venue: z.string().min(1, "Venue is required"),
   budgetItems: z
     .array(

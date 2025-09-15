@@ -125,7 +125,7 @@ class ProjectProposal(models.Model):
     gpr_id = models.BigAutoField(primary_key=True)
     # gpr_title = models.CharField(max_length=200)
     gpr_background = models.TextField(blank=True, null=True)
-    gpr_date = models.CharField(default=date.today().strftime("%B %d, %Y"))
+    # gpr_date = models.CharField(default=date.today().strftime("%B %d, %Y"))
     gpr_venue = models.CharField(max_length=200, blank=True)
     gpr_monitoring = models.TextField(blank=True)
     gpr_header_img = models.TextField(blank=True, null=True) 
@@ -214,6 +214,13 @@ class ProjectProposal(models.Model):
         if self.dev and self.dev.dev_gad_items:
             return self.dev.dev_gad_items
         return []
+    
+    @property
+    def project_date(self):
+        """Get the project date from the related development plan"""
+        if self.dev and self.dev.dev_date:
+            return self.dev.dev_date
+        return None
 
 class ProposalSuppDoc(models.Model):
     psd_id = models.BigAutoField(primary_key=True)

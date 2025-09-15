@@ -67,10 +67,6 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
-      <div className="pb-2">
-        <h2 className="text-lg font-semibold">DONATION DETAILS</h2>
-        <p className="text-xs text-black/50">View or edit donation details</p>
-      </div>
       <Form {...form}>
         <form className="flex flex-col gap-4">
           {/* Donor Name */}

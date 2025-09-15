@@ -335,18 +335,6 @@ const TruckManagement = () => {
         description=""
         mainContent={
           <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
-            <div className="pb-2">
-              <h2 className="text-lg font-semibold">
-                {isReadOnly
-                  ? "TRUCK DETAILS"
-                  : currentTruck
-                  ? "EDIT TRUCK"
-                  : "ADD NEW TRUCK"}
-              </h2>
-              <p className="text-xs text-black/50">
-                Fill out all necessary fields
-              </p>
-            </div>
             <div className="grid gap-4">
               <Form {...form}>
                 <form
