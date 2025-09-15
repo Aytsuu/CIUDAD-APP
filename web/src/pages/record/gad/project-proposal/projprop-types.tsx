@@ -98,6 +98,7 @@ export type ProjectProposalInput = {
     count: string | number;
   }[];
   budget_items?: any[];
+  dev_date?: string;
 };
 
 export type Staff = {
@@ -169,7 +170,7 @@ export const prepareProposalPayload = (proposalData: ProjectProposalInput) => {
 
  return Object.fromEntries(
     Object.entries(payload).filter(([key, value]) => {
-      // Keep participants and budget_items even if they're empty arrays
+
       if (key === 'participants' || key === 'budget_items') {
         return true;
       }

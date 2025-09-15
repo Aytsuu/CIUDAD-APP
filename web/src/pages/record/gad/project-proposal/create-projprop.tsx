@@ -301,6 +301,9 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
         );
         setValue("budgetItems", formattedBudgetItems);
       }
+      if (selectedProject.dev_date) {
+      setValue("date", selectedProject.dev_date);
+    }
     }
   };
 

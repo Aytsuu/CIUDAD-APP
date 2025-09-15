@@ -84,7 +84,7 @@ const transformProposalWithData = (proposal: any, suppDocs: any[]) => {
     background: proposal.gprBackground ?? proposal.gpr_background ?? 'No background provided',
     objectives: proposal.gprObjectives ?? proposal.gpr_objectives ?? [],
     participants: proposal.gprParticipants ?? proposal.gpr_participants ?? [],
-    date: proposal.gprDate ?? proposal.gpr_date ?? new Date().toISOString(),
+    date: proposal.gprDate ?? proposal.project_date ?? proposal.gpr_date ?? proposal.date ?? new Date().toISOString(),
     venue: proposal.gprVenue ?? proposal.gpr_venue ?? 'No venue provided',
      budgetItems: (proposal.gprBudgetItems || proposal.gpr_budget_items || []).map((item: any) => ({
       name: item.name || '',

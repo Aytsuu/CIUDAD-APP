@@ -254,6 +254,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
     project_title = serializers.SerializerMethodField()
     participants = serializers.JSONField(required=False)
     budget_items = serializers.JSONField(required=False)
+    project_date = serializers.SerializerMethodField()
     
     def to_internal_value(self, data):
         # Map selectedDevProject to dev if needed
@@ -403,6 +404,18 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
                 return dev_data.get('dev_gad_items', [])
         return []
     
+    def get_project_date(self, obj):
+        """Get project date from development plan"""
+        if hasattr(obj, 'dev') and obj.dev and obj.dev.dev_date:
+            return obj.dev.dev_date
+        elif isinstance(obj, dict) and 'dev' in obj:
+            dev_data = obj['dev']
+            if hasattr(dev_data, 'dev_date'):
+                return dev_data.dev_date
+            elif isinstance(dev_data, dict):
+                return dev_data.get('dev_date')
+        return None
+    
     def validate_gpr_header_img(self, value):
         if value is None:
             return value
@@ -421,20 +434,22 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         budget_items = validated_data.pop('budget_items', None)
         header_img_data = validated_data.pop('gpr_header_img', None)
         instance = super().create(validated_data)
-
-        if participants is not None or budget_items is not None:
-                dev_plan = instance.dev
-                if dev_plan:
-                    if participants is not None:
-                        dev_plan.dev_indicator = participants
-                        
-                    if budget_items is not None:
-                        dev_plan.dev_gad_items = budget_items
-                        
-                    try:
-                        dev_plan.save()
-                    except Exception as e:
-                        print("Error saving DevelopmentPlan:", str(e))
+        
+        date_data = self.context['request'].data.get('gpr_date') if 'request' in self.context else None
+        
+        if participants is not None or budget_items is not None or date_data is not None:
+            dev_plan = instance.dev
+            if dev_plan:
+                if participants is not None:
+                    dev_plan.dev_indicator = participants
+                if budget_items is not None:
+                    dev_plan.dev_gad_items = budget_items
+                if date_data is not None:
+                    dev_plan.dev_date = date_data
+                try:
+                    dev_plan.save()
+                except Exception as e:
+                    print("Error saving DevelopmentPlan:", str(e))
                         
         if header_img_data:
             try:
@@ -471,15 +486,18 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         
         participants = validated_data.pop('participants', None)
         budget_items = validated_data.pop('budget_items', None)
+        date_data = self.context['request'].data.get('gpr_date') if 'request' in self.context else None
         
         # Update the related DevelopmentPlan if participants or budget_items are provided
-        if participants is not None or budget_items is not None:
+        if participants is not None or budget_items is not None or date_data is not None:
             dev_plan = instance.dev
             if dev_plan:
                 if participants is not None:
                     dev_plan.dev_indicator = participants
                 if budget_items is not None:
                     dev_plan.dev_gad_items = budget_items
+                if date_data is not None:
+                    dev_plan.dev_date = date_data
                 dev_plan.save()
 
         instance = super().update(instance, validated_data)
@@ -514,7 +532,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
                 'gprId': instance.get('gpr_id'),
                 'gprTitle': self.get_project_title(instance),
                 'gprBackground': instance.get('gpr_background'),
-                'gprDate': instance.get('gpr_date'),
+                'gprDate': self.get_project_date(instance), 
                 'gprVenue': instance.get('gpr_venue'),
                 'gprMonitoring': instance.get('gpr_monitoring'),
                 'gprHeaderImage': instance.get('gpr_header_img'),
@@ -558,7 +576,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
                 'gprId': instance.gpr_id,
                 'gprTitle': self.get_project_title(instance),
                 'gprBackground': data.get('gpr_background'),
-                'gprDate': data.get('gpr_date'),
+                'gprDate': self.get_project_date(instance), 
                 'gprVenue': data.get('gpr_venue'),
                 'gprMonitoring': data.get('gpr_monitoring'),
                 'gprHeaderImage': instance.gpr_header_img if instance.gpr_header_img else None,
@@ -570,7 +588,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
                 'gprSignatories': data.get('gpr_signatories'),
                 'staffId': staff_id,
                 'staffName': data.get('staff_name', 'Unknown'),
-                'devId': dev_id,  # Use the extracted dev ID, not the DevelopmentPlan object
+                'devId': dev_id,
                 'devDetails': data.get('dev_details'),
                 'gbudId': data.get('gbud'),
             }
@@ -578,7 +596,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProjectProposal
         fields = [
-            'gpr_id', 'gpr_background', 'gpr_date', 'gpr_venue',
+            'gpr_id', 'gpr_background', 'gpr_venue', 'project_date',
             'gpr_monitoring', 'gpr_header_img', 'gpr_created', 'gpr_is_archive',
             'gpr_objectives', 'gpr_signatories', 'project_title', 'budget_items',
             'staff', 'gbud', 'dev', 'dev_details', 'participants'
