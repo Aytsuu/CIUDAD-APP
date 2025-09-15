@@ -71,7 +71,7 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
             existing = FamilyComposition.objects.filter(rp=item['rp'], fc_role='INDEPENDENT').first()
             if existing:
                 existing.delete()
-            instances(FamilyComposition(**item))
+            instances.append(FamilyComposition(**item))
 
         created_instances = FamilyComposition.objects.bulk_create(instances)
 

@@ -257,6 +257,10 @@ class SendOTPEmail(APIView):
     def post(self, request):
         email = request.data.get('email')       
 
+        if email:
+            exists = Account.objects.filter(email=email).first()
+            if exists:
+                return Response({'email': 'Email already in use'}, status=status.HTTP_400_BAD_REQUEST)
         otp = generate_otp()
         cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
         send_otp_email(email, otp)
