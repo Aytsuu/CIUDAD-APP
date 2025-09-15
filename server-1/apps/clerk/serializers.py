@@ -624,6 +624,7 @@ class ServiceChargePaymentRequestSerializer(serializers.ModelSerializer):
 
 # ================== TREASURER: SERVICE CHARGE LIST =========================
 class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
+    sr_id = serializers.CharField(read_only=True)
     caseNo = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
     address1 = serializers.SerializerMethodField()
@@ -635,6 +636,7 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceChargeRequest
         fields = [
+            'sr_id',
             'caseNo',
             'name',
             'address1',

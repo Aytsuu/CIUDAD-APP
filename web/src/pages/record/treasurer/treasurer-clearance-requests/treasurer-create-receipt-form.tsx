@@ -10,6 +10,7 @@ import { useAcceptRequest, useAcceptNonResRequest } from "./queries/personalClea
 import { useAddPersonalReceipt } from "../Receipts/queries/receipts-insertQueries";
 import { useMemo } from "react";
 import { useAuth } from '@/context/AuthContext';
+import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServiceChargeRate } from "./queries/serviceChargeQueries";
 
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
 function ReceiptForm({
@@ -42,6 +43,9 @@ function ReceiptForm({
     const { mutate: receipt, isPending} = useAddPersonalReceipt(onSuccess)
     const { mutate: acceptReq, isPending: isAcceptPending} = useAcceptRequest()
     const { mutate: acceptNonResReq, isPending: isAcceptNonResPending} = useAcceptNonResRequest()
+    const { data: scRate } = useServiceChargeRate();
+    const { mutateAsync: createScPayReq } = useCreateServiceChargePaymentRequest();
+    const { mutateAsync: acceptSummon } = useAcceptSummonRequest();
 
    console.log('stat', pay_status, 'staffId', staffId)
    // Derive resident status defensively: certificate flow (nat_col === 'Certificate') with null voter_id should be resident (paid)
@@ -69,13 +73,28 @@ function ReceiptForm({
         
         try {
             console.log('[Receipt onSubmit] context:', { id, is_resident, effectiveIsResident, voter_id, isFree, nat_col, staffId, purpose, rate });
-            if (effectiveIsResident){
-                console.log('[Receipt onSubmit] calling acceptReq (resident) with cr_id:', id);
-                await acceptReq(id)
+            
+            if (nat_col === 'Service Charge'){
+                const prId = scRate?.pr_id;
+                const amount = scRate?.pr_rate != null ? Number(scRate.pr_rate) : undefined;
+                if (prId == null){
+                    console.warn('[Receipt onSubmit] Service Charge rate not found; skipping payment request creation');
+                } else {
+                    console.log('[Receipt onSubmit] creating ServiceChargePaymentRequest with', { sr_id: id, pr_id: prId, spay_amount: amount });
+                    await createScPayReq({ sr_id: id.toString(), pr_id: prId, spay_amount: amount });
+                    // Auto-mark summon as Accepted
+                    await acceptSummon(id.toString());
+                }
             } else {
-                // For non-resident requests, use the acceptNonResReq mutation
-                console.log('[Receipt onSubmit] calling acceptNonResReq (non-resident) with nrc_id:', id, 'discountReason:', discountReason);
-                await acceptNonResReq({nrc_id: id, discountReason: discountReason})
+                // Certificate flow
+                if (effectiveIsResident){
+                    console.log('[Receipt onSubmit] calling acceptReq (resident) with cr_id:', id);
+                    await acceptReq(id)
+                } else {
+                    // For non-resident requests, use the acceptNonResReq mutation
+                    console.log('[Receipt onSubmit] calling acceptNonResReq (non-resident) with nrc_id:', id, 'discountReason:', discountReason);
+                    await acceptNonResReq({nrc_id: id, discountReason: discountReason})
+                }
             }
             // Create invoice after status update
             const values = form.getValues();
@@ -84,8 +103,8 @@ function ReceiptForm({
                 inv_amount: parseFloat(values.inv_amount || (discountedAmount || rate || '0')),
                 inv_nat_of_collection: values.inv_nat_of_collection,
                 inv_serial_num: values.inv_serial_num || 'N/A',
-                cr_id: effectiveIsResident ? id.toString() : undefined,
-                nrc_id: !effectiveIsResident ? Number(id) : undefined,
+                cr_id: nat_col !== 'Service Charge' && effectiveIsResident ? id.toString() : undefined,
+                nrc_id: nat_col !== 'Service Charge' && !effectiveIsResident ? Number(id) : undefined,
             };
             Object.keys(payload).forEach((k) => (payload[k] === undefined || payload[k] === '') && delete payload[k]);
             console.log('[Receipt onSubmit] creating invoice with payload:', payload);

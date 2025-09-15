@@ -9,7 +9,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import { Button } from "@/components/ui/button/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
-import { useTreasurerServiceCharges } from "./queries/serviceChargeQueries";
+import { useServiceChargeRate, useTreasurerServiceCharges } from "./queries/serviceChargeQueries";
 import type { ServiceCharge } from "./restful-api/serviceChargeGetAPI";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
@@ -64,9 +64,9 @@ export const columns: ColumnDef<ServiceCharge>[] = [
                           const sc = row.original as ServiceCharge;
                           return (
                             <ReceiptForm
-                              id={String(sc.caseNo)}
+                              id={String(sc.sr_id)}
                               purpose={sc.reason}
-                              rate={"0"}
+                              rate={(window as any).__serviceChargeRate || "0"}
                               requester={sc.name}
                               pay_status={"Unpaid"}
                               nat_col={"Service Charge"}
@@ -95,6 +95,9 @@ export const columns: ColumnDef<ServiceCharge>[] = [
 
 function ServiceCharge(){
     const { data = [], isLoading } = useTreasurerServiceCharges();
+    const { data: rateObj } = useServiceChargeRate();
+    // Expose to receipt dialog content renderer (string value)
+    (window as any).__serviceChargeRate = rateObj?.pr_rate != null ? String(rateObj.pr_rate) : "0";
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
 
