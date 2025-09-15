@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
-import {type ComplaintFormData, complaintFormSchema} from "@/form-schema/complaint-schema";
-import { ReviewInfo } from "./review";
-import { ComplainantInfo } from "./complainant";
-import { AccusedInfo } from "./accused";
-import { IncidentInfo } from "./incident";
+import {
+  type ComplaintFormData,
+  complaintFormSchema,
+} from "@/form-schema/complaint-schema";
+import { ReviewInfo } from "./Review";
+import { ComplainantInfo } from "./Complainant";
+import { AccusedInfo } from "./Accused";
+import { IncidentInfo } from "./Incident";
 import { ProgressBar } from "@/components/progress-bar";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button/button";
@@ -91,35 +94,47 @@ export const ComplaintForm = () => {
 
       const formData = new FormData();
 
-      const complainantData = data.complainant.map((comp) => ({
-        name: comp.fullName,
-        gender: comp.gender,
-        contactNumber: comp.contactNumber,
-        age: comp.age,
-        relation_to_respondent: comp.relation_to_respondent,
-        address: {
-          province: comp.address.province,
-          city: comp.address.city,
-          barangay: comp.address.barangay,
-          street: comp.address.street,
-          sitio: comp.address.sitio || "",
-        },
-      }));
+      const complainantData = data.complainant.map((comp) => {
+        const fullAddress = [
+          comp.address.street,
+          comp.address.barangay,
+          comp.address.city,
+          comp.address.province,
+        ]
+          .filter(Boolean)
+          .join(", ")
+          .toUpperCase();
+
+        return {
+          name: comp.fullName,
+          gender: comp.gender,
+          contactNumber: comp.contactNumber,
+          age: comp.age,
+          relation_to_respondent: comp.relation_to_respondent,
+          address: fullAddress,
+        };
+      });
       formData.append("complainant", JSON.stringify(complainantData));
 
-      const accusedData = data.accused.map((data) => ({
-        alias: `${data.alias} `,
-        age: data.age,
-        gender: data.gender,
-        description: data.description,
-        address: {
-          province: data.address.province,
-          city: data.address.city,
-          barangay: data.address.barangay,
-          street: data.address.street,
-          sitio: data.address.sitio || "",
-        },
-      }));
+      const accusedData = data.accused.map((acc) => {
+        const fullAddress = [
+          acc.address.street,
+          acc.address.barangay,
+          acc.address.city,
+          acc.address.province,
+        ]
+          .filter(Boolean)
+          .join(", ")
+          .toUpperCase();
+
+        return {
+          alias: acc.alias,
+          age: acc.age,
+          gender: acc.gender,
+          description: acc.description,
+          address: fullAddress,
+        };
+      });
       formData.append("accused", JSON.stringify(accusedData));
       formData.append("incident_type", data.incident.type);
       formData.append("allegation", data.incident.description);
@@ -153,8 +168,11 @@ export const ComplaintForm = () => {
         }
       }
 
-      await postComplaint.mutateAsync(formData);
-      await handleSendAlert();
+      const response = await postComplaint.mutateAsync(formData);
+
+      if (response) {
+        await handleSendAlert();
+      }
 
       toast.success("Complaint submitted successfully");
       setTimeout(() => {
@@ -259,7 +277,7 @@ export const ComplaintForm = () => {
                                hover:bg-blue-500 
                                transition-colors duration-200"
                   >
-                    <Info/>
+                    <Info />
                   </Button>
                 </div>
                 <p className="text-black/70 font-normal text-sm">

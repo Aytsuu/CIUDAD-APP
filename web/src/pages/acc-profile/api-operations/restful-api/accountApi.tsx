@@ -28,7 +28,7 @@ export const updateProfilePicture = async (file: File) => {
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("userimage")
+      .from("profile_picture-bucket")
       .upload(fileName, file, {
         cacheControl: "3600",
         upsert: false,
@@ -44,19 +44,18 @@ export const updateProfilePicture = async (file: File) => {
 
     // Get public URL
     const { data: urlData } = supabase.storage
-      .from("userimage")
+      .from("profile_picture-bucket")
       .getPublicUrl(fileName);
 
     console.log("Generated public URL:", urlData.publicUrl);
 
     // Send URL to backend
-    const response = await api.post("/authentication/upload-image/", {
+    const response = await api.post("/account/profileUpdate/", {
       image_url: urlData.publicUrl,
     });
 
     console.log("Backend update response:", response.data);
-    toast.success("Password updated successfully");
-    // Return URL with cache-busting parameter
+    toast.success("Profile picture updated successfully");
     return `${urlData.publicUrl}?t=${Date.now()}`;
   } catch (error: any) {
     throw error.message || "Image upload failed. Please try again.";

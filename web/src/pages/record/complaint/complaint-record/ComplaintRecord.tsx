@@ -5,8 +5,9 @@ import { Complaint } from "../complaint-type";
 import { filterComplaints } from "./FilterComplaint";
 
 import ComplaintFilterBar from "./ComplaintFilterBar";
-import ComplaintTable from "./ComplaintTable";
+import ComplaintTable from "../ComplaintTable";
 import ComplaintPagination from "./ComplaintPagination";
+import { useBulkArchiveComplaints } from "../api-operations/queries/complaintPostQueries";
 
 export default function ComplaintRecord() {
   const DEFAULT_PAGE_SIZE = 10;
@@ -15,23 +16,43 @@ export default function ComplaintRecord() {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [currentPage, setCurrentPage] = useState(1);
   const { data: complaints = [], isLoading, error } = useGetComplaint();
+  const bulkArchiveComplaints = useBulkArchiveComplaints();
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, pageSize]);
 
-  const nonArchivedComplaints = useMemo(() => {
-    return complaints.filter((c: Complaint) => !c.comp_is_archive);
+  // Filter for Filed and Raised complaints that are not archived
+  const filedAndRaisedComplaints = useMemo(() => {
+    return complaints.filter((c: Complaint) => 
+      (c.comp_status === 'Filed' || c.comp_status === 'Raised') && !c.comp_is_archive
+    );
   }, [complaints]);
 
   const filteredData = useMemo(() => {
-    return filterComplaints(nonArchivedComplaints, searchQuery);
-  }, [nonArchivedComplaints, searchQuery, timeFilter]);
+    return filterComplaints(filedAndRaisedComplaints, searchQuery);
+  }, [filedAndRaisedComplaints, searchQuery, timeFilter]);
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return filteredData.slice(start, start + pageSize);
   }, [filteredData, currentPage, pageSize]);
+
+  const buttonCounts = useMemo(() => {
+    const requestCount = complaints.filter((c: Complaint) => 
+      c.comp_status === 'Pending' && !c.comp_is_archive
+    ).length;
+    
+    const archivedCount = complaints.filter((c: Complaint) => 
+      c.comp_is_archive === true
+    ).length;
+    
+    const rejectedCount = complaints.filter((c: Complaint) => 
+      c.comp_status === 'Rejected' && !c.comp_is_archive
+    ).length;
+
+    return { requestCount, archivedCount, rejectedCount };
+  }, [complaints]);
 
   if (error) return <div>Error: {error.message}</div>;
 
@@ -41,24 +62,38 @@ export default function ComplaintRecord() {
     <div className="w-full h-full flex flex-col">
       <div className="flex flex-col justify-center mb-4">
         <h1 className="flex flex-row font-semibold text-xl sm:text-2xl text-darkBlue2 items-center">
-          Barangay Blotter
+          Barangay Blotter 
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
-          Manage and view complaint information
+          Manage and view filed and raised complaint
         </p>
       </div>
       <hr className="pb-4" />
+      
       <ComplaintFilterBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         timeFilter={timeFilter}
         setTimeFilter={setTimeFilter}
+        buttons={{
+          filter: true,
+          request: true,
+          archived: true,
+          newReport: true,
+          rejected: false, 
+          requestCount: buttonCounts.requestCount,
+          archivedCount: buttonCounts.archivedCount,
+          rejectedCount: buttonCounts.rejectedCount,
+        }}
       />
 
       <ComplaintTable
         data={paginatedData}
         columns={columns}
         isLoading={isLoading}
+        onArchiveComplaints={async (complaintIds: string[]) => {
+          await bulkArchiveComplaints.mutateAsync(complaintIds);
+        }}
       />
 
       <ComplaintPagination

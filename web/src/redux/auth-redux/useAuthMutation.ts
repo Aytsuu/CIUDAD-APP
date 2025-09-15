@@ -12,7 +12,7 @@ export const useLoginMutation = () => {
   return useMutation<TokenResponse, Error, LoginCredentials>({
     mutationFn: async (credentials) => {
       const response = await api.post('authentication/web/login/', credentials);
-      console.log(response.data)
+      console.log(response.data);
       return response.data;
     },
     onMutate: () => {

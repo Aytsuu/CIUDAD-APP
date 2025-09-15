@@ -16,13 +16,17 @@ export const useAuth = () => {
   const logoutMutation = useLogoutMutation();
 
   // Actions
-  const login = useCallback(
-    async (credentials: LoginCredentials) => {
+const login = useCallback(
+  async (credentials: LoginCredentials) => {
+    try {
       const result = await loginMutation.mutateAsync(credentials);
       return result.user;
-    },
-    [loginMutation]
-  );
+    } catch (error) {
+      throw error;
+    }
+  },
+  [loginMutation]
+);
 
   const signUp = useCallback(
     async (credentials: SignupCredentials) => {
