@@ -44,4 +44,7 @@ urlpatterns = [
 
     # Business Clearance endpoints
     path('business-clearance/', ClearanceRequestView.as_view(), name='business-clearance-create'),
+
+    # Treasurer - Service Charge Requests
+    path('treasurer/service-charges/', ServiceChargeTreasurerListView.as_view(), name='treasurer-service-charges'),
 ]
