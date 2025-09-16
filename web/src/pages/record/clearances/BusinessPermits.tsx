@@ -64,24 +64,24 @@ function BusinessDocumentPage() {
     setCurrentPage(page);
   };
 
-  const handleRowClick = (row: BusinessPermit) => {
-    navigate(`/record/clearances/BusinessPermitDocumentation/${row.bpr_id}`, {
-      state: {
-        requestNo: row.bpr_id,
-        businessName: row.business_name,
-        businessAddress: row.business_address, 
-        paymentMethod: row.req_pay_method,
-        dateRequested: row.req_request_date,
-        dateClaim: row.req_claim_date,
-        status: row.req_status,
-        paymentStatus: row.req_payment_status,
-        transactionId: row.req_transac_id,
-        grossSales: row.business_gross_sales,
-        purpose: row.req_purpose,
-        pr_id: row.pr_id, 
-      },
-    });
-  };
+  // const handleRowClick = (row: BusinessPermit) => {
+  //   navigate(`/record/clearances/BusinessPermitDocumentation/${row.bpr_id}`, {
+  //     state: {
+  //       requestNo: row.bpr_id,
+  //       businessName: row.business_name,
+  //       businessAddress: row.business_address, 
+  //       paymentMethod: row.req_pay_method,
+  //       dateRequested: row.req_request_date,
+  //       dateClaim: row.req_claim_date,
+  //       status: row.req_status,
+  //       paymentStatus: row.req_payment_status,
+  //       transactionId: row.req_transac_id,
+  //       grossSales: row.business_gross_sales,
+  //       purpose: row.req_purpose,
+  //       pr_id: row.pr_id, 
+  //     },
+  //   });
+  // };
 
   const columns: ColumnDef<BusinessPermit>[] = [
     {
@@ -110,7 +110,7 @@ function BusinessDocumentPage() {
     {
       accessorKey: "req_pay_method",
       header: "Payment Method",
-      cell: ({ row }) => {
+      cell: ({ }) => {
         // Display "Walk-in" for all business permit requests
         const value = "Walk-in";
         const bg = "bg-[#eaffea]"; 

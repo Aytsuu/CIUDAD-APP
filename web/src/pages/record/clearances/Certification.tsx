@@ -169,25 +169,25 @@ function CertificatePage() {
     setCurrentPage(page);
   };
 
-  const handleRowClick = (row: Certificate) => {
-    const fullName = `${row.resident_details?.per_fname || ''} ${row.resident_details?.per_lname || ''}`.trim();
-    navigate(`/record/clearances/ViewDocument/${row.cr_id}`, {
-      state: {
-        name: fullName || row.cr_id,
-        purpose: row.req_purpose || row.req_type,
-        date: row.req_claim_date,
-        requestId: row.cr_id,
-        requestDate: row.req_request_date,
-        paymentMethod: row.req_pay_method,
-        isNonResident: row.is_nonresident,
-        nonResidentData: row.is_nonresident ? {
-          requester: row.nrc_requester,
-          address: row.nrc_address,
-          birthdate: row.nrc_birthdate,
-        } : undefined,
-      },
-    });
-  };
+  // const handleRowClick = (row: Certificate) => {
+  //   const fullName = `${row.resident_details?.per_fname || ''} ${row.resident_details?.per_lname || ''}`.trim();
+  //   navigate(`/record/clearances/ViewDocument/${row.cr_id}`, {
+  //     state: {
+  //       name: fullName || row.cr_id,
+  //       purpose: row.req_purpose || row.req_type,
+  //       date: row.req_claim_date,
+  //       requestId: row.cr_id,
+  //       requestDate: row.req_request_date,
+  //       paymentMethod: row.req_pay_method,
+  //       isNonResident: row.is_nonresident,
+  //       nonResidentData: row.is_nonresident ? {
+  //         requester: row.nrc_requester,
+  //         address: row.nrc_address,
+  //         birthdate: row.nrc_birthdate,
+  //       } : undefined,
+  //     },
+  //   });
+  // };
 
   const columns: ColumnDef<Certificate>[] = [
     {

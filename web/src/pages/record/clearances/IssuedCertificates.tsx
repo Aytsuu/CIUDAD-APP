@@ -247,7 +247,7 @@ function IssuedCertificates() {
     queryFn: getIssuedBusinessPermits,
   });
 
-  const { data: allPurposes, isLoading: purposesLoading } = useQuery<Purpose[]>({
+  const { data: allPurposes, isLoading: _purposesLoading } = useQuery<Purpose[]>({
     queryKey: ["allPurposes"],
     queryFn: getAllPurposes,
   });

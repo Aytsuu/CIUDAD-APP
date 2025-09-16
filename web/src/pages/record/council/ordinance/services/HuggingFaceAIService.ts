@@ -248,7 +248,7 @@ export class HuggingFaceAIService {
             const uint8Array = new Uint8Array(arrayBuffer);
 
             // Convert to base64 for processing
-            const base64 = btoa(String.fromCharCode(...uint8Array));
+            // const base64 = btoa(String.fromCharCode(...uint8Array));
 
             // Try to extract text using a simple approach
             const pdfText = this.extractTextFromPDFBuffer(uint8Array);
@@ -320,63 +320,63 @@ export class HuggingFaceAIService {
     /**
      * Extract readable text from PDF content
      */
-    private extractTextFromPDFContent(pdfContent: string): string {
-        try {
-            // Look for text streams in PDF content
-            const textStreams = pdfContent.match(/stream\s*([\s\S]*?)\s*endstream/g);
-            let extractedText = '';
+    // private extractTextFromPDFContent(pdfContent: string): string {
+    //     try {
+    //         // Look for text streams in PDF content
+    //         const textStreams = pdfContent.match(/stream\s*([\s\S]*?)\s*endstream/g);
+    //         let extractedText = '';
 
-            if (textStreams) {
-                for (const stream of textStreams) {
-                    // Extract content between stream and endstream
-                    const content = stream.replace(/stream\s*/, '').replace(/\s*endstream/, '');
+    //         if (textStreams) {
+    //             for (const stream of textStreams) {
+    //                 // Extract content between stream and endstream
+    //                 const content = stream.replace(/stream\s*/, '').replace(/\s*endstream/, '');
 
-                    // Look for text patterns in the stream - both parentheses and brackets
-                    const textMatches = content.match(/\([^)]+\)|\[[^\]]+\]/g);
-                    if (textMatches) {
-                        const text = textMatches
-                            .map(match => match.slice(1, -1)) // Remove parentheses/brackets
-                            .join(' ')
-                            .replace(/\\[a-zA-Z0-9]+/g, ' ') // Remove PDF escape sequences
-                            .replace(/\s+/g, ' ') // Normalize whitespace
-                            .trim();
+    //                 // Look for text patterns in the stream - both parentheses and brackets
+    //                 const textMatches = content.match(/\([^)]+\)|\[[^\]]+\]/g);
+    //                 if (textMatches) {
+    //                     const text = textMatches
+    //                         .map(match => match.slice(1, -1)) // Remove parentheses/brackets
+    //                         .join(' ')
+    //                         .replace(/\\[a-zA-Z0-9]+/g, ' ') // Remove PDF escape sequences
+    //                         .replace(/\s+/g, ' ') // Normalize whitespace
+    //                         .trim();
 
-                        // Check if this looks like actual ordinance text
-                        if (text.length > 20 &&
-                            !text.includes('ReportLab') &&
-                            !text.includes('anonymous') &&
-                            !text.includes('YYjWN') && // Filter out encoded data
-                            !text.includes('ahcY?K') &&
-                            (text.includes('Ordinance') || text.includes('Section') || text.includes('Municipality'))) {
-                            extractedText += ' ' + text;
-                        }
-                    }
-                }
-            }
+    //                     // Check if this looks like actual ordinance text
+    //                     if (text.length > 20 &&
+    //                         !text.includes('ReportLab') &&
+    //                         !text.includes('anonymous') &&
+    //                         !text.includes('YYjWN') && // Filter out encoded data
+    //                         !text.includes('ahcY?K') &&
+    //                         (text.includes('Ordinance') || text.includes('Section') || text.includes('Municipality'))) {
+    //                         extractedText += ' ' + text;
+    //                     }
+    //                 }
+    //             }
+    //         }
 
-            // If we found good text, clean and return it
-            if (extractedText.length > 50) {
-                return this.cleanExtractedText(extractedText);
-            }
+    //         // If we found good text, clean and return it
+    //         if (extractedText.length > 50) {
+    //             return this.cleanExtractedText(extractedText);
+    //         }
 
-            // Fallback: look for any readable text patterns
-            const readableText = pdfContent
-                .replace(/[^\x20-\x7E\n\r]/g, ' ') // Keep only printable ASCII
-                .replace(/\\[a-zA-Z0-9]+/g, ' ') // Remove escape sequences
-                .replace(/\s+/g, ' ') // Normalize whitespace
-                .replace(/ReportLab.*?www\.reportlab\.com/g, '') // Remove ReportLab metadata
-                .replace(/anonymous.*?unspecified/g, '') // Remove metadata
-                .replace(/D:\d{14}.*?00'00'/g, '') // Remove date metadata
-                .replace(/YYjWN.*?ahcY\?K/g, '') // Remove encoded data patterns
-                .trim();
+    //         // Fallback: look for any readable text patterns
+    //         const readableText = pdfContent
+    //             .replace(/[^\x20-\x7E\n\r]/g, ' ') // Keep only printable ASCII
+    //             .replace(/\\[a-zA-Z0-9]+/g, ' ') // Remove escape sequences
+    //             .replace(/\s+/g, ' ') // Normalize whitespace
+    //             .replace(/ReportLab.*?www\.reportlab\.com/g, '') // Remove ReportLab metadata
+    //             .replace(/anonymous.*?unspecified/g, '') // Remove metadata
+    //             .replace(/D:\d{14}.*?00'00'/g, '') // Remove date metadata
+    //             .replace(/YYjWN.*?ahcY\?K/g, '') // Remove encoded data patterns
+    //             .trim();
 
-            return this.cleanExtractedText(readableText);
+    //         return this.cleanExtractedText(readableText);
 
-        } catch (error) {
-            console.error('Error processing PDF content:', error);
-            return '';
-        }
-    }
+    //     } catch (error) {
+    //         console.error('Error processing PDF content:', error);
+    //         return '';
+    //     }
+    // }
 
     /**
      * Clean and filter extracted text

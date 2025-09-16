@@ -2116,9 +2116,9 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
   }
 
 
-  const isTemplateEmpty = (template: Template) => {
-    return !template.temp_body || !template.temp_title || !template.temp_barangayLogo;
-  };
+  // const isTemplateEmpty = (template: Template) => {
+  //   return !template.temp_body || !template.temp_title || !template.temp_barangayLogo;
+  // };
 
   return (
     <div className="w-full h-full">
