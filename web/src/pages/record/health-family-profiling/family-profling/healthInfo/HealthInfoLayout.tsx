@@ -2,7 +2,7 @@ import React from "react";
 import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import HealthInfoForm from "./HealthInfoForm";
-import { familyFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
 
 export default function HealthInfoLayout({
   form,

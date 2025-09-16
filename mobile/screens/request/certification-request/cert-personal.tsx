@@ -1,18 +1,71 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useSelector } from 'react-redux';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { useAddPersonalCertification } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
 import { usePurposeAndRates, type PurposeAndRate } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, type DropdownOption } from "@/components/ui/select-layout";
-import { RootState } from '@/redux/store';
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/api/api";
 
 const CertForm: React.FC = () => {
   const router = useRouter();
-  const {user, isLoading} = useSelector((state: RootState) => state.auth);
+  const {user, isLoading} = useAuth();
+  const [hasVoterId, setHasVoterId] = useState<boolean>(false);
+  
+  // Debug: Inspect what useAuth provides
+  useEffect(() => {
+    try {
+      console.log("[AuthContext] resident rp_id:", user?.resident?.rp_id);
+      console.log("[AuthContext] resident voter_id:", user?.resident?.voter_id, "type:", typeof user?.resident?.voter_id);
+    } catch (e) {}
+  }, [user]);
+
+  // Minimal local fix: fetch voter status by rp_id (best-effort)
+  useEffect(() => {
+    const rpId = user?.resident?.rp_id;
+    // If auth already carries a voter indicator, use it
+    if (user?.resident?.voter_id !== null && user?.resident?.voter_id !== undefined) {
+      setHasVoterId(true);
+      return;
+    }
+    if ((user as any)?.resident?.voter) {
+      setHasVoterId(true);
+      return;
+    }
+    if (!rpId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        // Use profiling residents TABLE endpoint (includes voter_id)
+        const res = await api.get(`profiling/resident/list/table/`, { params: { rp: rpId } });
+        const items = Array.isArray(res?.data) ? res.data : Array.isArray(res?.data?.results) ? res.data.results : [];
+        console.log("[AuthContext] voter lookup table resp:", items);
+        const match = items.find((r: any) => String(r?.rp_id) === String(rpId));
+        if (!cancelled) {
+          const v = match?.voter_id ?? match?.voter ?? match?.voterId ?? null;
+          setHasVoterId(v !== null && v !== undefined && v !== 0 && v !== false);
+        }
+      } catch (_) {
+        // Fallback: try profiling resident personal detail
+        try {
+          const resDetail = await api.get(`profiling/resident/personal/${rpId}/`);
+          const data = resDetail?.data || {};
+          if (!cancelled) setHasVoterId(Boolean(data?.voter_id ?? data?.voter));
+        } catch (_) {
+          // remain false
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.resident?.rp_id, user?.resident?.voter_id]);
+
+  // Debug: Log resolved hasVoterId
+  useEffect(() => {
+    console.log("[AuthContext] hasVoterId:", hasVoterId);
+  }, [hasVoterId]);
   const [personalType, setPersonalType] = useState("");
   const [purpose, setPurpose] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -70,8 +123,8 @@ const CertForm: React.FC = () => {
     });
   };
 
-  // Show loading screen while auth is loading
-  if (isLoading) {
+  // Show loading screen while auth or purposes are loading
+  if (isLoading || isLoadingPurposes) {
     return (
       <_ScreenLayout
         customLeftAction={
@@ -87,7 +140,9 @@ const CertForm: React.FC = () => {
       >
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#00AFFF" />
-          <Text className="text-gray-600 text-base mt-4">Loading...</Text>
+          <Text className="text-gray-600 text-base mt-4">
+            {isLoading ? 'Loading user data...' : 'Loading purposes...'}
+          </Text>
         </View>
       </_ScreenLayout>
     );
@@ -152,34 +207,17 @@ const CertForm: React.FC = () => {
         {/* Removed payment mode field */}
       </View>
 
-      {/* Amount Display - Moved below form fields */}
-      {personalType && (
-        <View className={`rounded-lg p-4 mb-6 mt-4 ${
-          user?.resident?.voter_id ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'
-        }`}>
+      {/* Amount Display - show only for residents without voter_id */}
+      {personalType && !hasVoterId && (
+        <View className="rounded-lg p-4 mb-6 mt-4 bg-blue-50 border border-blue-200">
           <View className="flex-row items-center mb-2">
-            <Ionicons 
-              name={user?.resident?.voter_id ? "checkmark-circle" : "information-circle"} 
-              size={16} 
-              color={user?.resident?.voter_id ? "#059669" : "#2563EB"} 
-            />
-            <Text className={`text-sm font-medium ml-2 ${user?.resident?.voter_id ? 'text-green-800' : 'text-blue-800'}`}>
-              Amount to be Paid:
-            </Text>
+            <Ionicons name="information-circle" size={16} color="#2563EB" />
+            <Text className="text-sm font-medium ml-2 text-blue-800">Amount to be Paid:</Text>
           </View>
-          <Text className={`text-lg font-bold ${
-            user?.resident?.voter_id ? 'text-green-700' : 'text-blue-700'
-          }`}>
+          <Text className="text-lg font-bold text-blue-700">
             {(() => {
-              // Check if user has voter_id for free certificate (only residents with non-null voter_id get free)
-              const isEligibleForFreeCert = user?.resident?.voter_id !== null && user?.resident?.voter_id !== undefined;
-              
-              if (isEligibleForFreeCert) {
-                return '₱0 (FREE)';
-              } else {
-                const selectedPurpose = purposeData.find(p => p.pr_purpose === personalType);
-                return selectedPurpose ? `₱${selectedPurpose.pr_rate.toLocaleString()}` : '₱0';
-              }
+              const selectedPurpose = purposeData.find(p => p.pr_purpose === personalType);
+              return selectedPurpose ? `₱${selectedPurpose.pr_rate.toLocaleString()}` : '₱0';
             })()}
           </Text>
         </View>
@@ -187,13 +225,13 @@ const CertForm: React.FC = () => {
 
       {/* Submit Button */}
       <TouchableOpacity
-        className={`bg-[#00AFFF] rounded-lg py-3 items-center mt-8 shadow-md ${addPersonalCert.status === 'pending' || isLoading ? 'opacity-50' : ''}`}
+        className={`bg-[#00AFFF] rounded-lg py-3 items-center mt-8 shadow-md ${addPersonalCert.status === 'pending' || !!isLoading ? 'opacity-50' : ''}`}
         activeOpacity={0.85}
         onPress={handleSubmit}
-        disabled={addPersonalCert.status === 'pending' || isLoading}
+        disabled={addPersonalCert.status === 'pending' || !!isLoading}
       >
         <Text className="text-white font-semibold text-base">
-          {addPersonalCert.status === 'pending' ? 'Submitting...' : isLoading ? 'Loading...' : 'Submit Request'}
+          {addPersonalCert.status === 'pending' ? 'Submitting...' : !!isLoading ? 'Loading...' : 'Submit Request'}
         </Text>
       </TouchableOpacity>
       </View>

@@ -6,7 +6,7 @@ import { familyFormSchema } from "@/form-schema/family-form-schema";
 import { useResidentsListHealth } from "../../family-profling/queries/profilingFetchQueries";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { formatResidents } from "../../profilingFormats";
+import { formatResidents } from "../../ProfilingFormats";
 import { Combobox } from "@/components/ui/combobox";
 import { useLoading } from "@/context/LoadingContext";
 

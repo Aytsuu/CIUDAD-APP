@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -9,9 +9,24 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { getIssuedCertificates, getIssuedBusinessPermits, getAllPurposes, type IssuedCertificate, type IssuedBusinessPermit, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
+import { useAuth } from "@/context/AuthContext";
+import React from "react";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Label } from "@/components/ui/label";
+import { Combobox } from "@/components/ui/combobox";
+import TemplateMainPage from "../council/templates/template-main";
+import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
+import { calculateAge } from "@/helpers/ageCalculator";
+
+interface ExtendedIssuedCertificate extends IssuedCertificate {
+  AsignatoryStaff?: string;
+  SpecificPurpose?: string;
+}
 
 function IssuedCertificates() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [searchQuery, setSearchQuery] = useState("");
   const [filterValue, setFilterValue] = useState("All");
   const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits">("certificates");
@@ -20,20 +35,45 @@ function IssuedCertificates() {
   const [businessSearchQuery, setBusinessSearchQuery] = useState("");
   const [businessFilterValue, setBusinessFilterValue] = useState("All");
 
+  // Template/dialog states for issued certificates (match Certification UX)
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [viewingCertificate, setViewingCertificate] = useState<IssuedCertificate | null>(null);
+  const [selectedCertificate, setSelectedCertificate] = useState<ExtendedIssuedCertificate | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState("");
+  const [purposeInput, setPurposeInput] = useState("");
+
+  // Fetch staff for signatory selection
+  const { data: staffList = [] } = useGetStaffList();
+  const staffOptions = useMemo(() => {
+    return staffList.map((staff: any) => ({
+      id: staff.staff_id,
+      name: staff.full_name,
+    }));
+  }, [staffList]);
+
+  React.useEffect(() => {
+    console.log("IssuedCertificates: resolved staffId from useAuth:", staffId);
+  }, [staffId]);
+
   const handleViewFile = (certificate: IssuedCertificate) => {
-    // Navigate to ViewDocument with the certificate data
-    navigate(`/record/clearances/ViewDocument/${certificate.ic_id}`, {
-      state: {
-        name: certificate.requester,
-        purpose: certificate.purpose,
-        date: certificate.dateIssued,
-        requestId: certificate.original_certificate?.cr_id || certificate.ic_id,
-        requestDate: certificate.original_certificate?.req_request_date || certificate.dateIssued,
-        paymentMethod: certificate.original_certificate?.req_pay_method || "Walk-in",
-        isIssued: true, // Flag to indicate this is an issued certificate
-        originalCertificate: certificate.original_certificate,
-      },
-    });
+    setSelectedCertificate(null);
+    setViewingCertificate(certificate);
+    setSelectedStaffId("");
+    setPurposeInput("");
+    setIsDialogOpen(true);
+  };
+
+  const handleProceedToTemplate = () => {
+    setIsDialogOpen(false);
+    if (viewingCertificate && selectedStaffId) {
+      const selectedStaff = staffOptions.find((s) => s.id === selectedStaffId);
+      const extended: ExtendedIssuedCertificate = {
+        ...viewingCertificate,
+        AsignatoryStaff: selectedStaff?.name,
+        SpecificPurpose: purposeInput,
+      };
+      setSelectedCertificate(extended);
+    }
   };
 
   const handleViewBusinessFile = (permit: IssuedBusinessPermit) => {
@@ -46,9 +86,9 @@ function IssuedCertificates() {
         requestId: permit.original_permit?.bpr_id || permit.ibp_id,
         requestDate: permit.original_permit?.req_request_date || permit.dateIssued,
         paymentMethod: permit.original_permit?.req_pay_method || "Walk-in",
-        isIssued: true, // Flag to indicate this is an issued permit
+        isIssued: true, 
         originalPermit: permit.original_permit,
-        isBusinessPermit: true, // Flag to indicate this is a business permit
+        isBusinessPermit: true, 
       },
     });
   };
@@ -207,7 +247,7 @@ function IssuedCertificates() {
     queryFn: getIssuedBusinessPermits,
   });
 
-  const { data: allPurposes, isLoading: purposesLoading } = useQuery<Purpose[]>({
+  const { data: allPurposes, isLoading: _purposesLoading } = useQuery<Purpose[]>({
     queryKey: ["allPurposes"],
     queryFn: getAllPurposes,
   });
@@ -375,6 +415,71 @@ function IssuedCertificates() {
           Showing 1-10 of {activeTab === "certificates" ? (filteredCertificates?.length || 0) : (filteredBusinessPermits?.length || 0)} rows
         </p>
       </div>
+
+      {/* Render TemplateMainPage for issued certificate like Certification page */}
+      {selectedCertificate && (
+        <TemplateMainPage
+          key={selectedCertificate.ic_id + Date.now()}
+          fname={(selectedCertificate.requester || '').split(' ')[0] || ''}
+          lname={(selectedCertificate.requester || '').split(' ').slice(1).join(' ') || ''}
+          age={calculateAge("2003-09-04")}
+          birthdate={"2003-09-04"}
+          address={"Sitio Palma"}
+          purpose={selectedCertificate.purpose}
+          Signatory={selectedCertificate.AsignatoryStaff}
+          specificPurpose={selectedCertificate.SpecificPurpose}
+          issuedDate={selectedCertificate.dateIssued || new Date().toISOString()}
+          isNonResident={false}
+          showAddDetails={false}
+        />
+      )}
+
+      <DialogLayout
+        isOpen={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+        }}
+        className="max-w-[30%] h-[330px] flex flex-col overflow-auto scrollbar-custom"
+        title="Additional Details"
+        description={`Please provide the needed details for the certificate.`}
+        mainContent={
+          <div>
+            {viewingCertificate ? (
+              <div className="space-y-3">
+                <Label className="pb-1">Signatory</Label>
+                <div className="w-full pb-3">
+                  <Combobox
+                    options={staffOptions}
+                    value={selectedStaffId}
+                    onChange={(value) => setSelectedStaffId(value || "")}
+                    placeholder="Select signatory staff member"
+                    emptyMessage="No staff found"
+                    triggerClassName="w-full"
+                    contentClassName="w-full"
+                  />
+                </div>
+
+                <Label className="pb-1">Purpose</Label>
+                <div className="w-full pb-3">
+                  <Input
+                    placeholder="Specify Purpose"
+                    value={purposeInput}
+                    onChange={(e) => setPurposeInput(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button type="button" onClick={handleProceedToTemplate} disabled={!selectedStaffId || !purposeInput}>
+                    Proceed
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p>No certificate selected</p>
+            )}
+          </div>
+        }
+      />
     </div>
   );
 }

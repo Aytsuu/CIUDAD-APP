@@ -74,6 +74,7 @@ urlpatterns=[
     path('delete-purpose-and-rate/<int:pr_id>/', DeleteUpdate_Purpose_And_RatesView.as_view(), name = 'purpose-and-rate-delete'),
     path('update-annual-gross-sales/<int:ags_id>/', DeleteUpdate_Annual_Gross_SalesView.as_view(), name = 'annual-gross-sales-update'),
     path('update-purpose-and-rate/<int:pr_id>/', DeleteUpdate_Purpose_And_RatesView.as_view(), name='update-purpose-and-rate'),
+    path('get-pr-id/', PurposeAndRateByParamsView.as_view(), name='get-pr-id'),
 
 
     #RECEIPTS

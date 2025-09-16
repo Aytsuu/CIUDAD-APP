@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
-from account.Account.models import Account
+from apps.account.models import Account
+from rest_framework.response import Response
 from django.core.cache import cache
 from django.core.mail import send_mail
 import secrets
+from rest_framework import status
 
 # 6 digit otp
 def generate_otp():
@@ -13,12 +15,12 @@ class SignUpEmailOTPView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
-        email = request.get('email')
+        email = request.data.get('email')
         
         otp = generate_otp()
         cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
         
-        send_email(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, [email])
+        send_email(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
         
         return Response({'message': 'OTP sent to email'}, status=status.HTTP_200_OK)                 
             
@@ -28,21 +30,22 @@ class LogInEmailOTPView(APIView):
     def post(self, request):
         email = request.data.get('email')
         
-        if Account.objects.filter(email=email).exists():
+        if email:
+            exists = Account.objects.filter(email=email).first()
+            if exists:
+                return Response({'email': 'Email already in use'}, status=status.HTTP_400_BAD_REQUEST)
                 
-            otp = generate_otp()
-            cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
-            send_mail(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
-            return Response({f'message': 'Sucessfully sent an OTP to {email}'}, status=status.HTTP_200_OK)
+        otp = generate_otp()
+        cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
+        send_mail(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
+        return Response({f'message': 'Sucessfully sent an OTP to {email}'}, status=status.HTTP_200_OK)
         
-        return Response({'error': "Email do not exist. Signup to access the Barangay CIUDAD's services"}, status=status.HTTP_400_BAD_REQUEST)
-
 class ValidateEmailOTPView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
-        email = request.get('email')
-        otp = request.get('otp')
+        email = request.data.get('email')
+        otp = request.data.get('otp')
         
         if otp == cache.get(email):
             return Response({'message': 'OTP is valid'}, status=status.HTTP_200_OK)

@@ -7,6 +7,46 @@ import { ArrowUpDown } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Checkbox } from "@/components/ui/checkbox";
 
+const getStatusBadgeProps = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case "pending":
+      return {
+        className: "bg-red-100 text-red-800 hover:bg-red-200 border-red-300",
+        variant: "secondary" as const,
+      };
+    case "filed":
+      return {
+        className:
+          "bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-300",
+        variant: "secondary" as const,
+      };
+    case "raised":
+      return {
+        className:
+          "bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-300",
+        variant: "secondary" as const,
+      };
+    case "processing":
+      return {
+        className:
+          "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300",
+        variant: "secondary" as const,
+      };
+    case "settled":
+      return {
+        className:
+          "bg-green-100 text-green-800 hover:bg-green-200 border-green-300",
+        variant: "secondary" as const,
+      };
+    default:
+      return {
+        className:
+          "bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-300",
+        variant: "secondary" as const,
+      };
+  }
+};
+
 export const archiveComplaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
   {
     id: "select",
@@ -55,7 +95,7 @@ export const archiveComplaintColumns = (data: Complaint[]): ColumnDef<Complaint>
       return (
         <div className="relative flex items-center justify-center">
           <Badge variant="outline" className="font-medium bg-gray-50 text-gray-700">
-            COMP-2025-{row.original.comp_id}
+            {row.original.comp_id}
           </Badge>
         </div>
       );
@@ -146,12 +186,14 @@ export const archiveComplaintColumns = (data: Complaint[]): ColumnDef<Complaint>
   },
   {
     accessorKey: "comp_status",
-    header: "Final Status",
+    header: "Status",
     cell: ({ row }) => {
       const status = row.getValue("comp_status") as string;
+      const badgeProps = getStatusBadgeProps(status);
       return (
-        <div>
-          <Badge variant="secondary" className="bg-gray-200 text-gray-800">
+        <div className="font-normal text-gray-900">
+          <Badge variant={badgeProps.variant} 
+          className={`font-medium ${badgeProps.className}`}>
             {status}
           </Badge>
         </div>
