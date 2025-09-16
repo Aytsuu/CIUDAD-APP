@@ -1,5 +1,4 @@
 import { api } from "@/api/api";
-import type { MediaUploadType } from "@/components/ui/media-upload";
 
 export const addCaseActivity = async (caseInfo: Record<string, any>) => {
     try{

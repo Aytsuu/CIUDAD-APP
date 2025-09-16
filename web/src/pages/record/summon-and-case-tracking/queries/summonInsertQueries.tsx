@@ -4,7 +4,6 @@ import { CircleCheck } from "lucide-react";
 import { addCaseActivity, addSummonDate, addSummonTimeSlots } from "../requestAPI/summonPostAPI";
 import z from "zod"
 import SummonSchema from "@/form-schema/summon-schema";
-import { MediaUploadType } from "@/components/ui/media-upload";
 
 export const useAddCaseActivity = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();

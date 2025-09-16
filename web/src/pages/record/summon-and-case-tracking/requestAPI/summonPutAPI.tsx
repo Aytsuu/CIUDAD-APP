@@ -1,5 +1,4 @@
 import { api } from "@/api/api";
-import type { MediaUploadType } from "@/components/ui/media-upload";
 
 export const resolveCase = async (sr_id: string) => {
     try{

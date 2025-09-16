@@ -2,7 +2,6 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { resolveCase, escalateCase, acceptSummonRequest, rejectSummonRequest } from "../requestAPI/summonPutAPI";
-import type { MediaUploadType } from "@/components/ui/media-upload";
 
 export const useResolveCase = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
