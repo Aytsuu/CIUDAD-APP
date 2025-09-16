@@ -17,7 +17,7 @@ interface PasswordEntryProps {
   onSuccess: () => void;
 }
 
-export default function PasswordEntry({ userId, method, contact, onSuccess }: PasswordEntryProps) {
+export default function PasswordEntry({ method, contact }: PasswordEntryProps) {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -57,9 +57,7 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
       // onSuccess();
     } catch (error: any) {
       console.error("Password verification error:", error);
-      
-      // The error message should now be properly set by the mutation
-      const errorMsg = error?.message || "Invalid password. Please try again.";
+      const errorMsg = "Invalid password. Please try again.";
       setErrorMessage(errorMsg);
     } finally {
       setLoading(false);

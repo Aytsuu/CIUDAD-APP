@@ -12,7 +12,7 @@ interface EmailOTPProps {
   onResend: () => void;
 }
 
-export default function EmailOTP({ email, onSuccess, onResend }: EmailOTPProps) {
+export default function EmailOTP({ email, onSuccess }: EmailOTPProps) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -74,7 +74,6 @@ export default function EmailOTP({ email, onSuccess, onResend }: EmailOTPProps) 
       
       console.log("Verification response:", response); // Debug log
 
-      // Check if response is null (which means the mutation caught an error)
       if (response === null) {
         setErrorMessage("Invalid OTP. Please try again.");
         setOtp(["", "", "", "", "", ""]);
@@ -82,10 +81,8 @@ export default function EmailOTP({ email, onSuccess, onResend }: EmailOTPProps) 
         return;
       }
 
-      // Check if response indicates success (adjust based on your API response structure)
       if (response && response.data) {
         toast.success("Email verified successfully!");
-        // Extract userId from response if available, or use a placeholder
         const userId = response.data.userId || response.data.user_id || "verified_user";
         onSuccess(userId);
       } else {

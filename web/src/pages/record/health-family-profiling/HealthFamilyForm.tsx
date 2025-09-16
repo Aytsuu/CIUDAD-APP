@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // import React from "react";
 // import { Card } from "@/components/ui/card";
 // import { Button } from "@/components/ui/button/button";
@@ -26,6 +27,36 @@
 // import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 // import { toast } from "sonner";
 // import { useNavigate } from "react-router";
+=======
+import React from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button/button";
+import ParentsFormLayout from "../../record/health-family-profiling/family-profling/parents/ParentsFormLayout";
+import DependentsInfoLayout from "../../record/health-family-profiling/family-profling/dependents/DependentsInfoLayout";
+import DemographicForm from "../../record/health-family-profiling/family-profling/demographic/DemographicForm";
+import ProgressWithIcon from "@/components/ui/progressWithIcon";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import { formatHouseholds, formatResidents } from "../../record/profiling/ProfilingFormats";
+import { DependentRecord } from "../../record/profiling/ProfilingTypes";
+import { FaHome, FaUsers, FaBriefcaseMedical, FaHouseUser, FaClipboardList } from "react-icons/fa";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { useHouseholdsListHealth, useResidentsListHealth, useFamilyMembersWithResidentDetails, useFamilyDataHealth } from "./family-profling/queries/profilingFetchQueries";
+import { useLoading } from "@/context/LoadingContext";
+import { useSubmitEnvironmentalForm, useSubmitSurveyIdentificationForm, useSubmitNCDRecord, useSubmitTBRecord } from "./family-profling/queries/profilingAddQueries";
+// These imports are currently unused but may be needed when implementing step 4
+import EnvironmentalFormLayout from "./family-profling/householdInfo/EnvironmentalFormLayout";
+import NoncomDiseaseFormLayout from "./family-profling/householdInfo/NonComDiseaseFormLayout";
+import TbSurveilanceInfoLayout from "./family-profling/householdInfo/TbSurveilanceInfoLayout";
+import { Separator } from "@/components/ui/separator";
+import SurveyIdentificationForm, { SurveyIdentificationFormHandle } from "./family-profling/householdInfo/SurveyIdentificationForm";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { toast } from "sonner";
+import { useNavigate } from "react-router";
+>>>>>>> 29ad0b0ca8ad3cabce8a212640f989031ef2a07a
 
 export default function HealthFamilyForm() {
   // const { showLoading, hideLoading } = useLoading();

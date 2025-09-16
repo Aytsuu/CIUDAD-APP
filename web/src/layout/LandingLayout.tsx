@@ -19,7 +19,7 @@ const NavItemList = [
 ];
 
 export default function LandingLayout() {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   return (
     <div className="w-screen h-screen bg-snow overflow-hidden flex flex-col">
       {/* Fixed Headers Container */}

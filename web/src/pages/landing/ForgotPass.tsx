@@ -35,7 +35,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
 
-  const { sendEmailOTP, verifyEmailOTPAndLogin } = useAuth();
+  const { sendEmailOTP, verifyEmailOTP} = useAuth();
   const navigate = useNavigate();
 
   const emailForm = useForm<EmailFormData>({
@@ -91,7 +91,7 @@ export default function ForgotPassword() {
     setLoading(true);
     setErrorMessage("");
     try {
-      const user = await verifyEmailOTPAndLogin(verificationCode, email);
+      const user = await verifyEmailOTP(verificationCode, email);
       if (user) {
         setCurrentStep("forgot-reset");
       } else {
@@ -104,7 +104,7 @@ export default function ForgotPassword() {
     }
   };
 
-  const handleResetPassword = async (data: ResetPasswordFormData) => {
+  const handleResetPassword = async () => {
     setLoading(true);
     setErrorMessage("");
     try {

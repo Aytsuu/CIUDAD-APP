@@ -10,11 +10,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/context/AuthContext";
 import { updateProfilePicture } from "../api-operations/restful-api/accountApi";
 import sanRoqueLogo  from "@/assets/images/sanRoqueLogo.svg"
-import { useDispatch } from "react-redux";
 
 export default function Profile() {
   const { user } = useAuth();
-  const dispatch = useDispatch();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [editMode, setEditMode] = useState({
@@ -46,12 +44,11 @@ export default function Profile() {
     const loadingToast = toast.loading("Uploading profile picture...");
 
     try {
-      const response = await updateProfilePicture(file);
+      await updateProfilePicture(file);
 
       // await dispatch(updateProfilePicture({
       //   profile_image: response.profile_image
       // }));
-
 
       toast.dismiss(loadingToast);
       toast.success("Profile picture updated");

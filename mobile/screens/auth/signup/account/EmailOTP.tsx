@@ -6,11 +6,11 @@ import OTPModal from "./OTPModal";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormInput } from "@/components/ui/form/form-input";
 import { Button } from "@/components/ui/button";
-import { useSendOTP } from "../../queries/authPostQueries";
-import { ChevronLeft } from "@/lib/icons/ChevronLeft";
-import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import { router } from "expo-router";
-import { X } from "@/lib/icons/X";
+// import { useSendOTP } from "../../queries/authPostQueries";
+// import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+// import { ConfirmationModal } from "@/components/ui/confirmationModal";
+// import { router } from "expo-router";
+// import { X } from "@/lib/icons/X";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function EmailOTP({ params }: { params: Record<string, any> }) {
