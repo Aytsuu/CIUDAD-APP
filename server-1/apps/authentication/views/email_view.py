@@ -29,16 +29,14 @@ class LogInEmailOTPView(APIView):
     
     def post(self, request):
         email = request.data.get('email')
-        
-        if email:
-            exists = Account.objects.filter(email=email).first()
-            if exists:
-                return Response({'email': 'Email already in use'}, status=status.HTTP_400_BAD_REQUEST)
-                
-        otp = generate_otp()
-        cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
-        send_mail(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
-        return Response({f'message': 'Sucessfully sent an OTP to {email}'}, status=status.HTTP_200_OK)
+
+        if Account.objects.filter(email=email).exists():
+            otp = generate_otp()
+            cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
+            send_mail(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
+            return Response({f'message': 'Sucessfully sent an OTP to {email}'}, status=status.HTTP_200_OK)
+
+        return Response({'error': "Email do not exist. Signup to access the Barangay CIUDAD's services"}, status=status.HTTP_400_BAD_REQUEST)
         
 class ValidateEmailOTPView(APIView):
     permission_classes = [AllowAny]

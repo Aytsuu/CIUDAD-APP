@@ -20,117 +20,114 @@ import uuid
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
 from datetime import date
+from apps.profiling.models import ResidentProfile
+
 
 logger = logging.getLogger(__name__)
 
 class ComplaintCreateView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
-
-    def _create_file_records(self, complaint, uploaded_files_data):
-        try:
-            created_files = []
-            for file_data in uploaded_files_data:
-                complaint_file = Complaint_File.objects.create(
-                    comp_file_name=file_data.get('name'),
-                    comp_file_type=file_data.get('type', 'document'),
-                    comp_file_url=file_data.get('storagePath'),
-                    comp=complaint
-                )
-                created_files.append(complaint_file)
-                print(f"File record created: {complaint_file.comp_file_id}")
-            return created_files
-        except Exception as e:
-            logger.error(f"Error creating file records: {str(e)}")
-            raise Exception(f"File record creation failed: {str(e)}")
-
-    def _parse_json_field(self, data, field, default):
-        value = data.get(field, default)
-        if isinstance(value, str):
-            try:
-                return json.loads(value)
-            except json.JSONDecodeError:
-                logger.warning(f"Failed to decode JSON for field {field}, using default")
-                return default
-        return value
+    serializer_class = ComplaintSerializer
 
     @transaction.atomic
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         try:
-            complainant_data_list = self._parse_json_field(request.data, 'complainant', [])
-            accused_list = self._parse_json_field(request.data, 'accused', [])
-            uploaded_files_data = self._parse_json_field(request.data, 'uploaded_files', [])
+            logger.info(f"Received data keys: {request.data.keys()}")
 
-            print(f"Received {len(uploaded_files_data)} uploaded file URLs")
-            for i, file_data in enumerate(uploaded_files_data):
-                print(f"File {i}: {file_data.get('name')}, URL: {file_data.get('publicUrl')}")
-
-            complaint = self._create_complaint(request)
-
-            for complainant_data in complainant_data_list:
-                complainant = self._create_complainant(complainant_data)
-                # Use the through model
-                ComplaintComplainant.objects.create(comp=complaint, cpnt=complainant)
-
-            self._create_accused(complaint, accused_list)
-
-            created_files = []
-            if uploaded_files_data:
+            # Parse complainants safely
+            complainants_data = request.data.get("complainant", [])
+            if isinstance(complainants_data, str):
                 try:
-                    created_files = self._create_file_records(complaint, uploaded_files_data)
-                except Exception as file_error:
-                    logger.error(f"Failed to create file records: {str(file_error)}")
+                    complainants_data = json.loads(complainants_data)
+                except json.JSONDecodeError:
+                    complainants_data = []
+            for c in complainants_data:
+                if not c.get("cpnt_address"):
+                    c["cpnt_address"] = "N/A"
 
-            return Response({
-                'comp_id': complaint.comp_id,
-                'status': 'success',
-                'message': 'Complaint created successfully',
-                'created_files': len(created_files),
-                'total_files': len(uploaded_files_data)
-            }, status=status.HTTP_201_CREATED)
+            # Parse accused safely
+            accused_data = request.data.get("accused_persons", [])
+            if isinstance(accused_data, str):
+                try:
+                    accused_data = json.loads(accused_data)
+                except json.JSONDecodeError:
+                    accused_data = []
+            for a in accused_data:
+                if not a.get("acsd_address"):
+                    a["acsd_address"] = "N/A"
 
-        except Exception as e:
-            logger.error(f"Error creating complaint: {str(e)}")
-            return Response({
-                'error': str(e),
-                'status': 'error'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            # Extract main complaint data
+            complaint_data = {
+                "comp_incident_type": request.data.get("comp_incident_type"),
+                "comp_location": request.data.get("comp_location"),
+                "comp_datetime": request.data.get("comp_datetime"),
+                "comp_allegation": request.data.get("comp_allegation"),
+                "complainant": complainants_data,
+                "accused_persons": accused_data,
+            }
 
-    def _create_complaint(self, request):
-        return Complaint.objects.create(
-            comp_incident_type=request.data.get('incident_type'),
-            comp_datetime=request.data.get('datetime'),
-            comp_location=request.data.get('location'),
-            comp_allegation=request.data.get('allegation')
-        )
+            # Add staff_id if provided
+            if request.data.get("staff_id"):
+                try:
+                    from apps.administration.models import Staff
+                    staff_instance = Staff.objects.get(staff_id=request.data["staff_id"])
+                    complaint_data["staff_id"] = staff_instance
+                except Staff.DoesNotExist:
+                    logger.warning(f"Staff with ID {request.data['staff_id']} not found")
 
-    def _create_complainant(self, complainant_data):
-        address = complainant_data.get('address', '')
+            # Validate required fields
+            required_fields = [
+                "comp_incident_type",
+                "comp_location",
+                "comp_datetime",
+                "comp_allegation",
+            ]
+            missing_fields = [f for f in required_fields if not complaint_data.get(f)]
 
-        complainant = Complainant.objects.create(
-            cpnt_name=complainant_data.get('name'),
-            cpnt_gender=complainant_data.get('gender'),
-            cpnt_age=complainant_data.get('age'),
-            cpnt_number=complainant_data.get('contactNumber'),
-            cpnt_relation_to_respondent=complainant_data.get('relation_to_respondent'),
-            cpnt_address=address
-        )
+            if missing_fields:
+                return Response(
+                    {"error": f"Missing required fields: {', '.join(missing_fields)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        return complainant
-
-    def _create_accused(self, complaint, accused_list):
-        for accused_data in accused_list:
-            address = accused_data.get('address', '')
-
-            accused = Accused.objects.create(
-                acsd_name=accused_data.get('alias'),
-                acsd_age=accused_data.get('age'),
-                acsd_gender=accused_data.get('gender'),
-                acsd_description=accused_data.get('description'),
-                acsd_address=address
+            # Serialize complaint
+            serializer = ComplaintSerializer(
+                data=complaint_data, context={"request": request}
             )
 
-            ComplaintAccused.objects.create(comp=complaint, acsd=accused)
+            if serializer.is_valid():
+                complaint = serializer.save()
 
+                # Serialize response
+                response_serializer = ComplaintSerializer(
+                    complaint, context={"request": request}
+                )
+                logger.info(f"Successfully created complaint: {complaint.comp_id}")
+
+                return Response(
+                    response_serializer.data, status=status.HTTP_201_CREATED
+                )
+            else:
+                logger.error(f"Serializer errors: {serializer.errors}")
+                return Response(
+                    {"error": "Invalid data provided", "details": serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error: {str(e)}")
+            return Response(
+                {"error": "Invalid JSON data in request"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except Exception as e:
+            logger.error(f"Unexpected error in ComplaintCreateView: {str(e)}")
+            return Response(
+                {"error": "An unexpected error occurred", "detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+            
 class ComplaintListView(generics.ListAPIView):
     serializer_class = ComplaintSerializer
 
@@ -138,14 +135,17 @@ class ComplaintListView(generics.ListAPIView):
         try:
             return Complaint.objects.prefetch_related(
                 # Prefetch complainants through the intermediate model
-                'complaintcomplainant_set__cpnt',
+                'complaintcomplainant_set__cpnt__rp_id',
                 
                 # Prefetch accused through the intermediate model
-                'complaintaccused_set__acsd',
+                'complaintaccused_set__acsd__rp_id',
                 
                 # Prefetch complaint files
-                'complaint_file'
-            ).order_by('-comp_created_at')
+                'complaint_file',
+                
+                # Prefetch staff
+                'staff_id'
+            ).filter(comp_is_archive=False).order_by('-comp_created_at')
         except Exception as e:
             logger.error(f"Error in ComplaintListView queryset: {str(e)}")
             return Complaint.objects.none()
@@ -159,7 +159,7 @@ class ComplaintListView(generics.ListAPIView):
                 'error': 'An error occurred while fetching complaints',
                 'detail': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            
 class ComplaintDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ComplaintSerializer
     lookup_field = 'comp_id'
@@ -168,7 +168,8 @@ class ComplaintDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Complaint.objects.prefetch_related(
             'complaintcomplainant_set__cpnt',
             'complaintaccused_set__acsd',
-            'complaint_file'
+            'complaint_file',
+            'staff_id'
         )
 
     def perform_update(self, serializer):
@@ -196,7 +197,12 @@ class ArchiveComplaintView(APIView):
             )
 
 class ArchivedComplaintsView(generics.ListAPIView):
-    queryset = Complaint.objects.filter(comp_is_archive=True)
+    queryset = Complaint.objects.filter(comp_is_archive=True).prefetch_related(
+        'complaintcomplainant_set__cpnt',
+        'complaintaccused_set__acsd',
+        'complaint_file',
+        'staff_id'
+    ).order_by('-comp_created_at')
     serializer_class = ComplaintSerializer
     
 class RestoreComplaintView(APIView):
@@ -222,61 +228,128 @@ class RestoreComplaintView(APIView):
 class SearchComplainantsView(APIView):
     def get(self, request):
         query = request.GET.get("q", "")
+        print(f"SearchComplainantsView called with query: '{query}'")  # Debug log
+        
         if not query:
             return Response([])
 
-        complainants = (
-            Complainant.objects.filter(
-                Q(cpnt_name__icontains=query)
-                | Q(cpnt_number__icontains=query)
-                | Q(cpnt_address__icontains=query)
-            )[:10]  # removed .select_related
-        )
+        # Search in ResidentProfile using the per_id relationship
+        try:
+            residents = (
+                ResidentProfile.objects.select_related('per').filter(
+                    Q(per__per_lname__icontains=query)
+                    | Q(per__per_fname__icontains=query)
+                    | Q(per__per_mname__icontains=query)
+                    | Q(per__per_contact__icontains=query)
+                )[:10]
+            )
+            print(f"Found {residents.count()} residents")  # Debug log
+        except Exception as e:
+            print(f"Error querying residents: {e}")
+            return Response([])
+        
 
-        results = [
-            {
-                "id": c.cpnt_id,
-                "cpnt_name": c.cpnt_name,
-                "cpnt_gender": c.cpnt_gender,
-                "cpnt_age": c.cpnt_age,
-                "cpnt_number": c.cpnt_number,
-                "cpnt_relation_to_respondent": c.cpnt_relation_to_respondent,
-                "cpnt_address": c.cpnt_address,
-            }
-            for c in complainants
-        ]
-
+        results = []
+        for r in residents:
+            try:
+                # Access personal info through the per_id relationship
+                person = r.per
+                if person:
+                    full_name = f"{person.per_fname} {getattr(person, 'per_mname', '') or ''} {person.per_lname}".strip()
+                    address = f"{getattr(person, 'per_purok', '') or ''}, {getattr(person, 'per_barangay', '') or ''}, {getattr(person, 'per_municipality', '') or ''}, {getattr(person, 'per_province', '') or ''}".strip(', ')
+                    
+                    result = {
+                        "id": r.rp_id,  # For React key
+                        "rp_id": r.rp_id,
+                        
+                        # For display in search results (matching your current frontend)
+                        "cpnt_name": full_name,
+                        "cpnt_gender": getattr(person, 'per_sex', 'Unknown'),
+                        "cpnt_age": getattr(person, 'per_age', 0),
+                        "cpnt_number": getattr(person, 'per_contact', '') or '',
+                        "cpnt_address": address,
+                        
+                        # For selectResidentComplainant function (matching your current selection logic)
+                        "full_name": full_name,
+                        "gender": getattr(person, 'per_sex', 'Unknown'),
+                        "age": getattr(person, 'per_age', 0),
+                        "contact_number": getattr(person, 'per_contact', '') or '',
+                        "address": address,
+                    }
+                    results.append(result)
+                    
+                    # Debug: print the actual data being returned
+                    print(f"Resident data: {result}")
+                
+            except Exception as e:
+                print(f"Error processing resident {r.rp_id}: {e}")
+                continue
+        
+        print(f"Returning {len(results)} results")  # Debug log
         return Response(results)
 
 
 class SearchAccusedView(APIView):
     def get(self, request):
         query = request.GET.get("q", "")
+        print(f"SearchAccusedView called with query: '{query}'")  # Debug log
+        
         if not query:
             return Response([])
 
-        accused = (
-            Accused.objects.filter(
-                Q(acsd_name__icontains=query)
-                | Q(acsd_description__icontains=query)
-                | Q(acsd_address__icontains=query)
-            )[:10]  # removed .select_related
-        )
+        # Search in ResidentProfile using the per_id relationship
+        try:
+            residents = (
+                ResidentProfile.objects.select_related('per').filter(
+                    Q(per__per_lname__icontains=query)
+                    | Q(per__per_fname__icontains=query)
+                    | Q(per__per_mname__icontains=query)
+                    | Q(per__per_contact__icontains=query)
+                )[:10]
+            )
+            print(f"Found {residents.count()} accused residents")  # Debug log
+        except Exception as e:
+            print(f"Error querying accused residents: {e}")
+            return Response([])
 
-        results = [
-            {
-                "id": a.acsd_id,
-                "acsd_name": a.acsd_name,
-                "acsd_age": a.acsd_age,
-                "acsd_gender": a.acsd_gender,
-                "acsd_description": a.acsd_description,
-                "acsd_address": a.acsd_address,
-            }
-            for a in accused
-        ]
+        results = []
+        for r in residents:
+            try:
+                # Access personal info through the per_id relationship
+                person = r.per
+                if person:
+                    full_name = f"{person.per_fname} {getattr(person, 'per_mname', '') or ''} {person.per_lname}".strip()
+                    address = f"{getattr(person, 'per_purok', '') or ''}, {getattr(person, 'per_barangay', '') or ''}, {getattr(person, 'per_municipality', '') or ''}, {getattr(person, 'per_province', '') or ''}".strip(', ')
+                    
+                    result = {
+                        "id": r.rp_id,  # For React key
+                        "rp_id": r.rp_id,
+                        
+                        # For display in search results (different prefix for accused)
+                        "acc_name": full_name,
+                        "acc_gender": getattr(person, 'per_sex', 'Unknown'),
+                        "acc_age": getattr(person, 'per_age', 0),
+                        "acc_number": getattr(person, 'per_contact', '') or '',
+                        "acc_address": address,
+                        
+                        # For selection function
+                        "full_name": full_name,
+                        "gender": getattr(person, 'per_sex', 'Unknown'),
+                        "age": getattr(person, 'per_age', 0),
+                        "contact_number": getattr(person, 'per_contact', '') or '',
+                        "address": address,
+                    }
+                    results.append(result)
+                    
+                    # Debug: print the actual data being returned
+                    print(f"Accused data: {result}")
+                
+            except Exception as e:
+                print(f"Error processing accused resident {r.rp_id}: {e}")
+                continue
 
+        print(f"Returning {len(results)} accused results")  # Debug log
         return Response(results)
-
 
 class ServiceChargeRequestCreateView(APIView):
     @transaction.atomic
