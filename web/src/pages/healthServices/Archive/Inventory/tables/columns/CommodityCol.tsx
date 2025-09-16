@@ -1,144 +1,133 @@
-// columns/commodityStocksCol.ts
+// columns/CommodityCol.tsx
 import { ColumnDef } from "@tanstack/react-table";
 
-import { CommodityStocksRecord } from "../../tables/type";
-import { isNearExpiry, isExpired, isLowStock } from "./Alert";
-
-export const CommodityStocksColumns = (
-): ColumnDef<CommodityStocksRecord>[] => [
+export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
+ 
   {
-    accessorKey: "commodityInfo",
-    header: "Commodity",
+    accessorKey: "item",
+    header: "Commodity Details",
     cell: ({ row }) => {
-      const commodity = row.original.commodityInfo;
-      const expired = isExpired(row.original.expiryDate);
+      const item = row.original.item;
       return (
-        <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
-          <span className={`font-medium`}>
-            {commodity.com_name}
-            {expired && " (Expired)"}
-          </span>
-        </div>
-      );
-    },
-  },
-  
-  {
-    accessorKey: "recevFrom",
-    header: "Received From",
-    cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
-      return (
-        <div className={`text-center ${expired ? "text-red-600" : ""}`}>
-          {row.original.recevFrom.toUpperCase()}
+        <div className="flex flex-col">
+          <div className="font-medium text-center">
+            {item.com_name}
+          </div>
+          <div className="text-sm text-center text-gray-600">
+            {row.original.category}
+          </div>
         </div>
       );
     },
   },
   {
     accessorKey: "qty",
-    header: "Stocks",
+    header: "Total Qty",
     cell: ({ row }) => {
-      const { cinv_qty, cinv_pcs } = row.original.qty;
+      const qtyData = row.original.qty;
       const unit = row.original.cinv_qty_unit;
-      const expired = isExpired(row.original.expiryDate);
-
+      
+      // Check if qtyData is an object with the expected properties
+      if (qtyData && typeof qtyData === 'object') {
+        if (unit?.toLowerCase() === "boxes") {
+          // For boxes, show boxes count and total pieces
+          const boxes = qtyData?.cinv_qty || 0;
+          const totalPcs = qtyData?.cinv_pcs || 0;
+          
+          return (
+            <div className="text-center">
+              {boxes} box{boxes !== 1 ? "es" : ""}
+              <div className="text-sm text-blue-500">
+                ({totalPcs} pcs total)
+              </div>
+            </div>
+          );
+        } else {
+          // For other units, extract the quantity value from the object
+          const quantity = qtyData?.cinv_qty || qtyData?.value || 0;
+          return (
+            <div className="text-center">
+              {quantity} {unit}
+            </div>
+          );
+        }
+      }
+      
+      // If qtyData is not an object (shouldn't happen based on error, but safe guard)
       return (
-        <div className={`text-center ${expired ? "text-red-600" : ""}`}>
-          {unit.toLowerCase() === 'boxes' && cinv_pcs > 0 ? (
-            <div className="flex flex-col">
+        <div className="text-center">
+          {typeof qtyData === 'object' ? JSON.stringify(qtyData) : qtyData} {unit}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "availableStock",
+    header: "Available Stock",
+    cell: ({ row }) => {
+      const record = row.original;
+      const availableStock = record.availableStock;
+      const unit = record.cinv_qty_unit;
+      
+      if (unit?.toLowerCase() === "boxes") {
+        // Calculate boxes and remaining pieces for available stock
+        const pcsPerBox = record.qty?.cinv_pcs || 1;
+        const availablePcs = availableStock;
+        const fullBoxes = Math.floor(availablePcs / pcsPerBox);
+        const remainingPcs = availablePcs % pcsPerBox;
+        
+        if (remainingPcs > 0) {
+          return (
+            <div className="flex flex-col items-center">
               <span>
-                {cinv_qty} box/es
-                {expired && " (Expired)"}
+                {fullBoxes + 1} box{(fullBoxes + 1) !== 1 ? "es" : ""}
               </span>
-              <span className={expired ? "text-red-500" : "text-blue-500"}>
-                ({cinv_qty * cinv_pcs} total pc/s)
+              <span className="text-blue-500">
+                ({availablePcs} total pc{availablePcs !== 1 ? "s" : ""})
               </span>
             </div>
-          ) : (
-            <span>
-              {cinv_qty} {unit}
-              {expired && " (Expired)"}
-            </span>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "dispensed",
-    header: "Dispensed",
-    cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
-      return (
-        <div
-          className={`${
-            expired ? "text-red-600" : "text-red-700"
-          }`}
-        >
-          {row.original.dispensed}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "availQty",
-    header: "Available",
-    cell: ({ row }) => {
-      const { cinv_pcs } = row.original.qty;
-      const unit = row.original.cinv_qty_unit;
-      const availQty = parseInt(row.original.availQty);
-      const expired = isExpired(row.original.expiryDate);
-      const isLow = !expired && isLowStock(availQty, unit, cinv_pcs);
-      const isOutOfStock = availQty <= 0;
-
-      if (unit.toLowerCase() === "boxes" && cinv_pcs > 0) {
-        const boxCount = Math.ceil(availQty / cinv_pcs);
-        const remainingPieces = availQty;
-
-        return (
-          <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
-            <span
-              className={`${
-                expired
-                  ? ""
-                  : isOutOfStock
-                  ? "text-red-600 font-bold"
-                  : isLow
-                  ? "text-yellow-600 font-medium"
-                  : "text-blue"
-              }`}
-            >
-              {boxCount} box/es
-              {expired && " (Expired)"}
-              {isOutOfStock && !expired && " (Out of Stock)"}
-              {isLow && " (Low Stock)"}
-            </span>
-            <span className={expired ? "text-red-500" : "text-blue-500"}>
-              ({remainingPieces} total pc/s)
-            </span>
-          </div>
-        );
-      } else {
-        return (
-          <div
-            className={`text-center ${
-              expired
-                ? "text-red-600"
-                : isOutOfStock
-                ? "text-red-600 font-bold"
-                : isLow
-                ? "text-yellow-600 font-medium"
-                : "text-green-700"
-            }`}
-          >
-            {availQty} {unit}
-            {expired && " (Expired)"}
-            {isOutOfStock && !expired && " (Out of Stock)"}
-            {isLow && " (Low Stock)"}
-          </div>
-        );
+          );
+        } else {
+          return (
+            <div className="flex flex-col items-center">
+              <span>
+                {fullBoxes} box{fullBoxes !== 1 ? "es" : ""}
+              </span>
+              <span className="text-blue-500">
+                ({availablePcs} total pc{availablePcs !== 1 ? "s" : ""})
+              </span>
+            </div>
+          );
+        }
       }
+      
+      return (
+        <div className="text-center">
+          {availableStock} {unit}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "administered",
+    header: "Qty Used",
+    cell: ({ row }) => {
+      return (
+        <div className="text-center text-red-600">
+          {row.original.administered}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "recevFrom",
+    header: "Received From",
+    cell: ({ row }) => {
+      return (
+        <div className="text-center">
+          {row.original.recevFrom || "OTHERS"}
+        </div>
+      );
     },
   },
   {
@@ -146,27 +135,39 @@ export const CommodityStocksColumns = (
     header: "Expiry Date",
     cell: ({ row }) => {
       const expiryDate = row.original.expiryDate;
-      const isNear = isNearExpiry(expiryDate);
-      const expired = isExpired(expiryDate);
-
       return (
-        <div
-          className={`flex justify-center min-w-[100px] px-2 ${
-            expired ? "text-red-600" : ""
-          }`}
-        >
-          <div
-            className={`text-center w-full ${
-              expired
-                ? "font-bold"
-                : isNear
-                ? "text-orange-500 font-medium"
-                : ""
-            }`}
-          >
-            {expiryDate}
-            {expired ? " (Expired)" : isNear ? " (Near Expiry)" : ""}
-          </div>
+        <div className="text-center">
+          {expiryDate ? new Date(expiryDate).toLocaleDateString() : "N/A"}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "archivedDate",
+    header: "Archived Date",
+    cell: ({ row }) => {
+      const archivedDate = row.original.archivedDate;
+      return (
+        <div className="text-center">
+          {archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "reason",
+    header: "Reason",
+    cell: ({ row }) => {
+      const reason = row.original.reason;
+      return (
+        <div className="text-center">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            reason === "Expired" 
+              ? "bg-red-100 text-red-800" 
+              : "bg-yellow-100 text-yellow-800"
+          }`}>
+            {reason}
+          </span>
         </div>
       );
     },

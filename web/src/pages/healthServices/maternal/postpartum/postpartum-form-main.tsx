@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import type { z } from "zod"
-import { FormProvider, useForm } from "react-hook-form"
-import { PostPartumSchema } from "@/form-schema/maternal/postpartum-schema"
-import PostpartumFormFirstPg from "./postpartum-form"
-import { useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
+import type { z } from "zod";
+import { FormProvider, useForm } from "react-hook-form";
+import { PostPartumSchema } from "@/form-schema/maternal/postpartum-schema";
+import PostpartumFormFirstPg from "./postpartum-form";
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export default function PostpartumForm() {
   const defaultValues: z.infer<typeof PostPartumSchema> = {
@@ -24,8 +24,8 @@ export default function PostpartumForm() {
         sitio: "",
         barangay: "",
         city: "",
-        province: "",
-      },
+        province: ""
+      }
     },
     postpartumInfo: {
       dateOfDelivery: "",
@@ -41,36 +41,34 @@ export default function PostpartumForm() {
       dateBfInitiated: "",
       timeBfInitiated: "",
       nextVisitDate: "",
-      lochialDischarges: "",
+      lochialDischarges: ""
     },
     postpartumTable: {
       date: new Date().toLocaleDateString("en-CA"),
       bp: {
         systolic: "",
-        diastolic: "",
+        diastolic: ""
       },
       feeding: "",
       findings: "",
-      nursesNotes: "",
-    },
-  }
+      nursesNotes: ""
+    }
+  };
 
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(1);
 
   const form = useForm<z.infer<typeof PostPartumSchema>>({
     resolver: zodResolver(PostPartumSchema),
-    defaultValues,
-  })
+    defaultValues
+  });
 
   const nextPage = () => {
-    setCurrentPage((prev) => prev + 1)
-  }
+    setCurrentPage((prev) => prev + 1);
+  };
 
   return (
     <div>
-      <FormProvider {...form}>
-        {currentPage === 1 && <PostpartumFormFirstPg form={form} onSubmit={() => nextPage()} />}
-      </FormProvider>
+      <FormProvider {...form}>{currentPage === 1 && <PostpartumFormFirstPg form={form} onSubmit={() => nextPage()} />}</FormProvider>
     </div>
-  )
+  );
 }

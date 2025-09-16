@@ -5,9 +5,7 @@ import { Button } from "@/components/ui/button/button";
 import { MedicalConsultationHistory } from "../../types";
 import { Patient } from "../../../restful-api-patient/type";
 
-export const getMedicalConsultationColumns = (
-  patientData: Patient | null
-): ColumnDef<MedicalConsultationHistory>[] => [
+export const getMedicalConsultationColumns = (patientData: Patient | null): ColumnDef<MedicalConsultationHistory>[] => [
   {
     accessorKey: "created_at",
     header: "Created at",
@@ -16,7 +14,7 @@ export const getMedicalConsultationColumns = (
       const formattedDate = createdAt.toLocaleDateString();
 
       return <div className="text-sm text-gray-600">{formattedDate}</div>;
-    },
+    }
   },
   {
     accessorKey: "vital_signs",
@@ -49,7 +47,7 @@ export const getMedicalConsultationColumns = (
           </div>
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "bmi_details",
@@ -64,7 +62,7 @@ export const getMedicalConsultationColumns = (
           </div>
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "chiefcomplaint",
@@ -72,26 +70,22 @@ export const getMedicalConsultationColumns = (
     cell: ({ row }) => {
       return (
         <div className="flex flex-col w-full items-center">
-          <div className="text-sm font-medium  w-[200px]">
-            {row.original.medrec_chief_complaint || "N/A"}
-          </div>
+          <div className="text-sm font-medium  w-[200px]">{row.original.medrec_chief_complaint || "N/A"}</div>
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "bhw_name",
     header: "BHW Assigned",
     cell: ({ row }) => {
-      const bhw = `${
-        row.original.staff_details?.rp?.per?.per_fname || "N/A"
-      } ${row.original.staff_details?.rp?.per?.per_lname || "N/A"}`;
+      const bhw = `${row.original.staff_details?.rp?.per?.per_fname || "N/A"} ${row.original.staff_details?.rp?.per?.per_lname || "N/A"}`;
       return (
         <div className="flex flex-col">
           <div className="text-sm">{bhw}</div>
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "action",
@@ -101,7 +95,7 @@ export const getMedicalConsultationColumns = (
         <Link
           to="/DisplayMedicalConsultation"
           state={{
-            params: { MedicalConsultation: row.original, patientData },
+            params: { MedicalConsultation: row.original, patientData }
           }}
         >
           <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
@@ -109,6 +103,6 @@ export const getMedicalConsultationColumns = (
           </Button>
         </Link>
       </div>
-    ),
-  },
+    )
+  }
 ];

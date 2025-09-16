@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import *
 
+
 urlpatterns = [
     
     path('records/', ChildHealthRecordsView.as_view(), name='child-health-records'),
@@ -16,7 +17,10 @@ urlpatterns = [
     path('supplements/', ChildHealthSupplementsView.as_view(), name='child-health-supplements'),
     path('supplement-status/', ChildHealthSupplementStatusView.as_view(), name='child-health-supplement-status'),
     path('update-supplement-status/', UpdateChildHealthSupplementsStatusView.as_view(), name='update-child-health-supplement-status'),
-    path('nutritional-status/', NutritionalStatusView.as_view(), name='nutritional-status'),
+     path('nutritional-status/', NutritionalStatusView.as_view(), name='create-nutritional-status'),
+    path('nutritional-status/<str:pat_id>/', NutritionalStatusView.as_view(), name='nutritional-status'),
+    path('nutritional-status-monthly/', MonthlyNutritionalStatusViewChart.as_view(), name='nutritional-status-all'),
+
     path('nutritional-summary/<int:chrec_id>/',ChildHealthNutrionalStatusListView.as_view(),name='child-nutrional-status'),
    
     path('exclusive-bf-check/', ExclusiveBFCheckView.as_view(), name='exclusive-bf-check'),
@@ -26,8 +30,19 @@ urlpatterns = [
     path('update/child-vitalsigns/<int:chvital_id>/', UpdateChildHealthVitalSignsView.as_view(), name='child-vitalsigns-detail'),
     
     path('child-health-record-count/<str:pat_id>/', GeChildHealthRecordCountView.as_view(), name='child-health-record-count'),
-    path('child-health-records/by-patient/<str:pat_id>/', ChildHealthRecordByPatIDView.as_view(), name='pat_child_health_records'),
+    path('records/by-patient/<str:pat_id>/', ChildHealthRecordByPatIDView.as_view(), name='pat_child_health_records'),
     path('child-immunization-status/',ChildHealthImmunizationStatusListView.as_view(), name='child-immunization-status'),
     path('child-immunization-count/', ChildHealthImmunizationCountView.as_view(), name='child-health-immunization-count'),
-]
+    path('childhealth-totalrecords/', ChildHealthTotalCountAPIView.as_view(), name='monthly_child_health_records'),   
 
+    
+    #updated post create backed
+    path('create-new-record/', CompleteChildHealthRecordAPIView.as_view(), name='create-child-health'),
+    path('create-update-new-chhistory/', UpdateChildHealthRecordAPIView.as_view(), name='create-child-health-history'),
+    path('immunization-save/',SaveImmunizationDataAPIView.as_view(),name='save-immunization-data'),
+    path('next-ufcno/',NextUFCNumberAPIView.as_view(),name='next-ufc-number'),
+    path('latest-vital-bm/<str:pat_id>/', LatestVitalBMAPIView.as_view(), name='latest-vital-bm'),
+
+  ]
+
+F

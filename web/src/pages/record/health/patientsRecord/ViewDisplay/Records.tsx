@@ -1,83 +1,43 @@
-import { Tabs, TabsContent } from "@/components/ui/tabs"
-import CardLayout from "@/components/ui/card/card-layout"
-import { SyringeIcon, Pill, Baby, Heart } from "lucide-react"
-import { Button } from "@/components/ui/button/button"
-import { Link } from "react-router-dom" // Use react-router-dom's Link
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import CardLayout from "@/components/ui/card/card-layout";
+import { SyringeIcon, Pill, Baby, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button/button";
+import { Link } from "react-router-dom"; // Use react-router-dom's Link
 
 // Define the ChildHealthRecord interface as it's used in InvChildHealthRecords
-interface ChildHealthRecord {
-  chrec_id: number
-  pat_id: string
-  fname: string
-  lname: string
-  mname: string
-  sex: string
-  age: string
-  dob: string
-  householdno: string
-  street: string
-  sitio: string
-  barangay: string
-  city: string
-  province: string
-  landmarks: string
-  pat_type: string
-  address: string // Full formatted address
-  mother_fname: string
-  mother_lname: string
-  mother_mname: string
-  mother_contact: string
-  mother_occupation: string
-  father_fname: string
-  father_lname: string
-  father_mname: string
-  father_contact: string
-  father_occupation: string
-  family_no: string
-  birth_weight: number
-  birth_height: number
-  type_of_feeding: string
-  delivery_type: string
-  place_of_delivery_type: string
-  pod_location: string
-  pod_location_details: string
-  health_checkup_count: number
-  birth_order: number
-  tt_status: string
-}
 
 interface PatientLinkData {
-  pat_id: string
-  pat_type: string
-  age: string
-  addressFull: string
+  pat_id: string;
+  pat_type: string;
+  age: string;
+  addressFull: string;
   address: {
-    add_street: string
-    add_barangay: string
-    add_city?: string
-    add_province: string
-    add_sitio: string
-  }
-  households: Array<{ hh_id: string }>
+    add_street: string;
+    add_barangay: string;
+    add_city?: string;
+    add_province: string;
+    add_sitio: string;
+  };
+  households: Array<{ hh_id: string }>;
   personal_info: {
-    per_fname: string
-    per_mname: string
-    per_lname: string
-    per_dob: string
-    per_sex: string
-  }
+    per_fname: string;
+    per_mname: string;
+    per_lname: string;
+    per_dob: string;
+    per_sex: string;
+  };
 }
 
 interface MedicalHistoryTabProps {
-  vaccinationCount: number | undefined
-  medicineCount: number | undefined
-  firstAidCount: number | undefined
-  postpartumCount: number | undefined
-  medicalconCount: number | undefined
-  patientLinkData: PatientLinkData
-  childHealthCount?: number | undefined
-  childHealthRecords: ChildHealthRecord[] // This is the array of formatted records
-  prenatalCount: number | undefined
+  vaccinationCount: number | undefined;
+  medicineCount: number | undefined;
+  firstAidCount: number | undefined;
+  postpartumCount: number | undefined;
+  medicalconCount: number | undefined;
+  patientLinkData: PatientLinkData;
+  childHealthCount?: number | undefined;
+  childHealthRecords: any[];
+  prenatalCount: number | undefined;
 }
 
 export default function Records({
@@ -89,13 +49,13 @@ export default function Records({
   patientLinkData,
   childHealthCount,
   childHealthRecords, // This is the array of formatted records
-  prenatalCount, 
+  prenatalCount
 }: MedicalHistoryTabProps) {
   // Determine if there's at least one child health record to pass
-  const firstChildHealthRecord = childHealthRecords.length > 0 ? childHealthRecords[0] : null
+  const firstChildHealthRecord = childHealthRecords.length > 0 ? childHealthRecords[0] : null;
 
   // Check if all service counts are zero or undefined
-  const hasNoRecords = 
+  const hasNoRecords =
     (!vaccinationCount || vaccinationCount === 0) &&
     (!medicineCount || medicineCount === 0) &&
     (!firstAidCount || firstAidCount === 0) &&
@@ -115,12 +75,8 @@ export default function Records({
               {hasNoRecords ? (
                 <div className="p-6 text-center bg-gray-50 rounded-lg border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-700">No Records Found</h3>
-                  <p className="text-sm text-gray-500 mt-2">
-                  There are currently no records available for this patient. Please check back later or add new records.
-                  </p>
-                  <div className="mt-4">
-                 
-                  </div>
+                  <p className="text-sm text-gray-500 mt-2">There are currently no records available for this patient. Please check back later or add new records.</p>
+                  <div className="mt-4"></div>
                 </div>
               ) : (
                 <>
@@ -134,23 +90,13 @@ export default function Records({
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">Vaccination</h3>
                             <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-gray-600 bg-sky-100 px-2 py-1 rounded-md">
-                                {vaccinationCount !== undefined ? vaccinationCount : "0"} Records
-                              </span>
+                              <span className="text-sm text-gray-600 bg-sky-100 px-2 py-1 rounded-md">{vaccinationCount !== undefined ? vaccinationCount : "0"} Records</span>
                               <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
                             </div>
                           </div>
                         </div>
-                        <Link
-                          to="/invVaccinationRecord"
-                          state={{ params: { patientData: patientLinkData } }}
-                          className="transition-transform hover:scale-105"
-                        >
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 px-6 bg-white border-sky-300 text-sky-800 font-medium"
-                          >
+                        <Link to="/invVaccinationRecord" state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
+                          <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-sky-300 text-sky-800 font-medium">
                             View Details
                           </Button>
                         </Link>
@@ -167,19 +113,13 @@ export default function Records({
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">Medicine</h3>
                             <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">
-                                {medicineCount !== undefined ? medicineCount : "0"} Records
-                              </span>
+                              <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">{medicineCount !== undefined ? medicineCount : "0"} Records</span>
                               <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
                             </div>
                           </div>
                         </div>
                         <Link to="/IndivMedicineRecord" state={{ params: { patientData: patientLinkData } }}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium"
-                          >
+                          <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium">
                             View Details
                           </Button>
                         </Link>
@@ -196,19 +136,13 @@ export default function Records({
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">First Aid</h3>
                             <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">
-                                {firstAidCount !== undefined ? firstAidCount : "0"} Records
-                              </span>
+                              <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">{firstAidCount !== undefined ? firstAidCount : "0"} Records</span>
                               <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
                             </div>
                           </div>
                         </div>
                         <Link to="/indiv-firstaid-records" state={{ params: { patientData: patientLinkData } }}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium"
-                          >
+                          <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium">
                             View Details
                           </Button>
                         </Link>
@@ -225,19 +159,13 @@ export default function Records({
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">Medical Consultation</h3>
                             <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-gray-600 bg-green-200 px-2 py-1 rounded-md">
-                                {medicalconCount !== undefined ? medicalconCount : "0"} Records
-                              </span>
+                              <span className="text-sm text-gray-600 bg-green-200 px-2 py-1 rounded-md">{medicalconCount !== undefined ? medicalconCount : "0"} Records</span>
                               <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
                             </div>
                           </div>
                         </div>
                         <Link to="/invMedicalRecord" state={{ params: { patientData: patientLinkData } }}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 px-6 bg-white border-green-300 text-green-700 font-medium"
-                          >
+                          <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-green-300 text-green-700 font-medium">
                             View Details
                           </Button>
                         </Link>
@@ -254,23 +182,13 @@ export default function Records({
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">Postpartum Care</h3>
                             <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-gray-600 bg-pink-200 px-2 py-1 rounded-md">
-                                {postpartumCount !== undefined ? postpartumCount : "0"} Records
-                              </span>
+                              <span className="text-sm text-gray-600 bg-pink-200 px-2 py-1 rounded-md">{postpartumCount !== undefined ? postpartumCount : "0"} Records</span>
                               <span className="text-sm text-gray-500">Maternal Services</span>
                             </div>
                           </div>
                         </div>
-                        <Link 
-                          to="/maternalindividualrecords" 
-                          state={{ params: { patientData: patientLinkData } }}
-                          className="transition-transform hover:scale-105"
-                        >
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium"
-                          >
+                        <Link to="/maternalindividualrecords" state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
+                          <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium">
                             View Details
                           </Button>
                         </Link>
@@ -287,9 +205,7 @@ export default function Records({
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">Child Health Record</h3>
                             <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-gray-600 bg-pink-100 px-2 py-1 rounded-md">
-                                {childHealthCount !== undefined ? childHealthCount : "0"} Records
-                              </span>
+                              <span className="text-sm text-gray-600 bg-pink-100 px-2 py-1 rounded-md">{childHealthCount !== undefined ? childHealthCount : "0"} Records</span>
                             </div>
                           </div>
                         </div>
@@ -301,7 +217,7 @@ export default function Records({
                             variant="outline"
                             size="sm"
                             className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium"
-                            disabled={!firstChildHealthRecord} // Disable if no record to pass
+                            // disabled={!firstChildHealthRecord} // Disable if no record to pass
                           >
                             View Details
                           </Button>
@@ -319,23 +235,13 @@ export default function Records({
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">Prenatal Care</h3>
                             <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-gray-600 bg-red-200 px-2 py-1 rounded-md">
-                                {prenatalCount !== undefined ? prenatalCount : "0"} Records
-                              </span>
+                              <span className="text-sm text-gray-600 bg-red-200 px-2 py-1 rounded-md">{prenatalCount !== undefined ? prenatalCount : "0"} Records</span>
                               <span className="text-sm text-gray-500">Maternal Services</span>
                             </div>
                           </div>
                         </div>
-                        <Link 
-                          to="/maternalindividualrecords" 
-                          state={{ params: { patientData: patientLinkData } }}
-                          className="transition-transform hover:scale-105"
-                        >
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 px-6 bg-white border-red-300 text-red-700 font-medium"
-                          >
+                        <Link to="/maternalindividualrecords" state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
+                          <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-red-300 text-red-700 font-medium">
                             View Details
                           </Button>
                         </Link>
@@ -352,5 +258,5 @@ export default function Records({
         />
       </TabsContent>
     </Tabs>
-  )
+  );
 }

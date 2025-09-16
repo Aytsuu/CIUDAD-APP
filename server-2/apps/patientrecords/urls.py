@@ -26,7 +26,8 @@ urlpatterns = [
 
 
     path('vital-signs/', VitalSignsView.as_view(), name='vital-signs'),
-
+    path('vital-signs/latest/<str:pat_id>/', GetLatestVitalSignsView.as_view(), name='latest-vital-signs'),
+    
     path("obstetrical_history/", ObstetricalHistoryView.as_view(), name="obstetricalhistory"),
     
     path("spouse/", SpouseListView.as_view(), name='spouse'),
@@ -37,11 +38,12 @@ urlpatterns = [
     path('follow-up-visits-all/', AllFollowUpVisitsView.as_view(), name='follow-up-visits-all'),
     
     path('body-measurements/', BodyMeasurementView.as_view(), name='body-measurements'),
+    path('body-measurements/<str:pat_id>/', BodyMeasurementView.as_view(), name='body-measurements-by-patient'),
    
     path("findings/", FindingView.as_view(), name="findings"),
 
     path('followup-complete/<str:pat_id>/', GetCompletedFollowUpVisits.as_view(), name='followup-complete'),
-    path('followup-pending/<int:patrec_id>/', GetPendingFollowUpVisits.as_view(), name='physical-examination-list-detail'),
+    path('followup-pending/<str:pat_id>/', GetPendingFollowUpVisits.as_view(), name='followup-pending'),
     path('previous-measurement/<str:pat_id>/', GetPreviousHeightWeightAPIView.as_view(), name='previous-height-weight'),
    
     path('illness/', IllnessView.as_view(), name="illness"),
@@ -66,8 +68,8 @@ urlpatterns = [
 
     #DISABLITY
     
-    path('disability/', ListDisabilityView.as_view(), name='list-disability'),
-    path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
+    # path('disability/', ListDisabilityView.as_view(), name='list-disability'),
+    # path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
    
     # HEALTH STAFF
 

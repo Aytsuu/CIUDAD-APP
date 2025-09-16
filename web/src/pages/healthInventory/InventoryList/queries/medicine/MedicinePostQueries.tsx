@@ -10,6 +10,9 @@ export const useAddMedicine = () => {
     mutationFn: (data: MedicineType) => addMedicine(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medicines"] });
+      queryClient.invalidateQueries({ queryKey: ['medicineCategories'] }); 
+      queryClient.invalidateQueries({ queryKey: ['medicinelistcount'] });
+
     },
   });
 };

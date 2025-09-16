@@ -1,7 +1,7 @@
 import { VaccinationRecord } from "../../vaccination/tables/columns/types";
 import { StaffDetails } from "../../childservices/viewrecords/types";
 
-export interface VaccineRecordsResponse {
+export type VaccineRecordsResponse = {
   success: boolean;
   data: MonthlyVaccineRecord[];
   total_records: number;
@@ -9,7 +9,7 @@ export interface VaccineRecordsResponse {
 }
 
 
-export interface MonthlyVaccineRecord {
+export type MonthlyVaccineRecord= {
   month: string;
   record_count: number;
   records: VaccinationRecord[];
@@ -19,4 +19,15 @@ export interface MonthlyVaccineRecord {
     control_no: string;
     office: string;
   };
+}
+
+
+export  type VaccineChartResponse ={
+  success: boolean;
+  month: string; // Could use template literal `${number}-${number}` if you want stricter month format
+  vaccine_counts: {
+    [vaccineName: string]: number; // Fully dynamic vaccine names with number counts
+  };
+  total_records: number;
+
 }

@@ -1,6 +1,6 @@
 from .models import *
 from rest_framework import serializers
-from apps.inventory.serializers import *
+from apps.inventory.serializers.firstaid_serializers import *
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer, PatientRecordSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -23,6 +23,7 @@ class PatientFirstaidRecordSerializer(serializers.ModelSerializer):
         ).count()
         print(f"firstaid count for patient {obj.pat_id} with status RECORDED: {count}")
         return count
+    
     
 class FirstaidRecordSerializer(serializers.ModelSerializer):
     finv_details = FirstAidInventorySerializer(source='finv', read_only=True)

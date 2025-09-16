@@ -16,10 +16,8 @@ export default function EditMonthlyRecipientList() {
   const {
     reports,
     monthlyrcplist_id,
-    // recordCount,
-    // state_office,
-    // state_control,
-    year,
+
+    year
   } = location.state || {};
   const navigate = useNavigate();
   const signatureRef = useRef<SignatureFieldRef>(null);
@@ -35,9 +33,7 @@ export default function EditMonthlyRecipientList() {
 
   useEffect(() => {
     if (passedStaffId && staffOptions?.formatted) {
-      const staffExists = staffOptions.formatted.some(
-        (staff) => staff.id === passedStaffId
-      );
+      const staffExists = staffOptions.formatted.some((staff) => staff.id === passedStaffId);
       if (staffExists) {
         setSelectedStaffId(passedStaffId);
       }
@@ -78,18 +74,18 @@ export default function EditMonthlyRecipientList() {
         staff: selectedStaffId || passedStaffId,
         signature: currentSignature,
         office: office.toUpperCase(),
-        control_no: control_no,
+        control_no: control_no
       });
 
       toast.promise(submissionPromise, {
         loading: "Saving changes...",
         success: () => {
           queryClient.invalidateQueries({
-            queryKey: ["firstAidRecords", year],
+            queryKey: ["firstAidRecords", year]
           });
           return "Recipient list updated successfully!";
         },
-        error: "Failed to update recipient list",
+        error: "Failed to update recipient list"
       });
       await submissionPromise;
       navigate(-1);
@@ -103,18 +99,11 @@ export default function EditMonthlyRecipientList() {
     <>
       {/* Navigation Header */}
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <Button
-          className="text-black p-2 mb-2 self-start"
-          variant={"outline"}
-          onClick={() => navigate(-1)}
-          disabled={isSubmitting}
-        >
+        <Button className="text-black p-2 mb-2 self-start" variant={"outline"} onClick={() => navigate(-1)} disabled={isSubmitting}>
           <ChevronLeft />
         </Button>
         <div className="flex-col items-center">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Edit recipients ledger/list
-          </h1>
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Edit recipients ledger/list</h1>
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
@@ -139,8 +128,7 @@ export default function EditMonthlyRecipientList() {
                       reader.onload = (event) => {
                         const imgElement = document.createElement("img");
                         imgElement.src = event.target?.result as string;
-                        imgElement.className =
-                          "w-full h-full object-cover rounded-full";
+                        imgElement.className = "w-full h-full object-cover rounded-full";
                         const container = e.target?.parentElement;
                         if (container) {
                           container.innerHTML = "";
@@ -156,15 +144,9 @@ export default function EditMonthlyRecipientList() {
 
               {/* Header Text */}
               <div className="flex-1 text-center px-4">
-                <h1 className="text-sm font-bold uppercase mb-1">
-                  Republic of the Philippines
-                </h1>
-                <h2 className="text-lg font-bold uppercase mb-1">
-                  CEBU CITY HEALTH DEPARTMENT
-                </h2>
-                <p className="text-xs mb-1">
-                  General Maxilom Extension, Carreta, Cebu City
-                </p>
+                <h1 className="text-sm font-bold uppercase mb-1">Republic of the Philippines</h1>
+                <h2 className="text-lg font-bold uppercase mb-1">CEBU CITY HEALTH DEPARTMENT</h2>
+                <p className="text-xs mb-1">General Maxilom Extension, Carreta, Cebu City</p>
                 <p className="text-xs">(032) 232-6820; 232-6863</p>
               </div>
 
@@ -174,9 +156,7 @@ export default function EditMonthlyRecipientList() {
 
             {/* Title Section */}
             <div className="text-center py-4 border-b border-t border-gray-300 my-4">
-              <h3 className="text-xl font-bold uppercase tracking-widest">
-                RECIPIENTS LEDGER / LIST
-              </h3>
+              <h3 className="text-xl font-bold uppercase tracking-widest">RECIPIENTS LEDGER / LIST</h3>
             </div>
 
             {/* Form Fields */}
@@ -184,12 +164,7 @@ export default function EditMonthlyRecipientList() {
               <div className="space-y-1">
                 <Label className="font-medium">Office:</Label>
                 <div className="border-b border-black relative">
-                  <input
-                    className="w-full bg-transparent focus:outline-none py-1"
-                    value={office}
-                    onChange={(e) => setOffice(e.target.value)}
-                    disabled={isSubmitting}
-                  />
+                  <input className="w-full bg-transparent focus:outline-none py-1" value={office} onChange={(e) => setOffice(e.target.value)} disabled={isSubmitting} />
                   <Edit className="absolute right-2 bottom-2 h-4 w-4 text-gray-500" />
                 </div>
               </div>
@@ -197,12 +172,7 @@ export default function EditMonthlyRecipientList() {
               <div className="space-y-1">
                 <Label className="font-medium">Control No:</Label>
                 <div className="border-b border-black relative">
-                  <input
-                    className="w-full bg-transparent focus:outline-none py-1"
-                    value={control_no}
-                    onChange={(e) => setcontrol_no(e.target.value)}
-                    disabled={isSubmitting}
-                  />
+                  <input className="w-full bg-transparent focus:outline-none py-1" value={control_no} onChange={(e) => setcontrol_no(e.target.value)} disabled={isSubmitting} />
                   <Edit className="absolute right-2 bottom-2 h-4 w-4 text-gray-500" />
                 </div>
               </div>
@@ -210,59 +180,30 @@ export default function EditMonthlyRecipientList() {
 
             {/* Report Content Area */}
             <div className="border border-gray-300 bg-gray-50 h-96 p-4">
-              <p className="text-center text-gray-500">
-                Report content will appear here
-              </p>
+              <p className="text-center text-gray-500">Report content will appear here</p>
             </div>
 
             {/* Certification Text */}
-            <div className="py-4 text-sm italic">
-              Hereby certify that the names listed above are recipients of the
-              item as indicated below
-            </div>
+            <div className="py-4 text-sm italic">Hereby certify that the names listed above are recipients of the item as indicated below</div>
 
             {/* Signature Field */}
-            <SignatureField
-              ref={signatureRef}
-              title="Authorized Signature"
-              onSignatureChange={handleSignatureChange}
-              initialSignature={signatureBase64}
-              required={true}
-            />
+            <SignatureField ref={signatureRef} title="Authorized Signature" onSignatureChange={signature} initialSignature={signatureBase64} required={true} />
 
             {/* Staff Selection */}
             <div className="mt-6">
               <Label className="block mb-2">Name</Label>
               <div className="relative">
-                <Combobox
-                  options={staffOptions?.formatted || []}
-                  value={selectedStaffId}
-                  onChange={setSelectedStaffId}
-                  placeholder={
-                    isLoading ? "Loading staff..." : "Select staff member"
-                  }
-                  emptyMessage="No available staff members"
-                  triggerClassName="w-full"
-                />
+                <Combobox options={staffOptions?.formatted || []} value={selectedStaffId} onChange={(value) => setSelectedStaffId(value || "")} placeholder={isLoading ? "Loading staff..." : "Select staff member"} emptyMessage="No available staff members" triggerClassName="w-full" />
                 <Edit className="absolute right-3 top-3 h-4 w-4 text-gray-500" />
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-200">
-              <Button
-                onClick={() => navigate(-1)}
-                variant="outline"
-                className="px-8"
-                disabled={isSubmitting}
-              >
+              <Button onClick={() => navigate(-1)} variant="outline" className="px-8" disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button
-                onClick={handleSubmit}
-                className="px-8 bg-blue-600 hover:bg-blue-700"
-                disabled={isSubmitting || isLoading}
-              >
+              <Button onClick={handleSubmit} className="px-8 bg-blue-600 hover:bg-blue-700" disabled={isSubmitting || isLoading}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

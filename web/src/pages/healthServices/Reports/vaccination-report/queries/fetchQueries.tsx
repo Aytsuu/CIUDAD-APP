@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getVaccineRecords ,getVaccinationMonthCount,getVaccineReports} from "../restful-api/getAPI";
+import { getVaccinationChart, getVaccineRecords ,getVaccineReports} from "../restful-api/getAPI";
 
 export const useVaccineRecords = (yearFilter: string) => {
   return useQuery({
@@ -21,13 +21,9 @@ export const useVaccineReports = (month: string) => {
 };
 
 
-export const VacuseMonthCount = () => {
+export const useVaccineChart = (month: string) => {
   return useQuery({
-    queryKey: ["vacmonthCount"],
-    queryFn: getVaccinationMonthCount,
-    retry: 3,
-    staleTime: 60 * 1000, // 1 minute
-  })
+    queryKey: ["vaccineChart", month],
+    queryFn: () => getVaccinationChart(month),
+  });
 }
-
-

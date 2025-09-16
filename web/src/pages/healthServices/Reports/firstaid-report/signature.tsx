@@ -5,7 +5,7 @@ import SignatureCanvas from "react-signature-canvas";
 
 interface SignatureFieldProps {
   title: string;
-  onSignatureChange?: (signature: string | null) => void;
+  onSignatureChange?:any;
   initialSignature?: string;
   required?: boolean;
   className?: string;
@@ -146,7 +146,7 @@ export const SignatureField = forwardRef<SignatureFieldRef, SignatureFieldProps>
             {required && <span className="text-red-500">*</span>}
           </Label>
           
-          <div className="relative border border-gray-300 h-32 bg-white">
+          <div className="relative border border-gray-300 h-60 bg-white">
             {!isEditing && signatureData ? (
               // Display signature as image
               <div className="w-full h-full flex items-center justify-center p-2">

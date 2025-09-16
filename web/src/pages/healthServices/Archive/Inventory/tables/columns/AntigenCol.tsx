@@ -1,35 +1,31 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { StockRecords } from "../type";
 
-import { isNearExpiry, isExpired, isLowStock } from "./Alert"; // Import the alert functions
-
-export const getStockColumns = (
-): ColumnDef<StockRecords>[] => [
+export const getArchivedStockColumns = (): ColumnDef<any>[] => [
   {
     accessorKey: "batchNumber",
     header: "Batch Number",
+    cell: ({ row }) => {
+      return (
+        <div className="text-center">
+          {row.original.batchNumber}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "item",
     header: "Item Details",
     cell: ({ row }) => {
       const item = row.original.item;
-      const expired = isExpired(row.original.expiryDate);
       return (
-        <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
-          <div className={`font-medium text-center`}>
+        <div className="flex flex-col">
+          <div className="font-medium text-center">
             {item.antigen}
-            {expired && " (Expired)"}
           </div>
-          {row.original.type === "vaccine" && (
-            <div
-              className={`text-sm text-center ${
-                expired ? "text-red-500" : "text-gray-600"
-              }`}
-            >
-              {item.dosage} {item.unit}
-            </div>
-          )}
+          
+          <div className="text-sm text-center text-gray-600">
+            {item.dosage} {item.unit}
+          </div>
         </div>
       );
     },
@@ -38,194 +34,84 @@ export const getStockColumns = (
     accessorKey: "qty",
     header: "Total Qty",
     cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
       return (
-        <div className={`text-center ${expired ? "text-red-600" : ""}`}>
+        <div className="text-center">
           {row.original.qty}
-          {expired && " (Expired)"}
         </div>
       );
     },
   },
-
   {
     accessorKey: "availableStock",
     header: "Available Stock",
     cell: ({ row }) => {
       const record = row.original;
-      const expired = isExpired(record.expiryDate);
-      const isLow =
-        !expired &&
-        isLowStock(
-          record.availableStock,
-          record.type === "vaccine" ? "vials" : record.imzStck_unit,
-          record.dose_ml || record.imzStck_pcs
-        );
-
+  
       if (record.type === "vaccine") {
-        if (record.solvent === "diluent") {
+        if (record.solvent?.toLowerCase() === "diluent") {
           return (
-            <div
-              className={`text-center ${
-                expired
-                  ? "text-red-600"
-                  : isLow
-                  ? "text-yellow-600"
-                  : "text-black"
-              }`}
-            >
+            <div className="text-center">
               {record.availableStock} containers
-              {expired && " (Expired)"}
-              {isLow && " (Low Stock)"}
             </div>
           );
         }
-
-        const dosesPerVial = record.dose_ml;
+  
+        const dosesPerVial = record.dose_ml || 1;
         const availableDoses = record.availableStock;
         const fullVials = Math.ceil(availableDoses / dosesPerVial);
-        // const leftoverDoses = availableDoses % dosesPerVial;
-
+  
         return (
-          <div
-            className={`flex flex-col items-center ${
-              expired ? "text-red-600" : ""
-            }`}
-          >
-            <span
-              className={
-                expired
-                  ? ""
-                  : isLow
-                  ? "text-yellow-600"
-                  : "text-black"
-              }
-            >
+          <div className="flex flex-col items-center">
+            <span>
               {fullVials} vial{fullVials !== 1 ? "s" : ""}
-              {expired && " (Expired)"}
-              {isLow && " (Low Stock)"}
             </span>
-            <span className={expired ? "text-red-500" : "text-blue-500"}>
-              ({availableDoses} dose/s)
+            <span className="text-blue-500">
+              ({availableDoses} dose{availableDoses !== 1 ? "s" : ""})
             </span>
           </div>
         );
       }
-
+  
       if (record.type === "supply") {
-        const availablePcs = record.availableStock;
-        const isOutOfStock = availablePcs <= 0;
-
         if (record.imzStck_unit === "boxes") {
-          const pcsPerBox = record.imzStck_pcs;
+          const pcsPerBox = record.imzStck_pcs || 1;
+          const availablePcs = record.availableStock;
           const fullBoxes = Math.floor(availablePcs / pcsPerBox);
           const remainingPcs = availablePcs % pcsPerBox;
-
+  
           return (
-            <div
-              className={`flex flex-col items-center ${
-                expired ? "text-red-600" : ""
-              }`}
-            >
-              <span
-                className={
-                  expired
-                    ? ""
-                    : isOutOfStock
-                    ? "text-red-600 font-bold"
-                    : isLow
-                    ? "text-yellow-600"
-                    : "text-black"
-                }
-              >
-                {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box/es
-                {expired && " (Expired)"}
-                {isOutOfStock && !expired && " (Out of Stock)"}
-                {isLow && " (Low Stock)"}
+            <div className="flex flex-col items-center">
+              <span>
+                {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box{fullBoxes !== 1 ? "es" : ""}
               </span>
-              <span className={expired ? "text-red-500" : "text-blue-500"}>
-                ({availablePcs} total pc/s)
+              <span className="text-blue-500">
+                ({availablePcs} total pc{availablePcs !== 1 ? "s" : ""})
               </span>
             </div>
           );
         }
-
+  
         return (
-          <div
-            className={`text-center ${
-              expired
-                ? "text-red-600"
-                : isOutOfStock
-                ? "text-red-600 font-bold"
-                : isLow
-                ? "text-yellow-600"
-                : "text-green-600"
-            }`}
-          >
-            {availablePcs} pc/s
-            {expired && " (Expired)"}
-            {isOutOfStock && !expired && " (Out of Stock)"}
-            {isLow && " (Low Stock)"}
+          <div className="text-center">
+            {record.availableStock} pc{record.availableStock !== 1 ? "s" : ""}
           </div>
         );
       }
-
+  
       return (
-        <div
-          className={`text-center ${
-            expired
-              ? "text-red-600"
-              : isLow
-              ? "text-yellow-600"
-              : "text-green-600"
-          }`}
-        >
+        <div className="text-center">
           {record.availableStock}
-          {expired && " (Expired)"}
-          {isLow && " (Low Stock)"}
         </div>
       );
     },
   },
-
   {
     accessorKey: "administered",
     header: "Qty Used",
     cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
-      const record = row.original;
-      let total_stocks = 0;
-      let unit = "";
-      const availQty = Number(record.availableStock) || 0;
-
-      if (record.type === "vaccine") {
-        if (record.solvent === "diluent") {
-          total_stocks = Number(record.qty_number) - availQty;
-          unit = "containers";
-        } else {
-          total_stocks =
-            Number(record.qty_number) * Number(record.dose_ml) - availQty;
-          unit = "doses";
-        }
-      } else if (record.type === "supply") {
-        if (record.imzStck_unit === "boxes") {
-          // Convert boxes to pieces by multiplying with pcs per box
-          total_stocks =
-            Number(record.qty_number) * Number(record.imzStck_pcs) - availQty;
-          unit = "pcs";
-        } else {
-          total_stocks = Number(record.qty_number) - availQty;
-          unit = "pcs";
-        }
-      }
-
       return (
-        <div
-          className={`text-center ${
-            expired ? "text-red-600" : "text-red-600"
-          }`}
-        >
-          {total_stocks} {unit}
+        <div className="text-center text-red-600">
+          {row.original.administered}
         </div>
       );
     },
@@ -234,47 +120,51 @@ export const getStockColumns = (
     accessorKey: "wastedDose",
     header: "Wasted Units",
     cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
       return (
-        <div className="flex items-center justify-center gap-2">
-          <span
-            className={`text-sm ${
-              expired ? "text-red-600" : "text-gray-600"
-            }`}
-          >
-            {row.original.wastedDose || 0}
-          </span>
+        <div className="text-center">
+          {row.original.wastedDose}
         </div>
       );
     },
   },
-
   {
     accessorKey: "expiryDate",
     header: "Expiry Date",
     cell: ({ row }) => {
       const expiryDate = row.original.expiryDate;
-      const isNear = isNearExpiry(expiryDate);
-      const expired = isExpired(expiryDate);
-
       return (
-        <div
-          className={`flex justify-center min-w-[120px] px-2 ${
-            expired ? "text-red-600" : ""
-          }`}
-        >
-          <div
-            className={`text-center w-full ${
-              expired
-                ? "font-bold"
-                : isNear
-                ? "text-orange-500 font-medium"
-                : ""
-            }`}
-          >
-            {expiryDate}
-            {expired ? " (Expired)" : isNear ? " (Near Expiry)" : ""}
-          </div>
+        <div className="text-center">
+          {expiryDate !== "N/A" ? new Date(expiryDate).toLocaleDateString() : "N/A"}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "archivedDate",
+    header: "Archived Date",
+    cell: ({ row }) => {
+      const archivedDate = row.original.archivedDate;
+      return (
+        <div className="text-center">
+          {archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "reason",
+    header: "Reason",
+    cell: ({ row }) => {
+      const reason = row.original.reason;
+      return (
+        <div className="text-center">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            reason === "Expired" 
+              ? "bg-red-100 text-red-800" 
+              : "bg-yellow-100 text-yellow-800"
+          }`}>
+            {reason}
+          </span>
         </div>
       );
     },

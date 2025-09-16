@@ -11,7 +11,7 @@ export const api = axios.create({
 });
 
   export const api2 = axios.create({
-    baseURL: "http://192.168.0.127:8001",
+    baseURL: "http://172.31.225.66:8001",
     timeout: 10000,
   });
 

@@ -54,8 +54,22 @@ export interface AgeCalculation {
   }
   
   export function calculateAgeFromDOB(dob: string | Date, referenceDate?: string | Date): AgeCalculation {
-    const birthDate = new Date(dob)
-    const currentDate = referenceDate ? new Date(referenceDate) : new Date()
+     // Convert DD/MM/YYYY to Date object if needed
+  let birthDate: Date;
+  
+  if (typeof dob === 'string' && dob.includes('/')) {
+    // Handle DD/MM/YYYY format
+    const parts = dob.split('/');
+    if (parts.length === 3) {
+      birthDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`); // YYYY-MM-DD
+    } else {
+      birthDate = new Date(dob);
+    }
+  } else {
+    birthDate = new Date(dob);
+  }
+  
+  const currentDate = referenceDate ? new Date(referenceDate) : new Date();
   
     // Ensure we're working with valid dates
     if (isNaN(birthDate.getTime()) || isNaN(currentDate.getTime())) {
