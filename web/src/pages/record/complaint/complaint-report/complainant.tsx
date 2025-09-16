@@ -227,8 +227,6 @@ export const ComplainantInfo = () => {
                         
                           onValueChange={(value) => {
                             field.onChange(value);
-                            // Auto-fill the gender input field based on selection
-                            const genderInputField = `complainant.${activeTab}.genderInput`;
                             if (value === "Other") {
                               // Clear the input when Other is selected so user can type
                               control._formValues.complainant[

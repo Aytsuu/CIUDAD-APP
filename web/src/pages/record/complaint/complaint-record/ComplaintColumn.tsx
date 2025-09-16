@@ -50,7 +50,7 @@ const getStatusBadgeProps = (status: string) => {
   }
 };
 
-export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
+export const complaintColumns = (): ColumnDef<Complaint>[] => [
   {
     id: "select",
     header: ({ table }) => {
@@ -64,6 +64,7 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
             aria-label="Select all"
             className="border-gray"
           />
+          
         </div>
       );
     },

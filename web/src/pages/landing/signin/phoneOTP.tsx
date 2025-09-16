@@ -8,7 +8,7 @@ import { useSendOTP } from "../queries/authPostQueries";
 
 interface PhoneOTPProps {
   phone: string;
-  serverOtp: string; // The OTP received from server
+  serverOtp: string; 
   onSuccess: (userId: string) => void;
   onResend: () => Promise<void>; 
 }

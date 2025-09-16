@@ -1,1 +1,0 @@
-import { deleteComplaint } from "../restful-api/complaint-api";

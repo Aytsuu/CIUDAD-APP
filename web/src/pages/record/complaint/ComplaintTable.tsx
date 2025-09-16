@@ -173,7 +173,7 @@ export default function ComplaintTable({
                     {selectedCount === 1 ? 'Complaint to be archived:' : 'Complaints to be archived:'}
                   </p>
                   <ul className="space-y-1 max-h-32 overflow-y-auto">
-                    {selectedComplaints.slice(0, 5).map((complaint, index) => (
+                    {selectedComplaints.slice(0, 5).map((complaint) => (
                       <li key={complaint.id} className="text-sm text-gray-600">
                         • ID: {complaint.id} - {complaint.complainant}
                       </li>
