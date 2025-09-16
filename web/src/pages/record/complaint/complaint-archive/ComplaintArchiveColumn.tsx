@@ -47,7 +47,7 @@ const getStatusBadgeProps = (status: string) => {
   }
 };
 
-export const archiveComplaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
+export const archiveComplaintColumns = (): ColumnDef<Complaint>[] => [
   {
     id: "select",
     header: ({ table }) => {

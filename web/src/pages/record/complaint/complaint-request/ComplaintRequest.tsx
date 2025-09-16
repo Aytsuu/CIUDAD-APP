@@ -27,7 +27,7 @@ export default function ComplaintRequest() {
   const DEFAULT_PAGE_SIZE = 10;
   const [searchQuery, setSearchQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState<string | null>(null);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [pageSize] = useState(DEFAULT_PAGE_SIZE);
   const [currentPage, setCurrentPage] = useState(1);
   const { data: complaints = [], isLoading, error } = useGetComplaint();
 
