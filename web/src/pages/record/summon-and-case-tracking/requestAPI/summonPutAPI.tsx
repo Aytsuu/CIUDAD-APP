@@ -71,13 +71,12 @@ export const acceptSummonRequest = async(sr_id: string) => {
             sr_req_status: "Accepted"
         })
 
-         const response = await api.get('/treasurer/get-pr-id/', {
+        const purpose = await api.get(`treasurer/purpose-rates/`, {
                 params: {
-                    pr_purpose: "Summons",
-                    pr_category: "Service Charge", 
-                    pr_is_archive: false
+                    pr_purpose: "Summons"
                 }
-        })
+            }
+        )
 
         if(res){
             await api.post('clerk/service-charge-decision/',{
@@ -86,9 +85,9 @@ export const acceptSummonRequest = async(sr_id: string) => {
             })
 
             await api.post('clerk/service-charge-payment-request/', {
-                spay_amount: 150.00,
+                pr_id: purpose.data.pr_id,
                 spay_status: "Unpaid",
-                sr_id: response.data.pr_id
+                sr_id: sr_id
             })
         }
         return res.data
