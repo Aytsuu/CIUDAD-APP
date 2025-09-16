@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getServiceChargeRequest, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, 
-    getSummonTimeSlots, getSummonReqPendingList, getComplaintDetails, getSummonReqRejectedList} from "../requestAPI/summonGetAPI";
+    getSummonTimeSlots, getSummonReqPendingList, getComplaintDetails, getSummonReqRejectedList, getSummonReqAcceptedList} from "../requestAPI/summonGetAPI";
 
 export type ServiceChargeRequest = {
     sr_id: string;
@@ -184,6 +184,25 @@ export const useGetSummonReqRejectedList = () => {
     return useQuery<SummonReqRejectedList[]>({
         queryKey: ['summonRejectedReq'],
         queryFn: getSummonReqRejectedList,
+        staleTime: 5000
+    })
+}
+
+export type SummonReqAcceptedList = {
+    sr_id: string;
+    sr_req_date: string;
+    comp_id: string;
+    complainant_names: string[]
+    incident_type: string;
+    accused_names: string [];
+    rejection_reason: string;
+    decision_date: string;
+}
+
+export const useGetSummonReqAcceptedList = () => {
+    return useQuery<SummonReqAcceptedList[]>({
+        queryKey: ['summonAcceptedReq'],
+        queryFn: getSummonReqAcceptedList,
         staleTime: 5000
     })
 }

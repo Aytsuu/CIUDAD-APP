@@ -112,6 +112,8 @@ export const useAcceptRequest = (onSuccess?: () => void) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonPendingReq'] })
+            queryClient.invalidateQueries({ queryKey: ['summonAcceptedReq'] })
+
             toast.success('Request Accepted', {
                 id: "acceptReq",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -140,6 +142,7 @@ export const useRejectRequest = (onSuccess?: () => void) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonPendingReq'] })
+            queryClient.invalidateQueries({ queryKey: ['summonRejectedReq'] })
             toast.success('Request Rejected', {
                 id: "rejectReq",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,

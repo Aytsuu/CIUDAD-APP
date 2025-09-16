@@ -88,6 +88,16 @@ export const getSummonReqRejectedList = async () => {
 }
 
 
+export const getSummonReqAcceptedList = async () => {
+    try{
+        const res = await api.get('clerk/service-charge-accepted-list/')
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+
 export const getComplaintDetails = async (comp_id: string) => {
     try{
         const res = await api.get(`/complaint/${comp_id}/`)

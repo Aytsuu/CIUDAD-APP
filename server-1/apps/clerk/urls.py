@@ -14,6 +14,7 @@ urlpatterns = [
     # path('service-charge-request-file/', ServiceChargeRequestFileView.as_view(), name='service-charge-request-file'),
     path('service-charge-pending-list/', SummonRequestPendingListView.as_view(), name='service=-charge-pending-list'),
     path('service-charge-rejected-list/', SummonRequestRejectedListView.as_view(), name='service=-charge-rejected-list'),
+    path('service-charge-accepted-list/', SummonRequestAcceptedListView.as_view(), name='service=-charge-accepted-list'),
     path('update-summon-request/<str:sr_id>/', UpdateSummonRequestView.as_view(), name='update-summon-request'),
     path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
     path('service-charge-payment-request/', ServiceChargePaymentRequestView.as_view(), name='service-charge-payment-req'),

@@ -218,6 +218,20 @@ class SummonRequestRejectedListView(generics.ListAPIView):
         )
         return queryset
     
+class SummonRequestAcceptedListView(generics.ListAPIView):
+    serializer_class = SummonRequestAcceptedListSerializer
+    
+    def get_queryset(self):
+        queryset = ServiceChargeRequest.objects.filter(
+            sr_req_status__iexact='Accepted',
+            sr_type='Summon'
+        ).select_related('comp_id').prefetch_related(
+            'servicechargedecision',  
+            'comp_id__complaintcomplainant_set__cpnt',  
+            'comp_id__complaintaccused_set__acsd' 
+        )
+        return queryset
+    
 class ServiceChargePaymentRequestView(generics.ListCreateAPIView):
     serializer_class = ServiceChargePaymentRequestSerializer
     queryset = ServiceChargePaymentRequest.objects.all()

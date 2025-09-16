@@ -549,6 +549,65 @@ class SummonRequestRejectedListSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting decision date: {e}")
             return None
+
+class SummonRequestAcceptedListSerializer(serializers.ModelSerializer):
+    complainant_names = serializers.SerializerMethodField()
+    incident_type = serializers.SerializerMethodField()
+    accused_names = serializers.SerializerMethodField()
+    decision_date = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ServiceChargeRequest
+        fields = [
+            'sr_id', 
+            'sr_type', 
+            'sr_req_date', 
+            'sr_req_status', 
+            'sr_case_status', 
+            'comp_id', 
+            'staff_id', 
+            'complainant_names', 
+            'incident_type', 
+            'accused_names',
+            'decision_date'
+        ]
+    
+    def get_complainant_names(self, obj):
+        if obj.comp_id:
+            try:
+                # Use prefetched data
+                complainants = obj.comp_id.complaintcomplainant_set.all()
+                return [cc.cpnt.cpnt_name for cc in complainants]
+            except Exception as e:
+                print(f"Error getting complainants: {e}")
+                return []
+        return []
+    
+    def get_incident_type(self, obj):
+        if obj.comp_id:
+            return getattr(obj.comp_id, 'comp_incident_type', None)
+        return None
+    
+    def get_accused_names(self, obj):
+        if obj.comp_id:
+            try:
+                # Use prefetched data
+                accused_list = obj.comp_id.complaintaccused_set.all()
+                return [ca.acsd.acsd_name for ca in accused_list]
+            except Exception as e:
+                print(f"Error getting accused: {e}")
+                return []
+        return []
+    
+    def get_decision_date(self, obj):
+        try:
+            # Use the correct reverse relationship name for OneToOneField
+            if hasattr(obj, 'servicechargedecision'):
+                return obj.servicechargedecision.scd_decision_date
+            return None
+        except Exception as e:
+            print(f"Error getting decision date: {e}")
+            return None
         
 
 class SummonRequestAcceptedListSerializer(serializers.ModelSerializer):
