@@ -24,11 +24,6 @@ from utils.otp import generate_otp
 
 logger = logging.getLogger(__name__)
 
-def send_otp_email(email, otp):
-    subject = "Your OTP Code"
-    message = f"Your OTP code is: {otp}. It will expire in 5 minutes."
-    send_mail(subject, message, None, [email])
-
 class SignupView(APIView):
     permission_classes = [AllowAny]
 
@@ -220,58 +215,58 @@ class SignupView(APIView):
 #         return Response({'error': 'Failed to send OTP email'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
 
 
-class CookieTokenObtainPairView(TokenObtainPairView):
-    permission_classes = [AllowAny]
-    serializer_class = TokenObtainPairSerializer
+# class CookieTokenObtainPairView(TokenObtainPairView):
+#     permission_classes = [AllowAny]
+#     serializer_class = TokenObtainPairSerializer
     
-    def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        data = response.data
-        email = data.get('email')
-        refresh = data.get('refresh')
-        access = data.get('access')
+#     def post(self, request, *args, **kwargs):
+#         response = super().post(request, *args, **kwargs)
+#         data = response.data
+#         email = data.get('email')
+#         refresh = data.get('refresh')
+#         access = data.get('access')
         
-        logger.info(email)
+#         logger.info(email)
         
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.user
+#         serializer = self.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         user = serializer.user
         
-        if not getattr(user, "rp", None):
-            return Response({'error': 'Resident Profile required. Contact administrator.'}, status=status.HTTP_403_FORBIDDEN)
+#         if not getattr(user, "rp", None):
+#             return Response({'error': 'Resident Profile required. Contact administrator.'}, status=status.HTTP_403_FORBIDDEN)
         
-        if not getattr(user, "staff", None):
-            return Response({'error': 'Staff Privileges required. Contact administrator.'}, status=status.HTTP_403_FORBIDDEN)   
+#         if not getattr(user, "staff", None):
+#             return Response({'error': 'Staff Privileges required. Contact administrator.'}, status=status.HTTP_403_FORBIDDEN)   
         
-        logger.info(f"Tokens generated - Access: {'Yes' if access else 'No'}, Refresh: {'Yes' if refresh else 'No'}")
+#         logger.info(f"Tokens generated - Access: {'Yes' if access else 'No'}, Refresh: {'Yes' if refresh else 'No'}")
         
-        res = JsonResponse({'access': access,
-                            'user': UserAccountSerializer(user).data,
-                            'message': 'Login successful'}, 
-                           status=status.HTTP_200_OK)
+#         res = JsonResponse({'access': access,
+#                             'user': UserAccountSerializer(user).data,
+#                             'message': 'Login successful'}, 
+#                            status=status.HTTP_200_OK)
         
-        if refresh:
-            res.set_cookie(
-                key="refresh_token",
-                value=refresh,
-                httponly=True,
-                secure=True,
-                samesite='Strict'
-            )
-        else:
-            logger.warning("No refresh token found in response data")   
-        return res
+#         if refresh:
+#             res.set_cookie(
+#                 key="refresh_token",
+#                 value=refresh,
+#                 httponly=True,
+#                 secure=True,
+#                 samesite='Strict'
+#             )
+#         else:
+#             logger.warning("No refresh token found in response data")   
+#         return res
     
-class CookieTokenRefreshView(TokenRefreshView):
-    serializer_class = TokenRefreshSerializer
+# class CookieTokenRefreshView(TokenRefreshView):
+#     serializer_class = TokenRefreshSerializer
     
-    def post(self, request, *args, **kwargs):
-        refresh = request.COOKIES.get('refresh_token')
-        print("Refresh Token: ", refresh)
+#     def post(self, request, *args, **kwargs):
+#         refresh = request.COOKIES.get('refresh_token')
+#         print("Refresh Token: ", refresh)
         
-        if not refresh:
-            return Response({'error': 'Refresh token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
-        serializer = self.get_serializer(data={'refresh': refresh})
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+#         if not refresh:
+#             return Response({'error': 'Refresh token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
+#         serializer = self.get_serializer(data={'refresh': refresh})
+#         serializer.is_valid(raise_exception=True)
+#         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
