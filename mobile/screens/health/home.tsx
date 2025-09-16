@@ -13,7 +13,7 @@ const { width } = Dimensions.get('window');
 
 const Homepage = () => {
   // Get pending appointments count
-  const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments();
+  // const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments();
 
   const modules = [
     { name: 'Child Health Records', route: 'admin/childhealth/overall', icon: Baby },
@@ -183,10 +183,10 @@ const Homepage = () => {
             >
               <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My appointments</Text>
               {/* Notification Badge */}
-              <NotificationBadge 
+              {/* <NotificationBadge 
                 count={pendingCount} 
                 showBadge={!isLoadingPending && pendingCount > 0} 
-              />
+              /> */}
             </TouchableOpacity>
           </View>
 

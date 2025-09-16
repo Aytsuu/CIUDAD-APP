@@ -20,8 +20,8 @@ export default () => {
   },
   {
     title: "Medicine Request",
-     description: "",
-     route: ""
+     description: "Monitor your medicine requests.",
+     route: "/(health)/medicine-request/my-requests"
   },
   {
     title: "Maternal Appointment",

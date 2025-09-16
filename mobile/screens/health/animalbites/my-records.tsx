@@ -6,11 +6,12 @@ import { User, FileText, AlertCircle, Package, Clock, Shield, Activity, ArrowLef
 import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
 import { format } from "date-fns"
-import { useAuth } from "../familyplanning/useAuth"
 import { useAnimalBitePatientHistory, useAnimalBitePatientSummary } from "./db-request/get-query"
 import { getPatientRecordsByPatId } from "./api/get-api"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import PageLayout from "@/screens/_PageLayout"
+import { useAuth } from "@/contexts/AuthContext"
+import { LoadingState } from "@/components/ui/loading-state"
 
 // Remove the mock API function and use your actual API call
 type PatientRecordDetail = {
@@ -37,6 +38,7 @@ type PatientRecordDetail = {
 
 export default function MyAnimalBiteRecordsScreen() {
   const { user } = useAuth()
+  const rp_id = user?.resident?.rp_id
   const queryClient = useQueryClient()
 
   const { 
@@ -46,9 +48,9 @@ export default function MyAnimalBiteRecordsScreen() {
     error, 
     refetch, 
   } = useQuery<PatientRecordDetail[],Error>({
-    queryKey: ["myAnimalbiteRecord", user?.id],
-    queryFn: () => getPatientRecordsByPatId(user?.id || ""),
-    enabled: !!user?.id,
+    queryKey: ["myAnimalbiteRecord", rp_id],
+    queryFn: () => getPatientRecordsByPatId(rp_id),
+    enabled: !!rp_id,
   })
 
   const [refreshing, setRefreshing] = React.useState(false)
@@ -113,16 +115,9 @@ export default function MyAnimalBiteRecordsScreen() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-blue-50">
-        {/* <View className="bg-white p-8 rounded-2xl items-center shadow-sm"> */}
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text className="mt-4 text-gray-600 font-medium">Loading your animal bite records...</Text>
-        {/* </View> */}
-      </View>
-    )
-  }
+ if (isLoading) {
+    return <LoadingState/>}
+
   if (isError) {
     return (
       <View className="flex-1 justify-center items-center p-4 bg-red-50">
@@ -140,7 +135,7 @@ export default function MyAnimalBiteRecordsScreen() {
     )
   }
 
-  if (!user?.id) {
+  if (!rp_id) {
     return (
       <View className="flex-1 justify-center items-center p-4 bg-gray-50">
         <View className="bg-white p-8 rounded-2xl shadow-lg items-center max-w-sm">
@@ -339,7 +334,7 @@ export default function MyAnimalBiteRecordsScreen() {
               })}
             </ScrollView>
           ) : (
-            <View className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 items-center">
+            <View className="bg-white p-6 items-center">
               <Clock size={48} color="#D1D5DB" />
               <Text className="text-gray-600 text-lg font-bold mb-2 mt-4">No Records Found</Text>
               <Text className="text-gray-500 text-center leading-6">You don't have any animal bite records yet.</Text>

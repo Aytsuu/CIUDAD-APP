@@ -2769,14 +2769,14 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
     bm_id = None
     current_weight = data.get("weight")
     current_height = data.get("height")
-
+    patient = patient_record_instance.pat_id
     # Always create a new BodyMeasurement record for historical tracking
     bm_data = {
         "weight": float(current_weight) if current_weight is not None else 0,
         "height": float(current_height) if current_height is not None else 0,
         "age": data.get("age") or 0,
-        "patrec": patrec_id,
-        "pat": patient_record_instance.pat_id.pat_id,
+        # "patrec": patrec_id,
+        "pat": patient.pat_id,
     }
 
     print("BM data: ", bm_data)
@@ -2787,7 +2787,7 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
 
     # Get previous measurement for comparison logging
     previous_bm = BodyMeasurement.objects.filter(
-        patrec=patient_record_instance
+        pat=patient
     ).exclude(bm_id=bm_id).order_by('-created_at').first()
 
     if previous_bm:

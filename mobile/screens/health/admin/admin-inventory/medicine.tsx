@@ -14,6 +14,7 @@ import * as React from "react";
 import { api2 } from "@/api/api";
 import { router } from "expo-router";
 import PageLayout from "@/screens/_PageLayout";
+import { LoadingState } from "@/components/ui/loading-state";
 
 // Define interfaces for type safety
 interface InventoryItem {
@@ -301,12 +302,7 @@ export default function InventoryScreen() {
   }, [inventoryData, page, filteredInventory.length]);
 
   if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-blue-50">
-        <ActivityIndicator size="large" color="#3B82F6" />
-        <Text className="mt-4 text-gray-600 font-medium">Loading inventory...</Text>
-      </View>
-    );
+    return <LoadingState/>
   }
 
   if (hasError) {

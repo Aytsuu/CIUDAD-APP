@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, Activity
 import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Download, CheckCircle, XCircle, Clock, User, Pill } from "lucide-react-native";
 import { useUpdateRequestStatus } from "./restful-api";
+import { LoadingState } from "@/components/ui/loading-state";
 
 
 
@@ -43,14 +44,9 @@ export default function RequestDetailScreen() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#0000ff" />
-      </SafeAreaView>
-    );
-  }
-
+if (isLoading) {
+    return <LoadingState/>}
+    
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <View className="flex-1 p-4">

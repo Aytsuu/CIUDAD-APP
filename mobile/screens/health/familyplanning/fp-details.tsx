@@ -7,6 +7,7 @@ import { useLocalSearchParams, router } from "expo-router"
 import { Activity, AlertCircle, ArrowLeft, Baby, Calendar, Clock, CreditCard, Droplets, FileText, GraduationCap, Heart, Loader2, MapPin, Ruler, Scale, Stethoscope, TrendingUp, User, UserCheck } from "lucide-react-native"
 import { FPRecordData } from "../admin/admin-familyplanning/FPRecordData"
 import { getFPCompleteRecord } from "../admin/admin-familyplanning/GetRequest"
+import { LoadingState } from "@/components/ui/loading-state"
 
 export default function MyFpRecordDetailScreen() {
 const { fprecordId } = useLocalSearchParams()
@@ -45,14 +46,8 @@ const tabs = [
 "Service Provision",
 "Pregnancy Check",
 ];
-if (isLoading) {
-return (
-    <View className="flex-1 bg-gray-50 items-center justify-center p-6">
-        <Loader2 size={32} color="#3B82F6" />
-        <Text className="text-lg text-gray-600 mt-4">Loading record...</Text>
-    </View>
-);
-}
+ if (isLoading) {
+    return <LoadingState/>}
 
 if (isError) {
 console.log("❌ [fp-details] Error loading record:", error)

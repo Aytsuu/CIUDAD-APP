@@ -1,26 +1,206 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, TextInput, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, User, Phone, MapPin, Calendar, Baby, Heart, Loader2, ChevronLeft, ChevronRight, UserCheck, UserPlus, Users, Filter } from 'lucide-react-native';
+import { 
+  Search, 
+  User, 
+  Phone, 
+  MapPin, 
+  Calendar, 
+  Baby, 
+  Heart, 
+  Loader2, 
+  ChevronLeft, 
+  ChevronRight, 
+  UserCheck, 
+  UserPlus, 
+  Users, 
+  Filter,
+  AlertCircle,
+  RefreshCw,
+  FileText,
+  TrendingUp
+} from 'lucide-react-native';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Text as UIText } from '@/components/ui/text';
 import { useChildHealthRecords } from '../forms/queries/fetchQueries';
 import { calculateAge } from '@/helpers/ageCalculator';
 import { ChildHealthRecord } from '../forms/muti-step-form/types';
-import { filterOptions } from './types';
 import PageLayout from '@/screens/_PageLayout';
+import { LoadingState } from '@/components/ui/loading-state';
+
+type TabType = "all" | "resident" | "transient";
+
+// Components
+const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
+  const getTypeConfig = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'resident':
+        return {
+          color: 'text-green-700',
+          bgColor: 'bg-green-100',
+          borderColor: 'border-green-200',
+        };
+      case 'transient':
+        return {
+          color: 'text-amber-700',
+          bgColor: 'bg-amber-100',
+          borderColor: 'border-amber-200',
+        };
+      default:
+        return {
+          color: 'text-gray-700',
+          bgColor: 'bg-gray-100',
+          borderColor: 'border-gray-200',
+        };
+    }
+  };
+
+  const typeConfig = getTypeConfig(type);
+  return (
+    <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
+      <UIText className={`text-xs font-semibold ${typeConfig.color}`}>
+        {type}
+      </UIText>
+    </View>
+  );
+};
+
+const TabBar: React.FC<{
+  activeTab: TabType;
+  setActiveTab: (tab: TabType) => void;
+  counts: { all: number; resident: number; transient: number };
+}> = ({ activeTab, setActiveTab, counts }) => (
+  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+    <TouchableOpacity
+      onPress={() => setActiveTab('all')}
+      className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <UIText className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
+        All ({counts.all})
+      </UIText>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab('resident')}
+      className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <UIText className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Residents ({counts.resident})
+      </UIText>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab('transient')}
+      className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <UIText className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Transients ({counts.transient})
+      </UIText>
+    </TouchableOpacity>
+  </View>
+);
+
+const ChildHealthCard: React.FC<{
+  child: ChildHealthRecord;
+  onPress: () => void;
+}> = ({ child, onPress }) => {
+  const formatDateSafely = (dateString: string) => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (e) {
+      return "Invalid Date";
+    }
+  };
+
+  return (
+    <TouchableOpacity
+      className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm"
+      activeOpacity={0.8}
+      onPress={onPress}
+    >
+      {/* Header */}
+      <View className="p-4 border-b border-gray-100">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 mr-3">
+            <View className="flex-row items-center mb-1">
+              <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
+                <Baby color="white" size={20} />
+              </View>
+              <View className="flex-1">
+                <UIText className="font-semibold text-lg text-gray-900">
+                  {child.fname} {child.lname}
+                </UIText>
+                <UIText className="text-gray-500 text-sm">ID: {child.pat_id}</UIText>
+              </View>
+            </View>
+          </View>
+          <View className="items-end">
+            <StatusBadge type={child.pat_type} />
+            {/* <View className="bg-blue-100 px-2 py-1 rounded-lg mt-2"> */}
+              {/* <UIText className="text-blue-700 font-bold text-xs">#{child.chrec_id}</UIText> */}
+            {/* </View> */}
+          </View>
+        </View>
+      </View>
+
+      {/* Details */}
+      <View className="p-4 space-y-3">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center flex-1">
+            <Calendar size={16} color="#6B7280" />
+            <UIText className="ml-2 text-sm text-gray-700">
+              Born: {formatDateSafely(child.dob)}
+            </UIText>
+          </View>
+          <UIText className="text-sm text-gray-600">
+            {child.age} years old, {child.sex}
+          </UIText>
+        </View>
+
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center flex-1">
+            <Heart size={16} color="#6B7280" />
+            <UIText className="ml-2 text-sm text-gray-700">
+              {child.health_checkup_count} checkups
+            </UIText>
+          </View>
+          <View className="flex-row items-center">
+            <UIText className="text-sm text-gray-600">
+              Weight: {child.birth_weight || 'N/A'} kg
+            </UIText>
+          </View>
+        </View>
+
+        <View className="flex-row items-start">
+          <Users size={16} color="#6B7280" className="mt-0.5" />
+          <UIText className="ml-2 text-sm text-gray-700 flex-1">
+            Family #: {child.family_no}
+          </UIText>
+        </View>
+
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center flex-1">
+            <MapPin size={16} color="#6B7280" />
+            <UIText className="ml-2 text-sm text-gray-700 flex-1" numberOfLines={1}>
+              {child.sitio || child.address}
+            </UIText>
+          </View>
+        </View>
+
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 export default function AllChildHealthRecords() {
   const router = useRouter();
-  const { data: childHealthRecords, isLoading, isFetching, refetch } = useChildHealthRecords();
-
+  const { data: childHealthRecords, isLoading, isFetching, refetch, error } = useChildHealthRecords();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [pageSize, setPageSize] = useState(20); // Increased default page size
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedFilter, setSelectedFilter] = useState('all');
-  const [isFilterVisible, setIsFilterVisible] = useState(false); // Collapsible filter
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>("all");
 
   const formatChildHealthData = useCallback((): ChildHealthRecord[] => {
     if (!childHealthRecords) {
@@ -86,360 +266,177 @@ export default function AllChildHealthRecords() {
 
   const formattedData = useMemo(() => formatChildHealthData(), [formatChildHealthData]);
 
+  // Filter data based on active tab and search query
   const filteredData = useMemo(() => {
     let filtered = formattedData;
 
+    // Filter by search query first
     if (searchQuery) {
-      filtered = filtered.filter((item) => {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter((child) => {
         const searchText = (
-          `${item.fname} ${item.lname} ${item.mname} ` +
-          `${item.mother_fname} ${item.mother_lname} ${item.mother_mname} ` +
-          `${item.father_fname} ${item.father_lname} ${item.father_mname} ` +
-          `${item.address} ${item.sitio} ${item.family_no} ${item.pat_type}`
+          `${child.fname} ${child.lname} ${child.mname} ` +
+          `${child.mother_fname} ${child.mother_lname} ${child.mother_mname} ` +
+          `${child.father_fname} ${child.father_lname} ${child.father_mname} ` +
+          `${child.address} ${child.sitio} ${child.family_no} ${child.pat_type} ${child.pat_id}`
         ).toLowerCase();
-        return searchText.includes(searchQuery.toLowerCase());
+        return searchText.includes(lowerCaseQuery);
       });
     }
 
-    if (selectedFilter !== 'all') {
-      filtered = filtered.filter((item) => 
-        item.pat_type.toLowerCase() === selectedFilter
+    // Filter by active tab
+    if (activeTab !== 'all') {
+      filtered = filtered.filter((child) => 
+        child.pat_type.toLowerCase() === activeTab
       );
     }
 
+    // Sort by most recent (by age, youngest first)
+    filtered.sort((a, b) => parseInt(a.age) - parseInt(b.age));
+
     return filtered;
-  }, [formattedData, searchQuery, selectedFilter]);
+  }, [formattedData, searchQuery, activeTab]);
 
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return filteredData.slice(startIndex, startIndex + pageSize);
-  }, [filteredData, currentPage, pageSize]);
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-
-  const stats = useMemo(() => ({
-    totalChildren: formattedData.length,
-    residentChildren: formattedData.filter((p) => p.pat_type.toLowerCase() === "resident").length,
-    transientChildren: formattedData.filter((p) => p.pat_type.toLowerCase() === "transient").length,
+  // Calculate stats for tabs
+  const counts = useMemo(() => ({
+    all: formattedData.length,
+    resident: formattedData.filter((p) => p.pat_type.toLowerCase() === "resident").length,
+    transient: formattedData.filter((p) => p.pat_type.toLowerCase() === "transient").length,
   }), [formattedData]);
 
-  const handleRefresh = useCallback(async () => {
-    await refetch();
-    setCurrentPage(1);
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } catch (e) {
+      console.error("Refetch error:", e);
+    }
+    setRefreshing(false);
   }, [refetch]);
 
-  const handleFilterChange = (value: string) => {
-    setSelectedFilter(value);
-    setCurrentPage(1);
-  };
-
-  const formatFullName = (fname: string, mname: string, lname: string) => {
-    return `${fname} ${mname ? mname + ' ' : ''}${lname}`.trim();
-  };
-
-  const filterOptions = [
-    { id: "all", name: "All Types" },
-    { id: "resident", name: "Residents" },
-    { id: "transient", name: "Transients" },
-  ];
-
-  const renderChildItem = ({ item: child }: { item: ChildHealthRecord }) => (
-    <TouchableOpacity
-      onPress={() => {
-        if (!child.chrec_id || !child.pat_id || !child.dob) {
-          console.error('Missing required fields');
-          return;
-        }
-        router.push({
-          pathname: '/admin/childhealth/individual',
-          params: { ChildHealthRecord: JSON.stringify(child) },
-        });
-      }}
-      className="bg-white border-b border-slate-100 p-3 active:bg-slate-50"
-    > <View className="flex-row items-center justify-between">
-        {/* Main Info */}
-        <View className="flex-1">
-          <View className="flex-row items-center justify-between mb-1">
-            <Text className="text-base font-semibold text-slate-900" numberOfLines={1}>
-              {child.fname} {child.lname}
-            </Text>
-            <Badge
-              variant={child.pat_type.toLowerCase() === "transient" ? "secondary" : "default"}
-              className="bg-blue-600 ml-2"
-            >
-              <Text className="text-xs">{child.pat_type}</Text>
-            </Badge>
-          </View>
-
-          <View className="flex-row items-center mb-1">
-            <Text className="text-xs text-slate-500 mr-3">
-              <Text>Age: {child.age}y</Text>
-            </Text>
-            <Text className="text-xs text-slate-500">
-              <Text>Sex: {child.sex}</Text>
-            </Text>
-            <Text className="text-xs text-slate-500 ml-3">
-              <Text>Checkups: {child.health_checkup_count}</Text>
-            </Text>
-          </View>
-
-
-          <View className="flex-row items-center">
-            <Users size={12} color="#64748b" />
-            <Text className="text-xs text-slate-500 ml-1" numberOfLines={1}>
-              Family #: {child.family_no}
-            </Text>
-          </View>
-
-          {/* Parents - Compact */}
-          <View className="flex-row items-start mt-1">
-            <Text className="text-xs text-slate-400 mr-2">P:</Text>
-            <View className="flex-1">
-              <Text className="text-xs text-slate-600" numberOfLines={1}>
-                M: {child.mother_fname} {child.mother_lname}
-              </Text>
-              <Text className="text-xs text-slate-600" numberOfLines={1}>
-                F: {child.father_fname} {child.father_lname}
-              </Text>
-            </View>
-          </View>
-        </View>
-        <ChevronRight size={16} color="#94a3b8" className="ml-2" />
-      </View>
-    </TouchableOpacity>
-  );
-
-  //           {/* Birth Info */}
-  //           <View className="flex-row justify-between mb-3">
-  //             <View className="flex-1 mr-3">
-  //               <Text className="text-xs text-slate-400 uppercase tracking-wide mb-1">
-  //                 Birth Weight
-  //               </Text>
-  //               <Text className="text-sm text-slate-700 font-medium">
-  //                 {child.birth_weight || 'N/A'} kg
-  //               </Text>
-  //             </View>
-  //             <View className="flex-1 ml-3">
-  //               <Text className="text-xs text-slate-400 uppercase tracking-wide mb-1">
-  //                 Feeding Type
-  //               </Text>
-  //               <Text className="text-sm text-slate-700 font-medium">
-  //                 {child.type_of_feeding}
-  //               </Text>
-  //             </View>
-  //           </View>
-
-  //           {/* Address & Date */}
-  //           <View className="pt-3 border-t border-slate-100">
-  //             <Text className="text-xs text-slate-400 uppercase tracking-wide mb-1">
-  //               Address
-  //             </Text>
-  //             <Text className="text-sm text-slate-700 mb-2" numberOfLines={2}>
-  //               {child.address}
-  //             </Text>
-  //             <Text className="text-xs text-slate-500">
-  //               Born: {child.dob ? new Date(child.dob).toLocaleDateString() : 'N/A'}
-  //             </Text>
-  //           </View>
-  //         </TouchableOpacity>
-  //       </CardContent>
-  //     </Card>
-  //   </View>
-  // );
-
-   const renderHeader = () => (
-    <View>
-      {/* Stats Cards - More Compact */}
-      <View className="px-4 py-3 bg-slate-50">
-        <View className="flex-row gap-2">
-          <View className="flex-1">
-            <Card className="bg-white border-slate-200 shadow-xs">
-              <CardContent className="p-3">
-                <View className="flex-row items-center justify-between">
-                  <View>
-                    <Text className="text-lg font-bold text-slate-900">{stats.totalChildren}</Text>
-                    <Text className="text-xs text-slate-500">Total</Text>
-                  </View>
-                  <Users size={20} color="#64748b" />
-                </View>
-              </CardContent>
-            </Card>
-          </View>
-          <View className="flex-1">
-            <Card className="bg-white border-slate-200 shadow-xs">
-              <CardContent className="p-3">
-                <View className="flex-row items-center justify-between">
-                  <View>
-                    <Text className="text-lg font-bold text-green-700">{stats.residentChildren}</Text>
-                    <Text className="text-xs text-slate-500">Residents</Text>
-                  </View>
-                  <UserCheck size={20} color="#22c55e" />
-                </View>
-              </CardContent>
-            </Card>
-          </View>
-          <View className="flex-1">
-            <Card className="bg-white border-slate-200 shadow-xs">
-              <CardContent className="p-3">
-                <View className="flex-row items-center justify-between">
-                  <View>
-                    <Text className="text-lg font-bold text-amber-700">{stats.transientChildren}</Text>
-                    <Text className="text-xs text-slate-500">Transients</Text>
-                  </View>
-                  <UserPlus size={20} color="#f59e0b" />
-                </View>
-              </CardContent>
-            </Card>
-          </View>
-        </View>
-      </View>
-
-      {/* Search & Filter Bar - Always Visible */}
-      <View className="px-4 py-3 border-b border-slate-200 bg-white">
-        <View className="flex-row items-center">
-          {/* Search Input */}
-          <View className="flex-1 flex-row items-center bg-slate-100 rounded-lg px-3 py-2 mr-2">
-            <Search size={18} color="#94a3b8" />
-            <TextInput
-              className="flex-1 ml-2 text-slate-900"
-              placeholder="Search by name or family #..."
-              placeholderTextColor="#94a3b8"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-          {/* Filter Toggle Button */}
-          <TouchableOpacity
-            onPress={() => setIsFilterVisible(!isFilterVisible)}
-            className={`p-2 rounded-lg ${isFilterVisible ? 'bg-blue-100' : 'bg-slate-100'}`}
-          >
-            <Filter size={18} color={isFilterVisible ? "#3b82f6" : "#64748b"} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Collapsible Filter Options */}
-        {isFilterVisible && (
-          <View className="flex-row justify-between mt-3">
-            {filterOptions.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                onPress={() => handleFilterChange(option.id)}
-                className={`flex-1 items-center py-2 rounded-lg mx-1 ${selectedFilter === option.id ? "bg-blue-600" : "bg-slate-100"}`}
-              >
-                <Text className={`text-xs font-medium ${selectedFilter === option.id ? "text-white" : "text-slate-700"}`}>
-                  {option.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </View>
-
-      {/* Results Count */}
-      <View className="px-4 py-2 bg-slate-50 border-b border-slate-200">
-        <Text className="text-xs text-slate-500">
-          Showing {paginatedData.length} of {filteredData.length} records
-          {selectedFilter !== 'all' ? ` (Filtered: ${selectedFilter})` : ''}
-        </Text>
-      </View>
-    </View>
-  );
-
-  const renderEmpty = () => (
-    <View className="px-4 py-12">
-      <Card className="bg-white border-slate-200">
-        <CardContent className="items-center justify-center py-8">
-          <Baby size={40} color="#94a3b8" />
-          <Text className="text-lg font-medium text-slate-900 mt-4">
-            No Records Found
-          </Text>
-          <Text className="text-slate-500 text-center mt-1 text-sm">
-            {searchQuery || selectedFilter !== 'all'
-              ? 'Try adjusting your search or filter.'
-              : 'No child health records found.'
-            }
-          </Text>
-        </CardContent>
-      </Card>
-    </View>
-  );
-
-  const renderFooter = () => {
-    if (filteredData.length === 0 || totalPages <= 1) return null;
-    
-    return (
-      <View className="px-4 py-3 bg-white border-t border-slate-200">
-        <View className="flex-row items-center justify-between">
-          <Button
-            onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            variant="outline"
-            size="sm"
-          >
-            <Text>Previous</Text>
-          </Button>
-
-          <Text className="text-slate-600 text-sm font-medium">
-            Page {currentPage} of {totalPages}
-          </Text>
-
-          <Button
-            onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
-            variant="outline"
-            size="sm"
-          >
-            <Text>Next</Text>
-          </Button>
-        </View>
-      </View>
-    );
+  const handleChildPress = (child: ChildHealthRecord) => {
+    if (!child.chrec_id || !child.pat_id || !child.dob) {
+      console.error('Missing required fields');
+      return;
+    }
+    router.push({
+      pathname: '/admin/childhealth/individual',
+      params: { ChildHealthRecord: JSON.stringify(child) },
+    });
   };
 
   if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (error) {
     return (
-      <PageLayout headerTitle="Child Health Records">
-        <View className="flex-1 bg-slate-50 items-center justify-center">
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text className="text-slate-600 mt-3">Loading records...</Text>
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerTitle={<UIText className="text-gray-900 text-lg font-semibold">Child Health Records</UIText>}
+      >
+        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
+          <AlertCircle size={64} color="#EF4444" />
+          <UIText className="text-xl font-semibold text-gray-900 mt-4 text-center">Error loading records</UIText>
+          <UIText className="text-gray-600 text-center mt-2 mb-6">
+            Failed to load child health records. Please check your connection and try again.
+          </UIText>
+          <TouchableOpacity
+            onPress={onRefresh}
+            className="flex-row items-center bg-blue-600 px-6 py-3 rounded-lg"
+          >
+            <RefreshCw size={18} color="white" />
+            <UIText className="ml-2 text-white font-medium">Try Again</UIText>
+          </TouchableOpacity>
         </View>
       </PageLayout>
     );
   }
 
   return (
-     <PageLayout
-         leftAction={
-           <TouchableOpacity
-             onPress={() => router.back()}
-             className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
-           >
-             <ChevronLeft size={24} className="text-slate-700" />
-           </TouchableOpacity>
-         }
-         headerTitle={<Text className="text-slate-900 text-[13px]">Child Health Records</Text>}
-         rightAction={<View className="w-10 h-10" />}
-       >
-      <View className="flex-1 bg-white p-2">
-        <FlatList
-          data={paginatedData}
-          renderItem={renderChildItem}
-          keyExtractor={(item) => item.chrec_id}
-          ListHeaderComponent={renderHeader}
-          ListEmptyComponent={renderEmpty}
-          ListFooterComponent={renderFooter}
-          getItemLayout={(data, index) => ({ length: 120, offset: 120 * index, index })} // Optimizes scroll performance
-          initialNumToRender={10}
-          maxToRenderPerBatch={10}
-          windowSize={5}
-          refreshControl={
-            <RefreshControl
-              refreshing={isFetching}
-              onRefresh={handleRefresh}
-              tintColor="#3b82f6"
+    <PageLayout
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerTitle={<UIText className="text-gray-900 text-lg font-semibold">Child Health Records</UIText>}
+      rightAction={<View className="w-10 h-10" />}
+    >
+      <View className="flex-1 bg-gray-50">
+        {/* Search Bar */}
+        <View className="bg-white px-4 py-3 border-b border-gray-200">
+          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+            <Search size={20} color="#6B7280" />
+            <TextInput
+              className="flex-1 ml-3 text-gray-800 text-base"
+              placeholder="Search child records..."
+              placeholderTextColor="#9CA3AF"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
             />
-          }
-        />
+          </View>
+        </View>
+
+        {/* Tab Bar */}
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+
+        {/* Records List */}
+        {formattedData.length === 0 ? (
+          <View className="flex-1 justify-center items-center px-6">
+            <Baby size={64} color="#9CA3AF" />
+            <UIText className="text-xl font-semibold text-gray-900 mt-4 text-center">No records found</UIText>
+            <UIText className="text-gray-600 text-center mt-2">
+              There are no child health records available yet.
+            </UIText>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredData}
+            keyExtractor={(item) => `child-${item.chrec_id}`}
+            refreshControl={
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh} 
+                colors={['#3B82F6']} 
+              />
+            }
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ padding: 16 }}
+            initialNumToRender={15}
+            maxToRenderPerBatch={20}
+            windowSize={21}
+            renderItem={({ item }) => (
+              <ChildHealthCard
+                child={item}
+                onPress={() => handleChildPress(item)}
+              />
+            )}
+            ListEmptyComponent={() => (
+              <View className="flex-1 justify-center items-center py-20">
+                <Baby size={48} color="#D1D5DB" />
+                <UIText className="text-gray-600 text-lg font-semibold mb-2 mt-4">
+                  No records in this category
+                </UIText>
+                <UIText className="text-gray-500 text-center">
+                  {searchQuery
+                    ? `No ${activeTab === 'all' ? '' : activeTab} records match your search.`
+                    : `No ${activeTab === 'all' ? '' : activeTab} records found.`}
+                </UIText>
+              </View>
+            )}
+          />
+        )}
       </View>
     </PageLayout>
   );

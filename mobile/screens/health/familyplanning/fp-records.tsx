@@ -15,7 +15,8 @@ import {
 } from "lucide-react-native"
 import { router, useRouter } from "expo-router"
 import { getFPRecordsForPatient } from "../admin/admin-familyplanning/GetRequest"
-import { useAuth } from "./useAuth"
+import { LoadingState } from "@/components/ui/loading-state"
+import { useAuth } from "@/contexts/AuthContext"
 
 // Custom Components
 const Card = ({ children, className = "", onPress = null }) => (
@@ -90,6 +91,7 @@ interface FPRecord {
 export default function MyFpRecordsScreen() {
   const router = useRouter()
   const { user } = useAuth()
+  const rp_id = user?.resident?.rp_id
   const [selectedRecords, setSelectedRecords] = useState<FPRecord[]>([])
 
   const {
@@ -98,9 +100,9 @@ export default function MyFpRecordsScreen() {
     isError,
     error,
   } = useQuery<FPRecord[]>({
-    queryKey: ["myFpRecords", user?.id],
-    queryFn: () => getFPRecordsForPatient(user?.id),
-    enabled: !!user?.id,
+    queryKey: ["myFpRecords", rp_id],
+    queryFn: () => getFPRecordsForPatient(rp_id),
+    enabled: !!rp_id,
   })
 
   const handleCheckboxChange = (record: FPRecord, isChecked: boolean) => {
@@ -185,13 +187,7 @@ export default function MyFpRecordsScreen() {
   }
 
   if (isLoading) {
-    return (
-      <View className="flex-1 bg-gray-50 items-center justify-center p-6">
-        <Loader2 size={32} color="#3B82F6" />
-        <Text className="text-lg text-gray-600 mt-4">Loading your records...</Text>
-      </View>
-    )
-  }
+    return <LoadingState/>}
 
   if (isError) {
     return (

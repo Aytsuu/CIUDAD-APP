@@ -488,15 +488,12 @@ class MedicineRequestItemView(generics.ListCreateAPIView):
         if not medreq_id and not pat_id and not rp_id:
             return queryset
         
-        # If medreq_id is provided, it's required
-        if medreq_id and not (pat_id or rp_id):
-            raise ValidationError("Either pat_id or rp_id is required when medreq_id is specified")
-        
+        # REMOVED THE VALIDATION THAT REQUIRES pat_id/rp_id WHEN medreq_id IS PROVIDED
         # If medreq_id is provided, filter by it
         if medreq_id:
             queryset = queryset.filter(medreq_id=medreq_id)
         
-        # Filter by patient or resident ID if provided
+        # Filter by patient or resident ID if provided (optional)
         if pat_id:
             queryset = queryset.filter(medreq_id__pat_id=pat_id)
         elif rp_id:
@@ -504,21 +501,61 @@ class MedicineRequestItemView(generics.ListCreateAPIView):
             
         return queryset
     
+class MedicineRequestItemsByRequestView(generics.ListAPIView):
+    """Get medicine request items for a specific medicine request"""
+    serializer_class = MedicineRequestItemSerializer
+    pagination_class = StandardResultsPagination
     
+    def get_queryset(self):
+        medreq_id = self.kwargs.get('medreq_id')
+        
+        if not medreq_id:
+            return MedicineRequestItem.objects.none()
             
+        return MedicineRequestItem.objects.filter(
+            medreq_id=medreq_id
+        ).select_related(
+            'minv_id', 'medreq_id', 'med', 'medreq_id__rp_id', 'medreq_id__pat_id',
+            'medreq_id__rp_id__per',  # Add resident profile personal info
+            'medreq_id__pat_id__per',  # Add patient personal info
+        ).prefetch_related(
+            'minv_id__med_id',
+            'medreq_id__rp_id__per__personaladdress_set__add',  # Prefetch addresses
+            'medreq_id__pat_id__per__personaladdress_set__add',  # Prefetch patient addresses
+        ).order_by('-medreq_id__requested_at')
+                   
 class DeleteUpdateMedicineRequestView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = MedicineRequestSerializer
     queryset = MedicineRequest.objects.all()
     lookup_field = "medreq_id"
     
 
-
 class UserPendingMedicineRequestItemsView(generics.ListAPIView):
-    serializer_class = MedicineRequestItemSerializer  # Use simple serializer first
+    serializer_class = MedicineRequestItemSerializer
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
+        # Get patient ID from query params OR try to get it from authenticated user
         pat_id = self.request.query_params.get("pat_id")
+        
+        # If no pat_id provided in query params, try to get it from authenticated user
+        if not pat_id:
+            # Check if user is authenticated
+            if not self.request.user.is_authenticated:
+                return MedicineRequestItem.objects.none()
+            
+            # Try to get patient ID from user profile
+            try:
+                # Adjust this based on your actual model relationships
+                if hasattr(self.request.user, 'patient'):
+                    pat_id = self.request.user.patient.pat_id
+                elif hasattr(self.request.user, 'profile') and hasattr(self.request.user.profile, 'patient'):
+                    pat_id = self.request.user.profile.patient.pat_id
+                else:
+                    return MedicineRequestItem.objects.none()
+            except AttributeError:
+                return MedicineRequestItem.objects.none()
+
         if not pat_id:
             return MedicineRequestItem.objects.none()
 
@@ -1099,13 +1136,10 @@ class UserMedicineRequestsView(generics.ListAPIView):
 
     def get_queryset(self):
         # Get patient ID from query params
-        pat_id = 'PT20030001'
+        pat_id = self.request.query_params.get('pat_id')
         rp_id = self.request.query_params.get('rp_id')
 
-        print(f"DEBUG: Received pat_id={pat_id}, rp_id={rp_id}")
-
         if not pat_id and not rp_id:
-            print("DEBUG: No pat_id or rp_id provided")
             return MedicineRequest.objects.none()
 
         queryset = MedicineRequest.objects.select_related(
@@ -1113,47 +1147,15 @@ class UserMedicineRequestsView(generics.ListAPIView):
         ).prefetch_related(
             Prefetch('items', queryset=MedicineRequestItem.objects.select_related(
                 'minv_id', 'minv_id__med_id', 'med'
-            ))
+            ).all())  # Include all items
         ).order_by('-requested_at')
 
         if pat_id:
-            try:
-                # Filter by patient ID string directly since medreq_id is CharField
-                queryset = queryset.filter(pat_id=pat_id)
-                print(f"DEBUG: Filtering by pat_id={pat_id}")
-            except Exception as e:
-                print(f"DEBUG: Error filtering by pat_id: {str(e)}")
-                return MedicineRequest.objects.none()
+            queryset = queryset.filter(pat_id=pat_id)
         elif rp_id:
-            try:
-                # Filter by resident ID
-                queryset = queryset.filter(rp_id=rp_id)
-                print(f"DEBUG: Filtering by rp_id={rp_id}")
-            except Exception as e:
-                print(f"DEBUG: Error filtering by rp_id: {str(e)}")
-                return MedicineRequest.objects.none()
+            queryset = queryset.filter(rp_id=rp_id)
 
-        result_count = queryset.count()
-        print(f"DEBUG: Found {result_count} requests")
         return queryset
-
-    def list(self, request, *args, **kwargs):
-        try:
-            response = super().list(request, *args, **kwargs)
-            print(f"DEBUG: API Response data count: {len(response.data.get('results', []))}")
-            return response
-        except Exception as e:
-            print(f"ERROR in UserMedicineRequestsView: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            return Response({
-                'success': False,
-                'error': f'Error fetching medicine requests: {str(e)}',
-                'results': [],
-                'count': 0,
-                'next': None,
-                'previous': None
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     
 # class UserMedicineRequestsView(generics.ListAPIView):
@@ -1297,6 +1299,38 @@ class CheckPendingMedicineRequestView(APIView):
         
     # __________________________________________________________________________________________________________________________________________________
 
+class UserAllMedicineRequestItemsView(generics.ListAPIView):
+    serializer_class = MedicineRequestItemSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Handle rp_id (residents) or pat_id (patients)
+        rp_id = self.request.query_params.get('rp_id')
+        pat_id = self.request.query_params.get('pat_id')
+        
+        if not rp_id and not pat_id:
+            raise ValidationError({"error": "Either rp_id or pat_id is required"})
+        
+        queryset = MedicineRequestItem.objects
+        
+        if rp_id:
+            queryset = queryset.filter(medreq_id__rp_id=rp_id)
+        elif pat_id:
+            queryset = queryset.filter(medreq_id__pat_id=pat_id)
+        
+        # Optional: Filter by include_archived param (default: True for "all")
+        include_archived = self.request.query_params.get('include_archived', 'true').lower() == 'true'
+        if not include_archived:
+            queryset = queryset.filter(is_archived=False)   
+        
+        # Optimize with selects/prefetches
+        return queryset.select_related(
+            'minv_id', 'minv_id__med_id', 'medreq_id'
+        ).prefetch_related(
+            # 'medicine_files'
+        ).order_by('-created_at').distinct()
+
+    
 
 class MedicineRequestItemCancel(APIView):
     def patch(self, request, medreqitem_id):
@@ -1417,11 +1451,6 @@ class SubmitMedicineRequestView(APIView):
             medicines = json.loads(medicines_data)
             files = request.FILES.getlist('files', [])
             
-            # # Log received data
-            # print("Received data:", dict(data))
-            # print("Received files:", files)
-            # print("Medicines:", medicines)
-            
             if not medicines:
                 return Response({"error": "At least one medicine is required"}, status=status.HTTP_400_BAD_REQUEST)
             
@@ -1435,15 +1464,48 @@ class SubmitMedicineRequestView(APIView):
                 print("Warning: pat_id received as array, taking first element")
                 pat_id = pat_id[0]
             rp_id = data.get('rp_id')
-            
+            if isinstance(rp_id, list):
+                print("Warning: rp_id received as array, taking first element")
+                rp_id = rp_id[0]
+                
+            print(f"Received pat_id: {pat_id}, rp_id: {rp_id}")
+                
             if not pat_id and not rp_id:
                 return Response({"error": "Either patient ID or resident ID must be provided"}, 
                               status=status.HTTP_400_BAD_REQUEST)
             
+            if pat_id and rp_id:
+            # Both provided: Prioritize pat_id (user is a patient linked to resident)
+                print("Prioritizing pat_id over rp_id")
+                rp_id = None  # Ignore rp_id
+            elif not pat_id and not rp_id:
+                return Response({"error": "Either patient ID (pat_id) or resident ID (rp_id) must be provided"},
+                            status=status.HTTP_400_BAD_REQUEST)
+            elif pat_id:
+                print("Using pat_id only")
+            else:
+                print("Using rp_id only")
+            
+            pat_instance = None
+            
+            if pat_id:
+                try:
+                    pat_instance = Patient.objects.get(pat_id=pat_id)
+                    print(f"Validated pat_id: {pat_id} -> Patient {pat_instance}")
+                except Patient.DoesNotExist:
+                    return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            rp_instance = None
+            if rp_id:
+                try:
+                    rp_instance = ResidentProfile.objects.get(rp_id=rp_id)
+                    print(f"Validated rp_id: {rp_id} -> Resident {rp_instance}")
+                except ResidentProfile.DoesNotExist:
+                    return Response({"error": f"Resident with ID {rp_id} not found"}, status=status.HTTP_404_NOT_FOUND)
+                
             medicine_request = MedicineRequest.objects.create(
-                pat_id=Patient.objects.get(pat_id=pat_id) if pat_id else None,
-                rp_id=ResidentProfile.objects.get(rp_id=rp_id) if rp_id else None,
-                # status='pending',
+                pat_id=pat_instance,
+                rp_id=rp_instance,
                 mode='app'
             )
             
@@ -1525,6 +1587,99 @@ class SubmitMedicineRequestView(APIView):
             return Response({"error": f"Internal server error: {str(e)}"}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# class SubmitMedicineRequestView(APIView):
+#     parser_classes = (MultiPartParser, FormParser)
+
+#     @transaction.atomic
+#     def post(self, request, *args, **kwargs):
+#         try:
+#             print("Received data keys:", request.data.keys())
+#             print("Request data:", dict(request.data))
+            
+#             rp_id = request.data.get('rp_id')
+#             print(f"Extracted rp_id: {rp_id}")
+            
+#             # The medicines data is sent as a JSON string and must be parsed
+#             medicines_json = request.data.get('medicines', '[]')
+#             print(f"Medicines JSON: {medicines_json}")
+#             medicines = json.loads(medicines_json)
+
+#             mode = request.data.get('mode', 'app')
+
+#             # Validate required data
+#             if not rp_id:
+#                 raise ValidationError("'rp_id' is required for a new request.")
+#             if not medicines:
+#                 raise ValidationError("At least one medicine is required.")
+
+#             # Get resident profile instance
+#             try:
+#                 resident_instance = ResidentProfile.objects.get(rp_id=rp_id)
+#             except ResidentProfile.DoesNotExist:
+#                 raise ValidationError(f"Resident with ID {rp_id} not found.")
+            
+#             # Create the main MedicineRequest instance
+#             medicine_request = MedicineRequest.objects.create(
+#                 rp_id=resident_instance,
+#                 mode=mode,
+#                 status='pending'
+#             )
+            
+#             # Process and create MedicineRequestItem for each medicine
+#             request_items = []
+#             for med_data in medicines:
+#                 minv_id = med_data.get('minv_id')
+#                 medreqitem_qty = med_data.get('medreqitem_qty', 1)
+#                 reason = med_data.get('reason', '')
+
+#                 if not minv_id:
+#                     continue
+
+#                 try:
+#                     medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
+#                 except MedicineInventory.DoesNotExist:
+#                     raise ValidationError(f"Medicine with inventory ID {minv_id} not found.")
+                
+#                 # Check stock availability
+#                 if medicine_inventory.minv_qty_avail < medreqitem_qty:
+#                      raise ValidationError(
+#                          f"Insufficient stock ({medicine_inventory.minv_qty_avail}) "
+#                          f"for medicine ID {minv_id}. Requested: {medreqitem_qty}"
+#                      )
+
+#                 request_items.append(MedicineRequestItem(
+#                     medreq_id=medicine_request,
+#                     minv_id=medicine_inventory,
+#                     medreqitem_qty=medreqitem_qty,
+#                     reason=reason,
+#                     status='pending'
+#                 ))
+            
+#             MedicineRequestItem.objects.bulk_create(request_items)
+
+#             # Handle file uploads if any
+#             files = request.FILES.getlist('files', [])
+#             uploaded_files = []
+#             if files:
+#                 try:
+#                     serializer = Medicine_FileSerializer(context={'request': request})
+#                     uploaded_files = serializer._upload_files(files, medreq_instance=medicine_request)
+#                 except Exception as e:
+#                     print(f"File upload error: {str(e)}")
+#                     # Consider whether to fail the entire request or continue without files
+
+#             return Response({
+#                 "success": True,
+#                 "message": "Medicine request submitted successfully.",
+#                 "medreq_id": medicine_request.medreq_id,
+#                 "uploaded_files_count": len(uploaded_files)
+#             }, status=status.HTTP_201_CREATED)
+
+#         except ValidationError as e:
+#             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+#         except Exception as e:
+#             return Response({"error": "An internal server error occurred.", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 # Admin Management Views
 class PendingMedicineRequestsView(generics.ListAPIView):
     serializer_class = MedicineRequestSerializer

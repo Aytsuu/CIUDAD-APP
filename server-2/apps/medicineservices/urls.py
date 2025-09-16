@@ -14,7 +14,6 @@ urlpatterns=[
       
         path('medicine-request-items/', MedicineRequestItemView.as_view(), name='medicine_request_items'),
         path('medicine-request/', MedicineRequestProcessingView.as_view(), name='medicine_request-processing'),
-        path('medicine-request-pending/', MedicineRequestPendingTableView.as_view(), name='medicine_request-pending'),
         # path('medicine-request-items-pending/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
 
         path('medicine-request/<int:medreq_id>/', DeleteUpdateMedicineRequestView.as_view(), name='medicine_request_detail'),
@@ -38,8 +37,9 @@ urlpatterns=[
         path('create-medicine/request/', MedicineRequestCreateView.as_view(), name='medicine-request-create'),
         path('medicine-request/check-pending/<str:pat_id>/<str:med_id>/', CheckPendingMedicineRequestView.as_view(), name='check-pending-medicine-request'),
         path('user-requests/', UserMedicineRequestsView.as_view(), name='user-medicine-requests'),
-
-        path("user-pending-items/", UserPendingMedicineRequestItemsView.as_view(), name="user-pending-medicine-items"),
+        path('medicine-request-items-by-request/<str:medreq_id>/', MedicineRequestItemsByRequestView.as_view(), name='medicine_request_items_by_request'),
         # path("medicine/delete-medicine-request-item/<int:medreqitem_id>/", MedicineRequestItemDelete.as_view(), name="delete-medicine-request-item"),
- 
+        path("user-pending-items/", UserAllMedicineRequestItemsView.as_view(), name="user-pending-medicine-items"),
+        path("user-all-items/", UserAllMedicineRequestItemsView.as_view(), name="user-all-medicine-items"),
+        path('medicine-request-pending/', MedicineRequestPendingTableView.as_view(), name='medicine_request-pending'),
    ]

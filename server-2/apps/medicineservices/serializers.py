@@ -11,7 +11,6 @@ from apps.reports.serializers import FileInputSerializer
 from utils.supabase_client import upload_to_storage
 
 
-# ALL  medicine RECORD 
 class PatientMedicineRecordSerializer(serializers.ModelSerializer):
     medicine_count = serializers.SerializerMethodField()
     patient_details = PatientSerializer(source='*', read_only=True)
@@ -33,31 +32,39 @@ class MedicineRecordSerialzer(serializers.ModelSerializer):
     class Meta:
         model = MedicineRecord
         fields = '__all__'
+class MedicineRecordCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicineRecord
+        fields = '__all__'
 
 class MedicineRecordSerializerMinimal(serializers.ModelSerializer):
     minv_details = MedicineInventorySerializer(source='minv_id', read_only=True)
     class Meta:
         model = MedicineRecord
         fields = '__all__'
-        
+
 class MedicineRequestSerializer(serializers.ModelSerializer):
     address = serializers.SerializerMethodField()
     personal_info = serializers.SerializerMethodField()
     pat_type = serializers.SerializerMethodField()
     pat_id_value = serializers.SerializerMethodField()
     total_quantity = serializers.SerializerMethodField()
-
+    total_confirmed=serializers.SerializerMethodField()
+    
     class Meta:
         model = MedicineRequest
         fields = '__all__'
 
     def get_total_quantity(self, obj):
-        """Calculate total quantity of all items in this request"""
-        try:
-            return obj.items.aggregate(total=models.Sum('medreqitem_qty'))['total'] or 0
-        except Exception as e:
-            print(f"Error calculating total quantity: {str(e)}")
-            return 0
+         return MedicineRequestItem.objects.filter(
+            medreq_id=obj.medreq_id,
+            status='pending'
+        ).count()
+    def get_total_confirmed(self, obj):
+         return MedicineRequestItem.objects.filter(
+            medreq_id=obj.medreq_id,
+            status='confirmed'
+        ).count()
 
     def get_pat_type(self, obj):
         """Get patient type"""
@@ -82,10 +89,10 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
         return None
 
     def get_personal_info(self, obj):
-        """Get personal information with proper error handling"""
+        """Get personal information using the same pattern as PatientSerializer"""
         try:
             # Handle resident through pat_id
-            if obj.pat_id and obj.pat_id.pat_type == 'Resident' and obj.pat_id.rp_id:
+            if obj.pat_id and obj.pat_id.pat_type == 'Resident' and obj.pat_id.rp_id and hasattr(obj.pat_id.rp_id, 'per'):
                 personal = obj.pat_id.rp_id.per
                 return {
                     'per_fname': personal.per_fname,
@@ -98,7 +105,6 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
                     'per_edAttainment': personal.per_edAttainment,
                     'per_religion': personal.per_religion,
                     'per_contact': personal.per_contact,
-                    'per_occupation': personal.per_occupation,
                 }
             
             # Handle resident through direct rp_id
@@ -115,7 +121,6 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
                     'per_edAttainment': personal.per_edAttainment,
                     'per_religion': personal.per_religion,
                     'per_contact': personal.per_contact,
-                    'per_occupation': personal.per_occupation,
                 }
             
             # Handle transient patient
@@ -139,7 +144,7 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
         return None
 
     def get_address(self, obj):
-        """Get address with proper formatting and error handling"""
+        """Get address using the same pattern as PatientSerializer"""
         try:
             # Handle resident through pat_id
             if obj.pat_id and obj.pat_id.pat_type == 'Resident' and obj.pat_id.rp_id:
@@ -165,13 +170,15 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
             if personal_address and personal_address.add:
                 address = personal_address.add
                 sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                # Construct full address dynamically based on available fields
                 address_parts = [
                     f"Sitio {sitio}" if sitio else None,
-                    address.add_barangay,
-                    address.add_city,
-                    address.add_province,
-                    address.add_street,
+                    address.add_barangay if address.add_barangay else None,
+                    address.add_city if address.add_city else None,
+                    address.add_province if address.add_province else None,
+                    address.add_street if address.add_street else None,
                 ]
+                # Filter out None values and join with ", "
                 full_address = ", ".join(filter(None, address_parts))
                 return {
                     'add_street': address.add_street,
@@ -187,13 +194,15 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
             if household and household.add:
                 address = household.add
                 sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                # Construct full address dynamically based on available fields
                 address_parts = [
                     f"Sitio {sitio}" if sitio else None,
-                    address.add_barangay,
-                    address.add_city,
-                    address.add_province,
-                    address.add_street,
+                    address.add_barangay if address.add_barangay else None,
+                    address.add_city if address.add_city else None,
+                    address.add_province if address.add_province else None,
+                    address.add_street if address.add_street else None,
                 ]
+                # Filter out None values and join with ", "
                 full_address = ", ".join(filter(None, address_parts))
                 return {
                     'add_street': address.add_street,
@@ -214,13 +223,15 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
             if trans.tradd_id:
                 trans_addr = trans.tradd_id
                 sitio = trans_addr.tradd_sitio
+                # Construct full address dynamically based on available fields
                 address_parts = [
                     f"Sitio {sitio}" if sitio else None,
-                    trans_addr.tradd_barangay,
-                    trans_addr.tradd_city,
-                    trans_addr.tradd_province,
-                    trans_addr.tradd_street,
+                    trans_addr.tradd_barangay if trans_addr.tradd_barangay else None,
+                    trans_addr.tradd_city if trans_addr.tradd_city else None,
+                    trans_addr.tradd_province if trans_addr.tradd_province else None,
+                    trans_addr.tradd_street if trans_addr.tradd_street else None,
                 ]
+                # Filter out None values and join with ", "
                 full_address = ", ".join(filter(None, address_parts))
                 return {
                     'add_street': trans_addr.tradd_street,
@@ -233,7 +244,6 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting transient address: {str(e)}")
         return None
-
 
     
 class FindingPlanTreatmentSerializer(serializers.ModelSerializer):
@@ -267,12 +277,7 @@ class MedicineRequestItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicineRequestItem
         fields = '__all__'
-        
-# class DebugMedicineRequestItemSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = MedicineRequestItem
-#         fields = ['medreqitem_id', 'medreqitem_qty', 'reason', 'status']
-      
+     
 class Medicine_FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medicine_File
@@ -320,4 +325,3 @@ class Medicine_FileSerializer(serializers.ModelSerializer):
             print("No valid files to upload")
         
         return med_files
-    

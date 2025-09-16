@@ -9,6 +9,7 @@ import ScheduleCard from "./schedule-card"
 import PageLayout from "@/screens/_PageLayout"
 import { router } from "expo-router"
 import { ChevronLeft } from "lucide-react-native"
+import { LoadingState } from "@/components/ui/loading-state"
 
 const LayoutWithBack: React.FC<{ title: string; description: string; children: React.ReactNode }> = ({ title, description, children }) => {
   return (
@@ -151,14 +152,7 @@ export default function SchedulerMain() {
   }
 
   if (isLoadingServices || isLoadingSchedulers || isLoadingDays) {
-    return (
-      <LayoutWithBack title="Service Scheduler" description="Schedule services for the week">
-        <View className="flex-1 justify-center items-center bg-gray-50">
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text className="mt-4 text-gray-600">Loading schedule data...</Text>
-        </View>
-      </LayoutWithBack>
-    )
+    return <LoadingState/>
   }
 
   if (servicesError || schedulersError || daysError) {

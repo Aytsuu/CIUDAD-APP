@@ -186,7 +186,7 @@ class Obstetrical_History(models.Model):
 
 class FollowUpVisit(models.Model):
     followv_id = models.BigAutoField(primary_key=True)
-    followv_date = models.DateField(null=True,blank=True)
+    followv_date = models.DateField()
     followv_status = models.CharField(max_length=100)
     followv_description = models.TextField(default="")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -225,7 +225,6 @@ class BodyMeasurement(models.Model):
     remarks = models.TextField(blank=True, null=True)  # Additional remarks
     is_opt = models.BooleanField(default=False)  # Indicates if the vital sign is optional
     created_at = models.DateTimeField(auto_now_add=True)
-    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='body_measurements')
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='body_measurements', null=True, blank=True)
     pat = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='body_measurements', db_column='pat_id', null=True, blank=True)
     class Meta:

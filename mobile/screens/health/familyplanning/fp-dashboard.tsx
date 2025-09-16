@@ -6,8 +6,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { router } from "expo-router"
 import { ArrowLeft, Search, Loader2, AlertCircle, ChevronRight, Heart, Calendar, Clock, TrendingUp, AlertTriangle, Plus, Filter, ChevronLeft } from "lucide-react-native"
 import { getFPRecordsForPatient } from "../admin/admin-familyplanning/GetRequest"
-import { useAuth } from "./useAuth"
 import PageLayout from "@/screens/_PageLayout"
+import { useAuth } from "@/contexts/AuthContext"
+import { LoadingState } from "@/components/ui/loading-state"
 
 interface FPRecord {
   fprecord: number
@@ -304,6 +305,7 @@ export default function MyFpDashboardScreen() {
   const [showFilters, setShowFilters] = useState(false)
 
   const { user } = useAuth()
+  const rp_id = user?.resident?.rp_id
   const queryClient = useQueryClient()
 
   const {
@@ -313,9 +315,9 @@ export default function MyFpDashboardScreen() {
     error,
     refetch,
   } = useQuery<FPRecord[], Error>({
-    queryKey: ["myFpRecordsList", user?.id],
-    queryFn: () => getFPRecordsForPatient(user?.id || ""),
-    enabled: !!user?.id,
+    queryKey: ["myFpRecordsList", rp_id],
+    queryFn: () => getFPRecordsForPatient(rp_id || ""),
+    enabled: !!rp_id,
   })
   
   const filteredRecords = useMemo(() => {
@@ -323,7 +325,7 @@ export default function MyFpDashboardScreen() {
 
     if (searchQuery) {
       filtered = filtered.filter(
-        (record) =>
+        (record:any) =>
           record.client_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
           record.method_used.toLowerCase().includes(searchQuery.toLowerCase()) ||
           record.fprecord.toString().includes(searchQuery),
@@ -465,16 +467,7 @@ export default function MyFpDashboardScreen() {
   }
 
   if (isLoading) {
-    return (
-      <View className="flex-1 bg-gray-50 items-center justify-center">
-        <View className="w-16 h-16 bg-white rounded-full items-center justify-center shadow-lg mb-4">
-          <Loader2 size={24} color="#3B82F6" />
-        </View>
-        <Text className="text-gray-600 font-medium">Loading your records...</Text>
-        <Text className="text-gray-400 text-sm mt-1">Please wait a moment</Text>
-      </View>
-    )
-  }
+    return <LoadingState/>}
 
   if (isError) {
     return (

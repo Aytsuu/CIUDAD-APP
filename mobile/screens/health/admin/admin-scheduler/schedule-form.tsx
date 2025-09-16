@@ -7,6 +7,7 @@ import { useAddDay, useAddScheduler, useAddService } from "./queries/schedulerAd
 import { useGetDays, useGetServices } from "./queries/schedulerFetchQueries"
 import { useDeleteService, useDeleteDay } from "./queries/schedulerDeleteQueries"
 import { useToastContext } from "@/components/ui/toast"
+import { LoadingState } from "@/components/ui/loading-state"
 
 
 // Placeholder for a React Native compatible toast notification
@@ -298,12 +299,7 @@ export default function ServiceScheduleForm({
   }
 
   if (isLoadingServices || isLoadingDays) {
-    return (
-      <View className="flex-1 justify-center items-center p-4">
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text className="mt-4 text-gray-600">Loading schedule data...</Text>
-      </View>
-    );
+    return <LoadingState/>
   }
 
 

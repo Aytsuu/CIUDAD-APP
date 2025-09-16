@@ -6,6 +6,8 @@ import { useGlobalCartState } from "./cart-state"
 import { useMedicines } from "../admin/admin-inventory/queries/medicine/MedicineFetchQueries"
 import PageLayout from "@/screens/_PageLayout"
 import { api2 } from "@/api/api"
+import { useAuth } from "@/contexts/AuthContext"
+import { LoadingState } from "@/components/ui/loading-state"
 
 // Updated type definition to match the API response
 export type MedicineDisplay = {
@@ -37,8 +39,10 @@ export default function MedicineRequestScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   // Fetch medicines using react-query
   const { data: fetchedMedicines, isLoading, isError, error } = useMedicines(currentPage, pageSize, searchQuery);
-  const userId = "PT20030001";
-  
+  // const userId = "PT20030001";
+  const { user } = useAuth();
+  const userId = user?.resident?.rp_id;
+  console.log("RP_ID:", userId);
   useEffect(() => {
     const checkPendingRequests = async () => {
       if (!fetchedMedicines?.medicines || !userId) return;
@@ -122,16 +126,8 @@ export default function MedicineRequestScreen() {
   };
 
 
-  if (isLoading) {
-    return (
-      <SafeAreaView className="flex-1 bg-white">
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text className="mt-4 text-gray-700">Loading medicines...</Text>
-        </View>
-      </SafeAreaView>
-    )
-  }
+ if (isLoading) {
+     return <LoadingState/>}
 
   if (isError) {
     return (
@@ -148,15 +144,10 @@ export default function MedicineRequestScreen() {
   }
 
   return (
-    <PageLayout
-      leftAction={
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
+    <PageLayout leftAction={
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center" >
           <ChevronLeft size={24} className="text-gray-700" />
-        </TouchableOpacity>
-      }
+        </TouchableOpacity> }
       headerTitle={<Text className="text-gray-900 text-[13px]">Request Medicine</Text>}
       rightAction={<TouchableOpacity onPress={() => router.push("/medicine-request/cart")} className="p-2 relative">
         <ShoppingBag size={24} color="blue" />
@@ -165,11 +156,7 @@ export default function MedicineRequestScreen() {
             <Text className="text-white text-xs font-bold">{cartItems.length}</Text>
           </View>
         )}
-      </TouchableOpacity>}
-    >
-
-
-
+      </TouchableOpacity>}    >
 
       {/* Search and Filter */}
       <View className="p-4 bg-white shadow-sm">

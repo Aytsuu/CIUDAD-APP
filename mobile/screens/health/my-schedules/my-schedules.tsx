@@ -11,10 +11,11 @@ import {
 import { Search, ArrowLeft, AlertCircle, Calendar, User, FileText, Filter, FileWarning, ChevronLeft } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
-import { useAuth } from "../familyplanning/useAuth"
 import { format } from "date-fns"
 import { useAllFollowUpVisits } from "./fetch"
 import PageLayout from "@/screens/_PageLayout"
+import { useAuth } from "@/contexts/AuthContext"
+import { LoadingState } from "@/components/ui/loading-state"
 
 type ScheduleRecord = {
   id: number
@@ -39,6 +40,7 @@ type FilterType = "All" | "Pending" | "Completed" | "Missed" | "Cancelled"
 
 export default function MyAppointmentsScreen() {
   const { user } = useAuth()
+  const rp_id = user?.resident?.rp_id
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
   const [activeFilter, setActiveFilter] = useState<FilterType>("All")
@@ -56,7 +58,7 @@ export default function MyAppointmentsScreen() {
   // Debugging: Log API response and user
   console.log("API Response:", paginatedData)
   console.log("Raw results:", paginatedData?.results)
-  console.log("Current user ID:", user?.id)
+  console.log("Current user ID:", rp_id)
 
   // Utility functions defined before useMemo
   const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
@@ -123,8 +125,8 @@ export default function MyAppointmentsScreen() {
 
           // Check if this appointment belongs to the current user
           const patientId = patientDetails.pat_id || patientInfo.pat_id || ""
-          console.log(`Comparing patientId ${patientId} with user.id ${user?.id}`)
-          if (patientId !== user?.id) {
+          console.log(`Comparing patientId ${patientId} with rp_id ${rp_id}`)
+          if (patientId !== rp_id) {
             console.log(`Skipping appointment ${visit.followv_id || visit.id}: not for current user`)
             return null
           }
@@ -199,7 +201,7 @@ export default function MyAppointmentsScreen() {
 
     console.log("Transformed user appointments:", transformed)
     return transformed
-  }, [paginatedData, user?.id])
+  }, [paginatedData, rp_id])
 
   // Filter appointments (client-side search and status only)
   const filteredAppointments = useMemo(() => {
@@ -260,15 +262,7 @@ export default function MyAppointmentsScreen() {
   }
 
   if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-gray-100">
-        {/* <View className="bg-white p-8 rounded-2xl shadow-lg items-center"> */}
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text className="mt-4 text-gray-600 font-medium">Loading your appointments...</Text>
-        {/* </View> */}
-      </View>
-    )
-  }
+      return <LoadingState/>}
 
   if (error) {
     return (

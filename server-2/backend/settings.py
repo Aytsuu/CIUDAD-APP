@@ -23,7 +23,7 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-f
 
 # # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = False
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG=True
 
 # ========================
 # SUPABASE CONFIGURATION
@@ -34,9 +34,11 @@ SUPABASE_CONFIG = {
     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY', default='service-role-dev-key'),
     'JWT_SECRET': config('SUPABASE_JWT_SECRET', default='dev-jwt-secret'),
     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID', default='local-dev-project'),
-    'JWT_ALGORITHM': 'HS256',
-    'JWT_AUDIENCE': 'authenticated',
 }
+SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
+SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 
 # Application definition
 

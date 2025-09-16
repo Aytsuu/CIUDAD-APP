@@ -6,6 +6,7 @@ import { Link, router, useLocalSearchParams } from "expo-router"
 import { format } from "date-fns"
 import { usePatientRecordsByPatId } from "./db-request/get-query"
 import PageLayout from "@/screens/_PageLayout"
+import { LoadingState } from "@/components/ui/loading-state"
 
 
 type PatientRecordDetail = {
@@ -96,14 +97,7 @@ export default function AnimalBiteIndividualScreen() {
   }
 
   if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-blue-50">
-    
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text className="mt-4 text-gray-600 font-medium">Loading patient records...</Text>
-        
-      </View>
-    )
+    return <LoadingState/>
   }
 
   if (isError) {
