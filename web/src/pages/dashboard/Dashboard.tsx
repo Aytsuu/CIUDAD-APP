@@ -16,8 +16,8 @@ import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/icome-qua
 import { GargbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { WasteActivitySidebar } from "@/components/analytics/waste/waste-activities-sidebar";
 import { VaccineDistributionChart } from "@/components/analytics/health/vaccine-chart";
-import { MedicineDistributionSidebar } from "@/components/analytics/health/medicine-sidebar";
-import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
+// import { MedicineDistributionSidebar } from "@/components/analytics/health/medicine-sidebar";
+// import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { ServicesHealthRecordsSectionCards } from "@/components/analytics/health/services-count-cards";
 import { format } from "date-fns";
 
@@ -25,13 +25,10 @@ import { format } from "date-fns";
 import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
 
 export default function Dashboard() {
-  const currentMonth = format(new Date(), "yyyy-MM")
+  const currentMonth = format(new Date(), "yyyy-MM");
 
   return (
-    <MainLayoutComponent
-      title="Dashboard"
-      description="Overview of key metrics, data, and insights"
-    >
+    <MainLayoutComponent title="Dashboard" description="Overview of key metrics, data, and insights">
       <div className="w-full flex gap-4">
         <div className="w-full grid gap-4">
           <div className="grid grid-cols-5">
@@ -42,14 +39,11 @@ export default function Dashboard() {
             <WastePersonnelCards />
             <GargbagePickupSectionCards />
             <ServicesHealthRecordsSectionCards />
-
-
           </div>
           <div className="grid">
             <ReportSectionCharts />
             <StaffAttendanceRankingChart />
             <GADQuarterlyBudgetChart />
-           
           </div>
           <div className="grid">
             <IncomeExpenseQuarterlyChart />
@@ -68,9 +62,9 @@ export default function Dashboard() {
           <ReportSidebar />
           <GADExpenseSidebar />
           <CouncilEventsSidebar />
-          <WasteActivitySidebar/>
-          <GADExpenseSidebar/>
-          <CouncilEventsSidebar/>
+          <WasteActivitySidebar />
+          <GADExpenseSidebar />
+          <CouncilEventsSidebar />
         </div>
       </div>
     </MainLayoutComponent>

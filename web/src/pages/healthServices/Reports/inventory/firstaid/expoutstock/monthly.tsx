@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, Folder } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
@@ -16,7 +15,6 @@ export default function FirstAidExpiredOutOfStockSummary() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const navigate = useNavigate();
 
   const { data: apiResponse, isLoading, error } = useFirstAidExpiredOutOfStockSummary(currentPage, pageSize);
 

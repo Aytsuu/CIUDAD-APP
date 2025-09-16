@@ -80,7 +80,7 @@ export default function AntigenProblemDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `vaccination_problems_${monthName}`);
 
-  const handleExportPDF = () => exportToPDF(prepareExportData(), `vaccination_problems_${monthName}`);
+  const handleExportPDF = () => exportToPDF(`vaccination_problems_${monthName}`);
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");

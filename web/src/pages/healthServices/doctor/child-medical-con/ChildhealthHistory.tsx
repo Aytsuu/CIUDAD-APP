@@ -81,65 +81,7 @@ export default function PendingDisplayMedicalConsultation({
     <div className="p-6">
       <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">Page 1 of 2</div>
 
-      {/* Tab Navigation */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-auto bg-slate-100 mb-6">
-          <TabsTrigger value="current" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <Baby />
-            Current Record
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <History />
-            View History
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Current Record Tab */}
-        <TabsContent value="current">
-          {/* Edit Button - Only show if there's a latest record */}
-          {latestRecord && (
-            <div className="flex justify-end mb-4">
-              <Button onClick={navigateToUpdateLatest} variant="outline" className="flex items-center gap-2">
-                <Edit className="h-4 w-4" />
-                Edit Current Record
-              </Button>
-            </div>
-          )}
-
-          <PatientSummarySection recordsToDisplay={fullHistoryData.length > 0 ? [fullHistoryData.find((record) => record.chhist_id === chhistId) || fullHistoryData[0]] : []} fullHistoryData={fullHistoryData} chhistId={chhistId} />
-        </TabsContent>
-
-        {/* History Tab */}
-        <TabsContent value="history">
-          {fullHistoryData.length === 0 ? (
-            <div className="p-6 text-center text-gray-600">
-              <p>No health history found for this child.</p>
-            </div>
-          ) : (
-            <CardLayout
-              cardClassName="border rounded-lg shadow-sm"
-              content={
-                <div className="space-y-6 p-6">
-                  {/* Record Count */}
-                  <div className="flex justify-center">
-                    <div className="text-sm text-gray-500 font-medium">
-                      Showing {fullHistoryData.length} health {fullHistoryData.length === 1 ? "record" : "records"}
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <hr className="border-gray-200" />
-
-                  {/* Table View */}
-                  <div className="w-full">
-                    <HealthHistoryTable recordsToDisplay={fullHistoryData} chhistId={chhistId} supplementStatusesFields={supplementStatusesFields} />
-                  </div>
-                </div>
-              }
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+      <PatientSummarySection recordsToDisplay={fullHistoryData.length > 0 ? [fullHistoryData.find((record) => record.chhist_id === chhistId) || fullHistoryData[0]] : []} fullHistoryData={fullHistoryData} chhistId={chhistId} />
 
       {/* Navigation Buttons */}
       <div className="flex justify-end mt-6 sm:mt-8">

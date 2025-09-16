@@ -1,5 +1,4 @@
 import { VaccinationRecord } from "../../vaccination/tables/columns/types";
-import { StaffDetails } from "../../childservices/viewrecords/types";
 
 export type VaccineRecordsResponse = {
   success: boolean;
@@ -14,7 +13,7 @@ export type MonthlyVaccineRecord= {
   record_count: number;
   records: VaccinationRecord[];
   report: {
-    staff_details: StaffDetails;
+    staff_details: any;
     signature: string;
     control_no: string;
     office: string;

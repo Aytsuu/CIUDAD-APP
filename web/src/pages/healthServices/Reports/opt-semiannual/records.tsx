@@ -115,7 +115,7 @@ export default function SemiAnnualOPTDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `opt_semi_annual_records_${yearName.replace(" ", "_")}`);
 
-  const handleExportPDF = () => exportToPDF(prepareExportData(), `opt_semi_annual_records_${yearName.replace(" ", "_")}`);
+  const handleExportPDF = () => exportToPDF(`opt_semi_annual_records_${yearName.replace(" ", "_")}`);
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");
@@ -177,12 +177,6 @@ export default function SemiAnnualOPTDetails() {
     }
   };
 
-  const handleManualNutritionalStatusSearch = (value: string) => {
-    setNutritionalStatus(value);
-    if (value) {
-      setSelectedNutritionalStatuses([]);
-    }
-  };
 
   const getStatusCategory = (status: string) => {
     if (nutritionalStatusCategories.wfa.includes(status)) return "WFA";

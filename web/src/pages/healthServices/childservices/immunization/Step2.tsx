@@ -213,7 +213,7 @@ export default function Immunization({
     console.log("Selected vaccine value:", value);
 
     // Parse the value - adjust this based on your actual value format
-    let vacStck_id: any, vac_id: any, vac_name: any, expiry_date: any;
+    let vacStck_id: any, vac_id: any, vac_name: any;
 
     // If value is just the vac_id (single value)
     if (!value.includes(",")) {
@@ -228,7 +228,7 @@ export default function Immunization({
       }
     } else {
       // If value is in comma-separated format
-      [vacStck_id, vac_id, vac_name, expiry_date] = value.split(",");
+      [vacStck_id, vac_id, vac_name] = value.split(",");
     }
 
     const numericVacId = parseInt(vac_id, 10);

@@ -42,10 +42,7 @@ export default function MedicineExpiredOutOfStockSummary() {
   }, [searchQuery]);
 
   // Filter months based on search query - KEEPING ORIGINAL LOGIC
-  const filteredMonthlyData = monthlyData.filter((monthItem) => 
-    monthItem.month_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    monthItem.month.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMonthlyData = monthlyData.filter((monthItem) => monthItem.month_name.toLowerCase().includes(searchQuery.toLowerCase()) || monthItem.month.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div>
@@ -54,21 +51,14 @@ export default function MedicineExpiredOutOfStockSummary() {
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-gray-900">Medicine Problem Summary</h2>
-            <p className="text-sm text-gray-500">
-              View expired and out-of-stock medicines grouped by month
-            </p>
+            <p className="text-sm text-gray-500">View expired and out-of-stock medicines grouped by month</p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             {/* Search Input */}
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
-              <Input
-                placeholder="Search by month..."
-                className="pl-10 bg-white w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <Input placeholder="Search by month..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
           </div>
         </div>
@@ -98,14 +88,7 @@ export default function MedicineExpiredOutOfStockSummary() {
               <span className="text-sm text-gray-600">entries per page</span>
             </div>
 
-            {totalPages > 1 && (
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                className="justify-end"
-              />
-            )}
+            {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="justify-end" />}
           </div>
 
           <div className="bg-white w-full">
@@ -140,26 +123,18 @@ export default function MedicineExpiredOutOfStockSummary() {
               <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500 p-8">
                 <Folder className="w-16 h-16 text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No problem months found</h3>
-                <p className="text-sm text-center text-gray-400">
-                  {searchQuery ? "Try adjusting your search criteria" : "No problem records available"}
-                </p>
+                <p className="text-sm text-center text-gray-400">{searchQuery ? "Try adjusting your search criteria" : "No problem records available"}</p>
               </div>
             )}
-            
+
             {/* Footer with Pagination */}
             {filteredMonthlyData.length > 0 && (
               <div className="flex flex-col sm:flex-row items-center justify-between w-full pt-3 gap-3 border-t mt-6">
                 <p className="text-sm text-gray-600">
                   Showing {filteredMonthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, totalMonths)} of {totalMonths} months
                 </p>
-                
-                {totalPages > 1 && (
-                  <PaginationLayout
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                )}
+
+                {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
               </div>
             )}
           </div>

@@ -17,7 +17,7 @@ export default function InventoryMonthlyMedicineRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState<"month" | "items">("month");
+  const [sortBy] = useState<"month" | "items">("month");
   const [yearFilter] = useState<string>("all");
 
   const { data: apiResponse, isLoading, error, refetch } = useMedicineMonths(currentPage, pageSize, yearFilter, searchQuery);
