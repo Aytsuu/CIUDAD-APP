@@ -58,7 +58,7 @@ export default function SemiAnnualOPTDetails() {
   const { data: apiResponse, isLoading, error } = useSemiAnnualOPTRecords(year, currentPage, pageSize, combinedSitioSearch, combinedNutritionalStatus);
 
   const records: SemiAnnualChildRecord[] = apiResponse?.results?.children_data || [];
-  const summary = apiResponse?.results?.summary;
+  // const summary = apiResponse?.results?.summary;
   const totalEntries: number = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalEntries / pageSize);
 

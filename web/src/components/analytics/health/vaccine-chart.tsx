@@ -15,7 +15,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, subMonths, addMonths, parseISO, isSameMonth } from "date-fns";
 import { useState } from "react";
 import { CardTitle } from "@/components/ui/card";
-import { useVaccineChart } from "@/pages/healthServices/Reports/vaccination-report/queries/fetchQueries";
+import { useVaccineChart } from "@/pages/healthServices/reports/vaccination-report/queries/fetchQueries";
 
 interface VaccineChartProps {
   initialMonth: string;

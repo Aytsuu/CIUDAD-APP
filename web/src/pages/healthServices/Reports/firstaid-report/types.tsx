@@ -1,97 +1,128 @@
-import { StaffDetails } from "@/pages/healthServices/childservices/viewrecords/types";
-
 export interface InventoryDetail {
-  inv_id: string;
-  expiry_date: string;
-  inv_type: string;
-  created_at: string;
-  is_Archived: boolean;
-  updated_at: string;
+  inv_id: string | null;
+  expiry_date: string | null;
+  inv_type: string | null;
+  created_at: string | null;
+  is_Archived: boolean | null;
+  updated_at: string | null;
 }
 
-export interface FirstAidDetail {
-  fa_id: string;
-  catlist: string;
-  fa_name: string;
-  created_at: string;
-  updated_at: string;
-  cat: number;
+export interface MedicineDetail {
+  med_id: string | null;
+  catlist: string | null;
+  med_name: string | null;
+  med_type: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  cat: number | null;
 }
 
-export interface FirstAidInventoryDetails {
-  finv_id: number;
+export interface MedicineInventoryDetails {
+  minv_id: number;
   inv_detail: InventoryDetail;
-  fa_detail: FirstAidDetail;
-  inv_id: string;
-  fa_id: string;
-  finv_qty: number;
-  finv_qty_unit: string;
-  finv_pcs: number;
-  finv_used: number;
-  finv_qty_avail: number;
+  med_detail: MedicineDetail;
+  inv_id: string | null;
+  med_id: string | null;
+  minv_dsg: number;
+  minv_dsg_unit: string;
+  minv_form: string;
+  minv_qty: number;
+  minv_qty_unit: string;
+  minv_pcs: number;
+  minv_distributed: number;
+  minv_qty_avail: number;
 }
 
-export interface FirstAidRecord {
-  farec_id: number;
-  finv_details: FirstAidInventoryDetails;
-  qty: string;
-  created_at: string;
-  is_archived: boolean;
+export interface PersonalInfo {
+  per_fname: string | null;
+  per_lname: string | null;
+  per_mname: string | null;
+  per_suffix: string | null;
+  per_dob: string | null;
+  per_sex: string | null;
+  per_status: string | null;
+  per_edAttainment: string | null;
+  per_religion: string | null;
+  per_contact: string | null;
+}
+
+export interface AddressInfo {
+  add_street: string | null;
+  add_barangay: string | null;
+  add_city: string | null;
+  add_province: string | null;
+  sitio: string | null;
+  full_address: string | null;
+}
+
+export interface PatientDetails {
+  pat_id: string | null;
+  personal_info: PersonalInfo;
+  address: AddressInfo;
+  pat_type: string | null;
+  pat_status: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface PatientRecordDetails {
+  patrec_id: number | null;
+  pat_details: PatientDetails;
+  patrec_type: string | null;
+  created_at: string | null;
+  pat_id: string | null;
+}
+
+export interface MedicineRecord {
+  medrec_id: number;
+  minv_details: MedicineInventoryDetails;
+  patrec_details: PatientRecordDetails;
+  medrec_qty: number;
+  status: string;
+  req_type: string;
   reason: string;
-  finv: number;
-  patrec: number | null;
-  patrec_details: {
-    pat_details: {
-      personal_info: {
-        per_fname: string;
-        per_mname?: string;
-        per_lname: string;
-        per_sex: string;
-        per_dob: string;
-      };
-      pat_id: string;
-    };
-  };
+  is_archived: boolean;
+  requested_at: string | null;
+  fulfilled_at: string | null;
+  signature: string | null;
+  patrec_id: number | null;
+  minv_id: number;
 }
-
-export interface MonthlyRecord {
+export interface MonthlyMedicineRecord {
   month: string;
   record_count: number;
-  total_qty: number;
-  records: FirstAidRecord[];
-  monthlyrcplist_id: string;
+  monthlyrcplist_id: number;
   report: {
-    staff_details: StaffDetails;
-    signature: string;
-    control_no: string;
-    office: string;
+    monthlyrcplist_id: number;
+    staff_details: any | null;
+    month_year: string;
+    signature: string | null;
+    office: string | null;
+    control_no: string | null;
+    total_records: number;
+    rcp_type: string;
+    logo: string | null;
+    contact_number: string;
+    location: string;
+    department: string;
+    staff: string | null;
   };
+  records: MedicineRecord[];
 }
 
-export interface FirstAidRecordsResponse {
+export interface MedicineRecordsResponse {
   success: boolean;
-  results: {
-    data: MonthlyRecord[];
-    records: FirstAidRecord[];
-    report: {
-      staff_details: StaffDetails;
-      signature: string;
-      control_no: string;
-      office: string;
-    };
-    total_months: number;
-    record_count: number;
-  };
+  data: MonthlyMedicineRecord;
   total_records?: number;
 }
 
 
-
-export type FirstAidChartResponse = {
+export  type MedicineChartResponse ={
   success: boolean;
-  month: string;
-  first_aid_counts: {
-    [firstAidName: string]: number;
+  month: string; // Could use template literal `${number}-${number}` if you want stricter month format
+  medicine_counts: {
+    [medname: string]: number; // Fully dynamic vaccine names with number counts
   };
   total_records: number;
-};
+
+}
