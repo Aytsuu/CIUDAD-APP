@@ -1,11 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { ChevronRight, Edit } from "lucide-react"; // Added Edit icon
+import { ChevronRight } from "lucide-react"; // Added Edit icon
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Baby, History } from "lucide-react";
-import CardLayout from "@/components/ui/card/card-layout";
-import { HealthHistoryTable } from "../../childservices/viewrecords/health-history-table";
 import { getSupplementStatusesFields } from "../../childservices/viewrecords/config";
 import { PatientSummarySection } from "../../childservices/viewrecords/CurrentHistoryView";
 import { useChildHealthHistory } from "../../childservices/forms/queries/fetchQueries";

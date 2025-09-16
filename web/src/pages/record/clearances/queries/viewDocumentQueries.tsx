@@ -302,7 +302,7 @@ export const generatePdfFromTemplate = async (templateData: any, requestData: an
 
     // Process body content
     if (templateData.temp_body) {
-      let bodyText = templateData.temp_body;
+      const bodyText = templateData.temp_body;
       console.log('Original body text:', bodyText);
       
       // Get the actual values for placeholders
@@ -319,7 +319,7 @@ export const generatePdfFromTemplate = async (templateData: any, requestData: an
       const contentWidth = pageWidth - margin * 2;
       
       // Replace placeholders with actual values first
-      let processedText = bodyText
+      const processedText = bodyText
         .replace(/\[NAME\]/g, nameValue)
         .replace(/\[PURPOSE\]/g, purposeValue)
         .replace(/\[DATE\]/g, dateValue);
@@ -383,7 +383,7 @@ export const generatePdfFromTemplate = async (templateData: any, requestData: an
       const defaultBody = `TO WHOM IT MAY CONCERN:\n\nThis is to certify that [NAME] is a resident of this barangay and is hereby issued this clearance for the purpose of [PURPOSE].\n\nIssued this [DATE] at Barangay San Roque Ciudad, Cebu City, Philippines.`;
       
       // Replace placeholders with actual values first
-      let processedText = defaultBody
+      const processedText = defaultBody
         .replace(/\[NAME\]/g, nameValue)
         .replace(/\[PURPOSE\]/g, purposeValue)
         .replace(/\[DATE\]/g, dateValue);
