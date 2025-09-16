@@ -2,11 +2,11 @@ import React from "react";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { familyFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema2 } from "@/form-schema/family-form-schema";
 import { useResidentsListHealth } from "../../family-profling/queries/profilingFetchQueries";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { formatResidents } from "../../ProfilingFormats";
+import { formatResidents } from "../../../profiling/ProfilingFormats";
 import { Combobox } from "@/components/ui/combobox";
 import { useLoading } from "@/context/LoadingContext";
 
@@ -15,7 +15,7 @@ export default function RespondentsForm({ residents, form, selectedResidentId, p
     default: any[];
     formatted: any[];
   };
-  form: UseFormReturn<z.infer<typeof familyFormSchema>>;
+  form: UseFormReturn<z.infer<typeof familyFormSchema2>>;
   selectedResidentId: string;
   onSelect: React.Dispatch<React.SetStateAction<string>>;
   prefix: 'respondentInfo';
@@ -111,8 +111,8 @@ export default function RespondentsForm({ residents, form, selectedResidentId, p
         <form className="grid gap-4">
           <Combobox
             options={filteredResidents}
-            value={form.watch(`${prefix}.id`)}
-            onChange={(value) => form.setValue(`${prefix}.id`, value)}
+            value={form.watch(`${prefix}.id`) as string}
+            onChange={(value) => form.setValue(`${prefix}.id`, value ? String(value) : '')}
             placeholder="Search for resident..."
             contentClassName="w-[28rem]"   
             triggerClassName="w-1/3"
