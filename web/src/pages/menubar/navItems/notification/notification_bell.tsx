@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNotifications } from '@/context/NotificationContext'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { Bell, CheckCheck, Clock, AlertCircle, MessageSquare, Heart, Star, MoreHorizontal, Eye, EyeOff } from 'lucide-react'
+import { Bell, MoreHorizontal, Eye, EyeOff } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Notification } from '@/context/auth-types'
 

@@ -25,7 +25,7 @@ import {
 } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SelectLayout } from '@/components/ui/select-layout';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
