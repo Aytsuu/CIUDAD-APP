@@ -1,4 +1,3 @@
-import { StaffDetails } from "@/pages/healthServices/childservices/viewrecords/types";
 
 export interface InventoryDetail {
   inv_id: string;
@@ -61,7 +60,7 @@ export interface MonthlyRecord {
   records: FirstAidRecord[];
   monthlyrcplist_id: string;
   report: {
-    staff_details: StaffDetails;
+    staff_details: any;
     signature: string;
     control_no: string;
     office: string;
@@ -74,7 +73,7 @@ export interface FirstAidRecordsResponse {
     data: MonthlyRecord[];
     records: FirstAidRecord[];
     report: {
-      staff_details: StaffDetails;
+      staff_details: any;
       signature: string;
       control_no: string;
       office: string;

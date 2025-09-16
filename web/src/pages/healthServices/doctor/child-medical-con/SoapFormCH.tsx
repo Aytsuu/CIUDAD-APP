@@ -37,12 +37,38 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
   const isUpdating = useRef(false);
 
   // Use the medicine stocks with loading state
-  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock(true);
-
+  const [medicineSearchParams, setMedicineSearchParams] = useState<any>({
+    page: 1,
+    pageSize: 10,
+    search: '',
+    is_temp: true,
+  });
+  const { data: medicineData, isLoading: isMedicineLoading } = fetchMedicinesWithStock(medicineSearchParams);
+  
   // Get physical exam queries with loading states
   const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
   const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
   const hasPhysicalExamError = sectionsQuery.isError || optionsQuery.isError;
+
+  // Extract medicines and pagination info
+  const medicineStocksOptions = medicineData?.medicines || [];
+  const medicinePagination = medicineData?.pagination;
+
+  // Add handlers for search and pagination
+  const handleMedicineSearch = (searchTerm: string) => {
+    setMedicineSearchParams((prev:any) => ({
+      ...prev,
+      search: searchTerm,
+      page: 1, // Reset to first page when searching
+    }));
+  };
+
+  const handleMedicinePageChange = (page: number) => {
+    setMedicineSearchParams((prev:any )=> ({
+      ...prev,
+      page,
+    }));
+  };
 
   const form = useForm<SoapFormType>({
     resolver: zodResolver(soapSchema),
@@ -245,6 +271,11 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         onBack={handleBack}
         isSubmitting={isSubmitting}
         onSubmit={form.handleSubmit(onSubmit)}
+        // Pass the new props for medicine search and pagination
+        medicineSearchParams={medicineSearchParams}
+        medicinePagination={medicinePagination}
+        onMedicineSearch={handleMedicineSearch}
+        onMedicinePageChange={handleMedicinePageChange}
       />
     </div>
   );
