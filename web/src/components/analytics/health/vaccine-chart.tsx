@@ -74,7 +74,7 @@ export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
   const CustomTooltip = ({
     active,
     payload,
-    label,
+    // label,
   }: {
     active?: boolean;
     payload?: any[];
@@ -213,7 +213,7 @@ export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
                       dataKey="count"
                       barSize={40}
                     >
-                      {displayData.map((entry, index) => (
+                      {displayData.map((_entry, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={COLORS[index % COLORS.length]}
