@@ -5,8 +5,11 @@ from decimal import Decimal
 from utils.supabase_client import upload_to_storage, remove_from_storage
 import json
 from decimal import Decimal
+import logging
+
 
 Staff = apps.get_model('administration', 'Staff')
+logger = logging.getLogger(__name__)
 
 class StaffSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
@@ -417,7 +420,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         return None
     
     def validate_gpr_header_img(self, value):
-        if value is None:
+        if value is None or isinstance(value, str):
             return value
         if not isinstance(value, dict) or 'name' not in value or 'type' not in value or 'file' not in value or not value['file'].startswith('data:'):
             raise serializers.ValidationError({
