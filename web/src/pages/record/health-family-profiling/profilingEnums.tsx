@@ -4,7 +4,7 @@ export enum Origin {
   
 export enum Type {
     Viewing = 'viewing',
-    Registration = 'registration',
+    Create = 'create',
     Editing = 'editing',
     Request = 'request',
 }

@@ -7,7 +7,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { familyColumns } from "./FamilyColumns";
 import { useQuery } from "@tanstack/react-query";
-import { FamilyRecord } from "../profilingTypes";
+import { FamilyRecord } from "../ProfilingTypes";
 import { Link } from "react-router";
 import {
   getFamilies,
