@@ -58,6 +58,7 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
       DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
       
     steps:
       - uses: actions/checkout@v4
@@ -78,6 +79,7 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY2 }}
       SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET2 }}
       DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY2 }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID2 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
