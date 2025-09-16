@@ -29,7 +29,6 @@ export function PersonalInfoCard({
   medreq_id,
   onPatientRegistered,
   shouldShowRegisterButton = true,
-  isPatientRegistered = false,
   isCheckingPatient = false,
   patientExists = false // Default to false
 }: PersonalInfoCardProps) {

@@ -10,7 +10,7 @@ import { getSupplies,useImzBatchNumber } from "../REQUEST/Antigen/restful-api/ge
 import { ImmunizationSuppliesSchema, ImmunizationSuppliesType } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useSubmitImmunizationStock } from "../REQUEST/Antigen/queries/ImzSupplyPostQueries";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
 import { Loader2 } from "lucide-react";
@@ -47,7 +47,7 @@ export default function AddImzSupplyStock() {
   const totalPieces = currentUnit === "boxes" ? qty * (pcs || 0) : qty;
 
   const { mutate: submit, isPending } = useSubmitImmunizationStock();
-  const { batchNumbers, isLoading: isBatchNumbersLoading } = useImzBatchNumber();
+  const { batchNumbers } = useImzBatchNumber();
 
   useEffect(() => {
     const fetchSupplies = async () => {

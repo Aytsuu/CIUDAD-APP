@@ -2,7 +2,6 @@ import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { AlertCircle } from "lucide-react";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
-import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { IllnessComponent } from "@/components/ui/add-search-illness";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { PhysicalExam } from "@/components/ui/physical-exam";

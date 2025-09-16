@@ -9,7 +9,6 @@ import { useLoading } from "@/context/LoadingContext";
 import { useOPTSummaries } from "./queries/fetch";
 import { MonthInfoCard } from "../month-folder-component";
 
-
 export default function MonthlyOPTSummaries() {
   const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
@@ -17,11 +16,7 @@ export default function MonthlyOPTSummaries() {
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-  } = useOPTSummaries(currentPage, pageSize, searchQuery);
+  const { data: apiResponse, isLoading, error } = useOPTSummaries(currentPage, pageSize, searchQuery);
 
   useEffect(() => {
     if (error) {
@@ -53,44 +48,27 @@ export default function MonthlyOPTSummaries() {
   return (
     <div className="w-full h-full flex flex-col">
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <Button
-          className="text-black p-2 mb-2 self-start"
-          variant={"outline"}
-          onClick={() => navigate(-1)}
-        >
+        <Button className="text-black p-2 mb-2 self-start" variant={"outline"} onClick={() => navigate(-1)}>
           <ChevronLeft />
         </Button>
         <div className="flex-col items-center">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Monthly OPT Tracking
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            View OPT tracking records grouped by month ({totalMonths} months found)
-          </p>
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Monthly OPT Tracking</h1>
+          <p className="text-xs sm:text-sm text-darkGray">View OPT tracking records grouped by month ({totalMonths} months found)</p>
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
       <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
         <div className="relative flex-1">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2"
-            size={17}
-          />
-          <Input
-            placeholder="Search by month (e.g. 'July 2025')..."
-            className="pl-10 bg-white w-full"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={17} />
+          <Input placeholder="Search by month (e.g. 'July 2025')..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
       </div>
 
       <div className="bg-white rounded-md overflow-hidden">
         <div className="p-4 flex justify-between items-center bg-gray-50">
           <div className="text-sm font-medium">
-            Overall Totals: Male {overallTotals.Male} | Female{" "}
-            {overallTotals.Female}
+            Overall Totals: Male {overallTotals.Male} | Female {overallTotals.Female}
           </div>
         </div>
 
@@ -122,12 +100,12 @@ export default function MonthlyOPTSummaries() {
             ) : monthlyData.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {monthlyData.map((record) => (
-                  <MonthInfoCard 
+                  <MonthInfoCard
                     key={record.month}
                     monthItem={{
                       month: record.month,
                       total_items: record.record_count,
-                      month_name: record.month_name,
+                      month_name: record.month_name
                     }}
                     navigateTo={{
                       path: "/opt-summry-details",
@@ -137,7 +115,7 @@ export default function MonthlyOPTSummaries() {
                       }
                     }}
                     record_name="children"
-                />
+                  />
                 ))}
               </div>
             ) : (
@@ -153,16 +131,9 @@ export default function MonthlyOPTSummaries() {
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray">
-          Showing {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-          {Math.min(currentPage * pageSize, totalMonths)} of {totalMonths} months
+          Showing {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalMonths)} of {totalMonths} months
         </p>
-        {totalPages > 1 && (
-          <PaginationLayout
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        )}
+        {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
       </div>
     </div>
   );

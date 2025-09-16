@@ -11,6 +11,6 @@ export function useVaccinationCount(patientId: string) {
     },
     enabled: !!patientId,
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 0
   });
 }

@@ -78,9 +78,6 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
   }
 ];
 
-
-
-
 export const pendingItemsColumns: ColumnDef<any>[] = [
   {
     accessorKey: "medicine",
@@ -103,7 +100,7 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
       </div>
     )
   },
- 
+
   {
     id: "documents",
     header: "Documents",
@@ -163,33 +160,21 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
             <>
               {/* Refer Button */}
               <Button size="sm" variant="outline" onClick={() => setIsReferOpen(true)}>
-          Refer Request
+                Refer Request
               </Button>
 
               {/* ActionModal Button */}
               <Button size="sm" variant="destructive" className="text-xs" onClick={() => setIsActionModalOpen(true)}>
-          Reject Document
+                Reject Document
               </Button>
 
               {/* ActionModal Modal */}
-              <ActionModal
-          isOpen={isActionModalOpen}
-          onClose={() => setIsActionModalOpen(false)}
-          data={row.original}
-          mode="reject"
-              />
+              <ActionModal isOpen={isActionModalOpen} onClose={() => setIsActionModalOpen(false)} data={row.original} mode="reject" />
 
-              <ActionModal
-          isOpen={isReferOpen}
-          onClose={() => setIsReferOpen(false)}
-          data={row.original}
-          mode="refer"
-              />
+              <ActionModal isOpen={isReferOpen} onClose={() => setIsReferOpen(false)} data={row.original} mode="refer" />
             </>
           ) : (
-            <span className="text-xs text-gray-500 italic">
-              {status !== "pending" ? "Action completed" : "Actions not available"}
-            </span>
+            <span className="text-xs text-gray-500 italic">{status !== "pending" ? "Action completed" : "Actions not available"}</span>
           )}
         </div>
       );

@@ -5,7 +5,7 @@ import SignatureCanvas from "react-signature-canvas";
 
 interface SignatureFieldProps {
   title: string;
-  onSignatureChange?: (signature: string | null) => void;
+  onSignatureChange?:any;
   initialSignature?: string;
   required?: boolean;
   className?: string;

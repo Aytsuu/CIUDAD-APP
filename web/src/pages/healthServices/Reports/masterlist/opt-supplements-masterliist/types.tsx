@@ -7,21 +7,21 @@ export interface SupplementRecord {
 }
 
 export interface VitaminASupplement {
-  '6-11': string | null;
-  '12-23': { '1st_dose': string | null; '2nd_dose': string | null };
-  '24-35': { '1st_dose': string | null; '2nd_dose': string | null };
-  '36-47': { '1st_dose': string | null; '2nd_dose': string | null };
-  '48-59': { '1st_dose': string | null; '2nd_dose': string | null };
+  "6-11": string | null;
+  "12-23": { "1st_dose": string | null; "2nd_dose": string | null };
+  "24-35": { "1st_dose": string | null; "2nd_dose": string | null };
+  "36-47": { "1st_dose": string | null; "2nd_dose": string | null };
+  "48-59": { "1st_dose": string | null; "2nd_dose": string | null };
 }
 
 export interface DewormingSupplement {
-  '12-23': { '1st_dose': string | null; '2nd_dose': string | null };
-  '24-59': { '1st_dose': string | null; '2nd_dose': string | null };
+  "12-23": { "1st_dose": string | null; "2nd_dose": string | null };
+  "24-59": { "1st_dose": string | null; "2nd_dose": string | null };
 }
 
 export interface MNPSupplement {
-  '6-11': string[];
-  '12-23': string[];
+  "6-11": string[];
+  "12-23": string[];
 }
 
 export interface ChildSupplementData {
@@ -67,7 +67,4 @@ export interface ChildHealthSupplementsAlternativeResponse {
 }
 
 // Union type for all possible responses
-export type ChildHealthSupplementsResponse = 
-  | ChildHealthSupplementsReportResponse 
-  | ChildHealthSupplementsExportResponse 
-  | ChildHealthSupplementsAlternativeResponse;
+export type ChildHealthSupplementsResponse = ChildHealthSupplementsReportResponse | ChildHealthSupplementsExportResponse | ChildHealthSupplementsAlternativeResponse;

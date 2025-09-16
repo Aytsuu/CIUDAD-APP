@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, ChevronLeft, Folder } from "lucide-react";
+import { Loader2, Search, Folder } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
@@ -20,11 +19,7 @@ export default function MonthlyMedicineRecords() {
   const [yearFilter] = useState<string>("all");
   const navigate = useNavigate();
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-  } = useMedicineMonthly(yearFilter);
+  const { data: apiResponse, isLoading, error } = useMedicineMonthly(yearFilter);
 
   useEffect(() => {
     if (error) {
@@ -49,32 +44,24 @@ export default function MonthlyMedicineRecords() {
 
   // Filter data based on search query
   const filteredData = monthlyData.filter((monthData) => {
-    const monthName = new Date(monthData.month + "-01").toLocaleString(
-      "default",
-      {
-        month: "long",
-        year: "numeric",
-      }
-    );
+    const monthName = new Date(monthData.month + "-01").toLocaleString("default", {
+      month: "long",
+      year: "numeric"
+    });
     const searchText = `${monthData.month} ${monthName}`.toLowerCase();
     return searchText.includes(searchQuery.toLowerCase());
   });
 
   // Paginate the filtered data
   const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, yearFilter]);
 
   return (
-    <LayoutWithBack
-      title="Monthly Medicine Records"
-      description={`View medicine records grouped by month (${totalMonths} months found)`}>
+    <LayoutWithBack title="Monthly Medicine Records" description={`View medicine records grouped by month (${totalMonths} months found)`}>
       <div>
         <Card className="">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center ">
@@ -84,12 +71,7 @@ export default function MonthlyMedicineRecords() {
               {/* Search Input */}
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
-                <Input
-                  placeholder="Search by month..."
-                  className="pl-10 bg-white w-full"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                <Input placeholder="Search by month..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
             </div>
           </div>
@@ -117,14 +99,7 @@ export default function MonthlyMedicineRecords() {
                 <span className="text-sm text-gray-600">entries per page</span>
               </div>
 
-              {totalPages > 1 && (
-                <PaginationLayout
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  className="justify-end"
-                />
-              )}
+              {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="justify-end" />}
             </div>
 
             <div className="bg-white w-full px-4 pt-3">
@@ -136,13 +111,10 @@ export default function MonthlyMedicineRecords() {
               ) : paginatedData.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                   {paginatedData.map((record) => {
-                    const monthName = new Date(record.month + "-01").toLocaleString(
-                      "default",
-                      {
-                        month: "long",
-                        year: "numeric",
-                      }
-                    );
+                    const monthName = new Date(record.month + "-01").toLocaleString("default", {
+                      month: "long",
+                      year: "numeric"
+                    });
 
                     return (
                       <MonthInfoCard
@@ -150,7 +122,7 @@ export default function MonthlyMedicineRecords() {
                         monthItem={{
                           month: record.month,
                           total_items: record.record_count,
-                          month_name: monthName,
+                          month_name: monthName
                         }}
                         navigateTo={{
                           path: "/monthly-medicine-details",
@@ -160,7 +132,7 @@ export default function MonthlyMedicineRecords() {
                             records: record.records,
                             recordCount: record.record_count,
                             monthlyrcplist_id: record.monthlyrcplist_id
-                          },
+                          }
                         }}
                         className="[&_.icon-gradient]:from-blue-400 [&_.icon-gradient]:to-blue-600 
                                   [&_.item-count]:bg-blue-100 [&_.item-count]:text-blue-700 
@@ -173,9 +145,7 @@ export default function MonthlyMedicineRecords() {
                 <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500 p-8">
                   <Folder className="w-16 h-16 text-gray-300 mb-4" />
                   <h3 className="text-lg font-medium mb-2">No months found</h3>
-                  <p className="text-sm text-center text-gray-400">
-                    {searchQuery ? "Try adjusting your search criteria" : "No medicine records available"}
-                  </p>
+                  <p className="text-sm text-center text-gray-400">{searchQuery ? "Try adjusting your search criteria" : "No medicine records available"}</p>
                 </div>
               )}
 
@@ -186,13 +156,7 @@ export default function MonthlyMedicineRecords() {
                     Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} months
                   </p>
 
-                  {totalPages > 1 && (
-                    <PaginationLayout
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  )}
+                  {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
                 </div>
               )}
             </div>

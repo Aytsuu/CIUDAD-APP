@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import {  ChevronRight, Edit } from "lucide-react"; // Added Edit icon
+import { ChevronRight, Edit } from "lucide-react"; // Added Edit icon
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Baby, History } from "lucide-react";
@@ -20,7 +20,7 @@ interface PendingDisplayMedicalConsultationProps {
 export default function PendingDisplayMedicalConsultation({
   checkupData,
   onNext,
-  patientData, // Added patientData to props
+  patientData // Added patientData to props
 }: PendingDisplayMedicalConsultationProps) {
   const patId = checkupData.pat_details.pat_id;
   const chrecId = checkupData.chrec_id;
@@ -31,30 +31,21 @@ export default function PendingDisplayMedicalConsultation({
   const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
 
   // Data fetching using custom hook
-  const { 
-    data: historyData, 
-    isLoading 
-  } = useChildHealthHistory(chrecId);
+  const { data: historyData, isLoading } = useChildHealthHistory(chrecId);
 
   const [fullHistoryData, setFullHistoryData] = useState<any[]>([]);
   const [latestRecord, setLatestRecord] = useState<any | null>(null);
 
   useEffect(() => {
     if (historyData) {
-      const sortedHistory = (historyData[0]?.child_health_histories || [])
-        .sort((a: any, b: any) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      
+      const sortedHistory = (historyData[0]?.child_health_histories || []).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
       setFullHistoryData(sortedHistory);
       setLatestRecord(sortedHistory[0] || null); // Set the latest record
     }
   }, [historyData, chhistId]);
 
-  const supplementStatusesFields = useMemo(
-    () => getSupplementStatusesFields(fullHistoryData),
-    [fullHistoryData]
-  );
+  const supplementStatusesFields = useMemo(() => getSupplementStatusesFields(fullHistoryData), [fullHistoryData]);
 
   // Edit button functionality
   const navigateToUpdateLatest = () => {
@@ -63,7 +54,7 @@ export default function PendingDisplayMedicalConsultation({
         state: {
           params: {
             chhistId: chhistId,
-            patId:patId, // Use patientData from props
+            patId: patId, // Use patientData from props
             originalRecord: latestRecord,
             patientData: patientData, // Use patientData from props
             chrecId: chrecId,
@@ -88,24 +79,16 @@ export default function PendingDisplayMedicalConsultation({
 
   return (
     <div className="p-6">
-      <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
-        Page 1 of 2
-      </div>
+      <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">Page 1 of 2</div>
 
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 h-auto bg-slate-100 mb-6">
-          <TabsTrigger
-            value="current"
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-          >
+          <TabsTrigger value="current" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <Baby />
             Current Record
           </TabsTrigger>
-          <TabsTrigger
-            value="history"
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-          >
+          <TabsTrigger value="history" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <History />
             View History
           </TabsTrigger>
@@ -116,23 +99,14 @@ export default function PendingDisplayMedicalConsultation({
           {/* Edit Button - Only show if there's a latest record */}
           {latestRecord && (
             <div className="flex justify-end mb-4">
-              <Button
-                onClick={navigateToUpdateLatest}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
+              <Button onClick={navigateToUpdateLatest} variant="outline" className="flex items-center gap-2">
                 <Edit className="h-4 w-4" />
                 Edit Current Record
               </Button>
             </div>
           )}
-          
-          <PatientSummarySection
-            recordsToDisplay={fullHistoryData.length > 0 ? [fullHistoryData.find(record => record.chhist_id === chhistId) || fullHistoryData[0]] : []}
-            fullHistoryData={fullHistoryData}
-            chhistId={chhistId}
-            
-          />
+
+          <PatientSummarySection recordsToDisplay={fullHistoryData.length > 0 ? [fullHistoryData.find((record) => record.chhist_id === chhistId) || fullHistoryData[0]] : []} fullHistoryData={fullHistoryData} chhistId={chhistId} />
         </TabsContent>
 
         {/* History Tab */}
@@ -149,7 +123,7 @@ export default function PendingDisplayMedicalConsultation({
                   {/* Record Count */}
                   <div className="flex justify-center">
                     <div className="text-sm text-gray-500 font-medium">
-                      Showing {fullHistoryData.length} health {fullHistoryData.length === 1 ? 'record' : 'records'}
+                      Showing {fullHistoryData.length} health {fullHistoryData.length === 1 ? "record" : "records"}
                     </div>
                   </div>
 
@@ -158,11 +132,7 @@ export default function PendingDisplayMedicalConsultation({
 
                   {/* Table View */}
                   <div className="w-full">
-                    <HealthHistoryTable
-                      recordsToDisplay={fullHistoryData}
-                      chhistId={chhistId}
-                      supplementStatusesFields={supplementStatusesFields}
-                    />
+                    <HealthHistoryTable recordsToDisplay={fullHistoryData} chhistId={chhistId} supplementStatusesFields={supplementStatusesFields} />
                   </div>
                 </div>
               }
@@ -173,13 +143,7 @@ export default function PendingDisplayMedicalConsultation({
 
       {/* Navigation Buttons */}
       <div className="flex justify-end mt-6 sm:mt-8">
-        <Button
-          onClick={onNext}
-          className={`w-[100px] flex items-center justify-center gap-2 ${
-            isLoading ? "opacity-70 cursor-not-allowed" : ""
-          }`}
-          disabled={isLoading}
-        >
+        <Button onClick={onNext} className={`w-[100px] flex items-center justify-center gap-2 ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`} disabled={isLoading}>
           Next
           <ChevronRight className="h-4 w-4" />
         </Button>

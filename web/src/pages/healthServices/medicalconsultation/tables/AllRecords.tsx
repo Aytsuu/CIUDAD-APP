@@ -12,7 +12,7 @@ import { MedicalRecord } from "../types";
 import { getAllMedicalRecordsColumns, exportColumns } from "./columns/all_col";
 import { useLoading } from "@/context/LoadingContext";
 import { ExportButton } from "@/components/ui/export";
-import {useDebounce} from "@/hooks/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function AllMedicalConsRecord() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,12 +25,15 @@ export default function AllMedicalConsRecord() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Build query parameters
-  const queryParams = useMemo(() => ({
-    page: currentPage,
-    page_size: pageSize,
-    search: debouncedSearchQuery || undefined,
-    patient_type: patientTypeFilter !== "all" ? patientTypeFilter : undefined,
-  }), [currentPage, pageSize, debouncedSearchQuery, patientTypeFilter]);
+  const queryParams = useMemo(
+    () => ({
+      page: currentPage,
+      page_size: pageSize,
+      search: debouncedSearchQuery || undefined,
+      patient_type: patientTypeFilter !== "all" ? patientTypeFilter : undefined
+    }),
+    [currentPage, pageSize, debouncedSearchQuery, patientTypeFilter]
+  );
 
   // Fetch data with parameters
   const { data: apiResponse, isLoading, error } = useMedicalRecord(queryParams);
@@ -49,7 +52,11 @@ export default function AllMedicalConsRecord() {
   }, [isLoading, showLoading, hideLoading]);
 
   // Handle API response structure (could be paginated or not)
-  const { medicalRecords, totalCount, totalPages: apiTotalPages } = useMemo(() => {
+  const {
+    medicalRecords,
+    totalCount,
+    totalPages: apiTotalPages
+  } = useMemo(() => {
     if (!apiResponse) {
       return { medicalRecords: [], totalCount: 0, totalPages: 1 };
     }
@@ -60,14 +67,14 @@ export default function AllMedicalConsRecord() {
       return {
         medicalRecords: apiResponse.results,
         totalCount: apiResponse.count || 0,
-        totalPages: Math.ceil((apiResponse.count || 0) / pageSize),
+        totalPages: Math.ceil((apiResponse.count || 0) / pageSize)
       };
     } else if (Array.isArray(apiResponse)) {
       // Direct array response (fallback)
       return {
         medicalRecords: apiResponse,
         totalCount: apiResponse.length,
-        totalPages: Math.ceil(apiResponse.length / pageSize),
+        totalPages: Math.ceil(apiResponse.length / pageSize)
       };
     } else {
       // Unknown structure
@@ -80,7 +87,7 @@ export default function AllMedicalConsRecord() {
       return [];
     }
 
-    return medicalRecords.map((record: any, index: number) => {
+    return medicalRecords.map((record: any) => {
       const details = record.patient_details || {};
       const info = details.personal_info || {};
       const address = details.address || {};
@@ -92,14 +99,7 @@ export default function AllMedicalConsRecord() {
       const sex = info.per_sex || "";
       const dob = info.per_dob || "";
 
-      const addressString = [
-        address.add_street || info.per_address || "",
-        address.add_barangay || "",
-        address.add_city || "",
-        address.add_province || "",
-      ]
-        .filter((part) => part.trim().length > 0)
-        .join(", ") || "";
+      const addressString = [address.add_street || info.per_address || "", address.add_barangay || "", address.add_city || "", address.add_province || ""].filter((part) => part.trim().length > 0).join(", ") || "";
 
       return {
         rp_id: record.rp_id || null,
@@ -118,7 +118,7 @@ export default function AllMedicalConsRecord() {
         province: address.add_province || "",
         pat_type: record.pat_type || details.pat_type || "",
         address: addressString,
-        medicalrec_count: record.medicalrec_count || 0,
+        medicalrec_count: record.medicalrec_count || 0
       };
     });
   }, [medicalRecords]);
@@ -131,28 +131,16 @@ export default function AllMedicalConsRecord() {
     <>
       <div className="w-full h-full flex flex-col">
         <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Medical Consultation Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
-          </p>
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Medical Consultation Records</h1>
+          <p className="text-xs sm:text-sm text-darkGray">Manage and view patients information</p>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
-        
+
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search by name, patient ID, household number, or sitio..."
-                className="pl-10 bg-white w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+              <Input placeholder="Search by name, patient ID, household number, or sitio..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
             <SelectLayout
               placeholder="Filter records"
@@ -161,7 +149,7 @@ export default function AllMedicalConsRecord() {
               options={[
                 { id: "all", name: "All Types" },
                 { id: "resident", name: "Resident" },
-                { id: "transient", name: "Transient" },
+                { id: "transient", name: "Transient" }
               ]}
               value={patientTypeFilter}
               onChange={(value) => setPatientTypeFilter(value)}
@@ -173,8 +161,8 @@ export default function AllMedicalConsRecord() {
                 to="/medical-consultation-form"
                 state={{
                   params: {
-                    mode: "fromallrecordtable",
-                  },
+                    mode: "fromallrecordtable"
+                  }
                 }}
               >
                 New Record
@@ -199,13 +187,9 @@ export default function AllMedicalConsRecord() {
               />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
-            <ExportButton
-              data={formattedData}
-              filename="medical-consultation-records"
-              columns={exportColumns}
-            />
+            <ExportButton data={formattedData} filename="medical-consultation-records" columns={exportColumns} />
           </div>
-          
+
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
               <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
@@ -217,26 +201,16 @@ export default function AllMedicalConsRecord() {
                 <span>Error loading data. Please try again.</span>
               </div>
             ) : (
-              <DataTable 
-                columns={columns} 
-                data={formattedData} 
-              />
+              <DataTable columns={columns} data={formattedData} />
             )}
           </div>
-          
+
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {formattedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, totalCount)} of{" "}
-              {totalCount} rows
+              Showing {formattedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
             </p>
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={(page) => setCurrentPage(page)}
-              />
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={(page) => setCurrentPage(page)} />
             </div>
           </div>
         </div>

@@ -1,19 +1,16 @@
-
-
-import {useRef} from "react";
-
+import { useRef } from "react";
 
 export const handlePrint = () => {
-    const printRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
-    if (!printRef.current) return;
+  if (!printRef.current) return;
 
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) return;
 
-    const printContent = printRef.current.innerHTML;
+  const printContent = printRef.current.innerHTML;
 
-    printWindow.document.write(`
+  printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
@@ -256,10 +253,10 @@ export const handlePrint = () => {
       </html>
     `);
 
-    printWindow.document.close();
+  printWindow.document.close();
 
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
-  };
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 250);
+};

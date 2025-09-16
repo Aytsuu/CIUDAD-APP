@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateMedicine } from "../../restful-api/medicine/MedicinePutAPI";
 import { MedicineType } from "@/form-schema/inventory/lists/inventoryListSchema";
-import { useNavigate } from "react-router";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 export const useUpdateMedicine = () => {
   const queryClient = useQueryClient();

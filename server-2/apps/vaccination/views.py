@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from .serializers import *
 from datetime import datetime
-from django.db.models import Count, Max, Subquery, OuterRef, Q, F
+from django.db.models import Count, Max, Subquery, OuterRef, Q, F, Prefetch
 from django.db.models.functions import TruncMonth
 from apps.patientrecords.models import Patient,PatientRecord
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer,PatientRecordSerializer
@@ -20,7 +20,8 @@ from dateutil.relativedelta import relativedelta
 from django.utils.timezone import now
 from apps.patientrecords.models import *
 from apps.inventory.models import AntigenTransaction,VaccineStock, VaccineList, Inventory
-
+from pagination import *
+from apps.healthProfiling.models import ResidentProfile, PersonalAddress
 
 
 
@@ -118,6 +119,425 @@ class UnvaccinatedVaccinesView(APIView):
         unvaccinated_vaccines = get_unvaccinated_vaccines_for_patient(pat_id)
         serializer = VacccinationListSerializer(unvaccinated_vaccines, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+class GetAllResidentsNotVaccinated(APIView):
+    def get(self, request):
+        try:
+            data = get_all_residents_not_vaccinated()
+            return Response(data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+
+class UnvaccinatedVaccinesDetailsView(APIView):
+    """
+    Second endpoint: Get paginated list of unvaccinated residents for a specific vaccine and age group
+    """
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request, vac_id):
+        try:
+            # Get query parameters
+            age_group_id = request.GET.get('age_group_id')
+            search = request.GET.get('search', '')
+            
+            # Get the vaccine
+            try:
+                vaccine = VaccineList.objects.get(vac_id=vac_id)
+            except VaccineList.DoesNotExist:
+                return Response({'error': 'Vaccine not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+            # Get unvaccinated residents for this vaccine
+            unvaccinated_residents = self.get_unvaccinated_residents_for_vaccine(
+                vac_id, age_group_id, search
+            )
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            page_size = int(request.GET.get('page_size', paginator.page_size))
+            paginator.page_size = page_size
+            
+            page_data = paginator.paginate_queryset(unvaccinated_residents, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response({
+                    'success': True,
+                    'vaccine_info': {
+                        'vac_id': vaccine.vac_id,
+                        'vac_name': vaccine.vac_name,
+                        'vac_description': getattr(vaccine, 'vac_description', '')
+                    },
+                    'results': response.data['results'],
+                    'count': response.data['count'],
+                    'next': response.data.get('next'),
+                    'previous': response.data.get('previous')
+                })
+            
+            return Response({
+                'success': True,
+                'vaccine_info': {
+                    'vac_id': vaccine.vac_id,
+                    'vac_name': vaccine.vac_name,
+                    'vac_description': getattr(vaccine, 'vac_description', '')
+                },
+                'results': unvaccinated_residents,
+                'count': len(unvaccinated_residents)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching unvaccinated residents: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def calculate_age_in_time_unit(self, birth_date, time_unit):
+        """Calculate age in the specified time unit"""
+        if not birth_date:
+            return None
+            
+        today = date.today()
+        
+        if time_unit.lower() == 'days':
+            return (today - birth_date).days
+        elif time_unit.lower() == 'weeks':
+            return (today - birth_date).days // 7
+        elif time_unit.lower() == 'months':
+            return relativedelta(today, birth_date).months + (relativedelta(today, birth_date).years * 12)
+        elif time_unit.lower() == 'years':
+            return relativedelta(today, birth_date).years
+        else:
+            # Default to years
+            return relativedelta(today, birth_date).years
+
+    def is_resident_in_age_group(self, resident, age_group):
+        """Check if resident falls within the specified age group"""
+        if not age_group:
+            return True
+            
+        # Get birth date from personal info
+        birth_date = getattr(resident.per, 'per_dob', None) if hasattr(resident, 'per') and resident.per else None
+        
+        if not birth_date:
+            return False  # Skip residents without birth date
+            
+        # Calculate age in the time unit specified by the age group
+        age = self.calculate_age_in_time_unit(birth_date, age_group.time_unit)
+        
+        if age is None:
+            return False
+            
+        # Check if age falls within the range
+        return age_group.min_age <= age <= age_group.max_age
+
+    def get_unvaccinated_residents_for_vaccine(self, vac_id, age_group_id=None, search=''):
+        # Get the vaccine and its age group if specified
+        vaccine = VaccineList.objects.get(vac_id=vac_id)
+        age_group = None
+        
+        if age_group_id and age_group_id != 'null':
+            try:
+                age_group = Agegroup.objects.get(agegrp_id=age_group_id)
+            except Agegroup.DoesNotExist:
+                pass
+        elif vaccine.ageGroup:
+            # Use the vaccine's default age group if no specific age group is provided
+            age_group = vaccine.ageGroup
+        
+        # Get pat_ids of residents who already got this vaccine
+        vaccinated_ids = VaccinationHistory.objects.filter(
+            Q(vacStck_id__vac_id=vac_id) | Q(vac__vac_id=vac_id),
+            vachist_status="completed"
+        ).values_list('vacrec__patrec_id__pat_id', flat=True).distinct()
+        
+        # Get all residents with related data for better performance
+        # Use the correct relationship for addresses - prefetch PersonalAddress with add and sitio
+        all_residents = ResidentProfile.objects.select_related('per').prefetch_related(
+            Prefetch(
+                'per__personaladdress_set',
+                queryset=PersonalAddress.objects.select_related('add', 'add__sitio'),
+                to_attr='prefetched_personal_addresses'
+            )
+        ).filter(per__per_dob__isnull=False)
+        
+        # Get all resident-type, active patients
+        patients = Patient.objects.filter(
+            pat_type="Resident", 
+            pat_status="Active"
+        ).select_related('rp_id', 'rp_id__per')
+        
+        # Map rp_id -> patient
+        patient_map = {p.rp_id.rp_id: p for p in patients if p.rp_id}
+        
+        unvaccinated_residents = []
+        vaccine_data = VacccinationListSerializer(vaccine).data
+        
+        for resident in all_residents:
+            rp_id = resident.rp_id
+            # Use the serializer to get personal info with addresses
+            personal_info = ResidentPersonalInfoSerializer(resident).data
+            patient = patient_map.get(rp_id)
+            
+            # Apply age group filter first (most restrictive)
+            if age_group and not self.is_resident_in_age_group(resident, age_group):
+                continue
+            
+            is_unvaccinated = False
+            resident_data = None
+            
+            if patient:
+                # Has patient — check if vaccinated
+                if patient.pat_id not in vaccinated_ids:
+                    is_unvaccinated = True
+                    resident_data = {
+                        "status": "Has patient, not vaccinated for this vaccine",
+                        "pat_id": patient.pat_id,
+                        "rp_id": rp_id,
+                        "personal_info": personal_info,
+                        "vaccine_not_received": vaccine_data,
+                        "age_info": self.get_age_info(resident, age_group) if age_group else None
+                    }
+            else:
+                # No patient — definitely not vaccinated for this vaccine
+                is_unvaccinated = True
+                resident_data = {
+                    "status": "No patient record",
+                    "pat_id": None,
+                    "rp_id": rp_id,
+                    "personal_info": personal_info,
+                    "vaccine_not_received": vaccine_data,
+                    "age_info": self.get_age_info(resident, age_group) if age_group else None
+                }
+            
+            if is_unvaccinated and resident_data:
+                # Apply search filter if provided
+                if search:
+                    search_lower = search.lower()
+                    searchable_fields = [
+                        str(resident_data.get('pat_id', '')),
+                        str(resident_data.get('rp_id', '')),
+                        personal_info.get('per_fname', ''),
+                        personal_info.get('per_lname', ''),
+                        personal_info.get('per_mname', ''),
+                        personal_info.get('per_sex', ''),
+                    ]
+                    
+                    # Add address fields using the correct relationship
+                    if hasattr(resident.per, 'prefetched_personal_addresses'):
+                        for addr in resident.per.prefetched_personal_addresses:
+                            if addr.add:
+                                searchable_fields.extend([
+                                    addr.add.add_external_sitio or '',
+                                    addr.add.add_street or '',
+                                    addr.add.add_barangay or '',
+                                    addr.add.add_city or '',
+                                    addr.add.add_province or '',
+                                ])
+                                if addr.add.sitio:
+                                    searchable_fields.append(addr.add.sitio.sitio_name or '')
+                    
+                    # Create searchable text
+                    searchable_text = ' '.join(filter(None, searchable_fields)).lower()
+                    
+                    if search_lower not in searchable_text:
+                        continue
+                
+                unvaccinated_residents.append(resident_data)
+        
+        return unvaccinated_residents
+
+    def get_age_info(self, resident, age_group):
+        """Get age information for the resident"""
+        if not age_group:
+            return None
+            
+        birth_date = getattr(resident.per, 'per_dob', None) if hasattr(resident, 'per') and resident.per else None
+        
+        if not birth_date:
+            return {"error": "No birth date available"}
+            
+        age = self.calculate_age_in_time_unit(birth_date, age_group.time_unit)
+        
+        return {
+            "birth_date": birth_date.isoformat(),
+            "age": age,
+            "time_unit": age_group.time_unit,
+            "age_group_range": f"{age_group.min_age}-{age_group.max_age} {age_group.time_unit}"
+        }
+    
+
+class UnvaccinatedVaccinesSummaryView(APIView):
+    """
+    First endpoint: Get all vaccines with their unvaccinated resident counts and age ranges
+    """
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request):
+        try:
+            # Get all vaccines
+            vaccines = VaccineList.objects.select_related('ageGroup').all()
+            result = []
+            
+            for vaccine in vaccines:
+                # Get age groups for this vaccine first
+                age_groups = self.get_age_groups_for_vaccine(vaccine)
+                
+                # Calculate total unvaccinated as sum of all age groups
+                total_unvaccinated = sum(age_group['unvaccinated_count'] for age_group in age_groups)
+                
+                vaccine_data = {
+                    'vac_id': vaccine.vac_id,
+                    'vac_name': vaccine.vac_name,
+                    'vac_description': getattr(vaccine, 'vac_description', ''),
+                    'total_unvaccinated': total_unvaccinated,
+                    'age_groups': age_groups
+                }
+                result.append(vaccine_data)
+            
+            # Apply pagination
+            paginator = self.pagination_class()
+            page_size = int(request.GET.get('page_size', paginator.page_size))
+            paginator.page_size = page_size
+            
+            page_data = paginator.paginate_queryset(result, request)
+            
+            if page_data is not None:
+                response = paginator.get_paginated_response(page_data)
+                return Response({
+                    'success': True,
+                    'results': response.data['results'],
+                    'count': response.data['count'],
+                    'next': response.data.get('next'),
+                    'previous': response.data.get('previous')
+                })
+            
+            return Response({
+                'success': True,
+                'results': result,
+                'count': len(result)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching vaccines: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def calculate_age_in_time_unit(self, birth_date, time_unit):
+        """Calculate age in the specified time unit"""
+        if not birth_date:
+            return None
+            
+        today = date.today()
+        
+        if time_unit.lower() == 'days':
+            return (today - birth_date).days
+        elif time_unit.lower() == 'weeks':
+            return (today - birth_date).days // 7
+        elif time_unit.lower() == 'months':
+            return relativedelta(today, birth_date).months + (relativedelta(today, birth_date).years * 12)
+        elif time_unit.lower() == 'years':
+            return relativedelta(today, birth_date).years
+        else:
+            # Default to years
+            return relativedelta(today, birth_date).years
+
+    def get_unvaccinated_count_for_vaccine(self, vac_id, age_group=None):
+        # Get pat_ids of residents who already got this vaccine
+        vaccinated_ids = VaccinationHistory.objects.filter(
+            Q(vacStck_id__vac_id=vac_id) | Q(vac__vac_id=vac_id),
+            vachist_status="completed"
+        ).values_list('vacrec__patrec_id__pat_id', flat=True).distinct()
+        
+        # Get all residents
+        all_residents = ResidentProfile.objects.select_related('per').all()
+        
+        # Get all resident-type, active patients
+        patients = Patient.objects.filter(
+            pat_type="Resident", 
+            pat_status="Active"
+        ).select_related('rp_id', 'rp_id__per')
+        
+        # Map rp_id -> patient
+        patient_map = {p.rp_id.rp_id: p for p in patients if p.rp_id}
+        
+        unvaccinated_count = 0
+        
+        for resident in all_residents:
+            # Apply age group filter if specified
+            if age_group and not self.is_resident_in_age_group(resident, age_group):
+                continue
+                
+            patient = patient_map.get(resident.rp_id)
+            
+            if patient:
+                # Has patient — check if not vaccinated
+                if patient.pat_id not in vaccinated_ids:
+                    unvaccinated_count += 1
+            else:
+                # No patient — definitely not vaccinated
+                unvaccinated_count += 1
+        
+        return unvaccinated_count
+
+    def is_resident_in_age_group(self, resident, age_group):
+        """Check if resident falls within the specified age group"""
+        if not age_group:
+            return True
+            
+        # Get birth date from personal info
+        birth_date = getattr(resident.per, 'per_dob', None) if hasattr(resident, 'per') and resident.per else None
+        
+        if not birth_date:
+            return False  # Skip residents without birth date
+            
+        # Calculate age in the time unit specified by the age group
+        age = self.calculate_age_in_time_unit(birth_date, age_group.time_unit)
+        
+        if age is None:
+            return False
+            
+        # Check if age falls within the range
+        return age_group.min_age <= age <= age_group.max_age
+
+    def get_age_groups_for_vaccine(self, vaccine):
+        """Get age groups associated with this vaccine"""
+        age_groups = []
+        
+        if vaccine.ageGroup:
+            # Single age group associated with vaccine
+            age_group = vaccine.ageGroup
+            unvaccinated_count = self.get_unvaccinated_count_for_vaccine(vaccine.vac_id, age_group)
+            
+            age_groups.append({
+                'age_group_id': age_group.agegrp_id,
+                'age_group_name': age_group.agegroup_name,
+                'min_age': age_group.min_age,
+                'max_age': age_group.max_age,
+                'time_unit': age_group.time_unit,
+                'age_range_display': f"{age_group.min_age}-{age_group.max_age} {age_group.time_unit}",
+                'unvaccinated_count': unvaccinated_count
+            })
+        else:
+            # No specific age group - show all ages
+            all_ages_count = self.get_unvaccinated_count_for_vaccine(vaccine.vac_id)
+            age_groups.append({
+                'age_group_id': None,
+                'age_group_name': 'All Ages',
+                'min_age': 0,
+                'max_age': 999,
+                'time_unit': 'years',
+                'age_range_display': 'All Ages',
+                'unvaccinated_count': all_ages_count
+            })
+        
+        return age_groups
+
+    def get_unvaccinated_count_for_age_group(self, vac_id, age_group):
+        """Get unvaccinated count for a specific age group"""
+        return self.get_unvaccinated_count_for_vaccine(vac_id, age_group)
+    
     
 class CheckVaccineExistsView(APIView):
     def get(self, request, pat_id, vac_id):
@@ -157,14 +577,7 @@ class GetVaccinationCountView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
         
-class GetAllResidentsNotVaccinated(APIView):
-    def get(self, request):
-        try:
-            data = get_all_residents_not_vaccinated()
-            return Response(data, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-       
+
 
 class CountVaccinatedByPatientTypeView(APIView):
     def get(self, request):

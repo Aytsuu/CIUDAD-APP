@@ -22,7 +22,6 @@ import {
   User,
   Users,
   MapPin,
-  Paperclip,
   Eye,
   Info,
 } from "lucide-react";

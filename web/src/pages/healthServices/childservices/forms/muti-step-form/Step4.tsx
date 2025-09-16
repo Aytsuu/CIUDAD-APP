@@ -232,12 +232,11 @@ export default function LastPage({
     return !todaysHistoricalRecord && newVitalSigns.length === 0;
   });
 
-useEffect(() => {
-  console.log("latestVitalsData updated:", latestVitalsData);
-}
-, [latestVitalsData]);
+  useEffect(() => {
+    console.log("latestVitalsData updated:", latestVitalsData);
+  }, [latestVitalsData]);
 
-const currentAge = useMemo(() => calculateCurrentAge(formData.childDob), [formData.childDob]);
+  const currentAge = useMemo(() => calculateCurrentAge(formData.childDob), [formData.childDob]);
 
   const getLatestVitalSigns = (vitalSigns: VitalSignType[] | undefined) => {
     if (!vitalSigns || vitalSigns.length === 0) return null;

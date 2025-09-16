@@ -1,10 +1,10 @@
 // DisplayMedicalConsultation.tsx
 "use client";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, Stethoscope, ChevronRight, ChevronFirst, ChevronLast } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Stethoscope } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { ConsultationHistoryTable } from "./table-history";
 import { MedicalConsultationHistory } from "../types";
 import CurrentConsultationCard from "./current-medrec";
@@ -12,7 +12,6 @@ import { useConsultationHistory } from "../queries/fetchQueries";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function DisplayMedicalConsultation() {
-  const navigate = useNavigate();
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData, MedicalConsultation } = params || {};
@@ -107,8 +106,6 @@ export default function DisplayMedicalConsultation() {
 
   return (
     <LayoutWithBack title="Medical Consultation Record" description="View consultation details and patient information">
-      
-
       {/* Current Consultation Card - Always visible */}
 
       {/* Consultation History Section */}

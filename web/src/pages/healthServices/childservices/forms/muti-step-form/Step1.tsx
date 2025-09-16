@@ -28,9 +28,8 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode, s
   });
 
   const { handleSubmit, watch, setValue, reset, control, formState, setError, clearErrors } = form;
-  const {data: nextUfcData} = useNextufcno();
+  const { data: nextUfcData } = useNextufcno();
 
-  
   const { isSubmitting } = formState;
   const residenceType = watch("residenceType");
   const isTransient = residenceType === "Transient";

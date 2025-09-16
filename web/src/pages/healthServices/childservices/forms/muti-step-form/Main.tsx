@@ -44,12 +44,12 @@ export default function ChildHealthRecordForm() {
   const [apiData, setApiData] = useState<any>(null);
 
   // BF-related state - Updated to include BF checks with IDs
-  const [historicalBFdates, setHistoricalBFdates] = useState<string[]>([]);
+  // const [historicalBFdates, setHistoricalBFdates] = useState<string[]>([]);
   const [historicalBFChecks, setHistoricalBFChecks] = useState<BFCheck[]>([]);
 
   // Other historical data state
   const [historicalVitalSigns, setHistoricalVitalSigns] = useState<VitalSignType[]>([]);
-  const [historicalNutritionalStatus, setHistoricalNutritionalStatus] = useState<any[]>([]);
+  // const [historicalNutritionalStatus, setHistoricalNutritionalStatus] = useState<any[]>([]);
   const [historicalSupplementStatuses, setHistoricalSupplementStatuses] = useState<CHSSupplementStat[]>([]);
   const [latestHistoricalNoteContent, setLatestHistoricalNoteContent] = useState<string>("");
   const [latestHistoricalFollowUpDescription, setLatestHistoricalFollowUpDescription] = useState<string>("");
@@ -314,8 +314,8 @@ export default function ChildHealthRecordForm() {
         setImmunizationTracking(allImmunizationTracking);
         setHistoricalVitalSigns(allHistoricalVitalSigns);
         setHistoricalMedicines(allHistoricalMedicines);
-        setHistoricalNutritionalStatus(allHistoricalNutritionalStatuses);
-        setHistoricalBFdates(allHistoricalBFdates);
+        // setHistoricalNutritionalStatus(allHistoricalNutritionalStatuses);
+        // setHistoricalBFdates(allHistoricalBFdates);
         setHistoricalBFChecks(allHistoricalBFChecks); // Set BF checks with IDs
         setHistoricalSupplementStatuses(allHistoricalSupplementStatuses);
 

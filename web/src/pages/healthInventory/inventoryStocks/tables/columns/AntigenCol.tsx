@@ -1,7 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Minus, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import { Link } from "react-router-dom";
 
 export const getStockColumns = (
   handleArchiveInventory: (antigen: any) => void ,

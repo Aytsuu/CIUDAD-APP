@@ -33,7 +33,7 @@ export default function MedicineRequestDetail() {
   console.log("mrfreq", request);
   console.log("personal info", patientData);
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -41,7 +41,6 @@ export default function MedicineRequestDetail() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [selectedMedicines, setSelectedMedicines] = useState<any[]>([]);
   const [currentPatId, setCurrentPatId] = useState<string | null>(request?.pat_id || null);
-  const [initialSelectionsSet, setInitialSelectionsSet] = useState(false);
   const [signature, setSignature] = useState<string | null>(null);
   const signatureRef = useRef<SignatureFieldRef>(null);
 
@@ -56,17 +55,17 @@ export default function MedicineRequestDetail() {
   const { data: patientExists, isLoading: isCheckingPatient, refetch: refetchPatientExists } = useCheckPatientExists(request.rp_id);
 
   // Helper functions to determine patient status
- // Helper functions to determine patient status
-const shouldShowRegisterButton = () => {
-  // If still checking, don't show button
-  if (isCheckingPatient) return false;
+  // Helper functions to determine patient status
+  const shouldShowRegisterButton = () => {
+    // If still checking, don't show button
+    if (isCheckingPatient) return false;
 
-  // If patient exists, don't show register button
-  if ((patientExists as any)?.exists) return false;
+    // If patient exists, don't show register button
+    if ((patientExists as any)?.exists) return false;
 
-  // Show register button if patient doesn't exist
-  return true;
-};
+    // Show register button if patient doesn't exist
+    return true;
+  };
 
   const isPatientRegistered = () => {
     const patientData = patientExists as any;
@@ -133,7 +132,7 @@ const shouldShowRegisterButton = () => {
         throw new Error("Patient ID not returned from the server");
       }
       setCurrentPatId(response.pat_id);
-          refetchPatientExists();
+      refetchPatientExists();
 
       toast.success("Successfully registered");
     } catch (error) {
@@ -241,11 +240,6 @@ const shouldShowRegisterButton = () => {
     setSelectedMedicines(enhancedSelectedMedicines);
   };
 
-  // Reset initial selections when medicine data changes
-  useEffect(() => {
-    setInitialSelectionsSet(false);
-  }, [medicineData, medicineStocksOptions]);
-
   const { mutate: createAllocation, isPending } = useCreateMedicineAllocation();
   const processMedicineAllocation = () => {
     // Validate that all selected medicines have required data
@@ -330,27 +324,25 @@ const shouldShowRegisterButton = () => {
                 state={{
                   params: {
                     patientData: {
-
-                      pat_id:(patientExists as any)?.pat_id,
+                      pat_id: (patientExists as any)?.pat_id,
                       pat_type: patientData.pat_type,
-                  age: patientData.age,
-                  addressFull: patientData.address.full_address || "No address provided",
-                  address: {
-                    add_street: patientData.address.add_street,
-                    add_barangay: patientData.address.add_barangay,
-                    add_city: patientData.address.add_city,
-                    add_province: patientData.address.add_province,
-                    add_sitio: patientData.address.add_sitio
-                  },
-                  households: [{ hh_id: patientData.householdno }],
-                  personal_info: {
-                    per_fname: patientData.personal_info.per_fname,
-                    per_mname: patientData.personal_info.per_mname,
-                    per_lname: patientData.personal_info.per_lname,
-                    per_dob: patientData.personal_info.per_dob,
-                    per_sex: patientData.personal_info.per_sex
-
-                  }
+                      age: patientData.age,
+                      addressFull: patientData.address.full_address || "No address provided",
+                      address: {
+                        add_street: patientData.address.add_street,
+                        add_barangay: patientData.address.add_barangay,
+                        add_city: patientData.address.add_city,
+                        add_province: patientData.address.add_province,
+                        add_sitio: patientData.address.add_sitio
+                      },
+                      households: [{ hh_id: patientData.householdno }],
+                      personal_info: {
+                        per_fname: patientData.personal_info.per_fname,
+                        per_mname: patientData.personal_info.per_mname,
+                        per_lname: patientData.personal_info.per_lname,
+                        per_dob: patientData.personal_info.per_dob,
+                        per_sex: patientData.personal_info.per_sex
+                      }
                     }
                   }
                 }}

@@ -41,9 +41,9 @@ export const useSubmitSoapForm = () => {
         // Illness history
         selected_illnesses: formData.selectedIllnesses || []
       };
-      
+
       console.log("Payload sent:", payload);
-      
+
       // Wait for the response and return it
       const response = await createchildSoapForm(payload);
       return response; // This will be passed to onSuccess

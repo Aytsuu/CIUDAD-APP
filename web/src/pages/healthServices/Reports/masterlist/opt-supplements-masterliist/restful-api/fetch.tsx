@@ -1,6 +1,5 @@
 import { api2 } from "@/api/api";
 import { 
-  ChildHealthSupplementsReportResponse, 
   ChildHealthSupplementsExportResponse,
   ChildHealthSupplementsAlternativeResponse,
   ChildHealthSupplementsResponse 

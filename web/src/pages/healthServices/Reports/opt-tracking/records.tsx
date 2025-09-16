@@ -16,10 +16,9 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Label } from "@/components/ui/label";
 import { FilterSitio } from "../filter-sitio";
 import { SelectedFiltersChips } from "../selectedFiltersChipsProps ";
-import {FilterStatus}  from "../filter-nutstatus"
-import { ageRangeOptions,nutritionalStatusCategories,nutritionalStatusOptions } from "../options";
-import {useDebounce} from "@/hooks/use-debounce";
-
+import { FilterStatus } from "../filter-nutstatus";
+import { ageRangeOptions, nutritionalStatusCategories, nutritionalStatusOptions } from "../options";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function OPTTrackingDetails() {
   const location = useLocation();
@@ -33,58 +32,43 @@ export default function OPTTrackingDetails() {
   const [ageRange, setAgeRange] = useState("");
   const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
   const [selectedNutritionalStatuses, setSelectedNutritionalStatuses] = useState<string[]>([]);
-  
+
   const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
   const sitios = sitioData || [];
-  
+
   const debouncedSitioSearch = useDebounce(sitioSearch, 500);
   const debouncedNutritionalStatus = useDebounce(nutritionalStatus, 500);
   const debouncedAgeRange = useDebounce(ageRange, 300);
-  
+
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSitioSearch, debouncedNutritionalStatus, debouncedAgeRange, selectedSitios, selectedNutritionalStatuses]);
-  
-  const combinedSitioSearch = selectedSitios.length > 0 
-    ? selectedSitios.join(',')
-    : sitioSearch;
-  
-  const combinedNutritionalStatus = selectedNutritionalStatuses.length > 0 
-    ? selectedNutritionalStatuses.join(',')
-    : nutritionalStatus;
-  
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-  } = useMonthlyOPTRecords(
-    month,
-    currentPage,
-    pageSize,
-    combinedSitioSearch,
-    combinedNutritionalStatus,
-    debouncedAgeRange
-  );
-  
+
+  const combinedSitioSearch = selectedSitios.length > 0 ? selectedSitios.join(",") : sitioSearch;
+
+  const combinedNutritionalStatus = selectedNutritionalStatuses.length > 0 ? selectedNutritionalStatuses.join(",") : nutritionalStatus;
+
+  const { data: apiResponse, isLoading, error } = useMonthlyOPTRecords(month, currentPage, pageSize, combinedSitioSearch, combinedNutritionalStatus, debouncedAgeRange);
+
   const records: OPTChildHealthRecord[] = apiResponse?.results?.report_data || [];
   const totalEntries = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalEntries / pageSize);
-  
+
   useEffect(() => {
     if (isLoading) showLoading();
     else hideLoading();
   }, [isLoading, showLoading, hideLoading]);
-  
+
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch OPT records");
       console.error("API Error:", error);
     }
   }, [error]);
-  
+
   const startIndex = totalEntries === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalEntries);
-  
+
   const prepareExportData = useCallback(() => {
     return records.map((item) => ({
       "Household No": item.household_no || "N/A",
@@ -92,8 +76,7 @@ export default function OPTTrackingDetails() {
       Sex: item.sex || "N/A",
       "Date of Birth": item.date_of_birth || "N/A",
       "Age (months)": item.age_in_months?.toString() || "N/A",
-      "Name of Household Head/Mother/Caregiver":
-        item.parents?.mother || item.parents?.father || "N/A",
+      "Name of Household Head/Mother/Caregiver": item.parents?.mother || item.parents?.father || "N/A",
       Address: item.address || "N/A",
       Sitio: item.sitio || "N/A",
       Transient: item.transient ? "Yes" : "No",
@@ -106,19 +89,16 @@ export default function OPTTrackingDetails() {
       "MUAC (mm)": item.nutritional_status?.muac?.toString() || "N/A",
       Edema: item.nutritional_status?.edema || "N/A",
       "MUAC Status": item.nutritional_status?.muac_status || "N/A",
-      "Type of Feeding": item.type_of_feeding || "N/A",
+      "Type of Feeding": item.type_of_feeding || "N/A"
     }));
   }, [records]);
-  
-  const handleExportCSV = () =>
-    exportToCSV(prepareExportData(), `opt_records_${monthName.replace(" ", "_")}`);
-  
-  const handleExportExcel = () =>
-    exportToExcel(prepareExportData(), `opt_records_${monthName.replace(" ", "_")}`);
-  
-  const handleExportPDF = () =>
-    exportToPDF(prepareExportData(), `opt_records_${monthName.replace(" ", "_")}`);
-  
+
+  const handleExportCSV = () => exportToCSV(prepareExportData(), `opt_records_${monthName.replace(" ", "_")}`);
+
+  const handleExportExcel = () => exportToExcel(prepareExportData(), `opt_records_${monthName.replace(" ", "_")}`);
+
+  const handleExportPDF = () => exportToPDF(prepareExportData(), `opt_records_${monthName.replace(" ", "_")}`);
+
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");
     if (!printContent) return;
@@ -128,12 +108,7 @@ export default function OPTTrackingDetails() {
     document.body.innerHTML = originalContents;
     window.location.reload();
   };
-  
-  const handlePageSizeChange = (newPageSize: string) => {
-    setPageSize(Number(newPageSize));
-    setCurrentPage(1);
-  };
-  
+
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -141,20 +116,20 @@ export default function OPTTrackingDetails() {
       .toLocaleDateString("en-PH", {
         year: "numeric",
         month: "2-digit",
-        day: "2-digit",
+        day: "2-digit"
       })
       .replace(/\//g, "-");
   };
-  
+
   const handleSitioSelection = (sitio_name: string, checked: boolean) => {
     if (checked) {
       setSelectedSitios([...selectedSitios, sitio_name]);
       setSitioSearch("");
     } else {
-      setSelectedSitios(selectedSitios.filter(sitio => sitio !== sitio_name));
+      setSelectedSitios(selectedSitios.filter((sitio) => sitio !== sitio_name));
     }
   };
-  
+
   const handleSelectAllSitios = (checked: boolean) => {
     if (checked && sitios.length > 0) {
       setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
@@ -163,39 +138,32 @@ export default function OPTTrackingDetails() {
       setSelectedSitios([]);
     }
   };
-  
+
   const handleManualSitioSearch = (value: string) => {
     setSitioSearch(value);
     if (value) {
       setSelectedSitios([]);
     }
   };
-  
+
   const handleNutritionalStatusSelection = (status: string, checked: boolean) => {
     if (checked) {
       setSelectedNutritionalStatuses([...selectedNutritionalStatuses, status]);
       setNutritionalStatus("");
     } else {
-      setSelectedNutritionalStatuses(selectedNutritionalStatuses.filter(s => s !== status));
+      setSelectedNutritionalStatuses(selectedNutritionalStatuses.filter((s) => s !== status));
     }
   };
-  
+
   const handleSelectAllNutritionalStatuses = (checked: boolean) => {
     if (checked) {
-      setSelectedNutritionalStatuses(nutritionalStatusOptions.map(option => option.value).filter(v => v !== "all"));
+      setSelectedNutritionalStatuses(nutritionalStatusOptions.map((option) => option.value).filter((v) => v !== "all"));
       setNutritionalStatus("");
     } else {
       setSelectedNutritionalStatuses([]);
     }
   };
-  
-  const handleManualNutritionalStatusSearch = (value: string) => {
-    setNutritionalStatus(value);
-    if (value) {
-      setSelectedNutritionalStatuses([]);
-    }
-  };
-  
+
   const getStatusCategory = (status: string) => {
     if (nutritionalStatusCategories.wfa.includes(status)) return "WFA";
     if (nutritionalStatusCategories.lhfa.includes(status)) return "LHFA";
@@ -203,10 +171,10 @@ export default function OPTTrackingDetails() {
     if (nutritionalStatusCategories.muac.includes(status)) return "MUAC";
     return "Other";
   };
-  
+
   const groupedNutritionalStatuses = nutritionalStatusOptions.reduce((acc, option) => {
     if (option.value === "all") return acc;
-    
+
     const category = getStatusCategory(option.value);
     if (!acc[category]) {
       acc[category] = [];
@@ -216,27 +184,19 @@ export default function OPTTrackingDetails() {
   }, {} as Record<string, typeof nutritionalStatusOptions>);
 
   const getStatusDisplayName = (statusValue: string) => {
-    const statusInfo = nutritionalStatusOptions.find(opt => opt.value === statusValue);
+    const statusInfo = nutritionalStatusOptions.find((opt) => opt.value === statusValue);
     return statusInfo?.label || statusValue;
   };
 
   return (
-    <LayoutWithBack
-      title={`OPT Tracking`}
-      description={`${monthName} Child Health Records`}
-    >
+    <LayoutWithBack title={`OPT Tracking`} description={`${monthName} Child Health Records`}>
       <div className="bg-white p-4 border flex flex-col sm:flex-row justify-between gap-4">
         <div className="flex-1 flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search by Name or Sitio..."
-              className="pl-10 w-full"
-              value={sitioSearch}
-              onChange={(e) => handleManualSitioSearch(e.target.value)}
-            />
+            <Input placeholder="Search by Name or Sitio..." className="pl-10 w-full" value={sitioSearch} onChange={(e) => handleManualSitioSearch(e.target.value)} />
           </div>
-          
+
           <div className="flex-1 max-w-md">
             <Select value={ageRange} onValueChange={setAgeRange}>
               <SelectTrigger className="w-full">
@@ -251,52 +211,23 @@ export default function OPTTrackingDetails() {
               </SelectContent>
             </Select>
           </div>
-          
-          <FilterSitio
-            sitios={sitios}
-            isLoading={isLoadingSitios}
-            selectedSitios={selectedSitios}
-            onSitioSelection={handleSitioSelection}
-            onSelectAll={handleSelectAllSitios}
-            onManualSearch={handleManualSitioSearch}
-            manualSearchValue={sitioSearch}
-          />
-          
-          <FilterStatus
-            statusOptions={nutritionalStatusOptions}
-            groupedStatuses={groupedNutritionalStatuses}
-            selectedStatuses={selectedNutritionalStatuses}
-            onStatusSelection={handleNutritionalStatusSelection}
-            onSelectAll={handleSelectAllNutritionalStatuses}
-          />
+
+          <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} onManualSearch={handleManualSitioSearch} manualSearchValue={sitioSearch} />
+
+          <FilterStatus statusOptions={nutritionalStatusOptions} groupedStatuses={groupedNutritionalStatuses} selectedStatuses={selectedNutritionalStatuses} onStatusSelection={handleNutritionalStatusSelection} onSelectAll={handleSelectAllNutritionalStatuses} />
         </div>
-        
+
         <div className="flex gap-2 items-center">
-          <ExportDropdown
-            onExportCSV={handleExportCSV}
-            onExportExcel={handleExportExcel}
-            onExportPDF={handleExportPDF}
-            className="border-gray-200 hover:bg-gray-50"
-          />
-          <Button
-            onClick={handlePrint}
-            className="gap-2 border-gray-200 hover:bg-gray-50"
-          >
+          <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
+          <Button onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
             <Printer className="h-4 w-4 " />
             <span>Print</span>
           </Button>
         </div>
       </div>
-      
-      <SelectedFiltersChips
-        items={selectedSitios}
-        onRemove={(sitio) => handleSitioSelection(sitio, false)}
-        onClearAll={() => setSelectedSitios([])}
-        label="Filtered by sitios"
-        chipColor="bg-blue-100"
-        textColor="text-blue-800"
-      />
-      
+
+      <SelectedFiltersChips items={selectedSitios} onRemove={(sitio) => handleSitioSelection(sitio, false)} onClearAll={() => setSelectedSitios([])} label="Filtered by sitios" chipColor="bg-blue-100" textColor="text-blue-800" />
+
       <SelectedFiltersChips
         items={selectedNutritionalStatuses}
         onRemove={(status) => handleNutritionalStatusSelection(status, false)}
@@ -306,16 +237,11 @@ export default function OPTTrackingDetails() {
         textColor="text-green-800"
         getDisplayName={getStatusDisplayName}
       />
-      
+
       <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 rounded-t-lg">
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-700">Show</span>
-          <Input
-            type="number"
-            value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
-            className="w-20 h-8 bg-white border rounded-md text-sm text-center"
-          />
+          <Input type="number" value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))} className="w-20 h-8 bg-white border rounded-md text-sm text-center" />
           <span className="text-sm text-gray-700">entries</span>
         </div>
         <div className="flex items-center gap-4">
@@ -329,17 +255,10 @@ export default function OPTTrackingDetails() {
               `Showing ${startIndex} - ${endIndex} of ${totalEntries} records`
             )}
           </span>
-          {!isLoading && (
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              className="text-sm"
-            />
-          )}
+          {!isLoading && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />}
         </div>
       </div>
-      
+
       <div className="bg-white rounded-b-lg overflow-hidden">
         <div
           id="printable-area"
@@ -347,40 +266,27 @@ export default function OPTTrackingDetails() {
           style={{
             width: "100%",
             overflowX: "auto",
-            fontSize: "12px",
+            fontSize: "12px"
           }}
         >
-          <div className="min-w-[1000px]"> 
+          <div className="min-w-[1000px]">
             <div className="flex-1 text-center ">
-              <Label className="text-xs font-bold uppercase block">
-                Department of Health{" "}
-              </Label>
-              <Label className="text-sm font-bold uppercase block">
-                NATIONAL NUTRITIONAL COUNCIL
-              </Label>
+              <Label className="text-xs font-bold uppercase block">Department of Health </Label>
+              <Label className="text-sm font-bold uppercase block">NATIONAL NUTRITIONAL COUNCIL</Label>
               <Label className="text-xs block">CEBU CITY HEALTH DEPARTMENT</Label>
             </div>
             <div className="flex mt-4 d text-xs">
               <p className="font-semibold uppercase mr-1">OPT PLUS FORM NO. 1</p>
-              <p className="">
-                List of Preschooler with Weight and Height measurement &
-                Identified status
-              </p>
+              <p className="">List of Preschooler with Weight and Height measurement & Identified status</p>
             </div>
             <div className="text-start mb-6 mt-4 flex justify-between items-center text-xs">
               <div className="flex">
                 <span className="mr-1 font-semibold">Barangay/Sitio:</span>
-                <span className="underline">
-                  {selectedSitios.length > 0 
-                    ? selectedSitios.join(", ") 
-                    : sitioSearch || "All Sitios"
-                  }
-                </span>
+                <span className="underline">{selectedSitios.length > 0 ? selectedSitios.join(", ") : sitioSearch || "All Sitios"}</span>
               </div>
               <span className="font-semibold">Province of Cebu</span>
               <div>
-                <span className=" font-semibold">Year: </span>{" "}
-                <span className="underline">{new Date().getFullYear()}</span>
+                <span className=" font-semibold">Year: </span> <span className="underline">{new Date().getFullYear()}</span>
               </div>
               <div className="">
                 <span className=" font-semibold">Date of OPT Plus: </span>
@@ -391,20 +297,14 @@ export default function OPTTrackingDetails() {
               <div className="w-full h-[200px] flex items-center justify-center">
                 <div className="text-center">
                   <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                  <span className="text-sm text-gray-600">
-                    Loading records...
-                  </span>
+                  <span className="text-sm text-gray-600">Loading records...</span>
                 </div>
               </div>
             ) : records.length === 0 ? (
               <div className="w-full h-[200px] flex items-center justify-center">
                 <div className="text-center">
                   <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600">
-                    {sitioSearch || nutritionalStatus || ageRange || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0
-                      ? "No records found matching your filters"
-                      : "No records found for this month"}
-                  </p>
+                  <p className="text-gray-600">{sitioSearch || nutritionalStatus || ageRange || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0 ? "No records found matching your filters" : "No records found for this month"}</p>
                 </div>
               </div>
             ) : (
@@ -464,51 +364,23 @@ export default function OPTTrackingDetails() {
                   </thead>
                   <tbody className="text-xs text-center">
                     {records.map((item, index) => (
-                      <tr key={index} >
+                      <tr key={index}>
                         <td className="border p-1">{item.household_no}</td>
-                        <td className="border p-1">
-                          {item.parents?.mother || item.parents?.father || "N/A"}
-                        </td>
+                        <td className="border p-1">{item.parents?.mother || item.parents?.father || "N/A"}</td>
                         <td className="border p-1 "></td>
                         <td className="border p-1 "></td>
                         <td className="border p-1">{item.child_name || "N/A"}</td>
-                        <td className="border p-1 ">
-                          {item.sex === "Male"
-                            ? "M"
-                            : item.sex === "Female"
-                            ? "F"
-                            : "N/A"}
-                        </td>
-                        <td className="border p-1 text-center">
-                          {formatDate(item.date_of_birth)}
-                        </td>
-                        <td className="border p-1 text-center">
-                          {formatDate(item.date_of_weighing)}
-                        </td>
-                        <td className="border p-1 text-center">
-                          {item.age_in_months?.toString() || "N/A"}
-                        </td>
-                        <td className="border p-1 text-center">
-                          {item.weight ? Number(item.weight).toFixed(2) : "N/A"}
-                        </td>
-                        <td className="border p-1 text-center">
-                          {item.height ? Number(item.height).toFixed(1) : "N/A"}
-                        </td>
-                        <td className="border p-1 text-center">
-                          {item.nutritional_status?.wfa || "N/A"}
-                        </td>
-                        <td className="border p-1 text-center">
-                          {item.nutritional_status?.lhfa || "N/A"}
-                        </td>
-                        <td className="border p-1 text-center">
-                          {item.nutritional_status?.wfl || "N/A"}
-                        </td>
-                        <td className="border p-1 text-center">
-                          {item.nutritional_status?.muac || "N/A"}
-                        </td>
-                        <td className="border p-1 text-center">
-                          {item.sitio || "N/A"}
-                        </td>
+                        <td className="border p-1 ">{item.sex === "Male" ? "M" : item.sex === "Female" ? "F" : "N/A"}</td>
+                        <td className="border p-1 text-center">{formatDate(item.date_of_birth)}</td>
+                        <td className="border p-1 text-center">{formatDate(item.date_of_weighing)}</td>
+                        <td className="border p-1 text-center">{item.age_in_months?.toString() || "N/A"}</td>
+                        <td className="border p-1 text-center">{item.weight ? Number(item.weight).toFixed(2) : "N/A"}</td>
+                        <td className="border p-1 text-center">{item.height ? Number(item.height).toFixed(1) : "N/A"}</td>
+                        <td className="border p-1 text-center">{item.nutritional_status?.wfa || "N/A"}</td>
+                        <td className="border p-1 text-center">{item.nutritional_status?.lhfa || "N/A"}</td>
+                        <td className="border p-1 text-center">{item.nutritional_status?.wfl || "N/A"}</td>
+                        <td className="border p-1 text-center">{item.nutritional_status?.muac || "N/A"}</td>
+                        <td className="border p-1 text-center">{item.sitio || "N/A"}</td>
                       </tr>
                     ))}
                   </tbody>

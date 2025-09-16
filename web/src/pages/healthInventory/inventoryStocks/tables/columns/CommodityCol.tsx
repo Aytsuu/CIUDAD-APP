@@ -2,7 +2,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { Archive, Minus } from "lucide-react";
-import { Link } from "react-router-dom";
 
 export const CommodityStocksColumns = (handleArchiveInventory: (commodity: any) => void, onOpenWastedModal?: (record: any) => void): ColumnDef<any>[] => [
   {

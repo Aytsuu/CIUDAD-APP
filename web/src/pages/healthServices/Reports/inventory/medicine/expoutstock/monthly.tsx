@@ -1,6 +1,5 @@
 // MedicineExpiredOutOfStockSummary.tsx
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, Folder } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";

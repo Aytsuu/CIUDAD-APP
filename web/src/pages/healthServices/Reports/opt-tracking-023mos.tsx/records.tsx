@@ -1,26 +1,26 @@
-"use client"
+"use client";
 
-import React from "react"
-import { useState, useEffect, useCallback } from "react"
-import { useLocation } from "react-router-dom"
-import { Button } from "@/components/ui/button/button"
-import { Printer, Search, Loader2 } from "lucide-react"
-import { exportToCSV, exportToExcel, exportToPDF } from "../firstaid-report/export-report"
-import { ExportDropdown } from "../firstaid-report/export-dropdown"
-import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { Input } from "@/components/ui/input"
-import { useLoading } from "@/context/LoadingContext"
-import { toast } from "sonner"
-import { useYearlyOPTRecords } from "./queries/fetch"
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
+import React from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button/button";
+import { Printer, Search, Loader2 } from "lucide-react";
+import { exportToCSV, exportToExcel, exportToPDF } from "../firstaid-report/export-report";
+import { ExportDropdown } from "../firstaid-report/export-dropdown";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Input } from "@/components/ui/input";
+import { useLoading } from "@/context/LoadingContext";
+import { toast } from "sonner";
+import { useYearlyOPTRecords } from "./queries/fetch";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
-import { useDebounce } from "@/hooks/use-debounce"
+import { useDebounce } from "@/hooks/use-debounce";
 import { FilterSitio } from "../filter-sitio";
 import { SelectedFiltersChips } from "../selectedFiltersChipsProps ";
 import { FilterStatus } from "../filter-nutstatus";
 import { nutritionalStatusCategories, nutritionalStatusOptions } from "../options";
 
-type Quarter = "Q1" | "Q2" | "Q3"
+type Quarter = "Q1" | "Q2" | "Q3";
 
 const quarterConfig = {
   Q1: {
@@ -28,8 +28,8 @@ const quarterConfig = {
     months: [
       { key: "january", name: "January" },
       { key: "february", name: "February" },
-      { key: "march", name: "March" },
-    ],
+      { key: "march", name: "March" }
+    ]
   },
   Q2: {
     name: "April - August",
@@ -38,8 +38,8 @@ const quarterConfig = {
       { key: "may", name: "May" },
       { key: "june", name: "June" },
       { key: "july", name: "July" },
-      { key: "august", name: "August" },
-    ],
+      { key: "august", name: "August" }
+    ]
   },
   Q3: {
     name: "September - December",
@@ -47,74 +47,66 @@ const quarterConfig = {
       { key: "september", name: "September" },
       { key: "october", name: "October" },
       { key: "november", name: "November" },
-      { key: "december", name: "December" },
-    ],
-  },
-}
+      { key: "december", name: "December" }
+    ]
+  }
+};
 
 export default function QuarterlyOPTDetails() {
-  const location = useLocation()
-  const state = location.state as { year: string; yearName: string }
-  const { year, yearName } = state || {}
-  const { showLoading, hideLoading } = useLoading()
+  const location = useLocation();
+  const state = location.state as { year: string; yearName: string };
+  const { year, yearName } = state || {};
+  const { showLoading, hideLoading } = useLoading();
 
-  const [selectedQuarter, setSelectedQuarter] = useState<Quarter>("Q1")
-  const [sitioSearch, setSitioSearch] = useState("")
-  const [nutritionalStatus, setNutritionalStatus] = useState("")
-  const [pageSize, setPageSize] = useState(10)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [selectedSitios, setSelectedSitios] = useState<string[]>([])
-  const [selectedNutritionalStatuses, setSelectedNutritionalStatuses] = useState<string[]>([])
+  const [selectedQuarter, setSelectedQuarter] = useState<Quarter>("Q1");
+  const [sitioSearch, setSitioSearch] = useState("");
+  const [nutritionalStatus, setNutritionalStatus] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
+  const [selectedNutritionalStatuses, setSelectedNutritionalStatuses] = useState<string[]>([]);
 
   // Fetch sitio list
   const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
   const sitios = sitioData || [];
 
-  const debouncedSitioSearch = useDebounce(sitioSearch, 500)
-  const debouncedNutritionalStatus = useDebounce(nutritionalStatus, 500)
+  const debouncedSitioSearch = useDebounce(sitioSearch, 500);
+  const debouncedNutritionalStatus = useDebounce(nutritionalStatus, 500);
 
   useEffect(() => {
-    setCurrentPage(1)
-  }, [debouncedSitioSearch, debouncedNutritionalStatus, selectedSitios, selectedNutritionalStatuses])
+    setCurrentPage(1);
+  }, [debouncedSitioSearch, debouncedNutritionalStatus, selectedSitios, selectedNutritionalStatuses]);
 
   // Combine selected sitios with search query
-  const combinedSitioSearch = selectedSitios.length > 0 
-    ? selectedSitios.join(',')
-    : sitioSearch;
+  const combinedSitioSearch = selectedSitios.length > 0 ? selectedSitios.join(",") : sitioSearch;
 
-  const combinedNutritionalStatus = selectedNutritionalStatuses.length > 0 
-    ? selectedNutritionalStatuses.join(',')
-    : nutritionalStatus;
+  const combinedNutritionalStatus = selectedNutritionalStatuses.length > 0 ? selectedNutritionalStatuses.join(",") : nutritionalStatus;
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-  } = useYearlyOPTRecords(year, currentPage, pageSize, combinedSitioSearch, combinedNutritionalStatus)
+  const { data: apiResponse, isLoading, error } = useYearlyOPTRecords(year, currentPage, pageSize, combinedSitioSearch, combinedNutritionalStatus);
 
-  const records = apiResponse?.results?.children_data || []
-  const totalEntries = apiResponse?.count || 0
-  const totalPages = Math.ceil(totalEntries / pageSize)
+  const records = apiResponse?.results?.children_data || [];
+  const totalEntries = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalEntries / pageSize);
 
   useEffect(() => {
-    if (isLoading) showLoading()
-    else hideLoading()
-  }, [isLoading, showLoading, hideLoading])
+    if (isLoading) showLoading();
+    else hideLoading();
+  }, [isLoading, showLoading, hideLoading]);
 
   useEffect(() => {
     if (error) {
-      toast.error("Failed to fetch yearly OPT records")
-      console.error("API Error:", error)
+      toast.error("Failed to fetch yearly OPT records");
+      console.error("API Error:", error);
     }
-  }, [error])
+  }, [error]);
 
-  const startIndex = totalEntries === 0 ? 0 : (currentPage - 1) * pageSize + 1
-  const endIndex = Math.min(currentPage * pageSize, totalEntries)
+  const startIndex = totalEntries === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, totalEntries);
 
-  const currentQuarterConfig = quarterConfig[selectedQuarter]
+  const currentQuarterConfig = quarterConfig[selectedQuarter];
 
   const prepareExportData = useCallback(() => {
-    return records.map((item:any) => {
+    return records.map((item: any) => {
       const exportItem: Record<string, string | number | null> = {
         "Child ID": item.child_id || "N/A",
         "Household No": item.household_no || "N/A",
@@ -126,51 +118,48 @@ export default function QuarterlyOPTDetails() {
         "Father's Name": item.parents?.father || "N/A",
         Address: item.address || "N/A",
         Sitio: item.sitio || "N/A",
-        Transient: item.transient ? "Yes" : "No",
-      }
+        Transient: item.transient ? "Yes" : "No"
+      };
 
       // Add only current quarter's monthly data
       currentQuarterConfig.months.forEach((month) => {
-        const monthData = item.monthly_data[month.key]
-        const monthName = month.name
+        const monthData = item.monthly_data[month.key];
+        const monthName = month.name;
 
-        exportItem[`${monthName} Weighing Date`] = monthData?.date_of_weighing || "N/A"
-        exportItem[`${monthName} Weight (kg)`] = monthData?.weight || "N/A"
-        exportItem[`${monthName} Height (cm)`] = monthData?.height || "N/A"
-        exportItem[`${monthName} WFA Status`] = monthData?.body_measurement?.wfa || "N/A"
-        exportItem[`${monthName} LHFA Status`] = monthData?.body_measurement?.lhfa || "N/A"
-        exportItem[`${monthName} WFL Status`] = monthData?.body_measurement?.wfl || "N/A"
-        exportItem[`${monthName} Feeding Type`] = monthData?.type_of_feeding || "N/A"
-      })
+        exportItem[`${monthName} Weighing Date`] = monthData?.date_of_weighing || "N/A";
+        exportItem[`${monthName} Weight (kg)`] = monthData?.weight || "N/A";
+        exportItem[`${monthName} Height (cm)`] = monthData?.height || "N/A";
+        exportItem[`${monthName} WFA Status`] = monthData?.body_measurement?.wfa || "N/A";
+        exportItem[`${monthName} LHFA Status`] = monthData?.body_measurement?.lhfa || "N/A";
+        exportItem[`${monthName} WFL Status`] = monthData?.body_measurement?.wfl || "N/A";
+        exportItem[`${monthName} Feeding Type`] = monthData?.type_of_feeding || "N/A";
+      });
 
-      return exportItem
-    })
-  }, [records, currentQuarterConfig])
+      return exportItem;
+    });
+  }, [records, currentQuarterConfig]);
 
-  const handleExportCSV = () =>
-    exportToCSV(prepareExportData(), `opt_${selectedQuarter}_records_${yearName.replace(" ", "_")}`)
+  const handleExportCSV = () => exportToCSV(prepareExportData(), `opt_${selectedQuarter}_records_${yearName.replace(" ", "_")}`);
 
-  const handleExportExcel = () =>
-    exportToExcel(prepareExportData(), `opt_${selectedQuarter}_records_${yearName.replace(" ", "_")}`)
+  const handleExportExcel = () => exportToExcel(prepareExportData(), `opt_${selectedQuarter}_records_${yearName.replace(" ", "_")}`);
 
-  const handleExportPDF = () =>
-    exportToPDF(prepareExportData(), `opt_${selectedQuarter}_records_${yearName.replace(" ", "_")}`)
+  const handleExportPDF = () => exportToPDF(prepareExportData(), `opt_${selectedQuarter}_records_${yearName.replace(" ", "_")}`);
 
   const handlePrint = () => {
-    const printContent = document.getElementById("printable-area")
-    if (!printContent) return
-    const originalContents = document.body.innerHTML
-    document.body.innerHTML = printContent.innerHTML
-    window.print()
-    document.body.innerHTML = originalContents
-    window.location.reload()
-  }
+    const printContent = document.getElementById("printable-area");
+    if (!printContent) return;
+    const originalContents = document.body.innerHTML;
+    document.body.innerHTML = printContent.innerHTML;
+    window.print();
+    document.body.innerHTML = originalContents;
+    window.location.reload();
+  };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A"
-    const date = new Date(dateString)
-    return date.toLocaleDateString("en-CA")
-  }
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-CA");
+  };
 
   // Filter handlers
   const handleSitioSelection = (sitio_name: string, checked: boolean) => {
@@ -178,7 +167,7 @@ export default function QuarterlyOPTDetails() {
       setSelectedSitios([...selectedSitios, sitio_name]);
       setSitioSearch("");
     } else {
-      setSelectedSitios(selectedSitios.filter(sitio => sitio !== sitio_name));
+      setSelectedSitios(selectedSitios.filter((sitio) => sitio !== sitio_name));
     }
   };
 
@@ -203,25 +192,20 @@ export default function QuarterlyOPTDetails() {
       setSelectedNutritionalStatuses([...selectedNutritionalStatuses, status]);
       setNutritionalStatus("");
     } else {
-      setSelectedNutritionalStatuses(selectedNutritionalStatuses.filter(s => s !== status));
+      setSelectedNutritionalStatuses(selectedNutritionalStatuses.filter((s) => s !== status));
     }
   };
 
   const handleSelectAllNutritionalStatuses = (checked: boolean) => {
     if (checked) {
-      setSelectedNutritionalStatuses(nutritionalStatusOptions.map(option => option.value).filter(v => v !== "all"));
+      setSelectedNutritionalStatuses(nutritionalStatusOptions.map((option) => option.value).filter((v) => v !== "all"));
       setNutritionalStatus("");
     } else {
       setSelectedNutritionalStatuses([]);
     }
   };
 
-  const handleManualNutritionalStatusSearch = (value: string) => {
-    setNutritionalStatus(value);
-    if (value) {
-      setSelectedNutritionalStatuses([]);
-    }
-  };
+  
 
   const getStatusCategory = (status: string) => {
     if (nutritionalStatusCategories.wfa.includes(status)) return "WFA";
@@ -233,7 +217,7 @@ export default function QuarterlyOPTDetails() {
 
   const groupedNutritionalStatuses = nutritionalStatusOptions.reduce((acc, option) => {
     if (option.value === "all") return acc;
-    
+
     const category = getStatusCategory(option.value);
     if (!acc[category]) {
       acc[category] = [];
@@ -243,27 +227,18 @@ export default function QuarterlyOPTDetails() {
   }, {} as Record<string, typeof nutritionalStatusOptions>);
 
   const getStatusDisplayName = (statusValue: string) => {
-    const statusInfo = nutritionalStatusOptions.find(opt => opt.value === statusValue);
+    const statusInfo = nutritionalStatusOptions.find((opt) => opt.value === statusValue);
     return statusInfo?.label || statusValue;
   };
 
   return (
-    <LayoutWithBack
-      title={`Quarterly OPT Tracking`}
-      description={`${yearName} Child Health Records - ${currentQuarterConfig.name}`}
-    >
+    <LayoutWithBack title={`Quarterly OPT Tracking`} description={`${yearName} Child Health Records - ${currentQuarterConfig.name}`}>
       {/* Quarter Selection */}
       <div className="bg-white p-4 border-b">
         <div className="flex flex-wrap gap-2 mb-4">
           <span className="text-sm font-medium text-gray-700 flex items-center">Select Period:</span>
           {Object.entries(quarterConfig).map(([quarter, config]) => (
-            <Button
-              key={quarter}
-              variant={selectedQuarter === quarter ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedQuarter(quarter as Quarter)}
-              className="text-xs"
-            >
+            <Button key={quarter} variant={selectedQuarter === quarter ? "default" : "outline"} size="sm" onClick={() => setSelectedQuarter(quarter as Quarter)} className="text-xs">
               {config.name}
             </Button>
           ))}
@@ -275,40 +250,16 @@ export default function QuarterlyOPTDetails() {
         <div className="flex-1 flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search by Name or Sitio..."
-              className="pl-10 w-full"
-              value={sitioSearch}
-              onChange={(e) => handleManualSitioSearch(e.target.value)}
-            />
+            <Input placeholder="Search by Name or Sitio..." className="pl-10 w-full" value={sitioSearch} onChange={(e) => handleManualSitioSearch(e.target.value)} />
           </div>
 
-          <FilterSitio
-            sitios={sitios}
-            isLoading={isLoadingSitios}
-            selectedSitios={selectedSitios}
-            onSitioSelection={handleSitioSelection}
-            onSelectAll={handleSelectAllSitios}
-            onManualSearch={handleManualSitioSearch}
-            manualSearchValue={sitioSearch}
-          />
-          
-          <FilterStatus
-            statusOptions={nutritionalStatusOptions}
-            groupedStatuses={groupedNutritionalStatuses}
-            selectedStatuses={selectedNutritionalStatuses}
-            onStatusSelection={handleNutritionalStatusSelection}
-            onSelectAll={handleSelectAllNutritionalStatuses}
-          />
+          <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} onManualSearch={handleManualSitioSearch} manualSearchValue={sitioSearch} />
+
+          <FilterStatus statusOptions={nutritionalStatusOptions} groupedStatuses={groupedNutritionalStatuses} selectedStatuses={selectedNutritionalStatuses} onStatusSelection={handleNutritionalStatusSelection} onSelectAll={handleSelectAllNutritionalStatuses} />
         </div>
 
         <div className="flex gap-2 items-center">
-          <ExportDropdown
-            onExportCSV={handleExportCSV}
-            onExportExcel={handleExportExcel}
-            onExportPDF={handleExportPDF}
-            className="border-gray-200 hover:bg-gray-50"
-          />
+          <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
           <Button onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
             <Printer className="h-4 w-4" />
             <span>Print</span>
@@ -316,15 +267,8 @@ export default function QuarterlyOPTDetails() {
         </div>
       </div>
 
-      <SelectedFiltersChips
-        items={selectedSitios}
-        onRemove={(sitio) => handleSitioSelection(sitio, false)}
-        onClearAll={() => setSelectedSitios([])}
-        label="Filtered by sitios"
-        chipColor="bg-blue-100"
-        textColor="text-blue-800"
-      />
-      
+      <SelectedFiltersChips items={selectedSitios} onRemove={(sitio) => handleSitioSelection(sitio, false)} onClearAll={() => setSelectedSitios([])} label="Filtered by sitios" chipColor="bg-blue-100" textColor="text-blue-800" />
+
       <SelectedFiltersChips
         items={selectedNutritionalStatuses}
         onRemove={(status) => handleNutritionalStatusSelection(status, false)}
@@ -344,9 +288,9 @@ export default function QuarterlyOPTDetails() {
             className="w-[70px] h-8"
             value={pageSize}
             onChange={(e) => {
-              const value = Number.parseInt(e.target.value)
-              setPageSize(value > 0 ? value : 1)
-              setCurrentPage(1)
+              const value = Number.parseInt(e.target.value);
+              setPageSize(value > 0 ? value : 1);
+              setCurrentPage(1);
             }}
             min={1}
           />
@@ -364,14 +308,7 @@ export default function QuarterlyOPTDetails() {
               `Showing ${startIndex} - ${endIndex} of ${totalEntries} records`
             )}
           </span>
-          {!isLoading && (
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              className="text-sm"
-            />
-          )}
+          {!isLoading && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />}
         </div>
       </div>
 
@@ -384,7 +321,7 @@ export default function QuarterlyOPTDetails() {
             minHeight: "11in",
             margin: "0 auto",
             fontSize: "10px",
-            lineHeight: "1.2",
+            lineHeight: "1.2"
           }}
         >
           <div className="w-full">
@@ -399,12 +336,7 @@ export default function QuarterlyOPTDetails() {
             <div className="text-start mb-4 flex justify-between items-center text-xs">
               <div className="flex">
                 <span className="mr-1 font-semibold">Barangay/Sitio:</span>
-                <span className="underline">
-                  {selectedSitios.length > 0 
-                    ? selectedSitios.join(", ") 
-                    : sitioSearch || "All Sitios"
-                  }
-                </span>
+                <span className="underline">{selectedSitios.length > 0 ? selectedSitios.join(", ") : sitioSearch || "All Sitios"}</span>
               </div>
               <div>
                 <span className="font-semibold">Calendar Year: </span>
@@ -423,11 +355,7 @@ export default function QuarterlyOPTDetails() {
               <div className="w-full h-[200px] flex items-center justify-center">
                 <div className="text-center">
                   <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600">
-                    {sitioSearch || nutritionalStatus || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0
-                      ? "No records found matching your filters"
-                      : "No records found for this period"}
-                  </p>
+                  <p className="text-gray-600">{sitioSearch || nutritionalStatus || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0 ? "No records found matching your filters" : "No records found for this period"}</p>
                 </div>
               </div>
             ) : (
@@ -476,7 +404,7 @@ export default function QuarterlyOPTDetails() {
                     </tr>
                   </thead>
                   <tbody>
-                    {records.map((item:any, index:any) => (
+                    {records.map((item: any, index: any) => (
                       <>
                         {/* WFA Row */}
                         <tr key={`${index}-wfa`} className="hover:bg-gray-50">
@@ -491,7 +419,7 @@ export default function QuarterlyOPTDetails() {
                           </td>
 
                           {currentQuarterConfig.months.map((month) => {
-                            const monthData = item.monthly_data[month.key]
+                            const monthData = item.monthly_data[month.key];
                             return (
                               <React.Fragment key={`${month.key}-wfa`}>
                                 <td rowSpan={4} className="border border-black p-1 text-center align-middle">
@@ -508,44 +436,44 @@ export default function QuarterlyOPTDetails() {
                                   <span className="ml-1 font-bold">{monthData?.body_measurement?.wfa || ""}</span>
                                 </td>
                               </React.Fragment>
-                            )
+                            );
                           })}
                         </tr>
 
                         {/* L/HFA Row */}
                         <tr key={`${index}-lhfa`} className="hover:bg-gray-50">
                           {currentQuarterConfig.months.map((month) => {
-                            const monthData = item.monthly_data[month.key]
+                            const monthData = item.monthly_data[month.key];
                             return (
                               <td key={`${month.key}-lhfa`} className="border border-black p-1 text-left">
                                 L/HFA:
                                 <span className="ml-1 font-bold">{monthData?.body_measurement?.lhfa || ""}</span>
                               </td>
-                            )
+                            );
                           })}
                         </tr>
 
                         {/* WFL/Ht Row */}
                         <tr key={`${index}-wfl`} className="hover:bg-gray-50">
                           {currentQuarterConfig.months.map((month) => {
-                            const monthData = item.monthly_data[month.key]
+                            const monthData = item.monthly_data[month.key];
                             return (
                               <td key={`${month.key}-wfl`} className="border border-black p-1 text-left">
                                 WFL/Ht:
                                 <span className="ml-1 font-bold">{monthData?.body_measurement?.wfl || ""}</span>
                               </td>
-                            )
+                            );
                           })}
                         </tr>
                         <tr key={`${index}-remarks`} className="hover:bg-gray-50">
                           {currentQuarterConfig.months.map((month) => {
-                          const monthData = item.monthly_data[month.key]
-                          return (
-                            <td key={`${month.key}-remarks`} className="border border-black p-1 text-left">
-                            Remarks:
-                            <span className="ml-1 font-bold">{monthData?.body_measurement?.remarks || ""}</span>
-                            </td>
-                          )
+                            const monthData = item.monthly_data[month.key];
+                            return (
+                              <td key={`${month.key}-remarks`} className="border border-black p-1 text-left">
+                                Remarks:
+                                <span className="ml-1 font-bold">{monthData?.body_measurement?.remarks || ""}</span>
+                              </td>
+                            );
                           })}
                         </tr>
                       </>
@@ -558,5 +486,5 @@ export default function QuarterlyOPTDetails() {
         </div>
       </div>
     </LayoutWithBack>
-  )
+  );
 }

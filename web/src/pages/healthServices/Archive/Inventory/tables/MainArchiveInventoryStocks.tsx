@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Pill, Syringe, Package, Bandage } from "lucide-react";
 import MedicineArchiveTable from "./MedicineStocks";
 import CombinedStockTable from "./VaccineStocks";
-import FirstAidArchiveTable from "./FirstAidStocks";
 import CommodityArchiveTable from "./CommodityStocks";
 
 type ArchiveInventoryView = "medicine" | "vaccine" | "commodity" | "firstaid";

@@ -1,9 +1,7 @@
 // MonthlyChildrenRecords.tsx
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, ChevronLeft, Folder, UserPlus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Loader2, Search, Folder, UserPlus } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
@@ -18,14 +16,9 @@ export default function MonthlyNewChildrenRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [yearFilter, setYearFilter] = useState<string>("all");
-  const navigate = useNavigate();
+  const [yearFilter] = useState<string>("all");
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-  } = useMonthlyChildrenCount(yearFilter);
+  const { data: apiResponse, isLoading, error } = useMonthlyChildrenCount(yearFilter);
 
   useEffect(() => {
     if (error) {
@@ -49,34 +42,25 @@ export default function MonthlyNewChildrenRecords() {
   const totalMonths = monthlyData.length;
 
   // Filter data based on search query
-  const filteredData = monthlyData.filter((monthData:any) => {
-    const monthName = new Date(monthData.month + "-01").toLocaleString(
-      "default",
-      {
-        month: "long",
-        year: "numeric",
-      }
-    );
+  const filteredData = monthlyData.filter((monthData: any) => {
+    const monthName = new Date(monthData.month + "-01").toLocaleString("default", {
+      month: "long",
+      year: "numeric"
+    });
     const searchText = `${monthData.month} ${monthName}`.toLowerCase();
     return searchText.includes(searchQuery.toLowerCase());
   });
 
   // Paginate the filtered data
   const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, yearFilter]);
 
-  
   return (
-    <LayoutWithBack
-      title="Monthly New Children Records"
-      description={`View new children records grouped by month (${totalMonths} months found)`}>
+    <LayoutWithBack title="Monthly New Children Records" description={`View new children records grouped by month (${totalMonths} months found)`}>
       <div>
         <Card className="p-6">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
@@ -86,17 +70,10 @@ export default function MonthlyNewChildrenRecords() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-             
-
               {/* Search Input */}
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
-                <Input
-                  placeholder="Search by month..."
-                  className="pl-10 bg-white w-full"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                <Input placeholder="Search by month..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
             </div>
           </div>
@@ -125,14 +102,7 @@ export default function MonthlyNewChildrenRecords() {
                 <span className="text-sm text-gray-600">entries per page</span>
               </div>
 
-              {totalPages > 1 && (
-                <PaginationLayout
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  className="justify-end"
-                />
-              )}
+              {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="justify-end" />}
             </div>
 
             <div className="bg-white w-full px-4 pt-3">
@@ -143,14 +113,11 @@ export default function MonthlyNewChildrenRecords() {
                 </div>
               ) : paginatedData.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {paginatedData.map((record:any) => {
-                    const monthName = new Date(record.year_month + "-01").toLocaleString(
-                      "default",
-                      {
-                        month: "long",
-                        year: "numeric",
-                      }
-                    );
+                  {paginatedData.map((record: any) => {
+                    const monthName = new Date(record.year_month + "-01").toLocaleString("default", {
+                      month: "long",
+                      year: "numeric"
+                    });
 
                     return (
                       <MonthInfoCard
@@ -158,15 +125,15 @@ export default function MonthlyNewChildrenRecords() {
                         monthItem={{
                           month: record.year_month,
                           total_items: record.count,
-                          month_name: monthName,
+                          month_name: monthName
                         }}
                         navigateTo={{
                           path: "/monthly-new-children-records/details",
                           state: {
                             month: record.year_month,
                             monthName: monthName,
-                            recordCount: record.count,
-                          },
+                            recordCount: record.count
+                          }
                         }}
                         className="[&_.icon-gradient]:from-green-400 [&_.icon-gradient]:to-green-600 
                                   [&_.item-count]:bg-green-100 [&_.item-count]:text-green-700 
@@ -179,9 +146,7 @@ export default function MonthlyNewChildrenRecords() {
                 <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500 p-8">
                   <Folder className="w-16 h-16 text-gray-300 mb-4" />
                   <h3 className="text-lg font-medium mb-2">No months found</h3>
-                  <p className="text-sm text-center text-gray-400">
-                    {searchQuery ? "Try adjusting your search criteria" : "No children records available"}
-                  </p>
+                  <p className="text-sm text-center text-gray-400">{searchQuery ? "Try adjusting your search criteria" : "No children records available"}</p>
                 </div>
               )}
 
@@ -192,13 +157,7 @@ export default function MonthlyNewChildrenRecords() {
                     Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} months
                   </p>
 
-                  {totalPages > 1 && (
-                    <PaginationLayout
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  )}
+                  {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
                 </div>
               )}
             </div>

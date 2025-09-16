@@ -9,7 +9,6 @@ export const createchildSoapForm = async (data: Record<string, any>) => {
     console.log("Child SOAP form created successfully:", response.data);
 
     return response.data; // Return the response data
-   
   } catch (error) {
     console.error("Error creating child SOAP form:", error);
     throw error;

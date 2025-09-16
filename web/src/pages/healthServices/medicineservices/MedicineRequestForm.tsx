@@ -25,7 +25,6 @@ import { MediaUploadType, MediaUpload } from "@/components/ui/media-upload";
 import { StatusIndicator } from "./StatusIndicator";
 import { MedicineSummaryModal } from "./MedicineSummaryModal";
 
-
 export default function MedicineRequestForm() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -267,7 +266,7 @@ export default function MedicineRequestForm() {
                 </Button>
                 <Button
                   onClick={handlePreview}
-                  disabled={(mode === "fromindivrecord" && !selectedPatientData) || (mode === "fromallrecordtable" && !selectedPatientId) || selectedMedicines.length === 0 || hasInvalidQuantities || isMedicinesLoading || (hasPrescriptionMedicine && mediaFiles.length === 0) }
+                  disabled={(mode === "fromindivrecord" && !selectedPatientData) || (mode === "fromallrecordtable" && !selectedPatientId) || selectedMedicines.length === 0 || hasInvalidQuantities || isMedicinesLoading || (hasPrescriptionMedicine && mediaFiles.length === 0)}
                   className="w-full sm:w-auto px-6 text-white order-1 sm:order-2"
                 >
                   {isMedicinesLoading ? "Loading..." : "Preview Request"}

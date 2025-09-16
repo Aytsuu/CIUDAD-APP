@@ -1,7 +1,7 @@
 // MonthlyMedicineRecords.tsx
 import { useState, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, Folder, Filter } from "lucide-react";
+import { Loader2, Search, Folder } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
@@ -10,7 +10,6 @@ import { useMedicineMonths } from "./queries/fetch";
 import { MonthInfoCard } from "../../month-folder-component";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button/button";
 
 export default function InventoryMonthlyMedicineRecords() {
@@ -21,20 +20,15 @@ export default function InventoryMonthlyMedicineRecords() {
   const [sortBy, setSortBy] = useState<"month" | "items">("month");
   const [yearFilter] = useState<string>("all");
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-    refetch,
-  } = useMedicineMonths(currentPage, pageSize, yearFilter, searchQuery);
+  const { data: apiResponse, isLoading, error, refetch } = useMedicineMonths(currentPage, pageSize, yearFilter, searchQuery);
 
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch medicine months", {
         action: {
           label: "Retry",
-          onClick: () => refetch(),
-        },
+          onClick: () => refetch()
+        }
       });
     }
   }, [error, refetch]);
@@ -54,10 +48,7 @@ export default function InventoryMonthlyMedicineRecords() {
 
   // Memoized filtered and sorted data
   const filteredMonthlyData = useMemo(() => {
-    const filtered = monthlyData.filter(monthItem =>
-      monthItem.month_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      monthItem.month.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filtered = monthlyData.filter((monthItem) => monthItem.month_name.toLowerCase().includes(searchQuery.toLowerCase()) || monthItem.month.toLowerCase().includes(searchQuery.toLowerCase()));
 
     // Sort data
     return filtered.sort((a, b) => {
@@ -99,28 +90,18 @@ export default function InventoryMonthlyMedicineRecords() {
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-gray-900">Inventory Stock Report</h2>
-            <p className="text-sm text-gray-500">
-              View medicine transactions grouped by month
-            </p>
+            <p className="text-sm text-gray-500">View medicine transactions grouped by month</p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             {/* Search Input */}
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
-              <Input
-                placeholder="Search by month..."
-                className="pl-10 bg-white w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <Input placeholder="Search by month..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
-
-           
           </div>
         </div>
 
-      
         <div className="h-full w-full rounded-md">
           {/* Table Header with Pagination Controls */}
           <div className="w-full h-auto sm:h-16 bg-slate-50 flex flex-col sm:flex-row justify-between sm:items-center p-4 mb-4 gap-3">
@@ -146,14 +127,7 @@ export default function InventoryMonthlyMedicineRecords() {
               <span className="text-sm text-gray-600">entries per page</span>
             </div>
 
-            {totalPages > 1 && (
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                className="justify-end"
-              />
-            )}
+            {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="justify-end" />}
           </div>
 
           <div className="bg-white w-full ">
@@ -165,8 +139,8 @@ export default function InventoryMonthlyMedicineRecords() {
             ) : filteredMonthlyData.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {filteredMonthlyData.map((monthItem) => (
-                  <MonthInfoCard 
-                    key={monthItem.month} 
+                  <MonthInfoCard
+                    key={monthItem.month}
                     monthItem={monthItem}
                     navigateTo={{
                       path: "/inventory-monthly-medicine-details",
@@ -174,7 +148,7 @@ export default function InventoryMonthlyMedicineRecords() {
                         month: monthItem.month,
                         monthName: new Date(monthItem.month + "-01").toLocaleString("default", {
                           month: "long",
-                          year: "numeric",
+                          year: "numeric"
                         })
                       }
                     }}
@@ -186,26 +160,18 @@ export default function InventoryMonthlyMedicineRecords() {
               <div className="w-full h-[300px] flex flex-col items-center justify-center text-gray-500 p-8">
                 <Folder className="w-16 h-16 text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No months found</h3>
-                <p className="text-sm text-center text-gray-400">
-                  {searchQuery ? "Try adjusting your search criteria" : "No monthly records available"}
-                </p>
+                <p className="text-sm text-center text-gray-400">{searchQuery ? "Try adjusting your search criteria" : "No monthly records available"}</p>
               </div>
             )}
-            
+
             {/* Footer with Pagination */}
             {filteredMonthlyData.length > 0 && (
               <div className="flex flex-col sm:flex-row items-center justify-between w-full pt-3 gap-3 border-t mt-6">
                 <p className="text-sm text-gray-600">
                   Showing {displayRange.start} to {displayRange.end} of {totalMonths} months
                 </p>
-                
-                {totalPages > 1 && (
-                  <PaginationLayout
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                )}
+
+                {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
               </div>
             )}
           </div>

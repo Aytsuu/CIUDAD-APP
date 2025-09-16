@@ -1,23 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Printer, Search, Loader2 } from "lucide-react";
-import {
-  exportToCSV,
-  exportToExcel,
-  exportToPDF,
-} from "../../firstaid-report/export-report";
+import { Printer, Search, Loader2 } from "lucide-react";
+import { exportToCSV, exportToExcel, exportToPDF } from "../../firstaid-report/export-report";
 import { ExportDropdown } from "../../firstaid-report/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
 import TableLayout from "@/components/ui/table/table-layout";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { useMonthlyFirstAidRecords } from "./queries/fetch";
@@ -35,14 +25,9 @@ export default function MonthlyInventoryFirstAidDetails() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-  } = useMonthlyFirstAidRecords(month, currentPage, pageSize, searchTerm);
+  const { data: apiResponse, isLoading, error } = useMonthlyFirstAidRecords(month, currentPage, pageSize, searchTerm);
 
-  const records: FirstAidInventoryItem[] =
-    apiResponse?.data?.inventory_summary || [];
+  const records: FirstAidInventoryItem[] = apiResponse?.data?.inventory_summary || [];
 
   useEffect(() => {
     if (isLoading) showLoading();
@@ -65,10 +50,7 @@ export default function MonthlyInventoryFirstAidDetails() {
 
   const totalPages = Math.ceil(filteredRecords.length / pageSize);
   const paginatedRecords = useMemo(() => {
-    return filteredRecords.slice(
-      (currentPage - 1) * pageSize,
-      currentPage * pageSize
-    );
+    return filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   }, [filteredRecords, currentPage, pageSize]);
 
   const totalItems = apiResponse?.data?.total_items || filteredRecords.length;
@@ -83,28 +65,14 @@ export default function MonthlyInventoryFirstAidDetails() {
       "Dispensed Items": item.dispensed,
       "Closing Stock": item.closing,
       Unit: item.unit,
-      "Expiry Date": item.expiry
-        ? new Date(item.expiry).toLocaleDateString()
-        : "N/A",
+      "Expiry Date": item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A"
     }));
 
-  const handleExportCSV = () =>
-    exportToCSV(
-      prepareExportData(),
-      `firstaid_inventory_${monthName.replace(" ", "_")}`
-    );
+  const handleExportCSV = () => exportToCSV(prepareExportData(), `firstaid_inventory_${monthName.replace(" ", "_")}`);
 
-  const handleExportExcel = () =>
-    exportToExcel(
-      prepareExportData(),
-      `firstaid_inventory_${monthName.replace(" ", "_")}`
-    );
+  const handleExportExcel = () => exportToExcel(prepareExportData(), `firstaid_inventory_${monthName.replace(" ", "_")}`);
 
-  const handleExportPDF = () =>
-    exportToPDF(
-      prepareExportData(),
-      `firstaid_inventory_${monthName.replace(" ", "_")}`
-    );
+  const handleExportPDF = () => exportToPDF(prepareExportData(), `firstaid_inventory_${monthName.replace(" ", "_")}`);
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");
@@ -130,37 +98,20 @@ export default function MonthlyInventoryFirstAidDetails() {
       <span>(Present Month),</span>
     </div>,
     "Unit",
-    "Expiry Date",
+    "Expiry Date"
   ];
 
   return (
-    <LayoutWithBack
-      title={`First Aid Inventory`}
-      description={`${monthName} First Aid Inventory Summary`}
-    >
+    <LayoutWithBack title={`First Aid Inventory`} description={`${monthName} First Aid Inventory Summary`}>
       <div className="bg-white p-4 border flex flex-col sm:flex-row justify-between gap-4">
         <div className="flex-1 max-w-md relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search first aid items..."
-            className="pl-10 w-full"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <Input placeholder="Search first aid items..." className="pl-10 w-full" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
 
         <div className="flex gap-2 items-center">
-          <ExportDropdown
-            onExportCSV={handleExportCSV}
-            onExportExcel={handleExportExcel}
-            onExportPDF={handleExportPDF}
-            className="border-gray-200 hover:bg-gray-50"
-          />
-          <Button
-            variant="outline"
-            onClick={handlePrint}
-            className="gap-2 border-gray-200 hover:bg-gray-50"
-          >
+          <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
+          <Button variant="outline" onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
             <Printer className="h-4 w-4" />
             <span>Print</span>
           </Button>
@@ -195,12 +146,7 @@ export default function MonthlyInventoryFirstAidDetails() {
           <span className="text-sm text-gray-700">
             Showing {startIndex} - {endIndex} of {totalItems} items
           </span>
-          <PaginationLayout
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            className="text-sm"
-          />
+          <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />
         </div>
       </div>
 
@@ -211,7 +157,7 @@ export default function MonthlyInventoryFirstAidDetails() {
           style={{
             minHeight: "11in",
             margin: "0 auto",
-            fontSize: "12px",
+            fontSize: "12px"
           }}
         >
           <div className="text-center mb-6 print-only">
@@ -227,16 +173,7 @@ export default function MonthlyInventoryFirstAidDetails() {
           ) : (
             <TableLayout
               header={tableHeader}
-              rows={paginatedRecords.map((item) => [
-                item.fa_name,
-                item.opening.toString(),
-                item.dispensed.toString(),
-                item.closing.toString(),
-                item.unit,
-                item.expiry
-                  ? new Date(item.expiry).toLocaleDateString()
-                  : "N/A",
-              ])}
+              rows={paginatedRecords.map((item) => [item.fa_name, item.opening.toString(), item.dispensed.toString(), item.closing.toString(), item.unit, item.expiry ? new Date(item.expiry).toLocaleDateString() : "N/A"])}
               tableClassName="w-full border"
               headerCellClassName="font-medium text-sm p-2 border text-center"
               bodyCellClassName="p-2 border text-sm text-center"

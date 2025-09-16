@@ -1,47 +1,47 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button/button"
-import { Input } from "@/components/ui/input"
-import { Loader2, Search, ChevronLeft, Folder } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { toast } from "sonner"
-import { useLoading } from "@/context/LoadingContext"
-import type { OPTYearItem } from "./types"
-import { useOPTYears } from "./queries/fetch"
-import { MonthInfoCard } from "../month-folder-component"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button/button";
+import { Input } from "@/components/ui/input";
+import { Loader2, Search, ChevronLeft, Folder } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { toast } from "sonner";
+import { useLoading } from "@/context/LoadingContext";
+import type { OPTYearItem } from "./types";
+import { useOPTYears } from "./queries/fetch";
+import { MonthInfoCard } from "../month-folder-component";
 export default function YearlySemiAnnualOPTRecords() {
-  const { showLoading, hideLoading } = useLoading()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [pageSize, setPageSize] = useState(10)
-  const [currentPage, setCurrentPage] = useState(1)
-  const navigate = useNavigate()
+  const { showLoading, hideLoading } = useLoading();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
 
-  const { data: apiResponse, isLoading, error } = useOPTYears(currentPage, pageSize, searchQuery)
+  const { data: apiResponse, isLoading, error } = useOPTYears(currentPage, pageSize, searchQuery);
 
   useEffect(() => {
     if (error) {
-      toast.error("Failed to fetch OPT years")
-      toast("Retrying...")
+      toast.error("Failed to fetch OPT years");
+      toast("Retrying...");
       setTimeout(() => {
-        window.location.reload()
-      }, 2000)
+        window.location.reload();
+      }, 2000);
     }
-  }, [error])
+  }, [error]);
 
   useEffect(() => {
-    if (isLoading) showLoading()
-    else hideLoading()
-  }, [isLoading, showLoading, hideLoading])
+    if (isLoading) showLoading();
+    else hideLoading();
+  }, [isLoading, showLoading, hideLoading]);
 
-  const yearlyData: OPTYearItem[] = apiResponse?.results?.data || []
-  const totalYears: number = apiResponse?.results?.total_years || 0
-  const totalPages = Math.ceil(totalYears / pageSize)
+  const yearlyData: OPTYearItem[] = apiResponse?.results?.data || [];
+  const totalYears: number = apiResponse?.results?.total_years || 0;
+  const totalPages = Math.ceil(totalYears / pageSize);
 
   useEffect(() => {
-    setCurrentPage(1)
-  }, [searchQuery])
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -51,9 +51,7 @@ export default function YearlySemiAnnualOPTRecords() {
         </Button>
         <div className="flex-col items-center">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Yearly OPT Records</h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            View child health records grouped by year ({totalYears} years found)
-          </p>
+          <p className="text-xs sm:text-sm text-darkGray">View child health records grouped by year ({totalYears} years found)</p>
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
@@ -62,12 +60,7 @@ export default function YearlySemiAnnualOPTRecords() {
         <div className="sm:flex-row w-[250px] gap-2 mb-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={17} />
-            <Input
-              placeholder="Search by year (e.g. '2025')..."
-              className="pl-10 bg-white w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <Input placeholder="Search by year (e.g. '2025')..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
         </div>
       </div>
@@ -81,9 +74,9 @@ export default function YearlySemiAnnualOPTRecords() {
               className="w-[70px] h-8"
               value={pageSize}
               onChange={(e) => {
-                const value = Number.parseInt(e.target.value)
-                setPageSize(value > 0 ? value : 1)
-                setCurrentPage(1)
+                const value = Number.parseInt(e.target.value);
+                setPageSize(value > 0 ? value : 1);
+                setCurrentPage(1);
               }}
               min={1}
             />
@@ -129,14 +122,11 @@ export default function YearlySemiAnnualOPTRecords() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray">
-            Showing {yearlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, totalYears)} of {totalYears} years
+            Showing {yearlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalYears)} of {totalYears} years
           </p>
-          {totalPages > 1 && (
-            <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-          )}
+          {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
         </div>
       </div>
     </div>
-  )
+  );
 }

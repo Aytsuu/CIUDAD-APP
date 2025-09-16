@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Pill, AlertCircle, Loader2, History, Package, CheckCircle } from "lucide-react";
+import { AlertCircle, Loader2, History, Package, CheckCircle } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
@@ -26,13 +26,12 @@ export default function MedicineRequestPendingItems() {
   const medreq_id = location.state?.params?.medreq_id;
   const patientInfo = location.state?.params?.patientData;
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [medicineDisplayPage, setMedicineDisplayPage] = useState(1);
 
-  
   // Use the existing fetchMedicinesWithStock function
   const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
   // Use the new mutation hook instead of useCreateMedicineAllocation
@@ -82,12 +81,12 @@ export default function MedicineRequestPendingItems() {
       const matchingStocks = medicineStocksOptions.filter((stock: any) => String(stock.med_id) === String(pendingMedicine.med_id));
 
       // For each matching stock, create an entry
-      matchingStocks.forEach((stock: any, stockIndex: number) => {
+      matchingStocks.forEach((stock: any) => {
         // Get the pending items for this medicine
         const pendingItems = pendingMedicine.request_items.filter((item: any) => item.status === "pending");
 
         // If there are pending items, create mapping entries
-        pendingItems.forEach((item: any, itemIndex: number) => {
+        pendingItems.forEach((item: any) => {
           const uniqueId = `${pendingMedicine.med_id}_${stock.id}_${item.medreqitem_id}`;
 
           mappedMedicines.push({
@@ -113,12 +112,11 @@ export default function MedicineRequestPendingItems() {
   // Get the enhanced medicine stocks with proper mapping
   const enhancedMedicineStocks = createMedicineMapping();
 
- 
   // Calculate the actual count of pending items
-const pendingItemsCount = medicineData.reduce((count:any, medicine:any) => {
-  const pendingItems = medicine.request_items.filter((item: any) => item.status === "pending");
-  return count + pendingItems.length;
-}, 0);
+  const pendingItemsCount = medicineData.reduce((count: any, medicine: any) => {
+    const pendingItems = medicine.request_items.filter((item: any) => item.status === "pending");
+    return count + pendingItems.length;
+  }, 0);
 
   const processMedicineAllocation = () => {
     if (!medreq_id) {
@@ -207,13 +205,13 @@ const pendingItemsCount = medicineData.reduce((count:any, medicine:any) => {
           </Card>
         )}
 
-       
-
         {/* Pending Items Table */}
         <Card>
           <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
             <div>
-              <CardTitle>Pending Medicine Requests <span className="bg-red-500 text-white rounded-full text-sm px-2"> {totalCount}</span></CardTitle>
+              <CardTitle>
+                Pending Medicine Requests <span className="bg-red-500 text-white rounded-full text-sm px-2"> {totalCount}</span>
+              </CardTitle>
               <CardDescription>Review pending medicine request items before confirmation</CardDescription>
             </div>
             <div className="flex items-center gap-3">
@@ -225,7 +223,7 @@ const pendingItemsCount = medicineData.reduce((count:any, medicine:any) => {
                   }
                 }}
               >
-                <Button  size="sm">
+                <Button size="sm">
                   <History className="h-4 w-4 mr-2" />
                   View History
                 </Button>

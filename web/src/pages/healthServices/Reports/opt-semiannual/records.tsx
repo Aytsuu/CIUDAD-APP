@@ -18,7 +18,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { FilterSitio } from "../filter-sitio";
 import { SelectedFiltersChips } from "../selectedFiltersChipsProps ";
 import { FilterStatus } from "../filter-nutstatus";
-import {  nutritionalStatusCategories, nutritionalStatusOptions } from "../options";
+import { nutritionalStatusCategories, nutritionalStatusOptions } from "../options";
 import { useDebounce } from "@/hooks/use-debounce";
 
 const periodOptions = [
@@ -51,16 +51,11 @@ export default function SemiAnnualOPTDetails() {
     setCurrentPage(1);
   }, [debouncedSitioSearch, debouncedNutritionalStatus, selectedSitios, selectedNutritionalStatuses, periodFilter]);
 
-  const combinedSitioSearch = selectedSitios.length > 0 
-    ? selectedSitios.join(',')
-    : sitioSearch;
+  const combinedSitioSearch = selectedSitios.length > 0 ? selectedSitios.join(",") : sitioSearch;
 
-  const combinedNutritionalStatus = selectedNutritionalStatuses.length > 0 
-    ? selectedNutritionalStatuses.join(',')
-    : nutritionalStatus;
+  const combinedNutritionalStatus = selectedNutritionalStatuses.length > 0 ? selectedNutritionalStatuses.join(",") : nutritionalStatus;
 
-    const { data: apiResponse, isLoading, error } = useSemiAnnualOPTRecords(year, currentPage, pageSize, combinedSitioSearch, combinedNutritionalStatus);
-
+  const { data: apiResponse, isLoading, error } = useSemiAnnualOPTRecords(year, currentPage, pageSize, combinedSitioSearch, combinedNutritionalStatus);
 
   const records: SemiAnnualChildRecord[] = apiResponse?.results?.children_data || [];
   const summary = apiResponse?.results?.summary;
@@ -144,7 +139,7 @@ export default function SemiAnnualOPTDetails() {
       setSelectedSitios([...selectedSitios, sitio_name]);
       setSitioSearch("");
     } else {
-      setSelectedSitios(selectedSitios.filter(sitio => sitio !== sitio_name));
+      setSelectedSitios(selectedSitios.filter((sitio) => sitio !== sitio_name));
     }
   };
 
@@ -169,13 +164,13 @@ export default function SemiAnnualOPTDetails() {
       setSelectedNutritionalStatuses([...selectedNutritionalStatuses, status]);
       setNutritionalStatus("");
     } else {
-      setSelectedNutritionalStatuses(selectedNutritionalStatuses.filter(s => s !== status));
+      setSelectedNutritionalStatuses(selectedNutritionalStatuses.filter((s) => s !== status));
     }
   };
 
   const handleSelectAllNutritionalStatuses = (checked: boolean) => {
     if (checked) {
-      setSelectedNutritionalStatuses(nutritionalStatusOptions.map(option => option.value).filter(v => v !== "all"));
+      setSelectedNutritionalStatuses(nutritionalStatusOptions.map((option) => option.value).filter((v) => v !== "all"));
       setNutritionalStatus("");
     } else {
       setSelectedNutritionalStatuses([]);
@@ -199,7 +194,7 @@ export default function SemiAnnualOPTDetails() {
 
   const groupedNutritionalStatuses = nutritionalStatusOptions.reduce((acc, option) => {
     if (option.value === "all") return acc;
-    
+
     const category = getStatusCategory(option.value);
     if (!acc[category]) {
       acc[category] = [];
@@ -209,7 +204,7 @@ export default function SemiAnnualOPTDetails() {
   }, {} as Record<string, typeof nutritionalStatusOptions>);
 
   const getStatusDisplayName = (statusValue: string) => {
-    const statusInfo = nutritionalStatusOptions.find(opt => opt.value === statusValue);
+    const statusInfo = nutritionalStatusOptions.find((opt) => opt.value === statusValue);
     return statusInfo?.label || statusValue;
   };
 
@@ -219,12 +214,7 @@ export default function SemiAnnualOPTDetails() {
         <div className="flex-1 flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input 
-              placeholder="Search by Name or Sitio..." 
-              className="pl-10 w-full" 
-              value={sitioSearch} 
-              onChange={(e) => handleManualSitioSearch(e.target.value)} 
-            />
+            <Input placeholder="Search by Name or Sitio..." className="pl-10 w-full" value={sitioSearch} onChange={(e) => handleManualSitioSearch(e.target.value)} />
           </div>
 
           <div className="flex-1 max-w-md">
@@ -241,24 +231,10 @@ export default function SemiAnnualOPTDetails() {
               </SelectContent>
             </Select>
           </div>
-          
-          <FilterSitio
-            sitios={sitios}
-            isLoading={isLoadingSitios}
-            selectedSitios={selectedSitios}
-            onSitioSelection={handleSitioSelection}
-            onSelectAll={handleSelectAllSitios}
-            onManualSearch={handleManualSitioSearch}
-            manualSearchValue={sitioSearch}
-          />
-          
-          <FilterStatus
-            statusOptions={nutritionalStatusOptions}
-            groupedStatuses={groupedNutritionalStatuses}
-            selectedStatuses={selectedNutritionalStatuses}
-            onStatusSelection={handleNutritionalStatusSelection}
-            onSelectAll={handleSelectAllNutritionalStatuses}
-          />
+
+          <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} onManualSearch={handleManualSitioSearch} manualSearchValue={sitioSearch} />
+
+          <FilterStatus statusOptions={nutritionalStatusOptions} groupedStatuses={groupedNutritionalStatuses} selectedStatuses={selectedNutritionalStatuses} onStatusSelection={handleNutritionalStatusSelection} onSelectAll={handleSelectAllNutritionalStatuses} />
         </div>
 
         <div className="flex gap-2 items-center">
@@ -270,15 +246,8 @@ export default function SemiAnnualOPTDetails() {
         </div>
       </div>
 
-      <SelectedFiltersChips
-        items={selectedSitios}
-        onRemove={(sitio) => handleSitioSelection(sitio, false)}
-        onClearAll={() => setSelectedSitios([])}
-        label="Filtered by sitios"
-        chipColor="bg-blue-100"
-        textColor="text-blue-800"
-      />
-      
+      <SelectedFiltersChips items={selectedSitios} onRemove={(sitio) => handleSitioSelection(sitio, false)} onClearAll={() => setSelectedSitios([])} label="Filtered by sitios" chipColor="bg-blue-100" textColor="text-blue-800" />
+
       <SelectedFiltersChips
         items={selectedNutritionalStatuses}
         onRemove={(status) => handleNutritionalStatusSelection(status, false)}
@@ -339,12 +308,7 @@ export default function SemiAnnualOPTDetails() {
             <div className="text-start mb-4 mt-2 flex justify-between items-center text-xs">
               <div className="flex">
                 <span className="mr-1 font-semibold">Baranagy/Sitio:</span>
-                <span className="underline">
-                  {selectedSitios.length > 0 
-                    ? selectedSitios.join(", ") 
-                    : sitioSearch || "All Sitios"
-                  }
-                </span>
+                <span className="underline">{selectedSitios.length > 0 ? selectedSitios.join(", ") : sitioSearch || "All Sitios"}</span>
               </div>
               <div>
                 <span className="font-semibold">Calendar Year: </span>
@@ -352,10 +316,7 @@ export default function SemiAnnualOPTDetails() {
               </div>
               <div>
                 <span className="font-semibold">Period: </span>
-                <span className="underline">
-                  {periodFilter === "both" ? "Both Periods" : 
-                   periodFilter === "first" ? "First Semi-Annual" : "Second Semi-Annual"}
-                </span>
+                <span className="underline">{periodFilter === "both" ? "Both Periods" : periodFilter === "first" ? "First Semi-Annual" : "Second Semi-Annual"}</span>
               </div>
             </div>
 
@@ -370,11 +331,7 @@ export default function SemiAnnualOPTDetails() {
               <div className="w-full h-[200px] flex items-center justify-center">
                 <div className="text-center">
                   <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600">
-                    {sitioSearch || nutritionalStatus || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0
-                      ? "No records found matching your filters"
-                      : "No records found for this year"}
-                  </p>
+                  <p className="text-gray-600">{sitioSearch || nutritionalStatus || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0 ? "No records found matching your filters" : "No records found for this year"}</p>
                 </div>
               </div>
             ) : (

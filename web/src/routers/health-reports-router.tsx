@@ -44,7 +44,6 @@ import AntigenInventoryReportsTabs from "@/pages/healthServices/Reports/inventor
 
 import MonthlyNewChildrenRecords from "@/pages/healthServices/Reports/newchildren-list-report/monthly";
 import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/Reports/newchildren-list-report/records";
-import path from "path";
 export const reports_router = [
   {
     path: "/bhwmonthlyreport",

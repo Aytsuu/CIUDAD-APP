@@ -17,7 +17,7 @@ interface VaccinationSectionProps {
   selectedVaccineListId: string;
   handleExistingVaccineChange: (value: string) => void;
   setSelectedVaccineListId: (value: string) => void;
-  existingVaccineErrors: { vaccine?: string; dose?: string; date?: string;};
+  existingVaccineErrors: { vaccine?: string; dose?: string; date?: string };
   form: any; // Replace with proper form type
   existingVaccineTotalDoses: number;
   addExistingVac: () => void;
@@ -29,10 +29,7 @@ interface VaccinationSectionProps {
   handleVaccineChange: (value: string) => void;
   setSelectedVaccineId: (value: string) => void;
   isLoading: boolean;
-  newVaccineErrors: {vaccine?: string;
-    dose?: string;
-    date?: string;
-  };
+  newVaccineErrors: { vaccine?: string; dose?: string; date?: string };
   currentVaccineTotalDoses: number;
   selectedVaccineId: string;
   nextVisitDate: string | null;

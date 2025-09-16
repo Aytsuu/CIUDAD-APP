@@ -2,8 +2,7 @@ import { format } from "date-fns";
 import { MedicalConsultationHistory } from "../types";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Printer, History } from "lucide-react";
-import { Link } from "react-router";
+import { Printer } from "lucide-react";
 
 interface PatientData {
   pat_id: string;
@@ -289,12 +288,9 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
     <div className={`bg-white ${className}`}>
       {/* Print Button */}
       <div className="no-print mb-4 flex justify-end gap-2">
-       
         <Button onClick={handlePrint} variant="outline" className="flex gap-2 py-2 px-4 rounded border border-zinc-400">
           <Printer /> Print
         </Button>
-
-       
       </div>
 
       {/* Content to be printed */}

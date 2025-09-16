@@ -1,65 +1,36 @@
 import { exportToPDF, exportToCSV, exportToExcel } from "../../firstaid-report/export-report";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { getFullChildHealthSupplementsReport } from "./restful-api/fetch";
-import {formatDate,formatSupplementDate,formatMnpDates} from "@/helpers/dateHelper"
+import { formatDate, formatSupplementDate, formatMnpDates } from "@/helpers/dateHelper";
 
 // Helper function to prepare export data from records array
 export const prepareExportDataFromRecords = (recordsData: any[]) => {
   return recordsData.map((record) => ({
     "Date Registered": formatDate(record.date_registered),
     "Child Name": record.child_name,
-    "Date of Birth": record.date_of_birth
-      ? formatDate(record.date_of_birth)
-      : "-",
+    "Date of Birth": record.date_of_birth ? formatDate(record.date_of_birth) : "-",
     Sex: record.sex || "-",
-    "Mother's Name":
-      record.mother_name === "Not available" ? "-" : record.mother_name,
+    "Mother's Name": record.mother_name === "Not available" ? "-" : record.mother_name,
     "Age (months)": record.current_age_months,
     Address: record.address,
     Sitio: record.sitio,
     "Family No": record.family_no,
-    "Vitamin A (6-11 months)": formatSupplementDate(
-      record.supplements.vitamin_a["6-11"]
-    ),
-    "Vitamin A (12-23 months - 1st dose)": formatSupplementDate(
-      record.supplements.vitamin_a["12-23"]["1st_dose"]
-    ),
-    "Vitamin A (12-23 months - 2nd dose)": formatSupplementDate(
-      record.supplements.vitamin_a["12-23"]["2nd_dose"]
-    ),
-    "Vitamin A (24-35 months - 1st dose)": formatSupplementDate(
-      record.supplements.vitamin_a["24-35"]["1st_dose"]
-    ),
-    "Vitamin A (24-35 months - 2nd dose)": formatSupplementDate(
-      record.supplements.vitamin_a["24-35"]["2nd_dose"]
-    ),
-    "Vitamin A (36-47 months - 1st dose)": formatSupplementDate(
-      record.supplements.vitamin_a["36-47"]["1st_dose"]
-    ),
-    "Vitamin A (36-47 months - 2nd dose)": formatSupplementDate(
-      record.supplements.vitamin_a["36-47"]["2nd_dose"]
-    ),
-    "Vitamin A (48-59 months - 1st dose)": formatSupplementDate(
-      record.supplements.vitamin_a["48-59"]["1st_dose"]
-    ),
-    "Vitamin A (48-59 months - 2nd dose)": formatSupplementDate(
-      record.supplements.vitamin_a["48-59"]["2nd_dose"]
-    ),
+    "Vitamin A (6-11 months)": formatSupplementDate(record.supplements.vitamin_a["6-11"]),
+    "Vitamin A (12-23 months - 1st dose)": formatSupplementDate(record.supplements.vitamin_a["12-23"]["1st_dose"]),
+    "Vitamin A (12-23 months - 2nd dose)": formatSupplementDate(record.supplements.vitamin_a["12-23"]["2nd_dose"]),
+    "Vitamin A (24-35 months - 1st dose)": formatSupplementDate(record.supplements.vitamin_a["24-35"]["1st_dose"]),
+    "Vitamin A (24-35 months - 2nd dose)": formatSupplementDate(record.supplements.vitamin_a["24-35"]["2nd_dose"]),
+    "Vitamin A (36-47 months - 1st dose)": formatSupplementDate(record.supplements.vitamin_a["36-47"]["1st_dose"]),
+    "Vitamin A (36-47 months - 2nd dose)": formatSupplementDate(record.supplements.vitamin_a["36-47"]["2nd_dose"]),
+    "Vitamin A (48-59 months - 1st dose)": formatSupplementDate(record.supplements.vitamin_a["48-59"]["1st_dose"]),
+    "Vitamin A (48-59 months - 2nd dose)": formatSupplementDate(record.supplements.vitamin_a["48-59"]["2nd_dose"]),
     "MNP (6-11 months)": formatMnpDates(record.supplements.mnp["6-11"]),
     "MNP (12-23 months)": formatMnpDates(record.supplements.mnp["12-23"]),
-    "Deworming (12-23 months - 1st dose)": formatSupplementDate(
-      record.supplements.deworming["12-23"]["1st_dose"]
-    ),
-    "Deworming (12-23 months - 2nd dose)": formatSupplementDate(
-      record.supplements.deworming["12-23"]["2nd_dose"]
-    ),
-    "Deworming (24-59 months - 1st dose)": formatSupplementDate(
-      record.supplements.deworming["24-59"]["1st_dose"]
-    ),
-    "Deworming (24-59 months - 2nd dose)": formatSupplementDate(
-      record.supplements.deworming["24-59"]["2nd_dose"]
-    ),
-    "Feeding Type": record.type_of_feeding || "N/A",
+    "Deworming (12-23 months - 1st dose)": formatSupplementDate(record.supplements.deworming["12-23"]["1st_dose"]),
+    "Deworming (12-23 months - 2nd dose)": formatSupplementDate(record.supplements.deworming["12-23"]["2nd_dose"]),
+    "Deworming (24-59 months - 1st dose)": formatSupplementDate(record.supplements.deworming["24-59"]["1st_dose"]),
+    "Deworming (24-59 months - 2nd dose)": formatSupplementDate(record.supplements.deworming["24-59"]["2nd_dose"]),
+    "Feeding Type": record.type_of_feeding || "N/A"
   }));
 };
 
@@ -68,9 +39,7 @@ export const fetchAllDataForExport = async (searchQuery: string, showLoading: ()
   try {
     showLoading();
 
-    const allData = await getFullChildHealthSupplementsReport(
-      searchQuery
-    );
+    const allData = await getFullChildHealthSupplementsReport(searchQuery);
 
     let exportRecords;
 
@@ -128,7 +97,6 @@ export const handleExportPDF = async (searchQuery: string, showLoading: () => vo
     console.error("PDF export failed:", error);
   }
 };
-
 
 // Print handler - simplified version that directly prints without showing layout
 export const handlePrint = async (searchQuery: string, showLoading: () => void, hideLoading: () => void) => {
@@ -269,7 +237,7 @@ export const handlePrint = async (searchQuery: string, showLoading: () => void, 
         <tbody>
           ${printRecords
             .map(
-              (record, index) => `
+              (record) => `
             <tr class="border-b border-gray-200">
               <td class="border-r border-gray-300 px-2 py-2 text-center text-[10px]">
                 ${formatDate(record.date_registered)}
@@ -278,21 +246,13 @@ export const handlePrint = async (searchQuery: string, showLoading: () => void, 
                 ${record.child_name}
               </td>
               <td class="border-r border-gray-300 px-2 py-2 text-center text-[10px]">
-                ${
-                  record.date_of_birth
-                    ? formatDate(record.date_of_birth)
-                    : "-"
-                }
+                ${record.date_of_birth ? formatDate(record.date_of_birth) : "-"}
               </td>
               <td class="border-r border-gray-300 px-2 py-2 text-center text-[10px]">
                 ${record.sex || "-"}
               </td>
               <td class="border-r border-gray-300 px-2 py-2 text-left text-[10px]">
-                ${
-                  record.mother_name === "Not available"
-                    ? "-"
-                    : record.mother_name
-                }
+                ${record.mother_name === "Not available" ? "-" : record.mother_name}
               </td>
               
               <!-- Vitamin A - 6-11 months -->
@@ -302,50 +262,34 @@ export const handlePrint = async (searchQuery: string, showLoading: () => void, 
               
               <!-- Vitamin A - 12-23 months -->
               <td class="border-r border-gray-300 px-1 py-2 text-center text-[10px]">
-                ${formatSupplementDate(
-                  record.supplements.vitamin_a["12-23"]["1st_dose"]
-                )}
+                ${formatSupplementDate(record.supplements.vitamin_a["12-23"]["1st_dose"])}
               </td>
               <td class="border-r border-gray-300 px-1 py-2 text-center text-[10px]">
-                ${formatSupplementDate(
-                  record.supplements.vitamin_a["12-23"]["2nd_dose"]
-                )}
+                ${formatSupplementDate(record.supplements.vitamin_a["12-23"]["2nd_dose"])}
               </td>
               
               <!-- Vitamin A - 24-35 months -->
               <td class="border-r border-gray-300 px-1 py-2 text-center text-[10px]">
-                ${formatSupplementDate(
-                  record.supplements.vitamin_a["24-35"]["1st_dose"]
-                )}
+                ${formatSupplementDate(record.supplements.vitamin_a["24-35"]["1st_dose"])}
               </td>
               <td class="border-r border-gray-300 px-1 py-2 text-center text-[10px]">
-                ${formatSupplementDate(
-                  record.supplements.vitamin_a["24-35"]["2nd_dose"]
-                )}
+                ${formatSupplementDate(record.supplements.vitamin_a["24-35"]["2nd_dose"])}
               </td>
               
               <!-- Vitamin A - 36-47 months -->
               <td class="border-r border-gray-300 px-1 py-2 text-center text-[10px]">
-                ${formatSupplementDate(
-                  record.supplements.vitamin_a["36-47"]["1st_dose"]
-                )}
+                ${formatSupplementDate(record.supplements.vitamin_a["36-47"]["1st_dose"])}
               </td>
               <td class="border-r border-gray-300 px-1 py-2 text-center text-[10px]">
-                ${formatSupplementDate(
-                  record.supplements.vitamin_a["36-47"]["2nd_dose"]
-                )}
+                ${formatSupplementDate(record.supplements.vitamin_a["36-47"]["2nd_dose"])}
               </td>
               
               <!-- Vitamin A - 48-59 months -->
               <td class="border-r border-gray-300 px-1 py-2 text-center text-[10px]">
-                ${formatSupplementDate(
-                  record.supplements.vitamin_a["48-59"]["1st_dose"]
-                )}
+                ${formatSupplementDate(record.supplements.vitamin_a["48-59"]["1st_dose"])}
               </td>
               <td class="border-r border-gray-300 px-1 py-2 text-center text-[10px]">
-                ${formatSupplementDate(
-                  record.supplements.vitamin_a["48-59"]["2nd_dose"]
-                )}
+                ${formatSupplementDate(record.supplements.vitamin_a["48-59"]["2nd_dose"])}
               </td>
               
               <!-- MNP -->
@@ -358,26 +302,18 @@ export const handlePrint = async (searchQuery: string, showLoading: () => void, 
               
               <!-- Deworming - 12-23 months -->
               <td class="border-r border-gray-300 px-1 py-2 text-center text-[10px]">
-                ${formatSupplementDate(
-                  record.supplements.deworming["12-23"]["1st_dose"]
-                )}
+                ${formatSupplementDate(record.supplements.deworming["12-23"]["1st_dose"])}
               </td>
               <td class="border-r border-gray-300 px-1 py-2 text-center text-[10px]">
-                ${formatSupplementDate(
-                  record.supplements.deworming["12-23"]["2nd_dose"]
-                )}
+                ${formatSupplementDate(record.supplements.deworming["12-23"]["2nd_dose"])}
               </td>
               
               <!-- Deworming - 24-59 months -->
               <td class="border-r border-gray-300 px-1 py-2 text-center text-[10px]">
-                ${formatSupplementDate(
-                  record.supplements.deworming["24-59"]["1st_dose"]
-                )}
+                ${formatSupplementDate(record.supplements.deworming["24-59"]["1st_dose"])}
               </td>
               <td class="border-r border-gray-300 px-1 py-2 text-center text-[10px]">
-                ${formatSupplementDate(
-                  record.supplements.deworming["24-59"]["2nd_dose"]
-                )}
+                ${formatSupplementDate(record.supplements.deworming["24-59"]["2nd_dose"])}
               </td>
               
               <!-- Remarks -->
@@ -394,13 +330,13 @@ export const handlePrint = async (searchQuery: string, showLoading: () => void, 
     `;
 
     // Create a hidden iframe for printing
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'absolute';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = 'none';
-    iframe.style.left = '-9999px';
-    
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "absolute";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "none";
+    iframe.style.left = "-9999px";
+
     iframe.srcdoc = `
       <html>
         <head>
@@ -470,14 +406,13 @@ export const handlePrint = async (searchQuery: string, showLoading: () => void, 
     `;
 
     document.body.appendChild(iframe);
-    
+
     // Clean up after printing
-    iframe.onload = function() {
+    iframe.onload = function () {
       setTimeout(() => {
         document.body.removeChild(iframe);
       }, 1000);
     };
-
   } catch (error) {
     console.error("Print failed:", error);
     showErrorToast("Failed to prepare data for printing");

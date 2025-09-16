@@ -11,24 +11,15 @@ export default function FirstAidInventoryReportsTabs() {
 
   return (
     <div className="w-full  pb-10">
-      <LayoutWithBack
-        title="Antigen Inventory Reports"
-        description="View and manage antigen inventory reports including stock levels and restock needs."
-      >
+      <LayoutWithBack title="Antigen Inventory Reports" description="View and manage antigen inventory reports including stock levels and restock needs.">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full ">
           <div className="flex items-center justify-center mb-6">
             <TabsList className="grid grid-cols-2 p-1 h-auto rounded-full w-full max-w-md bg-white">
-              <TabsTrigger 
-                value="inventory" 
-                className="flex items-center justify-center gap-2 py-2 data-[state=active]:text-blue-500  data-[state=active]:bg-blue-100  data-[state=active]:rounded-full transition-all"
-              >
+              <TabsTrigger value="inventory" className="flex items-center justify-center gap-2 py-2 data-[state=active]:text-blue-500  data-[state=active]:bg-blue-100  data-[state=active]:rounded-full transition-all">
                 <Package className="h-4 w-4" />
                 <span>Inventory Stocks Report</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="restock" 
-                className="flex items-center justify-center gap-2 py-2 data-[state=active]:text-blue-500 data-[state=active]:bg-blue-100 data-[state=active]:rounded-full transition-all"
-              >
+              <TabsTrigger value="restock" className="flex items-center justify-center gap-2 py-2 data-[state=active]:text-blue-500 data-[state=active]:bg-blue-100 data-[state=active]:rounded-full transition-all">
                 <AlertTriangle className="h-4 w-4" />
                 <span>Need Restock Report</span>
               </TabsTrigger>

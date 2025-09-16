@@ -44,13 +44,7 @@ export default function AntigenProblemDetails() {
   const filteredRecords = useMemo(() => {
     if (!searchTerm) return allProblemItems;
     const lower = searchTerm.toLowerCase();
-    return allProblemItems.filter((item) => 
-      item.name.toLowerCase().includes(lower) || 
-      item.status.toLowerCase().includes(lower) ||
-      item.type.toLowerCase().includes(lower) ||
-      (item.solvent && item.solvent.toLowerCase().includes(lower)) ||
-      item.batch_number.toLowerCase().includes(lower)
-    );
+    return allProblemItems.filter((item) => item.name.toLowerCase().includes(lower) || item.status.toLowerCase().includes(lower) || item.type.toLowerCase().includes(lower) || (item.solvent && item.solvent.toLowerCase().includes(lower)) || item.batch_number.toLowerCase().includes(lower));
   }, [allProblemItems, searchTerm]);
 
   // Pagination calculations
@@ -66,20 +60,20 @@ export default function AntigenProblemDetails() {
   // Prepare data for export
   const prepareExportData = () =>
     filteredRecords.map((item) => ({
-      "Type": item.type,
-      "Name": item.name,
-      "Solvent": item.solvent || 'N/A',
+      Type: item.type,
+      Name: item.name,
+      Solvent: item.solvent || "N/A",
       "Batch Number": item.batch_number,
       "Expiry Date": item.expiry_date,
       "Opening Stock": item.opening_stock,
-      "Received": item.received,
-      "Dispensed": item.dispensed,
-      "Wasted": item.wasted,
-      "Administered": item.administered,
+      Received: item.received,
+      Dispensed: item.dispensed,
+      Wasted: item.wasted,
+      Administered: item.administered,
       "Closing Stock": item.closing_stock,
-      "Unit": item.unit,
-      "Dose ML": item.dose_ml || 'N/A',
-      "Status": item.status
+      Unit: item.unit,
+      "Dose ML": item.dose_ml || "N/A",
+      Status: item.status
     }));
 
   const handleExportCSV = () => exportToCSV(prepareExportData(), `vaccination_problems_${monthName}`);
@@ -119,9 +113,7 @@ export default function AntigenProblemDetails() {
         </Button>
         <div className="flex-col items-center">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Vaccination Need Restocking Details - {monthName}</h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Track vaccines and immunization supplies needing restocking - expired, out of stock, and near expiry -  ({summary.total_problems}  found)
-          </p>
+          <p className="text-xs sm:text-sm text-darkGray">Track vaccines and immunization supplies needing restocking - expired, out of stock, and near expiry - ({summary.total_problems} found)</p>
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
@@ -188,7 +180,7 @@ export default function AntigenProblemDetails() {
             rows={paginatedRecords.map((item) => [
               item.type,
               item.name,
-              item.solvent || 'N/A',
+              item.solvent || "N/A",
               item.batch_number,
               item.expiry_date,
               item.opening_stock.toString(),
@@ -214,8 +206,7 @@ export default function AntigenProblemDetails() {
       {/* Printable area */}
       <div id="printable-area" className="hidden">
         <div className="text-center mb-6">
-          <h2 className="font-bold uppercase tracking-wide text-lg"> Vaccination Restocking Summary
-          - {monthName}</h2>
+          <h2 className="font-bold uppercase tracking-wide text-lg"> Vaccination Restocking Summary - {monthName}</h2>
         </div>
         <table className="w-full border-collapse border border-gray-400">
           <thead>
@@ -232,7 +223,7 @@ export default function AntigenProblemDetails() {
               <tr key={index}>
                 <td className="border border-gray-400 p-2">{item.type}</td>
                 <td className="border border-gray-400 p-2">{item.name}</td>
-                <td className="border border-gray-400 p-2">{item.solvent || 'N/A'}</td>
+                <td className="border border-gray-400 p-2">{item.solvent || "N/A"}</td>
                 <td className="border border-gray-400 p-2">{item.batch_number}</td>
                 <td className="border border-gray-400 p-2">{item.expiry_date}</td>
                 <td className="border border-gray-400 p-2 text-center">{item.opening_stock}</td>

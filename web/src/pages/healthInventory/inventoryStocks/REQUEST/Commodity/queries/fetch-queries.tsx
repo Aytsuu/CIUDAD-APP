@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCommodityStocks, getCommodityStocksTable } from "../restful-api/CommodityGetAPI";
+import { getCommodityStocksTable } from "../restful-api/CommodityGetAPI";
 import { showErrorToast } from "@/components/ui/toast";
 import { getCommodity } from "@/pages/healthInventory/InventoryList/restful-api/commodity/fetch-api";
 

@@ -18,11 +18,7 @@ export default function MonthlyOPTRecords() {
   const [yearFilter] = useState<string>("all");
   const navigate = useNavigate();
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-  } = useOPTMonths(currentPage, pageSize, yearFilter, searchQuery);
+  const { data: apiResponse, isLoading, error } = useOPTMonths(currentPage, pageSize, yearFilter, searchQuery);
 
   useEffect(() => {
     if (error) {
@@ -50,37 +46,20 @@ export default function MonthlyOPTRecords() {
   return (
     <div className="w-full h-full flex flex-col">
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <Button
-          className="text-black p-2 mb-2 self-start"
-          variant={"outline"}
-          onClick={() => navigate(-1)}
-        >
+        <Button className="text-black p-2 mb-2 self-start" variant={"outline"} onClick={() => navigate(-1)}>
           <ChevronLeft />
         </Button>
         <div className="flex-col items-center">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Monthly OPT Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            View child health records grouped by month ({totalMonths} months
-            found)
-          </p>
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Monthly OPT Records</h1>
+          <p className="text-xs sm:text-sm text-darkGray">View child health records grouped by month ({totalMonths} months found)</p>
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
       <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
         <div className="relative flex-1">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2"
-            size={17}
-          />
-          <Input
-            placeholder="Search by month (e.g. 'August 2025')..."
-            className="pl-10 bg-white w-full"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={17} />
+          <Input placeholder="Search by month (e.g. 'August 2025')..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
       </div>
 
@@ -117,14 +96,14 @@ export default function MonthlyOPTRecords() {
                   monthItem={{
                     month: monthItem.month,
                     total_items: monthItem.record_count,
-                    month_name: monthItem.month_name,
+                    month_name: monthItem.month_name
                   }}
                   navigateTo={{
                     path: "/monthly-opt-details",
                     state: {
                       month: monthItem.month,
-                      monthName: monthItem.month_name,
-                    },
+                      monthName: monthItem.month_name
+                    }
                   }}
                   className="[&_.icon-gradient]:from-yellow-400 [&_.icon-gradient]:to-orange-500 [&_.item-count]:bg-blue-100 [&_.item-count]:text-blue-700"
                 />
@@ -141,18 +120,9 @@ export default function MonthlyOPTRecords() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray">
-            Showing{" "}
-            {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, totalMonths)} of {totalMonths}{" "}
-            months
+            Showing {monthlyData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalMonths)} of {totalMonths} months
           </p>
-          {totalPages > 1 && (
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          )}
+          {totalPages > 1 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 // InvMedicalConRecords.tsx
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import  { useState, useEffect, useCallback, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -21,11 +21,11 @@ import { getMedicalConsultationColumns } from "./columns/indiv_col";
 export default function InvMedicalConRecords() {
   const location = useLocation();
   const { params } = location.state || {};
-  const { patientData } = params || {}; 
+  const { patientData } = params || {};
   const mode = params.mode || "";
 
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
@@ -351,7 +351,6 @@ export default function InvMedicalConRecords() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="ml-2">Loading medicine records...</span>
               </div>
-            
             </>
           ) : isMedicalRecordsError ? (
             <div className="p-4 flex items-center gap-2 text-red-500">

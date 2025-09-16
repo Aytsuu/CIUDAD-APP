@@ -4,7 +4,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Search, FileInput, ChevronLeft, Loader2 } from "lucide-react";
+import { FileInput, ChevronLeft, Loader2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ChildHealthRecordCard } from "@/components/ui/childInfocard";
@@ -27,10 +27,10 @@ export default function InvChildHealthRecords() {
   const navigate = useNavigate();
   const { ChildHealthRecord } = location.state || {};
   const [childData] = useState(ChildHealthRecord);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   // Add safe access to ChildHealthRecord properties
   const patId = childData?.pat_id || "";
   const dob = childData?.dob || "";

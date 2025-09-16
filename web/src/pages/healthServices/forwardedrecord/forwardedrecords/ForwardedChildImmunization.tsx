@@ -87,7 +87,7 @@ export default function ForwardedCHimmunizationTable() {
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [currentData, setCurrentData] = useState<any[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-  const [selectedFilter, setSelectedFilter] = useState("all");
+  const [selectedFilter] = useState("all");
   const navigate = useNavigate();
 
   useEffect(() => {

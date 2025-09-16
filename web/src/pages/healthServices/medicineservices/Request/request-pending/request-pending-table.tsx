@@ -30,7 +30,12 @@ export default function PendingCnfirmation() {
     };
   }, [searchQuery]);
 
-  const { data: apiResponse, isLoading, error, refetch } = usePendingMedRequest(
+  const {
+    data: apiResponse,
+    isLoading,
+    error,
+    refetch
+  } = usePendingMedRequest(
     currentPage,
     pageSize,
     debouncedSearch,
@@ -48,7 +53,6 @@ export default function PendingCnfirmation() {
         <div className="text-red-500 text-lg mb-4">Failed to load pending medicine requests</div>
         <div className="flex gap-4">
           <Button onClick={() => refetch()}>Retry</Button>
-       
         </div>
       </div>
     );
@@ -60,12 +64,7 @@ export default function PendingCnfirmation() {
         <div className="w-full flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-            <Input
-              placeholder="Search by ID, name, contact, or patient ID..."
-              className="pl-10 bg-white w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <Input placeholder="Search by ID, name, contact, or patient ID..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
 
           <SelectLayout
@@ -135,12 +134,7 @@ export default function PendingCnfirmation() {
             </div>
           ) : medicineRequests.length === 0 ? (
             <div className="w-full h-[100px] flex items-center justify-center text-gray-500">
-              <span className="ml-2">
-                {debouncedSearch || dateFilter !== "all" 
-                  ? "No requests found matching your criteria" 
-                  : "No pending medicine requests found"
-                }
-              </span>
+              <span className="ml-2">{debouncedSearch || dateFilter !== "all" ? "No requests found matching your criteria" : "No pending medicine requests found"}</span>
             </div>
           ) : (
             <DataTable columns={medicineRequestPendingColumns} data={medicineRequests} />
@@ -150,16 +144,11 @@ export default function PendingCnfirmation() {
         {medicineRequests.length > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-
-              {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
+              Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
             </p>
 
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout 
-                currentPage={currentPage} 
-                totalPages={totalPages} 
-                onPageChange={setCurrentPage} 
-              />
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           </div>
         )}

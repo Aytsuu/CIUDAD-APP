@@ -105,9 +105,7 @@ export default function FirstAidProblemDetails() {
         </Button>
         <div className="flex-col items-center">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">First Aid Need Restocking Details - {monthName}</h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Track first aid items needing restocking - expired, out of stock, and near expiry -  ({summary.total_problems}  found)
-          </p>
+          <p className="text-xs sm:text-sm text-darkGray">Track first aid items needing restocking - expired, out of stock, and near expiry - ({summary.total_problems} found)</p>
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
@@ -186,8 +184,7 @@ export default function FirstAidProblemDetails() {
       {/* Printable area */}
       <div id="printable-area" className="hidden">
         <div className="text-center mb-6">
-          <h2 className="font-bold uppercase tracking-wide text-lg"> First Aid Restocking Summary
-          - {monthName}</h2>
+          <h2 className="font-bold uppercase tracking-wide text-lg"> First Aid Restocking Summary - {monthName}</h2>
         </div>
         <table className="w-full border-collapse border border-gray-400">
           <thead>

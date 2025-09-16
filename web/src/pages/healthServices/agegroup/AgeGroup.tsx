@@ -67,15 +67,15 @@ export default function AgeGroup() {
         );
       }
       return { previousAgeGroups };
-    },
-    onError: (error, id, context) => {
+        },
+        onError: (error, _, context) => {
       console.error("Error deleting age group:", error);
       toast.error("Error deleting age group. Please try again.");
       if (context?.previousAgeGroups) {
         queryClient.setQueryData(["ageGroups"], context.previousAgeGroups);
       }
-    },
-    onSettled: () => {
+        },
+        onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["ageGroups"] });
       toast.success("Age group deleted successfully!");
     }

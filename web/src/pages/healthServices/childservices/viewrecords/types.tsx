@@ -13,26 +13,26 @@
 //     per_religion: string;
 //     per_contact: string;
 //   }
-  
+
 //   export interface RPInfo {
 //     rp_id: string;
 //     per: PersonalInfo;
 //     rp_date_registered: string;
 //     staff: string;
 //   }
-  
+
 //   export interface FamilyHead {
 //     role: string;
 //     personal_info: PersonalInfo;
 //     rp_id?: string;
 //     composition_id?: number;
 //   }
-  
+
 //   export interface FamilyHeads {
 //     mother?: FamilyHead;
 //     father?: FamilyHead;
 //   }
-  
+
 //   export interface FamilyHeadInfo {
 //     fam_id: string | null;
 //     family_heads: FamilyHeads;
@@ -40,7 +40,7 @@
 //     has_father: boolean;
 //     total_heads: number;
 //   }
-  
+
 //   export interface SpouseInfo {
 //     spouse_exists: boolean;
 //     allow_spouse_insertion?: boolean;
@@ -54,7 +54,7 @@
 //     spouse_dob?: string;
 //     created_at?: string;
 //   }
-  
+
 //   export interface Address {
 //     add_street: string;
 //     add_barangay: string;
@@ -63,7 +63,7 @@
 //     add_sitio: string;
 //     full_address: string;
 //   }
-  
+
 //   export interface PatDetails {
 //     pat_id: string;
 //     personal_info: PersonalInfo;
@@ -80,7 +80,7 @@
 //     updated_at: string;
 //     trans_id: string | null;
 //   }
-  
+
 //   export interface PatRecDetails {
 //     patrec_id: number;
 //     pat_details: PatDetails;
@@ -88,7 +88,7 @@
 //     created_at: string;
 //     pat_id: string;
 //   }
-  
+
 //   export interface StaffDetails {
 //     staff_id: string;
 //     staff_assign_date: string;
@@ -108,7 +108,7 @@
 //     };
 //     manager: string;
 //   }
-  
+
 //   export interface CHRecDetails {
 //     chrec_id: number;
 //     staff_details: StaffDetails;
@@ -126,13 +126,13 @@
 //     staff: string;
 //     patrec: number;
 //   }
-  
+
 //   export interface DisabilityDetails {
 //     disability_id: number;
 //     disability_name: string;
 //     created_at: string;
 //   }
-  
+
 //   export interface Disability {
 //     pd_id: number;
 //     disability_details: DisabilityDetails;
@@ -140,7 +140,7 @@
 //     patrec: number;
 //     disability: number;
 //   }
-  
+
 //   export interface FollowVDetails {
 //     followv_id: number;
 //     followv_date: string;
@@ -150,7 +150,7 @@
 //     updated_at: string;
 //     patrec: number;
 //   }
-  
+
 //   export interface CHNotes {
 //     chnotes_id: number;
 //     chhist_details: any;
@@ -163,7 +163,7 @@
 //     followv: number | null;
 //     staff: string;
 //   }
-  
+
 //   export interface BMDetails {
 //     bm_id: number;
 //     age: string;
@@ -173,7 +173,6 @@
 //     patrec: number;
 //     staff: string;
 //   }
-  
 
 //   export interface CHVitalSigns {
 //     chvital_id: number;
@@ -187,7 +186,7 @@
 //     find: any;
 //     chhist: number;
 //   }
-  
+
 //   export interface MedDetail {
 //     med_id: string;
 //     catlist: string;
@@ -197,7 +196,7 @@
 //     updated_at: string;
 //     cat: number;
 //   }
-  
+
 //   export interface MinvDetail {
 //     minv_id: number;
 //     inv_detail: any;
@@ -212,7 +211,7 @@
 //     minv_pcs: number;
 //     minv_qty_avail: number;
 //   }
-  
+
 //   export interface MedRecDetail {
 //     medrec_id: number;
 //     minv_details: MinvDetail;
@@ -226,14 +225,14 @@
 //     medreq_id: number | null;
 //     staff: string | null;
 //   }
-  
+
 //   export interface CHSupplement {
 //     chsupplement_id: number;
 //     medrec_details: MedRecDetail;
 //     chhist: number;
 //     medrec: number;
 //   }
-  
+
 //   export interface EBFCheck {
 //     ebf_id: number;
 //     chhist_details: any;
@@ -241,7 +240,7 @@
 //     chhist: number;
 //     created_at: string;
 //   }
-  
+
 //   export interface CHSSupplementStat {
 //     chssupplementstat_id: number;
 //     chsupp_details: any;
@@ -254,7 +253,7 @@
 //     chsupplement: number;
 //     date_completed?: string | null;
 //   }
-  
+
 //   export interface NutritionStatus {
 //     nutstat_id: number;
 //     chvital_details: any;
@@ -266,8 +265,7 @@
 //     created_at: string;
 //     chvital: number;
 //   }
-  
-  
+
 // export interface ImmunizationTracking {
 //   imt_id: number;
 //   vachist_details: VaccinationHistoryDetails;
@@ -277,8 +275,6 @@
 //   chhist: number;
 
 // }
-
-
 
 // export interface VaccineDetails {
 //   vac_id: number;
@@ -309,7 +305,7 @@
 //   vacStck_id: number;
 //   vac_details: VaccineDetails; // You might want to replace 'any' with a specific type
 //   followv: number;
-  
+
 // }
 
 // export interface VitalSigns {
@@ -407,7 +403,7 @@
 //     disabilities: Disability[];
 //     created_at: string;
 //     tt_status: string;
-//     status: string;  
+//     status: string;
 //     chrec: number;
 //     chrec_details: CHRecDetails;
 //     child_health_notes: CHNotes[];
@@ -419,7 +415,6 @@
 //     nutrition_statuses: NutritionStatus[];
 //   }
 
-
 // export interface FieldConfig {
 //     label: string;
 //     path: string[];
@@ -428,7 +423,3 @@
 //       record?: ChildHealthHistoryRecord
 //     ) => string | JSX.Element[] | string[];
 //   }
-
-
-
-  

@@ -8,7 +8,6 @@ import { Search, Plus, FileInput, Loader2, XCircle, Clock, CalendarOff } from "l
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useArchiveAntigenStocks } from "../REQUEST/Archive/ArchivePutQueries";
 import { getStockColumns } from "./columns/AntigenCol";

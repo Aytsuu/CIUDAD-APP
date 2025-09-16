@@ -6,45 +6,42 @@ export interface MedicineMonthItem {
   month: string;
   total_items?: number;
   month_name?: string;
-  
 }
 
 interface MonthInfoCardProps {
   monthItem: MedicineMonthItem;
-  navigateTo?: string | { 
-    path: string;
-    state?: Record<string, any>;
-  } | ((month: string, monthName: string) => void);
+  navigateTo?:
+    | string
+    | {
+        path: string;
+        state?: Record<string, any>;
+      }
+    | ((month: string, monthName: string) => void);
   className?: string;
   disabled?: boolean;
   record_name?: string; // Optional prop for record name
 }
 
-export function MonthInfoCard({
-  monthItem,
-  navigateTo,
-  className = "",
-  disabled = false,
-  record_name = "records",
-}: MonthInfoCardProps) {
+export function MonthInfoCard({ monthItem, navigateTo, className = "", disabled = false, record_name = "records" }: MonthInfoCardProps) {
   const navigate = useNavigate();
   const monthDate = new Date(monthItem.month + "-01");
-  const monthName = monthItem.month_name || monthDate.toLocaleString("default", {
-    month: "long",
-    year: "numeric",
-  });
+  const monthName =
+    monthItem.month_name ||
+    monthDate.toLocaleString("default", {
+      month: "long",
+      year: "numeric"
+    });
 
-  const isCurrentMonth = new Date().getMonth() === monthDate.getMonth() && 
-    new Date().getFullYear() === monthDate.getFullYear();
+  const isCurrentMonth = new Date().getMonth() === monthDate.getMonth() && new Date().getFullYear() === monthDate.getFullYear();
   const isFutureMonth = monthDate > new Date();
   const isDisabled = disabled || isFutureMonth;
 
   const handleClick = () => {
     if (isDisabled || !navigateTo) return;
-    
-    if (typeof navigateTo === 'function') {
+
+    if (typeof navigateTo === "function") {
       navigateTo(monthItem.month, monthName);
-    } else if (typeof navigateTo === 'object') {
+    } else if (typeof navigateTo === "object") {
       navigate(navigateTo.path, { state: navigateTo.state });
     } else {
       navigate(navigateTo);
@@ -83,22 +80,14 @@ export function MonthInfoCard({
 
       <h3 className={`font-bold text-md ${colors.text} mb-2 text-center transition-colors`}>
         {monthName}
-        {isCurrentMonth && (
-          <span className={` text-xs px-2 py-0.5 ${colors.currentBadge} rounded-full`}>
-            (Current)
-          </span>
-        )}
-        {isFutureMonth && !disabled && (
-          <span className="ml-2 text-xs px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full">
-            Upcoming
-          </span>
-        )}
+        {isCurrentMonth && <span className={` text-xs px-2 py-0.5 ${colors.currentBadge} rounded-full`}>(Current)</span>}
+        {isFutureMonth && !disabled && <span className="ml-2 text-xs px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full">Upcoming</span>}
       </h3>
 
       <div className="text-center">
         <div className={`inline-flex items-center px-3 py-1 ${colors.countBg} ${colors.countText} rounded-full text-xs font-medium`}>
           <span className={`w-2 h-2 rounded-full mr-2 ${colors.countDot}`}></span>
-          {monthItem.total_items?.toLocaleString() || 0}  {record_name || "records"}
+          {monthItem.total_items?.toLocaleString() || 0} {record_name || "records"}
         </div>
       </div>
 

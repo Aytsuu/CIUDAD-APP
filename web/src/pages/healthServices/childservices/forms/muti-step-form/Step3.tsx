@@ -3,18 +3,8 @@ import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import {
-  Search,
-  FileInput,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown/dropdown-menu";
+import { Search, FileInput, ChevronLeft, ChevronRight } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ImmunizationTracking } from "./types";
 import { ColumnDef } from "@tanstack/react-table";
@@ -32,11 +22,7 @@ const immunizationColumns: ColumnDef<ImmunizationTracking>[] = [
   {
     accessorKey: "vaccine_name",
     header: "Vaccine",
-    cell: ({ row }) => (
-      <div className="font-medium text-gray-900">
-        {row.getValue("vaccine_name")}
-      </div>
-    ),
+    cell: ({ row }) => <div className="font-medium text-gray-900">{row.getValue("vaccine_name")}</div>
   },
 
   {
@@ -46,39 +32,16 @@ const immunizationColumns: ColumnDef<ImmunizationTracking>[] = [
       const doseNumber = Number(row.getValue("dose_number"));
       return (
         <div className="text-gray-800 flex justify-center ">
-          <div className="w-20 text-sm  bg-blue-500 text-white rounded-md py-1 ">
-            {getOrdinalSuffix(doseNumber)} Dose
-          </div>
+          <div className="w-20 text-sm  bg-blue-500 text-white rounded-md py-1 ">{getOrdinalSuffix(doseNumber)} Dose</div>
         </div>
       );
-    },
+    }
   },
-  // {
-  //   accessorKey: "status",
-  //   header: "Status",
-  //   cell: ({ row }) => {
-  //     const status = row.getValue("status");
-  //     return (
-  //       <div className={`text-sm font-medium ${
-  //         status === "completed" ? "text-green-600" :
-  //         status === "pending" ? "text-yellow-600" :
-  //         "text-gray-600"
-  //       }`}>
-  //         {status as string}
-  //       </div>
-  //     );
-  //   },
-  // },
+ 
   {
     accessorKey: "batch_number",
     header: "Batch",
-    cell: ({ row }) => (
-      <div className="text-sm">
-        {row.getValue("batch_number") || (
-          <span className="text-gray-400">N/A</span>
-        )}
-      </div>
-    ),
+    cell: ({ row }) => <div className="text-sm">{row.getValue("batch_number") || <span className="text-gray-400">N/A</span>}</div>
   },
   {
     accessorKey: "follow_up",
@@ -91,51 +54,36 @@ const immunizationColumns: ColumnDef<ImmunizationTracking>[] = [
           {followUpDate ? (
             <div className="flex flex-col">
               <span className="font-medium">{followUpDate}</span>
-              {followUpStatus && (
-                <span className="text-xs text-gray-500">{followUpStatus}</span>
-              )}
+              {followUpStatus && <span className="text-xs text-gray-500">{followUpStatus}</span>}
             </div>
           ) : (
             <span className="text-gray-400">N/A</span>
           )}
         </div>
       );
-    },
-  },
+    }
+  }
 ];
 
-export default function ChildHRPage3({
-  onPrevious,
-  onNext,
-  immunizationTracking,
-  isLoading = false,
-}: Page3Props) {
+export default function ChildHRPage3({ onPrevious, onNext, immunizationTracking, isLoading = false }: Page3Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
   const filteredData = React.useMemo(() => {
     return immunizationTracking.filter((record) => {
-      const searchText =
-        `${record.vaccine_name} ${record.batch_number}`.toLowerCase();
+      const searchText = `${record.vaccine_name} ${record.batch_number}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
   }, [searchQuery, immunizationTracking]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="w-full h-full flex flex-col">
-    
-
       <div>
-        <h2 className="text-xl font-semibold text-gray-800">
-          Immunization History
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-800">Immunization History</h2>
         <p className="text-sm text-gray-500">Track all administered vaccines</p>
       </div>
 
@@ -143,16 +91,8 @@ export default function ChildHRPage3({
       <div className="w-full flex flex-col sm:flex-row gap-2 mb-2 mt-6">
         <div className="w-full flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-              size={17}
-            />
-            <Input
-              placeholder="Search vaccines..."
-              className="pl-10 bg-white w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+            <Input placeholder="Search vaccines..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
         </div>
       </div>
@@ -178,11 +118,7 @@ export default function ChildHRPage3({
           <div className="flex justify-end sm:justify-start">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  aria-label="Export data"
-                  className="flex items-center gap-2"
-                >
+                <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
                   <FileInput />
                   Export
                 </Button>
@@ -196,28 +132,15 @@ export default function ChildHRPage3({
           </div>
         </div>
 
-        <div className="bg-white w-full overflow-x-auto">
-          {isLoading ? (
-            <TableSkeleton columns={immunizationColumns} rowCount={5} />
-          ) : (
-            <DataTable columns={immunizationColumns} data={paginatedData} />
-          )}
-        </div>
+        <div className="bg-white w-full overflow-x-auto">{isLoading ? <TableSkeleton columns={immunizationColumns} rowCount={5} /> : <DataTable columns={immunizationColumns} data={paginatedData} />}</div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing{" "}
-            {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} rows
+            Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
           </p>
 
           <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
+            <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         </div>
       </div>
@@ -228,10 +151,7 @@ export default function ChildHRPage3({
           <ChevronLeft className="h-4 w-4" />
           Previous
         </Button>
-        <Button
-          onClick={onNext}
-          className="gap-2 px-6 bg-blue-600 hover:bg-blue-700 text-white"
-        >
+        <Button onClick={onNext} className="gap-2 px-6 bg-blue-600 hover:bg-blue-700 text-white">
           Continue
           <ChevronRight className="h-4 w-4" />
         </Button>

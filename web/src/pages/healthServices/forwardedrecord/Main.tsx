@@ -1,10 +1,4 @@
-import {
-  useCHimmunizationCount,
-  usePendingMedicalConCount,
-  useForwardedVaccinationCount,
-  useForwardedChildMedRecordCount,
-  useScheduledVaccinationCount,
-} from "./restful-api/count";
+import { useCHimmunizationCount, usePendingMedicalConCount, useForwardedVaccinationCount, useScheduledVaccinationCount } from "./restful-api/count";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChildHealthImmunizationCard } from "./cards/ForwrdedChildHealthImmunizationCard";
 import { ForwardedVaccinationCard } from "./cards/ForwardedVaccinationCard";
@@ -13,12 +7,9 @@ import { ForwardedScheduledVaccinationCard } from "./cards/ScheduledVaccinationC
 import { NoRecordsCard } from "./cards/NoRecordsFound";
 
 export default function MainForwardedRecord() {
-  const { data: CHimmunizationcount, isLoading: isLoadingCH } =
-    useCHimmunizationCount();
-  const { data: pendingMedicalConCount, isLoading: isLoadingPending } =
-    usePendingMedicalConCount();
-  const { data: forwardedVaccinationCount, isLoading: isLoadingVacc } =
-    useForwardedVaccinationCount();
+  const { data: CHimmunizationcount, isLoading: isLoadingCH } = useCHimmunizationCount();
+  const { data: pendingMedicalConCount, isLoading: isLoadingPending } = usePendingMedicalConCount();
+  const { data: forwardedVaccinationCount, isLoading: isLoadingVacc } = useForwardedVaccinationCount();
 
   const { data: scheduledVaccinationCount } = useScheduledVaccinationCount();
 
@@ -27,26 +18,16 @@ export default function MainForwardedRecord() {
   const forwardedVaccinationCountData = forwardedVaccinationCount?.count || 0;
   const scheduledVaccinationCountData = scheduledVaccinationCount?.count || 0;
 
+  const isLoading = isLoadingCH || isLoadingPending || isLoadingVacc;
 
-  const isLoading =
-    isLoadingCH || isLoadingPending || isLoadingVacc ;
-
-  const hasNoRecords =
-    CHimmunizationcountData === 0 &&
-    pendingMedicalConCountData === 0 &&
-    forwardedVaccinationCountData === 0 &&
-    scheduledVaccinationCountData === 0;
+  const hasNoRecords = CHimmunizationcountData === 0 && pendingMedicalConCountData === 0 && forwardedVaccinationCountData === 0 && scheduledVaccinationCountData === 0;
 
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <div className="flex-col items-center">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Forwarded Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view forwarded records
-          </p>
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Forwarded Records</h1>
+          <p className="text-xs sm:text-sm text-darkGray">Manage and view forwarded records</p>
         </div>
       </div>
       <hr className="border-gray-300 mb-4" />

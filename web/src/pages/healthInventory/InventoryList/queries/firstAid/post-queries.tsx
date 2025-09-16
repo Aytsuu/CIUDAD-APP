@@ -2,7 +2,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { addFirstAid } from "../../restful-api/firstAid/FirstAidPostAPI";
 import { FirstAidType } from "@/form-schema/inventory/lists/inventoryListSchema";
-import { useNavigate } from "react-router";
 
 export const useAddFirstAid = () => {
   const queryClient = useQueryClient();

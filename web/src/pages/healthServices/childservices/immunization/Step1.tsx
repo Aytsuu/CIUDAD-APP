@@ -15,7 +15,6 @@ export default function PendingDisplayMedicalConsultation({ ChildHealthRecord, o
   const chhistId = ChildHealthRecord.record?.chhist_id;
   const chrecId = ChildHealthRecord.record?.chrec;
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [recordsPerPage, setRecordsPerPage] = useState(2);
 
   // Set initial index when fullHistoryData changes
   useEffect(() => {
@@ -24,10 +23,6 @@ export default function PendingDisplayMedicalConsultation({ ChildHealthRecord, o
       setCurrentIndex(initialIndex !== -1 ? initialIndex : 0);
     }
   }, [fullHistoryData, chhistId]);
-
-  useEffect(() => {
-    setRecordsPerPage(3);
-  }, []);
 
   return (
     <div className="p-6">

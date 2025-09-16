@@ -1,7 +1,7 @@
 // src/hooks/useRejectMedicineRequest.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { confirmAllPendingItems } from "../restful-api/update";
-import { showSuccessToast,showErrorToast} from "@/components/ui/toast";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useNavigate } from "react-router";
 
 export const useConfirmAllPendingItems = () => {
@@ -10,7 +10,7 @@ export const useConfirmAllPendingItems = () => {
 
   return useMutation({
     mutationFn: confirmAllPendingItems,
-    onSuccess: (data, variables) => {
+    onSuccess: (variables) => {
       // Invalidate and refetch related queries
       queryClient.invalidateQueries({ queryKey: ["pendingItemsMedRequest", variables] });
       queryClient.invalidateQueries({ queryKey: ["medicineRequestItems"] });
@@ -18,11 +18,10 @@ export const useConfirmAllPendingItems = () => {
 
       navigate(-1); // Navigate back to the previous page
       showSuccessToast("All pending items confirmed successfully");
-      
     },
     onError: (error) => {
       console.error("Failed to confirm pending items:", error);
-      showErrorToast
+      showErrorToast;
     }
   });
 };

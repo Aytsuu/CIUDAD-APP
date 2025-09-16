@@ -3,44 +3,26 @@ import { getFirstAidChart, getStaffList } from "../restful-api/getAPI";
 import { toast } from "sonner";
 import { getFirstaidRecords, getFirstaidReports } from "../restful-api/getAPI";
 
-export const useFirstAidRecords = (
-  page: number,
-  pageSize: number,
-  searchQuery: string,
-  yearFilter: string
-) => {
+export const useFirstAidRecords = (page: number, pageSize: number, searchQuery: string, yearFilter: string) => {
   return useQuery({
     queryKey: ["firstAidRecords", page, pageSize, searchQuery, yearFilter],
-    queryFn: () =>
-      getFirstaidRecords(
-        page,
-        pageSize,
-        searchQuery,
-        yearFilter === "all" ? undefined : yearFilter
-      ),
+    queryFn: () => getFirstaidRecords(page, pageSize, searchQuery, yearFilter === "all" ? undefined : yearFilter)
   });
 };
 
-export const useFirstAidReports = (
-  month: string,
-  page: number,
-  pageSize: number,
-  searchQuery: string
-) => {
+export const useFirstAidReports = (month: string, page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
     queryKey: ["fareport", month, page, pageSize, searchQuery],
-    queryFn: () => getFirstaidReports(month, page, pageSize, searchQuery),
+    queryFn: () => getFirstaidReports(month, page, pageSize, searchQuery)
   });
 };
 
 export const useFirstAidChart = (month: string) => {
   return useQuery({
     queryKey: ["firstAidChart", month],
-    queryFn: async () => getFirstAidChart(month),
+    queryFn: async () => getFirstAidChart(month)
   });
 };
-
-
 
 export const fetchStaffWithPositions = () => {
   return useQuery({
@@ -52,7 +34,7 @@ export const fetchStaffWithPositions = () => {
         if (!staffList || !Array.isArray(staffList)) {
           return {
             default: [],
-            formatted: [],
+            formatted: []
           };
         }
 
@@ -62,25 +44,18 @@ export const fetchStaffWithPositions = () => {
             id: String(staff.staff_id),
             name: (
               <div className="flex gap-3">
-                <span className="bg-green-500 rounded text-white p-1 text-xs">
-                  {staff.staff_id || "No ID"}
-                </span>
-                {`${staff.rp?.per?.per_fname || "Unknown"} ${
-                  staff.rp?.per?.per_lname || "Staff"
-                }`}
-                ( {staff.pos?.pos_title || "No Position"})
+                <span className="bg-green-500 rounded text-white p-1 text-xs">{staff.staff_id || "No ID"}</span>
+                {`${staff.rp?.per?.per_fname || "Unknown"} ${staff.rp?.per?.per_lname || "Staff"}`}( {staff.pos?.pos_title || "No Position"})
               </div>
             ),
-            rawName: `${staff.rp?.per?.per_fname || "Unknown"} ${
-              staff.rp?.per?.per_lname || "Staff"
-            }`,
-            position: staff.pos?.pos_title || "No Position",
-          })),
+            rawName: `${staff.rp?.per?.per_fname || "Unknown"} ${staff.rp?.per?.per_lname || "Staff"}`,
+            position: staff.pos?.pos_title || "No Position"
+          }))
         };
       } catch (error) {
         toast.error("Failed to fetch staff data");
         throw error;
       }
-    },
+    }
   });
 };

@@ -34,8 +34,8 @@ export const api2 = axios.create({
 
 
 // Track refresh state to prevent multiple refresh attempts
-let isRefreshing = false;
-let refreshPromise: Promise<string | null> | null = null;
+const isRefreshing = false;
+const refreshPromise: Promise<string | null> | null = null;
 
 // Simple access token storage (you could also use a more sophisticated store)
 let currentAccessToken: string | null = null;
