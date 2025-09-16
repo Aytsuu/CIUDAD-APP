@@ -9,7 +9,7 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import { CircleAlert, Plus } from 'lucide-react';
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 import { Combobox } from '@/components/ui/combobox';
-import { DependentRecord } from '../../profilingTypes';
+import { DependentRecord } from '../../../profiling/ProfilingTypes';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { Link } from 'react-router';

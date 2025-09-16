@@ -151,7 +151,8 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             if obj.rp_id and getattr(obj.rp_id, "per", None):
                 return {
                     'per_fname': obj.rp_id.per.per_fname,
-                    'per_lname': obj.rp_id.per.per_lname
+                    'per_lname': obj.rp_id.per.per_lname,
+                    'voter_id': getattr(obj.rp_id, 'voter_id', None)
                 }
             return None
         except Exception as e:
@@ -401,43 +402,7 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
         model = IssuedBusinessPermit
         fields = ['ibp_id', 'dateIssued', 'business_name']
 
-# Complaint-related Serializers
-class CaseSuppDocSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CaseSuppDoc
-        fields = '__all__'
-
-class ServiceChargeRequestFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ServiceChargeRequestFile
-        fields = '__all__'
-
-class CaseActivitySerializer(serializers.ModelSerializer):
-    srf_detail = ServiceChargeRequestFileSerializer(source='srf', read_only=True)
-    supporting_documents = CaseSuppDocSerializer(
-        source='supporting_docs',
-        many=True,
-        read_only=True
-    )
-    formatted_hearing_datetime = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CaseActivity
-        fields = [
-            'ca_id',
-            'ca_reason',
-            'ca_hearing_date',
-            'ca_hearing_time',
-            'formatted_hearing_datetime',
-            'ca_mediation',
-            'ca_date_of_issuance',
-            'srf_detail',
-            'supporting_documents'
-        ]
-    
-    def get_formatted_hearing_datetime(self, obj):
-        return datetime.combine(obj.ca_hearing_date, obj.ca_hearing_time).strftime("%B %d, %Y at %I:%M %p")
-
+# ================== SERVICE CHARGE SERIALIZERS =========================
 class SummonDateAvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
         model = SummonDateAvailability
@@ -462,95 +427,390 @@ class AccusedDetailsSerializer(serializers.ModelSerializer):
             'address'
         ]
 
+class SummonRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceChargeRequest
+        fields = '__all__'
 
 
-# Service Charge Request Serializers
-class ServiceChargeRequestSerializer(serializers.ModelSerializer):
+class SummonRequestPendingListSerializer(serializers.ModelSerializer):
     complainant_names = serializers.SerializerMethodField()
+    incident_type = serializers.SerializerMethodField()
     accused_names = serializers.SerializerMethodField()
-    incident_type = serializers.CharField(source='comp.comp_incident_type', read_only=True)
-    allegation = serializers.CharField(source='comp.comp_allegation', read_only=True)
-    formatted_decision_date = serializers.SerializerMethodField()
-    formatted_request_date = serializers.SerializerMethodField()
-
+    
     class Meta:
         model = ServiceChargeRequest
         fields = [
             'sr_id', 
-            'sr_code',
+            'sr_type', 
+            'sr_req_date', 
+            'sr_req_status', 
+            'sr_case_status', 
+            'comp_id', 
+            'staff_id', 
             'complainant_names', 
-            'accused_names', 
             'incident_type', 
-            'allegation',
-            'sr_status',
-            'sr_payment_status',
-            'sr_type',
-            'formatted_decision_date',
-            'formatted_request_date'
+            'accused_names'
         ]
-
+    
     def get_complainant_names(self, obj):
-        if not obj.comp:
-            return []
-        return [c.cpnt_name for c in obj.comp.complainant.all()]
+        if obj.comp_id:
+            try:
+                complainants = obj.comp_id.complaintcomplainant_set.select_related('cpnt').all()
+                return [cc.cpnt.cpnt_name for cc in complainants]
+            except Exception as e:
+                print(f"Error getting complainants: {e}")
+                return []
+        return []
+    
+    def get_incident_type(self, obj):
+        if obj.comp_id:
+            return getattr(obj.comp_id, 'comp_incident_type', None)
+        return None
     
     def get_accused_names(self, obj):
-        if not obj.comp:
-            return []
-        return [ca.acsd.acsd_name for ca in obj.comp.complaintaccused_set.all()]
+        if obj.comp_id:
+            try:
+                accused_list = obj.comp_id.complaintaccused_set.select_related('acsd').all()
+                return [ca.acsd.acsd_name for ca in accused_list]
+            except Exception as e:
+                print(f"Error getting accused: {e}")
+                return []
+        return []
     
-    def get_formatted_decision_date(self, obj):
-        if obj.sr_decision_date:
-            return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
+
+class SummonRequestRejectedListSerializer(serializers.ModelSerializer):
+    complainant_names = serializers.SerializerMethodField()
+    incident_type = serializers.SerializerMethodField()
+    accused_names = serializers.SerializerMethodField()
+    rejection_reason = serializers.SerializerMethodField()
+    decision_date = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ServiceChargeRequest
+        fields = [
+            'sr_id', 
+            'sr_type', 
+            'sr_req_date', 
+            'sr_req_status', 
+            'sr_case_status', 
+            'comp_id', 
+            'staff_id', 
+            'complainant_names', 
+            'incident_type', 
+            'accused_names',
+            'rejection_reason',
+            'decision_date'
+        ]
+    
+    def get_complainant_names(self, obj):
+        if obj.comp_id:
+            try:
+                # Use prefetched data
+                complainants = obj.comp_id.complaintcomplainant_set.all()
+                return [cc.cpnt.cpnt_name for cc in complainants]
+            except Exception as e:
+                print(f"Error getting complainants: {e}")
+                return []
+        return []
+    
+    def get_incident_type(self, obj):
+        if obj.comp_id:
+            return getattr(obj.comp_id, 'comp_incident_type', None)
         return None
     
-    def get_formatted_request_date(self, obj):
-        return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
+    def get_accused_names(self, obj):
+        if obj.comp_id:
+            try:
+                # Use prefetched data
+                accused_list = obj.comp_id.complaintaccused_set.all()
+                return [ca.acsd.acsd_name for ca in accused_list]
+            except Exception as e:
+                print(f"Error getting accused: {e}")
+                return []
+        return []
+    
+    def get_rejection_reason(self, obj):
+        try:
+            # Use the correct reverse relationship name for OneToOneField
+            if hasattr(obj, 'servicechargedecision'):
+                return obj.servicechargedecision.scd_reason
+            return None
+        except Exception as e:
+            print(f"Error getting rejection reason: {e}")
+            return None
+    
+    def get_decision_date(self, obj):
+        try:
+            # Use the correct reverse relationship name for OneToOneField
+            if hasattr(obj, 'servicechargedecision'):
+                return obj.servicechargedecision.scd_decision_date
+            return None
+        except Exception as e:
+            print(f"Error getting decision date: {e}")
+            return None
+        
 
-class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
-    complaint = ComplaintSerializer(source='comp', read_only=True)
-    case_activities = CaseActivitySerializer(source='case', many=True, read_only=True)
-    file_action_file = ServiceChargeRequestFileSerializer(read_only=True)
-    parent_summon = ServiceChargeRequestSerializer(read_only=True)
-    formatted_request_date = serializers.SerializerMethodField()
-    formatted_decision_date = serializers.SerializerMethodField()
+class SummonRequestAcceptedListSerializer(serializers.ModelSerializer):
+    complainant_names = serializers.SerializerMethodField()
+    incident_type = serializers.SerializerMethodField()
+    accused_names = serializers.SerializerMethodField()
+    decision_date = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ServiceChargeRequest
+        fields = [
+            'sr_id', 
+            'sr_type', 
+            'sr_req_date', 
+            'sr_req_status', 
+            'sr_case_status', 
+            'comp_id', 
+            'staff_id', 
+            'complainant_names', 
+            'incident_type', 
+            'accused_names',
+            'decision_date'
+        ]
+    
+    def get_complainant_names(self, obj):
+        if obj.comp_id:
+            try:
+                # Use prefetched data
+                complainants = obj.comp_id.complaintcomplainant_set.all()
+                return [cc.cpnt.cpnt_name for cc in complainants]
+            except Exception as e:
+                print(f"Error getting complainants: {e}")
+                return []
+        return []
+    
+    def get_incident_type(self, obj):
+        if obj.comp_id:
+            return getattr(obj.comp_id, 'comp_incident_type', None)
+        return None
+    
+    def get_accused_names(self, obj):
+        if obj.comp_id:
+            try:
+                # Use prefetched data
+                accused_list = obj.comp_id.complaintaccused_set.all()
+                return [ca.acsd.acsd_name for ca in accused_list]
+            except Exception as e:
+                print(f"Error getting accused: {e}")
+                return []
+        return []
+    
+    def get_decision_date(self, obj):
+        try:
+            # Use the correct reverse relationship name for OneToOneField
+            if hasattr(obj, 'servicechargedecision'):
+                return obj.servicechargedecision.scd_decision_date
+            return None
+        except Exception as e:
+            print(f"Error getting decision date: {e}")
+            return None
+    
+class ServiceChargeDecisionSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = ServiceChargeDecision
+        fields = '__all__'
+
+
+class ServiceChargePaymentRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceChargePaymentRequest
+        fields = '__all__'
+
+
+# ================== TREASURER: SERVICE CHARGE LIST =========================
+class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
+    sr_id = serializers.CharField(read_only=True)
+    caseNo = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+    address1 = serializers.SerializerMethodField()
+    respondent = serializers.SerializerMethodField()
+    address2 = serializers.SerializerMethodField()
+    reason = serializers.SerializerMethodField()
+    reqDate = serializers.DateTimeField(source='sr_req_date', format="%Y-%m-%d", read_only=True)
 
     class Meta:
         model = ServiceChargeRequest
         fields = [
             'sr_id',
-            'sr_code',
-            'sr_status',
-            'sr_payment_status',
-            'sr_type',
-            'formatted_request_date',
-            'formatted_decision_date',
-            'sr_decision_date',
-            'complaint',
-            'case_activities',
-            'file_action_file',
-            'parent_summon'
+            'caseNo',
+            'name',
+            'address1',
+            'respondent',
+            'address2',
+            'reason',
+            'reqDate',
         ]
-    
-    def get_formatted_request_date(self, obj):
-        return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
-    
-    def get_formatted_decision_date(self, obj):
-        if obj.sr_decision_date:
-            return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
+
+    def _get_first_complainant(self, obj):
+        if obj.comp_id:
+            try:
+                cc = obj.comp_id.complaintcomplainant_set.select_related('cpnt').first()
+                return cc.cpnt if cc else None
+            except Exception:
+                return None
         return None
 
-class FileActionRequestSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id',
-            'sr_code',
-            'sr_type',
-            'sr_payment_status',
-            'parent_summon',
-            'file_action_file',
-            'comp'
-        ]
+    def _get_first_accused(self, obj):
+        if obj.comp_id:
+            try:
+                ca = obj.comp_id.complaintaccused_set.select_related('acsd').first()
+                return ca.acsd if ca else None
+            except Exception:
+                return None
+        return None
+
+    def get_caseNo(self, obj):
+        return getattr(obj.comp_id, 'comp_id', None)
+
+    def get_name(self, obj):
+        cpnt = self._get_first_complainant(obj)
+        return getattr(cpnt, 'cpnt_name', None) if cpnt else None
+
+    def get_address1(self, obj):
+        cpnt = self._get_first_complainant(obj)
+        return getattr(cpnt, 'cpnt_address', None) if cpnt else None
+
+    def get_respondent(self, obj):
+        acsd = self._get_first_accused(obj)
+        return getattr(acsd, 'acsd_name', None) if acsd else None
+
+    def get_address2(self, obj):
+        acsd = self._get_first_accused(obj)
+        return getattr(acsd, 'acsd_address', None) if acsd else None
+
+    def get_reason(self, obj):
+        return getattr(obj.comp_id, 'comp_allegation', None) if obj.comp_id else None
+# ============================ MIGHT DELETE THESE LATER ==============================
+
+# Complaint-related Serializers
+# class CaseSuppDocSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = CaseSuppDoc
+#         fields = '__all__'
+
+# class ServiceChargeRequestFileSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = ServiceChargeRequestFile
+#         fields = '__all__'
+
+# class CaseActivitySerializer(serializers.ModelSerializer):
+#     srf_detail = ServiceChargeRequestFileSerializer(source='srf', read_only=True)
+#     supporting_documents = CaseSuppDocSerializer(
+#         source='supporting_docs',
+#         many=True,
+#         read_only=True
+#     )
+#     formatted_hearing_datetime = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = CaseActivity
+#         fields = [
+#             'ca_id',
+#             'ca_reason',
+#             'ca_hearing_date',
+#             'ca_hearing_time',
+#             'formatted_hearing_datetime',
+#             'ca_mediation',
+#             'ca_date_of_issuance',
+#             'srf_detail',
+#             'supporting_documents'
+#         ]
+    
+#     def get_formatted_hearing_datetime(self, obj):
+#         return datetime.combine(obj.ca_hearing_date, obj.ca_hearing_time).strftime("%B %d, %Y at %I:%M %p")
+
+# Service Charge Request Serializers
+# class ServiceChargeRequestSerializer(serializers.ModelSerializer):
+#     complainant_names = serializers.SerializerMethodField()
+#     accused_names = serializers.SerializerMethodField()
+#     incident_type = serializers.CharField(source='comp.comp_incident_type', read_only=True)
+#     allegation = serializers.CharField(source='comp.comp_allegation', read_only=True)
+#     formatted_decision_date = serializers.SerializerMethodField()
+#     formatted_request_date = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = ServiceChargeRequest
+#         fields = [
+#             'sr_id', 
+#             'sr_code',
+#             'complainant_names', 
+#             'accused_names', 
+#             'incident_type', 
+#             'allegation',
+#             'sr_status',
+#             'sr_payment_status',
+#             'sr_type',
+#             'formatted_decision_date',
+#             'formatted_request_date'
+#         ]
+
+#     def get_complainant_names(self, obj):
+#         if not obj.comp:
+#             return []
+#         return [c.cpnt_name for c in obj.comp.complainant.all()]
+    
+#     def get_accused_names(self, obj):
+#         if not obj.comp:
+#             return []
+#         return [ca.acsd.acsd_name for ca in obj.comp.complaintaccused_set.all()]
+    
+#     def get_formatted_decision_date(self, obj):
+#         if obj.sr_decision_date:
+#             return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
+#         return None
+    
+#     def get_formatted_request_date(self, obj):
+#         return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
+
+# class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
+#     complaint = ComplaintSerializer(source='comp', read_only=True)
+#     case_activities = CaseActivitySerializer(source='case', many=True, read_only=True)
+#     file_action_file = ServiceChargeRequestFileSerializer(read_only=True)
+#     parent_summon = ServiceChargeRequestSerializer(read_only=True)
+#     formatted_request_date = serializers.SerializerMethodField()
+#     formatted_decision_date = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = ServiceChargeRequest
+#         fields = [
+#             'sr_id',
+#             'sr_code',
+#             'sr_status',
+#             'sr_payment_status',
+#             'sr_type',
+#             'formatted_request_date',
+#             'formatted_decision_date',
+#             'sr_decision_date',
+#             'complaint',
+#             'case_activities',
+#             'file_action_file',
+#             'parent_summon'
+#         ]
+    
+#     def get_formatted_request_date(self, obj):
+#         return obj.sr_req_date.strftime("%B %d, %Y at %I:%M %p")
+    
+#     def get_formatted_decision_date(self, obj):
+#         if obj.sr_decision_date:
+#             return obj.sr_decision_date.strftime("%B %d, %Y at %I:%M %p")
+#         return None
+
+# class FileActionRequestSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = ServiceChargeRequest
+#         fields = [
+#             'sr_id',
+#             'sr_code',
+#             'sr_type',
+#             'sr_payment_status',
+#             'parent_summon',
+#             'file_action_file',
+#             'comp'
+#         ]
 
 

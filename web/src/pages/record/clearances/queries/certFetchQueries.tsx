@@ -139,23 +139,26 @@ export const markCertificateAsIssued = async (certificateData: MarkCertificateVa
     if (certificateData.is_nonresident && certificateData.nrc_id) {
       // For now, using the same endpoint, but you might need different logic
       // You may need to create a separate endpoint for non-resident certificates
-      const nonResidentData = {
-        nrc_id: certificateData.nrc_id,
-        staff_id: certificateData.staff_id || "00005250821",
-      };
-      
       // Update the non-resident certificate status first
       await api.patch(`/clerk/update-personal-req-status/${certificateData.nrc_id}/`, {
-        nrc_req_status: 'Issued'
+        nrc_req_status: 'Completed'
       });
       
       return { success: true, message: "Non-resident certificate marked as issued" };
     } else {
-      // Regular resident certificate
-      const res = await api.post('/clerk/mark-certificate-issued/', {
-        cr_id: certificateData.cr_id,
-        staff_id: certificateData.staff_id || "00005250821",
-      });
+      // Always omit staff_id to avoid backend staff creation with null pos_id
+      const payload = { cr_id: certificateData.cr_id };
+      console.log('Mark issued payload (resident):', payload);
+      const res = await api.post('/clerk/mark-certificate-issued/', payload);
+      // Also update resident certificate status to Issued
+      try {
+        await api.put(`/clerk/certificate-update-status/${certificateData.cr_id}/`, {
+          cr_req_status: 'Completed',
+          cr_date_completed: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.warn('Failed to set resident certificate status to Issued (non-fatal):', (err as any)?.response?.data || (err as any)?.message);
+      }
       return res.data;
     }
   } catch (err) {

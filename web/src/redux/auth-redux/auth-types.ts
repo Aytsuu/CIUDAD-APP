@@ -21,7 +21,7 @@ export interface AuthState {
 export interface LoginCredentials {
     email?: string;
     password: string;
-    phonr?: string;
+    phone?: string;
 }
 
 export interface SignupCredentials {

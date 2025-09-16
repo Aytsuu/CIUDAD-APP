@@ -12,8 +12,7 @@ import { Card } from "@/components/ui/card";
 import { features } from "./features";
 import { router, useRouter } from "expo-router";
 import { LoadingModal } from "@/components/ui/loading-modal";
-import { useSelector, useDispatch } from "react-redux";
-// import { RootState, AppDispatch } from "@/redux";
+import { useAuth } from "@/contexts/AuthContext";
 import PageLayout from "../_PageLayout";
 import React from "react";
 import ShowMore from '@/assets/icons/features/showmore.svg'
@@ -40,10 +39,8 @@ const styles = StyleSheet.create({
 });
 
 export default function HomeScreen() {
-  const dispatch = useDispatch<AppDispatch>();
-  const { user, isLoading } = useSelector(
-    (state: RootState) => state.auth
-  );
+  const router = useRouter();
+  const {user, isLoading} = useAuth();
   const [showMoreFeatures, setShowMoreFeatures] = React.useState<boolean>(false);
    const [showSplash, setShowSplash] = React.useState(true);
   const videoRef = React.useRef(null);
@@ -71,8 +68,8 @@ export default function HomeScreen() {
   if (isLoading) {
     return <LoadingModal visible={true} />;
   }
-
-  console.log("User Data:", user);
+  console.log("User: ", user)
+  console.log("User Data:", user?.staff?.rp?.pos_id);
 
   // Optimized feature rendering logic
   const renderFeatureItem = (item: any, index: number, isToggleButton = false) => (

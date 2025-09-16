@@ -10,7 +10,7 @@ import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAddReceipt } from "@/pages/record/treasurer/Receipts/queries/receipts-insertQueries";
 import ReceiptSchema from "@/form-schema/receipt-schema";
-
+import { useAuth } from "@/context/AuthContext";
 
 
 type CertificateRequest = {
@@ -55,6 +55,8 @@ function capitalizeFirst(str: string) {
 function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
 
     const { mutate: receipt, isPending} = useAddReceipt(onSuccess)
+    const { user } = useAuth();
+    const staffId = user?.staff?.staff_id as string | undefined;
 
    
     const { data: purposeAndRates = [] } = useQuery<PurposeAndRate[]>({
@@ -98,6 +100,10 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
     }, [certificateRequest.req_amount, form]);
 
     const onSubmit = (values: z.infer<typeof ReceiptSchema>) => {
+        if (!staffId) {
+            console.error("Missing staff ID. Please re-login and try again.");
+            return;
+        }
         console.log('=== RECEIPT FORM SUBMISSION ===');
         console.log('Form values:', values);
         console.log('certificateRequest:', certificateRequest);
@@ -111,6 +117,7 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
             inv_nat_of_collection: "Permit Clearance", // Ensure this is set correctly
             bpr_id: certificateRequest.cr_id, // Use cr_id as bpr_id for business clearance
             nrc_id: "", // Set to empty string for business clearance (schema expects string)
+            staff_id: staffId,
         };
         
         console.log('Receipt data with business clearance fields:', receiptData);

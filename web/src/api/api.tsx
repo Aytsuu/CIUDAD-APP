@@ -29,6 +29,6 @@ export const api2 = axios.create({
   },
 });
 
-setupApiInterceptor(api);
+setupApiInterceptor(api)
 
-export default api;
+export default api

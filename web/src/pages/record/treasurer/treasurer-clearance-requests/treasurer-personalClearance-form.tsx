@@ -14,6 +14,7 @@ import { useGetPurposeAndRate } from "../Rates/queries/RatesFetchQueries";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { useAuth } from "@/context/AuthContext";
 
 interface PersonalClearanceFormProps {
     onSuccess?: () => void;
@@ -23,8 +24,10 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isResident, setIsResident] = useState(true); // Default to resident
     const queryClient = useQueryClient();
+    const { user } = useAuth();
+    const staffId = user?.staff?.staff_id as string | undefined;
     const { data: residents = [], isLoading: residentLoading} = useGetResidents()
-    const { data: purposes = [], isLoading: purposesLoading} = useGetPurposeAndRate()
+    const { data: purposes = [], isLoading: _purposesLoading} = useGetPurposeAndRate()
 
     const purposeOptions = purposes
     .filter(purposes => purposes.pr_is_archive === false)
@@ -57,12 +60,17 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
         try {   
             setIsSubmitting(true);
             
+            if (!staffId) {
+                toast.error("Missing staff ID. Please re-login and try again.");
+                return;
+            }
+
             const payload = {
                 ...values   
             };
             
             console.log(payload)
-            await createPersonalClearance(payload);
+            await createPersonalClearance(payload, staffId);
             if (onSuccess) onSuccess();
             toast.success("Personal clearance created successfully!");
             
@@ -83,12 +91,17 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
         try {   
             setIsSubmitting(true);
             
+            if (!staffId) {
+                toast.error("Missing staff ID. Please re-login and try again.");
+                return;
+            }
+
             const payload = {
                 ...values,
             };
             
             console.log(payload)
-            await createNonResidentPersonalClearance(payload);
+            await createNonResidentPersonalClearance(payload, staffId);
             toast.success("Personal clearance created successfully!");
             
             nonResidentForm.reset();

@@ -39,12 +39,13 @@ class ComplaintSerializer(serializers.ModelSerializer):
             'complainant', 
             'accused_persons',      
             'complaint_files',
+            'comp_status',
         ]
 
     def get_accused_persons(self, obj):
-        complaint_accused = ComplaintAccused.objects.filter(comp=obj).select_related('acsd__add')
+        complaint_accused = ComplaintAccused.objects.filter(comp=obj)
         return AccusedSerializer([ca.acsd for ca in complaint_accused], many=True).data
 
     def get_complainant(self, obj): 
-        complaint_complainant = ComplaintComplainant.objects.filter(comp=obj).select_related('cpnt__add')
+        complaint_complainant = ComplaintComplainant.objects.filter(comp=obj)
         return ComplainantSerializer([cc.cpnt for cc in complaint_complainant], many=True).data

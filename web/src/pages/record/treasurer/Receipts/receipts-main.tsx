@@ -1,15 +1,12 @@
-
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search } from "lucide-react";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useInvoiceQuery, type Receipt } from "./queries/receipt-getQueries";
-// import { useInvoiceQuery, type Receipt } from "./queries/receipt-getQueries";
 
 function ReceiptPage() {
   const { data: fetchedData = [], isLoading } = useInvoiceQuery();
@@ -36,6 +33,7 @@ function ReceiptPage() {
         
         try {
           const date = new Date(dateValue as string | number | Date);
+
           if (isNaN(date.getTime())) {
             return <div className="text-gray-400">Invalid date</div>;
           }
@@ -45,11 +43,13 @@ function ReceiptPage() {
             month: '2-digit',
             day: '2-digit',
           });
+
           const formattedTime = date.toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
             hour12: true,
           });
+
           return <div>{`${formattedDate} at ${formattedTime}`}</div>;
         } catch (error) {
           return <div className="text-gray-400">Error</div>;
@@ -67,41 +67,37 @@ function ReceiptPage() {
     {
       accessorKey: "inv_amount",
       header: "Amount",
+      cell: ({ row }) => {
+        const value = row.getValue("inv_amount");
+        return `₱ ${value}`;
+      }
     },
     {
       accessorKey: "inv_change",
       header: "Change",
-      cell: ({ row }) => {
-        const value = row.getValue("inv_change") as string | number | null | undefined;
-        const num = value !== null && value !== undefined && value !== "" ? Number(value) : null;
-        if (num === null || isNaN(num)) {
-          return <div className="text-gray-400">—</div>;
-        }
-        return (
-          <div className={`font-medium ${num >= 0 ? "text-green-700" : "text-red-600"}`}>
-            ₱{num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-        );
-      }
+      cell: ({ row }) => `₱${(Number(row.getValue("inv_change")) || 0).toFixed(2)}`
     },
     {
-      accessorKey: "nrc_discount_reason",
+      accessorKey: "inv_discount_reason",
       header: "Discount Reason",
       cell: ({ row }) => {
-        const discountReason = row.getValue("nrc_discount_reason") as string | null | undefined;
-        if (!discountReason || discountReason === "None" || discountReason.trim() === "") {
-          return <div className="text-gray-400">—</div>;
-        }
-        return <div className="text-gray-900">{discountReason}</div>;
+        const value = row.getValue("inv_discount_reason") as string;
+        return value ? value : "None";
       }
     },
   ];
 
-  const filterOptions = [
-    { id: "all", name: "All" },
-    { id: "Barangay Certification", name: "Barangay Certification" },
-    { id: "Business Permit", name: "Business Permit" },
-  ];
+  // Dynamically generate filter options from inv_nat_of_collection
+  const filterOptions = useMemo(() => {
+    const uniqueNatures = Array.from(
+      new Set(fetchedData.map(item => item.inv_nat_of_collection))
+    ).filter(Boolean) as string[];
+
+    return [
+      { id: "all", name: "All" },
+      ...uniqueNatures.map(nature => ({ id: nature, name: nature })),
+    ];
+  }, [fetchedData]);
 
   const [selectedFilterId, setSelectedFilterId] = useState("all");
 

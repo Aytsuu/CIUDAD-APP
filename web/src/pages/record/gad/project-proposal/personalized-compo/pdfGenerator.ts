@@ -10,16 +10,11 @@ export interface ProposalPdfData {
   budgetItems: Array<{ name: string; pax: string; amount: string }>;
   monitoringEvaluation: string;
   signatories: Array<{ name: string; position: string; type: string }>;
-  paperSize: string;
   headerImage?: string | null;
 }
 
 export const generateProposalPdf = async (data: ProposalPdfData, preview = false) => {
-  const pageSize = {
-    a4: [595.28, 841.89],
-    letter: [612, 792],
-    legal: [612, 1008],
-  }[data.paperSize] || [595.28, 841.89];
+  const pageSize = [612, 1008];
 
   const doc = new jsPDF({
     orientation: "portrait",

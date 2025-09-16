@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAppDispatch } from "../redux";
 import { setLoading, setError, clearAuthState, clearError, setAuthData, setOtpSent } from "./authSlice";
 import { queryClient } from "@/lib/queryClient";
-import api from "@/api/api";
+import { api } from "@/api/api";
 import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse } from "./auth-types";
 
 
@@ -12,7 +12,7 @@ export const useLoginMutation = () => {
   return useMutation<TokenResponse, Error, LoginCredentials>({
     mutationFn: async (credentials) => {
       const response = await api.post('authentication/web/login/', credentials);
-      console.log(response.data)
+      console.log(response.data);
       return response.data;
     },
     onMutate: () => {

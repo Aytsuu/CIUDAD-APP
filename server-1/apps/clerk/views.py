@@ -11,16 +11,11 @@ from rest_framework.permissions import AllowAny
 import uuid
 import logging
 import traceback
-
 from .serializers import *
 from apps.complaint.models import Complainant, Accused, ComplaintAccused
 from apps.treasurer.models import Invoice
 from apps.act_log.utils import create_activity_log
 from .models import (
-    ServiceChargeRequest,
-    CaseActivity,
-    CaseSuppDoc,
-    ServiceChargeRequestFile,
     SummonDateAvailability,
     SummonTimeAvailability,
     ClerkCertificate,
@@ -28,32 +23,33 @@ from .models import (
     BusinessPermitRequest,
     IssuedBusinessPermit,
     Business,
+    ServiceChargeRequest,
 )
 
 logger = logging.getLogger(__name__)
 
+# ==================== MIGHT DELETE LATER ========================
+# class ServiceChargeRequestView(generics.ListCreateAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = ServiceChargeRequestSerializer
 
-class ServiceChargeRequestView(generics.ListCreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = ServiceChargeRequestSerializer
-
-    def get_queryset(self):
-        queryset = ServiceChargeRequest.objects.filter(
-            sr_payment_status="Paid", 
-            sr_type="Summon"
-        ).select_related(
-            'comp'
-        )
+#     def get_queryset(self):
+#         queryset = ServiceChargeRequest.objects.filter(
+#             sr_payment_status="Paid", 
+#             sr_type="Summon"
+#         ).select_related(
+#             'comp'
+#         )
         
-        # Only apply prefetch_related if there are records with complaints
-        if queryset.filter(comp__isnull=False).exists():
-            queryset = queryset.prefetch_related(
-                Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
-                Prefetch('comp__complaintaccused_set', queryset=ComplaintAccused.objects.select_related('acsd')),
-                'file_action_file'
-            )
+#         # Only apply prefetch_related if there are records with complaints
+#         if queryset.filter(comp__isnull=False).exists():
+#             queryset = queryset.prefetch_related(
+#                 Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
+#                 Prefetch('comp__complaintaccused_set', queryset=ComplaintAccused.objects.select_related('acsd')),
+#                 'file_action_file'
+#             )
         
-        return queryset.order_by('-sr_req_date')
+#         return queryset.order_by('-sr_req_date')
 
 # class FileActionrequestView(generics.ListCreateAPIView):
 #     serializer_class = FileActionRequestSerializer
@@ -162,8 +158,72 @@ class ServiceChargeRequestView(generics.ListCreateAPIView):
 #             return Response(serializer.data, status=status.HTTP_200_OK)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UpdateServiceChargeRequestView(generics.UpdateAPIView):
-    serializer_class = ServiceChargeRequestSerializer
+# class UpdateServiceChargeRequestView(generics.UpdateAPIView):
+#     serializer_class = ServiceChargeRequestSerializer
+#     queryset = ServiceChargeRequest.objects.all()
+#     lookup_field = 'sr_id'
+
+#     def update(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+# class ServiceChargeRequestFileView(generics.ListCreateAPIView):
+#     serializer_class = ServiceChargeRequestFileSerializer
+#     queryset = ServiceChargeRequestFile.objects.all()
+# =======================================================
+
+# class ServiceChargeRequestView(generics.ListAPIView):
+#     serializer_class = ServiceChargeRequestSerializer
+    
+#     def get_queryset(self):
+#         queryset = ServiceChargeRequest.objects.filter(
+#             sr_req_status='Pending',
+#             sr_type = 'Summon'  
+#         ).select_related(
+#             'comp_id'
+#         ).prefetch_related(
+#             'comp_id__complainant',
+#             'comp_id__accused'
+#         )
+#         return queryset
+
+class SummonRequestPendingListView(generics.ListAPIView):
+    serializer_class = SummonRequestPendingListSerializer
+    
+    def get_queryset(self):
+        queryset = ServiceChargeRequest.objects.filter(
+            sr_req_status='Pending',
+            sr_type='Summon'
+        ).select_related('comp_id').prefetch_related(
+            'comp_id__complaintcomplainant_set__cpnt',
+            'comp_id__complaintaccused_set__acsd'
+        )
+        return queryset
+    
+class SummonRequestRejectedListView(generics.ListAPIView):
+    serializer_class = SummonRequestRejectedListSerializer
+    
+    def get_queryset(self):
+        queryset = ServiceChargeRequest.objects.filter(
+            sr_req_status__iexact='Rejected',
+            sr_type='Summon'
+        ).select_related('comp_id').prefetch_related(
+            'servicechargedecision',  
+            'comp_id__complaintcomplainant_set__cpnt',  
+            'comp_id__complaintaccused_set__acsd' 
+        )
+        return queryset
+    
+class ServiceChargePaymentRequestView(generics.ListCreateAPIView):
+    serializer_class = ServiceChargePaymentRequestSerializer
+    queryset = ServiceChargePaymentRequest.objects.all()
+    
+class UpdateSummonRequestView(generics.UpdateAPIView):
+    serializer_class = SummonRequestSerializer
     queryset = ServiceChargeRequest.objects.all()
     lookup_field = 'sr_id'
 
@@ -175,9 +235,10 @@ class UpdateServiceChargeRequestView(generics.UpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-# class ServiceChargeRequestFileView(generics.ListCreateAPIView):
-#     serializer_class = ServiceChargeRequestFileSerializer
-#     queryset = ServiceChargeRequestFile.objects.all()
+
+class ServiceChargeDecisionView(generics.ListCreateAPIView):
+    serializer_class = ServiceChargeDecisionSerializer
+    queryset = ServiceChargeDecision.objects.all()
 
 class SummonDateAvailabilityView(generics.ListCreateAPIView):
     serializer_class = SummonDateAvailabilitySerializer
@@ -388,18 +449,11 @@ class IssuedCertificateListView(generics.ListAPIView):
 
     def get_queryset(self):
         try:
-            queryset = (
-                IssuedCertificate.objects.filter(
-                    staff__staff_id="00005250821"
-                )
-                .select_related(
-                    'certificate__rp_id__per',
-                    'staff'
-                )
-            )
-
-            logger.info(f"Found {queryset.count()} issued certificates")
-            return queryset
+            base_qs = IssuedCertificate.objects.all()
+            logger.info(f"Found {base_qs.count()} issued certificates (base)")
+            sample = list(base_qs.values('ic_id', 'ic_date_of_issuance', 'certificate_id', 'staff_id')[:5])
+            logger.info(f"IssuedCertificate sample: {sample}")
+            return base_qs.select_related('certificate__rp_id__per', 'staff')
         except Exception as e:
             logger.error(f"Error in get_queryset: {str(e)}")
             logger.error(f"Full traceback: {traceback.format_exc()}")
@@ -430,7 +484,8 @@ class MarkCertificateAsIssuedView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         try:
             cr_id = request.data.get('cr_id')
-            staff_id = request.data.get('staff_id', '00005250821')
+            # Do NOT default to a hardcoded staff_id. Only use provided staff_id if it exists and is valid
+            staff_id = request.data.get('staff_id')
             
             if not cr_id:
                 return Response(
@@ -454,11 +509,48 @@ class MarkCertificateAsIssuedView(generics.CreateAPIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Get or create staff
+            # Resolve staff strictly if provided; avoid creating a Staff record here to prevent NULL pos_id errors
             from apps.administration.models import Staff
-            staff, created = Staff.objects.get_or_create(staff_id="00005250821")
+            staff = None
+            if staff_id:
+                normalized_staff_id = str(staff_id).strip()
+                logger.info(f"MarkCertificateAsIssuedView: incoming staff_id={normalized_staff_id}")
+                # Try direct staff_id match
+                staff = Staff.objects.filter(staff_id=normalized_staff_id).first()
+                logger.info(f"MarkCertificateAsIssuedView: staff lookup (staff_id) found={bool(staff)}")
+                # Fallback: case-insensitive match
+                if not staff:
+                    staff = Staff.objects.filter(staff_id__iexact=normalized_staff_id).first()
+                    logger.info(f"MarkCertificateAsIssuedView: staff lookup (iexact) found={bool(staff)}")
+                # Fallback: some datasets use rp_id to mirror staff_id
+                if not staff and hasattr(Staff, 'rp_id'):
+                    staff = Staff.objects.filter(rp_id=normalized_staff_id).first()
+                    logger.info(f"MarkCertificateAsIssuedView: staff lookup (rp_id) found={bool(staff)}")
+                if not staff:
+                    return Response(
+                        {"error": f"Invalid staff_id {staff_id}"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            # If no staff_id in request, try to use the certificate's associated staff (if any)
+            if staff is None and getattr(certificate, 'staff_id_id', None):
+                logger.info(f"MarkCertificateAsIssuedView: attempting certificate.staff_id_id={certificate.staff_id_id}")
+                staff = Staff.objects.filter(pk=certificate.staff_id_id).first()
+            # If still no staff and the IssuedCertificate model requires staff (NOT NULL), fail fast
+            if staff is None:
+                # As a safety fallback, try any existing staff to avoid hard failure
+                fallback_staff = Staff.objects.first()
+                if fallback_staff:
+                    logger.warning(f"MarkCertificateAsIssuedView: No staff resolved from input; using fallback staff_id={fallback_staff.staff_id}")
+                    staff = fallback_staff
+                else:
+                    logger.warning("MarkCertificateAsIssuedView: No staff available in database. Rejecting request.")
+                    return Response(
+                        {"error": "No staff available in database. Please create a staff first."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
             
         
+            # Create issued certificate; staff is guaranteed at this point
             issued_certificate = IssuedCertificate.objects.create(
                 ic_date_of_issuance=timezone.now().date(),
                 certificate=certificate,
@@ -648,7 +740,7 @@ class IssuedBusinessPermitListView(generics.ListAPIView):
     def get_queryset(self):
         try:
             queryset = IssuedBusinessPermit.objects.select_related(
-                'permit_request__business',
+                'permit_request__bus_id',
                 'staff'
             ).all()
             
@@ -988,3 +1080,18 @@ class ClearanceRequestView(generics.CreateAPIView):
                 'error': str(e),
                 'detail': 'An error occurred while updating business permit request status'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ---------------------- Treasurer: Service Charge Requests ----------------------
+class ServiceChargeTreasurerListView(generics.ListAPIView):
+    serializer_class = ServiceChargeTreasurerListSerializer
+
+    def get_queryset(self):
+        # Pending or Paid service charges for Summon cases; adjust filters as needed
+        qs = ServiceChargeRequest.objects.filter(
+            sr_type='Summon'
+        ).select_related('comp_id').prefetch_related(
+            'comp_id__complaintcomplainant_set__cpnt',
+            'comp_id__complaintaccused_set__acsd'
+        ).order_by('-sr_req_date')
+        return qs

@@ -10,7 +10,7 @@ from datetime import datetime
 from rest_framework.permissions import AllowAny
 import logging
 from apps.treasurer.models import Purpose_And_Rates
-from apps.gad.models import ProjectProposalLog
+# from apps.gad.models import ProjectProposalLog
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveAPIView
@@ -499,7 +499,7 @@ class PurposeRatesListView(generics.ListCreateAPIView):
 
 class MinutesOfMeetingView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
-    queryset = MinutesOfMeeting.objects.all()
+    queryset = MinutesOfMeeting.objects.all().order_by('-mom_date')
 
 class MinutesOfMeetingDetailView(generics.RetrieveDestroyAPIView):
     queryset = MinutesOfMeeting.objects.all()

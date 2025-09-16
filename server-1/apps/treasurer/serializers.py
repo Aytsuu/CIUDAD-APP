@@ -441,7 +441,13 @@ class InvoiceSerializers(serializers.ModelSerializer):
     class Meta:
         model = Invoice
         fields = ['inv_num', 'inv_serial_num', 'inv_date', 'inv_amount', 
-                 'inv_nat_of_collection', 'nrc_id', 'bpr_id','inv_payor', 'inv_change']
+                 'inv_nat_of_collection', 'nrc_id', 'bpr_id', 'cr_id', 
+                 'inv_payor', 'inv_change', 'inv_discount_reason']
+        extra_kwargs = {
+            'nrc_id': {'allow_null': True, 'required': False},
+            'bpr_id': {'allow_null': True, 'required': False},
+            'cr_id': {'allow_null': True, 'required': False},
+        }
     
     def get_inv_payor(self, obj):
         # If the invoice is linked to a resident certificate
@@ -450,6 +456,17 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 return f"{obj.bpr_id.rp_id.per.per_lname}, {obj.bpr_id.rp_id.per.per_fname}"
             except AttributeError:
                 return "Unknown Business Owner"
+
+        # If the invoice is linked to a resident (ClerkCertificate)
+        if obj.cr_id is not None:
+            # Try common relationship shapes
+            try:
+                return f"{obj.cr_id.rp.per.per_lname}, {obj.cr_id.rp.per.per_fname}"
+            except Exception:
+                try:
+                    return f"{obj.cr_id.rp_id.per.per_lname}, {obj.cr_id.rp_id.per.per_fname}"
+                except Exception:
+                    return "Unknown Resident"
 
         # If the invoice is linked to a non-resident certificate
         elif obj.nrc_id is not None:
@@ -461,6 +478,24 @@ class InvoiceSerializers(serializers.ModelSerializer):
         #  If neither cr_id nor nrc_id exists
         return "Unknown"
     
+
+    def validate(self, attrs):
+        # Coerce empty strings from the client into None so DRF doesn't try bad lookups
+        for key in ['bpr_id', 'nrc_id', 'cr_id']:
+            if key in attrs and (attrs[key] == '' or attrs[key] == 0):
+                attrs[key] = None
+
+        link_keys = [
+            attrs.get('bpr_id'),
+            attrs.get('nrc_id'),
+            attrs.get('cr_id'),
+        ]
+        provided = sum(1 for v in link_keys if v)
+        if provided == 0:
+            raise serializers.ValidationError("You must provide one of bpr_id, nrc_id, or cr_id")
+        if provided > 1:
+            raise serializers.ValidationError("Provide only one of bpr_id, nrc_id, or cr_id")
+        return attrs
 
     def create(self, validated_data):
         # Create the invoice
@@ -503,6 +538,27 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 except Exception as e:
                     print(f"Failed to log activity: {e}")
             
+            # Check if it's a resident certificate request
+            elif invoice.cr_id and hasattr(invoice.cr_id, 'pr_id') and invoice.cr_id.pr_id:
+                required_amount = float(invoice.cr_id.pr_id.pr_rate or 0)
+                paid_amount = float(invoice.inv_amount or 0)
+
+                change_amount = paid_amount - required_amount
+                invoice.inv_change = change_amount if change_amount > 0 else 0
+                invoice.inv_status = "Paid"
+                invoice.save()
+
+                cert = invoice.cr_id
+                # Update payment status on certificate (support different field names)
+                try:
+                    if hasattr(cert, 'cr_req_payment_status'):
+                        cert.cr_req_payment_status = "Paid"
+                    elif hasattr(cert, 'req_payment_status'):
+                        cert.req_payment_status = "Paid"
+                    cert.save()
+                except Exception as e:
+                    print(f"Failed to update certificate payment status: {e}")
+
             # Check if it's a non-resident certificate request
             elif invoice.nrc_id:
                 # Add similar logic for non-resident certificates if needed
@@ -511,7 +567,13 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 
                 # Update non-resident certificate payment status
                 non_resident_cert = invoice.nrc_id
-                non_resident_cert.nrc_req_payment_status = "Paid"
+                try:
+                    non_resident_cert.nrc_req_payment_status = "Paid"
+                except Exception:
+                    try:
+                        non_resident_cert.req_payment_status = "Paid"
+                    except Exception:
+                        pass
                 non_resident_cert.save()
                 
         except Exception as e:
