@@ -24,11 +24,6 @@ from utils.otp import generate_otp
 
 logger = logging.getLogger(__name__)
 
-def send_otp_email(email, otp):
-    subject = "Your OTP Code"
-    message = f"Your OTP code is: {otp}. It will expire in 5 minutes."
-    send_mail(subject, message, None, [email])
-
 class SignupView(APIView):
     permission_classes = [AllowAny]
 

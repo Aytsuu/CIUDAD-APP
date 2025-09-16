@@ -192,7 +192,7 @@ export default function SignIn() {
           Login to your account
         </h2>
         <p className="text-gray-600">
-          Enter your number below to login to your account
+          Enter your credentials to login to your account
         </p>
       </div>
 
@@ -287,7 +287,7 @@ export default function SignIn() {
           Login to your account
         </h2>
         <p className="text-gray-600">
-          Enter your number below to login to your account
+          Enter your credentials to login to your account
         </p>
       </div>
 
