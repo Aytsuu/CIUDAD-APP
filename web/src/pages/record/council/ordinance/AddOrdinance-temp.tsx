@@ -23,6 +23,11 @@
 // import { toast } from 'sonner';
 
 function AddOrdinancePage() {
+    return(
+        <div>
+            
+        </div>
+    )
     // const navigate = useNavigate();
     // const [isSubmitting, setIsSubmitting] = useState(false);
     // const [_showDialog, _setShowDialog] = useState(false);

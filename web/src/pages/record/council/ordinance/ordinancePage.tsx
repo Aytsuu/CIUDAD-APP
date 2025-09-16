@@ -29,6 +29,11 @@
 // type OrdinanceItem = Ordinance;
 
 function OrdinancePage() {
+    return(
+        <div>
+            
+        </div>
+    )
     // const navigate = useNavigate();
     // const [ordinanceItems, setOrdinanceItems] = useState<OrdinanceItem[]>([]);
     // const [ordinanceFolders, setOrdinanceFolders] = useState<OrdinanceFolder[]>([]);

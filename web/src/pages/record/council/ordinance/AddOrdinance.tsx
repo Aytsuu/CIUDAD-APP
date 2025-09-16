@@ -26,6 +26,11 @@
 // // Removed unused auth
 
 function AddOrdinancePage() {
+    return(
+        <div>
+            
+        </div>
+    )
     // const navigate = useNavigate();
     // const [isSubmitting, setIsSubmitting] = useState(false);
 

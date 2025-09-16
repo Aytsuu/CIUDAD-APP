@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Loader2, CheckCircle, Eye } from 'lucide-react';
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -30,7 +30,7 @@ interface ExtendedCertificate extends Certificate {
 }
 
 function CertificatePage() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
