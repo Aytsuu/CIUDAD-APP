@@ -188,7 +188,7 @@ export default function SignIn() {
   const renderPhoneLoginContent = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-xl font-poppins text-gray-900">
+        <h2 className="text-xl font-medium text-gray-900">
           Login to your account
         </h2>
         <p className="text-gray-600">
@@ -220,7 +220,7 @@ export default function SignIn() {
           <Button
             type="submit"
             disabled={loading || sendOTPMutation.isPending}
-            className="w-full bg-black hover:bg-gray-800 text-white h-10 rounded-md font-medium"
+            className="w-full bg-blue-500 hover:bg-blue-800 text-white h-10 rounded-md font-medium"
           >
             {loading || sendOTPMutation.isPending ? (
               <>
@@ -283,7 +283,7 @@ export default function SignIn() {
   const renderEmailLoginContent = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-xl font-poppins text-gray-900">
+        <h2 className="text-xl font-medium text-gray-900">
           Login to your account
         </h2>
         <p className="text-gray-600">
@@ -317,7 +317,7 @@ export default function SignIn() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-10 bg-black hover:bg-gray-800 text-white rounded-md font-medium"
+            className="w-full h-10 bg-blue-500 hover:bg-blue-800 text-white rounded-md font-medium"
           >
             {loading ? (
               <>
@@ -336,7 +336,7 @@ export default function SignIn() {
           type="button"
           onClick={switchToPhoneLogin}
           variant="link"
-          className="w-full h-10"
+          className="w-full h-10 "
         >
           Login via Phone
         </Button>

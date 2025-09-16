@@ -62,7 +62,7 @@ export default function ComplaintRecord() {
     <div className="w-full h-full flex flex-col">
       <div className="flex flex-col justify-center mb-4">
         <h1 className="flex flex-row font-semibold text-xl sm:text-2xl text-darkBlue2 items-center">
-          Barangay Blotter 
+          Blotter 
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
           Manage and view filed and raised complaint

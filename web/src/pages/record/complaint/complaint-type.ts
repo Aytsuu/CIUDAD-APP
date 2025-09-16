@@ -7,7 +7,6 @@ export interface Address {
   sitio?: number | null;
 }
 
-// Matches backend Complainant model + nested Address
 export interface Complainant {
   cpnt_id: number;
   cpnt_name: string;
@@ -18,7 +17,6 @@ export interface Complainant {
   add: Address;
 }
 
-// Matches backend Accused model + nested Address
 export interface Accused {
   acsd_id: number;
   acsd_name: string;
@@ -28,7 +26,6 @@ export interface Accused {
   add: Address;
 }
 
-// Matches Complaint_File model
 export interface ComplaintFile {
   comp_file_id: number;
   comp_file_name: string;

@@ -109,8 +109,6 @@ class MobileLoginView(APIView):
             # Authenticate using phone or email
             if phone and not email:
                 logger.info(f"Authenticating with phone: {phone}")
-                # For phone authentication, we still need to manually check
-                # since Django's authenticate() typically uses username/email
                 try:
                     user_account = Account.objects.get(phone=phone)
                     if user_account.check_password(password):
@@ -123,11 +121,10 @@ class MobileLoginView(APIView):
                                 status=status.HTTP_401_UNAUTHORIZED
                             )
                 except Account.DoesNotExist:
-                    pass  # user remains None
+                    pass 
                     
             elif email and not phone:
                 logger.info(f"Authenticating with email: {email}")
-                # Use Django's authenticate since you've configured email as username
                 user = authenticate(request, username=email, password=password)
                 
             else:

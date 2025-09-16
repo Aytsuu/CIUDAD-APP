@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Lock, Phone, Mail, CheckCircle, AlertCircle, Shield } from "lucide-react";
+import { Eye, EyeOff, Lock, CheckCircle, AlertCircle} from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
@@ -54,7 +54,7 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
       await login(credentials);
       toast.success("Successfully signed in!");
       form.reset();
-      onSuccess();
+      // onSuccess();
     } catch (error: any) {
       console.error("Password verification error:", error);
       
@@ -78,7 +78,7 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
               <p className="text-green-800 font-semibold text-sm">
                 {method === "phone" ? "Phone Number Verified" : "Email Address Verified"}
               </p>
-              <div className="flex items-center gap-2 mt-1">
+              {/* <div className="flex items-center gap-2 mt-1"> */}
                 {/* {method === "phone" ? (
                   <Phone className="h-4 w-4 text-green-600" />
                 ) : (
@@ -87,7 +87,7 @@ export default function PasswordEntry({ userId, method, contact, onSuccess }: Pa
                 {/* <span className="text-green-700 text-sm font-mono">
                   {formatContact(contact, method)}
                 </span> */}
-              </div>
+              {/* </div> */}
             </div>
           </div>
         </div>
