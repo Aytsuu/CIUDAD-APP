@@ -1,5 +1,5 @@
 // MonthlyFirstAidDetails.tsx
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, Loader2, Edit } from "lucide-react";
@@ -50,10 +50,6 @@ export default function EditMonthlyRecipientList() {
       setSignature(signatureBase64);
     }
   }, [signatureBase64]);
-
-  const handleSignatureChange = useCallback((newSignature: string | null) => {
-    setSignature(newSignature);
-  }, []);
 
   const handleSubmit = async () => {
     const currentSignature = signatureRef.current?.getSignature();

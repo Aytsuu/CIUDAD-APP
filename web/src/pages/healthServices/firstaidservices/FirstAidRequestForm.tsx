@@ -41,7 +41,7 @@ export default function FirstAidRequestForm() {
   const itemsPerPage = 5;
   const { mutateAsync: submitFirstaidRequest } = useFirstRequestMutation();
   const signatureRef = useRef<SignatureFieldRef>(null);
-  const [signature, setSignature] = useState<string | null>(null);
+  const [signature] = useState<string | null>(null);
 
   // Initialize patient data based on mode
   useEffect(() => {
@@ -52,10 +52,6 @@ export default function FirstAidRequestForm() {
       form.setValue("pat_id", patientData.pat_id.toString());
     }
   }, [location.state, mode]);
-
-  const handleSignatureChange = useCallback((signature: string | null) => {
-    setSignature(signature);
-  }, []);
 
   const handlePatientSelect = (patient: Patient | null, patientId: string) => {
     setSelectedPatientId(patientId);
@@ -163,7 +159,7 @@ export default function FirstAidRequestForm() {
                     <div className="w-full overflow-x-auto">
                       <RequestSummary selectedFirstAids={selectedFirstAids} firstAidStocksOptions={firstAidStocksOptions} totalSelectedQuantity={totalSelectedQuantity} />
                       <div className="w-full px-4">
-                        <SignatureField ref={signatureRef} title="Signature" onSignatureChange={handleSignatureChange} required={true} />
+                        <SignatureField ref={signatureRef} title="Signature" onSignatureChange={signature} required={true} />
                       </div>
                     </div>
                   ) : (
@@ -229,7 +225,6 @@ export default function FirstAidRequestForm() {
                         actionLabel="Submit"
                         variant="default"
                         onClick={form.handleSubmit(onSubmit)}
-                        onClose={() => setIsConfirming(false)}
                       />
                     </>
                   )}

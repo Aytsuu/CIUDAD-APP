@@ -1,7 +1,7 @@
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table";
 import { format, isValid } from "date-fns";
-
+import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 interface ImmunizationTableProps {
   fullHistoryData: any[];
   chhistId: string;
@@ -10,7 +10,9 @@ interface ImmunizationTableProps {
 export const ImmunizationTable: React.FC<ImmunizationTableProps> = ({ fullHistoryData, chhistId }) => {
   // Check if there are any immunization records
   const hasImmunizationRecords = fullHistoryData.some((record) => record.immunization_tracking && record.immunization_tracking.length > 0);
-
+  const extractDOBFromRecord = (record: any): string => {
+    return record?.chrec_details?.patrec_details?.pat_details?.personal_info?.per_dob || "";
+  };
   return (
     <div className="border border-black mb-6">
       <Table className="border-collapse [&_tr:hover]:bg-inherit">
@@ -50,6 +52,7 @@ export const ImmunizationTable: React.FC<ImmunizationTableProps> = ({ fullHistor
                 const vaccinationHistory = tracking.vachist_details || {};
                 const vaccineStock = vaccinationHistory.vaccine_stock || {};
                 const vaccineDetails = vaccineStock.vaccinelist || {};
+                const childDOB = extractDOBFromRecord(record); // Extract DOB
 
                 // Format dose number with suffix
                 const doseNumber = vaccinationHistory.vachist_doseNo;
@@ -60,7 +63,7 @@ export const ImmunizationTable: React.FC<ImmunizationTableProps> = ({ fullHistor
                     <TableCell className={`border-r border-black ${!isLastRow ? "border-b" : ""}`}>{vaccinationHistory.created_at && isValid(new Date(vaccinationHistory.created_at)) ? format(new Date(vaccinationHistory.created_at), "MMM dd, yyyy") : "N/A"}</TableCell>
                     <TableCell className={`border-r border-black ${!isLastRow ? "border-b" : ""}`}>{vaccineDetails.vac_name || vaccinationHistory?.vac_details?.vac_name}</TableCell>
                     <TableCell className={`border-r border-black ${!isLastRow ? "border-b" : ""}`}>{doseSuffix}</TableCell>
-                    <TableCell className={`${!isLastRow ? "border-b border-black" : ""}`}>{vaccinationHistory.vachist_age || "N/A"}</TableCell>
+                    <TableCell className={`${!isLastRow ? "border-b border-black" : ""}`}>{childDOB && record.created_at ? `${calculateAgeFromDOB(childDOB, record.created_at).ageString} months` : "N/A"}</TableCell>
                   </TableRow>
                 );
               })

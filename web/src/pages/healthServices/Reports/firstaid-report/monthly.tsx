@@ -17,7 +17,6 @@ export default function MonthlyFirstAidRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [yearFilter] = useState<string>("all");
-  const navigate = useNavigate();
 
   const {
     data: apiResponse,

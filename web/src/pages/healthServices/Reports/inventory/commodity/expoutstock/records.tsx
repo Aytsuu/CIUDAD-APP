@@ -77,7 +77,7 @@ export default function CommodityProblemDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `commodity_problems_${monthName}`);
 
-  const handleExportPDF = () => exportToPDF(prepareExportData(), `commodity_problems_${monthName}`);
+  const handleExportPDF = () => exportToPDF( `commodity_problems_${monthName}`);
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");

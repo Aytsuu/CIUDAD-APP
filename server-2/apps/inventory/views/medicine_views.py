@@ -20,6 +20,29 @@ from ..models import *
 from ..serializers.medicine_serializers import * 
          
          
+         
+class MedicineInventoryView(generics.ListAPIView):
+    serializer_class = MedicineInventorySerializer
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        queryset = MedicineInventory.objects.select_related(
+            'inv_id', 
+            'med_id'
+        ).filter(inv_id__is_Archived=False)
+        
+        # Add search functionality
+        search_query = self.request.GET.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                models.Q(med_id__med_name__icontains=search_query) |
+                models.Q(inv_id__inv_id__icontains=search_query) |
+                models.Q(med_id__med_type__icontains=search_query)
+            )
+        
+        return queryset.order_by('med_id__med_name')
+
+         
 class MedicineListAvailableTable(APIView):
     def get(self, request):
         # Get current date for expiry comparison
@@ -367,12 +390,7 @@ class MedicineStockTableView(APIView):
         print(f"Auto-archived {archived_medicine_count} medicine items with transaction records")
 
 
-class MedicineInventoryView(generics.ListAPIView):
-    serializer_class = MedicineInventorySerializer
-    queryset = MedicineInventory.objects.all()
-    def get_queryset(self):
-        queryset = MedicineInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
-        return queryset
+
 
 class MedicineStockCreate(APIView):
     @transaction.atomic

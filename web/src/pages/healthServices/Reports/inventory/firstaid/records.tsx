@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { Printer, Search, Loader2 } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../../firstaid-report/export-report";
@@ -18,7 +18,6 @@ export default function MonthlyInventoryFirstAidDetails() {
   const location = useLocation();
   const state = location.state as { month: string; monthName: string };
   const { month, monthName } = state || {};
-  const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,7 +71,7 @@ export default function MonthlyInventoryFirstAidDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `firstaid_inventory_${monthName.replace(" ", "_")}`);
 
-  const handleExportPDF = () => exportToPDF(prepareExportData(), `firstaid_inventory_${monthName.replace(" ", "_")}`);
+  const handleExportPDF = () => exportToPDF( `firstaid_inventory_${monthName.replace(" ", "_")}`);
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");

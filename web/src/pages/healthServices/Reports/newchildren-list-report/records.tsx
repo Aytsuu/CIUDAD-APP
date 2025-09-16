@@ -125,8 +125,7 @@ export default function MonthlyNewChildrenDetails() {
   };
 
   const handleExportPDF = () => {
-    const dataToExport = prepareExportData();
-    exportToPDF(dataToExport, `children_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+    exportToPDF(`children_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
   };
 
   const handlePrint = () => {

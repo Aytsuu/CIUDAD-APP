@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import {  useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { Printer, Search, Loader2 } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../../firstaid-report/export-report";
@@ -17,7 +17,6 @@ export default function MonthlyInventoryAntigenDetails() {
   const location = useLocation();
   const state = location.state as { month: string; monthName: string };
   const { month, monthName } = state || {};
-  const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,7 +24,6 @@ export default function MonthlyInventoryAntigenDetails() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data: apiResponse, isLoading, error } = useMonthlyVaccineRecords(month, currentPage, pageSize, searchTerm);
-
   const records = apiResponse?.data?.inventory_summary || [];
 
   useEffect(() => {
@@ -72,7 +70,7 @@ export default function MonthlyInventoryAntigenDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `vaccine_inventory_${monthName.replace(" ", "_")}`);
 
-  const handleExportPDF = () => exportToPDF(prepareExportData(), `vaccine_inventory_${monthName.replace(" ", "_")}`);
+  const handleExportPDF = () => exportToPDF(`vaccine_inventory_${monthName.replace(" ", "_")}`);
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");

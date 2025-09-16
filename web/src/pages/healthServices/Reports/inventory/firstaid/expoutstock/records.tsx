@@ -72,7 +72,7 @@ export default function FirstAidProblemDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `firstaid_problems_${monthName}`);
 
-  const handleExportPDF = () => exportToPDF(prepareExportData(), `firstaid_problems_${monthName}`);
+  const handleExportPDF = () => exportToPDF(`firstaid_problems_${monthName}`);
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");

@@ -131,8 +131,7 @@ export default function MonthlyVaccinationDetails() {
   };
 
   const handleExportPDF = () => {
-    const dataToExport = prepareExportData();
-    exportToPDF(dataToExport, `vaccination_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+    exportToPDF(`vaccination_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
   };
 
   const handlePrint = () => {
