@@ -46,7 +46,7 @@ export default function OPTMonthlyDetails() {
   // Combine selected sitios for API call
   const sitioFilter = selectedSitios.length > 0 ? selectedSitios.join(",") : "";
 
-  const { data: reportData, isLoading, error, refetch } = useOPTMonthlyReport(month, sitioFilter);
+  const { data: reportData, isLoading, error } = useOPTMonthlyReport(month, sitioFilter);
 
   useEffect(() => {
     if (isLoading) {

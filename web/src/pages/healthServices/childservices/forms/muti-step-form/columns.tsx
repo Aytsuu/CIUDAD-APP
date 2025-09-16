@@ -8,31 +8,31 @@ import { Medicine } from "./types";
 import type { CHSSupplementStat } from "./types";
 import type { Control, UseFormHandleSubmit } from "react-hook-form";
 
-// export const NUTRITIONAL_STATUS_DESCRIPTIONS = {
-//   wfa: {
-//     N: "Normal",
-//     UW: "Underweight",
-//     SUW: "Severely Underweight"
-//   },
-//   lhfa: {
-//     N: "Normal",
-//     ST: "Stunted",
-//     SST: "Severely Stunted",
-//     T: "Tall",
-//     OB: "Obese"
-//   },
-//   wfh: {
-//     N: "Normal",
-//     W: "Wasted",
-//     SW: "Severely Wasted",
-//     OW: "Overweight"
-//   },
-//   muac: {
-//     N: "Normal",
-//     MAM: "Moderate Acute Malnutrition",
-//     SAM: "Severe Acute Malnutrition"
-//   }
-// };
+export const NUTRITIONAL_STATUS_DESCRIPTIONS = {
+  wfa: {
+    N: "Normal",
+    UW: "Underweight",
+    SUW: "Severely Underweight"
+  },
+  lhfa: {
+    N: "Normal",
+    ST: "Stunted",
+    SST: "Severely Stunted",
+    T: "Tall",
+    OB: "Obese"
+  },
+  wfh: {
+    N: "Normal",
+    W: "Wasted",
+    SW: "Severely Wasted",
+    OW: "Overweight"
+  },
+  muac: {
+    N: "Normal",
+    MAM: "Moderate Acute Malnutrition",
+    SAM: "Severe Acute Malnutrition"
+  }
+};
 
 // Historical Nutritional Status Columns
 export const createHistoricalNutritionalStatusColumns = (): ColumnDef<NutritionalStatusType>[] => [

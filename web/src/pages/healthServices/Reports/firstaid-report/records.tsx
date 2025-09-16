@@ -102,7 +102,7 @@ export default function MonthlyFirstAidDetails() {
 
   const handleExportPDF = () => {
     const dataToExport = prepareExportData();
-    exportToPDF(dataToExport, `first_aid_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+    exportToPDF( `first_aid_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
   };
 
   const handlePrint = () => {

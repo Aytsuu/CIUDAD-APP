@@ -82,6 +82,7 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
     }
   }, [initialData, form, patientData]);
 
+  // Add cleanup effect for form data updates
   useEffect(() => {
     return () => {
       if (onFormDataUpdate) {
@@ -101,8 +102,8 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         return;
       }
 
-      const currentJson = JSON.stringify(selectedMedicines.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
-      const updatedJson = JSON.stringify(updated.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
+      const currentJson = JSON.stringify(selectedMedicines.sort((a, b) => a.minv_id?.localeCompare(b.minv_id)));
+      const updatedJson = JSON.stringify(updated.sort((a, b) => a.minv_id?.localeCompare(b.minv_id)));
 
       if (currentJson === updatedJson) {
         return;
@@ -119,12 +120,13 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         updated.length > 0
           ? updated.map((med) => {
               const stock = medicineStocksOptions?.find((m: any) => m.id === med.minv_id);
-              return `- ${stock?.name} ${stock?.dosage} (${med.medrec_qty} ${stock?.unit}) ${med.reason}`;
+              return `- ${stock?.name || 'Unknown'} ${stock?.dosage || ''} (${med.medrec_qty} ${stock?.unit || 'units'}) ${med.reason || ''}`;
             })
           : [];
 
       const newSummary = [...summaryWithoutMeds, ...medLines].join("\n");
 
+      isUpdating.current = true;
       form.setValue("plantreatment_summary", newSummary);
       form.setValue("medicineRequest", {
         pat_id: patientData?.pat_id || "",

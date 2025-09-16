@@ -74,10 +74,8 @@ export default function MonthlyMedicineDetails() {
 
   // Export handlers
   const handleExportCSV = () => exportToCSV(prepareExportData(), `medicine_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
-
   const handleExportExcel = () => exportToExcel(prepareExportData(), `medicine_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
-
-  const handleExportPDF = () => exportToPDF(prepareExportData(), `medicine_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+  const handleExportPDF = () => exportToPDF(`medicine_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
 
   // Print handler prints full filtered table (printable area)
   const handlePrint = () => {

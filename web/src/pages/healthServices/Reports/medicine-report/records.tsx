@@ -114,8 +114,7 @@ export default function MonthlyMedicineDetails() {
   };
 
   const handleExportPDF = () => {
-    const dataToExport = prepareExportData();
-    exportToPDF(dataToExport, `medicine_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+    exportToPDF(`medicine_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
   };
 
   const handlePrint = () => {

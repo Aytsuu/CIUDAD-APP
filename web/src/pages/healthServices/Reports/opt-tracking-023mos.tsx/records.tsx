@@ -143,7 +143,7 @@ export default function QuarterlyOPTDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `opt_${selectedQuarter}_records_${yearName.replace(" ", "_")}`);
 
-  const handleExportPDF = () => exportToPDF(prepareExportData(), `opt_${selectedQuarter}_records_${yearName.replace(" ", "_")}`);
+  const handleExportPDF = () => exportToPDF(`opt_${selectedQuarter}_records_${yearName.replace(" ", "_")}`);
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");
@@ -204,8 +204,6 @@ export default function QuarterlyOPTDetails() {
       setSelectedNutritionalStatuses([]);
     }
   };
-
-  
 
   const getStatusCategory = (status: string) => {
     if (nutritionalStatusCategories.wfa.includes(status)) return "WFA";
