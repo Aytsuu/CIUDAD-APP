@@ -1,3 +1,6 @@
+# ---------------------------------------------------
+# PRODUCTION SERVER
+# ---------------------------------------------------
 
 from pathlib import Path
 from datetime import timedelta
@@ -79,6 +82,8 @@ INSTALLED_APPS = [
     'apps.childhealthservices',
     'apps.servicescheduler',
     'apps.reports',
+    "simple_history",
+
 ]
 
 # REST_FRAMEWORK = {
@@ -269,7 +274,7 @@ LOGGING = {
 
 # ---------------------------------------------------
 # DEVELOPMENT SERVER
-# ------------------------------------------------
+# ---------------------------------------------------
 
 
 # from pathlib import Path

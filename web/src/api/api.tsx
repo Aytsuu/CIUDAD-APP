@@ -24,8 +24,9 @@ export const api = axios.create({
 });
 
 export const api2 = axios.create({
-  baseURL: "http://localhost:8001"
+  baseURL: "http://localhost:8001",
 });
+
 
 setupApiInterceptor(api);
 

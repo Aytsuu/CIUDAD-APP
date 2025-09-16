@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import TableLayout from "@/components/ui/table/table-layout";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
-import { useFirstAidReports } from "./queries/fetchQueries";
+import { useFirstAidReports } from "@/pages/healthServices/Reports/firstaid-report/queries/fetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";

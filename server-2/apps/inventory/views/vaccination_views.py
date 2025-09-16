@@ -24,13 +24,43 @@ class AgeGroupView(generics.ListCreateAPIView):
     serializer_class = AgegroupSerializer
     queryset = Agegroup.objects.all()
       
+
+
 class DeleteUpdateAgeGroupView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AgegroupSerializer
     queryset = Agegroup.objects.all()
     lookup_field = 'agegrp_id'
+    
     def get_object(self):
         agegrp_id = self.kwargs.get('agegrp_id')
         return get_object_or_404(Agegroup, agegrp_id=agegrp_id)
+    
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            self.perform_destroy(instance)
+            return Response(
+                {"message": "Age group deleted successfully."}, 
+                status=status.HTTP_204_NO_CONTENT
+            )
+        except ProtectedError as e:
+            # Extract the vaccine names that are using this age group
+            vaccine_objects = e.protected_objects
+            vaccine_names = [str(vaccine) for vaccine in vaccine_objects]
+            
+            return Response(
+                {
+                    "error": "Cannot delete age group",
+                    "message": f"This age group is currently being used by {len(vaccine_objects)} vaccine(s).",
+                    "used_by": vaccine_names,
+                },
+                status=status.HTTP_409_CONFLICT
+            )
+        except Exception as e:
+            return Response(
+                {"error": "Failed to delete age group", "message": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
 # =======================SUPPLY================================#
 class ImmunizationSuppliesListTable(generics.ListAPIView):
