@@ -9,6 +9,8 @@ import { createReceiptSchema } from "@/form-schema/receipt-schema";
 import { useAcceptRequest, useAcceptNonResRequest } from "./queries/personalClearanceUpdateQueries";
 import { useAddPersonalReceipt } from "../Receipts/queries/receipts-insertQueries";
 import { useMemo } from "react";
+import { useAuth } from '@/context/AuthContext';
+import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServiceChargeRate } from "./queries/serviceChargeQueries";
 
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
 function ReceiptForm({
@@ -19,6 +21,7 @@ function ReceiptForm({
     pay_status,
     nat_col,
     is_resident,
+    voter_id,
     onSuccess,
     discountedAmount,
     discountReason
@@ -30,15 +33,25 @@ function ReceiptForm({
     pay_status: string;
     nat_col: string;
     is_resident: boolean;
+    voter_id?: string | number | null;
     onSuccess: () => void;
     discountedAmount?: string;
     discountReason?: string;
 }){
+    const { user } = useAuth();
+    const staffId = user?.staff?.staff_id;
     const { mutate: receipt, isPending} = useAddPersonalReceipt(onSuccess)
     const { mutate: acceptReq, isPending: isAcceptPending} = useAcceptRequest()
     const { mutate: acceptNonResReq, isPending: isAcceptNonResPending} = useAcceptNonResRequest()
+    const { data: scRate } = useServiceChargeRate();
+    const { mutateAsync: createScPayReq } = useCreateServiceChargePaymentRequest();
+    const { mutateAsync: acceptSummon } = useAcceptSummonRequest();
 
-   console.log('stat', pay_status)
+   console.log('stat', pay_status, 'staffId', staffId)
+   // Derive resident status defensively: certificate flow (nat_col === 'Certificate') with null voter_id should be resident (paid)
+   const effectiveIsResident = Boolean(is_resident || (nat_col === 'Certificate' && voter_id === null));
+   console.log('DEBUG voter_id value:', voter_id, 'type:', typeof voter_id, 'is_resident (prop):', is_resident, 'effectiveIsResident:', effectiveIsResident)
+   const isFree = Boolean(effectiveIsResident && voter_id !== null && voter_id !== undefined);
     const ReceiptSchema = useMemo(() => {
         return createReceiptSchema(discountedAmount || rate);
     }, [discountedAmount, rate]);
@@ -47,22 +60,56 @@ function ReceiptForm({
     const form = useForm<z.infer<typeof ReceiptSchema>>({
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
-            inv_serial_num: is_resident ? "N/A" : "", 
-            inv_amount: is_resident ? "150" : "",
+            inv_serial_num: effectiveIsResident ? "N/A" : "", 
+            inv_amount: effectiveIsResident ? (isFree ? "0" : (rate || "0")) : "",
             inv_nat_of_collection: nat_col,
             id: id.toString(), 
+            cr_id: effectiveIsResident ? id.toString() : undefined,
+            nrc_id: !effectiveIsResident ? id.toString() : undefined,
         }
     });
 
     const onSubmit = async () => {
         
         try {
-            if (is_resident){
-                await acceptReq(id)
+            console.log('[Receipt onSubmit] context:', { id, is_resident, effectiveIsResident, voter_id, isFree, nat_col, staffId, purpose, rate });
+            
+            if (nat_col === 'Service Charge'){
+                const prId = scRate?.pr_id;
+                const amount = scRate?.pr_rate != null ? Number(scRate.pr_rate) : undefined;
+                if (prId == null){
+                    console.warn('[Receipt onSubmit] Service Charge rate not found; skipping payment request creation');
+                } else {
+                    console.log('[Receipt onSubmit] creating ServiceChargePaymentRequest with', { sr_id: id, pr_id: prId, spay_amount: amount });
+                    await createScPayReq({ sr_id: id.toString(), pr_id: prId, spay_amount: amount });
+                    // Auto-mark summon as Accepted
+                    await acceptSummon(id.toString());
+                }
             } else {
-                // For non-resident requests, use the acceptNonResReq mutation
-                await acceptNonResReq({nrc_id: id, discountReason: discountReason})
+                // Certificate flow
+                if (effectiveIsResident){
+                    console.log('[Receipt onSubmit] calling acceptReq (resident) with cr_id:', id);
+                    await acceptReq(id)
+                } else {
+                    // For non-resident requests, use the acceptNonResReq mutation
+                    console.log('[Receipt onSubmit] calling acceptNonResReq (non-resident) with nrc_id:', id, 'discountReason:', discountReason);
+                    await acceptNonResReq({nrc_id: id, discountReason: discountReason})
+                }
             }
+            // Create invoice after status update
+            const values = form.getValues();
+            const payload: any = {
+                inv_date: new Date().toISOString(),
+                inv_amount: parseFloat(values.inv_amount || (discountedAmount || rate || '0')),
+                inv_nat_of_collection: values.inv_nat_of_collection,
+                inv_serial_num: values.inv_serial_num || 'N/A',
+                cr_id: nat_col !== 'Service Charge' && effectiveIsResident ? id.toString() : undefined,
+                nrc_id: nat_col !== 'Service Charge' && !effectiveIsResident ? Number(id) : undefined,
+            };
+            Object.keys(payload).forEach((k) => (payload[k] === undefined || payload[k] === '') && delete payload[k]);
+            console.log('[Receipt onSubmit] creating invoice with payload:', payload);
+            await receipt(payload as any);
+
             console.log('Receipt mutation called successfully');
         } catch (error) {
             console.error('Error in onSubmit:', error);
@@ -110,7 +157,7 @@ function ReceiptForm({
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Request Type</label>
-                        <p className="text-base text-gray-900 font-medium mt-1">{nat_col}</p>
+                        <p className="text-base text-gray-900 font-medium mt-1">{nat_col === 'Service Charge' ? 'Summon' : nat_col}</p>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Purpose</label>
@@ -118,11 +165,11 @@ function ReceiptForm({
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Payment Status</label>
-                        <p className="text-base text-green-600 font-semibold mt-1">{pay_status}</p>
+                        <p className="text-base text-green-600 font-semibold mt-1">{isFree ? 'Free (Registered Voter)' : pay_status}</p>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-600">Amount</label>
-                        <p className="text-base text-primary font-semibold mt-1">{`₱${rate}`}</p>
+                        <p className="text-base text-primary font-semibold mt-1">{`₱${isFree ? '0' : rate}`}</p>
                     </div>
                     </div>
                 </CardContent>
@@ -141,18 +188,19 @@ function ReceiptForm({
                         )}
                     </div>
                     
-                    {/* Discount Button */}
-                    <Button 
-                        type="button"
-                        variant="outline"
-                        disabled={isAlreadyPaid}
-                        className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
-                        onClick={() => {
-                            onSuccess(); // Hide the create receipt form
-                        }}
-                    >
-                        Apply Discount
-                    </Button>
+                    {/* Discount Button (hidden for free/voter requests) */}
+                    {!isFree && !isAlreadyPaid && (
+                        <Button 
+                            type="button"
+                            variant="outline"
+                            className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
+                            onClick={() => {
+                                onSuccess(); // Hide the create receipt form
+                            }}
+                        >
+                            Apply Discount
+                        </Button>
+                    )}
                 </div>
 
                 {/* Only show these fields if NOT resident */}
@@ -251,5 +299,6 @@ function ReceiptForm({
 }
 
 export default ReceiptForm;
+
 
 

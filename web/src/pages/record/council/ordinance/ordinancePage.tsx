@@ -421,7 +421,7 @@ function OrdinancePage() {
                 return folder;
             }));
             
-            toast.success("Document analysis completed successfully! (Using local processing)");
+            toast.success("Document analysis completed successfully!");
             
             // Open the AI analysis popup to show the results
             // Use the updated item with the new analysis result
@@ -513,7 +513,7 @@ function OrdinancePage() {
             });
             setAiAnalysisOpen(true);
             
-            toast.success("Amendment comparison analysis completed successfully! (Using local processing)");
+            toast.success("Amendment comparison analysis completed successfully!");
         } catch (error) {
             console.error("Error comparing amendments:", error);
             toast.error("Failed to compare amendments. Please try again.");
@@ -1255,22 +1255,6 @@ function OrdinancePage() {
                                                     </div>
                                                 </div>
 
-                                                {/* Similarities */}
-                                                {selectedOrdinanceForAnalysis.aiAnalysisResult.similarities && selectedOrdinanceForAnalysis.aiAnalysisResult.similarities.length > 0 && (
-                                                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                                                        <div className="flex items-center gap-2 mb-3">
-                                                            <h4 className="text-lg font-semibold text-gray-800">Similarities Between Amendments</h4>
-                                                        </div>
-                                                        <ul className="space-y-3">
-                                                            {selectedOrdinanceForAnalysis.aiAnalysisResult.similarities.map((similarity: string, index: number) => (
-                                                                <li key={index} className="flex items-start gap-3">
-                                                                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                                                                    <span className="text-sm text-gray-700 leading-relaxed">{similarity}</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
 
                                                 {/* Key Differences */}
                                                 {selectedOrdinanceForAnalysis.aiAnalysisResult.keyDifferences && selectedOrdinanceForAnalysis.aiAnalysisResult.keyDifferences.length > 0 && (

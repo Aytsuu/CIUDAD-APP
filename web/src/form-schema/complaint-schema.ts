@@ -32,16 +32,6 @@ export const addressSchema = z.object({
   province: z.string().optional(),
   sitio: z.string().optional(),
 })
-// .refine((data)=>
-//     data.street.trim() &&
-//     data.barangay.trim() &&
-//     data.city.trim() &&
-//     data.province.trim(),
-//     {
-//       path: ["street"],
-//       message: "All address fields (Street, Barangay, City, Province) are required",
-//     }
-//   );
 
 // -------------------------------------
 //  ✪ PERSON ( COMPLAINANT / ACCUSED ) 

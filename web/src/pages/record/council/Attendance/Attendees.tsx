@@ -21,7 +21,7 @@ function Attendees({ isEditMode, onEditToggle, onSave, ceId }: AttendeesProps) {
   const { data: eventAttendees = [], isLoading, error } = useGetAttendees(ceId);
   const addAttendee = useAddAttendee();
   const updateAttendee = useUpdateAttendee();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, _setIsSubmitting] = useState(false);
 
   if (error) {
     return <div className="w-full h-full p-4 text-center text-red-500">Error loading attendees: {error.message}</div>;

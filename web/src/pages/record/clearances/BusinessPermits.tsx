@@ -16,12 +16,15 @@ import { getBusinessPermit, markBusinessPermitAsIssued, type BusinessPermit, typ
 import { toast } from "sonner";
 import TemplateMainPage from "../council/templates/template-main";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { useAuth } from "@/context/AuthContext";
 
 // Type imported from queries
 
 function BusinessDocumentPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPermit, setSelectedPermit] = useState<BusinessPermit | null>(null);
 
@@ -46,7 +49,7 @@ function BusinessDocumentPage() {
   const handleMarkAsPrinted = (permit: BusinessPermit) => {
     markAsIssuedMutation.mutate({
       bpr_id: permit.bpr_id,
-      staff_id: "00003250722", 
+      staff_id: staffId, 
     });
   };
 

@@ -12,7 +12,6 @@ export const putCouncilEvent = async (
       ce_place: eventInfo.ce_place,
       ce_date: formatDate(eventInfo.ce_date),
       ce_time: eventInfo.ce_time,
-      ce_type: eventInfo.ce_type,
       ce_description: eventInfo.ce_description,
       ce_is_archive: eventInfo.ce_is_archive || false,
       ...(eventInfo.staff_id !== undefined && { staff_id: eventInfo.staff_id }),

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getServiceChargeRequest, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, getSummonTimeSlots} from "../requestAPI/summonGetAPI";
+import { getServiceChargeRequest, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, 
+    getSummonTimeSlots, getSummonReqPendingList, getComplaintDetails, getSummonReqRejectedList} from "../requestAPI/summonGetAPI";
 
 export type ServiceChargeRequest = {
     sr_id: string;
@@ -147,6 +148,62 @@ export const useGetSummonTimeSlots = (sd_id: number) => {
     return useQuery<SummonTimeSlots[]>({
         queryKey: ['summonTimeSlots', sd_id],
         queryFn: () => getSummonTimeSlots(sd_id),
+        staleTime: 5000
+    })
+}
+
+export type SummonReqPendingList = {
+    sr_id: string;
+    sr_req_date: string;
+    comp_id: string;
+    complainant_names: string[]
+    incident_type: string;
+    accused_names: string [];
+}
+
+export const useGetSummonReqPendingList = () => {
+    return useQuery<SummonReqPendingList[]>({
+        queryKey: ['summonPendingReq'],
+        queryFn: getSummonReqPendingList,
+        staleTime: 5000
+    })
+}
+
+export type SummonReqRejectedList = {
+    sr_id: string;
+    sr_req_date: string;
+    comp_id: string;
+    complainant_names: string[]
+    incident_type: string;
+    accused_names: string [];
+    rejection_reason: string;
+    decision_date: string;
+}
+
+export const useGetSummonReqRejectedList = () => {
+    return useQuery<SummonReqRejectedList[]>({
+        queryKey: ['summonRejectedReq'],
+        queryFn: getSummonReqRejectedList,
+        staleTime: 5000
+    })
+}
+
+export type ComplaintDetails = {
+    comp_id: string;
+    comp_incident_type: string;
+    comp_allegation: string;
+    comp_location: string;
+    comp_datetime: string;
+    comp_created_at: string;
+    complainant: string [];
+    accused_persons: string [];
+    complaint_files: string [];
+}
+
+export const useGetComplaintDetails = (comp_id: string) => {
+    return useQuery<ComplaintDetails>({
+        queryKey: ['complaintDetails', comp_id],
+        queryFn: () => getComplaintDetails(comp_id),
         staleTime: 5000
     })
 }

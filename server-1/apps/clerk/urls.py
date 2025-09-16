@@ -2,16 +2,21 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path('service-charge-request/', ServiceChargeRequestView.as_view(), name='service-charge-request'),
+    # path('service-charge-request/', ServiceChargeRequestView.as_view(), name='service-charge-request'),
     # path('case-details/<int:sr_id>/', ServiceChargeRequestDetailView.as_view(), name='case-details'),
     # path('case-activity/', CaseActivityView.as_view(), name='case-activity'),
-    path('update-service-charge-request/<int:sr_id>/', UpdateServiceChargeRequestView.as_view(), name='update-service-charge-request'),
+    # path('update-service-charge-request/<int:sr_id>/', UpdateServiceChargeRequestView.as_view(), name='update-service-charge-request'),
     # path('file-action-request/', FileActionrequestView.as_view(), name='file-action-request'),
     # path('case-supp-doc/', CaseSuppDocView.as_view(), name='case-supp-doc'),
     # path('case-supp-doc/<int:ca_id>/', CaseSuppDocView.as_view(), name='case-supp-doc'),
     # path('delete-case-supp-doc/<int:csd_id>/', DeleteCaseSuppDocView.as_view(), name='delete-case-supp-doc'),
     # path('update-case-supp-doc/<int:csd_id>/', UpdateCaseSuppDocView.as_view(), name='update-case-supp-doc'),
     # path('service-charge-request-file/', ServiceChargeRequestFileView.as_view(), name='service-charge-request-file'),
+    path('service-charge-pending-list/', SummonRequestPendingListView.as_view(), name='service=-charge-pending-list'),
+    path('service-charge-rejected-list/', SummonRequestRejectedListView.as_view(), name='service=-charge-rejected-list'),
+    path('update-summon-request/<str:sr_id>/', UpdateSummonRequestView.as_view(), name='update-summon-request'),
+    path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
+    path('service-charge-payment-request/', ServiceChargePaymentRequestView.as_view(), name='service-charge-payment-req'),
     path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),
     path('delete-summon-date/<int:sd_id>/', DeleteSummonDateAvailability.as_view(), name='delete-summon-date'),
     path('summon-time-availability/', SummonTimeAvailabilityView.as_view(), name='summon-time-availability'),
@@ -39,4 +44,7 @@ urlpatterns = [
 
     # Business Clearance endpoints
     path('business-clearance/', ClearanceRequestView.as_view(), name='business-clearance-create'),
+
+    # Treasurer - Service Charge Requests
+    path('treasurer/service-charges/', ServiceChargeTreasurerListView.as_view(), name='treasurer-service-charges'),
 ]

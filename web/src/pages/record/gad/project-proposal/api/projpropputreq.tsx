@@ -19,23 +19,3 @@ export const putProjectProposal =  async (proposalData: ProjectProposalInput) =>
   );
   return response.data;
 };
-
-export const patchProjectProposalStatus = async (
-  gprId: number,
-  status: string,
-  reason: string | null,
-  staffId?: number | null
-) => {
-  try {
-    const payload = {
-      gprl_status: status,
-      gprl_reason: reason,
-      staffId: staffId
-    };
-
-    const res = await api.patch(`gad/review-project-proposals/${gprId}/`, payload);
-    return res.data;
-  } catch (err) {
-    throw err;
-  }
-};

@@ -27,7 +27,7 @@ export const addCaseActivity = async (caseInfo: Record<string, any>) => {
     }
 }
 
-export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], description: string) => {    
+// export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], description: string) => {    
     // try{
 
     //     if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
@@ -54,7 +54,7 @@ export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], d
     // }catch(err){
     //     console.error(err)
     // }
-}
+// }
 
 export const addSummonDate = async (newDates: string[], oldDates: {
     sd_id: number;

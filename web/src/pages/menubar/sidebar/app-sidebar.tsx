@@ -46,7 +46,12 @@ const barangayItems: BaseMenuItem[] = [
   },
   {
     title: "Summon & Case Tracker",
-    url: "/summon-and-case-tracking",
+    url: "/",
+    items: [
+      { title: "Request List", url: "/request-list"},
+      { title: "Summon Calendar", url: "/summon-calendar"},
+      { title: "Cases", url: "/summon-cases"},
+    ]
   },
   {
     title: "GAD",
@@ -55,6 +60,7 @@ const barangayItems: BaseMenuItem[] = [
       { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
       { title: "Project Proposal", url: "/gad-project-proposal"},
       { title: "Annual Development Plan", url: "/gad-annual-development-plan"},
+      { title: "Activity", url: "/gad-activity"},
     ],
   },
   {
@@ -89,12 +95,10 @@ const barangayItems: BaseMenuItem[] = [
           { title: "Personal & Others", url: "/treasurer-personal-and-others" },
           { title: "Permit", url: "/treasurer-permit" },
           { title: "Service Charge", url: "/treasurer-service-charge" },
-          { title: "Barangay Service", url: "/treasurer-barangay-service" },
           { title: "Rates", url: "/treasurer-rates" },
         ],
       },
       { title: "Receipts", url: "/treasurer-receipts" },
-      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
     ],
   },
   {
@@ -126,15 +130,6 @@ const barangayItems: BaseMenuItem[] = [
   {
     title: "Announcement",
     url: "/announcement",
-  },
-  {
-    title: "Clerk",
-    url: "/",
-    items: [
-      { title: "Certifications", url: "record/clearances/certification" },
-      { title: "Business Permits", url: "record/clearances/businesspermit" },
-      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
-    ],
   },
   {
     title: "Activity Log",
