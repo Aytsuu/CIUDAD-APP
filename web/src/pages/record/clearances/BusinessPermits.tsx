@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {Search, ArrowUpDown, Loader2, CheckCircle, Eye } from "lucide-react";
@@ -21,7 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 // Type imported from queries
 
 function BusinessDocumentPage() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
