@@ -1,7 +1,8 @@
 from django.db import models
 from datetime import date
+from ..abstract_classes import AbstractModels
 
-class ReportType(models.Model):
+class ReportType(AbstractModels):
     rt_id = models.BigAutoField(primary_key=True)
     rt_label = models.CharField(max_length=500)
     rt_category = models.CharField(max_length=50)
@@ -34,7 +35,7 @@ class AcknowledgementReport(models.Model):
   ar_action_taken = models.TextField()
   ar_result = models.TextField()
   ar_created_at = models.DateField(default=date.today)
-  ar_status = models.CharField(max_length=20, default='Unsigned')
+  ar_status = models.CharField(max_length=20, default='UNSIGNED')
   ar_is_archive = models.BooleanField(default=False)
   ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, null=True)
   rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
@@ -58,7 +59,7 @@ class WeeklyAccomplishmentReport(models.Model):
   war_id = models.BigAutoField(primary_key=True)
   war_created_at = models.DateField(default=date.today)
   war_created_for = models.DateField(default=date.today)
-  war_status = models.CharField(max_length=50, default='Unsigned')
+  war_status = models.CharField(max_length=50, default='UNSIGNED')
   war_is_archive = models.BooleanField(default=False)
   staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
