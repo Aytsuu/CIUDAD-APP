@@ -70,7 +70,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
   },
   {
     accessorKey: "fam_building",
-    header: "Building",
+    header: "Household Occupancy",
   },
   {
     accessorKey: "father",
@@ -167,7 +167,7 @@ export const familyMembersCol = (
           await updateFamilyRole({
             familyId: family.fam_id,
             residentId: row.original.rp_id,
-            fc_role: capitalize(value as string)
+            fc_role: capitalize(value) as any
           });
           setIsChanging(false)
         }catch (err) {

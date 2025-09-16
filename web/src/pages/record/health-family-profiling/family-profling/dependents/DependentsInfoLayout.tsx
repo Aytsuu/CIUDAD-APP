@@ -16,12 +16,12 @@ import {
   useAddFamily, 
   useAddFamilyComposition,
 } from "../../../profiling/queries/profilingAddQueries";
-import {
-  useAddFamilyHealth,
-  useAddFamilyCompositionHealth 
-} from "../../../health-family-profiling/family-profling/queries/profilingAddQueries";
+// import {
+//   useAddFamilyHealth,
+//   useAddFamilyCompositionHealth 
+// } from "../../../health-family-profiling/family-profling/queries/profilingAddQueries";
 import { LoadButton } from "@/components/ui/button/load-button";
-import { useAddRespondentHealth, useAddPerAdditionalDetailsHealth, useAddMotherHealthInfo } from "../queries/profilingAddQueries";
+// import { useAddRespondentHealth, useAddPerAdditionalDetailsHealth, useAddMotherHealthInfo } from "../queries/profilingAddQueries";
 
 export default function DependentsInfoLayout({
   form,
@@ -50,13 +50,13 @@ export default function DependentsInfoLayout({
   const { mutateAsync: addFamily } = useAddFamily();
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
   
-  // Health database hooks
-  const { mutateAsync: addFamilyHealth } = useAddFamilyHealth();
-  const { mutateAsync: addFamilyCompositionHealth } = useAddFamilyCompositionHealth();
-  // Add hooks for respondent and health details
-  const { mutateAsync: addRespondent } = useAddRespondentHealth();
-  const { mutateAsync: addPerAdditionalDetails } = useAddPerAdditionalDetailsHealth();
-  const { mutateAsync: addMotherHealthInfo } = useAddMotherHealthInfo();
+  // // Health database hooks
+  // const { mutateAsync: addFamilyHealth } = useAddFamilyHealth();
+  // const { mutateAsync: addFamilyCompositionHealth } = useAddFamilyCompositionHealth();
+  // // Add hooks for respondent and health details
+  // const { mutateAsync: addRespondent } = useAddRespondentHealth();
+  // const { mutateAsync: addPerAdditionalDetails } = useAddPerAdditionalDetailsHealth();
+  // const { mutateAsync: addMotherHealthInfo } = useAddMotherHealthInfo();
 
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 

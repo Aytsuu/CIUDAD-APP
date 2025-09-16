@@ -6,16 +6,15 @@ from rest_framework.permissions import AllowAny
 from django.db.models import Q
 from django.db import transaction
 from pagination import StandardResultsPagination
-from apps.profiling.serializers.all_record_serializers import *
-from apps.profiling.models import ResidentProfile, BusinessRespondent
-from apps.profiling.serializers.all_record_serializers import *
+from apps.healthProfiling.serializers.all_record_serializers import *
+from apps.healthProfiling.models import ResidentProfile
+from apps.healthProfiling.serializers.all_record_serializers import *
 from apps.administration.models import Staff
-from apps.account.models import Account
 from ..models import FamilyComposition
 from datetime import datetime
 from ..utils import *
-from utils.supabase_client import upload_to_storage
-from ..utils import *
+# from utils.supabase_client import upload_to_storage
+
 
 class AllRecordTableView(generics.GenericAPIView):
   serializer_class = AllRecordTableSerializer
@@ -43,21 +42,26 @@ class AllRecordTableView(generics.GenericAPIView):
           Q(per__per_suffix__icontains=search)
       )
     ]
-    respondents = [
-      {
-        'id': res.br_id,
-        'lname': res.br_lname,
-        'fname': res.br_fname,
-        'mname': res.br_mname,
-        'suffix': '',
-        'sex': res.br_sex,
-        'date_registered': res.br_date_registered,
-        'type': 'Business',
-      }
-      for res in BusinessRespondent.objects.all()
-    ]
+    # respondents = [
+    #   {
+    #     'id': res.br_id,
+    #     'lname': res.per.per_lname,
+    #     'fname': res.per.per_fname,
+    #     'mname': res.per.per_mname,
+    #     'suffix': res.per.per_suffix,
+    #     'sex': res.per.per_sex,
+    #     'date_registered': res.br_date_registered,
+    #     'type': 'Business',
+    #   }
+    #   for res in BusinessRespondent.objects.select_related('per').filter(
+    #       Q(per__per_fname__icontains=search) |
+    #       Q(per__per_lname__icontains=search) |
+    #       Q(per__per_mname__icontains=search) |
+    #       Q(per__per_suffix__icontains=search)
+    #   )
+    # ]
     
-    unified_data = residents + respondents
+    unified_data = residents
     page = self.paginate_queryset(unified_data)
     serializer = self.get_serializer(page, many=True)
     return self.get_paginated_response(serializer.data)
@@ -74,7 +78,6 @@ class CompleteRegistrationView(APIView):
     family = request.data.get("family", None)
     business = request.data.get("business", None)
     staff = request.data.get("staff", None)
-    
 
     if staff:
       staff=Staff.objects.filter(staff_id=staff).first()
@@ -96,7 +99,7 @@ class CompleteRegistrationView(APIView):
           results["rp_id"] = rp.pk
 
     if account:
-        self.create_account(account, rp)
+        self.create_account(account, staff)
 
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
@@ -157,13 +160,8 @@ class CompleteRegistrationView(APIView):
 
     return resident_profile
 
-  def create_account(self, account, rp):
-    instance = Account.objects.create_user(
-      **account,
-      rp=rp,
-      username=account['phone']
-    )
-    return instance
+  def create_account(self, account, staff):
+    return
   
   def create_household(self, houses, rp, staff):
     # data = [undefined, sitio, street]
@@ -197,7 +195,7 @@ class CompleteRegistrationView(APIView):
       fam_indigenous=livingSolo["indigenous"],
       fam_building=livingSolo["building"],
       hh=hh[int(household_no)] if is_owned_selected else \
-        Household.objects.get(hh_id=household_no),
+        Household.objects.get(hh_id=livingSolo["householdNo"]),
       staff=staff
     )
 
@@ -216,51 +214,51 @@ class CompleteRegistrationView(APIView):
       rp=rp
     )
   
-  def create_business(self, business, rp, staff):
-    sitio = business.get("sitio", None)
-    street = business.get("bus_street", None)
-    files = business.get("files", [])
+  # def create_business(self, business, rp, staff):
+  #   sitio = business.get("sitio", None)
+  #   street = business.get("bus_street", None)
+  #   files = business.get("files", [])
 
-    if sitio and street:
-      add,_ = Address.objects.get_or_create(
-        add_province="Cebu",
-        add_city="Cebu City",
-        add_barangay="San Roque (ciudad)",
-        sitio=Sitio.objects.filter(sitio_id=sitio).first(),
-        add_street=street
-      )
+  #   if sitio and street:
+  #     add,_ = Address.objects.get_or_create(
+  #       add_province="Cebu",
+  #       add_city="Cebu City",
+  #       add_barangay="San Roque (ciudad)",
+  #       sitio=Sitio.objects.filter(sitio_id=sitio).first(),
+  #       add_street=street
+  #     )
     
-    business = Business(
-      bus_name=business["bus_name"],
-      bus_gross_sales=business["bus_gross_sales"],
-      bus_status="Active",
-      bus_date_verified=datetime.today(),
-      rp=rp,
-      add=add,
-      staff=staff
-    )
-    business._history_user=staff
-    business.save()
+  #   business = Business(
+  #     bus_name=business["bus_name"],
+  #     bus_gross_sales=business["bus_gross_sales"],
+  #     bus_status="Active",
+  #     bus_date_verified=datetime.today(),
+  #     rp=rp,
+  #     add=add,
+  #     staff=staff
+  #   )
+  #   business._history_user=staff
+  #   business.save()
 
-    if len(files) > 0:
-      business_files = []
-      for file_data in files:
-        folder = "images" if file_data['type'].split("/")[0] == "image" else "documents"
+  #   if len(files) > 0:
+  #     business_files = []
+  #     for file_data in files:
+  #       folder = "images" if file_data['type'].split("/")[0] == "image" else "documents"
 
-        business_file = BusinessFile(
-          bus=business,
-          bf_name=file_data['name'],
-          bf_type=file_data['type'],
-          bf_path=f"{folder}/{file_data['name']}",
-        )
+  #       business_file = BusinessFile(
+  #         bus=business,
+  #         bf_name=file_data['name'],
+  #         bf_type=file_data['type'],
+  #         bf_path=f"{folder}/{file_data['name']}",
+  #       )
         
-        url = upload_to_storage(file_data, 'business-bucket', folder)
-        business_file.bf_url=url
-        business_files.append(business_file)
+  #       url = upload_to_storage(file_data, 'business-bucket', folder)
+  #       business_file.bf_url=url
+  #       business_files.append(business_file)
 
-      if len(business_files) > 0:
-          BusinessFile.objects.bulk_create(business_files)
+  #     if len(business_files) > 0:
+  #         BusinessFile.objects.bulk_create(business_files)
 
-    return business
+    # return business
 
   
