@@ -31,28 +31,28 @@ import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries
 import { usePatientPostpartumCount, usePatientPrenatalCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries";
 
 export default function ViewPatientRecord() {
-  const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal")
-  const [isEditable, setIsEditable] = useState(false)
-  const { patientId } = useParams<{ patientId: string }>()
-  const { data: patientsData, error, isError } = usePatientDetails(patientId ?? "")
-  const { data: rawChildHealthRecords, isLoading: isLoadingChildHealthRecords } = useChildHealthRecords(patientId);
-  const { data: medicineCountData } = useMedicineCount(patientId ?? "")
-  const medicineCount = medicineCountData?.medicinerecord_count
-  const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")
-  const vaccinationCount = vaccinationCountData?.vaccination_count
-  const { data: firstAidCountData } = useFirstAidCount(patientId ?? "")
-  const firstAidCount = firstAidCountData?.firstaidrecord_count
-  const { data: childHealthCount } = useChildHealthRecordCount(patientId ?? "")
-  const childHealthCountData = childHealthCount?.childhealthrecord_count
-  const { data: medconCountData } = useMedConCount(patientId ?? "")
-  const medconCount = medconCountData?.medcon_count
-  const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "")
-  const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "")
-  const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "")
-  const postpartumCount = postpartumCountData
-  const { data: prenatalCountData } = usePatientPrenatalCount(patientId ?? "")
-  const prenatalCount = prenatalCountData
-  const updatePatientData = useUpdatePatient()
+  const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal");
+  const [isEditable, setIsEditable] = useState(false);
+  const { patientId } = useParams<{ patientId: string }>();
+  const { data: patientsData, error, isError } = usePatientDetails(patientId ?? "");
+  const { data: rawChildHealthRecords } = useChildData(patientId ?? "");
+  const { data: medicineCountData } = useMedicineCount(patientId ?? "");
+  const medicineCount = medicineCountData?.medicinerecord_count;
+  const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "");
+  const vaccinationCount = vaccinationCountData?.vaccination_count;
+  const { data: firstAidCountData } = useFirstAidCount(patientId ?? "");
+  const firstAidCount = firstAidCountData?.firstaidrecord_count;
+  const { data: childHealthCount } = useChildHealthRecordCount(patientId ?? "");
+  const childHealthCountData = childHealthCount?.childhealthrecord_count;
+  const { data: medconCountData } = useMedConCount(patientId ?? "");
+  const medconCount = medconCountData?.medcon_count;
+  const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
+  const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
+  const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "");
+  const postpartumCount = postpartumCountData;
+  const { data: prenatalCountData } = usePatientPrenatalCount(patientId ?? "");
+  const prenatalCount = prenatalCountData;
+  const updatePatientData = useUpdatePatient();
 
   const currentPatient = useMemo(() => {
     if (!patientsData || !patientId) return null;

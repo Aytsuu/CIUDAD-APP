@@ -18,7 +18,10 @@ class HouseholdTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
   
   def get_queryset(self):
-        queryset = Household.objects.annotate(
+        queryset = Household.objects.select_related(
+           'add',
+           'staff'
+        ).annotate(
            family_count=Count('family_set', distinct=True)
         ).prefetch_related(
             'family_set'  # For counting families (assuming Family has hh FK)
@@ -29,18 +32,24 @@ class HouseholdTableView(generics.ListAPIView):
             'rp__rp_id',
             'rp__per__per_lname',
             'rp__per__per_fname',
-            'rp__per__per_mname'
+            'rp__per__per_mname',
+            'add__sitio__sitio_name',
+            'add__add_street',
+            'staff__staff_id',
+            'staff__staff_type',
         )
 
         search_query = self.request.query_params.get('search', '').strip()
         if search_query:
             queryset = queryset.filter(
                 Q(hh_id__icontains=search_query) |
-                Q(sitio__sitio_name__icontains=search_query) |
-                Q(hh_street__icontains=search_query) |
+                Q(add__sitio__sitio_name__icontains=search_query) |
+                Q(add__add_street__icontains=search_query) |
                 Q(hh_nhts__icontains=search_query) |
+                Q(hh_date_registered__icontains=search_query) |
                 Q(rp__per__per_lname__icontains=search_query) |
-                Q(rp__per__per_fname__icontains=search_query) | 
+                Q(rp__per__per_fname__icontains=search_query) |
+                Q(rp__per__per_mname__icontains=search_query) |  
                 Q(family_count__icontains=search_query)
             ).distinct()
 
