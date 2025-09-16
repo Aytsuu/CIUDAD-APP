@@ -8,7 +8,7 @@ import { UseFormReturn } from "react-hook-form";
 
 import { z } from "zod";
 import { Combobox } from "@/components/ui/combobox";
-import { DependentRecord } from "../../ProfilingTypes"
+import { DependentRecord } from "../../../profiling/ProfilingTypes"
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 

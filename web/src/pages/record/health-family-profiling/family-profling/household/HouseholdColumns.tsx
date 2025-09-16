@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
-import { HouseholdFamRecord, HouseholdRecord } from "../../ProfilingTypes";
+import { HouseholdFamRecord, HouseholdRecord } from "../../../profiling/ProfilingTypes";
 import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { Combobox } from "@/components/ui/combobox";
 import React from "react";
 import { useFamFilteredByHouseHealth } from "../queries/profilingFetchQueries";
-import { formatFamiles } from "../../ProfilingFormats";
+import { formatFamiles } from "../../../profiling/ProfilingFormats";
 import { formatDate } from "@/helpers/dateHelper";
 
 // Define the columns for household the data tables
