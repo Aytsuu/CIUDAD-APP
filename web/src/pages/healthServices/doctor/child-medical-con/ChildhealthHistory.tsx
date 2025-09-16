@@ -1,15 +1,11 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { ChevronRight, Edit } from "lucide-react"; // Added Edit icon
+import { ChevronRight } from "lucide-react"; // Added Edit icon
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Baby, History } from "lucide-react";
-import CardLayout from "@/components/ui/card/card-layout";
-import { HealthHistoryTable } from "../../childservices/viewrecords/health-history-table";
-import { getSupplementStatusesFields } from "../../childservices/viewrecords/config";
+// import { getSupplementStatusesFields } from "../../childservices/viewrecords/config";
 import { PatientSummarySection } from "../../childservices/viewrecords/CurrentHistoryView";
 import { useChildHealthHistory } from "../../childservices/forms/queries/fetchQueries";
-import { useNavigate } from "react-router-dom"; // Added useNavigate
+// import { useNavigate } from "react-router-dom"; // Added useNavigate
 
 interface PendingDisplayMedicalConsultationProps {
   patientData: any;
@@ -20,21 +16,21 @@ interface PendingDisplayMedicalConsultationProps {
 export default function PendingDisplayMedicalConsultation({
   checkupData,
   onNext,
-  patientData // Added patientData to props
+  // patientData // Added patientData to props
 }: PendingDisplayMedicalConsultationProps) {
-  const patId = checkupData.pat_details.pat_id;
+  // const patId = checkupData.pat_details.pat_id;
   const chrecId = checkupData.chrec_id;
   const chhistId = checkupData.chhist_id;
-  const navigate = useNavigate(); // Added navigate hook
+  // const navigate = useNavigate(); // Added navigate hook
 
   // State management
-  const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
+  // const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
 
   // Data fetching using custom hook
   const { data: historyData, isLoading } = useChildHealthHistory(chrecId);
 
   const [fullHistoryData, setFullHistoryData] = useState<any[]>([]);
-  const [latestRecord, setLatestRecord] = useState<any | null>(null);
+  const [_latestRecord, setLatestRecord] = useState<any | null>(null);
 
   useEffect(() => {
     if (historyData) {
@@ -45,25 +41,25 @@ export default function PendingDisplayMedicalConsultation({
     }
   }, [historyData, chhistId]);
 
-  const supplementStatusesFields = useMemo(() => getSupplementStatusesFields(fullHistoryData), [fullHistoryData]);
+  // const supplementStatusesFields = useMemo(() => getSupplementStatusesFields(fullHistoryData), [fullHistoryData]);
 
   // Edit button functionality
-  const navigateToUpdateLatest = () => {
-    if (latestRecord) {
-      navigate("/child-health-record/form", {
-        state: {
-          params: {
-            chhistId: chhistId,
-            patId: patId, // Use patientData from props
-            originalRecord: latestRecord,
-            patientData: patientData, // Use patientData from props
-            chrecId: chrecId,
-            mode: "addnewchildhealthrecord" // Changed to "edit" mode
-          }
-        }
-      });
-    }
-  };
+  // const navigateToUpdateLatest = () => {
+  //   if (latestRecord) {
+  //     navigate("/child-health-record/form", {
+  //       state: {
+  //         params: {
+  //           chhistId: chhistId,
+  //           patId: patId, // Use patientData from props
+  //           originalRecord: latestRecord,
+  //           patientData: patientData, // Use patientData from props
+  //           chrecId: chrecId,
+  //           mode: "addnewchildhealthrecord" // Changed to "edit" mode
+  //         }
+  //       }
+  //     });
+  //   }
+  // };
 
   // Loading state
   if (isLoading) {

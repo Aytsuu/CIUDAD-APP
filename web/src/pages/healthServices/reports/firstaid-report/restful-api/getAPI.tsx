@@ -1,8 +1,7 @@
 // getAPI.ts
 import { api2 } from "@/api/api";
-import { FirstAidChartResponse, FirstAidRecordsResponse } from "../types";
 
-export const getFirstaidRecords = async (page: number, pageSize: number, searchQuery: string, year?: string): Promise<FirstAidRecordsResponse> => {
+export const getFirstaidRecords = async (page: number, pageSize: number, searchQuery: string, year?: string): Promise<any> => {
   try {
     const params = new URLSearchParams();
     if (year && year !== "all") params.append("year", year);
@@ -10,7 +9,7 @@ export const getFirstaidRecords = async (page: number, pageSize: number, searchQ
     params.append("page", page.toString());
     params.append("page_size", pageSize.toString());
 
-    const response = await api2.get<FirstAidRecordsResponse>(`/firstaid/firstaid-records/monthly/?${params.toString()}`);
+    const response = await api2.get<any>(`/firstaid/firstaid-records/monthly/?${params.toString()}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching First Aid records:", error);
@@ -19,10 +18,10 @@ export const getFirstaidRecords = async (page: number, pageSize: number, searchQ
 };
 
 // Update your query function
-export const getFirstaidReports = async (month: string, page: number, pageSize: number, searchQuery: string): Promise<FirstAidRecordsResponse> => {
+export const getFirstaidReports = async (month: string, page: number, pageSize: number, searchQuery: string): Promise<any> => {
   try {
     const url = `/firstaid/firstaid-reports/${month}/`;
-    const response = await api2.get<FirstAidRecordsResponse>(url, {
+    const response = await api2.get<any>(url, {
       params: {
         page,
         page_size: pageSize,
@@ -39,7 +38,7 @@ export const getFirstaidReports = async (month: string, page: number, pageSize: 
 export const getFirstAidChart = async (month: string) => {
   try {
     const url = `/firstaid/firstaid-records/monthly/chart/${month}/`;
-    const response = await api2.get<FirstAidChartResponse>(url);
+    const response = await api2.get<any>(url);
     console.log("Chart Response:", response.data);
     return response.data;
   } catch (error) {

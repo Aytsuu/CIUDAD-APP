@@ -1,4 +1,4 @@
-import { getMedicineStocks } from "./getAPI"; // Your API function
+// import { getMedicineStocks } from "./getAPI"; // Your API function
 import { useQuery} from '@tanstack/react-query';
 import { api2 } from "@/api/api";
   // export const fetchMedicinesWithStock = (is_temp?:boolean) => {

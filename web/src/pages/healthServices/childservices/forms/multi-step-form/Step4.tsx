@@ -226,7 +226,7 @@ export default function LastPage({
   const [editingAnemiaIndex, setEditingAnemiaIndex] = useState<number | null>(null);
   const [editingBirthWeightIndex, setEditingBirthWeightIndex] = useState<number | null>(null);
   const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
-  const { data: latestVitalsData, isLoading: isLatestVitalsLoading } = useChildLatestVitals(formData.pat_id || "");
+  const { data: latestVitalsData, isLoading: _isLatestVitalsLoading } = useChildLatestVitals(formData.pat_id || "");
   const [showVitalSignsForm, setShowVitalSignsForm] = useState(() => {
     const todaysHistoricalRecord = historicalVitalSigns.find((vital) => isToday(vital.date));
     return !todaysHistoricalRecord && newVitalSigns.length === 0;

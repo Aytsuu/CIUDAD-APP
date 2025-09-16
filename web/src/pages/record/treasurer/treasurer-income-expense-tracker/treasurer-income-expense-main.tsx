@@ -21,7 +21,7 @@ function IncomeExpenseMain() {
         return yearString.includes(searchTerm.toLowerCase());
     });
     
-    let styles = {
+    const styles = {
         budgetLabel: "w-[12rem]",
     };
 

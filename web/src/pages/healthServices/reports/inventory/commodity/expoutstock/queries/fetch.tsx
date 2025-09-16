@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   getCommodityExpiredOutOfStockSummary, 
   getMonthlyCommodityExpiredOutOfStockDetail 
-} from "./../restful-api/get";
+} from "../restful-api/get";
 
 export const useCommodityExpiredOutOfStockSummary = (
   page: number,

@@ -105,7 +105,7 @@ export default function BusinessPermitDocumentation() {
         yPos += 10;
       }
       if (templateData.temp_body) {
-        let bodyText = templateData.temp_body;
+        const bodyText = templateData.temp_body;
         const businessName = requestData.businessName || 'Unknown';
         const businessAddress = requestData.businessAddress || 'Unknown';
         const dateValue = formatDate(requestData.date) || 'Unknown';
@@ -113,7 +113,7 @@ export default function BusinessPermitDocumentation() {
         doc.setFontSize(10);
         yPos += sectionGap;
         const contentWidth = pageWidth - margin * 2;
-        let processedText = bodyText
+        const processedText = bodyText
           .replace(/\[BUSINESS NAME\]/g, businessName)
           .replace(/\[BUSINESS_ADDRESS\]/g, businessAddress)
           .replace(/\[BUSINESS ADDRESS\]/g, businessAddress)

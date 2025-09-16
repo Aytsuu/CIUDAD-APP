@@ -30,7 +30,7 @@ import { VaccinationRecord } from "../tables/columns/types";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";
-import { SignatureFieldRef, SignatureField } from "../../Reports/firstaid-report/signature";
+import { SignatureFieldRef, SignatureField } from "../../reports/firstaid-report/signature";
 import { showErrorToast } from "@/components/ui/toast";
 import { fetchStaffWithPositions } from "../../Reports/firstaid-report/queries/fetchQueries";
 

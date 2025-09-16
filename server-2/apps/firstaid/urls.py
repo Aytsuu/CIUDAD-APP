@@ -13,4 +13,8 @@ urlpatterns = [
   path('firstaid-records/monthly/', MonthlyFirstAidSummariesAPIView.as_view(), name='monthly_firstaid_records'),
   path('firstaid-reports/<str:month>/', MonthlyFirstAidRecordsDetailAPIView.as_view(), name='firstaid-reports'),
   path('firstaid-records/monthly/chart/<str:month>/', MonthlyFirstAidChart.as_view(), name='firstaid_records_list'),
+  
+  
+  # updated backedn for create-first-aid-inventory
+  path('create-first-aid-inventory/', CreateFirstAidRequestView.as_view(), name='create-first-aid-inventory'),
 ]

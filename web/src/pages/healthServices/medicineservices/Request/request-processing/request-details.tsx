@@ -19,7 +19,7 @@ import { registerPatient } from "@/pages/record/health/patientsRecord/restful-ap
 import { useCheckPatientExists } from "@/pages/record/health/patientsRecord/queries/fetch";
 import { PersonalInfoCard } from "./personal-info";
 import { useCreateMedicineAllocation } from "../queries/post";
-import { SignatureField, SignatureFieldRef } from "@/pages/healthServices/Reports/firstaid-report/signature";
+import { SignatureField, SignatureFieldRef } from "@/pages/healthServices/reports/firstaid-report/signature";
 
 export default function MedicineRequestDetail() {
   const location = useLocation();

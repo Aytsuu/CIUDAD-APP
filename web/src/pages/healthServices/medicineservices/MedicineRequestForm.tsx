@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, AlertCircle, Loader2 } from "lucide-react";
+import { ChevronLeft, AlertCircle } from "lucide-react";
 import { fetchMedicinesWithStock } from "./restful-api/fetchAPI";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
@@ -18,7 +18,7 @@ import { MedicineRequestArraySchema, MedicineRequestArrayType } from "@/form-sch
 import { Patient } from "@/components/ui/patientSearch";
 import CardLayout from "@/components/ui/card/card-layout";
 import { MedicineRequestError } from "./medicine-error";
-import { SignatureFieldRef } from "../Reports/firstaid-report/signature";
+import { SignatureFieldRef } from "../reports/firstaid-report/signature";
 import { showErrorToast } from "@/components/ui/toast";
 import { MediaUploadType, MediaUpload } from "@/components/ui/media-upload";
 import { StatusIndicator } from "./StatusIndicator";
