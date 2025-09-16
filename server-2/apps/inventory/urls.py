@@ -83,7 +83,7 @@ urlpatterns = [
 
     
     path("imz_supplieslist-table/", ImmunizationSuppliesListTable.as_view(), name="imz_supplies-list"),
-    path("imz_supplieslist-view/", ImmunizationSuppliesListCreateView.as_view(), name="imz_supplies-list-createview"),
+    path("imz_supplieslist-createview/", ImmunizationSuppliesListCreateView.as_view(), name="imz_supplies-list-createview"),
     path("imz_supplies/<int:imz_id>/", ImmunizationSuppliesRetrieveUpdateDestroyView.as_view(), name="imz_supplies-detail"),
     path("immunization_stock/<int:imzStck_id>/", ImmunizationSuppliesStockRetrieveUpdateDestroyView.as_view(), name="immunization_stocks-detail"),
     path("immunization_stock-create/", ImmunizationStockCreate.as_view(), name="immunization_stock_atomic"),
