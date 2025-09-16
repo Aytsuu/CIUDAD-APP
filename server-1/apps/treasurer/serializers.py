@@ -461,7 +461,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
         if obj.cr_id is not None:
             # Try common relationship shapes
             try:
-                return f"{obj.cr_id.rp.per.per_lname}, {obj.cr_id.rp.per.per_fname}"
+                return f"{obj.cr_id.rp_id.per.per_lname}, {obj.cr_id.rp_id.per.per_fname}"
             except Exception:
                 try:
                     return f"{obj.cr_id.rp_id.per.per_lname}, {obj.cr_id.rp_id.per.per_fname}"
