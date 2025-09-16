@@ -21,7 +21,6 @@ export default function ARFormLayout() {
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params, [location.state]);
   const data = React.useMemo(() => params?.data, [params]);
-  const selected = React.useMemo(() => params?.selected, [params])
   const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);

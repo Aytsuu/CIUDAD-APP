@@ -5,8 +5,8 @@ import { FaFacebook, FaPhoneAlt } from "react-icons/fa";
 import { GoVerified } from "react-icons/go";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button/button";
-import SignIn from "@/pages/landing/signin/Signin";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import SignIn from "@/pages/landing/signin/signin";
 
 const NavItemList = [
   { path: "/home", title: "Home" },
