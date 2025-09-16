@@ -1,6 +1,3 @@
-# ---------------------------------------------------
-# PRODUCTION SERVER
-# ---------------------------------------------------
 
 from pathlib import Path
 from datetime import timedelta
@@ -264,6 +261,7 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
 
 
 
