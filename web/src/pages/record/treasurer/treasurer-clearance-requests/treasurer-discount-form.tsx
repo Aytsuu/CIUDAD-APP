@@ -19,7 +19,7 @@ const DiscountSchema = z.object({
     discountReason: z.string().min(1, "Reason for discount is required")
 });
 
-function DiscountAuthorizationForm({ originalAmount, onAuthorize, onCancel }: DiscountAuthorizationFormProps) {
+function DiscountAuthorizationForm({ originalAmount, onAuthorize }: DiscountAuthorizationFormProps) {
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [amountError, setAmountError] = useState<string>("");
     

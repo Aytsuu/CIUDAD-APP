@@ -21,7 +21,6 @@ import { localDateFormatter } from "@/helpers/localDateFormatter";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Combobox } from "@/components/ui/combobox";
-import { capitalize } from "@/helpers/capitalize";
 import { useAuth } from "@/context/AuthContext";
 
 

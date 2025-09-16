@@ -6,7 +6,7 @@ import GADActivityForm from "./gadActivityCreate.tsx";
 import { Plus, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Mock data for GAD activities - replace with actual API calls
+
 const mockGADActivities = [
   {
     id: 1,
