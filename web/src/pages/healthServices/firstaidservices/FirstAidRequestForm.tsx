@@ -22,7 +22,7 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { FirstAidRequestError } from "./firstaid-error";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { SignatureFieldRef, SignatureField } from "../reports_tmp/firstaid-report/signature";
+import { SignatureFieldRef, SignatureField } from "../reports/firstaid-report/signature";
 import { showErrorToast } from "@/components/ui/toast";
 
 export default function FirstAidRequestForm() {

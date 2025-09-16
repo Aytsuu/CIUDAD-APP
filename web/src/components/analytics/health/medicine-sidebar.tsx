@@ -2,7 +2,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, Loader2, BarChart3, Pill, ChevronDown } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { useMedicineChart } from "@/pages/healthServices/reports_tmp/medicine-report/queries/fetchQueries"
+import { useMedicineChart } from "@/pages/healthServices/reports/medicine-report/queries/fetchQueries"
 import { useState } from "react"
 
 

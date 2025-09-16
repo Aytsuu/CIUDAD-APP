@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MainInventoryStocks from "./StocksMain";
-import ArchiveMainInventoryStocks from "@/pages/healthServices/archive_tmp/Inventory/tables/MainArchiveInventoryStocks";
+import ArchiveMainInventoryStocks from "@/pages/healthServices/archive/Inventory/tables/MainArchiveInventoryStocks";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import TransactionMainInventoryList from "../../transaction/tables/TransactionMainInventoryList";
 
