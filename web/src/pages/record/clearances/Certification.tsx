@@ -21,7 +21,7 @@ import { localDateFormatter } from "@/helpers/localDateFormatter";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Combobox } from "@/components/ui/combobox";
-import { capitalize } from "@/helpers/capitalize";
+import { useAuth } from "@/context/AuthContext";
 
 
 interface ExtendedCertificate extends Certificate {
@@ -32,6 +32,8 @@ interface ExtendedCertificate extends Certificate {
 function CertificatePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [currentPage, setCurrentPage] = useState(1);
   const [filterType, setFilterType] = useState("all");
   const [filterPurpose, setFilterPurpose] = useState("all");
@@ -118,13 +120,21 @@ function CertificatePage() {
   const handleMarkAsPrinted = (certificate: Certificate) => {
     const markData: MarkCertificateVariables = {
       cr_id: certificate.cr_id,
-      staff_id: "00005250821",
+      // Include staff_id if available and valid (backend now strictly validates; no upsert)
+      staff_id: staffId,
       is_nonresident: certificate.is_nonresident || false,
     };
 
     if (certificate.is_nonresident && certificate.nrc_id) {
       markData.nrc_id = certificate.nrc_id;
     }
+
+    console.log("Mark as Printed payload:", {
+      staffId,
+      is_nonresident: markData.is_nonresident,
+      cr_id: markData.cr_id,
+      nrc_id: markData.nrc_id,
+    });
 
     markAsIssuedMutation.mutate(markData);
   };
@@ -159,25 +169,25 @@ function CertificatePage() {
     setCurrentPage(page);
   };
 
-  const handleRowClick = (row: Certificate) => {
-    const fullName = `${row.resident_details?.per_fname || ''} ${row.resident_details?.per_lname || ''}`.trim();
-    navigate(`/record/clearances/ViewDocument/${row.cr_id}`, {
-      state: {
-        name: fullName || row.cr_id,
-        purpose: row.req_purpose || row.req_type,
-        date: row.req_claim_date,
-        requestId: row.cr_id,
-        requestDate: row.req_request_date,
-        paymentMethod: row.req_pay_method,
-        isNonResident: row.is_nonresident,
-        nonResidentData: row.is_nonresident ? {
-          requester: row.nrc_requester,
-          address: row.nrc_address,
-          birthdate: row.nrc_birthdate,
-        } : undefined,
-      },
-    });
-  };
+  // const handleRowClick = (row: Certificate) => {
+  //   const fullName = `${row.resident_details?.per_fname || ''} ${row.resident_details?.per_lname || ''}`.trim();
+  //   navigate(`/record/clearances/ViewDocument/${row.cr_id}`, {
+  //     state: {
+  //       name: fullName || row.cr_id,
+  //       purpose: row.req_purpose || row.req_type,
+  //       date: row.req_claim_date,
+  //       requestId: row.cr_id,
+  //       requestDate: row.req_request_date,
+  //       paymentMethod: row.req_pay_method,
+  //       isNonResident: row.is_nonresident,
+  //       nonResidentData: row.is_nonresident ? {
+  //         requester: row.nrc_requester,
+  //         address: row.nrc_address,
+  //         birthdate: row.nrc_birthdate,
+  //       } : undefined,
+  //     },
+  //   });
+  // };
 
   const columns: ColumnDef<Certificate>[] = [
     {
@@ -414,6 +424,7 @@ function CertificatePage() {
           specificPurpose={selectedCertificate.SpecificPurpose}
           issuedDate={new Date().toISOString()}
           isNonResident={selectedCertificate.is_nonresident}
+          showAddDetails={false}
         />
       )}
 

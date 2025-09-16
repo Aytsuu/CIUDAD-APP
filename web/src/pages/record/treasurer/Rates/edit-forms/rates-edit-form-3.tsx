@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form";
 import { PurposeAndRatesEditSchema } from "@/form-schema/treasurer/rates-edit-form-schema"
 import { useEditPurposeAndRate } from "../queries/RatesUpdateQueries"
+import { useAuth } from "@/context/AuthContext"
 
 function RatesEditFormPage3({pr_id, pr_purpose, pr_rate, onSuccess}: {
     pr_id: string;
@@ -13,12 +14,15 @@ function RatesEditFormPage3({pr_id, pr_purpose, pr_rate, onSuccess}: {
     pr_rate: number;
     onSuccess?: () => void;
 }){
+    const {user} = useAuth();
     const form = useForm<z.infer<typeof PurposeAndRatesEditSchema>>({
         resolver: zodResolver(PurposeAndRatesEditSchema),
         defaultValues: {
             purpose: pr_purpose,
             amount: pr_rate.toString(),
-            category: "Service Charge"
+            category: "Service Charge",
+            staff_id: user?.staff?.staff_id
+
         }
     })
 

@@ -832,7 +832,7 @@ class ResidentAcceptedPickupRequestsSerializer(serializers.ModelSerializer):
     file_url = serializers.SerializerMethodField()
     sitio_name = serializers.SerializerMethodField()
     dec_date = serializers.SerializerMethodField()
-    staff_name = serializers.SerializerMethodField(read_only  =True)
+    # staff_name = serializers.SerializerMethodField(read_only  =True)
 
     class Meta:
         model = Garbage_Pickup_Request
@@ -849,7 +849,7 @@ class ResidentAcceptedPickupRequestsSerializer(serializers.ModelSerializer):
             'file_url',
             'sitio_name',
             'dec_date',
-            'staff_name'
+            # 'staff_name'
         ]
 
     def get_garb_requester(self, obj):
@@ -918,20 +918,20 @@ class ResidentAcceptedPickupRequestsSerializer(serializers.ModelSerializer):
     def get_sitio_name(self, obj):
         return obj.sitio_id.sitio_name if obj.sitio_id else ""
     
-    def get_staff_name(self, obj):
-        if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
-            per = obj.staff_id.rp.per
+    # def get_staff_name(self, obj):
+    #     if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:
+    #         per = obj.staff_id.rp.per
 
-            full_name = f"{per.per_lname}, {per.per_fname}"
+    #         full_name = f"{per.per_lname}, {per.per_fname}"
 
-            if per.per_mname:
-                full_name += f" {per.per_mname}"
+    #         if per.per_mname:
+    #             full_name += f" {per.per_mname}"
             
-            if per.per_suffix:
-                full_name += f" {per.per_suffix}"
+    #         if per.per_suffix:
+    #             full_name += f" {per.per_suffix}"
             
-            return full_name
-        return None      
+    #         return full_name
+    #     return None      
 
 
 class ResidentCompletedPickupRequestSerializer(serializers.ModelSerializer):

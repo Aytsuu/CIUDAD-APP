@@ -19,6 +19,7 @@ from django.utils import timezone
 import uuid
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
+from datetime import date
 
 logger = logging.getLogger(__name__)
 
@@ -306,6 +307,12 @@ class ServiceChargeRequestCreateView(APIView):
                 'status': 'success',
                 'message': 'Service charge request created successfully'
             }, status=status.HTTP_201_CREATED)
+            
+        except Complaint.DoesNotExist:
+            logger.error(f"Complaint not found: {comp_id}")
+            return Response({
+                'error': 'Complaint not found'
+            }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger.error(f"Error creating service request: {str(e)}")
             return Response({

@@ -30,7 +30,7 @@ function WasteHotSched({onSuccess}: {
     onSuccess?: () => void;
 }) {
     const {user} = useAuth();
-    const {mutate: addHotspotAssignment} = useAddHotspot(onSuccess);
+    const {mutate: addHotspotAssignment, isPending} = useAddHotspot(onSuccess);
     const {data : fetchedWatchman = [], isLoading: isLoadingWatchman} = useGetWatchman();
     const {data: fetchedSitio = [], isLoading: isLoadingSitio} = useGetSitio();
     const watchmanOptions = fetchedWatchman.map(watchman => ({
@@ -167,7 +167,7 @@ function WasteHotSched({onSuccess}: {
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
-                    <Button type="submit">Save</Button>
+                    <Button type="submit" disabled={isPending}>{isPending? "Saving..." : "Save"}</Button>
                 </div>
             </form>
         </Form>

@@ -19,10 +19,12 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
     mutationFn: async (values: { 
       rep_status: string;
       files: FileData[]; 
+      staff_id: string;
     }) => {
       // 1. Update the main report status and date
       await updateWasteReport(rep_id, {
         rep_status: values.rep_status,
+        staff_id: values.staff_id
       });
       
       console.log("GAWAS SA QUERY: ", values.files)

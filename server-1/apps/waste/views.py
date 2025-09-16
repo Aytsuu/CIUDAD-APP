@@ -158,21 +158,21 @@ class UpcomingHotspotView(generics.ListAPIView):
             end_of_week = today + timedelta(days=7)
             queryset = queryset.filter(wh_date__lte=end_of_week)
             
-        return queryset.order_by('wh_date', 'wh_start_time')
+        return queryset.order_by('wh_date', 'wh_start_time', 'wh_end_time')
     
 
-class UpdateHotspotView(generics.RetrieveUpdateAPIView): 
-    serializer_class = WasteHotspotSerializer
-    queryset = WasteHotspot.objects.all()
-    lookup_field = 'wh_num'
+# class UpdateHotspotView(generics.RetrieveUpdateAPIView): 
+#     serializer_class = WasteHotspotSerializer
+#     queryset = WasteHotspot.objects.all()
+#     lookup_field = 'wh_num'
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     def update(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class WasteHotspotView(generics.ListCreateAPIView):
     serializer_class = WasteHotspotSerializer
@@ -182,7 +182,7 @@ class WasteHotspotView(generics.ListCreateAPIView):
         return WasteHotspot.objects.select_related(
             'wstp_id__staff__rp__per', 
             'sitio_id'                   
-        ).all()
+        ).all().order_by('wh_date', 'wh_start_time', 'wh_end_time')
 
 class UpdateHotspotView(generics.RetrieveUpdateAPIView): 
     serializer_class = WasteHotspotSerializer

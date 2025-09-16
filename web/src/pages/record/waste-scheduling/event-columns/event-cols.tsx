@@ -46,10 +46,10 @@ export const councilEventColumns: EventDetailColumn<CouncilEvent>[] = [
     cell: ({ row }) => format(new Date(row.original.ce_date), "MMM d, yyyy"),
   },
   { accessorKey: "ce_time", header: "Time" },
-  {
-  accessorKey: "ce_type",
-  header: "Type",
-  cell: (props: { row: { original: { ce_type: string } } }) =>
-    props.row.original.ce_type.charAt(0).toUpperCase() + props.row.original.ce_type.slice(1)
-}
+  // {
+  //   accessorKey: "ce_type",
+  //   header: "Type",
+  //   cell: (props: { row: { original: { ce_type: string } } }) =>
+  //     props.row.original.ce_type.charAt(0).toUpperCase() + props.row.original.ce_type.slice(1)
+  // }
 ];

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useSelector } from 'react-redux';
+import { useAuth } from "@/contexts/AuthContext";
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAddBusinessPermit } from "./queries/certificationReqInsertQueries";
@@ -10,11 +10,10 @@ import { CertificationRequestSchema } from "@/form-schema/certificates/certifica
 import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import _ScreenLayout from '@/screens/_ScreenLayout';
-import { RootState } from '@/redux/store';
 
 const CertPermit: React.FC = () => {
   const router = useRouter();
-  const {user, isLoading} = useSelector((state: RootState) => state.auth);
+  const { user, isLoading } = useAuth();
   
   const [permitType, setPermitType] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -336,13 +335,13 @@ const CertPermit: React.FC = () => {
           selectedValue={permitType}
           onSelect={(option) => setPermitType(option.value)}
           placeholder={
-            isLoadingBusiness || isLoading
+            isLoadingBusiness || !!isLoading
               ? "Loading business information..." 
               : businessData.length === 0 
                 ? "Business Clearance available" 
                 : "Select permit type"
           }
-          disabled={isLoadingBusiness || isLoadingPurposes || isLoading}
+          disabled={isLoadingBusiness || isLoadingPurposes || !!isLoading}
           className="mb-3"
         />
 
@@ -525,7 +524,7 @@ const CertPermit: React.FC = () => {
             </View>
 
             {/* Submit Button */}
-            {!isLoadingBusiness && !isLoading && (businessData.length > 0 || permitType === 'Business Clearance') ? (
+            {!isLoadingBusiness && !Boolean(isLoading) && (businessData.length > 0 || permitType === 'Business Clearance') ? (
               <TouchableOpacity
                 className={`bg-[#00AFFF] rounded-xl py-4 items-center mt-2 mb-8 ${addBusinessPermit.status === 'pending' ? 'opacity-50' : ''}`}
                 activeOpacity={0.85}
@@ -539,7 +538,7 @@ const CertPermit: React.FC = () => {
             ) : (
               <View className="bg-gray-100 rounded-xl py-4 items-center mt-2 mb-8">
                 <Text className="text-gray-500 font-semibold text-base">
-                  {isLoading ? 'Loading user data...' : 'Cannot Request Business Permit'}
+                  {Boolean(isLoading) ? 'Loading user data...' : 'Cannot Request Business Permit'}
                 </Text>
               </View>
             )}
