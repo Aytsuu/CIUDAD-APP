@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dialog/dialog";
 import {
   useAddProjectProposal,
-  useAddSupportDocument,
 } from "./queries/projprop-addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import {
@@ -55,7 +54,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const [_errorMessage, setErrorMessage] = useState<string | null>(null);
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const addMutation = useAddProjectProposal();
-  const addSupportDocMutation = useAddSupportDocument();
+  //const addSupportDocMutation = useAddSupportDocument();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedDevProject, setSelectedDevProject] = useState<any>(null);
 
@@ -492,10 +491,10 @@ const onSubmit = async (data: ProjectProposalFormValues) => {
         throw new Error('No proposal ID returned from server');
       }
       
-      const supportDocResult = await addSupportDocMutation.mutateAsync({
-        gpr_id: gprId,
-        files: newFiles,
-      });
+      // const supportDocResult = await addSupportDocMutation.mutateAsync({
+      //   gpr_id: gprId,
+      //   files: newFiles,
+      // });
     }
 
     form.reset();

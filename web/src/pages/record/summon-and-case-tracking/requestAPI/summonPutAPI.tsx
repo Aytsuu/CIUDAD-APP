@@ -35,7 +35,7 @@ export const escalateCase = async (sr_id: string, comp_id: string) => {
 }
 
 
-export const updateSuppDoc = async (values: {csd_id: string; description: string; media?: MediaUploadType[number];}) => {
+// export const updateSuppDoc = async (values: {csd_id: string; description: string; media?: MediaUploadType[number];}) => {
   // try {
   //   const formData = new FormData();
     
@@ -63,7 +63,7 @@ export const updateSuppDoc = async (values: {csd_id: string; description: string
   //   console.error(err);
   //   throw err;
   // }
-}
+// }
 
 export const acceptSummonRequest = async(sr_id: string) => {
     try{

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { addCaseActivity, addSuppDoc, addSummonDate, addSummonTimeSlots } from "../requestAPI/summonPostAPI";
+import { addCaseActivity, addSummonDate, addSummonTimeSlots } from "../requestAPI/summonPostAPI";
 import z from "zod"
 import SummonSchema from "@/form-schema/summon-schema";
 import { MediaUploadType } from "@/components/ui/media-upload";
@@ -33,32 +33,32 @@ export const useAddCaseActivity = (onSuccess?: () => void) => {
         })
 }
 
-export const useAddSuppDoc = (onSuccess?: () => void) => {
-    const queryClient = useQueryClient();
+// export const useAddSuppDoc = (onSuccess?: () => void) => {
+//     const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: (values: { 
-            ca_id: string; 
-            description: string;
-            media: MediaUploadType[number];
-        }) => addSuppDoc(values.ca_id, values.media, values.description),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['suppDocs'] });
-            toast.success('Document added successfully!', {
-                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                duration: 2000
-            });
-            onSuccess?.();
-        },
-        onError: (err) => {
-            console.error("Error adding document:", err);
-            toast.error(
-                "Failed to add document. Please try again.",
-                { duration: 2000 }
-            );
-        }
-    });
-}
+//     return useMutation({
+//         mutationFn: (values: { 
+//             ca_id: string; 
+//             description: string;
+//             media: MediaUploadType[number];
+//         }) => addSuppDoc(values.ca_id, values.media, values.description),
+//         onSuccess: () => {
+//             queryClient.invalidateQueries({ queryKey: ['suppDocs'] });
+//             toast.success('Document added successfully!', {
+//                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+//                 duration: 2000
+//             });
+//             onSuccess?.();
+//         },
+//         onError: (err) => {
+//             console.error("Error adding document:", err);
+//             toast.error(
+//                 "Failed to add document. Please try again.",
+//                 { duration: 2000 }
+//             );
+//         }
+//     });
+// }
 
 export const useAddSummonDates = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()

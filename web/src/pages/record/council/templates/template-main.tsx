@@ -1102,9 +1102,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button/button";
-import { Input } from '@/components/ui/input';
-import { Plus, SquarePen, Search } from 'lucide-react';
-import CardLayout from "@/components/ui/card/card-layout";
+import { Plus } from 'lucide-react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import TemplateCreateForm from "./template-create";
 import TemplateUpdateForm from "./template-update";
@@ -1112,7 +1110,6 @@ import { useGetTemplateRecord } from './queries/template-FetchQueries';
 import TemplatePreview from './template-preview';
 import { Skeleton } from "@/components/ui/skeleton";
 import {formatTimestampToDate } from '@/helpers/summonTimestampFormatter';
-import { toast } from "sonner";
 
 
 interface RequestProps {
@@ -1155,7 +1152,6 @@ type Template = {
 function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issuedDate, businessName, Signatory, specificPurpose, showAddDetails = true} : RequestProps ) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
 
   console.log("NISUDDDDD SAA TEMPLATE MAINNNNNNNNN")
 

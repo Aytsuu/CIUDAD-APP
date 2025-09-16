@@ -216,7 +216,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useState } from "react";
-import { useGetServiceChargeRequest, type ServiceChargeRequest } from "./queries/summonFetchQueries";
+import { type ServiceChargeRequest } from "./queries/summonFetchQueries";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 
 // Mock data for development
@@ -285,7 +285,7 @@ const mockServiceChargeData: ServiceChargeRequest[] = [
 
 // Mock hook implementation for development
 const useMockServiceChargeRequest = () => {
-  const [data, setData] = useState<ServiceChargeRequest[]>(mockServiceChargeData);
+  const [data, _setData] = useState<ServiceChargeRequest[]>(mockServiceChargeData);
   const isLoading = false;
   
   return { data, isLoading };
