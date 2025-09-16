@@ -5,46 +5,6 @@ import { Button } from "@/components/ui/button/button"
 import { Link } from "react-router-dom" // Use react-router-dom's Link
 
 // Define the ChildHealthRecord interface as it's used in InvChildHealthRecords
-interface ChildHealthRecord {
-  chrec_id: number
-  pat_id: string
-  fname: string
-  lname: string
-  mname: string
-  sex: string
-  age: string
-  dob: string
-  householdno: string
-  street: string
-  sitio: string
-  barangay: string
-  city: string
-  province: string
-  landmarks: string
-  pat_type: string
-  address: string // Full formatted address
-  mother_fname: string
-  mother_lname: string
-  mother_mname: string
-  mother_contact: string
-  mother_occupation: string
-  father_fname: string
-  father_lname: string
-  father_mname: string
-  father_contact: string
-  father_occupation: string
-  family_no: string
-  birth_weight: number
-  birth_height: number
-  type_of_feeding: string
-  delivery_type: string
-  place_of_delivery_type: string
-  pod_location: string
-  pod_location_details: string
-  health_checkup_count: number
-  birth_order: number
-  tt_status: string
-}
 
 interface PatientLinkData {
   pat_id: string
@@ -76,7 +36,7 @@ interface MedicalHistoryTabProps {
   medicalconCount: number | undefined
   patientLinkData: PatientLinkData
   childHealthCount?: number | undefined
-  childHealthRecords: ChildHealthRecord[]
+  childHealthRecords: any[]
   prenatalCount: number | undefined
 }
 
@@ -301,7 +261,7 @@ export default function Records({
                             variant="outline"
                             size="sm"
                             className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium"
-                            disabled={!firstChildHealthRecord} // Disable if no record to pass
+                            // disabled={!firstChildHealthRecord} // Disable if no record to pass
                           >
                             View Details
                           </Button>

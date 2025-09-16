@@ -8,28 +8,18 @@ import { exportToCSV, exportToExcel, exportToPDF } from "../firstaid-report/expo
 import { ExportDropdown } from "../firstaid-report/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
-
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { useSemiAnnualOPTRecords } from "./queries/fetch";
+import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import type { SemiAnnualChildRecord } from "./types";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
+import { FilterSitio } from "../filter-sitio";
+import { SelectedFiltersChips } from "../selectedFiltersChipsProps ";
+import { FilterStatus } from "../filter-nutstatus";
+import {  nutritionalStatusCategories, nutritionalStatusOptions } from "../options";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const periodOptions = [
   { value: "both", label: "Both Periods" },
@@ -47,15 +37,30 @@ export default function SemiAnnualOPTDetails() {
   const [nutritionalStatus, setNutritionalStatus] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [periodFilter, setPeriodFilter] = useState("both");
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
+  const [selectedNutritionalStatuses, setSelectedNutritionalStatuses] = useState<string[]>([]);
+
+  const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
+  const sitios = sitioData || [];
 
   const debouncedSitioSearch = useDebounce(sitioSearch, 500);
   const debouncedNutritionalStatus = useDebounce(nutritionalStatus, 500);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSitioSearch, debouncedNutritionalStatus]);
+  }, [debouncedSitioSearch, debouncedNutritionalStatus, selectedSitios, selectedNutritionalStatuses, periodFilter]);
 
-  const { data: apiResponse, isLoading, error } = useSemiAnnualOPTRecords(year, currentPage, pageSize, debouncedSitioSearch, debouncedNutritionalStatus);
+  const combinedSitioSearch = selectedSitios.length > 0 
+    ? selectedSitios.join(',')
+    : sitioSearch;
+
+  const combinedNutritionalStatus = selectedNutritionalStatuses.length > 0 
+    ? selectedNutritionalStatuses.join(',')
+    : nutritionalStatus;
+
+    const { data: apiResponse, isLoading, error } = useSemiAnnualOPTRecords(year, currentPage, pageSize, combinedSitioSearch, combinedNutritionalStatus);
+
 
   const records: SemiAnnualChildRecord[] = apiResponse?.results?.children_data || [];
   const summary = apiResponse?.results?.summary;
@@ -130,7 +135,82 @@ export default function SemiAnnualOPTDetails() {
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-CA"); // Returns YYYY-MM-DD format
+    return date.toLocaleDateString("en-CA");
+  };
+
+  // Filter handlers
+  const handleSitioSelection = (sitio_name: string, checked: boolean) => {
+    if (checked) {
+      setSelectedSitios([...selectedSitios, sitio_name]);
+      setSitioSearch("");
+    } else {
+      setSelectedSitios(selectedSitios.filter(sitio => sitio !== sitio_name));
+    }
+  };
+
+  const handleSelectAllSitios = (checked: boolean) => {
+    if (checked && sitios.length > 0) {
+      setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
+      setSitioSearch("");
+    } else {
+      setSelectedSitios([]);
+    }
+  };
+
+  const handleManualSitioSearch = (value: string) => {
+    setSitioSearch(value);
+    if (value) {
+      setSelectedSitios([]);
+    }
+  };
+
+  const handleNutritionalStatusSelection = (status: string, checked: boolean) => {
+    if (checked) {
+      setSelectedNutritionalStatuses([...selectedNutritionalStatuses, status]);
+      setNutritionalStatus("");
+    } else {
+      setSelectedNutritionalStatuses(selectedNutritionalStatuses.filter(s => s !== status));
+    }
+  };
+
+  const handleSelectAllNutritionalStatuses = (checked: boolean) => {
+    if (checked) {
+      setSelectedNutritionalStatuses(nutritionalStatusOptions.map(option => option.value).filter(v => v !== "all"));
+      setNutritionalStatus("");
+    } else {
+      setSelectedNutritionalStatuses([]);
+    }
+  };
+
+  const handleManualNutritionalStatusSearch = (value: string) => {
+    setNutritionalStatus(value);
+    if (value) {
+      setSelectedNutritionalStatuses([]);
+    }
+  };
+
+  const getStatusCategory = (status: string) => {
+    if (nutritionalStatusCategories.wfa.includes(status)) return "WFA";
+    if (nutritionalStatusCategories.lhfa.includes(status)) return "LHFA";
+    if (nutritionalStatusCategories.wfh.includes(status)) return "WFH";
+    if (nutritionalStatusCategories.muac.includes(status)) return "MUAC";
+    return "Other";
+  };
+
+  const groupedNutritionalStatuses = nutritionalStatusOptions.reduce((acc, option) => {
+    if (option.value === "all") return acc;
+    
+    const category = getStatusCategory(option.value);
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(option);
+    return acc;
+  }, {} as Record<string, typeof nutritionalStatusOptions>);
+
+  const getStatusDisplayName = (statusValue: string) => {
+    const statusInfo = nutritionalStatusOptions.find(opt => opt.value === statusValue);
+    return statusInfo?.label || statusValue;
   };
 
   return (
@@ -139,13 +219,46 @@ export default function SemiAnnualOPTDetails() {
         <div className="flex-1 flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input placeholder="Search by sitio..." className="pl-10 w-full" value={sitioSearch} onChange={(e) => setSitioSearch(e.target.value)} />
+            <Input 
+              placeholder="Search by Name or Sitio..." 
+              className="pl-10 w-full" 
+              value={sitioSearch} 
+              onChange={(e) => handleManualSitioSearch(e.target.value)} 
+            />
           </div>
 
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input placeholder="Search by nutritional status..." className="pl-10 w-full" value={nutritionalStatus} onChange={(e) => setNutritionalStatus(e.target.value)} />
+          <div className="flex-1 max-w-md">
+            <Select value={periodFilter} onValueChange={setPeriodFilter}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Filter by period" />
+              </SelectTrigger>
+              <SelectContent>
+                {periodOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+          
+          <FilterSitio
+            sitios={sitios}
+            isLoading={isLoadingSitios}
+            selectedSitios={selectedSitios}
+            onSitioSelection={handleSitioSelection}
+            onSelectAll={handleSelectAllSitios}
+            onManualSearch={handleManualSitioSearch}
+            manualSearchValue={sitioSearch}
+          />
+          
+          <FilterStatus
+            statusOptions={nutritionalStatusOptions}
+            groupedStatuses={groupedNutritionalStatuses}
+            selectedStatuses={selectedNutritionalStatuses}
+            onStatusSelection={handleNutritionalStatusSelection}
+            onSelectAll={handleSelectAllNutritionalStatuses}
+          />
         </div>
 
         <div className="flex gap-2 items-center">
@@ -156,6 +269,25 @@ export default function SemiAnnualOPTDetails() {
           </Button>
         </div>
       </div>
+
+      <SelectedFiltersChips
+        items={selectedSitios}
+        onRemove={(sitio) => handleSitioSelection(sitio, false)}
+        onClearAll={() => setSelectedSitios([])}
+        label="Filtered by sitios"
+        chipColor="bg-blue-100"
+        textColor="text-blue-800"
+      />
+      
+      <SelectedFiltersChips
+        items={selectedNutritionalStatuses}
+        onRemove={(status) => handleNutritionalStatusSelection(status, false)}
+        onClearAll={() => setSelectedNutritionalStatuses([])}
+        label="Filtered by nutritional status"
+        chipColor="bg-green-100"
+        textColor="text-green-800"
+        getDisplayName={getStatusDisplayName}
+      />
 
       <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 rounded-t-lg">
         <div className="flex items-center gap-2">
@@ -207,11 +339,23 @@ export default function SemiAnnualOPTDetails() {
             <div className="text-start mb-4 mt-2 flex justify-between items-center text-xs">
               <div className="flex">
                 <span className="mr-1 font-semibold">Baranagy/Sitio:</span>
-                <span className="underline">{sitioSearch || "All"}</span>
+                <span className="underline">
+                  {selectedSitios.length > 0 
+                    ? selectedSitios.join(", ") 
+                    : sitioSearch || "All Sitios"
+                  }
+                </span>
               </div>
               <div>
                 <span className="font-semibold">Calendar Year: </span>
                 <span className="underline">{year}</span>
+              </div>
+              <div>
+                <span className="font-semibold">Period: </span>
+                <span className="underline">
+                  {periodFilter === "both" ? "Both Periods" : 
+                   periodFilter === "first" ? "First Semi-Annual" : "Second Semi-Annual"}
+                </span>
               </div>
             </div>
 
@@ -226,7 +370,11 @@ export default function SemiAnnualOPTDetails() {
               <div className="w-full h-[200px] flex items-center justify-center">
                 <div className="text-center">
                   <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600">{sitioSearch || nutritionalStatus ? "No records found matching your filters" : "No records found for this year"}</p>
+                  <p className="text-gray-600">
+                    {sitioSearch || nutritionalStatus || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0
+                      ? "No records found matching your filters"
+                      : "No records found for this year"}
+                  </p>
                 </div>
               </div>
             ) : (

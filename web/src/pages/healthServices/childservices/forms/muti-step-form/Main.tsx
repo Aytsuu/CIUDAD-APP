@@ -16,7 +16,7 @@ import { useChildHealthRecordMutation } from "../restful-api/newchrecord";
 import { useUpdateChildHealthRecordMutation } from "../restful-api/newchhistory";
 import type { Patient } from "@/components/ui/patientSearch";
 import { Medicine } from "./types";
-import { initialFormData, ImmunizationTracking,BFCheck } from "./types";
+import { initialFormData, ImmunizationTracking, BFCheck } from "./types";
 import CardLayout from "@/components/ui/card/card-layout";
 import { useChildHealthHistory } from "../queries/fetchQueries";
 import { isToday } from "@/helpers/isToday";
@@ -27,12 +27,13 @@ export default function ChildHealthRecordForm() {
   const navigate = useNavigate();
   const params = useParams();
   const mode = (location.state?.params?.mode as "newchildhealthrecord" | "addnewchildhealthrecord" | undefined) || (params.mode as "newchildhealthrecord" | "addnewchildhealthrecord" | undefined);
+  const status = (location.state?.params?.status as string | undefined) || (params.status as string | undefined);
   const { chrecId, chhistId } = location.state?.params || {};
   const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord";
   const isNewchildhealthrecord = mode === "newchildhealthrecord";
   const { user } = useAuth();
   const staffId = user?.staff?.staff_id || null;
-  
+
   // State management
   const [immunizationTracking, setImmunizationTracking] = useState<ImmunizationTracking[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,11 +42,11 @@ export default function ChildHealthRecordForm() {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isLoading, setIsLoading] = useState(isaddnewchildhealthrecordMode);
   const [apiData, setApiData] = useState<any>(null);
-  
+
   // BF-related state - Updated to include BF checks with IDs
   const [historicalBFdates, setHistoricalBFdates] = useState<string[]>([]);
   const [historicalBFChecks, setHistoricalBFChecks] = useState<BFCheck[]>([]);
-  
+
   // Other historical data state
   const [historicalVitalSigns, setHistoricalVitalSigns] = useState<VitalSignType[]>([]);
   const [historicalNutritionalStatus, setHistoricalNutritionalStatus] = useState<any[]>([]);
@@ -58,7 +59,7 @@ export default function ChildHealthRecordForm() {
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [newVitalSigns, setNewVitalSigns] = useState<VitalSignType[]>([]);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  
+
   // Mutations
   const newchildhealthrecordMutation = useChildHealthRecordMutation();
   const updatechildhealthrecordmutation = useUpdateChildHealthRecordMutation();
@@ -97,7 +98,7 @@ export default function ChildHealthRecordForm() {
     const patrecDetails = chrecDetails?.patrec_details;
     const patient = patrecDetails?.pat_details;
     const familyHeadInfo = patient?.family_head_info;
-    
+
     const vaccinesFromApi: VaccineRecord[] =
       chhistRecord.child_health_vaccines?.map((vac: any) => ({
         vacStck_id: vac.vacStck_id?.toString() || "",
@@ -119,12 +120,13 @@ export default function ChildHealthRecordForm() {
       })) || [];
 
     // Transform BF checks from API
-    const BFchecksFromApi: BFCheck[] = chhistRecord.exclusive_bf_checks?.map((check: any) => ({
-      ebf_id: check.ebf_id,
-      ebf_date: check.ebf_date,
-      created_at: check.created_at,
-      chhist: check.chhist
-    })) || [];
+    const BFchecksFromApi: BFCheck[] =
+      chhistRecord.exclusive_bf_checks?.map((check: any) => ({
+        ebf_id: check.ebf_id,
+        ebf_date: check.ebf_date,
+        created_at: check.created_at,
+        chhist: check.chhist
+      })) || [];
 
     // Keep backward compatibility for BF dates
     const BFdatesFromApi = chhistRecord.exclusive_bf_checks?.map((check: any) => check.ebf_date) || [];
@@ -187,12 +189,12 @@ export default function ChildHealthRecordForm() {
         setIsLoading(false);
         return;
       }
-      
+
       try {
         setIsLoading(true);
         setError(null);
         const chrecRecord = childHealthRecord && childHealthRecord.length > 0 ? childHealthRecord[0] : null;
-        
+
         if (!chrecRecord) {
           throw new Error("Parent child health record (chrec) not found.");
         }
@@ -208,7 +210,7 @@ export default function ChildHealthRecordForm() {
 
         chrecRecord.child_health_histories?.forEach((history: any) => {
           const latestNote = getLatestNoteForRecord(history.child_health_notes || []);
-          
+
           // Process vital signs
           const vitalSignsFromHistory: VitalSignType[] =
             history.child_health_vital_signs?.map((vital: any) => ({
@@ -216,6 +218,7 @@ export default function ChildHealthRecordForm() {
               temp: vital.temp ? Number.parseFloat(vital.temp) : undefined,
               wt: vital.bm_details?.weight ? Number.parseFloat(vital.bm_details.weight) : undefined,
               ht: vital.bm_details?.height ? Number.parseFloat(vital.bm_details.height) : undefined,
+              is_opt: vital.bm_details?.is_opt || false,
               age: calculateAgeFromDOB(formData.childDob, vital.created_at).ageString,
               notes: latestNote?.chn_notes || "",
               follov_description: latestNote?.followv_details?.followv_description || "",
@@ -278,12 +281,13 @@ export default function ChildHealthRecordForm() {
           }
 
           // Process BF checks with IDs - Updated
-          const BFChecksFromHistory: BFCheck[] = history.exclusive_bf_checks?.map((check: any) => ({
-            ebf_id: check.ebf_id,
-            ebf_date: check.ebf_date,
-            created_at: check.created_at,
-            chhist: check.chhist
-          })) || [];
+          const BFChecksFromHistory: BFCheck[] =
+            history.exclusive_bf_checks?.map((check: any) => ({
+              ebf_id: check.ebf_id,
+              ebf_date: check.ebf_date,
+              created_at: check.created_at,
+              chhist: check.chhist
+            })) || [];
           allHistoricalBFChecks.push(...BFChecksFromHistory);
 
           // Keep backward compatibility for BF dates
@@ -315,10 +319,8 @@ export default function ChildHealthRecordForm() {
         setHistoricalBFChecks(allHistoricalBFChecks); // Set BF checks with IDs
         setHistoricalSupplementStatuses(allHistoricalSupplementStatuses);
 
-        const selectedChhistRecord = chrecRecord.child_health_histories?.find(
-          (history: any) => history.chhist_id === Number.parseInt(chhistId)
-        );
-        
+        const selectedChhistRecord = chrecRecord.child_health_histories?.find((history: any) => history.chhist_id === Number.parseInt(chhistId));
+
         if (!selectedChhistRecord) {
           throw new Error(`Child health history with ID ${chhistId} not found within chrec ${chrecId}.`);
         }
@@ -356,8 +358,6 @@ export default function ChildHealthRecordForm() {
     fetchRecordData();
   }, [chrecId, chhistId, mode, isaddnewchildhealthrecordMode, childHealthRecord]);
 
- 
-
   const updateFormData = (data: Partial<FormData>) => {
     setFormData((prev) => (prev ? { ...prev, ...data } : (data as FormData)));
   };
@@ -374,7 +374,7 @@ export default function ChildHealthRecordForm() {
   const handleSubmit = async (submittedData: FormData) => {
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       const dataToSubmit = {
         ...submittedData,
@@ -397,7 +397,7 @@ export default function ChildHealthRecordForm() {
           originalRecord: apiData
         });
       }
-      
+
       setFormData(initialFormData);
       setCurrentPage(1);
       setSelectedPatient(null);
@@ -460,16 +460,10 @@ export default function ChildHealthRecordForm() {
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
-      
+
       {/* Step Indicator */}
-      <StepIndicator 
-        currentStep={currentPage} 
-        totalSteps={4} 
-        onStepClick={handleStepClick} 
-        allowClickNavigation={true} 
-        completedSteps={completedSteps} 
-      />
-      
+      <StepIndicator currentStep={currentPage} totalSteps={4} onStepClick={handleStepClick} allowClickNavigation={true} completedSteps={completedSteps} />
+
       <CardLayout
         cardClassName="px-4"
         contentClassName="space-y-6"
@@ -488,23 +482,8 @@ export default function ChildHealthRecordForm() {
                 setSelectedPatientId={setSelectedPatientId}
               />
             )}
-            {currentPage === 2 && (
-              <ChildHRPage2
-                onPrevious={() => setCurrentPage(1)}
-                onNext={() => setCurrentPage(3)}
-                updateFormData={updateFormData}
-                formData={formData}
-                historicalBFChecks={historicalBFChecks}
-                mode={mode || "newchildhealthrecord"}
-              />
-            )}
-            {currentPage === 3 && (
-              <ChildHRPage3
-                onPrevious={() => setCurrentPage(2)}
-                onNext={() => setCurrentPage(4)}
-                immunizationTracking={immunizationTracking}
-              />
-            )}
+            {currentPage === 2 && <ChildHRPage2 onPrevious={() => setCurrentPage(1)} onNext={() => setCurrentPage(3)} updateFormData={updateFormData} formData={formData} historicalBFChecks={historicalBFChecks} mode={mode || "newchildhealthrecord"} />}
+            {currentPage === 3 && <ChildHRPage3 onPrevious={() => setCurrentPage(2)} onNext={() => setCurrentPage(4)} immunizationTracking={immunizationTracking} />}
             {currentPage === 4 && (
               <LastPage
                 onPrevious={() => setCurrentPage(3)}
@@ -521,6 +500,7 @@ export default function ChildHealthRecordForm() {
                 isSubmitting={isSubmitting}
                 newVitalSigns={newVitalSigns}
                 setNewVitalSigns={setNewVitalSigns}
+                status={status || ""}
               />
             )}
           </div>

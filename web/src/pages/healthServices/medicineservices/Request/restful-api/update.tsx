@@ -1,8 +1,9 @@
 import { api2 } from "@/api/api";
 
-export const updateMedicineRequest = async (medreq_id: any, data: any) => {
+export const updateMedicineRequest = async (medreq_id: string, data: Record<string, unknown>) => {
     try {
-      const res = await api2.patch(`/medicine/medicine-request/${medreq_id}/`, data);
+      const res = await api2.patch(`/medicine/update-medicine-request/${medreq_id}/`, data);
+      console.log(res);
       return res.data;
     } catch (error) {
       console.error("Error updating medicine request:", error);

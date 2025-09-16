@@ -15,12 +15,11 @@ import { fetchMedicinesWithStock } from "../../restful-api/fetchAPI";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import { createPatients } from "@/pages/record/health/patientsRecord/restful-api/post";
-import { updateMedicineRequest } from "../restful-api/update";
+import { registerPatient } from "@/pages/record/health/patientsRecord/restful-api/post";
+import { useCheckPatientExists } from "@/pages/record/health/patientsRecord/queries/fetch";
 import { PersonalInfoCard } from "./personal-info";
 import { useCreateMedicineAllocation } from "../queries/post";
 import { SignatureField, SignatureFieldRef } from "@/pages/healthServices/Reports/firstaid-report/signature";
-
 
 export default function MedicineRequestDetail() {
   const location = useLocation();
@@ -45,11 +44,42 @@ export default function MedicineRequestDetail() {
   const [initialSelectionsSet, setInitialSelectionsSet] = useState(false);
   const [signature, setSignature] = useState<string | null>(null);
   const signatureRef = useRef<SignatureFieldRef>(null);
+
   const handleSignatureChange = useCallback((signature: string | null) => {
     setSignature(signature);
   }, []);
+
   const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
   const { data: apiResponse, isLoading, error: confirmedRequestError } = usePendingItemsMedRequest(request.medreq_id, currentPage, pageSize);
+
+  // Check if patient exists using your existing hook
+  const { data: patientExists, isLoading: isCheckingPatient, refetch: refetchPatientExists } = useCheckPatientExists(request.rp_id);
+
+  // Helper functions to determine patient status
+ // Helper functions to determine patient status
+const shouldShowRegisterButton = () => {
+  // If still checking, don't show button
+  if (isCheckingPatient) return false;
+
+  // If patient exists, don't show register button
+  if ((patientExists as any)?.exists) return false;
+
+  // Show register button if patient doesn't exist
+  return true;
+};
+
+  const isPatientRegistered = () => {
+    const patientData = patientExists as any;
+    return patientData?.exists && patientData?.patient?.pat_id;
+  };
+
+  // Set currentPatId if patient already exists
+  useEffect(() => {
+    const patientData = patientExists as any;
+    if (patientData?.exists && patientData?.patient?.pat_id) {
+      setCurrentPatId(patientData.patient.pat_id);
+    }
+  }, [patientExists]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -83,21 +113,28 @@ export default function MedicineRequestDetail() {
     return count + confirmedItems.length;
   }, 0);
 
+  // Updated handleRegisterPatient function
   const handleRegisterPatient = async () => {
+    // setCurrentPatId(patId);
+    // // Refetch patient existence data to update the UI
+
     if (!request) return;
     setIsRegistering(true);
     try {
-      const response = await createPatients({
+      const response = await registerPatient({
+        medreq_id: request.medreq_id,
         pat_status: "active",
         rp_id: request.rp_id,
         personal_info: request.personal_info,
         pat_type: "Resident"
       });
+
+      if (!response.pat_id) {
+        throw new Error("Patient ID not returned from the server");
+      }
       setCurrentPatId(response.pat_id);
-      await updateMedicineRequest(request.medreq_id, {
-        rp_id: null,
-        pat_id: response.pat_id
-      });
+          refetchPatientExists();
+
       toast.success("Successfully registered");
     } catch (error) {
       toast.error("Failed to register patient");
@@ -106,7 +143,6 @@ export default function MedicineRequestDetail() {
       setIsRegistering(false);
     }
   };
-
 
   const createMedicineMapping = () => {
     if (!medicineStocksOptions || !medicineData?.length) {
@@ -260,11 +296,23 @@ export default function MedicineRequestDetail() {
   }
 
   return (
-    <LayoutWithBack title=" Medicine Request Items" description="Review and confirm confirmed medicine requests">
-      <div className=" ">
+    <LayoutWithBack title="Medicine Request Items" description="Review and confirm confirmed medicine requests">
+      <div className="">
         {/* Patient Information Card */}
         <div className="mb-5">
-          <PersonalInfoCard personalInfo={request.personal_info} address={request.address} currentPatId={currentPatId || request.pat_id} rp_id={request.rp_id} medreq_id={request.medreq_id} onPatientRegistered={handleRegisterPatient} />
+          <PersonalInfoCard
+            personalInfo={request.personal_info}
+            address={request.address}
+            currentPatId={currentPatId || request.pat_id}
+            rp_id={request.rp_id}
+            medreq_id={request.medreq_id}
+            onPatientRegistered={handleRegisterPatient}
+            // Add these new props for patient existence check
+            shouldShowRegisterButton={shouldShowRegisterButton()}
+            isPatientRegistered={isPatientRegistered()}
+            isCheckingPatient={isCheckingPatient}
+            patientExists={patientExists}
+          />
         </div>
 
         {/* confirmed Items Table */}
@@ -281,7 +329,29 @@ export default function MedicineRequestDetail() {
                 to="/IndivMedicineRecord"
                 state={{
                   params: {
-                    patientData: patientData
+                    patientData: {
+
+                      pat_id:(patientExists as any)?.pat_id,
+                      pat_type: patientData.pat_type,
+                  age: patientData.age,
+                  addressFull: patientData.address.full_address || "No address provided",
+                  address: {
+                    add_street: patientData.address.add_street,
+                    add_barangay: patientData.address.add_barangay,
+                    add_city: patientData.address.add_city,
+                    add_province: patientData.address.add_province,
+                    add_sitio: patientData.address.add_sitio
+                  },
+                  households: [{ hh_id: patientData.householdno }],
+                  personal_info: {
+                    per_fname: patientData.personal_info.per_fname,
+                    per_mname: patientData.personal_info.per_mname,
+                    per_lname: patientData.personal_info.per_lname,
+                    per_dob: patientData.personal_info.per_dob,
+                    per_sex: patientData.personal_info.per_sex
+
+                  }
+                    }
                   }
                 }}
               >
@@ -428,23 +498,20 @@ export default function MedicineRequestDetail() {
         </Card>
 
         {/* Action Button */}
-        <div className="flex justify-end mt-4 ">
-          {/* Action Button */}
-          <div className="flex justify-end mt-4">
-            <Button onClick={processMedicineAllocation} disabled={confirmedItemsCount === 0 || selectedMedicines.length === 0 || isPending || isRegistering || !signature} size="lg" className="min-w-[200px] bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400">
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Process Allocation ({selectedMedicines.length})
-                </>
-              )}
-            </Button>
-          </div>
+        <div className="flex justify-end mt-4">
+          <Button onClick={processMedicineAllocation} disabled={confirmedItemsCount === 0 || selectedMedicines.length === 0 || isPending || isRegistering || !signature} size="lg" className="min-w-[200px] bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400">
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Process Allocation ({selectedMedicines.length})
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </LayoutWithBack>

@@ -18,7 +18,7 @@ class UpdateMedicineRequestView(generics.RetrieveUpdateAPIView):
     queryset = MedicineRequest.objects.all()
     lookup_field = "medreq_id"
 
-    
+
 class UpdateMedicinerequestItemView(generics.RetrieveUpdateAPIView): 
     serializer_class = MedicineRequestItemSerializer
     queryset = MedicineRequestItem.objects.all()

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getMedicineInventory,getMedicineStocks} from "../restful-api/MedicineGetAPI";
+import { getMedicineStocks} from "../restful-api/MedicineGetAPI";
 
 
 

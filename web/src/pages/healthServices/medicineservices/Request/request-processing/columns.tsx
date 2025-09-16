@@ -113,7 +113,6 @@ export const medicineRequestColumns: ColumnDef<any>[] = [
               params: {
                 request: row.original,
                 patientData: {
-                  pat_id: row.original.pat_id_value,
                   pat_type: row.original.pat_type,
                   age: row.original.age,
                   addressFull: row.original.address.full_address || "No address provided",

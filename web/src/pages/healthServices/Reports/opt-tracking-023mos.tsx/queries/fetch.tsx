@@ -15,11 +15,13 @@ export const useOPTYears = (
       staleTime: 1000 * 60 * 5, // 5 minutes
     });
   };
+
+  
   export const useYearlyOPTRecords = (
     year: string,
     page: number,
     pageSize: number,
-    search?: string,
+    sitio?: string,
     nutritional_status?: string,
   ) => {
     return useQuery({
@@ -28,14 +30,14 @@ export const useOPTYears = (
         year, 
         page, 
         pageSize, 
-        search, 
+        sitio, 
         nutritional_status,
       ],
       queryFn: () => getYearlyOPTRecords(
         year, 
         page, 
         pageSize, 
-        search, 
+        sitio, 
         nutritional_status,
       ),
     });

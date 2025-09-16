@@ -1,22 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { Printer, Search, Loader2, Filter } from "lucide-react";
-import {
-  exportToCSV,
-  exportToExcel,
-  exportToPDF,
-} from "../firstaid-report/export-report";
+import { Printer, Search, Loader2 } from "lucide-react";
+import { exportToCSV, exportToExcel, exportToPDF } from "../firstaid-report/export-report";
 import { ExportDropdown } from "../firstaid-report/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { useMonthlyOPTRecords } from "./queries/fetch";
@@ -24,31 +14,12 @@ import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQue
 import { OPTChildHealthRecord } from "./types";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { FilterSitio } from "../filter-sitio";
+import { SelectedFiltersChips } from "../selectedFiltersChipsProps ";
+import {FilterStatus}  from "../filter-nutstatus"
+import { ageRangeOptions,nutritionalStatusCategories,nutritionalStatusOptions } from "../options";
+import {useDebounce} from "@/hooks/use-debounce";
 
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
-}
-
-const ageRangeOptions = [
-  { value: "0-71", label: "All" },
-  { value: "0-5", label: "0-5 months" },
-  { value: "6-11", label: "6-11 months" },
-  { value: "12-23", label: "12-23 months (1-2 years)" },
-  { value: "24-35", label: "24-35 months (2-3 years)" },
-  { value: "36-47", label: "36-47 months (3-4 years)" },
-  { value: "48-59", label: "48-59 months (4-5 years)" },
-  { value: "60-71", label: "60-71 months (5-6 years)" },
-];
 
 export default function OPTTrackingDetails() {
   const location = useLocation();
@@ -60,26 +31,28 @@ export default function OPTTrackingDetails() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [ageRange, setAgeRange] = useState("");
-  const [showSitioFilter, setShowSitioFilter] = useState(false);
   const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
-
-  // Fetch sitio list
+  const [selectedNutritionalStatuses, setSelectedNutritionalStatuses] = useState<string[]>([]);
+  
   const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
   const sitios = sitioData || [];
-
+  
   const debouncedSitioSearch = useDebounce(sitioSearch, 500);
   const debouncedNutritionalStatus = useDebounce(nutritionalStatus, 500);
   const debouncedAgeRange = useDebounce(ageRange, 300);
-
+  
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSitioSearch, debouncedNutritionalStatus, debouncedAgeRange, selectedSitios]);
-
-  // Combine manual search with selected sitios
+  }, [debouncedSitioSearch, debouncedNutritionalStatus, debouncedAgeRange, selectedSitios, selectedNutritionalStatuses]);
+  
   const combinedSitioSearch = selectedSitios.length > 0 
     ? selectedSitios.join(',')
     : sitioSearch;
-
+  
+  const combinedNutritionalStatus = selectedNutritionalStatuses.length > 0 
+    ? selectedNutritionalStatuses.join(',')
+    : nutritionalStatus;
+  
   const {
     data: apiResponse,
     isLoading,
@@ -89,30 +62,29 @@ export default function OPTTrackingDetails() {
     currentPage,
     pageSize,
     combinedSitioSearch,
-    debouncedNutritionalStatus,
+    combinedNutritionalStatus,
     debouncedAgeRange
   );
-
-  const records: OPTChildHealthRecord[] =
-    apiResponse?.results?.report_data || [];
+  
+  const records: OPTChildHealthRecord[] = apiResponse?.results?.report_data || [];
   const totalEntries = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalEntries / pageSize);
-
+  
   useEffect(() => {
     if (isLoading) showLoading();
     else hideLoading();
   }, [isLoading, showLoading, hideLoading]);
-
+  
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch OPT records");
       console.error("API Error:", error);
     }
   }, [error]);
-
+  
   const startIndex = totalEntries === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalEntries);
-
+  
   const prepareExportData = useCallback(() => {
     return records.map((item) => ({
       "Household No": item.household_no || "N/A",
@@ -137,25 +109,16 @@ export default function OPTTrackingDetails() {
       "Type of Feeding": item.type_of_feeding || "N/A",
     }));
   }, [records]);
-
+  
   const handleExportCSV = () =>
-    exportToCSV(
-      prepareExportData(),
-      `opt_records_${monthName.replace(" ", "_")}`
-    );
-
+    exportToCSV(prepareExportData(), `opt_records_${monthName.replace(" ", "_")}`);
+  
   const handleExportExcel = () =>
-    exportToExcel(
-      prepareExportData(),
-      `opt_records_${monthName.replace(" ", "_")}`
-    );
-
+    exportToExcel(prepareExportData(), `opt_records_${monthName.replace(" ", "_")}`);
+  
   const handleExportPDF = () =>
-    exportToPDF(
-      prepareExportData(),
-      `opt_records_${monthName.replace(" ", "_")}`
-    );
-
+    exportToPDF(prepareExportData(), `opt_records_${monthName.replace(" ", "_")}`);
+  
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");
     if (!printContent) return;
@@ -165,12 +128,12 @@ export default function OPTTrackingDetails() {
     document.body.innerHTML = originalContents;
     window.location.reload();
   };
-
+  
   const handlePageSizeChange = (newPageSize: string) => {
     setPageSize(Number(newPageSize));
     setCurrentPage(1);
   };
-
+  
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -182,30 +145,79 @@ export default function OPTTrackingDetails() {
       })
       .replace(/\//g, "-");
   };
-
+  
   const handleSitioSelection = (sitio_name: string, checked: boolean) => {
     if (checked) {
       setSelectedSitios([...selectedSitios, sitio_name]);
-      setSitioSearch(""); // Clear manual search when selecting sitios
+      setSitioSearch("");
     } else {
       setSelectedSitios(selectedSitios.filter(sitio => sitio !== sitio_name));
     }
   };
-
+  
   const handleSelectAllSitios = (checked: boolean) => {
     if (checked && sitios.length > 0) {
       setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
-      setSitioSearch(""); // Clear manual search when selecting all
+      setSitioSearch("");
     } else {
       setSelectedSitios([]);
     }
   };
-
+  
   const handleManualSitioSearch = (value: string) => {
     setSitioSearch(value);
     if (value) {
-      setSelectedSitios([]); // Clear selected sitios when manually searching
+      setSelectedSitios([]);
     }
+  };
+  
+  const handleNutritionalStatusSelection = (status: string, checked: boolean) => {
+    if (checked) {
+      setSelectedNutritionalStatuses([...selectedNutritionalStatuses, status]);
+      setNutritionalStatus("");
+    } else {
+      setSelectedNutritionalStatuses(selectedNutritionalStatuses.filter(s => s !== status));
+    }
+  };
+  
+  const handleSelectAllNutritionalStatuses = (checked: boolean) => {
+    if (checked) {
+      setSelectedNutritionalStatuses(nutritionalStatusOptions.map(option => option.value).filter(v => v !== "all"));
+      setNutritionalStatus("");
+    } else {
+      setSelectedNutritionalStatuses([]);
+    }
+  };
+  
+  const handleManualNutritionalStatusSearch = (value: string) => {
+    setNutritionalStatus(value);
+    if (value) {
+      setSelectedNutritionalStatuses([]);
+    }
+  };
+  
+  const getStatusCategory = (status: string) => {
+    if (nutritionalStatusCategories.wfa.includes(status)) return "WFA";
+    if (nutritionalStatusCategories.lhfa.includes(status)) return "LHFA";
+    if (nutritionalStatusCategories.wfh.includes(status)) return "WFH";
+    if (nutritionalStatusCategories.muac.includes(status)) return "MUAC";
+    return "Other";
+  };
+  
+  const groupedNutritionalStatuses = nutritionalStatusOptions.reduce((acc, option) => {
+    if (option.value === "all") return acc;
+    
+    const category = getStatusCategory(option.value);
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(option);
+    return acc;
+  }, {} as Record<string, typeof nutritionalStatusOptions>);
+
+  const getStatusDisplayName = (statusValue: string) => {
+    const statusInfo = nutritionalStatusOptions.find(opt => opt.value === statusValue);
+    return statusInfo?.label || statusValue;
   };
 
   return (
@@ -224,16 +236,7 @@ export default function OPTTrackingDetails() {
               onChange={(e) => handleManualSitioSearch(e.target.value)}
             />
           </div>
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search by nutritional status..."
-              className="pl-10 w-full"
-              value={nutritionalStatus}
-              onChange={(e) => setNutritionalStatus(e.target.value)}
-            />
-          </div>
-          {/* Age Range Filter */}
+          
           <div className="flex-1 max-w-md">
             <Select value={ageRange} onValueChange={setAgeRange}>
               <SelectTrigger className="w-full">
@@ -248,62 +251,26 @@ export default function OPTTrackingDetails() {
               </SelectContent>
             </Select>
           </div>
-          {/* Sitio Filter Dropdown */}
-          <div className="relative">
-            <Button
-              onClick={() => setShowSitioFilter(!showSitioFilter)}
-              className="gap-2"
-              variant="outline"
-            >
-              <Filter className="h-4 w-4" />
-              Filter Sitios
-              {selectedSitios.length > 0 && ` (${selectedSitios.length})`}
-            </Button>
-            
-            {showSitioFilter && (
-              <div className="absolute top-full left-0 mt-2 w-64 max-h-80 overflow-y-auto bg-white border rounded-md shadow-lg z-10 p-3">
-                {isLoadingSitios ? (
-                  <div className="flex items-center justify-center py-2">
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Loading sitios...
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center space-x-2 mb-2 p-2 border-b">
-                      <Checkbox
-                        id="select-all-sitios"
-                        checked={selectedSitios.length === sitios.length && sitios.length > 0}
-                        onCheckedChange={(checked) => handleSelectAllSitios(checked as boolean)}
-                      />
-                      <label
-                        htmlFor="select-all-sitios"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Select All
-                      </label>
-                    </div>
-                    
-                    {sitios.map((sitio:any) => (
-                      <div key={sitio.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50">
-                        <Checkbox
-                          id={`sitio-${sitio.id}`}
-                          checked={selectedSitios.includes(sitio.sitio_name)}
-                          onCheckedChange={(checked) => handleSitioSelection(sitio.sitio_name, checked as boolean)}
-                        />
-                        <label
-                          htmlFor={`sitio-${sitio.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          {sitio.sitio_name}
-                        </label>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+          
+          <FilterSitio
+            sitios={sitios}
+            isLoading={isLoadingSitios}
+            selectedSitios={selectedSitios}
+            onSitioSelection={handleSitioSelection}
+            onSelectAll={handleSelectAllSitios}
+            onManualSearch={handleManualSitioSearch}
+            manualSearchValue={sitioSearch}
+          />
+          
+          <FilterStatus
+            statusOptions={nutritionalStatusOptions}
+            groupedStatuses={groupedNutritionalStatuses}
+            selectedStatuses={selectedNutritionalStatuses}
+            onStatusSelection={handleNutritionalStatusSelection}
+            onSelectAll={handleSelectAllNutritionalStatuses}
+          />
         </div>
+        
         <div className="flex gap-2 items-center">
           <ExportDropdown
             onExportCSV={handleExportCSV}
@@ -320,32 +287,26 @@ export default function OPTTrackingDetails() {
           </Button>
         </div>
       </div>
-      {/* Display selected sitios as chips */}
-      {selectedSitios.length > 0 && (
-        <div className="bg-gray-50 p-3 flex flex-wrap gap-2">
-          <span className="text-sm font-medium">Filtered by sitios:</span>
-          {selectedSitios.map(sitio => (
-            <span 
-              key={sitio} 
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-            >
-              {sitio}
-              <button
-                onClick={() => handleSitioSelection(sitio, false)}
-                className="ml-1.5 rounded-full flex-shrink-0"
-              >
-                ×
-              </button>
-            </span>
-          ))}
-          <button
-            onClick={() => setSelectedSitios([])}
-            className="text-xs text-blue-600 hover:text-blue-800 ml-2"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
+      
+      <SelectedFiltersChips
+        items={selectedSitios}
+        onRemove={(sitio) => handleSitioSelection(sitio, false)}
+        onClearAll={() => setSelectedSitios([])}
+        label="Filtered by sitios"
+        chipColor="bg-blue-100"
+        textColor="text-blue-800"
+      />
+      
+      <SelectedFiltersChips
+        items={selectedNutritionalStatuses}
+        onRemove={(status) => handleNutritionalStatusSelection(status, false)}
+        onClearAll={() => setSelectedNutritionalStatuses([])}
+        label="Filtered by nutritional status"
+        chipColor="bg-green-100"
+        textColor="text-green-800"
+        getDisplayName={getStatusDisplayName}
+      />
+      
       <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 rounded-t-lg">
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-700">Show</span>
@@ -378,6 +339,7 @@ export default function OPTTrackingDetails() {
           )}
         </div>
       </div>
+      
       <div className="bg-white rounded-b-lg overflow-hidden">
         <div
           id="printable-area"
@@ -406,16 +368,15 @@ export default function OPTTrackingDetails() {
               </p>
             </div>
             <div className="text-start mb-6 mt-4 flex justify-between items-center text-xs">
-            <div className="flex">
-          <span className="mr-1 font-semibold">Barangay/Sitio:</span>
-          <span className="underline">
-            {/* Show selected sitios or manual search */}
-            {selectedSitios.length > 0 
-              ? selectedSitios.join(", ") 
-              : sitioSearch || "All Sitios"
-            }
-          </span>
-        </div>
+              <div className="flex">
+                <span className="mr-1 font-semibold">Barangay/Sitio:</span>
+                <span className="underline">
+                  {selectedSitios.length > 0 
+                    ? selectedSitios.join(", ") 
+                    : sitioSearch || "All Sitios"
+                  }
+                </span>
+              </div>
               <span className="font-semibold">Province of Cebu</span>
               <div>
                 <span className=" font-semibold">Year: </span>{" "}
@@ -440,7 +401,7 @@ export default function OPTTrackingDetails() {
                 <div className="text-center">
                   <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-gray-600">
-                    {sitioSearch || nutritionalStatus || ageRange || selectedSitios.length > 0
+                    {sitioSearch || nutritionalStatus || ageRange || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0
                       ? "No records found matching your filters"
                       : "No records found for this month"}
                   </p>

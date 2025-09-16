@@ -4,18 +4,21 @@ import React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button/button"
-import { Printer, Search, Loader2, Filter, X } from "lucide-react"
+import { Printer, Search, Loader2 } from "lucide-react"
 import { exportToCSV, exportToExcel, exportToPDF } from "../firstaid-report/export-report"
 import { ExportDropdown } from "../firstaid-report/export-dropdown"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
 import { useLoading } from "@/context/LoadingContext"
 import { toast } from "sonner"
 import { useYearlyOPTRecords } from "./queries/fetch"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { useDebounce } from "@/hooks/use-debounce"
+import { FilterSitio } from "../filter-sitio";
+import { SelectedFiltersChips } from "../selectedFiltersChipsProps ";
+import { FilterStatus } from "../filter-nutstatus";
+import { nutritionalStatusCategories, nutritionalStatusOptions } from "../options";
 
 type Quarter = "Q1" | "Q2" | "Q3"
 
@@ -56,34 +59,38 @@ export default function QuarterlyOPTDetails() {
   const { showLoading, hideLoading } = useLoading()
 
   const [selectedQuarter, setSelectedQuarter] = useState<Quarter>("Q1")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [sitioSearch, setSitioSearch] = useState("")
   const [nutritionalStatus, setNutritionalStatus] = useState("")
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedSitios, setSelectedSitios] = useState<string[]>([])
-  const [showSitioFilter, setShowSitioFilter] = useState(false)
+  const [selectedNutritionalStatuses, setSelectedNutritionalStatuses] = useState<string[]>([])
 
   // Fetch sitio list
   const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
   const sitios = sitioData || [];
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500)
+  const debouncedSitioSearch = useDebounce(sitioSearch, 500)
   const debouncedNutritionalStatus = useDebounce(nutritionalStatus, 500)
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [debouncedSearchQuery, debouncedNutritionalStatus, selectedSitios])
+  }, [debouncedSitioSearch, debouncedNutritionalStatus, selectedSitios, selectedNutritionalStatuses])
 
   // Combine selected sitios with search query
-  const combinedSearchQuery = selectedSitios.length > 0 
+  const combinedSitioSearch = selectedSitios.length > 0 
     ? selectedSitios.join(',')
-    : debouncedSearchQuery;
+    : sitioSearch;
+
+  const combinedNutritionalStatus = selectedNutritionalStatuses.length > 0 
+    ? selectedNutritionalStatuses.join(',')
+    : nutritionalStatus;
 
   const {
     data: apiResponse,
     isLoading,
     error,
-  } = useYearlyOPTRecords(year, currentPage, pageSize, combinedSearchQuery, debouncedNutritionalStatus)
+  } = useYearlyOPTRecords(year, currentPage, pageSize, combinedSitioSearch, combinedNutritionalStatus)
 
   const records = apiResponse?.results?.children_data || []
   const totalEntries = apiResponse?.count || 0
@@ -165,10 +172,11 @@ export default function QuarterlyOPTDetails() {
     return date.toLocaleDateString("en-CA")
   }
 
+  // Filter handlers
   const handleSitioSelection = (sitio_name: string, checked: boolean) => {
     if (checked) {
       setSelectedSitios([...selectedSitios, sitio_name]);
-      setSearchQuery(""); // Clear search query when selecting sitios
+      setSitioSearch("");
     } else {
       setSelectedSitios(selectedSitios.filter(sitio => sitio !== sitio_name));
     }
@@ -177,20 +185,67 @@ export default function QuarterlyOPTDetails() {
   const handleSelectAllSitios = (checked: boolean) => {
     if (checked && sitios.length > 0) {
       setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
-      setSearchQuery(""); // Clear search query when selecting all
+      setSitioSearch("");
     } else {
       setSelectedSitios([]);
     }
   };
 
-  const handleClearFilter = () => {
-    setSelectedSitios([]);
-    setSearchQuery("");
+  const handleManualSitioSearch = (value: string) => {
+    setSitioSearch(value);
+    if (value) {
+      setSelectedSitios([]);
+    }
   };
 
-  const filteredSitios = sitios.filter((sitio: any) =>
-    sitio.sitio_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleNutritionalStatusSelection = (status: string, checked: boolean) => {
+    if (checked) {
+      setSelectedNutritionalStatuses([...selectedNutritionalStatuses, status]);
+      setNutritionalStatus("");
+    } else {
+      setSelectedNutritionalStatuses(selectedNutritionalStatuses.filter(s => s !== status));
+    }
+  };
+
+  const handleSelectAllNutritionalStatuses = (checked: boolean) => {
+    if (checked) {
+      setSelectedNutritionalStatuses(nutritionalStatusOptions.map(option => option.value).filter(v => v !== "all"));
+      setNutritionalStatus("");
+    } else {
+      setSelectedNutritionalStatuses([]);
+    }
+  };
+
+  const handleManualNutritionalStatusSearch = (value: string) => {
+    setNutritionalStatus(value);
+    if (value) {
+      setSelectedNutritionalStatuses([]);
+    }
+  };
+
+  const getStatusCategory = (status: string) => {
+    if (nutritionalStatusCategories.wfa.includes(status)) return "WFA";
+    if (nutritionalStatusCategories.lhfa.includes(status)) return "LHFA";
+    if (nutritionalStatusCategories.wfh.includes(status)) return "WFH";
+    if (nutritionalStatusCategories.muac.includes(status)) return "MUAC";
+    return "Other";
+  };
+
+  const groupedNutritionalStatuses = nutritionalStatusOptions.reduce((acc, option) => {
+    if (option.value === "all") return acc;
+    
+    const category = getStatusCategory(option.value);
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(option);
+    return acc;
+  }, {} as Record<string, typeof nutritionalStatusOptions>);
+
+  const getStatusDisplayName = (statusValue: string) => {
+    const statusInfo = nutritionalStatusOptions.find(opt => opt.value === statusValue);
+    return statusInfo?.label || statusValue;
+  };
 
   return (
     <LayoutWithBack
@@ -221,78 +276,30 @@ export default function QuarterlyOPTDetails() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search by child name, family number, or sitio..."
+              placeholder="Search by Name or Sitio..."
               className="pl-10 w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={sitioSearch}
+              onChange={(e) => handleManualSitioSearch(e.target.value)}
             />
           </div>
 
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search by nutritional status..."
-              className="pl-10 w-full"
-              value={nutritionalStatus}
-              onChange={(e) => setNutritionalStatus(e.target.value)}
-            />
-          </div>
-
-          {/* Sitio Filter Dropdown */}
-          <div className="relative">
-            <Button
-              onClick={() => setShowSitioFilter(!showSitioFilter)}
-              className="gap-2"
-              variant="outline"
-            >
-              <Filter className="h-4 w-4" />
-              Filter Sitios
-              {selectedSitios.length > 0 && ` (${selectedSitios.length})`}
-            </Button>
-            
-            {showSitioFilter && (
-              <div className="absolute top-full left-0 mt-2 w-64 max-h-80 overflow-y-auto bg-white border rounded-md shadow-lg z-10 p-3">
-                {isLoadingSitios ? (
-                  <div className="flex items-center justify-center py-2">
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Loading sitios...
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center space-x-2 mb-2 p-2 border-b">
-                      <Checkbox
-                        id="select-all-sitios"
-                        checked={selectedSitios.length === sitios.length && sitios.length > 0}
-                        onCheckedChange={(checked) => handleSelectAllSitios(checked as boolean)}
-                      />
-                      <label
-                        htmlFor="select-all-sitios"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Select All
-                      </label>
-                    </div>
-                    
-                    {filteredSitios.map((sitio: any) => (
-                      <div key={sitio.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50">
-                        <Checkbox
-                          id={`sitio-${sitio.id}`}
-                          checked={selectedSitios.includes(sitio.sitio_name)}
-                          onCheckedChange={(checked) => handleSitioSelection(sitio.sitio_name, checked as boolean)}
-                        />
-                        <label
-                          htmlFor={`sitio-${sitio.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          {sitio.sitio_name}
-                        </label>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+          <FilterSitio
+            sitios={sitios}
+            isLoading={isLoadingSitios}
+            selectedSitios={selectedSitios}
+            onSitioSelection={handleSitioSelection}
+            onSelectAll={handleSelectAllSitios}
+            onManualSearch={handleManualSitioSearch}
+            manualSearchValue={sitioSearch}
+          />
+          
+          <FilterStatus
+            statusOptions={nutritionalStatusOptions}
+            groupedStatuses={groupedNutritionalStatuses}
+            selectedStatuses={selectedNutritionalStatuses}
+            onStatusSelection={handleNutritionalStatusSelection}
+            onSelectAll={handleSelectAllNutritionalStatuses}
+          />
         </div>
 
         <div className="flex gap-2 items-center">
@@ -309,32 +316,24 @@ export default function QuarterlyOPTDetails() {
         </div>
       </div>
 
-      {/* Display selected sitios as chips */}
-      {selectedSitios.length > 0 && (
-        <div className="bg-gray-50 p-3 flex flex-wrap gap-2">
-          <span className="text-sm font-medium">Filtered by sitios:</span>
-          {selectedSitios.map(sitio => (
-            <span 
-              key={sitio} 
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-            >
-              {sitio}
-              <button
-                onClick={() => handleSitioSelection(sitio, false)}
-                className="ml-1.5 rounded-full flex-shrink-0"
-              >
-                ×
-              </button>
-            </span>
-          ))}
-          <button
-            onClick={handleClearFilter}
-            className="text-xs text-blue-600 hover:text-blue-800 ml-2"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
+      <SelectedFiltersChips
+        items={selectedSitios}
+        onRemove={(sitio) => handleSitioSelection(sitio, false)}
+        onClearAll={() => setSelectedSitios([])}
+        label="Filtered by sitios"
+        chipColor="bg-blue-100"
+        textColor="text-blue-800"
+      />
+      
+      <SelectedFiltersChips
+        items={selectedNutritionalStatuses}
+        onRemove={(status) => handleNutritionalStatusSelection(status, false)}
+        onClearAll={() => setSelectedNutritionalStatuses([])}
+        label="Filtered by nutritional status"
+        chipColor="bg-green-100"
+        textColor="text-green-800"
+        getDisplayName={getStatusDisplayName}
+      />
 
       {/* Pagination Controls */}
       <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50">
@@ -403,7 +402,7 @@ export default function QuarterlyOPTDetails() {
                 <span className="underline">
                   {selectedSitios.length > 0 
                     ? selectedSitios.join(", ") 
-                    : searchQuery || "All Sitios"
+                    : sitioSearch || "All Sitios"
                   }
                 </span>
               </div>
@@ -425,7 +424,7 @@ export default function QuarterlyOPTDetails() {
                 <div className="text-center">
                   <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-gray-600">
-                    {searchQuery || nutritionalStatus || selectedSitios.length > 0
+                    {sitioSearch || nutritionalStatus || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0
                       ? "No records found matching your filters"
                       : "No records found for this period"}
                   </p>

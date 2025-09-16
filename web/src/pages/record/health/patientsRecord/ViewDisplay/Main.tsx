@@ -16,13 +16,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CardLayout from "@/components/ui/card/card-layout"
 import { calculateAge } from "@/helpers/ageCalculator"
 import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
-import {PatientData,ChildHealthRecord} from "./types"
+import {PatientData} from "./types"
 import PersonalInfoTab from "./PersonalInfoTab"
 import Records from "./Records"
 import VisitHistoryTab from "./VisitHistoryTab"
 import { useUpdatePatient } from "../queries/update"
 import { usePatientDetails } from "../queries/fetch"
-import { useChildHealthRecords } from "../queries/fetch"
+import { useChildData } from "../queries/fetch"
 import { useMedConCount, useChildHealthRecordCount } from "../queries/count"
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries"
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount"
@@ -36,7 +36,7 @@ export default function ViewPatientRecord() {
   const [isEditable, setIsEditable] = useState(false)
   const { patientId } = useParams<{ patientId: string }>()
   const { data: patientsData, error, isError } = usePatientDetails(patientId ?? "")
-  const { data: rawChildHealthRecords } = useChildHealthRecords(patientId);
+  const { data: rawChildHealthRecords } = useChildData(patientId ?? "");
   const { data: medicineCountData } = useMedicineCount(patientId ?? "")
   const medicineCount = medicineCountData?.medicinerecord_count
   const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")
@@ -193,28 +193,36 @@ export default function ViewPatientRecord() {
     return addressParts.length > 0 ? addressParts.join(", ") : "No address provided"
   }
 
-  const formatChildHealthData = React.useCallback((): ChildHealthRecord[] => {
+
+
+
+  const formatChildHealthData = React.useCallback((): any[] => {
     if (!rawChildHealthRecords || !rawChildHealthRecords.child_health_histories) return []
+    
     return rawChildHealthRecords.child_health_histories.map((record: any) => {
       const chrecDetails = record.chrec_details || {}
       const patrecDetails = chrecDetails.patrec_details || {}
       const patDetails = patrecDetails.pat_details || {}
-      const childInfo = patDetails.personal_info || {}
+      const childInfo = patDetails.personal_info || {} // Ensure this is never null
       const addressInfo = patDetails.address || {}
       const familyHeadInfo = patDetails.family_head_info || {}
       const motherInfo = familyHeadInfo.family_heads?.mother?.personal_info || {}
       const fatherInfo = familyHeadInfo.family_heads?.father?.personal_info || {}
       const vitalSigns = record.child_health_vital_signs?.[0]?.bm_details || {}
-
+  
+      // Add null checks for critical properties
+      const dob = childInfo?.per_dob || ""
+      const age = dob ? calculateAge(dob).toString() : ""
+  
       return {
         chrec_id: chrecDetails.chrec_id || 0,
         pat_id: patDetails.pat_id || "",
-        fname: childInfo.per_fname || "",
-        lname: childInfo.per_lname || "",
-        mname: childInfo.per_mname || "",
-        sex: childInfo.per_sex || "",
-        age: calculateAge(childInfo.per_dob).toString(),
-        dob: childInfo.per_dob || "",
+        fname: childInfo?.per_fname || "",
+        lname: childInfo?.per_lname || "",
+        mname: childInfo?.per_mname || "",
+        sex: childInfo?.per_sex || "",
+        age: age, // Use the safely calculated age
+        dob: dob, // Use the safely extracted dob
         householdno: patDetails.households?.[0]?.hh_id || "",
         street: addressInfo.add_street || "",
         sitio: addressInfo.add_sitio || "",
@@ -245,7 +253,6 @@ export default function ViewPatientRecord() {
         tt_status: record.tt_status || "",
       }
     })
-    
   }, [rawChildHealthRecords])
 
 

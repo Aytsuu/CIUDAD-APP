@@ -394,7 +394,7 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                             medreqitem_id=medreqitem_id,
                             medreq_id=medicine_request
                         )
-                    request_item.status = 'fulfilled'
+                    request_item.status = 'completed'
                     request_item.save()
                 
                  
@@ -456,7 +456,7 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                         "error": f"Medicine inventory with ID {minv_id} not found"
                     }, status=status.HTTP_404_NOT_FOUND)
                         
-            medicine_request.status = 'fulfilled'
+            medicine_request.status = 'completed'
            
             medicine_request.save()
             

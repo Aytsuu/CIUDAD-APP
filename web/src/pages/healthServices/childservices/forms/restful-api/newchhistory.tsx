@@ -122,11 +122,12 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
       pat_id: requestData.submittedData.pat_id,
       hasVitalSigns: !!requestData.submittedData.vitalSigns?.length,
       hasMedicines: !!requestData.submittedData.medicines?.length,
-      hasBFdates: !!requestData.submittedData.BFdates?.length,
+      hasBFdates: !!requestData.submittedData.BFchecks?.length,
       hasHistoricalStatuses: !!requestData.submittedData.historicalSupplementStatuses?.length,
       isUpdate: !!todaysHistoricalRecord
     });
 
+    console.log("Hey", requestData);
     // Make API call to the comprehensive update endpoint
     const response = await api2.post("child-health/create-update-new-chhistory/", requestData);
 
@@ -163,38 +164,38 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
 /**
  * React Query mutation hook for updating child health records
  */
-export const useUpdateChildHealthRecordMutation = () => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+// export const useUpdateChildHealthRecordMutation = () => {
+//   const navigate = useNavigate();
+//   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: updateChildHealthRecord,
-    onSuccess: (data) => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
-      queryClient.invalidateQueries({
-        queryKey: ["childHealthHistory", data.data.chrec_id]
-      });
-      queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
-      queryClient.invalidateQueries({ queryKey: ["medicineInventory"] });
-      queryClient.invalidateQueries({ queryKey: ["followUpVisits"] });
-      queryClient.invalidateQueries({ queryKey: ["bodyMeasurements"] });
+//   return useMutation({
+//     mutationFn: updateChildHealthRecord,
+//     onSuccess: (data) => {
+//       // Invalidate relevant queries
+//       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+//       queryClient.invalidateQueries({
+//         queryKey: ["childHealthHistory", data.data.chrec_id]
+//       });
+//       queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
+//       queryClient.invalidateQueries({ queryKey: ["medicineInventory"] });
+//       queryClient.invalidateQueries({ queryKey: ["followUpVisits"] });
+//       queryClient.invalidateQueries({ queryKey: ["bodyMeasurements"] });
 
-      // Show success message
-      toast.success(data.message || "Child health record updated successfully!");
+//       // Show success message
+//       toast.success(data.message || "Child health record updated successfully!");
 
-      // Navigate back
-      navigate(-1);
-    },
-    onError: (error: unknown) => {
-      console.error("Child health record update mutation failed:", error);
+//       // Navigate back
+//       navigate(-1);
+//     },
+//     onError: (error: unknown) => {
+//       console.error("Child health record update mutation failed:", error);
 
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while updating child health record";
+//       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while updating child health record";
 
-      toast.error(`Update Failed: ${errorMessage}`);
-    }
-  });
-};
+//       toast.error(`Update Failed: ${errorMessage}`);
+//     }
+//   });
+// };
 
 /**
  * Helper function to validate form data before submission
@@ -259,7 +260,7 @@ export function validateChildHealthFormData(formData: FormData): string[] {
 /**
  * Enhanced mutation hook with validation
  */
-export const useUpdateChildHealthRecordMutationWithValidation = () => {
+export const useUpdateChildHealthRecordMutation = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -275,23 +276,18 @@ export const useUpdateChildHealthRecordMutationWithValidation = () => {
     },
     onSuccess: (data) => {
       // Comprehensive query invalidation
-      const queriesToInvalidate = [
-        ["childHealthRecords"],
-        ["childHealthHistory", data.data.chrec_id],
-        ["patientRecords"],
-        ["medicineInventory"],
-        ["medicineRecords"],
-        ["followUpVisits"],
-        ["bodyMeasurements"],
-        ["vitalSigns"],
-        ["exclusiveBFChecks"],
-        ["childHealthSupplements"],
-        ["childHealthSupplementsStatus"]
-      ];
-
-      queriesToInvalidate.forEach((queryKey) => {
-        queryClient.invalidateQueries({ queryKey });
-      });
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.data.chrec_id] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
+      queryClient.invalidateQueries({ queryKey: ["nextufc"] });
+      queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
+      queryClient.invalidateQueries({ queryKey: ["medicinetransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
+      queryClient.invalidateQueries({ queryKey: ["followupChildHealth"] });
+      queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
 
       toast.success(data.message || "Child health record updated successfully!");
       navigate(-1);

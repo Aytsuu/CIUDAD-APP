@@ -35,6 +35,36 @@ class ChildHealthHistorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class LatestVitalBMSerializer(serializers.Serializer):
+    chvital_id = serializers.IntegerField()
+    created_at = serializers.DateTimeField()
+    
+    # Body Measurement fields
+    height = serializers.SerializerMethodField()
+    weight = serializers.SerializerMethodField()
+    wfa = serializers.CharField(source='bm.wfa')
+
+    def get_height(self, obj):
+        height = obj.bm.height
+        return int(height) if height % 1 == 0 else height
+
+    def get_weight(self, obj):
+        weight = obj.bm.weight
+        return int(weight) if weight % 1 == 0 else weight
+    lhfa = serializers.CharField(source='bm.lhfa')
+    wfl = serializers.CharField(source='bm.wfl')
+    muac = serializers.CharField(source='bm.muac')
+    muac_status = serializers.CharField(source='bm.muac_status')
+    edemaSeverity = serializers.CharField(source='bm.edemaSeverity')
+    bm_remarks = serializers.CharField(source='bm.remarks')
+    is_opt = serializers.BooleanField(source='bm.is_opt')
+    bm_created_at = serializers.DateTimeField(source='bm.created_at')
+    
+    # Vital Signs fields
+    vital_temp = serializers.CharField(source='vital.vital_temp')
+    vital_created_at = serializers.DateTimeField(source='vital.created_at')
+     
+   
 class ChildHealthNotesSerializer(serializers.ModelSerializer):
     chhist_details = ChildHealthHistorySerializerBase(source='chhist', read_only=True)
     followv_details = FollowUpVisitSerializerBase(source='followv', read_only=True)
@@ -46,9 +76,7 @@ class ChildHealthNotesSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChildHealthNotes
         fields = '__all__'  # or list your specific fields and add 'history'
-        # fields = ['chnotes_id', 'chn_notes', 'created_at', 'updated_at', 
-        #          'chhist', 'followv', 'staff', 'chhist_details', 
-        #          'followv_details', 'staff_details', 'history']
+       
     
     def get_history(self, obj):
         """Get history records for this note"""

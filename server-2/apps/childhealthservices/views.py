@@ -1,6 +1,7 @@
 # Standard library imports
 from collections import defaultdict
 from datetime import datetime, timedelta
+import logging
 
 # Django imports
 from django.db.models import (
@@ -343,6 +344,87 @@ class MonthlyNutritionalStatusViewChart(generics.ListAPIView):
         
         return queryset
     
+
+logger = logging.getLogger(__name__)
+
+class LatestVitalBMAPIView(APIView):
+    """
+    API to get the latest body measurement and vital signs data for a specific patient
+    pat_id is required in the URL path
+    """
+    
+    def get(self, request, pat_id):
+        try:
+            # Validate that pat_id is provided
+            if not pat_id:
+                return Response({
+                    'success': False,
+                    'message': 'Patient ID is required',
+                    'data': None
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Build the base queryset with correct relationship chain
+            queryset = ChildHealthVitalSigns.objects.select_related(
+                'bm',
+                'vital',
+                'chhist',
+                'chhist__chrec',
+                'chhist__chrec__patrec',
+                'chhist__chrec__patrec__pat_id',
+                'chhist__chrec__patrec__pat_id__rp_id',
+                'chhist__chrec__patrec__pat_id__rp_id__per',
+                'chhist__chrec__patrec__pat_id__trans_id'
+            ).filter(
+                bm__isnull=False,
+                vital__isnull=False,
+                chhist__chrec__patrec__pat_id__pat_id=pat_id  # Filter by patient ID from URL
+            ).order_by('-created_at')
+            
+            # Get the latest record for this patient
+            latest_record = queryset.first()
+            
+            if not latest_record:
+                return Response({
+                    'success': False,
+                    'message': f'No vital signs or body measurements found for patient ID: {pat_id}',
+                    'data': None
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Debug logging (remove in production)
+            logger.info(f"Found latest record for patient {pat_id}")
+            logger.info(f"ChildHealthVitalSigns ID: {latest_record.chvital_id}")
+            logger.info(f"Record created at: {latest_record.created_at}")
+            
+            # Serialize the data
+            try:
+                serializer = LatestVitalBMSerializer(latest_record)
+                serialized_data = serializer.data
+                
+                # Add patient ID to response for confirmation
+                serialized_data['queried_patient_id'] = pat_id
+                
+            except Exception as serializer_error:
+                logger.error(f"Serializer error for patient {pat_id}: {serializer_error}")
+                return Response({
+                    'success': False,
+                    'error': f'Serializer error: {str(serializer_error)}',
+                    'message': 'Failed to serialize data'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response({
+                'success': True,
+                'message': f'Latest vital signs and body measurements retrieved successfully for patient {pat_id}',
+                'data': serialized_data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"API error for patient {pat_id}: {e}")
+            return Response({
+                'success': False,
+                'error': str(e),
+                'message': f'Failed to retrieve latest vital signs and body measurements for patient {pat_id}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class NextUFCNumberAPIView(APIView):
@@ -710,8 +792,9 @@ class CompleteChildHealthRecordAPIView(APIView):
             date_completed=None
         )
         
-        
-        
+     
+     
+
 class UpdateChildHealthRecordAPIView(APIView):
     """
     API endpoint for updating child health records with all related data
@@ -816,8 +899,8 @@ class UpdateChildHealthRecordAPIView(APIView):
             return False
     
     def _handle_same_day_update(self, submitted_data, staff_instance, 
-                            todays_historical_record, original_record, 
-                            current_chhist_id, chnotes_id, chrec_id):
+                        todays_historical_record, original_record, 
+                        current_chhist_id, chnotes_id, chrec_id):
         """Handle updates for same-day records"""
         
         followv_id = None
@@ -829,101 +912,127 @@ class UpdateChildHealthRecordAPIView(APIView):
             original_followv_id = todays_historical_record.get('followv_id')
             follow_up_date = vital_sign.get('followUpVisit')
             follow_up_description = vital_sign.get('follov_description')
-            is_follow_up_data_present = follow_up_date or follow_up_description
+            notes_content = vital_sign.get('notes', '').strip()
             
-            if not original_followv_id and is_follow_up_data_present and not chnotes_id:
-                # Create new follow-up visit
-                follow_up = FollowUpVisit.objects.create(
-                    followv_date=follow_up_date or timezone.now().date(),
-                    created_at=timezone.now(),
-                    followv_description=follow_up_description or "Follow Up for Child Health",
-                    patrec_id=original_record['chrec_details']['patrec_details']['patrec_id'],
-                    followv_status="pending"
-                )
-                followv_id = follow_up.followv_id
-                
-                # Create child health notes
-                ChildHealthNotes.objects.create(
-                    chn_notes=vital_sign.get('notes', ''),
-                    created_at=timezone.now(),
-                    followv_id=followv_id,
-                    chhist_id=current_chhist_id,
-                    staff=staff_instance
-                )
-
-            elif not is_follow_up_data_present and not chnotes_id:
-                ChildHealthNotes.objects.create(
-                    chn_notes=vital_sign.get('notes', ''),
-                    created_at=timezone.now(),
-                    followv_id=followv_id,
-                    chhist_id=current_chhist_id,
-                    staff=staff_instance
-                )
-                
-            elif not original_followv_id and is_follow_up_data_present and chnotes_id:
-                # Create new follow-up visit
-                follow_up = FollowUpVisit.objects.create(
-                    followv_date=follow_up_date or timezone.now().date(),
-                    created_at=timezone.now(),
-                    followv_description=follow_up_description or "Follow Up for Child Health",
-                    patrec_id=original_record['chrec_details']['patrec_details']['patrec_id'],
-                    followv_status="pending"
-                )
-                followv_id = follow_up.followv_id
-                
-                # Update child health notes with new follow-up ID - FIXED for history tracking
-                try:
-                    notes_instance = ChildHealthNotes.objects.get(chnotes_id=chnotes_id)
-                    notes_instance.chn_notes = vital_sign.get('notes', '')
-                    notes_instance.staff = staff_instance
-                    notes_instance.followv_id = followv_id
-                    notes_instance.save()  # This will trigger Simple History
-                except ChildHealthNotes.DoesNotExist:
-                    # Fallback: create new notes if existing not found
-                    ChildHealthNotes.objects.create(
-                        chn_notes=vital_sign.get('notes', ''),
-                        created_at=timezone.now(),
-                        followv_id=followv_id,
-                        chhist_id=current_chhist_id,
-                        staff=staff_instance
-                    )
-        
+            # Check if there's actual follow-up data
+            is_follow_up_data_present = follow_up_date or (follow_up_description and follow_up_description.strip())
+            
+            # Check if there's actual note content
+            has_note_content = notes_content and notes_content != ''
+            
+            # Only proceed if there's actual content to save
+            should_create_or_update_notes = has_note_content or is_follow_up_data_present
+            
+            if not should_create_or_update_notes:
+                # No content to save, skip note creation/update
+                print("No note content or follow-up data to save, skipping note operations")
             else:
-                # Update existing notes if different - FIXED for history tracking
-                original_notes = todays_historical_record.get('notes')
-                submitted_notes = vital_sign.get('notes')
-                
-                if submitted_notes != original_notes and chnotes_id:
-                    try:
-                        notes_instance = ChildHealthNotes.objects.get(chnotes_id=chnotes_id)
-                        if notes_instance.chn_notes != submitted_notes:
-                            notes_instance.chn_notes = submitted_notes or ''
-                            notes_instance.staff = staff_instance
-                            notes_instance.save()  # This will trigger Simple History
-                    except ChildHealthNotes.DoesNotExist:
-                        # Create new notes if existing not found
+                # Proceed with note operations only if there's actual content
+                if not original_followv_id and is_follow_up_data_present and not chnotes_id:
+                    # Create new follow-up visit
+                    follow_up = FollowUpVisit.objects.create(
+                        followv_date=follow_up_date or timezone.now().date(),
+                        created_at=timezone.now(),
+                        followv_description=follow_up_description or "Follow Up for Child Health",
+                        patrec_id=original_record['chrec_details']['patrec_details']['patrec_id'],
+                        followv_status="pending"
+                    )
+                    followv_id = follow_up.followv_id
+                    
+                    # Create child health notes only if there's actual content
+                    if has_note_content or is_follow_up_data_present:
                         ChildHealthNotes.objects.create(
-                            chn_notes=submitted_notes or '',
+                            chn_notes=notes_content,
                             created_at=timezone.now(),
                             followv_id=followv_id,
                             chhist_id=current_chhist_id,
                             staff=staff_instance
                         )
+
+                elif has_note_content and not is_follow_up_data_present and not chnotes_id:
+                    # Only create notes if there's actual note content
+                    ChildHealthNotes.objects.create(
+                        chn_notes=notes_content,
+                        created_at=timezone.now(),
+                        followv_id=followv_id,
+                        chhist_id=current_chhist_id,
+                        staff=staff_instance
+                    )
+                    
+                elif not original_followv_id and is_follow_up_data_present and chnotes_id:
+                    # Create new follow-up visit
+                    follow_up = FollowUpVisit.objects.create(
+                        followv_date=follow_up_date or timezone.now().date(),
+                        created_at=timezone.now(),
+                        followv_description=follow_up_description or "Follow Up for Child Health",
+                        patrec_id=original_record['chrec_details']['patrec_details']['patrec_id'],
+                        followv_status="pending"
+                    )
+                    followv_id = follow_up.followv_id
+                    
+                    # Update existing child health notes only if there's content
+                    try:
+                        notes_instance = ChildHealthNotes.objects.get(chnotes_id=chnotes_id)
+                        # Only update if there's actual content or meaningful changes
+                        if has_note_content or is_follow_up_data_present:
+                            notes_instance.chn_notes = notes_content
+                            notes_instance.staff = staff_instance
+                            notes_instance.followv_id = followv_id
+                            notes_instance.save()  # This will trigger Simple History
+                    except ChildHealthNotes.DoesNotExist:
+                        # Fallback: create new notes only if there's actual content
+                        if has_note_content or is_follow_up_data_present:
+                            ChildHealthNotes.objects.create(
+                                chn_notes=notes_content,
+                                created_at=timezone.now(),
+                                followv_id=followv_id,
+                                chhist_id=current_chhist_id,
+                                staff=staff_instance
+                            )
+            
+                elif chnotes_id:
+                    # Update existing notes only if there's meaningful content or changes
+                    original_notes = todays_historical_record.get('notes', '').strip()
+                    
+                    # Check if there's a meaningful difference
+                    content_changed = notes_content != original_notes
+                    has_meaningful_content = has_note_content or is_follow_up_data_present
+                    
+                    if content_changed and has_meaningful_content:
+                        try:
+                            notes_instance = ChildHealthNotes.objects.get(chnotes_id=chnotes_id)
+                            notes_instance.chn_notes = notes_content
+                            notes_instance.staff = staff_instance
+                            notes_instance.save()  # This will trigger Simple History
+                            print(f"Updated existing notes: '{notes_content}'")
+                        except ChildHealthNotes.DoesNotExist:
+                            # Create new notes only if there's actual content
+                            if has_meaningful_content:
+                                ChildHealthNotes.objects.create(
+                                    chn_notes=notes_content,
+                                    created_at=timezone.now(),
+                                    followv_id=followv_id,
+                                    chhist_id=current_chhist_id,
+                                    staff=staff_instance
+                                )
+                    elif not has_meaningful_content and chnotes_id:
+                        # If there's no meaningful content but there's an existing note, 
+                        # consider if you want to delete it or leave it as is
+                        print("No meaningful content to update in existing notes")
         
         # Update child health history status
         ChildHealth_History.objects.filter(chhist_id=current_chhist_id).update(
             status=submitted_data.get('status', 'recorded')
         )
         
-        
         ChildHealthrecord.objects.filter(chrec_id=chrec_id).update(updated_at=timezone.now())
         self._handle_breastfeeding_dates(submitted_data, current_chhist_id, original_record)
         self._handle_medicines(submitted_data, staff_instance, current_chhist_id)
         self._handle_historical_supplement_statuses(submitted_data, original_record)
         return {"success": True}
-    
+
     def _handle_new_record_creation(self, submitted_data, staff_instance, 
-                                  chrec_id, patrec_id, original_record):
+                                chrec_id, patrec_id, original_record):
         """Handle creation of new child health records"""
         
         # Create new child health history
@@ -939,29 +1048,35 @@ class UpdateChildHealthRecordAPIView(APIView):
         bmi_id = None
         chvital_id = None
         
-        # Handle follow-up visit if needed
+        # Get notes and follow-up data
+        notes_text = ""
+        follow_up_date = None
+        follow_up_description = None
+        
         if (submitted_data.get('vitalSigns') and 
-            len(submitted_data['vitalSigns']) > 0 and 
-            submitted_data['vitalSigns'][0].get('followUpVisit')):
-            
+            len(submitted_data['vitalSigns']) > 0):
             vital_sign = submitted_data['vitalSigns'][0]
+            notes_text = vital_sign.get('notes', '').strip()
+            follow_up_date = vital_sign.get('followUpVisit')
+            follow_up_description = vital_sign.get('follov_description', '').strip()
+        
+        # Handle follow-up visit if there's actual follow-up data
+        has_follow_up_data = follow_up_date or follow_up_description
+        if has_follow_up_data:
             follow_up = FollowUpVisit.objects.create(
-                followv_date=vital_sign['followUpVisit'],
+                followv_date=follow_up_date or timezone.now().date(),
                 created_at=timezone.now(),
-                followv_description=vital_sign.get('follov_description', 'Follow Up for Child Health'),
+                followv_description=follow_up_description or 'Follow Up for Child Health',
                 patrec_id=patrec_id,
                 followv_status="pending"
             )
             followv_id = follow_up.followv_id
         
-        # Create health notes only if there are actual notes or follow-up data
-        notes_text = ""
-        if (submitted_data.get('vitalSigns') and 
-            len(submitted_data['vitalSigns']) > 0):
-            notes_text = submitted_data['vitalSigns'][0].get('notes', '')
+        # Only create notes if there's actual content (notes or follow-up data)
+        has_note_content = notes_text and notes_text != ''
+        should_create_notes = has_note_content or has_follow_up_data
         
-        # Only create notes if there's actual content or follow-up data
-        if notes_text or followv_id:
+        if should_create_notes:
             ChildHealthNotes.objects.create(
                 chn_notes=notes_text,
                 created_at=timezone.now(),
@@ -969,6 +1084,9 @@ class UpdateChildHealthRecordAPIView(APIView):
                 chhist_id=current_chhist_id,
                 staff=staff_instance
             )
+            print(f"Created notes with content: '{notes_text}' and follow-up: {bool(followv_id)}")
+        else:
+            print("No notes created - no meaningful content provided")
         
         # Handle vital signs and body measurements
         if (submitted_data.get('vitalSigns') and 
@@ -997,7 +1115,7 @@ class UpdateChildHealthRecordAPIView(APIView):
                 )
                 bmi_id = body_measurement.bm_id
         
-        # FIXED: Handle vital signs creation and child vital sign relationship properly
+        # Handle vital signs creation and child vital sign relationship properly
         if (submitted_data.get('vitalSigns', [{}])[0].get('temp')):
             # Create vital signs
             vital_signs = VitalSigns.objects.create(
@@ -1027,72 +1145,73 @@ class UpdateChildHealthRecordAPIView(APIView):
             "followv_id": followv_id,
             "bmi_id": bmi_id
         }
-    
+        
     def _handle_breastfeeding_dates(self, submitted_data, chhist_id, original_record=None):
         """
         Handle breastfeeding dates creation and updates
         - Creates new BF checks for newly added dates
-        - Updates existing BF checks if they've changed
+        - Updates existing BF checks iexexf they've changed
         """
         submitted_bf_checks = submitted_data.get('BFchecks', [])
         
         if not submitted_bf_checks:
             return
         
-        # Get existing BF checks if this is an update
-        existing_bf_checks = []
-        if original_record:
-            existing_bf_checks = original_record.get('exclusive_bf_checks', [])
-        
-        # Create a map of existing BF checks by ebf_id for quick lookup
-        existing_bf_map = {
-            bf_check.get('ebf_id'): bf_check 
-            for bf_check in existing_bf_checks 
-            if bf_check.get('ebf_id')
-        }
+        print(f"Processing {len(submitted_bf_checks)} BF checks for chhist_id: {chhist_id}")
         
         # Process submitted BF checks
         for bf_check in submitted_bf_checks:
             ebf_id = bf_check.get('ebf_id')
             ebf_date = bf_check.get('ebf_date')
+            chhist = bf_check.get('chhist')  # Note: using 'chhist' not 'chhist_id'
             
             if not ebf_date:
+                print(f"Skipping BF check {ebf_id} - no ebf_date provided")
                 continue
                 
             if ebf_id:
-                # This is an existing BF check - check if it needs updating
-                existing_bf = existing_bf_map.get(ebf_id)
-                
-                if existing_bf:
-                    # Check if the date has changed
-                    existing_date = existing_bf.get('ebf_date')
-                    if existing_date != ebf_date:
-                        # Update the existing record
-                        try:
+                # This is an existing BF check - try to update it
+                try:
+                    # First check if the record exists and get current data
+                    existing_bf = ExclusiveBFCheck.objects.filter(ebf_id=ebf_id).first()
+                    
+                    if existing_bf:
+                        # Check if the date has actually changed
+                        if existing_bf.ebf_date != ebf_date:
+                            # Update the existing record
                             ExclusiveBFCheck.objects.filter(ebf_id=ebf_id).update(
                                 ebf_date=ebf_date
                             )
-                            print(f"Updated BF check {ebf_id} with new date: {ebf_date}")
-                        except Exception as e:
-                            print(f"Error updating BF check {ebf_id}: {str(e)}")
-                            continue
-                else:
-                    # ebf_id provided but not found in existing records
-                    # This could be a data consistency issue
-                    print(f"Warning: BF check with ebf_id {ebf_id} not found in existing records")
+                            print(f"Updated BF check {ebf_id}: {existing_bf.ebf_date} -> {ebf_date}")
+                        else:
+                            print(f"BF check {ebf_id} date unchanged: {ebf_date}")
+                   
+                except Exception as e:
+                    print(f"Error handling BF check {ebf_id}: {str(e)}")
+                    continue
             else:
                 # This is a new BF check - create it
                 try:
-                    new_bf_check = ExclusiveBFCheck.objects.create(
+                    # Check if a BF check with this date already exists for this chhist_id
+                    existing_check = ExclusiveBFCheck.objects.filter(
                         chhist_id=chhist_id,
                         ebf_date=ebf_date
-                    )
-                    print(f"Created new BF check {new_bf_check.ebf_id} with date: {ebf_date}")
+                    ).first()
+                    
+                    if existing_check:
+                        print(f"BF check for date {ebf_date} already exists with ID {existing_check.ebf_id}")
+                    else:
+                        new_bf_check = ExclusiveBFCheck.objects.create(
+                            chhist_id=chhist_id,
+                            ebf_date=ebf_date
+                        )
+                        print(f"Created new BF check {new_bf_check.ebf_id} with date: {ebf_date}")
+                        
                 except Exception as e:
                     print(f"Error creating new BF check for date {ebf_date}: {str(e)}")
                     continue
 
-    
+        
     def _handle_medicines(self, submitted_data, staff_instance, chhist_id):
         """Handle medicine processing"""
         if not submitted_data.get('medicines'):
@@ -1261,6 +1380,12 @@ class UpdateChildHealthRecordAPIView(APIView):
             except Exception as e:
                 print(f"Supplement status update failed: {str(e)}")
                 raise Exception(f"Failed to update supplement statuses: {str(e)}")
+    
+     
+     
+     
+        
+        
 class SaveImmunizationDataAPIView(APIView):
     
     def post(self, request):

@@ -13,21 +13,11 @@ export interface AddRecordArgs {
   originalRecord?: any;
 }
 
-export interface AddRecordResult {
-  success: boolean;
-  message: string;
-  patrec_id: string;
-  chrec_id: string;
-  chhist_id: string;
-  chvital_id?: string;
-  followv_id?: string | null;
-}
-
 /**
  * Simplified function that sends all child health record data to a single comprehensive API endpoint
  * This replaces all the individual API calls with one atomic operation
  */
-export async function addChildHealthRecord({ submittedData, staff, todaysHistoricalRecord, originalRecord }: AddRecordArgs): Promise<AddRecordResult> {
+export async function addChildHealthRecord({ submittedData, staff, todaysHistoricalRecord, originalRecord }: any): Promise<any> {
   // Basic validation on frontend
   if (!submittedData.pat_id) {
     throw new Error("Patient ID is required");
@@ -103,7 +93,7 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
       residenceType: requestData.submittedData.residenceType,
       hasVitalSigns: !!requestData.submittedData.vitalSigns?.length,
       hasMedicines: !!requestData.submittedData.medicines?.length,
-      hasBFdates: !!requestData.submittedData.BFdates?.length,
+      hasBFdates: !!requestData.submittedData.BFchecks?.length,
       isUpdate: !!todaysHistoricalRecord
     });
 
@@ -119,7 +109,8 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
         chrec_id: response.data.chrec_id,
         chhist_id: response.data.chhist_id,
         chvital_id: response.data.chvital_id,
-        followv_id: response.data.followv_id
+        followv_id: response.data.followv_id,
+        pat_id: requestData.submittedData.pat_id
       };
     } else {
       throw new Error(`Unexpected response status: ${response.status}`);
@@ -142,34 +133,34 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
  * React Query mutation hook for child health records
  * This remains the same but now uses the simplified single API call
  */
-export const useChildHealthRecordMutation = () => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+// export const useChildHealthRecordMutation = () => {
+//   const navigate = useNavigate();
+//   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: addChildHealthRecord,
-    onSuccess: (data) => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
-      queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.chrec_id] });
-      queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
-      queryClient.invalidateQueries({ queryKey: ["medicineInventory"] });
+//   return useMutation({
+//     mutationFn: addChildHealthRecord,
+//     onSuccess: (data) => {
+//       // Invalidate relevant queries
+//       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+//       queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.chrec_id] });
+//       queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
+//       queryClient.invalidateQueries({ queryKey: ["medicineInventory"] });
 
-      // Show success message
-      toast.success(data.message || "Child health record processed successfully!");
+//       // Show success message
+//       toast.success(data.message || "Child health record processed successfully!");
 
-      // Navigate back
-      navigate(-1);
-    },
-    onError: (error: unknown) => {
-      console.error("Child health record mutation failed:", error);
+//       // Navigate back
+//       navigate(-1);
+//     },
+//     onError: (error: unknown) => {
+//       console.error("Child health record mutation failed:", error);
 
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while processing child health record";
+//       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while processing child health record";
 
-      toast.error(`Operation Failed: ${errorMessage}`);
-    }
-  });
-};
+//       toast.error(`Operation Failed: ${errorMessage}`);
+//     }
+//   });
+// };
 
 /**
  * Optional: Helper function to validate form data before submission
@@ -210,10 +201,8 @@ export function validateChildHealthFormData(formData: FormData): string[] {
   return errors;
 }
 
-/**
- * Enhanced mutation hook with validation
- */
-export const useChildHealthRecordMutationWithValidation = () => {
+
+export const useChildHealthRecordMutation = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -228,12 +217,18 @@ export const useChildHealthRecordMutationWithValidation = () => {
       return addChildHealthRecord(args);
     },
     onSuccess: (data) => {
-      // Comprehensive query invalidation
-      const queriesToInvalidate = [["childHealthRecords"], ["childHealthHistory", data.chrec_id], ["patientRecords"], ["medicineInventory"], ["medicineRecords"], ["followUpVisits"], ["bodyMeasurements"], ["vitalSigns"]];
-
-      queriesToInvalidate.forEach((queryKey) => {
-        queryClient.invalidateQueries({ queryKey });
-      });
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.chrec_id] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
+      queryClient.invalidateQueries({ queryKey: ["nextufc"] });
+      queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
+      queryClient.invalidateQueries({ queryKey: ["medicinetransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
+      queryClient.invalidateQueries({ queryKey: ["followupChildHealth", data.pat_id] });
+      queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
 
       toast.success(data.message || "Child health record processed successfully!");
       navigate(-1);

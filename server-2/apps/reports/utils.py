@@ -210,17 +210,17 @@ def apply_search_filter_to_body_measurement(queryset, search_query):
 
 def apply_nutritional_search_to_body_measurement(queryset, search_query):
     """Search by nutritional status for BodyMeasurement objects"""
-    search_terms = [term.strip().lower() for term in search_query.split(',') if term.strip()]
+    search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
     if not search_terms:
         return queryset
 
     status_query = Q()
     for term in search_terms:
         status_query |= (
-            Q(wfa__iexact=term) |        # Direct field access
-            Q(lhfa__iexact=term) |       # Direct field access
-            Q(wfl__iexact=term) |        # Direct field access
-            Q(muac_status__iexact=term)  # Direct field access
+            Q(wfa__icontains=term) |        # Partial match
+            Q(lhfa__icontains=term) |       
+            Q(wfl__icontains=term) |        
+            Q(muac_status__icontains=term)  
         )
     
     return queryset.filter(status_query)

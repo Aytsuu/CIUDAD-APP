@@ -136,12 +136,10 @@ class YearlyOPTChildHealthSummariesAPIView(APIView):
             'total': len(yearly_ids)
         }
 
-
-
 class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
     """
     API View to get monthly nutritional status report for a specific year
-    Returns each child's monthly measurements (Jan-Dec) for children aged 0-23 months
+    Returns each child's LATEST monthly measurements (Jan-Dec) for children aged 0-23 months
     Includes both residents and transients
     """
     serializer_class = BodyMeasurementSerializer
@@ -157,10 +155,19 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         start_date = datetime(year, 1, 1)
         end_date = datetime(year, 12, 31, 23, 59, 59)
 
-        # Get all records for the year (not just latest per child) - both residents and transients
+        # Get the LATEST record for each child in each month
+        latest_per_month_subquery = BodyMeasurement.objects.filter(
+            pat=OuterRef('pat'),
+            created_at__year=year,
+            created_at__month=OuterRef('created_at__month'),
+            is_opt=True
+        ).order_by('-created_at').values('bm_id')[:1]
+
+        # Get all records for the year, but only the latest per month per child
         queryset = BodyMeasurement.objects.filter(
             created_at__range=(start_date, end_date),
             is_opt=True,
+            bm_id=Subquery(latest_per_month_subquery)
         ).select_related(
             'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
         ).prefetch_related(
@@ -220,13 +227,14 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
             filtered_queryset = apply_search_filter_to_body_measurement(filtered_queryset, combined_search)
 
         # Nutritional status filter
-        nutritional_search = self.request.query_params.get('body_measurement', '').strip()
+        nutritional_search = self.request.query_params.get('nutritional_status', '').strip()
         if nutritional_search:
             filtered_queryset = apply_nutritional_search_to_body_measurement(filtered_queryset, nutritional_search)
 
         return filtered_queryset
 
-    def _format_monthly_report_data(self, data, queryset_objects=None):
+    def format_monthly_report_data(self, data, queryset_objects, year=None):
+        """Format BodyMeasurement data for monthly report output"""
         children_data = {}
         
         if queryset_objects:
@@ -243,7 +251,7 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
 
             for i, entry in enumerate(data):
                 try:
-                    bm_obj = queryset_objects[i]  # Changed from ns_obj to bm_obj
+                    bm_obj = queryset_objects[i]
 
                     # Get child ID for grouping
                     child_id = bm_obj.pat.pat_id
@@ -259,6 +267,7 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
 
                     # Initialize child data if not exists
                     if child_id not in children_data:
+                        # Use utility function for address
                         address, sitio, is_transient = get_patient_address(bm_obj.pat)
 
                         # Get patient's date of birth and sex
@@ -273,10 +282,10 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                             dob = pat_obj.trans_id.tran_dob
                             sex = pat_obj.trans_id.tran_sex
 
-                        # Get household number using reusable function
+                        # Use utility function for household number
                         household_no = get_household_no(pat_obj)
 
-                        # Get parents information using reusable function
+                        # Use utility function for parents information
                         parents = get_parents_info(pat_obj)
 
                         children_data[child_id] = {
@@ -334,16 +343,22 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                             'remarks': bm_obj.remarks
                         }
 
-                        # Update monthly data
-                        children_data[child_id]['monthly_data'][month_name] = {
-                            'measurement_exists': True,
-                            'date_of_weighing': entry.get('created_at', '')[:10],
-                            'age_at_weighing': age_months,
-                            'weight': entry.get('weight'),
-                            'height': entry.get('height'),
-                            'body_measurement': body_measurement,
-                            'type_of_feeding': 'N/A'
-                        }
+                        # Only update if this is the latest record for this month
+                        # (the query already ensures we only get latest, but double-check)
+                        current_month_data = children_data[child_id]['monthly_data'][month_name]
+                        if not current_month_data['measurement_exists'] or (
+                            current_month_data['date_of_weighing'] and 
+                            entry.get('created_at', '')[:10] > current_month_data['date_of_weighing']
+                        ):
+                            children_data[child_id]['monthly_data'][month_name] = {
+                                'measurement_exists': True,
+                                'date_of_weighing': entry.get('created_at', '')[:10],
+                                'age_at_weighing': age_months,
+                                'weight': entry.get('weight'),
+                                'height': entry.get('height'),
+                                'body_measurement': body_measurement,
+                                'type_of_feeding': 'N/A'
+                            }
 
                 except Exception as e:
                     print(f"Error formatting report entry {i}: {e}")
@@ -352,17 +367,22 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         # Convert to list format
         children_list = list(children_data.values())
         
-        return {
-            'year': self.kwargs['year'],
+        result = {
             'children_data': children_list
         }
+        
+        if year:
+            result['year'] = year
+            
+        return result
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        # Get the filtered queryset (this already has all the filters applied)
+        filtered_queryset = self.filter_queryset(self.get_queryset())
         
-        # Get unique child IDs for pagination count
+        # Get unique child IDs from the FILTERED queryset
         child_ids = set()
-        for record in queryset:
+        for record in filtered_queryset:
             child_id = record.pat.pat_id
             child_ids.add(child_id)
         
@@ -371,14 +391,14 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
         page = paginator.paginate_queryset(list(child_ids), request)
         
         if page is not None:
-            # Get all records for the children in this page
-            records_for_page = [record for record in queryset 
+            # Get only the FILTERED records for the children in this page
+            records_for_page = [record for record in filtered_queryset 
                              if record.pat.pat_id in page]
             
             serializer = self.get_serializer(records_for_page, many=True)
-            return paginator.get_paginated_response(
-                self._format_monthly_report_data(serializer.data, records_for_page)
-            )
+            formatted_data = self.format_monthly_report_data(serializer.data, records_for_page, self.kwargs['year'])
+            return paginator.get_paginated_response(formatted_data)
         
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(self._format_monthly_report_data(serializer.data, queryset))
+        serializer = self.get_serializer(filtered_queryset, many=True)
+        formatted_data = self.format_monthly_report_data(serializer.data, filtered_queryset, self.kwargs['year'])
+        return Response(formatted_data)

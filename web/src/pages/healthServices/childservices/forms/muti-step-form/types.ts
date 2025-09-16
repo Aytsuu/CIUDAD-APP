@@ -194,6 +194,7 @@ mode: "newchildhealthrecord" | "addnewchildhealthrecord";
 isSubmitting: boolean;
 newVitalSigns: VitalSignType[];
 setNewVitalSigns: React.Dispatch<React.SetStateAction<VitalSignType[]>>;
+status: string;
 }
 
 

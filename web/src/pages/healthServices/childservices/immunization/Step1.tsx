@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button/button";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PatientSummarySection } from "../viewrecords/CurrentHistoryView";
 import { History } from "lucide-react";
@@ -13,6 +13,7 @@ interface PendingDisplayMedicalConsultationProps {
 
 export default function PendingDisplayMedicalConsultation({ ChildHealthRecord, onNext, fullHistoryData }: PendingDisplayMedicalConsultationProps) {
   const chhistId = ChildHealthRecord.record?.chhist_id;
+  const chrecId = ChildHealthRecord.record?.chrec;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [recordsPerPage, setRecordsPerPage] = useState(2);
 
@@ -33,17 +34,34 @@ export default function PendingDisplayMedicalConsultation({ ChildHealthRecord, o
       <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">Page 1 of 2</div>
 
       <div className="space-y-6 p-6">
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end gap-4 mb-4">
           <Link
             to={`/child-health-records`}
             state={{
-              ChildHealthRecord: ChildHealthRecord,
-              mode: "addnewchildhealthrecord"
+              ChildHealthRecord: ChildHealthRecord
             }}
           >
             <Button>
               <History className="h-4 w-4" />
               View History
+            </Button>
+          </Link>
+
+          <Link
+            to={`/child-health-record/form`}
+            state={{
+              params: {
+                ChildHealthRecord: ChildHealthRecord,
+                chrecId: chrecId,
+                chhistId: chhistId,
+                mode: "addnewchildhealthrecord",
+                status: "immunization"
+              }
+            }}
+          >
+            <Button>
+              <Pencil className="h-4 w-4" />
+              Edit
             </Button>
           </Link>
         </div>

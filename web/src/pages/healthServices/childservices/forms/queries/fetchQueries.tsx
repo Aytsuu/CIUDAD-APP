@@ -1,6 +1,6 @@
 // src/hooks/useChildHealthRecord.ts
 import { useQuery } from "@tanstack/react-query";
-import { getNextufc, getChildHealthRecords, getNutrionalSummary, getNutritionalStatus, getChildHealthHistory } from "../restful-api/get";
+import {getLatestVitals, getNextufc, getChildHealthRecords, getNutrionalSummary, getNutritionalStatus, getChildHealthHistory } from "../restful-api/get";
 
 export function useChildHealthRecords() {
   return useQuery({
@@ -44,3 +44,13 @@ export const useNextufcno = () => {
     staleTime: 1000 * 60 * 5
   });
 };
+
+
+export const useChildLatestVitals = (id: string | undefined) => {
+  return useQuery({
+    queryKey: ["latestVitals", id],
+    queryFn: () => getLatestVitals(id!),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5
+  });
+}

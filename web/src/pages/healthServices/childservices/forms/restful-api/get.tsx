@@ -53,3 +53,14 @@ export const getNextufc = async () => {
     throw err;
   }
 };
+
+
+export const getLatestVitals = async (id:any) => {
+  try {
+    const response = await api2.get(`/child-health/latest-vital-bm/${id}/`);
+    return response.data;
+  } catch (err) {
+    console.error("Error fetching next UFC number:", err);
+    throw err;
+  }
+};

@@ -214,8 +214,6 @@ export const useUnvaccinatedResidents = () => {
 
 
 
-
-
 //  fetchVaccinesWithStock function with age filtering
 export const fetchVaccinesWithStock = (dob?: string) => {
   return useQuery({

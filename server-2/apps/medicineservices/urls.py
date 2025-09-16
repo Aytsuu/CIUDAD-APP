@@ -6,6 +6,7 @@ from .views.confirmed_table_views import *
 from .views.update_views import *
 from .views.pending_table_views import *
 from .views.count_views import *
+from .views.register_patient_views import *
 
 urlpatterns=[
         
@@ -27,11 +28,14 @@ urlpatterns=[
         # UPDATE OR DELETE
         path('update-pending-medreq/<str:medreq_id>/',UpdateConfirmAllPendingItemsView.as_view(), name='update-all medicine-request-pending'),
         path('update-medreq-item/<int:medreqitem_id>/',UpdateMedicinerequestItemView.as_view(),name='update-medicine-request-items'),
-        path('update-medicine-request/<int:medreq_id>/', UpdateMedicineRequestView.as_view(), name='medicine_request_detail'),
+        path('update-medicine-request/<str:medreq_id>/', UpdateMedicineRequestView.as_view(), name='medicine_request_detail'),
 
         
         # COUNT       
         path('medrec-count/<str:pat_id>/', GetMedRecordCountView.as_view(), name='medrec-count'),
+
+        path('check-patient-exists/<str:rp_id>/', CheckPatientExistsAPIView.as_view(), name='check-patient-exists-get'),
+        path('register-patient/', RegisterPatientAPIView.as_view(), name='register-patient'),
 
         
         
@@ -43,7 +47,6 @@ urlpatterns=[
         # path('medicine-request-pending/', MedicineRequestPendingTableView.as_view(), name='medicine_request-pending'),
         # path('medicine-request-items-pending/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
 
-        # path('medicine-request/<int:medreq_id>/', DeleteUpdateMedicineRequestView.as_view(), name='medicine_request_detail'),
         # path('delete-medicine-request-item/int<medreqitem_id>/',MedicineRequestItemDelete.as_view(),name="delete-medicine-request-item"), 
         # path('childmedicine/', ChildServiceMedicineRecordView.as_view(), name='medicine_request_item_detail'),
         
