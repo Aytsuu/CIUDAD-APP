@@ -106,7 +106,7 @@ function MinutesOfMeetingPage() {
             <div className="flex flex-row gap-4">
               <div className="flex items-center gap-2 text-sm text-gray-500">
                  <Calendar size={16} />
-                 <span>{formatDate(record.mom_date, true)}</span>
+                 <span>{formatDate(record.mom_date, "long")}</span>
               </div>
               <div>
                 {record.staff_name && (
