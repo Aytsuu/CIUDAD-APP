@@ -48,7 +48,7 @@ const AnnouncementCreate = () => {
   const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
   const { user } = useAuth();
-  const { data: positions = [] } = usePositions();
+  const { data: positions = [] } = usePositions("");
 
   type AnnouncementCreateFormValues = z.infer<typeof AnnouncementSchema> & {
     positions?: string[];
