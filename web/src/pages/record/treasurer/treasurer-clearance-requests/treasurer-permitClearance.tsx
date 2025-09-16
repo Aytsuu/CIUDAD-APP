@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 
 //table header
-const createColumns = (purposes: any[]): ColumnDef<PermitClearance>[] => [
+const createColumns = ({}): ColumnDef<PermitClearance>[] => [
     { accessorKey: "businessName",
         header: ({ column }) => (
               <div
@@ -36,7 +36,7 @@ const createColumns = (purposes: any[]): ColumnDef<PermitClearance>[] => [
     {
         accessorKey: "purpose",
         header: "Purpose",
-        cell: ({ row }) => "Business Permit" 
+        cell: ({ }) => "Business Permit" 
     },
     {
         accessorKey: "amount",

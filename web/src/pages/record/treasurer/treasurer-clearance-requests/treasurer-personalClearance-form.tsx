@@ -27,7 +27,7 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
     const { user } = useAuth();
     const staffId = user?.staff?.staff_id as string | undefined;
     const { data: residents = [], isLoading: residentLoading} = useGetResidents()
-    const { data: purposes = [], isLoading: purposesLoading} = useGetPurposeAndRate()
+    const { data: purposes = [], isLoading: _purposesLoading} = useGetPurposeAndRate()
 
     const purposeOptions = purposes
     .filter(purposes => purposes.pr_is_archive === false)
