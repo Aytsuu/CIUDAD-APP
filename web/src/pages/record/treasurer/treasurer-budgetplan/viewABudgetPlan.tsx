@@ -343,7 +343,7 @@ function ViewBudgetPlan(){
                 <span className="text-sm text-grat-600 italic flex justify-end gap-1">
                     <div>Created By: {fetchedData?.staff_name}</div>
                     <div className="">
-                           {fetchedData?.plan_issue_date && `on ${formatDate(fetchedData?.plan_issue_date, true)}`}
+                           {fetchedData?.plan_issue_date && `on ${formatDate(fetchedData?.plan_issue_date, "long")}`}
                     </div>
                 </span>
             </TabsContent>

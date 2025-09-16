@@ -11,6 +11,7 @@ import { FileDown, Loader2, Search, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { voterColumns } from "./VoterColumns";
 import { useVoterTable } from "../queries/profilingFetchQueries";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 export default function VoterRecords() {
   // ================== STATE INITIALIZATION ==================
