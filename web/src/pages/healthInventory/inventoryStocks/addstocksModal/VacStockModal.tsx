@@ -9,14 +9,14 @@ import { VaccineStockType, VaccineStocksSchema } from "@/form-schema/inventory/s
 import { useState } from "react";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useNavigate } from "react-router";
-import { Pill, Loader2, Edit } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useSubmitVaccineStock } from "../REQUEST/Antigen/queries/VaccinePostQueries";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useAuth } from "@/context/AuthContext";
 import { Combobox } from "@/components/ui/combobox";
 import { fetchVaccines } from "../REQUEST/Antigen/queries/AntigenFetchQueries";
-import { useBatchNumbers } from "../REQUEST/Antigen/restful-api/VaccineFetchAPI";
+import { useVacBatchNumber } from "../REQUEST/Antigen/restful-api/get";
 
 export default function AddVaccineStock() {
   const { user } = useAuth();
@@ -44,7 +44,7 @@ export default function AddVaccineStock() {
   const totalDoses = solvent === "doses" ? vialBoxCount * dosesPcsCount : null;
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<VaccineStockType | null>(null);
-  const { batchNumbers, isLoading: isBatchNumbersLoading } = useBatchNumbers();
+  const { batchNumbers, isLoading: isBatchNumbersLoading } = useVacBatchNumber();
 
   const isDuplicateBatchNumber = (newBatchNumber: string) => {
     if (isBatchNumbersLoading) return false;
@@ -102,7 +102,7 @@ export default function AddVaccineStock() {
                     }
                     onChange={(value) => {
                       // Extract only the vac_id from the concatenated value
-                      const vacId = value.split(',')[0]; // Get the first part before the comma
+                      const vacId = (value ?? '').split(',')[0]; // Get the first part before the comma
                       form.setValue("vac_id", vacId);
                     }}
                     placeholder={isVaccinesLoading ? "Loading vaccines..." : "Select vaccine"} 

@@ -3,16 +3,16 @@ import { createPatients } from "../restful-api/post";
 
 // query keys
 export const patientQueryKey = {
-	allPatients: ["patients"],
-	lists: () => [...patientQueryKey.allPatients, "list"],
-	list: (filters: any) => [...patientQueryKey.lists(), { filters }],
-	details: () => [...patientQueryKey.allPatients, "detail"],
-	detail: (id:any) => [patientQueryKey.details(), id],
-	search: (params:any) => [...patientQueryKey.allPatients, "search", params]  
-}
+  allPatients: ["patients"],
+  lists: () => [...patientQueryKey.allPatients, "list"],
+  list: (filters: any) => [...patientQueryKey.lists(), { filters }],
+  details: () => [...patientQueryKey.allPatients, "detail"],
+  detail: (id: any) => [patientQueryKey.details(), id],
+  search: (params: any) => [...patientQueryKey.allPatients, "search", params]
+};
 
 export const useAddPatient = () => {
-	const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
 	return useMutation({
 		mutationFn: createPatients,

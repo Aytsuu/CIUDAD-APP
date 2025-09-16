@@ -1,14 +1,13 @@
 // src/queries/fetch.ts
 import { useQuery } from "@tanstack/react-query";
 import { api2 } from "@/api/api";
-import { getUnvaccinatedVaccines } from "../restful-api/get";
+import { getUnvaccinatedVaccines, getUnvaccinatedVaccinesSummary, getUnvaccinatedResidentsDetailsForVaccine } from "../restful-api/get";
 import { VaccinationRecord } from "../tables/columns/types";
 import { getAgeInUnit } from "@/helpers/ageCalculator";
 import { getUnvaccinatedResidents, getVaccinationRecords, getVaccinationRecordById, getLatestVitals } from "../restful-api/get";
 import { showErrorToast } from "@/components/ui/toast";
 import { getVaccintStocks } from "../restful-api/get";
 import { calculateAge } from "@/helpers/ageCalculator";
-
 
 export const useIndivPatientVaccinationRecords = (patientId?: string) => {
   return useQuery({
@@ -63,7 +62,7 @@ export const useIndivPatientVaccinationRecords = (patientId?: string) => {
               followv_id: record.follow_up_visit?.followv_id,
               followv_date: record.follow_up_visit?.followv_date || "No Schedule",
               followv_status: record.follow_up_visit?.followv_status || "N/A",
-              followv_description: record.follow_up_visit?.followv_description || "N/A",
+              followv_description: record.follow_up_visit?.followv_description || "N/A"
             },
             vacrec_details: record.vacrec_details || {
               vacrec_id: record.vacrec_details?.vacrec_id || 0,
@@ -83,7 +82,6 @@ export const useIndivPatientVaccinationRecords = (patientId?: string) => {
   });
 };
 
-
 export const useFollowupVaccines = (patientId?: string) => {
   return useQuery({
     queryKey: ["followupVaccines", patientId],
@@ -92,7 +90,7 @@ export const useFollowupVaccines = (patientId?: string) => {
       const res = await api2.get(`/vaccination/patient-vaccine-followups/${patientId}/`);
       return res.data || [];
     },
-    staleTime: 5 * 60 * 1000, 
+    staleTime: 5 * 60 * 1000,
     enabled: !!patientId,
     retry: 3
   });
@@ -106,7 +104,7 @@ export const useLatestVitals = (patientId?: string) => {
       const res = await getLatestVitals(patientId);
       return res || null;
     },
-    staleTime: 5 * 60 * 1000, 
+    staleTime: 5 * 60 * 1000,
     enabled: !!patientId,
     retry: 3
   });
@@ -120,7 +118,7 @@ export const useFollowupChildHealthandVaccines = (patientId?: string) => {
       const res = await api2.get(`/vaccination/child-followups/${patientId}/`);
       return res.data || [];
     },
-    staleTime: 5 * 60 * 1000, 
+    staleTime: 5 * 60 * 1000,
     enabled: !!patientId
   });
 };
@@ -186,8 +184,8 @@ export const usePatientVaccinationDetails = (patientId: string) => {
     queryFn: () => getVaccinationRecordById(patientId),
     refetchOnMount: true,
     staleTime: 0,
-    enabled: !!patientId, 
-    retry: 3,
+    enabled: !!patientId,
+    retry: 3
   });
 };
 
@@ -197,8 +195,8 @@ export const useVaccinationRecords = () => {
     queryKey: ["vaccinationRecords"],
     queryFn: getVaccinationRecords,
     refetchOnMount: true,
-    staleTime: 1 * 60 * 1000 ,
-    retry: 3,
+    staleTime: 1 * 60 * 1000,
+    retry: 3
   });
 };
 
@@ -208,13 +206,9 @@ export const useUnvaccinatedResidents = () => {
     queryFn: getUnvaccinatedResidents,
     refetchOnMount: true,
     staleTime: 1 * 60 * 1000,
-    retry: 3,
+    retry: 3
   });
 };
-
-
-
-
 
 //  fetchVaccinesWithStock function with age filtering
 export const fetchVaccinesWithStock = (dob?: string) => {
@@ -223,7 +217,7 @@ export const fetchVaccinesWithStock = (dob?: string) => {
     queryFn: async () => {
       try {
         const stocks = await getVaccintStocks();
-        
+
         if (!stocks || !Array.isArray(stocks)) {
           return {
             default: [],
@@ -232,9 +226,7 @@ export const fetchVaccinesWithStock = (dob?: string) => {
         }
 
         const availableStocks = stocks.filter((stock) => {
-          const isExpired =
-            stock.inv_details?.expiry_date &&
-            new Date(stock.inv_details.expiry_date) < new Date();
+          const isExpired = stock.inv_details?.expiry_date && new Date(stock.inv_details.expiry_date) < new Date();
           return stock.vacStck_qty_avail > 0 && !isExpired;
         });
 
@@ -244,69 +236,58 @@ export const fetchVaccinesWithStock = (dob?: string) => {
         return {
           default: filteredStocks,
           formatted: filteredStocks.map((stock: any) => ({
-            id: `${stock.vacStck_id},${stock.vac_id},${
-              stock.vaccinelist?.vac_name || "Unknown Vaccine"
-            },${stock.inv_details?.expiry_date || "No Expiry"}`,
+            id: `${stock.vacStck_id},${stock.vac_id},${stock.vaccinelist?.vac_name || "Unknown Vaccine"},${stock.inv_details?.expiry_date || "No Expiry"}`,
             name: (
               <div className="flex gap-3">
-                <span className="bg-blue-500 rounded text-white p-1 text-xs">
-                  {stock.inv_details?.inv_id}
-                </span>
+                <span className="bg-blue-500 rounded text-white p-1 text-xs">{stock.inv_details?.inv_id}</span>
                 {`${stock.vaccinelist?.vac_name || "Unknown Vaccine"} 
-                (Avail: ${stock.vacStck_qty_avail}) ${
-                  stock.inv_details?.expiry_date 
-                    ? `[Exp: ${new Date(stock.inv_details.expiry_date).toLocaleDateString()}]` 
-                    : ''
-                }`}
+                (Avail: ${stock.vacStck_qty_avail}) ${stock.inv_details?.expiry_date ? `[Exp: ${new Date(stock.inv_details.expiry_date).toLocaleDateString()}]` : ""}`}
               </div>
-            ),
-          })),
+            )
+          }))
         };
       } catch (error) {
         showErrorToast("Failed to fetch vaccine stocks");
         throw error;
       }
-    },
+    }
   });
 };
-
-
-
 
 //HELPERS
 export const filterVaccinesByAge = (vaccines: any[], dob: string) => {
   if (!dob) return vaccines; // Return all vaccines if no DOB provided
-  
+
   try {
     const ageString = calculateAge(dob);
     const patientAge = parseAgeString(ageString);
-    
+
     return vaccines.filter((vaccine) => {
       const ageGroup = vaccine.vaccinelist?.age_group;
       if (!ageGroup) return false; // Skip if no age group info
-      
+
       const minAge = ageGroup.min_age;
       const maxAge = ageGroup.max_age;
       const timeUnit = ageGroup.time_unit;
-      
+
       // Convert patient age to the vaccine's time unit
       let patientAgeInVaccineUnits = patientAge.value;
-      
+
       if (patientAge.unit !== timeUnit) {
-        if (timeUnit === 'years' && patientAge.unit === 'months') {
+        if (timeUnit === "years" && patientAge.unit === "months") {
           patientAgeInVaccineUnits = patientAge.value / 12;
-        } else if (timeUnit === 'months' && patientAge.unit === 'years') {
+        } else if (timeUnit === "months" && patientAge.unit === "years") {
           patientAgeInVaccineUnits = patientAge.value * 12;
-        } else if (timeUnit === 'weeks') {
+        } else if (timeUnit === "weeks") {
           // Convert to weeks if needed
-          if (patientAge.unit === 'months') {
+          if (patientAge.unit === "months") {
             patientAgeInVaccineUnits = patientAge.value * 4.34524; // Approximate weeks in a month
-          } else if (patientAge.unit === 'years') {
+          } else if (patientAge.unit === "years") {
             patientAgeInVaccineUnits = patientAge.value * 52.1429; // Approximate weeks in a year
           }
         }
       }
-      
+
       // Check if patient age falls within the vaccine's age range
       return patientAgeInVaccineUnits >= minAge && patientAgeInVaccineUnits <= maxAge;
     });
@@ -318,14 +299,31 @@ export const filterVaccinesByAge = (vaccines: any[], dob: string) => {
 
 // Helper function to parse the age string into numeric value and unit
 const parseAgeString = (ageString: string): { value: number; unit: string } => {
-  const parts = ageString.split(' ');
-  if (parts.length < 2) return { value: 0, unit: 'days' }; 
-  
+  const parts = ageString.split(" ");
+  if (parts.length < 2) return { value: 0, unit: "days" };
+
   const value = parseInt(parts[0]);
-  const unit = parts[1].includes('year') ? 'years' : 
-               parts[1].includes('month') ? 'months' : 
-               parts[1].includes('day') ? 'days' : 
-               'days';
-  
+  const unit = parts[1].includes("year") ? "years" : parts[1].includes("month") ? "months" : parts[1].includes("day") ? "days" : "days";
+
   return { value, unit };
+};
+
+// Query hooks with proper types
+export const useUnvaccinatedVaccinesSummary = (params: any = {}) => {
+  return useQuery({
+    queryKey: ["unvaccinated-vaccines-summary", params],
+    queryFn: () => getUnvaccinatedVaccinesSummary(params),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false
+  });
+};
+
+export const useUnvaccinatedResidentsDetails = (vacId: number, params: any = {}) => {
+  return useQuery({
+    queryKey: ["unvaccinated-residents", vacId, params],
+    queryFn: () => getUnvaccinatedResidentsDetailsForVaccine(vacId, params),
+    enabled: !!vacId,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false
+  });
 };

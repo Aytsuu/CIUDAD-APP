@@ -11,10 +11,8 @@ export const fetchPatientRecords = async () => {
       default: patientData,
       formatted: patientData.map((patient: any) => ({
         id: patient.pat_id.toString(),
-        name: `${patient.personal_info?.per_lname || ""}, ${
-          patient.personal_info?.per_fname || ""
-        } ${patient.personal_info?.per_mname || ""}`.trim(),
-      })),
+        name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim()
+      }))
     };
   } catch (error) {
     console.error("Error fetching patients:", error);

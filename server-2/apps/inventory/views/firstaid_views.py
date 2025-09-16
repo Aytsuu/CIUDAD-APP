@@ -727,6 +727,89 @@ class ArchivedFirstAidTable(APIView):
 
 
 
+class FirstAidDeduct(APIView):
+    def post(self,request,*args, **kwargs):
+        try:
+            data = request.data.get('data', {})
+            record = request.data.get('record', {})
+            finv_id = record.get('id')
+            deduct_qty = int(data.get('wastedAmount', 0))
+            action = "Deducted"
+            staff_id = data.get('staff_id')
+            print("Deducting quantity:", deduct_qty)     
+            print("From inventory ID:", finv_id)
+            
+            if deduct_qty <= 0:
+                return Response({
+                    'error': 'Deduct quantity must be greater than zero.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            firstaid_inventory = get_object_or_404(FirstAidInventory, finv_id=finv_id)
+            current_avail = firstaid_inventory.finv_qty_avail or 0
+            
+            if deduct_qty > current_avail:
+                return Response({
+                    'error': 'Deduct quantity exceeds available stock.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Update available quantity
+            firstaid_inventory.finv_qty_avail = current_avail - deduct_qty
+            firstaid_inventory.finv_used = (firstaid_inventory.finv_used or 0) + deduct_qty
+            firstaid_inventory.save()
+            
+            # Format quantity string for transaction
+            if firstaid_inventory.finv_qty_unit and firstaid_inventory.finv_qty_unit.lower() == "boxes":
+                qty_str = f"{deduct_qty} pcs"
+            else:
+                qty_str = f"{deduct_qty} {firstaid_inventory.finv_qty_unit or 'units'}"
+            
+            # Create transaction record
+            FirstAidTransactions.objects.create(
+                fat_qty=qty_str,
+                fat_action=action,
+                finv_id=firstaid_inventory,
+                staff_id=staff_id if staff_id else None
+            )
+            
+            return Response({
+                'success': True,
+                'message': 'First aid stock deducted successfully.'
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                'error': f'Error deducting first aid stock: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ==================FIRST AID REPORT=======================
 
 class FirstAidSummaryMonthsAPIView(APIView):

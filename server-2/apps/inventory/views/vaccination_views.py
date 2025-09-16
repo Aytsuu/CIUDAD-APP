@@ -15,6 +15,7 @@ from calendar import monthrange
 import re
 from django.db.models import Q
 from pagination import *
+from apps.inventory.serializers.vaccine_serializers import *
 
 
 # =======================AGE GROUP================================#
@@ -1274,6 +1275,184 @@ class ArchivedAntigenTable(APIView):
                 'success': False,
                 'error': f'Error fetching archived antigens: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+
+
+
+# WATED-----------------------------------
+
+class WasteRequestMixin:
+    def validate_waste_request(self, request):
+        wasted_amount = request.data.get('wastedAmount')
+        staff_id = request.data.get('staff_id', None)
+        
+        if not wasted_amount:
+            return None, Response(
+                {"error": "wastedAmount is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            wasted_amount = int(wasted_amount)
+            if wasted_amount <= 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            return None, Response(
+                {"error": "wastedAmount must be a positive integer"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        return (wasted_amount, staff_id), None
+
+class VaccineWasteView(APIView, WasteRequestMixin):
+    def post(self, request, vacStck_id):
+        try:
+            vaccine_stock = VaccineStock.objects.select_related('inv_id').get(vacStck_id=vacStck_id)
+        except VaccineStock.DoesNotExist:
+            return Response(
+                {"error": "Vaccine stock not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Validate request data
+        data, error_response = self.validate_waste_request(request)
+        if error_response:
+            return error_response
+        
+        wasted_amount, staff_id = data
+        
+        # Check available quantity
+        if vaccine_stock.vacStck_qty_avail < wasted_amount:
+            return Response(
+                {"error": f"Cannot waste {wasted_amount} doses, only {vaccine_stock.vacStck_qty_avail} available"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            with transaction.atomic():
+                # Update vaccine stock
+                vaccine_stock.wasted_dose += wasted_amount
+                vaccine_stock.vacStck_qty_avail -= wasted_amount
+                vaccine_stock.save()
+                
+                # Update inventory timestamp - IMPORTANT: This updates the related Inventory object
+                vaccine_stock.inv_id.save()  # This will trigger auto_now=True on updated_at
+                
+                # Create transaction record
+                unit = "containers" if vaccine_stock.solvent == "diluent" else "doses"
+                AntigenTransaction.objects.create(
+                    antt_qty=f"{wasted_amount} {unit}",
+                    antt_action="Wasted",
+                    vacStck_id=vaccine_stock,
+                    staff_id=staff_id
+                )
+                
+                # Return serialized response using your existing serializer
+                serializer = VaccineStockSerializer(vaccine_stock)
+                
+                return Response(
+                    {
+                        "success": f"Successfully wasted {wasted_amount} {unit} of vaccine",
+                        "data": serializer.data
+                    },
+                    status=status.HTTP_200_OK
+                )
+                
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class SupplyWasteView(APIView, WasteRequestMixin):
+    def post(self, request, imzStck_id):
+        try:
+            supply_stock = ImmunizationStock.objects.select_related('inv_id').get(imzStck_id=imzStck_id)
+        except ImmunizationStock.DoesNotExist:
+            return Response(
+                {"error": "Supply stock not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Validate request data
+        data, error_response = self.validate_waste_request(request)
+        if error_response:
+            return error_response
+        
+        wasted_amount, staff_id = data
+        
+        # Check available quantity
+        if supply_stock.imzStck_avail < wasted_amount:
+            return Response(
+                {"error": f"Cannot waste {wasted_amount} items, only {supply_stock.imzStck_avail} available"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            with transaction.atomic():
+                # Update supply stock
+                supply_stock.wasted_items = (supply_stock.wasted_items or 0) + wasted_amount
+                supply_stock.imzStck_avail -= wasted_amount
+                supply_stock.save()
+                
+                # Update inventory timestamp - IMPORTANT: This updates the related Inventory object
+                supply_stock.inv_id.save()  # This will trigger auto_now=True on updated_at
+                
+                # Create transaction record
+                unit = "boxes" if supply_stock.imzStck_unit == "boxes" else "pcs"
+                AntigenTransaction.objects.create(
+                    antt_qty=f"{wasted_amount} {unit}",
+                    antt_action="Wasted",
+                    imzStck_id=supply_stock,
+                    staff_id=staff_id
+                )
+                
+                # Return serialized response using your existing serializer
+                serializer = ImmunizationStockSerializer(supply_stock)
+                
+                return Response(
+                    {
+                        "success": f"Successfully wasted {wasted_amount} {unit} of supply",
+                        "data": serializer.data
+                    },
+                    status=status.HTTP_200_OK
+                )
+                
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

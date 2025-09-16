@@ -1,7 +1,6 @@
 
 from rest_framework import generics
-from ..models import *
-from ..serializers.medicine_serializers import *
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import ProtectedError, Q, Sum
@@ -15,7 +14,35 @@ from pagination import *
 import re
 from calendar import monthrange
 
+        
+from apps.healthProfiling.models   import *   
+from ..models import *
+from ..serializers.medicine_serializers import * 
+         
+         
+         
+class MedicineInventoryView(generics.ListAPIView):
+    serializer_class = MedicineInventorySerializer
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        queryset = MedicineInventory.objects.select_related(
+            'inv_id', 
+            'med_id'
+        ).filter(inv_id__is_Archived=False)
+        
+        # Add search functionality
+        search_query = self.request.GET.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                models.Q(med_id__med_name__icontains=search_query) |
+                models.Q(inv_id__inv_id__icontains=search_query) |
+                models.Q(med_id__med_type__icontains=search_query)
+            )
+        
+        return queryset.order_by('med_id__med_name')
 
+         
 class MedicineListAvailableTable(APIView):
     def get(self, request):
         # Get current date for expiry comparison
@@ -85,7 +112,6 @@ class MedicineListAvailableTable(APIView):
         
         return Response({'medicines': medicine_data}, status=status.HTTP_200_OK)
 
-# For listing with pagination and search
 class MedicineListTable(generics.ListAPIView):
     serializer_class = MedicineListSerializers
     pagination_class = StandardResultsPagination
@@ -150,6 +176,7 @@ class MedicineListUpdateView(generics.RetrieveUpdateAPIView):
        return obj
        
        
+# ===========================MEDICINE STOCK TABLE==============================
 class MedicineStockTableView(APIView):
     """
     API view for medicine stocks with pagination, search, and filtering
@@ -361,13 +388,9 @@ class MedicineStockTableView(APIView):
             print(f"Archived medicine stock: {stock.minv_id}, Expiry: {stock.inv_id.expiry_date}, Qty: {qty_with_unit}")
         
         print(f"Auto-archived {archived_medicine_count} medicine items with transaction records")
-class MedicineInventoryView(generics.ListAPIView):
-    serializer_class = MedicineInventorySerializer
-    queryset = MedicineInventory.objects.all()
-    def get_queryset(self):
-        # Filter out MedicineInventory entries where the related Inventory is archived
-        queryset = MedicineInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
-        return queryset
+
+
+
 
 class MedicineStockCreate(APIView):
     @transaction.atomic
@@ -506,6 +529,7 @@ class MedicineStockCreate(APIView):
             'minv_id': minv_id,
             'staff': data.get('staff')  # Include staff if provided
         }
+
 class MedicineInvRetrieveView(generics.RetrieveUpdateAPIView):
     serializer_class=MedicineInventorySerializer
     queryset = MedicineInventory.objects.all()
@@ -517,7 +541,7 @@ class MedicineInvRetrieveView(generics.RetrieveUpdateAPIView):
        return obj
    
    
-
+# ============================TRANSACTION CREATE=================================
 class MedicineTransactionView(generics.ListCreateAPIView):
     serializer_class=MedicineTransactionSerializers
     queryset=MedicineTransactions.objects.all()
@@ -526,9 +550,8 @@ class MedicineTransactionView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
     
     
-# ============================TRANSACTION=================================
-
-class MedicineTransactionView(APIView):
+# ============================TRANSACTION TABLE=================================
+class TableMedicineTransactionView(APIView):
     pagination_class = StandardResultsPagination
     
     def get(self, request):
@@ -616,9 +639,10 @@ class MedicineTransactionView(APIView):
                 'error': f'Error fetching medicine transactions: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+
 # ===========================MEDICINE ARCHIVE==============================
 class MedicineArchiveInventoryView(APIView):
-    
     def patch(self, request, inv_id):
         """
         Archive medicine inventory item and create expired transaction only if expired AND has available stock
@@ -649,7 +673,6 @@ class MedicineArchiveInventoryView(APIView):
                         {"error": f"Failed to create transaction for expired medicine: {str(e)}"}, 
                         status=status.HTTP_400_BAD_REQUEST
                     )
-            
             return Response(
                 {
                     "message": "Medicine inventory archived successfully", 
@@ -658,7 +681,6 @@ class MedicineArchiveInventoryView(APIView):
                 },
                 status=status.HTTP_200_OK
             )
-            
         except Exception as e:
             return Response(
                 {"error": f"Error archiving medicine inventory: {str(e)}"}, 
@@ -825,699 +847,57 @@ class ArchivedMedicineTable(APIView):
             
             
             
-            
-            
-            
-# ==================MEDICINE REPORT=======================
-class MedicineSummaryMonthsAPIView(APIView):
-    pagination_class = StandardResultsPagination
-
-    def get(self, request):
+class MedicineDeduct(APIView):
+    def post(self,request,*args, **kwargs):
         try:
-            queryset = MedicineTransactions.objects.all()
-
-            search_query = request.GET.get('search', '').strip().lower()
-            year_param = request.GET.get('year', 'all')
-
-            if year_param and year_param != 'all':
-                try:
-                    if '-' in year_param:
-                        year, month = map(int, year_param.split('-'))
-                        queryset = queryset.filter(
-                            created_at__year=year,
-                            created_at__month=month
-                        )
-                    else:
-                        year = int(year_param)
-                        queryset = queryset.filter(created_at__year=year)
-                except ValueError:
-                    return Response({
-                        'success': False,
-                        'error': 'Invalid year format. Use YYYY or YYYY-MM.'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Get distinct months in queryset, sorted descending
-            distinct_months = queryset.annotate(
-                month=TruncMonth('created_at')
-            ).values('month').distinct().order_by('-month')
-
-            formatted_months = []
-
-            for item in distinct_months:
-                month_date = item['month']
-                if not month_date:
-                    continue
-                month_str = month_date.strftime('%Y-%m')
-                month_name = month_date.strftime('%B %Y')
-
-                if search_query and search_query not in month_name.lower():
-                    continue
-
-                # Get the date range for this month
-                start_date = month_date.date()
-                from calendar import monthrange
-                last_day = monthrange(start_date.year, start_date.month)[1]
-                end_date = start_date.replace(day=last_day)
-
-                # Filter transactions for this month - EXCLUDE expired items
-                month_transactions = queryset.filter(
-                    created_at__date__gte=start_date,
-                    created_at__date__lte=end_date
-                ).exclude(
-                    # Exclude items that expired BEFORE this month
-                    minv_id__inv_id__expiry_date__lt=start_date
-                )
-
-                # Count distinct medicine+inventory combos
-                total_items = month_transactions.values(
-                    "minv_id__med_id",
-                    "minv_id__inv_id"
-                ).distinct().count()
-
-                formatted_months.append({
-                    'month': month_str,
-                    'month_name': month_name,
-                    'total_items': total_items,
-                })
-
-            paginator = self.pagination_class()
-            page = paginator.paginate_queryset(formatted_months, request)
-            if page is not None:
-                return paginator.get_paginated_response({
-                    'success': True,
-                    'data': page,
-                    'total_months': len(formatted_months),
-                })
-
-            return Response({
-                'success': True,
-                'data': formatted_months,
-                'total_months': len(formatted_months),
-            }, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response({
-                'success': False,
-                'error': str(e),
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            data = request.data.get('data', {})
+            record = request.data.get('record', {})
+            minv_id = record.get('id')
+            deduct_qty = int(data.get('wastedAmount', 0))
+            action = "Deducted"
+            staff_id = data.get('staff_id')
+            print("Deducting quantity:", deduct_qty)     
+            print("From inventory ID:", minv_id)
             
-class MonthlyMedicineRecordsDetailAPIView(generics.ListAPIView):
-    serializer_class = MedicineInventorySerializer
-    pagination_class = StandardResultsPagination
-
-    def list(self, request, *args, **kwargs):
-        month_str = self.kwargs['month']  # Format: YYYY-MM
-        try:
-            year, month = map(int, month_str.split('-'))
-        except ValueError:
-            return Response({"error": "Invalid month format"}, status=400)
-
-        start_date = datetime(year, month, 1).date()
-        end_date = (start_date + relativedelta(months=1)) - timedelta(days=1)
-
-        inventory_summary = []
-
-        # Get unique medicine + expiry_date + inv_id combos to avoid duplicates
-        med_expiry_inv_pairs = MedicineTransactions.objects.filter(
-            created_at__date__lte=end_date
-        ).values_list(
-            "minv_id__med_id",
-            "minv_id__inv_id__expiry_date",
-            "minv_id__inv_id"
-        ).distinct()
-
-        # Track unique combinations to avoid duplicates
-        seen_combinations = set()
-
-        for med_id, expiry_date, inv_id in med_expiry_inv_pairs:
-            # Skip if expiry date is before the current month (already expired)
-            if expiry_date and expiry_date < start_date:
-                continue
-                
-            # Create a unique key for this combination
-            combo_key = (med_id, expiry_date, inv_id)
-            
-            # Skip if we've already processed this combination
-            if combo_key in seen_combinations:
-                continue
-                
-            seen_combinations.add(combo_key)
-
-            transactions = MedicineTransactions.objects.filter(
-                minv_id__med_id=med_id,
-                minv_id__inv_id__expiry_date=expiry_date,
-                minv_id__inv_id=inv_id
-            ).order_by("created_at")
-
-            first_tx = transactions.select_related("minv_id__med_id", "minv_id__inv_id").first()
-            if not first_tx:
-                continue
-
-            unit = first_tx.minv_id.minv_qty_unit
-            pcs_per_box = first_tx.minv_id.minv_pcs if unit and unit.lower() == "boxes" else 1
-
-            # Opening stock before start_date
-            opening_in = transactions.filter(
-                created_at__date__lt=start_date,
-                mdt_action__icontains="added"
-            )
-            opening_out = transactions.filter(
-                created_at__date__lt=start_date,
-                mdt_action__icontains="deduct"
-            )
-            opening_qty = (sum(self._parse_qty(t) for t in opening_in) -
-                           sum(self._parse_qty(t) for t in opening_out))
-
-            if unit and unit.lower() == "boxes":
-                opening_qty *= pcs_per_box
-
-            # Received during the month
-            monthly_transactions = transactions.filter(
-                created_at__date__gte=start_date,
-                created_at__date__lte=end_date,
-                mdt_action__icontains="added"
-            )
-            received_qty = sum(self._parse_qty(t) for t in monthly_transactions)
-            if unit and unit.lower() == "boxes":
-                received_qty *= pcs_per_box
-
-            # Dispensed during the month
-            dispensed_qty = sum(
-                self._parse_qty(t) for t in transactions.filter(
-                    created_at__date__gte=start_date,
-                    created_at__date__lte=end_date,
-                    mdt_action__icontains="deduct"
-                )
-            )
-
-            # Opening displayed includes received
-            display_opening = opening_qty + received_qty
-            closing_qty = display_opening - dispensed_qty
-
-            # Check if expired this month
-            expired_this_month = (first_tx.minv_id.inv_id.expiry_date and 
-                                start_date <= first_tx.minv_id.inv_id.expiry_date <= end_date)
-            
-            # REMOVED: Don't set closing to 0 for expired items
-            # if expired_this_month:
-            #     closing_qty = 0
-            
-            # Skip if there's no stock and it's not expiring this month
-            # Also include items that expired this month even if closing_qty <= 0
-            if closing_qty <= 0 and (not expiry_date or expiry_date > end_date) and not expired_this_month:
-                continue
-
-            inventory_summary.append({
-                'med_name': f"{first_tx.minv_id.med_id.med_name} {first_tx.minv_id.minv_dsg}{first_tx.minv_id.minv_dsg_unit} {first_tx.minv_id.minv_form}",
-                'opening': display_opening,
-                'received': received_qty,
-                'dispensed': dispensed_qty,
-                'closing': closing_qty,
-                'unit': "pcs",
-                'expiry': first_tx.minv_id.inv_id.expiry_date,
-                'expired_this_month': expired_this_month,
-            })
-
-        return Response({
-            'success': True,
-            'data': {
-                'month': month_str,
-                'inventory_summary': inventory_summary,
-                'total_items': len(inventory_summary)
-            }
-        })
-
-    def _parse_qty(self, transaction):
-        """Extract numeric value from mdt_qty."""
-        match = re.search(r'\d+', str(transaction.mdt_qty))
-        return int(match.group()) if match else 0   
-    
-    
-    
-#======================== EXPIRED AND OUT OF STOCK REPORT=========================
-class MedicineExpiredOutOfStockSummaryAPIView(APIView):
-    pagination_class = StandardResultsPagination
-
-    def _parse_qty(self, transaction, multiply_boxes=False):
-        """Extract numeric value from mdt_qty and convert boxes to pieces if needed."""
-        match = re.search(r'\d+', str(transaction.mdt_qty))
-        qty_num = int(match.group()) if match else 0
-        
-        if (multiply_boxes and 
-            transaction.minv_id.minv_qty_unit and 
-            transaction.minv_id.minv_qty_unit.lower() == "boxes"):
-            pcs_per_box = transaction.minv_id.minv_pcs or 1
-            qty_num *= pcs_per_box
-            
-        return qty_num
-
-    def get(self, request):
-        try:
-            # Get distinct months from medicine transactions
-            distinct_months = MedicineTransactions.objects.annotate(
-                month=TruncMonth('created_at')
-            ).values('month').distinct().order_by('-month')
-
-            formatted_months = []
-
-            for item in distinct_months:
-                month_date = item['month']
-                if not month_date:
-                    continue
-                    
-                month_str = month_date.strftime('%Y-%m')
-                month_name = month_date.strftime('%B %Y')
-
-                # Get the date range for this month
-                start_date = month_date.date()
-                last_day = monthrange(start_date.year, start_date.month)[1]
-                end_date = start_date.replace(day=last_day)
-                near_expiry_threshold = end_date + timedelta(days=30)
-
-                # Get all medicine inventory items that were active up to this month
-                med_expiry_inv_pairs = MedicineTransactions.objects.filter(
-                    created_at__date__lte=end_date
-                ).values_list(
-                    "minv_id__med_id",
-                    "minv_id__inv_id__expiry_date",
-                    "minv_id__inv_id"
-                ).distinct()
-
-                expired_count = 0
-                out_of_stock_count = 0
-                expired_out_of_stock_count = 0
-                near_expiry_count = 0
-
-                seen_combinations = set()
-
-                for med_id, expiry_date, inv_id in med_expiry_inv_pairs:
-                    # Create a unique key for this combination
-                    combo_key = (med_id, expiry_date, inv_id)
-                    if combo_key in seen_combinations:
-                        continue
-                    seen_combinations.add(combo_key)
-
-                    # Skip if no expiry date (can't be expired or near expiry)
-                    if not expiry_date:
-                        continue
-
-                    # Skip if expired BEFORE current month
-                    if expiry_date < start_date:
-                        continue
-
-                    transactions = MedicineTransactions.objects.filter(
-                        minv_id__med_id=med_id,
-                        minv_id__inv_id__expiry_date=expiry_date,
-                        minv_id__inv_id=inv_id
-                    ).order_by("created_at")
-
-                    # Calculate stock levels
-                    opening_in = transactions.filter(created_at__date__lt=start_date, mdt_action__icontains="added")
-                    opening_out = transactions.filter(created_at__date__lt=start_date, mdt_action__icontains="deduct")
-                    opening_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in opening_in) - sum(self._parse_qty(t, multiply_boxes=False) for t in opening_out)
-
-                    monthly_transactions = transactions.filter(
-                        created_at__date__gte=start_date,
-                        created_at__date__lte=end_date
-                    )
-                    received_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in monthly_transactions.filter(mdt_action__icontains="added"))
-                    dispensed_qty = sum(self._parse_qty(t, multiply_boxes=False) for t in monthly_transactions.filter(mdt_action__icontains="deduct"))
-
-                    closing_qty = opening_qty + received_qty - dispensed_qty
-
-                    # Check conditions
-                    is_expired = start_date <= expiry_date <= end_date
-                    is_out_of_stock = closing_qty <= 0
-                    is_near_expiry = (end_date < expiry_date <= near_expiry_threshold) and closing_qty > 0
-
-                    if is_expired and is_out_of_stock:
-                        expired_out_of_stock_count += 1
-                    elif is_expired:
-                        expired_count += 1
-                    elif is_out_of_stock:
-                        out_of_stock_count += 1
-                    elif is_near_expiry:
-                        near_expiry_count += 1
-
-                total_problems = expired_count + out_of_stock_count + expired_out_of_stock_count + near_expiry_count
-
-                formatted_months.append({
-                    'month': month_str,
-                    'month_name': month_name,
-                    'total_problems': total_problems,
-                    'expired_count': expired_count,
-                    'out_of_stock_count': out_of_stock_count,
-                    'expired_out_of_stock_count': expired_out_of_stock_count,
-                    'near_expiry_count': near_expiry_count,
-                })
-
-            paginator = self.pagination_class()
-            page = paginator.paginate_queryset(formatted_months, request)
-            if page is not None:
-                return paginator.get_paginated_response({
-                    'success': True,
-                    'data': page,
-                    'total_months': len(formatted_months),
-                })
-
-            return Response({
-                'success': True,
-                'data': formatted_months,
-                'total_months': len(formatted_months),
-            }, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response({
-                'success': False,
-                'error': str(e),
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        
-class MonthlyMedicineExpiredOutOfStockDetailAPIView(APIView):
-    pagination_class = StandardResultsPagination
-
-    def _parse_qty(self, transaction, multiply_boxes=False):
-        """Extract numeric value from mdt_qty and convert boxes to pieces if needed."""
-        match = re.search(r'\d+', str(transaction.mdt_qty))
-        qty_num = int(match.group()) if match else 0
-        
-        # If it's a box unit AND we need to multiply, convert to pieces
-        if (multiply_boxes and 
-            transaction.minv_id.minv_qty_unit and 
-            transaction.minv_id.minv_qty_unit.lower() == "boxes"):
-            pcs_per_box = transaction.minv_id.minv_pcs or 1
-            qty_num *= pcs_per_box
-            
-        return qty_num
-
-    def get(self, request, *args, **kwargs):
-        month_str = self.kwargs['month']  # Format: YYYY-MM
-        try:
-            year, month = map(int, month_str.split('-'))
-        except ValueError:
-            return Response({"error": "Invalid month format"}, status=400)
-
-        start_date = datetime(year, month, 1).date()
-        end_date = (start_date + relativedelta(months=1)) - timedelta(days=1)
-        near_expiry_threshold = end_date + timedelta(days=30)  # 1 month after end of current month
-
-        expired_items = []
-        out_of_stock_items = []
-        expired_out_of_stock_items = []
-        near_expiry_items = []  # New category for near expiry
-
-        # Get all medicine inventory items that were active up to this month
-        med_expiry_inv_pairs = MedicineTransactions.objects.filter(
-            created_at__date__lte=end_date
-        ).values_list(
-            "minv_id__med_id",
-            "minv_id__inv_id__expiry_date",
-            "minv_id__inv_id"
-        ).distinct()
-
-        seen_combinations = set()
-
-        for med_id, expiry_date, inv_id in med_expiry_inv_pairs:
-            # Create a unique key for this combination
-            combo_key = (med_id, expiry_date, inv_id)
-            if combo_key in seen_combinations:
-                continue
-            seen_combinations.add(combo_key)
-
-            # Skip if no expiry date
-            if not expiry_date:
-                continue
-
-            # Skip if expired BEFORE current month
-            if expiry_date < start_date:
-                continue
-
-            try:
-                minv = MedicineInventory.objects.get(
-                    med_id=med_id,
-                    inv_id__expiry_date=expiry_date,
-                    inv_id=inv_id
-                )
-            except MedicineInventory.DoesNotExist:
-                continue
-
-            transactions = MedicineTransactions.objects.filter(
-                minv_id__med_id=med_id,
-                minv_id__inv_id__expiry_date=expiry_date,
-                minv_id__inv_id=inv_id
-            ).order_by("created_at")
-
-            # Get unit information
-            unit = minv.minv_qty_unit
-            pcs_per_box = minv.minv_pcs if unit and unit.lower() == "boxes" else 1
-
-            # Calculate stock levels - multiply boxes for added quantities
-            opening_in = transactions.filter(created_at__date__lt=start_date, mdt_action__icontains="added")
-            opening_out = transactions.filter(created_at__date__lt=start_date, mdt_action__icontains="deduct")
-            opening_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in opening_in) - sum(self._parse_qty(t, multiply_boxes=False) for t in opening_out)
-
-            monthly_transactions = transactions.filter(
-                created_at__date__gte=start_date,
-                created_at__date__lte=end_date
-            )
-            # Multiply boxes for received items
-            received_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in monthly_transactions.filter(mdt_action__icontains="added"))
-            # Don't multiply boxes for dispensed items (they're already in pieces)
-            dispensed_qty = sum(self._parse_qty(t, multiply_boxes=False) for t in monthly_transactions.filter(mdt_action__icontains="deduct"))
-
-            closing_qty = opening_qty + received_qty - dispensed_qty
-
-            # Check conditions
-            is_expired = start_date <= expiry_date <= end_date
-            is_out_of_stock = closing_qty <= 0
-            is_near_expiry = (end_date < expiry_date <= near_expiry_threshold) and closing_qty > 0
-
-            item_data = {
-                'med_name': f"{minv.med_id.med_name} {minv.minv_dsg}{minv.minv_dsg_unit} {minv.minv_form}",
-                'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else 'No expiry',
-                'opening_stock': opening_qty,
-                'received': received_qty,
-                'dispensed': dispensed_qty,
-                'closing_stock': closing_qty,
-                'unit': 'pcs',
-                'status': 'Expired' if is_expired else 'Out of Stock' if is_out_of_stock else 'Near Expiry' if is_near_expiry else 'Active'
-            }
-
-            if is_expired and is_out_of_stock:
-                expired_out_of_stock_items.append(item_data)
-            elif is_expired:
-                expired_items.append(item_data)
-            elif is_out_of_stock:
-                out_of_stock_items.append(item_data)
-            elif is_near_expiry:
-                near_expiry_items.append(item_data)
-
-        # Combine all items (including near expiry in problem items)
-        all_problem_items = expired_items + out_of_stock_items + expired_out_of_stock_items + near_expiry_items
-
-        return Response({
-            'success': True,
-            'data': {
-                'month': month_str,
-                'summary': {
-                    'total_problems': len(all_problem_items),
-                    'expired_count': len(expired_items),
-                    'out_of_stock_count': len(out_of_stock_items),
-                    'expired_out_of_stock_count': len(expired_out_of_stock_items),
-                    'near_expiry_count': len(near_expiry_items),  # New count
-                },
-                'expired_items': expired_items,
-                'out_of_stock_items': out_of_stock_items,
-                'expired_out_of_stock_items': expired_out_of_stock_items,
-                'near_expiry_items': near_expiry_items,  # New category
-                'all_problem_items': all_problem_items
-            }
-        })  
-        
-        
-        
-from apps.medicineservices.models import MedicineRequestItem, MedicineRequest
-class MedicineRequestPendingItemsTableView(APIView):
-    pagination_class = StandardResultsPagination
-    
-    def get(self, request, *args, **kwargs):
-        try:
-            # Get the medicine request ID from URL parameters
-            medreq_id = self.kwargs.get('medreq_id')
-            
-            # Base queryset for medicine request items
-            queryset = MedicineRequestItem.objects.all()
-            
-            # Filter by medicine request ID if provided
-            if medreq_id:
-                queryset = queryset.filter(medreq_id=medreq_id)
-            else:
-                # If no specific medreq_id provided, filter by pending status
-                queryset = queryset.filter(medreq_id__status='pending')
-            
-            # Add select_related and prefetch_related for performance
-            queryset = queryset.select_related(
-                'minv_id', 
-                'medreq_id', 
-                'med', 
-                'medreq_id__rp_id', 
-                'medreq_id__pat_id',
-                'medreq_id__pat_id__rp_id',
-                'medreq_id__pat_id__trans_id',
-                'medreq_id__rp_id__per',
-                'minv_id__med_id',
-                'minv_id__inv_id',
-            ).prefetch_related(
-                'medreq_id__medicine_files',
-            ).order_by('-medreq_id__requested_at')
-            
-            # Group by med_id and prepare response data
-            medicine_groups = {}
-            
-            for item in queryset:
-                med_id = None
-                med_name = "Unknown Medicine"
-                
-                # Get medicine ID and name
-                if item.med:
-                    med_id = item.med.med_id
-                    med_name = item.med.med_name
-                    med_type = item.minv_id.med_id.med_type
-
-                elif item.minv_id and item.minv_id.med_id:
-                    med_id = item.minv_id.med_id.med_id
-                    med_name = item.minv_id.med_id.med_name
-                    med_type = item.minv_id.med_id.med_type
-                
-                # Get formatted patient name
-                patient_name = "Unknown Patient"
-                if item.medreq_id.pat_id:
-                    patient = item.medreq_id.pat_id
-                    
-                    if patient.rp_id and patient.rp_id.per:
-                        personal = patient.rp_id.per
-                        patient_name = f"{personal.per_fname} {personal.per_lname}"
-                        if personal.per_mname:
-                            patient_name = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
-                    elif patient.trans_id:
-                        transient = patient.trans_id
-                        patient_name = f"{transient.tran_fname} {transient.tran_lname}"
-                        if transient.tran_mname:
-                            patient_name = f"{transient.tran_fname} {transient.tran_mname} {transient.tran_lname}"
-                
-                if med_id not in medicine_groups:
-                    # Get ALL available stock for this medicine (no expiry filter)
-                    available_stock = MedicineInventory.objects.filter(
-                        med_id=med_id,
-                        minv_qty_avail__gt=0
-                    ).aggregate(total_available=Sum('minv_qty_avail'))['total_available'] or 0
-                    
-                    medicine_groups[med_id] = {
-                        'med_id': med_id,
-                        'med_name': med_name,
-                        'med_type':med_type,
-                        'patient_name': patient_name,  # Add formatted patient name here
-                        'total_available_stock': available_stock,
-                        'request_items': []
-                    }
-                
-                # Get medicine files for this request
-                medicine_files = []
-                for file in item.medreq_id.medicine_files.all():
-                    medicine_files.append({
-                        'medf_id': file.medf_id,
-                        'medf_name': file.medf_name,
-                        'medf_type': file.medf_type,
-                        'medf_path': file.medf_path,
-                        'medf_url': file.medf_url,
-                        'created_at': file.created_at
-                    })
-                
-                # Get patient information
-                patient_info = {}
-                if item.medreq_id.pat_id:
-                    patient = item.medreq_id.pat_id
-                    
-                    if patient.rp_id and patient.rp_id.per:
-                        personal = patient.rp_id.per
-                        patient_info = {
-                            'pat_id': patient.pat_id,
-                            'type': 'resident',
-                            'per_fname': personal.per_fname,
-                            'per_lname': personal.per_lname,
-                            'per_mname': personal.per_mname,
-                            'per_contact': personal.per_contact,
-                            'per_dob': personal.per_dob,
-                            'per_sex': personal.per_sex
-                        }
-                    elif patient.trans_id:
-                        transient = patient.trans_id
-                        patient_info = {
-                            'pat_id': patient.pat_id,
-                            'type': 'transient',
-                            'tran_fname': transient.tran_fname,
-                            'tran_lname': transient.tran_lname,
-                            'tran_mname': transient.tran_mname,
-                            'tran_contact': transient.tran_contact,
-                            'tran_dob': transient.tran_dob,
-                            'tran_sex': transient.tran_sex
-                        }
-                
-                # Get inventory details
-                inventory_info = {}
-                if item.minv_id:
-                    inventory_info = {
-                        'minv_id': item.minv_id.minv_id,
-                        'dosage': f"{item.minv_id.minv_dsg} {item.minv_id.minv_dsg_unit}",
-                        'form': item.minv_id.minv_form,
-                        'expiry_date': item.minv_id.inv_id.expiry_date if item.minv_id.inv_id else None,
-                        'quantity_available': item.minv_id.minv_qty_avail
-                    }
-                
-                request_item_data = {
-                    'medreqitem_id': item.medreqitem_id,
-                    'medreqitem_qty': item.medreqitem_qty,
-                    'reason': item.reason,
-                    'status': item.status,
-                    'inventory': inventory_info,
-                    'patient': patient_info,
-                    'medicine_files': medicine_files,
-                    'medreq_id': item.medreq_id.medreq_id,
-                    'requested_at': item.medreq_id.requested_at,
-                    'medreq_status': item.medreq_id.status
-                }
-                
-                medicine_groups[med_id]['request_items'].append(request_item_data)
-            
-            # Convert to list for pagination
-            medicine_data = list(medicine_groups.values())
-            
-            # Apply pagination
-            paginator = self.pagination_class()
-            page_size = int(request.GET.get('page_size', paginator.page_size))
-            paginator.page_size = page_size
-            
-            page_data = paginator.paginate_queryset(medicine_data, request)
-            
-            if page_data is not None:
-                response = paginator.get_paginated_response(page_data)
+            if not minv_id or deduct_qty <= 0:
                 return Response({
-                    'success': True,
-                    'results': response.data['results'],
-                    'count': response.data['count'],
-                    'next': response.data.get('next'),
-                    'previous': response.data.get('previous')
-                })
+                    'error': 'Invalid minv_id or deduct_qty'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Fetch the medicine inventory
+            medicine_inventory = get_object_or_404(MedicineInventory, minv_id=minv_id)
+            
+            if medicine_inventory.minv_qty_avail < deduct_qty:
+                return Response({
+                    'error': 'Deduct quantity exceeds available stock'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Deduct the quantity
+            medicine_inventory.minv_qty_avail -= deduct_qty
+            medicine_inventory.updated_at = timezone.now()
+            medicine_inventory.save()
+            
+            # Prepare quantity string for transaction
+            if medicine_inventory.minv_qty_unit and medicine_inventory.minv_qty_unit.lower() == "boxes":
+                            qty_string = f"{deduct_qty} pc/s"
+            else:
+                qty_string = f"{deduct_qty} {medicine_inventory.minv_qty_unit or 'units'}"
+
+            # Create transaction record
+            MedicineTransactions.objects.create(
+                mdt_qty=qty_string,
+                mdt_action=action,
+                minv_id=medicine_inventory,
+                staff_id=staff_id if staff_id else None  # Set to None if not provided
+            )
             
             return Response({
                 'success': True,
-                'results': medicine_data,
-                'count': len(medicine_data)
+                'message': f'Successfully deducted {deduct_qty} from inventory {minv_id}',
+                'new_available_stock': medicine_inventory.minv_qty_avail
             }, status=status.HTTP_200_OK)
-            
+        
         except Exception as e:
             return Response({
-                'success': False,
-                'error': f'Error fetching medicine request items: {str(e)}'
+                'error': f'Error deducting stock: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

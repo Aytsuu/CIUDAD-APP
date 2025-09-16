@@ -6,31 +6,24 @@ import { VaccinationRecord } from "./types";
 import { Patient } from "@/pages/healthServices/restful-api-patient/type";
 import { getOrdinalSuffix } from "@/helpers/getOrdinalSuffix";
 
-export const IndivVaccineColumns = (
-  patientData: Patient,
-): ColumnDef<VaccinationRecord>[] => [
+export const IndivVaccineColumns = (patientData: Patient): ColumnDef<VaccinationRecord>[] => [
   {
     accessorKey: "index",
     header: "#",
-    cell: ({ row }) => (
-      <div className="text-center bg-blue-50 p-1 rounded-md">
-        {row.index + 1}
-      </div>
-        ),
-      },
+    cell: ({ row }) => <div className="text-center bg-blue-50 p-1 rounded-md">{row.index + 1}</div>
+  },
 
-      {
-        accessorKey: "date_administered",
-        header: "Date Administered",
-        cell: ({ row }) => {
-        
+  {
+    accessorKey: "date_administered",
+    header: "Date Administered",
+    cell: ({ row }) => {
       return <div className="text-sm text-gray-600">{row.original.date_administered}</div>;
-        },
-      },
-      {
-        accessorKey: "vaccine_name",
-        header: "Vaccine",
-        cell: ({ row }) => (
+    }
+  },
+  {
+    accessorKey: "vaccine_name",
+    header: "Vaccine",
+    cell: ({ row }) => (
       <div className="flex justify-center min-w-[150px] px-2">
         <div className="font-medium">
           {row.original.vaccine_name}
@@ -42,7 +35,7 @@ export const IndivVaccineColumns = (
           </div> */}
         </div>
       </div>
-    ),
+    )
   },
   {
     accessorKey: "vital_signs",
@@ -83,26 +76,19 @@ export const IndivVaccineColumns = (
           </div>
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "vachist_doseNo",
     header: "Dose",
     cell: ({ row }) => {
-      const formattedDose = getOrdinalSuffix(
-        row.original.vachist_doseNo
-          ? parseInt(row.original.vachist_doseNo, 10)
-          : undefined
-      );
+      const formattedDose = getOrdinalSuffix(row.original.vachist_doseNo ? parseInt(row.original.vachist_doseNo, 10) : undefined);
       return (
         <div className="flex justify-center">
-          <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-            {formattedDose} Dose
-            
-          </div>
+          <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">{formattedDose} Dose</div>
         </div>
       );
-    },
+    }
   },
 
   //   // In the "vachist_status" column definition, modify it as follows:
@@ -172,7 +158,6 @@ export const IndivVaccineColumns = (
     accessorKey: "nextDose",
     header: "Next Dose",
     cell: ({ row }) => {
-    
       return (
         <div className="flex flex-col justify-center">
           {/* <span
@@ -185,34 +170,16 @@ export const IndivVaccineColumns = (
           </span> */}
           <div>
             <div className="text-xs mt-1">
-              {(row.original.follow_up_visit?.followv_status?.toLowerCase() ??
-                "") === "completed" ? (
+              {(row.original.follow_up_visit?.followv_status?.toLowerCase() ?? "") === "completed" ? (
                 "Next Dose: completed"
               ) : (
-                <>
-                  Next Dose:{" "}
-                  {isNaN(
-                    new Date(
-                      row.original.follow_up_visit?.followv_date ??
-                        "Invalid Date"
-                    ).getTime()
-                  ) ? (
-                    "No Schedule"
-                  ) : (
-                    <span className="text-red-500">
-                      {new Date(
-                        row.original.follow_up_visit?.followv_date ??
-                          "Invalid Date"
-                      ).toLocaleDateString()}
-                    </span>
-                  )}
-                </>
+                <>Next Dose: {isNaN(new Date(row.original.follow_up_visit?.followv_date ?? "Invalid Date").getTime()) ? "No Schedule" : <span className="text-red-500">{new Date(row.original.follow_up_visit?.followv_date ?? "Invalid Date").toLocaleDateString()}</span>}</>
               )}
             </div>
           </div>
         </div>
       );
-    },
+    }
   },
 
   {
@@ -222,15 +189,11 @@ export const IndivVaccineColumns = (
       <div className="flex justify-center px-2 w-full">
         {row.original.signature && (
           <div className="w-[200px]">
-            <img
-              src={`data:image/png;base64,${row.original.signature}`}
-              alt="Authorized Signature"
-              className="h-10 w-auto object-contain"
-            />
+            <img src={`data:image/png;base64,${row.original.signature}`} alt="Authorized Signature" className="h-10 w-auto object-contain" />
           </div>
         )}
       </div>
-    ),
+    )
   },
 
   {
@@ -238,15 +201,10 @@ export const IndivVaccineColumns = (
     header: "Actions",
     cell: ({ row }) => {
       const currentRecord = row.original;
-   
-    
-    
+
       return (
         <div className="flex justify-center gap-2">
-          <Link
-            to="/vaccinationView"
-            state={{ params: { Vaccination: currentRecord, patientData } }}
-          >
+          <Link to="/vaccinationView" state={{ params: { Vaccination: currentRecord, patientData } }}>
             <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
               View
             </Button>
@@ -267,6 +225,6 @@ export const IndivVaccineColumns = (
           )} */}
         </div>
       );
-    },
-  },
+    }
+  }
 ];

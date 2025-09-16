@@ -372,7 +372,7 @@ export const WARDocTemplate = ({
                 </div>
                 <div className="flex flex-col gap-2 mt-7">
                   {crew?.map((member: any, idx: number) => 
-                    <div className="w-full flex">
+                    <div  key={idx} className="w-full flex">
                       <div className="w-full flex justify-start px-7">
                         <Label className="w-full">{`${idx + 1}. 
                           ${member.lname.toUpperCase()}, ${member.fname.toUpperCase()}

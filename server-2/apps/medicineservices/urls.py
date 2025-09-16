@@ -14,8 +14,9 @@ urlpatterns=[
         path('pending-medreq-items-table/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
         path('pending-medicine-request-table/', MedicineRequestPendingTableView.as_view(), name='medicine_request-pending'),
         path('confirmed-medicine-request-table/', MedicineRequestProcessingTableView.as_view(), name='medicine_request-processing'),
+
         
-        
+        # CREATE
         path('create-medicine-record/', CreateMedicineRecordView.as_view(), name='create-medrecord'),
         path('findings-plan-treatment/', CreateFindingPlanTreatmentView.as_view(), name='findings_plan_treatment'),
         path('create-medicine-allocation/', CreateMedicineRequestAllocationAPIView.as_view(), name='medicine-allocation'),

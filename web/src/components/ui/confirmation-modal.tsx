@@ -19,8 +19,8 @@ export const variants: Record<string, string> = {
 interface ConfirmationModalProps {
   trigger?: React.ReactNode;
   title: string;
-  description: string;
-  actionLabel: string;
+  description: React.ReactNode;
+  actionLabel?: string;
   type?: string;
   variant?: string;
   onClick?: () => void;
@@ -32,7 +32,7 @@ export function ConfirmationModal({
   trigger,
   title,
   description,
-  actionLabel,
+  actionLabel = 'Confirm',
   type,
   variant,
   onClick,

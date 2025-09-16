@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {Search, ArrowUpDown, Loader2, CheckCircle, Eye } from "lucide-react";
@@ -16,12 +16,15 @@ import { getBusinessPermit, markBusinessPermitAsIssued, type BusinessPermit, typ
 import { toast } from "sonner";
 import TemplateMainPage from "../council/templates/template-main";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { useAuth } from "@/context/AuthContext";
 
 // Type imported from queries
 
 function BusinessDocumentPage() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPermit, setSelectedPermit] = useState<BusinessPermit | null>(null);
 
@@ -46,7 +49,7 @@ function BusinessDocumentPage() {
   const handleMarkAsPrinted = (permit: BusinessPermit) => {
     markAsIssuedMutation.mutate({
       bpr_id: permit.bpr_id,
-      staff_id: "00003250722", 
+      staff_id: staffId, 
     });
   };
 
@@ -61,24 +64,24 @@ function BusinessDocumentPage() {
     setCurrentPage(page);
   };
 
-  const handleRowClick = (row: BusinessPermit) => {
-    navigate(`/record/clearances/BusinessPermitDocumentation/${row.bpr_id}`, {
-      state: {
-        requestNo: row.bpr_id,
-        businessName: row.business_name,
-        businessAddress: row.business_address, 
-        paymentMethod: row.req_pay_method,
-        dateRequested: row.req_request_date,
-        dateClaim: row.req_claim_date,
-        status: row.req_status,
-        paymentStatus: row.req_payment_status,
-        transactionId: row.req_transac_id,
-        grossSales: row.business_gross_sales,
-        purpose: row.req_purpose,
-        pr_id: row.pr_id, 
-      },
-    });
-  };
+  // const handleRowClick = (row: BusinessPermit) => {
+  //   navigate(`/record/clearances/BusinessPermitDocumentation/${row.bpr_id}`, {
+  //     state: {
+  //       requestNo: row.bpr_id,
+  //       businessName: row.business_name,
+  //       businessAddress: row.business_address, 
+  //       paymentMethod: row.req_pay_method,
+  //       dateRequested: row.req_request_date,
+  //       dateClaim: row.req_claim_date,
+  //       status: row.req_status,
+  //       paymentStatus: row.req_payment_status,
+  //       transactionId: row.req_transac_id,
+  //       grossSales: row.business_gross_sales,
+  //       purpose: row.req_purpose,
+  //       pr_id: row.pr_id, 
+  //     },
+  //   });
+  // };
 
   const columns: ColumnDef<BusinessPermit>[] = [
     {
@@ -107,7 +110,7 @@ function BusinessDocumentPage() {
     {
       accessorKey: "req_pay_method",
       header: "Payment Method",
-      cell: ({ row }) => {
+      cell: ({ }) => {
         // Display "Walk-in" for all business permit requests
         const value = "Walk-in";
         const bg = "bg-[#eaffea]"; 

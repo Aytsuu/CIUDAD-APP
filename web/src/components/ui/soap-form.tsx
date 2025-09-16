@@ -2,25 +2,27 @@ import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { AlertCircle } from "lucide-react";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
-import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { IllnessComponent } from "@/components/ui/add-search-illness";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { PhysicalExam } from "@/components/ui/physical-exam";
 import { Loader2, ChevronLeft } from "lucide-react";
 import { ExamSection } from "@/pages/healthServices/doctor/types";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton component
 
 interface SoapFormFieldsProps {
   form: any;
   examSections: ExamSection[];
   setExamSections: (sections: ExamSection[]) => void;
   medicineStocksOptions: any[];
+  isMedicineLoading: boolean;
+  isPhysicalExamLoading: boolean; // Add this prop
+  hasPhysicalExamError: boolean; // Add this prop
   selectedMedicines: any[];
   onSelectedMedicinesChange: (medicines: any[]) => void;
   currentPage: number;
   onPageChange: (page: number) => void;
   onIllnessSelectionChange: (ids: number[]) => void;
   onAssessmentUpdate: (text: string) => void;
-
   onBack: () => void;
   isSubmitting: boolean;
   onSubmit: (e?: React.BaseSyntheticEvent) => void;
@@ -31,13 +33,15 @@ export default function SoapFormFields({
   examSections,
   setExamSections,
   medicineStocksOptions,
+  isMedicineLoading,
+  isPhysicalExamLoading,
+  hasPhysicalExamError,
   selectedMedicines,
   onSelectedMedicinesChange,
   currentPage,
   onPageChange,
   onIllnessSelectionChange,
   onAssessmentUpdate,
-
   onBack,
   isSubmitting,
   onSubmit
@@ -52,13 +56,76 @@ export default function SoapFormFields({
             <FormTextArea control={form.control} name="subj_summary" label="Patient-reported symptoms and history" placeholder="Describe the patient's chief complaint and history in their own words" className="min-h-[120px] w-full" />
           </div>
 
-          {/* Physical Exam */}
-          <PhysicalExam examSections={examSections} setExamSections={setExamSections} />
+          {/* Physical Exam with Skeleton Loading */}
+          <div className="space-y-3">
+            <h2 className="text-lg font-medium text-darkBlue2">Physical Exam</h2>
+            
+            {isPhysicalExamLoading ? (
+              // Skeleton Loading for Physical Exam
+              <div className="space-y-4 bg-white rounded-lg p-4 border">
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-1/3 bg-gray-200" />
+                  <div className="space-y-2">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="flex items-center space-x-2">
+                        <Skeleton className="h-4 w-4 bg-gray-200" />
+                        <Skeleton className="h-4 w-3/4 bg-gray-200" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-1/3 bg-gray-200" />
+                  <div className="space-y-2">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="flex items-center space-x-2">
+                        <Skeleton className="h-4 w-4 bg-gray-200" />
+                        <Skeleton className="h-4 w-2/3 bg-gray-200" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-1/3 bg-gray-200" />
+                  <div className="space-y-2">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="flex items-center space-x-2">
+                        <Skeleton className="h-4 w-4 bg-gray-200" />
+                        <Skeleton className="h-4 w-1/2 bg-gray-200" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : hasPhysicalExamError ? (
+              // Error State
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                <div>
+                  <p className="text-red-800 font-medium">Failed to load physical exam options</p>
+                  <p className="text-red-600 text-sm">Please try refreshing the page</p>
+                </div>
+              </div>
+            ) : (
+              // Normal Physical Exam Component
+              <PhysicalExam examSections={examSections} setExamSections={setExamSections} />
+            )}
+          </div>
 
           {/* Medicines */}
           <div className="space-y-3">
             <h2 className="text-lg font-medium text-darkBlue2">Plan Treatment (Treatment)</h2>
-            <MedicineDisplay medicines={medicineStocksOptions || []} initialSelectedMedicines={selectedMedicines} onSelectedMedicinesChange={onSelectedMedicinesChange} itemsPerPage={5} currentPage={currentPage} onPageChange={onPageChange} />
+            <MedicineDisplay 
+              medicines={medicineStocksOptions || []} 
+              initialSelectedMedicines={selectedMedicines} 
+              onSelectedMedicinesChange={onSelectedMedicinesChange} 
+              itemsPerPage={5} 
+              currentPage={currentPage} 
+              onPageChange={onPageChange}  
+              isLoading={isMedicineLoading}
+            />
           </div>
 
           {/* Objective & Plan */}
@@ -100,9 +167,9 @@ export default function SoapFormFields({
               <ChevronLeft />
               Previous
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="w-[100px]">
+            <Button type="submit" disabled={isSubmitting || isPhysicalExamLoading} className="w-[100px]">
               {isSubmitting ? (
-                <div className="flex items-center gap-2  ">
+                <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Saving...
                 </div>

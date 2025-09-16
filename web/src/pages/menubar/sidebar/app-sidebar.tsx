@@ -46,7 +46,12 @@ const barangayItems: BaseMenuItem[] = [
   },
   {
     title: "Summon & Case Tracker",
-    url: "/summon-and-case-tracking",
+    url: "/",
+    items: [
+      { title: "Request List", url: "/request-list"},
+      { title: "Summon Calendar", url: "/summon-calendar"},
+      { title: "Cases", url: "/summon-cases"},
+    ]
   },
   {
     title: "GAD",
@@ -55,6 +60,7 @@ const barangayItems: BaseMenuItem[] = [
       { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
       { title: "Project Proposal", url: "/gad-project-proposal"},
       { title: "Annual Development Plan", url: "/gad-annual-development-plan"},
+      { title: "Activity", url: "/gad-activity"},
     ],
   },
   {
@@ -89,17 +95,15 @@ const barangayItems: BaseMenuItem[] = [
           { title: "Personal & Others", url: "/treasurer-personal-and-others" },
           { title: "Permit", url: "/treasurer-permit" },
           { title: "Service Charge", url: "/treasurer-service-charge" },
-          { title: "Barangay Service", url: "/treasurer-barangay-service" },
           { title: "Rates", url: "/treasurer-rates" },
         ],
       },
       { title: "Receipts", url: "/treasurer-receipts" },
-      { title: "Review Project Proposal", url: "/gad-review-project-proposal"},
     ],
   },
   {
     title: "Certificate and Clearances",
-    subItems: true,
+
     url: "/",
     items: [
       { title: "Certifications", url: "record/clearances/certification" },
@@ -126,15 +130,6 @@ const barangayItems: BaseMenuItem[] = [
   {
     title: "Announcement",
     url: "/announcement",
-  },
-  {
-    title: "Clerk",
-    url: "/",
-    items: [
-      { title: "Certifications", url: "record/clearances/certification" },
-      { title: "Business Permits", url: "record/clearances/businesspermit" },
-      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
-    ],
   },
   {
     title: "Activity Log",
@@ -205,14 +200,13 @@ const healthItems: BaseMenuItem[] = [
       // },
       { title: "Forwarded Records", url: "/forwarded-records" },
       { title: "Animal Bites", url: "/Animalbite_viewing" },
-      { title: "Family Profiling", url: "/family-profiling-main" },
-      { title: "Medical Consultation Record", url: "/allMedRecords" },
-      { title: "Family Planning Record", url: "/FamPlanning_table" },
-      { title: "Maternal Record", url: "/maternalrecords" },
-      { title: "Child Health Record", url: "/all-child-health-records" },
-      { title: "Vaccination Record", url: "/VaccinationManagement" },
-      { title: "Medicine Record", url: "/all-medicine-records" },
-      { title: "Firstaid Record", url: "/all-firstaid-records" },
+      { title: "Medical Consultation ", url: "/allMedRecords" },
+      { title: "Family Planning", url: "/FamPlanning_table" },
+      { title: "Maternal", url: "/maternalrecords" },
+      { title: "Child Health", url: "/all-child-health-records" },
+      { title: "Vaccination", url: "/VaccinationManagement" },
+      { title: "Medicine", url: "/all-medicine-records" },
+      { title: "Firstaid", url: "/all-firstaid-records" },
       { title: "Schedules", url: "/health-appointments" }
     ]
   },
@@ -374,7 +368,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
   );
 };
 
-export function AppSidebar({ assignedFeatures }: { assignedFeatures?: any }) {
+export function AppSidebar() {
   const { user } = useAuth();
   const [activeItem, setActiveItem] = useState<string>("");
 

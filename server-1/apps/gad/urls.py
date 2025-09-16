@@ -15,15 +15,11 @@ urlpatterns = [
     
     path('project-proposals/', ProjectProposalView.as_view(), name='project-proposal-list'),
     path('project-proposals/<int:gpr_id>/', ProjectProposalDetailView.as_view(), name='project-proposal-detail'),
-    path('project-proposals/<int:gpr_id>/logs/', ProjectProposalLogView.as_view(), name='project-proposal-logs'),
-    path('project-proposal-logs/all/', AllProjectProposalLogView.as_view(), name='all-proposal-logs'),
-    path('review-project-proposals/<int:gpr_id>/', UpdateProposalStatusView.as_view(), name='update-proposal-status'),
     path('api/staff/', StaffListView.as_view(), name='staff-list'),
     path('project-proposals/<int:proposal_id>/support-docs/',ProposalSuppDocCreateView.as_view(),name='proposal-support-docs'),
     path('support-docs/<int:psd_id>/',ProposalSuppDocDetailView.as_view(),name='support-doc-detail'),
     path('project-proposals/<int:gpr_id>/archive/', ProjectProposalArchiveView.as_view(), name='project-proposal-archive'),
     path('project-proposals/<int:gpr_id>/restore/', ProjectProposalRestoreView.as_view(), name='project-proposal-restore'),
-    path('status-counts/', ProjectProposalStatusCountView.as_view(), name='project-proposal-status-counts'),
     
     path('gad-annual-development-plan/', GADDevelopmentPlanListCreate.as_view()),
     path('gad-annual-development-plan/years/', GADDevelopmentPlanYears.as_view()),

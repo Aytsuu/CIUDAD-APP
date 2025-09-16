@@ -1,16 +1,45 @@
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from ..serializers.personal_serializers import *
 from ..models import *
+from rest_framework.permissions import AllowAny
 
 class PersonalCreateView(generics.CreateAPIView):
-  serializer_class = PersonalBaseSerializer
-  queryset=Personal.objects.all()
+  permission_classes = [AllowAny]
+  serializer_class = PersonalWithHistorySerializer
+  queryset = Personal.objects.all()
 
-  def perform_create(self, serializer):
-    serializer.save()
+class PersonalUpdateView(APIView):
+  permission_classes = [AllowAny]
+  def patch(self, request, pk):
+    instance = get_object_or_404(Personal, pk=pk)
+    serializer = PersonalUpdateSerializer(
+      instance,
+      data=request.data,
+      partial=True
+    )
 
-class PersonalUpdateView(generics.RetrieveUpdateAPIView):
-    serializer_class = PersonalUpdateSerializer
-    queryset = Personal.objects.all()
-    lookup_field = 'per_id'
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    
+    return Response(serializer.errors, status=400)
+
+class PersonalHistoryView(APIView):
+  permission_classes = [AllowAny]
+  def get(self, request, *args, **kwargs):
+    per_id = request.query_params.get('per_id', None)
+    if per_id:
+      query = Personal.history.filter(per_id=per_id)
+    else:
+      return Response(status=status.HTTP_404_NOT_FOUND)
+      
+    return Response(data=PersonalHistoryBaseSerializer(query, many=True).data, 
+                    status=status.HTTP_200_OK)
+
+
+class HealthRelatedDetailsCreateView(generics.CreateAPIView):
+    queryset = HealthRelatedDetails.objects.all()
+    serializer_class = HealthRelatedDetailsSerializer

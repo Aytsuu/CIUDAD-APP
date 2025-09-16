@@ -1,5 +1,4 @@
 import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Button } from "@/components/ui/button/button";
@@ -9,8 +8,6 @@ import { VaccinationRecord } from "../tables/columns/types";
 import { useLocation } from "react-router-dom";
 import CardLayout from "@/components/ui/card/card-layout";
 import { useIndivPatientVaccinationRecords, useUnvaccinatedVaccines, useFollowupVaccines } from "../queries/fetch";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 import { usePatientVaccinationDetails } from "../queries/fetch";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
@@ -24,8 +21,6 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { Form } from "@/components/ui/form/form";
 import { useVaccinationMutation } from "../queries/adminsitered";
 
-
-// Follow-up visit schema
 const followUpSchema = z.object({
   followv_date: z.string().min(1, "Follow-up date is required"),
   followv_status: z.string().default("pending"),

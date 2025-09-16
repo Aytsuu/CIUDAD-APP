@@ -22,5 +22,13 @@ export const getArchivedComplaints = () => {
 };
 
 export const raiseIssue = (compId : number) => {
-  return api.post(`/complaint/${compId}/issue-raise/`)
+  return api.post(`/complaint/${compId}/raiseissue/`)
 };
+
+export const deleteComplaint = (compId : number) => {
+  return api.post(`/complaint/${compId}/delete/`);
+}
+
+export const updateComplaint = (compId : number, payload: any) => {
+  return api.patch(`/complaint/${compId}/update/`, payload)
+}

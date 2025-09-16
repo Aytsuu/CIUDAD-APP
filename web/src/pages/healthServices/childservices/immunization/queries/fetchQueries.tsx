@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchVaccineList } from '../restful-api/fetchAPI';
-import { getVaccintStocks } from '@/pages/healthServices/vaccination/restful-api/get';
+import { fetchVaccineList } from '../restful-api/fetch-api';
 
 export const useVaccinesListImmunization = () => {
   return useQuery({

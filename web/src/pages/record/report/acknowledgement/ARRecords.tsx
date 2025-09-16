@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { formatDate, getWeekNumber } from "@/helpers/dateHelper"
 import { useNavigate } from "react-router"
-import { getSitioList } from "../../profiling/restful-api/profilingGetAPI"
 import { useLoading } from "@/context/LoadingContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { useDebounce } from "@/hooks/use-debounce"
@@ -51,7 +50,7 @@ export default function ARRecords() {
   const now = new Date()
   const warThisMonth = React.useMemo(() => (
     weeklyAR?.filter((w: any) => {
-      const date = new Date(w.date);
+      const date = new Date(w.created_for);
       if(date.getFullYear() == now.getFullYear()) {
         if (date.getMonth() + 1 == now.getMonth() + 1) {
           return w;
@@ -66,6 +65,8 @@ export default function ARRecords() {
     , [])
   ), [weeklyAR])
 
+  console.log(formatDate(now))
+
   // ----------------- SIDE EFFECTS --------------------
   React.useEffect(() => {
     if(isLoadingArReports) showLoading();
@@ -74,8 +75,9 @@ export default function ARRecords() {
   
   React.useEffect(() => {
     if(warThisMonth) {
-      setIsCreatable(warThisMonth?.every((war: any) => 
-        getWeekNumber(war.date) !== getWeekNumber(formatDate(now) as string)
+      setIsCreatable(warThisMonth?.every((war: any) => {
+        getWeekNumber(war.created_for) !== getWeekNumber(formatDate(now) as string)
+      }
       ));
     }
   }, [warThisMonth]);
@@ -117,25 +119,6 @@ export default function ARRecords() {
     } catch (err) {
       setIsSubmitting(false)
       showErrorToast("Failed to create Weekly AR")
-    }
-  }
-
-  const handleCreateAR = async () => {
-    showLoading();
-    const sitio = await getSitioList();
-
-    if(sitio) {
-      hideLoading();
-      navigate('form', {
-      state: {
-        params: {
-          selected: false,
-          data: {
-            sitio
-          }
-        }
-      }
-    })
     }
   }
 
@@ -214,7 +197,7 @@ export default function ARRecords() {
                   Weekly AR Created
                 </Badge>
               ))}
-              {!isCreatingWeeklyAR && <Button onClick={handleCreateAR}>
+              {!isCreatingWeeklyAR && <Button onClick={() => navigate('form')}>
                 Create AR
               </Button>}
             </div>

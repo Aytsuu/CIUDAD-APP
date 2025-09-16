@@ -5,7 +5,6 @@ import MedicineRequestDetail from "@/pages/healthServices/medicineservices/Reque
 import MedicineRequestForm from "@/pages/healthServices/medicineservices/MedicineRequestForm";
 import MedicineRequestMain from "@/pages/healthServices/medicineservices/Request/Main";
 import MedicineRequestPendingItems from "@/pages/healthServices/medicineservices/Request/request-pending/request-pending-items";
-import path from "path";
 
 
 export const medicineRequest = [

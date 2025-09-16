@@ -1,92 +1,58 @@
-import React from "react";
+// components/medicine-request-pending-table.tsx
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search, FileInput, Loader2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useState } from "react";
-import { MedicineRequest } from "../types";
+import { useState, useEffect } from "react";
 import { medicineRequestColumns } from "./columns";
-import { useProcessingMedrequest } from "../queries.tsx/fetch";
+import { useProcessingMedrequest } from "../queries/fetch";
 
-
-
-const filterByDateRange = (data: MedicineRequest[], range: string) => {
-  const now = new Date();
-  const today = new Date(now.setHours(0, 0, 0, 0));
-
-  switch (range) {
-    case "today":
-      return data.filter((request) => {
-        if (!request.requested_at) return false;
-        const requestDate = new Date(request.requested_at);
-        return requestDate >= today;
-      });
-    case "this-week":
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
-      return data.filter((request) => {
-        if (!request.requested_at) return false;
-        const requestDate = new Date(request.requested_at);
-        return requestDate >= startOfWeek;
-      });
-    case "this-month":
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      return data.filter((request) => {
-        if (!request.requested_at) return false;
-        const requestDate = new Date(request.requested_at);
-        return requestDate >= startOfMonth;
-      });
-    default:
-      return data;
-  }
-};
-
-export default function MedicineRequests() {
+export default function PendingCnfirmation() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
-  const navigate = useNavigate();
 
-  const { data: medicineRequests = [], isLoading, error, refetch } = useProcessingMedrequest();
+  // Debounce search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 500);
 
-  const filteredData = React.useMemo(() => {
-    let result = medicineRequests;
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
-    // Apply date filter first
-    if (dateFilter !== "all") {
-      result = filterByDateRange(result, dateFilter);
-    }
+  const {
+    data: apiResponse,
+    isLoading,
+    error,
+    refetch
+  } = useProcessingMedrequest(
+    currentPage,
+    pageSize,
+    debouncedSearch,
+    dateFilter // Pass date filter to the server
+  );
 
-    // Apply search filter
-    if (searchQuery) {
-      result = result.filter((request: any) => {
-        const searchText = [request.medreq_id?.toString() || "", request.personal_info?.per_lname || "", request.personal_info?.per_fname || "", request.personal_info?.per_contact || ""].join(" ").toLowerCase().trim();
-        return searchText.includes(searchQuery.toLowerCase());
-      });
-    }
+  // Extract data from paginated response
+  const medicineRequests = apiResponse?.results || [];
+  const totalCount = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
-    return result;
-  }, [searchQuery, medicineRequests, statusFilter, dateFilter]);
-
-  const totalPages = Math.max(Math.ceil(filteredData.length / pageSize), 1);
-  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const columns = medicineRequestColumns;
   if (error) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center p-8">
-        <div className="text-red-500 text-lg mb-4">Failed to load medicine requests</div>
+        <div className="text-red-500 text-lg mb-4">Failed to load pending medicine requests</div>
         <div className="flex gap-4">
           <Button onClick={() => refetch()}>Retry</Button>
-          <Button variant="outline" onClick={() => navigate("/")}>
-            Return Home
-          </Button>
         </div>
       </div>
     );
@@ -98,15 +64,7 @@ export default function MedicineRequests() {
         <div className="w-full flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-            <Input
-              placeholder="Search by ID, name, or contact..."
-              className="pl-10 bg-white w-full"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
+            <Input placeholder="Search by ID, name, contact, or patient ID..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
 
           <SelectLayout
@@ -122,7 +80,7 @@ export default function MedicineRequests() {
             value={dateFilter}
             onChange={(value) => {
               setDateFilter(value);
-              setCurrentPage(1);
+              setCurrentPage(1); // Reset to first page when date filter changes
             }}
           />
         </div>
@@ -154,7 +112,7 @@ export default function MedicineRequests() {
           <div className="flex justify-end sm:justify-start">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" aria-label="Export data" className="flex items-center gap-2" disabled={filteredData.length === 0}>
+                <Button variant="outline" aria-label="Export data" className="flex items-center gap-2" disabled={medicineRequests.length === 0}>
                   <FileInput size={16} />
                   Export
                 </Button>
@@ -172,17 +130,21 @@ export default function MedicineRequests() {
           {isLoading ? (
             <div className="w-full h-[100px] flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">loading....</span>
+              <span className="ml-2">Loading pending requests...</span>
+            </div>
+          ) : medicineRequests.length === 0 ? (
+            <div className="w-full h-[100px] flex items-center justify-center text-gray-500">
+              <span className="ml-2">{debouncedSearch || dateFilter !== "all" ? "No requests found matching your criteria" : "No pending medicine requests found"}</span>
             </div>
           ) : (
-            <DataTable columns={columns} data={paginatedData} />
+            <DataTable columns={medicineRequestColumns} data={medicineRequests} />
           )}
         </div>
 
-        {filteredData.length > 0 && (
+        {medicineRequests.length > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
+              Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
             </p>
 
             <div className="w-full sm:w-auto flex justify-center">

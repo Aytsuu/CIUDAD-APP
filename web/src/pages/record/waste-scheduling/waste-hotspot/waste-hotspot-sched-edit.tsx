@@ -38,7 +38,7 @@ function WasteHotSchedEdit({wh_num, wh_date, wh_start_time, wh_end_time, wh_add_
 }) {
 
     console.log('waste:', wh_num)
-    const {mutate: editHotspotAssignment} = useEditHotspot(onSuccess);
+    const {mutate: editHotspotAssignment, isPending} = useEditHotspot(onSuccess);
     const {data : fetchedWatchman = [], isLoading: isLoadingWatchman} = useGetWatchman();
     const {data: fetchedSitio = [], isLoading: isLoadingSitio} = useGetSitio();
     const watchmanOptions = fetchedWatchman.map(watchman => ({
@@ -176,7 +176,7 @@ function WasteHotSchedEdit({wh_num, wh_date, wh_start_time, wh_end_time, wh_add_
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
-                    <Button type="submit">Save</Button>
+                    <Button type="submit" disabled={isPending}>{isPending? "Updating..." : "Update"}</Button>
                 </div>
             </form>
         </Form>

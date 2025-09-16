@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Modal, Image } from "react-native";
 import { X, Search, Info } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { formatTime } from "@/helpers/timeFormatter";
@@ -12,14 +12,12 @@ import { router } from "expo-router";
 
 export default function ResidentPending() {
   const {user} = useAuth()  
-  const { data: pendingRequests = [], isLoading: isDataLoading} = useGetGarbagePendingResident(user.resident.rp_id)
+  const { data: pendingRequests = [], isLoading: isDataLoading} = useGetGarbagePendingResident(user?.resident?.rp_id)
   const [searchQuery, setSearchQuery] = useState("");
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState("");
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
 
-  console.log('id', user.resident.rp_id)
-  console.log('Pending:', pendingRequests)
 
   const handleViewImage = (imageUrl: string) => {
     setCurrentImage(imageUrl);

@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.db.models import Max
 
 class Complainant(models.Model):
     cpnt_id = models.BigAutoField(primary_key=True)
@@ -8,8 +9,13 @@ class Complainant(models.Model):
     cpnt_age = models.CharField(max_length=2)
     cpnt_number = models.CharField(max_length=11)
     cpnt_relation_to_respondent = models.CharField(max_length=20)
-    add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE, related_name='complainant')
-
+    cpnt_address = models.CharField(max_length=255)
+    # rp_id = models.ForeignKey(
+    #     'profiling.ResidentProfile', 
+    #     on_delete=models.CASCADE, 
+    #     db_column='rp_id'
+    # )
+    
     class Meta:
         db_table = 'complainant'
 
@@ -19,23 +25,23 @@ class Accused(models.Model):
     acsd_age = models.CharField(max_length=2)
     acsd_gender = models.CharField(max_length=20)
     acsd_description = models.TextField()
-    add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE, related_name='accused')
+    acsd_address = models.CharField(max_length=255)
 
     class Meta:
         db_table = 'accused'
 
 class Complaint(models.Model):
-    comp_id = models.BigAutoField(primary_key=True)
+    comp_id = models.BigIntegerField(primary_key=True)
     comp_location = models.CharField(max_length=255)
     comp_incident_type = models.CharField(max_length=100)
     comp_datetime = models.CharField(max_length=100)
     comp_allegation = models.TextField()
     comp_created_at = models.DateTimeField(auto_now_add=True)
     comp_is_archive = models.BooleanField(default=False)
-    # comp_status = models.CharField(
-    #     max_length=20, 
-    #     default='Filed',
-    # )
+    comp_status = models.CharField(
+        max_length=20, 
+        default='Pending',
+    )
     complainant = models.ManyToManyField(
         Complainant,
         through='ComplaintComplainant',
@@ -53,10 +59,18 @@ class Complaint(models.Model):
     def save(self, *args, **kwargs):
         if not self.comp_id:
             today = timezone.now()
-            date_str = today.strftime('%Y%m%d')
-            
-            count_today = Complaint.objects.filter(comp_created_at__date=today.date()).count() + 1
-            self.comp_id = int(f"{date_str}{count_today:03d}")
+            date_str = today.strftime('%y%m%d')
+
+            last_id = Complaint.objects.filter(
+                comp_id__startswith=date_str
+            ).aggregate(max_id=Max('comp_id'))['max_id']
+
+            if last_id:
+                seq = int(str(last_id)[-3:]) + 1 
+            else:
+                seq = 1
+
+            self.comp_id = int(f"{date_str}{seq:03d}") 
         super().save(*args, **kwargs)
         
 class ComplaintComplainant(models.Model):

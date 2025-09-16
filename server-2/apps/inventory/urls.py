@@ -30,7 +30,8 @@ urlpatterns = [
     path('archive/medicinestocks/<str:inv_id>/', MedicineArchiveInventoryView.as_view(), name='archive-medicine-inventory'),
     path("medicine_stock-create/", MedicineStockCreate.as_view(), name="medicine-stock-atomic"),
     path('archive/medicinestocks-table/', ArchivedMedicineTable.as_view(), name='archived-medicine-table'),
-    path('medicine-transactions/table/',MedicineTransactionView.as_view(), name='medicine-transactions'),
+    path('medicine-transactions/table/',TableMedicineTransactionView.as_view(), name='medicine-transactions'),
+    path('medicine-deduct/', MedicineDeduct.as_view(), name='medicine-deduct'),
 
 
 
@@ -48,6 +49,7 @@ urlpatterns = [
     path("commodity-stock-table/",CommodityStockTableView.as_view(),name="commodity-stock-view"),
     path('archive/commoditystocks-table/', ArchivedCommodityTable.as_view(), name='archived-commodity-table'),
     path('commodity-transactions/table/',CommodityTransactionTableView.as_view(), name='commodity-transactions'),
+    path('commodity-deduct/', CommodityDeduct.as_view(), name='commodity-deduct'),
     
 
     path("firstaidlist/", FirstAidListView.as_view(), name="firstaidlist"),
@@ -62,6 +64,7 @@ urlpatterns = [
     path("first-aid-stock-table/",FirstAidStockTableView.as_view(),name="first-aid-stocks-table"),
     path('archive/firstaidstocks-table/', ArchivedFirstAidTable.as_view(), name='archived-firstaid-table'),
     path('firstaid-transactions/table/',FirstAidTransactionView.as_view(), name='firstaid-transactions'),
+    path('firstaid-deduct/', FirstAidDeduct.as_view(), name='firstaid-deduct'),
      
    
 
@@ -80,7 +83,7 @@ urlpatterns = [
 
     
     path("imz_supplieslist-table/", ImmunizationSuppliesListTable.as_view(), name="imz_supplies-list"),
-    path("imz_supplieslist-view/", ImmunizationSuppliesListCreateView.as_view(), name="imz_supplies-list-createview"),
+    path("imz_supplieslist-createview/", ImmunizationSuppliesListCreateView.as_view(), name="imz_supplies-list-createview"),
     path("imz_supplies/<int:imz_id>/", ImmunizationSuppliesRetrieveUpdateDestroyView.as_view(), name="imz_supplies-detail"),
     path("immunization_stock/<int:imzStck_id>/", ImmunizationSuppliesStockRetrieveUpdateDestroyView.as_view(), name="immunization_stocks-detail"),
     path("immunization_stock-create/", ImmunizationStockCreate.as_view(), name="immunization_stock_atomic"),
@@ -105,10 +108,12 @@ urlpatterns = [
     path('commodity-expired-out-of-stock-detail/<str:month>/', MonthlyCommodityExpiredOutOfStockDetailAPIView.as_view(), name='commodity-expired-out-of-stock-detail'),
     
     
-    path('medicine/records/<str:month>/',MonthlyMedicineRecordsDetailAPIView.as_view(),name='medicine-monthly-records'),
-    path('medicine/summaries/', MedicineSummaryMonthsAPIView.as_view(), name='medicine-summary-montly'),
-    path('medicine-expired-out-of-stock-summary/', MedicineExpiredOutOfStockSummaryAPIView.as_view(), name='outofexpiredstocks-monthly-records'),
-    path('medicine-expired-out-of-stock-detail/<str:month>/', MonthlyMedicineExpiredOutOfStockDetailAPIView.as_view(), name='outofexpiredstocks-chart'),
+    # path('medicine/records/<str:month>/',MonthlyMedicineRecordsDetailAPIView.as_view(),name='medicine-monthly-records'),
+    # path('medicine/summaries/', MedicineSummaryMonthsAPIView.as_view(), name='medicine-summary-montly'),
+    # path('medicine-expired-out-of-stock-summary/', MedicineExpiredOutOfStockSummaryAPIView.as_view(), name='outofexpiredstocks-monthly-records'),
+    # path('medicine-expired-out-of-stock-detail/<str:month>/', MonthlyMedicineExpiredOutOfStockDetailAPIView.as_view(), name='outofexpiredstocks-chart'),
+    
+    
     path('medicine-avaiable-records/', MedicineListAvailableTable.as_view(), name='medicine-available'),
     
     path('firstaid/summaries/', FirstAidSummaryMonthsAPIView.as_view(), name='firstaid-summary-montly'),
@@ -122,5 +127,20 @@ urlpatterns = [
     path('vaccination-expired-out-of-stock-detail/<str:month>/', MonthlyVaccinationExpiredOutOfStockDetailAPIView.as_view(), name='vaccination-expired-out-of-stock-detail'),
     
     
-    path('medreq-items-pending/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
+    # WASTED
+     path('waste/vaccine/<int:vacStck_id>/', VaccineWasteView.as_view(), name='vaccine-waste'),
+    path('waste/supply/<int:imzStck_id>/', SupplyWasteView.as_view(), name='supply-waste'),
+
+    # path('update-pending-medreq/<str:medreq_id>/',ConfirmAllPendingItemsView.as_view(), name='update-all medicine-request-pending'),
+    
+    # path('medreq-items-pending/<str:medreq_id>/', MedicineRequestPendingItemsTableView.as_view(), name='medicine_request-pending-details'),
+    # path('medicine-request-pending/', MedicineRequestPendingTableView.as_view(), name='medicine_request-pending'),
+    # path('medicine-request/', MedicineRequestProcessingTableView.as_view(), name='medicine_request-processing'),
+
+    # path('update-medreq-item/<int:medreqitem_id>/',UpdateMedicinerequestItemView.as_view(),name='update-medicine-request-items'),
+    # path('medicine-allocation/', MedicineRequestAllocationAPIView.as_view(), name='medicine-allocation'),
+
+    # path('childmedicine/', ChildServiceMedicineRecordView.as_view(), name='medicine_request_item_detail'),
+
+
 ] 

@@ -7,7 +7,7 @@ from datetime import datetime
 from django.db.models import Count, Q
 from apps.patientrecords.models import Patient,PatientRecord
 from apps.patientrecords.models import *
-from .utils import get_medcon_record_count
+from .utils import *
 from django.db.models import Count, Q
 from django.db import transaction
 from datetime import date
@@ -21,25 +21,100 @@ from apps.patientrecords.serializers.findings_serializers import FindingSerializ
 from apps.patientrecords.serializers.physicalexam_serializers import PEResultSerializer
 from apps.medicineservices.models import FindingsPlanTreatment
 from apps.childhealthservices.models import ChildHealthVitalSigns,ChildHealth_History
-
+from apps.inventory.models import MedicineInventory
+from pagination import *
+from apps.healthProfiling.models import *
 
 # ALL RECORDS
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Count, Q
+from datetime import datetime, timedelta
+
+
+
 class PatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = PatientMedConsultationRecordSerializer
+    pagination_class = StandardResultsPagination
+    
     def get_queryset(self):
-        return Patient.objects.annotate(
+        queryset = Patient.objects.annotate(
             medicalrec_count=Count(
                 'patient_records__medical_consultation_record',
                 filter=Q(
                     patient_records__medical_consultation_record__medrec_status='completed'
                 ),
-                distinct=True  # ✅ Prevents overcounting due to join duplicates
+                distinct=True
             )
         ).filter(
             patient_records__medical_consultation_record__medrec_status='completed'
-        ).distinct()
-
-
+        ).select_related(
+            'rp_id__per', 
+            'trans_id'
+        ).prefetch_related(
+            'rp_id__per__personaladdress_set__add__sitio',
+            'patient_records__medical_consultation_record'
+        ).distinct().order_by('-medicalrec_count')
+        
+        # Track if any filter is applied
+        filters_applied = False
+        original_count = queryset.count()
+        
+        # Combined search (patient name, patient ID, household number, and sitio)
+        search_query = self.request.query_params.get('search', '').strip()
+        sitio_search = self.request.query_params.get('sitio', '').strip()
+        
+        # Combine search and sitio parameters
+        combined_search_terms = []
+        if search_query and len(search_query) >= 2:  # Allow shorter search terms
+            combined_search_terms.append(search_query)
+        if sitio_search:
+            combined_search_terms.append(sitio_search)
+        
+        if combined_search_terms:
+            filters_applied = True
+            combined_search = ','.join(combined_search_terms)
+            queryset = apply_patient_search_filter(queryset, combined_search)
+            if queryset.count() == 0 and original_count > 0:
+                return Patient.objects.none()
+        
+        # Patient type filter
+        patient_type_search = self.request.query_params.get('patient_type', '').strip()
+        if patient_type_search:
+            filters_applied = True
+            queryset = apply_patient_type_filter(queryset, patient_type_search)
+            if queryset.count() == 0 and original_count > 0:
+                return Patient.objects.none()
+        
+        # Status filter (could be used for medical record status)
+        status_search = self.request.query_params.get('status', '').strip()
+        if status_search:
+            filters_applied = True
+            queryset = self._apply_status_filter(queryset, status_search)
+            if queryset.count() == 0 and original_count > 0:
+                return Patient.objects.none()
+        
+        return queryset
+    
+    def _apply_status_filter(self, queryset, status):
+        """Filter by status - keep this in view if it's specific to this view"""
+        # Implement your status filter logic here
+        return queryset.filter(patient_records__medical_consultation_record__medrec_status=status)
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            # You can add parents info and address to serialized data if needed
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    
 # USE FOR ADDING MEDICAL RECORD
 class MedicalConsultationRecordView(generics.CreateAPIView):
     serializer_class = MedicalConsultationRecordSerializer
@@ -55,8 +130,18 @@ class UpdateMedicalConsultationRecordView(generics.UpdateAPIView):
 
 
 # INDIVIDUAL PATIENT RECORDS
+# class ViewMedicalConsultationRecordView(generics.ListAPIView):
+#     serializer_class = MedicalConsultationRecordSerializer
+#     def get_queryset(self):
+#         pat_id = self.kwargs['pat_id']
+#         return MedicalConsultation_Record.objects.filter(
+#             patrec__pat_id=pat_id,
+#             medrec_status='completed' 
+#         ).order_by('-created_at')
 class ViewMedicalConsultationRecordView(generics.ListAPIView):
     serializer_class = MedicalConsultationRecordSerializer
+    pagination_class = StandardResultsPagination
+    
     def get_queryset(self):
         pat_id = self.kwargs['pat_id']
         return MedicalConsultation_Record.objects.filter(
@@ -194,7 +279,7 @@ class CreateMedicalConsultationView(APIView):
             bm = BodyMeasurement.objects.create(
                 height=float(data.get("height", 0)),
                 weight=float(data.get("weight", 0)),
-                patrec=patrec,
+                pat=pat_id,
                 staff=staff,
             )
 
@@ -227,6 +312,10 @@ class CreateMedicalConsultationView(APIView):
             ) 
 
 
+
+from apps.medicineservices.serializers import MedicineRequestItemSerializer
+
+# ========MEDICAL CONSULTATION END SOAP FORM
 # ========MEDICAL CONSULTATION END SOAP FORM
 class SoapFormSubmissionView(APIView):
     @transaction.atomic
@@ -258,11 +347,56 @@ class SoapFormSubmissionView(APIView):
             med_request_id = None
             medicine_request_data = data.get('medicine_request')
             if medicine_request_data and medicine_request_data.get('medicines'):
-                med_request_serializer = MedicineRequestSerializer(data=medicine_request_data)
+                # Create MedicineRequest first
+                med_request_data = {
+                    'rp_id': medicine_request_data.get('rp_id'),  # Physician ID
+                    'pat_id': medicine_request_data.get('pat_id'),  # Patient ID
+                    'status': 'pending',
+                    'mode': medicine_request_data.get('mode', 'walk-in')
+                }
+                
+                med_request_serializer = MedicineRequestSerializer(data=med_request_data)
                 med_request_serializer.is_valid(raise_exception=True)
                 med_request = med_request_serializer.save()
                 med_request_id = med_request.medreq_id
 
+                # Create MedicineRequestItem for each medicine and update inventory
+                for medicine in medicine_request_data['medicines']:
+                    minv_id = medicine.get('minv_id')
+                    requested_qty = medicine.get('medreqitem_qty', 0)
+                    
+                    # Update MedicineInventory with temporary deduction
+                    if minv_id and requested_qty > 0:
+                        try:
+                            medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
+                            
+                            # Add the requested quantity to existing temporary_deduction
+                            current_temp_deduction = medicine_inventory.temporary_deduction or 0
+                            medicine_inventory.temporary_deduction = current_temp_deduction + requested_qty
+                            medicine_inventory.save()
+                            
+                        except MedicineInventory.DoesNotExist:
+                            # Log warning or handle missing inventory
+                            return Response(
+                                {"error": f"Medicine inventory with ID {minv_id} not found"},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                    
+                    # Create the medicine request item
+                    medicine_item_data = {
+                        'medreqitem_qty': requested_qty,
+                        'reason': medicine.get('reason', ''),
+                        'minv_id': minv_id,  # Medicine inventory ID
+                        'med_id': medicine.get('med_id'),  # Medicine list ID
+                        'medreq_id': med_request.medreq_id,  # Link to the parent request
+                        'status': 'confirmed'
+                    }
+                    
+                    medicine_item_serializer = MedicineRequestItemSerializer(data=medicine_item_data)
+                    medicine_item_serializer.is_valid(raise_exception=True)
+                    medicine_item_serializer.save()
+
+                # Link medicine request to findings
                 FindingsPlanTreatment.objects.create(
                     medreq=med_request,
                     find=finding
@@ -288,7 +422,7 @@ class SoapFormSubmissionView(APIView):
             # 5. Medical History
             if data.get('selected_illnesses'):
                 medical_history_data = [
-                    {'patrec_id': patrec_id, 'ill_id': ill_id, 'year': datetime.now().year}
+                    {'patrec_id': patrec_id, 'ill_id': ill_id, 'year': date.today().strftime('%y-%m-%d')}
                     for ill_id in data['selected_illnesses']
                 ]
                 MedicalHistory.objects.bulk_create([
@@ -308,8 +442,6 @@ class SoapFormSubmissionView(APIView):
                 {'error': 'Internal server error', 'details': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-
 
 
 
@@ -346,11 +478,56 @@ class ChildHealthSoapFormSubmissionView(APIView):
             med_request_id = None
             medicine_request_data = data.get("medicine_request")
             if medicine_request_data and medicine_request_data.get("medicines"):
-                med_request_serializer = MedicineRequestSerializer(data=medicine_request_data)
+                # Create MedicineRequest first
+                med_request_data = {
+                    'rp_id': medicine_request_data.get('rp_id'),  # Physician ID
+                    'pat_id': medicine_request_data.get('pat_id'),  # Patient ID
+                    'status': 'pending',
+                    'mode': medicine_request_data.get('mode', 'walk-in')
+                }
+                
+                med_request_serializer = MedicineRequestSerializer(data=med_request_data)
                 med_request_serializer.is_valid(raise_exception=True)
                 med_request = med_request_serializer.save()
                 med_request_id = med_request.medreq_id
 
+                # Create MedicineRequestItem for each medicine and update inventory
+                for medicine in medicine_request_data['medicines']:
+                    minv_id = medicine.get('minv_id')
+                    requested_qty = medicine.get('quantity', 0)  # Note: using 'quantity' key for child health
+                    
+                    # Update MedicineInventory with temporary deduction
+                    if minv_id and requested_qty > 0:
+                        try:
+                            medicine_inventory = MedicineInventory.objects.get(minv_id=minv_id)
+                            
+                            # Add the requested quantity to existing temporary_deduction
+                            current_temp_deduction = medicine_inventory.temporary_deduction or 0
+                            medicine_inventory.temporary_deduction = current_temp_deduction + requested_qty
+                            medicine_inventory.save()
+                            
+                        except MedicineInventory.DoesNotExist:
+                            # Log warning or handle missing inventory
+                            return Response(
+                                {"error": f"Medicine inventory with ID {minv_id} not found"},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                    
+                    # Create the medicine request item
+                    medicine_item_data = {
+                        'medreqitem_qty': requested_qty,
+                        'reason': medicine.get('reason', ''),
+                        'minv_id': minv_id,  # Medicine inventory ID
+                        'med_id': medicine.get('med_id'),  # Medicine list ID
+                        'medreq_id': med_request.medreq_id,  # Link to the parent request
+                        'status': 'confirmed'
+                    }
+                    
+                    medicine_item_serializer = MedicineRequestItemSerializer(data=medicine_item_data)
+                    medicine_item_serializer.is_valid(raise_exception=True)
+                    medicine_item_serializer.save()
+
+                # Link medicine request to findings
                 FindingsPlanTreatment.objects.create(
                     medreq=med_request,
                     find=finding
@@ -379,7 +556,7 @@ class ChildHealthSoapFormSubmissionView(APIView):
                     MedicalHistory(
                         patrec_id=patrec_id,
                         ill_id=ill_id,
-                        year=date.today()
+                        year=date.today().strftime('%y-%m-%d')
                     )
                     for ill_id in data["selected_illnesses"]
                 ])

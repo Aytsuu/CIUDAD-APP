@@ -19,11 +19,11 @@ const DiscountSchema = z.object({
     discountReason: z.string().min(1, "Reason for discount is required")
 });
 
-function DiscountAuthorizationForm({ originalAmount, onAuthorize, onCancel }: DiscountAuthorizationFormProps) {
+function DiscountAuthorizationForm({ originalAmount, onAuthorize }: DiscountAuthorizationFormProps) {
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [amountError, setAmountError] = useState<string>("");
     
-    // This would normally be stored securely
+    //auth code for demo purposes pero asa ni nako i storeeee
     const CAPTAIN_AUTH_CODE = "test";
 
     const form = useForm<z.infer<typeof DiscountSchema>>({

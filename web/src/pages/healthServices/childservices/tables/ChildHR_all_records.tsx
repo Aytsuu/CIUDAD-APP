@@ -4,17 +4,11 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { Search, Loader2, FileInput } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useChildHealthRecords } from "../forms/queries/fetchQueries";
-import { ChildHealthRecord } from "../forms/muti-step-form/types";
 import { useLoading } from "@/context/LoadingContext";
 import { filterOptions } from "./types";
 import { childColumns } from "./columns/all_col";
@@ -24,17 +18,13 @@ export default function AllChildHealthRecords() {
   const { data: childHealthRecords, isLoading } = useChildHealthRecords();
   const { showLoading, hideLoading } = useLoading();
 
-  const formatChildHealthData = useCallback((): ChildHealthRecord[] => {
+  const formatChildHealthData = useCallback((): any[] => {
     if (!childHealthRecords) return [];
 
     return childHealthRecords.map((record: any) => {
       const childInfo = record.patrec_details?.pat_details?.personal_info || {};
-      const motherInfo =
-        record.patrec_details?.pat_details?.family_head_info?.family_heads
-          ?.mother?.personal_info || {};
-      const fatherInfo =
-        record.patrec_details?.pat_details?.family_head_info?.family_heads
-          ?.father?.personal_info || {};
+      const motherInfo = record.patrec_details?.pat_details?.family_head_info?.family_heads?.mother?.personal_info || {};
+      const fatherInfo = record.patrec_details?.pat_details?.family_head_info?.family_heads?.father?.personal_info || {};
       const addressInfo = record.patrec_details?.pat_details?.address || {};
 
       return {
@@ -46,18 +36,8 @@ export default function AllChildHealthRecords() {
         sex: childInfo.per_sex || "",
         age: calculateAge(childInfo.per_dob).toString(),
         dob: childInfo.per_dob || "",
-        householdno:
-          record.patrec_details?.pat_details?.households?.[0]?.hh_id || "",
-        address:
-          [
-            addressInfo.add_sitio,
-            addressInfo.add_street,
-            addressInfo.add_barangay,
-            addressInfo.add_city,
-            addressInfo.add_province,
-          ]
-            .filter((part) => part && part.trim() !== "")
-            .join(", ") || "No address Provided",
+        householdno: record.patrec_details?.pat_details?.households?.[0]?.hh_id || "",
+        address: [addressInfo.add_sitio, addressInfo.add_street, addressInfo.add_barangay, addressInfo.add_city, addressInfo.add_province].filter((part) => part && part.trim() !== "").join(", ") || "No address Provided",
         sitio: addressInfo.add_sitio || "",
         landmarks: addressInfo.add_landmarks || "",
         pat_type: record.patrec_details?.pat_details?.pat_type || "",
@@ -65,14 +45,12 @@ export default function AllChildHealthRecords() {
         mother_lname: motherInfo.per_lname || "",
         mother_mname: motherInfo.per_mname || "",
         mother_contact: motherInfo.per_contact || "",
-        mother_occupation:
-          motherInfo.per_occupation || record.mother_occupation || "",
+        mother_occupation: motherInfo.per_occupation || record.mother_occupation || "",
         father_fname: fatherInfo.per_fname || "",
         father_lname: fatherInfo.per_lname || "",
         father_mname: fatherInfo.per_mname || "",
         father_contact: fatherInfo.per_contact || "",
-        father_occupation:
-          fatherInfo.per_occupation || record.father_occupation || "",
+        father_occupation: fatherInfo.per_occupation || record.father_occupation || "",
         family_no: record.family_no || "Not Provided",
         birth_weight: record.birth_weight || 0,
         birth_height: record.birth_height || 0,
@@ -83,7 +61,7 @@ export default function AllChildHealthRecords() {
         pod_location_details: record.pod_location_details || "",
         health_checkup_count: record.health_checkup_count || 0,
         birth_order: record.birth_order || "",
-        tt_status: record.tt_status || "", // Optional field for TT status
+        tt_status: record.tt_status || "" // Optional field for TT status
       };
     });
   }, [childHealthRecords]);
@@ -91,8 +69,8 @@ export default function AllChildHealthRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<ChildHealthRecord[]>([]);
-  const [currentData, setCurrentData] = useState<ChildHealthRecord[]>([]);
+  const [filteredData, setFilteredData] = useState<any[]>([]);
+  const [currentData, setCurrentData] = useState<any[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedFilter, setSelectedFilter] = useState("all");
 
@@ -107,20 +85,13 @@ export default function AllChildHealthRecords() {
   useEffect(() => {
     const formattedData = formatChildHealthData();
     const filtered = formattedData.filter((item) => {
-      const matchesFilter =
-        selectedFilter === "all" ||
-        (selectedFilter === "resident" &&
-          item.pat_type.toLowerCase() === "resident") ||
-        (selectedFilter === "transient" &&
-          item.pat_type.toLowerCase() === "transient");
+      const matchesFilter = selectedFilter === "all" || (selectedFilter === "resident" && item.pat_type.toLowerCase() === "resident") || (selectedFilter === "transient" && item.pat_type.toLowerCase() === "transient");
 
       const matchesSearch =
         `${item.fname} ${item.lname} ${item.mname} ` +
         `${item.mother_fname} ${item.mother_lname} ${item.mother_mname} ` +
         `${item.father_fname} ${item.father_lname} ${item.father_mname} ` +
-        `${item.address} ${item.sitio} ${item.family_no} ${item.pat_type}`
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+        `${item.address} ${item.sitio} ${item.family_no} ${item.pat_type}`.toLowerCase().includes(searchQuery.toLowerCase());
 
       return matchesFilter && matchesSearch;
     });
@@ -128,13 +99,7 @@ export default function AllChildHealthRecords() {
     setFilteredData(filtered);
     setTotalPages(Math.ceil(filtered.length / pageSize));
     setCurrentPage(1);
-  }, [
-    searchQuery,
-    selectedFilter,
-    pageSize,
-    childHealthRecords,
-    formatChildHealthData,
-  ]);
+  }, [searchQuery, selectedFilter, pageSize, childHealthRecords, formatChildHealthData]);
 
   useEffect(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -144,41 +109,23 @@ export default function AllChildHealthRecords() {
 
   return (
     <>
-      <MainLayoutComponent
-        title="Child Health Record"
-        description="Manage and View Child's Record"
-      >
+      <MainLayoutComponent title="Child Health Record" description="Manage and View Child's Record">
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search..."
-                className="pl-10 bg-white w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+              <Input placeholder="Search..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
-            <SelectLayout
-              placeholder="Filter records"
-              label=""
-              className="bg-white w-full sm:w-48"
-              options={filterOptions}
-              value={selectedFilter}
-              onChange={(value) => setSelectedFilter(value)}
-            />
+            <SelectLayout placeholder="Filter records" label="" className="bg-white w-full sm:w-48" options={filterOptions} value={selectedFilter} onChange={(value) => setSelectedFilter(value)} />
           </div>
 
           <div className="w-full sm:w-auto">
             <Link
-              to="/child-health-record/newchildhealthrecord"
+              to="/child-health-record/form"
               state={{
                 params: {
-                  mode: "newchildhealthrecord", // This is the key part
-                },
+                  mode: "newchildhealthrecord" // This is the key part
+                }
               }}
             >
               <Button className="w-full sm:w-auto">New Record</Button>
@@ -205,11 +152,7 @@ export default function AllChildHealthRecords() {
             <div className="flex justify-end sm:justify-start">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    aria-label="Export data"
-                    className="flex items-center gap-2"
-                  >
+                  <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
                     <FileInput size={16} />
                     Export
                   </Button>
@@ -235,18 +178,11 @@ export default function AllChildHealthRecords() {
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {currentData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
+              Showing {currentData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
             </p>
 
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           </div>
         </div>

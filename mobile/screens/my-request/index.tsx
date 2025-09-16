@@ -16,7 +16,7 @@ export default () => {
   {
     title: "Certification Request",
      description: "Request official certification documents for personal or legal use.",
-     route: "/(my-request)/certificate-request/certificate-request-tracker"
+     route: "/(my-request)/certification-tracking/certificate-request-tracker"
   },
   {
     title: "Medicine Request",

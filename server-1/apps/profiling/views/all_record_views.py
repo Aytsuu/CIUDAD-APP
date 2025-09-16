@@ -16,6 +16,7 @@ from datetime import datetime
 from ..utils import *
 from utils.supabase_client import upload_to_storage
 from ..utils import *
+from ..tasks import DoubleQueries
 
 class AllRecordTableView(generics.GenericAPIView):
   serializer_class = AllRecordTableSerializer
@@ -46,20 +47,15 @@ class AllRecordTableView(generics.GenericAPIView):
     respondents = [
       {
         'id': res.br_id,
-        'lname': res.per.per_lname,
-        'fname': res.per.per_fname,
-        'mname': res.per.per_mname,
-        'suffix': res.per.per_suffix,
-        'sex': res.per.per_sex,
+        'lname': res.br_lname,
+        'fname': res.br_fname,
+        'mname': res.br_mname,
+        'suffix': '',
+        'sex': res.br_sex,
         'date_registered': res.br_date_registered,
         'type': 'Business',
       }
-      for res in BusinessRespondent.objects.select_related('per').filter(
-          Q(per__per_fname__icontains=search) |
-          Q(per__per_lname__icontains=search) |
-          Q(per__per_mname__icontains=search) |
-          Q(per__per_suffix__icontains=search)
-      )
+      for res in BusinessRespondent.objects.all()
     ]
     
     unified_data = residents + respondents
@@ -119,6 +115,10 @@ class CompleteRegistrationView(APIView):
         if bus:
           results["bus_id"] = bus.pk
 
+    # Perform double query
+    double_queries = DoubleQueries()
+    double_queries.complete_profile(request.data) 
+    
     return Response(results, status=status.HTTP_200_OK)
   
   def create_resident_profile(self, personal, staff):

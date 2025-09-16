@@ -3,6 +3,24 @@ from django.conf import settings
 from datetime import date
 from simple_history.models import HistoricalRecords
 
+class ProfilingAbstractModel(models.Model):
+    class Meta:
+        abstract = True
+    
+    def save(self, *args, **kwargs):
+        for field in self._meta.fields:
+            if(
+                isinstance(field, (models.CharField, models.TextField))
+                and not field.primary_key
+                and field.editable
+            ):
+                val = getattr(self, field.name)
+                if isinstance(val, str):
+                    setattr(self, field.name, val.upper())
+        super().save(*args, **kwargs)
+
+
+
 class Sitio(models.Model):
     sitio_id = models.CharField(max_length=100, primary_key=True)
     sitio_name = models.CharField(max_length=100)
@@ -54,7 +72,10 @@ class Personal(models.Model):
 
     class Meta:
         db_table = 'personal'
-
+        indexes = [
+            models.Index(fields=['per_lname', 'per_fname']),
+            models.Index(fields=['per_contact']),
+        ]
 
     def __str__(self):
         name_parts = [self.per_lname, self.per_fname]
@@ -89,6 +110,11 @@ class ResidentProfile(models.Model):
 
     class Meta:
         db_table = 'resident_profile'
+        indexes = [
+            models.Index(fields=['rp_id']),
+            models.Index(fields=['per']),
+            models.Index(fields=['rp_date_registered'])
+        ]
 
     def __str__(self):
         return f"{self.per} (ID: {self.rp_id})"
@@ -96,6 +122,7 @@ class ResidentProfile(models.Model):
 class RespondentsInfo(models.Model):
     ri_id = models.BigAutoField(primary_key=True)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='respondents_info')
+    fam = models.ForeignKey('Family', on_delete=models.CASCADE, related_name='respondents_info', null=True, blank=True)
  
     class Meta:
         db_table = 'respondents_info'
@@ -143,17 +170,23 @@ class FamilyComposition(models.Model):
     def __str__(self):
         return f"{self.rp} in Family {self.fam.fam_id}"
 
-    
-class RequestRegistration(models.Model):
-    req_id = models.BigAutoField(primary_key=True)
-    req_date = models.DateField()
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+# class RequestRegistration(models.Model):
+#     req_id = models.BigAutoField(primary_key=True)
+#     req_date = models.DateField(auto_now_add=True)
+#     req_is_archive = models.BooleanField(default=False)
 
-    class Meta: 
-        db_table = 'request_registration'
+#     class Meta: 
+#         db_table = 'request_registration'
 
-    def __str__(self):
-        return f"Request #{self.req_id} by {self.per} on {self.req_date}"
+# class RequestRegistrationComposition(models.Model):
+#     rrc_id = models.BigAutoField(primary_key=True)
+#     rrc_fam_role = models.CharField(max_length=50)
+#     req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name="request_composition")
+#     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+#     acc = models.ForeignKey('account.Account', on_delete=models.CASCADE, null=True)
+
+#     class Meta:
+#         db_table = 'request_registration_composition'
 
 class HealthRelatedDetails(models.Model):
     per_add_id = models.BigAutoField(primary_key=True)
@@ -188,6 +221,7 @@ class Dependents_Under_Five(models.Model):
 class WaterSupply(models.Model):
     water_sup_id = models.CharField(max_length=50, primary_key=True)
     water_sup_type = models.CharField(max_length=50)
+    water_conn_type = models.CharField(max_length=50, null=True, blank=True)
     water_sup_desc = models.TextField(max_length=1000)
     hh = models.ForeignKey(Household, on_delete=models.CASCADE)
 
@@ -224,9 +258,9 @@ class SolidWasteMgmt(models.Model):
         
 class TBsurveilance(models.Model):
     tb_id = models.CharField(max_length=50, primary_key=True)
-    tb_meds_source = models.CharField(max_length=100)
-    tb_days_taking_meds = models.IntegerField()
-    tb_status = models.CharField(max_length=100)
+    tb_meds_source = models.CharField(max_length=100, blank=True, null=True)
+    tb_days_taking_meds = models.IntegerField(null=True, blank=True, default=0)
+    tb_status = models.CharField(max_length=100, blank=True, null=True)
 
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
 
@@ -235,29 +269,16 @@ class TBsurveilance(models.Model):
 
 class NonCommunicableDisease(models.Model):
     ncd_id = models.CharField(max_length=50, primary_key=True)
-    ncd_riskclass_age = models.CharField(max_length=100)
-    ncd_comorbidities = models.CharField(max_length=100)
-    ncd_lifestyle_risk = models.CharField(max_length=100)
-    ncd_maintenance_status = models.CharField(max_length=100)
+    ncd_riskclass_age = models.CharField(max_length=100, blank=True, null=True)
+    ncd_comorbidities = models.CharField(max_length=100, blank=True, null=True)
+    ncd_lifestyle_risk = models.CharField(max_length=100, blank=True, null=True)
+    ncd_maintenance_status = models.CharField(max_length=100, blank=True, null=True)
 
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'non_communicable_disease'
 
-class RequestFile(models.Model):
-    rf_id = models.BigAutoField(primary_key=True)
-    rf_name = models.CharField(max_length=500)
-    rf_type = models.CharField(max_length=50)
-    rf_path = models.CharField(max_length=500)
-    rf_url = models.URLField()
-    rf_is_id = models.BooleanField(default=False)
-    rf_id_type = models.CharField(max_length=50, null=True ,blank=True)
-    rf_created_at = models.DateTimeField(auto_now_add=True)
-    req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name='files') 
- 
-    class Meta:
-        db_table = 'request_file'
 
 class MotherHealthInfo(models.Model):
     mhi_id = models.BigAutoField(primary_key=True)
@@ -274,8 +295,42 @@ class MotherHealthInfo(models.Model):
         db_table = 'mother_health_info'
         unique_together = ('rp', 'fam')
         
+class KYCRecord(models.Model):
+    kyc_id = models.BigAutoField(primary_key=True)
+    id_document_front = models.TextField(null=True, blank=True)
+    id_has_face = models.BooleanField(null=True, default=False)
+    id_face_embedding = models.BinaryField(null=True, blank=True)
+    face_photo = models.TextField(null=True, blank=True)
+    document_info_match = models.BooleanField(null=True, default=False)
+    face_match_score = models.FloatField(null=True, blank=True)
+    is_verified = models.BooleanField(null=True, default=False)
+    created_at = models.DateTimeField(null=True, auto_now_add=True)
+    updated_at = models.DateTimeField(null=True, auto_now=True)
 
+    class Meta:
+        db_table = 'kyc_record'
 
+class SurveyIdentification(models.Model):
+    si_id = models.CharField(max_length=50, primary_key=True)
+    si_filled_by = models.CharField(max_length=100, blank=True, null=True)
+    si_informant = models.CharField(max_length=100)
+    si_checked_by = models.CharField(max_length=100)
+    si_date = models.DateField()
+    si_signature = models.TextField()  # Base64 encoded signature
+    si_created_at = models.DateTimeField(auto_now_add=True)
+    si_updated_at = models.DateTimeField(auto_now=True)
+    
+    fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='survey_identifications')
+
+    class Meta:
+        db_table = 'survey_identification'
+        indexes = [
+            models.Index(fields=['fam']),
+            models.Index(fields=['si_date']),
+        ]
+
+    def __str__(self):
+        return f"Survey {self.si_id} - Family {self.fam.fam_id}"
 
 
 # class RiskClassGroups(models.Model):
@@ -298,3 +353,6 @@ class MotherHealthInfo(models.Model):
 
 #     class Meta:
 #         db_table = 'illness'
+
+
+

@@ -28,7 +28,19 @@ class ChildHealthrecord(models.Model):
     )
     birth_order = models.IntegerField(default=0)  # Birth order of the child
     pod_location = models.CharField(max_length=100, blank=True, null=True)  # Location of the place of delivery
-    
+    nbscreening_result = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        choices=[
+            ("normal", "Normal"),
+            ("referred", "Referred"),
+            ("done", "Done"),
+            ("with_results", "With Results"),
+            ("with_positive_results", "With Positive Results"),
+        ]
+    )
+    newbornInitiatedbf=models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     staff =models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_records', null=True, blank=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='child_health_records')

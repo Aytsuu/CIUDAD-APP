@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import React from "react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Badge } from "@/components/ui/badge";
+import { formatDate } from "@/helpers/dateHelper";
 
 // Define the columns for the data table
 export const IRColumns = (): ColumnDef<IRReport>[] => [
@@ -16,14 +17,12 @@ export const IRColumns = (): ColumnDef<IRReport>[] => [
     header: "Report No.",
   },
   {
-    accessorKey: "ir_location",
-    header: "Location",
-    cell: ({ row }) => {
-      const sitio = row.original.ir_sitio;
-      const street = row.original.ir_street;
-
-      return `Sitio ${sitio}, ${street} `;
-    },
+    accessorKey: "ir_area",
+    header: "Incident Area",
+  },
+  {
+    accessorKey: "ir_involved",
+    header: "Involved/Affected",
   },
   {
     accessorKey: "ir_add_details",
@@ -38,12 +37,15 @@ export const IRColumns = (): ColumnDef<IRReport>[] => [
     header: "Reported By",
   },
   {
-    accessorKey: "ir_time",
-    header: "Time",
-  },
-  {
     accessorKey: "ir_date",
     header: "Date",
+    cell: ({ row }) => (
+      formatDate(row.original.ir_date, "short")
+    )
+  },
+  {
+    accessorKey: "ir_time",
+    header: "Time",
   },
   {
     accessorKey: "action",
@@ -136,7 +138,7 @@ export const ARColumns = (
             checked={row.getIsSelected()}
             onCheckedChange={(value) => {
               if(unsigned) {
-                toast("Cannot add unsigned reports", {
+                toast("Cannot add Unsigned reports", {
                   icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
                   style: {
                     border: "1px solid rgb(225, 193, 193)",
@@ -155,6 +157,7 @@ export const ARColumns = (
         );
       }
     },
+    size: 30,
     enableSorting: false,
     enableHiding: false,
   },
@@ -167,14 +170,8 @@ export const ARColumns = (
     header: "Incident/Activity",
   },
   {
-    accessorKey: "ar_location",
-    header: "Location",
-    cell: ({ row }) => {
-      const sitio = row.original.ar_sitio;
-      const street = row.original.ar_street;
-
-      return `Sitio ${sitio}, ${street} `;
-    },
+    accessorKey: "ar_area",
+    header: "Area",
   },
   {
     accessorKey: "date",

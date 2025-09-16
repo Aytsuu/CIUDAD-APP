@@ -21,7 +21,7 @@ import {
   ClipboardCheck,
 } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { SelectLayout } from "@/components/ui/select-layout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";

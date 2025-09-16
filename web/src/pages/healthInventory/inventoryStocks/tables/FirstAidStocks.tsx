@@ -15,7 +15,7 @@ import { useFirstAidStocksTable } from "../REQUEST/FirstAid/queries/FirstAidFetc
 import { useArchiveFirstAidInventory } from "../REQUEST/Archive/ArchivePutQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
-
+import WastedModal from "../addstocksModal/WastedModal";
 type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expired";
 
 export default function FirstAidStocks() {
@@ -30,6 +30,12 @@ export default function FirstAidStocks() {
     isExpired: boolean;
     hasAvailableStock: boolean;
   } | null>(null);
+  
+  // New state for WastedModal
+  const [isWastedModalOpen, setIsWastedModalOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
+
+  const queryClient = useQueryClient();
   const { mutate: archiveFirstAidMutation } = useArchiveFirstAidInventory();
 
   // Updated to use pagination parameters with filter
@@ -59,6 +65,18 @@ export default function FirstAidStocks() {
     setIsArchiveConfirmationOpen(true);
   };
 
+  // New handler for opening WastedModal
+  const handleOpenWastedModal = (record: any) => {
+    setSelectedRecord(record);
+    setIsWastedModalOpen(true);
+  };
+
+  // New handler for closing WastedModal
+  const handleCloseWastedModal = () => {
+    setIsWastedModalOpen(false);
+    setSelectedRecord(null);
+  };
+
   const confirmArchiveInventory = async () => {
     if (firstAidToArchive !== null) {
       setIsArchiveConfirmationOpen(false);
@@ -68,6 +86,7 @@ export default function FirstAidStocks() {
           isExpired: firstAidToArchive.isExpired,
           hasAvailableStock: firstAidToArchive.hasAvailableStock
         });
+        queryClient.invalidateQueries({ queryKey: ["firstAidStocks"] });
         showSuccessToast("First aid item archived successfully");
       } catch (error) {
         console.error("Failed to archive first aid:", error);
@@ -78,7 +97,8 @@ export default function FirstAidStocks() {
     }
   };
 
-  const columns = getColumns(handleArchiveInventory);
+  // Updated columns to include the wasted modal handler
+  const columns = getColumns(handleArchiveInventory, handleOpenWastedModal);
 
   if (error) {
     return (
@@ -223,6 +243,9 @@ export default function FirstAidStocks() {
         title="Archive First Aid Item"
         description="Are you sure you want to archive this first aid item? It will be preserved in the system but removed from active inventory."
       />
+
+      {/* Wasted Modal */}
+      <WastedModal isOpen={isWastedModalOpen} onClose={handleCloseWastedModal} record={selectedRecord} mode={"first-aid"} />
     </>
   );
 }

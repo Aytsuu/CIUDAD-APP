@@ -4,7 +4,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Search, FileInput, ChevronLeft, Loader2 } from "lucide-react";
+import { FileInput, ChevronLeft, Loader2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ChildHealthRecordCard } from "@/components/ui/childInfocard";
@@ -27,21 +27,29 @@ export default function InvChildHealthRecords() {
   const navigate = useNavigate();
   const { ChildHealthRecord } = location.state || {};
   const [childData] = useState(ChildHealthRecord);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } = useUnvaccinatedVaccines(ChildHealthRecord?.pat_id, ChildHealthRecord.dob);
-  const { data: followUps = [], isLoading: followupLoading } = useFollowupChildHealthandVaccines(ChildHealthRecord?.pat_id);
-  const { data: historyData = [], isLoading: childHistoryLoading, isError, error } = useChildHealthHistory(childData.chrec_id);
-  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } = usePatientVaccinationDetails(ChildHealthRecord?.pat_id);
-  const { data: nutritionalStatusData = [] , isLoading:isGrowthLoading, isError: isgrowthError} = useNutriotionalStatus(ChildHealthRecord?.pat_id);
+
+  // Add safe access to ChildHealthRecord properties
+  const patId = childData?.pat_id || "";
+  const dob = childData?.dob || "";
+  const chrecId = childData?.chrec_id || "";
+
+  const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } = useUnvaccinatedVaccines(patId, dob);
+  const { data: followUps = [], isLoading: followupLoading } = useFollowupChildHealthandVaccines(patId);
+  const { data: historyData = [], isLoading: childHistoryLoading, isError, error } = useChildHealthHistory(chrecId);
+  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } = usePatientVaccinationDetails(patId);
+  const { data: nutritionalStatusData = [], isLoading: isGrowthLoading, isError: isgrowthError } = useNutriotionalStatus(patId);
   const isLoading = followupLoading || isUnvaccinatedLoading || isCompleteVaccineLoading || childHistoryLoading;
 
+  console.log("chhh", chrecId);
+  console.log("childData", childData);
   useEffect(() => {
-    if (!ChildHealthRecord || !ChildHealthRecord.chrec_id) {
+    if (!chrecId) {
       console.error("ChildHealthRecord or chrec_id is missing from location state.");
     }
-  }, [ChildHealthRecord, navigate]);
+  }, [chrecId, navigate]);
 
   useEffect(() => {
     if (isLoading) {
@@ -51,9 +59,6 @@ export default function InvChildHealthRecords() {
     }
   }, [isLoading]);
 
-  if (!ChildHealthRecord || !ChildHealthRecord.chrec_id) {
-    return <div className="w-full h-full flex items-center justify-center text-red-500">Error: Child health record data is missing or incomplete.</div>;
-  }
   // In your processedHistoryData useMemo
   const processedHistoryData = useMemo(() => {
     if (!historyData || historyData.length === 0) return [];
@@ -110,13 +115,13 @@ export default function InvChildHealthRecords() {
       }
 
       return {
-        chrec_id: mainRecord.chrec_id,
+        chrec_id: mainRecord.chrec,
         patrec: mainRecord.patrec_id,
         status: record.status || "N/A",
         chhist_id: record.chhist_id,
         id: index + 1,
         temp: record.child_health_vital_signs?.[0]?.temp || 0,
-        age: calculateAgeFromDOB(childData.dob, record.created_at).ageString,
+        age: dob ? calculateAgeFromDOB(dob, record.created_at).ageString : "N/A", // Safe access
         wt: record.child_health_vital_signs?.[0]?.bm_details?.weight || 0,
         ht: record.child_health_vital_signs?.[0]?.bm_details?.height || 0,
         bmi,
@@ -132,7 +137,7 @@ export default function InvChildHealthRecords() {
         hasFindings: !!findingsData.subj_summary || !!findingsData.obj_summary || !!findingsData.assessment_summary || !!findingsData.plantreatment_summary
       };
     });
-  }, [historyData, childData.dob]);
+  }, [historyData, dob]); // Use dob instead of childData.dob
 
   const latestRecord = useMemo(() => {
     if (processedHistoryData.length === 0) return null;
@@ -170,15 +175,15 @@ export default function InvChildHealthRecords() {
   const totalPages = Math.ceil(filteredData.length / pageSize);
 
   const navigateToUpdateLatest = () => {
-    if (latestRecord) {
-      navigate("/child-health-record/addnewchildhealthrecord", {
+    if (latestRecord && childData) {
+      navigate("/child-health-record/form", {
         state: {
           params: {
             chhistId: latestRecord.chhist_id,
             patId: childData?.pat_id,
             originalRecord: latestRecord,
             patientData: childData,
-            chrecId: childData?.chrec_id,
+            chrecId: chrecId, // Use the safe variable
             mode: "addnewchildhealthrecord"
           }
         }
@@ -194,6 +199,18 @@ export default function InvChildHealthRecords() {
         <div className="text-red-500 mb-4">Error loading data: {error instanceof Error ? error.message : "Unknown error"}</div>
         <Button variant="outline" onClick={() => window.location.reload()}>
           Refresh
+        </Button>
+      </div>
+    );
+  }
+
+  // Add early return if childData is missing
+  if (!childData) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center">
+        <div className="text-red-500 mb-4">Child health record data is missing</div>
+        <Button variant="outline" onClick={() => navigate(-1)}>
+          Go Back
         </Button>
       </div>
     );
@@ -230,8 +247,7 @@ export default function InvChildHealthRecords() {
         </div>
       )}
 
-      <GrowthChart data={nutritionalStatusData} isLoading={isGrowthLoading} error={isgrowthError}  />
-     
+      <GrowthChart data={nutritionalStatusData} isLoading={isGrowthLoading} error={isgrowthError} />
 
       <div className="h-full w-full rounded-md mt-4">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
@@ -241,7 +257,6 @@ export default function InvChildHealthRecords() {
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div className="flex gap-2">
-           
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
@@ -256,22 +271,19 @@ export default function InvChildHealthRecords() {
               </DropdownMenuContent>
             </DropdownMenu>
             <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
-        {latestRecord && (
-          <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
-            {isLatestRecordImmunizationOrCheckup ? (
-              <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
-                <span className="text-sm font-medium">{latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}</span>
-              </div>
-            ) : (
-              <Button onClick={navigateToUpdateLatest}>New record</Button>
-            )}
+              {latestRecord && (
+                <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
+                  {isLatestRecordImmunizationOrCheckup ? (
+                    <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
+                      <span className="text-sm font-medium">{latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}</span>
+                    </div>
+                  ) : (
+                    <Button onClick={navigateToUpdateLatest}>New record</Button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-            
-          </div>
-
-          
         </div>
 
         <div className="bg-white w-full overflow-x-auto">

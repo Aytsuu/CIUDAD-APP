@@ -8,11 +8,11 @@ import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { FormInput } from "@/components/ui/form/form-input";
 import { ImmunizationSchema, ImmunizationType } from "@/form-schema/inventory/lists/inventoryListSchema";
-import { useAddImzSupplies } from "../queries/Antigen/ImzPostQueries";
-import { useUpdateImzSupply } from "../queries/Antigen/ImzPutQueries";
+import { useAddImzSupplies } from "../queries/Antigen/post-queries";
+import { useUpdateImzSupply } from "../queries/Antigen/put-queries";
 import { Loader2 } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { useImzSupList } from "../queries/Antigen/ImzFetchQueries";
+import { useImzSupList } from "../queries/Antigen/fetch-queries";
 
 interface ImmunizationData {
   id: number;

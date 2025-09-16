@@ -326,7 +326,7 @@ function AttendancePage() {
 
     if (activeTab === "active") {
       councilEvents
-        .filter(event => event.ce_type === "meeting" && !event.ce_is_archive)
+        .filter(event => !event.ce_is_archive)
         .forEach(event => {
           const nonArchivedSheets = attendanceSheets.filter(
             sheet => sheet.ce_id === event.ce_id && !sheet.att_is_archive
@@ -353,7 +353,7 @@ function AttendancePage() {
 
       archivedSheetsByEvent.forEach((sheets, ce_id) => {
         const event = eventMap.get(ce_id);
-        if (event && event.ce_type === "meeting") {
+        if (event) {
           data.push({
             ceId: event.ce_id,
             attMettingTitle: event.ce_title || "Untitled Meeting",

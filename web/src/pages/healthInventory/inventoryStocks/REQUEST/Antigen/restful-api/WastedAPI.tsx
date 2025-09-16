@@ -1,49 +1,44 @@
-import { api2 } from "@/api/api";
+// WastedAPI.ts (update these functions)
+import { api2 } from "@/api/api"; // Your axios instance
 
-export const fetchVaccineStockById = async (vacStck_id: number) => {
-  const response = await api2.get(`inventory/vaccine_stocks/${vacStck_id}/`);
-  return response.data;
-};
-
-export const fetchImzSupplyStockById = async (imzStck_id: number) => {
-  const response = await api2.get(
-    `inventory/immunization_stock/${imzStck_id}/`
-  );
-  return response.data;
-};
-
-
-
-export const createVaccineWasteTransaction = async (
-  data: Record<string, any>
-) => {
+// Replace the multiple API calls with single endpoints
+export const handleVaccineWasteAPI = async (id: number, data: { wastedAmount: number; staff_id?: string }) => {
   try {
-    const res = await api2.post("inventory/antigens_stocks/transaction/", data);
-    return res.data;
-  } catch (err) {
-    console.error(err);
-    throw err;
+    const response = await api2.post(`/inventory/waste/vaccine/${id}/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error in handleVaccineWasteAPI:", error);
+    throw error;
   }
 };
 
-export const updateImmunizationStockQuantity = async (
-  data: Record<string, any>
-) => {
- 
-
-  const response = await api2.put(
-    `inventory/immunization_stock/${data.imzStck_id}/`,
-    data
-  );
-  return response.data;
+export const handleSupplyWasteAPI = async (id: number, data: { wastedAmount: number; staff_id?: string }) => {
+  try {
+    const response = await api2.post(`/inventory/waste/supply/${id}/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error in handleSupplyWasteAPI:", error);
+    throw error;
+  }
 };
 
+// You can keep these for other purposes if needed, but they won't be used for waste handling
+export const fetchVaccineStockById = async (id: number) => {
+  try {
+    const response = await api2.get(`/inventory/vaccine-stocks/${id}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error in fetchVaccineStockById:", error);
+    throw error;
+  }
+};
 
-export const createImmunizationWasteTransaction = async (
-  data: Record<string, any>
-) => {
-  
-
-  const response = await api2.post("inventory/imz_transaction/", data);
-  return response.data;
+export const fetchImzSupplyStockById = async (id: number) => {
+  try {
+    const response = await api2.get(`/inventory/immunization-stocks/${id}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error in fetchImzSupplyStockById:", error);
+    throw error;
+  }
 };

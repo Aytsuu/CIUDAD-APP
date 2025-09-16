@@ -1,4 +1,4 @@
-import { api } from "@/api/api";
+import { api, api2 } from "@/api/api";
 
 
 export const updateProfile = async (
@@ -7,7 +7,7 @@ export const updateProfile = async (
 ) => {
   try {
     const res = await api.patch(`profiling/personal/update/${perId}/`, data);
-    // await api2.patch(`health-profiling/personal/update/${perId}/`, data);
+    await api2.patch(`health-profiling/personal/update/${perId}/`, data);
     return res.data;
   } catch (err) {
     console.error(err)
@@ -21,7 +21,7 @@ export const updateFamily = async (
 ) => {
   try {
     const res = await api.put(`profiling/family/update/${familyId}/`, data)
-    // await api2.put(`health-profiling/family/update/${familyId}/`, data);
+    await api2.put(`health-profiling/family/update/${familyId}/`, data);
     return res.data;
   } catch (err) {
     console.error(err);
@@ -34,7 +34,7 @@ export const updateFamilyRole = async (familyId: string, residentId: string, fc_
     const res = await api.put(`profiling/family/role/update/${familyId}/${residentId}/`, {
       fc_role
     })
-    // await api2.put(`health-profiling/family/role/update/${familyId}/${residentId}/`, { fc_role });
+    await api2.put(`health-profiling/family/role/update/${familyId}/${residentId}/`, { fc_role });
     return res.data;
   } catch (err) {
     console.error(err)
@@ -49,7 +49,7 @@ export const updateHousehold = async (householdInfo: Record<string, any>) => {
       hh_nhts: householdInfo.nhts,
     }
     const res = await api.patch(`profiling/household/update/${householdInfo.hh_id}/`, data)
-    // await api2.patch(`health-profiling/household/update/${householdInfo.hh_id}/`, data);
+    await api2.patch(`health-profiling/household/update/${householdInfo.hh_id}/`, data);
 
     return res.data;
   } catch (err) {

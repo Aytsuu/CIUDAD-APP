@@ -50,7 +50,6 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
     pat_id_value = serializers.SerializerMethodField()
     total_quantity = serializers.SerializerMethodField()
     total_confirmed=serializers.SerializerMethodField()
-    
     class Meta:
         model = MedicineRequest
         fields = '__all__'

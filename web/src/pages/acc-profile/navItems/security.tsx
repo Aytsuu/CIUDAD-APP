@@ -47,7 +47,6 @@ export default function Security() {
   });
 
   const newPassword = watch("new_password", "");
-  const currentPassword = watch("old_password", "");
 
   const passwordRequirements = [
     { text: "Minimum 8 characters", regex: /.{8,}/ },

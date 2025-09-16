@@ -6,7 +6,7 @@ import { Building } from "@/lib/icons/Building"
 import { Plus } from "@/lib/icons/Plus"
 import { ChevronRight } from "@/lib/icons/ChevronRight"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { FileText } from "@/lib/icons/FileText"
 import { useModificationRequests, useOwnedBusinesses } from "./queries/businessGetQueries"
 import { useAuth } from "@/contexts/AuthContext"
@@ -14,9 +14,10 @@ import { MapPin } from "@/lib/icons/MapPin"
 import { FeedbackScreen } from "@/components/ui/feedback-screen"
 import { Search } from "@/lib/icons/Search"
 import { SearchInput } from "@/components/ui/search-input"
+import { LoadingState } from "@/components/ui/loading-state"
 
 export default () => {
-  // ---------------- STATE INITIALIZATION -------------------
+  // =================== STATE INITIALIZATION ===================
   const { user } = useAuth();
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
   const [searchInputVal, setSearchInputVal] = React.useState<string>('');
@@ -36,9 +37,9 @@ export default () => {
   const businessList = ownedBusinesses?.results || []
   const hasBusinesses = (ownedBusinesses?.count || 0) > 0
 
-  // ---------------- SIDE EFFECTS -------------------  
+  // =================== SIDE EFFECTS ===================  
 
-  // ---------------- HANDLERS -------------------  
+  // =================== HANDLERS ===================  
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
@@ -62,7 +63,7 @@ export default () => {
     setSelectedBusiness(business);
   }
 
-  // ---------------- RENDER -------------------
+  // =================== RENDER HELPER ===================
   const feedbackContents: any = {
     waiting: {
       title: (
@@ -87,15 +88,6 @@ export default () => {
       )
     }
   }
-  
-  const LoadingScreen = () => (
-    <View className="flex-1 items-center justify-center px-6">
-      <ActivityIndicator size="large" color="#3B82F6" />
-      <Text className="text-gray-600 text-base mt-4 text-center">
-        Loading your businesses...
-      </Text>
-    </View>
-  )
 
   const EmptyState = () => (
     <View className="flex-1 items-center justify-center px-6 py-12">
@@ -198,10 +190,6 @@ export default () => {
   )
 
   const renderContent = () => {
-    if (isLoadingBusinesses || isLoadingRequests) {
-      return <LoadingScreen />
-    }
-
     if(showFeedback){
       return (
         <FeedbackScreen 
@@ -214,6 +202,11 @@ export default () => {
     }
     
     return hasBusinesses ? <BusinessList /> : <EmptyState />
+  }
+
+  // =================== MAIN RENDER ===================
+  if (isLoadingBusinesses || isLoadingRequests) {
+    return <LoadingState />
   }
 
   return (

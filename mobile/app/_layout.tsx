@@ -52,7 +52,7 @@ export default function RootLayout() {
           <PersistGate loading={null} persistor={persistor}>
           <QueryClientProvider client={queryClient}>
             <ToastProvider>
-            <StatusBar backgroundColor="transparent" style="dark" />
+            <StatusBar backgroundColor="transparent" style='dark'/>
             <Stack initialRouteName='(auth)'>
               <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />

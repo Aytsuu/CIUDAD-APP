@@ -7,19 +7,19 @@ import { useForm } from "react-hook-form";
 import {z} from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useAddSuppDoc } from "./queries/summonInsertQueries";
+// import { useAddSuppDoc } from "./queries/summonInsertQueries";
 
-export default function SummonSuppDocForm({onSuccess}: {
+export default function SummonSuppDocForm({}: {
     // ca_id: string;
-    onSuccess: () => void;
+    // onSuccess: () => void;
 }) {
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
-    const {mutate: _addDocs, isPending} = useAddSuppDoc(onSuccess);
+    // const {mutate: _addDocs, isPending} = useAddSuppDoc(onSuccess);
 
     // Check if media is still uploading
     // const isMediaUploading = mediaFiles.some(file => file.status === 'uploading');
-    const isSubmitDisabled = isPending;
+    // const isSubmitDisabled = isPending;
 
     const form = useForm<z.infer<typeof SummonSuppDocSchema>>({
         resolver: zodResolver(SummonSuppDocSchema),
@@ -85,10 +85,10 @@ export default function SummonSuppDocForm({onSuccess}: {
                     <div className="flex items-center justify-end pt-4">
                         <Button 
                             type="submit" 
-                            disabled={isSubmitDisabled}
+                            // disabled={isSubmitDisabled}
                             className="w-[100px]"
                         >
-                            {isPending ? "Submitting..." : "Save"}
+                            {/* {isPending ? "Submitting..." : "Save"} */}
                         </Button>
                     </div>
                 </form>

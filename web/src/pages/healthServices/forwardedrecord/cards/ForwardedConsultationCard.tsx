@@ -17,22 +17,14 @@ export function ForwardedConsultationCard({ count }: ForwardedConsultationCardPr
             <SyringeIcon className="w-5 h-5 text-orange-600" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              Total Consultation Records
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900">Total Consultation Records</h3>
             <div className="flex items-center space-x-4 mt-1">
-              <span className="text-sm text-gray-600 bg-orange-200 px-2 py-1 rounded-md">
-                {count} Records forwarded
-              </span>
+              <span className="text-sm text-gray-600 bg-orange-200 px-2 py-1 rounded-md">{count} Records forwarded</span>
             </div>
           </div>
         </div>
         <Link to="/forwarded-records/medical-consultation">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-10 px-6 bg-white border-orange-300 text-orange-700 font-medium"
-          >
+          <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-orange-300 text-orange-700 font-medium">
             View Details
           </Button>
         </Link>

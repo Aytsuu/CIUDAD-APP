@@ -6,28 +6,39 @@ import Profiling from '@/assets/icons/features/profiling.svg'
 import Health from '@/assets/icons/features/health.svg'
 import Report from '@/assets/icons/features/report.svg'
 import Securado from '@/assets/icons/features/securado.svg'
+import { User } from "../_Enums";
 
 type FeatureType = {
   name: string;
   icon: React.ReactNode;
   route: string;
+  users?: string[]
 }
 
 export const features: FeatureType[] = [
   {
     name: "Request",
     icon: <Request width={30} height={30}/>,
-    route: "/(request)"
+    route: "/(request)",
+    users: [User.resident]
   },
   {
     name: "Report",
     icon: <Report width={30} height={30}/>,
-    route: "/(report)"
+    route: "/(report)",
+    users: [User.resident]
   },
   {
     name: "Blotter",
     icon: <Blotter width={30} height={30}/>,
-    route: "/(complaint)"
+    route: "/(complaint)",
+    users: [User.resident]
+  },
+  { 
+    name: "Profiling",
+    icon: <Profiling width={30} height={30}/>,
+    route: "/(profiling)",
+    users: ["profiling"]
   },
   { 
     name: "Profiling",
@@ -37,7 +48,8 @@ export const features: FeatureType[] = [
   {
     name: "Business",
     icon: <Business width={30} height={30}/>,
-    route: "/(business)"
+    route: "/(business)",
+    users: []
   },
   {
     name: "Health",
@@ -48,6 +60,7 @@ export const features: FeatureType[] = [
   {
     name: "Securado",
     icon: <Securado width={30} height={30}/>,
-    route: "/(securado)"
+    route: "/(securado)",
+    users: [User.resident]
   },
 ]

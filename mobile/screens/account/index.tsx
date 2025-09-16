@@ -153,7 +153,7 @@ export default () => {
             </View>
             <View className="ml-4 flex-1">
               <Text className="text-xl font-bold text-gray-900">
-                {user?.resident?.per?.per_fname || user?.username || "User"}{" "}
+                {user?.resident?.per?.per_fname} {" "}
                 {user?.resident?.per?.per_lname || ""}
               </Text>
               <Text className="text-gray-500 text-sm mt-1">{user?.email}</Text>

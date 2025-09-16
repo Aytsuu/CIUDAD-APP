@@ -5,6 +5,7 @@ import * as MediaLibrary from "expo-media-library"
 import * as FileSystem from 'expo-file-system';
 import { Ionicons } from "@expo/vector-icons"
 import { getMimeType } from "@/helpers/fileHandling";
+import { CloudUpload } from "@/lib/icons/CloudUpload";
 
 export interface MediaItem {
   uri: string
@@ -20,11 +21,10 @@ interface MediaPickerProps {
   multiple?: boolean
   maxImages?: number
   editable?: boolean
-  // New props for remove functionality
   showRemoveButtons?: boolean
   showClearAllButton?: boolean
   onlyRemoveNewImages?: boolean
-  initialImageIds?: string[] // IDs of images that were initially loaded (existing images)
+  initialImageIds?: string[]
 }
 
 export default function MediaPicker({
@@ -227,16 +227,14 @@ export default function MediaPicker({
     setGalleryVisible(true)
   }
 
-  // Helper function to determine if an image can be removed
   const canRemoveImage = (image: MediaItem, index: number) => {
     if (!editable || !showRemoveButtons) return false;
     
     if (onlyRemoveNewImages) {
-      // Only allow removal if the image is NOT in the initial images list
       return !initialImageIds.includes(image.id || '');
     }
     
-    return true; // Allow removal of all images if not restricted
+    return true;
   }
 
   const removeImage = (index: number) => {
@@ -246,7 +244,6 @@ export default function MediaPicker({
     setSelectedImages((prev) => prev.filter((_, i) => i !== index))
   }
 
-  // Helper function to get removable images count
   const getRemovableImagesCount = () => {
     if (!onlyRemoveNewImages) return selectedImages.length;
     
@@ -257,13 +254,59 @@ export default function MediaPicker({
     if (!editable || !showClearAllButton) return;
     
     if (onlyRemoveNewImages) {
-      // Only remove new images, keep existing ones
       setSelectedImages((prev) => prev.filter(image => initialImageIds.includes(image.id || '')));
     } else {
-      // Remove all images
       setSelectedImages([]);
     }
   }
+
+  // Render individual image item for the clean list view
+  const renderImageItem = ({ item, index }: { item: MediaItem; index: number }) => {
+    const isExistingImage = initialImageIds.includes(item.id || '');
+    const showRemoveButton = canRemoveImage(item, index);
+    
+    return (
+      <View className="bg-white rounded-xl mx-2 mb-3 shadow-sm border border-gray-100">
+        <View className="flex-row items-center p-3">
+          {/* Image Thumbnail */}
+          <View className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 mr-3 shadow-sm">
+            <Image 
+              source={{ uri: item.uri }} 
+              className="w-full h-full" 
+              resizeMode="cover"
+            />
+          </View>
+          
+          {/* Image Info */}
+          <View className="flex-1">
+            <Text className="text-gray-800 font-medium text-sm" numberOfLines={1}>
+              {item.name || `Image ${index + 1}`}
+            </Text>
+            <View className="flex-row items-center mt-1">
+              <Text className="text-gray-500 text-xs">
+                {item.type || 'image/jpeg'}
+              </Text>
+              {onlyRemoveNewImages && isExistingImage && (
+                <View className="ml-2 bg-blue-100 px-2 py-1 rounded-full">
+                  <Text className="text-blue-600 text-xs font-medium">Existing</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          
+          {/* Remove Button */}
+          {showRemoveButton && (
+            <TouchableOpacity
+              className="w-8 h-8 bg-red-50 rounded-full justify-center items-center ml-2"
+              onPress={() => removeImage(index)}
+            >
+              <Ionicons name="trash-outline" size={16} color="#ef4444" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  };
 
   const canSelectMore = multiple && selectedImages?.length < maxImages
   const removableCount = getRemovableImagesCount()
@@ -280,72 +323,63 @@ export default function MediaPicker({
     <View className="flex-1">
       {selectedImages?.length > 0 ? (
         <View className="flex-1">
-          <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-            <View className="p-4">
-              <Text className="text-lg font-semibold mb-3">Selected Files:</Text>
-              {selectedImages.map((image, index) => {
-                const isExistingImage = initialImageIds.includes(image.id || '');
-                const showRemoveButton = canRemoveImage(image, index);
-                
-                return (
-                  <View key={index} className="flex-row items-center justify-between bg-gray-100 p-3 mb-2 rounded-lg">
-                    <View className="flex-row items-center flex-1">
-                      <Ionicons name="image" size={20} color="#666" />
-                      <Text className="ml-2 flex-1 text-gray-800" numberOfLines={1}>
-                        {image.name || `image_${index + 1}.jpg`}
-                      </Text>
-                      {onlyRemoveNewImages && isExistingImage && (
-                        <Text className="text-xs text-blue-600 mr-2">existing</Text>
-                      )}
-                    </View>
-                    {showRemoveButton && (
-                      <TouchableOpacity
-                        className="bg-red-500 rounded-full w-6 h-6 justify-center items-center ml-2"
-                        onPress={() => removeImage(index)}
-                      >
-                        <Ionicons name="close" size={14} color="white" />
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                );
-              })}
-            </View>
-          </ScrollView>
+          {/* Header with count and clear button */}
+          <View className="flex-row justify-between items-center mb-3">
+            {editable && showClearAllButton && removableCount > 1 && (
+              <TouchableOpacity
+                className="bg-red-50 px-3 py-1.5 rounded-full"
+                onPress={removeAllImages}
+              >
+                <Text className="text-red-600 text-sm font-medium">
+                  {onlyRemoveNewImages ? `Clear New (${removableCount})` : `Clear All`}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          {/* Clean List View */}
+          <FlatList
+            data={selectedImages}
+            renderItem={renderImageItem}
+            keyExtractor={(item, index) => `${item.id}_${index}`}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 10 }}
+          />
         </View>
       ) : (
         <TouchableOpacity
-          className="w-full h-[300px] bg-[#f0f2f5] justify-center items-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300"
+          className="w-full bg-white justify-center rounded-3xl items-center overflow-hidden border-2 border-primaryBlue shadow-lg shadow-blue-500"
           onPress={editable ? openGallery : undefined}
         >
-          <View className="items-center">
-            <Ionicons name="add" size={28} color="#1778F2" />
-            <Text className="text-[#1778F2] text-[12px] mt-2 font-medium">{multiple ? "Add Photos" : "Add Photo"}</Text>
+          <View className="items-center p-5">
+            <View className="bg-blue-50 p-3 rounded-full">
+              <CloudUpload className="text-primaryBlue bg-blue-200"/>
+            </View>
+            <Text className="text-gray-700 text-[12px] mt-2">
+              <Text className="text-primaryBlue font-medium">
+                Click here {""}
+              </Text>
+              to upload your {multiple ? "photos" : "photo"}
+            </Text>
           </View>
         </TouchableOpacity>
       )}
 
-      {editable && multiple && showClearAllButton && removableCount > 1 && (
-        <TouchableOpacity
-          className="mt-2 p-2 bg-red-500 rounded-lg justify-center items-center"
-          onPress={removeAllImages}
-        >
-          <Text className="text-white font-medium">
-            {onlyRemoveNewImages ? `Clear New Images (${removableCount})` : `Clear All (${selectedImages.length})`}
-          </Text>
-        </TouchableOpacity>
-      )}
-
+      {/* Upload More Button */}
       {editable && multiple && selectedImages?.length > 0 && canSelectMore && (
-        <TouchableOpacity
-          className="mt-2 p-3 bg-[#1778F2] rounded-lg justify-center items-center"
-          onPress={openGallery}
-        >
-          <Text className="text-white font-medium">
-            Add More Photos ({selectedImages.length}/{maxImages})
-          </Text>
-        </TouchableOpacity>
+        <View className="flex-row justify-center">
+          <TouchableOpacity
+            className="mt-2 p-3 bg-[#1778F2] justify-center items-center rounded-full"
+            onPress={openGallery}
+          >
+            <Text className="text-white text-sm font-medium px-4">
+              Upload ({selectedImages.length}/{maxImages})
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
 
+      {/* Gallery Modal */}
       <Modal
         visible={galleryVisible}
         animationType="slide"
@@ -409,6 +443,7 @@ export default function MediaPicker({
         </View>
       </Modal>
 
+      {/* Camera Modal */}
       <Modal visible={cameraVisible} animationType="slide" transparent={false} onRequestClose={closeCamera}>
         <View className="flex-1 relative">
           {device && (

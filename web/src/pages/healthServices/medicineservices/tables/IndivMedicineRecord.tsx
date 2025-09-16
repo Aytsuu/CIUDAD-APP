@@ -1,25 +1,12 @@
 // src/features/medicine/pages/IndivMedicineRecords.tsx
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import {
-  ArrowUpDown,
-  Search,
-  ChevronLeft,
-  Pill,
-  AlertCircle,
-  Loader2,
-} from "lucide-react";
+import { ArrowUpDown, Search, ChevronLeft, Pill, AlertCircle, Loader2 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery } from "@tanstack/react-query";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { medicineRecordColumns } from "./columns/inv-med-col";
@@ -61,12 +48,7 @@ export default function IndivMedicineRecords() {
   }, [searchQuery]);
 
   // Updated to use pagination parameters with search
-  const { data: apiResponse, isLoading, error } = useIndividualMedicineRecords(
-    patientData.pat_id,
-    currentPage,
-    pageSize,
-    debouncedSearch
-  );
+  const { data: apiResponse, isLoading, error } = useIndividualMedicineRecords(patientData.pat_id, currentPage, pageSize, debouncedSearch);
 
   // Extract data from paginated response
   const medicineRecords = apiResponse?.results || [];
@@ -86,20 +68,12 @@ export default function IndivMedicineRecords() {
     <>
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4">
-          <Button
-            className="text-black p-2 mb-2 self-start"
-            variant={"outline"}
-            onClick={() => navigate(-1)}
-          >
+          <Button className="text-black p-2 mb-2 self-start" variant={"outline"} onClick={() => navigate(-1)}>
             <ChevronLeft />
           </Button>
           <div className="flex-col items-center mb-4">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Individual Medicine Records
-            </h1>
-            <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patient's medicine records
-            </p>
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Individual Medicine Records</h1>
+            <p className="text-xs sm:text-sm text-darkGray">Manage and view patient's medicine records</p>
           </div>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
@@ -112,13 +86,9 @@ export default function IndivMedicineRecords() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
             <div className="flex items-center gap-3 mb-4">
               <AlertCircle className="h-4 w-4 text-yellow-500" />
-              <Label className="text-base font-semibold text-yellow-500">
-                No patient selected
-              </Label>
+              <Label className="text-base font-semibold text-yellow-500">No patient selected</Label>
             </div>
-            <p className="text-sm text-gray-700">
-              Please select a patient from the medicine records page first.
-            </p>
+            <p className="text-sm text-gray-700">Please select a patient from the medicine records page first.</p>
           </div>
         )}
 
@@ -128,25 +98,15 @@ export default function IndivMedicineRecords() {
               <Pill className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-800 pr-2">
-                Total Medicine Records
-              </p>
+              <p className="text-sm font-medium text-gray-800 pr-2">Total Medicine Records</p>
             </div>
             <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
           </div>
 
           <div className="flex flex-1 justify-between items-center gap-2">
             <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search by medicine name, category..."
-                className="pl-10 bg-white w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+              <Input placeholder="Search by medicine name, category..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
             <div>
               <Button className="w-full sm:w-auto">
@@ -155,8 +115,8 @@ export default function IndivMedicineRecords() {
                   state={{
                     params: {
                       mode: "fromindivrecord",
-                      patientData: patientData,
-                    },
+                      patientData: patientData
+                    }
                   }}
                 >
                   New Medicine Record
@@ -212,9 +172,7 @@ export default function IndivMedicineRecords() {
               </div>
             ) : medicineRecords.length === 0 ? (
               <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-                <span className="ml-2">
-                  {debouncedSearch ? "No records found for your search" : "No medicine records found"}
-                </span>
+                <span className="ml-2">{debouncedSearch ? "No records found for your search" : "No medicine records found"}</span>
               </div>
             ) : (
               <DataTable columns={medicineRecordColumns} data={medicineRecords} />
@@ -223,15 +181,10 @@ export default function IndivMedicineRecords() {
 
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-
-              {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
+              Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
             </p>
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           </div>
         </div>

@@ -3,14 +3,9 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Search, ChevronLeft, AlertCircle } from "lucide-react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown/dropdown-menu";
+import { ArrowUpDown, Search, AlertCircle } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery } from "@tanstack/react-query";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
@@ -26,7 +21,6 @@ export default function IndivFirstAidRecords() {
   const location = useLocation();
   const patientData = location.state?.params?.patientData;
 
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,9 +28,7 @@ export default function IndivFirstAidRecords() {
   if (!patientData?.pat_id) {
     return <div>Error: Patient ID not provided</div>;
   }
-  const [selectedPatientData, setSelectedPatientData] = useState<any | null>(
-    null
-  );
+  const [selectedPatientData, setSelectedPatientData] = useState<any | null>(null);
 
   useEffect(() => {
     if (location.state?.params?.patientData) {
@@ -51,13 +43,11 @@ export default function IndivFirstAidRecords() {
   const { data: firstAidRecords, isLoading } = useQuery({
     queryKey: ["patientFirstAidDetails"],
     queryFn: async () => {
-      const response = await api2.get(
-        `/firstaid/indiv-firstaid-record/${patientData.pat_id}/`
-      );
+      const response = await api2.get(`/firstaid/indiv-firstaid-record/${patientData.pat_id}/`);
       return response.data;
     },
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 0
   });
 
   const formatFirstAidData = React.useCallback((): FirstAidRecord[] => {
@@ -71,24 +61,20 @@ export default function IndivFirstAidRecords() {
         reason: record.reason,
         finv: record.finv,
         patrec: record.patrec,
-        finv_details: record.finv_details || null,
+        finv_details: record.finv_details || null
       };
     });
   }, [firstAidRecords]);
 
   const filteredData = React.useMemo(() => {
     return formatFirstAidData().filter((record) => {
-      const searchText =
-        `${record.farec_id} ${record.finv_details?.fa_detail?.fa_name} ${record.finv_details?.fa_detail?.catlist} ${record.reason}`.toLowerCase();
+      const searchText = `${record.farec_id} ${record.finv_details?.fa_detail?.fa_name} ${record.finv_details?.fa_detail?.catlist} ${record.reason}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
   }, [searchQuery, formatFirstAidData]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const columns: ColumnDef<FirstAidRecord>[] = [
     {
@@ -101,7 +87,7 @@ export default function IndivFirstAidRecords() {
             <div>{usedAt.toLocaleDateString()}</div>
           </div>
         );
-      },
+      }
     },
     {
       accessorKey: "firstaid_item",
@@ -110,12 +96,10 @@ export default function IndivFirstAidRecords() {
         <div className="flex justify-center min-w-[200px] px-2">
           <div className="font-medium">
             {row.original.finv_details?.fa_detail?.fa_name || "Unknown"}
-            <div className="text-xs text-gray-500">
-              Category: {row.original.finv_details?.fa_detail?.catlist || "N/A"}
-            </div>
+            <div className="text-xs text-gray-500">Category: {row.original.finv_details?.fa_detail?.catlist || "N/A"}</div>
           </div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "qty",
@@ -124,7 +108,7 @@ export default function IndivFirstAidRecords() {
         <div className="flex justify-center min-w-[200px] px-2">
           <div className="text-sm">{row.original.qty}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "reason",
@@ -133,7 +117,7 @@ export default function IndivFirstAidRecords() {
         <div className="flex flex-col text-sm">
           <div>{row.original.reason || "No reason provided"}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "signature",
@@ -142,24 +126,17 @@ export default function IndivFirstAidRecords() {
         <div className="flex justify-center px-2 w-full">
           {row.original.signature && (
             <div className="w-[200px]">
-              <img
-                src={`data:image/png;base64,${row.original.signature}`}
-                alt="Authorized Signature"
-                className="h-10 w-auto object-contain"
-              />
+              <img src={`data:image/png;base64,${row.original.signature}`} alt="Authorized Signature" className="h-10 w-auto object-contain" />
             </div>
           )}
         </div>
-      ),
-    },
+      )
+    }
   ];
 
   return (
     <>
-      <LayoutWithBack
-        title="Individual First Aid Records"
-        description="Manage and view patient's first aid records"
-      >
+      <LayoutWithBack title="Individual First Aid Records" description="Manage and view patient's first aid records">
         {selectedPatientData ? (
           <div className="mb-4">
             <PatientInfoCard patient={selectedPatientData} />
@@ -168,13 +145,9 @@ export default function IndivFirstAidRecords() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
             <div className="flex items-center gap-3 mb-4">
               <AlertCircle className="h-4 w-4 text-yellow-500" />
-              <Label className="text-base font-semibold text-yellow-500">
-                No patient selected
-              </Label>
+              <Label className="text-base font-semibold text-yellow-500">No patient selected</Label>
             </div>
-            <p className="text-sm text-gray-700">
-              Please select a patient from the first aid records page first.
-            </p>
+            <p className="text-sm text-gray-700">Please select a patient from the first aid records page first.</p>
           </div>
         )}
 
@@ -185,27 +158,15 @@ export default function IndivFirstAidRecords() {
               <Heart className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-800 pr-2">
-                Total Medical Consultations
-              </p>
+              <p className="text-sm font-medium text-gray-800 pr-2">Total Medical Consultations</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900">
-              {firstAidCount !== undefined ? firstAidCount : "0"}
-            </p>
+            <p className="text-2xl font-bold text-gray-900">{firstAidCount !== undefined ? firstAidCount : "0"}</p>
           </div>
           <div className="flex flex-col sm:flex-row flex-1 justify-between items-center gap-4 w-full">
             <div className="w-full flex gap-2">
               <div className="relative flex-1 ">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-                  size={17}
-                />
-                <Input
-                  placeholder="Search by item name, category, reason..."
-                  className="pl-10 bg-white w-full"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+                <Input placeholder="Search by item name, category, reason..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
             </div>
           </div>
@@ -216,8 +177,8 @@ export default function IndivFirstAidRecords() {
                 state={{
                   params: {
                     mode: "fromindivrecord",
-                    patientData,
-                  },
+                    patientData
+                  }
                 }}
               >
                 New Request
@@ -259,26 +220,13 @@ export default function IndivFirstAidRecords() {
             </div>
           </div>
 
-          <div className="bg-white w-full overflow-x-auto">
-            {isLoading ? (
-              <TableSkeleton columns={columns} rowCount={3} />
-            ) : (
-              <DataTable columns={columns} data={paginatedData} />
-            )}
-          </div>
+          <div className="bg-white w-full overflow-x-auto">{isLoading ? <TableSkeleton columns={columns} rowCount={3} /> : <DataTable columns={columns} data={paginatedData} />}</div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} records
+              Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} records
             </p>
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           </div>
         </div>

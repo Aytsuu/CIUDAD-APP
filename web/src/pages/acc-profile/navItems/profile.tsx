@@ -45,11 +45,15 @@ export default function Profile() {
 
     try {
       await updateProfilePicture(file);
+
+      // await dispatch(updateProfilePicture({
+      //   profile_image: response.profile_image
+      // }));
+
       toast.dismiss(loadingToast);
       toast.success("Profile picture updated");
     } catch (error: any) {
       setUploadError(error.message || "Upload failed");
-      toast.dismiss(loadingToast);
       toast.error("Upload failed");
     } finally {
       setIsUploading(false);
@@ -335,7 +339,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.per?.per_ed_attainment}
+                    {user?.resident?.per?.per_edAttainment}
                   </div>
                 </div>
               </div>

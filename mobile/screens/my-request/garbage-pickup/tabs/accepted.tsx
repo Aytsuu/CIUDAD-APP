@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { useGetGarbageAcceptedResident } from "../queries/garbagePickupFetchQueries";
 import { router } from "expo-router";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { CheckCircle } from "lucide-react-native";
 import { formatTime } from "@/helpers/timeFormatter";
@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function ResidentAccepted() {
   const [searchQuery, setSearchQuery] = useState("");
   const {user} = useAuth()
-  const {data: acceptedRequest = [], isLoading: isDataLoading} = useGetGarbageAcceptedResident(user.resident.rp_id)
+  const {data: acceptedRequest = [], isLoading: isDataLoading} = useGetGarbageAcceptedResident(user?.resident?.rp_id)
   const {mutate: confirm} = useUpdateGarbReqStatusResident(() => {}, false)
 
   console.log('Accepted:', acceptedRequest)

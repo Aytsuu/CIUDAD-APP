@@ -26,8 +26,8 @@ class FamilyCompositionExtendedSerializer(serializers.ModelSerializer):
     info = obj.rp.per
     return f"{info.per_lname}, {info.per_fname}" + \
           (f" {info.per_mname[0]}." if info.per_mname else '')
+  
 
-    
 class FamilyCompositionBulkCreateSerializer(serializers.ModelSerializer):
   class Meta:
     model = FamilyComposition

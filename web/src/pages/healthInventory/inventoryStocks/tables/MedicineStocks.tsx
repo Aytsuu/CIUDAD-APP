@@ -16,6 +16,7 @@ import { useMedicineStockTable } from "../REQUEST/Medicine/queries/MedicineFetch
 import { useArchiveMedicineStocks } from "../REQUEST/Archive/ArchivePutQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import WastedModal from "../addstocksModal/WastedModal";
 
 type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expired";
 
@@ -29,8 +30,12 @@ export default function MedicineStocks() {
   const [medicineToArchive, setMedicineToArchive] = useState<string | null>(null);
   const [archiveContext, setArchiveContext] = useState({ isExpired: false, hasAvailableStock: false });
   
+  // New state for WastedModal
+  const [isWastedModalOpen, setIsWastedModalOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
+
   const queryClient = useQueryClient();
-  const { mutate: archiveInventoryMutation } = useArchiveMedicineStocks(); // Updated hook
+  const { mutate: archiveInventoryMutation } = useArchiveMedicineStocks();
 
   // Updated to use pagination parameters with filter
   const { data: apiResponse, isLoading, error } = useMedicineStockTable(currentPage, pageSize, searchQuery, stockFilter);
@@ -57,6 +62,18 @@ export default function MedicineStocks() {
     setIsArchiveConfirmationOpen(true);
   };
 
+  // New handler for opening WastedModal
+  const handleOpenWastedModal = (record: any) => {
+    setSelectedRecord(record);
+    setIsWastedModalOpen(true);
+  };
+
+  // New handler for closing WastedModal
+  const handleCloseWastedModal = () => {
+    setIsWastedModalOpen(false);
+    setSelectedRecord(null);
+  };
+
   const confirmArchiveInventory = async () => {
     if (medicineToArchive !== null) {
       setIsArchiveConfirmationOpen(false);
@@ -79,7 +96,8 @@ export default function MedicineStocks() {
     }
   };
 
-  const columns = getColumns(handleArchiveInventory);
+  // Updated columns to include the wasted modal handler
+  const columns = getColumns(handleArchiveInventory, handleOpenWastedModal);
 
   if (error) {
     return (
@@ -224,6 +242,9 @@ export default function MedicineStocks() {
         title="Archive Medicine Item"
         description="Are you sure you want to archive this medicine? It will be preserved in the system but removed from active inventory."
       />
+
+      {/* Wasted Modal */}
+      <WastedModal isOpen={isWastedModalOpen} onClose={handleCloseWastedModal} record={selectedRecord} mode={"medicine"} />
     </>
   );
 }

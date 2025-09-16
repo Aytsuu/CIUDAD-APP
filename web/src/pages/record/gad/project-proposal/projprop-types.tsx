@@ -1,19 +1,3 @@
-export type ProposalStatus =
-  | "Pending"
-  | "Amend"
-  | "Approved"
-  | "Rejected"
-  | "Viewed"
-  | "Resubmitted";
-
-export type ProjectProposalLog = {
-  gprlId: number;
-  gprlDateApprovedRejected: string;
-  gprlReason: string | null;
-  gprlDateSubmitted: string;
-  gprlStatus: ProposalStatus;
-  staffId: string | null;
-};
 
 export type SupportDoc = {
   psd_id: number;
@@ -77,10 +61,6 @@ export type ProjectProposal = {
   gprIsArchive: boolean;
   staffId: any;
   staffName: string;
-  status: ProposalStatus;
-  statusReason: string | null;
-  logs: ProjectProposalLog[];
-  paperSize: "a4" | "letter" | "legal";
   supportDocs: SupportDoc[];
   devId: number;
   projectIndex: number;
@@ -112,15 +92,13 @@ export type ProjectProposalInput = {
   staffId?: number | null | string;
   gprIsArchive?: boolean;
   supportDocs?: SupportDoc[];
-  status: ProposalStatus;
-  statusReason: string | null;
-  gpr_page_size: "a4" | "letter" | "legal";
   dev: number;
   participants?: {
     category: string;
     count: string | number;
   }[];
   budget_items?: any[];
+  dev_date?: string;
 };
 
 export type Staff = {
@@ -155,28 +133,6 @@ export interface ViewProjectProposalProps {
   projectSource?: string;
 }
 
-export interface ProposalLog {
-  gprl_id: number;
-  gpr_id: number;
-  gpr_title: string;
-  gprl_date_approved_rejected: string | null;
-  gprl_reason: string | null;
-  gprl_date_submitted: string;
-  gprl_status:
-    | "Pending"
-    | "Approved"
-    | "Rejected"
-    | "Viewed"
-    | "Amend"
-    | "Resubmitted";
-  staff: Staff | null;
-  gpr: number;
-  staff_details: {
-    staff_id: number;
-    full_name: string;
-    position: string;
-  } | null;
-}
 
 export const prepareProposalPayload = (proposalData: ProjectProposalInput) => {
   // Prepare header image data
@@ -207,7 +163,6 @@ export const prepareProposalPayload = (proposalData: ProjectProposalInput) => {
     gpr_header_img: headerImageData,
     staff: proposalData.staffId,
     gpr_is_archive: proposalData.gprIsArchive || false,
-    gpr_page_size: proposalData.gpr_page_size,
     dev: proposalData.dev,
     participants: proposalData.participants,
     budget_items: proposalData.budget_items
@@ -215,7 +170,7 @@ export const prepareProposalPayload = (proposalData: ProjectProposalInput) => {
 
  return Object.fromEntries(
     Object.entries(payload).filter(([key, value]) => {
-      // Keep participants and budget_items even if they're empty arrays
+
       if (key === 'participants' || key === 'budget_items') {
         return true;
       }
@@ -234,7 +189,6 @@ export const prepareEditProposalPayload = (proposalData: ProjectProposalInput) =
     gpr_signatories: proposalData.gpr_signatories,
     staff: proposalData.staffId,
     gpr_is_archive: proposalData.gprIsArchive || false,
-    gpr_page_size: proposalData.gpr_page_size,
     dev: proposalData.dev,
     participants: proposalData.participants,
     budget_items: proposalData.budget_items
