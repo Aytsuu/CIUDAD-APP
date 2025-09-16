@@ -12,8 +12,6 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Heart, Users, GraduationCap, Stethoscope, Utensils, CreditCard, Smartphone, Building2 } from "lucide-react"
 import { Footer } from "./Footer"
-import { useGetAnnouncement } from "@/pages/announcement/queries/announcementFetchQueries"; 
-import FloatingAnnouncement from "@/components/ui/floatingAnnouncement/FloatingAnnouncement";
 
 const donationCategories = [
   {
@@ -57,8 +55,6 @@ const donationCategories = [
 const presetAmounts = [100, 250, 500, 1000, 2500, 5000]
 
 export default function Donation() {
-    const { data: announcements } = useGetAnnouncement();
-    const latest = announcements?.[0];
   const [selectedCategory, setSelectedCategory] = useState("")
   const [donationAmount, setDonationAmount] = useState("")
   const [customAmount, setCustomAmount] = useState("")
@@ -372,8 +368,6 @@ export default function Donation() {
           </div>
         </div>
       </section>
-      {/* Floating Announcement */}
-      <FloatingAnnouncement announcement={latest ?? null} />
       <Footer />
     </main>
   )

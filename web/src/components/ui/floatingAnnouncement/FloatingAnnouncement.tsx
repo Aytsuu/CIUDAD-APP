@@ -43,7 +43,7 @@ export default function FloatingAnnouncement({ announcement }: FloatingAnnouncem
         const newProgress = prev - 1
         return newProgress <= 0 ? 0 : newProgress
       })
-    }, 100) // Update every 100ms for smooth animation
+    }, 100) 
 
     return () => {
       clearTimeout(timer)
@@ -53,7 +53,6 @@ export default function FloatingAnnouncement({ announcement }: FloatingAnnouncem
 
   if (!visible || !announcement) return null
 
-  const formattedEndAt = formatDateToManila(announcement.ann_end_at)
   const formattedEventStart = formatDateToManila(announcement.ann_event_start)
   const formattedEventEnd = formatDateToManila(announcement.ann_event_end)
   const hasEventDates = announcement.ann_event_start && announcement.ann_event_end
@@ -91,9 +90,6 @@ export default function FloatingAnnouncement({ announcement }: FloatingAnnouncem
           )}
         </div>
 
-        <div className="px-4 py-2 text-xs text-gray-500 border-t border-blue-200/60 bg-blue-50/30">
-          <p>Ends at: {formattedEndAt}</p>
-        </div>
 
         {/* Progress bar for auto-dismiss */}
         <div className="h-1 bg-blue-100 rounded-b-xl overflow-hidden">

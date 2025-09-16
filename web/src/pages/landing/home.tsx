@@ -2,12 +2,9 @@ import Demo1 from "@/assets/demo/demo-1.webp";
 import { Button } from "@/components/ui/button/button";
 import { MoveRight } from "lucide-react";
 import { Footer } from "./Footer";
-import { useGetAnnouncement } from "@/pages/announcement/queries/announcementFetchQueries"; 
-import FloatingAnnouncement from "@/components/ui/floatingAnnouncement/FloatingAnnouncement";
 
 export default function Home() {
-  const { data: announcements } = useGetAnnouncement();
-  const latest = announcements?.[0]; // or filter for active announcements
+
 
   return (
     <main className="flex-1 bg-[#17294A]">
@@ -34,8 +31,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Floating Announcement */}
-      <FloatingAnnouncement announcement={latest ?? null} />
+
 
       <Footer />
     </main>

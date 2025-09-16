@@ -1,8 +1,7 @@
  import React from "react";
 import { Footer } from "./Footer";
 import { useBrgyCouncil } from "./queries/landingFetchQueries";
-import { useGetAnnouncement } from "@/pages/announcement/queries/announcementFetchQueries"; 
-import FloatingAnnouncement from "@/components/ui/floatingAnnouncement/FloatingAnnouncement";
+
 
 export default function BarangayCouncil() {
   const { data: brgyCouncil } = useBrgyCouncil();
@@ -277,10 +276,6 @@ export default function BarangayCouncil() {
           </div>
         </div>
       </section>
-      
-                {/* Floating Announcement */}
-                <FloatingAnnouncement announcement={latest ?? null} />
-      
       <Footer />
     </main>
   );

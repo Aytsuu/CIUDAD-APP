@@ -1,10 +1,8 @@
 import { Footer } from "./Footer";
-import { useGetAnnouncement } from "@/pages/announcement/queries/announcementFetchQueries";
-import FloatingAnnouncement from "@/components/ui/floatingAnnouncement/FloatingAnnouncement";
+
 
 export default function Services() {
-  const { data: announcements } = useGetAnnouncement();
-  const latest = announcements?.[0]; // or filter for active announcements
+
   const serviceCategories = [
     {
       id: 'documents',
@@ -205,8 +203,7 @@ export default function Services() {
         </div>
       </section>
 
-      {/* Floating Announcement */}
-      <FloatingAnnouncement announcement={latest ?? null} />
+
       
       <Footer/>
     </main>

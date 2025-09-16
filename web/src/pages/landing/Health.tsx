@@ -28,8 +28,7 @@ import {
   Ambulance,
 } from "lucide-react"
 import { Footer } from "./Footer"
-import { useGetAnnouncement } from "@/pages/announcement/queries/announcementFetchQueries"
-import FloatingAnnouncement from "@/components/ui/floatingAnnouncement/FloatingAnnouncement"
+
 
 const healthServices = [
   {
@@ -150,8 +149,6 @@ const staffMembers = [
 ]
 
 export default function Health() {
-  const { data: announcements } = useGetAnnouncement()
-  const latest = announcements?.[0] // or filter for active announcements
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [appointmentForm, setAppointmentForm] = useState({
     name: "",
@@ -541,8 +538,7 @@ export default function Health() {
           </Tabs>
         </div>
       </section>
-      {/* Floating Announcement */}
-      <FloatingAnnouncement announcement={latest ?? null} />
+
       <Footer />
     </main>
   )
