@@ -57,7 +57,6 @@ const generateAndSetPdf = async () => {
       
       monitoringEvaluation: project.monitoringEvaluation || "",
       signatories: project.signatories || [],
-      paperSize: project.paperSize || "a4",
       headerImage: project.headerImage || null,
     };
 

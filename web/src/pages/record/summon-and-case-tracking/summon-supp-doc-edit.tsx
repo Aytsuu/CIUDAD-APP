@@ -7,13 +7,13 @@ import { useForm } from "react-hook-form";
 import {z} from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useUpdateSuppDoc } from "./queries/summonUpdateQueries";
+// import { useUpdateSuppDoc } from "./queries/summonUpdateQueries";
 
-export default function SummonSuppDocEditForm({csd_id, csd_url, csd_description, onSuccess}: {
+export default function SummonSuppDocEditForm({csd_id, csd_url, csd_description}: {
     csd_id: string;
     csd_url: string;
     csd_description: string;
-    onSuccess: () => void;
+    // onSuccess: () => void;
 }) {
     // const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => {
     //     return csd_url ? [{
@@ -27,7 +27,7 @@ export default function SummonSuppDocEditForm({csd_id, csd_url, csd_description,
     //     }] : [];
     // });
     const [_activeVideoId, _setActiveVideoId] = useState<string>("");
-    const {mutate: _updateDocs, isPending} = useUpdateSuppDoc(onSuccess);
+    // const {mutate: _updateDocs, isPending} = useUpdateSuppDoc(onSuccess);
     // const isSubmitDisabled = isPending || mediaFiles.some(file => file.status === 'uploading');
 
     const form = useForm<z.infer<typeof SummonSuppDocEditSchema>>({
@@ -106,7 +106,7 @@ export default function SummonSuppDocEditForm({csd_id, csd_url, csd_description,
                             className="w-[100px]"
                             onClick={() => console.log('Button clicked')}
                         > 
-                            {isPending ? "Submitting..." : "Save"}
+                            {/* {isPending ? "Submitting..." : "Save"} */}
                         </Button>
                     </div>
                 </form>

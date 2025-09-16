@@ -1,6 +1,16 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 export default function FamilyProfileOptions() {
+  const { user } = useAuth();
+  
+  // Determine routes based on staff type
+  const isHealthStaff = user?.staff?.staff_type === "Health Staff";
+    
+  const familyRoute = isHealthStaff 
+    ? "/family/family-profile-form" 
+    : "/profiling/family/form";
+
   return (
     <div className="w-full h-[14rem] sm:h-[18rem] md:h-[20rem] grid grid-cols-1 sm:grid-cols-2 gap-3">
       {/* Registration Form */}
@@ -14,11 +24,10 @@ export default function FamilyProfileOptions() {
         >
           Living Independently
         </div>
-    
-        
       </Link>
+      
       <Link
-        to="/profiling/family/form"
+        to={familyRoute}
         className="relative inline-block overflow-hidden group border-2 h-full rounded-lg"
       >
         {/* Text content */}

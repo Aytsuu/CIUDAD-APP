@@ -772,7 +772,7 @@ class IncomeExpenseFileDetailView(generics.RetrieveDestroyAPIView):
 class Annual_Gross_SalesView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Annual_Gross_SalesSerializers
-    queryset = Annual_Gross_Sales.objects.all()
+    queryset = Annual_Gross_Sales.objects.all().order_by('-ags_date')
 
 class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
     permission_classes = [AllowAny]
@@ -792,7 +792,7 @@ class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
 class Purpose_And_RatesView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
-    queryset = Purpose_And_Rates.objects.all()
+    queryset = Purpose_And_Rates.objects.all().order_by('-pr_date')
 
 
 class DeleteUpdate_Purpose_And_RatesView(generics.UpdateAPIView):
@@ -810,6 +810,42 @@ class DeleteUpdate_Purpose_And_RatesView(generics.UpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+class PurposeAndRateByParamsView(APIView):
+    def get(self, request):
+        pr_purpose = request.query_params.get('pr_purpose')
+        pr_category = request.query_params.get('pr_category')
+        pr_is_archive = request.query_params.get('pr_is_archive')
+        
+        # Validation and query logic same as above
+        if not all([pr_purpose, pr_category, pr_is_archive]):
+            return Response(
+                {'error': 'All parameters are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            pr_is_archive_bool = pr_is_archive.lower() == 'true' if isinstance(pr_is_archive, str) else bool(pr_is_archive)
+        except:
+            return Response(
+                {'error': 'Invalid pr_is_archive value'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            purpose_rate = Purpose_And_Rates.objects.get(
+                pr_purpose=pr_purpose,
+                pr_category=pr_category,
+                pr_is_archive=pr_is_archive_bool
+            )
+            serializer = Purpose_And_RatesSerializers(purpose_rate)
+            return Response(serializer.data)
+            
+        except Purpose_And_Rates.DoesNotExist:
+            return Response(
+                {'error': 'Record not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
 
 #---------------  RECEIPTS
 
@@ -824,7 +860,8 @@ class InvoiceView(generics.ListCreateAPIView):
     # Use the correct field names that exist in your Invoice model
     queryset = Invoice.objects.select_related(
         'bpr_id__rp_id__per',  # For business permit requests
-        'nrc_id'  # For non-resident certificate requests
+        'nrc_id',              # For non-resident certificate requests
+        'cr_id__rp_id__per'       # For resident certificates
     ).all()
 
 

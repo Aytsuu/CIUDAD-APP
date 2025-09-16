@@ -1,10 +1,12 @@
 import { api } from "@/api/api";
 
 
-// Function to get a valid resident profile ID
-const getValidResidentProfileId = async () => {
-    // TODO: Replace with actual logged-in user's resident ID from auth context
-    return "00001250821"; // Temporary resident ID - match the one used in cert-permit.tsx
+// Function to get a valid resident profile ID (from caller)
+const getValidResidentProfileId = async (userId?: string) => {
+    if (!userId) {
+        throw new Error("Error: No user ID provided");
+    }
+    return userId;
 };
 
 // Test function to check server connectivity
@@ -48,7 +50,7 @@ export const testServerConnection = async () => {
     }
 };
 
-export const addCertificationRequest = async (requestInfo: Record<string, any>, staffId?: string) => {
+export const addCertificationRequest = async (requestInfo: Record<string, any>, staffId?: string, userId?: string) => {
     try {
         let businessExistenceFileId = null;
         let grossSalesFileId = null;
@@ -93,7 +95,7 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
             const cr_id = `CR${timestamp.slice(-6)}${randomPart}`;
             
             // Get a valid resident profile ID
-            const residentProfileId = await getValidResidentProfileId();
+            const residentProfileId = await getValidResidentProfileId(userId);
             
             const payload = {
                 cr_id: cr_id, 
@@ -130,7 +132,7 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
                 req_status: 'Pending',
                 req_payment_status: 'Unpaid',
                 req_amount: requestInfo.req_amount || 0, // Required amount field
-                rp_id: await getValidResidentProfileId(),
+                rp_id: await getValidResidentProfileId(userId),
                 ags_id: requestInfo.ags_id || null, // Annual gross sales ID (optional)
                 pr_id: requestInfo.pr_id || null, // Purpose and rate ID (optional)
                 bus_permit_name: requestInfo.business_name || '', // Business name field
@@ -184,7 +186,7 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
     }
 };
 
-export const addBusinessClearance = async (requestInfo: Record<string, any>, staffId?: string) => {
+export const addBusinessClearance = async (requestInfo: Record<string, any>, staffId?: string, userId?: string) => {
     try {
         const payload: any = {
             req_request_date: new Date().toISOString().split('T')[0], // Current date
@@ -192,7 +194,7 @@ export const addBusinessClearance = async (requestInfo: Record<string, any>, sta
             req_status: 'Pending',
             req_payment_status: 'Unpaid',
             req_amount: requestInfo.req_amount || 0, // Required amount field
-            rp_id: await getValidResidentProfileId(),
+            rp_id: await getValidResidentProfileId(userId),
             ags_id: requestInfo.ags_id || null, // Annual gross sales ID (optional)
             pr_id: requestInfo.pr_id || null, // Purpose and rate ID (optional)
             bus_permit_name: requestInfo.business_name || '', // Business name field

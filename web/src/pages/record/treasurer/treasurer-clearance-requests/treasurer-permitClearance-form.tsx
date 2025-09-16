@@ -26,13 +26,14 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
     const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const queryClient = useQueryClient();
+    const staffId = user?.staff?.staff_id as string | undefined;
     
     
     // Add error handling for the queries
     const { data: businesses = [], isLoading: businessLoading, error: businessError } = useGetBusinesses();
     const { data: permitPurposes = [], isLoading: purposesLoading, error: purposesError } = useGetPermitPurposes();
     const { data: residents = [], isLoading: residentLoading} = useGetResidents();
-    const { data: grossSales = [], isLoading: grossSalesLoading } = useGetAnnualGrossSales();
+    const { data: grossSales = [], isLoading: _grossSalesLoading } = useGetAnnualGrossSales();
     
     // Log any errors
     if (businessError) {
@@ -85,41 +86,42 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
     }
 
     // Function to get business requestor when business is selected
-    const getBusinessRequestor = (businessValue: string) => {
-        console.log("getBusinessRequestor called with businessValue:", businessValue);
+    // const getBusinessRequestor = (businessValue: string) => {
+    //     console.log("getBusinessRequestor called with businessValue:", businessValue);
         
-        // Try to find by ID first
-        let selectedBusiness = businesses.find((business: any) => business.bus_id === businessValue);
+    //     // Try to find by ID first
+    //     let selectedBusiness = businesses.find((business: any) => business.bus_id === businessValue);
         
-        // If not found by ID, try to find by name
-        if (!selectedBusiness) {
-            selectedBusiness = businesses.find((business: any) => business.bus_name === businessValue);
-        }
+    //     // If not found by ID, try to find by name
+    //     if (!selectedBusiness) {
+    //         selectedBusiness = businesses.find((business: any) => business.bus_name === businessValue);
+    //     }
         
-        console.log("Selected business for requestor:", selectedBusiness);
+    //     console.log("Selected business for requestor:", selectedBusiness);
         
-        const requestor = selectedBusiness?.requestor || '';
-        console.log("Resolved requestor:", requestor);
+    //     const requestor = selectedBusiness?.requestor || '';
+    //     console.log("Resolved requestor:", requestor);
         
-        return requestor;
-    }
+    //     return requestor;
+    // }
 
     const onSubmit = async (values: z.infer<typeof PermitClearanceFormSchema>) => {
         try {
             setIsSubmitting(true);
             
-          
-            const staffId = "00006250722"; // Hardcoded staff ID
-            
+            if (!staffId) {
+                toast.error("Missing staff ID. Please re-login and try again.");
+                return;
+            }
+
             const payload = {
-                ...values,
-                staff: staffId  
+                ...values
             };
             
             console.log("Permit Clearance Data:", payload);
             
          
-            await createPermitClearance(payload);
+            await createPermitClearance(payload, staffId);
             console.log("Permit clearance created successfully");
             
             toast.success("Permit clearance created successfully!");

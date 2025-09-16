@@ -1,15 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Plus, X, Wallet } from "lucide-react";
-import {
-  useUpdateProjectProposal,
-  useUpdateProjectProposalStatus,
-} from "./queries/projprop-updatequeries";
+import { useUpdateProjectProposal } from "./queries/projprop-updatequeries";
 import { useAddSupportDocument } from "./queries/projprop-addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-import {
-  useGetStaffList
-} from "./queries/projprop-fetchqueries";
+import { useGetStaffList } from "./queries/projprop-fetchqueries";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { ProjectProposalSchema } from "@/form-schema/gad-projprop-create-form-schema";
@@ -41,10 +36,6 @@ export const EditProjectProposalForm: React.FC<
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const [selectedDevProject] = useState<any>(null);
   const [showConfirm, setShowConfirm] = useState(false);
-  const updateStatusMutation = useUpdateProjectProposalStatus();
-  const [confirmAction, setConfirmAction] = useState<"save" | "resubmit">(
-    "save"
-  );
   const { data: budgetEntries = [], isLoading: isBudgetLoading } =
     useGADBudgets(new Date().getFullYear().toString());
   const { data: yearBudgets } = useGetGADYearBudgets();
@@ -77,30 +68,37 @@ export const EditProjectProposalForm: React.FC<
     resolver: zodResolver(ProjectProposalSchema),
     defaultValues: {
       selectedDevProject: initialValues?.devId
-  ? {
-      dev_id: initialValues.devId,
-      project_title: initialValues.projectTitle || "",
-      participants: initialValues.participants?.map((p: any) =>
-        typeof p === "string"
-          ? { category: p, count: "0" }
-          : {
-              category: p.category || "",
-              count: String(p.count || 0),
-            }
-      ) || [],
-      budget_items: initialValues.budgetItems?.map((item: any) => ({
-        name: item.name,
-        pax: typeof item.pax === "number" ? item.pax.toString() : item.pax || "",
-        amount:
-          typeof item.amount === "number" ? String(item.amount) : item.amount || "0",
-      })) || [],
-    }
-  : {
-      dev_id: 0,
-      project_title: "",
-      participants: [],
-      budget_items: [],
-    },
+        ? {
+            dev_id: initialValues.devId,
+            project_title: initialValues.projectTitle || "",
+            participants:
+              initialValues.participants?.map((p: any) =>
+                typeof p === "string"
+                  ? { category: p, count: "0" }
+                  : {
+                      category: p.category || "",
+                      count: String(p.count || 0),
+                    }
+              ) || [],
+            budget_items:
+              initialValues.budgetItems?.map((item: any) => ({
+                name: item.name,
+                pax:
+                  typeof item.pax === "number"
+                    ? item.pax.toString()
+                    : item.pax || "",
+                amount:
+                  typeof item.amount === "number"
+                    ? String(item.amount)
+                    : item.amount || "0",
+              })) || [],
+          }
+        : {
+            dev_id: 0,
+            project_title: "",
+            participants: [],
+            budget_items: [],
+          },
       background: initialValues?.background || "",
       objectives: initialValues?.objectives?.length
         ? initialValues.objectives
@@ -130,7 +128,6 @@ export const EditProjectProposalForm: React.FC<
       signatories: initialValues?.signatories?.length
         ? initialValues.signatories
         : [{ name: "", position: "", type: "prepared" }],
-      paperSize: initialValues?.paperSize || "letter",
     },
   });
 
@@ -140,8 +137,6 @@ export const EditProjectProposalForm: React.FC<
   const participants = watch("participants");
   const budgetItems = watch("budgetItems");
   const signatories = watch("signatories");
-  const paperSize = watch("paperSize");
-
   const participantCategories = [
     "Women",
     "LGBTQIA+",
@@ -321,18 +316,18 @@ export const EditProjectProposalForm: React.FC<
         }));
 
       const formattedParticipants = data.participants
-        .filter(p => p.category.trim() !== "")
-        .map(p => ({
+        .filter((p) => p.category.trim() !== "")
+        .map((p) => ({
           category: p.category,
-          count: parseInt(p.count) || 0
+          count: parseInt(p.count) || 0,
         }));
-      
+
       const formattedBudgetItems = data.budgetItems
-        .filter(item => item.name.trim() !== "")
-        .map(item => ({
+        .filter((item) => item.name.trim() !== "")
+        .map((item) => ({
           name: item.name,
           pax: item.pax || "1",
-          amount: parseFloat(item.amount) || 0
+          amount: parseFloat(item.amount) || 0,
         }));
 
       const proposalData: ProjectProposalInput = {
@@ -346,16 +341,9 @@ export const EditProjectProposalForm: React.FC<
         gpr_header_img: headerImage,
         staffId: initialValues.staffId || null,
         gprIsArchive: initialValues.gprIsArchive || false,
-        status:
-          confirmAction === "resubmit" ? "Resubmitted" : initialValues.status,
-        statusReason:
-          confirmAction === "resubmit"
-            ? "Project proposal resubmitted by user"
-            : initialValues.statusReason,
-        gpr_page_size: data.paperSize,
         dev: data.selectedDevProject?.dev_id || initialValues.devId || 0,
         participants: formattedParticipants,
-        budget_items: formattedBudgetItems
+        budget_items: formattedBudgetItems,
       };
 
       await updateMutation.mutateAsync(proposalData);
@@ -365,14 +353,6 @@ export const EditProjectProposalForm: React.FC<
         await addSupportDocMutation.mutateAsync({
           gpr_id: initialValues.gprId,
           files: newDocs,
-        });
-      }
-
-      if (confirmAction === "resubmit") {
-        await updateStatusMutation.mutateAsync({
-          gprId: initialValues.gprId,
-          status: "Resubmitted",
-          reason: "Project proposal resubmitted by user",
         });
       }
 
@@ -390,18 +370,9 @@ export const EditProjectProposalForm: React.FC<
           monitoringEvaluation: data.monitoringEvaluation,
           signatories: data.signatories.filter((s) => s.name.trim() !== ""),
           headerImage: headerImage,
-          paperSize: data.paperSize,
           supportDocs: [...keptDocs, ...docsToArchive] as SupportDoc[],
-          status:
-            confirmAction === "resubmit"
-              ? "Resubmitted"
-              : initialValues?.status || "Pending",
-          statusReason:
-            confirmAction === "resubmit"
-              ? "Project proposal resubmitted by user"
-              : initialValues?.statusReason,
           participants: formattedParticipants,
-          budgetItems: formattedBudgetItems
+          budgetItems: formattedBudgetItems,
         };
         onSuccess(updatedProject);
       }
@@ -422,24 +393,6 @@ export const EditProjectProposalForm: React.FC<
           {errorMessage}
         </div>
       )}
-      <div className="mb-6">
-        <label className="block text-sm font-medium mb-2">Paper Size</label>
-        <div className="flex flex-wrap gap-4">
-          {["a4", "letter", "legal"].map((size) => (
-            <label key={size} className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="paperSize"
-                checked={paperSize === size}
-                onChange={() =>
-                  setValue("paperSize", size as "a4" | "letter" | "legal")
-                }
-              />
-              {size.charAt(0).toUpperCase() + size.slice(1)}
-            </label>
-          ))}
-        </div>
-      </div>
 
       <Form {...form}>
         <form
@@ -848,82 +801,24 @@ export const EditProjectProposalForm: React.FC<
               </div>
             </div>
             <div className="flex flex-col sm:flex-row justify-end mt-6 gap-3">
-              <div className="flex gap-2 mb-6">
-                {initialValues?.status !== "Amend" &&
-                initialValues?.status !== "Rejected" ? (
+              <ConfirmationModal
+                trigger={
                   <Button
                     type="button"
-                    onClick={() => {
-                      setConfirmAction("save");
-                      setShowConfirm(true);
-                    }}
+                    className="w-full sm:w-auto items-center gap-2 mb-5"
                     disabled={updateMutation.isPending || isSubmitting}
-                    className="gap-2"
                   >
-                    Save
+                    {updateMutation.isPending ? "Saving..." : "Save"}
                   </Button>
-                ) : (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setConfirmAction("save");
-                        setShowConfirm(true);
-                      }}
-                      disabled={updateMutation.isPending || isSubmitting}
-                      className="gap-2"
-                    >
-                      Just Save
-                    </Button>
-
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        setConfirmAction("resubmit");
-                        setShowConfirm(true);
-                      }}
-                      disabled={updateMutation.isPending || isSubmitting}
-                      className="gap-2"
-                    >
-                      Save and Resubmit
-                    </Button>
-                  </>
-                )}
-              </div>
-
-              <ConfirmationModal
+                }
+                title="Confirm Save"
+                description="Are you sure you want to save changes to this proposal?"
+                actionLabel="Confirm"
+                onClick={() => {
+                  handleSubmit(handleSave)();
+                }}
                 open={showConfirm}
                 onOpenChange={setShowConfirm}
-                title={
-                  confirmAction === "save"
-                    ? "Confirm Save"
-                    : "Confirm Resubmission"
-                }
-                description={
-                  confirmAction === "save"
-                    ? "Are you sure you want to save without resubmitting?"
-                    : "Are you sure you want to save and resubmit this proposal?"
-                }
-                actionLabel={
-                  confirmAction === "save"
-                    ? "Confirm Save"
-                    : "Confirm Resubmission"
-                }
-                onClick={() => {
-                  if (confirmAction === "resubmit") {
-                    handleSubmit((data) => {
-                      const updatedData = {
-                        ...data,
-                        status: "Resubmitted" as const,
-                        statusReason: "Project proposal resubmitted by user",
-                      };
-                      handleSave(updatedData);
-                    })();
-                  } else {
-                    handleSubmit(handleSave)();
-                  }
-                }}
               />
             </div>
           </div>
