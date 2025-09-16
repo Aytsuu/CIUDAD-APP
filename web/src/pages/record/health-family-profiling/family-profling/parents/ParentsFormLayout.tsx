@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button/button";
 import ParentsForm from "./ParentsForm";
 import HealthInfoForm from "../healthInfo/HealthInfoForm";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
-import { DependentRecord } from "../../profilingTypes";
+import { DependentRecord } from "../../ProfilingTypes";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";

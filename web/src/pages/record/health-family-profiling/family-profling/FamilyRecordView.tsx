@@ -4,7 +4,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { DataTable } from "@/components/ui/table/data-table";
 import { dependentViewColumns } from "./FamilyColumns";
 import { useLocation } from "react-router";
-import { DependentRecord } from "../profilingTypes";
+import { DependentRecord } from "../ProfilingTypes";
 import CardLayout from "@/components/ui/card/card-layout";
 
 export default function FamilyRecordView(){

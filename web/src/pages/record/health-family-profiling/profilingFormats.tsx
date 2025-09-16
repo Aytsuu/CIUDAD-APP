@@ -1,5 +1,7 @@
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { capitalize } from "@/helpers/capitalize";
+import { formatCurrency } from "@/helpers/currencyFormat";
 
 // Format residents for searching
 export const formatResidents = (residents: any) => {
@@ -21,6 +23,8 @@ export const formatResidents = (residents: any) => {
 
 };
 
+
+
 // Format sitio for searching
 export const formatSitio = (sitio: any) => {
   if (!sitio) return [];
@@ -38,15 +42,15 @@ export const formatHouseholds = (households: any) => {
   if (!households) return [];
 
   return households.map((household: any) => ({
-    id: household.hh_id,
+    id: `${household.hh_id} ${household.head.split("-")[1]}`,
     name: (
       <div className="flex gap-4 items-center">
         <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
           #{household.hh_id}
         </span>
         <div className="flex items-center gap-2">
-          <Label>Head:</Label>
-          {household.head}
+          <Label>Owner:</Label>
+          {household.head.split("-")[1]}
         </div>
       </div>
     ),
@@ -58,23 +62,26 @@ export const formatAddresses = (addresses: any) => {
 
   return addresses.map( (item: {
       per: string,
-      add: string,
-      add_sitio: string,
+      add_id: string,
+      sitio: string,
       add_street: string,
-    }, idx: number) => ({
-      per_id: item.per,
-      add_id: item.add,
-      id: `address ${idx+1} - ${item.add_sitio.toLowerCase()}, ${item.add_street.toLowerCase()}`,
-      name: `Address ${idx+1} - ${capitalize(item.add_sitio)}, ${item.add_street}`, 
-    })
+    }, idx: number) => {
+      if(item.sitio) {
+        return {
+          // per_id: item.per,
+          // add_id: item.add_id,
+          id: `${item.add_id}-${item.sitio.toLowerCase()}-${item.add_street}`,
+          name: `Address ${idx+1} - ${capitalize(item.sitio)}, ${item.add_street}`, 
+        }
+      }
+    }
   )
 }
-
 export const formatFamiles = (families: any) => {
   if (!families) return [];
 
   return families.map((family: any, idx: number) => ({
-    id: family.fam_id,
+    id: String(family.fam_id),
     name: (
       <div className="flex gap-4 items-center">
         <span>
@@ -86,4 +93,70 @@ export const formatFamiles = (families: any) => {
       </div>
     ),
   }));
+}
+
+export const formatRequestComposition = (compositions: any) => {
+  if (!compositions) return [];
+
+  return compositions.map((comp: any) => ({
+    id: comp.per_id,
+    name: <p>{`${comp.per_lname}, ${comp.per_fname}${comp.per_mname ? ` ${comp.per_mname}` : ""}`}</p>
+  }))
+}
+
+export const formatOwnedBusinesses = (businesses: any) => {
+  if(!businesses) return [];
+
+  return businesses.map((bus: any) => ({
+    id: `${bus.bus_id} ${bus.bus_name} ${bus.bus_gross_sales} ${bus.bus_status}`,
+    name: (
+      <div className="flex flex-col w-full items-start">
+        <p className="text-[15px]">{bus.bus_name}</p>
+        <div className="flex w-full justify-between items-center">
+          <p className="text-xs text-gray-700">Gross Sales: {formatCurrency(bus.bus_gross_sales)}</p>
+          <Badge className={`${bus.bus_status == 'Pending' ? 
+            "bg-amber-500 hover:bg-amber-500" : 
+            "bg-green-500 hover:bg-green-500"}`}>
+              {bus.bus_status}
+            </Badge>
+        </div>
+      </div>
+    )
+  }))
+}
+
+export const formatModificationRequests = (requests: any) => {
+  if(!requests) return [];
+  return requests.map((req: any) => ({
+      id: `${req.current_details.bus_id} ${req.current_details.bus_name} ${req.current_details.bm_id}`,
+      name: (
+        <div className="flex flex-col w-full items-start py-2">
+          <div className="flex items-center gap-2">
+            <p className="text-[15px] font-medium">{req.current_details.bus_name}</p>
+            <Badge variant="outline" className="text-xs">
+              ID: {req.current_details.bus_id}
+            </Badge>
+          </div>
+          <div className="flex w-full justify-between items-center mt-1">
+            <p className="text-xs text-gray-600">
+              Modification Request Pending
+            </p>
+            <Badge className="bg-amber-500 hover:bg-amber-500">
+              Pending Review
+            </Badge>
+          </div>
+        </div>
+      )
+    }))
+}
+
+export const formatOwnedHouses = (houses: any) => {
+  if(!houses) return;
+  return houses.map((house: any, index: number) => ({
+    id: String(index),
+    name: <div className="flex gap-2">
+      <p>{`House ${index + 1} - Sitio ${house.address.split("-")[1]}, ${house.address.split("-")[2]}`}</p>
+      <Badge>{house.nhts == "yes" ? "NHTS" : "Not an NHTS"}</Badge>
+    </div>
+  }))
 }

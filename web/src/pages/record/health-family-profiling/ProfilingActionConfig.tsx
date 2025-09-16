@@ -1,4 +1,4 @@
-import { Type, Origin } from "./profilingEnums";
+import { Type, Origin } from "./ProfilingEnums";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
