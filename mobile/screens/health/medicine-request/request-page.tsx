@@ -24,7 +24,7 @@ export type MedicineDisplay = {
     expiry_date: string;
     inventory_type: string;
   }[];
-  status: string;
+  // status: string;
 };
 
 export default function MedicineRequestScreen() {

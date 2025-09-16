@@ -19,7 +19,7 @@ const Homepage = () => {
     { name: 'Child Health Records', route: 'admin/childhealth/overall', icon: Baby },
     { name: 'Family Planning', route: 'admin/familyplanning/overall', icon: Heart },
     { name: 'Animal Bites', route: 'admin/animalbites/overall', icon: Dog },
-    { name: 'Maternal Records', route: '/maternal-records', icon: UserCircle },
+    { name: 'Maternal Records', route: '/my-records/my-med-records', icon: UserCircle },
     { name: 'Medical Consultation', route: '(health)/medicine-request/my-requests', icon: Stethoscope },
     { name: 'Profiling', route: 'admin/medicinerequest/medicinerequest', icon: UserRoundPlus },
     { name: 'Patients Records', route: '/admin/patientrecords/patientrecords', icon: Users },

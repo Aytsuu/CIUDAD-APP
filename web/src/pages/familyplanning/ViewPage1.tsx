@@ -1,6 +1,5 @@
-import type React from "react"
+import React from "react"
 import { useRef } from "react"; // Import useRef
-import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button/button"
@@ -11,21 +10,33 @@ import { getFPCompleteRecord } from "@/pages/familyplanning/request-db/GetReques
 import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 import { ChevronLeft } from "lucide-react"
 import { useReactToPrint } from "react-to-print";
+
 interface InputLineProps {
   className?: string
-  value: string | number | boolean | undefined
+  value: string | number | boolean | Date | undefined | null
 }
 
-const InputLine: React.FC<InputLineProps> = ({ className, value }) => (
-  <span
-    className={cn(
-      "inline-block border-b border-black text-xs px-1", // Use inline-block and remove fixed height
-      className
-    )}
-  >
-    {value !== undefined && value !== null ? String(value) : ""}
-  </span>
-);
+const InputLine: React.FC<InputLineProps> = ({ className, value }) => {
+  // Handle different value types and convert to string
+  const displayValue = React.useMemo(() => {
+    if (value === undefined || value === null) return "";
+    if (value instanceof Date) {
+      return value.toLocaleDateString();
+    }
+    return String(value);
+  }, [value]);
+
+  return (
+    <span
+      className={cn(
+        "inline-block border-b border-black text-xs px-1",
+        className
+      )}
+    >
+      {displayValue}
+    </span>
+  );
+};
 
 const YesNoCheckbox = ({ label, checked }: { label: string; checked: boolean | undefined }) => (
   <div className="flex items-center gap-1">
@@ -50,6 +61,9 @@ const getIncomeName = (incomeId: any) => {
   return option ? option.name : incomeId || 'N/A';
 };
 
+// Define type for STI keys to fix indexing issue
+type STIKey = 'abnormalDischarge' | 'sores' | 'pain' | 'history';
+
 const FamilyPlanningView: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -63,7 +77,7 @@ const FamilyPlanningView: React.FC = () => {
     pageStyle: `
       @page {
         size: 8.5in 13in;
-        margin: 0.5in; /* Corrected from 2in to 0.5in */
+        margin: 0.5in;
       }
       @media print {
         body {
@@ -75,6 +89,7 @@ const FamilyPlanningView: React.FC = () => {
       }
     `,
   });
+  
   const {
     data: recordData,
     isLoading,
@@ -86,9 +101,10 @@ const FamilyPlanningView: React.FC = () => {
     enabled: !!fprecordId,
   })
 
-
   // More precise filtering with exact condition names
   const getCustomIllnesses = () => {
+    if (!recordData) return [];
+    
     const illnesses = [];
 
     // Exact names of standard conditions (as they appear in the checklist)
@@ -131,20 +147,6 @@ const FamilyPlanningView: React.FC = () => {
       });
     }
 
-    // Add historical medical records (filter out exact standard conditions)
-    // if (recordData?.historical_medical_history) {
-    //   recordData?.historical_medical_history
-    //     .filter(record => record.is_current)
-    //     .forEach(record => {
-    //       const isExactStandard = exactStandardConditions.some(condition =>
-    //         condition.toLowerCase() === record.illname.toLowerCase()
-    //       );
-    //       if (!isExactStandard) {
-    //         illnesses.push(record.illname);
-    //       }
-    //     });
-    // }
-
     return illnesses;
   };
 
@@ -179,10 +181,9 @@ const FamilyPlanningView: React.FC = () => {
     );
   };
 
-
   return (
     <div className="mx-auto p-4 bg-white max-w-3xl text-[10px]">
-      <div className="flex justify-between items-center mb-1 no-print"> {/* Add no-print class */}
+      <div className="flex justify-between items-center mb-1 no-print">
         <Button
           className="text-black p-1 self-start"
           variant="outline"
@@ -299,7 +300,6 @@ const FamilyPlanningView: React.FC = () => {
                   <Label className="text-xs">Contact Number: </Label>
                   <InputLine className="h-4" value={recordData.contact} />
                 </div>
-
               </div>
             </div>
 
@@ -556,10 +556,10 @@ const FamilyPlanningView: React.FC = () => {
                 <div className="text-xs">
                   <div>Does the client or the client's partner have any of the following?</div>
                   {[
-                    { label: "abnormal discharge", key: "abnormalDischarge" },
-                    { label: "sores or ulcers in the genital area", key: "sores" },
-                    { label: "pain or burning sensation in the genital area", key: "pain" },
-                    { label: "history of treatment for sexually transmitted infections", key: "history" }
+                    { label: "abnormal discharge", key: "abnormalDischarge" as STIKey },
+                    { label: "sores or ulcers in the genital area", key: "sores" as STIKey },
+                    { label: "pain or burning sensation in the genital area", key: "pain" as STIKey },
+                    { label: "history of treatment for sexually transmitted infections", key: "history" as STIKey }
                   ].map((item, index) => (
                     <div key={index} className="flex justify-between items-center py-0.5">
                       <span>• {item.label}</span>
@@ -607,9 +607,9 @@ const FamilyPlanningView: React.FC = () => {
                 <Label className=" text-xs block mb-1">IV. RISKS FOR VIOLENCE AGAINST WOMEN (VAW)</Label>
                 <div className="text-xs">
                   {[
-                    { label: "history of domestic violence or VAW", key: "domesticViolence" },
-                    { label: "unpleasant relationship with partner", key: "unpleasantRelationship" },
-                    { label: "partner does not approve of the visit to FP clinic", key: "partnerDisapproval" }
+                    { label: "history of domestic violence or VAW", key: "domesticViolence" as const },
+                    { label: "unpleasant relationship with partner", key: "unpleasantRelationship" as const},
+                    { label: "partner does not approve of the visit to FP clinic", key: "partnerDisapproval" as const }
                   ].map((item, index) => (
                     <div key={index} className="flex justify-between items-center py-0.5">
                       <span>• {item.label}</span>

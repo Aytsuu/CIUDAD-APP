@@ -94,7 +94,7 @@ export default function FamilyPlanningForm2({
   useEffect(() => {
       if (illnesses.length > 0 && formData.medicalHistory) {
     const selected: number[] = []
-    const medicalHistoryData = formData.medicalHistory
+    // const medicalHistoryData = formData.medicalHistory
 
     // First, check for any existing selected illness IDs from the backend
     if (formData.selectedIllnessIds) {
@@ -147,24 +147,24 @@ export default function FamilyPlanningForm2({
   }
 
   // ORIGINAL: Keep the original medical history options as fallback
-  const medicalHistoryOptions = [
-    { name: "severeHeadaches", label: "Severe headaches / migraine" },
-    { name: "strokeHeartAttackHypertension", label: "History of stroke / heart attack / hypertension" },
-    { name: "hematomaBruisingBleeding", label: "Non-traumatic hematoma / frequent bruising or gum bleeding" },
-    { name: "breastCancerHistory", label: "Current or history of breast cancer / breast mass" },
-    { name: "severeChestPain", label: "Severe chest pain" },
-    { name: "cough", label: "Cough for more than 14 days" },
-    { name: "jaundice", label: "Jaundice" },
-    { name: "unexplainedVaginalBleeding", label: "Unexplained vaginal bleeding" },
-    { name: "abnormalVaginalDischarge", label: "Abnormal vaginal discharge" },
-    { name: "phenobarbitalOrRifampicin", label: "Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)" },
-    { name: "smoker", label: "Is this client a SMOKER?" },
-    { name: "disability", label: "Others" },
-  ]
+  // const medicalHistoryOptions = [
+  //   { name: "severeHeadaches", label: "Severe headaches / migraine" },
+  //   { name: "strokeHeartAttackHypertension", label: "History of stroke / heart attack / hypertension" },
+  //   { name: "hematomaBruisingBleeding", label: "Non-traumatic hematoma / frequent bruising or gum bleeding" },
+  //   { name: "breastCancerHistory", label: "Current or history of breast cancer / breast mass" },
+  //   { name: "severeChestPain", label: "Severe chest pain" },
+  //   { name: "cough", label: "Cough for more than 14 days" },
+  //   { name: "jaundice", label: "Jaundice" },
+  //   { name: "unexplainedVaginalBleeding", label: "Unexplained vaginal bleeding" },
+  //   { name: "abnormalVaginalDischarge", label: "Abnormal vaginal discharge" },
+  //   { name: "phenobarbitalOrRifampicin", label: "Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)" },
+  //   { name: "smoker", label: "Is this client a SMOKER?" },
+  //   { name: "disability", label: "Others" },
+  // ]
 
   const onSubmit = async (data: FormData) => {
 
-  let customDisabilityIllnessId: number | null = null;
+  // let customDisabilityIllnessId: number | null = null;
   if (data.medicalHistory?.disability && data.medicalHistory.disabilityDetails) {
     // Instead of directly creating here, we'll pass the string to the backend.
     // The backend will handle checking if it exists or creating it.
