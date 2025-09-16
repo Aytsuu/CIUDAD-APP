@@ -84,6 +84,11 @@ class AnnouncementCreateSerializer(serializers.ModelSerializer):
 
         if announcement_files:
             AnnouncementFile.objects.bulk_create(announcement_files)
+    
+    def get_username(self, obj):
+        if obj.staff and hasattr(obj.staff, "account") and obj.staff.account:
+            return obj.staff.account.username
+        return None
 
 class RecipientInputSerializer(serializers.Serializer):
     ann = serializers.PrimaryKeyRelatedField(queryset=Announcement.objects.all(),write_only=True)

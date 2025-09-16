@@ -1,3 +1,4 @@
+"use client"
 
 import { useEffect, useState } from "react"
 import { Bell, X } from "lucide-react"
@@ -5,7 +6,29 @@ import { Bell, X } from "lucide-react"
 interface FloatingAnnouncementProps {
   announcement: {
     ann_title: string
+    ann_end_at: string
+    ann_event_start?: string | null // Made optional and nullable
+    ann_event_end?: string | null // Made optional and nullable
   } | null
+}
+
+function formatDateToManila(dateString: string | null | undefined): string {
+  if (!dateString) return ""
+
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleString("en-PH", {
+      timeZone: "Asia/Manila",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })
+  } catch (error) {
+    return dateString
+  }
 }
 
 export default function FloatingAnnouncement({ announcement }: FloatingAnnouncementProps) {
@@ -30,6 +53,11 @@ export default function FloatingAnnouncement({ announcement }: FloatingAnnouncem
 
   if (!visible || !announcement) return null
 
+  const formattedEndAt = formatDateToManila(announcement.ann_end_at)
+  const formattedEventStart = formatDateToManila(announcement.ann_event_start)
+  const formattedEventEnd = formatDateToManila(announcement.ann_event_end)
+  const hasEventDates = announcement.ann_event_start && announcement.ann_event_end
+
   return (
     <div className="fixed bottom-6 right-6 z-50 max-w-sm animate-in slide-in-from-bottom-4 slide-in-from-right-4 duration-500">
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/60 rounded-xl shadow-lg shadow-blue-900/10 backdrop-blur-sm">
@@ -39,7 +67,7 @@ export default function FloatingAnnouncement({ announcement }: FloatingAnnouncem
             <div className="p-1.5 bg-blue-100 rounded-lg">
               <Bell className="w-4 h-4 text-blue-600" />
             </div>
-            <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">New Announcement</span>
+            <span className="text-xs font-semibold text-blue-700 tracking-wide">New Announcement</span>
           </div>
           <button
             onClick={() => setVisible(false)}
@@ -53,6 +81,18 @@ export default function FloatingAnnouncement({ announcement }: FloatingAnnouncem
         {/* Content */}
         <div className="px-4 pb-4">
           <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{announcement.ann_title}</p>
+          {hasEventDates && (
+            <div className="mt-3 p-2 bg-blue-50/50 rounded-lg border border-blue-100">
+              <p className="text-xs text-gray-600 font-medium">Event Schedule:</p>
+              <p className="text-xs text-gray-700 mt-1">
+                {formattedEventStart} - {formattedEventEnd}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="px-4 py-2 text-xs text-gray-500 border-t border-blue-200/60 bg-blue-50/30">
+          <p>Ends at: {formattedEndAt}</p>
         </div>
 
         {/* Progress bar for auto-dismiss */}

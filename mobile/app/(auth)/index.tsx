@@ -8,6 +8,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <LoginScreen/>
+    return <App/>
 }
  

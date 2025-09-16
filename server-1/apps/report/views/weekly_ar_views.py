@@ -59,18 +59,18 @@ class WARFileCreateView(generics.CreateAPIView):
         if war_id:
             war = WeeklyAccomplishmentReport.objects.filter(war_id=war_id).first()
 
-      if files and war:
-        instances = []
-        for file_data in files:
-          file = WARFile(
-            war=war,
-            warf_name=file_data['name'],
-            warf_type=file_data['type'],
-            warf_path=f"ar/{file_data['name']}"
-          )
-          url = upload_to_storage(file_data, 'report-bucket', 'war')
-          file.warf_url = url
-          instances.append(file)
+        if files and war:
+            instances = []
+            for file_data in files:
+                file = WARFile(
+                    war=war,
+                    warf_name=file_data['name'],
+                    warf_type=file_data['type'],
+                    warf_path=f"ar/{file_data['name']}"
+                )
+                url = upload_to_storage(file_data, 'report-bucket', 'war')
+                file.warf_url = url
+                instances.append(file)
 
 
 class WARFileDeleteView(generics.DestroyAPIView):

@@ -10,6 +10,11 @@ export default function Announcements() {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  // ✅ Only keep public announcements
+  const publicAnnouncements = announcements?.filter(
+    (a) => a.ann_type === "public"
+  )
+
   const openModal = (announcement: SetStateAction<Announcement | null>) => {
     setSelectedAnnouncement(announcement)
     setIsModalOpen(true)
@@ -31,13 +36,8 @@ export default function Announcements() {
             <div className="absolute top-1/2 right-1/4 transform translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-cyan-500/10 rounded-full blur-xl"></div>
 
             <div className="relative">
-              <div className="inline-block mb-6">
-                <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent text-sm font-bold tracking-wider uppercase px-6 py-3 border border-blue-400/40 rounded-full backdrop-blur-md bg-white/5 shadow-lg shadow-blue-500/20">
-                  Official Communications
-                </span>
-              </div>
               <h2 className="text-5xl md:text-7xl font-black mb-6 bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent leading-tight drop-shadow-2xl">
-                Latest Announcements
+                Public Announcements
               </h2>
               <div className="w-32 h-1.5 bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-500 mx-auto rounded-full shadow-lg shadow-blue-400/50"></div>
             </div>
@@ -48,9 +48,9 @@ export default function Announcements() {
               <div className="w-16 h-16 border-4 border-transparent border-t-blue-400 border-r-cyan-300 rounded-full animate-spin mb-4 shadow-lg"></div>
               <p className="text-blue-100 text-lg font-medium">Loading announcements...</p>
             </div>
-          ) : announcements && announcements.length > 0 ? (
+          ) : publicAnnouncements && publicAnnouncements.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {announcements.map((announcement) => (
+              {publicAnnouncements.map((announcement) => (
                 <div
                   key={announcement.ann_id}
                   onClick={() => openModal(announcement)}
@@ -92,7 +92,7 @@ export default function Announcements() {
 
                       <div className="flex items-center gap-4 mt-6 flex-wrap relative z-10">
                         {announcement.ann_start_at && (
-                          <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200 shadow-md hover:shadow-lg transition-all duration-300 group/badge">
+                          <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200 shadow-md">
                             <div className="w-3 h-3 bg-gradient-to-r from-emerald-400 to-green-500 rounded-full animate-pulse"></div>
                             <div className="text-sm">
                               <p className="text-emerald-700 font-bold uppercase text-xs tracking-wide">Event Start</p>
@@ -114,7 +114,7 @@ export default function Announcements() {
                         )}
 
                         {announcement.ann_end_at && (
-                          <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-rose-50 to-red-50 rounded-xl border border-rose-200 shadow-md hover:shadow-lg transition-all duration-300 group/badge">
+                          <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-rose-50 to-red-50 rounded-xl border border-rose-200 shadow-md">
                             <div className="w-3 h-3 bg-gradient-to-r from-rose-400 to-red-500 rounded-full animate-pulse"></div>
                             <div className="text-sm">
                               <p className="text-rose-700 font-bold uppercase text-xs tracking-wide">Event End</p>
@@ -159,9 +159,9 @@ export default function Announcements() {
               <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-white/10 to-blue-500/10 rounded-3xl flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-xl">
                 <div className="w-12 h-12 border-4 border-blue-200/50 rounded-2xl animate-pulse"></div>
               </div>
-              <h3 className="text-3xl font-bold text-white mb-4">No Announcements Available</h3>
+              <h3 className="text-3xl font-bold text-white mb-4">No Public Announcements</h3>
               <p className="text-blue-100 max-w-lg mx-auto text-lg leading-relaxed">
-                There are currently no announcements to display. Please check back later for updates.
+                There are currently no public announcements to display. Please check back later for updates.
               </p>
             </div>
           )}

@@ -154,6 +154,27 @@ const AnnouncementCreate = () => {
       }
     }
 
+    // Handle Event & Public Types
+if (["event", "public"].includes(announcementData.ann_type)) {
+  if (announcementData.ann_event_end && !announcementData.ann_end_at) {
+    announcementData.ann_end_at = announcementData.ann_event_end;
+  }
+  if (!announcementData.ann_event_end && announcementData.ann_end_at) {
+    announcementData.ann_event_end = announcementData.ann_end_at;
+  }
+}
+
+// Public: strip recipients + notifications
+if (announcementData.ann_type === "public") {
+  announcementData.ar_category = null;
+  announcementData.ar_type = [];
+  announcementData.pos_category = null;
+  announcementData.pos_group = null;
+  announcementData.ann_to_sms = false;
+  announcementData.ann_to_email = false;
+}
+
+
     // **Force Active if no scheduler provided**
     if (!announcementData.ann_start_at && !announcementData.ann_end_at) {
       announcementData.ann_status = "Active";
@@ -300,7 +321,7 @@ const AnnouncementCreate = () => {
       label="Start Date & Time"
     />
 
-    {annType === "event" ? (
+    {["event", "public"].includes(annType) ? (
       <>
         <FormDateTimeInput
           control={form.control}
@@ -327,48 +348,50 @@ const AnnouncementCreate = () => {
 </Card>
 
 
-                {/* Recipients */}
-                {["event", "general"].includes(annType) && (
-                  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-5 w-5 text-gray-600" />
-                        <CardTitle className="text-lg">Recipients</CardTitle>
-                      </div>
-                      <CardDescription>Choose audience, positions, and age group</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <FormSelect
-                        control={form.control}
-                        name="ar_category"
-                        label="Target Audience"
-                        options={[
-                          { id: "resident", name: "Resident" },
-                          { id: "staff", name: "Staff" },
-                        ]}
-                      />
-                      {recipientType === "staff" && (
-                        <>
-                          <FormSelect control={form.control} name="pos_category" label="Category" options={categoryOptions} />
-                          {posCategory && (
-                            <FormSelect control={form.control} name="pos_group" label="Group" options={groupOptions} />
-                          )}
-                          {posGroup && (
-                            <FormComboCheckbox
-                              label="Positions"
-                              control={form.control}
-                              name="ar_type"
-                              options={positionsForGroup.map((pos: { pos_title: string }) => ({
-                                id: pos.pos_title,
-                                name: pos.pos_title,
-                              }))}
-                            />
-                          )}
-                        </>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
+              {/* Recipients */}
+{["event", "general"].includes(annType) && (
+  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+    <CardHeader className="pb-4">
+      <div className="flex items-center gap-2">
+        <Users className="h-5 w-5 text-gray-600" />
+        <CardTitle className="text-lg">Recipients</CardTitle>
+      </div>
+      <CardDescription>Choose audience, positions, and age group</CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-6">
+      <FormSelect
+        control={form.control}
+        name="ar_category"
+        label="Target Audience"
+        options={[
+          { id: "resident", name: "Resident" },
+          { id: "staff", name: "Staff" },
+        ]}
+      />
+      {recipientType === "staff" && (
+        <>
+          <FormSelect control={form.control} name="pos_category" label="Category" options={categoryOptions} />
+          {posCategory && (
+            <FormSelect control={form.control} name="pos_group" label="Group" options={groupOptions} />
+          )}
+          {posGroup && (
+            <FormComboCheckbox
+              label="Positions"
+              control={form.control}
+              name="ar_type"
+              options={positionsForGroup.map((pos: { pos_title: string }) => ({
+                id: pos.pos_title,
+                name: pos.pos_title,
+              }))}
+            />
+          )}
+        </>
+      )}
+    </CardContent>
+  </Card>
+)}
+
+
 
                 {/* Media Upload */}
                 <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
@@ -391,28 +414,30 @@ const AnnouncementCreate = () => {
                   </CardContent>
                 </Card>
 
-                {/* Notification Options */}
-                <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="h-5 w-5 text-gray-600" />
-                      <CardTitle className="text-lg">Notification Options</CardTitle>
-                    </div>
-                    <CardDescription>Choose how to notify recipients</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center space-x-6">
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="ann_to_sms" {...form.register("ann_to_sms")} className="h-4 w-4" />
-                        <label htmlFor="ann_to_sms" className="text-sm font-medium text-gray-700">Send SMS Notification</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="ann_to_email" {...form.register("ann_to_email")} className="h-4 w-4" />
-                        <label htmlFor="ann_to_email" className="text-sm font-medium text-gray-700">Send Email Notification</label>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Notification Options */}
+{["event", "general"].includes(annType) && (
+  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+    <CardHeader className="pb-4">
+      <div className="flex items-center gap-2">
+        <MessageSquare className="h-5 w-5 text-gray-600" />
+        <CardTitle className="text-lg">Notification Options</CardTitle>
+      </div>
+      <CardDescription>Choose how to notify recipients</CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-2">
+          <input type="checkbox" id="ann_to_sms" {...form.register("ann_to_sms")} className="h-4 w-4" />
+          <label htmlFor="ann_to_sms" className="text-sm font-medium text-gray-700">Send SMS Notification</label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <input type="checkbox" id="ann_to_email" {...form.register("ann_to_email")} className="h-4 w-4" />
+          <label htmlFor="ann_to_email" className="text-sm font-medium text-gray-700">Send Email Notification</label>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+)}
 
                 {/* Submit Button */}
                 <div className="flex justify-end pt-4">

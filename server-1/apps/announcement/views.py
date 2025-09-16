@@ -12,6 +12,7 @@ from .serializers import (
 from django.db import transaction
 from django.utils import timezone
 from django.db.models import Q
+from apps.administration.models import Staff
 
 class AnnouncementView(generics.ListCreateAPIView):
     serializer_class = AnnouncementCreateSerializer
@@ -24,6 +25,34 @@ class AnnouncementView(generics.ListCreateAPIView):
             Q(ann_start_at__lte=now) | Q(ann_start_at__isnull=True),
             Q(ann_end_at__gte=now) | Q(ann_end_at__isnull=True)
         ).order_by('-ann_created_at')
+
+
+class AnnouncementCreatedReceivedView(APIView):
+    def get(self, request, staff_id):
+        # Announcements created by this staff
+        created = Announcement.objects.filter(staff__staff_id=staff_id)
+        created_data = AnnouncementCreateSerializer(created, many=True).data
+
+        # Announcements explicitly received
+        received_ids = AnnouncementRecipient.objects.filter(ar_category=staff_id).values_list('ann_id', flat=True)
+        received = Announcement.objects.filter(ann_id__in=received_ids)
+
+        # Add all public announcements (exclude self-created)
+        public_announcements = Announcement.objects.filter(ann_type="public")
+
+        # Merge received + public
+        received = received.union(public_announcements)
+        received_data = AnnouncementCreateSerializer(received, many=True).data
+
+        # Fetch staff position title
+        staff = Staff.objects.filter(staff_id=staff_id).first()
+        staff_pos_title = getattr(getattr(staff, "pos", None), "pos_title", None)
+
+        return Response({
+            "created": created_data,
+            "received": received_data,
+            "staff_pos_title": staff_pos_title
+        })
 
 
 class AnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):

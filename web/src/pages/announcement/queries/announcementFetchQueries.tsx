@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getAnnouncementRequest,
   getAnnouncementRecipientRequest,
+  getCreatedReceivedAnnouncements,
 } from "../restful-api/announcementGetRequest";
 
 // Matches Django Announcement model
@@ -52,5 +53,14 @@ export function useGetAnnouncementRecipient(ann_id: number) {
     queryFn: () => getAnnouncementRecipientRequest(ann_id),
     enabled: !!ann_id, // only run when we have an id
     staleTime: 5000
+  });
+}
+
+export function useGetCreatedReceivedAnnouncements(staff_id: string) {
+  return useQuery({
+    queryKey: ["createdReceivedAnnouncements", staff_id],
+    queryFn: () => getCreatedReceivedAnnouncements(staff_id),
+    enabled: !!staff_id,
+    staleTime: 5000,
   });
 }

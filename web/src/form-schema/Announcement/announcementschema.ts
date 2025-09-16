@@ -13,15 +13,17 @@ const AnnouncementSchema = z.object({
   ann_title: z.string().nonempty({ message: "Title is required" }),
   ann_details: z.string().nonempty({ message: "Details are required" }),
 
-  ann_start_at: optionalDatetimeField, // NOW OPTIONAL
-  ann_end_at: optionalDatetimeField,   // NOW OPTIONAL
+  ann_start_at: optionalDatetimeField,
+  ann_end_at: optionalDatetimeField,
   ann_event_start: z.string().optional(),
   ann_event_end: z.string().optional(),
 
   ann_type: z.string().nonempty({ message: "Type is required" }),
+
+  // ✅ Everything below is now optional
   ar_type: z.array(z.string()).optional().default([]),
   staff: z.string().optional(),
-  ar_category: z.string().nonempty({ message: "Recipient is required" }),
+  ar_category: z.string().optional(),   // <-- was required before
   ann_to_sms: z.boolean().optional().default(false),
   ann_to_email: z.boolean().optional().default(false),
   staff_group: z.string().optional(),

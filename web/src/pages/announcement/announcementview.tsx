@@ -355,6 +355,12 @@ function AnnouncementView() {
                         ))}
                       </div>
                     </div>
+                    <div>
+    <label className="text-sm font-medium text-gray-700">Created By</label>
+    <div className="text-base font-semibold text-gray-900">
+      {announcement.username || "Unknown"}
+    </div>
+  </div>
                   </CardContent>
                 </Card>
               )}
