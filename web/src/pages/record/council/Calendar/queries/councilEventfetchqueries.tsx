@@ -8,19 +8,19 @@ export const useGetCouncilEvents = () => {
     queryFn: () => getCouncilEvents().catch((error) => {
       throw error;
     }),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, 
   });
 };
 
   export const useGetAttendees = (ceId?: number) => {
     return useQuery<Attendee[], Error>({
-      queryKey: ["attendees", ceId], // Cache per ceId
+      queryKey: ["attendees", ceId],
       queryFn: () => {
         if (!ceId) throw new Error("ceId is required to fetch attendees");
         return getAttendees(ceId).then((data) => data.filter((a) => a.ce_id === ceId));
       },
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      enabled: !!ceId, // Only fetch if ceId is defined
+      staleTime: 1000 * 60 * 5,
+      enabled: !!ceId, 
     });
   };
 

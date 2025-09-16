@@ -7,7 +7,6 @@ export type CouncilEvent = {
   ce_place: string;
   ce_date: string;
   ce_time: string;
-  ce_type: string;
   ce_description: string;
   ce_is_archive: boolean;
   staff_id: string | null;

@@ -10,7 +10,7 @@ export default function StaffAttendanceRankingChart() {
   const currentYear = new Date().getFullYear();
   const { data: councilEvents = [] } = useGetCouncilEvents();
   const totalMeetings = councilEvents.filter(
-    (event) => event.ce_type === "meeting" && event.ce_is_archive === false && new Date(event.ce_date).getFullYear() === currentYear
+    (event) => event.ce_is_archive === false && new Date(event.ce_date).getFullYear() === currentYear
   ).length;
   const averageMeetings = rankingData.length > 0 ? Math.round(totalMeetings / rankingData.length) : 0;
 
