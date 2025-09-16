@@ -40,6 +40,19 @@ export const getParticulars = async (year?: number) => {
 };
 
 
+// RETRIEVE EXPENSE LOG
+export const getExpenseLog = async (year?: number) => {
+    try {
+        const params = year ? { params: { year } } : {};
+        const res = await api.get('treasurer/expense-log/', params);
+        console.log("EXPENSE LOG PO: ", res)
+        return res.data;
+        
+    } catch (err) {
+        console.error(err);
+    }
+};
+
 
 // ================================== INCOMEEEE =================================
 

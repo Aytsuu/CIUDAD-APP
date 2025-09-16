@@ -1,0 +1,55 @@
+export interface User {
+    acc_id: string;
+    email: string;
+    username?: string;
+    profile_image?: string;
+    resident?: Record <string, any>;
+    staff?: Record<string, any>;
+}
+
+export interface AuthState {
+    user: User | null;
+    accessToken: string | null;
+    isAuthenticated: boolean;
+    isLoading: boolean;
+    error: string | null;
+    hasCheckedAuth: boolean;
+    otpSent: boolean;
+    email: string | null;
+    phone: string | null;
+}
+
+export interface LoginCredentials {
+    email?: string;
+    phone?: string;
+    password: string;
+}
+
+export interface SignupCredentials {
+    email: string;
+    password: string;
+    username?: string;
+}
+
+export interface TokenResponse {
+    access_token: string;
+    refresh_token: string;
+    user: User;
+}
+
+export interface SignupResponse {
+    access_token?: string;
+    refresh_token?: string;
+    user?: User;
+    requireConfirmation?: boolean;
+}
+
+export interface OTPCredentials {
+    phone: string;
+    otp: string;
+}
+
+export interface EmailOTPCredentials {
+    email: string;
+    otp: string;
+}

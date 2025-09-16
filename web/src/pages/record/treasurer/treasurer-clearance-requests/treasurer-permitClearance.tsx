@@ -2,27 +2,23 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
-import { Eye, ReceiptText, Trash, Search, FileInput } from 'lucide-react';
+import { ReceiptText, Search, FileInput } from 'lucide-react';
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { ArrowUpDown } from "lucide-react";
-import { Label } from "@/components/ui/label";
 import PermitClearanceForm from "./treasurer-permitClearance-form";
-import ReceiptForm from "./treasurer-create-receipt-form";
+import ReceiptForm from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permit-create-receipt-form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import { getPermitClearances } from "./restful-api/permitClearanceGetAPI";
 import { useQuery } from "@tanstack/react-query";
+import { useGetPurposeAndRate } from "../Rates/queries/RatesFetchQueries";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { Skeleton } from "@/components/ui/skeleton";
 
-
-const styles = {
-    ViewFormLabelStyle: "font-semibold text-blue",
-    ViewFormDataStyle: "font-medium text-darkGray"
-}
 
 //table header
-export const columns: ColumnDef<PermitClearance>[] = [
+const createColumns = (purposes: any[]): ColumnDef<PermitClearance>[] => [
     { accessorKey: "businessName",
         header: ({ column }) => (
               <div
@@ -35,14 +31,36 @@ export const columns: ColumnDef<PermitClearance>[] = [
         cell: ({row}) => (
             <div className="">{row.getValue("businessName")}</div>
         )},
-    { accessorKey: "address", header: "Address"},
+  
     { accessorKey: "grossSales", header: "Gross Sales"},
     {
         accessorKey: "purpose",
         header: "Purpose",
-        cell: ({ row }) => row.original.req_sales_proof || ""
+        cell: ({ row }) => "Business Permit" 
     },
-    { accessorKey: "requestor", header: "Requestor"},
+    {
+        accessorKey: "amount",
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Amount
+                <ArrowUpDown size={14}/>
+            </div>
+        ),
+        cell: ({ row }) => {
+            // Use the req_amount field from the backend
+            const amount = row.original.req_amount || 0;
+            
+            return (
+                <div className="text-center font-medium text-green-700">
+                    ₱{amount.toLocaleString()}
+                </div>
+            );
+        },
+    },
+   
     { accessorKey: "reqDate",
         header: ({ column }) => (
               <div
@@ -56,19 +74,19 @@ export const columns: ColumnDef<PermitClearance>[] = [
             <div className="">{row.getValue("reqDate")}</div>
         )
     },
-    {  accessorKey: "claimDate",
-        header: ({ column }) => (
-              <div
-                className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              >Date to Claim
-                <ArrowUpDown size={14}/>
-              </div>
-        ),
-        cell: ({row}) => (
-            <div className="">{row.getValue("claimDate")}</div>
-        )
-    },
+    // {  accessorKey: "claimDate",
+    //     header: ({ column }) => (
+    //           <div
+    //             className="flex w-full justify-center items-center gap-2 cursor-pointer"
+    //             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    //           >Date to Claim
+    //             <ArrowUpDown size={14}/>
+    //           </div>
+    //     ),
+    //     cell: ({row}) => (
+    //         <div className="">{row.getValue("claimDate")}</div>
+    //     )
+    // },
     { accessorKey: "paymentStat", 
       header: "Payment Status",
       cell: ({ row }) => {
@@ -102,61 +120,8 @@ export const columns: ColumnDef<PermitClearance>[] = [
     },
     { accessorKey: "action", 
       header: "Action",
-      cell: ({}) =>(
+      cell: ({row}) =>(
         <div className="flex justify-center gap-0.5">
-            <TooltipLayout 
-            trigger = {
-                <DialogLayout
-                trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"> <Eye size={16} /></div>}
-                className="max-w-[50%] h-2/3 flex flex-col"
-                title="Request Details"
-                description="Detailed overview of the request."
-                mainContent={
-                <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col gap-3">
-                        <Label className={styles.ViewFormLabelStyle}>Business Name:</Label>
-                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
-
-                        <Label className={styles.ViewFormLabelStyle}>Address:</Label>
-                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
-
-                        <Label className={styles.ViewFormLabelStyle}>Annual Gross Sales:</Label>
-                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
-
-                        <Label className={styles.ViewFormLabelStyle}>Supporting Document:</Label>
-                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
-
-                        <Label className={styles.ViewFormLabelStyle}>Purpose:</Label>
-                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
-                    </div>
-
-                    {/* Divider */}
-                    {/* <div className="border border-gray-300"></div> */}
-
-                    {/* Request Details */}
-                    <div className="flex flex-col gap-3">
-                        <Label className={styles.ViewFormLabelStyle}>Requestor:</Label>
-                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
-
-                        <Label className={styles.ViewFormLabelStyle}>Date Requested:</Label>
-                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
-
-                        <Label className={styles.ViewFormLabelStyle}>Date to Claim:</Label>
-                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
-
-                        <Label className={styles.ViewFormLabelStyle}>Payment Method:</Label>
-                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
-
-                        <Label className={styles.ViewFormLabelStyle}>Payment Status:</Label>
-                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
-
-                        <Label className={styles.ViewFormLabelStyle}>Attached Receipt:</Label>
-                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
-                    </div>
-                </div>
-                } 
-                />
-            } content="View"/>
             <TooltipLayout
             trigger={
                 <DialogLayout
@@ -165,20 +130,40 @@ export const columns: ColumnDef<PermitClearance>[] = [
                     title="Create Receipt"
                     description="Enter the serial number to generate a receipt."
                     mainContent={
-                        <ReceiptForm/>
+                        <ReceiptForm 
+                            certificateRequest={{
+                                cr_id: row.original.bpr_id || "", // Use bpr_id instead of cr_id
+                                req_type: "Permit Clearance",
+                                req_purpose: "Business Permit", // Set fixed purpose for business clearance
+                                resident_details: {
+                                    per_fname: row.original.requestor || "",
+                                    per_lname: ""
+                                },
+                                req_payment_status: row.original.req_payment_status || "Pending",
+                                pr_id: row.original.pr_id,
+                                business_name: row.original.businessName || "",
+                                req_amount: row.original.req_amount || 0, // Pass the req_amount
+                                req_sales_proof: row.original.req_sales_proof || "" // Pass the gross sales range
+                            }}
+                            onSuccess={() => {}}
+                        />
                     } 
                 />
             } content="Create Receipt"/>
-            <TooltipLayout 
-             trigger={
-                <DialogLayout
-                trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"> <Trash size={16} /></div>}
-                className="max-w-[50%] h-2/3 flex flex-col"
-                title="Image Details"
-                description="Here is the image related to the report."
-                mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} 
-                />
-             }  content="Delete"/>
+            <ConfirmationModal
+                trigger={
+                    <Button variant="destructive" size="sm">
+                        Decline
+                    </Button>
+                }
+                title="Decline Request"
+                description={`Are you sure you want to decline the request for ${row.original.businessName}?`}
+                actionLabel="Decline"
+                onClick={() => {
+                    //decline
+                    console.log("Declining request:", row.original.cr_id);
+                }}
+            />
         </div>
       )},
 ];
@@ -193,7 +178,15 @@ type PermitClearance = {
     reqDate: string,
     claimDate: string,
     paymentStat: "Paid" | "Pending",
-    req_sales_proof?: string
+    req_sales_proof?: string,
+    req_purpose?: string,
+    cr_id?: string,
+    bpr_id?: string, // Add bpr_id field
+    req_payment_status?: string,
+    pr_id?: number,
+    amount?: string, // Add amount field
+    amount_to_pay?: number, // Add amount_to_pay field from backend
+    req_amount?: number // Add req_amount field from backend
 }
 
 export const PermitClearanceRecords: PermitClearance[] = [
@@ -212,38 +205,45 @@ export const PermitClearanceRecords: PermitClearance[] = [
 
 
 function PermitClearance(){
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<"paid" | "unpaid">("unpaid");
+    
     // Fetch data from backend
-    const { data: permitClearances} = useQuery({
+    const { data: permitClearances, isLoading, error } = useQuery<any[]>({
         queryKey: ["permitClearances"],
         queryFn: getPermitClearances
     });
 
-    const filter = [
-        { id: "All", name: "All" },
-        { id: "Pending", name: "Pending" },
-        { id: "Paid", name: "Paid" },
-    ];
+    // Fetch purpose and rates data for amount calculation
+    const { data: purposes = [] } = useGetPurposeAndRate();
 
-    const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
-
-    const filteredData = selectedFilter === "All" ? (permitClearances || [])
-    : (permitClearances || []).filter((item: any) => item.req_payment_status === selectedFilter);
+    const filteredData = (permitClearances || []).filter((item: any) => 
+        activeTab === "paid" ? item.req_payment_status === "Paid" : item.req_payment_status !== "Paid"
+    );
 
     // Map backend data to frontend columns
-    const mappedData = (filteredData || []).map((item: any) => ({
-        businessName: item.business_details?.bus_name || "",
-        address: item.business_details?.bus_respondentAddress || "",
-        grossSales: item.business_details?.bus_gross_sales || "",
-        purposes: item.purposes || [],
-        requestor: item.business_details?.bus_respondentFname && item.business_details?.bus_respondentLname
-            ? `${item.business_details.bus_respondentFname} ${item.business_details.bus_respondentLname}`
-            : "",
-        reqDate: item.req_request_date,
-        claimDate: item.req_claim_date,
-        paymentStat: item.req_payment_status,
-        req_sales_proof: item.req_sales_proof,
-        ...item
-    }));
+    const mappedData = (filteredData || []).map((item: any) => {
+        // Calculate date to claim (7 days from request date)
+        const requestDate = new Date(item.req_request_date);
+        const claimDate = new Date(requestDate);
+        claimDate.setDate(requestDate.getDate() + 7);
+        
+        return {
+            businessName: item.business_name || "",
+            address: item.business_address || "",
+            grossSales: item.req_sales_proof || "", // Use req_sales_proof instead of business_gross_sales
+            purposes: item.purposes || [],
+            requestor: item.requestor || "",
+            reqDate: item.req_request_date,
+            claimDate: claimDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+            paymentStat: item.req_payment_status,
+            req_sales_proof: item.req_sales_proof,
+            amount: item.amount_to_pay || 0, // Use amount_to_pay for amount column
+            req_amount: item.req_amount || 0, // Include req_amount field
+            bpr_id: item.bpr_id || "", // Include bpr_id field
+            ...item
+        };
+    });
 
     return(
         <div className="w-full h-full">
@@ -267,20 +267,19 @@ function PermitClearance(){
                             />
                             <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> {/* Adjust padding and text size */}
                         </div>
-                        <div className="flex flex-row gap-2 justify-center items-center">
-                            <Label>Filter: </Label>
-                            <SelectLayout className="bg-white" options={filter} placeholder="Filter" value={selectedFilter} label="Payment Status" onChange={setSelectedFilter}></SelectLayout>
-                        </div>                            
+                                                    
                     </div>
                     <div className="w-full sm:w-auto">
                         <DialogLayout
                             trigger={<Button className="w-full sm:w-auto">+ Create Request</Button>}
                             className=""
                             title="Create New Request"
-                            description="Create a new request for personal clearance."
+                            description="Create a new request for permit clearance."
+                            isOpen={isDialogOpen}
+                            onOpenChange={setIsDialogOpen}
                             mainContent={
                                 <div className="w-full h-full">
-                                    <PermitClearanceForm/>
+                                    <PermitClearanceForm onSuccess={() => setIsDialogOpen(false)} />
                                 </div>
                             }
                         />
@@ -288,31 +287,102 @@ function PermitClearance(){
                 </div>
 
                 <div className="bg-white">
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6">
-                            <div className="flex gap-x-2 items-center">
-                                <p className="text-xs sm:text-sm">Show</p>
-                                <Input type="number" className="w-14 h-8" defaultValue="10" />
-                                <p className="text-xs sm:text-sm">Entries</p>
-                            </div>
+                                                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6">
+                             <div className="flex gap-x-4 items-center">
+                                 <div className="flex gap-x-2 items-center">
+                                     <p className="text-xs sm:text-sm">Show</p>
+                                     <Input type="number" className="w-14 h-8" defaultValue="10" />
+                                     <p className="text-xs sm:text-sm">Entries</p>
+                                 </div>
+                                 
+                                 <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-300">
+                                     <button
+                                         onClick={() => setActiveTab("unpaid")}
+                                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                             activeTab === "unpaid"
+                                                 ? "bg-[#ffeaea] text-[#b91c1c] border-[#f3dada] shadow-sm"
+                                                 : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
+                                         }`}
+                                     >
+                                         Unpaid
+                                     </button>
+                                     <button
+                                         onClick={() => setActiveTab("paid")}
+                                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                             activeTab === "paid"
+                                                 ? "bg-[#eaffea] text-[#15803d] border-[#b6e7c3] shadow-sm"
+                                                 : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
+                                         }`}
+                                     >
+                                         Paid
+                                     </button>
+                                 </div>
+                             </div>
 
-                            <div>
-                                <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline">
-                                    <FileInput />
-                                    Export
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                                    <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                                    <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                                </DropdownMenuContent>
-                                </DropdownMenu>                    
-                            </div>
-                    </div>    
+                             <div>
+                                 <DropdownMenu>
+                                 <DropdownMenuTrigger asChild>
+                                     <Button variant="outline">
+                                     <FileInput />
+                                     Export
+                                     </Button>
+                                 </DropdownMenuTrigger>
+                                 <DropdownMenuContent>
+                                     <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                                     <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                                     <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                                 </DropdownMenuContent>
+                                 </DropdownMenu>                    
+                             </div>
+                     </div>    
 
-                    <DataTable columns={columns} data={mappedData}></DataTable>
+                    {isLoading ? (
+                        <div className="space-y-4">
+                            {/* Header skeleton */}
+                            <div className="flex flex-col gap-3 mb-3">
+                                <Skeleton className="h-8 w-1/4 opacity-30" />
+                                <Skeleton className="h-5 w-2/3 opacity-30" />
+                            </div>
+                            <Skeleton className="h-[1px] w-full mb-5 opacity-30" />
+                            
+                            {/* Controls skeleton */}
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                                    <Skeleton className="h-10 w-full sm:w-64 opacity-30" />
+                                    <div className="flex flex-row gap-2 justify-center items-center">
+                                        <Skeleton className="h-5 w-12 opacity-30" />
+                                        <Skeleton className="h-10 w-32 opacity-30" />
+                                    </div>
+                                </div>
+                                <Skeleton className="h-10 w-48 opacity-30" />
+                            </div>
+                            
+                            {/* Table skeleton */}
+                            <div className="bg-white rounded-lg shadow-sm">
+                                <div className="p-6">
+                                    <div className="space-y-4">
+                                        {[...Array(5)].map((_, index) => (
+                                            <div key={index} className="flex items-center space-x-4">
+                                                <Skeleton className="h-4 w-32 opacity-30" />
+                                                <Skeleton className="h-4 w-24 opacity-30" />
+                                                <Skeleton className="h-4 w-20 opacity-30" />
+                                                <Skeleton className="h-4 w-24 opacity-30" />
+                                                <Skeleton className="h-4 w-16 opacity-30" />
+                                                <div className="flex gap-2">
+                                                    <Skeleton className="h-8 w-20 rounded opacity-30" />
+                                                    <Skeleton className="h-8 w-20 rounded opacity-30" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : error ? (
+                        <div className="text-center py-4 text-red-500">Error loading data</div>
+                    ) : (
+                        <DataTable columns={createColumns(purposes)} data={mappedData} header={true}></DataTable>
+                    )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0">

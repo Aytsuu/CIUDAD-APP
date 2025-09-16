@@ -6,9 +6,9 @@ export const deletePosition = async (selectedPosition: string) => {
     const res = await api.delete(
       `administration/position/delete/${selectedPosition}/`
     );
-    // await api2.delete(
-    //   `administration/position/delete/${selectedPosition}/`
-    // );
+    await api2.delete(
+      `administration/position/delete/${selectedPosition}/`
+    );
     return res.status;
   } catch (err) {
     console.error(err);
@@ -25,9 +25,9 @@ export const deleteAssignedFeature = async (
     const res = await api.delete(
       `administration/assignment/delete/${featureId}/${selectedPosition}/`
     );
-    // await api2.delete(
-    //   `administration/assignment/delete/${featureId}/${selectedPosition}/`
-    // );
+    await api2.delete(
+      `administration/assignment/delete/${featureId}/${selectedPosition}/`
+    );
     return res.status;
   } catch (err) {
     console.error(err);

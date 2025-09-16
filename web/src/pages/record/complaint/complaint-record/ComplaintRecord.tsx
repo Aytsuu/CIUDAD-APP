@@ -16,6 +16,10 @@ export default function ComplaintRecord() {
   const [currentPage, setCurrentPage] = useState(1);
   const { data: complaints = [], isLoading, error } = useGetComplaint();
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, pageSize]);
+
   const nonArchivedComplaints = useMemo(() => {
     return complaints.filter((c: Complaint) => !c.comp_is_archive);
   }, [complaints]);
@@ -28,10 +32,6 @@ export default function ComplaintRecord() {
     const start = (currentPage - 1) * pageSize;
     return filteredData.slice(start, start + pageSize);
   }, [filteredData, currentPage, pageSize]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, pageSize]);
 
   if (error) return <div>Error: {error.message}</div>;
 
@@ -47,7 +47,7 @@ export default function ComplaintRecord() {
           Manage and view complaint information
         </p>
       </div>
-      <hr className="pb-4"/>
+      <hr className="pb-4" />
       <ComplaintFilterBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -55,7 +55,11 @@ export default function ComplaintRecord() {
         setTimeFilter={setTimeFilter}
       />
 
-      <ComplaintTable data={paginatedData} columns={columns} isLoading={isLoading} />
+      <ComplaintTable
+        data={paginatedData}
+        columns={columns}
+        isLoading={isLoading}
+      />
 
       <ComplaintPagination
         currentPage={currentPage}

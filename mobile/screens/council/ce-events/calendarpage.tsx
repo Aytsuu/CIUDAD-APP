@@ -13,7 +13,7 @@ import {
   useGetCouncilEvents,
   useDeleteCouncilEvent,
   useRestoreCouncilEvent,
-} from "@/screens/council/ce-events/queries";
+} from "@/screens/council/ce-events/ce-att-queries";
 import { format, parseISO, isSameMonth, isSameDay, addMonths } from "date-fns";
 import { Plus } from "lucide-react-native";
 import { MaterialIcons } from "@expo/vector-icons";

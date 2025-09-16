@@ -3,7 +3,35 @@ from django.conf import settings
 from datetime import date
 from simple_history.models import HistoricalRecords
 
-class Sitio(models.Model):
+class ProfilingAbstractModel(models.Model):
+    class Meta:
+        abstract = True
+    
+    def save(self, *args, **kwargs):
+        for field in self._meta.fields:
+            if(
+                isinstance(field, (models.CharField, models.TextField))
+                and not field.primary_key
+                and field.editable
+            ):
+                val = getattr(self, field.name)
+                if isinstance(val, str):
+                    setattr(self, field.name, val.upper())
+        super().save(*args, **kwargs)
+
+
+
+class Voter(models.Model):
+    voter_id = models.BigAutoField(primary_key=True)
+    voter_name = models.CharField(max_length=200)
+    voter_address = models.TextField()
+    voter_category = models.CharField(max_length=5, null=True)
+    voter_precinct = models.CharField(max_length=20)
+
+    class Meta:
+        db_table = "voter"
+
+class Sitio(ProfilingAbstractModel):
     sitio_id = models.CharField(max_length=100, primary_key=True)
     sitio_name = models.CharField(max_length=100)
 
@@ -13,7 +41,7 @@ class Sitio(models.Model):
     def __str__(self):
         return self.sitio_id
 
-class Address(models.Model):
+class Address(ProfilingAbstractModel):
     add_id = models.BigAutoField(primary_key=True)  
     add_province = models.CharField(max_length=50)
     add_city = models.CharField(max_length=50)
@@ -30,8 +58,8 @@ class Address(models.Model):
 
     def __str__(self):
         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
-
-class Personal(models.Model):
+    
+class Personal(ProfilingAbstractModel):
     per_id = models.BigAutoField(primary_key=True)
     per_lname = models.CharField(max_length=100)
     per_fname = models.CharField(max_length=100)
@@ -44,6 +72,13 @@ class Personal(models.Model):
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=20)  
     per_disability = models.CharField(max_length=100, null=True, blank=True)
+
+    history = HistoricalRecords(
+        table_name='personal_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True,
+    )
 
     history = HistoricalRecords(
         table_name='personal_history',
@@ -71,6 +106,7 @@ class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_addresses')
     add = models.ForeignKey(Address, on_delete=models.CASCADE)
+    
     class Meta:
         db_table = 'personal_address'
 
@@ -88,6 +124,7 @@ class ResidentProfile(models.Model):
     rp_date_registered = models.DateField(auto_now_add=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_information')
     staff = models.ForeignKey("administration.Staff", on_delete=models.CASCADE, null=True, related_name="resident_profiles")
+    voter = models.ForeignKey(Voter, on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = 'resident_profile'
@@ -101,7 +138,7 @@ class ResidentProfile(models.Model):
         return f"{self.per} (ID: {self.rp_id})"
 
 
-class Household(models.Model):
+class Household(ProfilingAbstractModel):
     hh_id = models.CharField(max_length=50, primary_key=True)
     hh_nhts = models.CharField(max_length=50)
     hh_date_registered = models.DateField(auto_now_add=True)
@@ -115,7 +152,7 @@ class Household(models.Model):
     def __str__(self):
         return f"Household {self.hh_id} - {self.rp} in {self.add}"
 
-class Family(models.Model):
+class Family(ProfilingAbstractModel):
     fam_id = models.CharField(max_length=50, primary_key=True)
     fam_indigenous = models.CharField(max_length=50)
     fam_building = models.CharField(max_length=50)
@@ -129,7 +166,7 @@ class Family(models.Model):
     def __str__(self):
         return f"Family {self.fam_id}"
 
-class FamilyComposition(models.Model):
+class FamilyComposition(ProfilingAbstractModel):
     fc_id = models.BigAutoField(primary_key=True)
     fc_role = models.CharField(max_length=50)
     fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='family_compositions')
@@ -140,7 +177,6 @@ class FamilyComposition(models.Model):
 
     def __str__(self):
         return f"{self.rp} in Family {self.fam.fam_id}"
-
     
 class RequestRegistration(models.Model):
     req_id = models.BigAutoField(primary_key=True)
@@ -150,7 +186,7 @@ class RequestRegistration(models.Model):
     class Meta: 
         db_table = 'request_registration'
 
-class RequestRegistrationComposition(models.Model):
+class RequestRegistrationComposition(ProfilingAbstractModel):
     rrc_id = models.BigAutoField(primary_key=True)
     rrc_fam_role = models.CharField(max_length=50)
     req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name="request_composition")
@@ -160,15 +196,20 @@ class RequestRegistrationComposition(models.Model):
     class Meta:
         db_table = 'request_registration_composition'
 
-class BusinessRespondent(models.Model):
+class BusinessRespondent(ProfilingAbstractModel):
     br_id = models.BigAutoField(primary_key=True)
     br_date_registered = models.DateField(default=date.today)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    br_lname = models.CharField(max_length=50)
+    br_fname = models.CharField(max_length=50)
+    br_mname = models.CharField(max_length=50, null=True)
+    br_sex = models.CharField(max_length=10)
+    br_dob = models.DateField()
+    br_contact = models.CharField(max_length=11)
 
     class Meta:
         db_table = 'business_respondent'
 
-class Business(models.Model):
+class Business(ProfilingAbstractModel):
     bus_id = models.BigAutoField(primary_key=True)
     bus_name = models.CharField(max_length=100)
     bus_gross_sales = models.FloatField()
@@ -190,7 +231,7 @@ class Business(models.Model):
     class Meta:
         db_table = 'business'
 
-class BusinessModification(models.Model):
+class BusinessModification(ProfilingAbstractModel):
     bm_id = models.BigAutoField(primary_key=True)
     bm_updated_name = models.CharField(max_length=100, null=True)
     bm_updated_gs = models.FloatField(null=True)
@@ -215,20 +256,3 @@ class BusinessFile(models.Model):
 
     class Meta:
         db_table = 'business_file'
-
-class KYCRecord(models.Model):
-    kyc_id = models.BigAutoField(primary_key=True)
-    id_document_front = models.TextField(null=True, blank=True)
-    id_has_face = models.BooleanField(null=True, default=False)
-    id_face_embedding = models.BinaryField(null=True, blank=True)
-    face_photo = models.TextField(null=True, blank=True)
-    document_info_match = models.BooleanField(null=True, default=False)
-    face_match_score = models.FloatField(null=True, blank=True)
-    is_verified = models.BooleanField(null=True, default=False)
-    created_at = models.DateTimeField(null=True, auto_now_add=True)
-    updated_at = models.DateTimeField(null=True, auto_now=True)
-
-    class Meta:
-        db_table = 'kyc_record'
-
-    

@@ -71,7 +71,7 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
 
           {/* Badge centered */}
           <Badge variant="outline" className="font-medium">
-            COMP-2025-{row.original.comp_id}
+            {row.original.comp_id}
           </Badge>
         </div>
       );
@@ -161,17 +161,6 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
         {row.getValue("comp_incident_type")}
       </div>
     ),
-  },
-  {
-    accessorKey: "comp_status",
-    header: "Status",
-    cell: ({ row }) => {
-      return (
-        <div>
-          <Badge className=""></Badge>
-        </div>
-      );
-    },
   },
   {
     accessorKey: "actions",

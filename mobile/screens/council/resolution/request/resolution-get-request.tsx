@@ -11,3 +11,16 @@ export const getResolution = async () => {
         console.error(err);
     }
 };
+
+
+
+export const getApprovedProposals = async () => {
+    try {
+
+        const res = await api.get('council/approved-proposals/');
+        return res.data;
+        
+    } catch (err) {
+        console.error(err);
+    }
+};

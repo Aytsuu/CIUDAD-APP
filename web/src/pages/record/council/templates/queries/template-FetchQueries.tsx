@@ -5,21 +5,16 @@ import { getPurposeRates } from "../request/template-GetRequest";
 
 
 export type TemplateRecord = {
-    temp_id: number,
-    temp_header: string;
-    temp_below_headerContent: string;
-    temp_title: string;
-    temp_subtitle: string;
-    temp_w_sign: boolean;
-    temp_w_seal: boolean;
-    temp_w_summon: boolean;
-    temp_paperSize: string;
-    temp_margin: string;
-    temp_filename: string;
-    temp_body: string;
-    temp_is_archive: boolean;
-    pr_id: number;
+    temp_id: number;
+    temp_contact_num: string,
+    temp_email: string;
     staff_id: number;
+    template_files: {  
+        tf_id: number;
+        tf_url: string;
+        tf_name: string;
+        tf_logoType: string;
+    }[];
 };
   
 

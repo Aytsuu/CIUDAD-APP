@@ -28,6 +28,7 @@ export default function AcceptedTable() {
   const filteredData = acceptedReqData.filter((request) => {
     const matchesSitio = selectedSitio === "0" || request.sitio_name === selectedSitio
     const matchesSearch = searchQuery === "" || `
+      ${request.garb_id} 
       ${request.garb_requester} 
       ${request.garb_location} 
       ${request.garb_waste_type} 
@@ -35,6 +36,7 @@ export default function AcceptedTable() {
       ${request.garb_additional_notes} 
       ${request.dec_date}
       ${request.sitio_name}
+      ${request.staff_name}
     `.toLowerCase().includes(searchQuery.toLowerCase())
     
     return matchesSitio && matchesSearch
@@ -241,6 +243,14 @@ export default function AcceptedTable() {
                     <div className="flex-shrink-0 min-w-0 w-56">
                       <div className="space-y-2">
                         <div>
+                          <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
+                            <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
+                              {request.garb_id}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
                           <h3 className="font-semibold text-sm text-gray-900 truncate">{request.garb_requester}</h3>
                           <p className="text-xs text-gray-500 mt-0.5">{request.sitio_name}</p>
                         </div>
@@ -275,6 +285,14 @@ export default function AcceptedTable() {
                             <p className="text-xs text-gray-500 uppercase tracking-wide">Scheduled Date</p>
                             <p className="text-xs font-medium text-gray-900 mt-0.5">
                               {request.assignment_info.pick_date}
+                            </p>
+                          </div>
+                        )}
+                        {request.staff_name && (
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Accepted & Assigned By</p>
+                            <p className="text-xs font-medium text-gray-900 mt-0.5">
+                              {request.staff_name}
                             </p>
                           </div>
                         )}

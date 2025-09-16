@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
-import {
-  type ComplaintFormData,
-  complaintFormSchema,
-} from "@/form-schema/complaint-schema";
+import {type ComplaintFormData, complaintFormSchema} from "@/form-schema/complaint-schema";
 import { ReviewInfo } from "./review";
 import { ComplainantInfo } from "./complainant";
 import { AccusedInfo } from "./accused";

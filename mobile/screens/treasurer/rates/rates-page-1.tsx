@@ -138,20 +138,12 @@ export default function RatesPage1() {
   }
 
   return (
-    <View className="flex-1 bg-white ">
-      {/* Header */}
-      <View className="mb-4">
-        <Text className="font-bold text-xl text-[#1a2332] text-center mb-1">
-          Barangay Clearance For Business Permit Based on Annual Gross Sales For Receipts
-        </Text>
-        <View className="h-1 bg-gradient-to-r from-[#2a3a61] to-[#4f46e5] rounded-full" />
-      </View>
-
+    <View className="flex-1 bg-white p-4">
       {/* Search and Add */}
       <View className="mb-4">
-        <View className="relative mb-3">
+        {/* <View className="relative mb-3">
           <Input placeholder="Search..." value={searchQuery} onChangeText={setSearchQuery} className="bg-white text-black rounded-lg p-2 border border-gray-300 pl-10"/>
-        </View>
+        </View> */}
         
         <Button onPress={handleCreate} className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md">
             <Plus size={20} color="white" />

@@ -1,19 +1,18 @@
 from django.db import models
 from datetime import date
-from django.contrib.postgres.fields import ArrayField
+import json, re
 
-
-#gihimoan lang nako so that I could connect as fk
 class DevelopmentPlan(models.Model):
     dev_id = models.BigAutoField(primary_key=True)
     dev_date = models.DateField(default=date.today)
     dev_client = models.CharField(max_length=200, null=True)
     dev_issue = models.CharField(max_length=200, null=True)
-    dev_project = models.CharField(max_length=200, null=True)
-    dev_res_person = models.CharField(max_length=200, null=True)
-    dev_indicator = models.CharField(max_length=200, null=True)
-    dev_gad_budget = models.DecimalField(max_digits=10, decimal_places=2)
-
+    dev_project = models.TextField(null=True, blank=True, db_column='dev_project')
+    dev_activity = models.JSONField(default=list, null=True, blank=True, db_column='dev_activity')
+    dev_res_person = models.JSONField(default=list, db_column='dev_res_person')
+    dev_indicator = models.JSONField(default=list, db_column='dev_indicator')
+    dev_gad_items = models.JSONField(default=list, db_column='dev_budget_items')
+   
     staff = models.ForeignKey(
         'administration.Staff',
         on_delete=models.SET_NULL,
@@ -24,35 +23,13 @@ class DevelopmentPlan(models.Model):
 
     class Meta:
         db_table = 'gad_development_plan'
-
-class DevelopmentBudget(models.Model):
-    gdb_id = models.BigAutoField(primary_key=True)
-    gdb_name = models.CharField(max_length=200, null=True)
-    gdb_pax = models.DecimalField(max_digits=10, decimal_places=2)
-    gdb_price = models.DecimalField(max_digits=10, decimal_places=2)
-
-    dev = models.ForeignKey(
-        DevelopmentPlan,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='dev_id',
-        related_name='budgets'
-    )
-
-    class Meta:
-        db_table = 'gad_development_budget'
-
-
-
-#===========================================================================================================
+        managed = False
 
 class GAD_Budget_Year(models.Model):
     gbudy_num = models.BigAutoField(primary_key=True)
     gbudy_budget = models.DecimalField(max_digits=10, decimal_places=2)
     gbudy_year = models.CharField(max_length=4, unique=True)
-    gbudy_expenses = models.DecimalField(max_digits=10, decimal_places=2, default=0) #total expenses for the year from gad_budget_record
-    gbudy_income = models.DecimalField(max_digits=10, decimal_places=2, default=0)# total income for the year from gad_budget_record
+    gbudy_expenses = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     gbudy_is_archive = models.BooleanField(default=False)
 
     class Meta:
@@ -61,22 +38,15 @@ class GAD_Budget_Year(models.Model):
 class GAD_Budget_Tracker(models.Model):
     gbud_num = models.BigAutoField(primary_key=True)
     gbud_datetime = models.DateTimeField(null=True)
-    gbud_type = models.CharField(max_length=100, null=True) #income or expense
     gbud_add_notes = models.CharField(max_length=500, null=True)
-
-    #if type is income
-    gbud_inc_particulars = models.CharField(max_length=200, null=True)
-    gbud_inc_amt = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
-    #if type is expense
-    gbud_exp_particulars = models.CharField(max_length=200, null=True) #this saves the retrieved gdb_name from devbudget
+    # gbud_exp_project = models.CharField(max_length=200, null=True)
+    gbud_exp_particulars = models.JSONField(default=list, null=True)
     gbud_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_actual_expense = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_remaining_bal = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
     gbud_reference_num = models.CharField(max_length=200, null=True)
-
-    #for soft delete
     gbud_is_archive = models.BooleanField(default = False)
+    gbud_project_index = models.IntegerField(default=0, help_text="Index of project in dev_project array")
     
     gbudy = models.ForeignKey(
         GAD_Budget_Year, 
@@ -84,13 +54,13 @@ class GAD_Budget_Tracker(models.Model):
         related_name='transactions',
         db_column='gbudy_num'
     )
-
-    gdb = models.ForeignKey(
-        DevelopmentBudget,
+    
+    dev = models.ForeignKey(
+        DevelopmentPlan,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        db_column='gdb_id'
+        db_column='dev_id'
     )
 
     staff = models.ForeignKey(
@@ -103,6 +73,22 @@ class GAD_Budget_Tracker(models.Model):
     
     class Meta:
         db_table = 'gad_budget_record'
+    
+    @property
+    def project_title(self):
+        """Get the project title from the related development plan"""
+        if self.dev and self.dev.dev_project:
+            projects = self.dev.dev_project if isinstance(self.dev.dev_project, list) else [self.dev.dev_project]
+            if 0 <= self.gbud_project_index < len(projects):
+                return projects[self.gbud_project_index]
+        return None
+    
+    @property
+    def budget_items(self):
+        """Get budget items from the related development plan"""
+        if self.dev and self.dev.dev_gad_items:
+            return self.dev.dev_gad_items
+        return []
 
 class GAD_Budget_File(models.Model):
     gbf_id = models.BigAutoField(primary_key=True)
@@ -121,6 +107,20 @@ class GAD_Budget_File(models.Model):
     class Meta:
         db_table = 'gad_budget_file'
 
+class GADBudgetLog(models.Model):
+    gbudl_id = models.BigAutoField(primary_key=True)
+    gbudl_budget_entry = models.ForeignKey(
+        GAD_Budget_Tracker,
+        on_delete=models.CASCADE,
+        related_name="logs"
+    )
+    gbudl_amount_returned = models.FloatField(default=0, null=True)
+    gbudl_created_at = models.DateTimeField(auto_now_add=True)
+    gbudl_prev_amount = models.FloatField(default=0, null=True)
+
+    class Meta:
+        db_table = "gad_budget_log"
+
 class ProjectProposal(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
@@ -128,19 +128,20 @@ class ProjectProposal(models.Model):
         ('Rejected', 'Rejected'),
         ('Viewed', 'Viewed'),
         ('Amend', 'Amend'),
+        ('Resubmitted', 'Resubmitted')
     ]
 
     gpr_id = models.BigAutoField(primary_key=True)
-    gpr_title = models.CharField(max_length=200)
+    # gpr_title = models.CharField(max_length=200)
     gpr_background = models.TextField(blank=True, null=True)
     gpr_date = models.CharField(default=date.today().strftime("%B %d, %Y"))
     gpr_venue = models.CharField(max_length=200, blank=True)
     gpr_monitoring = models.TextField(blank=True)
     gpr_header_img = models.TextField(blank=True, null=True) 
     gpr_page_size = models.CharField(max_length=20, default='letter', null=True)
-    gpr_objectives = models.JSONField(default=list)
-    gpr_participants = models.JSONField(default=list)
-    gpr_budget_items = models.JSONField(default=list)
+    gpr_objectives = models.JSONField(default=list, null=True)
+    # gpr_participants = models.JSONField(default=list)
+    # gpr_budget_items = models.JSONField(default=list)
     gpr_signatories = models.JSONField(default=list)
 
     staff = models.ForeignKey(
@@ -157,6 +158,13 @@ class ProjectProposal(models.Model):
         null=True,
         blank=True,
         db_column='gbud_num'
+    )
+    
+    dev = models.ForeignKey(
+        DevelopmentPlan,
+        on_delete=models.CASCADE,
+        related_name='proposals',
+        db_column='dev_id'
     )
     
     gpr_created = models.DateField(default=date.today)
@@ -182,6 +190,57 @@ class ProjectProposal(models.Model):
         """Get the date from the most recent status change"""
         latest_log = self.logs.order_by('-gprl_date_approved_rejected').first()
         return latest_log.prl_date_approved_rejected if latest_log else None
+    
+    @property
+    def project_title(self):
+        """Get the project title from the related development plan"""
+        if self.dev and self.dev.dev_project:
+            try:
+                # Try parsing as JSON
+                projects = json.loads(self.dev.dev_project)
+                if isinstance(projects, list) and projects:
+                    return projects[0] if isinstance(projects[0], str) else "Untitled Project"
+                elif isinstance(projects, str):
+                    return projects
+            except (json.JSONDecodeError, TypeError):
+                # Fallback: just treat it as plain text
+                return self.dev.dev_project
+        return "Untitled Project"
+
+    @property
+    def participants(self):
+        """Get participants from the related development plan indicators."""
+        if self.dev and self.dev.dev_indicator:
+            result = []
+            for entry in self.dev.dev_indicator:
+                if isinstance(entry, dict):
+                    # Already structured
+                    category = str(entry.get("category", "")).strip()
+                    count = entry.get("count")
+                    try:
+                        count = int(count)
+                    except (ValueError, TypeError):
+                        count = None
+                    result.append({"category": category, "count": count})
+                elif isinstance(entry, str):
+                    # Could be multiple comma-separated groups
+                    parts = [p.strip() for p in entry.split(",") if p.strip()]
+                    for part in parts:
+                        match = re.match(r'^(.*?)\s*\((\d+)\s*participants?\)$', part)
+                        if match:
+                            category, count = match.groups()
+                            result.append({"category": category.strip(), "count": int(count)})
+                        else:
+                            result.append({"category": part, "count": None})
+            return result
+        return []
+        
+    @property
+    def budget_items(self):
+        """Get budget items from the related development plan"""
+        if self.dev and self.dev.dev_gad_items:
+            return self.dev.dev_gad_items
+        return []
 
 class ProjectProposalLog(models.Model):
     STATUS_CHOICES = [
@@ -189,6 +248,8 @@ class ProjectProposalLog(models.Model):
         ('Approved', 'Approved'),
         ('Rejected', 'Rejected'),
         ('Viewed', 'Viewed'),
+        ('Amend', 'Amend'),
+        ('Resubmitted', 'Resubmitted')
     ]
 
     gprl_id = models.BigAutoField(primary_key=True)
@@ -233,5 +294,3 @@ class ProposalSuppDoc(models.Model):
 
     class Meta:
         db_table = 'proposal_supp_doc'
-
-        

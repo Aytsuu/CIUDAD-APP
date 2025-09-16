@@ -25,10 +25,9 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
 
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
 
-  const defaultValues = React.useRef(generateDefaultValues(accountFormSchema)).current
   const form = useForm<z.infer<typeof accountFormSchema>>({
     resolver: zodResolver(accountFormSchema),
-    defaultValues
+    defaultValues: generateDefaultValues(accountFormSchema._def.schema)
   })
 
   // ==================== HANDLERS ======================
@@ -54,9 +53,10 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
       }
 
       const accountInfo = form.getValues()
+      const {confirm_password, ...account} = accountInfo 
 
       await addAccount({
-        accountInfo,
+        accountInfo: account,
         residentId: tab_params?.isRegistrationTab ? tab_params.residentId : residentId,
       })
 

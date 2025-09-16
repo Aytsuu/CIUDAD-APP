@@ -92,12 +92,12 @@ const IncomeExpenseFormSchema = z.object({
     // iet_receipt_image: z.instanceof(File).refine((file) => file.size > 0, {
     //     message: "Receipt is required.",
     // }), 
-    iet_receipt_image: z.array(z.object({
-        name: z.string(),
-        type: z.string(),
-        path: z.string(),
-        url: z.string(),
-    })).optional(),
+    // iet_receipt_image: z.array(z.object({
+    //     name: z.string(),
+    //     type: z.string(),
+    //     path: z.string(),
+    //     url: z.string(),
+    // })).optional(),
 })
 
 export default IncomeExpenseFormSchema

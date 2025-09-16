@@ -2,7 +2,7 @@
 
 // // export default GADEditEntryForm;
 
-import GADViewEditEntryForm from "@/screens/gad/budget-tracker/edit-budget";
+import GADViewEditEntryForm from "@/screens/gad/budget-tracker/gad-edit-budget";
 
 export default function EditBudgetRoute() {
   return <GADViewEditEntryForm />;

@@ -9,10 +9,10 @@ import { NAV_THEME } from '@/lib/constants';
 import { PortalHost } from '@rn-primitives/portal';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@/components/ui/toast';
-import { AuthProvider } from "@/contexts/AuthContext";
 import * as NavigationBar from 'expo-navigation-bar';
 import {Provider} from "react-redux"
-import {store} from "@/redux/index"
+import { store, persistor } from '@/redux/store';
+import { PersistGate } from 'redux-persist/integration/react';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -23,9 +23,7 @@ const LIGHT_THEME: Theme = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const queryClient = new QueryClient({
-    
-  });
+  const queryClient = new QueryClient();
 
   const [loaded] = useFonts({
     PoppinsRegular: require('../assets/fonts/Poppins-Regular.ttf'),
@@ -50,11 +48,11 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={LIGHT_THEME}>
-      <AuthProvider>
         <Provider store={store}>
-        <StatusBar backgroundColor="transparent" style="dark" />
-        <ToastProvider>
+          <PersistGate loading={null} persistor={persistor}>
           <QueryClientProvider client={queryClient}>
+            <ToastProvider>
+            <StatusBar backgroundColor="transparent" style="dark" />
             <Stack initialRouteName='(auth)'>
               <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
@@ -62,7 +60,6 @@ export default function RootLayout() {
               <Stack.Screen name="(complaint)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(profiling)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(report)" options={{ headerShown: false, animation: 'fade' }} />
-              <Stack.Screen name="(request)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(securado)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(health)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="animal-bites/[id]" options = {{ headerShown: false, animation: 'fade'}}/>
@@ -70,14 +67,16 @@ export default function RootLayout() {
               <Stack.Screen name="(council)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(treasurer)" options = {{ headerShown: false, animation: 'fade' }}/>
               <Stack.Screen name="(waste)" options = {{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="(request)" options = {{headerShown: false}}/>
               <Stack.Screen name="gad" options = {{ headerShown: false, animation: 'fade' }}/>
               <Stack.Screen name="(summon)" options = {{ headerShown: false, animation: 'fade' }}/>
+              <Stack.Screen name="(my-request)" options = {{headerShown: false, animation: 'fade'}} />
               <Stack.Screen name="+not-found" options = {{ headerShown: false, animation: 'fade' }}/>
             </Stack>
+          </ToastProvider>
           </QueryClientProvider>
-        </ToastProvider>
+          </PersistGate>
         </Provider>
-      </AuthProvider>
       <PortalHost />
     </ThemeProvider>
   );

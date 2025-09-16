@@ -6,15 +6,13 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { familyColumns } from "./FamilyColumns";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import FamilyProfileOptions from "./FamilyProfileOptions";
 import { useQuery } from "@tanstack/react-query";
 import { FamilyRecord } from "../profilingTypes";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import {
   getFamilies,
-  getHouseholds,
-  getResidents,
+  getHouseholdList,
+  getResidentsList,
 } from "@/pages/record/profiling/restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -25,23 +23,23 @@ export default function FamilyRecords() {
   const [currentPage, setCurrentPage] = React.useState(1);
 
   // Fetch families and residents using useQuery
-  const { data: families, isLoading: isLoadingFamilies } = useQuery({
+  const { data: families, isLoading: isLoadingFamilies, error: familiesError } = useQuery({
     queryKey: ["families"],
     queryFn: getFamilies,
     refetchOnMount: true,
     staleTime: 0,
   });
 
-  const { data: residents, isLoading: isLoadingResidents } = useQuery({
+  const { data: residents, isLoading: isLoadingResidents, error: residentsError } = useQuery({
     queryKey: ["residents"],
-    queryFn: getResidents,
+    queryFn: () => getResidentsList(),
     refetchOnMount: true,
     staleTime: 0,
   });
 
-  const { data: households, isLoading: isLoadingHouseholds } = useQuery({
+  const { data: households, isLoading: isLoadingHouseholds, error: householdsError } = useQuery({
     queryKey: ["households"],
-    queryFn: getHouseholds,
+    queryFn: getHouseholdList,
     refetchOnMount: true,
     staleTime: 0,
   });
@@ -68,6 +66,13 @@ export default function FamilyRecords() {
       };
     });
   };
+
+  // Debug log to check residents data structure
+  React.useEffect(() => {
+    if (residents) {
+      console.log("Residents data structure:", residents);
+    }
+  }, [residents]);
 
   const filteredFamilies = React.useMemo(() => {
     let filtered = formatFamilyData();
@@ -96,6 +101,19 @@ export default function FamilyRecords() {
         <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
         <Skeleton className="h-10 w-full mb-4 opacity-30" />
         <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+      </div>
+    );
+  }
+
+  if (familiesError || residentsError || householdsError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600 mb-2">Error Loading Data</h2>
+          <p className="text-gray-600">
+            {familiesError?.message || residentsError?.message || householdsError?.message || 'An unexpected error occurred'}
+          </p>
+        </div>
       </div>
     );
   }
@@ -129,7 +147,7 @@ export default function FamilyRecords() {
           </div>
         </div>
 
-        {/* DialogLayout with state management */}
+        {/* Register Button - Navigate to form */}
         <Link
           to="/health-family-form"
           state={{
@@ -143,19 +161,6 @@ export default function FamilyRecords() {
             <Plus /> Register
           </Button>
         </Link>
-        <DialogLayout
-          trigger={
-            <Button>
-              <Plus /> Register
-            </Button>
-          }
-          mainContent={
-            <FamilyProfileOptions
-              residents={residents}
-              households={households}
-            />
-          }
-        />
       </div>
 
       <div className="bg-white rounded-md">

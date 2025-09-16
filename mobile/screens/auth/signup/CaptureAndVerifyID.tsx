@@ -6,13 +6,13 @@ import {
 import { View, StyleSheet, Text } from "react-native";
 import { supabase } from "@/lib/supabase";
 import * as FileSystem from 'expo-file-system'
-import { RealtimeChannel, RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { postDocumentData } from "../rest-api/authPostAPI";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import NetInfo from '@react-native-community/netinfo';
+import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
 
 export type CAVIDCamHandle = {
-  capturePhoto: () => Promise<number | null>;
+  capturePhoto: () => Promise<boolean | undefined>;
 }
 
 // Configuration constants
@@ -23,6 +23,8 @@ const SUBSCRIPTION_TIMEOUT = 30000; // 30 seconds
 
 export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
   (props, ref) => {
+    // Initialization
+    const { type } = useRegistrationTypeContext();
     const { getValues } = useRegistrationFormContext();
     const isActive = React.useRef<boolean>(true);
     const device = useCameraDevice("back");
@@ -77,48 +79,6 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
       
       throw lastError!;
     };
-
-    // Timeout utility function
-    const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> => {
-      const timeout = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)
-      );
-      return Promise.race([promise, timeout]);
-    };
-
-    // Create stable subscription
-    const createStableSubscription = (
-      request_id: number,
-      onUpdate: (payload: RealtimePostgresChangesPayload<any>) => void
-    ): RealtimeChannel => {
-      return supabase
-        .channel(`kyc-processor-${request_id}-${Date.now()}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "kyc_record",
-            filter: `kyc_id=eq.${request_id}`
-          },
-          onUpdate
-        );
-    };
-
-    // Subscribe with retry mechanism
-    const subscribeWithRetry = async (
-      channel: RealtimeChannel,
-      maxRetries: number = MAX_RETRIES
-    ): Promise<void> => {
-      return withRetry(async () => {
-        channel.subscribe();
-        // Optionally, you can check channel's current state if needed
-        // For now, we assume subscribe() resolves if successful
-        console.log("Subscription successful");
-        return;
-      }, maxRetries);
-    };
-
     // Monitor connection state
     React.useEffect(() => {
       const channel = supabase.channel('connection-monitor');
@@ -163,113 +123,55 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
     }, []);
 
     React.useImperativeHandle(ref, () => ({
-      capturePhoto: async (): Promise<number | null> => {
+      capturePhoto: async (): Promise<boolean | undefined> => {
         try {
-          return await withRetry(async () => {
-            if (!camera.current) {
-              throw new Error("Camera not ready");
-            }
+          if (!camera.current) {
+            throw new Error("Camera not ready");
+          }
 
-            // Capture photo
-            const photo = await camera.current.takePhoto();
-            const photoUri = `file://${photo?.path}`;
-            const base64Data = await FileSystem.readAsStringAsync(photoUri, {
-              encoding: FileSystem.EncodingType.Base64
-            });
-
-            // Insert KYC record
-            const { data, error } = await supabase
-              .from("kyc_record")
-              .insert([{ 
-                id_document_front: `data:image/jpeg;base64,${base64Data}` 
-              }])
-              .select();
-
-            if (error) {
-              console.log("Supabase insert error:", JSON.stringify(error, null, 2));
-              throw error;
-            }
-
-            const request_id = data[0].kyc_id;
-            console.log("KYC record created with ID:", request_id);
-
-            // Set up real-time subscription with timeout
-            return await withTimeout(
-              new Promise<number | null>(async (resolve, reject) => {
-                let subscription: RealtimeChannel | null = null;
-                let subscriptionTimeoutId: NodeJS.Timeout;
-
-                const cleanup = () => {
-                  if (subscription) {
-                    subscription.unsubscribe();
-                    console.log("Subscription cleaned up");
-                  }
-                  if (subscriptionTimeoutId) {
-                    clearTimeout(subscriptionTimeoutId);
-                  }
-                };
-
-                try {
-                  // Create subscription
-                  subscription = createStableSubscription(
-                    request_id,
-                    (payload) => {
-                      console.log("Received update:", payload.new);
-                      
-                      if (payload.new.document_info_match === true &&
-                          payload.new.id_has_face === true) {
-                        cleanup();
-                        console.log("KYC verification successful");
-                        resolve(request_id);
-                      } else {
-                        cleanup();
-                        console.log("KYC verification failed");
-                        resolve(null);
-                      }
-                    }
-                  );
-
-                  // Subscribe with retry
-                  await subscribeWithRetry(subscription);
-                  console.log("Successfully subscribed to channel");
-
-                  // Send data for processing
-                  try {
-                    await postDocumentData({
-                      kyc_id: request_id,
-                      lname: getValues('personalInfoSchema.per_lname').toUpperCase().trim(),
-                      fname: getValues('personalInfoSchema.per_fname').toUpperCase().trim(),
-                      dob: getValues('personalInfoSchema.per_dob'),
-                      image: `data:image/jpeg;base64,${base64Data}`
-                    });
-                    console.log("Document data sent for processing");
-                  } catch (postError) {
-                    console.log("Error sending document data:", postError);
-                    cleanup(); // unsubscribe & clear timeout
-                    resolve(null); // stop waiting
-                    return; // exit early
-                  }
-
-                  // Set timeout for the subscription to receive updates
-                  subscriptionTimeoutId = setTimeout(() => {
-                    cleanup();
-                    console.log("Subscription timeout - no update received");
-                    resolve(null);
-                  }, SUBSCRIPTION_TIMEOUT);
-
-                } catch (subscriptionError) {
-                  cleanup();
-                  console.log("Subscription setup failed:", subscriptionError);
-                  resolve(null);
-                }
-              }),
-              OPERATION_TIMEOUT
-            );
-
+          // Capture photo
+          const photo = await camera.current.takePhoto();
+          const photoUri = `file://${photo?.path}`;
+          const base64Data = await FileSystem.readAsStringAsync(photoUri, {
+            encoding: FileSystem.EncodingType.Base64
           });
+
+          // Send data for processing
+          try {
+            const values = type == "individual" ? 
+                        getValues('personalInfoSchema') : 
+                        getValues('businessRespondent') as any
+
+            switch(type) {
+              case 'individual':
+                const residentMatchID = await postDocumentData({
+                  lname: values.per_lname.toUpperCase().trim(),
+                  fname: values.per_fname.toUpperCase().trim(),
+                  ...(values.per_mname != "" && {mname: values.per_mname?.toUpperCase().trim()}),
+                  dob: values.per_dob,
+                  image: `data:image/jpeg;base64,${base64Data}`
+                });
+
+                return residentMatchID
+              case 'business':
+                const busRespondentMatchID = await postDocumentData({
+                  lname: values.br_lname.toUpperCase().trim(),
+                  fname: values.br_fname.toUpperCase().trim(),
+                  ...(values.br_mname != "" && {mname: values.br_mname?.toUpperCase().trim()}),
+                  dob: values.br_dob,
+                  image: `data:image/jpeg;base64,${base64Data}`
+                });
+
+                return busRespondentMatchID
+            }
+
+          } catch (postError) {
+            console.log("Error sending document data:", postError);
+            return false;
+          }
         } catch (error) {
           console.log("Capture and verification failed:", error);
-          return null;
+          return false;
         }
       }
     }));

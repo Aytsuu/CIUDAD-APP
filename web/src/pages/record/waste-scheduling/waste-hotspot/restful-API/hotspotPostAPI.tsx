@@ -10,6 +10,7 @@ export const addHotspot = async (hotspotInfo: Record<string, any>) => {
             wh_is_archive: false,
             sitio_id: hotspotInfo.sitio,
             wstp_id: hotspotInfo.watchman,
+            staff_id: hotspotInfo.staff_id
     })
 
     try{
@@ -21,6 +22,7 @@ export const addHotspot = async (hotspotInfo: Record<string, any>) => {
             wh_is_archive: false,
             sitio_id: hotspotInfo.sitio,
             wstp_id: hotspotInfo.watchman,
+             staff_id: hotspotInfo.staff_id
         })
 
         return res.data.wh_num

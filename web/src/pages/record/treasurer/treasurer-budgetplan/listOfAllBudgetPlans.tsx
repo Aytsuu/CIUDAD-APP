@@ -107,6 +107,10 @@ function BudgetPlan() {
             cell: ({ row }) => (
                 <div className="text-center">{row.getValue("plan_issue_date")}</div>
             )
+        },
+        {
+            accessorKey: "staff_name",
+            header: "Created By"
         }
     ];
 

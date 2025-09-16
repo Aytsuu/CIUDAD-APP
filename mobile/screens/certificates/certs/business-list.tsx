@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { getBusinessPermits, BusinessPermit } from '@/screens/certificates/restful-api/businessGetAPI'
+import { getBusinessPermits, BusinessPermit } from '../queries/businessPermitQueries'
 
 const BusinessList = () => {
   const [searchQuery, setSearchQuery] = useState('')

@@ -19,7 +19,8 @@ export const BudgetPlanStep1Schema = z.object({
     actualIncome: DataRequirement,
     actualRPT: DataRequirement,
     planId: z.number().default(0),
-    budgetaryObligations: z.string().default('')
+    budgetaryObligations: z.string().default(''),
+    staff_id: z.string().default('')
 })
 
 export const BudgetPlanStep2Schema = z.object({

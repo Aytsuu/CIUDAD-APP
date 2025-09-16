@@ -33,8 +33,12 @@ export default function BudgetPlanSuppDocs({ plan_id }: { plan_id: string }) {
     };
 
     const handleAddDocument = () => {
-        // Navigate to add document screen
-        router.push('/(treasurer)/budgetPlan/budget-plan-suppdoc-create');
+        router.push({
+            pathname: '/(treasurer)/budgetPlan/budget-plan-suppdoc-create',
+            params: {
+                plan_id: plan_id
+            }
+    });
     };
 
     if (isLoading) {
@@ -47,7 +51,6 @@ export default function BudgetPlanSuppDocs({ plan_id }: { plan_id: string }) {
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50">
-            {/* Fixed header section (won't scroll) */}
             <View className="bg-white p-4 border-b border-gray-200">
                 <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center gap-2">
@@ -178,7 +181,7 @@ export default function BudgetPlanSuppDocs({ plan_id }: { plan_id: string }) {
                                     className="absolute right-4 top-1/2 -mt-6 bg-black/50 rounded-full p-3"
                                     onPress={() => setCurrentIndex(prev => prev + 1)}
                                 >
-                                    <ChevronRight size={24} color="white" />x``
+                                    <ChevronRight size={24} color="white" />
                                 </TouchableOpacity>
                             )}
                         </>

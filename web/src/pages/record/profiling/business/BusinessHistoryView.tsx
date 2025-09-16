@@ -190,16 +190,16 @@ export default function BusinessHistoryView() {
 
             <ComparisonRow
               label="Registration Date"
-              oldValue={formatDate(old.bus_date_of_registration, 'long') as string}
-              newValue={formatDate(updated.bus_date_of_registration, 'long') as string}
+              oldValue={formatDate(old.bus_date_of_registration, 'long' as any) as string}
+              newValue={formatDate(updated.bus_date_of_registration, 'long' as any) as string}
               fieldKey="bus_date_of_registration"
               icon={Calendar}
             />
 
             <ComparisonRow
               label="Verification Date"
-              oldValue={formatDate(old.bus_date_verified, 'long') as string}
-              newValue={formatDate(updated.bus_date_verified, 'long') as string}
+              oldValue={formatDate(old.bus_date_verified, 'long' as any) as string}
+              newValue={formatDate(updated.bus_date_verified, 'long' as any) as string}
               fieldKey="bus_date_verified"
               icon={Calendar}
             />

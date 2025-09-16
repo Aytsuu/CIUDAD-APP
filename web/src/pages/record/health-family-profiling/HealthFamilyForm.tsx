@@ -32,14 +32,14 @@ export default function HealthFamilyForm() {
   const navigate = useNavigate();
   const { data: householdsListHealth, isLoading: isLoadingHouseholds } = useHouseholdsListHealth();
   const { data: residentsListHealth, isLoading: isLoadingResidents } = useResidentsListHealth(); 
-  const [currentStep, setCurrentStep] = React.useState<number>(4);
+  const [currentStep, setCurrentStep] = React.useState<number>(1);
   const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
   const [selectedMotherId, setSelectedMotherId] = React.useState<string>("");
   const [selectedFatherId, setSelectedFatherId] = React.useState<string>("");
-  const [selectedGuardianId, setSelectedGuardianId] = React.useState<string>("");
+  // const [selectedGuardianId, setSelectedGuardianId] = React.useState<string>("");
   const [selectedResidentId, setSelectedResidentId] = React.useState<string>("");
-  const [selectedRespondentId, setSelectedRespondentId] = React.useState<string>("250811000004-R"); 
-  const [famId, setFamId] = React.useState<string>("250811000004-R"); 
+  const [selectedRespondentId, setSelectedRespondentId] = React.useState<string>(""); 
+  const [famId, setFamId] = React.useState<string>(""); 
   const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>(
     []
   );
@@ -610,12 +610,12 @@ export default function HealthFamilyForm() {
               selectedParents={{
                 mother: selectedMotherId,
                 father: selectedFatherId,
-                guardian: selectedGuardianId,
+                // guardian: selectedGuardianId,
               }}
               dependentsList={dependentsList}
               setSelectedMotherId={setSelectedMotherId}
               setSelectedFatherId={setSelectedFatherId}
-              setSelectedGuardianId={setSelectedGuardianId}
+              // setSelectedGuardianId={setSelectedGuardianId}
               setSelectedRespondentId={setSelectedRespondentId}
               onSubmit={() => nextStep()}
               back={() => prevStep()}
@@ -625,7 +625,7 @@ export default function HealthFamilyForm() {
             <DependentsInfoLayout
               form={form}
               residents={{ default: residentsListHealth, formatted: formattedResidents }}
-              selectedParents={[selectedMotherId, selectedFatherId, selectedGuardianId]}
+              selectedParents={[selectedMotherId, selectedFatherId]}
               dependentsList={dependentsList}
               setDependentsList={setDependentsList}
               back={prevStep}
