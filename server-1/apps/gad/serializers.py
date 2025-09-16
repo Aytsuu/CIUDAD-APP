@@ -665,7 +665,11 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
     def get_total(self, obj):
         try:
             items = [self._normalize_budget_item(i) for i in (obj.dev_gad_items or [])]
-            total = sum(Decimal(str(i.get('price', 0))) for i in items)
+            # Sum amount × pax (fall back to price if amount missing)
+            total = sum(
+                Decimal(str((i.get('amount', i.get('price', 0))))) * Decimal(str(i.get('pax', 1)))
+                for i in items
+            )
             return str(total)
         except Exception:
             return "0"
@@ -737,11 +741,13 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
 
     def _normalize_budget_item(self, item):
         if not isinstance(item, dict):
-            return { 'name': '', 'pax': 0, 'price': 0 }
+            return { 'name': '', 'pax': 0, 'amount': 0 }
+        # Prefer 'amount'; fall back to 'price' or gdb_* variants
+        amount_value = item.get('amount', item.get('price', item.get('gdb_amount', item.get('gdb_price', 0))))
         return {
             'name': item.get('name', item.get('gdb_name', '')),
             'pax': item.get('pax', item.get('gdb_pax', 0)),
-            'price': item.get('price', item.get('gdb_price', 0)),
+            'amount': amount_value,
         }
 
     def _ensure_array(self, value):
