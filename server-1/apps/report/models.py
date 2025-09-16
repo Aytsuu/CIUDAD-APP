@@ -1,7 +1,8 @@
 from django.db import models
 from datetime import date
+from ..abstract_classes import AbstractModels
 
-class ReportType(models.Model):
+class ReportType(AbstractModels):
     rt_id = models.BigAutoField(primary_key=True)
     rt_label = models.CharField(max_length=500)
     rt_category = models.CharField(max_length=50)
@@ -12,13 +13,14 @@ class ReportType(models.Model):
 class IncidentReport(models.Model):
   ir_id = models.BigAutoField(primary_key=True)
   ir_add_details = models.TextField()
-  ir_time = models.TimeField(auto_now_add=True)
-  ir_date = models.DateField(auto_now_add=True)
+  ir_time = models.TimeField()
+  ir_date = models.DateField()
+  ir_area = models.TextField()
+  ir_involved = models.IntegerField()
+  ir_created_at = models.DateTimeField(auto_now_add=True)
   ir_is_archive = models.BooleanField(default=False)
   rt = models.ForeignKey(ReportType, on_delete=models.CASCADE)
   rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE)
-  add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE)
-
   class Meta:
     db_table = 'incident_report'
 
@@ -29,14 +31,14 @@ class AcknowledgementReport(models.Model):
   ar_time_started = models.TimeField()
   ar_date_completed = models.DateField()
   ar_time_completed = models.TimeField()
+  ar_area = models.TextField()
   ar_action_taken = models.TextField()
   ar_result = models.TextField()
   ar_created_at = models.DateField(default=date.today)
-  ar_status = models.CharField(max_length=20, default='Unsigned')
+  ar_status = models.CharField(max_length=20, default='UNSIGNED')
   ar_is_archive = models.BooleanField(default=False)
   ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, null=True)
   rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
-  add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE)
   staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
   class Meta:
@@ -57,7 +59,7 @@ class WeeklyAccomplishmentReport(models.Model):
   war_id = models.BigAutoField(primary_key=True)
   war_created_at = models.DateField(default=date.today)
   war_created_for = models.DateField(default=date.today)
-  war_status = models.CharField(max_length=50, default='Unsigned')
+  war_status = models.CharField(max_length=50, default='UNSIGNED')
   war_is_archive = models.BooleanField(default=False)
   staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 

@@ -1,7 +1,14 @@
 import { z } from "zod";
 
 export const accountFormSchema = z.object({
-  email: z.string().email({ message: "Invalid email (ex. juanlitoy243@gmail.com)"}),
+  email: z.string()
+    .email({ message: "Invalid email (ex. juanlitoy243@gmail.com)" })
+    .refine((val) => {
+      const domain = val.split("@")[1] || "";
+      return domain.includes(".") && domain.split(".").pop()!.length <= 4; // common TLDs
+    }, {
+      message: "Invalid email domain",
+    }),
   phone: z.string()
     .min(1, "Contact is required")
     .regex(

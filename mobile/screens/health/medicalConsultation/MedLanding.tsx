@@ -1,5 +1,5 @@
 import { View,Image,Text, ScrollView, TouchableOpacity, TouchableWithoutFeedback } from 'react-native'
-import {Button} from '@/components/ui/button'
+import {Button} from '@/components/ui/button/button'
 import React from 'react'
 import { router } from 'expo-router';
 

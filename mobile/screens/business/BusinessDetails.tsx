@@ -5,7 +5,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { MapPin } from "@/lib/icons/MapPin";
 import { CheckCircle } from "@/lib/icons/CheckCircle";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
 import { LoadingState } from "@/components/ui/loading-state";

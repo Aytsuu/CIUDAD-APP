@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Modal, Image } from "react-native";
 import { CheckCircle, XCircle, X, Search, Info } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { useGetGarbagePendingRequest } from "../queries/garbagePickupStaffFetchQueries";
 import { formatTimestamp } from "@/helpers/timestampformatter";

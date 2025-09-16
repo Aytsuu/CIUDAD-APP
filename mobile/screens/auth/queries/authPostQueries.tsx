@@ -3,6 +3,8 @@ import { addAccount, addAddress, addPersonal, addPersonalAddress, addRequest } f
 import { api } from "@/api/api";
 import { useRouter } from "expo-router";
 import { useToastContext } from "@/components/ui/toast";
+import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
+import axios from "axios";
 
 export const useAddAddress = () => {
   return useMutation({
@@ -131,14 +133,24 @@ export const useVerifyFamily = () => {
 }
 
 export const useSendOTP = () => {
+  const { toast } = useToastContext();
+  const { setError } = useRegistrationFormContext();
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       try {
         const res = await api.post("account/phone-verification", data)
         return res.data
-      } catch (err) {
-        console.error(err);
-        throw err
+      } catch (err: any) {
+        if (axios.isAxiosError(err) && err.response) {
+          const errors = err.response.data;
+
+          if (errors.phone) {
+            setError("accountFormSchema.phone", {
+              type: "server",
+              message: errors.phone, // "Phone already in use"
+            });
+          }
+        }
       }
     }
   })

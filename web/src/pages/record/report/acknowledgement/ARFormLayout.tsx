@@ -3,7 +3,6 @@ import React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { getARFormSchema } from "@/form-schema/report-schema";
 import { Form } from "@/components/ui/form/form";
 import ARForm from "./ARForm";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
@@ -13,8 +12,8 @@ import { Card } from "@/components/ui/card";
 import { useLocation } from "react-router";
 import { useAddAR } from "../queries/reportAdd";
 import { useAuth } from "@/context/AuthContext";
-import { formatSitio } from "../../profiling/ProfilingFormats";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { ARFormSchema } from "@/form-schema/report-schema";
 
 // Main component for the DRR AR Form
 export default function ARFormLayout() {
@@ -22,20 +21,17 @@ export default function ARFormLayout() {
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params, [location.state]);
   const data = React.useMemo(() => params?.data, [params]);
-  const sitio = React.useMemo(() => data?.sitio || [], [data])
   const selected = React.useMemo(() => params?.selected, [params])
   const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   
   const { mutateAsync: addAR } = useAddAR(); 
-  const defaultValues = generateDefaultValues(getARFormSchema(selected))
-  const form = useForm<z.infer<ReturnType<typeof getARFormSchema>>>({
-    resolver: zodResolver(getARFormSchema(selected)),
-    defaultValues,
+  const defaultValues = generateDefaultValues(ARFormSchema)
+  const form = useForm<z.infer<typeof ARFormSchema>>({
+    resolver: zodResolver(ARFormSchema),
+    defaultValues: generateDefaultValues(ARFormSchema)
   });
-
-  const formattedSitio = React.useMemo(() => formatSitio(sitio) || [], [sitio])
 
   // Function to handle form submission
   const submit = async () => {
@@ -62,15 +58,9 @@ export default function ARFormLayout() {
         'file': media.file
       }))
 
-      await addAR(selected ? {
+      await addAR({
         ...values,
-        'ir_sitio': data.ir_sitio,
-        'ir_street': data.ir_street,
-        'ir': data.ir_id,
-        'staff': user?.staff?.staff_id,
-        'rt': data.ir_type || null
-      } : {
-        ...values,
+        ...(data?.ir_id && {'ir': data.ir_id}),
         'files': files,
         'staff': user?.staff?.staff_id,
       }) 
@@ -102,11 +92,9 @@ export default function ARFormLayout() {
           >
             <ARForm
               form={form}
-              sitio={formattedSitio}
               mediaFiles={mediaFiles}
               isSubmitting={isSubmitting}
               activeVideoId={activeVideoId}
-              selected={selected || ""}
               setActiveVideoId={setActiveVideoId}
               setMediaFiles={setMediaFiles}
               submit={submit}
