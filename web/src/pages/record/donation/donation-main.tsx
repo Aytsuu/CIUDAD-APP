@@ -16,7 +16,7 @@ import { useGetDonations } from "./queries/donationFetchQueries";
 import { Button } from "@/components/ui/button/button";
 
 function DonationTracker() {
-  const [data] = useState<Donations[]>([]);
+  const [_data] = useState<Donations[]>([]);
   // const [loading, setLoading] = useState(true);
   const [error] = useState<string | null>(null); 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -130,8 +130,8 @@ function DonationTracker() {
                   </div>
                 }
                 className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                title=""
-                description=""
+                title="Edit Donation"
+                description="Fill out all necessary fields"
                 mainContent={
                   <div className="w-full h-full">
                     <ClerkDonateView
@@ -219,8 +219,8 @@ function DonationTracker() {
             </Button>
           }
           className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-          title=""
-          description=""
+          title="Add Donation"
+          description="Fill out all necessary fields"
           mainContent={
             <div className="w-full h-full">
               <ClerkDonateCreate onSuccess={() => {

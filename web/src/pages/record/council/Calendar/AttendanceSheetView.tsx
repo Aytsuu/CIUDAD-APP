@@ -156,8 +156,8 @@ headerText.forEach((line) => {
         chunk.length > 0
           ? chunk.map((row, i) => [
               (index * 10 + i + 1).toString(),
-              row.nameOfAttendee || "N/A",
-              row.designation || "N/A",
+              row.nameOfAttendee,
+              row.designation ,
               "",
             ])
           : [["1", "No attendees available", "", ""]],
@@ -178,7 +178,7 @@ headerText.forEach((line) => {
       columnStyles: {
         0: { cellWidth: 50, halign: "center" },
         1: { cellWidth: 150 },
-        2: { cellWidth: 200 },
+        2: { cellWidth: 175 },
         3: { cellWidth: 100, halign: "center" },
       },
       bodyStyles: {
@@ -218,12 +218,12 @@ const AttendanceSheetView: React.FC<EnhancedAttendanceSheetViewProps> = ({
   const formattedTime = formatTimeTo12Hour(time);
   const attendanceData = selectedAttendees.map((attendee) => ({
     Number: "",
-    nameOfAttendee: attendee.name || "N/A",
-    designation: attendee.designation || "N/A",
+    nameOfAttendee: attendee.name,
+    designation: attendee.designation,
     Sign: "",
   }));
 
-  const maxRowsPerPage = 10;
+  const maxRowsPerPage = 1000;
   const dataChunks = splitDataIntoChunks(attendanceData, maxRowsPerPage);
 
   useEffect(() => {

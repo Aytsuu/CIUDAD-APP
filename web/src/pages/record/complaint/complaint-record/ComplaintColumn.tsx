@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { Complaint } from "../complaint-type";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
+import { usePostArchiveComplaint } from "../api-operations/queries/complaintPostQueries";
 import {
   UserCheck2,
   ArrowUpDown,
@@ -13,6 +14,41 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Checkbox } from "@/components/ui/checkbox";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { RaiseIssueDialog } from "../RaiseIssueDialog";
+
+const getStatusBadgeProps = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'pending':
+      return {
+        className: "bg-red-100 text-red-800 hover:bg-red-200 border-red-300",
+        variant: "secondary" as const
+      };
+    case 'filed':
+      return {
+        className: "bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-300",
+        variant: "secondary" as const
+      };
+    case 'raised':
+      return {
+        className: "bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-300",
+        variant: "secondary" as const
+      };
+    case 'processing':
+      return {
+        className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300",
+        variant: "secondary" as const
+      };
+    case 'settled':
+      return {
+        className: "bg-green-100 text-green-800 hover:bg-green-200 border-green-300",
+        variant: "secondary" as const
+      };
+    default:
+      return {
+        className: "bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-300",
+        variant: "secondary" as const
+      };
+  }
+};
 
 export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
   {
@@ -163,10 +199,30 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
     ),
   },
   {
+    accessorKey: "comp_status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.getValue("comp_status") as string;
+      const badgeProps = getStatusBadgeProps(status);
+      
+      return (
+        <div className="flex justify-center">
+          <Badge 
+            variant={badgeProps.variant}
+            className={`font-medium ${badgeProps.className}`}
+          >
+            {status}
+          </Badge>
+        </div>
+      );
+    }
+  },
+  {
     accessorKey: "actions",
     header: "Action",
     cell: ({ row }) => {
       const complaint = row.original;
+      const archiveComplaint = usePostArchiveComplaint();
 
       const options = [
         {
@@ -199,7 +255,7 @@ export const complaintColumns = (data: Complaint[]): ColumnDef<Complaint>[] => [
 
       const handleSelect = (id: string) => {
         if (id === "archive") {
-          // archive logic
+          archiveComplaint.mutateAsync(String(complaint.comp_id))
           console.log("Archive:", complaint.comp_id);
         }
       };

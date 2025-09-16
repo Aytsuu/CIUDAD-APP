@@ -8,7 +8,6 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import BarangayServiceForm from "./treasurer-barangayService-form";
-import ReceiptForm from "./treasurer-create-receipt-form";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem} from "@/components/ui/dropdown/dropdown-menu";
 
@@ -50,7 +49,10 @@ export const columns: ColumnDef<BarangayService>[] = [
                             className="flex flex-col"
                             title="Create Receipt"
                             description="Enter the serial number to generate a receipt."
-                            mainContent={<ReceiptForm/>} 
+                            mainContent={
+                                // <ReceiptForm/>
+                                <div></div>
+                            } 
                         />
                     } 
                     content="Create Receipt"

@@ -19,6 +19,7 @@ from django.utils import timezone
 import uuid
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
+from datetime import date
 
 logger = logging.getLogger(__name__)
 
@@ -42,12 +43,22 @@ class ComplaintCreateView(APIView):
             logger.error(f"Error creating file records: {str(e)}")
             raise Exception(f"File record creation failed: {str(e)}")
 
+    def _parse_json_field(self, data, field, default):
+        value = data.get(field, default)
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to decode JSON for field {field}, using default")
+                return default
+        return value
+
     @transaction.atomic
     def post(self, request):
         try:
-            complainant_data_list = json.loads(request.data.get('complainant', '[]'))
-            accused_list = json.loads(request.data.get('accused', '[]'))
-            uploaded_files_data = json.loads(request.data.get('uploaded_files', '[]'))
+            complainant_data_list = self._parse_json_field(request.data, 'complainant', [])
+            accused_list = self._parse_json_field(request.data, 'accused', [])
+            uploaded_files_data = self._parse_json_field(request.data, 'uploaded_files', [])
 
             print(f"Received {len(uploaded_files_data)} uploaded file URLs")
             for i, file_data in enumerate(uploaded_files_data):
@@ -93,24 +104,7 @@ class ComplaintCreateView(APIView):
         )
 
     def _create_complainant(self, complainant_data):
-        address_data = complainant_data.get('address', {})
-        sitio_id = address_data.pop('sitio', None)
-        sitio_instance = None
-
-        if sitio_id:
-            try:
-                sitio_instance = Sitio.objects.get(sitio_id=sitio_id)
-            except Sitio.DoesNotExist:
-                address_data['add_external_sitio'] = sitio_id
-
-        address = Address.objects.create(
-            add_province=address_data.get('province'),
-            add_city=address_data.get('city'),
-            add_barangay=address_data.get('barangay'),
-            add_street=address_data.get('street'),
-            add_external_sitio=address_data.get('add_external_sitio'),
-            sitio=sitio_instance
-        )
+        address = complainant_data.get('address', '')
 
         complainant = Complainant.objects.create(
             cpnt_name=complainant_data.get('name'),
@@ -118,38 +112,21 @@ class ComplaintCreateView(APIView):
             cpnt_age=complainant_data.get('age'),
             cpnt_number=complainant_data.get('contactNumber'),
             cpnt_relation_to_respondent=complainant_data.get('relation_to_respondent'),
-            add=address
+            cpnt_address=address
         )
 
         return complainant
 
     def _create_accused(self, complaint, accused_list):
         for accused_data in accused_list:
-            address_data = accused_data.get('address', {})
-            sitio_id = address_data.pop('sitio', None)
-            sitio_instance = None
-
-            if sitio_id:
-                try:
-                    sitio_instance = Sitio.objects.get(sitio_id=sitio_id)
-                except Sitio.DoesNotExist:
-                    address_data['add_external_sitio'] = sitio_id
-
-            address = Address.objects.create(
-                add_province=address_data.get('province'),
-                add_city=address_data.get('city'),
-                add_barangay=address_data.get('barangay'),
-                add_street=address_data.get('street'),
-                add_external_sitio=address_data.get('add_external_sitio'),
-                sitio=sitio_instance
-            )
+            address = accused_data.get('address', '')
 
             accused = Accused.objects.create(
                 acsd_name=accused_data.get('alias'),
                 acsd_age=accused_data.get('age'),
                 acsd_gender=accused_data.get('gender'),
                 acsd_description=accused_data.get('description'),
-                add=address
+                acsd_address=address
             )
 
             ComplaintAccused.objects.create(comp=complaint, acsd=accused)
@@ -161,12 +138,10 @@ class ComplaintListView(generics.ListAPIView):
         try:
             return Complaint.objects.prefetch_related(
                 # Prefetch complainants through the intermediate model
-                'complaintcomplainant_set__cpnt__add',
-                'complaintcomplainant_set__cpnt__add__sitio',
+                'complaintcomplainant_set__cpnt',
                 
                 # Prefetch accused through the intermediate model
-                'complaintaccused_set__acsd__add',
-                'complaintaccused_set__acsd__add__sitio',
+                'complaintaccused_set__acsd',
                 
                 # Prefetch complaint files
                 'complaint_file'
@@ -185,24 +160,20 @@ class ComplaintListView(generics.ListAPIView):
                 'detail': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class ComplaintDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ComplaintSerializer
     lookup_field = 'comp_id'
 
     def get_queryset(self):
         return Complaint.objects.prefetch_related(
-            'complaintcomplainant_set__cpnt__add',
-            'complaintcomplainant_set__cpnt__add__sitio',
-            
-            'complaintaccused_set__acsd__add',
-            'complaintaccused_set__acsd__add__sitio',
-            
+            'complaintcomplainant_set__cpnt',
+            'complaintaccused_set__acsd',
             'complaint_file'
         )
 
     def perform_update(self, serializer):
         serializer.save()
+
         
 class ArchiveComplaintView(APIView):
 
@@ -258,11 +229,8 @@ class SearchComplainantsView(APIView):
             Complainant.objects.filter(
                 Q(cpnt_name__icontains=query)
                 | Q(cpnt_number__icontains=query)
-                | Q(add__add_barangay__icontains=query)
-                | Q(add__add_city__icontains=query)
-                | Q(add__add_province__icontains=query)
-            )
-            .select_related("add", "add__sitio")[:10]
+                | Q(cpnt_address__icontains=query)
+            )[:10]  # removed .select_related
         )
 
         results = [
@@ -273,21 +241,13 @@ class SearchComplainantsView(APIView):
                 "cpnt_age": c.cpnt_age,
                 "cpnt_number": c.cpnt_number,
                 "cpnt_relation_to_respondent": c.cpnt_relation_to_respondent,
-                "add": {
-                    "add_province": c.add.add_province,
-                    "add_city": c.add.add_city,
-                    "add_barangay": c.add.add_barangay,
-                    "add_street": c.add.add_street,
-                    "sitio": {
-                        "sitio_name": c.add.sitio.sitio_name if c.add.sitio else None
-                    },
-                    "add_external_sitio": c.add.add_external_sitio,
-                },
+                "cpnt_address": c.cpnt_address,
             }
             for c in complainants
         ]
 
         return Response(results)
+
 
 class SearchAccusedView(APIView):
     def get(self, request):
@@ -299,11 +259,8 @@ class SearchAccusedView(APIView):
             Accused.objects.filter(
                 Q(acsd_name__icontains=query)
                 | Q(acsd_description__icontains=query)
-                | Q(add__add_barangay__icontains=query)
-                | Q(add__add_city__icontains=query)
-                | Q(add__add_province__icontains=query)
-            )
-            .select_related("add", "add__sitio")[:10]
+                | Q(acsd_address__icontains=query)
+            )[:10]  # removed .select_related
         )
 
         results = [
@@ -313,45 +270,51 @@ class SearchAccusedView(APIView):
                 "acsd_age": a.acsd_age,
                 "acsd_gender": a.acsd_gender,
                 "acsd_description": a.acsd_description,
-                "add": {
-                    "add_province": a.add.add_province,
-                    "add_city": a.add.add_city,
-                    "add_barangay": a.add.add_barangay,
-                    "add_street": a.add.add_street,
-                    "sitio": {
-                        "sitio_name": a.add.sitio.sitio_name if a.add.sitio else None
-                    },
-                    "add_external_sitio": a.add.add_external_sitio,
-                },
+                "acsd_address": a.acsd_address,
             }
             for a in accused
         ]
 
         return Response(results)
 
+
 class ServiceChargeRequestCreateView(APIView):
     @transaction.atomic
     def post(self, request, comp_id):
         try:
             complaint = Complaint.objects.get(comp_id=comp_id)
+            logger.info(f"Found complaint: {complaint.comp_id}")
 
-            case_id = f"{complaint.comp_id:03}"
+            sr_count = ServiceChargeRequest.objects.count() + 1
             year_suffix = timezone.now().year % 100
-            sr_code = f"{case_id}-{year_suffix:02}"
+            sr_id = f"SR{sr_count:03d}-{year_suffix:02d}"
+            
+            logger.info(f"Generated SR Code: {sr_id}")
             
             service_request = ServiceChargeRequest.objects.create(
-                comp=complaint,
-                sr_code=sr_code,
-                sr_status="Ongoing", 
+                sr_id=sr_id,
+                comp_id=complaint,
+                sr_req_status="Pending", 
                 sr_type="Summon",
-                sr_payment_status="Unpaid"
+                sr_case_status="Ongoing",
+                sr_req_date=timezone.now()
             )
-
+            
+            logger.info(f"Created service request: {service_request.sr_id}")
+            
             return Response({
                 'sr_id': service_request.sr_id,
-                'sr_code': service_request.sr_code,
                 'status': 'success',
                 'message': 'Service charge request created successfully'
             }, status=status.HTTP_201_CREATED)
+            
+        except Complaint.DoesNotExist:
+            logger.error(f"Complaint not found: {comp_id}")
+            return Response({
+                'error': 'Complaint not found'
+            }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-           return Response({'error': 'Complaint not found'}, status=404)
+            logger.error(f"Error creating service request: {str(e)}")
+            return Response({
+                'error': f'An error occurred: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

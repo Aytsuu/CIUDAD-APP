@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RefreshCw, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+
 interface EmailOTPProps {
   email: string;
   onSuccess: (userId: string) => void;
@@ -19,7 +20,7 @@ export default function EmailOTP({ email, onSuccess, onResend }: EmailOTPProps) 
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const {sendEmailOTP, verifyEmailOTP} = useAuth();
+  const { sendEmailOTP, verifyEmailOTP } = useAuth();
 
   useEffect(() => {
     // Focus first input on mount
@@ -62,22 +63,41 @@ export default function EmailOTP({ email, onSuccess, onResend }: EmailOTPProps) 
     }
   };
 
-  const handleVerifyOtp = async (otp: string) => {
+  const handleVerifyOtp = async (otpCode: string) => {
     setLoading(true);
     setErrorMessage("");
 
     try {
-      const response = await verifyEmailOTP(
-        otp,
-        email, 
-      );
+      console.log("Verifying email OTP:", otpCode, "for email:", email); // Debug log
       
-      toast.success("Email verified successfully!");
-      onSuccess("Success"); 
+      const response = await verifyEmailOTP(otpCode, email);
+      
+      console.log("Verification response:", response); // Debug log
+
+      // Check if response is null (which means the mutation caught an error)
+      if (response === null) {
+        setErrorMessage("Invalid OTP. Please try again.");
+        setOtp(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
+        return;
+      }
+
+      // Check if response indicates success (adjust based on your API response structure)
+      if (response && response.data) {
+        toast.success("Email verified successfully!");
+        // Extract userId from response if available, or use a placeholder
+        const userId = response.data.userId || response.data.user_id || "verified_user";
+        onSuccess(userId);
+      } else {
+        setErrorMessage("Invalid OTP. Please try again.");
+        setOtp(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
+      }
     } catch (error: any) {
       console.error("Email OTP verification error:", error);
       setErrorMessage(
-        error?.data?.message || 
+        error?.response?.data?.error ||
+        error?.response?.data?.message || 
         error?.message || 
         "Invalid OTP. Please try again."
       );
@@ -95,16 +115,22 @@ export default function EmailOTP({ email, onSuccess, onResend }: EmailOTPProps) 
     setErrorMessage("");
     
     try {
-      await sendEmailOTP( email );
-      setTimer(60);
-      setCanResend(false);
-      setOtp(["", "", "", "", "", ""]);
-      inputRefs.current[0]?.focus();
-      toast.success("New OTP sent to your email!");
+      const success = await sendEmailOTP(email);
+      
+      if (success) {
+        setTimer(60);
+        setCanResend(false);
+        setOtp(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
+        toast.success("New OTP sent to your email!");
+      } else {
+        setErrorMessage("Failed to resend OTP. Please try again.");
+      }
     } catch (error: any) {
       console.error("Resend error:", error);
       setErrorMessage(
-        error?.data?.message || 
+        error?.response?.data?.error ||
+        error?.response?.data?.message || 
         error?.message || 
         "Failed to resend OTP. Please try again."
       );
@@ -125,7 +151,7 @@ export default function EmailOTP({ email, onSuccess, onResend }: EmailOTPProps) 
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">

@@ -22,6 +22,24 @@ export const usePostArchiveComplaint = () => {
   });
 };
 
+export const useBulkArchiveComplaints = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const results = [];
+      for (const id of ids) {
+        const result = await archiveComplaint(id);
+        results.push(result);
+      }
+      return results;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["complaints"]});
+      queryClient.invalidateQueries({queryKey: ["archivedComplaints"]});
+    },
+  });
+};
+
 export const usePostRaiseIssue = () => {
     const queryClient = useQueryClient();
     return useMutation({

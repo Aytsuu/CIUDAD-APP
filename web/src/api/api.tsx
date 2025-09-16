@@ -1,17 +1,10 @@
 import axios from "axios";
+import { setupApiInterceptor } from "./interceptor";
+
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
-
-export const api2 = axios.create({
-  baseURL: import.meta.env.VITE_API_URL2,
-  withCredentials: true,
+  withCredentials: true, 
   headers: {
     "Content-Type": "application/json",
     "Accept": "application/json",
@@ -27,15 +20,25 @@ export const api2 = axios.create({
 //   },
 // });
 
+export const api2 = axios.create({
+  baseURL: import.meta.env.VITE_API_URL2,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+});
+
+
 // export const api2 = axios.create({
 //   baseURL: "http://localhost:8001",
 // });
 
 
 
-// Track refresh state to prevent multiple refresh attempts
-const isRefreshing = false;
-const refreshPromise: Promise<string | null> | null = null;
+
+// let isRefreshing = false;
+// let refreshPromise: Promise<string | null> | null = null;
 
 // Simple access token storage (you could also use a more sophisticated store)
 let currentAccessToken: string | null = null;

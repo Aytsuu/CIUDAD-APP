@@ -4,11 +4,11 @@ import GADEditEntryForm from "@/pages/record/gad/budget-tracker/budget-tracker-e
 import GADProjectProposal from "@/pages/record/gad/project-proposal/project-proposal-main";
 import AnnualDevelopmentPlan from "@/pages/record/gad/annual_development_plan/annual_development_plan_main";
 import AnnaualDevelopmentPlanTable from "@/pages/record/gad/annual_development_plan/annual_development_table";
-import AdminGADProjectProposal from "@/pages/record/gad/project-proposal/projprop-admin-update-status";
-import ProjectProposalLogTable from "@/pages/record/gad/project-proposal/proposal-log";
 import GADBudgetLogTable from "@/pages/record/gad/budget-tracker/budget-log";
 import AnnualDevelopmentPlanEdit from "@/pages/record/gad/annual_development_plan/annual_development_plan_edit";
 import AnnualDevelopmentPlanCreate from "@/pages/record/gad/annual_development_plan/annual_development_plan_create";
+import GADActivityCalendar from "@/pages/record/gad/activity/gadActivityCalendar";
+
 
 export const gad_router = [
   {
@@ -32,10 +32,6 @@ export const gad_router = [
     element: <GADProjectProposal />,
   },
   {
-    path: "/gad-review-project-proposal",
-    element: <AdminGADProjectProposal />,
-  },
-  {
     path: "/gad-annual-development-plan",
     element: <AnnualDevelopmentPlan />,
   },
@@ -43,16 +39,16 @@ export const gad_router = [
     path: "/gad-annual-development-plan-table",
     element: <AnnaualDevelopmentPlanTable />,
   },
-   {
-        path: '/gad-annual-development-plan/create',
-        element: <AnnualDevelopmentPlanCreate/>
-    },
-    {
-        path: '/gad-annual-development-plan/edit/:devId',
-        element: <AnnualDevelopmentPlanEdit/>
-    },
   {
-    path: "/gad-project-proposal-log",
-    element: <ProjectProposalLogTable />,
+    path: '/gad-annual-development-plan/create',
+    element: <AnnualDevelopmentPlanCreate/>
+  },
+  {
+    path: '/gad-annual-development-plan/edit/:devId',
+    element: <AnnualDevelopmentPlanEdit/>
+  },
+  {
+    path: '/gad-activity',
+    element: <GADActivityCalendar/>
   },
 ];
