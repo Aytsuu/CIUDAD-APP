@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router';
-import SignIn from '@/pages/landing/signin/Signin';
+import SignIn from "@/pages/landing/signin/signin";
 import LandingLayout from '@/layout/LandingLayout';
 import BarangayCouncil from '@/pages/landing/BarangayCouncil';
 import MobileApp from '@/pages/landing/MobileApp';

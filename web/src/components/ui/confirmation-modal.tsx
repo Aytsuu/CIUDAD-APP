@@ -20,7 +20,7 @@ interface ConfirmationModalProps {
   trigger?: React.ReactNode;
   title: string;
   description: React.ReactNode;
-  actionLabel: string;
+  actionLabel?: string;
   type?: string;
   variant?: string;
   onClick?: () => void;
@@ -32,7 +32,7 @@ export function ConfirmationModal({
   trigger,
   title,
   description,
-  actionLabel,
+  actionLabel = 'Confirm',
   type,
   variant,
   onClick,

@@ -37,6 +37,7 @@ import { patientsRecordRouter } from './patients-record-router';
 import { summon_router } from './summon-router';
 import { clearances_router } from './clearances-router';
 // import { ProtectedRoute } from "@/ProtectedRoutes";
+import { medicalConsultation } from "./med-consultation";
 
 export const main_router: RouteObject[] = [
   {
@@ -105,6 +106,7 @@ export const main_router: RouteObject[] = [
       ...viewprofile_router,
       ...template_router,
       ...clearances_router,
+      ...medicalConsultation,
             
         ])
     }
