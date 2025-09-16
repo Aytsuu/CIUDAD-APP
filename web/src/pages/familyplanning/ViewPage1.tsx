@@ -64,7 +64,7 @@ const getIncomeName = (incomeId: any) => {
 // Define type for STI keys to fix indexing issue
 type STIKey = 'abnormalDischarge' | 'sores' | 'pain' | 'history';
 
-const FamilyPlanningView: React.FC = () => {
+const FamilyPlanningView = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { fprecordId } = location.state || {}
@@ -136,24 +136,24 @@ const FamilyPlanningView: React.FC = () => {
     }
 
     // Add medical history records (filter out exact standard conditions)
-    if (recordData?.medical_history_records) {
-      recordData?.medical_history_records.forEach(record => {
-        const isExactStandard = exactStandardConditions.some(condition =>
-          condition.toLowerCase() === record.illname.toLowerCase()
-        );
-        if (!isExactStandard) {
-          illnesses.push(record.illname);
-        }
-      });
-    }
+  //   if (recordData?.medical_history_records) {
+  //     recordData?.medical_history_records.forEach(record => {
+  //       const isExactStandard = exactStandardConditions.some(condition =>
+  //         condition.toLowerCase() === record.illname.toLowerCase()
+  //       );
+  //       if (!isExactStandard) {
+  //         illnesses.push(record.illname);
+  //       }
+  //     });
+  //   }
 
-    return illnesses;
-  };
+  //   return illnesses;
+  // };
 
-  // Helper function to check if custom illnesses exist
-  const hasCustomIllnesses = () => {
-    return getCustomIllnesses().length > 0;
-  };
+  // // Helper function to check if custom illnesses exist
+  // const hasCustomIllnesses = () => {
+  //   return getCustomIllnesses().length > 0;
+  // };
 
   if (isLoading) {
     return <div className="text-center py-8">Loading record details...</div>
@@ -426,7 +426,7 @@ const FamilyPlanningView: React.FC = () => {
                   ))}
 
                   {/* With Disability checkbox - automatically checked if custom illnesses exist */}
-                  <div className="flex justify-between items-center py-0.5">
+                  {/* <div className="flex justify-between items-center py-0.5">
                     <span>• With Disability?</span>
                     <div className="flex gap-1">
                       <YesNoCheckbox
@@ -444,10 +444,10 @@ const FamilyPlanningView: React.FC = () => {
                         }
                       />
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Display custom illnesses in a single input line below the disability checkbox */}
-                  {(hasCustomIllnesses()) && (
+                  {/* {(hasCustomIllnesses()) && (
                     <div className="mt-1">
                       <div className="flex items-center gap-1">
                         <p className="italic text-xs">If YES, please specify:</p>
@@ -457,7 +457,7 @@ const FamilyPlanningView: React.FC = () => {
                         />
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
 
@@ -783,6 +783,7 @@ const FamilyPlanningView: React.FC = () => {
       </div>
     </div>
   )
+}
 }
 
 export default FamilyPlanningView
