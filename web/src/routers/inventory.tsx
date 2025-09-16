@@ -7,7 +7,7 @@ import AddCommodityStock from "@/pages/healthInventory/inventoryStocks/addstocks
 import AddFirstAidStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/FirstAidStockModal";
 import AddVaccineStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/VacStockModal";
 import AddImzSupplyStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/ImmunizationSupplies";
-import ArchiveMainInventoryStocks from "@/pages/healthServices/archive/Inventory/tables/MainArchiveInventoryStocks";
+import ArchiveMainInventoryStocks from "@/pages/healthServices/archive_tmp/Inventory/tables/MainArchiveInventoryStocks";
 import MainInventory from "@/pages/healthInventory/inventoryStocks/tables/MainTable";
 
 export const healthinventory = [

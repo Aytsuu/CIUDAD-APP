@@ -1,49 +1,49 @@
 import BHWMonthlyReport from "@/pages/bhw/bhw-monthly-report";
-import HealthcareReports from "@/pages/healthServices/reports/MainReports";
-import MonthlyMedicineRecords from "@/pages/healthServices/reports/medicine-report/monthly";
-import MonthlyMedicineDetails from "@/pages/healthServices/reports/medicine-report/records";
-import MonthlyFirstAidRecords from "@/pages/healthServices/reports/firstaid-report/monthly";
-import MonthlyFirstAidDetails from "@/pages/healthServices/reports/firstaid-report/records";
-import EditMonthlyRecipientList from "@/pages/healthServices/reports/firstaid-report/edit-report";
-import MonthlyVaccineRecords from "@/pages/healthServices/reports/vaccination-report/monthly";
-import MonthlyVaccinationDetails from "@/pages/healthServices/reports/vaccination-report/records";
+import HealthcareReports from "@/pages/healthServices/reports_tmp/MainReports";
+import MonthlyMedicineRecords from "@/pages/healthServices/reports_tmp/medicine-report/monthly";
+import MonthlyMedicineDetails from "@/pages/healthServices/reports_tmp/medicine-report/records";
+import MonthlyFirstAidRecords from "@/pages/healthServices/reports_tmp/firstaid-report/monthly";
+import MonthlyFirstAidDetails from "@/pages/healthServices/reports_tmp/firstaid-report/records";
+import EditMonthlyRecipientList from "@/pages/healthServices/reports_tmp/firstaid-report/edit-report";
+import MonthlyVaccineRecords from "@/pages/healthServices/reports_tmp/vaccination-report/monthly";
+import MonthlyVaccinationDetails from "@/pages/healthServices/reports_tmp/vaccination-report/records";
 
 // iINVENTORY REPORTS
-import InventoryMonthlyMedicineRecords from "@/pages/healthServices/reports/inventory/medicine/monthly";
-import InventoryMonthlyMedicineDetails from "@/pages/healthServices/reports/inventory/medicine/records";
-import InventoryMonthlyCommodityRecords from "@/pages/healthServices/reports/inventory/commodity/monthly";
-import MonthlyCommodityDetails from "@/pages/healthServices/reports/inventory/commodity/records";
-import MonthlyInventoryFirstAidRecords from "@/pages/healthServices/reports/inventory/firstaid/monthly";
-import MonthlyInventoryFirstAidDetails from "@/pages/healthServices/reports/inventory/firstaid/records";
-import MonthlyInventoryAntigenRecords from "@/pages/healthServices/reports/inventory/antigen/monthly";
-import MonthlyInventoryAntigenDetails from "@/pages/healthServices/reports/inventory/antigen/records";
+import InventoryMonthlyMedicineRecords from "@/pages/healthServices/reports_tmp/inventory/medicine/monthly";
+import InventoryMonthlyMedicineDetails from "@/pages/healthServices/reports_tmp/inventory/medicine/records";
+import InventoryMonthlyCommodityRecords from "@/pages/healthServices/reports_tmp/inventory/commodity/monthly";
+import MonthlyCommodityDetails from "@/pages/healthServices/reports_tmp/inventory/commodity/records";
+import MonthlyInventoryFirstAidRecords from "@/pages/healthServices/reports_tmp/inventory/firstaid/monthly";
+import MonthlyInventoryFirstAidDetails from "@/pages/healthServices/reports_tmp/inventory/firstaid/records";
+import MonthlyInventoryAntigenRecords from "@/pages/healthServices/reports_tmp/inventory/antigen/monthly";
+import MonthlyInventoryAntigenDetails from "@/pages/healthServices/reports_tmp/inventory/antigen/records";
 // OPT
-import MonthlyOPTRecords from "@/pages/healthServices/reports/opt-tracking/monthly";
-import MonthlyOPTDetails from "@/pages/healthServices/reports/opt-tracking/records";
-import OPTSummariesAllMonths from "@/pages/healthServices/reports/opt-tracking-summary/monthly";
-import OPTMonthlyDetails from "@/pages/healthServices/reports/opt-tracking-summary/records";
-import MasterListChildHealthSupplementsReport from "@/pages/healthServices/reports/masterlist/opt-supplements-masterliist/masterlist";
-import YearlySemiAnnualOPTRecords from "@/pages/healthServices/reports/opt-semiannual/yearly";
-import SemiAnnualOPTDetails from "@/pages/healthServices/reports/opt-semiannual/records";
-import YearlyJanDecOPTRecords from "@/pages/healthServices/reports/opt-tracking-023mos.tsx/yearly";
-import YearlyJanDecOPTDetails from "@/pages/healthServices/reports/opt-tracking-023mos.tsx/records";
+import MonthlyOPTRecords from "@/pages/healthServices/reports_tmp/opt-tracking/monthly";
+import MonthlyOPTDetails from "@/pages/healthServices/reports_tmp/opt-tracking/records";
+import OPTSummariesAllMonths from "@/pages/healthServices/reports_tmp/opt-tracking-summary/monthly";
+import OPTMonthlyDetails from "@/pages/healthServices/reports_tmp/opt-tracking-summary/records";
+import MasterListChildHealthSupplementsReport from "@/pages/healthServices/reports_tmp/masterlist/opt-supplements-masterliist/masterlist";
+import YearlySemiAnnualOPTRecords from "@/pages/healthServices/reports_tmp/opt-semiannual/yearly";
+import SemiAnnualOPTDetails from "@/pages/healthServices/reports_tmp/opt-semiannual/records";
+import YearlyJanDecOPTRecords from "@/pages/healthServices/reports_tmp/opt-tracking-023mos.tsx/yearly";
+import YearlyJanDecOPTDetails from "@/pages/healthServices/reports_tmp/opt-tracking-023mos.tsx/records";
 
 // EXPIRED
-import MedicineProblemDetails from "@/pages/healthServices/reports/inventory/medicine/expoutstock/records";
-import FirstAidProblemDetails from "@/pages/healthServices/reports/inventory/firstaid/expoutstock/records";
-import CommodityProblemDetails from "@/pages/healthServices/reports/inventory/commodity/expoutstock/records";
-import AntigenProblemDetails from "@/pages/healthServices/reports/inventory/antigen/expoutstock/records";
+import MedicineProblemDetails from "@/pages/healthServices/reports_tmp/inventory/medicine/expoutstock/records";
+import FirstAidProblemDetails from "@/pages/healthServices/reports_tmp/inventory/firstaid/expoutstock/records";
+import CommodityProblemDetails from "@/pages/healthServices/reports_tmp/inventory/commodity/expoutstock/records";
+import AntigenProblemDetails from "@/pages/healthServices/reports_tmp/inventory/antigen/expoutstock/records";
 
 
-import MedicineInventoryReportsTabs from "@/pages/healthServices/reports/inventory/medicine/Main";
-import CommodityInventoryReportsTabs from "@/pages/healthServices/reports/inventory/commodity/Main";
-import FirstAidInventoryReportsTabs from "@/pages/healthServices/reports/inventory/firstaid/Main";
-import AntigenInventoryReportsTabs from "@/pages/healthServices/reports/inventory/antigen/Main";
+import MedicineInventoryReportsTabs from "@/pages/healthServices/reports_tmp/inventory/medicine/Main";
+import CommodityInventoryReportsTabs from "@/pages/healthServices/reports_tmp/inventory/commodity/Main";
+import FirstAidInventoryReportsTabs from "@/pages/healthServices/reports_tmp/inventory/firstaid/Main";
+import AntigenInventoryReportsTabs from "@/pages/healthServices/reports_tmp/inventory/antigen/Main";
 
 
 
-import MonthlyNewChildrenRecords from "@/pages/healthServices/reports/newchildren-list-report/monthly";
-import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/reports/newchildren-list-report/records";
+import MonthlyNewChildrenRecords from "@/pages/healthServices/reports_tmp/newchildren-list-report/monthly";
+import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/reports_tmp/newchildren-list-report/records";
 export const reports_router = [
   {
     path: "/bhwmonthlyreport",
