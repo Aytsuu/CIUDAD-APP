@@ -7,7 +7,6 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import CardLayout from "@/components/ui/card/card-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
@@ -16,6 +15,7 @@ import { format, subMonths, addMonths, parseISO, isSameMonth } from "date-fns";
 import { useState } from "react";
 import { CardTitle } from "@/components/ui/card";
 import { useVaccineChart } from "@/pages/healthServices/reports/vaccination-report/queries/fetchQueries";
+import CardLayout from "@/components/ui/card/card-layout";
 
 interface VaccineChartProps {
   initialMonth: string;
