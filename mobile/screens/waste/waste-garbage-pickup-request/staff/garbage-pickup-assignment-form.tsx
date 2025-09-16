@@ -1,7 +1,7 @@
 import '@/global.css';
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { AcceptPickupRequestSchema } from '@/form-schema/waste/garbage-pickup-schema-staff';
 import { useForm } from 'react-hook-form';

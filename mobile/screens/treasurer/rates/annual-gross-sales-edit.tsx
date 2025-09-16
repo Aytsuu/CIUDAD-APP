@@ -1,7 +1,7 @@
 import '@/global.css';
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import { FormInput } from "@/components/ui/form/form-input";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { AnnualGrossSalesEditSchema } from '@/form-schema/rates-form-schema';

@@ -3,7 +3,7 @@
 import { View, ScrollView, TouchableWithoutFeedback } from "react-native"
 import { Check } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { router, useLocalSearchParams } from "expo-router"
 import * as React from "react"
 

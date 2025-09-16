@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Image, ScrollView, StatusBar, TouchableOpacity, Touchable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Text } from "@/components/ui/text";
 import { Card } from "@/components/ui/card";
 import { router } from "expo-router";

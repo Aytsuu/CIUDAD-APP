@@ -2,17 +2,8 @@ import axios from "axios";
 import { setupApiInterceptor } from "./interceptor";
 
 
-// export const api = axios.create({
-//   baseURL: import.meta.env.VITE_API_URL,
-//   withCredentials: true, 
-//   headers: {
-//     "Content-Type": "application/json",
-//     "Accept": "application/json",
-//   },
-// });
-
 export const api = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true, 
   headers: {
     "Content-Type": "application/json",
@@ -20,9 +11,15 @@ export const api = axios.create({
   },
 });
 
+<<<<<<< HEAD
 // export const api2 = axios.create({
 //   baseURL: import.meta.env.VITE_API_URL2,
 //   withCredentials: true,
+=======
+// export const api = axios.create({
+//   baseURL: "http://localhost:8000",
+//   withCredentials: true, 
+>>>>>>> 32a7d78d22946eee4ab11bc077949792e82e3288
 //   headers: {
 //     "Content-Type": "application/json",
 //     "Accept": "application/json",

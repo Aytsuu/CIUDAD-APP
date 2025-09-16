@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';

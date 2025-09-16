@@ -36,7 +36,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToastContext } from "@/components/ui/toast";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useRouter } from "expo-router";
 import { Attendee } from "../ce-events/ce-att-typeFile";

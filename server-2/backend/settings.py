@@ -15,8 +15,15 @@
 # # Quick-start development settings - unsuitable for production
 # # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
+<<<<<<< HEAD
 # # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
+=======
+# ========================
+# SECURITY CONFIGURATION
+# ========================
+SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
+>>>>>>> 32a7d78d22946eee4ab11bc077949792e82e3288
 
 # # # SECURITY WARNING: don't run with debug turned on in production!
 # # DEBUG = False
@@ -263,11 +270,6 @@
 #         'level': 'INFO',
 #     },
 # }
-
-
-
-
-
 
 
 

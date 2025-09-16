@@ -8,6 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class UploadImageView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         try:

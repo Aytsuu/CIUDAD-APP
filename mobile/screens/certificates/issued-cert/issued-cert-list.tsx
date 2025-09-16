@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, Pressable, TextInput } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button/button'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { getIssuedCertificates, IssuedCertificate } from '../queries/issuedCertificateQueries'
