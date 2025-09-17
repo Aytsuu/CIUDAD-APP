@@ -343,13 +343,16 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 export default function SummonScheduleList(){
   const navigate = useNavigate()
   const location = useLocation()
-  const { sr_id, comp_id, sr_code } = location.state || {}
+  const { sr_id, comp_id, sr_code,
+    complainant = [], accused = [], accused_addresses = [], complainant_addresses = []
+   } = location.state || {}
   const { data: schedList = [], isLoading: isSchedLoading} = useGetScheduleList(sr_id)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   // const isCaseClosed = caseDetails?.sr_status === "Resolved" || caseDetails?.sr_status === "Escalated"
 
-
-  console.log('Sched', schedList)
+  
+  console.log('Complainant', complainant_addresses)
+  console.log('Accused', accused_addresses)
 
   const columns: ColumnDef<ScheduleList>[] = [
     {
@@ -444,20 +447,22 @@ export default function SummonScheduleList(){
                           className="w-[90vw] h-[90vh] max-w-[1800px] max-h-[1200px]"
                           mainContent={
                             <div className="w-full h-full">
-                              {/* <SummonPreview
-                                sr_code={sr_code || ""}
-                                incident_type={caseDetails?.complaint?.comp_incident_type || ""}
-                                complainant={caseDetails?.complainant?.map((c) => c.cpnt_name) || []}
-                                complainant_address={
-                                  caseDetails?.complainant?.map((c) => c.address?.formatted_address || "N/A") || []
-                                }
-                                accused={caseDetails?.complaint?.accused?.map((a) => a.acsd_name) || []}
-                                accused_address={caseDetails?.complaint?.accused?.map((a) => a.address?.formatted_address) || []}
+                              <SummonPreview
+                                sr_code={sr_code}
+                                // incident_type={incident}
+                                complainant={complainant || []}
+                                // complainant_address={
+                                //   caseDetails?.complainant?.map((c) => c.address?.formatted_address || "N/A") || []
+                                // }
+                                complainant_address={complainant_addresses}
+                                accused={accused || []}
+                                // accused_address={caseDetails?.complaint?.accused?.map((a) => a.address?.formatted_address) || []}
+                                accused_address={accused_addresses}
                                 hearingDate={schedule.hearing_date}
                                 hearingTime={schedule.hearing_time}
                                 mediation={schedule.ss_mediation_level}
                                 issuance_date={new Date().toISOString()}
-                              /> */}
+                              />
                             </div>
                           }
                         />

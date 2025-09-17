@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button/button";
 import { formatSummonDateTime } from "@/helpers/summonDateTimeFormatter";
-import { useGetSummonTemplate } from "./queries/summonFetchQueries";
 import sealImage from "@/assets/images/Seal.png";
 import { veraMonoNormal } from "@/assets/fonts/VeraMono-normal";
 import { veraMonoBold } from "@/assets/fonts/VeraMono-Bold-bold";
@@ -39,12 +38,14 @@ export const SummonPreview: React.FC<SummonPreviewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   const [pdfData, setPdfData] = useState<string | null>(null);
-  const { data: template } = useGetSummonTemplate();
+  console.log(complainant)
+  console.log('Accused', accused)
 
-  const header = template?.temp_header;
-  const marginSetting = template?.temp_margin || "normal";
-  const paperSizeSetting = template?.temp_paperSize || "letter";
-  const withSeal = template?.temp_w_seal || false;
+  // const header = template?.temp_header;
+  const header = "w";
+  const marginSetting =  "narrow";
+  const paperSizeSetting = "letter";
+  const withSeal = false;
   console.log(paperSizeSetting)
 
   const registerFonts = (doc: jsPDF) => {
@@ -62,19 +63,7 @@ export const SummonPreview: React.FC<SummonPreviewProps> = ({
 
     const generateDocument = async () => {
       try {
-        let pageFormat: [number, number] | string;
-        switch(paperSizeSetting) {
-          case "legal":
-            pageFormat = [612, 1008]; 
-            break;
-          case "letter":
-            pageFormat = [612, 792]; 
-            break;
-          case "a4":
-          default:
-            pageFormat = "a4"; 
-        }
-
+        let pageFormat = [612, 792];
         const marginValue = marginSetting === 'narrow' ? 36 : 72;
         const doc = new jsPDF({ 
           orientation: "portrait",
@@ -158,7 +147,7 @@ export const SummonPreview: React.FC<SummonPreviewProps> = ({
         yPos += lineHeight;
 
         // FOR: aligned right below case number
-        doc.text(`FOR: ${incident_type}`, pageWidth - marginValue, yPos, { align: "right" });
+        // doc.text(`FOR: ${incident_type}`, pageWidth - marginValue, yPos, { align: "right" });
         yPos += lineHeight * 2;  // Extra space after header
 
         // Left-aligned complainant details
@@ -221,7 +210,7 @@ export const SummonPreview: React.FC<SummonPreviewProps> = ({
         // Subtitle
         doc.setFont("times", "normal");
         doc.setFontSize(9);
-        const subtitle = `${mediation} MEDIATION`;
+        const subtitle = `${mediation}`;
         const subtitleWidth = doc.getTextWidth(subtitle);
         doc.text(subtitle, (pageWidth - subtitleWidth) / 2, yPos);
         yPos += lineHeight * 2;

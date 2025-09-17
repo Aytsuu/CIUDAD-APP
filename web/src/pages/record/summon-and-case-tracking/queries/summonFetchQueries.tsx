@@ -7,6 +7,8 @@ export type SummonCaseList = {
     sr_code: string;
     complainant_names: string[];
     accused_names: string[];
+    accused_addresses: string[],
+    complainant_addresses: string[];
     incident_type: string;
     sr_case_status: string;
     decision_date: string;

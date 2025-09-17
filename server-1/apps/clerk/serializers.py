@@ -672,8 +672,10 @@ class SummonRequestAcceptedListSerializer(serializers.ModelSerializer):
 
 class SummonCaseListSerializer(serializers.ModelSerializer):
     complainant_names = serializers.SerializerMethodField()
+    complainant_addresses = serializers.SerializerMethodField()
     incident_type = serializers.SerializerMethodField()
     accused_names = serializers.SerializerMethodField()
+    accused_addresses = serializers.SerializerMethodField()
     decision_date = serializers.SerializerMethodField()
     payment_status = serializers.SerializerMethodField()
     
@@ -689,8 +691,10 @@ class SummonCaseListSerializer(serializers.ModelSerializer):
             'comp_id', 
             'staff_id', 
             'complainant_names', 
+            'complainant_addresses',
             'incident_type', 
             'accused_names',
+            'accused_addresses',
             'decision_date',
             'payment_status'
         ]
@@ -702,6 +706,16 @@ class SummonCaseListSerializer(serializers.ModelSerializer):
                 return [cc.cpnt.cpnt_name for cc in complainants]
             except Exception as e:
                 print(f"Error getting complainants: {e}")
+                return []
+        return []
+    
+    def get_complainant_addresses(self, obj):
+        if obj.comp_id:
+            try:
+                complainants = obj.comp_id.complaintcomplainant_set.all()
+                return [cc.cpnt.cpnt_address or "N/A" for cc in complainants]
+            except Exception as e:
+                print(f"Error getting complainant addresses: {e}")
                 return []
         return []
     
@@ -717,6 +731,16 @@ class SummonCaseListSerializer(serializers.ModelSerializer):
                 return [ca.acsd.acsd_name for ca in accused_list]
             except Exception as e:
                 print(f"Error getting accused: {e}")
+                return []
+        return []
+    
+    def get_accused_addresses(self, obj):
+        if obj.comp_id:
+            try:
+                accused_list = obj.comp_id.complaintaccused_set.all()
+                return [ca.acsd.acsd_address or "N/A" for ca in accused_list]
+            except Exception as e:
+                print(f"Error getting accused addresses: {e}")
                 return []
         return []
     

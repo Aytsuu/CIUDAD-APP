@@ -20,7 +20,6 @@ export default function SummonAcceptedReq() {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = React.useState<number>(10);
     const [selectedIncident, setSelectedIncident] = useState<string>("0");
-    const [editingRowId, setEditingRowId] = useState<string | null>(null);
 
     
     console.log('fetchedData:', acceptedReq);
