@@ -442,11 +442,12 @@ class InvoiceSerializers(serializers.ModelSerializer):
         model = Invoice
         fields = ['inv_num', 'inv_serial_num', 'inv_date', 'inv_amount', 
                  'inv_nat_of_collection', 'nrc_id', 'bpr_id', 'cr_id', 
-                 'inv_payor', 'inv_change', 'inv_discount_reason']
+                  'spay_id','inv_payor', 'inv_change', 'inv_discount_reason']
         extra_kwargs = {
             'nrc_id': {'allow_null': True, 'required': False},
             'bpr_id': {'allow_null': True, 'required': False},
             'cr_id': {'allow_null': True, 'required': False},
+            'spay_id': {'allow_null': True, 'required': False},
         }
     
     def get_inv_payor(self, obj):
@@ -467,6 +468,23 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     return f"{obj.cr_id.rp_id.per.per_lname}, {obj.cr_id.rp_id.per.per_fname}"
                 except Exception:
                     return "Unknown Resident"
+                
+
+        # If the invoice is linked to a complaint
+        if obj.spay_id is not None:
+            try:
+                complaint = obj.spay_id.sr_id.comp_id
+                complainants = complaint.complainant.all()
+                
+                if complainants.exists():
+                    # Join all complainant names with commas
+                    return ", ".join([c.cpnt_name for c in complainants])
+                else:
+                    return "Unknown Complainant"
+                    
+            except Exception:
+                return "Unknown Complainant"
+                         
 
         # If the invoice is linked to a non-resident certificate
         elif obj.nrc_id is not None:

@@ -216,6 +216,15 @@ class Invoice(models.Model):
         related_name='treasurer_invoices' 
     )
 
+    spay_id = models.ForeignKey(
+        'clerk.ServiceChargePaymentRequest',
+        on_delete=models.CASCADE, 
+        db_column='spay_id',
+        null=True,
+        blank=True,
+        related_name='treasurer_spay_invoices' 
+    )    
+
     class Meta:
         db_table = 'invoice'
 
