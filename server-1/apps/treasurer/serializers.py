@@ -5,11 +5,7 @@ from apps.clerk.models import ClerkCertificate
 from utils.supabase_client import upload_to_storage
 from django.utils import timezone
 from django.db import transaction
-
-class FileInputSerializer(serializers.Serializer):
-  name = serializers.CharField()
-  type = serializers.CharField()
-  file = serializers.CharField()
+from apps.profiling.serializers.business_serializers import FileInputSerializer
 
 class Budget_Plan_DetailSerializer(serializers.ModelSerializer):
     class Meta:

@@ -313,6 +313,19 @@ class SummonSchedule(models.Model):
         db_table = 'summon_schedule'
 
 
+class SummonSuppDoc(models.Model):
+    ssd_id = models.BigAutoField(primary_key=True)
+    ssd_name = models.CharField(max_length=255)
+    ssd_type = models.CharField(max_length=100)
+    ssd_path = models.CharField(max_length=500)
+    ssd_url = models.CharField(max_length=500)
+    ssd_upload_date = models.DateTimeField(default=datetime.now)
+    ss_id = models.ForeignKey('SummonSchedule', on_delete=models.CASCADE, null=True, db_column="ss_id", related_name="supporting_docs")
+
+    class Meta:
+        db_table = 'summon_supp_doc'
+
+
 
 
 

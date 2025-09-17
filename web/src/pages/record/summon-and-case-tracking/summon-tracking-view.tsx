@@ -338,6 +338,7 @@ import { formatTime } from "@/helpers/timeFormatter"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import SummonPreview from "./summon-preview"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
+import SummonSuppDocForm from "./summon-supp-doc-form"
 
 
 export default function SummonScheduleList(){
@@ -348,6 +349,7 @@ export default function SummonScheduleList(){
    } = location.state || {}
   const { data: schedList = [], isLoading: isSchedLoading} = useGetScheduleList(sr_id)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
   // const isCaseClosed = caseDetails?.sr_status === "Resolved" || caseDetails?.sr_status === "Escalated"
 
   
@@ -415,16 +417,23 @@ export default function SummonScheduleList(){
               <TooltipLayout
                   trigger={
                       <div>
-                          <ConfirmationModal
+                          <DialogLayout
                             trigger={
                               <div className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
                                   <RefreshCw size={16} />
                               </div>
                             }
+                            mainContent={
+                              <SummonSuppDocForm
+                                ss_id = {row.original.ss_id}
+                                sr_id = {sr_id}
+                                onSuccess={() => setEditingRowId(null)}
+                              />
+                            }
                             title="Mark as Rescheduled"
-                            description="Are you sure you want to mark this schedule as rescheduled?"
-                            actionLabel="Confirm"
-                            // onClick={() => handleReschedule(schedule.ss_id)}
+                            description="Add supporting document and a reason to confirm reschedule."
+                            isOpen={editingRowId == row.original.ss_id}
+                            onOpenChange={(open) => setEditingRowId(open? row.original.ss_id: null)}
                           />
                           </div>
                   }

@@ -55,6 +55,42 @@ export const addCaseActivity = async (caseInfo: Record<string, any>) => {
     // }
 // }
 
+export const addSuppDoc = async ( ss_id: string, sr_id: string, files: { name: string; type: string; file: string | undefined }[], reason: string
+) => {
+    try {
+        const data = {
+            ss_id,
+            files: files.map(file => ({
+                name: file.name,
+                type: file.type,
+                file: file.file  
+            }))
+        };
+
+        console.log(data)
+
+        const response = await api.post('clerk/summon-supp-doc/', data);
+
+        if(response){
+            await api.put(`clerk/update-summon-sched/${ss_id}/`, {
+                ss_is_rescheduled: true,
+                ss_reason: reason
+            })
+
+            await api.put(`clerk/update-summon-request/${sr_id}/`, {
+                sr_case_status: "Waiting for Schedule"
+            })
+            
+        }
+
+        return response.data;
+    } catch (error: any) {
+        console.error('Upload failed:', error.response?.data || error);
+        throw error;
+    }
+};
+
+
 export const addSummonDate = async (newDates: string[], oldDates: {
     sd_id: number;
     sd_is_checked: boolean;
