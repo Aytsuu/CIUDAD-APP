@@ -7,7 +7,11 @@ export const useAddAccount = () => {
     mutationFn: ({accountInfo, residentId} : {
       accountInfo: Record<string, string>
       residentId: string
-    }) => addAccount(accountInfo, residentId),
+    }) => {
+      // Add logging to debug the payload
+      console.log('Sending account data:', { accountInfo, residentId });
+      return addAccount(accountInfo, residentId);
+    },
     onSuccess: (data) => {
       console.log('Account creation successful:', data);
       queryClient.invalidateQueries({queryKey: ["residents"]});

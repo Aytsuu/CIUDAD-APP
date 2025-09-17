@@ -161,7 +161,7 @@ export const columns: ColumnDef<Report>[] = [
         state={{ patientId: row.getValue("id") }}
       >
         <Button variant="outline">View</Button>
-      </RouterLink> 
+      </RouterLink>
     ),
     enableSorting: false,
     enableHiding: false,

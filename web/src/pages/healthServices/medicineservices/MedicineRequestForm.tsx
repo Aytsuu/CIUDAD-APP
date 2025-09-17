@@ -19,7 +19,7 @@ import { MedicineRequestArraySchema, MedicineRequestArrayType } from "@/form-sch
 import { Patient } from "@/components/ui/patientSearch";
 import CardLayout from "@/components/ui/card/card-layout";
 import { MedicineRequestError } from "./medicine-error";
-import { SignatureFieldRef } from "../Reports/firstaid-report/signature";
+import { SignatureFieldRef } from "../reports/firstaid-report/signature";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { MediaUploadType, MediaUpload } from "@/components/ui/media-upload";
 import { StatusIndicator } from "./StatusIndicator";

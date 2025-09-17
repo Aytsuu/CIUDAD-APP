@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, Printer, Search, Loader2 } from "lucide-react";
-import { exportToCSV, exportToExcel, exportToPDF } from "../../firstaid-report/export-report";
+import { exportToCSV, exportToExcel } from "../../firstaid-report/export-report";
 import { ExportDropdown } from "../../firstaid-report/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
@@ -74,7 +74,7 @@ export default function MonthlyCommodityDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `commodity_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
 
-  const handleExportPDF = () => exportToPDF(prepareExportData(), `commodity_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+  // const handleExportPDF = () => exportToPDF(prepareExportData(), `commodity_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
 
   // Print handler
   const handlePrint = () => {
@@ -124,7 +124,7 @@ export default function MonthlyCommodityDetails() {
         </div>
 
         <div className="flex gap-2 items-center">
-          <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
+          <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={() => {}} className="border-gray-200 hover:bg-gray-50" />
           <Button variant="outline" onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
             <Printer className="h-4 w-4" />
             <span>Print</span>

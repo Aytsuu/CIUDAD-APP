@@ -1,4 +1,4 @@
-import { StaffDetails } from "../../childservices/viewrecords/types";
+
 
 export interface InventoryDetail {
   inv_id: string | null;
@@ -96,7 +96,7 @@ export interface MonthlyMedicineRecord {
   monthlyrcplist_id: number;
   report: {
     monthlyrcplist_id: number;
-    staff_details: StaffDetails | null;
+    staff_details: any | null;
     month_year: string;
     signature: string | null;
     office: string | null;

@@ -30,10 +30,8 @@ export const VaccineColumns = (
 ): ColumnDef<VaccineRecords>[] => [
   {
     accessorKey: "vaccineName",
-    header: "Name",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("vaccineName")}</div>
-    ),
+    header: "Vaccine Name",
+    cell: ({ row }) => <div className="font-medium">{row.getValue("vaccineName")}</div>
   },
   {
     accessorKey: "vaccineType",
@@ -65,7 +63,7 @@ export const VaccineColumns = (
       const vaccine = row.original;
       const doseDetails = vaccine.doseDetails;
 
-      if (doseDetails.length === 0 || vaccine.category === "supply") {
+      if (doseDetails.length === 0) {
         return <div className="text-sm text-gray-500">N/A</div>;
       }
 

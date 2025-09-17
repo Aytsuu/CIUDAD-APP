@@ -12,6 +12,7 @@ export const addImzSupplies = async (data: Record<string, string>) => {
 export const addVaccine = async (data: { vac_type_choices: string; vac_name: string; no_of_doses: number; ageGroup: number }): Promise<any> => {
   try {
     const res = await api2.post("inventory/vac_list/", data);
+
     return res.data;
   } catch (err) {
     console.error("Error adding vaccine:", err);

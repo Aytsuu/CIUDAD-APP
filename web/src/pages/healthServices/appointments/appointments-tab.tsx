@@ -35,16 +35,21 @@ export default function ScheduleTab({ onTimeFrameChange }: ScheduleTabProps): JS
                 <h2 className="text-sm font-semibold text-gray-800">Today</h2>
               </div>
 
-							<div
-								className={getTabStyle("all")}
-								onClick={() => handleTimeFrameChange("all")}
-							>
-								<h2 className="text-sm font-semibold text-gray-800">All</h2>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+              <div className={getTabStyle("thisWeek")} onClick={() => handleTimeFrameChange("thisWeek")}>
+                <h2 className="text-sm font-semibold text-gray-500">This Week</h2>
+              </div>
+
+              <div className={getTabStyle("thisMonth")} onClick={() => handleTimeFrameChange("thisMonth")}>
+                <h2 className="text-sm font-semibold text-gray-800">This Month</h2>
+              </div>
+
+              <div className={getTabStyle("all")} onClick={() => handleTimeFrameChange("all")}>
+                <h2 className="text-sm font-semibold text-gray-800">All</h2>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

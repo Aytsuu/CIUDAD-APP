@@ -2,6 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { Edit, Trash, ArrowUpDown } from "lucide-react";
 
+
 export type MedicineRecords = {
   id: string;
   medicineName: string;

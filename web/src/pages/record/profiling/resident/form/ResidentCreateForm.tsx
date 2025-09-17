@@ -18,11 +18,9 @@ import {
   UserRoundPlus,
   MoveRight,
 } from "lucide-react";
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 import { formatResidents, formatSitio } from "../../ProfilingFormats";
 import { Button } from "@/components/ui/button/button";
-import { capitalizeAllFields } from "@/helpers/capitalize";
-import { addResidentAndPersonal, addAddress, addPersonalAddress } from "../../restful-api/profiingPostAPI";
 
 const DEFAULT_ADDRESS = [
   {
@@ -142,44 +140,15 @@ export default function ResidentCreateForm({ params }: {
       return;
     }
 
-    try {
-      const personalInfo = capitalizeAllFields(form.getValues());
-      // Safely get staff_id with proper type checking
-      const staffId = user?.staff?.staff_id;
+    params?.next(true)
+  }
 
-      if (!staffId) {
-        throw new Error("Staff information not available");
-      }
-
-      const resident = await addResidentAndPersonal({
-        personalInfo: personalInfo,
-        staffId: staffId
-      });
-
-      const new_addresses = await addAddress(addresses)
-
-      await addPersonalAddress({
-        data: new_addresses?.map((address: any) => ({
-          add: address.add_id,
-          per: resident.per.per_id,
-        })),
-        history_id: resident.per.history
-      })
-      
-      showSuccessToast('Successfully registered new resident!')
-      if (params?.isRegistrationTab) {
-        params.setResidentId(resident.rp_id);
-        params.setAddresses(new_addresses);
-        params?.next();
-      }
-      setIsSubmitting(false);
-      form.reset(defaultValues);
-
-    } catch (err) {
-      setIsSubmitting(false);
-      showErrorToast(
-        err instanceof Error ? err.message : "An error occurred"
-      );
+  // Submit for individual resident profiling (e.g., direct staff assignment)
+  const submit = async () => {
+    // Validations
+    if (!(await form.trigger())) {
+      showErrorToast("Please fill out all required fields");
+      return;
     }
 
     if (!validateAddresses(addresses)) {

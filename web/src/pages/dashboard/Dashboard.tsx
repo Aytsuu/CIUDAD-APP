@@ -6,8 +6,7 @@ import ReportSectionCharts from "@/components/analytics/report/report-section-ch
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { DonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
-import {GADExpenseSidebar} from "@/components/analytics/gad/btracker-sidebar";
-// import { ProjPropPendingSectionCards } from "@/components/analytics/gad/projprop-section-cards";
+import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar";
 import { CouncilEventsSidebar } from "@/components/analytics/council/ce-event-sidebar";
 import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
 import { WastePersonnelCards } from "@/components/analytics/waste/wastepersonnel-analytics-queries";
@@ -24,8 +23,6 @@ import { format } from "date-fns";
 
 // HEALTH
 import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
-import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
-import { MedicineDistributionSidebar } from "@/components/analytics/health/medicine-sidebar";
 
 export default function Dashboard() {
   const currentMonth = format(new Date(), "yyyy-MM");
@@ -66,11 +63,8 @@ export default function Dashboard() {
           <GADExpenseSidebar />
           <CouncilEventsSidebar />
           <WasteActivitySidebar />
-
-          <MedicineDistributionSidebar/>
-          <FirstAidDistributionSidebar/>
-
-
+          <GADExpenseSidebar />
+          <CouncilEventsSidebar />
         </div>
       </div>
     </MainLayoutComponent>
