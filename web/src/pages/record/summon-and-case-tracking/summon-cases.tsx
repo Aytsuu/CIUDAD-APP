@@ -216,88 +216,18 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useState } from "react";
-import { type ServiceChargeRequest } from "./queries/summonFetchQueries";
+import { useGetSummonCaseList, type SummonCaseList } from "./queries/summonFetchQueries";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 
-// Mock data for development
-const mockServiceChargeData: ServiceChargeRequest[] = [
-  {
-    sr_id: '1',
-    sr_code: "SC-2024-001",
-    complainant_name: "Maria Santos",
-    accused_names: ["Juan Dela Cruz", "Pedro Reyes"],
-    incident_type: "Workplace Harassment",
-    status: "Ongoing",
-    allegation: "Verbal abuse and inappropriate behavior towards colleagues during work hours",
-    decision_date: ''
-  },
-  {
-    sr_id: '2',
-    sr_code: "SC-2024-002",
-    complainant_name: "Robert Lim",
-    accused_names: ["Anna Torres"],
-    incident_type: "Theft",
-    status: "Resolved",
-    allegation: "Unauthorized taking of company property",
-    decision_date: "2024-01-15T08:30:00Z"
-  },
-  {
-    sr_id: '3',
-    sr_code: "SC-2024-003",
-    complainant_name: "Company Management",
-    accused_names: ["Michael Chen", "Sarah Gomez", "David Kim"],
-    incident_type: "Insubordination",
-    status: "Escalated",
-    allegation: "Repeated refusal to follow direct orders from supervisors",
-    decision_date: "2024-02-20T14:45:00Z"
-  },
-  {
-    sr_id: '4',
-    sr_code: "SC-2024-004",
-    complainant_name: "Liza Mendoza",
-    accused_names: ["Carlos Ramirez"],
-    incident_type: "Attendance Violation",
-    status: "Ongoing",
-    allegation: "Chronic tardiness and unauthorized absences affecting team productivity",
-    decision_date: ''
-  },
-  {
-    sr_id: '5',
-    sr_code: "SC-2024-005",
-    complainant_name: "Johnny Sy",
-    accused_names: ["Melissa Tan", "Andrew Ong"],
-    incident_type: "Data Breach",
-    status: "Resolved",
-    allegation: "Unauthorized access and sharing of confidential company information",
-    decision_date: "2024-03-10T10:15:00Z"
-  },
-  {
-    sr_id: '6',
-    sr_code: "SC-2024-006",
-    complainant_name: "Security Department",
-    accused_names: ["Anthony Lim"],
-    incident_type: "Security Violation",
-    status: "Ongoing",
-    allegation: "Bypassing security protocols and allowing unauthorized personnel entry",
-    decision_date: ''
-  }
-];
-
-// Mock hook implementation for development
-const useMockServiceChargeRequest = () => {
-  const [data, _setData] = useState<ServiceChargeRequest[]>(mockServiceChargeData);
-  const isLoading = false;
-  
-  return { data, isLoading };
-};
 
 const styles = {
     cardContent: "font-semibold text-[14px]",
     cardInfoRow: "flex flex-grid items-center gap-5",
     cardInfo: "font-sm text-[14px]",
-    statusOngoing: "text-[#5B72CF]",
-    statusResolved: "text-[#17AD00]",
-    statusEscalated: "text-[#FF0000]",
+    statusOngoing: "font-bold text-[#5B72CF]",
+    statusResolved: "font-bold text-[#17AD00]",
+    statusEscalated: "font-bold text-[#FF0000]",
+    statusWaiting: "font-bold text-[#EAB308]",
     decisionDate: "text-sm text-gray-500 mt-2"
 };
 
@@ -309,6 +239,8 @@ function getStatusColor(status: string) {
             return styles.statusResolved;
         case "Escalated":
             return styles.statusEscalated;
+        case "Waiting for Schedule":
+            return styles.statusWaiting;
         default:
             return "";
     }
@@ -320,18 +252,19 @@ function SummonCases(){
         { id: "Ongoing", name: "Ongoing" },
         { id: "Resolved", name: "Resolved" },
         { id: "Escalated", name: "Escalated" },
+        { id: "Waiting for Schedule", name: "Waiting for Schedule" },
     ];
 
     // Use mock data instead of the actual hook for development
     // const { data: fetchedData = [], isLoading } = useGetServiceChargeRequest();
-    const { data: fetchedData = [], isLoading } = useMockServiceChargeRequest();
+    const { data: fetchedData = [], isLoading } = useGetSummonCaseList();
     
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
     const [searchTerm, setSearchTerm] = useState("");
 
     // Filter data based on selected filter and search term
     const filteredData = fetchedData.filter(item => {
-        const matchesFilter = selectedFilter === "All" || item.status === selectedFilter;
+        const matchesFilter = selectedFilter === "All" || item.sr_case_status === selectedFilter;
         
         if (searchTerm === "") return matchesFilter;
         
@@ -339,9 +272,8 @@ function SummonCases(){
         
         // Safe search across all fields
         const matchesCode = String(item.sr_code || '').toLowerCase().includes(searchTermLower);
-        const matchesComplainant = String(item.complainant_name || '').toLowerCase().includes(searchTermLower);
+        const matchesComplainant = String(item.complainant_names || '').toLowerCase().includes(searchTermLower);
         const matchesIncidentType = String(item.incident_type || '').toLowerCase().includes(searchTermLower);
-        const matchesAllegation = String(item.allegation || '').toLowerCase().includes(searchTermLower);
         
         // Safe accused names search
         let matchesAccused = false;
@@ -357,7 +289,7 @@ function SummonCases(){
         }
         
         const matchesSearch = matchesCode || matchesComplainant || matchesAccused || 
-                            matchesIncidentType || matchesAllegation;
+                            matchesIncidentType;
         
         return matchesFilter && matchesSearch;
     });
@@ -437,7 +369,7 @@ function SummonCases(){
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-6"> 
-                            {filteredData.map((item: ServiceChargeRequest) => (
+                            {filteredData.map((item: SummonCaseList) => (
                                 <Link 
                                     key={item.sr_id}
                                     to='/view-case'  
@@ -458,7 +390,11 @@ function SummonCases(){
                                             <div className="flex flex-col gap-2">
                                                 <div className={styles.cardInfoRow}>
                                                     <p className={styles.cardContent}>Complainant: </p>
-                                                    <p className={styles.cardInfo}>{item.complainant_name}</p>
+                                                     <p className={styles.cardInfo}>
+                                                        {Array.isArray(item.complainant_names) 
+                                                        ? item.complainant_names.join(', ') 
+                                                        : item.complainant_names}
+                                                    </p>
                                                 </div>
                                                 
                                                 <div className={styles.cardInfoRow}>
@@ -477,12 +413,12 @@ function SummonCases(){
 
                                                 <div className={styles.cardInfoRow}>
                                                     <p className={styles.cardContent}>Status: </p>
-                                                    <p className={`${styles.cardInfo} ${getStatusColor(item.status)}`}>
-                                                        {item.status || "Unknown"}
+                                                    <p className={`${styles.cardInfo} ${getStatusColor(item.sr_case_status)}`}>
+                                                        {item.sr_case_status || "Unknown"}
                                                     </p>
                                                 </div>
 
-                                                {(item.status === "Resolved" || item.status === "Escalated") && item.decision_date && (
+                                                {(item.sr_case_status === "Resolved" || item.sr_case_status === "Escalated") && item.decision_date && (
                                                     <div className={styles.cardInfoRow}>
                                                         <p className={styles.cardContent}>Decision Date: </p>
                                                         <p className={styles.cardInfo}>
@@ -492,11 +428,6 @@ function SummonCases(){
                                                 )}
                                             </div>
                                         }
-                                        description={
-                                            <div className="mb-5">
-                                                <p>{item.allegation}</p>
-                                            </div>
-                                        }  
                                     />
                                 </Link>  
                             ))}

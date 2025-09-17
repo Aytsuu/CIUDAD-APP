@@ -1,14 +1,11 @@
 from rest_framework import generics
-from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view
-from django.db.models import Prefetch, F
+from django.db.models import Prefetch
 from django.core.exceptions import FieldError
 from django.utils import timezone
 from rest_framework.permissions import AllowAny
-import uuid
 import logging
 import traceback
 from .serializers import *
@@ -231,6 +228,26 @@ class SummonRequestAcceptedListView(generics.ListAPIView):
             'comp_id__complaintaccused_set__acsd' 
         )
         return queryset
+    
+class SummonCaseListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = SummonCaseListSerializer
+
+    def get_queryset(self):
+        queryset = ServiceChargeRequest.objects.filter(
+            sr_type="Summon",
+            servicechargepaymentrequest__spay_status="Paid"
+        ).select_related(
+            'comp_id'
+        ).prefetch_related(
+            Prefetch('comp_id__complaintcomplainant_set__cpnt'),
+            Prefetch('comp_id__complaintaccused_set__acsd'),
+            'servicechargedecision',
+            'servicechargepaymentrequest'
+        ).distinct()
+        
+        return queryset.order_by('sr_code')
+
     
 class ServiceChargePaymentRequestView(generics.ListCreateAPIView):
     serializer_class = ServiceChargePaymentRequestSerializer

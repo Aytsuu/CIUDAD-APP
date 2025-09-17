@@ -1,8 +1,8 @@
 import { api } from "@/api/api";
 
-export const getServiceChargeRequest = async () => {
+export const getSummonCaseList = async () => {
     try{
-        const res = await api.get('clerk/service-charge-request/')
+        const res = await api.get('clerk/summon-case-list/')
         console.log(res.data)
         return res.data
     }catch(err){

@@ -135,14 +135,12 @@ export default function SummonRejectedReq() {
                                     <ComplaintRecordForSummon 
                                         comp_id={complaint} 
                                         sr_id={String(row.original.sr_id)}
-                                        onSuccess={() => setEditingRowId(null)}
+                                        // onSuccess={() => setEditingRowId(null)}
                                         isPending={false}
                                     />
                                 </div>
                             </div>
                         }
-                        isOpen={editingRowId == row.original.sr_id}
-                        onOpenChange={(open) => setEditingRowId(open? row.original.sr_id: null)}
                     />
                 );
             },

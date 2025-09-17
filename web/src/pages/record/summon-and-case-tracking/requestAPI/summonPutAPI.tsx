@@ -66,19 +66,15 @@ export const escalateCase = async (sr_id: string, comp_id: string) => {
 
 export const acceptSummonRequest = async(sr_id: string) => {
     try{
-
-        const res = await api.put(`clerk/update-summon-request/${sr_id}/`, {
-            sr_req_status: "Accepted"
-        })
-
+        let res;
         const purpose = await api.get(`treasurer/purpose-rates/`, {
                 params: {
                     pr_purpose: "Summons"
                 }
             }
         )
-
-        if(res){
+        
+        if(purpose){
             await api.post('clerk/service-charge-decision/',{
                 scd_decision_date: new Date().toISOString(),
                 sr_id: sr_id
@@ -89,8 +85,14 @@ export const acceptSummonRequest = async(sr_id: string) => {
                 spay_status: "Unpaid",
                 sr_id: sr_id
             })
+
+            res = await api.put(`clerk/update-summon-request/${sr_id}/`, {
+                sr_req_status: "Accepted"
+            })
+
         }
-        return res.data
+        
+        return res?.data
         
     }catch(err){
         console.error(err)
