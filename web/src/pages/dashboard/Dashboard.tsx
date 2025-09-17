@@ -8,7 +8,7 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { DonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
 import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar";
 import { CouncilEventsSidebar } from "@/components/analytics/council/ce-event-sidebar";
-import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
+// import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
 import { WastePersonnelCards } from "@/components/analytics/waste/wastepersonnel-analytics-queries";
 import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report";
 import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
@@ -34,7 +34,7 @@ export default function Dashboard() {
           </div>
           <div className="grid">
             <ReportSectionCharts />
-            <StaffAttendanceRankingChart />
+            {/* <StaffAttendanceRankingChart /> */}
             <GADQuarterlyBudgetChart />
           </div>
           <div className="grid">
