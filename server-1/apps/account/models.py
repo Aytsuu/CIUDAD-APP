@@ -9,7 +9,7 @@ from django.utils import timezone
 class Account(AbstractUser):
     acc_id = models.AutoField(primary_key=True, verbose_name='Account ID')
     email = models.EmailField(unique=True,blank=True,null=True, verbose_name='Email Address' )    
-    username = models.CharField(max_length=100,unique=True,blank=True,null=True,validators=[MinLengthValidator(3)])
+    username = models.CharField(max_length=100,unique=True,validators=[MinLengthValidator(3)])
     profile_image = models.URLField( max_length=500,blank=True, null=True,default='https://isxckceeyjcwvjipndfd.supabase.co/storage/v1/object/public/profile_picture-bucket/1757783075918_c1nodq418e.png')
     phone = models.CharField(max_length=11, unique=True, blank=True, null=False, verbose_name='Phone Number' )
     
@@ -17,7 +17,7 @@ class Account(AbstractUser):
     br = models.OneToOneField("profiling.BusinessRespondent",on_delete=models.CASCADE,null=True,related_name="business_account")
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['username']
 
     
     class Meta:

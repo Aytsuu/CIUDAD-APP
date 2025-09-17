@@ -2,26 +2,10 @@ from django.db import models
 from django.conf import settings
 from datetime import date
 from simple_history.models import HistoricalRecords
-
-class ProfilingAbstractModel(models.Model):
-    class Meta:
-        abstract = True
-    
-    def save(self, *args, **kwargs):
-        for field in self._meta.fields:
-            if(
-                isinstance(field, (models.CharField, models.TextField))
-                and not field.primary_key
-                and field.editable
-            ):
-                val = getattr(self, field.name)
-                if isinstance(val, str):
-                    setattr(self, field.name, val.upper())
-        super().save(*args, **kwargs)
+from ..abstract_classes import AbstractModels
 
 
-
-class Sitio(models.Model):
+class Sitio(AbstractModels):
     sitio_id = models.CharField(max_length=100, primary_key=True)
     sitio_name = models.CharField(max_length=100)
 
@@ -31,7 +15,7 @@ class Sitio(models.Model):
     def __str__(self):
         return self.sitio_name
 
-class Address(models.Model):
+class Address(AbstractModels):
     add_id = models.BigAutoField(primary_key=True)  
     add_province = models.CharField(max_length=50)
     add_city = models.CharField(max_length=50)
@@ -49,7 +33,7 @@ class Address(models.Model):
     def __str__(self):
         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
 
-class Personal(models.Model):
+class Personal(AbstractModels):
     per_id = models.BigAutoField(primary_key=True)
     per_lname = models.CharField(max_length=100)
     per_fname = models.CharField(max_length=100)
@@ -130,7 +114,7 @@ class RespondentsInfo(models.Model):
     def __str__(self):
         return f"{self.rp} (Respondent ID: {self.ri_id})"
 
-class Household(models.Model):
+class Household(AbstractModels):
     hh_id = models.CharField(max_length=50, primary_key=True)
     hh_nhts = models.CharField(max_length=50)
     hh_date_registered = models.DateField(default=date.today)
@@ -144,7 +128,7 @@ class Household(models.Model):
     def __str__(self):
         return f"Household {self.hh_id} - {self.rp} in {self.add}"
 
-class Family(models.Model):
+class Family(AbstractModels):
     fam_id = models.CharField(max_length=50, primary_key=True)
     fam_indigenous = models.CharField(max_length=50)
     fam_building = models.CharField(max_length=50)
@@ -158,7 +142,7 @@ class Family(models.Model):
     def __str__(self):
         return f"Family {self.fam_id}"
 
-class FamilyComposition(models.Model):
+class FamilyComposition(AbstractModels):
     fc_id = models.BigAutoField(primary_key=True)
     fc_role = models.CharField(max_length=50)
     fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='family_compositions')
