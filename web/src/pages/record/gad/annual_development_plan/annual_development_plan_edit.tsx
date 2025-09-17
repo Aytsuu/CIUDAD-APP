@@ -74,6 +74,8 @@ export default function AnnualDevelopmentPlanEdit() {
 
   const updateMutation = useUpdateAnnualDevPlan();
 
+  const isEditable = Boolean(selectedYear) && Boolean(selectedPlanId);
+
   useEffect(() => {
     const loadStaff = async () => {
       try {
@@ -282,6 +284,7 @@ export default function AnnualDevelopmentPlanEdit() {
                 setSelectedPlanId(Number(id));
                 // Fetch plan data and populate form without navigation
                 try {
+                  let loadedActivities: { activity: string; participants: number }[] = [];
                   const plan = await getAnnualDevPlanById(id);
                   // Basic
                   form.setValue('dev_date', plan.dev_date || '');
@@ -290,10 +293,54 @@ export default function AnnualDevelopmentPlanEdit() {
                   form.setValue('dev_project', plan.dev_project || '');
                   form.setValue('dev_res_person', plan.dev_res_person || '');
                   form.setValue('dev_indicator', plan.dev_indicator || '');
-                  // Activities
                   try {
-                    const activities = typeof plan.dev_activity === 'string' ? JSON.parse(plan.dev_activity) : plan.dev_activity;
-                    setActivityInputs(Array.isArray(activities) ? activities : []);
+                    let activitiesSrc: any = plan.dev_activity;
+                    let parsedActs: any[] = [];
+                    if (Array.isArray(activitiesSrc)) {
+                      parsedActs = activitiesSrc;
+                    } else if (typeof activitiesSrc === 'string') {
+                      const t = activitiesSrc.trim();
+                      // Try strict JSON first
+                      try {
+                        parsedActs = JSON.parse(t);
+                        if (!Array.isArray(parsedActs)) parsedActs = [parsedActs];
+                      } catch {
+                        // Try to coerce single quotes to double quotes for JSON-like strings
+                        try {
+                          const coerced = t
+                            .replace(/\s+/g, ' ')
+                            .replace(/'/g, '"');
+                          const maybe = JSON.parse(coerced);
+                          parsedActs = Array.isArray(maybe) ? maybe : [maybe];
+                        } catch {
+                          // Fallback: extract object-like blocks { ... }
+                          const objectMatches = t.match(/\{[\s\S]*?\}/g);
+                          if (objectMatches) {
+                            parsedActs = objectMatches.map((block) => {
+                              const act = (block.match(/['\"]activity['\"]\s*:\s*['\"]([^'\"]+)['\"]/)
+                                || block.match(/activity\s*:\s*['\"]([^'\"]+)['\"]/))?.[1] || '';
+                              const p = (block.match(/['\"]participants['\"]\s*:\s*(\d+)/)
+                                || block.match(/participants\s*:\s*(\d+)/))?.[1];
+                              return { activity: act, participants: p ? Number(p) : 1 };
+                            });
+                          } else {
+                            // Treat as comma/newline separated list of activity strings
+                            parsedActs = t.split(/[\n,]+/).map(s => s.trim()).filter(Boolean).map((s) => ({ activity: s, participants: 1 }));
+                          }
+                        }
+                      }
+                    }
+                    // Normalize shape
+                    const normalizedActs = (parsedActs || []).map((it: any) => ({
+                      activity: String(it?.activity ?? it?.name ?? it ?? ''),
+                      participants: Number(it?.participants ?? it?.count ?? 1) || 1,
+                    })).filter((it: any) => it.activity);
+                    loadedActivities = normalizedActs;
+                    setActivityInputs(loadedActivities);
+                    // keep form value in sync so updates persist even without user edits
+                    try {
+                      form.setValue('dev_activity', JSON.stringify(loadedActivities));
+                    } catch {}
                   } catch { setActivityInputs([]); }
                   // Indicators - normalize into indicatorInputs as in create
                   try {
@@ -323,6 +370,12 @@ export default function AnnualDevelopmentPlanEdit() {
                       }
                     }
                     setIndicatorInputs(next);
+                    // If there are no activities stored, derive a sensible default from indicators
+                    if ((!loadedActivities || loadedActivities.length === 0) && next && next.length > 0) {
+                      const derived = next.map(i => ({ activity: i.indicator, participants: i.participants }));
+                      setActivityInputs(derived);
+                      try { form.setValue('dev_activity', JSON.stringify(derived)); } catch {}
+                    }
                   } catch { setIndicatorInputs([]); }
         
                   // Budgets - prefer dev_budget_items JSON: [{ name, pax, amount }]
@@ -383,7 +436,7 @@ export default function AnnualDevelopmentPlanEdit() {
 
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         {/* Basic Information Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-8 ${!isEditable ? 'pointer-events-none opacity-60' : ''}`}>
           <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
@@ -425,7 +478,7 @@ export default function AnnualDevelopmentPlanEdit() {
         </div>
 
         {/* Program Details Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-8 ${!isEditable ? 'pointer-events-none opacity-60' : ''}`}>
           <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Program Details</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column */}
@@ -551,7 +604,7 @@ export default function AnnualDevelopmentPlanEdit() {
         </div>
 
       
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-8 ${!isEditable ? 'pointer-events-none opacity-60' : ''}`}>
           <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Responsible Person</h2>
           <div className="space-y-4">
             <ComboboxInput
@@ -616,7 +669,7 @@ export default function AnnualDevelopmentPlanEdit() {
         </div>
 
         
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-8 ${!isEditable ? 'pointer-events-none opacity-60' : ''}`}>
           <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Budget Planning</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Budget Input Form */}
@@ -757,7 +810,7 @@ export default function AnnualDevelopmentPlanEdit() {
           </Button>
           <Button 
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !isEditable}
             className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (

@@ -783,10 +783,23 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
         # Present dev_project as text (already handled)
         data['dev_project'] = getattr(instance, 'dev_project', '') or ""
         
-        # Present dev_activity as JSON array (keep as is for frontend processing)
-        data['dev_activity'] = getattr(instance, 'dev_activity', []) or []
+        # Present dev_activity as JSON array; coerce from JSON text if needed
+        try:
+            dev_activity_value = getattr(instance, 'dev_activity', []) or []
+            if isinstance(dev_activity_value, str):
+                s = dev_activity_value.strip()
+                if s.startswith('[') and s.endswith(']'):
+                    try:
+                        data['dev_activity'] = json.loads(s)
+                    except Exception:
+                        data['dev_activity'] = []
+                else:
+                    data['dev_activity'] = []
+            else:
+                data['dev_activity'] = dev_activity_value
+        except Exception:
+            data['dev_activity'] = []
         
-        # Present other arrays as comma-separated strings for readability in table
         for field in ['dev_res_person', 'dev_indicator']:
             value = getattr(instance, field, [])
             try:
