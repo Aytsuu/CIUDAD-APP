@@ -282,6 +282,7 @@ export default function AnnualDevelopmentPlanEdit() {
                 setSelectedPlanId(Number(id));
                 // Fetch plan data and populate form without navigation
                 try {
+                  let loadedActivities: { activity: string; participants: number }[] = [];
                   const plan = await getAnnualDevPlanById(id);
                   // Basic
                   form.setValue('dev_date', plan.dev_date || '');
@@ -290,10 +291,54 @@ export default function AnnualDevelopmentPlanEdit() {
                   form.setValue('dev_project', plan.dev_project || '');
                   form.setValue('dev_res_person', plan.dev_res_person || '');
                   form.setValue('dev_indicator', plan.dev_indicator || '');
-                  // Activities
                   try {
-                    const activities = typeof plan.dev_activity === 'string' ? JSON.parse(plan.dev_activity) : plan.dev_activity;
-                    setActivityInputs(Array.isArray(activities) ? activities : []);
+                    let activitiesSrc: any = plan.dev_activity;
+                    let parsedActs: any[] = [];
+                    if (Array.isArray(activitiesSrc)) {
+                      parsedActs = activitiesSrc;
+                    } else if (typeof activitiesSrc === 'string') {
+                      const t = activitiesSrc.trim();
+                      // Try strict JSON first
+                      try {
+                        parsedActs = JSON.parse(t);
+                        if (!Array.isArray(parsedActs)) parsedActs = [parsedActs];
+                      } catch {
+                        // Try to coerce single quotes to double quotes for JSON-like strings
+                        try {
+                          const coerced = t
+                            .replace(/\s+/g, ' ')
+                            .replace(/'/g, '"');
+                          const maybe = JSON.parse(coerced);
+                          parsedActs = Array.isArray(maybe) ? maybe : [maybe];
+                        } catch {
+                          // Fallback: extract object-like blocks { ... }
+                          const objectMatches = t.match(/\{[\s\S]*?\}/g);
+                          if (objectMatches) {
+                            parsedActs = objectMatches.map((block) => {
+                              const act = (block.match(/['\"]activity['\"]\s*:\s*['\"]([^'\"]+)['\"]/)
+                                || block.match(/activity\s*:\s*['\"]([^'\"]+)['\"]/))?.[1] || '';
+                              const p = (block.match(/['\"]participants['\"]\s*:\s*(\d+)/)
+                                || block.match(/participants\s*:\s*(\d+)/))?.[1];
+                              return { activity: act, participants: p ? Number(p) : 1 };
+                            });
+                          } else {
+                            // Treat as comma/newline separated list of activity strings
+                            parsedActs = t.split(/[\n,]+/).map(s => s.trim()).filter(Boolean).map((s) => ({ activity: s, participants: 1 }));
+                          }
+                        }
+                      }
+                    }
+                    // Normalize shape
+                    const normalizedActs = (parsedActs || []).map((it: any) => ({
+                      activity: String(it?.activity ?? it?.name ?? it ?? ''),
+                      participants: Number(it?.participants ?? it?.count ?? 1) || 1,
+                    })).filter((it: any) => it.activity);
+                    loadedActivities = normalizedActs;
+                    setActivityInputs(loadedActivities);
+                    // keep form value in sync so updates persist even without user edits
+                    try {
+                      form.setValue('dev_activity', JSON.stringify(loadedActivities));
+                    } catch {}
                   } catch { setActivityInputs([]); }
                   // Indicators - normalize into indicatorInputs as in create
                   try {
@@ -323,6 +368,12 @@ export default function AnnualDevelopmentPlanEdit() {
                       }
                     }
                     setIndicatorInputs(next);
+                    // If there are no activities stored, derive a sensible default from indicators
+                    if ((!loadedActivities || loadedActivities.length === 0) && next && next.length > 0) {
+                      const derived = next.map(i => ({ activity: i.indicator, participants: i.participants }));
+                      setActivityInputs(derived);
+                      try { form.setValue('dev_activity', JSON.stringify(derived)); } catch {}
+                    }
                   } catch { setIndicatorInputs([]); }
         
                   // Budgets - prefer dev_budget_items JSON: [{ name, pax, amount }]
