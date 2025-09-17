@@ -201,9 +201,9 @@ export const confirmedItemsColumns: ColumnDef<any>[] = [
     header: "Quantity",
     cell: ({ row }) => <div className="min-w-[100px] px-3 py-2 text-center">{row.original.medreqitem_qty || 0}</div>
   },
-  // {
-  //   id: "actions",
-  //   header: "Actions",
-  //   cell: ({ row }) => <></>
-  // }
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => <></>
+  }
 ];

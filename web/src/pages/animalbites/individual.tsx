@@ -122,10 +122,12 @@ const IndividualPatientHistory: React.FC = () => {
     isLoading,
     isError,
     error,
+    refetch,
   } = useQuery<PatientRecordDetail[], Error>({
     queryKey: ["animalBiteHistory", id],
     queryFn: () => getAnimalBitePatientDetails(id),
     enabled: !!id,
+    refetchOnWindowFocus: true,
   });
   
    const patientData = useMemo(() => {
@@ -133,7 +135,7 @@ const IndividualPatientHistory: React.FC = () => {
     
     const firstRecord = patientRecords[0];
     return {
-      pat_id: Number(firstRecord.patient_id),
+      pat_id: String(firstRecord.patient_id),
       pat_type: "Animal Bite Patient",
       personal_info: {
         per_fname: firstRecord.patient_fname || "",

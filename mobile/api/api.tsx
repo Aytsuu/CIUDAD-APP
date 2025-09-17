@@ -2,16 +2,15 @@ import axios from "axios";
 import { setupApiInterceptor } from "./apiInterceptor";
  ``
 export const api = axios.create({
-  baseURL: "http://192.168.210.248:8000", 
+  baseURL: "http://192.168.140.31:8000", 
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
   timeout: 10000, // 10 second timeout
 });
-
 export const api2 = axios.create({
-  baseURL: "http://192.168.210.248:8001",
+  baseURL: "http://192.168.140.31:8001",
   timeout: 10000,
 });
 
