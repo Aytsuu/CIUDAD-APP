@@ -81,8 +81,9 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
     )
 
     # Perform double query
+    request = self.context.get("request")
     double_queries = PostQueries()
-    response = double_queries.household(validated_data)
+    response = double_queries.household(request.data)
     if not response.ok:
       try:
           error_detail = response.json()
