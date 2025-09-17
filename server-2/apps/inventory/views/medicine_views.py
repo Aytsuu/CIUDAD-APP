@@ -476,6 +476,7 @@ class MedicineStockCreate(APIView):
             medicine_data = data.copy()
             medicine_data['inv_id'] = inv_id
         
+        
         # Validate medicineID
         medicine_id = medicine_data.get('medicineID')
         if not medicine_id:
@@ -504,9 +505,7 @@ class MedicineStockCreate(APIView):
         
         # Handle staff field
         staff = medicine_data.get('staff')
-        if staff:
-            medicine_data['staff'] = int(staff)
-        else:
+        if not staff:  # If staff is empty or None
             medicine_data['staff'] = None
         
         return medicine_data

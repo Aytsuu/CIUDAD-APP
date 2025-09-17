@@ -17,7 +17,7 @@ export const BasicInfoSchema = z.object({
   childSex: z.string().min(1, "required"),
   childDob: z.string().min(1, "required"),
   childAge: z.string().min(1, "required"),
-  placeOfDeliveryType: z.enum(["Hospital Gov't/Private", "Home", "Private Clinic", "HC"], {
+  placeOfDeliveryType: z.enum(["Hospital Gov't/Private", "Home", "Private Clinic", "HC","Lying in"], {
     required_error: "Place of delivery is required",
   }),
   placeOfDeliveryLocation: z.string().optional(),

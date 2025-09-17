@@ -48,8 +48,10 @@ urlpatterns = [
 
     
     
-    # =============================BACKEND=================================
+    # =============================BACKEND CREATION UPDATED=================================
     path('submit-vaccination-records/', VaccinationSubmissionView.as_view(), name='vaccination-records-list'),
+    path("vaccination-completion/",VaccinationCompletionAPIView.as_view(),name="vaccine-completion-create"),
+    
 
 
 ]

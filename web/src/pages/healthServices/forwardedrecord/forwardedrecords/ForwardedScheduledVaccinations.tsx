@@ -48,14 +48,17 @@ export default function ForwardedScheduledVaccinationsTables() {
       return {
         ...record,
         vaccine_name: vaccineList.vac_name || "Unknown Vaccine",
-        vachist_doseNo: record.vachist_doseNo || "N/A",
+        vachist_doseNo: record.vachist_doseNo || "",
         vacrec_totaldose: vacrecDetails.vacrec_totaldose || 1,
-        status: record.vachist_status || "N/A",
-        batch_number: vaccineStock.batch_number || "N/A",
-        expiry_date: invDetails.expiry_date || "N/A",
+        status: record.vachist_status || "",
+        patrec_id:vacrecDetails.patrec_id || "",
+
+        batch_number: vaccineStock.batch_number || "",
+        expiry_date: invDetails.expiry_date || "",
         patient: {
-          pat_id: patientDetails.pat_id || "N/A",
-          pat_type: patientDetails.pat_type || "N/A",
+          pat_id: patientDetails.pat_id || "",
+          
+          pat_type: patientDetails.pat_type || "",
           personal_info: personalInfo,
           address: {
             add_street: address.add_street || "",
@@ -190,6 +193,7 @@ export default function ForwardedScheduledVaccinationsTables() {
               state={{
                 Vaccination: row.original,
                 patientData: {
+                  patrec_id:row.original.patrec_id || "",
                   pat_id: row.original.patient?.pat_id || "",
                   pat_type: row.original.patient?.pat_type || "",
                   age: patient?.per_dob ? calculateAge(patient.per_dob).toString() : "N/A",

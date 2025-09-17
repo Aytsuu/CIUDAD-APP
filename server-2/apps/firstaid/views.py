@@ -143,7 +143,7 @@ class CreateFirstAidRequestView(APIView):
                     # Create first aid transaction
                     firstaid_transaction = FirstAidTransactions.objects.create(
                         fat_qty=f"{qty} {unit}",
-                        fat_action="Deducted (FirstAid Request)",
+                        fat_action="Deducted",
                         staff=staff_instance,
                         finv_id=firstaid_inv
                     )

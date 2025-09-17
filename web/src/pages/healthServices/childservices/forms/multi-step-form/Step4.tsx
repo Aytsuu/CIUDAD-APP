@@ -220,17 +220,40 @@ export default function LastPage({
   setNewVitalSigns,
   status
 }: LastPageProps) {
-  const [currentPage, setCurrentPage] = useState(1);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   // const [editingData, setEditingData] = useState<VitalSignType | null>(null);
   const [editingAnemiaIndex, setEditingAnemiaIndex] = useState<number | null>(null);
   const [editingBirthWeightIndex, setEditingBirthWeightIndex] = useState<number | null>(null);
-  const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
+  const [medicineSearchParams, setMedicineSearchParams] = useState<any>({
+    page: 1,
+    pageSize: 10,
+    search: "",
+    is_temp: true
+  });
+  const { data: medicineData, isLoading: isMedicinesLoading } = fetchMedicinesWithStock(medicineSearchParams);
   const { data: latestVitalsData, isLoading: _isLatestVitalsLoading } = useChildLatestVitals(formData.pat_id || "");
   const [showVitalSignsForm, setShowVitalSignsForm] = useState(() => {
     const todaysHistoricalRecord = historicalVitalSigns.find((vital) => isToday(vital.date));
     return !todaysHistoricalRecord && newVitalSigns.length === 0;
   });
+
+  const medicineStocksOptions = medicineData?.medicines || [];
+  const medicinePagination = medicineData?.pagination;
+
+  const handleMedicineSearch = (searchTerm: string) => {
+    setMedicineSearchParams((prev: any) => ({
+      ...prev,
+      search: searchTerm,
+      page: 1 // Reset to first page when searching
+    }));
+  };
+
+  const handleMedicinePageChange = (page: number) => {
+    setMedicineSearchParams((prev: any) => ({
+      ...prev,
+      page
+    }));
+  };
 
   useEffect(() => {
     console.log("latestVitalsData updated:", latestVitalsData);
@@ -715,7 +738,19 @@ export default function LastPage({
                   </div>
                 </div>
               ) : (
-                <MedicineDisplay medicines={medicineStocksOptions || []} initialSelectedMedicines={selectedMedicines || []} onSelectedMedicinesChange={handleMedicineSelectionChange} currentPage={currentPage} onPageChange={setCurrentPage} />
+                <MedicineDisplay
+                  medicines={medicineStocksOptions || []}
+                  initialSelectedMedicines={selectedMedicines || []}
+                  onSelectedMedicinesChange={handleMedicineSelectionChange}
+                  itemsPerPage={medicineSearchParams.pageSize}
+                  currentPage={medicineSearchParams.page}
+                  onPageChange={handleMedicinePageChange}
+                  onSearch={handleMedicineSearch}
+                  searchQuery={medicineSearchParams.search}
+                  totalPages={medicinePagination?.totalPages}
+                  totalItems={medicinePagination?.totalItems}
+                  isLoading={isMedicinesLoading}
+                />
               )}
             </div>
           </div>

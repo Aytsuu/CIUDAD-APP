@@ -42,7 +42,7 @@ export default function ViewPatientRecord() {
   const vaccinationCount = vaccinationCountData?.vaccination_count;
   const { data: firstAidCountData } = useFirstAidCount(patientId ?? "");
   const firstAidCount = firstAidCountData?.firstaidrecord_count;
-  const { data: childHealthCount } = useChildHealthRecordCount(patientId ?? "");
+  const { data: childHealthCount ,isLoading:childHistoryLoading} = useChildHealthRecordCount(patientId ?? "");
   const childHealthCountData = childHealthCount?.childhealthrecord_count;
   const { data: medconCountData } = useMedConCount(patientId ?? "");
   const medconCount = medconCountData?.medcon_count;
@@ -236,6 +236,7 @@ export default function ViewPatientRecord() {
       };
     });
   }, [rawChildHealthRecords]);
+  console.log("Formatted Child Health Records:", formatChildHealthData());
 
   const formattedChildHealthData = formatChildHealthData();
 
@@ -396,6 +397,7 @@ export default function ViewPatientRecord() {
             childHealthCount={childHealthCountData}
             childHealthRecords={formattedChildHealthData}
             prenatalCount={prenatalCount}
+            childHistoryLoading={childHistoryLoading}
           />
         )}
 

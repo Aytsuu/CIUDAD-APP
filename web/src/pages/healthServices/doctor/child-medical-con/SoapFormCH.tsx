@@ -44,13 +44,9 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
     is_temp: true,
   });
   const { data: medicineData, isLoading: isMedicineLoading } = fetchMedicinesWithStock(medicineSearchParams);
-  
-  // Get physical exam queries with loading states
   const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
   const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
   const hasPhysicalExamError = sectionsQuery.isError || optionsQuery.isError;
-
-  // Extract medicines and pagination info
   const medicineStocksOptions = medicineData?.medicines || [];
   const medicinePagination = medicineData?.pagination;
 

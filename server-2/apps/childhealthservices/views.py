@@ -574,7 +574,7 @@ class CompleteChildHealthRecordAPIView(APIView):
             staff=staff_instance,
             patrec=patient_record,
             landmarks=submitted_data.get('landmarks'),
-            nbscreening_results=submitted_data.get('nbscreening_results'), 
+            nbscreening_result=submitted_data.get('nbscreening_result'), 
             newbornInitiatedbf=submitted_data.get('newbornInitiatedbf', False)
         )
         
@@ -582,7 +582,7 @@ class CompleteChildHealthRecordAPIView(APIView):
         child_health_history = ChildHealth_History.objects.create(
             chrec=child_health_record,
             status=submitted_data.get('status', 'recorded'),
-            tt_status=submitted_data.get('tt_status')
+            tt_status=submitted_data.get('tt_status') 
         )
         
         # Handle follow-up visit
@@ -732,15 +732,12 @@ class CompleteChildHealthRecordAPIView(APIView):
             
             if not minv_id or medrec_qty <= 0:
                 continue
-            
             try:
                 # Get medicine inventory
                 medicine_inv = MedicineInventory.objects.select_for_update().get(pk=minv_id)
-                
                 # Check stock
                 if medicine_inv.minv_qty_avail < medrec_qty:
                     raise Exception(f"Insufficient stock for medicine {minv_id}")
-                
                 # Create medicine record
                 medicine_record = MedicineRecord.objects.create(
                     patrec_id=patient_record,
@@ -751,7 +748,6 @@ class CompleteChildHealthRecordAPIView(APIView):
                     fulfilled_at=timezone.now(),
                     staff=staff_instance
                 )
-                
                 # Update inventory
                 medicine_inv.minv_qty_avail -= medrec_qty
                 medicine_inv.save()
@@ -777,8 +773,8 @@ class CompleteChildHealthRecordAPIView(APIView):
                 )
                 
             except MedicineInventory.DoesNotExist:
-                raise Exception(f"Medicine inventory {minv_id} not found")
-    
+                raise Exception(f"Medicine inventory {minv_id} not found") 
+           
     def _create_supplement_status(self, status_type, status_data, chhist_id, weight):
         """Create supplement status record"""
         chhist = ChildHealth_History.objects.get(chhist_id=chhist_id)

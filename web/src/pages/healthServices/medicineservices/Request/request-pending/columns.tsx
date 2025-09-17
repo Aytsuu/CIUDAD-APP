@@ -17,7 +17,7 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
     header: "Patient Name",
     cell: ({ row }) => {
       const { per_fname, per_mname, per_lname, per_suffix } = row.original.personal_info;
-      return `${per_fname} ${per_mname ? per_mname.charAt(0) + "." : ""} ${per_lname} ${per_suffix}`.trim();
+      return `${per_fname} ${per_mname ? per_mname.charAt(0) + "." : ""} ${per_lname} ${per_suffix || ""}`.trim();
     }
   },
   {

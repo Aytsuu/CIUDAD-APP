@@ -23,21 +23,54 @@ export default function CommodityList() {
 
   const columns = CommodityColumns(setComToDelete, setIsDeleteConfirmationOpen, setSelectedCommodity, setModalMode, setShowCommodityModal);
 
-  const { data: commodities, isLoading: isLoadingCommodities } = useCommodities();
+  // Check what the hook actually returns
+  const { data: commoditiesData, isLoading: isLoadingCommodities } = useCommodities();
   const deleteMutation = useDeleteCommodity();
 
   const formatCommodityData = useCallback((): CommodityRecords[] => {
-    if (!commodities) return [];
-    return commodities.map((commodity: any) => ({
-      id: commodity.com_id,
-      com_name: commodity.com_name,
-      user_type: commodity.user_type,
-      gender_type: commodity.gender_type
-    }));
-  }, [commodities]);
+    // Handle different possible data structures
+    if (!commoditiesData) return [];
+    
+    // Check if data is an array directly
+    if (Array.isArray(commoditiesData)) {
+      return commoditiesData.map((commodity: any) => ({
+        id: commodity.com_id,
+        com_name: commodity.com_name,
+        user_type: commodity.user_type,
+        gender_type: commodity.gender_type
+      }));
+    }
+    
+    // Check if data is in a nested property (common with API responses)
+    if (commoditiesData.data && Array.isArray(commoditiesData.data)) {
+      return commoditiesData.data.map((commodity: any) => ({
+        id: commodity.com_id,
+        com_name: commodity.com_name,
+        user_type: commodity.user_type,
+        gender_type: commodity.gender_type
+      }));
+    }
+    
+    // Check if data is in a results property
+    if (commoditiesData.results && Array.isArray(commoditiesData.results)) {
+      return commoditiesData.results.map((commodity: any) => ({
+        id: commodity.com_id,
+        com_name: commodity.com_name,
+        user_type: commodity.user_type,
+        gender_type: commodity.gender_type
+      }));
+    }
+    
+    // Fallback: return empty array if structure is unexpected
+    console.warn("Unexpected commodities data structure:", commoditiesData);
+    return [];
+  }, [commoditiesData]);
 
   const filteredCommodities = useMemo(() => {
-    return formatCommodityData().filter((record) => Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase()));
+    const formattedData = formatCommodityData();
+    return formattedData.filter((record) => 
+      Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
+    );
   }, [searchQuery, formatCommodityData]);
 
   const handleDelete = () => {

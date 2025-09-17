@@ -86,7 +86,6 @@ def get_latest_vital_signs(pat_id):
                 'oxygen_saturation': latest.vital_o2,
                 'pulse': latest.vital_pulse,
                 'created_at': latest.created_at,
-                'staff': latest.staff  # Include staff info if needed
             }
         else:
             return None

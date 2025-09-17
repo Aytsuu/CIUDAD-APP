@@ -67,9 +67,12 @@ export default function MedicineRequestDetail() {
     return true;
   };
 
+  const patientDataFetch = patientExists as any;
+
   const isPatientRegistered = () => {
     const patientData = patientExists as any;
-    return patientData?.exists && patientData?.patient?.pat_id;
+
+    return patientData?.exists && patientData?.pat_id;
   };
 
   // Set currentPatId if patient already exists
@@ -153,13 +156,13 @@ export default function MedicineRequestDetail() {
     // For each confirmed medicine request
     medicineData.forEach((confirmedMedicine: any) => {
       // Find all stock entries that match this medicine
-      const matchingStocks = medicineStocksOptions.filter((stock) => {
+      const matchingStocks = medicineStocksOptions.medicines.filter((stock: any) => {
         const match = String(stock.med_id) === String(confirmedMedicine.med_id);
         return match;
       });
 
       // For each matching stock, create an entry
-      matchingStocks.forEach((stock) => {
+      matchingStocks.forEach((stock: any) => {
         // Get the confirmed items for this medicine
         const confirmedItems = confirmedMedicine.request_items?.filter((item: any) => item.status === "confirmed") || [];
         // If there are confirmed items, create mapping entries
@@ -256,6 +259,7 @@ export default function MedicineRequestDetail() {
       requested_at: request.requested_at,
       staff_id: staff_id,
       signature: signature,
+      pat_id: currentPatId || patientDataFetch?.pat_id,
       selected_medicines: validSelectedMedicines.map((med) => ({
         minv_id: med.original_stock_id || med.minv_id, // Use original stock ID for API
         medrec_qty: med.medrec_qty,

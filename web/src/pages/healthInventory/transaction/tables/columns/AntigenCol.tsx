@@ -1,17 +1,17 @@
 import { ColumnDef } from "@tanstack/react-table";
 
 export const AntigenTransactionColumns = (): ColumnDef<any>[] => [
-  {
-    accessorKey: "id",
-    header: "#",
-    cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md  text-center font-semibold">
-          {row.original.antt_id}
-        </div>
-      </div>
-    ),
-  },
+  // {
+  //   accessorKey: "id",
+  //   header: "#",
+  //   cell: ({ row }) => (
+  //     <div className="flex justify-center">
+  //       <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md  text-center font-semibold">
+  //         {row.original.antt_id}
+  //       </div>
+  //     </div>
+  //   ),
+  // },
   {
     accessorKey: "item_name",
     header: "Item Name",

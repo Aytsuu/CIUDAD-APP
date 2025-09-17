@@ -549,21 +549,21 @@ class CommodityTransactionTableView(APIView):
             page = int(request.GET.get('page', 1))
             page_size = int(request.GET.get('page_size', 10))
             
-            # Get commodity transactions with related data
+            # Get commodity transactions with related data - FIXED staff relationship
             transactions = CommodityTransaction.objects.select_related(
                 'cinv_id__com_id', 
                 'cinv_id__inv_id',
-                'staff'
+                'staff__rp__per'  # Add this to get the personal info
             ).all()
             
-            # Apply search filter if provided
+            # Apply search filter if provided - UPDATED search fields
             if search_query:
                 transactions = transactions.filter(
                     Q(cinv_id__com_id__com_name__icontains=search_query) |
                     Q(cinv_id__inv_id__inv_id__icontains=search_query) |
                     Q(comt_action__icontains=search_query) |
-                    Q(staff__first_name__icontains=search_query) |
-                    Q(staff__last_name__icontains=search_query)
+                    Q(staff__rp__per__per_fname__icontains=search_query) |  # Updated
+                    Q(staff__rp__per__per_lname__icontains=search_query)    # Updated
                 )
             
             # Format the data for response
@@ -576,12 +576,13 @@ class CommodityTransactionTableView(APIView):
                 inventory = commodity_inventory.inv_id if commodity_inventory else None
                 staff = transaction.staff
                 
-                # Format staff name
-                staff_name = "Manage by System"
-                if staff:
-                    staff_name = f"{staff.first_name or ''} {staff.last_name or ''}".strip()
+                # Format staff name - FIXED (consistent with medicine view)
+                staff_name = "Managed by System"
+                if staff and staff.rp and staff.rp.per:
+                    personal = staff.rp.per
+                    staff_name = f"{personal.per_fname or ''} {personal.per_lname or ''}".strip()
                     if not staff_name:
-                        staff_name = staff.username
+                        staff_name = f"Staff {staff.staff_id}"  # Fallback to staff ID
                 
                 item_data = {
                     'comt_id': transaction.comt_id,
@@ -619,7 +620,6 @@ class CommodityTransactionTableView(APIView):
                 'success': False,
                 'error': f'Error fetching commodity transactions: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 # ===========================COMMODITY ARCHIVED TABLE==============================

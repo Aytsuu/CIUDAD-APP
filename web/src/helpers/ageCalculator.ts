@@ -1,19 +1,19 @@
-export const calculateAge = (dateOfBirth: string, type?: string): string => {
+export const calculateAge = (dateOfBirth: string): string => {
   if (!dateOfBirth || isNaN(new Date(dateOfBirth).getTime())) {
     return "-"; // or 'N/A' if you prefer
   }
   const birthDate = new Date(dateOfBirth);
   const today = new Date();
-  
+
   let years = today.getFullYear() - birthDate.getFullYear();
   let months = today.getMonth() - birthDate.getMonth();
-  
+
   // Adjust for month difference and day of month
   if (months < 0 || (months === 0 && today.getDate() < birthDate.getDate())) {
     years--;
     months += 12;
   }
-  
+
   // Handle day difference for more precise month calculation
   if (today.getDate() < birthDate.getDate()) {
     months--;
@@ -23,20 +23,20 @@ export const calculateAge = (dateOfBirth: string, type?: string): string => {
   months = Math.max(0, months);
 
   if (years > 0) {
-    return `${years} ${type == "long" ? `year${years > 1 ? 's' : ''} old` : ''}`;
+    return `${years} yr${years > 1 ? "s" : ""} old`;
   }
-  
+
   if (months > 0) {
-    return `${months} ${type == "long" ? `month${months > 1 ? 's' : ''} old` : ''}`;
+    return `${months} month${months > 1 ? "s" : ""} old`;
   }
-  
+
   // For ages less than 1 month
   const days = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24));
   if (days > 0) {
-    return `${days} ${type == "long" ? `day${days > 1 ? 's' : ''} old` : ''}`;
+    return `${days} day${days > 1 ? "s" : ""} old`;
   }
-  
-  return 'Newborn';
+
+  return "Newborn";
 };
 
 

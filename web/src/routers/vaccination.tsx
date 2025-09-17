@@ -6,7 +6,6 @@ import UnvaccinaResident from "@/pages/healthServices/vaccination/tables/all/Unv
 import VaccinationManagement from "@/pages/healthServices/vaccination/tables/all/MainTable";
 import AgeGroup from "@/pages/healthServices/agegroup/AgeGroup";
 import ScheduledVaccine from "@/pages/healthServices/vaccination/viewhistory/ScheduledVaccine";
-import ForwardedVaccinationForm from "@/pages/healthServices/vaccination/forms/Step2Vaccination";
 export const vaccination = [
   {
     path: "invVaccinationRecord",
@@ -45,11 +44,7 @@ export const vaccination = [
     path: "scheduled-vaccine",
     element: <ScheduledVaccine />
   },
- 
-  {
-    path: "forwarded-vaccination-form", 
-    element: <ForwardedVaccinationForm />
-  }
+
 
 
 ];

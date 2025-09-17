@@ -367,6 +367,7 @@ class UnvaccinatedVaccinesDetailsView(APIView):
         }
     
 
+
 class UnvaccinatedVaccinesSummaryView(APIView):
     """
     First endpoint: Get all vaccines with their unvaccinated resident counts and age ranges
@@ -378,6 +379,9 @@ class UnvaccinatedVaccinesSummaryView(APIView):
             # Get all vaccines
             vaccines = VaccineList.objects.select_related('ageGroup').all()
             result = []
+            
+            # Get total count of all residents
+            total_residents_count = self.get_total_residents_count()
             
             for vaccine in vaccines:
                 # Get age groups for this vaccine first
@@ -391,7 +395,8 @@ class UnvaccinatedVaccinesSummaryView(APIView):
                     'vac_name': vaccine.vac_name,
                     'vac_description': getattr(vaccine, 'vac_description', ''),
                     'total_unvaccinated': total_unvaccinated,
-                    'age_groups': age_groups
+                    'age_groups': age_groups,
+                    'total_residents_count': total_residents_count
                 }
                 result.append(vaccine_data)
             
@@ -409,13 +414,15 @@ class UnvaccinatedVaccinesSummaryView(APIView):
                     'results': response.data['results'],
                     'count': response.data['count'],
                     'next': response.data.get('next'),
-                    'previous': response.data.get('previous')
+                    'previous': response.data.get('previous'),
+                    'total_residents_count': total_residents_count
                 })
             
             return Response({
                 'success': True,
                 'results': result,
-                'count': len(result)
+                'count': len(result),
+                'total_residents_count': total_residents_count
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -423,6 +430,24 @@ class UnvaccinatedVaccinesSummaryView(APIView):
                 'success': False,
                 'error': f'Error fetching vaccines: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def get_total_residents_count(self):
+        """Get total count of all residents"""
+        return ResidentProfile.objects.count()
+
+    def get_residents_count_for_age_group(self, age_group=None):
+        """Get total count of residents in a specific age group"""
+        all_residents = ResidentProfile.objects.select_related('per').all()
+        
+        if not age_group:
+            return len(all_residents)
+            
+        count = 0
+        for resident in all_residents:
+            if self.is_resident_in_age_group(resident, age_group):
+                count += 1
+                
+        return count
 
     def calculate_age_in_time_unit(self, birth_date, time_unit):
         """Calculate age in the specified time unit"""
@@ -509,6 +534,7 @@ class UnvaccinatedVaccinesSummaryView(APIView):
             # Single age group associated with vaccine
             age_group = vaccine.ageGroup
             unvaccinated_count = self.get_unvaccinated_count_for_vaccine(vaccine.vac_id, age_group)
+            total_residents_count = self.get_residents_count_for_age_group(age_group)
             
             age_groups.append({
                 'age_group_id': age_group.agegrp_id,
@@ -517,11 +543,14 @@ class UnvaccinatedVaccinesSummaryView(APIView):
                 'max_age': age_group.max_age,
                 'time_unit': age_group.time_unit,
                 'age_range_display': f"{age_group.min_age}-{age_group.max_age} {age_group.time_unit}",
-                'unvaccinated_count': unvaccinated_count
+                'unvaccinated_count': unvaccinated_count,
+                'total_residents_count': total_residents_count
             })
         else:
             # No specific age group - show all ages
-            all_ages_count = self.get_unvaccinated_count_for_vaccine(vaccine.vac_id)
+            all_ages_unvaccinated_count = self.get_unvaccinated_count_for_vaccine(vaccine.vac_id)
+            all_ages_total_residents_count = self.get_residents_count_for_age_group()
+            
             age_groups.append({
                 'age_group_id': None,
                 'age_group_name': 'All Ages',
@@ -529,15 +558,11 @@ class UnvaccinatedVaccinesSummaryView(APIView):
                 'max_age': 999,
                 'time_unit': 'years',
                 'age_range_display': 'All Ages',
-                'unvaccinated_count': all_ages_count
+                'unvaccinated_count': all_ages_unvaccinated_count,
+                'total_residents_count': all_ages_total_residents_count
             })
         
         return age_groups
-
-    def get_unvaccinated_count_for_age_group(self, vac_id, age_group):
-        """Get unvaccinated count for a specific age group"""
-        return self.get_unvaccinated_count_for_vaccine(vac_id, age_group)
-    
     
 class CheckVaccineExistsView(APIView):
     def get(self, request, pat_id, vac_id):
@@ -608,6 +633,125 @@ class ForwardedVaccinationCountView(APIView):
 
 
 
+
+# ======SCHEDULES VACCINATION LAST STEP======
+
+import logging
+logger = logging.getLogger(__name__)
+class VaccinationCompletionAPIView(APIView):
+    @transaction.atomic
+    def post(self, request):
+        try:
+            data = request.data
+            logger.info(f"Vaccination completion request received: {data}")
+            
+            # Extract required data
+            vaccination_id = data.get('vachist_id')
+            follow_up_data = data.get('followUpData')  # This will be None if not provided
+            patient_id = data.get('patientId')
+            patrec_id = data.get('patrec_id')
+            
+            if not vaccination_id:
+                return Response(
+                    {"error": "vachist_id is required"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get the vaccination history record
+            try:
+                vaccination = VaccinationHistory.objects.select_related(
+                    'followv', 'vacrec', 'vacrec__patrec_id'
+                ).get(vachist_id=vaccination_id)
+            except VaccinationHistory.DoesNotExist:
+                return Response(
+                    {"error": f"Vaccination history with id {vaccination_id} not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Create a savepoint for potential rollback
+            sid = transaction.savepoint()
+            
+            try:
+                # 1. Handle previous vaccination's follow-up if exists
+                previous_vaccination = VaccinationHistory.objects.filter(
+                    vacrec=vaccination.vacrec,
+                    vachist_status='completed'
+                ).exclude(vachist_id=vaccination_id).order_by('-date_administered').first()
+                
+                if previous_vaccination and previous_vaccination.followv:
+                    logger.info(f"Updating previous follow-up visit: {previous_vaccination.followv.followv_id}")
+                    previous_vaccination.followv.followv_status = 'completed'
+                    previous_vaccination.followv.completed_at = timezone.now().date()
+                    previous_vaccination.followv.save()
+                
+                # 2. Handle current vaccination follow-up - ONLY if we have valid data
+                follow_up_visit = None
+                
+                # Check if we have follow_up_data and it contains a valid date
+                if (follow_up_data and 
+                    follow_up_data.get('followv_date') and 
+                    isinstance(follow_up_data.get('followv_date'), str) and
+                    follow_up_data.get('followv_date').strip()):
+                    
+                    try:
+                        formatted_date = datetime.strptime(follow_up_data.get('followv_date'), '%Y-%m-%d').date()
+                        
+                        # Check if we have an existing follow-up to update
+                        if vaccination.followv:
+                            logger.info(f"Updating existing follow-up visit: {vaccination.followv.followv_id}")
+                            vaccination.followv.followv_date = formatted_date
+                            if follow_up_data.get('followv_status'):
+                                vaccination.followv.followv_status = follow_up_data.get('followv_status')
+                            if follow_up_data.get('followv_description'):
+                                vaccination.followv.followv_description = follow_up_data.get('followv_description', '')
+                            vaccination.followv.save()
+                            follow_up_visit = vaccination.followv
+                        else:
+                            # Create new follow-up
+                            logger.info("Creating new follow-up visit")
+                            follow_up_visit = FollowUpVisit.objects.create(
+                                followv_date=formatted_date,
+                                followv_status=follow_up_data.get('followv_status', 'pending'),
+                                followv_description=follow_up_data.get('followv_description', 'No description provided'),
+                                patrec_id=patrec_id or vaccination.vacrec.patrec_id_id
+                            )
+                    except (ValueError, TypeError):
+                        # If date parsing fails, just log it and continue without follow-up
+                        logger.warning("Invalid date format in follow-up data, skipping follow-up processing")
+                
+                # 3. Update vaccination status to completed (this always happens)
+                logger.info(f"Updating vaccination status to completed: {vaccination_id}")
+                vaccination.vachist_status = 'completed'
+                if follow_up_visit:
+                    vaccination.followv = follow_up_visit
+                vaccination.save()
+                
+                # Commit the transaction
+                transaction.savepoint_commit(sid)
+                logger.info("Vaccination completion processed successfully")
+                
+                return Response({
+                    "success": True,
+                    "patientId": patient_id,
+                    "vaccinationId": vaccination_id,
+                    "followUpVisitId": follow_up_visit.followv_id if follow_up_visit else None
+                }, status=status.HTTP_200_OK)
+                
+            except Exception as e:
+                # Rollback to savepoint on error
+                transaction.savepoint_rollback(sid)
+                logger.error(f"Error processing vaccination completion: {str(e)}")
+                return Response(
+                    {"error": f"Failed to process vaccination: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+        except Exception as e:
+            logger.error(f"Unexpected error in vaccination completion: {str(e)}")
+            return Response(
+                {"error": "An unexpected error occurred"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
  
@@ -684,8 +828,6 @@ def bulk_create_immunization_histories(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
 # ======================================================================================#
 
 class VaccinationSubmissionView(APIView):
@@ -694,19 +836,25 @@ class VaccinationSubmissionView(APIView):
         try:
             data = request.data
             
-            # Extract data from request
-            assignment_option = data.get('assignment_option')
+            # Extract data from request - fixed structure
             form_data = data.get('form_data', {})
-            form2_data = data.get('form2_data', {})
             signature = data.get('signature')
-            pat_id = data.get('pat_id')
             vacStck_id = data.get('vacStck_id')
             vac_id = data.get('vac_id')
             vac_name = data.get('vac_name')
             expiry_date = data.get('expiry_date')
             follow_up_data = data.get('follow_up_data', {})
             vaccination_history = data.get('vaccination_history', [])
-            staff_id = data.get('staff_id')
+            print("staff",form_data.get("staff_id"))
+            print("form",form_data)
+            
+            # Get staff_id from request user
+            staff_id = form_data.get("staff_id") or None
+            if not staff_id:
+                return Response(
+                    {'error': 'Staff ID not found'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
             # Get vaccine stock
             try:
@@ -729,7 +877,7 @@ class VaccinationSubmissionView(APIView):
             vaccine_stock.vacStck_qty_avail -= 1
             vaccine_stock.save()
             
-             # Create antigen transaction with appropriate unit
+            # Create antigen transaction with appropriate unit
             if vaccine_stock.solvent == 'diluent':
                 antt_qty = "1 container"
             else:
@@ -742,31 +890,39 @@ class VaccinationSubmissionView(APIView):
                 staff_id=staff_id
             )
             
-            
             # Update inventory timestamp
             if vaccine_stock.inv_id:
                 inventory = vaccine_stock.inv_id
                 inventory.updated_at = timezone.now()
                 inventory.save()
             
-            # Determine status
-            status_val = "forwarded" if assignment_option == "other" else "in queue"
+            # Determine status - removed assignment_option since it's not in frontend
+            status_val = "in queue"  # Default to completed since no assignment option
+            
+            # Get patient ID from request or data - you need to determine how this is passed
+            pat_id = form_data.get("pat_id")  # You need to ensure this is passed from frontend
+            
+            if not pat_id:
+                return Response(
+                    {'error': 'Patient ID is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
             # Process based on vaccine type
             if vac_type == "routine":
                 result = self.process_routine_vaccination(
-                    assignment_option, form_data, form2_data, signature, pat_id,
+                    data, form_data, signature, pat_id,
                     vaccine_stock, status_val, follow_up_data, vac_name, staff_id
                 )
             elif vac_type == "primary":
                 result = self.process_primary_vaccination(
-                    assignment_option, form_data, form2_data, signature, pat_id,
+                    data, form_data, signature, pat_id,
                     vaccine_stock, status_val, follow_up_data, vac_name, staff_id,
                     vaccination_history
                 )
             elif vac_type == "conditional":
                 result = self.process_conditional_vaccination(
-                    assignment_option, form_data, form2_data, signature, pat_id,
+                    data, form_data, signature, pat_id,
                     vaccine_stock, status_val, follow_up_data, vac_name, staff_id,
                     vaccination_history
                 )
@@ -784,9 +940,9 @@ class VaccinationSubmissionView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    def process_routine_vaccination(self, assignment_option, form_data, form2_data, 
-                              signature, pat_id, vaccine_stock, status_val, 
-                              follow_up_data, vac_name, staff_id):
+    def process_routine_vaccination(self, data, form_data, signature, pat_id, 
+                                  vaccine_stock, status_val, follow_up_data, 
+                                  vac_name, staff_id):
     
         # Check if there's an existing vaccination record for this patient and vaccine
         existing_vacrec = None
@@ -826,18 +982,18 @@ class VaccinationSubmissionView(APIView):
             # Create new vaccination record
             vaccination_record = VaccinationRecord.objects.create(
                 patrec_id=patient_record,
-                vacrec_totaldose=1
+                vacrec_totaldose=int(form_data.get('vacrec_totaldose', 1))
             )
         
-        # Create vital signs if self-assignment
+        # Create vital signs - always create if data is available
         vital = None
-        if assignment_option == "self":
+        if form_data:  # Check if form_data exists
             vital = VitalSigns.objects.create(
-                vital_bp_systolic=form2_data.get('bpsystolic', ''),
-                vital_bp_diastolic=form2_data.get('bpdiastolic', ''),
-                vital_temp=form2_data.get('temp', ''),
-                vital_o2=form2_data.get('o2', ''),
-                vital_pulse=form2_data.get('pr', ''),
+                vital_bp_systolic=form_data.get('bpsystolic', ''),
+                vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                vital_temp=form_data.get('temp', ''),
+                vital_o2=form_data.get('o2', ''),
+                vital_pulse=form_data.get('pr', ''),
                 staff_id=staff_id,
                 patrec=patient_record
             )
@@ -846,18 +1002,17 @@ class VaccinationSubmissionView(APIView):
         followv = None
         if follow_up_data:
             followv = FollowUpVisit.objects.create(
-                followv_date=follow_up_data.get('followv_date') or form_data.get('followv_date'),
+                followv_date=follow_up_data.get('followv_date'),
                 followv_status='pending',
                 followv_description=follow_up_data.get('followv_description') or 
-                                f"Follow-up visit for {vac_name} in queue on {form_data.get('followv_date')}",
+                                f"Follow-up visit for {vac_name}",
                 patrec=patient_record
             )
         
         # Create vaccination history - convert to integer
         vachist = VaccinationHistory.objects.create(
             vacrec=vaccination_record,
-            assigned_to=form_data.get('assignto'),
-            vacStck_id=vaccine_stock,
+            vacStck_id=vaccine_stock,  # Removed assigned_to field
             vachist_doseNo=int(form_data.get('vachist_doseNo', 1)),
             vachist_status=status_val,
             staff_id=staff_id,
@@ -873,11 +1028,12 @@ class VaccinationSubmissionView(APIView):
             'vachist_id': vachist.vachist_id,
             'vital_id': vital.vital_id if vital else None,
             'followv_id': followv.followv_id if followv else None,
-            'is_new_record': not existing_vacrec  # Flag indicating if new record was created
+            'is_new_record': not existing_vacrec
         }
-    def process_primary_vaccination(self, assignment_option, form_data, form2_data, 
-                                   signature, pat_id, vaccine_stock, status_val, 
-                                   follow_up_data, vac_name, staff_id, vaccination_history):
+
+    def process_primary_vaccination(self, data, form_data, signature, pat_id, 
+                                   vaccine_stock, status_val, follow_up_data, 
+                                   vac_name, staff_id, vaccination_history):
         # Convert to integers for comparison
         dose_no = int(form_data.get('vachist_doseNo', 1))
         total_dose = int(form_data.get('vacrec_totaldose', 0))
@@ -890,13 +1046,13 @@ class VaccinationSubmissionView(APIView):
             )
             
             vital = None
-            if assignment_option == "self":
+            if form_data:
                 vital = VitalSigns.objects.create(
-                    vital_bp_systolic=form2_data.get('bpsystolic', ''),
-                    vital_bp_diastolic=form2_data.get('bpdiastolic', ''),
-                    vital_temp=form2_data.get('temp', ''),
-                    vital_o2=form2_data.get('o2', ''),
-                    vital_pulse=form2_data.get('pr', ''),
+                    vital_bp_systolic=form_data.get('bpsystolic', ''),
+                    vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                    vital_temp=form_data.get('temp', ''),
+                    vital_o2=form_data.get('o2', ''),
+                    vital_pulse=form_data.get('pr', ''),
                     staff_id=staff_id,
                     patrec=patient_record
                 )
@@ -909,17 +1065,16 @@ class VaccinationSubmissionView(APIView):
             followv = None
             if follow_up_data:
                 followv = FollowUpVisit.objects.create(
-                    followv_date=follow_up_data.get('followv_date') or form_data.get('followv_date'),
+                    followv_date=follow_up_data.get('followv_date'),
                     followv_status='pending',
                     followv_description=follow_up_data.get('followv_description') or 
-                                      f"Follow-up visit for {vac_name} in queue on {form_data.get('followv_date')}",
+                                      f"Follow-up visit for {vac_name}",
                     patrec=patient_record
                 )
             
             vachist = VaccinationHistory.objects.create(
                 vacrec=vaccination_record,
-                assigned_to=form_data.get('assignto'),
-                vacStck_id=vaccine_stock,
+                vacStck_id=vaccine_stock,  # Removed assigned_to
                 vachist_doseNo=dose_no,
                 vachist_status=status_val,
                 staff_id=staff_id,
@@ -939,23 +1094,29 @@ class VaccinationSubmissionView(APIView):
             
         else:
             # Subsequent doses - use existing records
-            if not vaccination_history or not vaccination_history[0].get('vacrec'):
-                raise Exception("Previous vaccination record not found for subsequent dose")
+            if not vaccination_history:
+                raise Exception("Previous vaccination history not found for subsequent dose")
             
-            old_vacrec_id = vaccination_history[0]['vacrec']
+            # Get the latest vaccination history record
+            latest_history = vaccination_history[0] if isinstance(vaccination_history, list) and vaccination_history else vaccination_history
+            
+            old_vacrec_id = latest_history.get('vacrec_id') or latest_history.get('vacrec')
+            if not old_vacrec_id:
+                raise Exception("Previous vaccination record ID not found")
+            
             try:
                 old_vaccination_record = VaccinationRecord.objects.get(vacrec_id=old_vacrec_id)
             except VaccinationRecord.DoesNotExist:
                 raise Exception("Previous vaccination record not found")
             
             vital = None
-            if assignment_option == "self":
+            if form_data:
                 vital = VitalSigns.objects.create(
-                    vital_bp_systolic=form2_data.get('bpsystolic', ''),
-                    vital_bp_diastolic=form2_data.get('bpdiastolic', ''),
-                    vital_temp=form2_data.get('temp', ''),
-                    vital_o2=form2_data.get('o2', ''),
-                    vital_pulse=form2_data.get('pr', ''),
+                    vital_bp_systolic=form_data.get('bpsystolic', ''),
+                    vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                    vital_temp=form_data.get('temp', ''),
+                    vital_o2=form_data.get('o2', ''),
+                    vital_pulse=form_data.get('pr', ''),
                     staff_id=staff_id,
                     patrec=old_vaccination_record.patrec_id
                 )
@@ -964,17 +1125,16 @@ class VaccinationSubmissionView(APIView):
             # FIXED: Use integer comparison
             if dose_no < total_dose and follow_up_data:
                 followv = FollowUpVisit.objects.create(
-                    followv_date=follow_up_data.get('followv_date') or form_data.get('followv_date'),
+                    followv_date=follow_up_data.get('followv_date'),
                     followv_status='pending',
                     followv_description=follow_up_data.get('followv_description') or 
-                                      f"Follow-up visit for {vac_name} in queue on {form_data.get('followv_date')}",
+                                      f"Follow-up visit for {vac_name}",
                     patrec=old_vaccination_record.patrec_id
                 )
             
             vachist = VaccinationHistory.objects.create(
                 vacrec=old_vaccination_record,
-                assigned_to=form_data.get('assignto'),
-                vacStck_id=vaccine_stock,
+                vacStck_id=vaccine_stock,  # Removed assigned_to
                 vachist_doseNo=dose_no,
                 vachist_status=status_val,
                 staff_id=staff_id,
@@ -990,9 +1150,9 @@ class VaccinationSubmissionView(APIView):
                 'followv_id': followv.followv_id if followv else None
             }
 
-    def process_conditional_vaccination(self, assignment_option, form_data, form2_data, 
-                                      signature, pat_id, vaccine_stock, status_val, 
-                                      follow_up_data, vac_name, staff_id, vaccination_history):
+    def process_conditional_vaccination(self, data, form_data, signature, pat_id, 
+                                      vaccine_stock, status_val, follow_up_data, 
+                                      vac_name, staff_id, vaccination_history):
         # Convert to integer
         dose_no = int(form_data.get('vachist_doseNo', 1))
         
@@ -1004,13 +1164,13 @@ class VaccinationSubmissionView(APIView):
             )
             
             vital = None
-            if assignment_option == "self":
+            if form_data:
                 vital = VitalSigns.objects.create(
-                    vital_bp_systolic=form2_data.get('bpsystolic', ''),
-                    vital_bp_diastolic=form2_data.get('bpdiastolic', ''),
-                    vital_temp=form2_data.get('temp', ''),
-                    vital_o2=form2_data.get('o2', ''),
-                    vital_pulse=form2_data.get('pr', ''),
+                    vital_bp_systolic=form_data.get('bpsystolic', ''),
+                    vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                    vital_temp=form_data.get('temp', ''),
+                    vital_o2=form_data.get('o2', ''),
+                    vital_pulse=form_data.get('pr', ''),
                     staff_id=staff_id,
                     patrec=patient_record
                 )
@@ -1025,17 +1185,16 @@ class VaccinationSubmissionView(APIView):
             followv = None
             if follow_up_data:
                 followv = FollowUpVisit.objects.create(
-                    followv_date=follow_up_data.get('followv_date') or form_data.get('followv_date'),
+                    followv_date=follow_up_data.get('followv_date'),
                     followv_status='pending',
                     followv_description=follow_up_data.get('followv_description') or 
-                                      f"Follow-up visit for {vac_name} in queue on {form_data.get('followv_date')}",
+                                      f"Follow-up visit for {vac_name}",
                     patrec=patient_record
                 )
             
             vachist = VaccinationHistory.objects.create(
                 vacrec=vaccination_record,
-                assigned_to=form_data.get('assignto'),
-                vacStck_id=vaccine_stock,
+                vacStck_id=vaccine_stock,  # Removed assigned_to
                 vachist_doseNo=dose_no,
                 vachist_status=status_val,
                 staff_id=staff_id,
@@ -1055,23 +1214,29 @@ class VaccinationSubmissionView(APIView):
             
         else:
             # Subsequent doses
-            if not vaccination_history or not vaccination_history[0].get('vacrec'):
-                raise Exception("Previous vaccination record not found for subsequent dose")
+            if not vaccination_history:
+                raise Exception("Previous vaccination history not found for subsequent dose")
             
-            old_vacrec_id = vaccination_history[0]['vacrec']
+            # Get the latest vaccination history record
+            latest_history = vaccination_history[0] if isinstance(vaccination_history, list) and vaccination_history else vaccination_history
+            
+            old_vacrec_id = latest_history.get('vacrec_id') or latest_history.get('vacrec')
+            if not old_vacrec_id:
+                raise Exception("Previous vaccination record ID not found")
+            
             try:
                 old_vaccination_record = VaccinationRecord.objects.get(vacrec_id=old_vacrec_id)
             except VaccinationRecord.DoesNotExist:
                 raise Exception("Previous vaccination record not found")
             
             vital = None
-            if assignment_option == "self":
+            if form_data:
                 vital = VitalSigns.objects.create(
-                    vital_bp_systolic=form2_data.get('bpsystolic', ''),
-                    vital_bp_diastolic=form2_data.get('bpdiastolic', ''),
-                    vital_temp=form2_data.get('temp', ''),
-                    vital_o2=form2_data.get('o2', ''),
-                    vital_pulse=form2_data.get('pr', ''),
+                    vital_bp_systolic=form_data.get('bpsystolic', ''),
+                    vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                    vital_temp=form_data.get('temp', ''),
+                    vital_o2=form_data.get('o2', ''),
+                    vital_pulse=form_data.get('pr', ''),
                     staff_id=staff_id,
                     patrec=old_vaccination_record.patrec_id
                 )
@@ -1079,17 +1244,16 @@ class VaccinationSubmissionView(APIView):
             followv = None
             if follow_up_data:
                 followv = FollowUpVisit.objects.create(
-                    followv_date=follow_up_data.get('followv_date') or form_data.get('followv_date'),
+                    followv_date=follow_up_data.get('followv_date'),
                     followv_status='pending',
                     followv_description=follow_up_data.get('followv_description') or 
-                                      f"Follow-up visit for {vac_name} in queue on {form_data.get('followv_date')}",
+                                      f"Follow-up visit for {vac_name}",
                     patrec=old_vaccination_record.patrec_id
                 )
             
             vachist = VaccinationHistory.objects.create(
                 vacrec=old_vaccination_record,
-                assigned_to=form_data.get('assignto'),
-                vacStck_id=vaccine_stock,
+                vacStck_id=vaccine_stock,  # Removed assigned_to
                 vachist_doseNo=dose_no,
                 vachist_status=status_val,
                 staff_id=staff_id,

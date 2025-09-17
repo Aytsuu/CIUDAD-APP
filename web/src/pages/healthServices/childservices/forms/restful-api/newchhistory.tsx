@@ -3,8 +3,7 @@ import { api2 } from "@/api/api";
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-
+import { showSuccessToast,showErrorToast } from "@/components/ui/toast";
 export interface AddRecordArgs {
   submittedData: FormData;
   staff: string | null;
@@ -161,45 +160,6 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
   }
 }
 
-/**
- * React Query mutation hook for updating child health records
- */
-// export const useUpdateChildHealthRecordMutation = () => {
-//   const navigate = useNavigate();
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: updateChildHealthRecord,
-//     onSuccess: (data) => {
-//       // Invalidate relevant queries
-//       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
-//       queryClient.invalidateQueries({
-//         queryKey: ["childHealthHistory", data.data.chrec_id]
-//       });
-//       queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
-//       queryClient.invalidateQueries({ queryKey: ["medicineInventory"] });
-//       queryClient.invalidateQueries({ queryKey: ["followUpVisits"] });
-//       queryClient.invalidateQueries({ queryKey: ["bodyMeasurements"] });
-
-//       // Show success message
-//       toast.success(data.message || "Child health record updated successfully!");
-
-//       // Navigate back
-//       navigate(-1);
-//     },
-//     onError: (error: unknown) => {
-//       console.error("Child health record update mutation failed:", error);
-
-//       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while updating child health record";
-
-//       toast.error(`Update Failed: ${errorMessage}`);
-//     }
-//   });
-// };
-
-/**
- * Helper function to validate form data before submission
- */
 export function validateChildHealthFormData(formData: FormData): string[] {
   const errors: string[] = [];
 
@@ -289,7 +249,7 @@ export const useUpdateChildHealthRecordMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["followupChildHealth"] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
 
-      toast.success(data.message || "Child health record updated successfully!");
+      showSuccessToast("submitted successfully!");
       navigate(-1);
     },
     onError: (error: unknown) => {
@@ -297,7 +257,7 @@ export const useUpdateChildHealthRecordMutation = () => {
 
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while updating child health record";
 
-      toast.error(`Update Failed: ${errorMessage}`);
-    }
+showErrorToast(`Operation Failed: ${errorMessage}`)  
+  }
   });
 };

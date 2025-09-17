@@ -2,7 +2,8 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import CardLayout from "@/components/ui/card/card-layout";
 import { SyringeIcon, Pill, Baby, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import { Link } from "react-router-dom"; // Use react-router-dom's Link
+import { Link } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton"; // Assuming you have a Skeleton component
 
 // Define the ChildHealthRecord interface as it's used in InvChildHealthRecords
 
@@ -38,7 +39,26 @@ interface MedicalHistoryTabProps {
   childHealthCount?: number | undefined;
   childHealthRecords: any[];
   prenatalCount: number | undefined;
+  childHistoryLoading?: boolean;
 }
+
+// Skeleton component for loading state
+const ChildHealthSkeleton = () => (
+  <div className="p-4 rounded-lg border border-pink-200">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center space-x-3">
+        <Skeleton className="w-9 h-9 rounded-lg" />
+        <div>
+          <Skeleton className="h-5 w-40 mb-2" />
+          <div className="flex items-center space-x-4 mt-1">
+            <Skeleton className="h-6 w-24" />
+          </div>
+        </div>
+      </div>
+      <Skeleton className="h-10 w-24" />
+    </div>
+  </div>
+);
 
 export default function Records({
   vaccinationCount,
@@ -48,8 +68,9 @@ export default function Records({
   medicalconCount,
   patientLinkData,
   childHealthCount,
-  childHealthRecords, // This is the array of formatted records
-  prenatalCount
+  childHealthRecords,
+  prenatalCount,
+  childHistoryLoading
 }: MedicalHistoryTabProps) {
   // Determine if there's at least one child health record to pass
   const firstChildHealthRecord = childHealthRecords.length > 0 ? childHealthRecords[0] : null;
@@ -195,36 +216,43 @@ export default function Records({
                       </div>
                     </div>
                   )}
-                  {childHealthCount !== 0 && (
-                    <div className="p-4 rounded-lg border border-pink-200">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 rounded-lg">
-                            <Baby className="w-5 h-5 text-pink-600" />
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Child Health Record</h3>
-                            <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-gray-600 bg-pink-100 px-2 py-1 rounded-md">{childHealthCount !== undefined ? childHealthCount : "0"} Records</span>
+                  
+                  {/* Child Health Record with Skeleton Loading */}
+                  {childHistoryLoading ? (
+                    <ChildHealthSkeleton />
+                  ) : (
+                    childHealthCount !== 0 && (
+                      <div className="p-4 rounded-lg border border-pink-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 rounded-lg">
+                              <Baby className="w-5 h-5 text-pink-600" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-900">Child Health Record</h3>
+                              <div className="flex items-center space-x-4 mt-1">
+                                <span className="text-sm text-gray-600 bg-pink-100 px-2 py-1 rounded-md">{childHealthCount !== undefined ? childHealthCount : "0"} Records</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <Link
-                          to="/child-health-records"
-                          state={{ ChildHealthRecord: firstChildHealthRecord }} // Pass the single record
-                        >
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium"
-                            // disabled={!firstChildHealthRecord} // Disable if no record to pass
+                          <Link
+                            to="/child-health-records"
+                            state={{ ChildHealthRecord: firstChildHealthRecord }}
                           >
-                            View Details
-                          </Button>
-                        </Link>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium"
+                              disabled={!firstChildHealthRecord}
+                            >
+                              View Details
+                            </Button>
+                          </Link>
+                        </div>
                       </div>
-                    </div>
+                    )
                   )}
+                  
                   {prenatalCount !== 0 && (
                     <div className="p-4 rounded-lg border border-red-200 bg-red-100">
                       <div className="flex items-center justify-between">

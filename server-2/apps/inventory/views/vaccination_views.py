@@ -906,9 +906,6 @@ class CombinedStockTable(APIView):
 
 
 # ==========================TRANSATION=========================
-from django.db.models import Q, Case, When, Value, CharField
-from django.db.models.functions import Coalesce
-
 class AntigenTransactionView(APIView):
     pagination_class = StandardResultsPagination
     
@@ -919,16 +916,16 @@ class AntigenTransactionView(APIView):
             page = int(request.GET.get('page', 1))
             page_size = int(request.GET.get('page_size', 10))
             
-            # Get antigen transactions with related data
+            # Get antigen transactions with related data - FIXED staff relationship
             transactions = AntigenTransaction.objects.select_related(
                 'vacStck_id__vac_id',
                 'vacStck_id__inv_id',
                 'imzStck_id__imz_id',
                 'imzStck_id__inv_id',
-                'staff'
+                'staff__rp__per'  # Add this to get the personal info
             ).all()
             
-            # Apply search filter if provided
+            # Apply search filter if provided - UPDATED search fields
             if search_query:
                 transactions = transactions.filter(
                     Q(vacStck_id__vac_id__vac_name__icontains=search_query) |
@@ -936,8 +933,8 @@ class AntigenTransactionView(APIView):
                     Q(vacStck_id__inv_id__inv_id__icontains=search_query) |
                     Q(imzStck_id__inv_id__inv_id__icontains=search_query) |
                     Q(antt_action__icontains=search_query) |
-                    Q(staff__first_name__icontains=search_query) |
-                    Q(staff__last_name__icontains=search_query)
+                    Q(staff__rp__per__per_fname__icontains=search_query) |  # Updated
+                    Q(staff__rp__per__per_lname__icontains=search_query)    # Updated
                 )
             
             # Format the data for response
@@ -949,7 +946,7 @@ class AntigenTransactionView(APIView):
                 immunization_stock = transaction.imzStck_id
                 
                 # Determine item type and get details
-                item_name = "Manage by System"
+                item_name = "Unknown Item"
                 item_type = "Unknown"
                 inv_id = "N/A"
                 
@@ -966,12 +963,13 @@ class AntigenTransactionView(APIView):
                     item_type = "Immunization Supply"
                     inv_id = inventory.inv_id if inventory else "N/A"
                 
-                # Format staff name
-                staff_name = "Unknown"
-                if staff:
-                    staff_name = f"{staff.first_name or ''} {staff.last_name or ''}".strip()
+                # Format staff name - FIXED (consistent with other views)
+                staff_name = "Managed by System"
+                if staff and staff.rp and staff.rp.per:
+                    personal = staff.rp.per
+                    staff_name = f"{personal.per_fname or ''} {personal.per_lname or ''}".strip()
                     if not staff_name:
-                        staff_name = staff.username
+                        staff_name = f"Staff {staff.staff_id}"  # Fallback to staff ID
                 
                 item_data = {
                     'antt_id': transaction.antt_id,
@@ -1011,7 +1009,7 @@ class AntigenTransactionView(APIView):
                 'success': False,
                 'error': f'Error fetching antigen transactions: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            
 # ===========================ARCHIVE==============================
 class AntigenArchiveInventoryView(APIView):
     
