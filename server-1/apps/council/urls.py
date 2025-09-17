@@ -57,7 +57,7 @@ urlpatterns = [
     path("resolution-supp/", ResolutionSupDocsView.as_view(), name="council-supp-docs"),
     path('resolution-supp-delete/<int:rsd_id>/', ResolutionSupDocsDetailView.as_view(), name='council-supp-detail'), 
     #APPROVED PROPOSALS
-    path('approved-proposals/', ApprovedGADProposalsView.as_view(), name='approved-gad-proposals'),
+    path('approved-proposals/', GADProposalsView.as_view(), name='approved-gad-proposals'),
 
         # ================================== ORDINANCE URLS (from secretary) =================================
     # Ordinance endpoints
