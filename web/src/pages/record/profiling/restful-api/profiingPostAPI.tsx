@@ -4,7 +4,7 @@ import { capitalize } from "@/helpers/capitalize";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
 
-// POST request for personal
+// POST request for personal        
 export const addPersonal = async (data: Record<string, any>) => {
   
   try {
@@ -107,7 +107,6 @@ export const addFamily = async (
       staff: staffId,
     }
     const res = await api.post("profiling/family/create/", data);
-    await api2.post("health-profiling/family/create/", data);
 
     return res.data;
   } catch (err) {
@@ -119,7 +118,6 @@ export const addFamily = async (
 export const addFamilyComposition = async (data: Record<string, any>[]) => {
   try {
     const res = await api.post("profiling/family/composition/bulk/create/", data);
-    await api2.post("health-profiling/family/composition/bulk/create/", data);
 
     return res.data
   } catch (err) {
