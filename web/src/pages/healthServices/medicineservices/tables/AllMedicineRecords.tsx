@@ -4,20 +4,14 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search, FileInput } from "lucide-react";
+import { ArrowUpDown, Search, FileInput, Loader2 } from "lucide-react";
 import { Link } from "react-router";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery } from "@tanstack/react-query";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { getMedicineRecords } from "../restful-api/getAPI";
 // import { useNavigate } from "react-router";
-import { TableSkeleton } from "../../skeleton/table-skeleton";
 import { MedicineRecord } from "../types";
 
 export default function AllMedicineRecords() {
@@ -33,7 +27,7 @@ export default function AllMedicineRecords() {
     queryKey: ["medicineRecords"],
     queryFn: getMedicineRecords,
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 0
   });
 
   const formatMedicineData = React.useCallback((): MedicineRecord[] => {
@@ -45,12 +39,7 @@ export default function AllMedicineRecords() {
 
       // Construct address string - returns empty string if no address components
       const addressString =
-        [
-          address.add_street,
-          address.add_barangay,
-          address.add_city,
-          address.add_province,
-        ]
+        [address.add_street, address.add_barangay, address.add_city, address.add_province]
           .filter((part) => part && part.trim().length > 0) // Remove empty parts
           .join(", ") || ""; // Join with commas or return empty string
 
@@ -70,7 +59,7 @@ export default function AllMedicineRecords() {
         province: address.add_province || "",
         pat_type: record.patient_details.pat_type || "",
         medicine_count: record.medicine_count || 0,
-        address: addressString, // Will be empty string if no address parts
+        address: addressString // Will be empty string if no address parts
       };
     });
   }, [medicineRecords]);
@@ -83,10 +72,7 @@ export default function AllMedicineRecords() {
         ${record.fname} 
         ${record.sitio}`.toLowerCase();
 
-      const typeMatches =
-        patientTypeFilter === "all" ||
-        (record.pat_type ?? "").toLowerCase() ===
-          patientTypeFilter.toLowerCase();
+      const typeMatches = patientTypeFilter === "all" || (record.pat_type ?? "").toLowerCase() === patientTypeFilter.toLowerCase();
 
       return searchText.includes(searchQuery.toLowerCase()) && typeMatches;
     });
@@ -94,25 +80,18 @@ export default function AllMedicineRecords() {
 
   // Pagination logic
   const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const columns: ColumnDef<MedicineRecord>[] = [
     {
       accessorKey: "patient",
       header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => {
-        const fullName =
-          `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
+        const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
         return (
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
@@ -123,38 +102,29 @@ export default function AllMedicineRecords() {
             </div>
           </div>
         );
-      },
+      }
     },
     {
       accessorKey: "address",
       header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Address <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">
-            {row.original.address
-              ? row.original.address
-              : "No address provided"}
-          </div>
+          <div className="w-full truncate">{row.original.address ? row.original.address : "No address provided"}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "sitio",
       header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">
-            {row.original.sitio || "N/A"}
-          </div>
+          <div className="text-center w-full">{row.original.sitio || "N/A"}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "type",
@@ -163,18 +133,16 @@ export default function AllMedicineRecords() {
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">{row.original.pat_type}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "medicine_count",
       header: "No of Records",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">
-            {row.original.medicine_count}
-          </div>
+          <div className="text-center w-full">{row.original.medicine_count}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "action",
@@ -196,7 +164,7 @@ export default function AllMedicineRecords() {
                       add_barangay: row.original.barangay,
                       add_city: row.original.city,
                       add_province: row.original.province,
-                      add_sitio: row.original.sitio,
+                      add_sitio: row.original.sitio
                     },
                     households: [{ hh_id: row.original.householdno }],
                     personal_info: {
@@ -204,18 +172,18 @@ export default function AllMedicineRecords() {
                       per_mname: row.original.mname,
                       per_lname: row.original.lname,
                       per_dob: row.original.dob,
-                      per_sex: row.original.sex,
-                    },
-                  },
-                },
+                      per_sex: row.original.sex
+                    }
+                  }
+                }
               }}
             >
               View
             </Link>
           </div>
         </div>
-      ),
-    },
+      )
+    }
   ];
 
   return (
@@ -223,12 +191,8 @@ export default function AllMedicineRecords() {
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <div className="flex-col items-center ">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Medicine Records
-            </h1>
-            <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patient's medicine records
-            </p>
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Medicine Records</h1>
+            <p className="text-xs sm:text-sm text-darkGray">Manage and view patient's medicine records</p>
           </div>
         </div>
         <hr className="border-gray-300 mb-4" />
@@ -236,16 +200,8 @@ export default function AllMedicineRecords() {
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search..."
-                className="pl-10 bg-white w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+              <Input placeholder="Search..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
             <SelectLayout
               placeholder="Filter records"
@@ -254,7 +210,7 @@ export default function AllMedicineRecords() {
               options={[
                 { id: "all", name: "All Types" },
                 { id: "resident", name: "Resident" },
-                { id: "transient", name: "Transient" },
+                { id: "transient", name: "Transient" }
               ]}
               value={patientTypeFilter}
               onChange={(value) => setPatientTypeFilter(value)}
@@ -267,8 +223,8 @@ export default function AllMedicineRecords() {
                 to="/medicine-request-form"
                 state={{
                   params: {
-                    mode: "fromallrecordtable",
-                  },
+                    mode: "fromallrecordtable"
+                  }
                 }}
               >
                 New Request
@@ -297,11 +253,7 @@ export default function AllMedicineRecords() {
             <div className="flex justify-end sm:justify-start">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    aria-label="Export data"
-                    className="flex items-center gap-2"
-                  >
+                  <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
                     <FileInput />
                     Export
                   </Button>
@@ -315,27 +267,14 @@ export default function AllMedicineRecords() {
             </div>
           </div>
 
-          <div className="bg-white w-full overflow-x-auto">
-            {isLoading ? (
-              <TableSkeleton columns={columns} rowCount={5} />
-            ) : (
-              <DataTable columns={columns} data={paginatedData} />
-            )}
-          </div>
+          <div className="bg-white w-full overflow-x-auto">{isLoading ? <Loader2 className="animate-spin text-gray-500 w-6 h-6 mx-auto my-4" /> : <DataTable columns={columns} data={paginatedData} />}</div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 ">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
+              Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
             </p>
 
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           </div>
         </div>

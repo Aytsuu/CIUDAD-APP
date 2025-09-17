@@ -6,7 +6,7 @@ import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { View, Text } from "react-native";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import AccountSetup from "../account/AccountSetup";
 
 export default function LinkAccountReg() {

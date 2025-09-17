@@ -64,8 +64,8 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
 
         console.log("YEAR NUMBERRRR: ", typeof inputYear)
 
-        let totIncome = Number(totInc);
-        let inc_amount = Number(values.inc_amount)
+        const totIncome = Number(totInc);
+        const inc_amount = Number(values.inc_amount)
 
         totalIncome = totIncome + inc_amount;
 

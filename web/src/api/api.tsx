@@ -30,6 +30,15 @@ export const api2 = axios.create({
   },
 });
 
+// export const api2 = axios.create({
+//   baseURL: "http://localhost:8001",
+//   withCredentials: true, 
+//   headers: {
+//     "Content-Type": "application/json",
+//     "Accept": "application/json",
+//   },
+// });
+
 setupApiInterceptor(api)
 
 export default api

@@ -1,21 +1,55 @@
 // Format date (YYYY-MM-DD) or (July 10, 2025)
-export const formatDate = (date: string | Date, isLong?: boolean) => {
-  if(!date) return null;
-  return isLong ? new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }) : new Date(date).toISOString().split('T')[0]
-}
+export const formatDate = (date: string | Date, type?: string) => {
+  if (!date) return null;
+  const d = new Date(date);
 
+  switch (type) {
+    case 'short':
+      return d.toLocaleDateString("en-PH", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    case 'long':
+      return d.toLocaleDateString("en-PH", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    default:
+      // Format YYYY-MM-DD in local time
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+  }
+};
+
+
+
+// Helper functions for date formatting (same as in your main component)
+export const formatSupplementDate = (dateString: string | null) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  });
+};
+
+
+
+export const formatMnpDates = (dates: string[]) => {
+  if (!dates || dates.length === 0) return "-";
+  return dates.map((date) => formatSupplementDate(date)).join(", ");
+};
 // Get week number based on a given date format (YYYY-MM-DD)
 // Example: date = 2025-06-11 --> returns 2
 export const getWeekNumber = (dateString: string): number => {
   const date = new Date(dateString);
-  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-  const firstDayWeekDay = firstDay.getDay();
   const dayOfMonth = date.getDate();
-  return Math.ceil((dayOfMonth + firstDayWeekDay) / 7);
+  return Math.ceil(dayOfMonth / 7);
 };
 
 // Get month in text based on a given date format (YYYY-MM-DD)

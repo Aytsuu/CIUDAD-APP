@@ -4,7 +4,7 @@ import { useGetSitio } from "../_global_queries/Retrieve";
 import React from "react";
 import { formatSitio } from "@/helpers/formatSitio";
 import { MediaItem } from "@/components/ui/media-picker";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { useToastContext } from "@/components/ui/toast";
 import { useAddBusiness } from "./queries/businessAddQueries";

@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from django.db import transaction
 from django.db.models import Q, Count
 from apps.pagination import StandardResultsPagination
+from apps.account.serializers import UserAccountSerializer
 from ..models import RequestRegistration
 from ..serializers.request_registration_serializers import *
 from rest_framework.permissions import AllowAny
@@ -65,7 +66,7 @@ class RequestCreateView(APIView):
           account = Account.objects.create_user(
               email=acc.get('email', None),
               phone=acc.get('phone', None),
-              username=acc['username'],
+              username=acc.get('phone', None),
               password=acc['password']
           )
 
@@ -81,7 +82,8 @@ class RequestCreateView(APIView):
     
     if len(new_comp) > 0:
       RequestRegistrationComposition.objects.bulk_create(new_comp)
-      return Response(data=RequestBaseSerializer(request).data, status=status.HTTP_200_OK)
+      serialzer = UserAccountSerializer(account)
+      return Response(data=serialzer.data, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
   def create_personal_info(self, personal, staff=None):

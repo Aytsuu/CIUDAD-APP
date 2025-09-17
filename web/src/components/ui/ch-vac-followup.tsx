@@ -41,18 +41,19 @@ export function FollowUpsCard({
     onClick,
   }: {
     active: boolean;
-    type: "pending" | "completed" | "missed";
+    type: "pending" | "completed" | "defaulted";
     count: number;
     onClick: () => void;
   }) => {
     const config = {
       pending: { icon: Clock, color: "blue" },
       completed: { icon: CheckCircle, color: "green" },
-      missed: { icon: AlertCircle, color: "red" },
+      defaulted: { icon: AlertCircle, color: "red" },
     }[type];
 
     return (
       <button
+      type="button"
         onClick={onClick}
         className={`flex-1 py-2 text-sm flex flex-row justify-center items-center gap-2 transition-colors border-b-2 ${
           active
@@ -232,7 +233,7 @@ export function FollowUpsCard({
             />
             <TabButton
               active={activeTab === "missed"}
-              type="missed"
+              type="defaulted"
               count={categorizedFollowups.missed.length}
               onClick={() => setActiveTab("missed")}
             />
@@ -279,7 +280,7 @@ export function FollowUpsCard({
             />
             <TabButton
               active={activeChildHealthTab === "missed"}
-              type="missed"
+              type="defaulted"
               count={categorizedChildHealths.missed.length}
               onClick={() => setActiveChildHealthTab("missed")}
             />

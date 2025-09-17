@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import { FamilyRecord, DependentRecord} from "../ProfilingTypes";
+import { FamilyRecord, DependentRecord} from "../../../record/profiling/ProfilingTypes";
 
 // Define the columns for family data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ export const familyColumns = (families: any[]): ColumnDef<FamilyRecord>[] => [
         to="/family-record-view"
         state={{
           params: {
-            data: families.find((family) => family.fam_id == row.original.id)
+            data: families.find((family) => family.fam_id == row.original.fam_id)
           }
         }}
       >

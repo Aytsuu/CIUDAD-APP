@@ -1,24 +1,24 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateCommodity } from "../../restful-api/commodity/CommodityPutAPI";
-import { toast } from "sonner";
-import { useNavigate } from "react-router";
+import { updateCommodity } from "../../restful-api/commodity/put-api";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+
 export const useUpdateCommodity = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   return useMutation({
-    mutationFn: ({com_id,data}: {
-      com_id: string; data: Record<string,any>; }) => updateCommodity(com_id, data),
-    onSuccess: () => {
-      navigate(-1)
-      toast.success("Commodity updated successfully", {
-        description: "The commodity has been updated in the inventory list.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["commodities"] });
+    mutationFn: async (params: { com_id: string; data: Record<string,any> }) => {
+      return await updateCommodity(params.com_id, params.data);
     },
-    onError: (error) => {
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["commodities"] });
+      queryClient.invalidateQueries({ queryKey: ["commodity"] });
+      queryClient.invalidateQueries({ queryKey: ["commoditylistcount"] });
+      showSuccessToast("updated successfully!");
+    },
+    onError: (error: any) => {
       console.error("Error updating commodity:", error);
+      showErrorToast("Failed to update. Please try again.");
+      throw error; // Re-throw to be caught in the component
+
     },
   });
-  
 };
-

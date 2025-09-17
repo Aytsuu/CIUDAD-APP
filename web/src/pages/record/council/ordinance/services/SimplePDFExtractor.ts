@@ -65,7 +65,7 @@ export class SimplePDFExtractor {
      */
     private extractReadableText(text: string): string {
         // Remove PDF-specific characters and commands
-        let cleanText = text
+        const cleanText = text
             .replace(/\\[a-zA-Z0-9]+/g, ' ') // Remove PDF commands
             .replace(/[^\x20-\x7E\n\r]/g, ' ') // Keep only printable ASCII
             .replace(/\s+/g, ' ') // Normalize whitespace

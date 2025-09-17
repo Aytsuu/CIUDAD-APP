@@ -1,10 +1,10 @@
-import { api, api2 } from "@/api/api";
+import { api } from "@/api/api";
 import { formatDate } from "@/helpers/dateHelper";
 import { capitalize } from "@/helpers/capitalize";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
 
-// POST request for personal
+// POST request for personal        
 export const addPersonal = async (data: Record<string, any>) => {
   
   try {
@@ -21,7 +21,6 @@ export const addPersonal = async (data: Record<string, any>) => {
       per_contact: data.per_contact,
     }
     const res = await api.post("profiling/personal/create/", new_data);
-    await api2.post("health-profiling/personal/create/", new_data);
 
     return res.data;
   } catch (err) {
@@ -34,7 +33,6 @@ export const addPersonal = async (data: Record<string, any>) => {
 export const addAddress =  async (data: Record<string, any>[]) => {
   try {
     const res = await api.post("profiling/address/create/", data);
-    await api2.post("health-profiling/address/create/", data);
     return res.data;
   } catch (err) {
     throw err;
@@ -50,14 +48,7 @@ export const addPersonalAddress = async (data: Record<string, any>[], staff_id?:
       history_id: history_id
     }
     const res = await api.post("profiling/per_address/create/", values);
-    try {
-      await api2.post("health-profiling/per_address/create/", values);
-    } catch (healthErr: any) {
-      console.error("Health database per_address creation error:", healthErr);
-      if (healthErr.response) {
-        console.error("Health database per_address error response:", healthErr.response.data);
-      }
-    }
+
     return res.data;
   } catch (err) {
     throw err;
@@ -84,7 +75,6 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
       staff: staffId || null
     }
     const res = await api.post("profiling/resident/create/combined/", data);
-    await api2.post("health-profiling/resident/create/combined/", data);
     
     return res.data
   } catch (err) { 
@@ -107,7 +97,6 @@ export const addFamily = async (
       staff: staffId,
     }
     const res = await api.post("profiling/family/create/", data);
-    await api2.post("health-profiling/family/create/", data);
 
     return res.data;
   } catch (err) {
@@ -119,7 +108,6 @@ export const addFamily = async (
 export const addFamilyComposition = async (data: Record<string, any>[]) => {
   try {
     const res = await api.post("profiling/family/composition/bulk/create/", data);
-    await api2.post("health-profiling/family/composition/bulk/create/", data);
 
     return res.data
   } catch (err) {
@@ -132,13 +120,12 @@ export const addHousehold = async (householdInfo: Record<string, string>, staffI
   try {
     const data = {
       hh_nhts: capitalize(householdInfo.nhts),
-      add: householdInfo.address.split(" ")[0],
+      add: householdInfo.address.split("-")[0],
       rp: householdInfo.householdHead.split(" ")[0],
       staff: staffId
     }
-    const res = await api.post("profiling/household/create/", data);
-    await api2.post("health-profiling/household/create/", data);
 
+    const res = await api.post("profiling/household/create/", data);
     return res.data;
   } catch (err) {
     throw err;

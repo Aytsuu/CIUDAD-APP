@@ -40,7 +40,7 @@ export type CommodityStocksRecord = {
 
 
   export type FirstAidStocksRecord = {
-  staff_id: string | null
+  staff_id: string | null; // Nullable staff_id
   finv_id: number;
   firstAidInfo: {
     fa_name: string;

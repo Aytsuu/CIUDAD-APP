@@ -24,6 +24,15 @@ class PhoneVerificationBaseSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def create(self, validated_data):
+        phone = validated_data.get('pv_phone_num', None)
+        action = validated_data.get('pv_type', None)
+        exists = None
+        if phone and action:
+            exists = Account.objects.filter(phone=phone).first()
+            if action != "login" and exists:
+                raise serializers.ValidationError({"phone": "Phone already in use"})
+            if action == "login" and not exists:
+                raise serializers.ValidationError({"phone": "Phone is not registered"})
         instance = PhoneVerification(**validated_data)
         instance.pv_otp = generate_otp()
         instance.save()

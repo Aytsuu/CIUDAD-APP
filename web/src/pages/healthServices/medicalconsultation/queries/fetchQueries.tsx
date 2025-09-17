@@ -1,19 +1,29 @@
-import { useQuery } from '@tanstack/react-query';
-import {getMedconRecordById,getMedicalRecord} from '../restful-api/get';
-export const usePatientMedicalRecords = (patientId: string | undefined) => {
-  return useQuery({
-    queryKey: ['patientMedicalDetails', patientId],
-    queryFn: () => patientId ? getMedconRecordById(patientId) : Promise.resolve(null),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    enabled: !!patientId,
+import { useQuery } from "@tanstack/react-query";
+import { getConsultationHistory, getMedicalRecord, getPreviousBMI } from "../restful-api/get";
+
+export const useConsultationHistory = (patientId: string, page: number, pageSize: number) => {
+  return useQuery<any>({
+    queryKey: ["consultationHistory", patientId, page, pageSize],
+    queryFn: () => getConsultationHistory(patientId, page, pageSize),
+    enabled: !!patientId
   });
 };
 
+export const useMedicalRecord = (params?: { page?: number; page_size?: number; search?: string; patient_type?: string }) => {
+  return useQuery({
+    queryKey: ["MedicalRecord", params],
+    queryFn: () => getMedicalRecord(params),
+    staleTime: 1000 * 60 * 5,
+    retry: 3
+  });
+};
 
-export const useMedicalRecord = () => {
-    return useQuery({
-        queryKey: ["MedicalRecord"],
-        queryFn: getMedicalRecord,
-        staleTime: 1000 * 60 * 5, // 5 minutes
-    });
+export const usePreviousBMI = (id: string) => {
+  return useQuery({
+    queryKey: ["previousBMI", id],
+    queryFn: () => getPreviousBMI(id),
+    staleTime: 1000 * 60 * 5,
+    enabled: !!id,
+    retry: 3
+  });
 };

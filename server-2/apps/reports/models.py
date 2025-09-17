@@ -15,6 +15,7 @@ from apps.administration.models import Staff  # Adjust the import based on your 
 #     class Meta:
 #         db_table = 'header_recipient_list_report_template'
 
+
 class MonthlyRecipientListReport(models.Model):
     monthlyrcplist_id = models.AutoField(primary_key=True)
     month_year = models.CharField(max_length=7)  # Format: YYYY-MM
