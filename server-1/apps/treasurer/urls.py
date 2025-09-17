@@ -19,22 +19,17 @@ urlpatterns=[
     path('previous-budget-plan-details/', PreviousYearBudgetPlanDetailsView.as_view(), name='previous-budget-plan-details'),
 
 
-    #Income and Disbursement URL
-    # Income Folder URLs
-    path('income-tab/folders/', IncomeFolderListView.as_view()),
-    path('income-tab/folders/<int:inf_num>/', IncomeFolderDetailView.as_view()),
-    path('income-tab/folders/<int:pk>/permanent-delete/', PermanentDeleteFolder.as_view()),
-    # Disbursement Folder URLs
-    path('disbursement-tab/folders/', DisbursementFolderListView.as_view()),
-    path('disbursement-tab/folders/<int:dis_num>/', DisbursementFolderDetailView.as_view()),
-    path('disbursement-tab/folders/<int:pk>/permanent-delete/', PermanentDeleteFolder.as_view()),
-    # Image URLs (shared for both archive/delete via query params)
-    path('income-tab/images/', Income_ImageListView.as_view()),
-    path('income-tab/images/<int:infi_num>/', Income_ImageView.as_view()),
-    path('disbursement-tab/images/', Disbursement_ImageListView.as_view()),
-    path('disbursement-tab/images/<int:disf_num>/', Disbursement_ImageView.as_view()),
+    #Disbursement URL
+    path('disbursement-vouchers/', DisbursementVoucherView.as_view(), name='disbursement-voucher-list-create'),
+    path('disbursement-vouchers/<int:dis_num>/', DisbursementVoucherDetailView.as_view(), name='disbursement-voucher-detail'),
+    path('disbursement-vouchers/<int:dis_num>/archive/', DisbursementVoucherArchiveView.as_view(), name='disbursement-voucher-archive'),
+    path('disbursement-vouchers/<int:dis_num>/restore/', DisbursementVoucherRestoreView.as_view(), name='disbursement-voucher-restore'),
+    path('disbursement-files/', DisbursementFileView.as_view(), name='disbursement-file-list-create'),
+    path('disbursement-files/<int:disf_num>/', DisbursementFileDetailView.as_view(), name='disbursement-file-detail'),
+    path('disbursement-files/<int:disf_num>/archive/', DisbursementFileArchiveView.as_view(), name='disbursement-file-archive'),
+    path('disbursement-files/<int:disf_num>/restore/', DisbursementFileRestoreView.as_view(), name='disbursement-file-restore'),
+    path('disbursement-vouchers/<int:dis_num>/files/', DisbursementFileCreateView.as_view(), name='disbursement-voucher-files'),
 
-    
     #EXPENSE URL
     path('income-expense-tracking/', Income_Expense_TrackingView.as_view(), name = 'treasurer-income-expense-tracking'),
     path('update-income-expense-tracking/<int:iet_num>/', UpdateIncomeExpenseView.as_view(), name='treasurer-income-expense-tracking-update'),
