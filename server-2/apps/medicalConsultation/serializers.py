@@ -16,8 +16,6 @@ class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
         model = Patient
         fields = "__all__"
         
-
- 
     
 class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)

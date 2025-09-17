@@ -1,974 +1,786 @@
-import type React from "react"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Link } from "react-router"
+// import React from "react"
+// import { useRef } from "react"; // Import useRef
+// import { cn } from "@/lib/utils"
+// import { Label } from "@/components/ui/label"
+// import { Button } from "@/components/ui/button/button"
+// import { Checkbox } from "@/components/ui/checkbox"
+// import { useNavigate, useLocation } from "react-router-dom"
+// import { useQuery } from "@tanstack/react-query"
+// import { getFPCompleteRecord } from "@/pages/familyplanning/request-db/GetRequest"
+// import type { FormData } from "@/form-schema/FamilyPlanningSchema"
+// import { ChevronLeft } from "lucide-react"
+// import { useReactToPrint } from "react-to-print";
 
-interface InputLineProps {
-  className?: string
-  value: string
-}
-// Header details
-const Header = [
-  { name: "CLIENT ID.:", value: "", className: "w-48 md:w-64" },
-  { name: "PHILHEALTH NO.:", value: "", className: "w-56 md:w-72" },
-]; 
+// interface InputLineProps {
+//   className?: string
+//   value: string | number | boolean | Date | undefined | null
+// }
 
-// NHTS details
-const NHTS = [
-  { name: "NHTS?", value: "", className: "w-12" },
-  { name: "Pantawid Pamilya Pilipino (4Ps):", value: "", className: "w-12" },
-];
+// const InputLine: React.FC<InputLineProps> = ({ className, value }) => {
+//   // Handle different value types and convert to string
+//   const displayValue = React.useMemo(() => {
+//     if (value === undefined || value === null) return "";
+//     if (value instanceof Date) {
+//       return value.toLocaleDateString();
+//     }
+//     return String(value);
+//   }, [value]);
 
-// const ClientType = [
-//   { name: "New Acceptor", value: "", classname: "w-12" },
-//   { name: "Current User", value: "", classname: "w-12" },
+//   return (
+//     <span
+//       className={cn(
+//         "inline-block border-b border-black text-xs px-1",
+//         className
+//       )}
+//     >
+//       {displayValue}
+//     </span>
+//   );
+// };
+
+// const YesNoCheckbox = ({ label, checked }: { label: string; checked: boolean | undefined }) => (
+//   <div className="flex items-center gap-1">
+//     <Checkbox checked={checked === true} disabled className="h-3 w-3" />
+//     <Label className="text-xs">{label}</Label>
+//   </div>
+// )
+
+// const INCOME_OPTIONS = [
+//   { id: "lower", name: "Lower than 5,000" },
+//   { id: "5,000-10,000", name: "5,000-10,000" },
+//   { id: "10,000-30,000", name: "10,000-30,000" },
+//   { id: "30,000-50,000", name: "30,000-50,000" },
+//   { id: "50,000-80,000", name: "50,000-80,000" },
+//   { id: "80,000-100,000", name: "80,000-100,000" },
+//   { id: "100,000-200,000", name: "100,000-200,000" },
+//   { id: "higher", name: "Higher than 200,000" },
 // ];
 
-// const CurrentUserType = [
-//   { name: "Changing Method", value: "", classname: "w-12" },
-//   { name: "Changing Clinic", value: "", classname: "w-12" },
-//   { name: "Dropout/Restart", value: "", classname: "w-12" }
-// ];
+// const getIncomeName = (incomeId: any) => {
+//   const option = INCOME_OPTIONS.find((opt) => opt.id === incomeId);
+//   return option ? option.name : incomeId || 'N/A';
+// };
 
-// const ReasonFP = [
-//   { name: "spacing", value: "", classname: "w-12" },
-//   { name: "limiting", value: "", classname: "w-12" },
-//   { name: "others", value: "", classname: "w-12" }
-// ];
+// // Define type for STI keys to fix indexing issue
+// type STIKey = 'abnormalDischarge' | 'sores' | 'pain' | 'history';
 
-// const Reason = [
-//   { name: "medical condition", value: "", classname: "w-12" },
-//   { name: "side-effects", value: "", classname: "w-12" },
-// ];
+// export const FamilyPlanningView () => {
+//   const navigate = useNavigate()
+//   const location = useLocation()
+//   const { fprecordId } = location.state || {}
 
-// const MethodsCurrentlyUsed = [
-//   { name: "COC", value: "", classname: "w-12" },
-//   { name: "IUD", value: "", classname: "w-12" },
-//   { name: "BOM/CMM", value: "", classname: "w-12" },
-//   { name: "LAM", value: "", classname: "w-12" },
-//   { name: "POP", value: "", classname: "w-12" },
-//   { name: "Interval", value: "", classname: "w-12" },
-//   { name: "BBT", value: "", classname: "w-12" },
-//   { name: "Others", value: "", classname: "w-12" },
-//   { name: "Injectable", value: "", classname: "w-12" },
-//   { name: "Post Partum", value: "", classname: "w-12" },
-//   { name: "STM", value: "", classname: "w-12" },
-//   { name: "Implant", value: "", classname: "w-12" },
-//   { name: "Condom", value: "", classname: "w-12" },
-//   { name: "SDM", value: "", classname: "w-12" }
-// ];
+//   // Create a ref for the component to be printed
+//   const componentRef = useRef<HTMLDivElement>(null);
 
-// // Medical History questions
-// const MedicalHistoryQuestions = [
-//   { name: "severe headaches / migraine", value: "" },
-//   { name: "history of stroke / heart attack / hypertension", value: "" },
-//   { name: "non-traumatic hematoma / frequent bruising or gum bleeding", value: "" },
-//   { name: "current or history of breast cancer / breast mass", value: "" },
-//   { name: "severe chest pain", value: "" },
-//   { name: "cough for more than 14 days", value: "" },
-//   { name: "jaundice", value: "" },
-//   { name: "unexplained vaginal bleeding", value: "" },
-//   { name: "abnormal vaginal discharge", value: "" },
-//   { name: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)", value: "" },
-//   { name: "Is this client a SMOKER?", value: "" },
-//   { name: "With Disability?", value: "" }
-// ];
-
-// // VAW Risk Assessment items
-// const VAWRiskItems = [
-//   { name: "unpleasant relationship with partner", value: "" },
-//   { name: "partner does not approved of the visit to FP clinic", value: "" },
-//   { name: "history of domestic violence or VAW", value: "" }
-// ];
-
-// // Referral options
-// const ReferralOptions = [
-//   { name: "DSWD", value: "" },
-//   { name: "WCPU", value: "" },
-//   { name: "NGOs", value: "" },
-//   { name: "Others", value: "", hasSpecify: true }
-// ];
-// const Obstetrical = [
-//   { name: "G", value: "" },
-//   { name: "P", value: "" },
-//   { name: "Full term", value: "" },
-//   { name: "Abortion", value: ""},
-//   { name: "Premature", value: "" },
-//   { name: "Living Children", value: ""},
-// ];
-
-
-interface InputLineProps {
-  className?: string;
-  value: string;
-}
-
-
-const InputLine: React.FC<InputLineProps> = ({ className, value }) => (
-  <Input
-    className={cn("border-0 border-b border-black rounded-none w-full px-2 py-1 h-6", className)}
-    readOnly
-    value={value}
-  />
-)
-
-// Radio button component for yes/no options
-const YesNoRadio = ({ name, value }: { name: string; value?: string }) => (
-  <div className="flex items-center space-x-4">
-    <div className="flex items-center space-x-1">
-      <input
-        type="radio"
-        id={`${name}-yes`}
-        name={name}
-        value="yes"
-        checked={value === "yes"}
-        readOnly
-        className="h-4 w-4"
-      />
-      <Label htmlFor={`${name}-yes`} className="text-sm">
-        Yes
-      </Label>
-    </div>
-    <div className="flex items-center space-x-1">
-      <input
-        type="radio"
-        id={`${name}-no`}
-        name={name}
-        value="no"
-        checked={value === "no"}
-        readOnly
-        className="h-4 w-4"
-      />
-      <Label htmlFor={`${name}-no`} className="text-sm">
-        No
-      </Label>
-    </div>
-  </div>
-)
-
-const FamilyPlanningView: React.FC = () => {
-  return (
-    <div className="mx-auto p-4 bg-white">
-      
-      <div className="flex justify-between items-center mb-4">
-        <div className="text-sm font-bold">SIDE A</div>
-        <div className="text-center font-bold text-base md:text-lg">
-          FAMILY PLANNING (FP) FORM 1
-        </div>
-        <div className="text-sm font-bold">ver 3.0</div>
-      </div>
-
-      <div className="border p-4">
-        {/* Top Section */}
-        <div className="">
-
-          <div className="flex  bg-gray ">
-          <div className="md:col-span-2 bg-gray p-2 border border-black">
-            <Label className="font-bold block mb-2">
-              FAMILY PLANNING CLIENT ASSESSMENT RECORD
-            </Label>
-            <p className="text-sm">
-              Instructions for Physicians, Nurses, and Midwives:{" "}
-              <strong>
-                Make sure that the client is not pregnant by using the question
-                listed in SIDE B.
-              </strong>{" "}
-              Completely fill out or check the required information. Refer
-              accordingly for any abnormal history/findings for further medical
-              evaluation.
-            </p>
-          </div>
-             {/* Right Section */}
-          <div className="border border-black flex-grow pl-3 pt-1 pr-3">
-            {Header.map((field, index) => (
-              <div className="flex items-center mb-2 w-full" key={index}>
-                <Label className="text-sm font-bold whitespace-nowrap mr-2">
-                  {field.name}
-                </Label>
-                <div className="w-full">
-                  <InputLine className="w-full box-border" value={field.value} />
-                </div>
-              </div>
-            ))}
-           <div className="flex gap-8">
-              {NHTS.map((field, index) => (
-                <div className="flex items-center gap-2" key={index}>
-                  <Label className="text-sm font-bold whitespace-nowrap">
-                    {field.name}
-                  </Label>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1">
-                      <Checkbox checked={field.value === "Yes"} disabled />
-                      <Label className="text-sm">Yes</Label>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Checkbox checked={field.value === "No"} disabled />
-                      <Label className="text-sm">No</Label>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              </div>
-              </div>
-           
-          </div>
-          
-          <div className="p-2">
-           
-           
-          </div>
-        </div>
-        <div className="w-full border border-black p-3">
-        <div className="w-full">
-          <Label className="font-bold whitespace-nowrap">NAME OF CLIENT:</Label>
-          <div className="flex-1">
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-2 space-y-1">
-                <InputLine value="" />
-                <Label className="text-xs text-center block">Last Name</Label>
-              </div>
-
-
-              <div className="col-span-2 space-y-1">
-                <InputLine value="" />
-                <Label className="text-xs text-center block">Given Name</Label>
-              </div>
-              <div className="col-span-1 space-y-1">
-                <InputLine value="" />
-                <Label className="text-xs text-center block">MI</Label>
-              </div>
-              <div className="col-span-2 space-y-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Date of Birth</Label>
-            </div>
-            <div className="col-span-1 space-y-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Age</Label>
-            </div>
-            <div className="col-span-2 space-y-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Educ. Attain.</Label>
-            </div>
-            <div className="col-span-2 space-y-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Occupation</Label>
-            </div>
-            </div>
-          </div>
-          {/* Demographics Row */}
-          
-        </div>
-
-        {/* Address Section */}
-        <div className="flex items-start gap-2 mt-6">
-          <Label className="font-bold whitespace-nowrap">ADDRESS:</Label>
-          <br></br>
-          <div className="grid grid-cols-12 gap-4">
-            <div className="">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">No.</Label>
-            </div>
-            <div className="col-span-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Street</Label>
-            </div>
-            <div className="col-span-2">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Barangay</Label>
-            </div>
-            <div className="col-span-2">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Municipality/City</Label>
-            </div>
-            <div className="col-span-2 space-y-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Province</Label>
-            </div>
-            <div className="col-span-2">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Contact Number</Label>
-            </div>
-        
-            <div className="col-span-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Civil Status</Label>
-            </div>
-            <div className="col-span-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Religion</Label>
-            </div>
-         
-        </div> 
-        </div>
-
-        {/* Spouse Section */}
-        <div className="flex items-start gap-2 mt-6">
-          <Label className="font-bold block mb-2">NAME OF SPOUSE:</Label>
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-3 space-y-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Last Name</Label>
-            </div>
-            <div className="col-span-3 space-y-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Given Name</Label>
-            </div>
-            <div className="col-span-1 space-y-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">MI</Label>
-            </div>
-            <div className="col-span-2 space-y-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Date of Birth</Label>
-            </div>
-            <div className="col-span-1 space-y-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Age</Label>
-            </div>
-            <div className="col-span-2 space-y-1">
-              <InputLine value="" />
-              <Label className="text-xs text-center block">Occupation</Label>
-            </div>
-          </div>
-        </div>
-        
-
-        {/* Bottom Row */}
-        <div className="grid grid-cols-12 gap-4 mt-5 mb-5">
-          <div className="col-span-3">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-bold whitespace-nowrap">NO. OF LIVING CHILDREN:</Label>
-              <div className="flex-grow">
-                <InputLine value="" />
-              </div>
-            </div>
-          </div>
-          <div className="col-span-4">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-bold whitespace-nowrap mt-2">PLAN TO HAVE MORE CHILDREN?</Label>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 mt-2">
-                  <Checkbox id="plan-more-yes" disabled />
-                  <Label htmlFor="plan-more-yes" className="text-sm">Yes</Label>
-                </div>
-                <div className="flex items-center gap-1 mt-2">
-                  <Checkbox id="plan-more-no" disabled />
-                  <Label htmlFor="plan-more-no" className="text-sm">No</Label>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-span-5">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-bold whitespace-nowrap">AVERAGE MONTHLY INCOME:</Label>
-              <div className="flex-grow">
-                <InputLine value="" />
-              </div>
-            </div>
-          </div>
-        </div>
-        </div>
-      
-
-        {/* Type of Client Section */}
-        <div className="grid grid-cols-12 p-2  border border-black">
-           {/* Left Column */}
-           <div className="col-span-6 p-2 ">
-            <div className="font-bold mb-4">Type of Client</div>
-            <div className="grid grid-rows-2 gap-2">
-              <div className="flex items-center space-x-2">
-                <input type="radio" id="new-acceptor" name="client-type" value="new-acceptor" />
-                <Label htmlFor="new-acceptor">New Acceptor</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input type="radio" id="current-user" name="client-type" value="current-user" />
-                <Label htmlFor="current-user">Current User</Label>
-              </div>
-            </div>
-            <div className="ml-8 mt-2">
-              <div className="flex items-center space-x-2">
-                <input type="radio" id="changing-method" name="current-user-type" value="changing-method" />
-                <Label htmlFor="changing-method">Changing Method</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input type="radio" id="changing-clinic" name="current-user-type" value="changing-clinic" />
-                <Label htmlFor="changing-clinic">Changing Clinic</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input type="radio" id="dropout-restart" name="current-user-type" value="dropout-restart" />
-                <Label htmlFor="dropout-restart">Dropout/Restart</Label>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <div className="font-bold">Reason for FP:</div>
-              <div className="flex items-center space-x-2">
-                <input type="radio" id="spacing" name="reason-fp" value="spacing" />
-                <Label htmlFor="spacing">spacing</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input type="radio" id="limiting" name="reason-fp" value="limiting" />
-                <Label htmlFor="limiting">limiting</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input type="radio" id="others-fp" name="reason-fp" value="others" />
-                <Label htmlFor="others-fp">others</Label>
-                <InputLine value="" className="w-32 inline-block" />
-              </div>
-            
-
-            <div className="mt-4">
-              <div className="font-bold">Reason:</div>
-              <div className="flex items-center space-x-2">
-                <input type="radio" id="medical-condition" name="reason" value="medical-condition" />
-                <Label htmlFor="medical-condition">medical condition</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input type="radio" id="side-effects" name="reason" value="side-effects" />
-                <Label htmlFor="side-effects">side-effects</Label>
-                <InputLine value="" className="w-32 inline-block" />
-              </div>
-            </div>
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="col-span-5 p-2">
-            <div>Method currently used (for Changing Method):</div>
-            <div className="grid grid-cols-2 mt-4 gap-4">
-              {[
-                "COC",
-                "BOM/CMM",
-                "POP",
-                "LAM",
-                "Injectable",
-                "BBT",
-                "Implant",
-                "IUD",
-                "SDM",
-                "Interval",
-                "STM",
-                "Post Partum",
-                "Condom",
-                "Others",
-              ].map((method) => (
-                <div key={method} className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    id={method.toLowerCase().replace(/\//g, "-")}
-                    name="method-used"
-                    value={method.toLowerCase().replace(/\//g, "-")}
-                  />
-                  <Label htmlFor={method.toLowerCase().replace(/\//g, "-")}>{method}</Label>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-end">
-              <Label className="text-sm">specify:</Label>
-              <InputLine value="" className="w-32 ml-2 inline-block" />
-            </div>
-          </div>
-        </div>
-
-        {/* Medical History and VAW Risk Section */}
-        <div className="grid grid-cols-2 border border-black">
-          {/* Medical History */}
-          <div className="border-r border-black p-2">
-            <div className="font-bold">I. MEDICAL HISTORY</div>
-            <div className="text-sm mb-2">Does the client have any of the following?</div>
-
-            {[
-              "severe headaches / migraine",
-              "history of stroke / heart attack / hypertension",
-              "non-traumatic hematoma / frequent bruising or gum bleeding",
-              "current or history of breast cancer / breast mass",
-              "severe chest pain",
-              "cough for more than 14 days",
-              "jaundice",
-              "unexplained vaginal bleeding",
-              "abnormal vaginal discharge",
-              "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)",
-              "Is this client a SMOKER?",
-              "With Disability?",
-            ].map((item, index) => (
-              <div key={index} className="flex justify-between items-center mb-1">
-                <div className="flex items-center">
-                  <span className="mr-2">■</span>
-                  <Label className="text-sm">{item}</Label>
-                </div>
-                <YesNoRadio name={`medical-${index}`} />
-              </div>
-            ))}
-
-            <div className="ml-4 mt-1">
-              <Label className="text-sm">If YES please specify:</Label>
-              <InputLine value="" className="w-full" />
-            </div>
-          </div>
-
-          {/* VAW Risk Assessment */}
-          <div className="p-2 border border-black">
-            <div className="font-bold">IV. RISKS FOR VIOLENCE AGAINST WOMEN (VAW)</div>
-
-            {[
-              "unpleasant relationship with partner",
-              "partner does not approved of the visit to FP clinic",
-              "history of domestic violence or VAW",
-            ].map((item, index) => (
-              <div key={index} className="flex justify-between items-center mb-1">
-                <div className="flex items-center">
-                  <span className="mr-2">■</span>
-                  <Label className="text-sm">{item}</Label>
-                </div>
-                <YesNoRadio name={`vaw-${index}`} />
-              </div>
-            ))}
-
-            <div className="mt-2">
-              <Label className="font-bold text-sm">Referred to:</Label>
-              <div className="grid grid-rows gap-1 mt-1">
-                {["DSWD", "WCPU", "NGOs", "Others"].map((option) => (
-                  <div key={option} className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id={`referral-${option.toLowerCase()}`}
-                      name="referral"
-                      value={option.toLowerCase()}
-                    />
-                    <Label className="text-sm">{option}</Label>
-                    {option === "Others" && <InputLine value="" className="w-24 inline-block" />}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        <div className="border  border-black p-2 grid grid-cols-2">
-          <div>
-            <div className="font-bold">II. OBSTETRICAL HISTORY</div>
-            <div className="flex items-center mt-2">
-              <Label className="text-sm">Number of pregnancies: G:</Label>
-              <InputLine value="" className="w-12 ml-1 inline-block" />
-              <Label className="text-sm ml-4">P:</Label>
-              <InputLine value="" className="w-12 ml-1 inline-block" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mt-2">
-              <div>
-                <div className="flex items-center">
-                  <Label className="text-sm">Full term</Label>
-                  <InputLine value="" className="flex-1 ml-2" />
-                </div>
-                <div className="flex items-center mt-2">
-                  <Label className="text-sm">Abortion</Label>
-                  <InputLine value="" className="flex-1 ml-2" />
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center">
-                  <Label className="text-sm">Premature</Label>
-                  <InputLine value="" className="flex-1 ml-2" />
-                </div>
-                <div className="flex items-center mt-2">
-                  <Label className="text-sm">Living Children</Label>
-                  <InputLine value="" className="flex-1 ml-2" />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-2">
-              <div className="flex items-center">
-                <Label className="text-sm">Date of last delivery</Label>
-                <InputLine value="" className="w-32 ml-2 inline-block" />
-              </div>
-              <div className="flex items-center mt-2">
-                <Label className="text-sm">Type of last delivery:</Label>
-                <div className="flex items-center space-x-1 ml-2">
-                  <input type="radio" id="vaginal" name="delivery-type" value="vaginal" />
-                  <Label className="text-sm">Vaginal</Label>
-                </div>
-                <div className="flex items-center space-x-1 ml-4">
-                  <input type="radio" id="cesarean" name="delivery-type" value="cesarean" />
-                  <Label className="text-sm">Cesarean Section</Label>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mt-2">
-              <div>
-                <div className="flex items-center">
-                  <Label className="text-sm">Last menstrual period</Label>
-                  <InputLine value="" className="flex-1 ml-2" />
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center">
-                  <Label className="text-sm">Previous menstrual period</Label>
-                  <InputLine value="" className="flex-1 ml-2" />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-2">
-              <Label className="text-sm">Menstrual Flow:</Label>
-              <div className="ml-4">
-                <div className="flex items-center space-x-1">
-                  <input type="radio" id="scanty" name="menstrual-flow" value="scanty" />
-                  <Label className="text-sm">Scanty (1-2 pads per day)</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <input type="radio" id="moderate" name="menstrual-flow" value="moderate" />
-                  <Label className="text-sm">Moderate (3-5 pads per day)</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <input type="radio" id="heavy" name="menstrual-flow" value="heavy" />
-                  <Label className="text-sm">Heavy (more than 5 pads per day)</Label>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-2">
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id="dysmenorrhea" />
-                <Label className="text-sm">Dysmenorrhea</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id="hydatidiform-mole" />
-                <Label className="text-sm">Hydatidiform mole (within the last 12 months)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id="ectopic-pregnancy" />
-                <Label className="text-sm">History of ectopic pregnancy</Label>
-              </div>
-            </div>
-          </div>
-
-             {/* Physical Examination Section */}
-      <div className="border-l pl-3 border-black">
-  <div className="font-bold">V. PHYSICAL EXAMINATION</div>
-  <div className="grid grid-cols-2 gap-4 mt-2">
-    {/* Left Column: Skin to Abdomen */}
-    <div>
-      {/* Skin Section */}
-      <div className="mb-3">
-        <div className="font-bold text-sm">SKIN:</div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="skin-normal" name="skin" value="normal" />
-          <Label className="text-sm">normal</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="skin-pale" name="skin" value="pale" />
-          <Label className="text-sm">pale</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="skin-yellowish" name="skin" value="yellowish" />
-          <Label className="text-sm">yellowish</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="skin-hematoma" name="skin" value="hematoma" />
-          <Label className="text-sm">hematoma</Label>
-        </div>
-      </div>
-
-      {/* Conjunctiva Section */}
-      <div className="mb-3">
-        <div className="font-bold text-sm">CONJUNCTIVA:</div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="conjunctiva-normal" name="conjunctiva" value="normal" />
-          <Label className="text-sm">normal</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="conjunctiva-pale" name="conjunctiva" value="pale" />
-          <Label className="text-sm">pale</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="conjunctiva-yellowish" name="conjunctiva" value="yellowish" />
-          <Label className="text-sm">yellowish</Label>
-        </div>
-      </div>
-
-      {/* Neck Section */}
-      <div className="mb-3">
-        <div className="font-bold text-sm">NECK:</div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="neck-normal" name="neck" value="normal" />
-          <Label className="text-sm">normal</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="neck-mass" name="neck" value="neck-mass" />
-          <Label className="text-sm">neck mass</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="neck-enlarged" name="neck" value="enlarged-lymph-nodes" />
-          <Label className="text-sm">enlarged lymph nodes</Label>
-        </div>
-      </div>
-
-      {/* Breast Section */}
-      <div className="mb-3">
-        <div className="font-bold text-sm">BREAST:</div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="breast-normal" name="breast" value="normal" />
-          <Label className="text-sm">normal</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="breast-mass" name="breast" value="mass" />
-          <Label className="text-sm">mass</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="breast-discharge" name="breast" value="nipple-discharge" />
-          <Label className="text-sm">nipple discharge</Label>
-        </div>
-      </div>
-
-      {/* Abdomen Section */}
-      <div className="mb-3">
-        <div className="font-bold text-sm">ABDOMEN:</div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="abdomen-normal" name="abdomen" value="normal" />
-          <Label className="text-sm">normal</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="abdomen-mass" name="abdomen" value="abdominal-mass" />
-          <Label className="text-sm">abdominal mass</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="abdomen-varicosities" name="abdomen" value="varicosities" />
-          <Label className="text-sm">varicosities</Label>
-        </div>
-      </div>
-    </div>
-
-    {/* Right Column: Extremities to Pelvic Exam */}
-    <div>
-      {/* Extremities Section */}
-      <div className="mb-3">
-        <div className="font-bold text-sm">EXTREMITIES:</div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="extremities-normal" name="extremities" value="normal" />
-          <Label className="text-sm">normal</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="extremities-edema" name="extremities" value="edema" />
-          <Label className="text-sm">edema</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="extremities-varicosities" name="extremities" value="varicosities" />
-          <Label className="text-sm">varicosities</Label>
-        </div>
-      </div>
-
-      {/* Pelvic Examination Section */}
-      <div className="mb-3">
-        <div className="font-bold text-sm">PELVIC EXAMINATION:</div>
-        <div className="text-sm">(For IUD Acceptors)</div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="pelvic-normal" name="pelvic" value="normal" />
-          <Label className="text-sm">normal</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="pelvic-mass" name="pelvic" value="mass" />
-          <Label className="text-sm">mass</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="pelvic-discharge" name="pelvic" value="abnormal-discharge" />
-          <Label className="text-sm">abnormal discharge</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="pelvic-abnormalities" name="pelvic" value="cervical-abnormalities" />
-          <Label className="text-sm">cervical abnormalities</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="pelvic-warts" name="pelvic" value="warts" />
-          <Label className="text-sm">warts</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="pelvic-polyp" name="pelvic" value="polyp-or-cyst" />
-          <Label className="text-sm">polyp or cyst</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="pelvic-inflammation" name="pelvic" value="inflammation-or-erosion" />
-          <Label className="text-sm">inflammation or erosion</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="pelvic-bloody" name="pelvic" value="bloody-discharge" />
-          <Label className="text-sm">bloody discharge</Label>
-        </div>
-      </div>
-
-      {/* Cervical Consistency Section */}
-      <div className="mb-3">
-        <div className="font-bold text-sm">CERVICAL CONSISTENCY:</div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="cervical-firm" name="cervical-consistency" value="firm" />
-          <Label className="text-sm">firm</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="cervical-soft" name="cervical-consistency" value="soft" />
-          <Label className="text-sm">soft</Label>
-        </div>
-      </div>
-
-      {/* Cervical Tenderness and Adnexal Mass Section */}
-      <div className="mb-3">
-        <div className="flex items-center space-x-1">
-          <input type="checkbox" id="cervical-tenderness" />
-          <Label className="text-sm">cervical tenderness</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="checkbox" id="adnexal-mass" />
-          <Label className="text-sm">adnexal mass / tenderness</Label>
-        </div>
-      </div>
-
-      {/* Uterine Position Section */}
-      <div className="mb-3">
-        <div className="font-bold text-sm">UTERINE POSITION:</div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="uterine-mid" name="uterine-position" value="mid" />
-          <Label className="text-sm">mid</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="uterine-anteflexed" name="uterine-position" value="anteflexed" />
-          <Label className="text-sm">anteflexed</Label>
-        </div>
-        <div className="flex items-center space-x-1">
-          <input type="radio" id="uterine-retroflexed" name="uterine-position" value="retroflexed" />
-          <Label className="text-sm">retroflexed</Label>
-        </div>
-        <div className="flex items-center mt-1">
-          <Label className="text-sm">uterine depth:</Label>
-          <InputLine value="" className="w-16 ml-1 inline-block" />
-          <span className="text-sm ml-1">cm</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-         
-        </div>
-
-          </div>
-          <div className="grid grid-cols-2">
-
-
-
-        <div className="border border-black p-2">
-            <div className="font-bold">III. RISKS FOR SEXUALITY TRANSMITTED INFECTIONS</div>
-            <div className="text-sm mb-2">Does the client or the client's partner have any of the following?</div>
-
-            <div className="flex justify-between items-center mb-1">
-              <div className="flex items-center">
-                <span className="mr-2">■</span>
-                <Label className="text-sm">abnormal discharge from the genital area</Label>
-              </div>
-              <YesNoRadio name="abnormal-discharge" />
-            </div>
-
-            <div className="ml-4 mb-2">
-              <Label className="text-sm italic">if "YES" please indicate if from:</Label>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-1">
-                  <input type="checkbox" id="vagina-discharge" />
-                  <Label className="text-sm">Vagina</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <input type="checkbox" id="penis-discharge" />
-                  <Label className="text-sm">Penis</Label>
-                </div>
-              </div>
-            </div>
-
-            {[
-              "sores or ulcers in the genital area",
-              "pain or burning sensation in the genital area",
-              "history or treatment for sexually transmitted infections",
-              "HIV / AIDS / Pelvic inflammatory disease",
-            ].map((item, index) => (
-              <div key={index} className="flex justify-between items-center mb-1">
-                <div className="flex items-center">
-                  <span className="mr-2">■</span>
-                  <Label className="text-sm">{item}</Label>
-                </div>
-                <YesNoRadio name={`sti-${index}`} />
-              </div>
-            ))}
-         <div className="p-2 mt-6 text-[13px] text-center border-t border-black">
-          <p>
-            Implant = Progestin subdermal implant; IUD = Intrauterine device; BTL = Bilateral tubal ligation; NSV =
-            No-scalpel vasectomy; COC = Combined oral contraceptives; POP = Progestin only pills; CMM = Cervical mucus
-            method; SDM = Standard days method; BBT = Basal body temperature; BOM = Billings ovulation method; CMM
-            =Cervical mucus method; STM = Symptothermal method
-          </p>
-        </div>
-          </div>
-          
-
-          <div className="p-4 border border-black">
-  <div className="font-bold">ACKNOWLEDGEMENT:</div>
-  <p className="mt-2 text-md ">
-    This is to certify that the Physician/Nurse/Midwife of the clinic has fully
-    explained to me the different methods available in family planning and I
-    freely choose the <InputLine className="w-48 mx-1" value={""} /><p> method. </p>
-    
-  </p>
-
-  <div className="flex justify-between mt-6 mb-6">
-    <div className="text-center">
-      <InputLine className="w-48" value={""} />
-      <div>Client Signature</div>
-    </div>
-    <div className="text-center">
-      <InputLine className="w-48" value={""} />
-      <div>Date</div>
-    </div>
-  </div>
+//   const handlePrint = useReactToPrint({
+//     contentRef: componentRef,
+//     pageStyle: `
+//       @page {
+//         size: 8.5in 13in;
+//         margin: 0.5in;
+//       }
+//       @media print {
+//         body {
+//           -webkit-print-color-adjust: exact;
+//         }
+//         .no-print {
+//           display: none !important;
+//         }
+//       }
+//     `,
+//   });
   
-  <div>
-    <p>For WEA below 18 yrs. Old:</p>
-    <p className="mt-1 flex">
-      I hereby consent <InputLine className="w-48 mx-1" value={""} /> to accept the Family Planning
-      method.
-    </p>
-  </div>
+//   const {
+//     data: recordData,
+//     isLoading,
+//     isError,
+//     error,
+//   } = useQuery<FormData, Error>({
+//     queryKey: ["fpCompleteRecordView", fprecordId],
+//     queryFn: () => getFPCompleteRecord(Number(fprecordId)),
+//     enabled: !!fprecordId,
+//   })
 
-  <div className="flex justify-between mt-6">
-    <div className="text-center">
-      <InputLine className="w-48" value={""} />
-      <div>Parent/Guardian Signature</div>
-    </div>
-    <div className="text-center">
-      <InputLine className="w-48" value={""} />
-      <div>Date</div>
-    </div>
-  </div>
-</div>
+//   // More precise filtering with exact condition names
+//   const getCustomIllnesses = () => {
+//     if (!recordData) return [];
+    
+//     const illnesses = [];
 
-   
+//     // Exact names of standard conditions (as they appear in the checklist)
+//     const exactStandardConditions = [
+//       "severe headaches / migraine",
+//       "history of stroke / heart attack / hypertension",
+//       "non-traumatic hematoma / frequent bruising or gum bleeding",
+//       "current or history of breast cancer / breast mass",
+//       "severe chest pain",
+//       "cough for more than 14 days",
+//       "jaundice",
+//       "unexplained vaginal bleeding",
+//       "abnormal vaginal discharge",
+//       "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)",
+//       "Is the client a SMOKER?",
+//       "With Disability?"
+//     ];
 
-</div>
-</div>
-      {/* Navigation Buttons */}
-      <div className="flex justify-end space-x-4 mt-6">
-        <Link to="/FamPlanning_view2">
-        <Button>Next</Button>
-        </Link>
-      </div>
-    </div>
-  )
-}
+//     // Add disability details if available and not empty
+//     if (recordData.medicalHistory?.disabilityDetails && recordData.medicalHistory.disabilityDetails.trim() !== "") {
+//       const disabilityDetail = recordData.medicalHistory.disabilityDetails.trim();
+//       // Check if it's not an exact standard condition
+//       const isExactStandard = exactStandardConditions.some(condition =>
+//         condition.toLowerCase() === disabilityDetail.toLowerCase()
+//       );
+//       if (!isExactStandard) {
+//         illnesses.push(disabilityDetail);
+//       }
+//     }
 
-export default FamilyPlanningView
+//     // Add medical history records (filter out exact standard conditions)
+//   //   if (recordData?.medical_history_records) {
+//   //     recordData?.medical_history_records.forEach(record => {
+//   //       const isExactStandard = exactStandardConditions.some(condition =>
+//   //         condition.toLowerCase() === record.illname.toLowerCase()
+//   //       );
+//   //       if (!isExactStandard) {
+//   //         illnesses.push(record.illname);
+//   //       }
+//   //     });
+//   //   }
 
+//   //   return illnesses;
+//   // };
 
+//   // Helper function to check if custom illnesses exist
+//   // const hasCustomIllnesses = () => {
+//   //   return getCustomIllnesses().length > 0;
+//   // };
 
+//   if (isLoading) {
+//     return <div className="text-center py-8">Loading record details...</div>
+//   }
 
+//   if (isError) {
+//     return <div className="text-center py-8 text-red-500">Error loading record: {error?.message}</div>
+//   }
 
+//   if (!recordData) {
+//     return <div className="text-center py-8">No record found for ID: {fprecordId}</div>
+//   }
 
+//   const SignatureDisplay = ({ signatureData }: { signatureData: string | undefined }) => {
+//     if (!signatureData) return <div className="h-8 border-b border-black w-full"></div>;
 
+//     return (
+//       <div className="flex items-center">
+//         <img
+//           src={signatureData}
+//           alt="Signature"
+//           className="h-8 border-b border-black"
+//         />
+//       </div>
+//     );
+//   };
+
+//   return (
+//     <div className="mx-auto p-4 bg-white max-w-3xl text-[10px]">
+//       <div className="flex justify-between items-center mb-1 no-print">
+//         <Button
+//           className="text-black p-1 self-start"
+//           variant="outline"
+//           onClick={() => navigate(-1)}
+//           type="button"
+//         >
+//           <ChevronLeft size={16} />
+//         </Button>
+//         <Button onClick={handlePrint} className="ml-auto">
+//           Print Side A
+//         </Button>
+//       </div>
+
+//       {/* Wrap the content to be printed with the ref */}
+//       <div ref={componentRef} className="print-content">
+//         {/* Header */}
+//         <div className="flex justify-between items-center mb-1">
+//           <div className="text-xs font-bold ">SIDE A</div>
+//           <div className="text-center font-bold text-sm">FAMILY PLANNING (FP) FORM 1</div>
+//           <div className="text-xs font-bold">ver 3.0</div>
+//         </div>
+
+//         <div className="border border-black">
+//           {/* Top Section - Two Columns */}
+//           <div className="flex">
+//             {/* Left Column - Instructions */}
+//             <div className="w-2/3 border-r bg-gray-200 border-black p-1">
+//               <div className=" text-sm mb-1 font-bold">FAMILY PLANNING CLIENT ASSESSMENT RECORD</div>
+//               <p className="text-xs italic">
+//                 Instructions for Physicians, Nurses, and Midwives: <strong>Make sure that the client is not pregnant by using the question listed in SIDE B. </strong>Completely fill out or check the required information. Refer accordingly for any abnormal history/findings for further medical evaluation.
+//               </p>
+//             </div>
+
+//             {/* Right Column - Client Info */}
+//             <div className="w-1/3 p-1 bg-gray-200">
+//               <div className="flex items-center mb-1">
+//                 <Label className="text-xs  mr-2 whitespace-nowrap">CLIENT ID.:</Label>
+//                 <InputLine className="flex-1 h-4" value={recordData.client_id} />
+//               </div>
+//               <div className="flex items-center mb-1">
+//                 <Label className="text-xs  mr-2 whitespace-nowrap">PHILHEALTH NO.:</Label>
+//                 <InputLine className="flex-1 h-4" value={recordData.philhealthNo} />
+//               </div>
+//               <div className="flex items-center gap-1 mb-1">
+//                 <Label className="text-xs ">NHTS?</Label>
+//                 <YesNoCheckbox label="Yes" checked={recordData.nhts_status === true} />
+//                 <YesNoCheckbox label="No" checked={recordData.nhts_status === false} />
+//               </div>
+//               <div className="flex items-center gap-1">
+//                 <Label className="text-xs ">4Ps:</Label>
+//                 <YesNoCheckbox label="Yes" checked={recordData.fourps === true} />
+//                 <YesNoCheckbox label="No" checked={recordData.fourps === false} />
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Client Details */}
+//           <div className="border-t border-black border-b p-1">
+//             <div className="mb-1 ">
+//               <Label className=" text-xs">NAME OF CLIENT: </Label>
+//               <div className="flex grid-cols-12 gap-1 mt-1">
+//                 <div className="col-span-2">
+//                   <Label className="text-xs">Last Name </Label>
+//                   <InputLine className="h-4" value={recordData.lastName} />
+//                 </div>
+//                 <div className="col-span-2">
+//                   <Label className="text-xs">Given Name</Label>
+//                   <InputLine className="h-4" value={recordData.givenName} />
+//                 </div>
+//                 <div className="col-span-2">
+//                   <Label className="text-xs">M.I.</Label>
+//                   <InputLine className="h-4" value={recordData.middleInitial} />
+//                 </div>
+//                 <div className="col-span-2">
+//                   <Label className="text-xs align-center">Date of Birth</Label>
+//                   <InputLine className="h-4" value={recordData.dateOfBirth} />
+//                 </div>
+//                 <div className="col-span-2">
+//                   <Label className="text-xs">Age</Label>
+//                   <InputLine className="h-4" value={recordData.age} />
+//                 </div>
+//                 <div className="col-span-2">
+//                   <Label className="text-xs">Educ. Attain.</Label>
+//                   <InputLine className="h-4" value={recordData.educationalAttainment} />
+//                 </div>
+//                 <div className="col-span-2">
+//                   <Label className="text-xs">Occupation</Label>
+//                   <InputLine className="h-4" value={recordData.occupation} />
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Address, Contact Number, Civil Status - Single Row */}
+//             <div className="mb-1">
+//               <Label className=" text-xs">ADDRESS</Label>
+//               <div className="flex  grid-cols-12 gap-6 mt-1">
+//                 <div className="col-span-3">
+//                   <Label className="text-xs">No. Street</Label>
+//                   <InputLine className="h-4" value={recordData.address?.houseNumber} />
+//                 </div>
+//                 <div className="col-span-3">
+//                   <Label className="text-xs">Barangay: </Label>
+//                   <InputLine className="h-4" value={recordData.address?.barangay} />
+//                 </div>
+//                 <div className="col-span-3">
+//                   <Label className="text-xs">Municipality/City: </Label>
+//                   <InputLine className="h-4" value={recordData.address?.municipality} />
+//                 </div>
+//                 <div className="col-span-2">
+//                   <Label className="text-xs">Province: </Label>
+//                   <InputLine className="h-4" value={recordData.address?.province} />
+//                 </div>
+//                 <div className="col-span-2">
+//                   <Label className="text-xs">Contact Number: </Label>
+//                   <InputLine className="h-4" value={recordData.contact} />
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Name of Spouse - Single Row */}
+//             <div className="mb-1">
+//               <Label className=" text-xs">NAME OF SPOUSE:</Label>
+//               <div className="flex grid-cols-12 gap-5 mt-1">
+//                 <div className="col-span-4">
+//                   <Label className="text-xs">Last Name:</Label>
+//                   <InputLine className="h-4" value={recordData.spouse?.s_lastName} />
+//                 </div>
+//                 <div className="col-span-4">
+//                   <Label className="text-xs">Given Name: </Label>
+//                   <InputLine className="h-4" value={recordData.spouse?.s_givenName} />
+//                 </div>
+//                 <div className="col-span-2">
+//                   <Label className="text-xs">M.I.</Label>
+//                   <InputLine className="h-4" value={recordData.spouse?.s_middleInitial} />
+//                 </div>
+//                 <div className="col-span-2">
+//                   <Label className="text-xs">Date of Birth: </Label>
+//                   <InputLine className="h-4" value={recordData.spouse?.s_dateOfBirth} />
+//                 </div>
+//                 <div className="col-span-2">
+//                   <Label className="text-xs">Age: </Label>
+//                   <InputLine className="h-4" value={recordData.spouse?.s_age} />
+//                 </div>
+//                 <div className="col-span-2">
+//                   <Label className="text-xs">Occupation: </Label>
+//                   <InputLine className="h-4" value={recordData.spouse?.s_occupation} />
+//                 </div>
+//               </div>
+//             </div>
+
+//             <div className="flex grid-cols-4 gap-9 mb-1">
+//               <div>
+//                 <Label className=" text-xs">NO. OF LIVING CHILDREN:</Label>
+//                 <InputLine className="h-4 mt-1" value={recordData.obstetricalHistory?.numOfLivingChildren} />
+//               </div>
+//               <div>
+//                 <Label className=" text-xs">PLAN TO HAVE MORE CHILDREN?</Label>
+//                 <div className="flex gap-1 mt-1">
+//                   <YesNoCheckbox label="Yes" checked={recordData.plan_more_children === true} />
+//                   <YesNoCheckbox label="No" checked={recordData.plan_more_children === false} />
+//                 </div>
+//               </div>
+//               <div className="">
+//                 <Label className=" text-xs">AVERAGE MONTHLY INCOME:</Label>
+//                 <InputLine className="h-4 mt-1" value={getIncomeName(recordData.avg_monthly_income)} />
+//               </div>
+//             </div>
+
+//             {/* Client Type Section */}
+//             <div className="pt-1 mt-2 grid grid-cols-12 gap-1">
+//               {/* Type of Client */}
+//               <Label className=" col-span-2">Type of Client:</Label>
+//               <InputLine className="col-span-4" value={recordData.typeOfClient} />
+//               {recordData.typeOfClient === "Current User" && (
+//                 <>
+//                   <Label className=" col-span-2 mt-0">Subtype of Client:</Label>
+//                   <InputLine className="col-span-4" value={recordData.subTypeOfClient} />
+//                 </>
+//               )}
+
+//               {/* Reason for FP */}
+//               <Label className=" col-span-2">Reason for FP:</Label>
+//               <InputLine className="col-span-4" value={recordData.reasonForFP} />
+//               {(recordData.reasonForFP === "fp_others" || recordData.reasonForFP === "sideeffects") && (
+//                 <>
+//                   <Label className=" col-span-2 mt-0">
+//                     {recordData.reasonForFP === "fp_others" ? "Other Reason for FP:" : "Side Effect:"}
+//                   </Label>
+//                   <InputLine className="col-span-4" value={recordData.otherReasonForFP} />
+//                 </>
+//               )}
+
+//               {/* Method Currently Used */}
+//               <Label className=" col-span-2">Method Used:</Label>
+//               <InputLine className="col-span-4" value={recordData.methodCurrentlyUsed} />
+//               {recordData.methodCurrentlyUsed === "Others" && (
+//                 <>
+//                   <Label className=" col-span-2 mt-0">Other Method:</Label>
+//                   <InputLine className="col-span-4" value={recordData.otherMethod} />
+//                 </>
+//               )}
+//             </div>
+//           </div>
+
+//           {/* Main Content - Two Columns */}
+//           <div className="flex border-t border-black">
+//             {/* Left Column */}
+//             <div className="w-1/2 border-r border-black">
+//               {/* Medical History */}
+//               <div className="p-1">
+//                 <Label className="text-xs block">I. MEDICAL HISTORY</Label>
+//                 <div className="text-xs">
+//                   <div>Does the client have any of the following?</div>
+//                   {[
+//                     { label: "severe headaches / migraine", key: "severeHeadaches" },
+//                     { label: "history of stroke / heart attack / hypertension", key: "strokeHeartAttackHypertension" },
+//                     { label: "non-traumatic hematoma / frequent bruising or gum bleeding", key: "hematomaBruisingBleeding" },
+//                     { label: "current or history of breast cancer / breast mass", key: "breastCancerHistory" },
+//                     { label: "severe chest pain", key: "severeChestPain" },
+//                     { label: "cough for more than 14 days", key: "cough" },
+//                     { label: "jaundice", key: "jaundice" },
+//                     { label: "unexplained vaginal bleeding", key: "unexplainedVaginalBleeding" },
+//                     { label: "abnormal vaginal discharge", key: "abnormalVaginalDischarge" },
+//                     { label: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)", key: "phenobarbitalOrRifampicin" },
+//                     { label: "Is the client a SMOKER?", key: "smoker" },
+//                   ].map((item, index) => (
+//                     <div key={index} className="flex justify-between items-center py-0.5">
+//                       <span>• {item.label}</span>
+//                       <div className="flex gap-1">
+//                         <YesNoCheckbox
+//                           label="Yes"
+//                           checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === true}
+//                         />
+//                         <YesNoCheckbox
+//                           label="No"
+//                           checked={recordData.medicalHistory?.[item.key as keyof typeof recordData.medicalHistory] === false}
+//                         />
+//                       </div>
+//                     </div>
+//                   ))}
+
+//                   {/* With Disability checkbox - automatically checked if custom illnesses exist */}
+//                   {/* <div className="flex justify-between items-center py-0.5">
+//                     <span>• With Disability?</span>
+//                     <div className="flex gap-1">
+//                       <YesNoCheckbox
+//                         label="Yes"
+//                         checked={
+//                           recordData.medicalHistory?.disability === true ||
+//                           hasCustomIllnesses()
+//                         }
+//                       />
+//                       <YesNoCheckbox
+//                         label="No"
+//                         checked={
+//                           recordData.medicalHistory?.disability === false &&
+//                           !hasCustomIllnesses()
+//                         }
+//                       />
+//                     </div>
+//                   </div> */}
+
+//                   {/* Display custom illnesses in a single input line below the disability checkbox */}
+//                   {/* {(hasCustomIllnesses()) && (
+//                     <div className="mt-1">
+//                       <div className="flex items-center gap-1">
+//                         <p className="italic text-xs">If YES, please specify:</p>
+//                         <InputLine
+//                           className="flex-1 h-4"
+//                           value={getCustomIllnesses().join(', ')}
+//                         />
+//                       </div>
+//                     </div>
+//                   )} */}
+//                 </div>
+//               </div>
+
+//               {/* Obstetrical History */}
+//               <div className="border-t border-black p-1">
+//                 <Label className=" text-xs block">II. OBSTETRICAL HISTORY</Label>
+//                 <div className="grid grid-cols-2 gap-1 text-xs ">
+//                   <div className="flex items-center gap-1">
+//                     <span>Number of pregnancies:</span>
+//                     <span>G</span>
+//                     <InputLine className="w-8 h-4" value={recordData.obstetricalHistory?.g_pregnancies} />
+//                     <span>P</span>
+//                     <InputLine className="w-8 h-4" value={recordData.obstetricalHistory?.p_pregnancies} />
+//                   </div>
+//                   <div></div>
+//                   <div className="flex items-center gap-1">
+//                     <InputLine className="w-8 h-4" value={recordData.obstetricalHistory?.fullTerm} />
+//                     <span>Full term</span>
+//                     <InputLine className="w-8 h-4" value={recordData.obstetricalHistory?.premature} />
+//                     <span>Premature</span>
+//                   </div>
+//                   <div className="flex items-center gap-1">
+//                     <InputLine className="w-8 h-4" value={recordData.obstetricalHistory?.abortion} />
+//                     <span>Abortion</span>
+//                     <InputLine className="w-8 h-4" value={recordData.obstetricalHistory?.numOfLivingChildren} />
+//                     <span>Living children</span>
+//                   </div>
+//                 </div>
+//                 <div className="text-xs ">
+//                   <div className="flex items-center gap-1">
+//                     <span>Date of last delivery:</span>
+//                     <InputLine className="inline-block w-24 h-4" value={recordData.obstetricalHistory?.lastDeliveryDate} />
+//                   </div>
+//                   <div className="flex items-center gap-1">
+//                     <span>Type of last delivery:</span>
+//                     <div className="flex gap-1">
+//                       <div className="flex items-center gap-1">
+//                         <input type="checkbox" checked={recordData.obstetricalHistory?.typeOfLastDelivery === 'Vaginal'} disabled className="h-3 w-3" />
+//                         <span>Vaginal</span>
+//                       </div>
+//                       <div className="flex items-center gap-1">
+//                         <input type="checkbox" checked={recordData.obstetricalHistory?.typeOfLastDelivery === 'Caesarean Section'} disabled className="h-3 w-3" />
+//                         <span>Caesarean Section</span>
+//                       </div>
+//                     </div>
+//                   </div>
+//                   <div className="flex items-center gap-1">
+//                     <span>Last menstrual period:</span>
+//                     <InputLine className="inline-block w-24 h-4" value={recordData.obstetricalHistory?.lastMenstrualPeriod} />
+//                   </div>
+//                   <div className="flex items-center gap-1">
+//                     <span>Previous menstrual period:</span>
+//                     <InputLine className="inline-block w-24 h-4" value={recordData.obstetricalHistory?.previousMenstrualPeriod} />
+//                   </div>
+//                   <div>
+//                     <div>Menstrual flow:</div>
+//                     <div className="ml-4">
+//                       <div className="flex items-center gap-1">
+//                         <input type="checkbox" checked={recordData.obstetricalHistory?.menstrualFlow === 'Scanty'} disabled className="h-3 w-3" />
+//                         <span>scanty (1-2 pads per day)</span>
+//                       </div>
+//                       <div className="flex items-center gap-1">
+//                         <input type="checkbox" checked={recordData.obstetricalHistory?.menstrualFlow === 'Moderate'} disabled className="h-3 w-3" />
+//                         <span>moderate (3-5 pads per day)</span>
+//                       </div>
+//                       <div className="flex items-center gap-1">
+//                         <input type="checkbox" checked={recordData.obstetricalHistory?.menstrualFlow === 'Heavy'} disabled className="h-3 w-3" />
+//                         <span>heavy (5/more pads per day)</span>
+//                       </div>
+//                     </div>
+//                   </div>
+//                   <div className="flex items-center gap-1">
+//                     <div className="flex items-center gap-1">
+//                       <input type="checkbox" checked={recordData.obstetricalHistory?.dysmenorrhea === true} disabled className="h-3 w-3" />
+//                       <span>Dysmenorrhea</span>
+//                     </div>
+//                   </div>
+//                   <div className="flex items-center gap-1">
+//                     <div className="flex items-center gap-1">
+//                       <input type="checkbox" checked={recordData.obstetricalHistory?.hydatidiformMole === true} disabled className="h-3 w-3" />
+//                       <span>Hydatidiform mole (within the last 12 months)</span>
+//                     </div>
+//                   </div>
+//                   <div className="flex items-center gap-1">
+//                     <div className="flex items-center gap-1">
+//                       <input type="checkbox" checked={recordData.obstetricalHistory?.ectopicPregnancyHistory === true} disabled className="h-3 w-3" />
+//                       <span>History of ectopic pregnancy</span>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* STI */}
+//               <div className="border-t border-black p-1">
+//                 <Label className=" text-xs block">III. RISKS FOR SEXUALLY TRANSMITTED INFECTIONS</Label>
+//                 <div className="text-xs">
+//                   <div>Does the client or the client's partner have any of the following?</div>
+//                   {[
+//                     { label: "abnormal discharge", key: "abnormalDischarge" as STIKey },
+//                     { label: "sores or ulcers in the genital area", key: "sores" as STIKey },
+//                     { label: "pain or burning sensation in the genital area", key: "pain" as STIKey },
+//                     { label: "history of treatment for sexually transmitted infections", key: "history" as STIKey }
+//                   ].map((item, index) => (
+//                     <div key={index} className="flex justify-between items-center py-0.5">
+//                       <span>• {item.label}</span>
+//                       <div className="flex gap-1">
+//                         <YesNoCheckbox
+//                           label="Yes"
+//                           checked={recordData.sexuallyTransmittedInfections?.[item.key] === true}
+//                         />
+//                         <YesNoCheckbox
+//                           label="No"
+//                           checked={recordData.sexuallyTransmittedInfections?.[item.key] === false}
+//                         />
+//                       </div>
+//                     </div>
+//                   ))}
+//                   <div className="flex justify-between items-center py-0.5">
+//                     <span>• HIV / AIDS / Pelvic inflammatory disease</span>
+//                     <div className="flex gap-1">
+//                       <YesNoCheckbox
+//                         label="Yes"
+//                         checked={recordData.sexuallyTransmittedInfections?.hiv === true}
+//                       />
+//                       <YesNoCheckbox
+//                         label="No"
+//                         checked={recordData.sexuallyTransmittedInfections?.hiv === false}
+//                       />
+//                     </div>
+//                   </div>
+//                   {recordData.sexuallyTransmittedInfections?.abnormalDischarge && (
+//                     <div className="mt-1 ml-4">
+//                       <span>Abnormal Discharge From: </span>
+//                       <span className="font-semibold underline">
+//                         {recordData.sexuallyTransmittedInfections.dischargeFrom}
+//                       </span>
+//                     </div>
+//                   )}
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Right Column */}
+//             <div className="w-1/2">
+//               {/* VAW Risk Assessment */}
+//               <div className="p-1">
+//                 <Label className=" text-xs block mb-1">IV. RISKS FOR VIOLENCE AGAINST WOMEN (VAW)</Label>
+//                 <div className="text-xs">
+//                   {[
+//                     { label: "history of domestic violence or VAW", key: "domesticViolence" as const },
+//                     { label: "unpleasant relationship with partner", key: "unpleasantRelationship" as const},
+//                     { label: "partner does not approve of the visit to FP clinic", key: "partnerDisapproval" as const }
+//                   ].map((item, index) => (
+//                     <div key={index} className="flex justify-between items-center py-0.5">
+//                       <span>• {item.label}</span>
+//                       <div className="flex gap-1">
+//                         <YesNoCheckbox
+//                           label="Yes"
+//                           checked={recordData.violenceAgainstWomen?.[item.key] === true}
+//                         />
+//                         <YesNoCheckbox
+//                           label="No"
+//                           checked={recordData.violenceAgainstWomen?.[item.key] === false}
+//                         />
+//                       </div>
+//                     </div>
+//                   ))}
+//                   <div className="mt-2">
+//                     <span>Referred to: </span>
+//                     <InputLine className="inline-block w-20 h-4 ml-1" value={recordData.violenceAgainstWomen?.referredTo} />
+
+//                   </div>
+//                 </div>
+//               </div>
+//               {/* Physical Examination - Additional Details */}
+//               <div className="border-t border-black p-1">
+//                 <Label className=" text-xs block mb-1">V. PHYSICAL EXAMINATION</Label>
+//                 <div className="text-xs space-y-2">
+//                   {/* Vital Signs - 2 Columns */}
+//                   <div className="grid grid-cols-2 gap-1">
+//                     <div className="flex items-center gap-1">
+//                       <span>Weight:</span>
+//                       <InputLine className="flex-1 h-4" value={recordData.weight} />
+//                       <span>kg</span>
+//                     </div>
+//                     <div className="flex items-center gap-1">
+//                       <span>Blood pressure:</span>
+//                       <InputLine className="flex-1 h-4" value={recordData.bloodPressure} />
+//                       <span>mmHg</span>
+//                     </div>
+//                     <div className="flex items-center gap-1">
+//                       <span>Height:</span>
+//                       <InputLine className="flex-1 h-4" value={recordData.height} />
+//                       <span>cm</span>
+//                     </div>
+//                     <div className="flex items-center gap-1">
+//                       <span>Pulse rate:</span>
+//                       <InputLine className="flex-1 h-4" value={recordData.pulseRate} />
+//                       <span>/min</span>
+//                     </div>
+//                   </div>
+
+//                   {/* Body Examinations - 2 Columns */}
+//                   <div className="grid grid-cols-2 gap-1">
+//                     <div> SKIN: <InputLine className="h-4" value={recordData.skinExamination} /></div>
+//                     <div> CONJUNCTIVA: <InputLine className="h-4" value={recordData.conjunctivaExamination} /> </div>
+//                     <div> NECK:<InputLine className="h-4" value={recordData.neckExamination} /> </div>
+//                     <div> BREAST: <InputLine className="h-4" value={recordData.breastExamination} /> </div>
+//                     <div> ABDOMEN: <InputLine className="h-4" value={recordData.abdomenExamination} /> </div>
+//                     <div> EXTREMITIES <InputLine className="h-4" value={recordData.extremitiesExamination} /> </div>
+//                   </div>
+
+//                   {/* Pelvic Examination - 2 Columns */}
+//                   <div className="mt-2">
+//                     <div className="font-semibold">PELVIC EXAMINATION (For IUD Acceptors):</div>
+//                     <div className="ml-4 grid grid-cols-2 gap-1">
+//                       <div className="flex items-center gap-1">
+//                         <span>Pelvic Examination:</span>
+//                         <InputLine className="flex-1 h-4" value={recordData.pelvicExamination} />
+//                       </div>
+//                       <div className="flex items-center gap-1">
+//                         <span>Cervical Consistency:</span>
+//                         <InputLine className="flex-1 h-4" value={recordData.cervicalConsistency} />
+//                       </div>
+//                       <div className="flex items-center gap-1">
+//                         <span>Cervical Tenderness:</span>
+//                         <div className="flex gap-1">
+//                           <div className="flex items-center gap-1">
+//                             <input type="checkbox" checked={recordData.cervicalTenderness === true} disabled className="h-3 w-3" />
+//                             <span>Yes</span>
+//                           </div>
+//                           <div className="flex items-center gap-1">
+//                             <input type="checkbox" checked={recordData.cervicalTenderness === false} disabled className="h-3 w-3" />
+//                             <span>No</span>
+//                           </div>
+//                         </div>
+//                       </div>
+//                       <div className="flex items-center gap-1">
+//                         <span>Adnexal mass/tenderness:</span>
+//                         <div className="flex gap-1">
+//                           <div className="flex items-center gap-1">
+//                             <input type="checkbox" checked={recordData.cervicalAdnexal === true} disabled className="h-3 w-3" />
+//                             <span>Yes</span>
+//                           </div>
+//                           <div className="flex items-center gap-1">
+//                             <input type="checkbox" checked={recordData.cervicalAdnexal === false} disabled className="h-3 w-3" />
+//                             <span>No</span>
+//                           </div>
+//                         </div>
+//                       </div>
+//                       <div className="flex items-center gap-1">
+//                         <span>Uterine Position:</span>
+//                         <InputLine className="flex-1 h-4" value={recordData.uterinePosition} />
+//                       </div>
+//                       <div className="flex items-center gap-1">
+//                         <span>Uterine depth:</span>
+//                         <InputLine className="flex-1 h-4" value={recordData.uterineDepth} />
+//                         <span>cm</span>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* Acknowledgement */}
+//               <div className="border-t border-black p-1">
+//                 <Label className=" text-xs block mb-1">ACKNOWLEDGEMENT:</Label>
+//                 <div className="text-xs">
+//                   <p className="mb-1">
+//                     This is to certify that the Physician/Nurse/Midwife of the clinic has fully explained to me the different methods available in family planning and I freely choose the <span className="font-semibold underline">{recordData.acknowledgement?.selectedMethod || '_______'}</span> method.
+//                   </p>
+
+//                   <div className="grid grid-cols-2 gap-4 mb-1">
+//                     <div>
+//                       <SignatureDisplay signatureData={recordData.acknowledgement?.clientSignature} />
+//                       <div>Client Signature</div>
+//                     </div>
+//                     <div>
+//                       <div>Date</div>
+//                       <InputLine className="h-4" value={recordData.acknowledgement?.clientSignatureDate} />
+//                     </div>
+//                   </div>
+
+//                   <p className="mb-1">
+//                     For WRA below 18 yrs. old:<br />
+//                     I hereby consent <span className="font-semibold underline">{recordData.acknowledgement?.clientName || '_______'}</span> to accept the Family Planning method
+//                   </p>
+
+//                   <div className="grid grid-cols-2 gap-4">
+//                     <div>
+//                       <div>Parent/Guardian Signature</div>
+//                       <SignatureDisplay signatureData={recordData.acknowledgement?.guardianSignature} />
+//                     </div>
+//                     <div>
+//                       <div>Date</div>
+//                       <InputLine className="h-4" value={recordData.acknowledgement?.guardianSignatureDate} />
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+
+//               <div className="border-t border-black p-1 text-xs">
+//                 <div className="justify-text italic gap-4">
+
+//                   <div className="text-xs space-y-0.5">
+//                     <small>Implant = Progestin subdermal implant; IUD = Intrauterine device; BTL = Bilateral tubal ligation; <br></br>NSV = No-scalpel vasectomy; COC = Combined Oral Contraceptive; POP = Progestin only pills
+//                       <br></br>LAM = Lactational amenorrhea method; SDM = Standard days method; BBT = Basal body temperature; BOM = Billings ovulation method; CMM = Cervical mucus method; STM = Symptothermal method
+//                     </small>
+//                   </div>
+
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </div> {/* End of print-content div */}
+
+//       {/* Navigation Button (outside print-content) */}
+//       <div className="flex justify-end mt-4 no-print"> {/* Add no-print class */}
+//         <Button onClick={() => navigate("/familyplanning/view2", { state: { fprecordId: fprecordId } })}>
+//           Next (Side B)
+//         </Button>
+//       </div>
+//     </div>
+//   )
+// }

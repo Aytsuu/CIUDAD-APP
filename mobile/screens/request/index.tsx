@@ -19,11 +19,6 @@ export default () => {
      route: "/(request)/certification-request/cert-choices"
   },
   {
-    title: "Medicine Request",
-     description: "",
-     route: ""
-  },
-  {
     title: "Maternal Appointment",
      description: "",
      route: ""

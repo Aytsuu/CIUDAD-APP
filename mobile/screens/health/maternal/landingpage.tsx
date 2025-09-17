@@ -23,7 +23,7 @@ const MaternalLanding = () => {
           <Text className='font-light text-md mt-2 mb-5'>Guiding you through every step.</Text>
 
         </View>
-        <Button className='justify-center bg-[#263D67] items-center flex mt-4'>
+        <Button className='justify-center bg-blue-800 items-center flex mt-4' onPress={() => router.push('/maternal/bookingpage')}>
           <Text className='color-white font-PoppinsSemiBold text-lg'>BOOK PRENATAL APPOINTMENT</Text>
         </Button>
 
