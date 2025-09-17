@@ -74,6 +74,8 @@ export default function AnnualDevelopmentPlanEdit() {
 
   const updateMutation = useUpdateAnnualDevPlan();
 
+  const isEditable = Boolean(selectedYear) && Boolean(selectedPlanId);
+
   useEffect(() => {
     const loadStaff = async () => {
       try {
@@ -434,7 +436,7 @@ export default function AnnualDevelopmentPlanEdit() {
 
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         {/* Basic Information Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-8 ${!isEditable ? 'pointer-events-none opacity-60' : ''}`}>
           <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
@@ -476,7 +478,7 @@ export default function AnnualDevelopmentPlanEdit() {
         </div>
 
         {/* Program Details Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-8 ${!isEditable ? 'pointer-events-none opacity-60' : ''}`}>
           <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Program Details</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column */}
@@ -602,7 +604,7 @@ export default function AnnualDevelopmentPlanEdit() {
         </div>
 
       
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-8 ${!isEditable ? 'pointer-events-none opacity-60' : ''}`}>
           <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Responsible Person</h2>
           <div className="space-y-4">
             <ComboboxInput
@@ -667,7 +669,7 @@ export default function AnnualDevelopmentPlanEdit() {
         </div>
 
         
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-8 ${!isEditable ? 'pointer-events-none opacity-60' : ''}`}>
           <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Budget Planning</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Budget Input Form */}
@@ -808,7 +810,7 @@ export default function AnnualDevelopmentPlanEdit() {
           </Button>
           <Button 
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !isEditable}
             className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
