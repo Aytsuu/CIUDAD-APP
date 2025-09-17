@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Eye, Stamp, Search, Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Eye, Search, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import {
 } from "../Calendar/queries/councilEventdelqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
-import Attendees from "./Attendees";
+// import Attendees from "./Attendees";
 import {useGetCouncilEvents, useGetAttendanceSheets} from "../Calendar/queries/councilEventfetchqueries";
 import { CouncilEvent, AttendanceSheet, AttendanceRecord } from "../Calendar/councilEventTypes";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -179,12 +179,12 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
         (sheet) => sheet.ce_id === ceId && !sheet.att_is_archive
       ) || [];
       const archiveSheet = useArchiveAttendanceSheet();
-      const [isAttendeesDialogOpen, setIsAttendeesDialogOpen] = useState(false);
-      const [isEditMode, setIsEditMode] = useState(false);
+      // const [isAttendeesDialogOpen, setIsAttendeesDialogOpen] = useState(false);
+      // const [isEditMode, setIsEditMode] = useState(false);
 
-      const handleSaveSuccess = () => {
-        setIsEditMode(false);
-      };
+      // const handleSaveSuccess = () => {
+      //   setIsEditMode(false);
+      // };
 
       if (row.original.isArchived) {
         return (
@@ -263,7 +263,7 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
             }
             content="View"
           />
-          <TooltipLayout
+          {/* <TooltipLayout
             trigger={
               <DialogLayout
                 trigger={
@@ -285,7 +285,7 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
                     setIsEditMode(false);
                   }
                 }}
-                mainContent={
+                mainContent={ ''
                   <Attendees
                     ceId={ceId}
                     isEditMode={isEditMode}
@@ -296,7 +296,7 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
               />
             }
             content={isEditMode ? "Save" : "Mark"}
-          />
+          /> */}
         </div>
       );
     },
@@ -463,7 +463,7 @@ function AttendancePage() {
           Attendance Record
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
-          Mark and view attendance information
+          View and manage the signed attendance sheets.
         </p>
       </div>
       <hr className="border-gray mb-6 sm:mb-10" />

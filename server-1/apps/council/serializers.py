@@ -14,12 +14,12 @@ class CouncilSchedulingSerializer(serializers.ModelSerializer):
         model = CouncilScheduling
         fields = '__all__'
 
-class CouncilAttendeesSerializer(serializers.ModelSerializer):
-    atn_present_or_absent = serializers.ChoiceField(choices=['Present', 'Absent'])
+# class CouncilAttendeesSerializer(serializers.ModelSerializer):
+#     atn_present_or_absent = serializers.ChoiceField(choices=['Present', 'Absent'])
 
-    class Meta:
-        model = CouncilAttendees
-        fields = ['atn_id', 'atn_name','atn_designation', 'atn_present_or_absent', 'ce_id', 'staff_id']
+#     class Meta:
+#         model = CouncilAttendees
+#         fields = ['atn_id', 'atn_name','atn_designation', 'atn_present_or_absent', 'ce_id', 'staff_id']
 
 class CouncilAttendanceSerializer(serializers.ModelSerializer):
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)

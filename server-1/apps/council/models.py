@@ -13,6 +13,7 @@ class CouncilScheduling(models.Model):
     ce_date = models.DateField(default=date.today)
     ce_time = models.TimeField()
     ce_description = models.CharField(max_length=500)
+    ce_rows = models.IntegerField(null=True)
     ce_is_archive = models.BooleanField(default=False)
     
     staff = models.ForeignKey(
@@ -26,23 +27,23 @@ class CouncilScheduling(models.Model):
     class Meta:
         db_table = 'council_event'
 
-class CouncilAttendees(models.Model):
-    atn_id = models.BigAutoField(primary_key=True)
-    atn_name = models.CharField(max_length=200, default='')
-    atn_designation = models.CharField(max_length=200, default='')
-    atn_present_or_absent = models.CharField(max_length=100)
-    ce_id = models.ForeignKey('CouncilScheduling', on_delete=models.CASCADE)
+# class CouncilAttendees(models.Model):
+#     atn_id = models.BigAutoField(primary_key=True)
+#     atn_name = models.CharField(max_length=200, default='')
+#     atn_designation = models.CharField(max_length=200, default='')
+#     atn_present_or_absent = models.CharField(max_length=100)
+#     ce_id = models.ForeignKey('CouncilScheduling', on_delete=models.CASCADE)
     
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='staff_id'
-    )
+#     staff = models.ForeignKey(
+#         'administration.Staff',
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         db_column='staff_id'
+#     )
 
-    class Meta:
-        db_table = 'attendees'
+#     class Meta:
+#         db_table = 'attendees'
 
 class CouncilAttendance(models.Model):
     att_id = models.BigAutoField(primary_key=True)

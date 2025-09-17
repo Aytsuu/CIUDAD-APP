@@ -42,25 +42,25 @@ export const useGetCouncilEvents = () => {
   });
 };
 
-export const getStaffAttendanceRanking = async (): Promise<StaffAttendanceRanking[]> => {
-  try {
-    const res = await api.get('council/staff-attendance-ranking/');
-    const data = res.data?.data ?? res.data ?? [];
-    return Array.isArray(data) ? data : [];
-  } catch (err) {
-    console.error("API Error fetching staff attendance ranking:", err);
-    return [];
-  }
-};
+// export const getStaffAttendanceRanking = async (): Promise<StaffAttendanceRanking[]> => {
+//   try {
+//     const res = await api.get('council/staff-attendance-ranking/');
+//     const data = res.data?.data ?? res.data ?? [];
+//     return Array.isArray(data) ? data : [];
+//   } catch (err) {
+//     console.error("API Error fetching staff attendance ranking:", err);
+//     return [];
+//   }
+// };
 
-export const useGetStaffAttendanceRanking = () => {
-  return useQuery<StaffAttendanceRanking[], Error>({
-    queryKey: ["staffAttendanceRanking"],
-    queryFn: async () => {
-      const data = await getStaffAttendanceRanking();
-      console.log("Fetched ranking data:", data);
-      return data;
-    },
-    staleTime: 1000 * 60 * 5,
-  });
-};
+// export const useGetStaffAttendanceRanking = () => {
+//   return useQuery<StaffAttendanceRanking[], Error>({
+//     queryKey: ["staffAttendanceRanking"],
+//     queryFn: async () => {
+//       const data = await getStaffAttendanceRanking();
+//       console.log("Fetched ranking data:", data);
+//       return data;
+//     },
+//     staleTime: 1000 * 60 * 5,
+//   });
+// };
