@@ -12,8 +12,9 @@ interface AnnualDevelopmentPlanViewProps {
 
 interface BudgetItem {
   name: string;
-  pax: string;
-  price: string;
+  pax: string | number;
+  amount?: string | number;
+  price?: string | number; 
 }
 
 interface DevelopmentPlan {
@@ -228,16 +229,28 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     {plan.dev_gad_items && plan.dev_gad_items.length > 0 ? (
-                      plan.dev_gad_items.map((item, idx) => (
-                        <div key={idx}>₱{item.price}</div>
-                      ))
+                      plan.dev_gad_items.map((item, idx) => {
+                        const amount = Number((item.amount ?? item.price) || 0);
+                        return <div key={idx}>₱{isFinite(amount) ? amount.toFixed(2) : '0.00'}</div>;
+                      })
                     ) : (
                       <span>₱{plan.total || '0'}</span>
                     )}
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     {plan.dev_gad_items && plan.dev_gad_items.length > 0 ? (
-                      <div>₱{plan.dev_gad_items.reduce((sum, item) => sum + parseFloat(item.price), 0).toFixed(2)}</div>
+                      <div>
+                        ₱{
+                          plan.dev_gad_items
+                            .reduce((sum, item) => {
+                              const pax = Number(item.pax || 0);
+                              const amount = Number((item.amount ?? item.price) || 0);
+                              const total = (isFinite(pax) ? pax : 0) * (isFinite(amount) ? amount : 0);
+                              return sum + total;
+                            }, 0)
+                            .toFixed(2)
+                        }
+                      </div>
                     ) : (
                       <span>₱{plan.total || '0'}</span>
                     )}

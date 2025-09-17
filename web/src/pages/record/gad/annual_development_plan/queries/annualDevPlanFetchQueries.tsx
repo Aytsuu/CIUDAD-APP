@@ -67,11 +67,13 @@ export const useUpdateAnnualDevPlan = () => {
             const payload = {
                 ...restFormData,
                 staff: staff || null,
-                budgets: budgetItems.map((item) => ({
-                    name: item.gdb_name,
-                    pax: item.gdb_pax,
-                    amount: Number(item.gdb_amount || "0"),
-                })),
+                dev_budget_items: JSON.stringify(
+                    budgetItems.map((item) => ({
+                        name: item.gdb_name,
+                        pax: item.gdb_pax,
+                        amount: Number(item.gdb_amount || "0"),
+                    }))
+                ),
             };
             return await updateAnnualDevPlan(devId, payload);
         },

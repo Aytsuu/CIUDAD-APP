@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useCreateAnnualDevPlan, type BudgetItem as BudgetItemType } from "./queries/annualDevPlanFetchQueries";
+import { useUpdateAnnualDevPlan, type BudgetItem as BudgetItemType } from "./queries/annualDevPlanFetchQueries";
 import { ComboboxInput } from "@/components/ui/form/form-combo-box-search";
 import { getStaffList, getAnnualDevPlanYears, getAnnualDevPlansByYear, getAnnualDevPlanById } from "./restful-api/annualGetAPI";
 import { useForm } from "react-hook-form";
@@ -69,9 +69,10 @@ export default function AnnualDevelopmentPlanEdit() {
   const [years, setYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [plansForYear, setPlansForYear] = useState<Array<{ dev_id: number; dev_project: string }>>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
   const [plansLoading, setPlansLoading] = useState<boolean>(false);
 
-  const createMutation = useCreateAnnualDevPlan();
+  const updateMutation = useUpdateAnnualDevPlan();
 
   useEffect(() => {
     const loadStaff = async () => {
@@ -214,18 +215,21 @@ export default function AnnualDevelopmentPlanEdit() {
     setIsLoading(true);
 
     try {
-      const resPersonsArray = selectedStaff.map(s => s.position);
-      const { dev_gad_budget, ...formData } = data; // Remove dev_gad_budget as it's not part of the API
-      await createMutation.mutateAsync({ 
-        formData: (staffId ? { ...formData, staff: staffId } : formData) as any, // include staff if available
-        budgetItems: budgetItems as BudgetItemType[], 
-        resPersons: resPersonsArray 
+      const { dev_gad_budget, ...formData } = data;
+      if (!selectedPlanId) {
+        toast.error("Please select a plan to update.");
+        return;
+      }
+      await updateMutation.mutateAsync({ 
+        devId: selectedPlanId,
+        formData: (staffId ? { ...formData, staff: staffId } : formData) as any,
+        budgetItems: budgetItems as BudgetItemType[],
       });
-      toast.success("Annual development plan created successfully!");
+      toast.success("Annual development plan updated successfully!");
       navigate(-1);
     } catch (error) {
-      console.error("Error creating annual development plan:", error);
-      toast.error("Failed to create annual development plan");
+      console.error("Error updating annual development plan:", error);
+      toast.error("Failed to update annual development plan");
     } finally {
       setIsLoading(false);
     }
@@ -275,6 +279,7 @@ export default function AnnualDevelopmentPlanEdit() {
               onChange={async (e) => {
                 const id = e.target.value;
                 if (!id) return;
+                setSelectedPlanId(Number(id));
                 // Fetch plan data and populate form without navigation
                 try {
                   const plan = await getAnnualDevPlanById(id);
