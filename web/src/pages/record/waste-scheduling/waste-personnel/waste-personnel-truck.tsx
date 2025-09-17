@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Shield, Truck, User, Trash2 } from "lucide-react";
+import { Truck, User, Trash2 } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetAllPersonnel, useGetTrucks } from "./queries/truckFetchQueries";
@@ -7,7 +7,7 @@ import { PersonnelCategory, PersonnelData } from "./waste-personnel-types";
 import TruckManagement from "./waste-truck-form";
 
 const WastePersonnelDashboard = () => {
-  const [activeTab, setActiveTab] = useState<PersonnelCategory>("Watchman");
+  const [activeTab, setActiveTab] = useState<PersonnelCategory>("Driver Loader");
   const {
     data: trucks = [],
     isLoading: isTrucksLoading,
@@ -22,34 +22,20 @@ const WastePersonnelDashboard = () => {
 
   const normalizePosition = (title: string) => {
     const lower = title.toLowerCase();
-    if (lower.includes("Watchman") || lower.includes("watchmen"))
-      return "Watchman";
-    if (lower.includes("Waste Driver") || lower.includes("truck driver"))
-      return "Waste Driver";
-    if (lower.includes("Waste Collector") || lower.includes("waste collectors"))
-      return "Waste Collector";
+    // if (lower.includes("Watchman") || lower.includes("watchmen"))
+    //   return "Watchman";
+    if (lower.includes("Driver Loader") || lower.includes("driver loader"))
+      return "Driver Loader";
+    if (lower.includes("Waste Loader") || lower.includes("waste loader"))
+      return "Waste Loader";
     return title;
   };
 
   const personnelData: PersonnelData = {
-    Watchman: personnel
-      .filter(
-        (p) => normalizePosition(p.staff.position?.title || "") === "Watchman"
-      )
-      .map((p) => ({
-        id: p.wstp_id.toString(),
-        name: `${p.staff.profile.personal?.fname || ""} ${
-          p.staff.profile.personal?.mname || ""
-        } ${p.staff.profile.personal?.lname || ""} ${
-          p.staff.profile.personal?.suffix || ""
-        }`,
-        position: "Watchman",
-        contact: p.staff.profile.personal?.contact || "N/A",
-      })),
-    "Waste Driver": personnel
+    "Driver Loader": personnel
       .filter(
         (p) =>
-          normalizePosition(p.staff.position?.title || "") === "Waste Driver"
+          normalizePosition(p.staff.position?.title || "") === "Driver Loader"
       )
       .map((p) => ({
         id: p.wstp_id.toString(),
@@ -58,13 +44,13 @@ const WastePersonnelDashboard = () => {
         } ${p.staff.profile.personal?.lname || ""} ${
           p.staff.profile.personal?.suffix || ""
         }`,
-        position: "Waste Driver",
+        position: "Driver Loader",
         contact: p.staff.profile.personal?.contact || "N/A",
       })),
-    "Waste Collector": personnel
+    "Waste Loader": personnel
       .filter(
         (p) =>
-          normalizePosition(p.staff.position?.title || "") === "Waste Collector"
+          normalizePosition(p.staff.position?.title || "") === "Waste Loader"
       )
       .map((p) => ({
         id: p.wstp_id.toString(),
@@ -73,23 +59,21 @@ const WastePersonnelDashboard = () => {
         } ${p.staff.profile.personal?.lname || ""} ${
           p.staff.profile.personal?.suffix || ""
         }`,
-        position: "Waste Collector",
+        position: "Waste Loader",
         contact: p.staff.profile.personal?.contact || "N/A",
       })),
   };
 
   const getCategoryIcon = (category: PersonnelCategory) => {
     switch (category) {
-      case "Watchman":
-        return <Shield className="h-5 w-5" />;
-      case "Waste Driver":
+      case "Driver Loader":
         return (
           <div className="relative">
             <User className="h-5 w-5" />
             <Truck className="h-3 w-3 absolute -bottom-1 -right-1" />
           </div>
         );
-      case "Waste Collector":
+      case "Waste Loader":
         return <Trash2 className="h-5 w-5" />;
       case "Trucks":
         return <Truck className="h-5 w-5" />;
@@ -98,11 +82,9 @@ const WastePersonnelDashboard = () => {
 
   const getCategoryColor = (category: PersonnelCategory) => {
     switch (category) {
-      case "Watchman":
-        return "bg-green-100 text-green-600";
-      case "Waste Driver":
+      case "Driver Loader":
         return "bg-yellow-100 text-yellow-600";
-      case "Waste Collector":
+      case "Waste Loader":
         return "bg-sky-100 text-sky-600";
       case "Trucks":
         return "bg-purple-100 text-purple-600";
@@ -136,12 +118,11 @@ const WastePersonnelDashboard = () => {
       </div>
       <hr className="border-gray mb-6 sm:mb-8" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {(
           [
-            "Watchman",
-            "Waste Driver",
-            "Waste Collector",
+            "Driver Loader",
+            "Waste Loader",
             "Trucks",
           ] as PersonnelCategory[]
         ).map((category) => (
@@ -210,9 +191,8 @@ const WastePersonnelDashboard = () => {
           <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
             {(
               [
-                "Watchman",
-                "Waste Driver",
-                "Waste Collector",
+                "Driver Loader",
+                "Waste Loader",
                 "Trucks",
               ] as PersonnelCategory[]
             ).map((category) => (
