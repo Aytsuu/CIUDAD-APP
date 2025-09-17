@@ -9,7 +9,7 @@ import { ArrowDown, ArrowUp, Home, Loader2, Search, UserCog, Users } from "lucid
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { SelectLayout } from "@/components/ui/select/select-layout"
 import { useQuery } from "@tanstack/react-query"
-import { FPPatientsCount, getFPPatientsCounts, getFPRecordsList } from "@/pages/familyplanning/request-db/GetRequest"
+import { getFPPatientsCounts, getFPRecordsList } from "@/pages/familyplanning/request-db/GetRequest"
 import CardLayout from "@/components/ui/card/card-layout"
 import { useNavigate } from "react-router-dom"
 import ViewButton from "@/components/ui/view-button"
@@ -55,7 +55,7 @@ interface FPRecord {
     isLoading: isLoadingCounts, 
     isError: isErrorCounts, 
     error: errorCounts 
-  } = useQuery<FPPatientsCount, Error>({
+  } = useQuery<any>({
     queryKey: ["fpPatientCounts"],
     queryFn: getFPPatientsCounts,
   });

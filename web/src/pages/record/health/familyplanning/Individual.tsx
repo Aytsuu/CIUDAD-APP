@@ -171,7 +171,7 @@ const IndividualFamPlanningTable: React.FC = () => {
     });
   };
 
-  const handleCreateNewRecord = ({ gender }: { gender: any }) => {
+  const handleCreateNewRecord = () => {
   if (!patientId) {
     toast.error("Patient ID not found");
     return;
@@ -230,13 +230,13 @@ const IndividualFamPlanningTable: React.FC = () => {
           // Get all visible rows in current table
           const visibleRows = table.getRowModel().rows;
           const allSelected = visibleRows.length > 0 && visibleRows.every(row => isRecordSelected(row.original));
-          const someSelected = visibleRows.some(row => isRecordSelected(row.original));
+          // const someSelected = visibleRows.some(row => isRecordSelected(row.original));
           
           return (
             <Checkbox
               checked={allSelected}
-              ref={(ref) => {
-                if (ref) ref.indeterminate = someSelected && !allSelected;
+              ref={(_ref) => {
+                // if (ref) ref.indeterminate = someSelected && !allSelected;
               }}
               onCheckedChange={(value) => {
                 if (value) {
@@ -386,7 +386,7 @@ const IndividualFamPlanningTable: React.FC = () => {
             <LayoutList className="h-5 w-5 mr-2" /> Compare Records ({selectedRecords.length})
           </Button>
           <Button
-            onClick={() => handleCreateNewRecord({ gender: patientInfoForCard?.personal_info.per_sex || "Unknown" })}
+            onClick={() => handleCreateNewRecord()}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
             <Plus className="h-5 w-5 mr-2" /> New method for Patient
@@ -484,7 +484,7 @@ const IndividualFamPlanningTable: React.FC = () => {
           <div className="text-center py-8">
             <p className="text-gray-500 mb-4">No family planning records found for this patient.</p>
             <Button
-              onClick={() => handleCreateNewRecord({ gender: patientInfoForCard?.personal_info.per_sex || "Unknown" })}
+              onClick={() => handleCreateNewRecord()}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Plus className="h-5 w-5 mr-2" /> Create First Record

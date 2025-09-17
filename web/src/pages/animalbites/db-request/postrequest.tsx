@@ -130,15 +130,15 @@ export const deleteAnimalBitePatient = async (patientId: string) => {
 }
 
 // Test function to fetch patients
-const testFetchPatients = async () => {
-  try {
-    console.log("🧪 Testing patient fetching...")
-    const patients = await getAllPatients()
-    console.log(`✅ Successfully fetched ${patients.length} patients`)
-    console.log("📊 Sample patient data:", patients.slice(0, 2))
-    return patients
-  } catch (error) {
-    console.error("❌ Failed to fetch patients:", error)
-    return []
-  }
-}
+// const testFetchPatients = async () => {
+//   try {
+//     console.log("🧪 Testing patient fetching...")
+//     const patients = await getAllPatients()
+//     console.log(`✅ Successfully fetched ${patients.length} patients`)
+//     console.log("📊 Sample patient data:", patients.slice(0, 2))
+//     return patients
+//   } catch (error) {
+//     console.error("❌ Failed to fetch patients:", error)
+//     return []
+//   }
+// }

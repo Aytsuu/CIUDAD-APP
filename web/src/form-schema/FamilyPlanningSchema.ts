@@ -4,12 +4,12 @@ import { z } from "zod";
 const today = new Date();
 today.setHours(0, 0, 0, 0);
 
-const getPhilippineToday = (): Date => {
-  const now = new Date();
-  const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-  phTime.setHours(0, 0, 0, 0);
-  return phTime;
-};
+// const getPhilippineToday = (): Date => {
+//   const now = new Date();
+//   const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+//   phTime.setHours(0, 0, 0, 0);
+//   return phTime;
+// };
 
 const isWeekend = (date: Date): boolean => {
   const day = date.getDay()
