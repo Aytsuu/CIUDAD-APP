@@ -4,6 +4,7 @@ from ..serializers.position_serializers import PositionBaseSerializer
 from ..serializers.assignment_serializers import AssignmentMinimalSerializer
 from apps.profiling.models import ResidentProfile, FamilyComposition
 from apps.account.models import Account
+from ..double_queries import PostQueries
 
 class StaffBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -74,6 +75,16 @@ class StaffCreateSerializer(serializers.ModelSerializer):
     if len(holders) < max_holders:
       register = Staff(**validated_data)
       register.save()
+
+      # Perform double query
+      double_queries = PostQueries()
+      response = double_queries.staff(validated_data)
+      if not response.ok:
+        try:
+            error_detail = response.json()
+        except ValueError:
+            error_detail = response.text
+        raise serializers.ValidationError({"error": error_detail})
       return register
 
     return None

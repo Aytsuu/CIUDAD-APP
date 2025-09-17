@@ -16,7 +16,7 @@ from datetime import datetime
 from ..utils import *
 from utils.supabase_client import upload_to_storage
 from ..utils import *
-from ..tasks import DoubleQueries
+from ..double_queries import PostQueries
 
 class AllRecordTableView(generics.GenericAPIView):
   serializer_class = AllRecordTableSerializer
@@ -116,13 +116,19 @@ class CompleteRegistrationView(APIView):
           results["bus_id"] = bus.pk
 
     # Perform double query
-    double_queries = DoubleQueries()
-    double_queries.complete_profile(request.data) 
+    double_queries = PostQueries()
+    response = double_queries.complete_profile(request.data) 
+    if not response.ok:
+      try:
+          error_detail = response.json()
+      except ValueError:
+          error_detail = response.text
+      raise serializers.ValidationError({"error": error_detail})
     
     return Response(results, status=status.HTTP_200_OK)
   
   def create_resident_profile(self, personal, staff):
-    addresses = personal.pop("per_addresses", None)
+    addresses = personal.pop("per_addresses", [])
     add_instances = [
       Address.objects.get_or_create(
         add_province=add["add_province"],
