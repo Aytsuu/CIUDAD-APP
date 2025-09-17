@@ -13,7 +13,7 @@ export default function ComplaintRecord() {
   const DEFAULT_PAGE_SIZE = 10;
   const [searchQuery, setSearchQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState<string | null>(null);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [pageSize] = useState(DEFAULT_PAGE_SIZE);
   const [currentPage, setCurrentPage] = useState(1);
   const { data: complaints = [], isLoading, error } = useGetComplaint();
   const bulkArchiveComplaints = useBulkArchiveComplaints();
@@ -56,13 +56,13 @@ export default function ComplaintRecord() {
 
   if (error) return <div>Error: {error.message}</div>;
 
-  const columns = useMemo(() => complaintColumns(complaints), [complaints]);
+  const columns = useMemo(() => complaintColumns(), [complaints]);
 
   return (
     <div className="w-full h-full flex flex-col">
       <div className="flex flex-col justify-center mb-4">
         <h1 className="flex flex-row font-semibold text-xl sm:text-2xl text-darkBlue2 items-center">
-          Barangay Blotter 
+          Blotter 
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
           Manage and view filed and raised complaint

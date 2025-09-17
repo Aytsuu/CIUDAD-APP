@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button/button";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import DependentForm from "./DependentForm";
 import { DataTable } from "@/components/ui/table/data-table";
-import { DependentRecord } from "../../profilingTypes";
+import { DependentRecord } from "../../../profiling/ProfilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { CircleAlert, Trash } from "lucide-react";

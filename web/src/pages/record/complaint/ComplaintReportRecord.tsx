@@ -44,7 +44,7 @@ export function ComplaintViewRecord() {
       console.log("Raising issue for comp_id:", complaintData.comp_id);
 
       await raiseIssue(complaintData.comp_id);
-      // await handleSendAlert();
+      await handleSendAlert();
       await archiveComplaint(complaintData.comp_id.toString());
       setComplaintStatus((prev) => ({ ...prev, isRaised: true, isArchived: true }));
       toast.success("Issue raised successfully", {

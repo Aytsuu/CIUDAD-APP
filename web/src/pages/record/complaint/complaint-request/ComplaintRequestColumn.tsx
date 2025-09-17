@@ -69,7 +69,6 @@ interface RequestComplaintColumnsProps {
 }
 
 export const requestComplaintColumns = ({
-  data,
   onRejectComplaint,
   onAcceptComplaint,
   onArchiveComplaint,

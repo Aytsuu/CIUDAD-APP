@@ -363,7 +363,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
   );
 };
 
-export function AppSidebar({ assignedFeatures }: { assignedFeatures?: any }) {
+export function AppSidebar() {
   const { user } = useAuth();
   const [activeItem, setActiveItem] = useState<string>("");
 
