@@ -307,6 +307,7 @@ class SummonSchedule(models.Model):
     ss_reason = models.TextField()
     st_id = models.ForeignKey('SummonTimeAvailability', db_column='st_id', on_delete=models.SET_NULL, null = True, blank = True)
     sd_id = models.ForeignKey('SummonDateAvailability', db_column='sd_id', on_delete=models.SET_NULL, null = True, blank = True)
+    sr_id = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, db_column='sr_id')
 
     class Meta:
         db_table = 'summon_schedule'

@@ -749,6 +749,10 @@ class ServiceChargePaymentRequestSerializer(serializers.ModelSerializer):
         model = ServiceChargePaymentRequest
         fields = '__all__'
 
+class SummonScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SummonSchedule
+        fields = '__all__'
 
 # ================== TREASURER: SERVICE CHARGE LIST =========================
 class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):

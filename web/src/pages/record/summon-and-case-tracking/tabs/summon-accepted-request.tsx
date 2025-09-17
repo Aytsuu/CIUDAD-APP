@@ -128,15 +128,11 @@ export default function SummonAcceptedReq() {
                                 <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
                                     <ComplaintRecordForSummon 
                                         comp_id={complaint} 
-                                        sr_id={String(row.original.sr_id)}
-                                        onSuccess={() => setEditingRowId(null)}
                                         isPending={false}
                                     />
                                 </div>
                             </div>
                         }
-                        isOpen={editingRowId == row.original.sr_id}
-                        onOpenChange={(open) => setEditingRowId(open? row.original.sr_id: null)}
                     />
                 );
             },

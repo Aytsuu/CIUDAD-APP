@@ -85,7 +85,6 @@ export const addSummonDate = async (newDates: string[], oldDates: {
 export const addSummonTimeSlots = async (timeSlots: Array<{
     sd_id: number;
     st_start_time: string;
-    st_end_time: string;
     st_is_booked?: boolean;
 }>) => {
 
