@@ -46,7 +46,6 @@ function uniquePreserve<T>(items: T[], keyFn: (x: T) => string): T[] {
   return out;
 }
 
-// 🔹 Format helper for datetime fields
 function formatToISO(date: string | Date | null): string | null {
   if (!date) return null;
   const d = typeof date === "string" ? new Date(date) : date;
@@ -147,36 +146,45 @@ export default function AnnouncementCreate() {
   }, [positions, posCategory, posGroup]);
 
   const onSubmit = async (data: AnnouncementCreateFormValues) => {
-    setIsSubmitting(true);
-    try {
-      const cleanedData: Record<string, any> = {};
-      for (const key in data) {
-        const value = (data as any)[key];
-        cleanedData[key] = value !== "" && value !== undefined ? value : null;
+  setIsSubmitting(true);
+  try {
+    const cleanedData: Record<string, any> = {};
+    for (const key in data) {
+      const value = (data as any)[key];
+      cleanedData[key] = value !== "" && value !== undefined ? value : null;
+    }
+
+    // 🔹 Normalize datetime fields
+    cleanedData.ann_start_at = formatToISO(cleanedData.ann_start_at);
+    cleanedData.ann_end_at = formatToISO(cleanedData.ann_end_at);
+    cleanedData.ann_event_start = formatToISO(cleanedData.ann_event_start);
+    cleanedData.ann_event_end = formatToISO(cleanedData.ann_event_end);
+
+    let { ar_type, ar_category, pos_category, pos_group, ...announcementData } = cleanedData;
+
+    // 🔹 Event handling (ann_end_at = ann_event_end always)
+    if (announcementData.ann_type === "event") {
+      if (announcementData.ann_event_end) {
+        announcementData.ann_end_at = announcementData.ann_event_end;
       }
+    }
 
-      // 🔹 Normalize datetime fields
-      cleanedData.ann_start_at = formatToISO(cleanedData.ann_start_at);
-      cleanedData.ann_end_at = formatToISO(cleanedData.ann_end_at);
-      cleanedData.ann_event_start = formatToISO(cleanedData.ann_event_start);
-      cleanedData.ann_event_end = formatToISO(cleanedData.ann_event_end);
+    // 🔹 Public announcements – only keep event dates
+    if (announcementData.ann_type === "public") {
+      announcementData.ann_start_at = null; // public doesn’t use it
+      announcementData.ann_end_at = null;
+    }
 
-      let { ar_type, ar_category, pos_category, pos_group, ...announcementData } = cleanedData;
+    // 🔹 General announcements – no event fields
+    if (announcementData.ann_type === "general") {
+      announcementData.ann_event_start = null;
+      announcementData.ann_event_end = null;
+    }
 
-      // sync event fields
-      if (announcementData.ann_type === "event") {
-        if (announcementData.ann_event_end && !announcementData.ann_end_at) {
-          announcementData.ann_end_at = announcementData.ann_event_end;
-        }
-        if (!announcementData.ann_event_end && announcementData.ann_end_at) {
-          announcementData.ann_event_end = announcementData.ann_end_at;
-        }
-      }
-
-      // force Active if no schedule
-      if (!announcementData.ann_start_at && !announcementData.ann_end_at) {
-        announcementData.ann_status = "Active";
-      }
+    // ✅ force Active if no schedule
+    if (!announcementData.ann_start_at && !announcementData.ann_end_at) {
+      announcementData.ann_status = "Active";
+    }
 
       if (Array.isArray(ar_type)) {
         const origWithKey = (ar_type as string[]).map((t: string) => ({
@@ -251,127 +259,141 @@ export default function AnnouncementCreate() {
         />
 
         {annType ? (
+  <>
+    {/* Basic Info */}
+    <FormInput
+      control={control}
+      name="ann_title"
+      label="Announcement Title"
+      placeholder="Enter a clear and descriptive title"
+    />
+    <FormInput
+      control={control}
+      name="ann_details"
+      label="Announcement Details"
+      placeholder="Provide details"
+    />
+
+    {/* Schedule */}
+<Text className="text-gray-700 font-medium mt-4 mb-2">Schedule</Text>
+
+{annType === "public" && (
+  <>
+    <FormDateAndTimeInput control={control} name="ann_event_start" label="Event Start" />
+    <FormDateAndTimeInput control={control} name="ann_event_end" label="Event End" />
+  </>
+)}
+
+{annType === "event" && (
+  <>
+    <FormDateAndTimeInput control={control} name="ann_start_at" label="Start Date & Time" />
+    <FormDateAndTimeInput control={control} name="ann_event_start" label="Event Start" />
+    <FormDateAndTimeInput control={control} name="ann_event_end" label="Event End" />
+  </>
+)}
+
+{annType === "general" && (
+  <>
+    <FormDateAndTimeInput control={control} name="ann_start_at" label="Start Date & Time" />
+    <FormDateAndTimeInput control={control} name="ann_end_at" label="End Date & Time" />
+  </>
+)}
+
+
+
+    {["event", "general"].includes(annType) && (
+      <>
+        {/* Recipients */}
+        <Text className="text-gray-700 font-medium mt-4 mb-2">Recipients</Text>
+        <FormSelect
+          control={control}
+          name="ar_category"
+          label="Target Audience"
+          options={[
+            { label: "Resident", value: "resident" },
+            { label: "Staff", value: "staff" },
+          ]}
+        />
+        {recipientType === "staff" && (
           <>
-            {/* Basic Info */}
-            <FormInput
+            <FormSelect
               control={control}
-              name="ann_title"
-              label="Announcement Title"
-              placeholder="Enter a clear and descriptive title"
+              name="pos_category"
+              label="Category"
+              options={categoryOptions}
             />
-            <FormInput
-              control={control}
-              name="ann_details"
-              label="Announcement Details"
-              placeholder="Provide details"
-            />
-
-            {/* Schedule */}
-            <Text className="text-gray-700 font-medium mt-4 mb-2">Schedule</Text>
-            <FormDateAndTimeInput control={control} name="ann_start_at" label="Start Date & Time" />
-
-            {annType === "event" ? (
-              <>
-                <FormDateAndTimeInput control={control} name="ann_event_start" label="Event Start" />
-                <FormDateAndTimeInput control={control} name="ann_event_end" label="Event End" />
-              </>
-            ) : (
-              <FormDateAndTimeInput control={control} name="ann_end_at" label="End Date & Time" />
+            {posCategory && (
+              <FormSelect
+                control={control}
+                name="pos_group"
+                label="Group"
+                options={groupOptions}
+              />
             )}
-
-            {/* Recipients */}
-            {["event", "general"].includes(annType) && (
-              <>
-                <Text className="text-gray-700 font-medium mt-4 mb-2">Recipients</Text>
-                <FormSelect
-                  control={control}
-                  name="ar_category"
-                  label="Target Audience"
-                  options={[
-                    { label: "Resident", value: "resident" },
-                    { label: "Staff", value: "staff" },
-                  ]}
-                />
-                {recipientType === "staff" && (
-                  <>
-                    <FormSelect
-                      control={control}
-                      name="pos_category"
-                      label="Category"
-                      options={categoryOptions}
-                    />
-                    {posCategory && (
-                      <FormSelect
-                        control={control}
-                        name="pos_group"
-                        label="Group"
-                        options={groupOptions}
-                      />
-                    )}
-                    {posGroup && (
-                      <FormComboCheckbox
-                        label="Positions"
-                        control={control}
-                        name="ar_type"
-                        options={positionsForGroup.map((pos: { pos_title: string }) => ({
-                          id: pos.pos_title,
-                          name: pos.pos_title,
-                          label: pos.pos_title,
-                          value: pos.pos_title,
-                        }))}
-                      />
-                    )}
-                  </>
-                )}
-              </>
+            {posGroup && (
+              <FormComboCheckbox
+                label="Positions"
+                control={control}
+                name="ar_type"
+                options={positionsForGroup.map((pos: { pos_title: string }) => ({
+                  id: pos.pos_title,
+                  name: pos.pos_title,
+                  label: pos.pos_title,
+                  value: pos.pos_title,
+                }))}
+              />
             )}
-
-            {/* Notifications */}
-            <Text className="text-gray-700 font-medium mt-4 mb-2">Notifications</Text>
-            <Controller
-              control={control}
-              name="ann_to_sms"
-              render={({ field: { value, onChange } }) => (
-                <TouchableOpacity
-                  className="flex-row items-center mb-2"
-                  onPress={() => onChange(!value)}
-                >
-                  <View
-                    className={`w-5 h-5 mr-2 border rounded ${
-                      value ? "bg-blue-500" : "bg-white"
-                    }`}
-                  />
-                  <Text className="text-gray-700">Send SMS</Text>
-                </TouchableOpacity>
-              )}
-            />
-            <Controller
-              control={control}
-              name="ann_to_email"
-              render={({ field: { value, onChange } }) => (
-                <TouchableOpacity
-                  className="flex-row items-center"
-                  onPress={() => onChange(!value)}
-                >
-                  <View
-                    className={`w-5 h-5 mr-2 border rounded ${
-                      value ? "bg-blue-500" : "bg-white"
-                    }`}
-                  />
-                  <Text className="text-gray-700">Send Email</Text>
-                </TouchableOpacity>
-              )}
-            />
-
-            {/* Submit */}
-            <Button onPress={handleSubmit(onSubmit)} disabled={isSubmitting} className="mt-6">
-              <Send size={16} color="blue" />
-              <Text className="ml-2 text-blue">
-                {isSubmitting ? "Submitting..." : "Create Announcement"}
-              </Text>
-            </Button>
           </>
-        ) : null}
+        )}
+
+        {/* Notifications */}
+        <Text className="text-gray-700 font-medium mt-4 mb-2">Notifications</Text>
+        <Controller
+          control={control}
+          name="ann_to_sms"
+          render={({ field: { value, onChange } }) => (
+            <TouchableOpacity
+              className="flex-row items-center mb-2"
+              onPress={() => onChange(!value)}
+            >
+              <View
+                className={`w-5 h-5 mr-2 border rounded ${
+                  value ? "bg-blue-500" : "bg-white"
+                }`}
+              />
+              <Text className="text-gray-700">Send SMS</Text>
+            </TouchableOpacity>
+          )}
+        />
+        <Controller
+          control={control}
+          name="ann_to_email"
+          render={({ field: { value, onChange } }) => (
+            <TouchableOpacity
+              className="flex-row items-center"
+              onPress={() => onChange(!value)}
+            >
+              <View
+                className={`w-5 h-5 mr-2 border rounded ${
+                  value ? "bg-blue-500" : "bg-white"
+                }`}
+              />
+              <Text className="text-gray-700">Send Email</Text>
+            </TouchableOpacity>
+          )}
+        />
+      </>
+    )}
+
+    {/* Submit */}
+    <Button onPress={handleSubmit(onSubmit)} disabled={isSubmitting} className="mt-6">
+      <Text className="ml-2 text-blue ">
+        {isSubmitting ? "Submitting..." : "Create Announcement"}
+      </Text>
+    </Button>
+  </>
+) : null}
+
       </ScrollView>
     </View>
   );

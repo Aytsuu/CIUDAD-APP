@@ -36,8 +36,8 @@ export const usePostAnnouncement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
     },
-    onError: (err) => {
-      console.error("Error submitting announcement:", err);
+    onError: (err: any) => {
+      console.error("Error submitting announcement:", err.response?.data || err.message);
     },
   });
 };
@@ -48,16 +48,16 @@ export const usePostAnnouncementRecipient = () => {
 
   return useMutation({
     mutationFn: (recipients: Record<string, any>[]) =>
-      postAnnouncementRecipient({ recipients }),
+      postAnnouncementRecipient(recipients),
     onSuccess: (_, variables) => {
-      if (variables.length && variables[0].ann_id) {
+      if (variables.length && (variables[0].ann || variables[0].ann_id)) {
         queryClient.invalidateQueries({
-          queryKey: ["announcementRecipients", variables[0].ann_id],
+          queryKey: ["announcementRecipients", variables[0].ann || variables[0].ann_id],
         });
       }
     },
-    onError: (err) => {
-      console.error("Error submitting recipient:", err);
+    onError: (err: any) => {
+      console.error("Error submitting recipient:", err.response?.data || err.message);
     },
   });
 };
@@ -69,14 +69,14 @@ export const usePostAnnouncementFile = () => {
   return useMutation({
     mutationFn: (files: Record<string, any>[]) => postAnnouncementFile(files),
     onSuccess: (_, variables) => {
-      if (variables.length && variables[0].ann_id) {
+      if (variables.length && (variables[0].ann || variables[0].ann_id)) {
         queryClient.invalidateQueries({
-          queryKey: ["announcementFiles", variables[0].ann_id],
+          queryKey: ["announcementFiles", variables[0].ann || variables[0].ann_id],
         });
       }
     },
-    onError: (err) => {
-      console.error("Error uploading files:", err);
+    onError: (err: any) => {
+      console.error("Error uploading files:", err.response?.data || err.message);
     },
   });
 };
@@ -89,6 +89,9 @@ export const useDeleteAnnouncement = () => {
     mutationFn: (ann_id: string) => deleteAnnouncement(ann_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
+    },
+    onError: (err: any) => {
+      console.error("Error deleting announcement:", err.response?.data || err.message);
     },
   });
 };
