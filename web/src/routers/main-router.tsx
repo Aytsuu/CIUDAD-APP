@@ -36,6 +36,7 @@ import { familyProfilingRoute } from './family-profiling-route';
 import { patientsRecordRouter } from './patients-record-router';
 import { summon_router } from './summon-router';
 import { clearances_router } from './clearances-router';
+import { team_router } from "./team-router";
 // import { ProtectedRoute } from "@/ProtectedRoutes";
 
 export const main_router: RouteObject[] = [
@@ -69,6 +70,7 @@ export const main_router: RouteObject[] = [
         //   </ProtectedRoute>
         // ),
       })),
+      ...team_router,
       ...complaint_router,
       ...ord_router,
       ...res_router,
