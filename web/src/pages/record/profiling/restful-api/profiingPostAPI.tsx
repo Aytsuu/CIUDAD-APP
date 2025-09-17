@@ -136,7 +136,6 @@ export const addHousehold = async (householdInfo: Record<string, string>, staffI
     }
     
     const res = await api.post("profiling/household/create/", data);
-
     return res.data;
   } catch (err) {
     throw err;
