@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react"
 import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button/button"
@@ -9,7 +8,7 @@ import { ArrowDown, ArrowUp, Home, Loader2, Search, UserCog, Users } from "lucid
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { SelectLayout } from "@/components/ui/select/select-layout"
 import { useQuery } from "@tanstack/react-query"
-import { getFPPatientsCounts, getFPRecordsList } from "@/pages/familyplanning/request-db/GetRequest"
+import { FPPatientsCount, getFPPatientsCounts, getFPRecordsList } from "@/pages/familyplanning/request-db/GetRequest"
 import CardLayout from "@/components/ui/card/card-layout"
 import { useNavigate } from "react-router-dom"
 import ViewButton from "@/components/ui/view-button"
@@ -55,7 +54,7 @@ interface FPRecord {
     isLoading: isLoadingCounts, 
     isError: isErrorCounts, 
     error: errorCounts 
-  } = useQuery<any>({
+  } = useQuery<FPPatientsCount, Error>({
     queryKey: ["fpPatientCounts"],
     queryFn: getFPPatientsCounts,
   });
@@ -210,7 +209,7 @@ interface FPRecord {
   const totalFPPatients = fpCounts?.total_fp_patients || 0;
   const residentFPPatients = fpCounts?.resident_fp_patients || 0;
   const transientFPPatients = fpCounts?.transient_fp_patients || 0;
-  const minorFPPatients = fpCounts?.minor_fp_patients || 0;
+  const minorFPPatients = 0;
   const residentFPPercentage = totalFPPatients > 0 ? Math.round((residentFPPatients / totalFPPatients) * 100) : 0;
   const transientFPPercentage = totalFPPatients > 0 ? Math.round((transientFPPatients / totalFPPatients) * 100) : 0;
   const minorFPPercentage = totalFPPatients > 0 ? Math.round((minorFPPatients / totalFPPatients) * 100) : 0;

@@ -230,13 +230,13 @@ const IndividualFamPlanningTable: React.FC = () => {
           // Get all visible rows in current table
           const visibleRows = table.getRowModel().rows;
           const allSelected = visibleRows.length > 0 && visibleRows.every(row => isRecordSelected(row.original));
-          // const someSelected = visibleRows.some(row => isRecordSelected(row.original));
+          const someSelected = visibleRows.some(row => isRecordSelected(row.original));
           
           return (
             <Checkbox
               checked={allSelected}
-              ref={(_ref) => {
-                // if (ref) ref.indeterminate = someSelected && !allSelected;
+              ref={(ref) => {
+                if (ref && ref instanceof HTMLInputElement) ref.indeterminate = someSelected && !allSelected;
               }}
               onCheckedChange={(value) => {
                 if (value) {
