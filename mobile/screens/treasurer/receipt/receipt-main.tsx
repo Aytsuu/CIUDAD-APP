@@ -472,6 +472,10 @@ const ReceiptPage = () => {
         <Text>{item.inv_nat_of_collection}</Text>
       </View>
       <View className="flex-row justify-between mb-2">
+        <Text className="text-gray-600">Discount Reason:</Text>
+        <Text>{item.inv_discount_reason || "None"}</Text>
+      </View>      
+      <View className="flex-row justify-between mb-2">
         <Text className="text-gray-600">Amount:</Text>
         <Text className="font-semibold">
           ₱{Number(item.inv_amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
