@@ -10,7 +10,7 @@ import {
   addPersonalAddress,
   addResidentAndPersonal,
 } from "../restful-api/profiingPostAPI";
-import { api, api2 } from "@/api/api";
+import { api } from "@/api/api";
 
 export const useAddSitio = () => {
   const queryClient = useQueryClient();
