@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useArchiveBudgetPlan, useRestoreBudgetPlan } from "./queries/budgetPlanUpdateQueries";
 import { useNavigate } from "react-router-dom";
-import { ConfirmationModal2 } from "@/components/ui/confirmation-modal-2";
+// import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 
 function BudgetPlan() {
@@ -241,11 +241,11 @@ function BudgetPlan() {
                     </div>
 
                     {showAddButton && (
-                        <ConfirmationModal2
+                        <ConfirmationModal
                             trigger={<Button>+ Add New</Button>}
                             title="Cloning Confirmation"
                             description="Would you like to clone the data from the previous year?"
-                            confirmLabel="Clone"
+                            actionLabel="Clone"
                             cancelLabel="Start Fresh"
                             showCloseButton={true}
                             onCancel={() => {
@@ -255,7 +255,7 @@ function BudgetPlan() {
                                     } 
                                 });
                             }}
-                            onConfirm={() => {
+                            onClick={() => {
                                 navigate("/budgetplan-forms", { 
                                     state: { 
                                         shouldClone: true
