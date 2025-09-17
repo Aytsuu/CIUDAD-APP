@@ -15,8 +15,8 @@ class PositionView(generics.ListCreateAPIView):
         staff_type = self.request.query_params.get('staff_type', None)
         
         if staff_type:
-            pos_category = 'Barangay Position' if staff_type == 'Barangay Staff' \
-                            else 'Health Position'
+            pos_category = 'BARANGAY POSITION' if staff_type.lower() == 'barangay staff' \
+                            else 'HEALTH POSITION'
             queryset = Position.objects.filter(pos_category=pos_category)
             return queryset
         return None
