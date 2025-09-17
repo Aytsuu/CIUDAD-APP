@@ -36,6 +36,7 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
     const { data: resolutionData = [] } = useResolution();    
     const { data: gadProposals = [], isLoading: isLoadingProposals } = useApprovedProposals();
 
+    console.log("PROPOSALS: ", gadProposals)
     // Create mutation
     const { mutate: createResolution, isPending } = useCreateResolution(onSuccess);
 
@@ -204,8 +205,8 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
                             value={selectedProposal?.name || ""}
                             options={gadProposals}
                             label="GAD Proposal Reference"
-                            placeholder="Select an approved GAD proposal..."
-                            emptyText="No approved GAD proposals found."
+                            placeholder="Select GAD proposal"
+                            emptyText="No GAD proposals found."
                             onSelect={(_value, item) => {
                                 if (item) form.setValue("gpr_id", item.id);
                             }}
