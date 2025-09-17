@@ -11,18 +11,14 @@ export const getSummonCaseList = async () => {
 }
 
 
-export const getCaseDetails = async (srId: string) => {
+export const getSummonScheduleList = async (sr_id: string) => {
     try{
-        const res = await api.get(`clerk/case-details/${srId}/`)
-
-        console.log('complainants', res.data.complainant)
-
+        const res = await api.get( `clerk/summon-schedule-list/${sr_id}/`)
         return res.data
-    } catch(err){
+    }catch(err){
         console.error(err)
     }
 }
-
 
 export const getSuppDoc = async(ca_id: string) => {
     try{
@@ -108,3 +104,17 @@ export const getComplaintDetails = async (comp_id: string) => {
     }
 }
 
+
+// ================ MIGHT DELETE LATER ===================
+
+export const getCaseDetails = async (srId: string) => {
+    try{
+        const res = await api.get(`clerk/case-details/${srId}/`)
+
+        console.log('complainants', res.data.complainant)
+
+        return res.data
+    } catch(err){
+        console.error(err)
+    }
+}

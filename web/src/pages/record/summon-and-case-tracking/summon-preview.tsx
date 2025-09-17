@@ -11,7 +11,7 @@ import { formatDateForSummon, formatTimestampToDate } from "@/helpers/summonTime
 
 interface SummonPreviewProps {
   sr_code: string;
-  incident_type: string;
+  incident_type?: string;
   complainant: string[];
   complainant_address: string[];
   accused: string[];

@@ -749,10 +749,29 @@ class ServiceChargePaymentRequestSerializer(serializers.ModelSerializer):
         model = ServiceChargePaymentRequest
         fields = '__all__'
 
-class SummonScheduleSerializer(serializers.ModelSerializer):
+class SummonScheduleDetailSerializer(serializers.ModelSerializer):
+    # Fields from ServiceChargeRequest
+    # sr_code = serializers.CharField(source='sr_id.sr_code', read_only=True)
+    # comp_id = serializers.PrimaryKeyRelatedField(source='sr_id.comp_id', read_only=True)
+    # sr_case_status = serializers.CharField(source='sr_id.sr_case_status', read_only=True)
+    
+    # Fields from date/time availability
+    hearing_date = serializers.DateField(source='sd_id.sd_date', read_only=True)
+    hearing_time = serializers.TimeField(source='st_id.st_start_time', read_only=True)
+    
     class Meta:
         model = SummonSchedule
-        fields = '__all__'
+        fields = [
+            'ss_id', 
+            'ss_mediation_level', 
+            'ss_is_rescheduled', 
+            'ss_reason',
+            # 'sr_code',
+            # 'comp_id',
+            # 'sr_case_status',
+            'hearing_date',
+            'hearing_time'
+        ]
 
 # ================== TREASURER: SERVICE CHARGE LIST =========================
 class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getSummonCaseList, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, 
+import { getSummonCaseList, getSummonScheduleList, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, 
     getSummonTimeSlots, getSummonReqPendingList, getComplaintDetails, getSummonReqRejectedList, getSummonReqAcceptedList} from "../requestAPI/summonGetAPI";
 
 export type SummonCaseList = {
@@ -10,6 +10,7 @@ export type SummonCaseList = {
     incident_type: string;
     sr_case_status: string;
     decision_date: string;
+    comp_id: string;
 }
 
 export const useGetSummonCaseList = () => {
@@ -20,64 +21,24 @@ export const useGetSummonCaseList = () => {
     })
 }
 
-export type CaseActivity = {
-    ca_id: string;
-    ca_reason: string;
-    ca_hearing_date: string;
-    ca_hearing_time: string;
-    ca_mediation: string;
-    ca_date_of_issuance: string;
-    srf_detail: {
-        srf_id: string;
-        srf_name: string;
-        srf_url: string;
-    };
-};
+export type ScheduleList = {
+    ss_id: string;
+    ss_mediation_level: string;
+    ss_is_rescheduled: boolean;
+    ss_reason: string;
+    hearing_date: string;
+    hearing_time: string;
+}
 
-export type FormattedAddress = string;
 
-export type AddressDetails = {
-    add_province: string;
-    add_city: string;
-    add_barangay: string;
-    add_street: string;
-    sitio_name?: string;
-    add_external_sitio?: string;
-    formatted_address: FormattedAddress; // Add this new field
-};
-
-export type CaseDetails = {
-    sr_id: string;
-    sr_code: string;
-    sr_status: string;
-    sr_decision_date: string;
-    complainant: {
-        cpnt_id: string;
-        cpnt_name: string;
-        address: AddressDetails;
-    }[];
-    complaint: {
-        comp_id: string;
-        comp_incident_type: string;
-        comp_allegation: string;
-        comp_datetime: string;
-        accused: {
-            acsd_id: string;
-            acsd_name: string;
-            address: AddressDetails;
-        }[];
-    };
-    case_activities: CaseActivity[];
-};
-
-export const useGetCaseDetails = (srId: string) => {
-    return useQuery<CaseDetails>({
-        queryKey: ['caseDetails', srId],
-        queryFn: () => getCaseDetails(srId),
-        enabled: !!srId, 
+export const useGetScheduleList = (sr_id: string) => {
+     return useQuery<ScheduleList[]>({
+        queryKey: ['schedList', sr_id],
+        queryFn: () => getSummonScheduleList(sr_id),
+        enabled: !!sr_id, 
         staleTime: 5000,
     });
-};
+}
 
 export type CaseSuppDoc = {
     csd_id: string;
@@ -224,3 +185,63 @@ export const useGetComplaintDetails = (comp_id: string) => {
         staleTime: 5000
     })
 }
+
+// =========== MIGHT DELETE THIS LATER ===================
+export type CaseActivity = {
+    ca_id: string;
+    ca_reason: string;
+    ca_hearing_date: string;
+    ca_hearing_time: string;
+    ca_mediation: string;
+    ca_date_of_issuance: string;
+    srf_detail: {
+        srf_id: string;
+        srf_name: string;
+        srf_url: string;
+    };
+};
+
+export type FormattedAddress = string;
+
+export type AddressDetails = {
+    add_province: string;
+    add_city: string;
+    add_barangay: string;
+    add_street: string;
+    sitio_name?: string;
+    add_external_sitio?: string;
+    formatted_address: FormattedAddress; // Add this new field
+};
+
+export type CaseDetails = {
+    sr_id: string;
+    sr_code: string;
+    sr_status: string;
+    sr_decision_date: string;
+    complainant: {
+        cpnt_id: string;
+        cpnt_name: string;
+        address: AddressDetails;
+    }[];
+    complaint: {
+        comp_id: string;
+        comp_incident_type: string;
+        comp_allegation: string;
+        comp_datetime: string;
+        accused: {
+            acsd_id: string;
+            acsd_name: string;
+            address: AddressDetails;
+        }[];
+    };
+    case_activities: CaseActivity[];
+};
+
+export const useGetCaseDetails = (srId: string) => {
+    return useQuery<CaseDetails>({
+        queryKey: ['caseDetails', srId],
+        queryFn: () => getCaseDetails(srId),
+        enabled: !!srId, 
+        staleTime: 5000,
+    });
+};
