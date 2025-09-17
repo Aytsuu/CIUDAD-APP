@@ -1,6 +1,5 @@
 import { api2 } from "@/api/api"
 import axios from "axios"
-import { getAllPatients } from "../api/get-api"
 
 // Helper function for consistent error handling
 const handleApiError = (err: any, operation: string) => {
