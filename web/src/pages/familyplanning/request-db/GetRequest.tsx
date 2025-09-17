@@ -24,6 +24,7 @@ export interface FPPatientsCount {
   total_fp_patients: number;
   resident_fp_patients: number;
   transient_fp_patients: number;
+  minor_fp_patients: number;
 }
 
 export const getFPPatientsCounts = async (): Promise<FPPatientsCount> => {

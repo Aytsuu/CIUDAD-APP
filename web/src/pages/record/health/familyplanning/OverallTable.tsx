@@ -209,7 +209,7 @@ interface FPRecord {
   const totalFPPatients = fpCounts?.total_fp_patients || 0;
   const residentFPPatients = fpCounts?.resident_fp_patients || 0;
   const transientFPPatients = fpCounts?.transient_fp_patients || 0;
-  const minorFPPatients = 0;
+  const minorFPPatients = fpCounts?.minor_fp_patients || 0;
   const residentFPPercentage = totalFPPatients > 0 ? Math.round((residentFPPatients / totalFPPatients) * 100) : 0;
   const transientFPPercentage = totalFPPatients > 0 ? Math.round((transientFPPatients / totalFPPatients) * 100) : 0;
   const minorFPPercentage = totalFPPatients > 0 ? Math.round((minorFPPatients / totalFPPatients) * 100) : 0;
