@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from datetime import date
 from simple_history.models import HistoricalRecords
-from ..abstract_classes import AbstractModels
+from abstract_classes import AbstractModels
 
 class Voter(models.Model):
     voter_id = models.BigAutoField(primary_key=True)
