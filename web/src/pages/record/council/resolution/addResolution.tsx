@@ -36,10 +36,11 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
     const { data: resolutionData = [] } = useResolution();    
     const { data: gadProposals = [], isLoading: isLoadingProposals } = useApprovedProposals();
 
-    console.log("PROPOSALS: ", gadProposals)
+
     // Create mutation
     const { mutate: createResolution, isPending } = useCreateResolution(onSuccess);
 
+    
     const form = useForm<z.infer<typeof resolutionFormSchema>>({
         resolver: zodResolver(resolutionFormSchema),
         mode: 'onChange',
