@@ -130,10 +130,11 @@ export const addHousehold = async (householdInfo: Record<string, string>, staffI
   try {
     const data = {
       hh_nhts: capitalize(householdInfo.nhts),
-      add: householdInfo.address.split(" ")[0],
+      add: householdInfo.address.split("-")[0],
       rp: householdInfo.householdHead.split(" ")[0],
       staff: staffId
     }
+    
     const res = await api.post("profiling/household/create/", data);
 
     return res.data;
