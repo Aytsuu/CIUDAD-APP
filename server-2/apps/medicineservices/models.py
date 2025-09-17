@@ -125,6 +125,3 @@ class FindingsPlanTreatment(models.Model):
     
     class Meta:
         db_table = 'findings_plan_treatment'
-
-
-
