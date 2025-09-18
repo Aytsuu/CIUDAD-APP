@@ -15,7 +15,7 @@ import {
 import { capitalizeAllFields } from "@/helpers/capitalize";
 import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
 import { View, Text } from "react-native";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { useDispatch } from "react-redux";
 import { setAuthData } from "@/redux/auth-redux/authSlice";
 

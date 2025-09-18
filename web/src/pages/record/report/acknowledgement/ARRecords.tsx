@@ -65,8 +65,6 @@ export default function ARRecords() {
     , [])
   ), [weeklyAR])
 
-  console.log(formatDate(now))
-
   // ----------------- SIDE EFFECTS --------------------
   React.useEffect(() => {
     if(isLoadingArReports) showLoading();

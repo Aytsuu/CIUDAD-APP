@@ -7,7 +7,7 @@ import {
   } from "@/components/ui/form/form";
   import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import CardLayout from "@/components/ui/card/card-layout";
 import { UseFormReturn } from "react-hook-form";
 import { TabsContent } from "@/components/ui/tabs";

@@ -6,7 +6,7 @@ import { Search } from "lucide-react"
 import { useState, useMemo, useEffect } from "react"
 import type { UnvaccinatedResident } from "../columns/types"
 import { X } from "lucide-react"
-import { Button } from "@/components/ui/button/button"
+import { Button } from "@/components/ui/button"
 import { ColumnDef } from "@tanstack/react-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 

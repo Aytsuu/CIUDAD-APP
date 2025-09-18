@@ -2,7 +2,7 @@ import { SafeAreaView, View, ActivityIndicator, Text, Pressable, Image, Modal, T
 import { useGetBudgetPlanSuppDoc, type BudgetPlanSuppDoc } from "./queries/budgetPlanFetchQueries";
 import { ChevronLeft, ChevronRight, X, Paperclip, FileText, Plus } from "lucide-react-native";
 import { useState } from "react";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "expo-router";
 
 export default function BudgetPlanSuppDocs({ plan_id }: { plan_id: string }) {

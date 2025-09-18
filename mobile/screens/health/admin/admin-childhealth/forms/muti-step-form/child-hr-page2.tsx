@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
 import { ChildDetailsSchema, type FormData } from "@/form-schema/chr-schema/chr-schema"
-import { Button } from "@/components/ui/button/button" // Corrected import path
+import { Button } from "@/components/ui/button" // Corrected import path
 import { Baby, Calendar, ChevronLeft, Trash2, Plus, Pencil, Check } from "lucide-react"
 import { DisabilityComponent } from "@/components/ui/add-search-disability"
 import { FormSelect } from "@/components/ui/form/form-select"

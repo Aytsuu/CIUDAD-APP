@@ -1,7 +1,7 @@
 import { TabsContent } from "@/components/ui/tabs";
 import CardLayout from "@/components/ui/card/card-layout";
 import { SyringeIcon, Pill, Baby, Dog } from "lucide-react";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import { useAnimalBiteCount, usePatientPostpartumCount } from "@/pages/record/health/patientsRecord/queries/patientsFetchQueries";
 
