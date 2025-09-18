@@ -52,8 +52,8 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
     return "Pregnancy Loss" // covers both "pregnancy loss" and any unknown variants
   }
 
-    // counts
-    const completedPregnancies = pregnancies.filter(p => normalizeStatus(p.status) === "Completed").length;
+  // counts
+  const completedPregnancies = pregnancies.filter(p => normalizeStatus(p.status) === "Completed").length;
 	
 
 	return (
@@ -63,32 +63,47 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
 				<div className="grid grid-cols-3 gap-2 w-full">
 					{/* 1st trimester */}
 					<div className="flex flex-col text-center rounded-md border p-4 gap-2">
-						<span className="flex items-center">
-							<Clock size={16} color="green"/>
-							<h3 className="text-sm font-semibold ml-1">1st Trimester</h3>
+						<span className="flex flex-col">
+              <div className="flex items-center">
+                <Clock size={16} color="green"/>
+                <h3 className="text-sm font-semibold ml-1">1st Trimester</h3>
+              </div>
+							<div className="flex">
+                <p className="text-[11px] pl-5 text-black/50 font-bold italic">12 wks and 6 days</p>
+              </div>
 						</span>
 						<div className="flex justify-center p-4">
-							<p className="text-[30px] font-bold">{completedPregnancies}</p>
+							<p className="text-[14px] font-bold">Date</p>
 						</div>
 					</div>
                     {/* 2nd trimester */}
-                    <div className="flex flex-col text-center rounded-md border p-4 gap-2">
-						<span className="flex items-center">
-							<Clock size={16} color="green"/>
-							<h3 className="text-sm font-semibold ml-1">2nd Trimester</h3>
+          <div className="flex flex-col text-center rounded-md border p-4 gap-2">
+						<span className="flex flex-col">
+              <div className="flex items-center">
+                <Clock size={16} color="green"/>
+                <h3 className="text-sm font-semibold ml-1">2nd Trimester</h3>
+              </div>
+							<div className="flex">
+                <p className="text-[11px] pl-5 text-black/50 font-bold italic">13 wks to 27 wks and 6 days</p>
+              </div>
 						</span>
 						<div className="flex justify-center p-4">
-							<p className="text-[30px] font-bold">{completedPregnancies}</p>
+							<p className="text-[14px] font-bold">Date</p>
 						</div>
 					</div>
                     {/* 3rd trimester */}
-                    <div className="flex flex-col text-center rounded-md border p-4 gap-2">
-						<span className="flex items-center">
-							<Clock size={16} color="green"/>
-							<h3 className="text-sm font-semibold ml-1">3rd Trimester</h3>
+          <div className="flex flex-col text-center rounded-md border p-4 gap-2">
+						<span className="flex flex-col">
+              <div className="flex items-center">
+                <Clock size={16} color="green"/>
+                <h3 className="text-sm font-semibold ml-1">3rd Trimester</h3>
+              </div>
+							<div className="flex">
+                <p className="text-[11px] pl-5 text-black/50 font-bold italic">28 wks to 40 wks</p>
+              </div>
 						</span>
 						<div className="flex justify-center p-4">
-							<p className="text-[30px] font-bold">{completedPregnancies}</p>
+							<p className="text-[14px] font-bold">Date</p>
 						</div>
 					</div>
 				</div>

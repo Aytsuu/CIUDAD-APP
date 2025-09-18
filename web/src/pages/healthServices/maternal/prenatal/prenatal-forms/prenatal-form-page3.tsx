@@ -1,7 +1,7 @@
 "use client"
 
 
-import { useState, useCallback, useEffect } from "react" 
+import { useState, useCallback } from "react" 
 import type { UseFormReturn } from "react-hook-form"
 import type { z } from "zod"
 
@@ -20,9 +20,8 @@ import { MedicineDisplay } from "@/components/ui/medicine-display"
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
 import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices/restful-api/fetchAPI"
-import { usePrenatalPatientFollowUpVisits, useCalculatedMissedVisits } from "../../queries/maternalFetchQueries"
+import { usePrenatalPatientFollowUpVisits } from "../../queries/maternalFetchQueries"
 import { ScrollText } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
 
 
 export default function PrenatalFormThirdPg({
@@ -54,9 +53,9 @@ export default function PrenatalFormThirdPg({
     }
   }
 
-  const aogWks = form.watch("followUpSchedule.aogWeeks") || undefined
-  const aogDays = form.watch("followUpSchedule.aogDays") || undefined
-  const pregnancyId = form.watch("pregnancy_id") || ""
+  // const aogWks = form.watch("followUpSchedule.aogWeeks") || undefined
+  // const aogDays = form.watch("followUpSchedule.aogDays") || undefined
+  // const pregnancyId = form.watch("pregnancy_id") || ""
 
   const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -64,13 +63,13 @@ export default function PrenatalFormThirdPg({
 
   const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
   const { data: followUpVisitsData, isLoading: isFUVLoading, error: followUpVisitsError } = usePrenatalPatientFollowUpVisits(form.getValues("pat_id") || "")
-  const { data: missedVisitsData, isLoading: isMissedVisitsLoading, error: missedVisitsError, refetch: refetchMissedVisits } = useCalculatedMissedVisits(pregnancyId, aogWks, aogDays)
+  // const { data: missedVisitsData, isLoading: isMissedVisitsLoading, error: missedVisitsError, refetch: refetchMissedVisits } = useCalculatedMissedVisits(pregnancyId, aogWks, aogDays)
 
-  useEffect(() => {
-    if(pregnancyId && aogWks) {
-      refetchMissedVisits()
-    }
-  }, [pregnancyId, aogWks, aogDays, refetchMissedVisits])
+  // useEffect(() => {
+  //   if(pregnancyId && aogWks) {
+  //     refetchMissedVisits()
+  //   }
+  // }, [pregnancyId, aogWks, aogDays, refetchMissedVisits])
 
   const getDayName = (dateString: string) => {
     const date = new Date(dateString)
@@ -363,27 +362,26 @@ export default function PrenatalFormThirdPg({
                         </CardContent>
                       </Card>
                     )} */}
-                    <div>
-                      {/* Your existing form fields */}
-                      
-                      {/* AOG Analysis Display */}
-                      {isMissedVisitsLoading && (
+
+                     {/* AOG Analysis Display */}
+                    {/* <div>  */}
+                      {/* {isMissedVisitsLoading && (
                         <Card className="mt-4 mb-4 p-4 border rounded-lg bg-gray-50">
                           <CardContent>
                             <p>Calculating missed visits...</p>
                           </CardContent>
                         </Card>
-                      )}
+                      )} */}
 
-                      {missedVisitsError && (
+                      {/* {missedVisitsError && (
                         <Card className="mt-4 mb-4 p-4 border rounded-lg bg-red-50">
                           <CardContent>
                             <p className="text-red-600">Error calculating missed visits</p>
                           </CardContent>
                         </Card>
-                      )}
+                      )} */}
 
-                      {missedVisitsData && !missedVisitsData.error && (
+                      {/* {missedVisitsData && !missedVisitsData.error && (
                         <Card className="mt-4 mb-4 p-4 border rounded-lg bg-blue-50">
                           <CardHeader>
                             <CardTitle className="font-semibold text-blue-800 mb-3">
@@ -405,8 +403,8 @@ export default function PrenatalFormThirdPg({
                                     : "Weekly"
                                   }
                                 </p>
-                              </div>
-                              <div>
+                              </div> */}
+                              {/* <div>
                                 <p><strong>Expected Visits by Now:</strong> {missedVisitsData.expected_visits}</p>
                                 <p><strong>Actual Visits:</strong> {missedVisitsData.actual_visits}</p>
                                 {missedVisitsData.missed_visits > 0 && (
@@ -425,7 +423,6 @@ export default function PrenatalFormThirdPg({
                               </div>
                             </div>
                             
-                            {/* Visit Breakdown */}
                             {missedVisitsData.visit_breakdown && missedVisitsData.visit_breakdown.length > 0 && (
                               <div className="mt-4">
                                 <p className="font-semibold mb-2">Visit History:</p>
@@ -446,16 +443,16 @@ export default function PrenatalFormThirdPg({
                             )}
                           </CardContent>
                         </Card>
-                      )}
+                      )} */}
 
-                      {missedVisitsData?.error && (
+                      {/* {missedVisitsData?.error && (
                         <Card className="mt-4 mb-4 p-4 border rounded-lg bg-yellow-50">
                           <CardContent>
                             <p className="text-yellow-700">{missedVisitsData.error}</p>
                           </CardContent>
                         </Card>
-                      )}
-                    </div>
+                      )} */}
+                    {/* </div> */}
 
                     {/* Follow-up Date Picker */}
                     <div className="mb-4">
@@ -525,97 +522,106 @@ export default function PrenatalFormThirdPg({
               </div>
 
               {/* guide for 4anc visits */}
-              <div className="grid grid-cols- gap-4 mb-8 p-4">
-                <Card className="border rounded-lg shadow-md flex flex-col w-full mb-8">
+              
+            </div>
+            <div className="grid grid-cols- gap-4 mb-5">
+                <Card className="border rounded-lg shadow-md flex flex-col w-full">
                   <CardHeader>
                     <div className="flex justify-between items-center p-5">
-                      <CardTitle className="text-md font-semibold">GUIDE FOR 4ANC VISITS</CardTitle>
+                      <CardTitle className="text-md font-semibold">GUIDE FOR 8 ANC VISITS</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="px-4">
                       <div className="grid grid-cols-3 px-4 mb-5 gap-3 ">
+                        {/* 1st Trimester */}
                         <Card className="border rounded-md px-3 py-5">
                           <CardContent>
                             <Label className="col-span-2">1st Trimester</Label>
-                            <Separator className="my-2"/>
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.firstTri"
-                                label="1st visit"
-                                type="date"
-                              />
-                            </div>
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.firstTriTwo"
-                                label="2nd visit"
-                                type="date"
-                              />
-                            </div>
                             <Label className="text-black text-opacity-50 italic ml-1">(up to 12 wks and 6 days)</Label>
+                            <div className="border px-5 py-3 rounded-md mt-2">
+                              <div className="mb-2">
+                                <FormDateTimeInput
+                                  control={form.control}
+                                  name="ancVisits.firstTri"
+                                  label="1st visit"
+                                  type="date"
+                                />
+                              </div>
+                              <div className="mb-2">
+                                <FormDateTimeInput
+                                  control={form.control}
+                                  name="ancVisits.firstTriTwo"
+                                  label="2nd visit"
+                                  type="date"
+                                />
+                              </div>
+                            </div>
                           </CardContent>
                         </Card>
-                        <Card className="border rounded-md p-5">
+                        {/* 2nd Trimester */}
+                        <Card className="border rounded-md py-5 px-3">
                           <CardContent>
                             <Label className="col-span-2">2nd Trimester</Label>
-                            <Separator className="my-2"/>
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.secondTri"
-                                label="1st visit"
-                                type="date"
-                              />
-                            </div>
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.secondTriTwo"
-                                label="2nd visit"
-                                type="date"
-                              />
-                            </div>
                             <Label className="text-black text-opacity-50 italic ml-1">(13-27 wks and 6 days)</Label>
+                            <div className="border px-5 py-3 rounded-md mt-2">
+                              <div className="mb-2">
+                                <FormDateTimeInput
+                                  control={form.control}
+                                  name="ancVisits.secondTri"
+                                  label="1st visit"
+                                  type="date"
+                                />
+                              </div>
+                              <div className="mb-2">
+                                <FormDateTimeInput
+                                  control={form.control}
+                                  name="ancVisits.secondTriTwo"
+                                  label="2nd visit"
+                                  type="date"
+                                />
+                              </div>
+                            </div>
                           </CardContent>
                         </Card>
+                        {/* 3rd Trimester */}
                         <Card className="grid border px-3 py-5 rounded-md">
                           <CardContent>
                             <Label className="col-span-2">3rd Trimester</Label>
-                            <Separator className="my-2"/>
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.thirdTriOne"
-                                label="1st visit"
-                                type="date"
-                              />
-                            </div>
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.thirdTriTwo"
-                                label="2nd visit"
-                                type="date"
-                              />
-                            </div>
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.thirdTriThree"
-                                label="3rd visit"
-                                type="date"
-                              />
-                            </div>
-                            <div>
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.thirdTriFour"
-                                label="4th visit"
-                                type="date"
-                              />
+                            <Label className="text-black text-opacity-50 italic ml-1">(28 wks to 40 wks)</Label>
+                            <div className="border px-5 py-3 rounded-md mt-2">
+                              <div className="mb-2">
+                                <FormDateTimeInput
+                                  control={form.control}
+                                  name="ancVisits.thirdTriOne"
+                                  label="1st visit"
+                                  type="date"
+                                />
+                              </div>
+                              <div className="mb-2">
+                                <FormDateTimeInput
+                                  control={form.control}
+                                  name="ancVisits.thirdTriTwo"
+                                  label="2nd visit"
+                                  type="date"
+                                />
+                              </div>
+                              <div className="mb-2">
+                                <FormDateTimeInput
+                                  control={form.control}
+                                  name="ancVisits.thirdTriThree"
+                                  label="3rd visit"
+                                  type="date"
+                                />
+                              </div>
+                              <div>
+                                <FormDateTimeInput
+                                  control={form.control}
+                                  name="ancVisits.thirdTriFour"
+                                  label="4th visit"
+                                  type="date"
+                                />
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -624,10 +630,8 @@ export default function PrenatalFormThirdPg({
                   </CardContent>
                 </Card>
               </div>
-            </div>
-
             <div>
-              {/* checklist */}
+              {/* Checklist */}
                 <Card className="border rounded-lg shadow-md flex flex-col w-full mb-5">
                   <CardHeader>
                     <CardTitle className="text-md font-semibold p-5">CHECKLIST</CardTitle>
@@ -656,7 +660,8 @@ export default function PrenatalFormThirdPg({
                   </CardContent>
                 </Card>
             </div>
-
+            
+            {/* Birth Plans and Micronutrient Supplementation */}
             <div className="grid ">
               <Card className=" p-4 border rounded-lg shadow-md mb-5">
                 <CardHeader>

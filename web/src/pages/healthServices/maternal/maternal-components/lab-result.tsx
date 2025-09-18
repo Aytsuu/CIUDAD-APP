@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Upload, X, CheckCircle2, Clock, AlertCircle, Calendar, ImageIcon } from "lucide-react"
+import { fileToBase64 } from "@/helpers/fileHelpers"
 
 // Types
 export interface LabImage {
@@ -791,7 +792,7 @@ export const getLabResultsSummary = (labResults: LabResults) => {
     }, {} as any)
 }
 
-export const convertLabResultsToSchema = (labResults: LabResults) => {
+export const convertLabResultsToSchema = async (labResults: LabResults) => {
   const labTypeMapping = {
     urinalysis: "urinalysis",
     cbc: "cbc",
@@ -806,21 +807,28 @@ export const convertLabResultsToSchema = (labResults: LabResults) => {
     ogct100: "ogct_100gms",
   } as const
 
-  return Object.entries(labResults)
-    .filter(([_, lab]) => lab.checked) // only checked labs
-    .map(([labName, lab]) => ({
+  const results = await Promise.all(
+   Object.entries(labResults)
+    .filter(([_, lab]) => lab.checked) 
+    .map(async ([labName, lab]) => ({
       lab_type: labTypeMapping[labName as keyof typeof labTypeMapping],
       resultDate: lab.date,
       toBeFollowed: lab.toBeFollowed, 
       documentPath: lab.imageFile ? `lab_images/${labName}_${Date.now()}.${lab.imageFile.name.split(".").pop()}` : "",
-      remarks: lab.remarks || "",
-      images: lab.images.map(img => ({
-        image_url: img.url || img.preview || "",
-        image_name: img.name || "",
-        image_type: img.type || "",
-        image_size: img.size || 0,
-      })), // Ensure images array is passed
+      labRemarks: lab.remarks || "",
+      images: await Promise.all(
+        lab.images.map(async img => ({
+          image_url: await fileToBase64(img.file),
+          image_name: img.name,
+          image_type: img.type,
+          image_size: img.size,
+        }))
+      )
+      
+      // Ensure images array is passed
     }))
+  )
+  return results
 }
 
 // Validation helper

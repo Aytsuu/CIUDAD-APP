@@ -183,7 +183,7 @@ const transformPatientsToReports = (patients: Patients[]): Report[] => {
     sitio: patient.address?.add_sitio || "Unknown",
     lastName: patient.personal_info?.per_lname || "",
     firstName: patient.personal_info?.per_fname || "",
-    mi: patient.personal_info?.per_mname || "None",
+    mi: patient.personal_info?.per_mname || "",
     type: patient.pat_type || "Resident",
   }));
 };

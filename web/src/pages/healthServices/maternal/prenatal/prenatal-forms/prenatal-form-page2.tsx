@@ -94,6 +94,7 @@ export default function PrenatalFormSecPg({
     }
   }, [ttRecords.length, form])
 
+  // automatic edc calculation based on lmp
   useEffect(() => {
     const lmp = form.getValues("presentPregnancy.pf_lmp");
     if (lmp) {
@@ -108,22 +109,25 @@ export default function PrenatalFormSecPg({
 
   useEffect(() => {
     // convert lab results to the format expected by your form schema
-    const convertedLabResults = convertLabResultsToSchema(labResults)
+    const convertAndSetLabResults = async () => {
+      const convertedLabResults = await convertLabResultsToSchema(labResults)
+      form.setValue("labResults.labResultsData", convertedLabResults)
 
-    form.setValue("labResults.labResultsData", convertedLabResults)
+      // validate lab results and set errors
+      const validation = validateLabResults(labResults)
+      setLabErrors(validation.errors)
 
-    // validate lab results and set errors
-    const validation = validateLabResults(labResults)
-    setLabErrors(validation.errors)
-
-    if (!validation.isValid) {
-      form.setError("labResults", {
-        type: "manual",
-        message: "Please complete all required lab result fields",
-      })
-    } else {
-      form.clearErrors("labResults")
+      if (!validation.isValid) {
+        form.setError("labResults", {
+          type: "manual",
+          message: "Please complete all required lab result fields",
+        })
+      } else {
+        form.clearErrors("labResults")
+      }
     }
+    
+    convertAndSetLabResults()
   }, [labResults, form])
 
   const handleNext = async () => {

@@ -224,7 +224,7 @@ export function PregnancyAccordion({
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-sm text-gray-500">
-                                {new Date(record.dateCreated).toLocaleDateString()}
+                                Date created: {new Date(record.dateCreated).toLocaleDateString()}
                               </span>
                               <div className="flex gap-1">
                                 <TooltipLayout
@@ -273,7 +273,7 @@ export function PregnancyAccordion({
                                         Complete
                                       </Button>
                                     }
-                                    content={`Mark this ${record.recordType.toLowerCase()} record as completed`}
+                                    content={`Mark ${record.recordType.toLowerCase()} as completed`}
                                   />
                                 )}
 
@@ -290,7 +290,7 @@ export function PregnancyAccordion({
                                         Pregnancy Loss
                                       </Button>
                                     }
-                                    content="Mark this prenatal record to reflect pregnancy loss outcome"
+                                    content="Mark prenatal to reflect pregnancy loss outcome"
                                   />
                                 )}
                               </div>

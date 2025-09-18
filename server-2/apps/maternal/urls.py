@@ -1,21 +1,6 @@
 from django.urls import path
 from . import views
 from .views import *
-# from .views import (
-#     PostpartumRecordCreateView,
-# 	get_patient_postpartum_count,
-#     get_latest_patient_postpartum_records,
-# 	get_patient_pregnancy_records,
-# 	get_patient_prenatal_count,
-# 	get_all_active_pregnancies,
-# 	get_prenatal_followup_visit,
-# 	get_prenatal_prev_hospitalization,
-#     get_prenatal_prev_pregnancy,
-#     get_latest_patient_prenatal_record,
-#     get_prenatal_records_with_care,
-#     get_prenatal_form_complete,
-#     get_prenatal_patient_tt_status,
-# )
 
 urlpatterns=[
     path('maternal-patients/', views.get_maternal_patients, name='get-maternal-patients'),

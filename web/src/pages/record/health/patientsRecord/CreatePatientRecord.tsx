@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { useNavigate } from "react-router-dom"
 
@@ -26,6 +26,7 @@ import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 
 import { generateDefaultValues } from "@/pages/record/health/patientsRecord/generateDefaultValues"
 import { capitalize } from "@/helpers/capitalize"
+import { formatResidents } from "../../profiling/ProfilingFormats"
 
 import { useResidents, useAllTransientAddresses } from "./queries/fetch"
 import { useAddPatient } from "./queries/add"
@@ -51,7 +52,7 @@ export const capitalizeAllFields = (data: any): any => {
     return data;
 };
 
-
+// typescript interfaces
 interface ResidentProfile {
   rp_id: string
   households: {
@@ -100,6 +101,7 @@ interface PatientCreationData {
   }
 }
 
+// main component
 export default function CreatePatientRecord() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
@@ -114,11 +116,24 @@ export default function CreatePatientRecord() {
     defaultValues,
   })
 
-  const patientType = form.watch("patientType")
-  
   const { data: residentsData, isLoading: residentLoading } = useResidents()
   const { data: transAddress, isLoading: transAddressLoading } = useAllTransientAddresses()
 
+  const formattedResidents = formatResidents(residentsData)
+
+  const patientType = form.watch("patientType")
+  const phId = form.watch("philhealthId")
+
+  useEffect(() => {
+    if(phId && phId.length != 12) {
+      form.setError("philhealthId", {
+        type: "manual",
+        message: "PhilHealth ID must be 12 digits.",
+      })
+    } else if (phId && phId.length === 12) {
+      form.clearErrors("philhealthId")
+    }
+  }, [phId, form])
 
   const transientAddressOpt = (transAddress && Array.isArray(transAddress)) ? transAddress?.map((tradd: any) => ({
     id: tradd.tradd_id.toString(),
@@ -143,7 +158,7 @@ export default function CreatePatientRecord() {
 
     if (selectedAddress) {
       form.setValue("address.street", selectedAddress.tradd_street || "")
-      form.setValue("address.sitio", selectedAddress.tradd_sitio || "")
+      form.setValue("address.sitio", capitalize(selectedAddress.tradd_sitio) || "")
       form.setValue("address.barangay", selectedAddress.tradd_barangay || "")
       form.setValue("address.city", selectedAddress.tradd_city || "")
       form.setValue("address.province", selectedAddress.tradd_province || "")
@@ -162,7 +177,13 @@ export default function CreatePatientRecord() {
     formatted:
       residentsData?.map((personal: any) => ({
         id: personal.rp_id.toString(),
-        name: `${personal.personal_info?.per_lname || ""}, ${personal.personal_info?.per_fname || ""} ${personal.personal_info?.per_mname || ""}`.trim(),
+        name: (
+          <>
+            <span className="rounded-md px-2 py-1 font-poppins mr-1 bg-blue-600 text-white"># {personal.rp_id} </span>
+            {personal.personal_info?.per_lname || ""}, {personal.personal_info?.per_fname || ""} {personal.personal_info?.per_mname || ""}
+            
+          </>
+        )
       })) || [],
   }
 
@@ -214,10 +235,10 @@ export default function CreatePatientRecord() {
       form.setValue("philhealthId", personalInfo.philhealth_id || "");
 
       if (selectedPatient.personal_info.per_addresses && selectedPatient.personal_info.per_addresses.length > 0) {
-        const address = selectedPatient.personal_info.per_addresses[0]; // Get first address
+        const address = selectedPatient.personal_info.per_addresses[0]; 
 
         form.setValue("address.street", address.add_street || "");
-        form.setValue("address.sitio", address.sitio || "");
+        form.setValue("address.sitio", address.sitio || ""); // to be added capitalize helper
         form.setValue("address.barangay", address.add_barangay || "");
         form.setValue("address.city", address.add_city || "");
         form.setValue("address.province", address.add_province || "");
@@ -393,9 +414,8 @@ export default function CreatePatientRecord() {
                       <Separator className="w-full bg-gray" />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 rounded-lg bg-white mb-8">
-                      <div className="flex-1">
-                        <Label className="text-black/70"> </Label>
+                    <div className="grid grid-cols-2 gap-6 rounded-lg bg-white mb-8">
+                      <div className="">
                         <FormSelect
                           control={form.control}
                           name="patientType"
@@ -410,10 +430,10 @@ export default function CreatePatientRecord() {
 
                       {patientType === "resident" && (
                         <div>
-                          <Label className="text-black/70">Resident Selection</Label>
-                          <div className="relative mt-[6.5px]">
+                          <Label className="text-black/70">Resident</Label>
+                          <div className="grid mt-[6.5px] ">
                             <Combobox
-                              options={persons.formatted}
+                              options={formattedResidents}
                               value={selectedResidentId}
                               onChange={handlePatientSelection}
                               placeholder={residentLoading ? "Loading residents..." : "Select a resident"}
@@ -438,7 +458,7 @@ export default function CreatePatientRecord() {
                       )}
 
                       {patientType === 'transient' && (
-                        <div className="flex w-full items-end">
+                        <div className="flex w-[600px] items-end">
                           <label className="flex items-center text-[15px] font-poppins p-[9px] w-full gap-1"> <CircleAlert size={15}/> For <b>TRANSIENT</b> please fill in the needed details below.</label>
                         </div>
                       )}

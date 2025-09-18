@@ -4,20 +4,16 @@ from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from django.db.models import OuterRef, Exists, Prefetch
 from rest_framework.response import Response
+
 from apps.maternal.serializer import *
-# from apps.maternal.serializer import (
-#     MedicalHistorySerializer, ObstetricalHistorySerializer, PostpartumCompleteSerializer,
-#     PrenatalCompleteSerializer, PregnancyDetailSerializer,BodyMeasurementReadSerializer,
-#     PreviousPregnancyCreateSerializer, ObstetricRiskCodeCreateSerializer, PrenatalCareCreateSerializer,
-#     PrenatalDetailSerializer, PrenatalCareDetailSerializer, PrenatalFormCompleteViewSerializer,
-#     SpouseCreateSerializer
-# ) 
+from apps.maternal.serializers.postpartum_serializer import *
+from apps.maternal.serializers.prenatal_serializer import *
+from apps.maternal.serializers.pregnancy_serializer import *
+
 from apps.patientrecords.serializers.patients_serializers import *
 from .models import *
-from .utils import calculate_missed_visits
+from .utils import *
 
-
-from datetime import datetime
 import logging
 
 

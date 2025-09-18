@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useFormContext, type UseFormReturn } from "react-hook-form"
 import { Form } from "@/components/ui/form/form"
 import type { ColumnDef } from "@tanstack/react-table"
+import { Trash } from "lucide-react"
 
 import type { z } from "zod"
 
@@ -278,7 +279,7 @@ export default function PrenatalFormFourthPq({
       header: "Actions",
       cell: ({ row }) => (
         <Button variant="destructive" onClick={() => removePrenatalCareEntry(row.index)}>
-          Remove
+          <Trash className="h-4 w-4" />
         </Button>
       ),
     },
@@ -288,7 +289,6 @@ export default function PrenatalFormFourthPq({
 
    const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
     setIsConfirmOpen(false)
     setIsSubmitting(true)
     
@@ -471,7 +471,14 @@ export default function PrenatalFormFourthPq({
                 disabled={isSubmitting || addPrenatalRecordMutation.isPending}
                 onClick={() => setIsConfirmOpen(true)}
               >
-                {isSubmitting ? "Submitting..." : "Submit"}
+                
+                {isSubmitting ? 
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    "Submitting..." 
+                  </>
+                : "Submit"
+                }
               </Button>
             </div>
           </form>

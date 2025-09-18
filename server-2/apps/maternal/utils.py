@@ -1,10 +1,67 @@
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
-from apps.maternal.models import Pregnancy, Prenatal_Form
-from apps.patientrecords.models import Spouse
-from apps.maternal.serializer import *
-from datetime import date
+# from datetime import datetime, timedelta
+# from dateutil.relativedelta import relativedelta
+# from datetime import date
 
+from apps.patientrecords.models import Spouse
+from apps.patientrecords.serializers.patients_serializers import *
+from apps.maternal.models import Pregnancy, Prenatal_Form
+from apps.maternal.serializer import *
+
+
+def _check_medical_records_for_spouse(self, obj):
+    try:
+        # family_planning_with_spouse = PostpartumRecord.objects.filter(
+        #     patrec_id__pat_id=obj,
+        #     spouse_id__isnull=False
+        # ).select_related('spouse_id').order_by('-created_at').first()
+        
+        # if family_planning_with_spouse and family_planning_with_spouse.spouse_id:
+        #     return {
+        #         'spouse_exists': True,
+        #         'spouse_source': 'postpartum_record',
+        #         'spouse_info': SpouseSerializer(family_planning_with_spouse.spouse_id, context=self.context).data
+        #     }
+
+        # query PostpartumRecord with spouse
+        postpartum_with_spouse = PostpartumRecord.objects.filter(
+            patrec_id__pat_id=obj,
+            spouse_id__isnull=False
+        ).select_related('spouse_id').order_by('-created_at').first()
+        
+        if postpartum_with_spouse and postpartum_with_spouse.spouse_id:
+            return {
+                'spouse_exists': True,
+                'spouse_source': 'postpartum_record',
+                'spouse_info': SpouseSerializer(postpartum_with_spouse.spouse_id, context=self.context).data
+            }
+        
+        # query Prenatal_Form with spouse
+        prental_with_spouse = Prenatal_Form.objects.filter(
+            patrec_id__pat_id=obj,
+            spouse_id__isnull=False
+        ).select_related('spouse_id').order_by('-created_at').first()
+        
+        if prental_with_spouse and prental_with_spouse.spouse_id:
+            return {
+                'spouse_exists': True,
+                'spouse_source': 'prenatal_form',
+                'spouse_info': SpouseSerializer(prental_with_spouse.spouse_id, context=self.context).data
+            }
+        
+        # No spouse found in medical records
+        return {
+            'spouse_exists': False,
+            'allow_spouse_insertion': True,
+            'reason': 'No spouse found in family composition or medical records'
+        }
+
+    except Exception as e:
+        print(f"Error checking medical records for spouse: {str(e)}")
+        return {
+            'spouse_exists': False,
+            'allow_spouse_insertion': True,
+            'reason': f'Error in medical records check: {str(e)}'
+        }
 
 def handle_spouse_logic(patient, spouse_data):
     if not spouse_data:
@@ -40,12 +97,7 @@ def handle_spouse_logic(patient, spouse_data):
     else:
         print("Spouse insertion not allowed")
         return None
-        # fallback: try to create spouse if there's an error
-        # try:
-        #     return Spouse.objects.create(**spouse_data)
-        # except Exception as create_error:
-        #     print(f"Error creating spouse: {str(create_error)}")
-        #     return None
+    
 
 
 def calculate_missed_visits(pregnancy_id, current_aog_weeks=None, current_aog_days=0):

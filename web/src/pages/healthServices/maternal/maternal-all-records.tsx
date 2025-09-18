@@ -194,7 +194,7 @@ export default function MaternalAllRecords() {
     {
       accessorKey: "sitio",
       header: ({}) => (
-        <div className="border">Sitio</div>
+        <div>Sitio</div>
       ),
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
