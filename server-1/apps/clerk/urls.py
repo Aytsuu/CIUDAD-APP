@@ -12,15 +12,21 @@ urlpatterns = [
     # path('delete-case-supp-doc/<int:csd_id>/', DeleteCaseSuppDocView.as_view(), name='delete-case-supp-doc'),
     # path('update-case-supp-doc/<int:csd_id>/', UpdateCaseSuppDocView.as_view(), name='update-case-supp-doc'),
     # path('service-charge-request-file/', ServiceChargeRequestFileView.as_view(), name='service-charge-request-file'),
+
+    # Request List
     path('service-charge-pending-list/', SummonRequestPendingListView.as_view(), name='service=-charge-pending-list'),
     path('service-charge-rejected-list/', SummonRequestRejectedListView.as_view(), name='service=-charge-rejected-list'),
     path('service-charge-accepted-list/', SummonRequestAcceptedListView.as_view(), name='service=-charge-accepted-list'),
+
+    # Case List and details
     path('summon-case-list/', SummonCaseListView.as_view(), name='summon-case-list'),
     path('service-charge-request-details/<str:sr_id>/', ServiceChargeRequestDetailView.as_view(), name='service-charge-req-details'),
     path('summon-schedule-list/<str:sr_id>/', SummonScheduleByServiceRequestView.as_view(), name='summon-schedule-list'),
     path('update-summon-sched/<str:ss_id>/', UpdateSummonScheduleView.as_view(), name='update-summon-sched'),
     path('summon-supp-doc/', SummonSuppDocView.as_view(), name='summon-supp-doc'),
     path('summon-supp-doc/<str:ss_id>/', SummonSuppDocRetrieveView.as_view(), name='summon-supp-doc-retrieve'),
+    path('create-summon-sched/', SummonScheduleCreateView.as_view(), name='summon-sched-create'),
+
     path('update-summon-request/<str:sr_id>/', UpdateSummonRequestView.as_view(), name='update-summon-request'),
     path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
     path('service-charge-payment-request/', ServiceChargePaymentRequestView.as_view(), name='service-charge-payment-req'),
@@ -29,6 +35,8 @@ urlpatterns = [
     path('summon-time-availability/', SummonTimeAvailabilityView.as_view(), name='summon-time-availability'),
     path('summon-time-availability/<int:sd_id>/', SummonTimeAvailabilityByDateView.as_view(), name='summon-time-availability-by-date'),
     path('delete-summon-time-availability/<int:st_id>/', DeleteSummonTimeAvailabilityView.as_view(), name='delete-summon-time-availability'),
+    path('update-summon-time-availability/<str:st_id>/', UpdateSummonTimeAvailabilityView.as_view(), name='update-summon-time-availability'),
+
    
     # Certificate URLs
     path('certificate/', CertificateListView.as_view(), name='certificate_list'),

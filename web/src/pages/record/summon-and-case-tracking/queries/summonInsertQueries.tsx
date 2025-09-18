@@ -1,19 +1,19 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { addCaseActivity, addSummonDate, addSummonTimeSlots, addSuppDoc } from "../requestAPI/summonPostAPI";
+import { addSchedule, addSummonDate, addSummonTimeSlots, addSuppDoc } from "../requestAPI/summonPostAPI";
 import z from "zod"
 import SummonSchema from "@/form-schema/summon-schema";
 import { showSuccessToast } from "@/components/ui/toast";
 import { showErrorToast } from "@/components/ui/toast";
 
-export const useAddCaseActivity = (onSuccess?: () => void) => {
+export const useAddSummonSchedule = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
      return useMutation({
-            mutationFn: (values: z.infer<typeof SummonSchema>) => addCaseActivity(values),
+            mutationFn: (values: z.infer<typeof SummonSchema>) => addSchedule(values),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['caseDetails'] });
+                queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] });
 
                 toast.loading('Submitting Record...', {id: "createCase"});
         
@@ -46,7 +46,7 @@ export const useAddSuppDoc = (onSuccess?: () => void) => {
             return addSuppDoc(data.ss_id, data.sr_id,  data.file, data.reason);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['suppDocs'] });
+            queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] });
 
             showSuccessToast('Documents uploaded successfully!')
             onSuccess?.();

@@ -1,350 +1,108 @@
-import { veraMonoNormal } from "@/assets/fonts/VeraMono-normal";
-import { veraMonoBold } from "@/assets/fonts/VeraMono-Bold-bold";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Form } from "@/components/ui/form/form";
 import { FormSelect } from "@/components/ui/form/form-select";
 import SummonSchema from "@/form-schema/summon-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { useForm } from "react-hook-form";
-import { useAddCaseActivity } from "./queries/summonInsertQueries";
-import { useGetSummonTemplate } from "./queries/summonFetchQueries";
-import { jsPDF } from "jspdf";
-import sealImage from "@/assets/images/Seal.png";
-import { formatSummonDateTime } from "@/helpers/summonDateTimeFormatter";
+import { useAddSummonSchedule } from "./queries/summonInsertQueries";
+import { useGetSummonDates } from "./queries/summonFetchQueries";
+import { useGetSummonTimeSlots } from "./queries/summonFetchQueries";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatTime } from "@/helpers/timeFormatter";
+import { useGetScheduleList } from "./queries/summonFetchQueries";
 
-// Helper function to format date for summon
-const formatDateForSummon = (date: Date) => {
-  const day = date.getDate();
-  const month = date.toLocaleString('default', { month: 'long' }).toUpperCase();
-  const year = date.getFullYear();
-  
-  // Add ordinal suffix to day
-  const suffix = 
-    day === 1 || day === 21 || day === 31 ? 'st' :
-    day === 2 || day === 22 ? 'nd' :
-    day === 3 || day === 23 ? 'rd' : 'th';
-  
-  return `${day}${suffix} day of ${month} ${year}`;
-};
-
-function CreateNewSummon({ sr_id, complainant, accused, incident_type, complainant_address, accused_address, sr_code, onSuccess }: {
-    sr_id: number;
-    complainant: string[];
-    accused: string[];
-    incident_type: string;
-    complainant_address: string[];
-    accused_address: string[];
-    sr_code: string;
+function CreateSummonSched({ sr_id, onSuccess }: {
+    sr_id: string;
     onSuccess: () => void
 }) {
-    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-    const { mutate: addCase } = useAddCaseActivity(onSuccess);
-    const { data: template } = useGetSummonTemplate();
-    const header = template?.temp_header;
-    const marginSetting = template?.temp_margin || "normal";
-    const paperSizeSetting = template?.temp_paperSize || "letter";
-    const withSeal = template?.temp_w_seal || false;
+    const [selectedDateId, setSelectedDateId] = useState<number | null>(null);
+    const { data: scheduleList = [], isLoading: isLoadingSchedList} = useGetScheduleList(sr_id)
+    const { data: dates = [], isLoading: isLoadingDates } = useGetSummonDates();
+    const { data: timeslots = [], isLoading: isLoadingTimeslots } = useGetSummonTimeSlots(selectedDateId || 0);
+    const { mutate: addSched, isPending } = useAddSummonSchedule(onSuccess);
 
-    const reasons = [
-        { id: "First Hearing", name: "First Hearing" },
-        { id: "Unresolved", name: "Unresolved" },
-        { id: "Complainant is Absent/Unavailable", name: "Complainant is Absent/Unavailable" },
-        { id: "Accused is Absent/Unavailable", name: "Accused is Absent/Unavailable" },
-    ];
+    const currentDateStr = new Date().toISOString().split('T')[0];
 
-    const mediationNumber = [
-        { id: "1st", name: "1st" },
-        { id: "2nd", name: "2nd" },
-        { id: "3rd", name: "3rd" },
-    ];
+    function getMediationLevel(scheduleCount: number){
+        if (scheduleCount === 0) {
+            return "1st MEDIATION";
+        } else if (scheduleCount === 1) {
+            return "2nd MEDIATION";
+        } else if (scheduleCount === 2) {
+            return "3rd MEDIATION";
+        } else if (scheduleCount === 3) {
+            return "1st Conciliation Proceedings";
+        } else if (scheduleCount === 4) {
+            return "2nd Conciliation Proceedings";
+        } else if (scheduleCount >= 5) {
+            return "3rd Conciliation Proceedings";
+        }
+        return "1st MEDIATION"; // Default fallback
+    }
+  
+    const mediationLevel = getMediationLevel(scheduleList.length);
+
+    const dateOptions = dates
+        .filter(date => date.sd_date > currentDateStr)
+        .map(date => ({
+            id: String(date.sd_id),  
+            name: `${date.sd_date}`  
+        }));
 
     const form = useForm<z.infer<typeof SummonSchema>>({
         resolver: zodResolver(SummonSchema),
         defaultValues: {
-            reason: "",
-            hearingDate: "",
-            hearingTime: "",
-            mediation: "",
+            sd_id: "",
+            st_id: "",
+            ss_mediation_level: mediationLevel,
             sr_id: String(sr_id),
         },
     });
 
-    const registerFonts = (doc: jsPDF) => {
-        doc.addFileToVFS('VeraMono-normal.ttf', veraMonoNormal);
-        doc.addFont('VeraMono-normal.ttf', 'VeraMono', 'normal');
-        doc.addFileToVFS('VeraMono-Bold-bold.ttf', veraMonoBold);
-        doc.addFont('VeraMono-Bold-bold.ttf', 'VeraMono', 'bold');
-    };
+    // Update form value when mediationLevel changes
+    useEffect(() => {
+        form.setValue("ss_mediation_level", mediationLevel);
+    }, [mediationLevel, form]);
 
-    const generatePdf = async (hearingDate: string, hearingTime: string, mediation: string) => {
-        return new Promise<void>((resolve) => {
-            // Convert paper size to jsPDF format
-            let pageFormat: [number, number] | string;
-            switch(paperSizeSetting) {
-                case "legal":
-                    pageFormat = [612, 1008]; 
-                    break;
-                case "letter":
-                    pageFormat = [612, 792]; 
-                    break;
-                case "a4":
-                default:
-                    pageFormat = "a4"; 
-            }
+    const selectedDate = form.watch("sd_id");
 
-            const marginValue = marginSetting === 'narrow' ? 36 : 72;
-            const doc = new jsPDF({ 
-                orientation: "portrait",
-                unit: "pt",
-                format: pageFormat,
-            });
+    useEffect(() => {
+        if (selectedDate) {
+            const dateId = parseInt(selectedDate);
+            setSelectedDateId(dateId);
+        } else {
+            setSelectedDateId(null);
+        }
+    }, [selectedDate]);
 
-            registerFonts(doc);
+    // Generate time slot options based on the selected date, excluding booked slots
+    const timeSlotOptions = timeslots
+        .filter(timeslot => !timeslot.st_is_booked) // Exclude booked time slots
+        .map(timeslot => ({
+            id: String(timeslot.st_id),
+            name: `${formatTime(timeslot.st_start_time)}`
+        }));
 
-            let yPos = marginValue;
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            const lineHeight = 14;
-            const sectionGap = 20;
-
-            const setCurrentFont = (style: 'normal' | 'bold' = 'normal') => {
-                doc.setFont("VeraMono", style);
-            };
-
-            // Add header - check if header is an image URL or text content
-            if (header && (header.startsWith('http://') || header.startsWith('https://'))) {
-                // Handle image header
-                const imageHeight = 130;
-                const img = new Image();
-                img.crossOrigin = "Anonymous"; // Handle CORS if needed
-                img.src = header;
-                
-                img.onload = () => {
-                    try {
-                        doc.addImage(img, "PNG", marginValue, yPos, pageWidth - marginValue * 2, imageHeight);
-                        yPos += imageHeight + 30;
-                        continueDocumentGeneration();
-                    } catch (e) {
-                        console.error("Error adding header image:", e);
-                        // Fallback to text if image fails
-                        addTextHeader();
-                        continueDocumentGeneration();
-                    }
-                };
-                
-                img.onerror = () => {
-                    console.error("Failed to load header image");
-                    addTextHeader();
-                    continueDocumentGeneration();
-                };
-            } else {
-                // Handle text header
-                addTextHeader();
-                continueDocumentGeneration();
-            }
-
-            function addTextHeader() {
-                setCurrentFont('normal');
-                doc.setFontSize(10);
-
-                const headerLines = header && !header.startsWith('http')
-                    ? header.split("\n")
-                    : [
-                        "Republic of the Philippines",
-                        "Cebu City | San Roque Ciudad",
-                        "",
-                        "Office of the Barangay Captain",
-                        "Arellano Boulevard, Cebu City, Cebu 6000",
-                        "barangaysanroquetiudad23@gmail.com",
-                        "(032) 231-36-99"
-                    ];
-
-                headerLines.forEach((line) => {
-                    doc.text(line, pageWidth / 2, yPos, { align: "center" });
-                    yPos += lineHeight;
-                });
-                yPos += 20; // Add some space after the header
-            }
-
-            function continueDocumentGeneration() {
-                // Case Info
-                setCurrentFont('bold');
-                doc.setFontSize(10);
-                doc.text(`BARANGAY CASE NO. : ${sr_code}`, pageWidth - marginValue, yPos, { align: "right" });
-                yPos += lineHeight;
-
-                // FOR: aligned right below case number
-                doc.text(`FOR: ${incident_type}`, pageWidth - marginValue, yPos, { align: "right" });
-                yPos += lineHeight * 2;  // Extra space after header
-
-                // Left-aligned complainant details
-                for (let i = 0; i < complainant.length; i++) {
-                // Print name
-                    setCurrentFont('bold');
-                    doc.text(`NAME:`, marginValue, yPos);
-                    setCurrentFont('bold');
-                    doc.text(`${complainant[i]}`, marginValue + 35, yPos);
-                    yPos += lineHeight;
-                    
-                    // Print corresponding address if available
-                    if (i < complainant_address.length) {
-                        setCurrentFont('normal');
-                        doc.text(`ADDRESS:`, marginValue, yPos);
-                        setCurrentFont('normal');
-                        doc.text(`${complainant_address[i]}`, marginValue + 50, yPos);
-                        yPos += lineHeight;
-                    }
-                }
-
-                doc.text(`COMPLAINANT/S`, marginValue, yPos);
-                yPos += lineHeight * 2;  // Extra space before divider
-
-                // Divider
-                setCurrentFont('bold');
-                doc.text(`-AGAINST-`, marginValue, yPos);
-                yPos += lineHeight * 1.5;  // Extra space after divider
-
-                // Left-aligned respondent details
-
-                for (let i = 0; i < accused.length; i++) {
-                    // Print name
-                    setCurrentFont('bold');
-                    doc.text(`NAME:`, marginValue, yPos);
-                    setCurrentFont('bold');
-                    doc.text(`${accused[i]}`, marginValue + 35, yPos); // Indent name text
-                    yPos += lineHeight;
-                    
-                    
-                    // Print corresponding address if available
-                    if (i < accused_address.length) {
-                        setCurrentFont('normal');
-                        doc.text(`ADDRESS:`, marginValue, yPos);
-                        setCurrentFont('normal');
-                        doc.text(`${accused_address[i]}`, marginValue + 50, yPos); // Indent address text
-                        yPos += lineHeight;
-                    }
-                    
-                    // Add extra space between entries if not last item
-                    if (i < accused.length - 1) {
-                        yPos += lineHeight * 0.5;
-                    }
-                }
-
-                doc.text(`RESPONDENT`, marginValue, yPos);
-                yPos += lineHeight * 2;  
-
-                // Title
-                doc.setFont("times", "bold");
-                doc.setFontSize(16);
-                const title = "S U M M O N";
-                const titleWidth = doc.getTextWidth(title);
-                doc.text(title, (pageWidth - titleWidth) / 2, yPos);
-                yPos += lineHeight;
-
-                // Subtitle
-                doc.setFont("times", "normal");
-                doc.setFontSize(9);
-                const subtitle = `${mediation} MEDIATION`;
-                const subtitleWidth = doc.getTextWidth(subtitle);
-                doc.text(subtitle, (pageWidth - subtitleWidth) / 2, yPos);
-                yPos += lineHeight * 2;
-
-                // Body
-                setCurrentFont('normal');
-                doc.setFontSize(10);
-
-                const formattedDateTime = formatSummonDateTime(hearingDate, hearingTime);
-
-                const bodyText1 = `You are hereby informed to appear before me in person, together with your witnesses, on the ${formattedDateTime} at the Barangay Hall of San Roque (CIUDAD). Then and there to answer the complaint made before me, for mediation of your dispute with complainant.`;
-                const splitText1 = doc.splitTextToSize(bodyText1, pageWidth - marginValue * 2);
-                splitText1.forEach((line: string) => {
-                    doc.text(line, marginValue, yPos);
-                    yPos += lineHeight;
-                });
-
-                yPos += sectionGap;
-
-                const bodyText2 = `You are hereby warned that if you refuse or willfully fail to appear in obedience to this Summon, you may be barred from filing any counter claim arising from said complaint. Fail not or else face punishment for contempt of court.`;
-                const splitText2 = doc.splitTextToSize(bodyText2, pageWidth - marginValue * 2);
-                splitText2.forEach((line: string) => {
-                    doc.text(line, marginValue, yPos);
-                    yPos += lineHeight;
-                });
-
-                yPos += sectionGap;
-
-                // Current date formatting
-                const currentDate = new Date();
-                const formattedDate = formatDateForSummon(currentDate);
-                doc.text(`Issued this ${formattedDate}, in the City of Cebu, Philippines.`, marginValue, yPos);
-                yPos += lineHeight * 3;
-
-                // Signature section
-                // Signature section - Right-aligned
-                setCurrentFont("bold");
-                const captainName = "HON. VIRGINIA N. ABENOJA";
-                const nameWidth = doc.getTextWidth(captainName);
-                doc.text(captainName, pageWidth - marginValue, yPos, { align: "right" });
-
-                setCurrentFont("normal");
-                const position = "Punong Barangay";
-                const positionWidth = doc.getTextWidth(position);
-                // Calculate right alignment offset to center position under name
-                const positionX = pageWidth - marginValue - (nameWidth - positionWidth)/2;
-                doc.text(position, positionX, yPos + lineHeight, { align: "right" });
-
-                yPos += lineHeight * 4;
-
-                // Signature fields
-                setCurrentFont('normal');
-                doc.text("COMPLAINANT ____________________", marginValue, yPos);
-                doc.text("RESPONDENT ____________________", marginValue + 250, yPos);
-                doc.text("SERVER ____________________", marginValue + 250, yPos + lineHeight * 2);
-
-                // Add seal image only if withSeal is true
-                if (withSeal) {
-                    const sealSize = 80;
-                    const sealX = pageWidth - marginValue - sealSize;
-                    const sealY = pageHeight - marginValue - sealSize - 50;
-
-                    const img = new Image();
-                    img.src = sealImage;
-                    img.onload = () => {
-                        doc.addImage(img, "PNG", sealX, sealY, sealSize, sealSize);
-
-                        // Red seal label
-                        doc.setFontSize(10);
-                        doc.setTextColor(255, 0, 0);
-                        doc.setFont("times", "bold");
-
-                        const sealText = "NOT VALID WITHOUT SEAL";
-                        const textWidth = doc.getTextWidth(sealText);
-                        doc.text(sealText, sealX + (sealSize - textWidth) / 2, sealY + sealSize + 15);
-
-                        doc.save(`Summon_${sr_code}.pdf`);
-                        resolve();
-                    };
-                } else {
-                    doc.save(`Summon_${sr_code}.pdf`);
-                    resolve();
-                }
-            }
-        });
-    };
+    if (isLoadingDates || isLoadingSchedList) {
+        return (
+            <div className="p-4 border rounded-lg">
+                <Skeleton className="h-8 w-1/3 mb-4" />
+                <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                </div>
+                <Skeleton className="h-16 w-full mt-4" />
+            </div>
+        );
+    }
 
     const onSubmit = async (values: z.infer<typeof SummonSchema>) => {
-        try {
-            setIsGeneratingPdf(true);
-            await generatePdf(values.hearingDate, values.hearingTime, values.mediation);
-            addCase(values);
-        } catch (error) {
-            console.error("Error generating PDF:", error);
-        } finally {
-            setIsGeneratingPdf(false);
-        }
+        console.log('Summonsched', values);
+        addSched(values);
     };
 
     return (
@@ -352,40 +110,58 @@ function CreateNewSummon({ sr_id, complainant, accused, incident_type, complaina
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <div className="space-y-4">
+                        {/* Display the determined mediation level */}
+                        <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
+                            <p className="text-sm font-medium text-blue-800">
+                                Mediation Level: <span className="font-bold">{mediationLevel}</span>
+                            </p>
+                            <p className="text-xs text-blue-600 mt-1">
+                                Based on {scheduleList.length} previous schedule{scheduleList.length !== 1 ? 's' : ''}
+                            </p>
+                        </div>
+
                         <FormSelect
                             control={form.control}
-                            name="reason"
-                            label="Reason"
-                            options={reasons}
-                        />
-
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="hearingDate"
+                            name="sd_id"
                             label="Hearing Date"
-                            type="date"
+                            options={dateOptions}
+                            placeholder="Select a date"
                         />
 
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="hearingTime"
-                            label="Hearing Time"
-                            type="time"
-                        />
+                        {selectedDateId && (
+                            isLoadingTimeslots ? (
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-1/4" />
+                                    <Skeleton className="h-10 w-full" />
+                                </div>
+                            ) : (
+                                <FormSelect
+                                    control={form.control}
+                                    name="st_id"
+                                    label="Hearing Time Slot"
+                                    options={timeSlotOptions}
+                                    placeholder="Select a time slot"
+                                />
+                            )
+                        )}
 
-                        <FormSelect
-                            control={form.control}
-                            name="mediation"
-                            label="Mediation"
-                            options={mediationNumber}
-                        />
+                        {selectedDateId && timeSlotOptions.length === 0 && !isLoadingTimeslots && (
+                            <p className="text-sm text-gray-500">No available time slots for the selected date.</p>
+                        )}
 
-                        
+                        {selectedDateId && timeSlotOptions.length > 0 && (
+                            <p className="text-sm text-green-600">
+                                {timeSlotOptions.length} available time slot{timeSlotOptions.length !== 1 ? 's' : ''}
+                            </p>
+                        )}
                     </div>
 
                     <div className="flex justify-end mt-6 gap-2">
-                        <Button type="submit" disabled={isGeneratingPdf}>
-                            {isGeneratingPdf ? "Generating PDF..." : "Save"}
+                        <Button 
+                            type="submit" 
+                            disabled={!selectedDateId || isLoadingTimeslots || timeSlotOptions.length === 0 || isPending} 
+                        >
+                            {isPending? "Submitting...": "Submit"}
                         </Button>
                     </div>
                 </form>
@@ -394,4 +170,4 @@ function CreateNewSummon({ sr_id, complainant, accused, incident_type, complaina
     );
 }
 
-export default CreateNewSummon;
+export default CreateSummonSched;
