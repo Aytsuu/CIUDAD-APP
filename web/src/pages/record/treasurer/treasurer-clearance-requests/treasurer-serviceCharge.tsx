@@ -72,7 +72,7 @@ const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharg
                             id: String(sc.sr_id),
                             purpose: sc.sr_type || "Service Charge",
                             rate: (window as any).__serviceChargeRate || "0",
-                            requester: `Complaint ID: ${sc.comp_id}`,
+                            requester: sc.complainant_name || "Unknown",
                             pay_status: sc.payment_request?.spay_status || "Unpaid",
                             nat_col: "Service Charge",
                             is_resident: false,
@@ -131,7 +131,7 @@ function ServiceCharge(){
     const handlePaymentSuccess = async () => {
         console.log("Payment successful, refreshing data...");
         // Invalidate and refetch the service charges data
-        await queryClient.invalidateQueries({ queryKey: ['treasurerServiceCharges'] });
+        await queryClient.invalidateQueries({ queryKey: ['treasurer-service-charges'] });
         await refetch();
         console.log("Data refreshed successfully");
     };
@@ -141,9 +141,8 @@ function ServiceCharge(){
 
     // Filter data based on active tab
     const filteredData = useMemo(() => {
-        const base = (activeTab === "pending")
-            ? (data || []).filter(item => item.sr_req_status === "Pending")
-            : (data || []).filter(item => item.sr_req_status === "Declined");
+        // Show all fetched rows (already filtered by sr_code=null on server/client)
+        const base = data || [];
 
         const q = searchQuery.trim().toLowerCase();
         if (!q) return base;

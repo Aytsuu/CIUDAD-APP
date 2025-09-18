@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { DisbursementCreate } from "./disbursement-create";
-// import { EditDisbursementVoucherForm } from "./edit-disbursement";
+import { EditDisbursementVoucher } from "./disbursement-edit";
 import { Button } from "@/components/ui/button/button";
 import {
   useGetDisbursementVouchers,
@@ -38,16 +38,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog/dialog";
-// import ViewDisbursementVoucher from "./view-disbursement";
+import ViewDisbursementVoucher from "./disbursement-view";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DisbursementVoucher, DisbursementFile } from "./incDisb-types";
 import { DocumentCard } from "./disbursement-suppdocs-modal";
 
 function TreasurerDisbursementVouchers() {
-  const filter = [
-    { id: "All", name: "All" },
-  ];
+  const filter = [{ id: "All", name: "All" }];
 
   const {
     data: disbursements = [],
@@ -56,7 +54,8 @@ function TreasurerDisbursementVouchers() {
     error,
     refetch,
   } = useGetDisbursementVouchers();
-  const { mutate: deleteDisbursement } = usePermanentDeleteDisbursementVoucher();
+  const { mutate: deleteDisbursement } =
+    usePermanentDeleteDisbursementVoucher();
   const { mutate: deleteDisbursementFile } = useDeleteDisbursementFile();
   const { mutate: archiveDisbursement } = useArchiveDisbursementVoucher();
   const { mutate: restoreDisbursement } = useRestoreDisbursementVoucher();
@@ -68,10 +67,12 @@ function TreasurerDisbursementVouchers() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [_isPdfLoading, setIsPdfLoading] = useState(true);
-  const [editingDisbursement, setEditingDisbursement] = useState<DisbursementVoucher | null>(null);
+  const [editingDisbursement, setEditingDisbursement] =
+    useState<DisbursementVoucher | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedDisbursement, setSelectedDisbursement] = useState<DisbursementVoucher | null>(null);
+  const [selectedDisbursement, setSelectedDisbursement] =
+    useState<DisbursementVoucher | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<DisbursementFile[]>([]);
   const [isFilesDialogOpen, setIsFilesDialogOpen] = useState(false);
   const [isDeletingFile, setIsDeletingFile] = useState(false);
@@ -99,7 +100,10 @@ function TreasurerDisbursementVouchers() {
   }, [disbursementFiles, isFilesDialogOpen]);
 
   useEffect(() => {
-    if (detailedDisbursement && selectedDisbursement?.dis_num === detailedDisbursement.dis_num) {
+    if (
+      detailedDisbursement &&
+      selectedDisbursement?.dis_num === detailedDisbursement.dis_num
+    ) {
       setEditingDisbursement(detailedDisbursement);
     }
   }, [detailedDisbursement, selectedDisbursement]);
@@ -116,7 +120,10 @@ function TreasurerDisbursementVouchers() {
     })
     .filter((disbursement: DisbursementVoucher) => {
       const payee = disbursement.dis_payee?.toLowerCase() || "";
-      const particulars = disbursement.dis_particulars?.map(p => p.description?.toLowerCase() || "").join(" ") || "";
+      const particulars =
+        disbursement.dis_particulars
+          ?.map((p) => p.description?.toLowerCase() || "")
+          .join(" ") || "";
       const search = searchTerm.toLowerCase();
       return payee.includes(search) || particulars.includes(search);
     });
@@ -152,7 +159,11 @@ function TreasurerDisbursementVouchers() {
   };
 
   const handleViewDisbursement = (disbursement: DisbursementVoucher) => {
-    if (selectedDisbursement?.dis_num === disbursement.dis_num && isViewDialogOpen) return;
+    if (
+      selectedDisbursement?.dis_num === disbursement.dis_num &&
+      isViewDialogOpen
+    )
+      return;
 
     setIsViewDialogOpen(false);
     setSelectedDisbursement(null);
@@ -207,7 +218,9 @@ function TreasurerDisbursementVouchers() {
         onSuccess: () => {
           setSelectedFiles((prev) =>
             prev.map((file) =>
-              file.disf_num === disfNum ? { ...file, disf_is_archive: true } : file
+              file.disf_num === disfNum
+                ? { ...file, disf_is_archive: true }
+                : file
             )
           );
         },
@@ -226,7 +239,9 @@ function TreasurerDisbursementVouchers() {
         onSuccess: () => {
           setSelectedFiles((prev) =>
             prev.map((file) =>
-              file.disf_num === disfNum ? { ...file, disf_is_archive: false } : file
+              file.disf_num === disfNum
+                ? { ...file, disf_is_archive: false }
+                : file
             )
           );
         },
@@ -281,7 +296,8 @@ function TreasurerDisbursementVouchers() {
           <div>Disbursement Vouchers</div>
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
-          Create, track, and manage disbursement vouchers with ease, ensuring proper documentation and approval processes.
+          Create, track, and manage disbursement vouchers with ease, ensuring
+          proper documentation and approval processes.
         </p>
       </div>
       <hr className="border-gray mb-5 sm:mb-4" />
@@ -348,105 +364,115 @@ function TreasurerDisbursementVouchers() {
       <div className="flex flex-col gap-4">
         {paginatedDisbursements.length === 0 && (
           <div className="text-center py-8 text-gray-500">
-            No {viewMode === "active" ? "active" : "archived"} disbursement vouchers found.
+            No {viewMode === "active" ? "active" : "archived"} disbursement
+            vouchers found.
           </div>
         )}
-        {paginatedDisbursements.map((disbursement: DisbursementVoucher, index: number) => {
-          const total = disbursement.dis_particulars?.reduce((sum, item) => {
-            const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
-            return sum + amount;
-          }, 0) || 0;
+        {paginatedDisbursements.map(
+          (disbursement: DisbursementVoucher, index: number) => {
+            const total =
+              disbursement.dis_particulars?.reduce((sum, item) => {
+                const amount =
+                  typeof item.amount === "string"
+                    ? parseFloat(item.amount) || 0
+                    : item.amount || 0;
+                return sum + amount;
+              }, 0) || 0;
 
-          return (
-            <CardLayout
-              key={disbursement.dis_num || index}
-              title={
-                <div className="flex flex-row justify-between items-center">
-                  <div className="w-full">
-                    DV #{disbursement.dis_num} - {disbursement.dis_payee || "Unknown Payee"}
-                  </div>
-                  <div className="flex gap-2">
-                    <Eye
-                      className="text-gray-500 hover:text-blue-600 cursor-pointer"
-                      size={20}
-                      onClick={() => handleViewDisbursement(disbursement)}
-                    />
-                    {viewMode === "active" ? (
-                      <>
-                        <ConfirmationModal
-                          trigger={
-                            <Archive
-                              className="text-gray-500 hover:text-red-600 cursor-pointer"
-                              size={20}
-                            />
-                          }
-                          title="Archive Disbursement Voucher"
-                          description="Are you sure you want to archive this disbursement voucher?"
-                          actionLabel="Archive"
-                          onClick={() => handleArchive(disbursement.dis_num)}
-                          type="warning"
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <ConfirmationModal
-                          trigger={
-                            <ArchiveRestore
-                              className="text-gray-500 hover:text-green-600 cursor-pointer"
-                              size={20}
-                            />
-                          }
-                          title="Restore Disbursement Voucher"
-                          description="Are you sure you want to restore this disbursement voucher?"
-                          actionLabel="Restore"
-                          onClick={() => handleRestore(disbursement.dis_num)}
-                          type="success"
-                        />
-                        <ConfirmationModal
-                          trigger={
-                            <Trash
-                              className="text-gray-500 hover:text-red-600 cursor-pointer"
-                              size={20}
-                            />
-                          }
-                          title="Permanently Delete Disbursement Voucher"
-                          description="Are you sure you want to permanently delete this disbursement voucher? This action cannot be undone."
-                          actionLabel={isDeleting ? "Deleting..." : "Delete"}
-                          onClick={() => handleDelete(disbursement.dis_num)}
-                          type="destructive"
-                        />
-                      </>
-                    )}
-                  </div>
-                </div>
-              }
-              description={
-                <div className="space-y-2">
-                  <div className="line-clamp-2 text-sm text-gray-600">
-                    <strong>Particulars:</strong>{" "}
-                    {disbursement.dis_particulars?.map(p => p.description).join(", ") || "No particulars provided"}
-                  </div>
-                  <div className="flex items-center justify-end mt-2">
-                    <div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewFiles(disbursement)}
-                        className="text-sky-600 hover:text-blue-800 flex items-center gap-1"
-                      >
-                        View Supporting Docs
-                      </Button>
+            return (
+              <CardLayout
+                key={disbursement.dis_num || index}
+                title={
+                  <div className="flex flex-row justify-between items-center">
+                    <div className="w-full">
+                      DV #{disbursement.dis_num} -{" "}
+                      {disbursement.dis_payee || "Unknown Payee"}
+                    </div>
+                    <div className="flex gap-2">
+                      <Eye
+                        className="text-gray-500 hover:text-blue-600 cursor-pointer"
+                        size={20}
+                        onClick={() => handleViewDisbursement(disbursement)}
+                      />
+                      {viewMode === "active" ? (
+                        <>
+                          <ConfirmationModal
+                            trigger={
+                              <Archive
+                                className="text-gray-500 hover:text-red-600 cursor-pointer"
+                                size={20}
+                              />
+                            }
+                            title="Archive Disbursement Voucher"
+                            description="Are you sure you want to archive this disbursement voucher?"
+                            actionLabel="Archive"
+                            onClick={() => handleArchive(disbursement.dis_num)}
+                            type="warning"
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <ConfirmationModal
+                            trigger={
+                              <ArchiveRestore
+                                className="text-gray-500 hover:text-green-600 cursor-pointer"
+                                size={20}
+                              />
+                            }
+                            title="Restore Disbursement Voucher"
+                            description="Are you sure you want to restore this disbursement voucher?"
+                            actionLabel="Restore"
+                            onClick={() => handleRestore(disbursement.dis_num)}
+                            type="success"
+                          />
+                          <ConfirmationModal
+                            trigger={
+                              <Trash
+                                className="text-gray-500 hover:text-red-600 cursor-pointer"
+                                size={20}
+                              />
+                            }
+                            title="Permanently Delete Disbursement Voucher"
+                            description="Are you sure you want to permanently delete this disbursement voucher? This action cannot be undone."
+                            actionLabel={isDeleting ? "Deleting..." : "Delete"}
+                            onClick={() => handleDelete(disbursement.dis_num)}
+                            type="destructive"
+                          />
+                        </>
+                      )}
                     </div>
                   </div>
-                </div>
-              }
-              content={null}
-              cardClassName="w-full border p-4"
-              titleClassName="text-lg font-semibold text-darkBlue2"
-              contentClassName="text-sm text-darkGray"
-            />
-          );
-        })}
+                }
+                description={
+                  <div className="space-y-2">
+                    <div className="line-clamp-2 text-sm text-gray-600">
+                      <strong>Particulars:</strong>{" "}
+                      {disbursement.dis_particulars
+                        ?.map((p) => p.description)
+                        .join(", ") || "No particulars provided"}
+                    </div>
+                    <div className="flex items-center justify-end mt-2">
+                      <div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewFiles(disbursement)}
+                          className="text-sky-600 hover:text-blue-800 flex items-center gap-1"
+                        >
+                          View Supporting Docs
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                }
+                content={null}
+                cardClassName="w-full border p-4"
+                titleClassName="text-lg font-semibold text-darkBlue2"
+                contentClassName="text-sm text-darkGray"
+              />
+            );
+          }
+        )}
 
         {/* Pagination Section */}
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
@@ -472,12 +498,15 @@ function TreasurerDisbursementVouchers() {
           <DialogHeader className="p-4 bg-background border-b sticky top-0 z-50">
             <div className="flex items-center justify-between w-full">
               <DialogTitle className="text-left">
-                Disbursement Voucher #{selectedDisbursement?.dis_num} - {selectedDisbursement?.dis_payee}
+                Disbursement Voucher #{selectedDisbursement?.dis_num} -{" "}
+                {selectedDisbursement?.dis_payee}
               </DialogTitle>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => selectedDisbursement && handleEdit(selectedDisbursement)}
+                  onClick={() =>
+                    selectedDisbursement && handleEdit(selectedDisbursement)
+                  }
                   className="flex items-center gap-2"
                   disabled={!selectedDisbursement}
                 >
@@ -492,15 +521,16 @@ function TreasurerDisbursementVouchers() {
             </div>
           </DialogHeader>
 
-          {/* <div className="flex-1 overflow-auto relative">
+          <div className="flex-1 overflow-auto relative">
             {selectedDisbursement && (
               <ViewDisbursementVoucher
                 disbursement={detailedDisbursement || selectedDisbursement}
                 onLoad={() => setIsPdfLoading(false)}
                 onError={() => setIsPdfLoading(false)}
+                onClose={closePreview}
               />
             )}
-          </div> */}
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -539,7 +569,8 @@ function TreasurerDisbursementVouchers() {
                         key={file.disf_num}
                         file={file}
                         showActions={
-                          selectedDisbursement?.dis_is_archive === false }
+                          selectedDisbursement?.dis_is_archive === false
+                        }
                         onDelete={() => handleDeleteFile(file.disf_num)}
                         onArchive={() => handleArchiveFile(file.disf_num)}
                         isDeleting={isDeletingFile}
@@ -571,7 +602,8 @@ function TreasurerDisbursementVouchers() {
                         key={file.disf_num}
                         file={file}
                         showActions={
-                          selectedDisbursement?.dis_is_archive === false }
+                          selectedDisbursement?.dis_is_archive === false
+                        }
                         onDelete={() => handleDeleteFile(file.disf_num)}
                         onRestore={() => handleRestoreFile(file.disf_num)}
                         isDeleting={isDeletingFile}
@@ -589,7 +621,7 @@ function TreasurerDisbursementVouchers() {
         </DialogContent>
       </Dialog>
 
-      {/* {editingDisbursement && (
+      {editingDisbursement && (
         <DialogLayout
           trigger={null}
           className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
@@ -597,14 +629,13 @@ function TreasurerDisbursementVouchers() {
           description=""
           mainContent={
             <div className="w-full h-full">
-              <EditDisbursementVoucherForm
-                onSuccess={(_updatedData) => {
+              <EditDisbursementVoucher
+                onSuccess={() => {
                   setIsEditDialogOpen(false);
                   setSelectedDisbursement(null);
                   setEditingDisbursement(null);
                 }}
-                initialValues={editingDisbursement}
-                isEditMode={true}
+                existingVoucher={editingDisbursement}
               />
             </div>
           }
@@ -617,7 +648,7 @@ function TreasurerDisbursementVouchers() {
             }
           }}
         />
-      )} */}
+      )}
     </div>
   );
 }

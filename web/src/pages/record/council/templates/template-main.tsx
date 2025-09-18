@@ -1090,16 +1090,6 @@
 
 // export default TemplateMainPage;
 
-
-
-
-
-
-
-
-
-
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button/button";
 import { Plus } from 'lucide-react';
@@ -1697,13 +1687,12 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
     // },
     {
       temp_id: "File Action",
-      temp_belowHeaderContent: "\t\t\t\t\t\t\t\t\t\t\t\t\t\tBarangay Case No.[ Case No. ]\n" +
-      "[ Name of Complainant ]\n" +
-      "[ Address ], Brgy. San Roque Ciudad Cebu City\n" +
+      temp_belowHeaderContent: `\t\t\t\t\t\t\t\t\t\t\t\tBarangay Case No.${businessName || ""}\n` +
+      `${fname || ""}\n` +
+      `${address ? `${address}, Brgy. San Roque Ciudad Cebu City` : "Brgy. San Roque Ciudad Cebu City"}\n` +
       "Complainant/s\n\n" +
       "      - AGAINTS -\n\n" +
-      "[ Name of Respondent ]\n" +
-      "[ Address ], Brgy. San Roque Ciudad Cebu City\n" +
+      `${specificPurpose || ""}\n` +
       "Respondent/s\n",
       temp_title: "CERTIFICATION TO FILE ACTION",
       temp_barangayLogo: barangayLogo,
@@ -1719,11 +1708,11 @@ function TemplateMainPage({fname, lname, age, birthdate, address, purpose, issue
       temp_w_sign_applicant: false,
       temp_w_seal: false,
       temp_body: "This is to certify that:\n\n" +
-      "1. There was a complaint filled in this Office on [SEPTEMBER] [10], [2025];\n\n" +
+      `1. There was a complaint filled in this Office on ${FormattedBirthdate || FormattedIssuanceDate};\n\n` +
       "2. There has been a personal confrontation between the parties before the Punong Barangay but mediation failed;\n\n" +
       "3. The Pangkat ng Tagapangkasundo was constituted but the personal confrontation before the Pangkat likewise did not result into settlement;\n\n" +
       "4. Therefore, the corresponding complaint for the dispute may now be filed in the court/government office.\n\n" +
-      "This [ DAY [st/nd/rd/th] ] day of [MONTH] [YEAR] in Barangay San Roque Ciudad Cebu City." 
+      `This ${FormattedIssuanceDate} in Barangay San Roque Ciudad Cebu City.` 
     },       
     {
       temp_id: "Marriage Certification",

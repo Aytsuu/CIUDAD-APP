@@ -5,7 +5,7 @@ urlpatterns = [
     # path('service-charge-request/', ServiceChargeRequestView.as_view(), name='service-charge-request'),
     # path('case-details/<int:sr_id>/', ServiceChargeRequestDetailView.as_view(), name='case-details'),
     # path('case-activity/', CaseActivityView.as_view(), name='case-activity'),
-    # path('update-service-charge-request/<int:sr_id>/', UpdateServiceChargeRequestView.as_view(), name='update-service-charge-request'),
+   
     # path('file-action-request/', FileActionrequestView.as_view(), name='file-action-request'),
     # path('case-supp-doc/', CaseSuppDocView.as_view(), name='case-supp-doc'),
     # path('case-supp-doc/<int:ca_id>/', CaseSuppDocView.as_view(), name='case-supp-doc'),
@@ -17,6 +17,7 @@ urlpatterns = [
     path('service-charge-pending-list/', SummonRequestPendingListView.as_view(), name='service=-charge-pending-list'),
     path('service-charge-rejected-list/', SummonRequestRejectedListView.as_view(), name='service=-charge-rejected-list'),
     path('service-charge-accepted-list/', SummonRequestAcceptedListView.as_view(), name='service=-charge-accepted-list'),
+    path('update-service-charge-request/<str:sr_id>/', UpdateServiceChargeRequestView.as_view(), name='update-service-charge-request'),
 
     # Case List and details
     path('summon-case-list/', SummonCaseListView.as_view(), name='summon-case-list'),

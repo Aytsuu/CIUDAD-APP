@@ -435,6 +435,11 @@ class SummonRequestSerializer(serializers.ModelSerializer):
         model = ServiceChargeRequest
         fields = '__all__'
 
+class ServiceChargeRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceChargeRequest
+        fields = '__all__'
+
 class SummonRequestPendingListSerializer(serializers.ModelSerializer):
     complainant_names = serializers.SerializerMethodField()
     incident_type = serializers.SerializerMethodField()
@@ -551,66 +556,6 @@ class SummonRequestRejectedListSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting decision date: {e}")
             return None
-
-class SummonRequestAcceptedListSerializer(serializers.ModelSerializer):
-    complainant_names = serializers.SerializerMethodField()
-    incident_type = serializers.SerializerMethodField()
-    accused_names = serializers.SerializerMethodField()
-    decision_date = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = ServiceChargeRequest
-        fields = [
-            'sr_id', 
-            'sr_type', 
-            'sr_req_date', 
-            'sr_req_status', 
-            'sr_case_status', 
-            'comp_id', 
-            'staff_id', 
-            'complainant_names', 
-            'incident_type', 
-            'accused_names',
-            'decision_date'
-        ]
-    
-    def get_complainant_names(self, obj):
-        if obj.comp_id:
-            try:
-                # Use prefetched data
-                complainants = obj.comp_id.complaintcomplainant_set.all()
-                return [cc.cpnt.cpnt_name for cc in complainants]
-            except Exception as e:
-                print(f"Error getting complainants: {e}")
-                return []
-        return []
-    
-    def get_incident_type(self, obj):
-        if obj.comp_id:
-            return getattr(obj.comp_id, 'comp_incident_type', None)
-        return None
-    
-    def get_accused_names(self, obj):
-        if obj.comp_id:
-            try:
-                # Use prefetched data
-                accused_list = obj.comp_id.complaintaccused_set.all()
-                return [ca.acsd.acsd_name for ca in accused_list]
-            except Exception as e:
-                print(f"Error getting accused: {e}")
-                return []
-        return []
-    
-    def get_decision_date(self, obj):
-        try:
-            # Use the correct reverse relationship name for OneToOneField
-            if hasattr(obj, 'servicechargedecision'):
-                return obj.servicechargedecision.scd_decision_date
-            return None
-        except Exception as e:
-            print(f"Error getting decision date: {e}")
-            return None
-        
 
 class SummonRequestAcceptedListSerializer(serializers.ModelSerializer):
     complainant_names = serializers.SerializerMethodField()
@@ -890,6 +835,10 @@ class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
 class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
     complainant_name = serializers.SerializerMethodField()
     payment_request = serializers.SerializerMethodField()
+    complainant_names = serializers.SerializerMethodField()
+    complainant_addresses = serializers.SerializerMethodField()
+    accused_names = serializers.SerializerMethodField()
+    accused_addresses = serializers.SerializerMethodField()
     
     class Meta:
         model = ServiceChargeRequest
@@ -903,6 +852,10 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
             'comp_id',
             'staff_id',
             'complainant_name',
+            'complainant_names',
+            'complainant_addresses',
+            'accused_names',
+            'accused_addresses',
             'payment_request'
         ]
     
@@ -914,6 +867,42 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
             except Exception:
                 return None
         return None
+
+    def get_complainant_names(self, obj):
+        if obj.comp_id:
+            try:
+                complainants = obj.comp_id.complaintcomplainant_set.select_related('cpnt').all()
+                return [cc.cpnt.cpnt_name for cc in complainants if getattr(cc, 'cpnt', None)]
+            except Exception:
+                return []
+        return []
+
+    def get_complainant_addresses(self, obj):
+        if obj.comp_id:
+            try:
+                complainants = obj.comp_id.complaintcomplainant_set.select_related('cpnt').all()
+                return [getattr(cc.cpnt, 'cpnt_address', None) or "N/A" for cc in complainants if getattr(cc, 'cpnt', None)]
+            except Exception:
+                return []
+        return []
+
+    def get_accused_names(self, obj):
+        if obj.comp_id:
+            try:
+                accused_list = obj.comp_id.complaintaccused_set.select_related('acsd').all()
+                return [ca.acsd.acsd_name for ca in accused_list if getattr(ca, 'acsd', None)]
+            except Exception:
+                return []
+        return []
+
+    def get_accused_addresses(self, obj):
+        if obj.comp_id:
+            try:
+                accused_list = obj.comp_id.complaintaccused_set.select_related('acsd').all()
+                return [getattr(ca.acsd, 'acsd_address', None) or "N/A" for ca in accused_list if getattr(ca, 'acsd', None)]
+            except Exception:
+                return []
+        return []
     
     def get_payment_request(self, obj):
         try:
@@ -1193,6 +1182,58 @@ class CaseTrackingSerializer(serializers.ModelSerializer):
         elif status_lower == 'escalated':
             return 'Escalated'
         return 'In Progress'
+
+# New: Flat serializer exposing top-level payment fields for easy Paid-list consumption
+class ServiceChargePaidListSerializer(serializers.ModelSerializer):
+    complainant_name = serializers.SerializerMethodField()
+    spay_status = serializers.SerializerMethodField()
+    spay_date_paid = serializers.SerializerMethodField()
+    pr_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ServiceChargeRequest
+        fields = [
+            'sr_id',
+            'sr_code',
+            'sr_type',
+            'sr_req_date',
+            'sr_req_status',
+            'sr_case_status',
+            'comp_id',
+            'staff_id',
+            'complainant_name',
+            'spay_status',
+            'spay_date_paid',
+            'pr_id',
+        ]
+
+    def get_complainant_name(self, obj):
+        if obj.comp_id:
+            try:
+                complainant = obj.comp_id.complaintcomplainant_set.select_related('cpnt').first()
+                return complainant.cpnt.cpnt_name if complainant and complainant.cpnt else None
+            except Exception:
+                return None
+        return None
+
+    def get_spay_status(self, obj):
+        try:
+            return getattr(obj.servicechargepaymentrequest, 'spay_status', None)
+        except Exception:
+            return None
+
+    def get_spay_date_paid(self, obj):
+        try:
+            return getattr(obj.servicechargepaymentrequest, 'spay_date_paid', None)
+        except Exception:
+            return None
+
+    def get_pr_id(self, obj):
+        try:
+            pr = getattr(obj.servicechargepaymentrequest, 'pr_id', None)
+            return pr.pr_id if pr else None
+        except Exception:
+            return None
 # ============================ MIGHT DELETE THESE LATER ==============================
 
 # Complaint-related Serializers

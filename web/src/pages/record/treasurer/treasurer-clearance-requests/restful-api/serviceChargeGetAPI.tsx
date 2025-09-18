@@ -20,10 +20,8 @@ export type ServiceCharge = {
 };
 
 export async function getTreasurerServiceCharges(): Promise<ServiceCharge[]> {
-  const { data } = await api.get<ServiceCharge[]>('/clerk/treasurer/service-charges/', {
-    params: { sr_req_status: 'Pending' }
-  });
-  return data ?? [];
+  const { data } = await api.get<ServiceCharge[]>('/clerk/treasurer/service-charges/');
+  return (data ?? []).filter(item => !item.sr_code || String(item.sr_code).trim() === '');
 }
 
 export type PurposeRate = {

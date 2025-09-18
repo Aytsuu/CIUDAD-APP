@@ -235,16 +235,20 @@ function ReceiptForm({
                     
                     {/* Discount Button (hidden for free/voter requests) */}
                     {!isFree && !isAlreadyPaid && (
-                        <Button 
+                        <Button
                             type="button"
                             variant="outline"
-                            className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
-                            onClick={() => {
-                                onSuccess(); // Hide the create receipt form
-                            }}
-                        >
+                            disabled={nat_col === "Service Charge"}
+                            className={`
+                                flex items-center gap-2 border-green-500 
+                                ${nat_col === "Service Charge" 
+                                ? "text-gray-400 cursor-not-allowed disabled:opacity-100 disabled:pointer-events-auto" 
+                                : "text-green-600 hover:bg-green-50 hover:text-green-700"}
+                            `}
+                            onClick={onSuccess}
+                            >
                             Apply Discount
-                        </Button>
+                            </Button>
                     )}
                 </div>
 
