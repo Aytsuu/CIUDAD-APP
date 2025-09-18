@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Printer } from 'lucide-react-native';
 import { format, isValid } from 'date-fns';
 import { ChildHealthHistoryRecord } from './types';
-import { calculateAge } from '@/helpers/ageCalculator';
+// import { calculateAge } from '@/helpers/ageCalculator';
 import { getValueByPath } from './ChildHealthutils';
 import { ImmunizationTable } from './tables/ImmunizationTable';
 import { VitalSignsTable } from './tables/VitalSignsTable';
