@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GADAnnualDevPlanCreateSchema, type GADAnnualDevPlanCreateInput } from "@/form-schema/gad-annual-dev-plan-create-shema";
 import { useAuth } from "@/context/AuthContext";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const getClientOptions = () => (
   <>
@@ -472,6 +473,15 @@ export default function AnnualDevelopmentPlanEdit() {
               {form.formState.errors.dev_issue && (
                 <p className="text-red-500 text-sm">{form.formState.errors.dev_issue.message}</p>
               )}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  checked={form.watch("dev_mandated") || false}
+                  onCheckedChange={(checked) => {
+                    form.setValue("dev_mandated", checked as boolean);
+                  }}
+                />
+                <label className="text-sm font-medium text-gray-700">Mandated</label>
+              </div>
             </div>
           </div>
         </div>
