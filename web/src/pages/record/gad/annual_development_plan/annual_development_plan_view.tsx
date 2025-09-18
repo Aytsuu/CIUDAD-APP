@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAnnualDevPlansByYear } from "./restful-api/annualGetAPI";
 import { toast } from "sonner";
+import { useGetProjectProposals } from "@/pages/record/gad/project-proposal/queries/projprop-fetchqueries";
+import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
 
 interface AnnualDevelopmentPlanViewProps {
   year: number;
@@ -35,6 +37,31 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   const navigate = useNavigate();
   const [plans, setPlans] = useState<DevelopmentPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch GAD Project Proposals and Resolutions to determine links per mandate
+  const { data: proposals = [] } = useGetProjectProposals();
+  const { data: resolutions = [] } = useResolution();
+
+  // Build quick lookup maps
+  const proposalByDevId = useMemo(() => {
+    const map = new Map<number, any>();
+    (proposals || []).forEach((p: any) => {
+      if (p && typeof p.devId === 'number') {
+        map.set(p.devId, p);
+      }
+    });
+    return map;
+  }, [proposals]);
+
+  const resolutionByGprId = useMemo(() => {
+    const map = new Map<number, any>();
+    (resolutions || []).forEach((r: any) => {
+      if (r && typeof r.gpr_id === 'number') {
+        map.set(r.gpr_id, r);
+      }
+    });
+    return map;
+  }, [resolutions]);
 
   useEffect(() => {
     fetchPlans();
@@ -89,6 +116,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
               <col className="w-24" />
               <col className="w-24" />
               <col className="w-56" />
+              <col className="w-40" />
             </colgroup>
             <thead>
               <tr className="bg-gray-100 text-gray-700 border-b border-gray-200">
@@ -97,6 +125,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                 <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}>PERFORMANCE INDICATOR AND TARGET</th>
                 <th className="px-3 py-2 text-center align-bottom border border-gray-200" colSpan={4}>GAD BUDGET</th>
                 <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}>RESPONSIBLE PERSON</th>
+                <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}></th>
               </tr>
               <tr className="bg-blue-50 text-blue-900 font-semibold border-b border-blue-100">
                 <td className="bg-sky-100 px-3 py-2 border border-blue-200" colSpan={1}>CLIENT FOCUSED</td>
@@ -254,13 +283,39 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                     ) : (
                       <span>₱{plan.total || '0'}</span>
                     )}
-                  </td>
+              </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     <ul className="list-disc list-inside">
                       {plan.dev_res_person.split(',').map((person, idx) => (
                         <li key={idx} className="text-sm">{person.trim()}</li>
                       ))}
                     </ul>
+                  </td>
+                  <td className="px-3 py-2 align-top border border-gray-200">
+                    {(() => {
+                      const proposal = proposalByDevId.get(plan.dev_id);
+                      const hasProposal = Boolean(proposal && proposal.gprId);
+                      const hasResolution = hasProposal && resolutionByGprId.has(proposal.gprId as number);
+
+                      if (!hasProposal && !hasResolution) {
+                        return <span className="text-sm text-gray-500">-</span>;
+                      }
+
+                      return (
+                        <div className="flex gap-2">
+                          {hasProposal && (
+                            <Link to={{ pathname: "/gad-project-proposal", search: `?gprId=${proposal.gprId}` }}>
+                              <Button size="sm" variant="outline">Proposal</Button>
+                            </Link>
+                          )}
+                          {hasResolution && (
+                            <Link to={{ pathname: "/res-page", search: `?gprId=${proposal.gprId}` }}>
+                              <Button size="sm" variant="outline">Resolution</Button>
+                            </Link>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                 </tr>
               ))}
@@ -269,6 +324,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                 <td className="px-3 py-2 border border-gray-200">
                   ₱{plans.reduce((sum, plan) => sum + parseFloat(plan.total || '0'), 0).toFixed(2)}
                 </td>
+                <td className="px-3 py-2 border border-gray-200"></td>
                 <td className="px-3 py-2 border border-gray-200"></td>
               </tr>
             </tbody>
