@@ -157,9 +157,10 @@ export const WARDocTemplate = ({
   }
 
   const getName = (value: string) => {
-    const array = value.split("-")[1];
-    return array.split(" ").join(", ");
-  }
+    const name = value.split("-")[1];
+    const array = name.split(" ");
+    return (`${array[0]}, ${array[1]} ${array.length == 3 && array[2]}`);
+  };
 
   const changePreparedBy = (value: string) => {
     const name = getName(value);
