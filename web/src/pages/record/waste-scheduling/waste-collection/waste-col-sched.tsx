@@ -13,6 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import WasteColSchedSchema from '@/form-schema/waste-col-form-schema';
+import { useGetWasteCollectionSchedFull } from './queries/wasteColFetchQueries';
 import { useGetWasteCollectors } from './queries/wasteColFetchQueries';
 import { useGetWasteDrivers } from './queries/wasteColFetchQueries';
 import { useGetWasteTrucks } from './queries/wasteColFetchQueries';
@@ -59,6 +60,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
 
     //FETCH QUERY MUTATIONS
+    const { data: wasteCollectionData = [] } = useGetWasteCollectionSchedFull();
     const { data: collectors = [], isLoading: isLoadingCollectors } = useGetWasteCollectors();
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
@@ -110,6 +112,44 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
         if(!values.additionalInstructions){
             values.additionalInstructions = "None";
         }
+
+        //checks for sitio with the same day
+        const selectedSitioName = sitioOptions.find(sitio => sitio.id === values.selectedSitios)?.name;        
+        
+        const hasSameSitioSameDay = wasteCollectionData.some(schedule => 
+            schedule.wc_day === values.day &&
+            schedule.sitio_name === selectedSitioName
+        );
+
+
+        //checks for overlapping day and time
+        const hasDuplicateSchedule = wasteCollectionData.some(schedule => 
+            schedule.wc_day === values.day && 
+            schedule.wc_time === formattedTime
+        );
+
+
+        if (hasDuplicateSchedule) {
+            form.setError("day", {
+                type: "manual",
+                message: `There is already a schedule for ${values.day} at ${values.time}.`,
+            });          
+            
+            form.setError("time", {
+                type: "manual",
+                message: `There is already a schedule for ${values.day} at ${values.time}.`,
+            });  
+            return; // Stop form submission
+        }
+
+        
+        if (hasSameSitioSameDay) {
+            form.setError("day", {
+                type: "manual",
+                message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+            });
+            return;
+        }        
 
         createSchedule({
             ...values,
