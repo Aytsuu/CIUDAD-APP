@@ -22,6 +22,7 @@ import { useGetWasteTrucks } from './queries/wasteColFetchQueries';
 import { useGetWasteSitio } from './queries/wasteColFetchQueries';
 import { useUpdateWasteSchedule } from './queries/wasteColUpdateQueries';
 import { useUpdateCollectors } from './queries/wasteColUpdateQueries';
+import { useGetWasteCollectionSchedFull } from './queries/wasteColFetchQueries';
 import { useAuth } from "@/context/AuthContext";
 
 
@@ -70,8 +71,9 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
     const { data: sitios = [], isLoading: isLoadingSitios } = useGetWasteSitio();
+    const { data: wasteCollectionData = [], isLoading: isLoadingWasteData } = useGetWasteCollectionSchedFull();
 
-    const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
+    const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios || isLoadingWasteData;
 
 
     //UPDATE QUERY MUTATIONS
@@ -122,6 +124,53 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
             const [hour, minute] = values.time.split(":");
             const formattedTime = `${hour}:${minute}:00`;
 
+            //checks for sitio with the same day
+            const selectedSitioName = sitioOptions.find(sitio => sitio.id === values.selectedSitios)?.name;    
+            
+            const hasSameSitioSameDay = wasteCollectionData.some(schedule => 
+                schedule.wc_day === values.day &&
+                schedule.sitio_name === selectedSitioName &&
+                schedule.wc_num !== Number(wc_num)          
+            );
+
+            //checks for overlapping day and time
+            const hasDuplicateSchedule = wasteCollectionData.some(schedule => 
+                schedule.wc_day === values.day && 
+                schedule.wc_time === formattedTime &&
+                schedule.wc_num !== Number(wc_num) 
+            );     
+            
+            //return if there is overlapping schedule
+            if (hasDuplicateSchedule) {
+                
+                form.setError("day", {
+                    type: "manual",
+                    message: `There is already a schedule for ${values.day} at ${values.time}.`,
+                });          
+                
+                form.setError("time", {
+                    type: "manual",
+                    message: `There is already a schedule for ${values.day} at ${values.time}.`,
+                });  
+
+                return; 
+            }           
+
+            //return if the sitio has already a schedule for that day
+            if (hasSameSitioSameDay) {
+                form.setError("day", {
+                    type: "manual",
+                    message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+                });
+
+                form.setError("selectedSitios", {
+                    type: "manual",
+                    message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+                });
+                return;
+            }        
+      
+      
             if(!values.additionalInstructions){
                 values.additionalInstructions = "None";
             }
