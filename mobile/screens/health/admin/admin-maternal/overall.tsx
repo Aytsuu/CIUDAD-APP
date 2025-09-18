@@ -28,8 +28,7 @@ export default function OverallMaternalRecordScreen() {
    const { data: activePregnancies } = useActivepregnanciesCount();
 
   const activePregnanciesCount = activePregnancies || 0;
-  const maternalPatientsCount = maternalRecords.count
-
+  const maternalPatientsCount = maternalRecords?.count || 0
 
    const renderHeader = () => (
       <View>
@@ -43,7 +42,7 @@ export default function OverallMaternalRecordScreen() {
                   <Users size={24} color="#3b82f6" />
                   <View className="ml-3">
                      <Text className="text-2xl font-bold text-blue-900">
-                        {maternalPatientsCount}
+                        {maternalPatientsCount || 0}
                      </Text>
                      <Text className="text-sm text-center text-blue-700">Patients</Text>
                   </View>

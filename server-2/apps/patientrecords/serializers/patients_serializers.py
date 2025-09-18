@@ -39,7 +39,7 @@ class PatientSerializer(serializers.ModelSerializer):
     family = serializers.SerializerMethodField()
     family_head_info = serializers.SerializerMethodField()
     spouse_info = serializers.SerializerMethodField()
-    family_planning_record = serializers.SerializerMethodField()
+    # family_planning_record = serializers.SerializerMethodField()
     additional_info = serializers.SerializerMethodField()
 
     class Meta:
