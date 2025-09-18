@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getSummonCaseList, getSummonScheduleList, getServiceChargeReqDetails, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, 
+import { getSummonCaseList, getSummonScheduleList, getSummonSuppDoc, getServiceChargeReqDetails, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, 
     getSummonTimeSlots, getSummonReqPendingList, getComplaintDetails, getSummonReqRejectedList, getSummonReqAcceptedList} from "../requestAPI/summonGetAPI";
 
 export type SummonCaseList = {
@@ -31,6 +31,14 @@ export type SupportingDoc = {
   ssd_url: string;
   ssd_upload_date: string; 
 };
+
+export const useGetSummonSuppDoc = (ss_id: string) => {
+    return useQuery<SupportingDoc[]>({
+        queryKey: ['summonSuppDoc', ss_id],
+        queryFn:() => getSummonSuppDoc(ss_id),
+        staleTime: 5000,
+    })
+}
 
 export type ScheduleList = {
     ss_id: string;

@@ -30,6 +30,16 @@ export const getSummonScheduleList = async (sr_id: string) => {
     }
 }
 
+export const getSummonSuppDoc = async (ss_id: string) => {
+    try{
+        const res = await api.get( `clerk/summon-supp-doc/${ss_id}/`)
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+
 export const getSuppDoc = async(ca_id: string) => {
     try{
         const res = await api.get(`clerk/case-supp-doc/${ca_id}/`)

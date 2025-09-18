@@ -6,7 +6,7 @@ import { ComplaintRecordForSummon } from "./complaint-record"
 import { Button } from "@/components/ui/button/button"
 import { DataTable } from "@/components/ui/table/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { ChevronLeft, RefreshCw, Inspect, Check, AlertTriangle } from "lucide-react"
+import { ChevronLeft, RefreshCw, Inspect, Check, AlertTriangle, Eye } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import SummonPreview from "./summon-preview"
@@ -21,6 +21,7 @@ import { useEscalateCase } from "./queries/summonUpdateQueries"
 import { useGetServiceChargeReqDetails, type ScheduleList } from "./queries/summonFetchQueries"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import CreateSummonSched from "./summon-create"
+import SummonSuppDocs from "./summon-supp-doc-view"
 
 function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
   return (
@@ -161,6 +162,28 @@ export default function SummonDetails() {
 
         return (
           <div className="flex justify-center gap-2">
+             {!canReschedule && (
+              <TooltipLayout
+                trigger={
+                  <DialogLayout
+                    trigger={
+                      <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                        <Eye size={16} />
+                      </div>
+                    }
+                    title="Supporting Documents"
+                    description={`Supporting documents for schedule ${new Date(schedule.hearing_date).toLocaleDateString()}`}
+                    className="w-[90vw] h-[80vh] max-w-[1800px] max-h-[1000px]"
+                    mainContent={
+                      <div>
+                        <SummonSuppDocs ss_id={schedule.ss_id} />
+                      </div>
+                    }
+                  />
+                }
+                content="View Details"
+              />
+            )} 
             {canReschedule && (
               <TooltipLayout
                 trigger={
