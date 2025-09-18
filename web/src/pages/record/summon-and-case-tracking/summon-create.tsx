@@ -115,9 +115,6 @@ function CreateSummonSched({ sr_id, onSuccess }: {
                             <p className="text-sm font-medium text-blue-800">
                                 Mediation Level: <span className="font-bold">{mediationLevel}</span>
                             </p>
-                            <p className="text-xs text-blue-600 mt-1">
-                                Based on {scheduleList.length} previous schedule{scheduleList.length !== 1 ? 's' : ''}
-                            </p>
                         </div>
 
                         <FormSelect

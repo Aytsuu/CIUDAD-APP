@@ -1,14 +1,12 @@
 import { api } from "@/api/api";
 import { useQuery } from "@tanstack/react-query";
 
-export const getComplaintLists = (status?: string) => {
+export const getComplaintLists = () => {
   return useQuery({
-    queryKey: ["ComplaintList", status],
+    queryKey: ["ComplaintList"],
     queryFn: async () => {
       try {
-        const res = await api.get("complaint/list/", {
-          params: {status},
-        });
+        const res = await api.get("complaint/list/");
         return res.data;
       } catch (error) {
         throw error;

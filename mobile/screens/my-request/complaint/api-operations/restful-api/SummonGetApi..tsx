@@ -17,3 +17,13 @@ export const getSummonTimeSlots = async(sd_id: number) => {
         console.error(err)
     }
 }
+
+
+export const getCaseTracking = async (comp_id: string) => {
+    try{
+        const res = await api.get(`clerk/case-tracking/${comp_id}/`)
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}

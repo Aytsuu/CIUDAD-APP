@@ -23,6 +23,7 @@ from .models import (
     ServiceChargeRequest,
 )
 from rest_framework.generics import RetrieveAPIView
+from django.http import Http404 
 
 logger = logging.getLogger(__name__)
 
@@ -394,7 +395,27 @@ class UpdateSummonTimeAvailabilityView(generics.UpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# Certificate Views
+class CaseTrackingView(generics.RetrieveAPIView):
+    serializer_class = CaseTrackingSerializer
+    def get_object(self):
+        comp_id = self.kwargs.get('comp_id')
+        
+        try:
+            case = ServiceChargeRequest.objects.get(comp_id=comp_id)
+            
+            return case
+        except ServiceChargeRequest.DoesNotExist:
+            raise Http404("Case not found for this complaint")
+    
+    def get(self, request, *args, **kwargs):
+        case = self.get_object()
+        serializer = self.get_serializer(case)
+        return Response(serializer.data)
+
+
+
+# ===========================Certificate Views=====================
+
 class CertificateListView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = ClerkCertificateSerializer

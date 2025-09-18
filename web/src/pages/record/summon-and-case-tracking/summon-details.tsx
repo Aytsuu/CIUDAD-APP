@@ -574,7 +574,8 @@ export default function SummonDetails() {
                 content="Reschedule"
               />
             )}
-         
+        
+            {canReschedule && (
             <TooltipLayout
               trigger={
                 <DialogLayout
@@ -611,6 +612,7 @@ export default function SummonDetails() {
               }
               content="Preview"
             />
+          )}
            
           </div>
         )

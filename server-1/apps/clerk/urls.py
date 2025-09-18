@@ -36,7 +36,7 @@ urlpatterns = [
     path('summon-time-availability/<int:sd_id>/', SummonTimeAvailabilityByDateView.as_view(), name='summon-time-availability-by-date'),
     path('delete-summon-time-availability/<int:st_id>/', DeleteSummonTimeAvailabilityView.as_view(), name='delete-summon-time-availability'),
     path('update-summon-time-availability/<str:st_id>/', UpdateSummonTimeAvailabilityView.as_view(), name='update-summon-time-availability'),
-
+    path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
    
     # Certificate URLs
     path('certificate/', CertificateListView.as_view(), name='certificate_list'),

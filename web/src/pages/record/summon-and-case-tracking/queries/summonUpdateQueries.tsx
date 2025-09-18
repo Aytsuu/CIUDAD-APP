@@ -36,7 +36,7 @@ export const useEscalateCase = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
 
      return useMutation({
-       mutationFn: ({ srId, comp_id }: { srId: string, comp_id: string }) =>escalateCase(srId, comp_id),
+       mutationFn: ( sr_id: string) =>escalateCase(sr_id),
         onMutate: () =>{
             toast.loading("Marking case...", { id: "escalateCase" });
         },

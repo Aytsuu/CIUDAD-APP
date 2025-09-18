@@ -213,14 +213,6 @@ function SummonCases(){
                                                     </p>
                                                 </div>
 
-                                                {(item.sr_case_status === "Resolved" || item.sr_case_status === "Escalated") && item.decision_date && (
-                                                    <div className={styles.cardInfoRow}>
-                                                        <p className={styles.cardContent}>Decision Date: </p>
-                                                        <p className={styles.cardInfo}>
-                                                            {formatTimestamp(item.decision_date)}
-                                                        </p>
-                                                    </div>
-                                                )}
                                             </div>
                                         }
                                     />

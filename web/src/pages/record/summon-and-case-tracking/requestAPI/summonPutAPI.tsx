@@ -12,22 +12,23 @@ export const resolveCase = async (sr_id: string) => {
     }
 }
 
-export const escalateCase = async (sr_id: string, comp_id: string) => {
+export const escalateCase = async (sr_id: string) => {
     try{
-         const res2 = await api.post('clerk/file-action-request/', {
-            comp: comp_id,
-            sr_type: 'File Action',
-            sr_request_date: new Date().toISOString(),
-            sr_payment_status: "Unpaid",
-            parent_summon: sr_id
+        //  const res2 = await api.post('clerk/file-action-request/', {
+        //     comp: comp_id,
+        //     sr_type: 'File Action',
+        //     sr_request_date: new Date().toISOString(),
+        //     sr_payment_status: "Unpaid",
+        //     parent_summon: sr_id
+        // })
+
+        console.log('sr_id', sr_id)
+        const res = await api.put(`clerk/update-summon-request/${sr_id}/`, {
+            sr_case_status: "Escalated",
+            sr_date_marked: new Date().toISOString(),
         })
 
-        const res = await api.put(`clerk/update-service-charge-request/${sr_id}/`, {
-            status: "Escalated",
-            decision_date: new Date().toISOString(),
-        })
-
-        return res.data, res2.data
+        return res.data
     }catch(err){
         console.error(err)
     }
