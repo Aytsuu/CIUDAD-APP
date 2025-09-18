@@ -24,246 +24,242 @@ import {
   useArchiveAttendanceSheet,
   useRestoreAttendanceSheet,
   useDeleteAttendanceSheet,
-  useGetAttendees,
-  useAddAttendee,
-  useUpdateAttendee,
   useAddAttendanceSheet,
 } from "../ce-events/ce-att-queries";
 import { useLocalSearchParams } from "expo-router";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useForm, FormProvider } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useToastContext } from "@/components/ui/toast";
+// import { Checkbox } from "@/components/ui/checkbox";
+// import { useForm, FormProvider } from "react-hook-form";
+// import { zodResolver } from "@hookform/resolvers/zod";
+// import * as z from "zod";
+// import { useToastContext } from "@/components/ui/toast";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { Button } from "@/components/ui/button/button";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useRouter } from "expo-router";
-import { Attendee } from "../ce-events/ce-att-typeFile";
 import PageLayout from "@/screens/_PageLayout";
 
 // ============ MARK ATTENDANCE ==============
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-const MarkAttendeesSchema = z.object({ attendees: z.array(z.string()) });
-const MarkAttendance = ({ ceId }: { ceId: number }) => {
-  const {
-    data: allAttendees = [],
-    isLoading,
-    error,
-    refetch,
-  } = useGetAttendees(ceId);
-  const addAttendee = useAddAttendee();
-  const updateAttendee = useUpdateAttendee();
-  const { toast } = useToastContext();
-  const [refreshing, setRefreshing] = useState(false);
+// const MarkAttendeesSchema = z.object({ attendees: z.array(z.string()) });
+// const MarkAttendance = ({ ceId }: { ceId: number }) => {
+//   const {
+//     data: allAttendees = [],
+//     isLoading,
+//     error,
+//     refetch,
+//   } = useGetAttendees(ceId);
+//   const addAttendee = useAddAttendee();
+//   const updateAttendee = useUpdateAttendee();
+//   const { toast } = useToastContext();
+//   const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
-  const eventAttendees = useMemo(() => {
-    return allAttendees.filter((attendee) => attendee.ce_id === ceId);
-  }, [allAttendees, ceId]);
+//   const onRefresh = async () => {
+//     setRefreshing(true);
+//     await refetch();
+//     setRefreshing(false);
+//   };
+//   const eventAttendees = useMemo(() => {
+//     return allAttendees.filter((attendee) => attendee.ce_id === ceId);
+//   }, [allAttendees, ceId]);
 
-  const form = useForm<z.infer<typeof MarkAttendeesSchema>>({
-    resolver: zodResolver(MarkAttendeesSchema),
-    defaultValues: {
-      attendees: [],
-    },
-  });
+//   const form = useForm<z.infer<typeof MarkAttendeesSchema>>({
+//     resolver: zodResolver(MarkAttendeesSchema),
+//     defaultValues: {
+//       attendees: [],
+//     },
+//   });
 
-  const selectedAttendees = form.watch("attendees") ?? [];
-  const isAllSelected =
-    selectedAttendees.length === eventAttendees.length &&
-    eventAttendees.length > 0;
+//   const selectedAttendees = form.watch("attendees") ?? [];
+//   const isAllSelected =
+//     selectedAttendees.length === eventAttendees.length &&
+//     eventAttendees.length > 0;
 
-  useEffect(() => {
-    if (isLoading || !eventAttendees) return;
-    if (eventAttendees.length > 0) {
-      const presentAttendees = eventAttendees
-        .filter(
-          (attendee: Attendee) => attendee.atn_present_or_absent === "Present"
-        )
-        .map((attendee: Attendee) => attendee.atn_name);
-      form.reset({ attendees: presentAttendees });
-    }
-  }, [eventAttendees, form, isLoading]);
+//   useEffect(() => {
+//     if (isLoading || !eventAttendees) return;
+//     if (eventAttendees.length > 0) {
+//       const presentAttendees = eventAttendees
+//         .filter(
+//           (attendee: Attendee) => attendee.atn_present_or_absent === "Present"
+//         )
+//         .map((attendee: Attendee) => attendee.atn_name);
+//       form.reset({ attendees: presentAttendees });
+//     }
+//   }, [eventAttendees, form, isLoading]);
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const allAttendeeNames = eventAttendees.map(
-        (attendee: Attendee) => attendee.atn_name
-      );
-      form.setValue("attendees", allAttendeeNames);
-    } else {
-      form.setValue("attendees", []);
-    }
-  };
+//   const handleSelectAll = (checked: boolean) => {
+//     if (checked) {
+//       const allAttendeeNames = eventAttendees.map(
+//         (attendee: Attendee) => attendee.atn_name
+//       );
+//       form.setValue("attendees", allAttendeeNames);
+//     } else {
+//       form.setValue("attendees", []);
+//     }
+//   };
 
-  const onSubmit = async (values: z.infer<typeof MarkAttendeesSchema>) => {
-    try {
-      const mutationPromises = eventAttendees.map(
-        async (attendee: Attendee) => {
-          const isPresent = values.attendees.includes(attendee.atn_name);
-          const status = isPresent ? "Present" : "Absent";
-          if (attendee.atn_id) {
-            return updateAttendee.mutateAsync({
-              atn_id: attendee.atn_id,
-              attendeeInfo: { atn_present_or_absent: status },
-            });
-          } else {
-            return addAttendee.mutateAsync({
-              atn_name: attendee.atn_name,
-              atn_designation: attendee.atn_designation || "No Designation",
-              atn_present_or_absent: status,
-              ce_id: ceId,
-              staff_id: attendee.staff_id || null,
-            });
-          }
-        }
-      );
-      await Promise.all(mutationPromises);
-      toast.success("Attendees updated successfully");
-    } catch (err) {
-      toast.error("Failed to save attendance");
-    }
-  };
+//   const onSubmit = async (values: z.infer<typeof MarkAttendeesSchema>) => {
+//     try {
+//       const mutationPromises = eventAttendees.map(
+//         async (attendee: Attendee) => {
+//           const isPresent = values.attendees.includes(attendee.atn_name);
+//           const status = isPresent ? "Present" : "Absent";
+//           if (attendee.atn_id) {
+//             return updateAttendee.mutateAsync({
+//               atn_id: attendee.atn_id,
+//               attendeeInfo: { atn_present_or_absent: status },
+//             });
+//           } else {
+//             return addAttendee.mutateAsync({
+//               atn_name: attendee.atn_name,
+//               atn_designation: attendee.atn_designation || "No Designation",
+//               atn_present_or_absent: status,
+//               ce_id: ceId,
+//               staff_id: attendee.staff_id || null,
+//             });
+//           }
+//         }
+//       );
+//       await Promise.all(mutationPromises);
+//       toast.success("Attendees updated successfully");
+//     } catch (err) {
+//       toast.error("Failed to save attendance");
+//     }
+//   };
 
-  if (ceId === 0) {
-    return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <Text className="text-red-500 text-lg font-medium">
-          Error: Invalid meeting ID
-        </Text>
-      </View>
-    );
-  }
+//   if (ceId === 0) {
+//     return (
+//       <View className="flex-1 justify-center items-center bg-white">
+//         <Text className="text-red-500 text-lg font-medium">
+//           Error: Invalid meeting ID
+//         </Text>
+//       </View>
+//     );
+//   }
 
-  if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <Loader2 size={24} color="#07143F" className="animate-spin" />
-        <Text className="text-gray-500 text-lg font-medium mt-4">
-          Loading attendees...
-        </Text>
-      </View>
-    );
-  }
+//   if (isLoading) {
+//     return (
+//       <View className="flex-1 justify-center items-center bg-white">
+//         <Loader2 size={24} color="#07143F" className="animate-spin" />
+//         <Text className="text-gray-500 text-lg font-medium mt-4">
+//           Loading attendees...
+//         </Text>
+//       </View>
+//     );
+//   }
 
-  if (error) {
-    return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <Text className="text-red-500 text-lg font-medium">
-          Error: {error.message || "Failed to load attendees"}
-        </Text>
-      </View>
-    );
-  }
+//   if (error) {
+//     return (
+//       <View className="flex-1 justify-center items-center bg-white">
+//         <Text className="text-red-500 text-lg font-medium">
+//           Error: {error.message || "Failed to load attendees"}
+//         </Text>
+//       </View>
+//     );
+//   }
 
-  return (
-    <FormProvider {...form}>
-      <View className="flex-1 bg-white p-4">
-        <Text className="text-lg font-bold text-gray-800 mb-4">
-          Mark Attendance for Meeting
-        </Text>
-        <Text className="text-sm text-gray-600 mb-4">
-          Attendees count: {eventAttendees.length}
-        </Text>
-        {eventAttendees.length > 0 ? (
-          <View>
-            <View className="flex-row items-center mb-4 p-2 h-10 bg-gray-50 rounded">
-              <Checkbox
-                checked={isAllSelected}
-                onCheckedChange={handleSelectAll}
-                accessibilityLabel="Select all attendees"
-                disabled={!true}
-                className="h-5 w-5"
-              />
-              <Text className="ml-3 text-base font-medium text-gray-900">
-                Select All
-              </Text>
-            </View>
-            <ScrollView
-              style={{ maxHeight: 500, minHeight: 500 }}
-              showsVerticalScrollIndicator={true}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-              }
-            >
-              <View className="space-y-3">
-                {eventAttendees.map((attendee: Attendee, index) => {
-                  const isSelected = selectedAttendees.includes(
-                    attendee.atn_name
-                  );
-                  return (
-                    <View
-                      key={attendee.atn_id || index}
-                      className="flex-row items-center p-3 bg-gray-50 rounded border border-gray-200"
-                    >
-                      <MaterialIcons name="person" size={20} color="#4b5563" />
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={(checked) => {
-                          const newValue = checked
-                            ? [...selectedAttendees, attendee.atn_name]
-                            : selectedAttendees.filter(
-                                (name: string) => name !== attendee.atn_name
-                              );
-                          form.setValue("attendees", newValue);
-                        }}
-                        accessibilityLabel={`Mark ${attendee.atn_name} as ${
-                          isSelected ? "absent" : "present"
-                        }`}
-                        disabled={!true}
-                        className="h-5 w-5 ml-2"
-                      />
-                      <View className="ml-3 flex-1">
-                        <Text className="text-base font-medium text-gray-900">
-                          {attendee.atn_name}
-                        </Text>
-                        {attendee.atn_designation && (
-                          <Text className="text-sm text-gray-500 mt-1">
-                            {attendee.atn_designation}
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </ScrollView>
-            <View className=" bg-white border-t border-gray-200 px-4 py-4">
-              <ConfirmationModal
-                trigger={
-                  <Button className="bg-primaryBlue py-3 rounded-lg">
-                    <Text className="text-white text-base font-semibold text-center">
-                      Save
-                    </Text>
-                  </Button>
-                }
-                title="Confirm Save Attendance"
-                description="Are you sure you want to save these attendance changes?"
-                actionLabel="Save"
-                variant="default"
-                onPress={form.handleSubmit(onSubmit)}
-                loading={addAttendee.isPending || updateAttendee.isPending}
-                loadingMessage="Saving..."
-              />
-            </View>
-          </View>
-        ) : (
-          <View className="flex-1 justify-center items-center bg-gray-50 rounded-lg p-4">
-            <Text className="text-gray-500 text-lg font-medium text-center">
-              No attendees found for this meeting.
-            </Text>
-          </View>
-        )}
-      </View>
-    </FormProvider>
-  );
-};
+//   return (
+//     <FormProvider {...form}>
+//       <View className="flex-1 bg-white p-4">
+//         <Text className="text-lg font-bold text-gray-800 mb-4">
+//           Mark Attendance for Meeting
+//         </Text>
+//         <Text className="text-sm text-gray-600 mb-4">
+//           Attendees count: {eventAttendees.length}
+//         </Text>
+//         {eventAttendees.length > 0 ? (
+//           <View>
+//             <View className="flex-row items-center mb-4 p-2 h-10 bg-gray-50 rounded">
+//               <Checkbox
+//                 checked={isAllSelected}
+//                 onCheckedChange={handleSelectAll}
+//                 accessibilityLabel="Select all attendees"
+//                 disabled={!true}
+//                 className="h-5 w-5"
+//               />
+//               <Text className="ml-3 text-base font-medium text-gray-900">
+//                 Select All
+//               </Text>
+//             </View>
+//             <ScrollView
+//               style={{ maxHeight: 500, minHeight: 500 }}
+//               showsVerticalScrollIndicator={true}
+//               refreshControl={
+//                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+//               }
+//             >
+//               <View className="space-y-3">
+//                 {eventAttendees.map((attendee: Attendee, index) => {
+//                   const isSelected = selectedAttendees.includes(
+//                     attendee.atn_name
+//                   );
+//                   return (
+//                     <View
+//                       key={attendee.atn_id || index}
+//                       className="flex-row items-center p-3 bg-gray-50 rounded border border-gray-200"
+//                     >
+//                       <MaterialIcons name="person" size={20} color="#4b5563" />
+//                       <Checkbox
+//                         checked={isSelected}
+//                         onCheckedChange={(checked) => {
+//                           const newValue = checked
+//                             ? [...selectedAttendees, attendee.atn_name]
+//                             : selectedAttendees.filter(
+//                                 (name: string) => name !== attendee.atn_name
+//                               );
+//                           form.setValue("attendees", newValue);
+//                         }}
+//                         accessibilityLabel={`Mark ${attendee.atn_name} as ${
+//                           isSelected ? "absent" : "present"
+//                         }`}
+//                         disabled={!true}
+//                         className="h-5 w-5 ml-2"
+//                       />
+//                       <View className="ml-3 flex-1">
+//                         <Text className="text-base font-medium text-gray-900">
+//                           {attendee.atn_name}
+//                         </Text>
+//                         {attendee.atn_designation && (
+//                           <Text className="text-sm text-gray-500 mt-1">
+//                             {attendee.atn_designation}
+//                           </Text>
+//                         )}
+//                       </View>
+//                     </View>
+//                   );
+//                 })}
+//               </View>
+//             </ScrollView>
+//             <View className=" bg-white border-t border-gray-200 px-4 py-4">
+//               <ConfirmationModal
+//                 trigger={
+//                   <Button className="bg-primaryBlue py-3 rounded-lg">
+//                     <Text className="text-white text-base font-semibold text-center">
+//                       Save
+//                     </Text>
+//                   </Button>
+//                 }
+//                 title="Confirm Save Attendance"
+//                 description="Are you sure you want to save these attendance changes?"
+//                 actionLabel="Save"
+//                 variant="default"
+//                 onPress={form.handleSubmit(onSubmit)}
+//                 loading={addAttendee.isPending || updateAttendee.isPending}
+//                 loadingMessage="Saving..."
+//               />
+//             </View>
+//           </View>
+//         ) : (
+//           <View className="flex-1 justify-center items-center bg-gray-50 rounded-lg p-4">
+//             <Text className="text-gray-500 text-lg font-medium text-center">
+//               No attendees found for this meeting.
+//             </Text>
+//           </View>
+//         )}
+//       </View>
+//     </FormProvider>
+//   );
+// };
 
 // ============ ATTENDANCE SHEETS ==============
 
@@ -335,7 +331,7 @@ const AttendanceSheets = () => {
       }
     >
       <ScrollView className="flex-1 p-2">
-        <Tabs value={modalTab} onValueChange={handleTabChange}>
+        {/* <Tabs value={modalTab} onValueChange={handleTabChange}> */}
           <TabsList className="flex-row bg-white px-4 pb-4">
             <TabsTrigger
               value="view"
@@ -469,10 +465,10 @@ const AttendanceSheets = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="mark" className="flex-1">
+          {/* <TabsContent value="mark" className="flex-1">
             <MarkAttendance ceId={parsedCeId} />
           </TabsContent>
-        </Tabs>
+        </Tabs> */}
 
         {/* Upload Modal */}
         <Modal
