@@ -217,6 +217,23 @@ export const markCertificateAsIssued = async (certificateData: MarkCertificateVa
   }
 };
 
+// Mark service charge as issued/printed
+export const markServiceChargeAsIssued = async (serviceChargeData: { sr_id: string }) => {
+  try {
+    console.log('Marking service charge as issued:', serviceChargeData);
+    // Use the proper service charge endpoint
+    const res = await api.patch(`/clerk/update-service-charge-request/${serviceChargeData.sr_id}/`, {
+      sr_req_status: 'Completed',
+      sr_date_marked: new Date().toISOString(),
+    });
+    return res.data;
+  } catch (err) {
+    const error = err as AxiosError;
+    console.error('Error marking service charge as issued:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
 
 export type Staff = {
   staff_id: string;

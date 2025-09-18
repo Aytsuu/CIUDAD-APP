@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Loader2, Eye, CheckCircle } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -8,16 +8,17 @@ import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { getPaidServiceCharges, type ServiceCharge } from "@/pages/record/clearances/queries/certFetchQueries";
+import { getPaidServiceCharges, markServiceChargeAsIssued, type ServiceCharge } from "@/pages/record/clearances/queries/certFetchQueries";
 import TemplateMainPage from "../council/templates/template-main";
 import { localDateFormatter } from "@/helpers/localDateFormatter";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { toast } from "sonner";
 
 
 interface ExtendedServiceCharge extends ServiceCharge {}
 
 function ServiceChargePage() {
-  // const navigate = useNavigate();
+ 
   const [searchTerm, setSearchTerm] = useState("");
 
   const [selectedSC, setSelectedSC] = useState<ExtendedServiceCharge | null>(null);
@@ -29,6 +30,19 @@ function ServiceChargePage() {
   const { data: serviceCharges, isLoading, error } = useQuery<ServiceCharge[]>({
     queryKey: ["paidServiceCharges"],
     queryFn: getPaidServiceCharges,
+  });
+
+  // Mutation for marking service charge as issued
+  const markAsIssuedMutation = useMutation<any, unknown, { sr_id: string }>({
+    mutationFn: markServiceChargeAsIssued,
+    onSuccess: async (_data, variables) => {
+      toast.success(`Service Charge ${variables.sr_id} marked as printed successfully!`);
+      queryClient.invalidateQueries({ queryKey: ["paidServiceCharges"] });
+      setSelectedSC(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || "Failed to mark service charge as printed");
+    },
   });
 
   // Filter and search logic
@@ -53,9 +67,9 @@ function ServiceChargePage() {
     return filteredServiceCharges.slice(start, end);
   }, [filteredServiceCharges, currentPage, pageSize]);
 
-  // Mark as Printed opens the print view immediately
+  // Mark as Printed -> behave like Certification: mark as issued and move to Issued Certificates
   const handleMarkAsPrinted = (sc: ServiceCharge) => {
-    setSelectedSC(sc as ExtendedServiceCharge);
+    markAsIssuedMutation.mutate({ sr_id: sc.sr_id });
   };
 
   // Eye icon: open populated template immediately
@@ -164,9 +178,9 @@ function ServiceChargePage() {
                   Mark as Printed
                 </Button>
               }
-              title="Mark as Printed"
-              description={`Open the File Action print view for ${sc.sr_code}?`}
-              actionLabel="Open Print View"
+              title="Mark Service Charge as Printed"
+              description={`Are you sure you want to mark service charge ${sc.sr_code} as printed? This will move it to the Issued Certificates page.`}
+              actionLabel="Mark as Printed"
               onClick={() => handleMarkAsPrinted(sc)}
             />        
           </div>
@@ -194,14 +208,14 @@ function ServiceChargePage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          </div>
         </div>
+      </div>
 
         <div className="bg-white">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6">
             <div className="flex items-center gap-4">
-              <div className="flex gap-x-2 items-center">
-                <p className="text-xs sm:text-sm">Show</p>
+          <div className="flex gap-x-2 items-center">
+            <p className="text-xs sm:text-sm">Show</p>
                 <Input type="number" className="w-14 h-8" value={pageSize}
                   onChange={(e) => {
                     const val = parseInt(e.target.value || '10', 10);
@@ -210,10 +224,10 @@ function ServiceChargePage() {
                     setCurrentPage(1);
                   }}
                 />
-                <p className="text-xs sm:text-sm">Entries</p>
+            <p className="text-xs sm:text-sm">Entries</p>
               </div>
-            </div>
           </div>
+        </div>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -229,7 +243,7 @@ function ServiceChargePage() {
               header={true} 
             />
           )}
-        </div>
+      </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0 mt-4">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
