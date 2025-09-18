@@ -22,6 +22,7 @@ from .models import (
     Business,
     ServiceChargeRequest,
 )
+from rest_framework.generics import RetrieveAPIView
 
 logger = logging.getLogger(__name__)
 
@@ -248,6 +249,12 @@ class SummonCaseListView(generics.ListAPIView):
         
         return queryset.order_by('sr_code')
 
+
+class ServiceChargeRequestDetailView(RetrieveAPIView):
+    serializer_class = ServiceChargeRequestDetailSerializer
+    queryset = ServiceChargeRequest.objects.all()
+    lookup_field = 'sr_id' 
+
 class SummonScheduleByServiceRequestView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonScheduleDetailSerializer
@@ -261,6 +268,10 @@ class SummonScheduleByServiceRequestView(generics.ListAPIView):
             'sd_id',
             'st_id'
         ).order_by('sd_id__sd_date', 'st_id__st_start_time')
+
+class SummonScheduleCreateView(generics.ListCreateAPIView):
+    serializer_class = SummonScheduleSerializer
+    queryset = SummonSchedule.objects.all()
     
 class UpdateSummonScheduleView(generics.UpdateAPIView):
     serializer_class = SummonScheduleSerializer
@@ -363,11 +374,24 @@ class SummonTimeAvailabilityByDateView(generics.ListAPIView):
             queryset = queryset.filter(sd_id=sd_id)
         return queryset
 
-
 class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
     queryset = SummonTimeAvailability.objects.all()
     serializer_class = SummonTimeAvailabilitySerializer
     lookup_field = 'st_id'
+
+
+class UpdateSummonTimeAvailabilityView(generics.UpdateAPIView):
+    serializer_class = SummonTimeAvailabilitySerializer
+    queryset = SummonTimeAvailability.objects.all()
+    lookup_field = 'st_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # Certificate Views

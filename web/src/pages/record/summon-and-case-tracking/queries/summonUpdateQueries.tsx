@@ -12,7 +12,7 @@ export const useResolveCase = (onSuccess?: () => void) => {
             toast.loading("Marking case...", { id: "resolveCase" });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['caseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] })
             queryClient.invalidateQueries({ queryKey: ['summonCases'] })
             toast.success('Case marked as resolved', {
                 id: "resolveCase",
@@ -41,7 +41,7 @@ export const useEscalateCase = (onSuccess?: () => void) => {
             toast.loading("Marking case...", { id: "escalateCase" });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['caseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] })
             queryClient.invalidateQueries({ queryKey: ['summonCases'] })
             toast.success('Case marked as escalated', {
                 id: "escalateCase",

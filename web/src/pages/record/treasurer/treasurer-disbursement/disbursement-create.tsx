@@ -21,10 +21,11 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
   const { user } = useAuth();
   const [files, setFiles] = useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [_errorMessage, setErrorMessage] = useState<string | null>(null);
   // const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const addMutation = useAddDisbursementVoucher();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const addFilesMutation = useAddDisbursementFiles(); 
 
   const form = useForm<DisbursementFormValues>({
     defaultValues: {
@@ -86,19 +87,6 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
   const { control, setValue, watch } = form;
   const particulars = watch("dis_particulars");
   const payacc = watch("dis_payacc");
-
-  const totalParticularsAmount = particulars.reduce((sum: number, item: ParticularItem) => {
-    return sum + (parseFloat(item.amount) || 0);
-  }, 0);
-
-  const totalDebit = payacc.reduce((sum: number, item: PayAccItem) => {
-    return sum + (parseFloat(item.debit) || 0);
-  }, 0);
-
-  const totalCredit = payacc.reduce((sum: number, item: PayAccItem) => {
-    return sum + (parseFloat(item.credit) || 0);
-  }, 0);
-
   const addParticular = () => {
     setValue("dis_particulars", [...particulars, { forPayment: "", tax: "0", amount: "0" }]);
   };
@@ -179,7 +167,7 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
         }
         
         // You would call your file upload mutation here
-        await useAddDisbursementFiles.mutateAsync({
+        await addFilesMutation.mutateAsync({
           dis_num: disNum,
           files: newFiles,
         });
@@ -271,8 +259,8 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
                     <FormInput
                       control={control}
                       name={`dis_particulars.${index}.tax`}
-                      label="Withholding Tax"
-                      placeholder="0.00"
+                      label="Withholding Tax %"
+                      placeholder="0"
                       type="number"
                     />
                     <FormInput
@@ -303,17 +291,6 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
                   <Plus size={16} />
                   Add Particular
                 </Button>
-                {totalParticularsAmount > 0 && (
-                  <div className="mt-2 p-2 bg-gray-50 rounded-lg">
-                    <span className="font-medium">Total Amount: </span>
-                    <span className="font-bold">
-                      ₱{totalParticularsAmount.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -405,28 +382,6 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
                   <Plus size={16} />
                   Add Account
                 </Button>
-                {(totalDebit > 0 || totalCredit > 0) && (
-                  <div className="mt-2 p-2 bg-gray-50 rounded-lg grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="font-medium">Total Debit: </span>
-                      <span className="font-bold text-red-600">
-                        ₱{totalDebit.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        })}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium">Total Credit: </span>
-                      <span className="font-bold text-green-600">
-                        ₱{totalCredit.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -442,11 +397,11 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
               />
             </div>
 
-            {errorMessage && (
+            {/* {errorMessage && (
               <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
                 {errorMessage}
               </div>
-            )}
+            )} */}
 
             <div className="flex flex-col sm:flex-row justify-end mt-6 gap-3">
               <ConfirmationModal

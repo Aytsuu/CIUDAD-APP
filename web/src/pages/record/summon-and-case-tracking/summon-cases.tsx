@@ -161,17 +161,10 @@ function SummonCases(){
                                 <Link 
                                     key={item.sr_id}
                                     to='/view-case'  
-                                    state={{ sr_id: item.sr_id, comp_id: item.comp_id, sr_code: item.sr_code, case_status: item.sr_case_status,
-                                        incident_type: item.incident_type,
-                                        complainant: Array.isArray(item.complainant_names) 
-                                        ? item.complainant_names 
-                                        : [item.complainant_names],
+                                    state={{ sr_id: item.sr_id,
                                         complainant_addresses: Array.isArray(item.complainant_addresses) 
                                         ? item.complainant_addresses 
                                         : [item.complainant_addresses || "N/A"],
-                                        accused: Array.isArray(item.accused_names) 
-                                        ? item.accused_names 
-                                        : [item.accused_names],
                                         accused_addresses: Array.isArray(item.accused_addresses) 
                                         ? item.accused_addresses 
                                         : [item.accused_addresses || "N/A"]

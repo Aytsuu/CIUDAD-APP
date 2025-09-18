@@ -1,13 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { useNavigate } from "react-router";
 import { postDisbursementVoucher, addDisbursementFiles } from "../api/incDisb-postreq";
 import { DisbursementInput, DisbursementFileInput } from "../incDisb-types"; 
 
 export const useAddDisbursementVoucher = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   return useMutation({
     mutationFn: (disbursementData: DisbursementInput) => postDisbursementVoucher(disbursementData),
@@ -17,7 +15,6 @@ export const useAddDisbursementVoucher = () => {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000,
       });
-      navigate(`/disbursement-vouchers`);
     },
     onError: (error: any) => {
       toast.error("Failed to add disbursement voucher", {
