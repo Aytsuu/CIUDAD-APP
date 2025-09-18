@@ -10,10 +10,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GADAnnualDevPlanCreateSchema, type GADAnnualDevPlanCreateInput } from "@/form-schema/gad-annual-dev-plan-create-shema";
 import { useAuth } from "@/context/AuthContext";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const getClientOptions = () => (
   <>
-    <option value="">Select client</option>
     <option value="Women">Women</option>
     <option value="LGBTQIA+">LGBTQIA+</option>
     <option value="Senior">Senior</option>
@@ -251,10 +251,19 @@ export default function AnnualDevelopmentPlanCreate() {
               {form.formState.errors.dev_issue && (
                 <p className="text-red-500 text-sm">{form.formState.errors.dev_issue.message}</p>
               )}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  checked={form.watch("dev_mandated") || false}
+                  onCheckedChange={(checked) => {
+                    form.setValue("dev_mandated", checked as boolean);
+                  }}
+                />
+                <label className="text-sm font-medium text-gray-700">Mandated</label>
+              </div>
+            </div>
             </div>
           </div>
-        </div>
-
+       
         {/* Program Details Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Program Details</h2>

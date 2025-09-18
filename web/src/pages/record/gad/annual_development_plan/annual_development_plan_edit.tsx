@@ -13,7 +13,6 @@ import { useAuth } from "@/context/AuthContext";
 
 const getClientOptions = () => (
   <>
-    <option value="">Select client</option>
     <option value="Women">Women</option>
     <option value="LGBTQIA+">LGBTQIA+</option>
     <option value="Senior">Senior</option>
