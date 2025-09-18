@@ -29,7 +29,6 @@ const forceCapitalize = (str: string | null | undefined): string => {
 interface TTStatusRecord {
   tts_status: string
   tts_date_given: string | null
-  // tts_tdap: boolean
 }
 
 export default function PrenatalForm() {
