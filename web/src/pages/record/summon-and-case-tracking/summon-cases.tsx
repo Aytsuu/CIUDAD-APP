@@ -161,7 +161,8 @@ function SummonCases(){
                                 <Link 
                                     key={item.sr_id}
                                     to='/view-case'  
-                                    state={{ sr_id: item.sr_id, comp_id: item.comp_id, sr_code: item.sr_code, 
+                                    state={{ sr_id: item.sr_id, comp_id: item.comp_id, sr_code: item.sr_code, case_status: item.sr_case_status,
+                                        incident_type: item.incident_type,
                                         complainant: Array.isArray(item.complainant_names) 
                                         ? item.complainant_names 
                                         : [item.complainant_names],
