@@ -559,7 +559,7 @@
 import { useState, useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Trash, Search, Plus, Eye, History  } from "lucide-react";
+import { Trash, Search, Plus, Eye, Archive, ArchiveRestore  } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
@@ -570,7 +570,7 @@ import { formatTime } from "@/helpers/timeFormatter";
 import UpdateWasteColSched from "./waste-col-UpdateSched";
 import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from "./queries/wasteColFetchQueries";
 import WasteColSched from "./waste-col-sched";
-import { useArchiveWasteCol, useDeleteWasteCol } from "./queries/wasteColDeleteQueries";
+import { useArchiveWasteCol, useRestoreWasteCol, useDeleteWasteCol } from "./queries/wasteColDeleteQueries";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { sortWasteCollectionData } from "@/helpers/wasteCollectionHelper";
 
@@ -600,11 +600,20 @@ function WasteCollectionMain() {
 
     // ARCHIVE / RESTORE / DELETE MUTATIONS
     const { mutate: archiveWasteSchedCol } = useArchiveWasteCol();
+    const { mutate: restoreWasteSchedCol } = useRestoreWasteCol();
     const { mutate: deleteWasteSchedCol } = useDeleteWasteCol();
 
 
     const handleDelete = (wc_num: number) => {
         deleteWasteSchedCol(wc_num);
+    };
+
+    const handleArchive = (wc_num: number) => {
+        archiveWasteSchedCol(wc_num);
+    };
+
+    const handleRestore = (wc_num: number) => {
+        restoreWasteSchedCol(wc_num);
     };
 
     //sort data by day and time
@@ -685,21 +694,22 @@ function WasteCollectionMain() {
                         }
                         content="View"
                     />
+
                     <TooltipLayout
                         trigger={
                             <ConfirmationModal
                                 trigger={
                                     <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                                        <Trash size={16} />
+                                        <Archive size={16} />
                                     </div>
                                 }
-                                title="Delete Schedule"
-                                description="This schedule will be permanently deleted. Are you sure?"
-                                actionLabel="Delete"
-                                onClick={() => handleDelete(row.original.wc_num)}
+                                title="Archive Schedule"
+                                description="This schedule will be archive. Are you sure?"
+                                actionLabel="Archive"
+                                onClick={() => handleArchive(row.original.wc_num)}
                             />
                         }
-                        content="Delete"
+                        content="Archive"
                     />
                 </div>
             ),
@@ -714,6 +724,19 @@ function WasteCollectionMain() {
             header: "Action",
             cell: ({ row }) => (
                 <div className="flex justify-center gap-2">
+                    <TooltipLayout
+                        trigger={
+                            <ConfirmationModal
+                                trigger={ <div className="bg-[#10b981] hover:bg-[#34d399] text-white px-4 py-2 rounded cursor-pointer"><ArchiveRestore size={16}/></div>}
+                                title="Restore Archived Schedule"
+                                description="Would you like to restore this schedule from the archive and make it active again?"
+                                actionLabel="Restore"
+                                onClick={() => handleRestore(row.original.wc_num)}
+                            />
+                        }
+                        content="Restore"
+                    />
+
                     <TooltipLayout
                         trigger={
                             <ConfirmationModal
@@ -790,7 +813,7 @@ function WasteCollectionMain() {
                             <TabsTrigger value="active">Active Schedules</TabsTrigger>
                             <TabsTrigger value="archived">
                                 <div className="flex items-center gap-2">
-                                    <History size={16} /> Past Schedules
+                                    <ArchiveRestore size={16} /> Archive Schedule
                                 </div>
                             </TabsTrigger>
                         </TabsList>
