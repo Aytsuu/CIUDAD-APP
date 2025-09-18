@@ -287,6 +287,21 @@ class UpdateSummonRequestView(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        
+        # Check if status is being updated to "Paid" and sr_code needs to be generated
+        if (request.data.get('status') == 'Paid' or 
+            request.data.get('sr_req_status') == 'Paid') and not instance.sr_code:
+            
+            # Generate sr_code using the logic: 0000-25, 0001-25, etc.
+            sr_count = ServiceChargeRequest.objects.count() + 1
+            year_suffix = timezone.now().year % 100
+            sr_code = f"{sr_count:04d}-{year_suffix:02d}"
+            
+            # Add sr_code to the request data
+            request.data['sr_code'] = sr_code
+            
+            logger.info(f"Generated sr_code: {sr_code} for ServiceChargeRequest: {instance.sr_id}")
+        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -1161,11 +1176,16 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
     serializer_class = ServiceChargeTreasurerListSerializer
 
     def get_queryset(self):
-        # Pending or Paid service charges for Summon cases; adjust filters as needed
-        qs = ServiceChargeRequest.objects.filter(
-            sr_type='Summon'
-        ).select_related('comp_id').prefetch_related(
-            'comp_id__complaintcomplainant_set__cpnt',
-            'comp_id__complaintaccused_set__acsd'
-        ).order_by('-sr_req_date')
-        return qs
+        queryset = ServiceChargeRequest.objects.filter(sr_type='Summon').select_related(
+            'comp_id',
+            'servicechargepaymentrequest__pr_id'
+        ).prefetch_related(
+            'comp_id__complaintcomplainant_set__cpnt'
+        )
+        
+        # Filter by sr_req_status if provided
+        sr_req_status = self.request.query_params.get('sr_req_status')
+        if sr_req_status:
+            queryset = queryset.filter(sr_req_status=sr_req_status)
+        
+        return queryset.order_by('-sr_req_date')

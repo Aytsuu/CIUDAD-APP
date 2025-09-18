@@ -85,6 +85,7 @@ export const addPersonalReceipt = async (data: Record<string, any>) => {
                     nrc_id: data.nrc_id ? Number(data.nrc_id) : null,
                     bpr_id: data.bpr_id ? Number(data.bpr_id) : null,
                     cr_id: data.cr_id ? String(data.cr_id) : null,
+                    spay_id: data.spay_id ? Number(data.spay_id) : null,
                 };
                 
                 console.log('API Payload:', payload);

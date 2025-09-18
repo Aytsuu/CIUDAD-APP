@@ -852,67 +852,45 @@ class SummonScheduleSerializer(serializers.ModelSerializer):
 
 # ================== TREASURER: SERVICE CHARGE LIST =========================
 class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
-    sr_id = serializers.CharField(read_only=True)
-    caseNo = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
-    address1 = serializers.SerializerMethodField()
-    respondent = serializers.SerializerMethodField()
-    address2 = serializers.SerializerMethodField()
-    reason = serializers.SerializerMethodField()
-    reqDate = serializers.DateTimeField(source='sr_req_date', format="%Y-%m-%d", read_only=True)
-
+    complainant_name = serializers.SerializerMethodField()
+    payment_request = serializers.SerializerMethodField()
+    
     class Meta:
         model = ServiceChargeRequest
         fields = [
             'sr_id',
-            'caseNo',
-            'name',
-            'address1',
-            'respondent',
-            'address2',
-            'reason',
-            'reqDate',
+            'sr_code', 
+            'sr_type',
+            'sr_req_date',
+            'sr_req_status',
+            'sr_case_status',
+            'comp_id',
+            'staff_id',
+            'complainant_name',
+            'payment_request'
         ]
-
-    def _get_first_complainant(self, obj):
+    
+    def get_complainant_name(self, obj):
         if obj.comp_id:
             try:
-                cc = obj.comp_id.complaintcomplainant_set.select_related('cpnt').first()
-                return cc.cpnt if cc else None
+                complainant = obj.comp_id.complaintcomplainant_set.select_related('cpnt').first()
+                return complainant.cpnt.cpnt_name if complainant and complainant.cpnt else None
             except Exception:
                 return None
         return None
-
-    def _get_first_accused(self, obj):
-        if obj.comp_id:
-            try:
-                ca = obj.comp_id.complaintaccused_set.select_related('acsd').first()
-                return ca.acsd if ca else None
-            except Exception:
-                return None
-        return None
-
-    def get_caseNo(self, obj):
-        return getattr(obj.comp_id, 'comp_id', None)
-
-    def get_name(self, obj):
-        cpnt = self._get_first_complainant(obj)
-        return getattr(cpnt, 'cpnt_name', None) if cpnt else None
-
-    def get_address1(self, obj):
-        cpnt = self._get_first_complainant(obj)
-        return getattr(cpnt, 'cpnt_address', None) if cpnt else None
-
-    def get_respondent(self, obj):
-        acsd = self._get_first_accused(obj)
-        return getattr(acsd, 'acsd_name', None) if acsd else None
-
-    def get_address2(self, obj):
-        acsd = self._get_first_accused(obj)
-        return getattr(acsd, 'acsd_address', None) if acsd else None
-
-    def get_reason(self, obj):
-        return getattr(obj.comp_id, 'comp_allegation', None) if obj.comp_id else None
+    
+    def get_payment_request(self, obj):
+        try:
+            payment_request = obj.servicechargepaymentrequest
+            return {
+                'spay_id': payment_request.spay_id,
+                'spay_status': payment_request.spay_status,
+                'spay_due_date': payment_request.spay_due_date,
+                'spay_date_paid': payment_request.spay_date_paid,
+                'pr_id': payment_request.pr_id.pr_id if payment_request.pr_id else None
+            }
+        except Exception:
+            return None
 # ============================ MIGHT DELETE THESE LATER ==============================
 
 # Complaint-related Serializers
