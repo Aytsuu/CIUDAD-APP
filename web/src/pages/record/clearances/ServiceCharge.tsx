@@ -266,7 +266,6 @@ function ServiceChargePage() {
           isNonResident={false}
           showAddDetails={false}
           businessName={ selectedSC.sr_code}
-          onClose={handleTemplateClose}
         />
       )}
     </div>
