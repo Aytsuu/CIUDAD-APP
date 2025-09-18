@@ -28,7 +28,7 @@ import { useAuth } from "@/context/AuthContext";
 
 interface UpdateWasteColProps {
     wc_num: number;
-    wc_date: string;
+    wc_day: string;
     wc_time: string;
     wc_add_info: string;
     wc_is_archive: boolean;
@@ -50,7 +50,18 @@ const announcementOptions = [
 ];
 
 
-function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, truck_id, driver_id, collector_ids, onSuccess } : UpdateWasteColProps) {
+const dayOptions = [
+    { id: "Monday", name: "Monday" },
+    { id: "Tuesday", name: "Tuesday" },
+    { id: "Wednesday", name: "Wednesday" },
+    { id: "Thursday", name: "Thursday" },
+    { id: "Friday", name: "Friday" },
+    { id: "Saturday", name: "Saturday" },
+    { id: "Sunday", name: "Sunday" },
+]
+
+
+function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, truck_id, driver_id, collector_ids, onSuccess } : UpdateWasteColProps) {
     
     const { user } = useAuth();
 
@@ -92,7 +103,7 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
     const form = useForm<z.infer<typeof WasteColSchedSchema>>({
         resolver: zodResolver(WasteColSchedSchema),
         defaultValues: {
-            date: wc_date,
+            day: wc_day,
             time: wc_time,
             additionalInstructions: wc_add_info,
             selectedSitios: String(sitio_id),
@@ -206,12 +217,11 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
 
 
                     {/* Date and Time */}
-                    <FormDateTimeInput
+                    <FormSelect
                         control={form.control}
-                        name="date"
-                        type="date"
-                        label="Date"
-                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                        name="day"
+                        label="Collection Day"
+                        options={dayOptions}
                     />
 
                     <FormDateTimeInput
