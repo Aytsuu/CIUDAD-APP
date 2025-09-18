@@ -339,6 +339,7 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import SummonPreview from "./summon-preview"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import SummonSuppDocForm from "./summon-supp-doc-form"
+import { useGetTemplateRecord } from "../council/templates/queries/template-FetchQueries"
 
 
 export default function SummonScheduleList(){
@@ -350,6 +351,19 @@ export default function SummonScheduleList(){
   const { data: schedList = [], isLoading: isSchedLoading} = useGetScheduleList(sr_id)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
+  const { data: templates = [], isLoading: isLoadingTemplate } = useGetTemplateRecord()
+  const templateData = templates[0] || {};
+  const barangayLogo =
+    templateData.template_files?.find(
+      (file: any) => file.tf_logoType === "barangayLogo"
+    )?.tf_url || "";
+  const cityLogo =
+    templateData.template_files?.find(
+      (file: any) => file.tf_logoType === "cityLogo"
+    )?.tf_url || "";
+  const email = templateData.temp_email || "";
+  const telNum = templateData.temp_contact_num || "";
+
   // const isCaseClosed = caseDetails?.sr_status === "Resolved" || caseDetails?.sr_status === "Escalated"
 
   
@@ -458,14 +472,13 @@ export default function SummonScheduleList(){
                             <div className="w-full h-full">
                               <SummonPreview
                                 sr_code={sr_code}
-                                // incident_type={incident}
+                                barangayLogo = {barangayLogo}
+                                cityLogo = {cityLogo}
+                                email = {email}
+                                telnum = {telNum}
                                 complainant={complainant || []}
-                                // complainant_address={
-                                //   caseDetails?.complainant?.map((c) => c.address?.formatted_address || "N/A") || []
-                                // }
                                 complainant_address={complainant_addresses}
                                 accused={accused || []}
-                                // accused_address={caseDetails?.complaint?.accused?.map((a) => a.address?.formatted_address) || []}
                                 accused_address={accused_addresses}
                                 hearingDate={schedule.hearing_date}
                                 hearingTime={schedule.hearing_time}
@@ -486,7 +499,7 @@ export default function SummonScheduleList(){
     },
   ]
 
-  if (isSchedLoading) {
+  if (isSchedLoading || isLoadingTemplate) {
     return (
       <div className="p-4 border rounded-lg">
         <Skeleton className="h-8 w-1/3 mb-4" />

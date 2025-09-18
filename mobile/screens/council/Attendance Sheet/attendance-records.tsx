@@ -30,7 +30,7 @@ const AttendanceRecord = () => {
 
   const filteredTableData: AttendanceRecords[] = React.useMemo(() => {
     const data = councilEvents
-      .filter(event => event.ce_type === 'meeting' && !event.ce_is_archive)
+      .filter(event => !event.ce_is_archive)
       .map(event => {
         const nonArchivedSheets = attendanceSheets.filter(
           sheet => sheet.ce_id === event.ce_id && !sheet.att_is_archive
