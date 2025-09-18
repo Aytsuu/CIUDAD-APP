@@ -6,7 +6,7 @@ import { ChevronLeft,Activity,Heart,AlertCircle,Clock,Stethoscope,} from "lucide
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { FollowUpsCard } from "@/components/healthcomponents/ch-vax-followup";
 import { ChildHealthRecordCard } from "@/components/healthcomponents/childInfoCard";
 import { VaccinationStatusCards } from "@/components/healthcomponents/vaccination-status";
@@ -16,7 +16,7 @@ import { VaccinationStatusCardsSkeleton } from "@/components/healthcomponents/va
 import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 import { ChrRecords } from "./types";
 import { useFollowupChildHealthandVaccines, usePatientVaccinationDetails, useUnvaccinatedVaccines } from "../../../vaccination/queries/fetch";
-import { LoadingContext } from "@/contexts/LoadingContext";
+// import { LoadingContext } from "@/contexts/LoadingContext";
 import { HorizontalDataTable } from "@/components/healthcomponents/data-table";
 import { getChildHealthColumns } from "./columns/indiv_col";
 

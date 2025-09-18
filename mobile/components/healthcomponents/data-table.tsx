@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
-import { useReactTable, flexRender, getCoreRowModel, ColumnFiltersState, SortingState, VisibilityState, getFilteredRowModel, getSortedRowModel, ColumnDef } from '@tanstack/react-table';
+// import { useReactTable, flexRender, getCoreRowModel, ColumnFiltersState, SortingState, VisibilityState, getFilteredRowModel, getSortedRowModel, ColumnDef } from '@tanstack/react-table';
 
 const { width: screenWidth } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth * 0.8; // 80% of screen width

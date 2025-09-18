@@ -55,21 +55,18 @@ class CouncilSchedulingDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [AllowAny]
 
     def get_object(self):
-        # Use the lookup_field (ce_id) from URL kwargs
         queryset = self.get_queryset()
         lookup_value = self.kwargs[self.lookup_field]
         try:
             obj = queryset.get(pk=lookup_value)
         except CouncilScheduling.DoesNotExist:
-            raise status.HTTP_404_NOT_FOUND  # Let Django handle 404
+            raise status.HTTP_404_NOT_FOUND 
         return obj
 
     def get(self, request, *args, **kwargs):
-        # Already handled by RetrieveUpdateDestroyAPIView's default get
         return super().get(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
-        # Already handled by RetrieveUpdateDestroyAPIView's default put
         return super().put(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):

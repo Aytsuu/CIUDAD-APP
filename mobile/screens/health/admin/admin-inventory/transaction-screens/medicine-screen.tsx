@@ -3,7 +3,7 @@ import React from "react";
 import { View, Text, TextInput, FlatList, TouchableOpacity } from "react-native";
 import type { MedicineRecords, ApiItemWithStaff } from "../types";
 import { SearchInput } from "@/components/ui/search-input";
-import { Skeleton } from "@/components/ui/skeleton";
+// import { Skeleton } from "@/components/ui/skeleton";
 import { useMedicineTransactions } from "../restful-api/transaction/fetchqueries";
 
 export default function MedicineListScreen() {
@@ -60,10 +60,10 @@ export default function MedicineListScreen() {
   if (isLoadingMedicines) {
     return (
       <View className="w-full h-full p-4">
-        <Skeleton className="h-10 w-1/2 mb-3" />
+        {/* <Skeleton className="h-10 w-1/2 mb-3" />
         <Skeleton className="h-7 w-3/4 mb-6" />
         <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" /> */}
       </View>
     );
   }
