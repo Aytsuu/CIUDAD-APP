@@ -1,7 +1,7 @@
-import SummonTrackingView from "@/pages/record/summon-and-case-tracking/summon-tracking-view";
 import SummonReqTabs from "@/pages/record/summon-and-case-tracking/tabs/summon-tabs";
 import SummonCalendar from "@/pages/record/summon-and-case-tracking/summonCalendar";
 import SummonCases from "@/pages/record/summon-and-case-tracking/summon-cases";
+import SummonDetails from "@/pages/record/summon-and-case-tracking/summon-details";
 
 export const summon_router = [
     {
@@ -14,7 +14,7 @@ export const summon_router = [
     },
     {
         path: '/view-case',
-        element: <SummonTrackingView/>  
+        element: <SummonDetails/>  
     },
     {
         path: '/summon-calendar',

@@ -435,7 +435,6 @@ class SummonRequestSerializer(serializers.ModelSerializer):
         model = ServiceChargeRequest
         fields = '__all__'
 
-
 class SummonRequestPendingListSerializer(serializers.ModelSerializer):
     complainant_names = serializers.SerializerMethodField()
     incident_type = serializers.SerializerMethodField()
@@ -849,6 +848,43 @@ class SummonScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = SummonSchedule
         fields = '__all__'
+
+
+class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
+    complaint = serializers.SerializerMethodField()
+    schedules = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ServiceChargeRequest
+        fields = [
+            'sr_id',
+            'sr_code',
+            'sr_type',
+            'sr_req_date',
+            'sr_req_status',
+            'sr_case_status',
+            'sr_date_marked',
+            'comp_id',
+            'complaint',       
+            'schedules',      
+        ]
+
+    def get_complaint(self, obj):
+        if not obj.comp_id:
+            return None
+        return ComplaintSerializer(obj.comp_id, context=self.context).data
+
+    def get_schedules(self, obj):
+        schedules = SummonSchedule.objects.filter(sr_id=obj)
+        result = []
+        for schedule in schedules:
+            schedule_data = SummonScheduleDetailSerializer(schedule).data
+            supp_docs = SummonSuppDoc.objects.filter(ss_id=schedule)
+            schedule_data['supporting_docs'] = SummonSuppDocViewSieralizer(
+                supp_docs, many=True
+            ).data
+            result.append(schedule_data)
+        return result
 
 # ================== TREASURER: SERVICE CHARGE LIST =========================
 class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
