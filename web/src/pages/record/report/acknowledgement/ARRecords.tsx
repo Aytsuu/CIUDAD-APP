@@ -105,7 +105,7 @@ export default function ARRecords() {
 
           addWARComp(compositions, {
             onSuccess: () => {
-              showSuccessToast("Weekly AR created successfully");
+              showSuccessToast("Weekly accomplishment report created successfully");
               setIsCreatingWeeklyAR(false);
               setIsCreatable(false);
               setReset(true);
@@ -186,7 +186,7 @@ export default function ARRecords() {
                 ) : (
                   <Button onClick={() => setIsCreatingWeeklyAR(true)} className="gap-2">
                     <Plus className="h-4 w-4" />
-                    Create Week {getWeekNumber(formatDate(now) as string)} AR
+                    Create Week {getWeekNumber(formatDate(now) as string)}
                   </Button>
                 )
               ) : (

@@ -33,6 +33,7 @@ class RTEUpdateSerializer(serializers.ModelSerializer):
         setattr(instance, 'rte_logoRight', url)
     elif logo_left:
       url = upload_to_storage(logo_left, 'report-bucket', 'template')
+      print(url)
       if url:
         setattr(instance, 'rte_logoLeft', url)
     elif logo_top:

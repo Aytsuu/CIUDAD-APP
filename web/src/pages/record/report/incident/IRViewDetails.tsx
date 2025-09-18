@@ -229,7 +229,7 @@ export default function IRViewDetails() {
                   navigate("/report/acknowledgement/form", {
                     state: {
                       params: {
-                        IRInfo,
+                        data: IRInfo,
                       },
                     },
                   });

@@ -273,7 +273,7 @@ export default function WeeklyAR() {
                               )
                             }
 
-                            if(missingWeeks.includes(week) && missedWeeksPassed >= week) {
+                            if((missingWeeks.includes(week) && missedWeeksPassed >= week) || week == getWeekNumber(new Date().toDateString())) {
                               return (
                                 <div className="flex items-center justify-between w-full mr-4">
                                   <div className="flex items-center gap-2">
