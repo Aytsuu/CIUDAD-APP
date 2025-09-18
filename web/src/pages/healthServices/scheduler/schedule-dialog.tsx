@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button/button"
 import { Edit } from "lucide-react"
 import ServiceScheduleForm from "../scheduler/schedule-form"
 import type { WeeklySchedule } from "../scheduler/schedule-types"
+import { useState } from "react"
 
 interface ScheduleDialogProps {
   weeklySchedule: WeeklySchedule
@@ -30,12 +31,15 @@ export default function ScheduleDialog({
   onAddService,
   onAddDay,
 }: ScheduleDialogProps) {
+  const [isOpen, setIsOpen] = useState(false)
+
   const handleSave = (newSchedule: WeeklySchedule) => {
     onSave(newSchedule)
+    setIsOpen(false)
   }
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button className="flex items-center gap-2">
           <Edit className="h-4 w-4" />

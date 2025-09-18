@@ -150,8 +150,8 @@ export default function MaternalAllRecords() {
           `${patient.per_lname}, ${patient.per_fname} ${patient.per_mname}`.trim();
 
         return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
+          <div className="flex justify-center w-full">
+            <div className="flex flex-col ">
               <div className="font-medium truncate">{fullName}</div>
               <div className="text-sm text-darkGray">
                 {patient.per_sex}, {age} {patient.ageTime} old
@@ -184,8 +184,8 @@ export default function MaternalAllRecords() {
               .join(", ") || "Unknown"
           : "Unknown";
         return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="w-full truncate">{fullAddress}</div>
+          <div className="flex justify-center min-w-full px-2">
+            <div className="w-full break-words">{fullAddress}</div>
           </div>
         );
       },
@@ -193,9 +193,11 @@ export default function MaternalAllRecords() {
 
     {
       accessorKey: "sitio",
-      header: "Sitio",
+      header: ({}) => (
+        <div>Sitio</div>
+      ),
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
+        <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">
             {row.original.address?.add_sitio}
           </div>
@@ -414,7 +416,7 @@ export default function MaternalAllRecords() {
               <p className="text-xs sm:text-sm">Show</p>
               <Input
                 type="number"
-                className="w-14 h-8"
+                className="w-16 h-8"
                 defaultValue={entriesCount}
                 onChange={(e) => setEntriesCount(Number(e.target.value))}
               />

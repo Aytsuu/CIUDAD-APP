@@ -29,7 +29,6 @@ const forceCapitalize = (str: string | null | undefined): string => {
 interface TTStatusRecord {
   tts_status: string
   tts_date_given: string | null
-  // tts_tdap: boolean
 }
 
 export default function PrenatalForm() {
@@ -66,7 +65,7 @@ export default function PrenatalForm() {
     defaultValues,
   })
 
-  const transformData = (data: z.infer<typeof PrenatalFormSchema>): PrenatalRecord => {
+  const transformData = async (data: z.infer<typeof PrenatalFormSchema>): Promise<PrenatalRecord> => {
     const toNullIfEmpty = (value: string | null | undefined) => (value === "" ? null : value)
 
     // helper to check if an object has any non-empty/non-null values
@@ -157,6 +156,7 @@ export default function PrenatalForm() {
       console.log("No current TT record to add (empty or missing)")
     }
 
+
     return {
       pat_id: data.pat_id as string, 
       patrec_type: "Prenatal",
@@ -165,13 +165,16 @@ export default function PrenatalForm() {
       pf_edc: toNullIfEmpty(data.presentPregnancy.pf_edc) ?? null,
       previous_complications: forceCapitalize(data.medicalHistory.previousComplications) || null,
 
+      // spouse section
       spouse_data: spouseData,
 
+      // body measurement section
       body_measurement: {
         weight: data.motherPersonalInfo.motherWt || null,
         height: data.motherPersonalInfo.motherHt || null,
       },
 
+      // obstetrical history section
       obstetrical_history: {
         obs_ch_born_alive: data.obstetricHistory?.noOfChBornAlive || null,
         obs_living_ch: data.obstetricHistory?.noOfLivingCh || null,
@@ -186,6 +189,7 @@ export default function PrenatalForm() {
         obs_record_from: "Prenatal", 
       },
       
+      // previous illness section
       medical_history:
       data.medicalHistory.prevIllnessData?.map((item) => ({
         year: item.prevIllnessYr || null,
@@ -194,16 +198,20 @@ export default function PrenatalForm() {
           : (typeof item.prevIllness === "number" ? item.prevIllness : null)
       })),
 
+      // previous hospitalizations section
       previous_hospitalizations:
         data.medicalHistory.prevHospitalizationData?.map((item) => ({
           prev_hospitalization: forceCapitalize(item.prevHospitalization) ?? "",
           prev_hospitalization_year: item.prevHospitalizationYr || null,
         })) || [],
 
+      // previous pregnancy section
       previous_pregnancy_data: previousPregnancyData,
 
+      // tt status section
       tt_statuses: ttStatusesArray, 
 
+      // lab results section
       lab_results_data:
         data.labResults?.labResultsData?.map((result) => ({
           lab_type: result.lab_type,
@@ -214,11 +222,14 @@ export default function PrenatalForm() {
           images: result.images || [],
         })) || [],
 
+      // anc visit section
       anc_visit_data: ancVisitData,
 
+      // follow-up schedule section
       followup_date: toNullIfEmpty(data.followUpSchedule.followUpDate) ?? null,
       followup_description: "Prenatal Follow-up Visit",
 
+      // checklist of pre-eclampsia signs and symptoms section
       checklist_data: {
         increased_bp: data.assessmentChecklist.increasedBP ?? false, 
         epigastric_pain: data.assessmentChecklist.epigastricPain ?? false,
@@ -234,17 +245,20 @@ export default function PrenatalForm() {
         abdominal_pain: data.assessmentChecklist.abdominalPain ?? false,
       },
 
+      // birth plan section
       birth_plan_data: {
         place_of_delivery_plan: capitalize(data.pregnancyPlan.planPlaceOfDel) || "", 
         newborn_screening_plan: data.pregnancyPlan.planNewbornScreening ?? false, 
       },
 
+      // obstetric risk codes section
       obstetric_risk_code_data: {
         pforc_prev_c_section: data.riskCodes.hasOneOrMoreOfTheFF.prevCaesarian || false,
         pforc_3_consecutive_miscarriages: data.riskCodes.hasOneOrMoreOfTheFF.miscarriages || false,
         pforc_postpartum_hemorrhage: data.riskCodes.hasOneOrMoreOfTheFF.postpartumHemorrhage || false,
       },
 
+      // prenatal care section
       prenatal_care_data:
         data.prenatalCare?.map((item) => ({
           pfpc_date: item.date ?? "",
@@ -281,7 +295,7 @@ export default function PrenatalForm() {
   const handleFinalSubmit = async (data: z.infer<typeof PrenatalFormSchema>) => {
     try {
       const validated_data = PrenatalFormSchema.parse(data)
-      const transformedData = transformData(validated_data)
+      const transformedData = await transformData(validated_data)
 
       console.log("Transformed Data for API:", transformedData) // Debug log
 

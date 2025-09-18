@@ -1,5 +1,5 @@
 import { format } from "date-fns"
-import { Calendar, MapPin, User, Heart, Shield } from "lucide-react"
+import { Calendar, MapPin, User, Heart, Shield, Map} from "lucide-react"
 
 // Updated interface to match Patient
 interface Patient {
@@ -15,12 +15,12 @@ interface Patient {
   };
   address?: {
     add_street?: string;
+    add_sitio?: string;
     add_barangay?: string;
     add_city?: string;
     add_province?: string;
     add_external_sitio?: string;
   }
-  sitio?: string;
   pat_type: string;
   patrec_type?: string;
 }
@@ -40,7 +40,7 @@ const formatFullName = (patients?: Patient["personal_info"]) => {
 const formatAddress = (patient: Patient) => {
   const addressParts = [
 	patient.address?.add_street,
-	patient.sitio,
+	patient.address?.add_sitio,
 	patient.address?.add_barangay,
 	patient.address?.add_city,
 	patient.address?.add_province,
@@ -87,6 +87,7 @@ export const PatientInfoCardv2 = ({ patient }: PatientInfoCardv2Props) => {
   const dob = patient.personal_info ? formatDateOfBirth(patient.personal_info.per_dob) : ""
   const sex = patient.personal_info ? patient.personal_info.per_sex : "Not specified"
   const address = formatAddress(patient)
+  const sitio = patient.address?.add_sitio ?? "Not specified"
   const GenderIcon = getGenderIcon(patient.personal_info?.per_sex)
 
   return (
@@ -124,12 +125,20 @@ export const PatientInfoCardv2 = ({ patient }: PatientInfoCardv2Props) => {
           </div>
         </div>
 
-        <div>
+        <div className="space-y-4">
           <div className="flex items-start gap-3">
             <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-gray-900 leading-relaxed">{address}</p>
               <p className="text-xs text-gray-500">Address</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <Map className="w-5 h-5 text-red-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-gray-900 leading-relaxed">{sitio}</p>
+              <p className="text-xs text-gray-500">Sitio</p>
             </div>
           </div>
         </div>

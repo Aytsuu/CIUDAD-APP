@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock, CheckCircle, HeartHandshake } from "lucide-react"
+import { Clock, CheckCircle, HeartHandshake, Tally5 } from "lucide-react"
 
 
 interface PregnancyDataDetails{
@@ -61,16 +61,16 @@ export default function PregnancyChart({ pregnancies }: PregnancyChartProps) {
 	return (
 		<div className="bg-white rounded-sm shadow-md border border-gray-200">
 			<div className="p-4 w-full">
-				<h2 className="text-lg font-semibold mb-3">Overall Pregnancy Summary</h2>
+				<h2 className="flex items-center text-lg font-semibold mb-3 gap-1"><Tally5 size={24} color="#f97316"/> Overall Pregnancy Summary</h2>
 				<div className="grid grid-cols-2 gap-2 w-full">
 					{/* active */}
 					<div className="flex flex-col text-center rounded-md border p-4 gap-2">
 						<span className="flex items-center">
-							<Clock size={16} color="green"/>
-							<h3 className="text-sm font-semibold ml-1">Active Pregnancy</h3>
+							<CheckCircle size={16} color="blue"/>
+							<h3 className="text-sm font-semibold ml-1">Completed Pregnancies</h3>
 						</span>
 						<div className="flex justify-center p-4">
-							<p className="text-[30px] font-bold">{activePregnancies}</p>
+							<p className="text-[30px] font-bold">{completedPregnancies}</p>
 						</div>
 						
 					</div>
@@ -78,10 +78,10 @@ export default function PregnancyChart({ pregnancies }: PregnancyChartProps) {
 					<div className="grid grid-rows-2 gap-1">
 						<div className="flex flex-col text-center border rounded-md p-3">
 							<span className="flex items-center">
-								<CheckCircle size={16} color="blue"/>
-								<h3 className="text-sm font-semibold ml-1">Completed Pregnancies</h3>
+								<Clock size={16} color="green"/>
+								<h3 className="text-sm font-semibold ml-1">Active Pregnancy</h3>
 							</span>
-							<p className="text-[20px] font-bold">{completedPregnancies}</p>
+							<p className="text-[20px] font-bold">{activePregnancies}</p>
 						</div>
 						<div className="flex flex-col text-center border rounded-md p-3">
 							<span className="flex items-center">

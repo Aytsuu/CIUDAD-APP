@@ -4,8 +4,8 @@ import PrenatalForm from "@/pages/healthServices/maternal/prenatal/prenatal-form
 import PrenatalViewingOne from "@/pages/healthServices/maternal/prenatal/prenatal-history/form-history/prenatal-viewing-one";
 import PrenatalIndivHistory from "@/pages/healthServices/maternal/prenatal/prenatal-history/prenatal-indiv-history";
 import PostpartumForm from "@/pages/healthServices/maternal/postpartum/postpartum-form-main";
-import PostpartumViewing from "@/pages/healthServices/maternal/postpartum/pospartum-viewing";
-import PostpartumIndivHistory from "@/pages/healthServices/maternal/postpartum/postpartum-indiv-history";
+import PostpartumViewing from "@/pages/healthServices/maternal/postpartum/postpartum-history/form-history/pospartum-viewing";
+import PostpartumIndivHistory from "@/pages/healthServices/maternal/postpartum/postpartum-history/postpartum-indiv-history";
 
 export const maternal_router = [
     {

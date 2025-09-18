@@ -172,57 +172,21 @@ const healthItems: BaseMenuItem[] = [
   },
  
   { title: "Patients Record", url: "/patients-record-main" },
-
+  { title: "Forwarded Records", url: "/forwarded-records" },
   {
     title: "Services",
     url: "/",
     items: [
-      { title: "Administrations", url: "/health-administration" },
-      { title: "Doctor", url: "/mainMedicalForm" },
+      
       { title: "Animal Bites", url: "/Animalbite_viewing" },
-      { title: "Child Services", url: "/allChildHRTable" },
-      { title: "Maternal Services", url: "/maternalrecords" },
-      { title: "Family Planning", url: "/FamPlanning_table" },
+      // { title: "Family Profiling", url: "/family-profiling-main" },=-=------- 000
       { title: "Medical Consultation", url: "/allMedRecords" },
-      { title: "Vaccination", url: "/allRecordsForVaccine" },
-      { title: "Patients Record", url: "/patients-record-main" },
-      {title: "Forwarded Records", url: "/forwarded-records"},
-      // {
-      //   title: "Forwarded Records",
-      //   url: "/",
-      //   anotherItems: [
-      //     {
-      //       title: "Child Immunization",
-      //       url: "/forwarded-child-health-immunization",
-      //     },
-      //     { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
-      //     { title: "Step 2: Vitals Queue  ", url: "/forwarded-vitals-queue" },
-      //     {
-      //       title: "Medical Consultaion",
-      //       url: "/forwarded-medical-consultation",
-      //     },
-      //   ],
-      // },
-      {
-        title: "Manage Request",
-        url: "/",
-        items: [
-          {
-            title: "Medicine Request",
-            url: "/medicine-requests",
-          },
-          { title: "Medical Consultation", url: "/" },
-        ],
-      },
-      { title: "Animal Bites", url: "/Animalbite_viewing" },
-      { title: "Family Profiling", url: "/family-profiling-main" },
-      { title: "Medical Consultation Record", url: "/allMedRecords" },
-      { title: "Family Planning Record", url: "/FamPlanning_table" },
-      { title: "Maternal Record", url: "/maternalrecords" },
-      { title: "Child Health Record", url: "/all-child-health-records" },
-      { title: "Vaccination Record", url: "/VaccinationManagement" },
-      { title: "Medicine Record", url: "/all-medicine-records" },
-      { title: "Firstaid Record", url: "/all-firstaid-records" },
+      { title: "Family Planning", url: "/FamPlanning_table" },
+      { title: "Maternal", url: "/maternalrecords" },
+      { title: "Child Health", url: "/all-child-health-records" },
+      { title: "Vaccination", url: "/VaccinationManagement" },
+      { title: "Medicine", url: "/all-medicine-records" },
+      { title: "Firstaid", url: "/all-firstaid-records" },
       { title: "Schedules", url: "/health-appointments" }
     ]
   },
@@ -254,7 +218,7 @@ const healthItems: BaseMenuItem[] = [
     url: "/",
     items: [
       {
-        title: "Manage age group",
+        title: "Age Group",
         url: "/age-group"
       },
       { title: "Medical Consultation", url: "/" }

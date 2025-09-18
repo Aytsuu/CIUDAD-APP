@@ -4,7 +4,7 @@ import { BsChevronLeft } from "react-icons/bs";
 import { useNavigate, useLocation } from "react-router";
 import { FileText } from "lucide-react";
 import { MdOutlinePregnantWoman } from "react-icons/md";
-import { PostpartumHistoryTable } from "../maternal-components/postpartum-history";
+import { PostpartumHistoryTable } from "../../maternal-components/postpartum-history";
 import { useEffect, useState } from "react";
 
 interface PostpartumVisit {

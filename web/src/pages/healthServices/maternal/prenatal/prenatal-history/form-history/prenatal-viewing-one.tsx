@@ -134,7 +134,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
 
 
   return (
-    <div className="flex max-w-6xl mx-auto m-5 h-[128rem] overflow-hidden border border-gray-500">
+    <div className="flex max-w-6xl mx-auto m-5 overflow-hidden border border-gray-500">
       <div className="mx-10 my-5">
         {/* Header */}
         <div>

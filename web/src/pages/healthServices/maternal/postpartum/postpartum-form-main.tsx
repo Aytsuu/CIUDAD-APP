@@ -46,10 +46,10 @@ export default function PostpartumForm() {
       outcome: "",
       attendedBy: "",
       ttStatus: "",
-      ironSupplement: "",
-      vitASupplement: "",
+      // ironSupplement: "",
+      // vitASupplement: "",
       noOfPadPerDay: 0,
-      mebendazole: "",
+      // mebendazole: "",
       dateBfInitiated: "",
       timeBfInitiated: "",
       nextVisitDate: "",
@@ -74,7 +74,7 @@ export default function PostpartumForm() {
 
   const submitPage = () => {
     setCurrentPage((prev) => prev + 1)
-  }
+  } 
 
   useEffect(() => {
     if(location.state?.params) {
