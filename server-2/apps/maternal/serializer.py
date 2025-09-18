@@ -12,8 +12,8 @@ from apps.maternal.models import (
     ObstetricRiskCode, PrenatalCare
 )
 from apps.administration.models import Staff 
-from apps.healthProfiling.models import PersonalAddress
-from apps.patientrecords.serializers.patients_serializers import PatientSerializer, SpouseSerializer    
+from apps.healthProfiling.models import *
+from apps.patientrecords.serializers.patients_serializers import SpouseSerializer    
 from .utils import handle_spouse_logic
 
 

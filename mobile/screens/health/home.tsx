@@ -4,7 +4,7 @@ import { View, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions } from
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus, Venus } from "lucide-react-native";
+import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus, Venus, NotebookPen } from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
 import { usePendingAppointments } from "./my-schedules/pendingAppointment";
 import NotificationBadge from "./my-schedules/notifbadge";
@@ -25,6 +25,7 @@ const Homepage = () => {
     { name: 'Patients Records', route: '/admin/patientrecords/patientrecords', icon: Users },
     { name: 'Schedules', route: 'admin/schedules/all-appointment', icon: Calendar },
     { name: 'Inventory', route: 'admin/inventory/medicine', icon: Archive },
+    { name: 'BHW Daily Field', route: '', icon: NotebookPen },
     // { name: 'Transactions', route: 'admin/inventory/transaction', icon: Archive },
   ];
 

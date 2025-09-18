@@ -1,4 +1,3 @@
-import axios from "axios";
 import { api2 } from "@/api/api"
 
 // maternal records

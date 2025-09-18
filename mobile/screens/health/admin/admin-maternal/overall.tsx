@@ -24,10 +24,11 @@ import { useMaternalRecords, useActivepregnanciesCount } from "./queries/materna
 
 export default function OverallMaternalRecordScreen() {
 
-   const { data: maternalRecords, isLoading, isError } = useMaternalRecords();
+   const { data: maternalRecords } = useMaternalRecords();
    const { data: activePregnancies } = useActivepregnanciesCount();
 
   const activePregnanciesCount = activePregnancies || 0;
+  const maternalPatientsCount = maternalRecords.count
 
 
    const renderHeader = () => (
@@ -42,7 +43,7 @@ export default function OverallMaternalRecordScreen() {
                   <Users size={24} color="#3b82f6" />
                   <View className="ml-3">
                      <Text className="text-2xl font-bold text-blue-900">
-                        {/* {totalFPPatients} */} 0
+                        {maternalPatientsCount}
                      </Text>
                      <Text className="text-sm text-center text-blue-700">Patients</Text>
                   </View>
