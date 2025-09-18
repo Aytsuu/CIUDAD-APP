@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useToastContext } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { capitalizeAllFields } from "@/helpers/capitalize";
 

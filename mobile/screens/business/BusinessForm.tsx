@@ -6,7 +6,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import React from "react";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { Control } from "react-hook-form";
 

@@ -130,12 +130,10 @@ export const ARDocTemplate = ({
   }
 
   const getName = (value: string) => {
-    return value.split(" ")?.map((val, idx) => {
-      if(idx > 1) {
-        return val
-      }
-    }).filter(Boolean).join(", ");
-  }
+    const name = value.split("-")[1];
+    const array = name.split(" ");
+    return (`${array[0]}, ${array[1]} ${array.length == 3 && array[2]}`);
+  };
 
   const changePreparedBy = (value: string) => {
     const name = getName(value);

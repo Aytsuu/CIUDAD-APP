@@ -8,6 +8,7 @@ export type IRReport = {
   ir_add_details: string;
   ir_type: string;
   ir_reported_by: string;
+  ir_severity: string;
   ir_time: string;
   ir_date: string;
 }

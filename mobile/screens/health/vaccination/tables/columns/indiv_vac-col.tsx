@@ -1,7 +1,7 @@
 // columns.ts
 import { ColumnDef } from "@tanstack/react-table";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { VaccinationRecord } from "./types";
 import { Patient } from "@/pages/healthServices/restful-api-patient/type";
 import { getOrdinalSuffix } from "@/helpers/getOrdinalSuffix";

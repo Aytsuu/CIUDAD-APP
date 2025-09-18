@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Search,
