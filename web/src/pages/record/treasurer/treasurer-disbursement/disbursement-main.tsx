@@ -286,7 +286,7 @@ function TreasurerDisbursementVouchers() {
       </div>
       <hr className="border-gray mb-5 sm:mb-4" />
 
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-3">
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <div className="relative flex-1">
             <Search
@@ -426,25 +426,7 @@ function TreasurerDisbursementVouchers() {
                     <strong>Particulars:</strong>{" "}
                     {disbursement.dis_particulars?.map(p => p.description).join(", ") || "No particulars provided"}
                   </div>
-                  <div className="text-left mt-1">
-                    <span className="text-xs text-gray-500">
-                      Date: {disbursement.dis_date || "No date provided"} | 
-                      Check #: {disbursement.dis_checknum || "N/A"} | 
-                      Bank: {disbursement.dis_bank || "N/A"}
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-500 underline">
-                    Total Amount: ₱{new Intl.NumberFormat('en-US', { 
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2 
-                    }).format(total)}
-                  </span>
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-xs text-gray-500">
-                        Staff: {disbursement.staff_name || "Unassigned"}
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-end mt-2">
                     <div>
                       <Button
                         variant="ghost"
@@ -452,7 +434,7 @@ function TreasurerDisbursementVouchers() {
                         onClick={() => handleViewFiles(disbursement)}
                         className="text-sky-600 hover:text-blue-800 flex items-center gap-1"
                       >
-                        View Files
+                        View Supporting Docs
                       </Button>
                     </div>
                   </div>
