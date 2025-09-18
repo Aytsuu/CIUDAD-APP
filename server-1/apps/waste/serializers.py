@@ -94,7 +94,7 @@ class WasteCollectionSchedFullDataSerializer(serializers.ModelSerializer):
         model = WasteCollectionSched
         fields = [
             'wc_num',
-            'wc_date',
+            'wc_day',
             'wc_time',
             'wc_add_info',
             'wc_is_archive',
@@ -203,7 +203,7 @@ class WasteCollectionSchedFullDataSerializer(serializers.ModelSerializer):
         model = WasteCollectionSched
         fields = [
             'wc_num',
-            'wc_date',
+            'wc_day',
             'wc_time',
             'wc_add_info',
             'wc_is_archive',
