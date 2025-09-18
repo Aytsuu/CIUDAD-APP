@@ -22,6 +22,7 @@ from .models import (
     Business,
     ServiceChargeRequest,
 )
+from rest_framework.generics import RetrieveAPIView
 
 logger = logging.getLogger(__name__)
 
@@ -248,6 +249,12 @@ class SummonCaseListView(generics.ListAPIView):
         
         return queryset.order_by('sr_code')
 
+
+class ServiceChargeRequestDetailView(RetrieveAPIView):
+    serializer_class = ServiceChargeRequestDetailSerializer
+    queryset = ServiceChargeRequest.objects.all()
+    lookup_field = 'sr_id' 
+
 class SummonScheduleByServiceRequestView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonScheduleDetailSerializer
@@ -362,7 +369,6 @@ class SummonTimeAvailabilityByDateView(generics.ListAPIView):
         if sd_id is not None:
             queryset = queryset.filter(sd_id=sd_id)
         return queryset
-
 
 class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
     queryset = SummonTimeAvailability.objects.all()

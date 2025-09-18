@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getSummonCaseList, getSummonScheduleList, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, 
+import { getSummonCaseList, getSummonScheduleList, getServiceChargeReqDetails, getCaseDetails, getSummonTemplate, getSuppDoc, getSummonDates, 
     getSummonTimeSlots, getSummonReqPendingList, getComplaintDetails, getSummonReqRejectedList, getSummonReqAcceptedList} from "../requestAPI/summonGetAPI";
 
 export type SummonCaseList = {
@@ -23,6 +23,15 @@ export const useGetSummonCaseList = () => {
     })
 }
 
+export type SupportingDoc = {
+  ssd_id: number;
+  ssd_name: string;
+  ssd_type: string;
+  ssd_path: string;
+  ssd_url: string;
+  ssd_upload_date: string; 
+};
+
 export type ScheduleList = {
     ss_id: string;
     ss_mediation_level: string;
@@ -30,8 +39,52 @@ export type ScheduleList = {
     ss_reason: string;
     hearing_date: string;
     hearing_time: string;
+    supporting_docs: SupportingDoc[];
 }
 
+export type ResidentProfileBase = {
+  [key: string]: any;
+};
+
+export type Complainant = {
+  cpnt_id: number;
+  cpnt_name: string;
+  rp_id: number | null;
+  res_profile: ResidentProfileBase | null;
+};
+
+export type Accused = {
+  acsd_id: number;
+  acsd_name: string;
+  res_profile: ResidentProfileBase | null;
+};
+
+export type Complaint = {
+  comp_incident_type: string;
+  complainant: Complainant[];
+  accused_persons: Accused[];
+  staff: any | null; 
+};
+
+export type ServiceChargeReqDetails = {
+  sr_id: string;
+  sr_code: string | null;
+  sr_req_status: string;
+  sr_case_status: string;
+  sr_date_marked: string | null; 
+  comp_id: string | null;
+  complaint: Complaint | null;
+  schedules: ScheduleList[];
+};
+
+export const useGetServiceChargeReqDetails = (sr_id: string) => {
+    return useQuery<ServiceChargeReqDetails[]>({
+        queryKey: ['serviceChargeDetails', sr_id],
+        queryFn: () => getServiceChargeReqDetails(sr_id),
+        enabled: !!sr_id, 
+        staleTime: 5000,
+    });
+}
 
 export const useGetScheduleList = (sr_id: string) => {
      return useQuery<ScheduleList[]>({
@@ -40,47 +93,6 @@ export const useGetScheduleList = (sr_id: string) => {
         enabled: !!sr_id, 
         staleTime: 5000,
     });
-}
-
-export type CaseSuppDoc = {
-    csd_id: string;
-    csd_name: string;
-    csd_url: string;
-    csd_description: string;
-    csd_upload_date: string;
-};
-
-export const useGetSuppDoc = (ca_id: string) => {
-    return useQuery<CaseSuppDoc[]>({
-        queryKey: ['suppDocs', ca_id],
-        queryFn: () => getSuppDoc(ca_id),
-        enabled: !!ca_id, 
-        staleTime: 5000,
-    });
-}
-
-
-export type SummonTemplate = {
-    temp_id: number,
-    temp_header: string;
-    temp_below_headerContent: string;
-    temp_title: string;
-    temp_subtitle: string;
-    temp_w_sign: boolean;
-    temp_w_seal: boolean;
-    temp_w_summon: boolean;
-    temp_paperSize: string;
-    temp_margin: string;
-    temp_filename: string;
-    temp_body: string;
-};
-
-export const useGetSummonTemplate = () => {
-    return useQuery<SummonTemplate>({
-        queryKey: ['summonTemp'],
-        queryFn: getSummonTemplate,
-        staleTime: 5000
-    })
 }
   
 
@@ -188,7 +200,69 @@ export const useGetComplaintDetails = (comp_id: string) => {
     })
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // =========== MIGHT DELETE THIS LATER ===================
+export type CaseSuppDoc = {
+    csd_id: string;
+    csd_name: string;
+    csd_url: string;
+    csd_description: string;
+    csd_upload_date: string;
+};
+
+export const useGetSuppDoc = (ca_id: string) => {
+    return useQuery<CaseSuppDoc[]>({
+        queryKey: ['suppDocs', ca_id],
+        queryFn: () => getSuppDoc(ca_id),
+        enabled: !!ca_id, 
+        staleTime: 5000,
+    });
+}
+
+export type SummonTemplate = {
+    temp_id: number,
+    temp_header: string;
+    temp_below_headerContent: string;
+    temp_title: string;
+    temp_subtitle: string;
+    temp_w_sign: boolean;
+    temp_w_seal: boolean;
+    temp_w_summon: boolean;
+    temp_paperSize: string;
+    temp_margin: string;
+    temp_filename: string;
+    temp_body: string;
+};
+
+export const useGetSummonTemplate = () => {
+    return useQuery<SummonTemplate>({
+        queryKey: ['summonTemp'],
+        queryFn: getSummonTemplate,
+        staleTime: 5000
+    })
+}
 export type CaseActivity = {
     ca_id: string;
     ca_reason: string;
