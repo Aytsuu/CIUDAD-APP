@@ -6,7 +6,7 @@ import { ChevronLeft,Activity,Heart,AlertCircle,Clock,Stethoscope,} from "lucide
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { FollowUpsCard } from "@/components/healthcomponents/ch-vax-followup";
 import { ChildHealthRecordCard } from "@/components/healthcomponents/childInfoCard";
 import { VaccinationStatusCards } from "@/components/healthcomponents/vaccination-status";
@@ -16,7 +16,7 @@ import { VaccinationStatusCardsSkeleton } from "@/components/healthcomponents/va
 import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 import { ChrRecords } from "./types";
 import { useFollowupChildHealthandVaccines, usePatientVaccinationDetails, useUnvaccinatedVaccines } from "../../../vaccination/queries/fetch";
-import { LoadingContext } from "@/contexts/LoadingContext";
+// import { LoadingContext } from "@/contexts/LoadingContext";
 import { HorizontalDataTable } from "@/components/healthcomponents/data-table";
 import { getChildHealthColumns } from "./columns/indiv_col";
 
@@ -26,12 +26,12 @@ export default function InvChildHealthRecords() {
   console.log('InvChildHealthRecords: Received params via useLocalSearchParams:', params);
   console.log('InvChildHealthRecords: Expected route prop:', arguments[0]?.route);
 
-  const loadingContext = useContext(LoadingContext);
-  const { isLoading: globalLoading, showLoading, hideLoading } = loadingContext || {
-    isLoading: false,
-    showLoading: () => console.warn("LoadingProvider not found"),
-    hideLoading: () => console.warn("LoadingProvider not found"),
-  };
+  // const loadingContext = useContext(LoadingContext);
+  // const { isLoading: globalLoading, showLoading, hideLoading } = loadingContext || {
+  //   isLoading: false,
+  //   showLoading: () => console.warn("LoadingProvider not found"),
+  //   hideLoading: () => console.warn("LoadingProvider not found"),
+  // };
 
   // Parse ChildHealthRecord with robust validation
   let ChildHealthRecord = null;
@@ -86,13 +86,13 @@ export default function InvChildHealthRecords() {
     }
   }, [childData]);
 
-  useEffect(() => {
-    if (combinedLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [combinedLoading, showLoading, hideLoading]);
+  // useEffect(() => {
+  //   if (combinedLoading) {
+  //     showLoading();
+  //   } else {
+  //     hideLoading();
+  //   }
+  // }, [combinedLoading, showLoading, hideLoading]);
 
   if (!childData || !childData.chrec_id || !childData.pat_id || !childData.dob) {
     return (
@@ -334,9 +334,7 @@ export default function InvChildHealthRecords() {
       <View className="p-4 space-y-6 gap-4">
         <ChildHealthRecordCard child={childData} />
 
-        {globalLoading ? (
-          <VaccinationStatusCardsSkeleton />
-        ) : (
+       
           <View className="space-y-4 mb-5">
             <VaccinationStatusCards
               unvaccinatedVaccines={unvaccinatedVaccines}
@@ -347,8 +345,7 @@ export default function InvChildHealthRecords() {
             </View>
             <HorizontalDataTable columns={columns} data={currentData} />
           </View>
-        )}
-        
+       
       </View>
     </ScrollView>
   );

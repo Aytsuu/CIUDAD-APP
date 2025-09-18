@@ -266,15 +266,39 @@ export default function FpRecordViewPage1() {
                 <Text className="text-sm font-medium text-gray-900">{recordData.obstetricalHistory?.typeOfLastDelivery ?? "N/A"}</Text>
               </View>
             </View>
+             <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <Droplets size={18} color="#6B7280" />
+              </View>
+              
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Last Menstrual Period</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.obstetricalHistory?.lastMenstrualPeriod ?? "N/A"}</Text>
+              </View>
+            </View>
+
             <View className="flex-row items-start space-x-3 mb-4">
               <View className="w-5 h-5 mt-1">
                 <Droplets size={18} color="#6B7280" />
               </View>
+              
               <View className="flex-1">
                 <Text className="text-sm text-gray-500 mb-1">Previous Menstrual Period</Text>
                 <Text className="text-sm font-medium text-gray-900">{recordData.obstetricalHistory?.previousMenstrualPeriod ?? "N/A"}</Text>
               </View>
             </View>
+
+            <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <Droplets size={18} color="#6B7280" />
+              </View>
+              
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Menstrual Flow</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.obstetricalHistory?.menstrualFlow ?? "N/A"}</Text>
+              </View>
+            </View>
+
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">Dysmenorrhea:</Text>
               <View className={`px-3 py-1 rounded-full ${recordData.obstetricalHistory?.dysmenorrhea ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
@@ -308,7 +332,7 @@ export default function FpRecordViewPage1() {
                 </View>
                 <View className="bg-gray-50 rounded-lg p-4 items-center flex-1 mx-1">
                   <Heart size={20} color="#3B82F6" />
-                  <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.livingChildren ?? "0"}</Text>
+                  <Text className="text-sm font-bold mt-2 text-blue-600">{recordData.obstetricalHistory?.numOfLivingChildren ?? "0"}</Text>
                   <Text className="text-sm text-gray-500 text-center mt-1">Living Children</Text>
                 </View>
               </View>
@@ -762,50 +786,102 @@ export default function FpRecordViewPage1() {
         );
       case 10: // Pregnancy Check
         return (
-          <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <View className="flex-row items-center mb-4">
-              <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-purple-100">
-                <Stethoscope size={20} color="#8B5CF6" />
-              </View>
-              <Text className="text-lg font-semibold text-gray-800">Pregnancy Check</Text>
-            </View>
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-sm text-gray-500">Breastfeeding?</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.breastfeeding ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.pregnancyCheck?.breastfeeding ? "Yes" : "No"}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-sm text-gray-500">Abstained?</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.abstained ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.pregnancyCheck?.abstained ? "Yes" : "No"}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-sm text-gray-500">Recent Baby?</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.recent_baby ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.pregnancyCheck?.recent_baby ? "Yes" : "No"}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-sm text-gray-500">Recent Period?</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.recent_period ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.pregnancyCheck?.recent_period ? "Yes" : "No"}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-sm text-gray-500">Recent Abortion?</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.recent_abortion ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.pregnancyCheck?.recent_abortion ? "Yes" : "No"}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-sm text-gray-500">Using Contraceptive?</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.using_contraceptive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.pregnancyCheck?.using_contraceptive ? "Yes" : "No"}</Text>
-              </View>
-            </View>
+  <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mx-4 my-3">
+    {/* Header */}
+    <View className="flex-row items-center mb-5">
+      <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-purple-100">
+        <Stethoscope size={20} color="#8B5CF6" />
+      </View>
+      <Text className="text-lg font-semibold text-gray-800">Pregnancy Check</Text>
+    </View>
+    
+    {/* Questions Container */}
+    <View className="space-y-4">
+      {/* Question 1 */}
+      <View className="bg-gray-50 rounded-lg p-3">
+        <Text className="text-sm text-gray-700 mb-2 leading-5">
+          Did you have a baby less than six (6) months ago, are you fully or nearly fully breastfeeding, and have you had no menstrual period since then?
+        </Text>
+        <View className="flex-row justify-end">
+          <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.breastfeeding ? "bg-green-100" : "bg-gray-100"}`}>
+            <Text className={`text-xs font-medium ${recordData.pregnancyCheck?.breastfeeding ? "text-green-800" : "text-gray-700"}`}>
+              {recordData.pregnancyCheck?.breastfeeding ? "Yes" : "No"}
+            </Text>
           </View>
+        </View>
+      </View>
+      
+      {/* Question 2 */}
+      <View className="bg-gray-50 rounded-lg p-3">
+        <Text className="text-sm text-gray-700 mb-2 leading-5">
+          Have you abstained from sexual intercourse since your last menstrual period or delivery?
+        </Text>
+        <View className="flex-row justify-end">
+          <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.abstained ? "bg-green-100" : "bg-gray-100"}`}>
+            <Text className={`text-xs font-medium ${recordData.pregnancyCheck?.abstained ? "text-green-800" : "text-gray-700"}`}>
+              {recordData.pregnancyCheck?.abstained ? "Yes" : "No"}
+            </Text>
+          </View>
+        </View>
+      </View>
+      
+      {/* Question 3 */}
+      <View className="bg-gray-50 rounded-lg p-3">
+        <Text className="text-sm text-gray-700 mb-2 leading-5">
+          Have you had a baby in the last four (4) weeks?
+        </Text>
+        <View className="flex-row justify-end">
+          <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.recent_baby ? "bg-green-100" : "bg-gray-100"}`}>
+            <Text className={`text-xs font-medium ${recordData.pregnancyCheck?.recent_baby ? "text-green-800" : "text-gray-700"}`}>
+              {recordData.pregnancyCheck?.recent_baby ? "Yes" : "No"}
+            </Text>
+          </View>
+        </View>
+      </View>
+      
+      {/* Question 4 */}
+      <View className="bg-gray-50 rounded-lg p-3">
+        <Text className="text-sm text-gray-700 mb-2 leading-5">
+          Did your last menstrual period start within the past seven (7) days?
+        </Text>
+        <View className="flex-row justify-end">
+          <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.recent_period ? "bg-green-100" : "bg-gray-100"}`}>
+            <Text className={`text-xs font-medium ${recordData.pregnancyCheck?.recent_period ? "text-green-800" : "text-gray-700"}`}>
+              {recordData.pregnancyCheck?.recent_period ? "Yes" : "No"}
+            </Text>
+          </View>
+        </View>
+      </View>
+      
+      {/* Question 5 */}
+      <View className="bg-gray-50 rounded-lg p-3">
+        <Text className="text-sm text-gray-700 mb-2 leading-5">
+          Have you had miscarriage or abortion in the last seven (7) days?
+        </Text>
+        <View className="flex-row justify-end">
+          <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.recent_abortion ? "bg-green-100" : "bg-gray-100"}`}>
+            <Text className={`text-xs font-medium ${recordData.pregnancyCheck?.recent_abortion ? "text-green-800" : "text-gray-700"}`}>
+              {recordData.pregnancyCheck?.recent_abortion ? "Yes" : "No"}
+            </Text>
+          </View>
+        </View>
+      </View>
+      
+      {/* Question 6 */}
+      <View className="bg-gray-50 rounded-lg p-3">
+        <Text className="text-sm text-gray-700 mb-2 leading-5">
+          Have you been using a reliable contraceptive method consistently and correctly?
+        </Text>
+        <View className="flex-row justify-end">
+          <View className={`px-3 py-1 rounded-full ${recordData.pregnancyCheck?.using_contraceptive ? "bg-green-100" : "bg-gray-100"}`}>
+            <Text className={`text-xs font-medium ${recordData.pregnancyCheck?.using_contraceptive ? "text-green-800" : "text-gray-700"}`}>
+              {recordData.pregnancyCheck?.using_contraceptive ? "Yes" : "No"}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  </View>
         );
       default:
         return null;

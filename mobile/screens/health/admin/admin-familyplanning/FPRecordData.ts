@@ -26,6 +26,7 @@ export interface FPRecordData {
   obstetricalHistory?: {
     menstrualFlow?: string;
     lastDeliveryDate?: string;
+    lastMenstrualPeriod?: string;
     typeOfLastDelivery?: string;
     previousMenstrualPeriod?: string;
     dysmenorrhea?: boolean;
@@ -33,7 +34,7 @@ export interface FPRecordData {
     ectopicPregnancyHistory?: boolean;
     g_pregnancies?: number;
     p_pregnancies?: number;
-    livingChildren?: number;
+    numOfLivingChildren?: number;
     fullTerm?: number;
     premature?: number;
     abortion?: number;

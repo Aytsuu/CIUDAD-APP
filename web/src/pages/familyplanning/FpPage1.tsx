@@ -154,9 +154,9 @@ export default function FamilyPlanningForm({
 
   useEffect(() => {
     if (age) {
-      if (age < 10 || age > 49) {
+      if (age < 13 || age > 49) {
         setIsAgeInvalid(true);
-        toast.warning("Patient's age is outside the recommended range (10-49 years) for family planning services. Proceed with caution or select another patient.");
+        toast.warning("Patient's age is outside the recommended age (13-49 years) for family planning services. Proceed with caution or select another patient.");
       } else {
         setIsAgeInvalid(false);
       }
