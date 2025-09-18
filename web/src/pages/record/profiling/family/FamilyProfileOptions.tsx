@@ -5,7 +5,7 @@ export default function FamilyProfileOptions() {
   const { user } = useAuth();
   
   // Determine routes based on staff type
-  const isHealthStaff = user?.staff?.staff_type === "Health Staff";
+  const isHealthStaff = user?.staff?.staff_type === "HEALTH STAFF";
     
   const familyRoute = isHealthStaff 
     ? "/family/family-profile-form" 
