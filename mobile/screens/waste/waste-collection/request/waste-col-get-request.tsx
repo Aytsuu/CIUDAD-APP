@@ -6,7 +6,6 @@ import { api } from "@/api/api";
 export const getWasteCollectionSchedFull = async () => {
     try {
         const res = await api.get('waste/waste-collection-sched-full/');
-        console.log("Raw API response:", res.data); 
         return res.data;
     } catch (err) {
         console.error(err);
