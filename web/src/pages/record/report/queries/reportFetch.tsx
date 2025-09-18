@@ -62,7 +62,7 @@ export const useGetAcknowledgementReport = (page: number, pageSize: number, sear
 
 export const useGetARInfo = (arId: string) => {
   return useQuery({
-    queryKey: ['ARInfo'],
+    queryKey: ['ARInfo', arId],
     queryFn: async () => {
       try {
         const res = await api.get(`report/ar/${arId}/info/`);
@@ -95,7 +95,7 @@ export const useGetWeeklyAR = () => {
 
 export const useGetWARInfo = (warId: string) => {
   return useQuery({
-    queryKey: ['WARInfo'],
+    queryKey: ['WARInfo', warId],
     queryFn: async () => {
       try {
         const res = await api.get(`report/war/${warId}/info/`);

@@ -16,7 +16,7 @@ class IncidentReport(AbstractModels):
   ir_time = models.TimeField()
   ir_date = models.DateField()
   ir_area = models.TextField()
-  ir_involved = models.IntegerField()
+  ir_involved = models.IntegerField(default=0)
   ir_severity = models.CharField()
   ir_created_at = models.DateTimeField(auto_now_add=True)
   ir_is_archive = models.BooleanField(default=False)
@@ -39,7 +39,6 @@ class AcknowledgementReport(AbstractModels):
   ar_status = models.CharField(max_length=20, default='UNSIGNED')
   ar_is_archive = models.BooleanField(default=False)
   ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, null=True)
-  rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
   staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
   class Meta:
