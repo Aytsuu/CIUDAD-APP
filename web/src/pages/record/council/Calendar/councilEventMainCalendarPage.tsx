@@ -42,7 +42,7 @@ function CalendarPage() {
       data: wasteCollectionData,
       columns: wasteColColumns,
       titleAccessor: "sitio_name",
-      dateAccessor: "wc_date",
+      dateAccessor: "wc_day",
       timeAccessor: "wc_time",
       defaultColor: "#10b981", // emerald
     },
