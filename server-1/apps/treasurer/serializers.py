@@ -440,7 +440,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # Coerce empty strings from the client into None so DRF doesn't try bad lookups
-        for key in ['bpr_id', 'nrc_id', 'cr_id']:
+        for key in ['bpr_id', 'nrc_id', 'cr_id', 'spay_id']:
             if key in attrs and (attrs[key] == '' or attrs[key] == 0):
                 attrs[key] = None
 
@@ -448,12 +448,14 @@ class InvoiceSerializers(serializers.ModelSerializer):
             attrs.get('bpr_id'),
             attrs.get('nrc_id'),
             attrs.get('cr_id'),
+            attrs.get('spay_id'),
         ]
+        
         provided = sum(1 for v in link_keys if v)
         if provided == 0:
-            raise serializers.ValidationError("You must provide one of bpr_id, nrc_id, or cr_id")
+            raise serializers.ValidationError("You must provide one of bpr_id, nrc_id, cr_id, or spay_id")
         if provided > 1:
-            raise serializers.ValidationError("Provide only one of bpr_id, nrc_id, or cr_id")
+            raise serializers.ValidationError("Provide only one of bpr_id, nrc_id, cr_id, or spay_id")
         return attrs
 
     def create(self, validated_data):
@@ -534,6 +536,49 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     except Exception:
                         pass
                 non_resident_cert.save()
+            
+            # Check if it's a service charge payment request
+            elif invoice.spay_id:
+                print(f"[InvoiceSerializer] Processing service charge payment for spay_id: {invoice.spay_id}")
+                
+                # Update invoice status to Paid
+                invoice.inv_status = "Paid"
+                invoice.save()
+                
+                # Update service charge payment request status
+                service_charge_payment = invoice.spay_id
+                service_charge_payment.spay_status = "Paid"
+                service_charge_payment.spay_date_paid = invoice.inv_date
+                service_charge_payment.save()
+                
+                print(f"[InvoiceSerializer] Updated service charge payment status to Paid for spay_id: {service_charge_payment.spay_id}")
+                
+                # Update the service charge request status to Accepted
+                service_charge_request = service_charge_payment.sr_id
+                service_charge_request.sr_req_status = "Accepted"
+                service_charge_request.save()
+                
+                print(f"[InvoiceSerializer] Updated service charge request status to Accepted for sr_id: {service_charge_request.sr_id}")
+                
+                # Log activity
+                try:
+                    from apps.act_log.utils import create_activity_log
+                    from apps.administration.models import Staff
+                    
+                    # Use a default staff ID if none is available
+                    staff_id = '00003250722'  # Default staff ID
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                    
+                    if staff:
+                        create_activity_log(
+                            act_type="Receipt Created",
+                            act_description=f"Receipt {invoice.inv_serial_num} created for service charge {service_charge_request.sr_id}. Payment status updated to Paid.",
+                            staff=staff,
+                            record_id=invoice.inv_serial_num,
+                            feat_name="Receipt Management"
+                        )
+                except Exception as e:
+                    print(f"Failed to log activity: {e}")
                 
         except Exception as e:
             print(f"Failed to process invoice: {e}")

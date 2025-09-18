@@ -10,6 +10,7 @@ export const GADAnnualDevPlanCreateSchema = z.object({
     dev_date: z.string().min(1, "Date is required"),
     dev_client: z.string().min(1, "Client is required"),
     dev_issue: z.string().min(1, "Gender issue or GAD mandate is required"),
+    dev_mandated: z.boolean().default(false),
     dev_project: z.string().min(1, "GAD Program/Project/Activity is required"),
     dev_activity: z.string().optional(),
     dev_indicator: z.string().min(1, "Performance indicator is required"),
