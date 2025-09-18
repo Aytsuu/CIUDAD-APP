@@ -108,7 +108,7 @@ class Disbursement_FileSerializers(serializers.ModelSerializer):
     dis_desc = serializers.CharField(source='dis_num.dis_desc', read_only=True)
     class Meta:
         model = Disbursement_File
-        fields = ['disf_num', 'disf_upload_date', 'disf_is_archive', 'disf_type', 'disf_name', 'disf_path', 'disf_url', 'dis_num', 'staff_name', 'dis_year', 'dis_name','dis_desc']
+        fields = ['disf_num', 'disf_is_archive', 'disf_type', 'disf_name', 'disf_path', 'disf_url', 'dis_num', 'staff_name']
         extra_kwargs = {
             'dis_num': {'required': True},
             'disf_name': {'required': True},
@@ -152,9 +152,8 @@ class Disbursement_FileSerializers(serializers.ModelSerializer):
 class Disbursement_VoucherSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disbursement_Voucher
-        fields = '_all_'
+        fields = '__all__'
         read_only_fields = ['dis_is_archive']
-
 
 # =========================== INCOME & EXPENSE ==========================
 
