@@ -435,7 +435,6 @@ class SummonRequestSerializer(serializers.ModelSerializer):
         model = ServiceChargeRequest
         fields = '__all__'
 
-
 class SummonRequestPendingListSerializer(serializers.ModelSerializer):
     complainant_names = serializers.SerializerMethodField()
     incident_type = serializers.SerializerMethodField()

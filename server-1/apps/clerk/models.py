@@ -255,6 +255,7 @@ class ServiceChargeRequest(models.Model):
     sr_req_date = models.DateTimeField(default=datetime.now)
     sr_req_status = models.CharField(max_length = 250)
     sr_case_status = models.CharField(max_length = 250)
+    sr_date_marked = models.DateTimeField(null=True, blank = True)
     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
     staff_id = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, null = True, blank = True, db_column='staff_id')
 

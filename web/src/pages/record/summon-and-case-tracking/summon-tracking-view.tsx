@@ -17,25 +17,19 @@ import { useGetTemplateRecord } from "../council/templates/queries/template-Fetc
 import { formatTime } from "@/helpers/timeFormatter"
 import { Card } from "@/components/ui/card" 
 import { Label } from "@/components/ui/label"
+import { useResolveCase } from "./queries/summonUpdateQueries"
+import { useEscalateCase } from "./queries/summonUpdateQueries"
+
 
 export default function SummonScheduleList() {
   const navigate = useNavigate()
   const location = useLocation()
-  const {
-    sr_id,
-    comp_id,
-    sr_code,
-    case_status,
-    complainant = [],
-    incident_type,
-    accused = [],
-    accused_addresses = [],
-    complainant_addresses = [],
-  } = location.state || {}
+  const { sr_id, comp_id, sr_code, case_status, complainant = [], incident_type, accused = [], accused_addresses = [], complainant_addresses = []} = location.state || {}
   const { data: schedList = [], isLoading: isSchedLoading } = useGetScheduleList(sr_id)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingRowId, setEditingRowId] = useState<string | null>(null)
-  const [showResolveModal, setShowResolveModal] = useState(false)
+  const { mutate: resolve } = useResolveCase()
+  const { mutate: escalate } = useEscalateCase()
   const { data: templates = [], isLoading: isLoadingTemplate } = useGetTemplateRecord()
   const templateData = templates[0] || {}
   const barangayLogo =
@@ -44,9 +38,12 @@ export default function SummonScheduleList() {
   const email = templateData.temp_email || ""
   const telNum = templateData.temp_contact_num || ""
 
-  const handleMarkAsResolved = () => {
-    console.log("Marking case as resolved:", sr_id)
-    setShowResolveModal(false)
+  const handleResolve = () => {
+    resolve(sr_id)
+  }
+
+  const handleEscalate = () =>{
+    escalate(sr_id)
   }
 
 
@@ -296,7 +293,7 @@ export default function SummonScheduleList() {
                     title="Confirm Resolution"
                     description="Are you sure you want to mark this case as resolved?"
                     actionLabel="Confirm"
-                    // onClick={() => handleResolve(sr_id)}
+                    onClick={() => handleResolve()}
                   />
                   <ConfirmationModal
                     trigger={
@@ -307,7 +304,7 @@ export default function SummonScheduleList() {
                     title="Confirm Escalation"
                     description="Are you sure you want to escalate this case?"
                     actionLabel="Confirm"
-                    // onClick={() => handleEscalate(sr_id, caseDetails?.complaint.comp_id || "")}
+                    onClick={() => handleEscalate()}
                   />
                 </div>
               ) : (
