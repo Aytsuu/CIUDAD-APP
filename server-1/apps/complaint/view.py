@@ -21,7 +21,8 @@ from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
 from datetime import date
 from apps.profiling.models import ResidentProfile
-
+from apps.administration.models import Staff
+from utils.supabase_client import upload_to_storage
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,6 @@ class ComplaintCreateView(APIView):
             # Add staff_id if provided
             if request.data.get("staff_id"):
                 try:
-                    from apps.administration.models import Staff
                     staff_instance = Staff.objects.get(staff_id=request.data["staff_id"])
                     complaint_data["staff_id"] = staff_instance
                 except Staff.DoesNotExist:
@@ -97,6 +97,25 @@ class ComplaintCreateView(APIView):
 
             if serializer.is_valid():
                 complaint = serializer.save()
+                
+                files = request.FILES.getlist("complaint_files")
+                if files:
+                    complaint_files = []
+                    for file_data in files:
+                        folder = "images" if file_data.content_type.split("/")[0] == "image" else "documents"
+
+                        url = upload_to_storage(file_data, "complaint-bucket", folder)
+
+                        complaint_file = Complaint_File(
+                            comp=complaint,
+                            comp_file_name=file_data.name,
+                            comp_file_type=file_data.content_type,
+                            comp_file_url=url,
+                        )
+                        complaint_files.append(complaint_file)
+
+                    if complaint_files:
+                        Complaint_File.objects.bulk_create(complaint_files)
 
                 # Serialize response
                 response_serializer = ComplaintSerializer(
@@ -135,7 +154,7 @@ class ComplaintListView(generics.ListAPIView):
         try:
             queryset = Complaint.objects.prefetch_related(
                 'complaintcomplainant_set__cpnt__rp_id',
-                'complaintaccused_set__acsd__rp_id',
+                # 'complaintaccused_set__acsd__rp_id',
                 'complaint_file',
                 'staff_id'
             ).filter(comp_is_archive=False).order_by('-comp_created_at')

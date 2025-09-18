@@ -1,6 +1,6 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useState, useEffect } from "react";
-import { Plus, X, Search, UserCheck, UserPlus } from "lucide-react";
+import { Plus, X, Search, UserCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -28,8 +28,10 @@ export const ComplainantInfo = () => {
   const currentComplainant = watch(`complainant.${activeTab}`);
   const complainantType = currentComplainant?.type || "manual";
 
-  // Search query
-  const { data: searchResults = [], isLoading: isSearchLoading } = useSearchComplainants(searchQuery);
+  // Search query - also fetch all residents when searching is active
+  const { data: searchResults = [], isLoading: isSearchLoading } = useSearchComplainants(
+    isSearching ? (searchQuery || "") : ""
+  );
 
   const addComplainant = () => {
     const newIndex = fields.length;
@@ -200,32 +202,21 @@ export const ComplainantInfo = () => {
         key={`tab-${activeTab}`}
         className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-6 shadow-sm"
       >
-        <h3 className="text-base font-semibold text-black/70 mb-6">
-          Complainant {activeTab + 1} Information
-        </h3>
-
-        {/* Entry Type Selection */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              type="button"
-              variant={isSearching ? "default" : "outline"}
-              onClick={() => setIsSearching(true)}
-              className="flex items-center gap-2"
-            >
-              <Search className="h-4 w-4" />
-              Search Resident
-            </Button>
-            <Button
-              type="button"
-              variant={!isSearching ? "default" : "outline"}
-              onClick={switchToManualEntry}
-              className="flex items-center gap-2"
-            >
-              <UserPlus className="h-4 w-4" />
-              Manual Entry
-            </Button>
-          </div>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-base font-semibold text-black/70">
+            Complainant {activeTab + 1} Information
+          </h3>
+          
+          {/* Search Button */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsSearching(!isSearching)}
+            className="flex items-center gap-2 text-blue-600 border-blue-300 hover:bg-blue-50"
+          >
+            <Search className="h-4 w-4" />
+            {isSearching ? "Cancel Search" : "Search Resident"}
+          </Button>
         </div>
 
         {/* Search Section */}
@@ -241,40 +232,47 @@ export const ComplainantInfo = () => {
               <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
             </div>
 
-            {/* Search Results */}
-            {searchQuery && (
-              <div className="max-h-60 overflow-y-auto border rounded-lg bg-white">
-                {isSearchLoading ? (
-                  <div className="p-4 text-center text-gray-500">Searching...</div>
-                ) : searchResults.length > 0 ? (
-                  <div className="divide-y">
-                    {searchResults.map((resident: any) => (
-                      <div
-                        key={resident.id}
-                        className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                        onClick={() => selectResidentComplainant(resident)}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="font-medium text-gray-900">{resident.cpnt_name}</h4>
-                            <p className="text-sm text-gray-600">
-                              {resident.cpnt_gender}, Age {resident.cpnt_age}
-                            </p>
-                            <p className="text-sm text-gray-500">{resident.cpnt_number}</p>
-                            <p className="text-xs text-gray-400 mt-1">{resident.cpnt_address}</p>
-                          </div>
-                          <UserCheck className="h-5 w-5 text-green-500" />
+            {/* Search Results - Show all residents by default or filtered results */}
+            <div className="max-h-60 overflow-y-auto border rounded-lg bg-white">
+              {isSearchLoading ? (
+                <div className="p-4 text-center text-gray-500">Loading residents...</div>
+              ) : searchResults.length > 0 ? (
+                <div className="divide-y">
+                  {searchQuery ? (
+                    <div className="px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium border-b">
+                      Search Results ({searchResults.length} found)
+                    </div>
+                  ) : (
+                    <div className="px-4 py-2 bg-gray-50 text-gray-700 text-sm font-medium border-b">
+                      All Registered Residents ({searchResults.length} total)
+                    </div>
+                  )}
+                  {searchResults.map((resident: any) => (
+                    <div
+                      key={resident.id}
+                      className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => selectResidentComplainant(resident)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-medium text-gray-900">{resident.cpnt_name}</h4>
+                          <p className="text-sm text-gray-600">
+                            {resident.cpnt_gender}, Age {resident.cpnt_age}
+                          </p>
+                          <p className="text-sm text-gray-500">{resident.cpnt_number}</p>
+                          <p className="text-xs text-gray-400 mt-1">{resident.cpnt_address}</p>
                         </div>
+                        <UserCheck className="h-5 w-5 text-green-500" />
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-4 text-center text-gray-500">
-                    No residents found. Try different search terms.
-                  </div>
-                )}
-              </div>
-            )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 text-center text-gray-500">
+                  {searchQuery ? "No residents found. Try different search terms." : "No residents registered in the system."}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -283,10 +281,41 @@ export const ComplainantInfo = () => {
           <div className="space-y-6">
             {/* Show resident info if linked */}
             {complainantType === "resident" && currentComplainant?.rp_id && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center gap-2 text-green-700">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2 text-green-700 mb-3">
                   <UserCheck className="h-4 w-4" />
                   <span className="font-medium">Linked to Resident Profile ID: {currentComplainant.rp_id}</span>
+                </div>
+                
+                {/* Display resident information in a read-only format */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-700">Full Name:</span>
+                    <p className="text-gray-900">{currentComplainant.fullName}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Age:</span>
+                    <p className="text-gray-900">{currentComplainant.age}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Gender:</span>
+                    <p className="text-gray-900">{currentComplainant.genderInput}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Contact:</span>
+                    <p className="text-gray-900">{currentComplainant.contactNumber}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <span className="font-medium text-gray-700">Address:</span>
+                    <p className="text-gray-900">
+                      {[
+                        currentComplainant.address?.street,
+                        currentComplainant.address?.barangay,
+                        currentComplainant.address?.city,
+                        currentComplainant.address?.province
+                      ].filter(Boolean).join(", ")}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -297,170 +326,179 @@ export const ComplainantInfo = () => {
               {...control.register(`complainant.${activeTab}.rp_id`)}
             />
 
-            <FormInput
-              control={control}
-              name={`complainant.${activeTab}.fullName`}
-              label="Full Name *"
-              placeholder="Enter full name"
-              className="max-w-full"
-              readOnly={complainantType === "resident"}
-            />
-
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={control}
-                name={`complainant.${activeTab}.age`}
-                rules={{ validate: validateAge }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold text-black/50">
-                      Age *
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="150"
-                        placeholder="Age"
-                        readOnly={complainantType === "resident"}
-                        {...field}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value === "" || /^\d+$/.test(value)) {
-                            field.onChange(value);
-                          }
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div>
-                <FormLabel className="font-semibold text-black/50">
-                  Gender *
-                </FormLabel>
-                <div className="flex mt-2">
-                  <div className="flex-shrink-0 w-32">
-                    <FormField
-                      control={control}
-                      name={`complainant.${activeTab}.gender`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <SelectLayout
-                              placeholder="Select gender"
-                              label="Gender Options"
-                              options={genderOptions}
-                              value={field.value || ""}
-                              onChange={(value) => {
-                                field.onChange(value);
-                                if (value === "Other") {
-                                  setValue(`complainant.${activeTab}.genderInput`, "");
-                                } else {
-                                  setValue(`complainant.${activeTab}.genderInput`, value);
-                                }
-                              }}
-                              className="h-9"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="flex-1 ml-2">
-                    <FormInput
-                      control={control}
-                      name={`complainant.${activeTab}.genderInput`}
-                      placeholder={
-                        selectedGender === "Other"
-                          ? "Enter gender"
-                          : "Auto-filled from selection"
-                      }
-                      readOnly={selectedGender !== "Other" || complainantType === "resident"}
-                      className={`${
-                        selectedGender !== "Other" || complainantType === "resident"
-                          ? "bg-gray-100 cursor-not-allowed"
-                          : ""
-                      }`}
-                    />
-                  </div>
-                </div>
-              </div>
-
+            {/* For resident type, show only relationship field */}
+            {complainantType === "resident" ? (
               <FormInput
                 control={control}
-                name={`complainant.${activeTab}.contactNumber`}
-                label="Contact Number *"
-                placeholder="e.g. +63 912 345 6789"
-                type="tel"
-                readOnly={complainantType === "resident"}
+                name={`complainant.${activeTab}.relation_to_respondent`}
+                label="Relationship to Respondent *"
+                placeholder="e.g. Neighbor, Friend, Relative"
               />
-            </div>
+            ) : (
+              /* For manual entry, show all fields */
+              <>
+                <FormInput
+                  control={control}
+                  name={`complainant.${activeTab}.fullName`}
+                  label="Full Name *"
+                  placeholder="Enter full name"
+                  className="max-w-full"
+                />
 
-            <FormInput
-              control={control}
-              name={`complainant.${activeTab}.relation_to_respondent`}
-              label="Relationship to Respondent *"
-              placeholder="e.g. Neighbor, Friend, Relative"
-            />
+                <div className="grid grid-cols-3 gap-4">
+                  <FormField
+                    control={control}
+                    name={`complainant.${activeTab}.age`}
+                    rules={{ validate: validateAge }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-semibold text-black/50">
+                          Age *
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="150"
+                            placeholder="Age"
+                            {...field}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value === "" || /^\d+$/.test(value)) {
+                                field.onChange(value);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            {/* Address Section */}
-            <div className="space-y-4 pt-4 border-t border-gray-200">
-              <div className="space-y-3">
-                <FormLabel className="font-semibold text-black/50">
-                  Complete Address (Street / Barangay / Municipality / Province) *
-                </FormLabel>
+                  <div>
+                    <FormLabel className="font-semibold text-black/50">
+                      Gender *
+                    </FormLabel>
+                    <div className="flex mt-2">
+                      <div className="flex-shrink-0 w-32">
+                        <FormField
+                          control={control}
+                          name={`complainant.${activeTab}.gender`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <SelectLayout
+                                  placeholder="Select gender"
+                                  label="Gender Options"
+                                  options={genderOptions}
+                                  value={field.value || ""}
+                                  onChange={(value) => {
+                                    field.onChange(value);
+                                    if (value === "Other") {
+                                      setValue(`complainant.${activeTab}.genderInput`, "");
+                                    } else {
+                                      setValue(`complainant.${activeTab}.genderInput`, value);
+                                    }
+                                  }}
+                                  className="h-9"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
-                <div className="flex flex-col md:flex-row items-stretch border-2 border-gray-300 rounded-lg p-2 bg-white gap-2 md:gap-0">
-                  {[
-                    { key: "street", placeholder: "Street/Sitio" },
-                    { key: "barangay", placeholder: "Barangay" },
-                    { key: "city", placeholder: "Municipality/City" },
-                    { key: "province", placeholder: "Province" },
-                  ].map(({ key, placeholder }, i) => (
-                    <div key={key} className="flex-1 flex items-center">
-                      <FormField
-                        control={control}
-                        name={`complainant.${activeTab}.address.${key}`}
-                        render={({ field }) => (
-                          <FormItem className="w-full">
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder={placeholder}
-                                className="border-none shadow-none px-2 h-10 md:h-8"
-                                readOnly={complainantType === "resident"}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      {i < 3 && (
-                        <span className="hidden md:inline mx-2 text-gray-400 font-medium">
-                          /
-                        </span>
-                      )}
+                      <div className="flex-1 ml-2">
+                        <FormInput
+                          control={control}
+                          name={`complainant.${activeTab}.genderInput`}
+                          placeholder={
+                            selectedGender === "Other"
+                              ? "Enter gender"
+                              : "Auto-filled from selection"
+                          }
+                          readOnly={selectedGender !== "Other"}
+                          className={`${
+                            selectedGender !== "Other"
+                              ? "bg-gray-100 cursor-not-allowed"
+                              : ""
+                          }`}
+                        />
+                      </div>
                     </div>
-                  ))}
+                  </div>
+
+                  <FormInput
+                    control={control}
+                    name={`complainant.${activeTab}.contactNumber`}
+                    label="Contact Number *"
+                    placeholder="e.g. +63 912 345 6789"
+                    type="tel"
+                  />
                 </div>
 
-                {/* Address field validation messages */}
-                <div className="space-y-1">
-                  {["street", "barangay", "city", "province"].map((fieldKey) => (
-                    <FormField
-                      key={fieldKey}
-                      control={control}
-                      name={`complainant.${activeTab}.address.${fieldKey}`}
-                      render={() => <FormMessage />}
-                    />
-                  ))}
+                <FormInput
+                  control={control}
+                  name={`complainant.${activeTab}.relation_to_respondent`}
+                  label="Relationship to Respondent *"
+                  placeholder="e.g. Neighbor, Friend, Relative"
+                />
+
+                {/* Address Section */}
+                <div className="space-y-4 pt-4 border-t border-gray-200">
+                  <div className="space-y-3">
+                    <FormLabel className="font-semibold text-black/50">
+                      Complete Address (Street / Barangay / Municipality / Province) *
+                    </FormLabel>
+
+                    <div className="flex flex-col md:flex-row items-stretch border-2 border-gray-300 rounded-lg p-2 bg-white gap-2 md:gap-0">
+                      {[
+                        { key: "street", placeholder: "Street/Sitio" },
+                        { key: "barangay", placeholder: "Barangay" },
+                        { key: "city", placeholder: "Municipality/City" },
+                        { key: "province", placeholder: "Province" },
+                      ].map(({ key, placeholder }, i) => (
+                        <div key={key} className="flex-1 flex items-center">
+                          <FormField
+                            control={control}
+                            name={`complainant.${activeTab}.address.${key}`}
+                            render={({ field }) => (
+                              <FormItem className="w-full">
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    placeholder={placeholder}
+                                    className="border-none shadow-none px-2 h-10 md:h-8"
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          {i < 3 && (
+                            <span className="hidden md:inline mx-2 text-gray-400 font-medium">
+                              /
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Address field validation messages */}
+                    <div className="space-y-1">
+                      {["street", "barangay", "city", "province"].map((fieldKey) => (
+                        <FormField
+                          key={fieldKey}
+                          control={control}
+                          name={`complainant.${activeTab}.address.${fieldKey}`}
+                          render={() => <FormMessage />}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         )}
       </div>

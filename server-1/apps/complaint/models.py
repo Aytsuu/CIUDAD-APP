@@ -110,7 +110,7 @@ class Complaint_File(models.Model):
     comp_file_id = models.BigAutoField(primary_key=True)
     comp_file_name = models.CharField(max_length=100)
     comp_file_type = models.CharField(max_length=50)
-    # comp_file_url = models.URLField(max_length=500)
+    comp_file_url = models.URLField(max_length=500)
     comp = models.ForeignKey(
         Complaint,
         on_delete=models.CASCADE,

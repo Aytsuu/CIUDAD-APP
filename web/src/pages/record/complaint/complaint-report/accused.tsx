@@ -199,7 +199,7 @@ export const AccusedInfo = () => {
           {/* Entry Type Selection */}
           <div className="p-4 bg-gray-50 rounded-lg">
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button
+              {/* <Button
                 type="button"
                 variant={isSearching ? "default" : "outline"}
                 onClick={() => setIsSearching(true)}
@@ -207,7 +207,7 @@ export const AccusedInfo = () => {
               >
                 <Search className="h-4 w-4" />
                 Search Resident
-              </Button>
+              </Button> */}
               <Button
                 type="button"
                 variant={!isSearching ? "default" : "outline"}

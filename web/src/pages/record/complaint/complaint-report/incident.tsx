@@ -9,11 +9,37 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { FormInput } from "@/components/ui/form/form-input";
+import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
+import React from "react";
 
 export const IncidentInfo = () => {
-  const { control } = useFormContext();
+  const { control, setValue, watch } = useFormContext();
   const incidentType = useWatch({ control, name: "incident.type" });
 
+  // Watch the documents field from the form
+  const formDocuments = watch("documents") || [];
+  const [mediaFiles, setMediaFiles] =
+    React.useState<MediaUploadType>(formDocuments);
+
+  // Sync mediaFiles with form data whenever it changes
+  React.useEffect(() => {
+    setValue("documents", mediaFiles);
+  }, [mediaFiles, setValue]);
+
+  // Sync form data with local state on mount/form data change
+  React.useEffect(() => {
+    if (formDocuments.length !== mediaFiles.length) {
+      setMediaFiles(formDocuments);
+    }
+  }, [formDocuments]);
+  
+  const files = mediaFiles.map((media) => {
+    return {
+      name: media.name,
+      type: media.type,
+      file: media.file,
+    };
+  });
   const incidentTypeOptions = [
     { id: "Theft", name: "Theft" },
     { id: "Assault", name: "Assault" },
@@ -101,10 +127,14 @@ export const IncidentInfo = () => {
       />
 
       <div className="space-y-6">
-        {/* <MediaUpload
+        <MediaUpload
           title="Supporting Documents"
-          description="Upload images, videos, or documents (PDF, DOC, DOCX) that support your complaint (Max 10MB each)"
-        /> */}
+          description="Upload images (PNG, JPEG...) that support your complaint"
+          mediaFiles={mediaFiles}
+          setMediaFiles={setMediaFiles}
+          maxFiles={5}
+          acceptableFiles="image"
+        />
       </div>
     </div>
   );

@@ -164,7 +164,7 @@ export const requestComplaintColumns = ({
           {firstComplainant}
           {remainingCount > 0 && (
             <Badge className="bg-white text-black hover:bg-slate-100">
-              +{remainingCount} more
+              +{remainingCount}
             </Badge>
           )}
         </div>

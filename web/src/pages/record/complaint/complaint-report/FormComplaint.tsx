@@ -112,7 +112,7 @@ export const ComplaintForm = () => {
           cpnt_age: comp.age,
           cpnt_relation_to_respondent: comp.relation_to_respondent,
           cpnt_address: fullAddress,
-          rp_id: comp.rp_id || null, // Optional resident profile ID
+          rp_id: comp.rp_id || null,
         };
       });
       formData.append("complainant", JSON.stringify(complainantData));
@@ -129,12 +129,12 @@ export const ComplaintForm = () => {
           .toUpperCase();
 
         return {
-          acsd_name: acc.alias, // Using alias as name
+          acsd_name: acc.alias,
           acsd_age: acc.age,
           acsd_gender: acc.genderInput || acc.gender,
           acsd_description: acc.description,
           acsd_address: fullAddress,
-          rp_id: acc.rp_id || null, // Optional resident profile ID
+          rp_id: acc.rp_id || null, 
         };
       });
       formData.append("accused_persons", JSON.stringify(accusedData));
