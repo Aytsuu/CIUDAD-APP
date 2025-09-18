@@ -133,32 +133,23 @@ class ComplaintListView(generics.ListAPIView):
 
     def get_queryset(self):
         try:
-            return Complaint.objects.prefetch_related(
-                # Prefetch complainants through the intermediate model
+            queryset = Complaint.objects.prefetch_related(
                 'complaintcomplainant_set__cpnt__rp_id',
-                
-                # Prefetch accused through the intermediate model
                 'complaintaccused_set__acsd__rp_id',
-                
-                # Prefetch complaint files
                 'complaint_file',
-                
-                # Prefetch staff
                 'staff_id'
             ).filter(comp_is_archive=False).order_by('-comp_created_at')
+            
+            # we filter by comp_status
+            status = self.request.query_params.get('status')
+            if status:
+                queryset = queryset.filter(comp_status=status)
+                
+            return queryset
+        
         except Exception as e:
             logger.error(f"Error in ComplaintListView queryset: {str(e)}")
             return Complaint.objects.none()
-
-    def list(self, request, *args, **kwargs):
-        try:
-            return super().list(request, *args, **kwargs)
-        except Exception as e:
-            logger.error(f"Error in ComplaintListView list: {str(e)}")
-            return Response({
-                'error': 'An error occurred while fetching complaints',
-                'detail': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
 class ComplaintDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ComplaintSerializer
@@ -369,7 +360,7 @@ class ServiceChargeRequestCreateView(APIView):
                 comp_id=complaint,
                 sr_req_status="Pending", 
                 sr_type="Summon",
-                sr_case_status="Ongoing",
+                sr_case_status="Waiting for Schedule",
                 sr_req_date=timezone.now()
             )
             

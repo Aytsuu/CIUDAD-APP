@@ -2,6 +2,7 @@ from rest_framework import serializers
 from apps.profiling.serializers.resident_profile_serializers import ResidentProfileBaseSerializer
 from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
 from .models import *
+import json
 
 class AccusedSerializer(serializers.ModelSerializer):
     res_profile = ResidentProfileBaseSerializer(source='rp_id', read_only=True)  
@@ -78,7 +79,6 @@ class ComplaintSerializer(serializers.ModelSerializer):
         return None
         
     def create(self, validated_data):
-        import json  # Ensure json is imported in this scope
         
         # Get data from request
         request_data = self.context['request'].data
