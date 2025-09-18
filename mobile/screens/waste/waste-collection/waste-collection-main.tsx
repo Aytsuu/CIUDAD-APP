@@ -1059,7 +1059,6 @@ import { useArchiveWasteCol, useRestoreWasteCol, useDeleteWasteCol } from './que
 import { Plus, Trash, Archive, ArchiveRestore, Edit3, Search, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { formatTime } from '@/helpers/timeFormatter';
-import ScreenLayout from '@/screens/_ScreenLayout';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { sortWasteCollectionData } from '@/helpers/wasteCollectionHelper';
@@ -1246,7 +1245,7 @@ const WasteCollectionMain = () => {
 
   const renderSectionHeader = ({ section }: { section: { title: string } }) => (
     <View className="bg-blue-50 py-3 px-4 rounded-md mb-3 mt-3">
-      <Text className="text-lg font-bold text-blue-500">{section.title}</Text>
+      <Text className="text-lg font-bold text-primaryBlue">{section.title}</Text>
     </View>
   );
 
@@ -1288,8 +1287,8 @@ const WasteCollectionMain = () => {
               <View className="relative flex-1">
                 <Search className="absolute left-3 top-3 text-gray-500" size={17} />
                 <TextInput
-                  placeholder="Search by sitio or details..."
-                  className="pl-10 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
+                  placeholder="Search..."
+                  className="pl-3 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                 />
@@ -1311,11 +1310,11 @@ const WasteCollectionMain = () => {
           {/* Create Button */}
           <View className="pb-4 px-4">
             <TouchableOpacity
-              className="bg-blue-500 flex-row items-center justify-center w-full px-4 py-4 rounded-lg mb-3"
+              className="bg-primaryBlue flex-row items-center justify-center w-full px-4 py-4 rounded-lg mb-3"
               onPress={() => router.push('/(waste)/waste-collection/waste-col-create')}
             >
               <Plus size={16} className="text-white mr-2" />
-              <Text className="text-white text-sm font-medium">Create</Text>
+              <Text className="text-white text-lg font-medium">Create</Text>
             </TouchableOpacity>
           </View>      
 
