@@ -60,6 +60,7 @@ export type DisbursementInput = {
   dis_paydate: string;
   dis_payacc: any[];
   staff?: number;
+  dis_is_archive?: boolean;
 };
 
 export interface ParticularItem {
