@@ -30,6 +30,56 @@ export type Certificate = {
   };
 };
 
+export type ServiceCharge = {
+  sr_id: string;
+  sr_code: string;
+  sr_req_date: string;
+  req_payment_status: string;
+  complainant_name?: string;
+  invoice?: {
+    inv_num: string;
+    inv_serial_num: string;
+    inv_date: string;
+    inv_amount: string;
+    inv_nat_of_collection: string;
+  };
+  complainant_names?: string[];
+  complainant_addresses?: string[];
+  accused_names?: string[];
+  accused_addresses?: string[];
+};
+
+export const getPaidServiceCharges = async (): Promise<ServiceCharge[]> => {
+  try {
+    // Use existing treasurer endpoint that already joins payment_request
+    const res = await api.get('/clerk/treasurer/service-charges/');
+    const list = (res.data ?? []) as any[];
+
+    const merged: ServiceCharge[] = (list || [])
+      .filter((sr: any) => (sr.payment_request?.spay_status ?? '').toLowerCase() === 'paid')
+      .map((sr: any) => ({
+        sr_id: String(sr.sr_id),
+        sr_code: sr.sr_code ?? null,
+        sr_req_date: sr.sr_req_date ?? '',
+        req_payment_status: sr.payment_request?.spay_status ?? 'Paid',
+        complainant_name: sr.complainant_name ?? undefined,
+        complainant_names: sr.complainant_names ?? [],
+        complainant_addresses: sr.complainant_addresses ?? [],
+        accused_names: sr.accused_names ?? [],
+        accused_addresses: sr.accused_addresses ?? [],
+        invoice: undefined,
+      }));
+
+    merged.sort((a, b) => new Date(b.sr_req_date).getTime() - new Date(a.sr_req_date).getTime());
+
+    return merged;
+  } catch (err) {
+    const error = err as AxiosError;
+    console.error('Error fetching service charges:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export type NonResidentCertificate = {
   nrc_id: string;
   nrc_req_date: string;
