@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, Loader2, Eye, CheckCircle } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -11,6 +11,7 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { getPaidServiceCharges, type ServiceCharge } from "@/pages/record/clearances/queries/certFetchQueries";
 import TemplateMainPage from "../council/templates/template-main";
 import { localDateFormatter } from "@/helpers/localDateFormatter";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 
 interface ExtendedServiceCharge extends ServiceCharge {}
@@ -20,6 +21,10 @@ function ServiceChargePage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const [selectedSC, setSelectedSC] = useState<ExtendedServiceCharge | null>(null);
+  const queryClient = useQueryClient();
+  const [refreshTick, setRefreshTick] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const { data: serviceCharges, isLoading, error } = useQuery<ServiceCharge[]>({
     queryKey: ["paidServiceCharges"],
@@ -38,6 +43,16 @@ function ServiceChargePage() {
     });
   }, [serviceCharges, searchTerm]);
 
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil((filteredServiceCharges?.length || 0) / pageSize));
+  }, [filteredServiceCharges, pageSize]);
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredServiceCharges.slice(start, end);
+  }, [filteredServiceCharges, currentPage, pageSize]);
+
   // Mark as Printed opens the print view immediately
   const handleMarkAsPrinted = (sc: ServiceCharge) => {
     setSelectedSC(sc as ExtendedServiceCharge);
@@ -47,6 +62,13 @@ function ServiceChargePage() {
   const handleViewFile = (sc: ServiceCharge) => {
     setSelectedSC(sc as ExtendedServiceCharge);
   }
+
+  // When print dialog/template closes, refresh table and force a remount to avoid UI glitch
+  const handleTemplateClose = async () => {
+    setSelectedSC(null);
+    await queryClient.invalidateQueries({ queryKey: ["paidServiceCharges"] });
+    setRefreshTick(t => t + 1);
+  };
 
   const columns: ColumnDef<ServiceCharge>[] = [
     {
@@ -175,7 +197,24 @@ function ServiceChargePage() {
           </div>
         </div>
 
-        <div className="bg-white w-full overflow-x-auto">
+        <div className="bg-white">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6">
+            <div className="flex items-center gap-4">
+              <div className="flex gap-x-2 items-center">
+                <p className="text-xs sm:text-sm">Show</p>
+                <Input type="number" className="w-14 h-8" value={pageSize}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value || '10', 10);
+                    const safe = isNaN(val) || val <= 0 ? 10 : val;
+                    setPageSize(safe);
+                    setCurrentPage(1);
+                  }}
+                />
+                <p className="text-xs sm:text-sm">Entries</p>
+              </div>
+            </div>
+          </div>
+
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
@@ -184,11 +223,32 @@ function ServiceChargePage() {
             <div className="text-center py-5 text-red-500">Error loading data</div>
           ) : (
             <DataTable 
+              key={refreshTick}
               columns={columns} 
-            data={filteredServiceCharges} 
+              data={paginatedData} 
               header={true} 
             />
           )}
+        </div>
+
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0 mt-4">
+        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+          {(() => {
+            const total = filteredServiceCharges?.length || 0;
+            const start = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+            const end = Math.min(total, currentPage * pageSize);
+            return `Showing ${start}-${end} of ${total} rows`;
+          })()}
+        </p>
+
+        <div className="w-full sm:w-auto flex justify-center">
+          <PaginationLayout
+            className=""
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={(p) => setCurrentPage(p)}
+          />
+        </div>
       </div>
 
       {selectedSC && (
@@ -201,11 +261,12 @@ function ServiceChargePage() {
           address={(selectedSC.complainant_addresses && selectedSC.complainant_addresses.length ? selectedSC.complainant_addresses.filter(Boolean).join(', ') : '')}
           purpose={'File Action'}
           Signatory={''}
-          specificPurpose={`${(selectedSC.accused_names || []).join(', ')}\n${(() => { const addr = (selectedSC.accused_addresses || []).filter(Boolean).join(', '); return addr ? `${addr}, Brgy. San Roque Ciudad Cebu City` : 'Brgy. San Roque Ciudad Cebu City'; })()}`}
+          specificPurpose={`${(selectedSC.accused_names || []).join(', ')}` + "\n" + `${(() => { const addr = (selectedSC.accused_addresses || []).filter(Boolean).join(', '); return addr ? `${addr}, Brgy. San Roque Ciudad Cebu City` : 'Brgy. San Roque Ciudad Cebu City'; })()}`}
           issuedDate={new Date().toISOString()}
           isNonResident={false}
           showAddDetails={false}
           businessName={ selectedSC.sr_code}
+          onClose={handleTemplateClose}
         />
       )}
     </div>

@@ -23,6 +23,7 @@ from .models import (
     ServiceChargeRequest,
 )
 from rest_framework.generics import RetrieveAPIView
+from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 
@@ -1200,16 +1201,16 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
     serializer_class = ServiceChargeTreasurerListSerializer
 
     def get_queryset(self):
-        queryset = ServiceChargeRequest.objects.filter(sr_type='Summon').select_related(
+        # Only Summon requests that do NOT have an sr_code yet (null or empty)
+        queryset = ServiceChargeRequest.objects.filter(
+            sr_type='Summon'
+        ).filter(
+            Q(sr_code__isnull=True) | Q(sr_code__exact='')
+        ).select_related(
             'comp_id',
             'servicechargepaymentrequest__pr_id'
         ).prefetch_related(
             'comp_id__complaintcomplainant_set__cpnt'
         )
-        
-        # Filter by sr_req_status if provided
-        sr_req_status = self.request.query_params.get('sr_req_status')
-        if sr_req_status:
-            queryset = queryset.filter(sr_req_status=sr_req_status)
-        
+
         return queryset.order_by('-sr_req_date')

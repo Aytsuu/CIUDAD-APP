@@ -552,12 +552,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 
                 print(f"[InvoiceSerializer] Updated service charge payment status to Paid for spay_id: {service_charge_payment.spay_id}")
                 
-                # Update the service charge request status to Accepted
-                service_charge_request = service_charge_payment.sr_id
-                service_charge_request.sr_req_status = "Accepted"
-                service_charge_request.save()
-                
-                print(f"[InvoiceSerializer] Updated service charge request status to Accepted for sr_id: {service_charge_request.sr_id}")
+                # Do not change sr_req_status here; leave case status management to clerk/council flows
                 
                 # Log activity
                 try:
@@ -571,7 +566,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     if staff:
                         create_activity_log(
                             act_type="Receipt Created",
-                            act_description=f"Receipt {invoice.inv_serial_num} created for service charge {service_charge_request.sr_id}. Payment status updated to Paid.",
+                            act_description=f"Receipt {invoice.inv_serial_num} created for service charge {service_charge_payment.spay_id}. Payment status updated to Paid.",
                             staff=staff,
                             record_id=invoice.inv_serial_num,
                             feat_name="Receipt Management"

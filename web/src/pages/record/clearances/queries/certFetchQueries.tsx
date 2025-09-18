@@ -51,18 +51,17 @@ export type ServiceCharge = {
 
 export const getPaidServiceCharges = async (): Promise<ServiceCharge[]> => {
   try {
-    // Use existing treasurer endpoint that already joins payment_request
-    const res = await api.get('/clerk/treasurer/service-charges/');
+    // Fetch directly from the Paid list endpoint (includes sr_code and names/addresses)
+    const res = await api.get('/clerk/summon-case-list/');
     const list = (res.data ?? []) as any[];
 
     const merged: ServiceCharge[] = (list || [])
-      .filter((sr: any) => (sr.payment_request?.spay_status ?? '').toLowerCase() === 'paid')
       .map((sr: any) => ({
         sr_id: String(sr.sr_id),
         sr_code: sr.sr_code ?? null,
         sr_req_date: sr.sr_req_date ?? '',
-        req_payment_status: sr.payment_request?.spay_status ?? 'Paid',
-        complainant_name: sr.complainant_name ?? undefined,
+        req_payment_status: sr.payment_status ?? 'Paid',
+        complainant_name: Array.isArray(sr.complainant_names) && sr.complainant_names.length ? sr.complainant_names[0] : undefined,
         complainant_names: sr.complainant_names ?? [],
         complainant_addresses: sr.complainant_addresses ?? [],
         accused_names: sr.accused_names ?? [],
