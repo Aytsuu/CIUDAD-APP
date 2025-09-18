@@ -11,57 +11,62 @@ const addressSchema = z.object({
 
 const complainantSchema = z.object({
   type: z.enum(["manual", "resident"]).default("manual"),
-  rp_id: z.string().nullable().optional(), 
-  fullName: z.string().min(1, "Full name is required"),
-  gender: z.string().min(1, "Gender is required"),
+  rp_id: z.string().nullable().optional(),
+  cpnt_name: z.string().min(1, "Full name is required"),
+  cpnt_gender: z.string().min(1, "Gender is required"),
   genderInput: z.string().optional(),
-  age: z.string()
+  cpnt_age: z.string()
     .min(1, "Age is required")
     .refine((val) => {
       const age = parseInt(val);
       return !isNaN(age) && age >= 1 && age <= 150;
     }, "Age must be a valid number between 1 and 150"),
-  relation_to_respondent: z.string().min(1, "Relationship to respondent is required"),
-  contactNumber: z.string()
+  cpnt_relation_to_respondent: z.string().min(1, "Relationship to respondent is required"),
+  cpnt_number: z.string()
     .min(1, "Contact number is required")
     .regex(/^[\d\s+()-]+$/, "Invalid contact number format"),
+  cpnt_address: z.string().optional(),
   address: addressSchema.optional(),
 });
 
-// Accused schema - matches backend Accused model
 const accusedSchema = z.object({
   type: z.enum(["manual", "resident"]).default("manual"),
-  rp_id: z.string().nullable().optional(), // Optional resident profile ID
-  alias: z.string().min(1, "Name/alias is required"),
-  age: z.string()
+  rp_id: z.string().nullable().optional(),
+  acsd_name: z.string().min(1, "Name/alias is required"), // Changed from alias
+  acsd_age: z.string() // Changed from age
     .min(1, "Age is required")
     .refine((val) => {
       const age = parseInt(val);
       return !isNaN(age) && age >= 1 && age <= 150;
     }, "Age must be a valid number between 1 and 150"),
-  gender: z.string().min(1, "Gender is required"),
+  acsd_gender: z.string().min(1, "Gender is required"), // Changed from gender
   genderInput: z.string().optional(),
-  description: z.string().min(10, "Description must be at least 10 characters"),
+  acsd_description: z.string().min(10, "Description must be at least 10 characters"), // Changed from description
+  acsd_address: z.string().optional(), // Changed
   address: addressSchema.optional(),
 });
 
 // Incident schema - matches backend Complaint model fields
+// In your complaint-schema.ts
 const incidentSchema = z.object({
-  location: z.string().min(1, "Location is required"),
-  type: z.string().min(1, "Incident type is required"),
-  description: z.string().min(20, "Description must be at least 20 characters"),
-  date: z.string().min(1, "Date is required"),
-  time: z.string().min(1, "Time is required"),
+  comp_location: z.string().min(1, "Location is required"),
+  comp_incident_type: z.string().min(1, "Incident type is required"),
+  comp_allegation: z.string().min(20, "Description must be at least 20 characters"),
+  comp_datetime: z.string().min(1, "Date and time is required"),
+  // These are for UI only, not sent to backend
+  date: z.string().optional(),
+  time: z.string().optional(),
+  otherType: z.string().optional(),
 });
+
 
 // Document/file schema - matches backend Complaint_File model
 const documentSchema = z.object({
-  name: z.string(),
-  size: z.number(),
-  type: z.string(),
+  comp_file_name: z.string(),
+  comp_file_size: z.number(),
+  comp_file_type: z.string(),
   status: z.enum(["uploading", "uploaded", "error"]),
-  publicUrl: z.string().optional(),
-  storagePath: z.string().optional(),
+  comp_file_url: z.string().optional(),
   error: z.string().optional(),
 });
 
@@ -82,6 +87,7 @@ export const complaintFormSchema = z.object({
     .optional(),
 });
 
+
 // TypeScript type inference
 export type ComplaintFormData = z.infer<typeof complaintFormSchema>;
 export type ComplainantData = z.infer<typeof complainantSchema>;
@@ -89,220 +95,73 @@ export type AccusedData = z.infer<typeof accusedSchema>;
 export type IncidentData = z.infer<typeof incidentSchema>;
 export type DocumentData = z.infer<typeof documentSchema>;
 
-// Validation helpers
-export const validateComplainantAge = (age: string): boolean => {
-  const ageNum = parseInt(age);
-  return !isNaN(ageNum) && ageNum >= 1 && ageNum <= 150;
-};
-
-export const validateContactNumber = (number: string): boolean => {
-  return /^[\d\s+()-]+$/.test(number) && number.length >= 10;
-};
-
 // Transform functions for backend compatibility
 export const transformComplainantForBackend = (complainant: ComplainantData) => {
-  const fullAddress = [
-    complainant.address?.street,
-    complainant.address?.barangay,
-    complainant.address?.city,
-    complainant.address?.province,
-  ]
-    .filter(Boolean)
-    .join(", ")
-    .toUpperCase();
+  let address = complainant.cpnt_address || "";
+  
+  // Build address string from address object if manual entry and no cpnt_address
+  if (complainant.type === "manual" && !address && complainant.address) {
+    address = [
+      complainant.address.street,
+      complainant.address.barangay,
+      complainant.address.city,
+      complainant.address.province,
+      complainant.address.sitio
+    ].filter(Boolean).join(", ");
+  }
 
   return {
-    cpnt_name: complainant.fullName,
-    cpnt_gender: complainant.genderInput || complainant.gender,
-    cpnt_number: complainant.contactNumber,
-    cpnt_age: complainant.age,
-    cpnt_relation_to_respondent: complainant.relation_to_respondent,
-    cpnt_address: fullAddress,
+    cpnt_name: complainant.cpnt_name,
+    cpnt_gender: complainant.genderInput || complainant.cpnt_gender,
+    cpnt_number: complainant.cpnt_number,
+    cpnt_age: complainant.cpnt_age,
+    cpnt_relation_to_respondent: complainant.cpnt_relation_to_respondent,
+    cpnt_address: address || "N/A",
     rp_id: complainant.rp_id || null,
   };
 };
 
 export const transformAccusedForBackend = (accused: AccusedData) => {
-  const fullAddress = [
-    accused.address?.street,
-    accused.address?.barangay,
-    accused.address?.city,
-    accused.address?.province,
-  ]
-    .filter(Boolean)
-    .join(", ")
-    .toUpperCase();
+  let address = accused.acsd_address || "";
+  
+  if (accused.type === "manual" && !address && accused.address) {
+    address = [
+      accused.address.street,
+      accused.address.barangay,
+      accused.address.city,
+      accused.address.province,
+      accused.address.sitio
+    ].filter(Boolean).join(", ");
+  }
 
   return {
-    acsd_name: accused.alias,
-    acsd_age: accused.age,
-    acsd_gender: accused.genderInput || accused.gender,
-    acsd_description: accused.description,
-    acsd_address: fullAddress,
+    acsd_name: accused.acsd_name,
+    acsd_age: accused.acsd_age,
+    acsd_gender: accused.genderInput || accused.acsd_gender,
+    acsd_description: accused.acsd_description,
+    acsd_address: address || "N/A",
     rp_id: accused.rp_id || null,
   };
 };
 
 export const transformIncidentForBackend = (incident: IncidentData) => {
-  const dateTimeString = `${incident.date}T${incident.time}`;
-  
   return {
-    comp_incident_type: incident.type,
-    comp_allegation: incident.description,
-    comp_location: incident.location,
-    comp_datetime: dateTimeString,
+    comp_incident_type: incident.comp_incident_type,
+    comp_allegation: incident.comp_allegation,
+    comp_location: incident.comp_location,
+    comp_datetime: incident.comp_datetime,
   };
 };
 
 export const transformDocumentsForBackend = (documents: DocumentData[]) => {
   const uploadedFiles = documents.filter(
-    (doc) => doc.status === "uploaded" && doc.publicUrl
+    (doc) => doc.status === "uploaded" && doc.comp_file_url
   );
 
   return uploadedFiles.map((doc) => ({
-    cf_filename: doc.name,
-    cf_size: doc.size,
-    cf_type: doc.type,
-    cf_path: doc.publicUrl,
-    cf_storage_path: doc.storagePath,
+    comp_file_name: doc.comp_file_name,
+    comp_file_type: doc.comp_file_type,
+    comp_file_url: doc.comp_file_url,
   }));
 };
 
-
-// import { z } from "zod";
-
-// // Address schema
-// const addressSchema = z.object({
-//   street: z.string().optional(),
-//   barangay: z.string().optional(),
-//   city: z.string().optional(),
-//   province: z.string().optional(),
-//   sitio: z.string().optional(),
-// });
-
-// // Complainant schema
-// const complainantSchema = z.object({
-//   type: z.enum(["manual", "resident"]).default("manual"),
-//   rp_id: z.string().nullable().optional(),
-//   fullName: z.string().optional(),
-//   gender: z.string().optional(),
-//   genderInput: z.string().optional(),
-//   age: z.string().optional(),
-//   relation_to_respondent: z.string().optional(),
-//   contactNumber: z.string().optional(),
-//   address: addressSchema.optional(),
-// });
-
-// // Accused schema
-// const accusedSchema = z.object({
-//   type: z.enum(["manual", "resident"]).default("manual"),
-//   rp_id: z.string().nullable().optional(),
-//   alias: z.string().optional(),
-//   age: z.string().optional(),
-//   gender: z.string().optional(),
-//   genderInput: z.string().optional(),
-//   description: z.string().optional(),
-//   address: addressSchema.optional(),
-// });
-
-// // Incident schema
-// const incidentSchema = z.object({
-//   location: z.string().optional(),
-//   type: z.string().optional(),
-//   description: z.string().optional(),
-//   date: z.string().optional(),
-//   time: z.string().optional(),
-// });
-
-// // Document/file schema
-// const documentSchema = z.object({
-//   name: z.string().optional(),
-//   size: z.number().optional(),
-//   type: z.string().optional(),
-//   status: z.string().optional(),
-//   publicUrl: z.string().optional(),
-//   storagePath: z.string().optional(),
-//   error: z.string().optional(),
-// });
-
-// // Main complaint form schema
-// export const complaintFormSchema = z.object({
-//   complainant: z.array(complainantSchema).optional(),
-//   accused: z.array(accusedSchema).optional(),
-//   incident: incidentSchema.optional(),
-//   documents: z.array(documentSchema).optional(),
-// });
-
-// // TypeScript type inference
-// export type ComplaintFormData = z.infer<typeof complaintFormSchema>;
-// export type ComplainantData = z.infer<typeof complainantSchema>;
-// export type AccusedData = z.infer<typeof accusedSchema>;
-// export type IncidentData = z.infer<typeof incidentSchema>;
-// export type DocumentData = z.infer<typeof documentSchema>;
-
-// // Transform functions for backend compatibility
-// export const transformComplainantForBackend = (complainant: ComplainantData) => {
-//   const fullAddress = [
-//     complainant.address?.street,
-//     complainant.address?.barangay,
-//     complainant.address?.city,
-//     complainant.address?.province,
-//   ]
-//     .filter(Boolean)
-//     .join(", ")
-//     .toUpperCase();
-
-//   return {
-//     cpnt_name: complainant.fullName,
-//     cpnt_gender: complainant.genderInput || complainant.gender,
-//     cpnt_number: complainant.contactNumber,
-//     cpnt_age: complainant.age,
-//     cpnt_relation_to_respondent: complainant.relation_to_respondent,
-//     cpnt_address: fullAddress,
-//     rp_id: complainant.rp_id || null,
-//   };
-// };
-
-// export const transformAccusedForBackend = (accused: AccusedData) => {
-//   const fullAddress = [
-//     accused.address?.street,
-//     accused.address?.barangay,
-//     accused.address?.city,
-//     accused.address?.province,
-//   ]
-//     .filter(Boolean)
-//     .join(", ")
-//     .toUpperCase();
-
-//   return {
-//     acsd_name: accused.alias,
-//     acsd_age: accused.age,
-//     acsd_gender: accused.genderInput || accused.gender,
-//     acsd_description: accused.description,
-//     acsd_address: fullAddress,
-//     rp_id: accused.rp_id || null,
-//   };
-// };
-
-// export const transformIncidentForBackend = (incident: IncidentData) => {
-//   const dateTimeString = incident.date && incident.time 
-//     ? `${incident.date}T${incident.time}` 
-//     : null;
-
-//   return {
-//     comp_incident_type: incident.type,
-//     comp_allegation: incident.description,
-//     comp_location: incident.location,
-//     comp_datetime: dateTimeString,
-//   };
-// };
-
-// export const transformDocumentsForBackend = (documents: DocumentData[]) => {
-//   return documents?.map((doc) => ({
-//     cf_filename: doc.name,
-//     cf_size: doc.size,
-//     cf_type: doc.type,
-//     cf_path: doc.publicUrl,
-//     cf_storage_path: doc.storagePath,
-//   })) || [];
-// };

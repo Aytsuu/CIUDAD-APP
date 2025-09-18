@@ -64,31 +64,32 @@ export const ReviewInfo = () => {
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">Full Name</p>
           <p className="text-base font-medium text-foreground">
-            {person.fullName || person.alias || "Not provided"}
+            {type === 'complainant' ? person.cpnt_name : person.acsd_name || "Not provided"}
           </p>
         </div>
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">Age & Gender</p>
           <p className="text-base font-medium text-foreground">
-            {person.age || "N/A"} / {person.gender || "N/A"}
+            {(type === 'complainant' ? person.cpnt_age : person.acsd_age) || "N/A"} / 
+            {(type === 'complainant' ? person.cpnt_gender : person.acsd_gender) || "N/A"}
           </p>
         </div>
         {type === 'complainant' && (
           <>
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">Contact Number</p>
-              <p className="text-base font-medium text-foreground">{person.contactNumber || "Not provided"}</p>
+              <p className="text-base font-medium text-foreground">{person.cpnt_number || "Not provided"}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">Relation to Respondent</p>
-              <p className="text-base font-medium text-foreground">{person.relation_to_respondent || "Not provided"}</p>
+              <p className="text-base font-medium text-foreground">{person.cpnt_relation_to_respondent || "Not provided"}</p>
             </div>
           </>
         )}
         {type === 'accused' && (
           <div className="md:col-span-2 space-y-1">
             <p className="text-sm font-medium text-muted-foreground">Description</p>
-            <p className="text-base font-medium text-foreground">{person.description || "Not provided"}</p>
+            <p className="text-base font-medium text-foreground">{person.acsd_description || "Not provided"}</p>
           </div>
         )}
       </div>
@@ -97,7 +98,9 @@ export const ReviewInfo = () => {
         <p className="text-sm font-medium text-muted-foreground">Address</p>
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4 text-muted-foreground" />
-          <p className="text-base font-medium text-foreground">{formatAddress(person.address)}</p>
+          <p className="text-base font-medium text-foreground">
+            {type === 'complainant' ? person.cpnt_address : person.acsd_address || "Not provided"}
+          </p>
         </div>
       </div>
     </div>
@@ -129,6 +132,22 @@ export const ReviewInfo = () => {
       </div>
     )
   }
+
+  // Format datetime for display
+  const formatDateTime = (dateTimeString: string) => {
+    if (!dateTimeString) return { date: "N/A", time: "N/A" };
+    
+    try {
+      const date = new Date(dateTimeString);
+      const formattedDate = date.toLocaleDateString();
+      const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return { date: formattedDate, time: formattedTime };
+    } catch (error) {
+      return { date: "Invalid date", time: "Invalid time" };
+    }
+  };
+
+  const { date: incidentDate, time: incidentTime } = formatDateTime(data.incident?.comp_datetime);
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
@@ -227,9 +246,9 @@ export const ReviewInfo = () => {
                 <p className="text-sm font-medium text-muted-foreground">Incident Type</p>
                 <div className="mt-1">
                   <Badge variant="destructive" className="text-sm">
-                    {data.incident?.type === "other"
+                    {data.incident?.comp_incident_type === "Other"
                       ? data.incident?.otherType
-                      : data.incident?.type || "N/A"}
+                      : data.incident?.comp_incident_type || "N/A"}
                   </Badge>
                 </div>
               </div>
@@ -238,21 +257,35 @@ export const ReviewInfo = () => {
                 <div className="flex items-center gap-4 mt-1">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-base font-medium text-foreground">{data.incident?.date || "N/A"}</span>
+                    <span className="text-base font-medium text-foreground">{incidentDate}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-base font-medium text-foreground">{data.incident?.time || "N/A"}</span>
+                    <span className="text-base font-medium text-foreground">{incidentTime}</span>
                   </div>
                 </div>
               </div>
             </div>
+            
             <Separator className="my-3" />
+            
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Description</p>
+              <p className="text-sm font-medium text-muted-foreground">Location</p>
+              <div className="flex items-center gap-2 mt-1">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="text-base font-medium text-foreground">
+                  {data.incident?.comp_location || "Not provided"}
+                </span>
+              </div>
+            </div>
+
+            <Separator className="my-3" />
+            
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Allegation/Description</p>
               <div className="bg-muted/50 p-4 rounded-md mt-1">
                 <p className="text-foreground whitespace-pre-line">
-                  {data.incident?.description || "No description provided"}
+                  {data.incident?.comp_allegation || "No description provided"}
                 </p>
               </div>
             </div>

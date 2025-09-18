@@ -5,10 +5,10 @@ import {
   type ComplaintFormData,
   complaintFormSchema,
 } from "@/form-schema/complaint-schema";
-import { ReviewInfo } from "./Review";
-import { ComplainantInfo } from "./Complainant";
-import { AccusedInfo } from "./Accused";
-import { IncidentInfo } from "./Incident";
+import { ReviewInfo } from "./review";
+import { ComplainantInfo } from "./complainant";
+import { AccusedInfo } from "./accused";
+import { IncidentInfo } from "./incident";
 import { ProgressBar } from "@/components/progress-bar";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button/button";
@@ -52,11 +52,10 @@ export const ComplaintForm = () => {
       complainant: [],
       accused: [],
       incident: {
-        location: "",
-        type: "Other",
-        description: "",
-        date: "",
-        time: "",
+        comp_location: "",
+        comp_incident_type: "Other",
+        comp_allegation: "",
+        comp_datetime: "",
       },
       documents: [],
     },
@@ -94,61 +93,60 @@ export const ComplaintForm = () => {
 
       const formData = new FormData();
 
+      // Transform complainants - use correct field names
       const complainantData = data.complainant.map((comp) => {
         const fullAddress = [
-          comp.address.street,
-          comp.address.barangay,
-          comp.address.city,
-          comp.address.province,
+          comp.address?.street,
+          comp.address?.barangay,
+          comp.address?.city,
+          comp.address?.province,
         ]
           .filter(Boolean)
           .join(", ")
           .toUpperCase();
 
         return {
-          cpnt_name: comp.fullName,
-          cpnt_gender: comp.genderInput || comp.gender,
-          cpnt_number: comp.contactNumber,
-          cpnt_age: comp.age,
-          cpnt_relation_to_respondent: comp.relation_to_respondent,
+          cpnt_name: comp.cpnt_name, // Changed from fullName
+          cpnt_gender: comp.genderInput || comp.cpnt_gender, // Changed from gender
+          cpnt_number: comp.cpnt_number, // Changed from contactNumber
+          cpnt_age: comp.cpnt_age, // Changed from age
+          cpnt_relation_to_respondent: comp.cpnt_relation_to_respondent, // Changed
           cpnt_address: fullAddress,
           rp_id: comp.rp_id || null,
         };
       });
       formData.append("complainant", JSON.stringify(complainantData));
 
+      // Transform accused persons - use correct field names
       const accusedData = data.accused.map((acc) => {
         const fullAddress = [
-          acc.address.street,
-          acc.address.barangay,
-          acc.address.city,
-          acc.address.province,
+          acc.address?.street,
+          acc.address?.barangay,
+          acc.address?.city,
+          acc.address?.province,
         ]
           .filter(Boolean)
           .join(", ")
           .toUpperCase();
 
         return {
-          acsd_name: acc.alias,
-          acsd_age: acc.age,
-          acsd_gender: acc.genderInput || acc.gender,
-          acsd_description: acc.description,
+          acsd_name: acc.acsd_name, // Changed from alias
+          acsd_age: acc.acsd_age, // Changed from age
+          acsd_gender: acc.genderInput || acc.acsd_gender, // Changed from gender
+          acsd_description: acc.acsd_description, // Changed from description
           acsd_address: fullAddress,
-          rp_id: acc.rp_id || null, 
+          rp_id: acc.rp_id || null,
         };
       });
       formData.append("accused_persons", JSON.stringify(accusedData));
 
-      formData.append("comp_incident_type", data.incident.type);
-      formData.append("comp_allegation", data.incident.description);
-      formData.append("comp_location", data.incident.location ?? "");
+      // Use correct incident field names
+      formData.append("comp_incident_type", data.incident.comp_incident_type); // Changed from type
+      formData.append("comp_allegation", data.incident.comp_allegation); // Changed from description
+      formData.append("comp_location", data.incident.comp_location ?? ""); // Changed from location
 
       // DateTime - backend expects string format
-      const dateTimeString = `${data.incident.date}T${data.incident.time}`;
-      const dateTime = new Date(dateTimeString);
-      if (isNaN(dateTime.getTime())) {
-        throw new Error("Invalid date or time format");
-      }
+      const dateTimeString = data.incident.comp_datetime; // Already combined
       formData.append("comp_datetime", dateTimeString);
 
       if (data.documents && data.documents.length > 0) {
@@ -166,16 +164,19 @@ export const ComplaintForm = () => {
             cf_storage_path: fileData.storagePath,
           }));
 
-          formData.append("complaint_files", JSON.stringify(fileDataForBackend));
+          formData.append(
+            "complaint_files",
+            JSON.stringify(fileDataForBackend)
+          );
         }
       }
 
       console.log("Submitting complaint with data:", {
         complainant: complainantData,
         accused_persons: accusedData,
-        comp_incident_type: data.incident.type,
-        comp_allegation: data.incident.description,
-        comp_location: data.incident.location,
+        comp_incident_type: data.incident.comp_incident_type,
+        comp_allegation: data.incident.comp_allegation,
+        comp_location: data.incident.comp_location,
         comp_datetime: dateTimeString,
       });
 
@@ -243,8 +244,13 @@ export const ComplaintForm = () => {
   const stepFields: Record<number, string[]> = {
     1: ["complainant"],
     2: ["accused"],
-    3: ["incident"],
-    4: ["review"],
+    3: [
+      "incident.comp_location",
+      "incident.comp_incident_type",
+      "incident.comp_allegation",
+      "incident.comp_datetime",
+    ],
+    4: ["documents"],
   };
 
   const steps = [
@@ -286,7 +292,7 @@ export const ComplaintForm = () => {
               <div>
                 <div className="flex items-center gap-x-2">
                   <h2 className="text-2xl font-bold text-darkBlue2">
-                    Barangay Complaint Form
+                    Blotter Form
                   </h2>
                   <Button
                     variant="ghost"

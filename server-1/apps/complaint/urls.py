@@ -19,7 +19,7 @@ urlpatterns = [
     # Searching
     path('complainant/search/', SearchComplainantsView.as_view(), name='search-complainants'),
     path('accused/search/', SearchAccusedView.as_view(), name='search-accused'),
-
+    path('complainant/all/', AllResidentsView.as_view(), name='all-residents'),
     # Update
     path('<int:comp_id>/update/', ComplaintUpdateView.as_view(), name='complaint-update'),
     

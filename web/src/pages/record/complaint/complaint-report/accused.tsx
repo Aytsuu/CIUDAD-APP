@@ -10,30 +10,29 @@ import {
 } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, Search, UserCheck, UserPlus } from "lucide-react";
+import { Plus, X, UserCheck } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { FormInput } from "@/components/ui/form/form-input";
-import { useSearchAccused } from "../api-operations/queries/complaintGetQueries";
-
+import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
+import { useAllResidents } from "../api-operations/queries/complaintGetQueries";
 
 export const AccusedInfo = () => {
-  const { control, watch, setValue } = useFormContext();
+  const { control, watch, setValue, trigger } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: "accused",
   });
 
   const [activeTab, setActiveTab] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  const [selectedResident, setSelectedResident] = useState<any>(null);
+
+  // Fetch all residents upfront
+  const { data: allResidents = [], isLoading: isResidentsLoading } = useAllResidents();
 
   // Watch current accused data
   const currentAccused = watch(`accused.${activeTab}`);
   const accusedType = currentAccused?.type || "manual";
-  const selectedGender = watch(`accused.${activeTab}.gender`);
-
-  // Search query
-  const { data: searchResults = [], isLoading: isSearchLoading } = useSearchAccused(searchQuery);
+  const selectedGender = watch(`accused.${activeTab}.acsd_gender`);
 
   const genderOptions = [
     { id: "Male", name: "Male" },
@@ -42,16 +41,23 @@ export const AccusedInfo = () => {
     { id: "Prefer not to say", name: "Prefer not to say" },
   ];
 
+  // Add debug logging
+  // useEffect(() => {
+  //   console.log('Current accused:', currentAccused);
+  //   console.log('Form errors:', control.formState.errors);
+  // }, [currentAccused, control.formState.errors]);
+
   useEffect(() => {
     if (fields.length === 0) {
       append({
-        type: "manual", // "manual" or "resident"
-        rp_id: null, // resident profile ID (optional)
-        alias: "",
-        age: "",
-        gender: "",
+        type: "manual",
+        rp_id: null,
+        acsd_name: "",
+        acsd_age: "",
+        acsd_gender: "",
         genderInput: "",
-        description: "",
+        acsd_description: "",
+        acsd_address: "",
         address: {
           street: "",
           barangay: "",
@@ -69,11 +75,12 @@ export const AccusedInfo = () => {
     append({
       type: "manual",
       rp_id: null,
-      alias: "",
-      age: "",
-      gender: "",
+      acsd_name: "",
+      acsd_age: "",
+      acsd_gender: "",
       genderInput: "",
-      description: "",
+      acsd_description: "",
+      acsd_address: "",
       address: {
         street: "",
         barangay: "",
@@ -83,6 +90,7 @@ export const AccusedInfo = () => {
       },
     });
     setActiveTab(newIndex);
+    setSelectedResident(null);
   };
 
   const removeAccused = (index: any) => {
@@ -93,37 +101,57 @@ export const AccusedInfo = () => {
     } else if (activeTab > index) {
       setActiveTab(activeTab - 1);
     }
+    setSelectedResident(null);
   };
 
   const selectResidentAccused = (resident: any) => {
+    setSelectedResident(resident);
     setValue(`accused.${activeTab}.type`, "resident");
     setValue(`accused.${activeTab}.rp_id`, resident.rp_id);
-    setValue(`accused.${activeTab}.alias`, resident.full_name);
-    setValue(`accused.${activeTab}.age`, resident.age.toString());
-    setValue(`accused.${activeTab}.gender`, resident.gender);
-    setValue(`accused.${activeTab}.genderInput`, resident.gender);
-    setValue(`accused.${activeTab}.description`, `Resident: ${resident.full_name}`);
+    setValue(`accused.${activeTab}.acsd_name`, resident.cpnt_name);
+    setValue(`accused.${activeTab}.acsd_age`, resident.cpnt_age);
+    setValue(`accused.${activeTab}.acsd_gender`, resident.cpnt_gender);
+    setValue(`accused.${activeTab}.genderInput`, resident.cpnt_gender);
+    setValue(`accused.${activeTab}.acsd_description`, `Resident: ${resident.cpnt_name}`);
+    setValue(`accused.${activeTab}.acsd_address`, resident.cpnt_address || "");
     
-    // Parse address from ResidentProfile format
-    if (resident.address) {
-      const addressParts = resident.address.split(", ");
+    // Parse address for display
+    if (resident.cpnt_address) {
+      const addressParts = resident.cpnt_address.split(", ");
       setValue(`accused.${activeTab}.address`, {
         street: addressParts[0] || "",
         barangay: addressParts[1] || "",
         city: addressParts[2] || "",
         province: addressParts[3] || "",
-        sitio: "",
+        sitio: addressParts[4] || "",
       });
     }
     
-    setSearchQuery("");
-    setIsSearching(false);
+    // Trigger validation after setting values
+    setTimeout(() => {
+      trigger(`accused.${activeTab}`);
+    }, 100);
   };
 
   const switchToManualEntry = () => {
+    setSelectedResident(null);
     setValue(`accused.${activeTab}.type`, "manual");
     setValue(`accused.${activeTab}.rp_id`, null);
-    setIsSearching(false);
+    setValue(`accused.${activeTab}.acsd_address`, "");
+    
+    // Clear fields but keep manually entered data
+    setValue(`accused.${activeTab}.acsd_name`, currentAccused?.acsd_name || "");
+    setValue(`accused.${activeTab}.acsd_age`, currentAccused?.acsd_age || "");
+    setValue(`accused.${activeTab}.acsd_gender`, currentAccused?.acsd_gender || "");
+    setValue(`accused.${activeTab}.acsd_description`, currentAccused?.acsd_description || "");
+  };
+
+  const validateAge = (value: any) => {
+    if (!value) return "Age is required";
+    const age = parseInt(value);
+    if (isNaN(age)) return "Age must be a number";
+    if (age < 1 || age > 150) return "Age must be between 1 and 150";
+    return true;
   };
 
   const getTabDisplayName = (index: any) => `Resp. ${index + 1}`;
@@ -144,7 +172,10 @@ export const AccusedInfo = () => {
                     ? "bg-blue-500 text-white shadow-sm"
                     : "bg-ashGray/40 text-black/50 hover:bg-gray-200"
                 }`}
-                onClick={() => setActiveTab(index)}
+                onClick={() => {
+                  setActiveTab(index);
+                  setSelectedResident(null);
+                }}
               >
                 <span className="text-sm font-medium">
                   {getTabDisplayName(index)}
@@ -196,187 +227,107 @@ export const AccusedInfo = () => {
             </span>
           </div>
 
-          {/* Entry Type Selection */}
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* <Button
-                type="button"
-                variant={isSearching ? "default" : "outline"}
-                onClick={() => setIsSearching(true)}
-                className="flex items-center gap-2"
-              >
-                <Search className="h-4 w-4" />
-                Search Resident
-              </Button> */}
-              <Button
-                type="button"
-                variant={!isSearching ? "default" : "outline"}
-                onClick={switchToManualEntry}
-                className="flex items-center gap-2"
-              >
-                <UserPlus className="h-4 w-4" />
-                Manual Entry
-              </Button>
-            </div>
+          {/* Resident Selection */}
+          <div className="mb-6">
+            <ComboboxInput
+              value={selectedResident ? selectedResident.cpnt_name : ""}
+              options={allResidents}
+              isLoading={isResidentsLoading}
+              label="Select Resident (Optional)"
+              placeholder="Search or select a resident..."
+              emptyText="No residents found."
+              onSelect={(displayValue, item) => {
+                if (item) {
+                  selectResidentAccused(item);
+                }
+              }}
+              displayKey="cpnt_name"
+              valueKey="rp_id"
+              additionalDataKey="cpnt_number"
+              className="w-full"
+            />
           </div>
 
-          {/* Search Section */}
-          {isSearching && (
-            <div className="space-y-3">
-              <div className="relative">
-                <Input
-                  placeholder="Search by name, description, or address..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pr-10"
-                />
-                <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
-              </div>
-
-              {/* Search Results */}
-              {searchQuery && (
-                <div className="max-h-60 overflow-y-auto border rounded-lg bg-white">
-                  {isSearchLoading ? (
-                    <div className="p-4 text-center text-gray-500">Searching...</div>
-                  ) : searchResults.length > 0 ? (
-                    <div className="divide-y">
-                      {searchResults.map((resident: any) => (
-                        <div
-                          key={resident.rp_id}
-                          className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                          onClick={() => selectResidentAccused(resident)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h4 className="font-medium text-gray-900">{resident.full_name}</h4>
-                              <p className="text-sm text-gray-600">
-                                {resident.gender}, Age {resident.age}
-                              </p>
-                              <p className="text-sm text-gray-500">{resident.contact_number}</p>
-                              <p className="text-xs text-gray-400 mt-1">{resident.address}</p>
-                            </div>
-                            <UserCheck className="h-5 w-5 text-green-500" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-4 text-center text-gray-500">
-                      No accused persons found. Try different search terms.
-                    </div>
-                  )}
+          {/* Show resident info if linked */}
+          {accusedType === "resident" && currentAccused?.rp_id && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 text-green-700">
+                  <UserCheck className="h-4 w-4" />
+                  <span className="font-medium">Linked to Resident Profile</span>
                 </div>
-              )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={switchToManualEntry}
+                  className="text-red-600 border-red-300 hover:bg-red-50 text-xs"
+                >
+                  Switch to Manual Entry
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-gray-700">Full Name:</span>
+                  <p className="text-gray-900">{currentAccused.acsd_name}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Age:</span>
+                  <p className="text-gray-900">{currentAccused.acsd_age}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Gender:</span>
+                  <p className="text-gray-900">{currentAccused.genderInput || currentAccused.acsd_gender}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <span className="font-medium text-gray-700">Address:</span>
+                  <p className="text-gray-900">{currentAccused.acsd_address}</p>
+                </div>
+              </div>
             </div>
           )}
 
+          {/* Hidden field for rp_id */}
+          <input
+            type="hidden"
+            {...control.register(`accused.${activeTab}.rp_id`)}
+          />
+
           {/* Form Fields */}
-          {!isSearching && (
-            <div className="space-y-6">
-              {/* Show resident info if linked */}
-              {accusedType === "resident" && currentAccused?.rp_id && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-700">
-                    <UserCheck className="h-4 w-4" />
-                    <span className="font-medium">Linked to Resident Profile ID: {currentAccused.rp_id}</span>
-                  </div>
-                </div>
-              )}
+          <div className="space-y-6">
+            <FormInput
+              control={control}
+              name={`accused.${activeTab}.acsd_name`}
+              label="Full Name (If known)/Alias *"
+              placeholder="Enter name or alias"
+              readOnly={accusedType === "resident"}
+            />
 
-              {/* Hidden field for rp_id */}
-              <input
-                type="hidden"
-                {...control.register(`accused.${activeTab}.rp_id`)}
-              />
-
-              <FormInput
-                control={control}
-                name={`accused.${activeTab}.alias`}
-                label="Full Name (If known)/Alias *"
-                placeholder="Enter name or alias"
-                readOnly={accusedType === "resident"}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormInput
-                  control={control}
-                  name={`accused.${activeTab}.age`}
-                  label="Age *"
-                  type="number"
-                  placeholder="Age"
-                  min={1}
-                  max={150}
-                  readOnly={accusedType === "resident"}
-                />
-
-                <div>
-                  <FormLabel className="font-semibold text-black/50">
-                    Gender *
-                  </FormLabel>
-                  <div className="flex mt-2">
-                    <div className="flex-shrink-0 w-32">
-                      <FormField
-                        control={control}
-                        name={`accused.${activeTab}.gender`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <SelectLayout
-                                placeholder="Select gender"
-                                label="Gender Options"
-                                options={genderOptions}
-                                value={field.value || ""}
-                                onChange={(value) => {
-                                  field.onChange(value);
-                                  if (value === "Other") {
-                                    setValue(`accused.${activeTab}.genderInput`, "");
-                                  } else {
-                                    setValue(`accused.${activeTab}.genderInput`, value);
-                                  }
-                                }}
-                                className="h-9"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <div className="flex-1 ml-2">
-                      <FormInput
-                        control={control}
-                        name={`accused.${activeTab}.genderInput`}
-                        placeholder={
-                          selectedGender === "Other"
-                            ? "Enter gender"
-                            : "Auto-filled from selection"
-                        }
-                        readOnly={selectedGender !== "Other" || accusedType === "resident"}
-                        className={`${
-                          selectedGender !== "Other" || accusedType === "resident"
-                            ? "bg-gray-100 cursor-not-allowed"
-                            : ""
-                        }`}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={control}
-                name={`accused.${activeTab}.description`}
+                name={`accused.${activeTab}.acsd_age`}
+                rules={{ validate: validateAge }}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-semibold text-black/50">
-                      Description *
+                      Age *
                     </FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="Provide detailed description (e.g. physical appearance)..."
-                        className="min-h-[120px]"
-                        readOnly={accusedType === "resident"}
+                      <Input
+                        type="number"
+                        min="1"
+                        max="150"
+                        placeholder="Age"
                         {...field}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || /^\d+$/.test(value)) {
+                            field.onChange(value);
+                          }
+                        }}
+                        readOnly={accusedType === "resident"}
                       />
                     </FormControl>
                     <FormMessage />
@@ -384,53 +335,136 @@ export const AccusedInfo = () => {
                 )}
               />
 
-              {/* Address */}
-              <div className="space-y-3">
+              <div>
                 <FormLabel className="font-semibold text-black/50">
-                  Complete Address *
+                  Gender *
                 </FormLabel>
-                <div className="flex flex-col md:flex-row items-stretch border-2 border-gray-300 rounded-lg p-2 bg-white gap-2 md:gap-0">
-                  {["street", "barangay", "city", "province"].map((key, i) => (
-                    <div key={key} className="flex-1 flex items-center">
-                      <FormField
-                        control={control}
-                        name={`accused.${activeTab}.address.${key}`}
-                        render={({ field }) => (
-                          <FormItem className="w-full">
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
-                                className="border-none shadow-none px-2 h-10 md:h-8"
-                                readOnly={accusedType === "resident"}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      {i < 3 && (
-                        <span className="hidden md:inline mx-2 text-gray-400 font-medium">
-                          /
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Address field validation messages */}
-                <div className="space-y-1">
-                  {["street", "barangay", "city", "province"].map((fieldKey) => (
+                <div className="flex mt-2">
+                  <div className="flex-shrink-0 w-32">
                     <FormField
-                      key={fieldKey}
                       control={control}
-                      name={`accused.${activeTab}.address.${fieldKey}`}
-                      render={() => <FormMessage />}
+                      name={`accused.${activeTab}.acsd_gender`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <SelectLayout
+                              placeholder="Select gender"
+                              label=""
+                              options={genderOptions}
+                              value={field.value || ""}
+                              onChange={(value) => {
+                                field.onChange(value);
+                                if (value === "Other") {
+                                  setValue(`accused.${activeTab}.genderInput`, "");
+                                } else {
+                                  setValue(`accused.${activeTab}.genderInput`, value);
+                                }
+                              }}
+                              className="h-9"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  ))}
+                  </div>
+                  <div className="flex-1 ml-2">
+                    <FormInput
+                      control={control}
+                      name={`accused.${activeTab}.genderInput`}
+                      placeholder={
+                        selectedGender === "Other"
+                          ? "Enter gender"
+                          : "Auto-filled from selection"
+                      }
+                      readOnly={selectedGender !== "Other" || accusedType === "resident"}
+                      className={`${
+                        selectedGender !== "Other" || accusedType === "resident"
+                          ? "bg-gray-100 cursor-not-allowed"
+                          : ""
+                      }`}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          )}
+
+            <FormField
+              control={control}
+              name={`accused.${activeTab}.acsd_description`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-semibold text-black/50">
+                    Description *
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Provide detailed description (e.g. physical appearance)..."
+                      className="min-h-[120px]"
+                      readOnly={accusedType === "resident"}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Address Section - Only show for manual entry */}
+            {accusedType === "manual" && (
+              <div className="space-y-4 pt-4 border-t border-gray-200">
+                <div className="space-y-3">
+                  <FormLabel className="font-semibold text-black/50">
+                    Complete Address (Street / Barangay / Municipality / Province) *
+                  </FormLabel>
+
+                  <div className="flex flex-col md:flex-row items-stretch border-2 border-gray-300 rounded-lg p-2 bg-white gap-2 md:gap-0">
+                    {[
+                      { key: "street", placeholder: "Street/Sitio" },
+                      { key: "barangay", placeholder: "Barangay" },
+                      { key: "city", placeholder: "Municipality/City" },
+                      { key: "province", placeholder: "Province" },
+                    ].map(({ key, placeholder }, i) => (
+                      <div key={key} className="flex-1 flex items-center">
+                        <FormField
+                          control={control}
+                          name={`accused.${activeTab}.address.${key}`}
+                          render={({ field }) => (
+                            <FormItem className="w-full">
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder={placeholder}
+                                  className="border-none shadow-none px-2 h-10 md:h-8"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        {i < 3 && (
+                          <span className="hidden md:inline mx-2 text-gray-400 font-medium">
+                            /
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Address field validation messages */}
+                  <div className="space-y-1">
+                    {["street", "barangay", "city", "province"].map((fieldKey) => (
+                      <FormField
+                        key={fieldKey}
+                        control={control}
+                        name={`accused.${activeTab}.address.${fieldKey}`}
+                        render={() => <FormMessage />}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

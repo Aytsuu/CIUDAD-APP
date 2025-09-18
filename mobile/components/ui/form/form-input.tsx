@@ -43,13 +43,15 @@ export const FormInput = ({
 
         return (
           <View className="mb-4">
-            {label && <Text className="text-[12px] font-PoppinsRegular">{label}</Text>}
+            {label && <Text className="text-sm mb-2">{label}</Text>}
             <Input
               className={`
                 h-[45px]
-                font-PoppinsRegular
                 bg-white
                 text-black
+                native:text-sm
+                native:font-normal
+                rounded-xl
                 ${error ? 'border-red-500' : 'border-gray-300'}
               `}
               placeholder={placeholder}
