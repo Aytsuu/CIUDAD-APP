@@ -1,63 +1,38 @@
+// DisplayMedicalConsultation.tsx
+"use client";
+import { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import { ChevronLeft, Stethoscope } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { api2 } from "@/api/api";
+import { Card, CardContent } from "@/components/ui/card";
+import { Stethoscope } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { ConsultationHistoryTable } from "./table-history";
 import { MedicalConsultationHistory } from "../types";
 import CurrentConsultationCard from "./current-medrec";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useLoading } from "@/context/LoadingContext";
+import { useConsultationHistory } from "../queries/fetchQueries";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function DisplayMedicalConsultation() {
-  const { showLoading, hideLoading } = useLoading();
-  const navigate = useNavigate();
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData, MedicalConsultation } = params || {};
-  const [consultationHistory, setConsultationHistory] = useState<
-    MedicalConsultationHistory[]
-  >([]);
-  const [isLoading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
   const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 3; // Fixed to 3 records per page
+
   const patientId = useMemo(() => patientData?.pat_id, [patientData]);
 
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading]);
+  // Use the React Query hook
+  const { data, isLoading, error: queryError, isError } = useConsultationHistory(patientId || "", currentPage, pageSize);
 
-  const fetchConsultationHistory = useCallback(async () => {
-    if (!patientId) return;
+  const consultationHistory = useMemo(() => {
+    if (!data?.results) return [];
 
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await api2.get(
-        `medical-consultation/view-medcon-record/${patientId}/`
-      );
-      const responseData = response.data;
-
-      if (!responseData || responseData.length === 0) {
-        setConsultationHistory([]);
-        return;
-      }
-
-      const formattedHistories = responseData.map((history: any) => ({
+    return data.results
+      .map((history: any) => ({
         patrec: history.patrec,
         medrec_id: history.medrec_id,
         medrec_status: history.medrec_status,
-        medrec_chief_complaint:
-          history.medrec_chief_complaint || "Not specified",
+        medrec_chief_complaint: history.medrec_chief_complaint || "Not specified",
         created_at: history.created_at,
         medrec_age: history.medrec_age,
         vital_signs: {
@@ -66,11 +41,11 @@ export default function DisplayMedicalConsultation() {
           vital_temp: history.vital_signs?.vital_temp || "N/A",
           vital_RR: history.vital_signs?.vital_RR || "N/A",
           vital_o2: history.vital_signs?.vital_o2 || "N/A",
-          vital_pulse: history.vital_signs?.vital_pulse || "N/A",
+          vital_pulse: history.vital_signs?.vital_pulse || "N/A"
         },
         bmi_details: {
           height: history.bmi_details?.height || "N/A",
-          weight: history.bmi_details?.weight || "N/A",
+          weight: history.bmi_details?.weight || "N/A"
         },
         staff_details: history.staff_details
           ? {
@@ -78,191 +53,96 @@ export default function DisplayMedicalConsultation() {
                 per: {
                   per_fname: history.staff_details?.rp?.per?.per_fname || "",
                   per_lname: history.staff_details?.rp?.per?.per_lname || "",
-                  per_mname: history.staff_details?.rp?.per?.per_mname || "",
-                },
-              },
+                  per_mname: history.staff_details?.rp?.per?.per_mname || ""
+                }
+              }
             }
           : null,
-
         find_details: history.find_details
           ? {
-              assessment_summary:
-                history.find_details.assessment_summary || "Not specified",
-              plantreatment_summary:
-                history.find_details.plantreatment_summary || "Not specified",
-              subj_summary:
-                history.find_details.subj_summary || "Not specified",
-              obj_summary: history.find_details.obj_summary || "Not specified",
+              assessment_summary: history.find_details.assessment_summary || "Not specified",
+              plantreatment_summary: history.find_details.plantreatment_summary || "Not specified",
+              subj_summary: history.find_details.subj_summary || "Not specified",
+              obj_summary: history.find_details.obj_summary || "Not specified"
             }
-          : null,
-      }));
+          : null
+      }))
+      .sort((a: MedicalConsultationHistory, b: MedicalConsultationHistory) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  }, [data]);
 
-      const sortedHistories = formattedHistories.sort(
-        (a: MedicalConsultationHistory, b: MedicalConsultationHistory) =>
-          new Date(b.created_at || 0).getTime() -
-          new Date(a.created_at || 0).getTime()
-      );
-
-      setConsultationHistory(sortedHistories);
-    } catch (err) {
-      console.error("Error fetching medical consultation history:", err);
-      setError("Failed to load medical consultation history");
-      setConsultationHistory([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [patientId]);
-
-  useEffect(() => {
-    fetchConsultationHistory();
-  }, [fetchConsultationHistory]);
+  const totalCount = data?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
   const currentConsultation = useMemo(() => {
-    return consultationHistory.find(
-      (history) => history.medrec_id === MedicalConsultation?.medrec_id
-    );
+    return consultationHistory.find((history: any) => history.medrec_id === MedicalConsultation?.medrec_id);
   }, [consultationHistory, MedicalConsultation]);
-
-  const relevantHistory = useMemo(() => {
-    if (!MedicalConsultation?.created_at) return [];
-    return consultationHistory.filter(
-      (history) =>
-        new Date(history.created_at ?? 0) <=
-        new Date(MedicalConsultation.created_at ?? 0)
-    );
-  }, [consultationHistory, MedicalConsultation]);
-
-  const { totalPages } = useMemo(() => {
-    const recordsPerPage = 3;
-    const totalPages = Math.ceil(relevantHistory.length / recordsPerPage);
-    return { totalPages };
-  }, [relevantHistory]);
 
   const paginate = useCallback((pageNumber: number) => {
     setCurrentPage(pageNumber);
   }, []);
 
+  const PaginationControls = () => {
+    if (totalCount === 0) return null;
+
+    const startItem = (currentPage - 1) * pageSize + 1;
+    const endItem = Math.min(currentPage * pageSize, totalCount);
+
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-end mt-4 gap-4">
+        <div className="text-sm text-gray-600">
+          Showing {startItem} to {endItem} of {totalCount} records
+        </div>
+      </div>
+    );
+  };
+
   if (!patientData || !MedicalConsultation) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center p-4">
-        <p className="text-base sm:text-lg md:text-xl text-gray-600">
-          No medical consultation data found.
-        </p>
+        <p className="text-base sm:text-lg md:text-xl text-gray-600">No medical consultation data found.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      {/* Always visible header section */}
-      <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <Button
-          className="text-darkGray p-2"
-          variant="outline"
-          onClick={() => navigate(-1)}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="font-semibold text-lg sm:text-xl md:text-2xl text-darkBlue2">
-            Medical Consultation Record
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            View consultation details and patient information
-          </p>
-        </div>
-      </div>
-      <hr className="border-gray mb-4 sm:mb-6" />
+    <LayoutWithBack title="Medical Consultation Record" description="View consultation details and patient information">
+      {/* Current Consultation Card - Always visible */}
 
-      {isLoading ? (
-        <Card className="w-full p-4 sm:p-6 md:p-8">
-          <CardContent>
-            {/* Current Consultation Skeleton */}
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <Skeleton className="h-4 w-1/3" />
-                  <Skeleton className="h-4 w-1/3" />
-                  <Skeleton className="h-4 w-1/3" />
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="space-y-2">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-5 w-full" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <Skeleton className="h-5 w-1/3" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="space-y-2">
-                      <Skeleton className="h-4 w-1/2" />
-                      <Skeleton className="h-16 w-full" />
-                    </div>
-                  ))}
-                </div>
-              </div>
+      {/* Consultation History Section */}
+      <Card className="w-full mt-6 shadow-lg border-0">
+        <CardContent className="p-6">{currentConsultation && <CurrentConsultationCard consultation={currentConsultation} patientData={patientData} />}</CardContent>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Stethoscope className="h-6 w-6 text-blue-600" />
             </div>
-
-            {/* Consultation History Skeleton */}
-            <div className="mt-10 space-y-6">
-              <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                <Skeleton className="h-5 w-5 rounded-full" />
-                <Skeleton className="h-6 w-48" />
-              </div>
-
-              <div className="flex justify-center gap-2">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-8 w-8 rounded-md" />
-                ))}
-              </div>
+            <div>
+              <h2 className="font-bold text-xl text-gray-900">Consultation History</h2>
+              <p className="text-sm text-gray-600">Previous medical consultations and records</p>
             </div>
-          </CardContent>
-        </Card>
-      ) : error ? (
-        <Card className="w-full p-4 sm:p-6 md:p-8">
-          <CardContent>
-            <div className="text-center p-4 sm:p-6 bg-red-50 rounded-lg border border-red-200">
-              <p className="text-base sm:text-lg text-red-600 font-medium">
-                {error}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="w-full p-4 sm:p-6 md:p-8">
-          <CardContent>
-            {currentConsultation && (
-              <CurrentConsultationCard
-                consultation={currentConsultation}
-                patientData={patientData}
-              />
-            )}
+          </div>
 
-            <div className="mt-10">
-              <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                <Stethoscope className="text-blue" />
-                <h2 className="font-bold text-base sm:text-lg">
-                  Consultation History
-                </h2>
+          {/* Consultation History Table with loading state */}
+          <ConsultationHistoryTable relevantHistory={consultationHistory} currentConsultationId={MedicalConsultation?.medrec_id} currentPage={currentPage} totalPages={totalPages} onPaginate={paginate} isLoading={isLoading} />
+
+          {/* Pagination Controls */}
+          {!isLoading && <PaginationControls />}
+
+          {/* Error State */}
+          {isError && (
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center gap-2 text-red-700">
+                <Stethoscope className="h-5 w-5" />
+                <h3 className="font-semibold">Unable to load consultation history</h3>
               </div>
-
-              <ConsultationHistoryTable
-                relevantHistory={relevantHistory}
-                currentConsultationId={MedicalConsultation?.medrec_id}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPaginate={paginate}
-              />
+              <p className="text-sm text-red-600 mt-2">{queryError instanceof Error ? queryError.message : "Please try refreshing the page"}</p>
+              <Button onClick={() => window.location.reload()} variant="outline" className="mt-3 border-red-300 text-red-700 hover:bg-red-50">
+                Retry Loading
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          )}
+        </CardContent>
+      </Card>
+    </LayoutWithBack>
   );
 }

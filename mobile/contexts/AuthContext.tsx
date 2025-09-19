@@ -81,7 +81,7 @@ export const useAuth = () => {
       try {
         await sendOTPMutation.mutateAsync(phoneNumber);
         return true;
-      } catch {
+      } catch (err: any){
         return false;
       }
     },
@@ -107,8 +107,8 @@ export const useAuth = () => {
       try {
         await sendEmailOTPMutation.mutateAsync(emailAddress);
         return true;
-      } catch {
-        return false;
+      } catch (err){
+        throw err;
       }
     },
     [sendEmailOTPMutation]

@@ -5,9 +5,10 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { UseFormReturn } from "react-hook-form";
+
 import { z } from "zod";
 import { Combobox } from "@/components/ui/combobox";
-import { DependentRecord } from "../../profilingTypes";
+import { DependentRecord } from "../../../profiling/ProfilingTypes"
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 
@@ -20,16 +21,29 @@ export default function ParentsForm({ residents, form, dependentsList, onSelect,
   title: string;
 }) {
 
+  // Early return if residents data is not available
+  if (!residents?.formatted || !residents?.default) {
+    return (
+      <div className="bg-white rounded-lg p-4">
+        <div className="mb-4">
+          <h2 className="font-semibold text-lg">{title}</h2>
+          <p className="text-xs text-black/50">Loading residents data...</p>
+        </div>
+      </div>
+    );
+  }
 
   const filteredResidents = React.useMemo(() => {
+    if (!residents?.formatted) return [];
     return residents.formatted.filter((resident: any) => {
       const residentId = resident.id.split(" ")[0]
       // Only exclude dependents, allow same person to be selected for multiple parent roles
       return !dependentsList.some((dependent) => dependent.id == residentId)
     }
-  )}, [residents.formatted, dependentsList])
+  )}, [residents?.formatted, dependentsList])
 
   React.useEffect(() => {
+    if (!residents?.default) return;
 
     const selectedResident = form.watch(`${prefix}.id`);
     const searchedResident = residents.default.find((value: any) =>
@@ -77,7 +91,7 @@ export default function ParentsForm({ residents, form, dependentsList, onSelect,
 
     onSelect(selectedResident?.split(' ')[0])
 
-  }, [form.watch(`${prefix}.id`)]);
+  }, [form.watch(`${prefix}.id`), residents?.default]);
 
   return (
     <div className="bg-white rounded-lg">
@@ -91,7 +105,7 @@ export default function ParentsForm({ residents, form, dependentsList, onSelect,
           <Combobox
             options={filteredResidents}
             value={form.watch(`${prefix}.id`)} // Use the isolated watched value
-            onChange={(value) => form.setValue(`${prefix}.id`, value)}
+            onChange={(value) => form.setValue(`${prefix}.id`, value as string)}
             placeholder="Select a resident"
             contentClassName="w-[28rem]"
             triggerClassName="w-1/3"

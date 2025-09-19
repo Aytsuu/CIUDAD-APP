@@ -3,7 +3,7 @@ import { toTitleCase } from "@/helpers/ToTitleCase";
 
 export const addMedicine = async (data : Record<string, string>) => {
     try {
-      const res = await api2.post("inventory/medicinelist/", {
+      const res = await api2.post("inventory/medicinecreateview/", {
         med_name: toTitleCase(data.medicineName),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

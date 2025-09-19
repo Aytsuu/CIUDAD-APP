@@ -1,65 +1,88 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from ..serializers.resident_profile_serializers import *
 from django.db.models import Prefetch, Q
 from apps.pagination import *
 # from apps.account.models import *
 
-class ResidentProfileCreateView(generics.CreateAPIView):
-    serializer_class = ResidentProfileBaseSerializer
-    queryset=ResidentProfile.objects.all()
-    
-    def perform_create(self, serializer):
-        serializer.save()
-
 class ResidentProfileTableView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentProfileTableSerializer
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         queryset = ResidentProfile.objects.select_related(
           'per',
-          'staff',  # Include staff relationship
         ).prefetch_related(
             Prefetch('family_compositions', 
                 queryset=FamilyComposition.objects.select_related(
                     'fam',
                     'fam__hh',
-                ).only('fam')),
+                ).only(
+                    'fam',
+                    'fam__hh__hh_id', # Only what's needed for search
+                )),
+            Prefetch('per__personal_addresses',
+                queryset=PersonalAddress.objects.select_related(
+                    'add',
+                    'add__sitio',
+                ).only(
+                    'add__sitio__sitio_name',  # Only what's needed for search
+                ))
         ).only(
           'rp_id',
           'rp_date_registered',
           'per__per_lname',
           'per__per_fname',
           'per__per_mname',
-          'staff__staff_id',  # Include staff fields
-          'staff__staff_type',
+          'per__per_sex',
+          'per__per_suffix',
+          'per__per_dob',
+          'per__per_disability',
         )
 
         search_query = self.request.query_params.get('search', '').strip()
         if search_query:
-            queryset = queryset.filter(
-                Q(per__per_lname__icontains=search_query) |
-                Q(per__per_fname__icontains=search_query) |
-                Q(per__per_mname__icontains=search_query) |
-                Q(rp_id__icontains=search_query) |
-                Q(family_compositions__fam__hh__hh_id__icontains=search_query)).distinct()
+            if search_query.isdigit():
+                queryset = queryset.filter(
+                    Q(rp_id__icontains=search_query) |
+                    Q(family_compositions__fam__hh__hh_id__icontains=search_query)
+                ).distinct()
+            else:
+                # Split name into parts for more accurate matching
+                name_parts = search_query.split()
+                name_q = Q()
+                for part in name_parts:
+                    name_q &= (
+                        Q(per__per_lname__icontains=part) |
+                        Q(per__per_fname__icontains=part) |
+                        Q(per__per_mname__icontains=part) |
+                        Q(per__per_suffix__icontains=part) |
+                        Q(per__per_disability__icontains=part)
+                    )
+                
+                queryset = queryset.filter(
+                    name_q |
+                    Q(per__personal_addresses__add__sitio__sitio_name__icontains=search_query)
+                ).distinct()
 
-        return queryset
+        return queryset.order_by('rp_id')
     
 class ResidentPersonalCreateView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentPersonalCreateSerializer
-    
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs) 
+    queryset = ResidentProfile.objects.all()
 
 class ResidentPersonalInfoView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentPersonalInfoSerializer
     queryset=ResidentProfile.objects.all()
     lookup_field='rp_id'
 
 class ResidentProfileListWithOptions(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentProfileListSerializer
     
     def get_queryset(self):
@@ -94,6 +117,7 @@ class ResidentProfileListWithOptions(generics.ListAPIView):
         return ResidentProfile.objects.all()
     
 class ResidentProfileFamSpecificListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentProfileListSerializer
     
     def get_queryset(self):
@@ -101,19 +125,57 @@ class ResidentProfileFamSpecificListView(generics.ListAPIView):
         return ResidentProfile.objects.filter(family_compositions__fam_id=fam_id)
 
 # For verification in link registration
-class LinkRegVerificationView(APIView):
+# class LinkRegVerificationView(APIView):
+#     permission_classes = [AllowAny]
+#     def post(self, request, *args, **kwargs):
+#         rp_id = request.data.get('rp_id', None)
+#         personal_info = request.data.get('personal_info', None)
+#         print(personal_info)
+#         if rp_id:
+#             exists = ResidentProfile.objects.filter(rp_id=rp_id).first()
+#             if exists:
+#                 has_account = Account.objects.filter(rp=exists).first()
+#             else:
+#                 return Response(status=status.HTTP_404_NOT_FOUND)
+#         else:
+#             exists = ResidentProfile.objects.filter(
+#                 per__per_lname=personal_info['lname'],
+#                 per__per_fname=personal_info['fname'],
+#                 per__per_dob=personal_info['dob'],
+#                 per__per_contact=personal_info['contact']
+#             ).first()
+#             if exists:
+#                 has_account = Account.objects.filter(rp=exists).first()
+#             else:
+#                 return Response(status=status.HTTP_404_NOT_FOUND)
 
-    def post(self, request):
-        residentId = request.data.get('resident_id')
-        profile = ResidentProfile.objects.filter(rp_id=residentId).first()
-        if not profile:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+#         if has_account: 
+#             return Response(status=status.HTTP_409_CONFLICT)
         
-        dob = profile.per.per_dob
-        today = date.today()
-        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        if age < 13:
-            return Response(status=status.HTTP_403_FORBIDDEN)
-        
-        return Response(status=status.HTTP_200_OK, data=profile)
-        
+#         if exists:
+#             data = {
+#                 'rp_id': exists.rp_id
+#             }
+#             return Response(data=data, status=status.HTTP_200_OK)
+            
+#         return Response(status=status.HTTP_404_NOT_FOUND)
+
+# class LinkVoterView(generics.UpdateAPIView):
+#     serializer_class = ResidentProfileBaseSerializer
+#     queryset = ResidentProfile.objects.all()
+#     lookup_field = "rp_id"
+
+#     def update(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         name = f'{instance.per.per_lname.upper()}, {instance.per.per_fname.upper()}' \
+#                 f'{" " + instance.per.per_mname.upper() if instance.per.per_mname else ""}'
+#         print(name)
+#         retrieved = {
+#             "voter": Voter.objects.filter(voter_name=name).first().voter_id
+#         }
+#         print(retrieved)
+#         serializer = self.get_serializer(instance, data=retrieved, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         return Response(status=status.HTTP_400_BAD_REQUEST)

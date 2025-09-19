@@ -14,6 +14,8 @@ import { createWasteEvent } from './queries/wasteEventQueries';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
+import { FormSelect } from '@/components/ui/form/form-select';
+import { useSitioList } from '@/pages/record/profiling/queries/profilingFetchQueries';
 
 const announcementOptions = [
     { id: "all", label: "All", checked: false },
@@ -28,6 +30,8 @@ const announcementOptions = [
 function WasteEventSched() {
     const queryClient = useQueryClient();
     const { user } = useAuth();
+    const { data: sitioList = [], isLoading: isSitioLoading } = useSitioList();
+    const sitioOptions = (sitioList || []).map((s: any) => ({ id: s.sitio_id, name: s.sitio_name }));
     
     const form = useForm<z.infer<typeof WasteEventSchedSchema>>({
         resolver: zodResolver(WasteEventSchedSchema),
@@ -44,13 +48,8 @@ function WasteEventSched() {
         },
     });
 
-    // const handleResetAnnouncements = () => {
-    //     form.setValue('selectedAnnouncements', []);
-    // };
-
     const onSubmit = async (values: z.infer<typeof WasteEventSchedSchema>) => {
         try {
-            // Get staff_id from current user using the correct pattern
             const staffId = user?.staff?.staff_id;
             
             if (!staffId) {
@@ -58,30 +57,30 @@ function WasteEventSched() {
                 return;
             }
 
-            // Format date and time properly for Django
             const formattedDate = values.date ? new Date(values.date).toISOString().split('T')[0] : null;
             const formattedTime = values.time || null;
 
+            const selectedSitio = sitioOptions.find((o: { id: string; name: string }) => String(o.id) === String(values.location));
+            const sitioName = selectedSitio?.name || '';
+
             const eventData = {
                 we_name: values.eventName,
-                we_location: values.location,
+                we_location: sitioName,
                 we_date: formattedDate,
                 we_time: formattedTime,
                 we_description: values.eventDescription || '',
                 we_organizer: values.organizer,
                 we_invitees: values.invitees,
                 we_is_archive: false,
-                staff: staffId  // Use the current user's staff_id
+                staff: staffId
             };
 
             await createWasteEvent(eventData);
             
-            // Invalidate and refetch calendar data
             queryClient.invalidateQueries({ queryKey: ['wasteEvents'] });
             
             toast.success("Event has been scheduled successfully!");
 
-            // Reset form
             form.reset();
         } catch (error) {
             console.error('Error creating waste event:', error);
@@ -120,18 +119,23 @@ function WasteEventSched() {
                                 )}
                             />
 
-                            {/* Location */}
+                            {/* Location (Sitio) - same layout with icon */}
                             <FormField
                                 control={form.control}
                                 name="location"
-                                render={({ field }) => (
+                                render={() => (
                                     <FormItem className="mb-4">
                                         <div className="flex items-center gap-2 mb-2">
                                             <MapPin className="w-4 h-4 text-gray-500" />
-                                            <Label className="font-medium">Location</Label>
+                                            <Label className="font-medium">Sitio</Label>
                                         </div>
                                         <FormControl>
-                                            <Input placeholder="Enter location/venue" {...field} className="w-full" />
+                                            <FormSelect
+                                                control={form.control}
+                                                name="location"
+                                                options={sitioOptions}
+                                                isLoading={isSitioLoading}
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

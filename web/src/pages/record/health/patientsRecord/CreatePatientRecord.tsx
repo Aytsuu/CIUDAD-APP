@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import { useNavigate } from "react-router-dom"
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button/button"
@@ -18,228 +18,219 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
 
-import { FormInput } from "@/components/ui/form/form-input"
-import { FormSelect } from "@/components/ui/form/form-select"
-import { Combobox } from "@/components/ui/combobox"
-import { Label } from "@/components/ui/label"
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { Combobox } from "@/components/ui/combobox";
+import { Label } from "@/components/ui/label";
 
-import { useResidents, useAllTransientAddresses } from "./queries/fetch"
-import { useAddPatient } from "./queries/add"
+import { useResidents, useAllTransientAddresses } from "./queries/fetch";
+import { useAddPatient } from "./queries/add";
 
 interface ResidentProfile {
-  rp_id: string
+  rp_id: string;
   households: {
-    hh_id: string
-  }
+    hh_id: string;
+  };
   personal_info: {
-    per_lname: string
-    per_fname: string
-    per_mname: string
-    per_sex: string
-    per_contact: string
-    per_dob: string
+    per_lname: string;
+    per_fname: string;
+    per_mname: string;
+    per_sex: string;
+    per_contact: string;
+    per_dob: string;
     per_addresses: Array<{
-      add_street: string
-      add_barangay: string
-      add_city: string
-      add_province: string
-      sitio?: string
-    }>
-  }
+      add_street: string;
+      add_barangay: string;
+      add_city: string;
+      add_province: string;
+      sitio?: string;
+    }>;
+  };
 }
 
 interface PatientCreationData {
-  pat_type: string
-  rp_id?: string
+  pat_type: string;
+  rp_id?: string;
   transient_data?: {
-    tran_lname: string
-    tran_fname: string
-    tran_mname?: string
-    tran_dob: string
-    tran_sex: string
-    tran_contact: string
-    tran_ed_attainment?: string
-    tran_religion?: string
-    tran_status?: string
-    tradd_id?: number
+    tran_lname: string;
+    tran_fname: string;
+    tran_mname?: string;
+    tran_dob: string;
+    tran_sex: string;
+    tran_contact: string;
+    tran_ed_attainment?: string;
+    tran_religion?: string;
+    tran_status?: string;
+    tradd_id?: number;
     address?: {
-      tradd_street?: string
-      tradd_sitio?: string
-      tradd_barangay?: string
-      tradd_city?: string
-      tradd_province?: string
-    }
-  }
+      tradd_street?: string;
+      tradd_sitio?: string;
+      tradd_barangay?: string;
+      tradd_city?: string;
+      tradd_province?: string;
+    };
+  };
 }
 
 export default function CreatePatientRecord() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const navigate = useNavigate()
-  const defaultValues = generateDefaultValues(patientRecordSchema)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedResidentId, setSelectedResidentId] = useState<string>("")
-  const [selectedTrAddtId, setSelectedTrAddId] = useState<number>(0)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const defaultValues = generateDefaultValues(patientRecordSchema);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedResidentId, setSelectedResidentId] = useState<string>("");
+  const [selectedTrAddtId, setSelectedTrAddId] = useState<number>(0);
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm<z.infer<typeof patientRecordSchema>>({
     resolver: zodResolver(patientRecordSchema),
-    defaultValues,
-  })
+    defaultValues
+  });
 
-  const patientType = form.watch("patientType")
-  
-  const { data: residentsData, isLoading: residentLoading } = useResidents()
-  const { data: transAddress, isLoading: transAddressLoading } = useAllTransientAddresses()
+  const patientType = form.watch("patientType");
 
+  const { data: residentsData, isLoading: residentLoading } = useResidents();
+  const { data: transAddress, isLoading: transAddressLoading } = useAllTransientAddresses();
 
   const transientAddressOpt = transAddress?.map((tradd: any) => ({
     id: tradd.tradd_id.toString(),
-    name: `${tradd.tradd_street || ""}, ${tradd.tradd_sitio || ""}, ${tradd.tradd_barangay || ""}, ${tradd.tradd_city || ""}, ${tradd.tradd_province || ""}`.trim(),
-  }))
+    name: `${tradd.tradd_street || ""}, ${tradd.tradd_sitio || ""}, ${tradd.tradd_barangay || ""}, ${tradd.tradd_city || ""}, ${tradd.tradd_province || ""}`.trim()
+  }));
 
-  const handleTransientAddressSelection = (selectedValue: string) => {
-    const id = Number(selectedValue)
-    setSelectedTrAddId(id)
-    console.log("Selected Transient Address ID: ", id)
+  const handleTransientAddressSelection = (selectedValue: string | undefined) => {
+    const id = Number(selectedValue || 0);
+    setSelectedTrAddId(id);
+    console.log("Selected Transient Address ID: ", id);
 
-    const selectedAddress = transAddress?.find((address : any) => address.tradd_id === id)
+    const selectedAddress = transAddress?.find((address: any) => address.tradd_id === id);
 
     if (selectedAddress) {
-      form.setValue("address.street", selectedAddress.tradd_street || "")
-      form.setValue("address.sitio", selectedAddress.tradd_sitio || "")
-      form.setValue("address.barangay", selectedAddress.tradd_barangay || "")
-      form.setValue("address.city", selectedAddress.tradd_city || "")
-      form.setValue("address.province", selectedAddress.tradd_province || "")
+      form.setValue("address.street", selectedAddress.tradd_street || "");
+      form.setValue("address.sitio", selectedAddress.tradd_sitio || "");
+      form.setValue("address.barangay", selectedAddress.tradd_barangay || "");
+      form.setValue("address.city", selectedAddress.tradd_city || "");
+      form.setValue("address.province", selectedAddress.tradd_province || "");
     } else {
-      form.setValue("address.street", "")
-      form.setValue("address.sitio", "")
-      form.setValue("address.barangay", "")
-      form.setValue("address.city", "")
-      form.setValue("address.province", "")
+      form.setValue("address.street", "");
+      form.setValue("address.sitio", "");
+      form.setValue("address.barangay", "");
+      form.setValue("address.city", "");
+      form.setValue("address.province", "");
     }
-  }
-  
+  };
 
   const persons = {
     default: residentsData || [],
     formatted:
       residentsData?.map((personal: any) => ({
         id: personal.rp_id.toString(),
-        name: `${personal.personal_info?.per_lname || ""}, ${personal.personal_info?.per_fname || ""} ${personal.personal_info?.per_mname || ""}`.trim(),
-      })) || [],
-  }
+        name: `${personal.personal_info?.per_lname || ""}, ${personal.personal_info?.per_fname || ""} ${personal.personal_info?.per_mname || ""}`.trim()
+      })) || []
+  };
 
-  const handlePatientSelection = (id: string) => {
-    setSelectedResidentId(id)
-    console.log("Selected Resident ID:", id)
-    const selectedPatient: ResidentProfile | undefined = persons.default.find(
-      (p: ResidentProfile) => p.rp_id.toString() === id,
-    )
+  const handlePatientSelection = (id: string | undefined) => {
+    setSelectedResidentId(id || undefined || "");
+    console.log("Selected Resident ID:", id);
+    const selectedPatient: ResidentProfile | undefined = persons.default.find((p: ResidentProfile) => p.rp_id.toString() === id);
 
     if (selectedPatient && selectedPatient.personal_info) {
-      console.log("Selected Patient:", selectedPatient)
+      console.log("Selected Patient:", selectedPatient);
 
-      const personalInfo = selectedPatient.personal_info
+      const personalInfo = selectedPatient.personal_info;
 
       if (Array.isArray(selectedPatient?.households)) {
         console.log(
           "Household Nos:",
-          selectedPatient.households.map((h) => h.hh_id),
-        )
+          selectedPatient.households.map((h) => h.hh_id)
+        );
       }
 
-      form.setValue("lastName", personalInfo.per_lname || "")
-      form.setValue("firstName", personalInfo.per_fname || "")
-      form.setValue("middleName", personalInfo.per_mname || "")
-      form.setValue("sex", personalInfo.per_sex || "")
-      form.setValue("contact", personalInfo.per_contact || "")
-      form.setValue("dateOfBirth", personalInfo.per_dob || "")
-      form.setValue("patientType", "resident")
+      form.setValue("lastName", personalInfo.per_lname || "");
+      form.setValue("firstName", personalInfo.per_fname || "");
+      form.setValue("middleName", personalInfo.per_mname || "");
+      form.setValue("sex", personalInfo.per_sex || "");
+      form.setValue("contact", personalInfo.per_contact || "");
+      form.setValue("dateOfBirth", personalInfo.per_dob || "");
+      form.setValue("patientType", "resident");
 
       if (selectedPatient.personal_info.per_addresses && selectedPatient.personal_info.per_addresses.length > 0) {
-        const address = selectedPatient.personal_info.per_addresses[0] // Get first address
+        const address = selectedPatient.personal_info.per_addresses[0]; // Get first address
 
-        form.setValue("address.street", address.add_street || "")
-        form.setValue("address.sitio", address.sitio || "")
-        form.setValue("address.barangay", address.add_barangay || "")
-        form.setValue("address.city", address.add_city || "")
-        form.setValue("address.province", address.add_province || "")
+        form.setValue("address.street", address.add_street || "");
+        form.setValue("address.sitio", address.sitio || "");
+        form.setValue("address.barangay", address.add_barangay || "");
+        form.setValue("address.city", address.add_city || "");
+        form.setValue("address.province", address.add_province || "");
       } else {
-        form.setValue("address.street", "")
-        form.setValue("address.sitio", "")
-        form.setValue("address.barangay", "")
-        form.setValue("address.city", "")
-        form.setValue("address.province", "")
+        form.setValue("address.street", "");
+        form.setValue("address.sitio", "");
+        form.setValue("address.barangay", "");
+        form.setValue("address.city", "");
+        form.setValue("address.province", "");
       }
     }
-  }
+  };
 
-  const createNewPatient = useAddPatient()
+  const createNewPatient = useAddPatient();
   const handleCreatePatientId = async (patientData: PatientCreationData) => {
     try {
-      const result = await createNewPatient.mutateAsync(patientData)
+      const result = await createNewPatient.mutateAsync(patientData);
 
       if (result) {
-        toast("Patient record has been created successfully")
-        return true
+        toast("Patient record has been created successfully");
+        return true;
       } else {
-        toast("Patient record may have been created. Please refresh to verify.")
-        return false
+        toast("Patient record may have been created. Please refresh to verify.");
+        return false;
       }
     } catch (error) {
-      console.error("Error creating patient record:", error)
+      console.error("Error creating patient record:", error);
       toast("Failed to create patient record.", {
-        description: "An error occurred while creating the patient record. Please check the details and try again.",
-      })
-      return false
+        description: "An error occurred while creating the patient record. Please check the details and try again."
+      });
+      return false;
     }
-  }
+  };
 
   // handles the form validation and opens the confirmation dialog
   const handleFormSubmit = async () => {
-    const formData = form.getValues()
+    const formData = form.getValues();
 
     if (formData.patientType === "resident" && !selectedResidentId) {
-      toast("Please select a resident first")
-      return
+      toast("Please select a resident first");
+      return;
     }
 
     if (formData.patientType === "transient") {
-      const requiredFields = ["lastName", "firstName", "dateOfBirth", "sex", "contact"]
-      const missingFields = requiredFields.filter((field) => !formData[field as keyof typeof formData])
+      const requiredFields = ["lastName", "firstName", "dateOfBirth", "sex", "contact"];
+      const missingFields = requiredFields.filter((field) => !formData[field as keyof typeof formData]);
 
       if (missingFields.length > 0) {
-        toast.error(`Please fill in the following required fields: ${missingFields.join(", ")}`)
-        return
+        toast.error(`Please fill in the following required fields: ${missingFields.join(", ")}`);
+        return;
       }
     }
 
-    setIsDialogOpen(true)
-  }
+    setIsDialogOpen(true);
+  };
 
   const confirmSubmit = async () => {
-    const formData = form.getValues()
+    const formData = form.getValues();
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      const patientType =
-        formData.patientType === "resident"
-          ? "Resident"
-          : formData.patientType === "transient"
-            ? "Transient"
-            : "Resident"
-      const sexType = formData.sex === "female" ? "Female" : "Male"
-      form.setValue("houseNo", "N/A")
+      const patientType = formData.patientType === "resident" ? "Resident" : formData.patientType === "transient" ? "Transient" : "Resident";
+      const sexType = formData.sex === "female" ? "Female" : "Male";
+      form.setValue("houseNo", "N/A");
 
-      let patientData: PatientCreationData
+      let patientData: PatientCreationData;
 
       if (patientType === "Resident") {
         patientData = {
           pat_type: patientType,
-          rp_id: selectedResidentId,
-        }
+          rp_id: selectedResidentId
+        };
       } else {
-        const trPatientData: PatientCreationData['transient_data'] = {
+        const trPatientData: PatientCreationData["transient_data"] = {
           tran_lname: formData.lastName,
           tran_fname: formData.firstName,
           tran_mname: formData.middleName,
@@ -248,7 +239,7 @@ export default function CreatePatientRecord() {
           tran_contact: formData.contact,
           tran_status: "Active",
           tran_ed_attainment: "Not Specified",
-          tran_religion: "Not Specified",
+          tran_religion: "Not Specified"
           // address: {
           //   tradd_street: formData.address?.street || "",
           //   tradd_sitio: formData.address?.sitio || "",
@@ -256,60 +247,56 @@ export default function CreatePatientRecord() {
           //   tradd_city: formData.address?.city || "",
           //   tradd_province: formData.address?.province || "",
           // },
-        }
-        if(selectedTrAddtId !== 0) {
-          trPatientData.tradd_id = selectedTrAddtId
+        };
+        if (selectedTrAddtId !== 0) {
+          trPatientData.tradd_id = selectedTrAddtId;
         } else {
           trPatientData.address = {
             tradd_street: formData.address?.street || "",
             tradd_sitio: formData.address?.sitio || "",
             tradd_barangay: formData.address?.barangay || "",
             tradd_city: formData.address?.city || "",
-            tradd_province: formData.address?.province || "",
-          }
+            tradd_province: formData.address?.province || ""
+          };
         }
 
         patientData = {
           pat_type: patientType,
-          transient_data: trPatientData,
-        }
+          transient_data: trPatientData
+        };
       }
 
-      console.log("Creating patient with data:", patientData)
+      console.log("Creating patient with data:", patientData);
 
-      const success = await handleCreatePatientId(patientData)
+      const success = await handleCreatePatientId(patientData);
 
       if (success) {
-        form.reset(defaultValues)
-        setSelectedResidentId("")
-        setSelectedTrAddId(0)
-        navigate(-1)
+        form.reset(defaultValues);
+        setSelectedResidentId("");
+        setSelectedTrAddId(0);
+        navigate(-1);
       }
     } catch (error) {
-      toast("Failed to create patient record. Please try again.")
+      toast("Failed to create patient record. Please try again.");
     } finally {
-      setIsSubmitting(false)
-      setIsDialogOpen(false) 
+      setIsSubmitting(false);
+      setIsDialogOpen(false);
     }
-  }
+  };
 
   const isResident = () => {
-    return patientType === 'resident'
-  }
+    return patientType === "resident";
+  };
 
   const handleDialogClose = () => {
-    setIsDialogOpen(false)
-  }
+    setIsDialogOpen(false);
+  };
 
   return (
     <div className="w-full">
       <div className="w-full">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-          <Button
-            className="bg-white text-black p-2 self-start"
-            variant="outline"
-            onClick={() => window.history.back()}
-          >
+          <Button className="bg-white text-black p-2 self-start" variant="outline" onClick={() => window.history.back()}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex flex-col">
@@ -320,149 +307,113 @@ export default function CreatePatientRecord() {
       </div>
       <Separator className="bg-gray mb-2 sm:mb-4" />
 
-      
-          <div className="w-full mx-auto border-none">
-            <div>
-              <Form {...form}>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    handleFormSubmit()
-                  }}
-                  className="space-y-4"
-                >
-                  <div className="grid grid-cols-3 gap-4 rounded-lg bg-white p-4">
-                    <div className="flex-1">
-                      <Label className="text-black/70"> </Label>
-                      <FormSelect
-                        control={form.control}
-                        name="patientType"
-                        label="Patient Type"
-                        options={[
-                          { id: "resident", name: "Resident" },
-                          { id: "transient", name: "Transient" },
-                        ]}
-                        readOnly={false}
+      <div className="w-full mx-auto border-none">
+        <div>
+          <Form {...form}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleFormSubmit();
+              }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-3 gap-4 rounded-lg bg-white p-4">
+                <div className="flex-1">
+                  <Label className="text-black/70"> </Label>
+                  <FormSelect
+                    control={form.control}
+                    name="patientType"
+                    label="Patient Type"
+                    options={[
+                      { id: "resident", name: "Resident" },
+                      { id: "transient", name: "Transient" }
+                    ]}
+                    readOnly={false}
+                  />
+                </div>
+
+                {patientType === "resident" && (
+                  <div>
+                    <Label className="text-black/70">Resident Selection</Label>
+                    <div className="relative mt-[6.5px]">
+                      <Combobox
+                        options={persons.formatted}
+                        value={selectedResidentId}
+                        onChange={(value) => handlePatientSelection(value)}
+                        placeholder={residentLoading ? "Loading residents..." : "Select a resident"}
+                        triggerClassName="font-normal w-full"
+                        emptyMessage={
+                          <div className="flex flex-col gap-2 justify-center items-center">
+                            <Label className="font-normal text-[13px]">{residentLoading ? "Loading..." : "No residents were found without an assigned Patient ID."}</Label>
+                            <Link to="/residents/new">
+                              <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">Register New Resident</Label>
+                            </Link>
+                          </div>
+                        }
                       />
                     </div>
-
-                    {patientType === "resident" && (
-                      <div>
-                        <Label className="text-black/70">Resident Selection</Label>
-                        <div className="relative mt-[6.5px]">
-                          <Combobox
-                            options={persons.formatted}
-                            value={selectedResidentId}
-                            onChange={handlePatientSelection}
-                            placeholder={residentLoading ? "Loading residents..." : "Select a resident"}
-                            triggerClassName="font-normal w-full"
-                            emptyMessage={
-                              <div className="flex flex-col gap-2 justify-center items-center">
-                                <Label className="font-normal text-[13px]">
-                                  {residentLoading
-                                    ? "Loading..."
-                                    : "No residents were found without an assigned Patient ID."}
-                                </Label>
-                                <Link to="/residents/new">
-                                  <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                                    Register New Resident
-                                  </Label>
-                                </Link>
-                              </div>
-                            }
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {patientType === 'transient' && (
-                      <div className="flex w-full items-end">
-                        <label className="flex items-center text-xs font-poppins p-[9px] w-full gap-1"> <CircleAlert size={15}/> For <i>TRANSIENT</i> please fill in the needed details below.</label>
-                      </div>
-                    )}
                   </div>
+                )}
 
-                  <CardLayout
-                    title=""
-                    description=""
-                    content={
-                    <>
-                      <div className="mb-8">
-                        <Label className="text-xl text-black">Patient Information</Label>
-                        <p className="text-sm text-black/70 mb-2">Review the patient information before saving.</p>
-                        <Separator className="w-full bg-gray" />
-                      </div>
+                {patientType === "transient" && (
+                  <div className="flex w-full items-end">
+                    <label className="flex items-center text-xs font-poppins p-[9px] w-full gap-1">
+                      {" "}
+                      <CircleAlert size={15} /> For <i>TRANSIENT</i> please fill in the needed details below.
+                    </label>
+                  </div>
+                )}
+              </div>
 
-                      {/* personal information section - read Only if RESIDENT */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <FormInput
-                          control={form.control}
-                          name="lastName"
-                          label="Last Name"
-                          placeholder="Enter last name"
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="firstName"
-                          label="First Name"
-                          placeholder="Enter first name"
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="middleName"
-                          label="Middle Name"
-                          placeholder="Enter middle name"
-                          readOnly={isResident() ? true : false}
-                        />
-                      </div>
+              <CardLayout
+                title=""
+                description=""
+                content={
+                  <>
+                    <div className="mb-8">
+                      <Label className="text-xl text-black">Patient Information</Label>
+                      <p className="text-sm text-black/70 mb-2">Review the patient information before saving.</p>
+                      <Separator className="w-full bg-gray" />
+                    </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                        <FormSelect
-                          control={form.control}
-                          name="sex"
-                          label="Sex"
-                          options={[
-                            { id: "female", name: "Female" },
-                            { id: "male", name: "Male" },
-                          ]}
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="contact"
-                          label="Contact"
-                          placeholder="Enter contact"
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormDateTimeInput
-                          control={form.control}
-                          name="dateOfBirth"
-                          label="Date of Birth"
-                          type="date"
-                          readOnly={isResident() ? true : false}
-                        />
-                      </div>
+                    {/* personal information section - read Only if RESIDENT */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                      <FormInput control={form.control} name="lastName" label="Last Name" placeholder="Enter last name" readOnly={isResident() ? true : false} />
+                      <FormInput control={form.control} name="firstName" label="First Name" placeholder="Enter first name" readOnly={isResident() ? true : false} />
+                      <FormInput control={form.control} name="middleName" label="Middle Name" placeholder="Enter middle name" readOnly={isResident() ? true : false} />
+                    </div>
 
-                      {/* address section - read Only if RESIDENT */}
-                      {patientType === 'transient' && (
-                        <>
-                        <Label className="flex text-black/70">Address Selection <p className="text-xs italic text-black/50 ml-2">[Applicable for Transient Only]</p></Label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                      <FormSelect
+                        control={form.control}
+                        name="sex"
+                        label="Sex"
+                        options={[
+                          { id: "female", name: "Female" },
+                          { id: "male", name: "Male" }
+                        ]}
+                        readOnly={isResident() ? true : false}
+                      />
+                      <FormInput control={form.control} name="contact" label="Contact" placeholder="Enter contact" readOnly={isResident() ? true : false} />
+                      <FormDateTimeInput control={form.control} name="dateOfBirth" label="Date of Birth" type="date" readOnly={isResident() ? true : false} />
+                    </div>
+
+                    {/* address section - read Only if RESIDENT */}
+                    {patientType === "transient" && (
+                      <>
+                        <Label className="flex text-black/70">
+                          Address Selection <p className="text-xs italic text-black/50 ml-2">[Applicable for Transient Only]</p>
+                        </Label>
                         <div className="relative mb-4 mt-2">
                           <Combobox
                             options={transientAddressOpt}
                             value={selectedTrAddtId ? selectedTrAddtId.toString() : ""}
-                            onChange={handleTransientAddressSelection}
+                            onChange={handleTransientAddressSelection || ""}
                             placeholder={transAddressLoading ? "Loading addresses..." : "Select an address for the transient patient"}
                             triggerClassName="font-normal w-full"
                             emptyMessage={
                               <div className="flex flex-col gap-2 justify-center items-center">
-                                <Label className="font-normal text-[13px]">
-                                  {transAddressLoading
-                                    ? "Loading..."
-                                    : "No Address was found. Please fill in the address details below."}
-                                </Label>
+                                <Label className="font-normal text-[13px]">{transAddressLoading ? "Loading..." : "No Address was found. Please fill in the address details below."}</Label>
                               </div>
                             }
                           />
@@ -470,91 +421,46 @@ export default function CreatePatientRecord() {
                       </>
                     )}
 
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-                        <FormInput
-                          control={form.control}
-                          name="address.street"
-                          label="Street"
-                          placeholder="Enter street "
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="address.sitio"
-                          label="Sitio"
-                          placeholder="Enter sitio "
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="address.barangay"
-                          label="Barangay"
-                          placeholder="Enter barangay "
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="address.city"
-                          label="City"
-                          placeholder="Enter city "
-                          readOnly={isResident() ? true : false}
-                        />
-                        <FormInput
-                          control={form.control}
-                          name="address.province"
-                          label="Province"
-                          placeholder="Enter province "
-                          readOnly={isResident() ? true : false}
-                        />
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+                      <FormInput control={form.control} name="address.street" label="Street" placeholder="Enter street " readOnly={isResident() ? true : false} />
+                      <FormInput control={form.control} name="address.sitio" label="Sitio" placeholder="Enter sitio " readOnly={isResident() ? true : false} />
+                      <FormInput control={form.control} name="address.barangay" label="Barangay" placeholder="Enter barangay " readOnly={isResident() ? true : false} />
+                      <FormInput control={form.control} name="address.city" label="City" placeholder="Enter city " readOnly={isResident() ? true : false} />
+                      <FormInput control={form.control} name="address.province" label="Province" placeholder="Enter province " readOnly={isResident() ? true : false} />
+                    </div>
 
-                      {/* Form Actions */}
-                      <div className="flex justify-end space-x-4 pt-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => window.history.back()}
-                          disabled={isSubmitting}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="submit"
-                          className="bg-buttonBlue hover:bg-buttonBlue/90 text-white"
-                          disabled={isSubmitting}
-                        >
-                          {isSubmitting ? (
-                            <div className="flex items-center">
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                              Creating Patient Record...
-                            </div>
-                          ) : (
-                            <div className="flex items-center">
-                              <Save className="mr-2 h-4 w-4" />
-                              Save Patient
-                            </div>
-                          )}
-                        </Button>
-                      </div>
-                    </>
-                    }
-                    cardClassName="border-none pb-2 p-3 rounded-lg"
-                    headerClassName="pb-2 bt-2 text-xl"
-                    contentClassName="pt-0"
-                  />
-                </form>
-              </Form>
-            </div>
-          </div>
-        
+                    {/* Form Actions */}
+                    <div className="flex justify-end space-x-4 pt-4">
+                      <Button type="button" variant="outline" onClick={() => window.history.back()} disabled={isSubmitting}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" className="bg-buttonBlue hover:bg-buttonBlue/90 text-white" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Creating Patient Record...
+                          </div>
+                        ) : (
+                          <div className="flex items-center">
+                            <Save className="mr-2 h-4 w-4" />
+                            Save Patient
+                          </div>
+                        )}
+                      </Button>
+                    </div>
+                  </>
+                }
+                cardClassName="border-none pb-2 p-3 rounded-lg"
+                headerClassName="pb-2 bt-2 text-xl"
+                contentClassName="pt-0"
+              />
+            </form>
+          </Form>
+        </div>
+      </div>
 
       {/* Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={isDialogOpen}
-        onOpenChange={handleDialogClose}
-        onConfirm={confirmSubmit}
-        title="Confirm Patient Registration"
-      />
+      <ConfirmationDialog isOpen={isDialogOpen} onOpenChange={handleDialogClose} onConfirm={confirmSubmit} title="Confirm Patient Registration" />
     </div>
-  )
+  );
 }

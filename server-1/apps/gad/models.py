@@ -122,23 +122,14 @@ class GADBudgetLog(models.Model):
         db_table = "gad_budget_log"
 
 class ProjectProposal(models.Model):
-    STATUS_CHOICES = [
-        ('Pending', 'Pending'),
-        ('Approved', 'Approved'),
-        ('Rejected', 'Rejected'),
-        ('Viewed', 'Viewed'),
-        ('Amend', 'Amend'),
-        ('Resubmitted', 'Resubmitted')
-    ]
-
     gpr_id = models.BigAutoField(primary_key=True)
     # gpr_title = models.CharField(max_length=200)
     gpr_background = models.TextField(blank=True, null=True)
-    gpr_date = models.CharField(default=date.today().strftime("%B %d, %Y"))
+    # gpr_date = models.CharField(default=date.today().strftime("%B %d, %Y"))
     gpr_venue = models.CharField(max_length=200, blank=True)
     gpr_monitoring = models.TextField(blank=True)
     gpr_header_img = models.TextField(blank=True, null=True) 
-    gpr_page_size = models.CharField(max_length=20, default='letter', null=True)
+    # gpr_page_size = models.CharField(max_length=20, default='letter', null=True)
     gpr_objectives = models.JSONField(default=list, null=True)
     # gpr_participants = models.JSONField(default=list)
     # gpr_budget_items = models.JSONField(default=list)
@@ -172,24 +163,6 @@ class ProjectProposal(models.Model):
 
     class Meta:
         db_table = 'project_proposal'
-
-    @property
-    def current_status(self):
-        """Get the most recent status from the proposal logs"""
-        latest_log = self.logs.order_by('-gprl_date_approved_rejected').first()
-        return latest_log.gprl_status if latest_log else 'Pending'
-
-    @property
-    def status_reason(self):
-        """Get the reason from the most recent log"""
-        latest_log = self.logs.order_by('-gprl_date_approved_rejected').first()
-        return latest_log.gprl_reason if latest_log else None
-
-    @property
-    def status_date(self):
-        """Get the date from the most recent status change"""
-        latest_log = self.logs.order_by('-gprl_date_approved_rejected').first()
-        return latest_log.prl_date_approved_rejected if latest_log else None
     
     @property
     def project_title(self):
@@ -241,41 +214,13 @@ class ProjectProposal(models.Model):
         if self.dev and self.dev.dev_gad_items:
             return self.dev.dev_gad_items
         return []
-
-class ProjectProposalLog(models.Model):
-    STATUS_CHOICES = [
-        ('Pending', 'Pending'),
-        ('Approved', 'Approved'),
-        ('Rejected', 'Rejected'),
-        ('Viewed', 'Viewed'),
-        ('Amend', 'Amend'),
-        ('Resubmitted', 'Resubmitted')
-    ]
-
-    gprl_id = models.BigAutoField(primary_key=True)
-    gprl_date_approved_rejected = models.DateTimeField(null=True)
-    gprl_reason = models.TextField(blank=True, null=True)
-    gprl_date_submitted = models.DateField(default=date.today)
-    gprl_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='staff_id'
-    )
-    
-    gpr = models.ForeignKey(
-        ProjectProposal,
-        on_delete=models.CASCADE,
-        related_name='logs',
-        db_column='gpr_id'
-    )
-
-    class Meta:
-        db_table = 'project_proposal_log'
-        ordering = ['-gprl_date_approved_rejected']
+    @property
+    def project_date(self):
+        """Get the project date from the related development plan"""
+        if self.dev and self.dev.dev_date:
+            return self.dev.dev_date
+        return None
 
 class ProposalSuppDoc(models.Model):
     psd_id = models.BigAutoField(primary_key=True)

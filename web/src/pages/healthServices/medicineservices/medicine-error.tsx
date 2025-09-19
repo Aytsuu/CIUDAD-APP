@@ -8,13 +8,7 @@ interface MedicineRequestErrorProps {
   hasExceededStock: boolean;
 }
 
-export function MedicineRequestError({
-  mode,
-  selectedPatientData,
-  selectedPatientId,
-  selectedMedicinesLength,
-  hasExceededStock,
-}: MedicineRequestErrorProps) {
+export function MedicineRequestError({ mode, selectedPatientData, selectedPatientId, selectedMedicinesLength, hasExceededStock }: MedicineRequestErrorProps) {
   return (
     <div className=" mb-4 ">
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -22,15 +16,7 @@ export function MedicineRequestError({
           <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-amber-900">
-              {mode === "fromindivrecord" && !selectedPatientData
-                ? "Patient Required"
-                : mode === "fromallrecordtable" && !selectedPatientId
-                ? "Patient Required"
-                : selectedMedicinesLength === 0
-                ? "Medicines Required"
-                : hasExceededStock
-                ? "Stock Limit Exceeded"
-                : "Invalid Quantities"}
+              {mode === "fromindivrecord" && !selectedPatientData ? "Patient Required" : mode === "fromallrecordtable" && !selectedPatientId ? "Patient Required" : selectedMedicinesLength === 0 ? "Medicines Required" : hasExceededStock ? "Stock Limit Exceeded" : "Invalid Quantities"}
             </p>
             <p className="text-xs text-amber-700 mt-1">
               {mode === "fromindivrecord" && !selectedPatientData

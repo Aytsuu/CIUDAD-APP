@@ -11,6 +11,7 @@ export const MedicineListSchema = z.object({
 export const CommodityListSchema = z.object({
   com_name: z.string().min(1, "Enter Commodity Name").default(""),
   user_type: z.string().min(1, "User type is required"),
+  gender_type: z.string().min(1,"Gender is required")
 
 });
 
@@ -58,6 +59,7 @@ export const CommodityListSchema = z.object({
 export const FirstAidSchema = z.object({
   fa_name: z.string().min(1, "Item name is Required").default(""),
   cat_id: z.string().min(1, "Category is required"),
+  staff_id: z.string().optional(),
 
 });
 

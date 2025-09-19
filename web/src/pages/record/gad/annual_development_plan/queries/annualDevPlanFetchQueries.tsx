@@ -34,7 +34,7 @@ export const useCreateAnnualDevPlan = () => {
                 dev_res_person: JSON.stringify(resPersons && resPersons.length ? resPersons : (restFormData.dev_res_person ? [restFormData.dev_res_person] : [])),
                 dev_indicator: JSON.stringify(restFormData.dev_indicator ? [restFormData.dev_indicator] : []),
                 dev_budget_items: JSON.stringify(budgetItems),
-                staff: staff || "00003250821",
+                staff: staff || null,
             };
 
             return await createAnnualDevPlan(payload);

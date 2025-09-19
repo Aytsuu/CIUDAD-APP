@@ -1,17 +1,9 @@
-import {api2} from "@/api/api";
-import { useMutation } from "@tanstack/react-query";
+import { api2 } from "@/api/api";
 
 // 2. Wrapped function version (still fully combined)
-export const addInventory = async (data:any, inv_type: string,staff:string) => {
+export const addInventory = async (data: Record<any, string>) => {
   try {
-    const res = await api2.post("inventory/inventorylist/", {
-      expiry_date: data.expiryDate,
-      inv_type: inv_type,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      staff:staff||null
-
-    });
+    const res = await api2.post("inventory/inventorylist/", data);
     return res.data;
   } catch (err: any) {
     console.log("Error response:", err.response?.data || err.message);
@@ -19,31 +11,21 @@ export const addInventory = async (data:any, inv_type: string,staff:string) => {
   }
 };
 
-export const useAddInventory = () => {
-  return useMutation({
-    mutationFn: ({ data, inv_type,staff }: { data: any; inv_type: string,staff:string }) =>
-      addInventory(data, inv_type,staff),
-    onError: (error: Error) => {
-      console.error("Error adding inventory:", error.message);
-    },
-  });
-};
-
 export const updateInventoryTimestamp = async (inv_id: string) => {
   return await api2.put(`inventory/update_inventorylist/${inv_id}/`, {
-    updated_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   });
 };
 
-  // Add this to your REQUEST file (or create a new one)
+// Add this to your REQUEST file (or create a new one)
 export const archiveInventory = async (inv_id: string) => {
-    try {
-      const response = await api2.put(`inventory/update_inventorylist/${inv_id}/`, {
-        is_Archived: true
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error archiving inventory:", error);
-      throw error;
-    }
-  };
+  try {
+    const response = await api2.put(`inventory/update_inventorylist/${inv_id}/`, {
+      is_Archived: true
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error archiving inventory:", error);
+    throw error;
+  }
+};

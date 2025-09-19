@@ -13,6 +13,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { useGetStaffByTitle } from "../../administration/queries/administrationFetchQueries";
 import { formatStaffs } from "../../administration/AdministrationFormats";
 import { toast } from "sonner";
+import { fileToBase64 } from "@/helpers/fileHelpers";
 
 export const ARDocTemplate = ({
   incident,
@@ -83,10 +84,11 @@ export const ARDocTemplate = ({
     const files = Array.from(e.target.files || []);
     try {
       const publicUrl = await handleImageUpload(files);
+      console.log(publicUrl)
       if(publicUrl){
         updateTemplate({
           data: {
-            rte_logoLeft: publicUrl
+            logo_left: publicUrl
           },
           type: 'AR'  
         })
@@ -103,7 +105,7 @@ export const ARDocTemplate = ({
       if(publicUrl){
         updateTemplate({
           data: {
-            rte_logoRight: publicUrl
+            logo_right: publicUrl
           },
           type: 'AR'  
         })
@@ -130,12 +132,10 @@ export const ARDocTemplate = ({
   }
 
   const getName = (value: string) => {
-    return value.split(" ")?.map((val, idx) => {
-      if(idx > 1) {
-        return val
-      }
-    }).filter(Boolean).join(", ");
-  }
+    const name = value.split("-")[1];
+    const array = name.split(" ");
+    return (`${array[0]}, ${array[1]} ${array.length == 3 && array[2]}`);
+  };
 
   const changePreparedBy = (value: string) => {
     const name = getName(value);
@@ -187,19 +187,13 @@ export const ARDocTemplate = ({
 
   const handleImageUpload = React.useCallback(async (files: any[]) => {
     if (files.length === 0) return;
-
-    // const newFile = {
-    //   type: files[0].type.startsWith("image/")
-    //     ? "image"
-    //     : files[0].type.startsWith("video/")
-    //     ? "video"
-    //     : ("document" as "image" | "video" | "document"),
-    //   file: files[0],
-    //   status: "uploading" as const,
-    //   previewUrl: URL.createObjectURL(files[0]),
-    // };
-
-    return null;
+    const base64 = await fileToBase64(files[0]);
+    const file = {
+      name: `media_${files[0].name}_${Date.now()}.${files[0].type.split('/')[1]}${Math.random().toString(36).substring(2, 8)}`,
+      type: files[0].type, 
+      file: base64,
+    }
+    return file;
   }, []);
 
   // Logo component
@@ -325,8 +319,8 @@ export const ARDocTemplate = ({
               <Label>ACTIONS TAKEN: <span>{act_taken}</span></Label>
             </div>
             <div className="flex gap-8 mt-6">
-              {images?.map((image: any) => (
-                <img src={image.arf_url} className="w-[250px] h-[220px] bg-gray" />
+              {images?.map((image: any, index: number) => (
+                <img key={index} src={image.arf_url} className="w-[250px] h-[220px] bg-gray" />
               ))}
             </div>
             <div className="w-[85%] flex justify-between mt-12">

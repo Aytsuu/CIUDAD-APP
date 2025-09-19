@@ -1,21 +1,51 @@
 // Format date (YYYY-MM-DD) or (July 10, 2025)
-export const formatDate = (date: string | Date, isLong?: boolean) => {
-  if(!date) return null;
-  return isLong ? new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }) : new Date(date).toISOString().split('T')[0]
-}
+export const formatDate = (date: string | Date, type?: string) => {
+  if (!date) return null;
+  const d = new Date(date);
 
+  switch (type) {
+    case 'short':
+      return d.toLocaleDateString("en-PH", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    case 'long':
+      return d.toLocaleDateString("en-PH", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    default:
+      // Format YYYY-MM-DD in local time
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+  }
+};
+
+// Helper functions for date formatting (same as in your main component)
+export const formatSupplementDate = (dateString: string | null) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  });
+};
+
+export const formatMnpDates = (dates: string[]) => {
+  if (!dates || dates.length === 0) return "-";
+  return dates.map((date) => formatSupplementDate(date)).join(", ");
+};
 // Get week number based on a given date format (YYYY-MM-DD)
 // Example: date = 2025-06-11 --> returns 2
 export const getWeekNumber = (dateString: string): number => {
   const date = new Date(dateString);
-  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-  const firstDayWeekDay = firstDay.getDay();
   const dayOfMonth = date.getDate();
-  return Math.ceil((dayOfMonth + firstDayWeekDay) / 7);
+  return Math.ceil(dayOfMonth / 7);
 };
 
 // Get month in text based on a given date format (YYYY-MM-DD)
@@ -62,6 +92,7 @@ export const getRangeOfDaysInWeek = (
   if(onlyNumber) return { start_day: startDate, end_day: endDate }
   return `${month.toUpperCase()} ${startDate}-${endDate}, ${year}`;
 };
+
 // Get month in number based on a given month in text
 export const monthNameToNumber = (month: string) => {
   const months = [
@@ -110,28 +141,24 @@ export const getAllWeeksInMonth = (monthName: string, year?: number) => {
 // Helper function to check if a week has passed
 export const hasWeekPassed = (month: string, weekNo: number, year?: number) => {
   const currentDate = new Date()
-  const targetYear = year || new Date().getFullYear()
+  const targetYear = year || currentDate.getFullYear()
   const currentYear = currentDate.getFullYear()
 
-  // If the target year is in the past, all weeks have passed
+  // Past year: all weeks have passed
   if (targetYear < currentYear) return true
 
-  // If the target year is in the future, no weeks have passed
+  // Future year: no weeks have passed
   if (targetYear > currentYear) return false
 
-  // For the current year, check if the specific week has passed
   const monthNames = getMonths
   const monthIndex = monthNames.indexOf(month)
 
   if (monthIndex === -1) return false
 
-  // Calculate the end date of the given week
-  const firstDayOfMonth = new Date(targetYear, monthIndex, 1)
-  const firstDayOfWeek = firstDayOfMonth.getDay()
-  const daysToFirstMonday = firstDayOfWeek === 0 ? 1 : 8 - firstDayOfWeek
+  // Week N starts at (N - 1) * 7 days from day 1
+  const weekStartDate = new Date(targetYear, monthIndex, 1 + (weekNo - 1) * 7)
+  const weekEndDate = new Date(weekStartDate)
+  weekEndDate.setDate(weekStartDate.getDate() + 6)
 
-  // Calculate the end of the specified week
-  const weekEndDate = new Date(targetYear, monthIndex, daysToFirstMonday + (weekNo - 1) * 7 + 6)
-
-  return weekEndDate < currentDate
+  return currentDate > weekEndDate
 }

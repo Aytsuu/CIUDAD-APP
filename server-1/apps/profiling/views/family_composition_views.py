@@ -6,6 +6,7 @@ from django.db import transaction
 from ..serializers.family_composition_serializers import *
 from ..models import *
 from apps.pagination import *
+from ..double_queries import PostQueries
 
 class FamilyCompositionCreateView(generics.CreateAPIView):
     permission_classes = [AllowAny]
@@ -66,16 +67,30 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
         instances = []
+
         # Prepare model instances
         for item in serializer.validated_data:
             existing = FamilyComposition.objects.filter(rp=item['rp'], fc_role='INDEPENDENT').first()
             if existing:
                 existing.delete()
-            instances(FamilyComposition(**item))
+            instances.append(FamilyComposition(**item))
 
-        created_instances = FamilyComposition.objects.bulk_create(instances)
+        created_instances = []
+        for instance in instances:
+            instance.save()
+            created_instances.append(instance)
 
         if len(created_instances) > 0:
+            # Perform double query
+            double_queries = PostQueries()
+            response = double_queries.family_composition(self.request.data)
+            if not response.ok:
+                try:
+                    error_detail = response.json()
+                except ValueError:
+                    error_detail = response.text
+                raise serializers.ValidationError({"error": error_detail})
+
             response_serializer = FamilyCompositionExtendedSerializer(created_instances, many=True)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         return Response(status=status.HTTP_400_BAD_REQUEST)

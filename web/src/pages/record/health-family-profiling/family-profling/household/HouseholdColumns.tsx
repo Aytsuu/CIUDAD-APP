@@ -1,15 +1,21 @@
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoveRight } from "lucide-react";
-import { Button } from "@/components/ui/button/button";
-import { HouseholdRecord } from "../profilingTypes";
+import { ArrowUpDown } from "lucide-react";
+import { HouseholdFamRecord, HouseholdRecord } from "../../../profiling/ProfilingTypes";
+import { useLoading } from "@/context/LoadingContext";
+import ViewButton from "@/components/ui/view-button";
+import { Combobox } from "@/components/ui/combobox";
+import React from "react";
+import { useFamFilteredByHouseHealth } from "../queries/profilingFetchQueries";
+import { formatFamiles } from "../../../profiling/ProfilingFormats";
+import { formatDate } from "@/helpers/dateHelper";
 
 // Define the columns for household the data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[] => [
+export const householdColumns: ColumnDef<HouseholdRecord>[] = [
   {
-    accessorKey: 'id',
+    accessorKey: 'hh_id',
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -19,6 +25,42 @@ export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[
         <ArrowUpDown size={14} />
       </div>
     ),
+  },
+  {
+    accessorKey: 'total_families',
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Families
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const { showLoading, hideLoading } = useLoading();
+      const { data: famFilteredByHouse, isLoading } = useFamFilteredByHouseHealth(row.getValue('hh_id'));
+      const formattedFamilies = React.useMemo(() => formatFamiles(famFilteredByHouse), [famFilteredByHouse]);
+
+      React.useEffect(() => {
+        if(isLoading) {
+          showLoading();
+        } else {
+          hideLoading();
+        }
+      }, [isLoading])
+
+      return (
+        <Combobox 
+          options={formattedFamilies}
+          value={row.getValue('total_families')}
+          placeholder="Search member"
+          emptyMessage="No resident found"
+          staticVal={true}
+          size={300}
+        />
+      )
+    }
   },
   {
     accessorKey: 'sitio',
@@ -33,12 +75,12 @@ export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[
     ),
   },  
   {
-    accessorKey: 'streetAddress',
+    accessorKey: 'street',
     header: 'Street Address',
   },
   {
     accessorKey: 'nhts',
-    header: 'NHTS?',
+    header: 'NHTS',
   },
   {
     accessorKey: 'head',
@@ -47,7 +89,7 @@ export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Head
+        Owner
         <ArrowUpDown size={14} />
       </div>
     ),
@@ -58,34 +100,79 @@ export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[
     )
   },
   {
-    accessorKey: 'dateRegistered',
-    header: 'Date Registered'
-  },
-  {
-    accessorKey: 'registeredBy',
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Registered By
-        <ArrowUpDown size={14} />
-      </div>
-    ),
+    accessorKey: 'date_registered',
+    header: 'Date Registered',
+    cell: ({row}) => (
+      formatDate(row.original.date_registered, "long" as any)
+    )
   },
   {
     accessorKey: 'action',
     header: 'Action',
-    cell: ({ row }) => (
-        <Link to="/household/view" 
-          state={{params: {data: households.find((household) => household.hh_id == row.original.id)}}}
-        >
-          <Button variant={"outline"}>
-              View <MoveRight/>
-          </Button>
-        </Link>
-    )
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const handleViewClick = async () => {
+        // const families = await getFamFilteredByHouse(row.original.hh_id);
+        navigate("/profiling/household/view", {
+          state: {
+            params: {
+              hh_id: row.original.hh_id
+            }
+          }
+        })
+        
+      }
+      return (
+        <ViewButton onClick={handleViewClick} />
+      ) 
+    }
   },
 ]
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
+  {
+    accessorKey: "fam_id",
+    header: "Family ID"
+  },
+  {
+    accessorKey: "total_members", 
+    header: "No of Members"
+  },
+  {
+    accessorKey: "fam_building", 
+    header: "Household Occupancy"
+  },
+  {
+    accessorKey: "fam_indigenous", 
+    header: "Indigenous"
+  },
+  {
+    accessorKey: "fam_date_registered", 
+    header: "Date Registered",
+    cell: ({row}) => (
+      formatDate(row.original.fam_date_registered, "long" as any)
+    )
+  },
+  {
+    accessorKey: "action", 
+    header: "Action",
+    cell: ({row}) => {
+      const navigate = useNavigate();
+      const handleClickView = () => {
+        navigate("/profiling/family/view", {
+          state: {
+            params: {
+              fam_id: row.original.fam_id
+            }
+          }
+        })
+      }
+
+      return (
+        <ViewButton onClick={handleClickView} />
+      )
+    }
+  },
+];

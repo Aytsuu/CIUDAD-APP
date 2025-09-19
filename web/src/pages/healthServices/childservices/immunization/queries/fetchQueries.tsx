@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchVaccineStocks } from '../restful-api/fetchAPI';
+import { fetchVaccineList } from '../restful-api/fetch-api';
 
 export const useVaccinesListImmunization = () => {
   return useQuery({
     queryKey: ['vaccineListImmunization'],
-    queryFn: fetchVaccineStocks,
+    queryFn: fetchVaccineList,
     staleTime: 5 * 60 * 1000, 
     retry: 2, 
   });
 };
+
+

@@ -8,12 +8,8 @@ import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { Users } from "lucide-react";
 import { toast } from "sonner";
-import {
-  AgeGroupSchema,
-  AgeGroupType,
-  time_unit_options,
-} from "./types";
-import { updateAgegroup, getAgegroup } from "./restful-api/agepostAPI";
+import { AgeGroupSchema, AgeGroupType, time_unit_options } from "./types";
+import { updateAgegroup, getAgegroup } from "./restful-api/api";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface AgeGroupFormProps {
@@ -33,23 +29,18 @@ export function EditAgeGroupForm({ ageGroup, onSubmitSuccess, onCancel }: AgeGro
       agegroup_name: ageGroup?.agegroup_name ?? "",
       min_age: ageGroup?.min_age ?? 0,
       max_age: ageGroup?.max_age ?? 0,
-      time_unit: ageGroup?.time_unit ?? "",
-    },
+      time_unit: ageGroup?.time_unit ?? ""
+    }
   });
 
   const checkForDuplicate = async (data: AgeGroupType) => {
     const existingAgeGroups = await queryClient.fetchQuery({
       queryKey,
-      queryFn: getAgegroup,
+      queryFn: getAgegroup
     });
 
     return existingAgeGroups.some(
-      (group: AgeGroupType & { id?: string }) =>
-        group.agegroup_name === data.agegroup_name &&
-        group.min_age === data.min_age &&
-        group.max_age === data.max_age &&
-        group.time_unit === data.time_unit &&
-        group.id !== ageGroup?.id // Exclude current age group from duplicate check
+      (group: AgeGroupType & { id?: string }) => group.agegroup_name === data.agegroup_name && group.min_age === data.min_age && group.max_age === data.max_age && group.time_unit === data.time_unit && group.id !== ageGroup?.id // Exclude current age group from duplicate check
     );
   };
 
@@ -59,9 +50,7 @@ export function EditAgeGroupForm({ ageGroup, onSubmitSuccess, onCancel }: AgeGro
       // Check for duplicates
       const isDuplicate = await checkForDuplicate(data);
       if (isDuplicate) {
-        toast.error(
-          "An age group with the same minimum age, maximum age, and time unit already exists."
-        );
+        toast.error("An age group with the same minimum age, maximum age, and time unit already exists.");
         setIsLoading(false);
         return;
       }
@@ -89,60 +78,21 @@ export function EditAgeGroupForm({ ageGroup, onSubmitSuccess, onCancel }: AgeGro
             <Label className="text-xl text-darkBlue2">Edit Age Group</Label>
           </div>
 
-          <FormInput
-            control={form.control}
-            name="agegroup_name"
-            label="Age Group Name"
-            placeholder="e.g., Toddler, Teen, Adult"
-          />
+          <FormInput control={form.control} name="agegroup_name" label="Age Group Name" placeholder="e.g., Toddler, Teen, Adult" />
 
           <div className="grid grid-cols-2 gap-4">
-            <FormInput
-              control={form.control}
-              name="min_age"
-              label="Minimum Age"
-              placeholder="0"
-              type="number"
-            />
-            <FormInput
-              control={form.control}
-              name="max_age"
-              label="Maximum Age"
-              placeholder="0"
-              type="number"
-            />
+            <FormInput control={form.control} name="min_age" label="Minimum Age" placeholder="0" type="number" />
+            <FormInput control={form.control} name="max_age" label="Maximum Age" placeholder="0" type="number" />
           </div>
 
-          <FormSelect
-            control={form.control}
-            name="time_unit"
-            label="Time Unit"
-            options={time_unit_options}
-          />
+          <FormSelect control={form.control} name="time_unit" label="Time Unit" options={time_unit_options} />
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isLoading}
-              aria-label="Cancel form"
-            >
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading} aria-label="Cancel form">
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              aria-label="Update age group"
-            >
-              {isLoading ? (
-                <span className="flex items-center">
-                
-                  Updating...
-                </span>
-              ) : (
-                "Update"
-              )}
+            <Button type="submit" disabled={isLoading} aria-label="Update age group">
+              {isLoading ? <span className="flex items-center">Updating...</span> : "Update"}
             </Button>
           </div>
         </form>

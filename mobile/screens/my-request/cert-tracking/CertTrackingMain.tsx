@@ -1,15 +1,14 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
-import { useSelector } from 'react-redux';
+import { useAuth } from "@/contexts/AuthContext";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { useRouter } from "expo-router";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useCertTracking, useCancelCertificate } from "./queries/certTrackingQueries";
-import { RootState } from '@/redux';
 
 export default function CertTrackingMain() {
   const router = useRouter();
-  const {user, isLoading: authLoading} = useSelector((state: RootState) => state.auth);
+  const { user, isLoading: authLoading } = useAuth();
 
   const { data, isLoading, isError } = useCertTracking(user?.resident?.rp_id || "");
   const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(user?.resident?.rp_id || "");
@@ -88,6 +87,29 @@ export default function CertTrackingMain() {
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#00AFFF" />
           <Text className="text-gray-600 text-base mt-4">Loading...</Text>
+        </View>
+      </_ScreenLayout>
+    );
+  }
+
+  // Show loading screen while tracking data is loading
+  if (isLoading) {
+    return (
+      <_ScreenLayout
+        customLeftAction={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        headerBetweenAction={<Text className="text-[13px]">Track Requests</Text>}
+        customRightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#00AFFF" />
+          <Text className="text-gray-600 text-base mt-4">Loading requests…</Text>
         </View>
       </_ScreenLayout>
     );

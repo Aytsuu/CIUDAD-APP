@@ -1,126 +1,123 @@
 "use client"
-
-import React from "react"
+import { useState } from "react"
 import { DataTable } from "@/components/ui/table/data-table"
-import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
-import { Search, FileInput } from "lucide-react"
+import { Search, Loader2 } from "lucide-react"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { Skeleton } from "@/components/ui/skeleton"
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { FirstAidColumns } from "./columns/FirstAidCol"
-import type { FirstAidRecords } from "./type"
-import { useFirstaid } from "../queries/FetchQueries"
+import { useFirstAidTransactions } from "../queries/fetch"
 
-export default function FirstAidList() {
-  const [searchQuery, setSearchQuery] = React.useState("")
-  const [pageSize, setPageSize] = React.useState(10)
-  const [currentPage, setCurrentPage] = React.useState(1)
-  const { data: firstAidData, isLoading: isLoadingFirstAid } = useFirstaid()
+export default function FirstAidTransactionTable() {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [pageSize, setPageSize] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const { data: apiResponse, isLoading, error } = useFirstAidTransactions(
+    currentPage, 
+    pageSize, 
+    searchQuery, 
+  )
+
+  // Extract data from API response
+  const transactionData = Array.isArray(apiResponse?.results) ? apiResponse.results : []
+  const totalCount = apiResponse?.count || 0
+  const totalPages = Math.ceil(totalCount / pageSize)
+
   const columns = FirstAidColumns()
 
-  // Format first aid data
-  const formatFirstAidData = React.useCallback(() => {
-    if (!firstAidData) return []
-    return firstAidData.map((firstAid: any) => {
-      const staffFirstName = firstAid.staff_detail?.rp?.per?.per_fname || ""
-      const staffLastName = firstAid.staff_detail?.rp?.per?.per_lname || ""
-      const staffFullName = `${staffFirstName} ${staffLastName}`.trim()
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
 
-      return {
-        inv_id:firstAid.finv_details?.inv_detail?.inv_id,
-        fat_id: firstAid.fat_id,
-        fa_name: firstAid.fa_name,
-        fat_qty: firstAid.fat_qty,
-        fat_action: firstAid.fat_action,
-        staff: staffFullName || firstAid.staff, // Use full name, fallback to staff ID if names are not available
-        created_at: new Date(firstAid.created_at).toLocaleDateString(),
-      }
-    })
-  }, [firstAidData])
+  // Handle search
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+    setCurrentPage(1)
+  }
 
-  const filteredFirstAid = React.useMemo(() => {
-    return formatFirstAidData().filter((record: FirstAidRecords) =>
-      Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase()),
-    )
-  }, [searchQuery, formatFirstAidData])
+  // Handle page size change
+  const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = +e.target.value
+    setPageSize(value >= 1 ? value : 1)
+    setCurrentPage(1)
+  }
 
-  // Calculate total pages for pagination
-  const totalPages = Math.ceil(filteredFirstAid.length / pageSize)
-  // Slice the data for the current page
-  const paginatedFirstAid = filteredFirstAid.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-
-  if (isLoadingFirstAid) {
+  if (error) {
     return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-red-500">Error loading first aid transactions</div>
       </div>
     )
   }
+
   return (
-    <div>
-      <div className="hidden lg:flex justify-between items-center mb-4">
+    <>
+      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
+              size={17}
+            />
             <Input
-              placeholder="Search..."
+              placeholder="Search first aid transactions..."
               className="pl-10 bg-white w-full"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
             />
           </div>
         </div>
       </div>
-      <div className="bg-white rounded-md">
-        <div className="flex justify-between p-3">
-          <div className="flex items-center gap-2">
+
+      <div className="h-full w-full rounded-md">
+        <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="flex gap-x-2 items-center">
             <p className="text-xs sm:text-sm">Show</p>
             <Input
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={(e) => {
-                const value = +e.target.value
-                if (value >= 1) {
-                  setPageSize(value)
-                } else {
-                  setPageSize(1) // Reset to 1 if invalid
-                }
-              }}
+              onChange={handlePageSizeChange}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline" className="h-[2rem] bg-transparent">
-                <FileInput /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" },
-            ]}
-          />
         </div>
-        <div className="overflow-x-auto">
-          <DataTable columns={columns} data={paginatedFirstAid} />
-        </div>
-        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
-          <p className="text-xs sm:text-sm text-darkGray">
-            Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredFirstAid.length)} of{" "}
-            {filteredFirstAid.length} rows
-          </p>
-          {paginatedFirstAid.length > 0 && (
-            <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+
+        <div className="bg-white w-full overflow-x-auto">
+          {isLoading ? (
+            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Loading first aid transactions...</span>
+            </div>
+          ) : error ? (
+            <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
+              <span className="ml-2">Error loading data. Please check console.</span>
+            </div>
+          ) : transactionData.length === 0 ? (
+            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+              <span className="ml-2">No first aid transactions found</span>
+            </div>
+          ) : (
+            <DataTable columns={columns} data={transactionData} />
           )}
         </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing{" "}
+            {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-
+            {Math.min(currentPage * pageSize, totalCount)} of{" "}
+            {totalCount} transactions
+          </p>
+          <PaginationLayout
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
       </div>
-    </div>
+    </>
   )
 }

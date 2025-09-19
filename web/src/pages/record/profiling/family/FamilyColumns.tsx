@@ -4,7 +4,8 @@ import { ArrowUpDown, Loader2 } from "lucide-react";
 import { FamilyRecord, MemberRecord } from "../ProfilingTypes";
 import { calculateAge } from "@/helpers/ageCalculator";
 import React from "react";
-import { useLoading } from "@/context/LoadingContext";import { Combobox } from "@/components/ui/combobox";
+import { useLoading } from "@/context/LoadingContext";
+import { Combobox } from "@/components/ui/combobox";
 import { useResidentsFamSpecificList } from "../queries/profilingFetchQueries";
 import { formatResidents } from "../ProfilingFormats";
 import ViewButton from "@/components/ui/view-button";
@@ -70,7 +71,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
   },
   {
     accessorKey: "fam_building",
-    header: "Building",
+    header: "Household Occupancy",
   },
   {
     accessorKey: "father",
@@ -167,7 +168,7 @@ export const familyMembersCol = (
           await updateFamilyRole({
             familyId: family.fam_id,
             residentId: row.original.rp_id,
-            fc_role: capitalize(value as string)
+            fc_role: capitalize(value) as any
           });
           setIsChanging(false)
         }catch (err) {

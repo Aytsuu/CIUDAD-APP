@@ -11,7 +11,15 @@ export const useCertTracking = (residentId: string) => {
                 getBusinessPermitRequests(residentId)
             ]);
 
-            return { personal, business } as { personal: any[]; business: any[] };
+            const byResident = (item: any) => {
+                const rp = String(item?.rp_id ?? item?.rp ?? "").trim();
+                return rp === String(residentId).trim();
+            };
+
+            return {
+                personal: Array.isArray(personal) ? personal.filter(byResident) : [],
+                business: Array.isArray(business) ? business.filter(byResident) : []
+            } as { personal: any[]; business: any[] };
         },
         enabled: !!residentId,
         staleTime: 0,

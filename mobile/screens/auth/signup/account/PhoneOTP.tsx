@@ -17,6 +17,7 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { router } from "expo-router";
 import { X } from "@/lib/icons/X";
+import { SubmitButton } from "@/components/ui/button/submit-button";
 
 export default function PhoneOTP({ params }: { params: Record<string, any> }) {
   // ====================== STATE INITIALIZATION ======================
@@ -62,7 +63,6 @@ export default function PhoneOTP({ params }: { params: Record<string, any> }) {
 
   const send = async () => {
     if (!(await trigger("accountFormSchema.phone"))) {
-      toast.error("Failed to send. Please try again.");
       return;
     }
 
@@ -71,12 +71,11 @@ export default function PhoneOTP({ params }: { params: Record<string, any> }) {
       const phone = getValues("accountFormSchema.phone");
       const verification = await sendOTP({
         pv_phone_num: phone,
+        pv_type: params?.signin ? "login" : "signup"
       });
 
       setOtpValue(verification.pv_otp);
       setModalVisible(true);
-    } catch (err) {
-      toast.error("Failed to send. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -104,17 +103,12 @@ export default function PhoneOTP({ params }: { params: Record<string, any> }) {
           />
         </View>
 
-        <Button
-          className={`bg-primaryBlue native:h-[45px] py-4 rounded-lg ${
-            isSubmitting ? "opacity-70" : ""
-          }`}
-          onPress={send}
-          disabled={isSubmitting}
-        >
-          <Text className="text-white font-semibold text-base">
-            {isSubmitting ? "Sending Code..." : "Send Verification Code"}
-          </Text>
-        </Button>
+        <SubmitButton 
+          submittingLabel="Sending Code..."
+          buttonLabel="Send Verification Code"
+          isSubmitting={isSubmitting}
+          handleSubmit={send}
+        />
       </View>
 
       <View className="flex-row items-center justify-center mt-8 gap-1">

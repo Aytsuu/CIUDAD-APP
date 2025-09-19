@@ -1,294 +1,244 @@
-// src/services/childHealthAPI.ts
-import {
-  createFollowUpVisit,
-  createBodyMeasurement,
-  createPatientDisability,
-  processMedicineRequest,
-  createChildHealthNotes,
-  createChildVitalSign,
-  createNutritionalStatus,
-  createSupplementStatus,
-  createExclusiveBFCheck,
-  createChildHealthRecord,
-  createChildHealthHistory,
-} from "./createAPI";
+// src/services/childHealthAPI.ts - Simplified version using single API call
 
-import { createVitalSigns } from "@/pages/healthServices/vaccination/restful-api/post";
-
-import type { FormData } from "@/form-schema/chr-schema/chr-schema";
-import { createPatientRecord } from "@/pages/healthServices/restful-api-patient/createPatientRecord";
 import { api2 } from "@/api/api";
-import { useQueryClient } from "@tanstack/react-query";
+import type { FormData } from "@/form-schema/chr-schema/chr-schema";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
 export interface AddRecordArgs {
   submittedData: FormData;
   staff: string | null;
+  todaysHistoricalRecord?: any;
+  originalRecord?: any;
 }
 
-export interface AddRecordResult {
-  patrec_id: string;
-  chrec_id: string;
-  chhist_id: string;
-  chvital_id?: string;
-  followv_id?: string | null;
-}
-
-export async function addChildHealthRecord({
-  submittedData,
-  staff,
-}: AddRecordArgs): Promise<AddRecordResult> {
-  // Validate required fields
+/**
+ * Simplified function that sends all child health record data to a single comprehensive API endpoint
+ * This replaces all the individual API calls with one atomic operation
+ */
+export async function addChildHealthRecord({ submittedData, staff, todaysHistoricalRecord, originalRecord }: any): Promise<any> {
+  // Basic validation on frontend
   if (!submittedData.pat_id) {
     throw new Error("Patient ID is required");
   }
+
   if (submittedData.residenceType === "Transient" && !submittedData.trans_id) {
     throw new Error("Transient ID is required for transient residents");
   }
 
-  // Transient update handling
-  if (submittedData.residenceType === "Transient") {
-    try {
-      const transRes = await api2.patch(
-        `patientrecords/update-transient/${submittedData.trans_id}/`,
-        {
-          mother_fname: submittedData.motherFname || null,
-          mother_lname: submittedData.motherLname || null,
-          mother_mname: submittedData.motherMname || null,
-          mother_age: submittedData.motherAge || null,
-          mother_dob: submittedData.motherdob || null,
-          father_fname: submittedData.fatherFname || null,
-          father_lname: submittedData.fatherLname || null,
-          father_mname: submittedData.fatherMname || null,
-          father_age: submittedData.fatherAge || null,
-          father_dob: submittedData.fatherdob || null,
-        }
-      );
-      if (transRes.status !== 200) {
-        throw new Error("Failed to update transient information");
-      }
-      console.log("Transient updated successfully:", transRes.data);
-    } catch (transientError) {
-      console.error("Transient update error:", transientError);
-      if (transientError instanceof Error) {
-        throw new Error(
-          `Failed to update transient: ${transientError.message}`
-        );
-      } else {
-        throw new Error("Failed to update transient: Unknown error");
-      }
-    }
-  }
+  try {
+    console.log("Sending comprehensive child health data to single API endpoint...");
 
-  // Create patient record
-  const newPatrec = await createPatientRecord(
-    submittedData.pat_id,
-    "Child Health Record",
-    staff
-  );
-
-  const patrec_id = newPatrec.patrec_id;
-  const newChrec = await createChildHealthRecord({
-    ufc_no: submittedData.ufcNo || "",
-    family_no: submittedData.familyNo || "",
-    place_of_delivery_type: submittedData.placeOfDeliveryType,
-    pod_location: submittedData.placeOfDeliveryLocation || "",
-    mother_occupation: submittedData.motherOccupation || "",
-    type_of_feeding: submittedData.type_of_feeding,
-    father_occupation: submittedData.fatherOccupation || "",
-    birth_order: submittedData.birth_order,
-    newborn_screening: submittedData.dateNewbornScreening || "",
-    staff: staff,
-    patrec: patrec_id,
-    landmarks: submittedData.landmarks || null,
-  });
-
-  const chrec_id = newChrec.chrec_id;
-  console.log("Child health record created:", newChrec);
-
-  // Create child health history
-  const newChhist = await createChildHealthHistory({
-    created_at: new Date().toISOString(),
-    chrec: chrec_id,
-    status: submittedData.status || "recorded",
-    tt_status: submittedData.tt_status,
-  });
-  const current_chhist_id = newChhist.chhist_id;
-
-  // Handle follow-up visit if needed
-  let followv_id = null;
-  if (submittedData.vitalSigns?.[0]?.followUpVisit) {
-    const newFollowUp = await createFollowUpVisit({
-      followv_date: submittedData.vitalSigns[0].followUpVisit,
-      created_at: new Date().toISOString(),
-      followv_description:
-        submittedData.vitalSigns[0].follov_description ||
-        "Follow Up for Child Health",
-      patrec: patrec_id,
-      followv_status: "pending",
-      updated_at: new Date().toISOString(),
-    });
-    followv_id = newFollowUp.followv_id;
-  }
-
-  // Create health notes if there are notes added
-  if (submittedData.vitalSigns?.[0]?.notes) {
-    await createChildHealthNotes({
-      chn_notes: submittedData.vitalSigns[0].notes,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      followv: followv_id,
-      chhist: current_chhist_id,
-      staff: staff || null,
-    });
-  }
-
-  // Create body measurements
-  const newBMI = await createBodyMeasurement({
-    age: submittedData.childAge,
-    height: submittedData.vitalSigns?.[0]?.ht || null,
-    weight: submittedData.vitalSigns?.[0]?.wt || null,
-    created_at: new Date().toISOString(),
-    patrec: patrec_id,
-    staff: staff || null,
-  });
-  const bmi_id = newBMI.bm_id;
-
-  const vitalsigns = await createVitalSigns({
-    vital_temp: submittedData.vitalSigns?.[0]?.temp || "",
-    staff: staff || null,
-    patrec:patrec_id
-  });
-  const vital_id = vitalsigns.vital_id;
-
-  console.log("Vital signs created:", vitalsigns);
-  // Create vital signs
-  const newVitalSign = await createChildVitalSign({
-    // temp: submittedData.vitalSigns?.[0]?.temp || null,
-    vital: vital_id,
-    bm: bmi_id,
-    chhist: current_chhist_id,
-    created_at: new Date().toISOString(),
-
-  });
-  const chvital_id = newVitalSign.chvital_id;
-
-  // Create nutritional status
-  await createNutritionalStatus({
-    wfa: submittedData.nutritionalStatus?.wfa || "",
-    lhfa: submittedData.nutritionalStatus?.lhfa || "",
-    wfl: submittedData.nutritionalStatus?.wfh || "",
-    muac: submittedData.nutritionalStatus?.muac?.toString() || "",
-    muac_status: submittedData.nutritionalStatus?.muac_status || "",
-    created_at: new Date().toISOString(),
-    chvital: chvital_id,
-    edemaSeverity: submittedData.edemaSeverity || "None",
-  });
-
-  console.log(submittedData.BFdates);
-  // Handle breastfeeding dates
-  if (submittedData.BFdates && submittedData.BFdates.length > 0) {
-    for (const date of submittedData.BFdates) {
-      await createExclusiveBFCheck({
-        chhist: current_chhist_id,
-        BFdates: submittedData.BFdates,
-      });
-    }
-  }
-
-  // Handle disabilities
-  if (
-    submittedData.disabilityTypes &&
-    submittedData.disabilityTypes.length > 0
-  ) {
-    await createPatientDisability({
-      patrec: patrec_id,
-      disabilities: submittedData.disabilityTypes?.map(String) || [],
-    });
-  }
-
-  // Handle low birth weight
-  const isLowBirthWeight =
-    submittedData.vitalSigns?.[0]?.wt &&
-    Number.parseFloat(String(submittedData.vitalSigns[0].wt)) < 2.5;
-  if (
-    isLowBirthWeight &&
-    (submittedData.birthwt?.seen || submittedData.birthwt?.given_iron)
-  ) {
-    await createSupplementStatus({
-      status_type: "birthwt",
-      date_seen: submittedData.birthwt?.seen || null,
-      date_given_iron: submittedData.birthwt?.given_iron || null,
-      chhist: current_chhist_id,
-      created_at: new Date().toISOString(),
-      birthwt: Number(submittedData.vitalSigns?.[0]?.wt),
-      date_completed: null,
-    });
-  }
-
-  // Handle anemia
-  if (submittedData.anemic?.is_anemic == true) {
-    await createSupplementStatus({
-      status_type: "anemic",
-      date_seen: submittedData.anemic?.seen || null,
-      date_given_iron: submittedData.anemic?.given_iron || null,
-      chhist: current_chhist_id,
-      created_at: new Date().toISOString(),
-      birthwt: Number(submittedData.vitalSigns?.[0]?.wt),
-      date_completed: null,
-      updated_at: new Date().toISOString(),
-    });
-  }
-
-  
-  if (submittedData.medicines && submittedData.medicines.length > 0) {
-    await processMedicineRequest(
-      {
+    // Transform the data to match what the backend expects
+    const requestData = {
+      submittedData: {
+        // Patient info
         pat_id: submittedData.pat_id,
-        medicines: submittedData.medicines.map((med) => ({
-          minv_id: med.minv_id,
-          medrec_qty: med.medrec_qty,
-          reason: med.reason || "",
-        })),
-      },
-      staff || null,
-      current_chhist_id 
-    );
-  }
+        trans_id: submittedData.trans_id,
+        residenceType: submittedData.residenceType,
 
-  return {
-    patrec_id,
-    chrec_id,
-    chhist_id: current_chhist_id,
-    chvital_id,
-    followv_id,
-  };
+        // Child health record fields
+        ufcNo: submittedData.ufcNo,
+        familyNo: submittedData.familyNo,
+        placeOfDeliveryType: submittedData.placeOfDeliveryType,
+        placeOfDeliveryLocation: submittedData.placeOfDeliveryLocation,
+        motherOccupation: submittedData.motherOccupation,
+        type_of_feeding: submittedData.type_of_feeding,
+        fatherOccupation: submittedData.fatherOccupation,
+        birth_order: submittedData.birth_order,
+        dateNewbornScreening: submittedData.dateNewbornScreening,
+        landmarks: submittedData.landmarks,
+
+        // Child health history
+        status: submittedData.status,
+        tt_status: submittedData.tt_status,
+        created_at: submittedData.created_at,
+
+        // Vital signs and measurements
+        vitalSigns: submittedData.vitalSigns,
+        nutritionalStatus: submittedData.nutritionalStatus,
+        childAge: submittedData.childAge,
+        edemaSeverity: submittedData.edemaSeverity,
+
+        // Breastfeeding dates
+        BFchecks: submittedData.BFchecks,
+        // Medicines
+        medicines: submittedData.medicines,
+
+        // Supplement statuses
+        historicalSupplementStatuses: submittedData.historicalSupplementStatuses,
+        birthwt: submittedData.birthwt,
+        anemic: submittedData.anemic,
+
+        // Transient parent information
+        motherFname: submittedData.motherFname,
+        motherLname: submittedData.motherLname,
+        motherMname: submittedData.motherMname,
+        motherAge: submittedData.motherAge,
+        motherdob: submittedData.motherdob,
+        fatherFname: submittedData.fatherFname,
+        fatherLname: submittedData.fatherLname,
+        fatherMname: submittedData.fatherMname,
+        fatherAge: submittedData.fatherAge,
+        fatherdob: submittedData.fatherdob
+      },
+      staff: staff,
+      todaysHistoricalRecord: todaysHistoricalRecord,
+      originalRecord: originalRecord
+    };
+
+    console.log("Request payload:", {
+      pat_id: requestData.submittedData.pat_id,
+      residenceType: requestData.submittedData.residenceType,
+      hasVitalSigns: !!requestData.submittedData.vitalSigns?.length,
+      hasMedicines: !!requestData.submittedData.medicines?.length,
+      hasBFdates: !!requestData.submittedData.BFchecks?.length,
+      isUpdate: !!todaysHistoricalRecord
+    });
+
+    // Make single API call to comprehensive endpoint
+    const response = await api2.post("child-health/create-new-record/", requestData);
+
+    if (response.status === 200 || response.status === 201) {
+      console.log("Child health record processed successfully:", response.data);
+      return {
+        success: response.data.success,
+        message: response.data.message,
+        patrec_id: response.data.patrec_id,
+        chrec_id: response.data.chrec_id,
+        chhist_id: response.data.chhist_id,
+        chvital_id: response.data.chvital_id,
+        followv_id: response.data.followv_id,
+        pat_id: requestData.submittedData.pat_id
+      };
+    } else {
+      throw new Error(`Unexpected response status: ${response.status}`);
+    }
+  } catch (error: any) {
+    console.error("Failed to process child health record:", error);
+
+    // Handle different types of errors
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(`Failed to process child health record: ${error.message}`);
+    } else {
+      throw new Error("Failed to process child health record: Unknown error occurred");
+    }
+  }
 }
 
+/**
+ * React Query mutation hook for child health records
+ * This remains the same but now uses the simplified single API call
+ */
+// export const useChildHealthRecordMutation = () => {
+//   const navigate = useNavigate();
+//   const queryClient = useQueryClient();
 
+//   return useMutation({
+//     mutationFn: addChildHealthRecord,
+//     onSuccess: (data) => {
+//       // Invalidate relevant queries
+//       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+//       queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.chrec_id] });
+//       queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
+//       queryClient.invalidateQueries({ queryKey: ["medicineInventory"] });
 
+//       // Show success message
+//       toast.success(data.message || "Child health record processed successfully!");
 
-import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+//       // Navigate back
+//       navigate(-1);
+//     },
+//     onError: (error: unknown) => {
+//       console.error("Child health record mutation failed:", error);
+
+//       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while processing child health record";
+
+//       toast.error(`Operation Failed: ${errorMessage}`);
+//     }
+//   });
+// };
+
+/**
+ * Optional: Helper function to validate form data before submission
+ */
+export function validateChildHealthFormData(formData: FormData): string[] {
+  const errors: string[] = [];
+
+  // Required field validations
+  if (!formData.pat_id) {
+    errors.push("Patient ID is required");
+  }
+
+  if (formData.residenceType === "Transient" && !formData.trans_id) {
+    errors.push("Transient ID is required for transient residents");
+  }
+
+  // Validate medicines if present
+  if (formData.medicines && formData.medicines.length > 0) {
+    formData.medicines.forEach((med, index) => {
+      if (!med.minv_id) {
+        errors.push(`Medicine ${index + 1}: Inventory ID is required`);
+      }
+      if (!med.medrec_qty || med.medrec_qty <= 0) {
+        errors.push(`Medicine ${index + 1}: Quantity must be greater than 0`);
+      }
+    });
+  }
+
+  // Validate vital signs if present
+  if (formData.vitalSigns && formData.vitalSigns.length > 0) {
+    formData.vitalSigns.forEach((vital, index) => {
+      if (vital.date && !vital.temp && !vital.ht && !vital.wt) {
+        errors.push(`Vital signs ${index + 1}: At least one measurement is required when date is provided`);
+      }
+    });
+  }
+
+  return errors;
+}
+
 
 export const useChildHealthRecordMutation = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: addChildHealthRecord,
+    mutationFn: async (args: AddRecordArgs) => {
+      // Validate before submission
+      const validationErrors = validateChildHealthFormData(args.submittedData);
+      if (validationErrors.length > 0) {
+        throw new Error(`Validation failed: ${validationErrors.join(", ")}`);
+      }
+
+      return addChildHealthRecord(args);
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
-      queryClient.invalidateQueries({ queryKey: ["childHealthHistory",data.chrec_id] }); 
-      toast.success("Child health record created successfully!");
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.chrec_id] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
+      queryClient.invalidateQueries({ queryKey: ["nextufc"] });
+      queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
+      queryClient.invalidateQueries({ queryKey: ["medicinetransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
+      queryClient.invalidateQueries({ queryKey: ["followupChildHealth", data.pat_id] });
+      queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
+
+      toast.success(data.message || "Child health record processed successfully!");
       navigate(-1);
     },
     onError: (error: unknown) => {
-      console.error("Failed to create child health record:", error);
-      toast.error(
-        `Operation Failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-    },
+      console.error("Child health record mutation with validation failed:", error);
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while processing child health record";
+
+      toast.error(`Operation Failed: ${errorMessage}`);
+    }
   });
 };

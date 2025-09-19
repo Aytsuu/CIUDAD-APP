@@ -42,29 +42,11 @@ import ViewProjectProposal from "./view-projprop";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ProjectProposal, SupportDoc } from "./projprop-types";
-import { Link } from "react-router";
 import { DocumentCard } from "./projpropsupp-docs-modal";
 
 function GADProjectProposal() {
-  const style = {
-    projStat: {
-      pending: "text-blue",
-      amend: "text-yellow-500",
-      approved: "text-green-500",
-      rejected: "text-red-500",
-      viewed: "text-darkGray",
-      resubmitted: "text-indigo-600",
-    },
-  };
-
   const filter = [
     { id: "All", name: "All" },
-    { id: "Pending", name: "Pending" },
-    { id: "Viewed", name: "Viewed" },
-    { id: "Amend", name: "Amend" },
-    { id: "Resubmitted", name: "Resubmitted"},
-    { id: "Approved", name: "Approved" },
-    { id: "Rejected", name: "Rejected" },
   ];
 
   const {
@@ -126,9 +108,9 @@ function GADProjectProposal() {
   }, [detailedProject, selectedProject]);
 
   const filteredProjects = (projects as ProjectProposal[])
-    .filter((project: ProjectProposal) => {
+    .filter((_project: ProjectProposal) => {
       if (selectedFilter === "All") return true;
-      return project.status === selectedFilter;
+      return false;
     })
     .filter((project: ProjectProposal) => {
       return viewMode === "active"
@@ -395,11 +377,6 @@ function GADProjectProposal() {
             </span>
           </span>
         </div>
-        <Link to= "/gad-project-proposal-log">
-        <Button variant="link" className="mr-1 w-20 underline text-sky-600">
-          View Logs
-        </Button>
-        </Link>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -410,10 +387,6 @@ function GADProjectProposal() {
           </div>
         )}
         {paginatedProjects.map((project: ProjectProposal, index: number) => {
-          const status =
-            project.status.toLowerCase() as keyof typeof style.projStat;
-          const reason = project.statusReason || "No reason provided";
-
           return (
             <CardLayout
               key={project.gprId || index}
@@ -429,7 +402,6 @@ function GADProjectProposal() {
                       onClick={() => handleViewProject(project)}
                     />
                     {viewMode === "active" ? (
-                      (project.status !== 'Viewed' && project.status !== 'Approved' && project.status !== 'Resubmitted') && (
                       <>
                         <ConfirmationModal
                           trigger={
@@ -445,7 +417,7 @@ function GADProjectProposal() {
                           type="warning"
                         />
                       </>
-                    )) : (
+                    ) : (
                       <>
                         <ConfirmationModal
                           trigger={
@@ -509,16 +481,6 @@ function GADProjectProposal() {
                     </span>
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex flex-col gap-1">
-                      <span
-                        className={`text-xs font-medium ${
-                          style.projStat[status] || "text-gray-500"
-                        }`}
-                      >
-                        {project.status || "Pending"}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        Remark(s): {reason}
-                      </span>
                     </div>
                     <div>
                       <Button
@@ -573,8 +535,7 @@ function GADProjectProposal() {
                   onClick={() => selectedProject && handleEdit(selectedProject)}
                   className="flex items-center gap-2"
                   disabled={
-                    !selectedProject || (selectedProject.status !== "Pending" && selectedProject.status !== "Amend" && selectedProject.status !== "Rejected")|| selectedProject.gprIsArchive === true
-                  }
+                    !selectedProject }
                 >
                   <Edit size={16} /> Edit
                 </Button>
@@ -634,9 +595,7 @@ function GADProjectProposal() {
                         key={doc.psd_id}
                         doc={doc}
                         showActions={
-                          selectedProject?.gprIsArchive === false &&
-                          (selectedProject?.status === "Pending" || selectedProject?.status === "Amend" || selectedProject?.status === "Rejected")
-                        }
+                          selectedProject?.gprIsArchive === false }
                         onDelete={() => handleDeleteDoc(doc.psd_id)}
                         onArchive={() => handleArchiveDoc(doc.psd_id)}
                         isDeleting={isDeletingDoc}
@@ -668,9 +627,7 @@ function GADProjectProposal() {
                         key={doc.psd_id}
                         doc={doc}
                         showActions={
-                          selectedProject?.gprIsArchive === false &&
-                          (selectedProject?.status === "Pending" || selectedProject?.status === "Amend" || selectedProject?.status === "Rejected")
-                        }
+                          selectedProject?.gprIsArchive === false }
                         onDelete={() => handleDeleteDoc(doc.psd_id)}
                         onRestore={() => handleRestoreDoc(doc.psd_id)}
                         isDeleting={isDeletingDoc}
