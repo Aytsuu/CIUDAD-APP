@@ -590,7 +590,11 @@ function PersonalClearance() {
                             {...currentReceipt}
                             discountedAmount={appliedDiscountAmount}
                             discountReason={appliedDiscountReason}
-                            onSuccess={() => {
+                            onComplete={() => {
+                                
+                                setIsReceiptModalOpen(false);
+                            }}
+                            onRequestDiscount={() => {
                                 setIsReceiptModalOpen(false);
                                 setIsDiscountModalOpen(true);
                             }}
