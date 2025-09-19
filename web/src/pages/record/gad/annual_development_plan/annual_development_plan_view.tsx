@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog/dialog";
 import ViewProjectProposal from "@/pages/record/gad/project-proposal/view-projprop";
+import ViewResolution from "./view-resolution-GAD";
 
 interface AnnualDevelopmentPlanViewProps {
   year: number;
@@ -47,6 +48,9 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [_isPdfLoading, setIsPdfLoading] = useState(true);
+  const [isResolutionDialogOpen, setIsResolutionDialogOpen] = useState(false);
+  const [selectedResolution, setSelectedResolution] = useState<any>(null);
+  const [_isResolutionLoading, setIsResolutionLoading] = useState(true);
 
   // Fetch GAD Project Proposals and Resolutions to determine links per mandate
   const { data: proposals = [] } = useGetProjectProposals();
@@ -115,6 +119,23 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   const closePreview = () => {
     setIsViewDialogOpen(false);
     setSelectedProject(null);
+  };
+
+  const handleViewResolution = (resolution: any) => {
+    if (selectedResolution?.res_num === resolution.res_num && isResolutionDialogOpen) return;
+
+    setIsResolutionDialogOpen(false);
+    setSelectedResolution(null);
+
+    setTimeout(() => {
+      setSelectedResolution(resolution);
+      setIsResolutionDialogOpen(true);
+    }, 50);
+  };
+
+  const closeResolutionPreview = () => {
+    setIsResolutionDialogOpen(false);
+    setSelectedResolution(null);
   };
 
   return (
@@ -347,9 +368,13 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                             </Button>
                           )}
                           {hasResolution && (
-                            <Link to={{ pathname: "/res-page", search: `?gprId=${proposal.gprId}` }}>
-                              <Button size="sm" variant="outline">Resolution</Button>
-                            </Link>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleViewResolution(resolutionByGprId.get(proposal.gprId))}
+                            >
+                              Resolution
+                            </Button>
                           )}
                         </div>
                       );
@@ -402,6 +427,35 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                 project={detailedProject || selectedProject}
                 onLoad={() => setIsPdfLoading(false)}
                 onError={() => setIsPdfLoading(false)}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isResolutionDialogOpen} onOpenChange={closeResolutionPreview}>
+        <DialogContent className="max-w-[90vw] w-[90vw] h-[95vh] max-h-[95vh] p-0 flex flex-col">
+          <DialogHeader className="p-4 bg-background border-b sticky top-0 z-50">
+            <div className="flex items-center justify-between w-full">
+              <DialogTitle className="text-left">
+                {selectedResolution?.res_title || "Resolution"}
+              </DialogTitle>
+              <div className="flex gap-2">
+                <X
+                  className="text-gray-500 cursor-pointer hover:text-gray-700"
+                  size={20}
+                  onClick={closeResolutionPreview}
+                />
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto relative">
+            {selectedResolution && (
+              <ViewResolution
+                resolution={selectedResolution}
+                onLoad={() => setIsResolutionLoading(false)}
+                onError={() => setIsResolutionLoading(false)}
               />
             )}
           </div>
