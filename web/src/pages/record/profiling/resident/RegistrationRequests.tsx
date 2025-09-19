@@ -36,8 +36,6 @@ export default function RegistrationRequests() {
   const totalCount = requests?.count || 0
   const totalPages = Math.ceil(totalCount / pageSize)
 
-  console.log("requestlist:", requestList)
-
   const sidebarItems = [
     {
       id: "individual",
@@ -69,8 +67,6 @@ export default function RegistrationRequests() {
   // ----------------- HANDLERS --------------------
   const formatRequestList = React.useCallback(() => {
     const formatted = requestList.map((request: any) => {
-      console.log("mapped request:", request)
-      console.log("selected request type:", selectedRequestType)
       if(selectedRequestType === "individual") {
         const personal = request.compositions[0] 
         return {
@@ -104,8 +100,6 @@ export default function RegistrationRequests() {
 
     return formatted
   }, [requestList])
-
-  console.log("formatted:", formatRequestList())
 
   return (
     // ----------------- RENDER --------------------

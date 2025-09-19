@@ -84,7 +84,6 @@ export const ARDocTemplate = ({
     const files = Array.from(e.target.files || []);
     try {
       const publicUrl = await handleImageUpload(files);
-      console.log(publicUrl)
       if(publicUrl){
         updateTemplate({
           data: {
