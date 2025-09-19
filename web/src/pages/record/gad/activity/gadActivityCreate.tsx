@@ -2,6 +2,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import GADActivityFormSchema from "@/form-schema/gad-activity-schema";
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
@@ -12,15 +13,6 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from "@/context/AuthContext";
 import { Activity, Users, MapPin, Calendar } from "lucide-react";
 
-// GAD Activity Form Schema
-const GADActivityFormSchema = z.object({
-  activityTitle: z.string().min(1, "Activity title is required"),
-  activityDate: z.string().min(1, "Activity date is required"),
-  activityTime: z.string().min(1, "Activity time is required"),
-  venue: z.string().min(1, "Venue is required"),
-  description: z.string().min(1, "Description is required"),
-  expectedParticipants: z.string().min(1, "Expected participants is required"),
-});
 
 type GADActivityFormData = z.infer<typeof GADActivityFormSchema>;
 

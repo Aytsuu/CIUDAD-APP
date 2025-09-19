@@ -6,7 +6,7 @@ import { updateAnnualDevPlan } from "../restful-api/annualPutAPI";
 export interface BudgetItem {
     gdb_name: string;
     gdb_pax: string;
-    gdb_price: string;
+    gdb_amount: string;
 }
 
 export interface AnnualDevPlanFormData {
@@ -33,7 +33,13 @@ export const useCreateAnnualDevPlan = () => {
                 dev_activity: restFormData.dev_activity || null, // Keep as JSON string
                 dev_res_person: JSON.stringify(resPersons && resPersons.length ? resPersons : (restFormData.dev_res_person ? [restFormData.dev_res_person] : [])),
                 dev_indicator: JSON.stringify(restFormData.dev_indicator ? [restFormData.dev_indicator] : []),
-                dev_budget_items: JSON.stringify(budgetItems),
+                dev_budget_items: JSON.stringify(
+                    budgetItems.map((item) => ({
+                        name: item.gdb_name,
+                        pax: item.gdb_pax,
+                        amount: Number(item.gdb_amount || "0"),
+                    }))
+                ),
                 staff: staff || null,
             };
 
@@ -61,7 +67,13 @@ export const useUpdateAnnualDevPlan = () => {
             const payload = {
                 ...restFormData,
                 staff: staff || null,
-                budgets: budgetItems,
+                dev_budget_items: JSON.stringify(
+                    budgetItems.map((item) => ({
+                        name: item.gdb_name,
+                        pax: item.gdb_pax,
+                        amount: Number(item.gdb_amount || "0"),
+                    }))
+                ),
             };
             return await updateAnnualDevPlan(devId, payload);
         },

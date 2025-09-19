@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getSummonDates, getSummonTimeSlots } from "../restful-api/SummonGetApi.";
+import { getSummonDates, getSummonTimeSlots, getCaseTracking, getSummonScheduleList } from "../restful-api/SummonGetApi";
 
 export type SummonDates = {
     sd_id: number;
@@ -18,7 +18,6 @@ export const useGetSummonDates = () => {
 export type SummonTimeSlots = {
     st_id?: number;
     st_start_time: string;
-    st_end_time: string;
     sd_id?: number;
     st_is_booked?: boolean;
 }
@@ -29,4 +28,81 @@ export const useGetSummonTimeSlots = (sd_id: number) => {
         queryFn: () => getSummonTimeSlots(sd_id),
         staleTime: 5000
     })
+}
+
+export type CaseStep =  {
+  id: number;
+  title: string;
+  description: string;
+  status: "pending" | "accepted" | "rejected" | "paid" | "unpaid";
+  display_status: string;
+  icon: React.ReactNode;
+  details?: string;
+}
+
+
+export type ServiceChargeDecision = {
+  scd_decision_date?: string;
+  scd_reason?: string;
+};
+
+export type ServiceChargePayment = {
+  spay_id?: number;
+  spay_status?: string;
+  spay_due_date?: string;
+  spay_date_paid?: string;
+  amount?: number;
+  purpose?: string;
+};
+
+export type SummonSchedule = {
+  ss_id?: number;
+  ss_mediation_level?: string;
+  ss_is_rescheduled?: boolean;
+  ss_reason?: string;
+  date?: string;
+  time?: string;
+};
+
+export type CaseTrackingData = {
+  sr_id: string;
+  sr_code?: string;
+  sr_type?: string;
+  sr_req_date: string;
+  sr_req_status: string;
+  sr_case_status: string;
+  sr_date_marked?: string;
+  decision?: ServiceChargeDecision;
+  payment?: ServiceChargePayment;
+  schedule?: SummonSchedule;
+  current_step: CaseStep[];
+  progress_percentage: number;
+};
+
+// Hook to fetch case tracking data
+export const useGetCaseTracking = (comp_id: string) => {
+  return useQuery<CaseTrackingData>({
+    queryKey: ['caseTracking', comp_id],
+    queryFn: () => getCaseTracking(comp_id),
+    staleTime: 5000,
+    enabled: !!comp_id, // Only run query if comp_id is provided
+  });
+}
+
+export type ScheduleList = {
+    ss_id: string;
+    ss_mediation_level: string;
+    ss_is_rescheduled: boolean;
+    ss_reason: string;
+    hearing_date: string;
+    hearing_time: string;
+}
+
+export const useGetScheduleList = (sr_id: string) => {
+     return useQuery<ScheduleList[]>({
+        queryKey: ['schedList', sr_id],
+        queryFn: () => getSummonScheduleList(sr_id),
+        enabled: !!sr_id, 
+        staleTime: 5000,
+    });
 }

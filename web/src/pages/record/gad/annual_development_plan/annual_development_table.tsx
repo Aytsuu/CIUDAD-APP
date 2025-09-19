@@ -1,4 +1,4 @@
-function AnnaualDevelopmentPlanTable(){
+function AnnuallDevelopmentPlanTable(){
     return(
         <div className="bg-snow w-full h-full">
             <div className="flex flex-col gap-3 mb-4">
@@ -6,7 +6,7 @@ function AnnaualDevelopmentPlanTable(){
                     <div>Annual Development Plan</div>
                 </h1>
                 <p className="text-xs sm:text-sm text-darkGray">
-                    Plan, monitor, and achieve your annual development goals with structured strategies and progress tracking.
+                    Plan, monitor, and achieve your annual development goals with structured strategies and progress tracking.sss
                 </p>
             </div>
             <hr className="border-gray mb-5 sm:mb-4" />   
@@ -14,4 +14,4 @@ function AnnaualDevelopmentPlanTable(){
     )
 }
 
-export default AnnaualDevelopmentPlanTable
+export default AnnuallDevelopmentPlanTable

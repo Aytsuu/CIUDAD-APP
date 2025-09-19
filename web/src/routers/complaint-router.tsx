@@ -3,7 +3,7 @@ import { ComplaintForm } from "@/pages/record/complaint/complaint-report/FormCom
 import { ComplaintViewRecord } from "@/pages/record/complaint/ComplaintReportRecord";
 import ArchiveComplaints from "@/pages/record/complaint/complaint-archive/ArchiveComplaint";
 import ComplaintRequest from "@/pages/record/complaint/complaint-request/ComplaintRequest";
-import ComplaintRejected from "@/pages/record/complaint/complain-rejected/ComplaintRejected";
+// import ComplaintRejected from "@/pages/record/complaint/complain-rejected/ComplaintRejected";
 
 export const complaint_router = [
   {
@@ -26,8 +26,8 @@ export const complaint_router = [
     path: "complaint/request",
     element: <ComplaintRequest />,
   },
-  {
-    path: "complaint/request/rejected",
-    element: <ComplaintRejected />,
-  },
+  // {
+  //   path: "complaint/request/rejected",
+  //   element: <ComplaintRejected />,
+  // },
 ];

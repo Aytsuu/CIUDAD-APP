@@ -23,10 +23,6 @@ interface BaseMenuItem {
 // Menu items with unlimited nesting support
 const barangayItems: BaseMenuItem[] = [
   {
-    title: "Calendar",
-    url: "/waste-calendar-scheduling",
-  },
-  {
     title: "Report",
     url: "/",
     items: [
@@ -54,13 +50,17 @@ const barangayItems: BaseMenuItem[] = [
     ]
   },
   {
+    title: "Donation",
+    url: "/donation-record",
+  },
+  {
     title: "GAD",
     url: "/",
     items: [
+      { title: "Activity", url: "/gad-activity"},
       { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
       { title: "Project Proposal", url: "/gad-project-proposal"},
       { title: "Annual Development Plan", url: "/gad-annual-development-plan"},
-      { title: "Activity", url: "/gad-activity"},
     ],
   },
   {
@@ -85,8 +85,8 @@ const barangayItems: BaseMenuItem[] = [
         url: "/treasurer-income-expense-main",
       },
       {
-        title: "Income & Disbursement",
-        url: "/treasurer-income-and-disbursement",
+        title: "Disbursement",
+        url: "/treasurer-disbursement",
       },
       {
         title: "Payment Request",
@@ -108,24 +108,21 @@ const barangayItems: BaseMenuItem[] = [
     items: [
       { title: "Certifications", url: "record/clearances/certification" },
       { title: "Business Permits", url: "record/clearances/businesspermit" },
+      { title: "Service Charge", url: "record/clearances/servicecharge" },
       { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
+      
+      
     ],
   },
-  {
-    title: "Donation",
-    url: "/donation-record",
-  },
-  {
-    title: "Illegal Dumping Reports",
-    url: "/waste-illegaldumping-report",
-  },
-  {
-    title: "Garbage Pickup Request",
-    url: "/garbage-pickup-request"
-  },
-  {
-    title: "Waste Personnel & Collection Vehicle",
-    url: "/waste-personnel",
+    {
+    title: "Waste",
+    url: "/",
+    items: [
+      { title: "Waste Personnel & Collection Vehicle", url: "/waste-personnel"},
+      { title: "Calendar", url: "/waste-calendar-scheduling"},
+      { title: "Illegal Dumping Reports", url: "/waste-illegaldumping-report"},
+      { title: "Garbage Pickup Request", url: "/garbage-pickup-request"},
+    ],
   },
   {
     title: "Announcement",

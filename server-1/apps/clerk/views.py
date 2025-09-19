@@ -1,14 +1,11 @@
 from rest_framework import generics
-from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view
-from django.db.models import Prefetch, F
+from django.db.models import Prefetch
 from django.core.exceptions import FieldError
 from django.utils import timezone
 from rest_framework.permissions import AllowAny
-import uuid
 import logging
 import traceback
 from .serializers import *
@@ -25,6 +22,9 @@ from .models import (
     Business,
     ServiceChargeRequest,
 )
+from rest_framework.generics import RetrieveAPIView
+from django.http import Http404 
+from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 
@@ -158,18 +158,18 @@ logger = logging.getLogger(__name__)
 #             return Response(serializer.data, status=status.HTTP_200_OK)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# class UpdateServiceChargeRequestView(generics.UpdateAPIView):
-#     serializer_class = ServiceChargeRequestSerializer
-#     queryset = ServiceChargeRequest.objects.all()
-#     lookup_field = 'sr_id'
+class UpdateServiceChargeRequestView(generics.UpdateAPIView):
+    serializer_class = ServiceChargeRequestSerializer
+    queryset = ServiceChargeRequest.objects.all()
+    lookup_field = 'sr_id'
 
-#     def update(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         serializer = self.get_serializer(instance, data=request.data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 # class ServiceChargeRequestFileView(generics.ListCreateAPIView):
 #     serializer_class = ServiceChargeRequestFileSerializer
@@ -218,6 +218,77 @@ class SummonRequestRejectedListView(generics.ListAPIView):
         )
         return queryset
     
+class SummonRequestAcceptedListView(generics.ListAPIView):
+    serializer_class = SummonRequestAcceptedListSerializer
+    
+    def get_queryset(self):
+        queryset = ServiceChargeRequest.objects.filter(
+            sr_req_status__iexact='Accepted',
+            sr_type='Summon'
+        ).select_related('comp_id').prefetch_related(
+            'servicechargedecision',  
+            'comp_id__complaintcomplainant_set__cpnt',  
+            'comp_id__complaintaccused_set__acsd' 
+        )
+        return queryset
+    
+class SummonCaseListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = SummonCaseListSerializer
+
+    def get_queryset(self):
+        queryset = ServiceChargeRequest.objects.filter(
+            sr_type="Summon",
+            servicechargepaymentrequest__spay_status="Paid"
+        ).select_related(
+            'comp_id'
+        ).prefetch_related(
+            Prefetch('comp_id__complaintcomplainant_set__cpnt'),
+            Prefetch('comp_id__complaintaccused_set__acsd'),
+            'servicechargedecision',
+            'servicechargepaymentrequest'
+        ).distinct()
+        
+        return queryset.order_by('sr_code')
+
+
+class ServiceChargeRequestDetailView(RetrieveAPIView):
+    serializer_class = ServiceChargeRequestDetailSerializer
+    queryset = ServiceChargeRequest.objects.all()
+    lookup_field = 'sr_id' 
+
+class SummonScheduleByServiceRequestView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = SummonScheduleDetailSerializer
+    
+    def get_queryset(self):
+        sr_id = self.kwargs['sr_id']
+        return SummonSchedule.objects.filter(
+            sr_id=sr_id
+        ).select_related(
+            'sr_id',
+            'sd_id',
+            'st_id'
+        ).order_by('sd_id__sd_date', 'st_id__st_start_time')
+
+class SummonScheduleCreateView(generics.ListCreateAPIView):
+    serializer_class = SummonScheduleSerializer
+    queryset = SummonSchedule.objects.all()
+    
+class UpdateSummonScheduleView(generics.UpdateAPIView):
+    serializer_class = SummonScheduleSerializer
+    queryset = SummonSchedule.objects.all()
+    lookup_field = 'ss_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    
 class ServiceChargePaymentRequestView(generics.ListCreateAPIView):
     serializer_class = ServiceChargePaymentRequestSerializer
     queryset = ServiceChargePaymentRequest.objects.all()
@@ -229,11 +300,43 @@ class UpdateSummonRequestView(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        
+        # Check if status is being updated to "Paid" and sr_code needs to be generated
+        if (request.data.get('status') == 'Paid' or 
+            request.data.get('sr_req_status') == 'Paid') and not instance.sr_code:
+            
+            # Generate sr_code using the logic: 0000-25, 0001-25, etc.
+            sr_count = ServiceChargeRequest.objects.count() + 1
+            year_suffix = timezone.now().year % 100
+            sr_code = f"{sr_count:04d}-{year_suffix:02d}"
+            
+            # Add sr_code to the request data
+            request.data['sr_code'] = sr_code
+            
+            logger.info(f"Generated sr_code: {sr_code} for ServiceChargeRequest: {instance.sr_id}")
+        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class SummonSuppDocView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = SummonSuppDocCreateSerializer
+    queryset = SummonSuppDoc.objects.all()
+
+    
+class SummonSuppDocRetrieveView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = SummonSuppDocViewSieralizer
+
+    def get_queryset(self):
+        ss_id = self.kwargs.get('ss_id')
+        if ss_id:
+            # Use the exact field name from your model
+            return SummonSuppDoc.objects.filter(ss_id=ss_id)
+        return SummonSuppDoc.objects.all()
     
 
 class ServiceChargeDecisionView(generics.ListCreateAPIView):
@@ -274,14 +377,47 @@ class SummonTimeAvailabilityByDateView(generics.ListAPIView):
             queryset = queryset.filter(sd_id=sd_id)
         return queryset
 
-
 class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
     queryset = SummonTimeAvailability.objects.all()
     serializer_class = SummonTimeAvailabilitySerializer
     lookup_field = 'st_id'
 
 
-# Certificate Views
+class UpdateSummonTimeAvailabilityView(generics.UpdateAPIView):
+    serializer_class = SummonTimeAvailabilitySerializer
+    queryset = SummonTimeAvailability.objects.all()
+    lookup_field = 'st_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CaseTrackingView(generics.RetrieveAPIView):
+    serializer_class = CaseTrackingSerializer
+    def get_object(self):
+        comp_id = self.kwargs.get('comp_id')
+        
+        try:
+            case = ServiceChargeRequest.objects.get(comp_id=comp_id)
+            
+            return case
+        except ServiceChargeRequest.DoesNotExist:
+            raise Http404("Case not found for this complaint")
+    
+    def get(self, request, *args, **kwargs):
+        case = self.get_object()
+        serializer = self.get_serializer(case)
+        return Response(serializer.data)
+
+
+
+# ===========================Certificate Views=====================
+
 class CertificateListView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = ClerkCertificateSerializer
@@ -1087,11 +1223,16 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
     serializer_class = ServiceChargeTreasurerListSerializer
 
     def get_queryset(self):
-        # Pending or Paid service charges for Summon cases; adjust filters as needed
-        qs = ServiceChargeRequest.objects.filter(
+        # Only Summon requests that do NOT have an sr_code yet (null or empty)
+        queryset = ServiceChargeRequest.objects.filter(
             sr_type='Summon'
-        ).select_related('comp_id').prefetch_related(
-            'comp_id__complaintcomplainant_set__cpnt',
-            'comp_id__complaintaccused_set__acsd'
-        ).order_by('-sr_req_date')
-        return qs
+        ).filter(
+            Q(sr_code__isnull=True) | Q(sr_code__exact='')
+        ).select_related(
+            'comp_id',
+            'servicechargepaymentrequest__pr_id'
+        ).prefetch_related(
+            'comp_id__complaintcomplainant_set__cpnt'
+        )
+
+        return queryset.order_by('-sr_req_date')

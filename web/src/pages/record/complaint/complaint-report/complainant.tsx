@@ -241,14 +241,13 @@ export const ComplainantInfo = () => {
         </div>
 
         <div className="space-y-6">
-          {/* Resident Selection - Improved design */}
-          <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg">
-            <div className="space-y-3">
-              <h4 className="font-semibold text-green-700 text-sm flex items-center gap-2">
-                <UserCheck className="h-4 w-4" />
-                Quick Select from Resident Database
-              </h4>
-              <div className="max-w-md">
+          {/* Resident Selection - First in green wrapper */}
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-4">
+              <FormLabel className="font-semibold text-green-700 whitespace-nowrap">
+                Select Resident (Optional):
+              </FormLabel>
+              <div className="flex-1">
                 <ComboboxInput
                   value={
                     selectedResident
@@ -257,8 +256,8 @@ export const ComplainantInfo = () => {
                   }
                   options={formattedResidents}
                   isLoading={isResidentsLoading}
-                  placeholder="Search by Resident ID or Name..."
-                  emptyText="No residents found matching your search."
+                  placeholder="Search by ID or name..."
+                  emptyText="No residents found."
                   onSelect={(displayValue, item) => {
                     if (item) {
                       selectResidentComplainant(item);
@@ -268,23 +267,20 @@ export const ComplainantInfo = () => {
                   valueKey="rp_id"
                   additionalDataKey="cpnt_number"
                   className="w-full"
-                  label=""
+                  label={""}
                 />
               </div>
-              <p className="text-xs text-green-600">
-                💡 Start typing to search existing residents, or leave blank to enter information manually.
-              </p>
             </div>
           </div>
 
-          {/* Show resident info if linked - Improved layout */}
+          {/* Show resident info if linked */}
           {complainantType === "resident" && currentComplainant?.rp_id && (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2 text-blue-700">
-                  <UserCheck className="h-5 w-5" />
-                  <span className="font-semibold text-base">
-                    Linked to Resident Profile #{currentComplainant.rp_id}
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 text-green-700">
+                  <UserCheck className="h-4 w-4" />
+                  <span className="font-medium">
+                    Linked to Resident Profile
                   </span>
                 </div>
                 <Button
@@ -292,68 +288,55 @@ export const ComplainantInfo = () => {
                   variant="outline"
                   size="sm"
                   onClick={switchToManualEntry}
-                  className="text-red-600 border-red-300 hover:bg-red-50 text-xs font-medium"
+                  className="text-red-600 border-red-300 hover:bg-red-50 text-xs"
                 >
                   Switch to Manual Entry
                 </Button>
               </div>
 
-              {/* Display resident information in a clean grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-white p-3 rounded border">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Resident ID
+              {/* Display resident information in a read-only format */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-gray-700">
+                    Resident ID:
                   </span>
-                  <p className="text-sm font-medium text-gray-900 mt-1">
-                    {currentComplainant.rp_id}
-                  </p>
+                  <p className="text-gray-900">{currentComplainant.rp_id}</p>
                 </div>
-                <div className="bg-white p-3 rounded border">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Full Name
-                  </span>
-                  <p className="text-sm font-medium text-gray-900 mt-1">
+                <div>
+                  <span className="font-medium text-gray-700">Full Name:</span>
+                  <p className="text-gray-900">
                     {currentComplainant.cpnt_name}
                   </p>
                 </div>
-                <div className="bg-white p-3 rounded border">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Age
-                  </span>
-                  <p className="text-sm font-medium text-gray-900 mt-1">
-                    {currentComplainant.cpnt_age} years old
+                <div>
+                  <span className="font-medium text-gray-700">Age:</span>
+                  <p className="text-gray-900">{currentComplainant.cpnt_age}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Gender:</span>
+                  <p className="text-gray-900">
+                    {currentComplainant.genderInput ||
+                      currentComplainant.cpnt_gender}
                   </p>
                 </div>
-                <div className="bg-white p-3 rounded border">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Gender
-                  </span>
-                  <p className="text-sm font-medium text-gray-900 mt-1">
-                    {currentComplainant.genderInput || currentComplainant.cpnt_gender}
+                <div>
+                  <span className="font-medium text-gray-700">Contact:</span>
+                  <p className="text-gray-900">
+                    {currentComplainant.cpnt_number}
                   </p>
                 </div>
-                <div className="bg-white p-3 rounded border">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Contact Number
+                <div>
+                  <span className="font-medium text-gray-700">
+                    Relationship:
                   </span>
-                  <p className="text-sm font-medium text-gray-900 mt-1">
-                    {currentComplainant.cpnt_number || 'Not provided'}
+                  <p className="text-gray-900">
+                    {currentComplainant.cpnt_relation_to_respondent}
                   </p>
                 </div>
-                <div className="bg-white p-3 rounded border">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Relationship
-                  </span>
-                  <p className="text-sm font-medium text-gray-900 mt-1">
-                    {currentComplainant.cpnt_relation_to_respondent || 'Not specified'}
-                  </p>
-                </div>
-                <div className="bg-white p-3 rounded border md:col-span-2 lg:col-span-3">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Address
-                  </span>
-                  <p className="text-sm font-medium text-gray-900 mt-1">
-                    {currentComplainant.cpnt_address || 'Not provided'}
+                <div className="md:col-span-2">
+                  <span className="font-medium text-gray-700">Address:</span>
+                  <p className="text-gray-900">
+                    {currentComplainant.cpnt_address}
                   </p>
                 </div>
               </div>
@@ -368,240 +351,185 @@ export const ComplainantInfo = () => {
 
           {/* For resident type, show only relationship field if needed */}
           {complainantType === "resident" && currentComplainant?.rp_id ? (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm text-yellow-700 mb-3">
-                📝 Please specify the relationship to the respondent for this complaint:
-              </p>
+            <FormInput
+              control={control}
+              name={`complainant.${activeTab}.cpnt_relation_to_respondent`}
+              label="Relationship to Respondent *"
+              placeholder="e.g. Neighbor, Friend, Relative"
+            />
+          ) : (
+            /* For manual entry, show all fields */
+            <>
+              <FormInput
+                control={control}
+                name={`complainant.${activeTab}.cpnt_name`}
+                label="Full Name *"
+                placeholder="Enter full name"
+                className="max-w-full"
+              />
+
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={control}
+                  name={`complainant.${activeTab}.cpnt_age`}
+                  rules={{ validate: validateAge }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-black/50">
+                        Age *
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="150"
+                          placeholder="Age"
+                          {...field}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "" || /^\d+$/.test(value)) {
+                              field.onChange(value);
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div>
+                  <FormLabel className="font-semibold text-black/50">
+                    Gender *
+                  </FormLabel>
+                  <div className="flex mt-2">
+                    <div className="flex-shrink-0 w-32">
+                      <FormField
+                        control={control}
+                        name={`complainant.${activeTab}.cpnt_gender`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <SelectLayout
+                                placeholder="Select gender"
+                                label=""
+                                options={genderOptions}
+                                value={field.value || ""}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                  if (value === "Other") {
+                                    setValue(
+                                      `complainant.${activeTab}.genderInput`,
+                                      ""
+                                    );
+                                  } else {
+                                    setValue(
+                                      `complainant.${activeTab}.genderInput`,
+                                      value
+                                    );
+                                  }
+                                }}
+                                className="h-9"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="flex-1 ml-2">
+                      <FormInput
+                        control={control}
+                        name={`complainant.${activeTab}.genderInput`}
+                        placeholder={
+                          selectedGender === "Other"
+                            ? "Enter gender"
+                            : "Auto-filled from selection"
+                        }
+                        readOnly={selectedGender !== "Other"}
+                        className={`${
+                          selectedGender !== "Other"
+                            ? "bg-gray-100 cursor-not-allowed"
+                            : ""
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <FormInput
+                  control={control}
+                  name={`complainant.${activeTab}.cpnt_number`}
+                  label="Contact Number *"
+                  placeholder="e.g. +63 912 345 6789"
+                  type="tel"
+                />
+              </div>
+
               <FormInput
                 control={control}
                 name={`complainant.${activeTab}.cpnt_relation_to_respondent`}
                 label="Relationship to Respondent *"
-                placeholder="e.g. Neighbor, Friend, Relative, Self"
-                className="bg-white"
+                placeholder="e.g. Neighbor, Friend, Relative"
               />
-            </div>
-          ) : (
-            /* For manual entry, show all fields */
-            <div className="space-y-6">
-              {/* Personal Information Section */}
-              <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-gray-700 border-b border-gray-200 pb-2">
-                  Personal Information
-                </h4>
-                
-                <FormInput
-                  control={control}
-                  name={`complainant.${activeTab}.cpnt_name`}
-                  label="Full Name *"
-                  placeholder="Enter complete name (First Middle Last)"
-                  className="max-w-full"
-                />
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={control}
-                    name={`complainant.${activeTab}.cpnt_age`}
-                    rules={{ validate: validateAge }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-semibold text-black/50">
-                          Age *
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="150"
-                            placeholder="Age"
-                            {...field}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (value === "" || /^\d+$/.test(value)) {
-                                field.onChange(value);
-                              }
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              {/* Address Section */}
+              <div className="space-y-4 pt-4 border-t border-gray-200">
+                <div className="space-y-3">
+                  <FormLabel className="font-semibold text-black/50">
+                    Complete Address (Street / Barangay / Municipality /
+                    Province) *
+                  </FormLabel>
 
-                  <div>
-                    <FormLabel className="font-semibold text-black/50">
-                      Gender *
-                    </FormLabel>
-                    <div className="flex mt-2 gap-2">
-                      <div className="flex-shrink-0 w-32">
+                  <div className="flex flex-col md:flex-row items-stretch border-2 border-gray-300 rounded-lg p-2 bg-white gap-2 md:gap-0">
+                    {[
+                      { key: "street", placeholder: "Street/Sitio" },
+                      { key: "barangay", placeholder: "Barangay" },
+                      { key: "city", placeholder: "Municipality/City" },
+                      { key: "province", placeholder: "Province" },
+                    ].map(({ key, placeholder }, i) => (
+                      <div key={key} className="flex-1 flex items-center">
                         <FormField
                           control={control}
-                          name={`complainant.${activeTab}.cpnt_gender`}
+                          name={`complainant.${activeTab}.address.${key}`}
                           render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="w-full">
                               <FormControl>
-                                <SelectLayout
-                                  placeholder="Select"
-                                  label=""
-                                  options={genderOptions}
-                                  value={field.value || ""}
-                                  onChange={(value) => {
-                                    field.onChange(value);
-                                    if (value === "Other") {
-                                      setValue(
-                                        `complainant.${activeTab}.genderInput`,
-                                        ""
-                                      );
-                                    } else {
-                                      setValue(
-                                        `complainant.${activeTab}.genderInput`,
-                                        value
-                                      );
-                                    }
-                                  }}
-                                  className="h-9"
+                                <Input
+                                  {...field}
+                                  placeholder={placeholder}
+                                  className="border-none shadow-none px-2 h-10 md:h-8"
                                 />
                               </FormControl>
-                              <FormMessage />
                             </FormItem>
                           )}
                         />
+                        {i < 3 && (
+                          <span className="hidden md:inline mx-2 text-gray-400 font-medium">
+                            /
+                          </span>
+                        )}
                       </div>
+                    ))}
+                  </div>
 
-                      <div className="flex-1">
-                        <FormInput
+                  {/* Address field validation messages */}
+                  <div className="space-y-1">
+                    {["street", "barangay", "city", "province"].map(
+                      (fieldKey) => (
+                        <FormField
+                          key={fieldKey}
                           control={control}
-                          name={`complainant.${activeTab}.genderInput`}
-                          placeholder={
-                            selectedGender === "Other"
-                              ? "Please specify"
-                              : "Auto-filled from selection"
-                          }
-                          readOnly={selectedGender !== "Other"}
-                          className={`${
-                            selectedGender !== "Other"
-                              ? "bg-gray-100 cursor-not-allowed text-gray-600"
-                              : ""
-                          }`}
+                          name={`complainant.${activeTab}.address.${fieldKey}`}
+                          render={() => <FormMessage />}
                         />
-                      </div>
-                    </div>
-                  </div>
-
-                  <FormInput
-                    control={control}
-                    name={`complainant.${activeTab}.cpnt_number`}
-                    label="Contact Number *"
-                    placeholder="e.g. +63 912 345 6789"
-                    type="tel"
-                  />
-                </div>
-
-                <FormInput
-                  control={control}
-                  name={`complainant.${activeTab}.cpnt_relation_to_respondent`}
-                  label="Relationship to Respondent *"
-                  placeholder="e.g. Neighbor, Friend, Relative, Self"
-                />
-              </div>
-
-              {/* Address Section - Improved design */}
-              <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-gray-700 border-b border-gray-200 pb-2">
-                  Address Information
-                </h4>
-                
-                <div className="space-y-3">
-                  <FormLabel className="font-semibold text-black/50">
-                    Complete Address *
-                  </FormLabel>
-                  <p className="text-xs text-gray-500">
-                    Please provide the complete address in the format: Street/Sitio, Barangay, Municipality/City, Province
-                  </p>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-gray-600">Street/Sitio</label>
-                      <FormField
-                        control={control}
-                        name={`complainant.${activeTab}.address.street`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder="Street/Sitio"
-                                className="bg-white border-gray-300"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-gray-600">Barangay</label>
-                      <FormField
-                        control={control}
-                        name={`complainant.${activeTab}.address.barangay`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder="Barangay"
-                                className="bg-white border-gray-300"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-gray-600">Municipality/City</label>
-                      <FormField
-                        control={control}
-                        name={`complainant.${activeTab}.address.city`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder="Municipality/City"
-                                className="bg-white border-gray-300"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-gray-600">Province</label>
-                      <FormField
-                        control={control}
-                        name={`complainant.${activeTab}.address.province`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder="Province"
-                                className="bg-white border-gray-300"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                      )
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>

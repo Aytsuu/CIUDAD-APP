@@ -1,150 +1,117 @@
-import { Button } from "@/components/ui/button/button"
-import { FileInput, CircleAlert, FileText, Edit, Trash2 } from "lucide-react"
-import DialogLayout from "@/components/ui/dialog/dialog-layout"
-import SummonSuppDocForm from "./summon-supp-doc-form"
-import { useState } from "react"
-import { useGetSuppDoc } from "./queries/summonFetchQueries"
-import { formatTimestamp } from "@/helpers/timestampformatter"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useDeleteSuppDoc } from "./queries/summonDeleteQueries"
-import { ConfirmationModal } from "@/components/ui/confirmation-modal"
-import SummonSuppDocEditForm from "./summon-supp-doc-edit"
+import { FolderOpen, FileText, Calendar } from 'lucide-react';
+import { useGetSummonSuppDoc } from './queries/summonFetchQueries';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatTimestamp } from '@/helpers/timestampformatter';
+import { useState } from 'react';
 
-export default function SummonSuppDocs({ ca_id }: { ca_id: string }) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingRowId, setEditingRowId] = useState<number | null>(null)
+export default function SummonSuppDocs({ ss_id }: { ss_id: string }) {
+    const { data: suppDocs, isLoading } = useGetSummonSuppDoc(ss_id);
 
-  const { data: suppDocs = [], isLoading } = useGetSuppDoc(ca_id);
-  const { mutate: deleteSuppDoc} = useDeleteSuppDoc()
-  const hasDocuments = suppDocs.length > 0
-
-  const handleDelete = (csd_id: string) => {
-    deleteSuppDoc(csd_id)
-  }
-
-  if (isLoading) {
-    return (
-      <div className="p-4 border rounded-lg">
-        <Skeleton className="h-8 w-1/3 mb-4" />
-        <div className="space-y-3">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </div>
-        <Skeleton className="h-16 w-full mt-4" />
-      </div>
-    )
-  }
-
-  return (
-    <div>
-      {/* Header with Title, Description and Add Button */}
-      <div className="flex justify-end items-start mb-2">
-        <DialogLayout
-          trigger={
-            <Button size="default">
-              <FileInput className="mr-2 h-4 w-4" />
-              Add Supporting Document
-            </Button>
-          }
-          title="Add Supporting Document"
-          description="Upload relevant photos to support this case activity."
-          mainContent={
-              <SummonSuppDocForm 
-                // ca_id={ca_id} 
-                // onSuccess={() => setIsDialogOpen(false)} 
-              />}
-          isOpen={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-        />
-      </div>
-
-      {/* Main Content Area */}
-      <div >
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <p>Loading documents...</p>
-          </div>
-        ) : hasDocuments ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-2">
-            {suppDocs.map((doc) => (
-              <div key={doc.csd_id} className="border rounded-lg p-6 hover:bg-gray-50 transition-colors shadow-sm">
-                <div className="flex gap-8">
-                  {/* Document Preview - Made Even Bigger */}
-                  {doc.csd_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                    <div className="flex-shrink-0 w-40 h-40 bg-gray-100 rounded-lg overflow-hidden border">
-                      <img
-                        src={doc.csd_url || "/placeholder.svg"}
-                        alt={doc.csd_name}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                        onClick={() => window.open(doc.csd_url, "_blank")}
-                      />
+    if (isLoading) {
+        return (
+            <div className="w-full space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <Skeleton className="h-7 w-48 mb-2" />
+                        <Skeleton className="h-4 w-32" />
                     </div>
-                  ) : (
-                    <div className="flex-shrink-0 w-40 h-40 bg-gray-100 rounded-lg flex items-center justify-center border">
-                      <FileText className="text-gray-400 w-16 h-16" />
-                    </div>
-                  )}
-
-                  {/* Document Info */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-lg truncate mb-2">{doc.csd_name}</h3>
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                      {doc.csd_description || "No description provided"}
-                    </p>
-                    <p className="text-xs text-gray-400">Uploaded: {formatTimestamp(doc.csd_upload_date)}</p>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex-shrink-0 flex flex-col gap-2">
-                    <DialogLayout
-                        trigger={
-                            <Button variant="outline" size="sm" className="p-2">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                        }
-                        title="Edit Supporting Document"
-                        description="Update relevant supporting document for the case activity."
-                        mainContent={
-                          <SummonSuppDocEditForm
-                            csd_id={doc.csd_id}
-                            csd_url={doc.csd_url}
-                            csd_description = {doc.csd_description}
-                            // onSuccess={() => setEditingRowId(null)}
-                          />
-                        }
-                        isOpen={editingRowId === Number(doc.csd_id)}
-                        onOpenChange={(open) => setEditingRowId(open ? Number(doc.csd_id) : null)}
-                    />
-                    <ConfirmationModal
-                        trigger={
-                          <Button variant="outline"  size="sm" className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        }
-                        title="Delete Confirmation"
-                        description="Would you like to permanently delete this document?"
-                        actionLabel="Confirm"
-                        onClick={() => handleDelete(doc.csd_id)}
-                    />
-                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
-            <CircleAlert className="mb-4 text-gray-400" size={64} />
-            <p className="text-gray-500 text-xl text-center">
-              No supporting documents available for this case activity
-            </p>
-            <p className="text-gray-400 text-sm mt-2 text-center">
-              Use the "Add Supporting Document" button above to upload files
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="space-y-3">
+                            <Skeleton className="aspect-square rounded-xl" />
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-3 w-20" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="mt-[-3rem] w-full">
+            {/* Content Section */}
+            {suppDocs && suppDocs.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                    {suppDocs.map((doc) => (
+                        <DocumentCard
+                            key={doc.ssd_id}
+                            doc={doc}
+                        />
+                    ))}
+                </div>
+            ) : (
+                <EmptyState />
+            )}
+        </div>
+    );
+}
+
+function DocumentCard({ doc }: {
+    doc: {
+        ssd_id: number;
+        ssd_url: string;
+        ssd_name: string;
+        ssd_upload_date: string;
+    };
+}) {
+    const [imageError, setImageError] = useState(false);
+
+    return (
+        <div className="space-y-6 max-h-[calc(90vh-100px)] overflow-y-auto h-full group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            {/* Image Container */}
+            <div className="relative aspect-square bg-gray-50">
+                {!imageError ? (
+                    <img
+                        src={doc.ssd_url || "/placeholder.svg"}
+                        alt={doc.ssd_name}
+                        className="object-cover w-full h-full"
+                        onError={() => setImageError(true)}
+                    />
+                ) : (
+                    <div className="w-full flex items-center justify-center bg-gray-100">
+                        <FileText className="h-12 w-12 text-gray-400" />
+                    </div>
+                )}
+            </div>
+
+            {/* Content */}
+            <div className="p-4 space-y-3">
+                {/* Title and Date */}
+                <div>
+                    <h3 className="font-medium text-gray-900 truncate text-sm" title={doc.ssd_name}>
+                        {doc.ssd_name}
+                    </h3>
+                    <div className="flex items-center text-gray-500 text-xs mt-1">
+                        <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />
+                        <span>{formatTimestamp(doc.ssd_upload_date)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function EmptyState() {
+    return (
+        <div className="flex-1 flex flex-col items-center justify-center px-4">
+            <div className="text-center max-w-md">
+                {/* Icon */}
+                <div className="mx-auto w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center">
+                    <FolderOpen className="w-12 h-12 text-blue-500" />
+                </div>
+                
+                {/* Content */}
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    No Documents Available
+                </h3>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                    There are no supporting documents for this summon.
+                </p>
+            </div>
+        </div>
+    );
 }

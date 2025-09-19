@@ -41,8 +41,8 @@ function CalendarPage() {
       name: "Waste Collection",
       data: wasteCollectionData,
       columns: wasteColColumns,
-      titleAccessor: "collectors_names",
-      dateAccessor: "wc_date",
+      titleAccessor: "sitio_name",
+      dateAccessor: "wc_day",
       timeAccessor: "wc_time",
       defaultColor: "#10b981", // emerald
     },

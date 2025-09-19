@@ -54,8 +54,7 @@ class KYCVerificationProcessor:
                 logger.error('Extracted Info does not match personal info')
                 return False
 
-            key = f"{user_data['lname']}{user_data['fname']}" + \
-                  (f"{user_data['mname']}" if 'mname' in user_data else '')
+            key = f"{user_data['lname']}{user_data['fname']}"
             
             cache.set(key, id_face, timeout=300)
             logger.info('info matched')

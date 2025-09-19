@@ -10,10 +10,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GADAnnualDevPlanCreateSchema, type GADAnnualDevPlanCreateInput } from "@/form-schema/gad-annual-dev-plan-create-shema";
 import { useAuth } from "@/context/AuthContext";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const getClientOptions = () => (
   <>
-    <option value="">Select client</option>
     <option value="Women">Women</option>
     <option value="LGBTQIA+">LGBTQIA+</option>
     <option value="Senior">Senior</option>
@@ -45,11 +45,11 @@ export default function AnnualDevelopmentPlanCreate() {
       staff: staffId || "",
     }
   });
-  const [budgetItems, setBudgetItems] = useState<{gdb_name: string, gdb_pax: string, gdb_price: string}[]>([]);
+  const [budgetItems, setBudgetItems] = useState<{gdb_name: string, gdb_pax: string, gdb_amount: string}[]>([]);
   const [currentBudgetItem, setCurrentBudgetItem] = useState({
     gdb_name: "",
     gdb_pax: "",
-    gdb_price: "",
+    gdb_amount: "",
   });
 
   const [staffOptions, setStaffOptions] = useState<{ staff_id: string; full_name: string; position: string }[]>([]);
@@ -89,21 +89,21 @@ export default function AnnualDevelopmentPlanCreate() {
   };
 
   const addBudgetItem = () => {
-    if (currentBudgetItem.gdb_name && currentBudgetItem.gdb_pax && currentBudgetItem.gdb_price) {
+    if (currentBudgetItem.gdb_name && currentBudgetItem.gdb_pax && currentBudgetItem.gdb_amount) {
       setBudgetItems(prev => [...prev, currentBudgetItem]);
       // Calculate total budget: sum of (pax * price) for all items
       const totalBudget = budgetItems.reduce((sum, item) => {
         const pax = parseFloat(item.gdb_pax) || 0;
-        const price = parseFloat(item.gdb_price) || 0;
-        return sum + (pax * price);
-      }, 0) + (parseFloat(currentBudgetItem.gdb_pax) || 0) * (parseFloat(currentBudgetItem.gdb_price) || 0);
+        const amount = parseFloat(item.gdb_amount) || 0;
+        return sum + (pax * amount);
+      }, 0) + (parseFloat(currentBudgetItem.gdb_pax) || 0) * (parseFloat(currentBudgetItem.gdb_amount) || 0);
       form.setValue("dev_gad_budget", totalBudget.toString());
-      setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_price: "" });
+      setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_amount: "" });
     }
   };
 
   const clearBudgetItem = () => {
-    setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_price: "" });
+    setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_amount: "" });
   };
 
   const removeBudgetItem = (index: number) => {
@@ -112,8 +112,8 @@ export default function AnnualDevelopmentPlanCreate() {
       // Recalculate total budget after removal
       const totalBudget = newItems.reduce((sum, item) => {
         const pax = parseFloat(item.gdb_pax) || 0;
-        const price = parseFloat(item.gdb_price) || 0;
-        return sum + (pax * price);
+        const amount = parseFloat(item.gdb_amount) || 0;
+        return sum + (pax * amount);
       }, 0);
       form.setValue("dev_gad_budget", totalBudget.toString());
       return newItems;
@@ -251,10 +251,19 @@ export default function AnnualDevelopmentPlanCreate() {
               {form.formState.errors.dev_issue && (
                 <p className="text-red-500 text-sm">{form.formState.errors.dev_issue.message}</p>
               )}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  checked={form.watch("dev_mandated") || false}
+                  onCheckedChange={(checked) => {
+                    form.setValue("dev_mandated", checked as boolean);
+                  }}
+                />
+                <label className="text-sm font-medium text-gray-700">Mandated</label>
+              </div>
+            </div>
             </div>
           </div>
-        </div>
-
+       
         {/* Program Details Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-200">Program Details</h2>
@@ -477,14 +486,14 @@ export default function AnnualDevelopmentPlanCreate() {
                       min="0"
                       step="1"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                    />1
+                    />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Price (₱)</label>
                     <input
                       type="number"
-                      name="gdb_price"
-                      value={currentBudgetItem.gdb_price}
+                      name="gdb_amount"
+                      value={currentBudgetItem.gdb_amount}
                       onChange={handleBudgetItemChange}
                       placeholder="0.00"
                       min="0"
@@ -535,8 +544,8 @@ export default function AnnualDevelopmentPlanCreate() {
                   <div className="space-y-3">
                     {budgetItems.map((item, index) => {
                       const pax = parseFloat(item.gdb_pax) || 0;
-                      const price = parseFloat(item.gdb_price) || 0;
-                      const total = pax * price;
+                      const amount = parseFloat(item.gdb_amount) || 0;
+                      const total = pax * amount;
                       return (
                         <div key={index} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                           <div className="flex justify-between items-start mb-2">
@@ -554,7 +563,7 @@ export default function AnnualDevelopmentPlanCreate() {
                               </button>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600">Quantity: {item.gdb_pax} | Price: ₱{price.toFixed(2)}</p>
+                          <p className="text-sm text-gray-600">Quantity: {item.gdb_pax} | Price: ₱{amount.toFixed(2)}</p>
                         </div>
                       );
                     })}
@@ -564,8 +573,8 @@ export default function AnnualDevelopmentPlanCreate() {
                         <span className="text-2xl font-bold text-green-600">
                           ₱{budgetItems.reduce((sum, item) => {
                             const pax = parseFloat(item.gdb_pax) || 0;
-                            const price = parseFloat(item.gdb_price) || 0;
-                            return sum + (pax * price);
+                            const amount = parseFloat(item.gdb_amount) || 0;
+                            return sum + (pax * amount);
                           }, 0).toFixed(2)}
                         </span>
                       </div>

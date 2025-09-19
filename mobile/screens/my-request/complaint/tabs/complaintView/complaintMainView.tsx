@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { 
   TouchableOpacity, 
   View, 
@@ -12,7 +12,7 @@ import {
 import PageLayout from "@/screens/_PageLayout";
 import ComplaintDetails from "./complaintDetails";
 import { ComplaintData } from "./types";
-
+import CaseTracking from "./caseTracking";
 
 interface TabButtonProps {
   title: string;
@@ -32,17 +32,15 @@ export default function ComplaintMainView(): JSX.Element {
   // Parse complaint data
   const data: ComplaintData | null = complaint ? JSON.parse(complaint) : null;
 
-  // Tab Button Component
+  // Tab Button Component - Updated to match DriverTasksMain style
   const TabButton: React.FC<TabButtonProps> = ({ title, isActive, onPress }) => (
     <TouchableOpacity
       onPress={onPress}
-      className={`flex-1 py-3 px-4 rounded-lg mx-1 ${
-        isActive ? 'bg-blue-500' : 'bg-gray-100'
+      className={`flex-1 py-4 items-center border-b-2 ${
+        isActive ? "border-blue-500" : "border-transparent"
       }`}
     >
-      <Text className={`font-semibold text-center ${
-        isActive ? 'text-white' : 'text-gray-600'
-      }`}>
+      <Text className={`font-medium ${isActive ? "text-blue-600" : "text-gray-500"}`}>
         {title}
       </Text>
     </TouchableOpacity>
@@ -85,9 +83,9 @@ export default function ComplaintMainView(): JSX.Element {
       headerTitle={<Text className="text-gray-900 font-medium">Complaint View</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1">
-        {/* Tab Navigation */}
-        <View className="bg-white border-b border-gray-200 px-4 py-3">
+      <View className="flex-1 bg-gray-50">
+        {/* Tab Navigation - Updated to match DriverTasksMain style */}
+        <View className="bg-white border-b border-gray-200">
           <View className="flex-row">
             <TabButton
               title="Complaint Details"
@@ -104,12 +102,11 @@ export default function ComplaintMainView(): JSX.Element {
 
         {/* Tab Content */}
         <View className="flex-1">
-            <ComplaintDetails data={data} />
-          {/* {activeTab === 'details' ? (
+          {activeTab === 'details' ? (
             <ComplaintDetails data={data} />
           ) : (
-            <CaseTracking data={data} />
-          )} */}
+            <CaseTracking comp_id = {String(data.comp_id)} isRaised={data.comp_status}/>
+          )}
         </View>
       </View>
     </PageLayout>

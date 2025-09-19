@@ -89,29 +89,29 @@ function GADActivityPage() {
           </div>
         </div>
         
-        <DialogLayout
-          isOpen={isAddDialogOpen}
-          onOpenChange={setIsAddDialogOpen}
-          trigger={
-            <Button onClick={() => setIsAddDialogOpen(true)}>
+          <DialogLayout
+            isOpen={isAddDialogOpen}
+            onOpenChange={setIsAddDialogOpen}
+            trigger={
+              <Button onClick={() => setIsAddDialogOpen(true)}>
               <Plus size={16} className="mr-2" /> Add Activity
-            </Button>
-          }
-          className="max-w-[90%] sm:max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+              </Button>
+            }
+            className="max-w-[90%] sm:max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
           title="Add GAD Activity"
           description="Create a new Gender and Development activity"
-          mainContent={
-            <div className="w-full h-full">
+            mainContent={
+              <div className="w-full h-full">
               <GADActivityForm onSuccess={() => setIsAddDialogOpen(false)} />
-            </div>
-          }
-        />
+              </div>
+            }
+          />
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-        <EventCalendar
-          sources={calendarSources}
-          legendItems={[
+            <EventCalendar
+              sources={calendarSources}
+              legendItems={[
             { label: "GAD Activities", color: "#8b5cf6" },
           ]}
         />

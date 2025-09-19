@@ -9,7 +9,7 @@ import { getComplaintLists } from "../api-operations/queries/ComplaintGetQueries
 import { useRouter } from "expo-router";
 
 export default function ComplaintAccepted() {
-  const { data, isLoading, error } = getComplaintLists("Filed");
+  const { data, isLoading, error } = getComplaintLists();
   const router = useRouter();
 
   if (isLoading)

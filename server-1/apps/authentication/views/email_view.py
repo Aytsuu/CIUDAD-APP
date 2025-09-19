@@ -20,7 +20,7 @@ class SignUpEmailOTPView(APIView):
         otp = generate_otp()
         cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
         
-        send_email(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
+        send_mail(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
         
         return Response({'message': 'OTP sent to email'}, status=status.HTTP_200_OK)                 
             
