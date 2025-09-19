@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, X } from "lucide-react";
+import { ChevronLeft, X, FileText, Scroll } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAnnualDevPlansByYear } from "./restful-api/annualGetAPI";
 import { toast } from "sonner";
@@ -180,7 +180,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                 <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}>PERFORMANCE INDICATOR AND TARGET</th>
                 <th className="px-3 py-2 text-center align-bottom border border-gray-200" colSpan={4}>GAD BUDGET</th>
                 <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}>RESPONSIBLE PERSON</th>
-                <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}></th>
+                <th className="px-3 py-2 text-center align-bottom border border-gray-200" rowSpan={2}>Actions</th>
               </tr>
               <tr className="bg-blue-50 text-blue-900 font-semibold border-b border-blue-100">
                 <td className="bg-sky-100 px-3 py-2 border border-blue-200" colSpan={1}>CLIENT FOCUSED</td>
@@ -346,7 +346,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                       ))}
                     </ul>
                   </td>
-                  <td className="px-3 py-2 align-top border border-gray-200">
+                  <td className="px-3 py-2 align-top border border-gray-200 text-center">
                     {(() => {
                       const proposal = proposalByDevId.get(plan.dev_id);
                       const hasProposal = Boolean(proposal && proposal.gprId);
@@ -357,23 +357,25 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                       }
 
                       return (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 justify-center">
                           {hasProposal && (
                             <Button 
-                              size="sm" 
+                              size="icon" 
                               variant="outline"
+                              title="View Proposal"
                               onClick={() => handleViewProject(proposal)}
                             >
-                              Proposal
+                              <FileText size={16} />
                             </Button>
                           )}
                           {hasResolution && (
                             <Button 
-                              size="sm" 
+                              size="icon" 
                               variant="outline"
+                              title="View Resolution"
                               onClick={() => handleViewResolution(resolutionByGprId.get(proposal.gprId))}
                             >
-                              Resolution
+                              <Scroll size={16} />
                             </Button>
                           )}
                         </div>
