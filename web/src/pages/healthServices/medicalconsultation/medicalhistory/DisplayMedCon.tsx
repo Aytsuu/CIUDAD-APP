@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Stethoscope } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { ConsultationHistoryTable } from "./table-history";
-import { MedicalConsultationHistory } from "../types";
 import CurrentConsultationCard from "./current-medrec";
 import { useConsultationHistory } from "../queries/fetchQueries";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -50,11 +49,11 @@ export default function DisplayMedicalConsultation() {
         staff_details: history.staff_details
           ? {
               rp: {
-                per: {
-                  per_fname: history.staff_details?.rp?.per?.per_fname || "",
-                  per_lname: history.staff_details?.rp?.per?.per_lname || "",
-                  per_mname: history.staff_details?.rp?.per?.per_mname || ""
-                }
+             
+                  per_fname: history.staff_details?.rp?.per_fname || "",
+                  per_lname: history.staff_details?.rp?.per_lname || "",
+                  per_mname: history.staff_details?.rp?.per_mname || ""
+                
               }
             }
           : null,
@@ -67,7 +66,7 @@ export default function DisplayMedicalConsultation() {
             }
           : null
       }))
-      .sort((a: MedicalConsultationHistory, b: MedicalConsultationHistory) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   }, [data]);
 
   const totalCount = data?.count || 0;

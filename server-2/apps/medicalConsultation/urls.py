@@ -16,4 +16,8 @@ urlpatterns=[
     path ('create-medical-consultation-record-step1/', CreateMedicalConsultationView.as_view(), name='create-medical-consultation-record'),
     path ('create-soap-form/', SoapFormSubmissionView.as_view(), name='create-medical-consultation-record-step2'),
     path('create-soap-form/childhealth/', ChildHealthSoapFormSubmissionView.as_view(), name='create-medical-consultation-record-step3'),
+    
+    
+    
+path('combined-health-records/<str:assigned_to>/', CombinedHealthRecordsView.as_view(), name='combined-health-records-assigned'),
 ]

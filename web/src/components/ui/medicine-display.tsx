@@ -243,14 +243,14 @@ export const MedicineDisplay = ({
   const emptyStateColSpan = readonly ? 5 : 7
 
   // Debug logging for troubleshooting
-  console.log('MedicineDisplay Debug:', {
-    medicines: medicines,
-    totalItems: totalItems,
-    totalPages: totalPages,
-    currentPage: currentPage,
-    localSearchQuery: localSearchQuery,
-    isLoading: isLoading
-  });
+  // console.log('MedicineDisplay Debug:', {
+  //   medicines: medicines,
+  //   totalItems: totalItems,
+  //   totalPages: totalPages,
+  //   currentPage: currentPage,
+  //   localSearchQuery: localSearchQuery,
+  //   isLoading: isLoading
+  // });
 
   return (
     <div className="lg:block bg-white rounded-xl shadow-sm border border-gray-200">

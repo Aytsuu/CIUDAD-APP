@@ -30,6 +30,7 @@ import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";
 import { showErrorToast } from "@/components/ui/toast";
 import { SignatureField, SignatureFieldRef } from "../../Reports/firstaid-report/signature";
+import { fetchStaffWithPositions } from "@/pages/healthServices/Reports/firstaid-report/queries/fetchQueries";
 
 export default function VaccinationRecordForm() {
   const navigate = useNavigate();
@@ -51,6 +52,8 @@ export default function VaccinationRecordForm() {
   const patientToUse = shouldShowPatientSearch ? selectedPatientData : patientDataFromLocation;
   const signatureRef = useRef<SignatureFieldRef>(null);
   const [signature, setSignature] = useState<string | null>(null);
+  const { data: staffOptions, isLoading: staffLoading } = fetchStaffWithPositions();
+  const [selectedStaffId, setSelectedStaffId] = useState("");
 
   // Data fetching hooks
   const { data: patientVaccinationRecords } = useIndivPatientVaccinationRecords(patientToUse?.pat_id);
@@ -77,9 +80,12 @@ export default function VaccinationRecordForm() {
       o2: latestVitals?.oxygen_saturation || "",
       bpsystolic: latestVitals?.bp_systolic || "",
       bpdiastolic: latestVitals?.bp_diastolic || "",
-      staff_id: staff_id ? staff_id.toString() : ""
+      staff_id: staff_id ? staff_id.toString() : "",
+      selectedStaffId: ""
     }
   });
+
+  const { setValue } = form;
 
   // Use useEffect to update vital signs when latestVitals changes
   useEffect(() => {
@@ -362,6 +368,23 @@ export default function VaccinationRecordForm() {
                   <div className="flex gap-2">
                     <FormInput control={form.control} name="bpsystolic" label="Systolic Blood Pressure" placeholder="range: 90-130" type="number" />
                     <FormInput control={form.control} name="bpdiastolic" label="Diastolic Blood Pressure" type="number" placeholder="range: 60-80" />
+                  </div>
+
+                  <div className="mt-6">
+                    <Label className="block mb-2">Forward To</Label>
+                    <div className="relative">
+                      <Combobox
+                        options={staffOptions?.formatted || []}
+                        value={selectedStaffId}
+                        onChange={(value) => {
+                          setSelectedStaffId(value || "");
+                          setValue("selectedStaffId", value || ""); // Also set the form value
+                        }}
+                        placeholder={staffLoading ? "Loading staff..." : "Select staff member"}
+                        emptyMessage="No available staff members"
+                        triggerClassName="w-full"
+                      />
+                    </div>
                   </div>
 
                   <div className="w-full">

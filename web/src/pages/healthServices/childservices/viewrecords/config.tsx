@@ -1,4 +1,5 @@
 import { format, isValid, isSameDay } from "date-fns";
+import { calculateAgeFromDOB } from "@/helpers/ageCalculator"; // Import the helper
 
 export const recordOverviewFields: any[] = [
   // { label: "Record ID", path: ["chhist_id"] },
@@ -87,7 +88,24 @@ export const familyHeadInfoFields: any[] = [
 export const vitalSignsFields: any[] = [
   {
     label: "Age",
-    path: ["child_health_vital_signs", "0", "bm_details", "age"]
+    path: ["child_health_vital_signs", "0", "bm_details", "age"],
+    format: (__: any, record: any) => {
+      const dob = record?.chrec_details?.patrec_details?.pat_details?.personal_info?.per_dob;
+      const createdAt = record?.created_at;
+
+      // Debug logging - remove this after fixing
+      console.log("Debug Age Calculation:");
+      console.log("DOB:", dob);
+      console.log("CreatedAt:", createdAt);
+      console.log("DOB valid:", dob && isValid(new Date(dob)));
+      console.log("CreatedAt valid:", createdAt && isValid(new Date(createdAt)));
+      console.log("Full record:", record);
+
+      if (!dob || !createdAt || !isValid(new Date(dob)) || !isValid(new Date(createdAt))) {
+        return "N/A";
+      }
+      return calculateAgeFromDOB(dob, createdAt).ageString;
+    }
   },
   {
     label: "Weight (kg)",
@@ -440,11 +458,11 @@ export const immunizationTrackingFields: any[] = [
                 <div>
                   <span className="font-semibold">Age at vaccination:</span> {vachist.vachist_age}
                 </div>
-                {vachist.follow_up_visit && (
+                {/* {vachist.follow_up_visit && (
                   <div className=" bg-red-100 rounded-md p-1 text-red-500">
                     <span className="font-semibold ">Next follow-up:</span> {new Date(vachist.follow_up_visit.followv_date).toLocaleDateString()}
                   </div>
-                )}
+                )} */}
               </div>
             </div>
           </div>

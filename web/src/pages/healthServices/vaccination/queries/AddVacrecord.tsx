@@ -18,7 +18,7 @@ export const useSubmitVaccinationRecord = () => {
       followUpData,
       vaccinationHistory
     }: {
-      data: Record<string, any>; 
+      data: Record<string, any>;
       signature: string | null;
       vacStck_id: string;
       vac_id: string;
@@ -46,6 +46,7 @@ export const useSubmitVaccinationRecord = () => {
           // Add pat_id if available
           pat_id: data.pat_id,
           staff_id: data.staff_id || null,
+          selectedStaffId: data.selectedStaffId || null
         },
         // Additional metadata
         signature: signature,
@@ -60,13 +61,13 @@ export const useSubmitVaccinationRecord = () => {
               followv_description: followUpData.followv_description
             }
           : undefined,
-        vaccination_history: vaccinationHistory,
+        vaccination_history: vaccinationHistory
       };
-      
+
       console.log("Submission Data:", submissionData);
 
       console.log("Submission Data:", submissionData);
-      
+
       // Make API call to submit the complete vaccination record
       const response = await api2.post("/vaccination/submit-vaccination-records/", submissionData);
       return response.data;
@@ -80,7 +81,6 @@ export const useSubmitVaccinationRecord = () => {
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
       queryClient.invalidateQueries({ queryKey: ["scheduledVaccination"] });
 
-      
       navigate(-1);
       showSuccessToast("Vaccination record successfully submitted");
     },

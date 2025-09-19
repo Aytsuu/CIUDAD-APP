@@ -95,6 +95,11 @@ export default function Immunization({
   const staff_id = user?.staff?.staff_id || null;
   const [basicVaccineList, setBasicVaccineList] = useState<any[]>([]);
   const { mutate: saveImmunization, isPending: isSaving } = useImmunizationMutations();
+  console.log("eadadd",ChildHealthRecord)
+// Get the single vital signs record
+const vitalSigns = ChildHealthRecord?.record?.child_health_vital_signs?.[0];
+const vital_id = vitalSigns?.vital || null;
+console.log("vital_id",vital_id)
 
   useEffect(() => {
     if (vaccinesListData) {
@@ -582,6 +587,7 @@ export default function Immunization({
       vaccines,
       existingVaccines,
       ChildHealthRecord,
+      vital_id,
       staff_id,
       pat_id
     });

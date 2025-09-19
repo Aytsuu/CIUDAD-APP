@@ -1,30 +1,19 @@
 import { format } from "date-fns";
-import { MedicalConsultationHistory } from "../types";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Printer } from "lucide-react";
 
-interface PatientData {
-  pat_id: string;
-  personal_info: {
-    per_fname: string;
-    per_lname: string;
-    per_sex: string;
-    per_dob: string;
-  };
-  addressFull: string;
-}
-
 interface CurrentConsultationCardProps {
-  consultation: MedicalConsultationHistory;
-  patientData: PatientData;
+  consultation: any;
+  patientData: any;
   className?: string;
 }
 
 export default function CurrentConsultationCard({ consultation, patientData, className = "" }: CurrentConsultationCardProps) {
   const printRef = useRef<HTMLDivElement>(null);
-  const bhw = `${consultation.staff_details?.rp?.per?.per_fname || ""} ${consultation.staff_details?.rp?.per?.per_lname || ""} ${consultation.staff_details?.rp?.per?.per_mname || ""} ${consultation.staff_details?.rp?.per?.per_suffix || ""}`;
+  const bhw = `${consultation.staff_details?.rp?.per_fname || ""} ${consultation.staff_details?.rp?.per_lname || ""} ${consultation.staff_details?.rp?.per_mname || ""} ${consultation.staff_details?.rp?.per?.per_suffix || ""}`;
   console.log("BHW Assigned:", bhw);
+  console.log("jejedsd",consultation)
 
   const handlePrint = () => {
     if (!printRef.current) return;
@@ -461,7 +450,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
                 <div className="space-y-2 p-4">
                   <div>
                     <div className="text-sm mt-1">
-                      {consultation.find_details?.plantreatment_summary?.split("-").map((item, index) => (
+                      {consultation.find_details?.plantreatment_summary?.split("-").map((item:any, index:any) => (
                         <div key={index}>{item.trim()}</div>
                       ))}
                     </div>

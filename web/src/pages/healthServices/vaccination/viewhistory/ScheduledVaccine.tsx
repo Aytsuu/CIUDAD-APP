@@ -225,6 +225,7 @@ export default function ScheduledVaccine() {
                     <VaccinationHistoryRecord 
                       relevantHistory={relevantHistory} 
                       currentVaccinationId={Vaccination?.vachist_id} 
+                      patientDob={patientData?.personal_info?.per_dob}
                       loading={isLoading} 
                       error={error?.message} 
                     />

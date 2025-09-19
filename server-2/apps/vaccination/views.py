@@ -845,6 +845,7 @@ class VaccinationSubmissionView(APIView):
             expiry_date = data.get('expiry_date')
             follow_up_data = data.get('follow_up_data', {})
             vaccination_history = data.get('vaccination_history', [])
+            assigned_to_id=form_data.get("selectedStaffId")  # This can be None
             print("staff",form_data.get("staff_id"))
             print("form",form_data)
             
@@ -855,6 +856,16 @@ class VaccinationSubmissionView(APIView):
                     {'error': 'Staff ID not found'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
+                
+            assigned_to_instance = None
+            if assigned_to_id:
+                try:
+                    assigned_to_instance = Staff.objects.get(staff_id=assigned_to_id)
+                except Staff.DoesNotExist:
+                    return Response(
+                        {'error': 'Assigned staff not found'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
             
             # Get vaccine stock
             try:
@@ -912,19 +923,19 @@ class VaccinationSubmissionView(APIView):
             if vac_type == "routine":
                 result = self.process_routine_vaccination(
                     data, form_data, signature, pat_id,
-                    vaccine_stock, status_val, follow_up_data, vac_name, staff_id
+                    vaccine_stock, status_val, follow_up_data, vac_name, staff_id,assigned_to_instance
                 )
             elif vac_type == "primary":
                 result = self.process_primary_vaccination(
                     data, form_data, signature, pat_id,
                     vaccine_stock, status_val, follow_up_data, vac_name, staff_id,
-                    vaccination_history
+                    vaccination_history,assigned_to_instance
                 )
             elif vac_type == "conditional":
                 result = self.process_conditional_vaccination(
                     data, form_data, signature, pat_id,
                     vaccine_stock, status_val, follow_up_data, vac_name, staff_id,
-                    vaccination_history
+                    vaccination_history,assigned_to_instance
                 )
             else:
                 return Response(
@@ -942,7 +953,7 @@ class VaccinationSubmissionView(APIView):
 
     def process_routine_vaccination(self, data, form_data, signature, pat_id, 
                                   vaccine_stock, status_val, follow_up_data, 
-                                  vac_name, staff_id):
+                                  vac_name, staff_id,assigned_to_instance):
     
         # Check if there's an existing vaccination record for this patient and vaccine
         existing_vacrec = None
@@ -957,7 +968,8 @@ class VaccinationSubmissionView(APIView):
                     # Check if this vacrec has any history with the same vaccine
                     if VaccinationHistory.objects.filter(
                         vacrec=vacrec, 
-                        vacStck_id__vac_id=vaccine_stock.vac_id
+                        vacStck_id__vac_id=vaccine_stock.vac_id,
+                        
                     ).exists():
                         existing_vacrec = vacrec
                         existing_patrec = patrec
@@ -1019,7 +1031,8 @@ class VaccinationSubmissionView(APIView):
             vital=vital,
             followv=followv,
             signature=signature,
-            date_administered=timezone.now().date()
+            date_administered=timezone.now().date(),
+            assigned_to= assigned_to_instance
         )
         
         return {
@@ -1033,7 +1046,7 @@ class VaccinationSubmissionView(APIView):
 
     def process_primary_vaccination(self, data, form_data, signature, pat_id, 
                                    vaccine_stock, status_val, follow_up_data, 
-                                   vac_name, staff_id, vaccination_history):
+                                   vac_name, staff_id, vaccination_history,assigned_to_instance):
         # Convert to integers for comparison
         dose_no = int(form_data.get('vachist_doseNo', 1))
         total_dose = int(form_data.get('vacrec_totaldose', 0))
@@ -1081,7 +1094,8 @@ class VaccinationSubmissionView(APIView):
                 vital=vital,
                 followv=followv,
                 signature=signature,
-                date_administered=timezone.now().date()
+                date_administered=timezone.now().date(),
+                assigned_to= assigned_to_instance
             )
             
             return {
@@ -1141,7 +1155,8 @@ class VaccinationSubmissionView(APIView):
                 vital=vital,
                 followv=followv,
                 signature=signature,
-                date_administered=timezone.now().date()
+                date_administered=timezone.now().date(),
+                assigned_to= assigned_to_instance
             )
             
             return {
@@ -1152,7 +1167,7 @@ class VaccinationSubmissionView(APIView):
 
     def process_conditional_vaccination(self, data, form_data, signature, pat_id, 
                                       vaccine_stock, status_val, follow_up_data, 
-                                      vac_name, staff_id, vaccination_history):
+                                      vac_name, staff_id, vaccination_history,assigned_to_instance):
         # Convert to integer
         dose_no = int(form_data.get('vachist_doseNo', 1))
         
@@ -1201,7 +1216,8 @@ class VaccinationSubmissionView(APIView):
                 vital=vital,
                 followv=followv,
                 signature=signature,
-                date_administered=timezone.now().date()
+                date_administered=timezone.now().date(),
+                assigned_to=assigned_to_instance
             )
             
             return {
@@ -1260,7 +1276,8 @@ class VaccinationSubmissionView(APIView):
                 vital=vital,
                 followv=followv,
                 signature=signature,
-                date_administered=timezone.now().date()
+                date_administered=timezone.now().date(),
+                assigned_to= assigned_to_instance
             )
             
             return {

@@ -3,9 +3,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Link } from "react-router-dom";
 import { ArrowUpDown } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { MedicalRecord } from "../../types";
 
-export const getAllMedicalRecordsColumns = (): ColumnDef<MedicalRecord>[] => [
+export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => [
   {
     accessorKey: "pat_id",
     header: "Patient ID",
@@ -128,31 +127,31 @@ export const exportColumns = [
   {
     key: "patient",
     header: "Patient",
-    format: (row: MedicalRecord) => `${row.lname}, ${row.fname} ${row.mname}`.trim()
+    format: (row: any) => `${row.lname}, ${row.fname} ${row.mname}`.trim()
   },
   {
     key: "sex_age",
     header: "Sex/Age",
-    format: (row: MedicalRecord) => `${row.sex}, ${row.age}`
+    format: (row: any) => `${row.sex}, ${row.age}`
   },
   {
     key: "address",
     header: "Address",
-    format: (row: MedicalRecord) => row.address || "No address provided"
+    format: (row: any) => row.address || "No address provided"
   },
   {
     key: "sitio",
     header: "Sitio",
-    format: (row: MedicalRecord) => row.sitio || "N/A"
+    format: (row: any) => row.sitio || "N/A"
   },
   {
     key: "pat_type",
     header: "Type",
-    format: (row: MedicalRecord) => row.pat_type
+    format: (row: any) => row.pat_type
   },
   {
     key: "medicalrec_count",
     header: "No of Records",
-    format: (row: MedicalRecord) => row.medicalrec_count
+    format: (row: any) => row.medicalrec_count
   }
 ];

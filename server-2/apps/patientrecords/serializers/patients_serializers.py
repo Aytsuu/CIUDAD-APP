@@ -116,8 +116,8 @@ class PatientSerializer(serializers.ModelSerializer):
                 # try to find mother role first (existing logic)
                 mother_composition = all_compositions.filter(fc_role__iexact='Mother').first()
                 if mother_composition:
-                    print(f'Found mother role for resident {obj.rp_id.rp_id}, using fam_id: {mother_composition.fam_id}')
-                    print(f'Mother Info: {mother_composition}')
+                    # print(f'Found mother role for resident {obj.rp_id.rp_id}, using fam_id: {mother_composition.fam_id}')
+                    # print(f'Mother Info: {mother_composition}')
                     return {
                         'fam_id': str(mother_composition.fam_id),
                         'fc_role': 'Mother',
@@ -127,8 +127,8 @@ class PatientSerializer(serializers.ModelSerializer):
                 # try to find father role
                 father_composition = all_compositions.filter(fc_role__iexact='Father').first()
                 if father_composition:
-                    print(f'Found father role for resident {obj.rp_id.rp_id}, using fam_id: {father_composition.fam_id}')
-                    print(f'Father Info: {father_composition}')
+                    # print(f'Found father role for resident {obj.rp_id.rp_id}, using fam_id: {father_composition.fam_id}')
+                    # print(f'Father Info: {father_composition}')
                     return {
                         'fam_id': str(father_composition.fam_id),
                         'fc_role': 'Father',
@@ -143,7 +143,7 @@ class PatientSerializer(serializers.ModelSerializer):
                 ).first()
 
                 if other_composition:
-                    print(f'Using other role ({other_composition.fc_role}) for resident {obj.rp_id.rp_id}')
+                    # print(f'Using other role ({other_composition.fc_role}) for resident {obj.rp_id.rp_id}')
                     return {
                         'fam_id': str(other_composition.fam_id),
                         'fc_role': other_composition.fc_role,
@@ -254,7 +254,7 @@ class PatientSerializer(serializers.ModelSerializer):
                             'per_dob': trans.mother_dob,
                         }
                     }
-                    print(f"Transient Mother Info: {family_heads['mother']}")
+                    # print(f"Transient Mother Info: {family_heads['mother']}")
 
                 if trans.father_fname or trans.father_lname:
                     family_heads['father'] = {
@@ -266,7 +266,7 @@ class PatientSerializer(serializers.ModelSerializer):
                             'per_dob': trans.father_dob,
                         }
                     }
-                    print(f"Transient Father Info: {family_heads['father']}")
+                    # print(f"Transient Father Info: {family_heads['father']}")
                 
                 return {
                     'fam_id': None,  # Transient has no `fam_id` because no FamilyComposition
@@ -316,7 +316,7 @@ class PatientSerializer(serializers.ModelSerializer):
                     'add_sitio': sitio,
                     'full_address': full_address
                 }
-                print("✅ PersonalAddress used →", result)
+                # print("✅ PersonalAddress used →", result)
                 return result
 
             # Fallback: Try to fetch from Household
@@ -369,10 +369,10 @@ class PatientSerializer(serializers.ModelSerializer):
                 'add_sitio': sitio,
                 'full_address': full_address
             }
-            print("📦 Transient Address →", result)
+            # print("📦 Transient Address →", result)
             return result
 
-        print("❓ Address not found for any type.")
+        # print("❓ Address not found for any type.")
         return None
     
 

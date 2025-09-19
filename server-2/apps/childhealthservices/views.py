@@ -47,9 +47,41 @@ class CheckUPChildHealthHistoryView(generics.ListAPIView):
     
 class ChildHealthImmunizationStatusListView(generics.ListAPIView):
     serializer_class = ChildHealthHistoryFullSerializer
-
+    pagination_class = StandardResultsPagination
+    
     def get_queryset(self):
-        return ChildHealth_History.objects.filter(status="immunization").order_by('-created_at')  # Filter by check-up and order by most recent first
+        # Get assigned_to from URL parameters
+        assigned_to = self.kwargs.get('assigned_to')
+        
+        queryset = ChildHealth_History.objects.filter(
+            status="immunization",
+            assigned_to=assigned_to  # Add the assigned_to filter
+        ).order_by('-created_at')
+        
+        # Get query parameters
+        search_query = self.request.query_params.get('search', '')
+        patient_type = self.request.query_params.get('patient_type', 'all')
+        
+        # Apply search filter
+        if search_query:
+            queryset = queryset.filter(
+                Q(chrec__ufc_no__icontains=search_query) |
+                Q(chrec__family_no__icontains=search_query) |
+                Q(tt_status__icontains=search_query) |
+                Q(chrec__patrec__pat_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(chrec__patrec__pat_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(chrec__patrec__pat_id__trans_id__tran_lname__icontains=search_query) |
+                Q(chrec__patrec__pat_id__trans_id__tran_fname__icontains=search_query)
+            )
+        
+        # Apply patient type filter
+        if patient_type != 'all':
+            if patient_type == 'resident':
+                queryset = queryset.filter(chrec__patrec__pat_id__pat_type='Resident')
+            elif patient_type == 'transient':
+                queryset = queryset.filter(chrec__patrec__pat_id__pat_type='Transient')
+        
+        return queryset
     
 class UpdateChildHealthHistoryView(generics.RetrieveUpdateAPIView):
     queryset = ChildHealth_History.objects.all()
@@ -208,7 +240,7 @@ class ExclusiveBFCheckView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         chhist_id = request.data.get("chhist")
-        bf_dates = request.data.get("BFdates", [])
+        bf_dates = request.data.get("BFchecks", [])
 
         if not chhist_id or not isinstance(bf_dates, list):
             return Response({"error": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
@@ -481,6 +513,9 @@ class ChildHealthTotalCountAPIView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
+
+# ======================================================
 class CompleteChildHealthRecordAPIView(APIView):
     """
     Comprehensive API endpoint that handles ALL child health record operations in one atomic transaction
@@ -502,6 +537,14 @@ class CompleteChildHealthRecordAPIView(APIView):
             if submitted_data.get('residenceType') == "Transient" and not submitted_data.get('trans_id'):
                 return Response({"error": "Transient ID is required for transient residents"}, status=status.HTTP_400_BAD_REQUEST)
             
+            # Validate all date fields before processing
+            date_validation_errors = self._validate_date_fields(submitted_data)
+            if date_validation_errors:
+                return Response({
+                    "error": "Invalid date format(s)",
+                    "details": date_validation_errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
             # Get staff instance if provided
             staff_instance = None
             if staff_id:
@@ -517,9 +560,84 @@ class CompleteChildHealthRecordAPIView(APIView):
             return self._handle_new_record_creation(submitted_data, staff_instance)
                 
         except Exception as e:
+            import traceback
+            error_traceback = traceback.format_exc()
+            print(f"Error occurred: {str(e)}")
+            print(f"Traceback: {error_traceback}")
+            
             return Response({
-                "error": f"An error occurred: {str(e)}"
+                "error": f"An error occurred: {str(e)}",
+                "traceback": error_traceback
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _validate_date_fields(self, submitted_data):
+        """Validate all date fields in the submitted data"""
+        errors = []
+        
+        # Check newborn_screening date
+        newborn_screening = submitted_data.get('newborn_screening')
+        if newborn_screening and self._is_invalid_date(newborn_screening):
+            errors.append(f"newborn_screening: Invalid date format '{newborn_screening}'")
+        
+        # Check vital signs dates
+        if submitted_data.get('vitalSigns'):
+            for i, vital_sign in enumerate(submitted_data['vitalSigns']):
+                # Check followUpVisit date
+                follow_up_visit = vital_sign.get('followUpVisit')
+                if follow_up_visit and self._is_invalid_date(follow_up_visit):
+                    errors.append(f"vitalSigns[{i}].followUpVisit: Invalid date format '{follow_up_visit}'")
+                
+                # Check date field if exists
+                date_field = vital_sign.get('date')
+                if date_field and self._is_invalid_date(date_field):
+                    errors.append(f"vitalSigns[{i}].date: Invalid date format '{date_field}'")
+        
+        # Check breastfeeding dates
+        bf_dates = submitted_data.get('BFchecks', [])
+        for i, date in enumerate(bf_dates):
+            if self._is_invalid_date(date):
+                errors.append(f"BFchecks[{i}]: Invalid date format '{date}'")
+        
+        # Check supplement status dates
+        birthwt_data = submitted_data.get('birthwt', {})
+        if birthwt_data:
+            seen_date = birthwt_data.get('seen')
+            given_iron_date = birthwt_data.get('given_iron')
+            if seen_date and self._is_invalid_date(seen_date):
+                errors.append(f"birthwt.seen: Invalid date format '{seen_date}'")
+            if given_iron_date and self._is_invalid_date(given_iron_date):
+                errors.append(f"birthwt.given_iron: Invalid date format '{given_iron_date}'")
+        
+        anemic_data = submitted_data.get('anemic', {})
+        if anemic_data:
+            seen_date = anemic_data.get('seen')
+            given_iron_date = anemic_data.get('given_iron')
+            if seen_date and self._is_invalid_date(seen_date):
+                errors.append(f"anemic.seen: Invalid date format '{seen_date}'")
+            if given_iron_date and self._is_invalid_date(given_iron_date):
+                errors.append(f"anemic.given_iron: Invalid date format '{given_iron_date}'")
+        
+        return errors
+    
+    def _is_invalid_date(self, date_value):
+        """Check if date value is invalid"""
+        if not date_value or not isinstance(date_value, str):
+            return False
+        
+        invalid_patterns = [
+            "NaN-NaN-NaN",
+            "Invalid Date",
+            "null",
+            "undefined"
+        ]
+        
+        return any(pattern in date_value for pattern in invalid_patterns)
+    
+    def _clean_date_value(self, date_value):
+        """Clean date value by converting invalid formats to None"""
+        if self._is_invalid_date(date_value):
+            return None
+        return date_value
     
     def _handle_transient_update(self, submitted_data):
         """Handle transient patient information updates"""
@@ -532,13 +650,20 @@ class CompleteChildHealthRecordAPIView(APIView):
             
             # Update transient information
             update_fields = [
+                'tran_fname', 'tran_lname', 'tran_mname', 'tran_suffix', 'tran_dob',
+                'tran_sex', 'tran_status', 'tran_ed_attainment', 'tran_religion', 'tran_contact',
                 'mother_fname', 'mother_lname', 'mother_mname', 'mother_age', 'mother_dob',
                 'father_fname', 'father_lname', 'father_mname', 'father_age', 'father_dob'
             ]
             
             for field in update_fields:
-                if submitted_data.get(field.replace('_', '').replace('dob', '_dob')):
-                    setattr(transient, field, submitted_data.get(field.replace('_', '').replace('dob', '_dob')))
+                if field in submitted_data:
+                    # Clean date fields specifically
+                    if field.endswith('_dob') and submitted_data.get(field):
+                        cleaned_value = self._clean_date_value(submitted_data.get(field))
+                        setattr(transient, field, cleaned_value)
+                    else:
+                        setattr(transient, field, submitted_data.get(field))
             
             transient.save()
             
@@ -560,17 +685,20 @@ class CompleteChildHealthRecordAPIView(APIView):
             patrec_type="Child Health Record"
         )
         
+        # Clean newborn_screening date
+        newborn_screening = self._clean_date_value(submitted_data.get('newborn_screening'))
+        
         # Create child health record
         child_health_record = ChildHealthrecord.objects.create(
-            ufc_no=submitted_data.get('ufcNo', ''),
-            family_no=submitted_data.get('familyNo', ''),
-            place_of_delivery_type=submitted_data.get('placeOfDeliveryType'),
-            pod_location=submitted_data.get('placeOfDeliveryLocation', ''),
-            mother_occupation=submitted_data.get('motherOccupation', ''),
+            ufc_no=submitted_data.get('ufc_no', ''),
+            family_no=submitted_data.get('family_no', ''),
+            place_of_delivery_type=submitted_data.get('place_of_delivery_type'),
+            pod_location=submitted_data.get('pod_location', ''),
+            mother_occupation=submitted_data.get('mother_occupation', ''),
             type_of_feeding=submitted_data.get('type_of_feeding'),
-            father_occupation=submitted_data.get('fatherOccupation', ''),
+            father_occupation=submitted_data.get('father_occupation', ''),
             birth_order=submitted_data.get('birth_order', 0),
-            newborn_screening=submitted_data.get('dateNewbornScreening'),
+            newborn_screening=newborn_screening,
             staff=staff_instance,
             patrec=patient_record,
             landmarks=submitted_data.get('landmarks'),
@@ -579,19 +707,32 @@ class CompleteChildHealthRecordAPIView(APIView):
         )
         
         # Create child health history
+        # Get the staff instance if selectedStaffId is provided
+        # This code might need a check:
+        assigned_staff = None
+        selected_staff_id = submitted_data.get('selectedStaffId')
+        if selected_staff_id:  # This checks for truthy values (not None, not empty string)
+            try:
+                assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
+            except Staff.DoesNotExist:
+                print(f"Staff with ID {selected_staff_id} does not exist")
+        # Create the child health history record
         child_health_history = ChildHealth_History.objects.create(
             chrec=child_health_record,
             status=submitted_data.get('status', 'recorded'),
-            tt_status=submitted_data.get('tt_status') 
+            tt_status=submitted_data.get('tt_status'),
+            assigned_to=assigned_staff
         )
         
         # Handle follow-up visit
         followv_id = None
         if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
             vital_sign = submitted_data['vitalSigns'][0]
-            if vital_sign.get('followUpVisit'):
+            follow_up_visit_date = self._clean_date_value(vital_sign.get('followUpVisit'))
+            
+            if follow_up_visit_date:
                 follow_up_visit = FollowUpVisit.objects.create(
-                    followv_date=vital_sign['followUpVisit'],
+                    followv_date=follow_up_visit_date,
                     followv_description=vital_sign.get('follov_description', 'Follow Up for Child Health'),
                     patrec=patient_record,
                     followv_status="pending"
@@ -656,8 +797,8 @@ class CompleteChildHealthRecordAPIView(APIView):
             chvital_id = child_vital_sign.chvital_id
         
         # Handle breastfeeding dates
-        if submitted_data.get('BFdates'):
-            self._handle_breastfeeding_dates(submitted_data['BFdates'], child_health_history.chhist_id)
+        if submitted_data.get('BFchecks'):
+            self._handle_breastfeeding_dates(submitted_data['BFchecks'], child_health_history.chhist_id)
         
         # Handle supplement statuses (low birth weight and anemia)
         if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
@@ -700,11 +841,21 @@ class CompleteChildHealthRecordAPIView(APIView):
     def _handle_breastfeeding_dates(self, bf_dates, chhist_id):
         """Handle exclusive breastfeeding check dates"""
         chhist = ChildHealth_History.objects.get(chhist_id=chhist_id)
-        for date in bf_dates:
-            ExclusiveBFCheck.objects.create(
-                chhist=chhist,
-                ebf_date=date
-            )
+        for bf_data in bf_dates:
+            # Extract the ebf_date from the object
+            if isinstance(bf_data, dict):
+                date_value = bf_data.get('ebf_date')
+            else:
+                # Handle case where it might be just a date string
+                date_value = bf_data
+            
+            # Clean date before creating
+            cleaned_date = self._clean_date_value(date_value)
+            if cleaned_date:
+                ExclusiveBFCheck.objects.create(
+                    chhist=chhist,
+                    ebf_date=cleaned_date
+                )
     
     def _handle_medicines(self, medicines, pat_id, chhist_id, staff_instance):
         """Handle medicine processing in bulk"""
@@ -779,19 +930,22 @@ class CompleteChildHealthRecordAPIView(APIView):
         """Create supplement status record"""
         chhist = ChildHealth_History.objects.get(chhist_id=chhist_id)
         
+        # Clean date fields
+        seen_date = self._clean_date_value(status_data.get('seen'))
+        given_iron_date = self._clean_date_value(status_data.get('given_iron'))
+        
         ChildHealthSupplementsStatus.objects.create(
             status_type=status_type,
-            date_seen=status_data.get('seen'),
-            date_given_iron=status_data.get('given_iron'),
+            date_seen=seen_date,
+            date_given_iron=given_iron_date,
             chhist=chhist,
             birthwt=Decimal(str(weight)) if weight else None,
             date_completed=None
         )
-        
-     
-     
 
-class UpdateChildHealthRecordAPIView(APIView):
+
+
+class UpdateChildHealthRecordAPIView(APIView): 
     """
     API endpoint for updating child health records with all related data
     """
@@ -806,6 +960,7 @@ class UpdateChildHealthRecordAPIView(APIView):
         todays_historical_record = data.get('todaysHistoricalRecord', {})
         original_record = data.get('originalRecord', {})
         
+        print("SubmittedData",submitted_data)
         try:
             # Validate required fields
             if not submitted_data.get('pat_id'):
@@ -846,18 +1001,17 @@ class UpdateChildHealthRecordAPIView(APIView):
             followv_id = None
             bmi_id = None
             
-            # Check if this is a same-day update or new record
-            is_same_day_update = (
-                submitted_data.get('created_at') and 
-                self._is_same_day(submitted_data['created_at'])
-            )
+            # FIXED: Check if this is a same-day update using existing chhist_id and its creation date
+            is_same_day_update = self._is_same_day_update(old_chhist, todays_historical_record)
             
             if is_same_day_update:
+                print(f"Processing same-day update for chhist_id: {old_chhist}")
                 result = self._handle_same_day_update(
                     submitted_data, staff_instance, todays_historical_record,
                     original_record, current_chhist_id, chnotes_id, chrec_id
                 )
             else:
+                print(f"Creating new record - not same day or no existing record")
                 result = self._handle_new_record_creation(
                     submitted_data, staff_instance, chrec_id, patrec_id,
                     original_record
@@ -885,8 +1039,39 @@ class UpdateChildHealthRecordAPIView(APIView):
                 "error": f"Failed to update child health record: {str(error)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+    def _is_same_day_update(self, chhist_id, todays_historical_record):
+        """
+        FIXED: Check if we should update existing record instead of creating new one
+        - Check if chhist_id exists and was created today (date only, ignore time)
+        """
+        if not chhist_id:
+            return False
+            
+        try:
+            # Check if the chhist record exists and was created today
+            chhist_record = ChildHealth_History.objects.get(chhist_id=chhist_id)
+            
+            # Extract just the date part (ignore time)
+            record_date = chhist_record.created_at.date()
+            today = timezone.now().date()
+            
+            is_today = record_date == today
+            print(f"Checking chhist_id {chhist_id}: record_date={record_date}, today={today}, is_same_day={is_today}")
+            
+            return is_today
+            
+        except ChildHealth_History.DoesNotExist:
+            print(f"ChildHealth_History with id {chhist_id} does not exist")
+            return False
+        except Exception as e:
+            print(f"Error checking same day update: {str(e)}")
+            return False
+    
     def _is_same_day(self, created_at_str):
-        """Check if the created_at date is the same as today"""
+        """
+        DEPRECATED: This method is no longer used but kept for reference
+        Check if the created_at date is the same as today
+        """
         try:
             from datetime import datetime
             created_date = datetime.fromisoformat(created_at_str.replace('Z', '+00:00')).date()
@@ -899,12 +1084,21 @@ class UpdateChildHealthRecordAPIView(APIView):
                         current_chhist_id, chnotes_id, chrec_id):
         """Handle updates for same-day records"""
         
+        print(f"Handling same-day update for chhist_id: {current_chhist_id}")
+        
         followv_id = None
+        chvital_id = None
+        bmi_id = None
         
         if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
             vital_sign = submitted_data['vitalSigns'][0]
             
-            # Handle follow-up visit
+            # Handle body measurements update
+            existing_chvital_id = todays_historical_record.get('chvital_id')
+            
+           
+            
+            # Handle follow-up visit (existing logic)
             original_followv_id = todays_historical_record.get('followv_id')
             follow_up_date = vital_sign.get('followUpVisit')
             follow_up_description = vital_sign.get('follov_description')
@@ -1016,27 +1210,67 @@ class UpdateChildHealthRecordAPIView(APIView):
                         # consider if you want to delete it or leave it as is
                         print("No meaningful content to update in existing notes")
         
-        # Update child health history status
+        
+        
+        
+          # Create child health history
+        # Get the staff instance if selectedStaffId is provided
+        assigned_staff = None
+        selected_staff_id = submitted_data.get('selectedStaffId')
+        if selected_staff_id:
+            try:
+                assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
+            except Staff.DoesNotExist:
+                raise ValueError(f"Staff with ID {selected_staff_id} does not exist")
+
+        
+        # Update child health history status - DON'T CREATE NEW, JUST UPDATE
         ChildHealth_History.objects.filter(chhist_id=current_chhist_id).update(
-            status=submitted_data.get('status', 'recorded')
+            status=submitted_data.get('status', 'recorded'),
+            assigned_to=assigned_staff
+
+            
         )
         
+        # Update the child health record timestamp
         ChildHealthrecord.objects.filter(chrec_id=chrec_id).update(updated_at=timezone.now())
+        
+        # Handle other updates (existing logic)
         self._handle_breastfeeding_dates(submitted_data, current_chhist_id, original_record)
         self._handle_medicines(submitted_data, staff_instance, current_chhist_id)
         self._handle_historical_supplement_statuses(submitted_data, original_record)
-        return {"success": True}
+        
+        return {
+            "success": True,
+            "chvital_id": chvital_id,
+            "bmi_id": bmi_id,
+            "followv_id": followv_id
+        }
+
+   
 
     def _handle_new_record_creation(self, submitted_data, staff_instance, 
                                 chrec_id, patrec_id, original_record):
         """Handle creation of new child health records"""
-        
+           # Create child health history
+        # Get the staff instance if selectedStaffId is provided
+        assigned_staff = None
+        selected_staff_id = submitted_data.get('selectedStaffId')
+        if selected_staff_id:
+            try:
+                assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
+            except Staff.DoesNotExist:
+                raise ValueError(f"Staff with ID {selected_staff_id} does not exist")
+
+     
         # Create new child health history
         new_chhist = ChildHealth_History.objects.create(
             created_at=timezone.now(),
             chrec_id=chrec_id,
             status=submitted_data.get('status', 'recorded'),
-            tt_status=submitted_data.get('tt_status')
+            tt_status=submitted_data.get('tt_status'),
+            assigned_to=assigned_staff
+
         )
         current_chhist_id = new_chhist.chhist_id
         
@@ -1146,7 +1380,7 @@ class UpdateChildHealthRecordAPIView(APIView):
         """
         Handle breastfeeding dates creation and updates
         - Creates new BF checks for newly added dates
-        - Updates existing BF checks iexexf they've changed
+        - Updates existing BF checks if they've changed
         """
         submitted_bf_checks = submitted_data.get('BFchecks', [])
         
@@ -1278,7 +1512,7 @@ class UpdateChildHealthRecordAPIView(APIView):
                 mdt_qty=mdt_qty,
                 mdt_action="Deducted",
                 staff=staff_instance,
-                minv_id=medicine_inv
+                minv_id=medicine_inv 
             )
             
         except MedicineInventory.DoesNotExist:
@@ -1298,7 +1532,7 @@ class UpdateChildHealthRecordAPIView(APIView):
                 ChildHealthSupplementsStatus.objects.create(
                     status_type='birthwt',
                     date_seen=birthwt_data.get('seen'),
-                    date_given_iron=birthwt_data.get('given_iron'),
+                    date_given_iron=birthwt_data.get('given_iron'), 
                     chhist_id=chhist_id,
                     created_at=timezone.now(),
                     birthwt=Decimal(str(weight)),
@@ -1376,12 +1610,12 @@ class UpdateChildHealthRecordAPIView(APIView):
             except Exception as e:
                 print(f"Supplement status update failed: {str(e)}")
                 raise Exception(f"Failed to update supplement statuses: {str(e)}")
-    
-     
      
      
         
-        
+      
+      
+# CHILD IMMUNIZAION  
 class SaveImmunizationDataAPIView(APIView):
     
     def post(self, request):
@@ -1398,6 +1632,7 @@ class SaveImmunizationDataAPIView(APIView):
             child_health_record = data.get('ChildHealthRecord', {})
             staff_id = data.get('staff_id')
             pat_id = data.get('pat_id')
+            vital_id=data.get('vital_id')
             
             # Validation
             if not pat_id:
@@ -1422,7 +1657,7 @@ class SaveImmunizationDataAPIView(APIView):
             with transaction.atomic():
                 created_records = self.save_immunization_data(
                     form_data, vaccines, existing_vaccines, 
-                    child_health_record, staff_id, pat_id
+                    child_health_record, staff_id, pat_id,vital_id
                 )
                 
                 return Response({
@@ -1436,7 +1671,7 @@ class SaveImmunizationDataAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    def save_immunization_data(self, form_data, vaccines, existing_vaccines, child_health_record, staff_id, pat_id):
+    def save_immunization_data(self, form_data, vaccines, existing_vaccines, child_health_record, staff_id, pat_id,vital_id):
         """
         Save immunization data with proper transaction handling
         """
@@ -1503,14 +1738,14 @@ class SaveImmunizationDataAPIView(APIView):
         for vaccine in vaccines:
             self.process_new_vaccine(
                 vaccine, child_health_record, staff_instance, 
-                pat_id, patrec_id, chhist_instance, created_records
+                pat_id, patrec_id, chhist_instance, created_records,vital_id
             )
         
         # Process existing vaccines
         for existing_vaccine in existing_vaccines:
             self.process_existing_vaccine(
                 existing_vaccine, child_health_record, staff_instance, 
-                pat_id, chhist_instance, created_records
+                pat_id, chhist_instance, created_records,vital_id
             )
         
         # Update child health history status
@@ -1544,7 +1779,7 @@ class SaveImmunizationDataAPIView(APIView):
                 staff=staff_instance
             )
     
-    def process_new_vaccine(self, vaccine, child_health_record, staff_instance, pat_id, patrec_id, chhist_instance, created_records):
+    def process_new_vaccine(self, vaccine, child_health_record, staff_instance, pat_id, patrec_id, chhist_instance, created_records,vital_id):
         """
         Process a new vaccine administration
         """
@@ -1629,10 +1864,10 @@ class SaveImmunizationDataAPIView(APIView):
         
         # Get vital signs
         vital_instance = None
-        vital_signs = child_health_record.get('child_health_vital_signs', [])
-        if vital_signs and vital_signs[0].get('vital'):
+        vital_signs = vital_id
+        if vital_signs :
             try:
-                vital_instance = VitalSigns.objects.get(vital_id=vital_signs[0]['vital'])
+                vital_instance = VitalSigns.objects.get(vital_id=vital_id)
             except VitalSigns.DoesNotExist:
                 pass
         
@@ -1657,7 +1892,7 @@ class SaveImmunizationDataAPIView(APIView):
         )
         created_records['imt_ids'].append(immunization_record.imt_id)
     
-    def process_existing_vaccine(self, existing_vaccine, child_health_record, staff_instance, pat_id, chhist_instance, created_records):
+    def process_existing_vaccine(self, existing_vaccine, child_health_record, staff_instance, pat_id, chhist_instance, created_records,vital_id):
         """
         Process an existing vaccine record
         """
@@ -1686,14 +1921,7 @@ class SaveImmunizationDataAPIView(APIView):
         else:
             vaccination_record = get_object_or_404(VaccinationRecord, vacrec_id=vacrec_id)
         
-        # Get vital signs
-        vital_instance = None
-        vital_signs = child_health_record.get('child_health_vital_signs', [])
-        if vital_signs and vital_signs[0].get('vital'):
-            try:
-                vital_instance = VitalSigns.objects.get(vital_id=vital_signs[0]['vital'])
-            except VitalSigns.DoesNotExist:
-                pass
+        #
         
         # Get vaccine list instance
         vaccine_instance = None
@@ -1710,7 +1938,7 @@ class SaveImmunizationDataAPIView(APIView):
             vac=vaccine_instance,
             vachist_doseNo=current_dose,
             vachist_status='completed',
-            vital=vital_instance,
+            vital=None,
             staff=staff_instance,
             followv=None,
             date_administered=self.parse_date(existing_vaccine.get('date')) or date.today()

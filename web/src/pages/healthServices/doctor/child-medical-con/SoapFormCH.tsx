@@ -1,3 +1,4 @@
+// MAIN FIX: Update your SoapForm component
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -26,10 +27,20 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
   const [currentPage, setCurrentPage] = useState(1);
   const { mutate: submitSoapForm, isPending: isSubmitting } = useSubmitSoapForm();
 
+  // FIX: Initialize with proper structure and unique IDs
   const [selectedMedicines, setSelectedMedicines] = useState<any[]>(() => {
-    if (initialData?.selectedMedicines?.length) return initialData.selectedMedicines;
-    if (initialData?.medicineRequest?.medicines?.length) return initialData.medicineRequest.medicines;
-    if (checkupData?.find_details?.prescribed_medicines?.length) return checkupData.find_details.prescribed_medicines;
+    const initializeMedicines = (medicines: any[]) => {
+      return medicines.map((med, index) => ({
+        ...med,
+        _tempId: med._tempId || `medicine_${Date.now()}_${index}`,
+        medrec_qty: Number(med.medrec_qty) || 1, // Ensure numeric value
+        reason: med.reason || ""
+      }));
+    };
+
+    if (initialData?.selectedMedicines?.length) return initializeMedicines(initialData.selectedMedicines);
+    if (initialData?.medicineRequest?.medicines?.length) return initializeMedicines(initialData.medicineRequest.medicines);
+    if (checkupData?.find_details?.prescribed_medicines?.length) return initializeMedicines(checkupData.find_details.prescribed_medicines);
     return [];
   });
 
@@ -73,15 +84,23 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
       obj_summary: initialData?.obj_summary || "",
       assessment_summary: initialData?.assessment_summary || "",
       plantreatment_summary: initialData?.plantreatment_summary || "",
-      medicineRequest: initialData?.medicineRequest || {
+      medicineRequest: {
         pat_id: patientData?.pat_id || "",
-        medicines: []
+        medicines: selectedMedicines // Use the state directly
       },
       physicalExamResults: initialData?.physicalExamResults || [],
       selectedIllnesses: initialData?.selectedIllnesses || [],
       followv: initialData?.followv || undefined
     }
   });
+
+  // FIX: Sync form values when selectedMedicines changes
+  useEffect(() => {
+    form.setValue("medicineRequest", {
+      pat_id: patientData?.pat_id || "",
+      medicines: selectedMedicines
+    });
+  }, [selectedMedicines, form, patientData?.pat_id]);
 
   useEffect(() => {
     if (initialData) {
@@ -90,19 +109,16 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         obj_summary: initialData.obj_summary || "",
         assessment_summary: initialData.assessment_summary || "",
         plantreatment_summary: initialData.plantreatment_summary || "",
-        medicineRequest: initialData.medicineRequest || {
+        medicineRequest: {
           pat_id: patientData?.pat_id || "",
-          medicines: []
+          medicines: selectedMedicines
         },
         physicalExamResults: initialData.physicalExamResults || [],
         selectedIllnesses: initialData.selectedIllnesses || [],
         followv: initialData.followv || undefined
       });
-
-      const meds = initialData.selectedMedicines || initialData.medicineRequest?.medicines || [];
-      if (meds.length) setSelectedMedicines(meds);
     }
-  }, [initialData, form, patientData]);
+  }, [initialData, form, patientData, selectedMedicines]);
 
   // Add cleanup effect for form data updates
   useEffect(() => {
@@ -117,6 +133,7 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
     };
   }, [form, selectedMedicines, onFormDataUpdate]);
 
+  // FIX: Improved medicine update handler with better change detection
   const handleSelectedMedicinesChange = useCallback(
     (updated: any[]) => {
       if (isUpdating.current) {
@@ -124,14 +141,34 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         return;
       }
 
-      const currentJson = JSON.stringify(selectedMedicines.sort((a, b) => a.minv_id?.localeCompare(b.minv_id)));
-      const updatedJson = JSON.stringify(updated.sort((a, b) => a.minv_id?.localeCompare(b.minv_id)));
+      // Add unique IDs to new medicines and ensure proper structure
+      const updatedWithIds = updated.map((med, index) => ({
+        ...med,
+        _tempId: med._tempId || `medicine_${Date.now()}_${index}`,
+        medrec_qty: Number(med.medrec_qty) || 1, // Ensure numeric value
+        reason: med.reason || ""
+      }));
 
-      if (currentJson === updatedJson) {
+      // Better change detection - compare the actual content, not just order
+      const currentMedicines = selectedMedicines.map(med => ({
+        minv_id: med.minv_id,
+        medrec_qty: med.medrec_qty,
+        reason: med.reason
+      }));
+      
+      const newMedicines = updatedWithIds.map(med => ({
+        minv_id: med.minv_id,
+        medrec_qty: med.medrec_qty,
+        reason: med.reason
+      }));
+
+      const hasChanges = JSON.stringify(currentMedicines) !== JSON.stringify(newMedicines);
+      
+      if (!hasChanges) {
         return;
       }
 
-      setSelectedMedicines(updated);
+      setSelectedMedicines(updatedWithIds);
 
       const summaryWithoutMeds = form
         .getValues("plantreatment_summary")
@@ -139,8 +176,8 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         .filter((line) => !line.startsWith("- ") && line.trim() !== "");
 
       const medLines =
-        updated.length > 0
-          ? updated.map((med) => {
+        updatedWithIds.length > 0
+          ? updatedWithIds.map((med) => {
               const stock = medicineStocksOptions?.find((m: any) => m.id === med.minv_id);
               return `- ${stock?.name || 'Unknown'} ${stock?.dosage || ''} (${med.medrec_qty} ${stock?.unit || 'units'}) ${med.reason || ''}`;
             })
@@ -152,14 +189,14 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
       form.setValue("plantreatment_summary", newSummary);
       form.setValue("medicineRequest", {
         pat_id: patientData?.pat_id || "",
-        medicines: updated
+        medicines: updatedWithIds
       });
 
       if (onFormDataUpdate) {
         const currentValues = form.getValues();
         onFormDataUpdate({
           ...currentValues,
-          selectedMedicines: updated
+          selectedMedicines: updatedWithIds
         });
       }
     },
@@ -238,8 +275,17 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
   }, [form, selectedMedicines, onFormDataUpdate, onBack]);
 
   const onSubmit = async (data: SoapFormType) => {
+    // Ensure the latest selectedMedicines are included in submission
+    const submissionData = {
+      ...data,
+      medicineRequest: {
+        ...data.medicineRequest,
+        medicines: selectedMedicines
+      }
+    };
+
     submitSoapForm({
-      formData: data,
+      formData: submissionData,
       patientData,
       checkupData,
       staffId: staff

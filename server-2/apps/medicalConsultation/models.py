@@ -20,7 +20,7 @@ class MedicalConsultation_Record(models.Model):
      find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='medical_consultation_record',null=True)
      medreq =models.ForeignKey(MedicineRequest,on_delete=models.CASCADE,related_name='medical_consultation_record',null=True )
      staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medical_consultation_record',null=True)
-     
+     assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medical_consultation_record_assigned', null=True, blank=True)
     
      class Meta:
            db_table = 'medical_consultation_record'

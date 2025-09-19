@@ -12,7 +12,7 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { type_of_feeding_options } from "./options";
 import { Page2Props } from "./types";
 import { ChildDetailsSchema, type FormData } from "@/form-schema/chr-schema/chr-schema";
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 
 export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formData, historicalBFChecks, mode }: Page2Props) {
   const form = useForm<FormData>({
@@ -23,9 +23,11 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
       BFchecks: formData.BFchecks || [],
       dateNewbornScreening: formData.dateNewbornScreening || "",
       type_of_feeding: formData.type_of_feeding || "",
-      tt_status: formData.tt_status || ""
+      tt_status: formData.tt_status || "",
+      newbornInitiatedbf: formData.newbornInitiatedbf
     }
   });
+  console.log("newbornInitiatedbf", form.getValues("newbornInitiatedbf"));
 
   useEffect(() => {
     console.log(historicalBFChecks);
@@ -43,7 +45,7 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
   const getCurrentMonth = (): string => {
     const now = new Date();
     const year = now.getFullYear();
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const month = (now.getMonth() + 1).toString().padStart(2, "0");
     return `${year}-${month}`;
   };
 
@@ -150,7 +152,6 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
         });
 
         console.log("Historical BF check updated:", updatedBFCheck);
-        showSuccessToast("Historical BF check updated successfully");
       } else {
         // Create new BF check object
         const newBFCheck = {
@@ -167,7 +168,6 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
         });
 
         console.log("BF date added/updated successfully:", newBFCheck);
-        showSuccessToast(editingIndex !== null ? "BF date updated successfully" : "BF date added successfully");
       }
 
       setEditingIndex(null);
@@ -207,8 +207,6 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
       setEditingIndex(null);
       setCurrentBFDate("");
     }
-    
-    showSuccessToast("BF date removed successfully");
   };
 
   const handleCancelEdit = () => {
@@ -237,7 +235,7 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
           noValidate
         >
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 sm:gap-8">
             {/* Left Column - Medical Information */}
             <div className="space-y-6">
               {/* Newborn Screening Card */}
@@ -251,12 +249,12 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                 description=""
                 content={
                   <div className="p-4 space-y-6">
-                    <FormDateTimeInput 
-                      control={form.control} 
-                      name="dateNewbornScreening" 
-                      label="Date of Newborn Screening" 
-                      type="date" 
-                      max={new Date().toISOString().split('T')[0]} // Set max to today's date
+                    <FormDateTimeInput
+                      control={form.control}
+                      name="dateNewbornScreening"
+                      label="Date of Newborn Screening"
+                      type="date"
+                      max={new Date().toISOString().split("T")[0]} // Set max to today's date
                     />
                     <FormMessage />
                     <FormField
@@ -336,12 +334,12 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                                   <span className="text-xs text-gray-500 block">Format: YYYY-MM (e.g., 2023-09)</span>
                                   <span className="text-xs text-blue-500 block">Maximum allowed: {maxMonth}</span>
                                 </label>
-                                <input 
-                                  type="month" 
-                                  value={currentBFDate} 
-                                  onChange={(e) => setCurrentBFDate(e.target.value)} 
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500" 
-                                  placeholder="YYYY-MM" 
+                                <input
+                                  type="month"
+                                  value={currentBFDate}
+                                  onChange={(e) => setCurrentBFDate(e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                  placeholder="YYYY-MM"
                                   max={maxMonth} // Set maximum to current month
                                 />
                               </div>
@@ -359,7 +357,7 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                                 )}
                               </Button>
                               {(editingIndex !== null || editingHistoricalId !== null) && (
-                                <Button type="button" onClick={handleCancelEdit} className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg">
+                                <Button type="button" onClick={handleCancelEdit} className="bg-gray-400 hover:bg-gray-300 px-4 py-2 rounded-lg">
                                   Cancel
                                 </Button>
                               )}
@@ -447,8 +445,6 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                         <p>No BF dates recorded yet</p>
                       </div>
                     )}
-
-                
                   </div>
                 }
               />

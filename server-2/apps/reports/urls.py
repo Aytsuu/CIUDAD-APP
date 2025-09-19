@@ -15,7 +15,7 @@ from .views.inv_medicine_views import MonthlyMedicineRecordsDetailAPIView, Medic
 urlpatterns=[
         path('healthstaff/', HealthStaffListView.as_view(), name='healthstaff-list'),
         path('update/monthly_recipient_list_report/<int:monthlyrcplist_id>/', UpdateMonthlyRCPReportDetailView.as_view(), name='healthstaff-detail'),
-        
+    
         
         # CHILD HEALTH REPORTS
         path('supplements/report/',ChildHealthSupplementsMasterReport.as_view(), name='monthly-child-health-supplements'),

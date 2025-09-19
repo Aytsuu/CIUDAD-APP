@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { getFirstAidChart, getStaffList } from "../restful-api/getAPI";
+import { getFirstAidChart, getStaffList } from "@/pages/healthServices/Reports/firstaid-report/restful-api/getAPI";
 import { toast } from "sonner";
-import { getFirstaidRecords, getFirstaidReports } from "../restful-api/getAPI";
+import { getFirstaidRecords, getFirstaidReports } from "@/pages/healthServices/Reports/firstaid-report/restful-api/getAPI";
 
 export const useFirstAidRecords = (page: number, pageSize: number, searchQuery: string, yearFilter: string) => {
   return useQuery({
@@ -45,10 +45,10 @@ export const fetchStaffWithPositions = () => {
             name: (
               <div className="flex gap-3">
                 <span className="bg-green-500 rounded text-white p-1 text-xs">{staff.staff_id || "No ID"}</span>
-                {`${staff.rp?.per?.per_fname || "Unknown"} ${staff.rp?.per?.per_lname || "Staff"}`}( {staff.pos?.pos_title || "No Position"})
+                {`${staff.rp?.per_fname || "Unknown"} ${staff.rp?.per_lname || "Staff"}`}( {staff.pos?.pos_title || "No Position"})
               </div>
             ),
-            rawName: `${staff.rp?.per?.per_fname || "Unknown"} ${staff.rp?.per?.per_lname || "Staff"}`,
+            rawName: `${staff.rp?.per_fname || "Unknown"} ${staff.rp?.per_lname || "Staff"}`,
             position: staff.pos?.pos_title || "No Position"
           }))
         };

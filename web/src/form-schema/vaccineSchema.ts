@@ -20,6 +20,7 @@ export const VaccineSchema = z.object({
   o2: z.string().optional(),
   bpsystolic: z.string().optional(),
   bpdiastolic: z.string().optional(),
+  selectedStaffId: z.string().optional()
 });
 
 export type VaccineSchemaType = z.infer<typeof VaccineSchema>;

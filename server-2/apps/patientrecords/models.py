@@ -14,10 +14,10 @@ class TransientAddress(models.Model):
     tradd_barangay = models.CharField(max_length=50)
     tradd_street = models.CharField(max_length=50)
     tradd_sitio= models.CharField(max_length=50, null=True, blank=True)
-
-    class Meta:
-        db_table = 'transient_address'
-
+ 
+    class Meta:  
+        db_table = 'transient_address'      
+     
    
 class Transient(models.Model):
     trans_id = models.CharField(max_length=15, primary_key=True)
@@ -245,9 +245,9 @@ class Illness(models.Model):
 class Finding(models.Model):
     find_id = models.BigAutoField(primary_key=True)
     assessment_summary =models.TextField(default="",blank=True,null=True)
-    obj_summary = models.TextField(default="")
-    subj_summary = models.TextField(default="")
-    plantreatment_summary=models.TextField(default="")
+    obj_summary = models.TextField(default="",blank=True,null=True)
+    subj_summary = models.TextField(default="",blank=True,null=True)
+    plantreatment_summary=models.TextField(default="",blank=True,null=True)
     created_at= models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'finding'
