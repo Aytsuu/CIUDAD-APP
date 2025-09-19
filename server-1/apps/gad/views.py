@@ -241,33 +241,46 @@ class ProjectProposalDetailView(generics.RetrieveUpdateDestroyAPIView):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        participants = request.data.get('participants')
-        budget_items = request.data.get('budget_items')
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        
+        # Extract header image data from request before validation
+        header_img_data = request.data.get('gpr_header_img')
+        if header_img_data and isinstance(header_img_data, str):
+            try:
+                header_img_data = json.loads(header_img_data)
+            except (json.JSONDecodeError, TypeError):
+                header_img_data = None
+        
+        # Remove header image from request data to avoid validation issues
+        request_data = request.data.copy()
+        if 'gpr_header_img' in request_data:
+            del request_data['gpr_header_img']
+        
+        serializer = self.get_serializer(instance, data=request_data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
         
-        # Save with the additional data
-        serializer.save(
-            participants=participants,
-            budget_items=budget_items
-        )
-
-        return Response(serializer.data)
-    
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
-        
-        if permanent:
-            # Permanent delete
-            instance.delete()
-        else:
-            # Soft delete (archive)
-            instance.gpr_is_archive = True
-            instance.save()
-            
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            with transaction.atomic():
+                # First, save the main proposal data
+                self.perform_update(serializer)
+                
+                # THEN, handle the image upload after successful save
+                if header_img_data:
+                    try:
+                        url = upload_to_storage(header_img_data, 'project-proposal-bucket', 'header_images')
+                        instance.gpr_header_img = url
+                        instance.save(update_fields=['gpr_header_img'])
+                    except Exception as e:
+                        # Log the error but don't fail the entire request
+                        print(f"Header image upload failed but proposal was saved: {str(e)}")
+                
+                return Response(serializer.data)
+                
+        except Exception as e:
+            # If anything fails, the transaction will roll back
+            return Response(
+                {"error": f"Failed to update proposal: {str(e)}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
  
 class ProposalSuppDocCreateView(generics.ListCreateAPIView):
     serializer_class = ProposalSuppDocSerializer
