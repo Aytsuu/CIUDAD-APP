@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog/dialog";
 import {
   useAddProjectProposal,
+  useAddSupportDocument,
 } from "./queries/projprop-addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import {
@@ -51,10 +52,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const [pdfPreview, setPdfPreview] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
-  const [_errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const addMutation = useAddProjectProposal();
-  //const addSupportDocMutation = useAddSupportDocument();
+  const addSupportDocMutation = useAddSupportDocument();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedDevProject, setSelectedDevProject] = useState<any>(null);
 
@@ -249,7 +250,6 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     "GAD Staff",
   ];
 
-  // In handleProjectSelect function, replace the form.setValue call with:
   const handleProjectSelect = (projectId?: string) => {
     const selectedProject = availableProjects.find(
       (project) => project.dev_id.toString() === projectId
@@ -258,10 +258,8 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     if (selectedProject) {
       setSelectedDevProject(selectedProject);
 
-      // Use setValue without immediate validation to avoid blocking
       setValue("selectedDevProject", selectedProject as any);
 
-      // Auto-populate form fields with development plan data
       if (
         selectedProject.participants &&
         selectedProject.participants.length > 0
@@ -409,122 +407,123 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
     setIsPreviewOpen(false);
   };
 
-const onSubmit = async (data: ProjectProposalFormValues) => {
-   console.log("Form submitted with data:", data);
-  console.log("Media files:", mediaFiles);
-  console.log("Supporting docs:", supportingDocs);
-  console.log("Media files length:", mediaFiles.length);
-  console.log("Supporting docs length:", supportingDocs.length);
-  
-  // Check if files have the expected structure
-  if (mediaFiles.length > 0) {
-    console.log("First media file:", mediaFiles[0]);
-    console.log("Media file has file property:", !!mediaFiles[0].file);
-  }
-  
-  if (supportingDocs.length > 0) {
-    console.log("First supporting doc:", supportingDocs[0]);
-    console.log("Supporting doc has file property:", !!supportingDocs[0].file);
-  }
-  
-
-  const formattedParticipants = data.participants
-    .filter(p => p.category.trim() !== "")
-    .map(p => ({
-      category: p.category,
-      count: parseInt(p.count) || 0
-    }));
-  
-  const formattedBudgetItems = data.budgetItems
-    .filter(item => item.name.trim() !== "")
-    .map(item => ({
-      name: item.name,
-      pax: item.pax || "1",
-      amount: parseFloat(item.amount) || 0
-    }));
-
-  try {
-    setErrorMessage(null);
-    let gpr_header_img: string | null = null;
-
-    if (mediaFiles.length > 0 && mediaFiles[0].file) {
-      if (mediaFiles[0].file.startsWith("data:")) {
-        gpr_header_img = mediaFiles[0].file;
-      } else {
-        gpr_header_img = mediaFiles[0].file;
-      }
+  const onSubmit = async (data: ProjectProposalFormValues) => {
+    console.log("Form submitted with data:", data);
+    console.log("Media files:", mediaFiles);
+    console.log("Supporting docs:", supportingDocs);
+    console.log("Media files length:", mediaFiles.length);
+    console.log("Supporting docs length:", supportingDocs.length);
+    
+    if (mediaFiles.length > 0) {
+      console.log("First media file:", mediaFiles[0]);
+      console.log("Media file has file property:", !!mediaFiles[0].file);
+    }
+    
+    if (supportingDocs.length > 0) {
+      console.log("First supporting doc:", supportingDocs[0]);
+      console.log("Supporting doc has file property:", !!supportingDocs[0].file);
     }
 
-    const proposalData: ProjectProposalInput = {
-      gprId: existingProposal?.gprId,
-      gpr_background: data.background,
-      gpr_objectives: data.objectives.filter((obj: string) => obj.trim() !== ""),
-      gpr_date: data.date,
-      gpr_venue: data.venue,
-      gpr_monitoring: data.monitoringEvaluation,
-      gpr_signatories: data.signatories.filter((s: Signatory) => s.name.trim() !== ""),
-      gpr_header_img,
-      staffId: user?.staff?.staff_id || null,
-      gprIsArchive: existingProposal?.gprIsArchive || false,
-      dev: data.selectedDevProject.dev_id,
-      participants: formattedParticipants,
-      budget_items: formattedBudgetItems
-    };
-
-
-    // Create the proposal
-    const proposalResponse = await addMutation.mutateAsync(proposalData);
-
-    // Handle supporting documents using the returned ID
-    const newFiles: FileInput[] = supportingDocs
-      .filter((doc) => !!doc.file && !existingProposal?.supportDocs?.some((sd: SupportDoc) => sd.psd_url === doc.url))
-      .map((doc) => ({
-        name: doc.name,
-        type: doc.type,
-        file: doc.file as string,
+    const formattedParticipants = data.participants
+      .filter(p => p.category.trim() !== "")
+      .map(p => ({
+        category: p.category,
+        count: parseInt(p.count) || 0
+      }));
+    
+    const formattedBudgetItems = data.budgetItems
+      .filter(item => item.name.trim() !== "")
+      .map(item => ({
+        name: item.name,
+        pax: item.pax || "1",
+        amount: parseFloat(item.amount) || 0
       }));
 
+    try {
+      setErrorMessage(null);
+      let gpr_header_img: string | null = null;
 
-    if (newFiles.length > 0) {
-      const gprId = proposalResponse.gprId || proposalResponse.gpr_id;
-      if (!gprId) {
-        throw new Error('No proposal ID returned from server');
+      if (mediaFiles.length > 0 && mediaFiles[0].file) {
+        if (mediaFiles[0].file.startsWith("data:")) {
+          gpr_header_img = mediaFiles[0].file;
+        } else {
+          gpr_header_img = mediaFiles[0].file;
+        }
+      }
+
+      const proposalData: ProjectProposalInput = {
+        gprId: existingProposal?.gprId,
+        gpr_background: data.background,
+        gpr_objectives: data.objectives.filter((obj: string) => obj.trim() !== ""),
+        gpr_date: data.date,
+        gpr_venue: data.venue,
+        gpr_monitoring: data.monitoringEvaluation,
+        gpr_signatories: data.signatories.filter((s: Signatory) => s.name.trim() !== ""),
+        gpr_header_img,
+        staffId: user?.staff?.staff_id || null,
+        gprIsArchive: existingProposal?.gprIsArchive || false,
+        dev: data.selectedDevProject.dev_id,
+        participants: formattedParticipants,
+        budget_items: formattedBudgetItems
+      };
+
+      const proposalResponse = await addMutation.mutateAsync(proposalData);
+
+      const newFiles: FileInput[] = supportingDocs
+        .filter((doc) => !!doc.file && !existingProposal?.supportDocs?.some((sd: SupportDoc) => sd.psd_url === doc.url))
+        .map((doc) => ({
+          name: doc.name,
+          type: doc.type,
+          file: doc.file as string,
+        }));
+
+      if (newFiles.length > 0) {
+        const gprId = proposalResponse.gprId || proposalResponse.gpr_id;
+        if (!gprId) {
+          throw new Error('No proposal ID returned from server');
+        }
+        
+        const supportDocResult = await addSupportDocMutation.mutateAsync({
+          gpr_id: gprId,
+          files: newFiles,
+        });
+        console.log("Support documents uploaded:", supportDocResult);
+      }
+
+      form.reset();
+      setMediaFiles([]);
+      setSupportingDocs([]);
+      onSuccess();
+
+    } catch (error: any) {
+      let errorMessage = "Failed to save proposal. Please check the form data and try again.";
+      
+      if (error.response?.data) {
+        if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else if (error.response.data.error) {
+          errorMessage = error.response.data.error;
+        } else if (error.response.data.detail) {
+          errorMessage = error.response.data.detail;
+        } else {
+          errorMessage = JSON.stringify(error.response.data, null, 2);
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
-      // const supportDocResult = await addSupportDocMutation.mutateAsync({
-      //   gpr_id: gprId,
-      //   files: newFiles,
-      // });
+      setErrorMessage(errorMessage);
     }
-
-    form.reset();
-    setMediaFiles([]);
-    setSupportingDocs([]);
-    onSuccess();
-
-  } catch (error: any) {
-    let errorMessage = "Failed to save proposal. Please check the form data and try again.";
-    
-    if (error.response?.data) {
-      if (typeof error.response.data === 'string') {
-        errorMessage = error.response.data;
-      } else if (error.response.data.error) {
-        errorMessage = error.response.data.error;
-      } else if (error.response.data.detail) {
-        errorMessage = error.response.data.detail;
-      } else {
-        errorMessage = JSON.stringify(error.response.data, null, 2);
-      }
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
-    
-    setErrorMessage(errorMessage);
-  }
-};
+  };
 
   return (
     <div className="container mx-auto px-4 sm:px-6 max-w-2xl md:max-w-3xl lg:max-w-4xl">
+      {errorMessage && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {errorMessage}
+        </div>
+      )}
+      
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -957,10 +956,11 @@ const onSubmit = async (data: ProjectProposalFormValues) => {
                     className="w-full sm:w-auto items-center gap-2"
                     disabled={
                       addMutation.isPending ||
+                      addSupportDocMutation.isPending ||
                       Object.keys(form.formState.errors).length > 0
                     }
                   >
-                    {addMutation.isPending ? "Saving..." : "Save"}
+                    {addMutation.isPending || addSupportDocMutation.isPending ? "Saving..." : "Save"}
                   </Button>
                 }
                 title="Confirm Save"
