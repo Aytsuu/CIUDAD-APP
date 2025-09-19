@@ -14,7 +14,7 @@ import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServic
 import { Loader2 } from "lucide-react";
 
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
-function ReceiptForm({
+   function ReceiptForm({
     id,
     purpose,
     rate,
@@ -23,7 +23,8 @@ function ReceiptForm({
     nat_col,
     is_resident,
     voter_id,
-    onSuccess,
+    onComplete,
+    onRequestDiscount,
     discountedAmount,
     discountReason,
     spay_id
@@ -36,14 +37,15 @@ function ReceiptForm({
     nat_col: string;
     is_resident: boolean;
     voter_id?: string | number | null;
-    onSuccess: () => void;
+    onComplete: () => void;
+    onRequestDiscount: () => void;
     discountedAmount?: string;
     discountReason?: string;
     spay_id?: number;
 }){
-    const { user } = useAuth();
+   const { user } = useAuth();
     const staffId = user?.staff?.staff_id;
-    const { mutate: receipt, isPending} = useAddPersonalReceipt(onSuccess)
+   const { mutate: receipt, isPending} = useAddPersonalReceipt(onComplete)
     const { mutate: acceptReq, isPending: isAcceptPending} = useAcceptRequest()
     const { mutate: acceptNonResReq, isPending: isAcceptNonResPending} = useAcceptNonResRequest()
     const { data: scRate } = useServiceChargeRate();
@@ -154,8 +156,8 @@ function ReceiptForm({
 
             console.log('Receipt mutation called successfully');
             
-            // Call onSuccess callback to refresh data
-            onSuccess();
+            // Call onComplete callback to finish the flow
+            onComplete();
         } catch (error) {
             console.error('Error in onSubmit:', error);
         }
@@ -245,7 +247,7 @@ function ReceiptForm({
                                 ? "text-gray-400 cursor-not-allowed disabled:opacity-100 disabled:pointer-events-auto" 
                                 : "text-green-600 hover:bg-green-50 hover:text-green-700"}
                             `}
-                            onClick={onSuccess}
+                            onClick={onRequestDiscount}
                             >
                             Apply Discount
                             </Button>
