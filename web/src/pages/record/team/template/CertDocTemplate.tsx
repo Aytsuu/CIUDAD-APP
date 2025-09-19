@@ -109,7 +109,6 @@ export const CertDocTemplate = ({
     const files = Array.from(e.target.files || []);
     try {
       const file = await handleImageUpload(files);
-      console.log;
       if (file) {
         updateTemplate({
           data: {

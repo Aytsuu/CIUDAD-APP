@@ -73,9 +73,8 @@ export default function ARRecords() {
   
   React.useEffect(() => {
     if(warThisMonth) {
-      setIsCreatable(warThisMonth?.every((war: any) => {
-        getWeekNumber(war.created_for) !== getWeekNumber(formatDate(now) as string)
-      }
+      setIsCreatable(warThisMonth?.every((war: any) => 
+        getWeekNumber(war.created_for) !== getWeekNumber(new Date().toISOString())
       ));
     }
   }, [warThisMonth]);
@@ -83,6 +82,8 @@ export default function ARRecords() {
   const onSelectedRowsChange = React.useCallback((rows: any[]) => {
     setSelectedRows(rows)
   }, [])
+
+  console.log(isCreatable)
 
   const handleCreateWAR = async () => {
     setIsSubmitting(true)

@@ -39,8 +39,6 @@ export default function BusinessRecords() {
 
   const formattedRequest = formatModificationRequests(modificationRequests);
 
-  console.log(businessList)
-
   // ----------------- SIDE EFFECTS --------------------
   React.useEffect(() => {
     if(isLoadingBusinesses || isLoadingRequests) showLoading();
