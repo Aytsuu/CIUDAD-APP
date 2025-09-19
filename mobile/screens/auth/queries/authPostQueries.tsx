@@ -3,6 +3,8 @@ import { addAccount, addAddress, addPersonal, addPersonalAddress, addRequest } f
 import { api } from "@/api/api";
 import { useRouter } from "expo-router";
 import { useToastContext } from "@/components/ui/toast";
+import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
+import axios from "axios";
 
 export const useAddAddress = () => {
   return useMutation({
@@ -72,8 +74,8 @@ export const useAddBusinessRespondent = () => {
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       try {
-        console.log('respondent:', data)
-        const res = await api.post('profiling/business/create-respondent/', data);
+        console.log(data)
+        const res = await api.post('profiling/business/respondent/create/', data);
         return res.data;
       } catch (err ) {
         throw err;
@@ -82,33 +84,33 @@ export const useAddBusinessRespondent = () => {
   })
 }
 
-export const useVerifyBusinessRespondent = () => {
-  const { toast } = useToastContext();
-  return useMutation({
-    mutationFn: async ({br_id, personal_info} : {
-      br_id?: string 
-      personal_info?: Record<string, any>
-    }) => {
-      try {
-        const res = await api.post("profiling/business/verify/account-creation/", {
-          br_id: br_id,
-          personal_info: personal_info
-        });
+// export const useVerifyBusinessRespondent = () => {
+//   const { toast } = useToastContext();
+//   return useMutation({
+//     mutationFn: async ({br_id, personal_info} : {
+//       br_id?: string 
+//       personal_info?: Record<string, any>
+//     }) => {
+//       try {
+//         const res = await api.post("profiling/business/verify/account-creation/", {
+//           br_id: br_id,
+//           personal_info: personal_info
+//         });
 
-        return res.data;
-      } catch (err) {
-        throw err;
-      }
-    },
-    onError: (error: any) => {
-      if (error?.response?.status === 404) {
-        toast.error("Business Respondent not found.");
-      } else if (error?.response?.status === 409) {
-        toast.error("An account already exists for this profile.");
-      }
-    }
-  })
-}
+//         return res.data;
+//       } catch (err) {
+//         throw err;
+//       }
+//     },
+//     onError: (error: any) => {
+//       if (error?.response?.status === 404) {
+//         toast.error("Business Respondent not found.");
+//       } else if (error?.response?.status === 409) {
+//         toast.error("An account already exists for this profile.");
+//       }
+//     }
+//   })
+// }
 
 export const useVerifyFamily = () => {
   const { toast } = useToastContext();
@@ -125,6 +127,30 @@ export const useVerifyFamily = () => {
     onError: (error: any) => {
       if (error?.response?.status === 404) {
         toast.error("Family with this ID does not exist.");
+      }
+    }
+  })
+}
+
+export const useSendOTP = () => {
+  const { toast } = useToastContext();
+  const { setError } = useRegistrationFormContext();
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        const res = await api.post("account/phone-verification", data)
+        return res.data
+      } catch (err: any) {
+        if (axios.isAxiosError(err) && err.response) {
+          const errors = err.response.data;
+
+          if (errors.phone) {
+            setError("accountFormSchema.phone", {
+              type: "server",
+              message: errors.phone, // "Phone already in use"
+            });
+          }
+        }
       }
     }
   })

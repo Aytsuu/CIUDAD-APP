@@ -29,11 +29,11 @@ export default () => {
           }}
         />
         <Tabs.Screen
-            name="account"
-            options={{
-              title: "Account",
-              headerShown: false,
-            }}
+          name="account"
+          options={{
+            title: "Account",
+            headerShown: false,
+          }}
         />
     </Tabs>
   )

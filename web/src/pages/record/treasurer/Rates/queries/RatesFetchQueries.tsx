@@ -8,6 +8,7 @@ export type AnnualGrossSales = {
     ags_rate: number;
     ags_date: string;
     ags_is_archive: boolean;
+    staff_name: string;
 }
 
 export const useGetAnnualGrossSales = () => {
@@ -27,6 +28,7 @@ export type PurposeAndRate = {
     pr_category: string;
     pr_date: string;
     pr_is_archive: boolean;
+    staff_name: string;
 }
 
 export const useGetPurposeAndRate = () => {

@@ -8,7 +8,7 @@ import React from "react"
 import { SearchInput } from "@/components/ui/search-input"
 import { useGetMinutesOfMeetingRecords, type MinutesOfMeetingRecords } from "./queries/MOMFetchQueries"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { formatAreaOfFocus } from "@/helpers/wordFormatter"
 
 export default function MinutesOfMeetingMain() {
@@ -31,7 +31,7 @@ export default function MinutesOfMeetingMain() {
       (record: MinutesOfMeetingRecords) =>
         record.mom_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         record.mom_agenda.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        record.areas_of_focus.some((area) => area.toLowerCase().includes(searchQuery.toLowerCase())),
+        record.mom_area_of_focus.some((area) => area.toLowerCase().includes(searchQuery.toLowerCase())),
     )
   }, [momRecords, searchQuery])
 
@@ -85,21 +85,21 @@ export default function MinutesOfMeetingMain() {
         </Text>
       </View>
 
-      {item.areas_of_focus?.length > 0 && (
+      {item.mom_area_of_focus?.length > 0 && (
         <View>
           <View className="flex-row items-center mb-2">
             <Users size={14} className="text-gray-500 mr-1" />
             <Text className="text-gray-500 text-xs font-medium uppercase tracking-wide">Areas of Focus</Text>
           </View>
           <View className="flex-row flex-wrap">
-            {item.areas_of_focus.slice(0, 3).map((area, index) => (
+            {item.mom_area_of_focus.slice(0, 3).map((area, index) => (
               <View key={index} className="bg-gray-100 px-2 py-1 rounded-md mr-2 mb-1">
                 <Text className="text-gray-700 text-xs font-medium">{formatAreaOfFocus(area)}</Text>
               </View>
             ))}
-            {item.areas_of_focus.length > 3 && (
+            {item.mom_area_of_focus.length > 3 && (
               <View className="bg-gray-100 px-2 py-1 rounded-md mr-2 mb-1">
-                <Text className="text-gray-500 text-xs font-medium">+{item.areas_of_focus.length - 3} more</Text>
+                <Text className="text-gray-500 text-xs font-medium">+{item.mom_area_of_focus.length - 3} more</Text>
               </View>
             )}
           </View>

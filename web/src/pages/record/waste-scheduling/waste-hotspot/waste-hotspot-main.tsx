@@ -121,6 +121,10 @@ function WasteHotspotMain() {
             accessorKey: "wh_add_info", 
             header: "Additional Info",
             cell: ({ row }) => <div>{row.getValue("wh_add_info") || "None"}</div>
+        }, 
+        {
+            accessorKey: "staff_name",
+            header: "Assigned By"
         }
     ];
 

@@ -10,7 +10,7 @@ interface Patient {
     per_lname: string;
     per_mname: string;
     per_sex: string;
-    per_dob?: string
+    per_dob?: string;
     ageTime?: "yrs";
   };
   address?: {
@@ -26,16 +26,16 @@ interface Patient {
 }
 
 interface PatientInfoCardv2Props {
-  patient: Patient | null
+  patient: Patient | null;
 }
 
 // Helper functions
 const formatFullName = (patients?: Patient["personal_info"]) => {
-  if (!patients) return "Not provided"
-  const { per_fname = "", per_mname = "", per_lname = "" } = patients
-  const fullName = `${per_fname} ${per_mname} ${per_lname}`.trim()
-  return fullName || "Not provided"
-}
+  if (!patients) return "Not provided";
+  const { per_fname = "", per_mname = "", per_lname = "" } = patients;
+  const fullName = `${per_fname} ${per_mname} ${per_lname}`.trim();
+  return fullName || "Not provided";
+};
 
 const formatAddress = (patient: Patient) => {
   const addressParts = [
@@ -50,23 +50,23 @@ const formatAddress = (patient: Patient) => {
 }
 
 const formatDateOfBirth = (dob?: string) => {
-  if (!dob) return "Not provided"
+  if (!dob) return "Not provided";
   try {
-    return format(new Date(dob), "MMM dd, yyyy")
+    return format(new Date(dob), "MMM dd, yyyy");
   } catch {
-    return "Invalid date"
+    return "Invalid date";
   }
-}
+};
 
 const formatAge = (ageData?: { age: number; ageTime: string }) => {
-  if (!ageData) return "N/A"
-  return `${ageData.age} ${ageData.ageTime}`
-}
+  if (!ageData) return "N/A";
+  return `${ageData.age} ${ageData.ageTime}`;
+};
 
 const getGenderIcon = (gender?: string) => {
-  if (!gender) return User
-  return gender.toLowerCase() === 'female' ? Heart : Shield
-}
+  if (!gender) return User;
+  return gender.toLowerCase() === "female" ? Heart : Shield;
+};
 
 // Empty state
 const EmptyPatientState = () => (
@@ -75,11 +75,11 @@ const EmptyPatientState = () => (
     <h3 className="text-lg font-semibold text-gray-900 mb-2">No Patient Selected</h3>
     <p className="text-gray-600">Select a patient to view their information</p>
   </div>
-)
+);
 
 export const PatientInfoCardv2 = ({ patient }: PatientInfoCardv2Props) => {
   if (!patient) {
-    return <EmptyPatientState />
+    return <EmptyPatientState />;
   }
 
   const fullName = formatFullName(patient.personal_info)
@@ -94,9 +94,7 @@ export const PatientInfoCardv2 = ({ patient }: PatientInfoCardv2Props) => {
     <div className="p-6 bg-white rounded-sm shadow-md border border-gray-200">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-12 h-12 bg-slate-400 rounded-xl flex items-center justify-center text-white text-lg font-bold">
-          {fullName.charAt(0).toUpperCase()}
-        </div>
+        <div className="w-12 h-12 bg-slate-400 rounded-xl flex items-center justify-center text-white text-lg font-bold">{fullName.charAt(0).toUpperCase()}</div>
         <div className="flex-1">
           <h2 className="text-xl font-bold text-gray-900">{fullName}</h2>
           <p className="text-sm text-gray-600">
@@ -144,5 +142,5 @@ export const PatientInfoCardv2 = ({ patient }: PatientInfoCardv2Props) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

@@ -4,7 +4,7 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-
+    path('monthly-list/', get_monthly_fp_list, name='monthly-fp-list'),
     path('illnesses/create_or_get/', get_or_create_illness, name='create_or_get_illness'),
     path('familyplanning/illnesses/by_ids/', get_illnesses_by_ids, name='get_illnesses_by_ids'),
     path('last-previous-pregnancy/<str:patient_id>/', get_last_previous_pregnancy, name='last-pregnancy'),

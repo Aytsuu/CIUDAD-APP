@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
+import _ScreenLayout from '@/screens/_ScreenLayout';
 
 const CertChoices = () => {
   const router = useRouter();
@@ -15,16 +16,27 @@ const CertChoices = () => {
       icon: "person-outline"
     },
     {
-      title: "Permit",
+      title: "Business Permit and Business Clearance",
       description: "Request permit certification documents for business or activities.",
-      route: "/(request)/certification-request/cert-permit",
+      route: "/(request)/certification-request/cert-business-request",
       icon: "document-text-outline"
-    }
+    },
   ];
 
   return (
-    <View className="flex-1 bg-white px-5 pt-8">
-      <View className="flex-1">
+    <_ScreenLayout
+      customLeftAction={
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Ionicons name="chevron-back" size={20} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerBetweenAction={<Text className="text-[13px]">Certification Requests</Text>}
+      customRightAction={<View className="w-10 h-10" />}
+    >
+      <View className="flex-1 px-5">
         {menuItem.map((item: any, index: number) => (
           <TouchableOpacity
             key={index}
@@ -56,7 +68,7 @@ const CertChoices = () => {
           </TouchableOpacity>
         ))}
       </View>
-    </View>
+    </_ScreenLayout>
   );
 };
 

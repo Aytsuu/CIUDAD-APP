@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import {z} from "zod";
 import { editAnnualGrossSales, editPurposeAndRate } from "../restful-API/RatesPutAPI";
 import { AnnualGrossSalesEditSchema, PurposeAndRatesEditSchema } from "@/form-schema/treasurer/rates-edit-form-schema";
+import { showSuccessToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 
 
 export const useEditAnnualGrossSales = (onSuccess?: () => void) => {
@@ -14,25 +14,18 @@ export const useEditAnnualGrossSales = (onSuccess?: () => void) => {
             editAnnualGrossSales(values.ags_id, { 
                 minRange: values.minRange,
                 maxRange: values.maxRange,
-                amount: values.amount
+                amount: values.amount,
+                staff_id: values.staff_id
             }),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['grossSales'] });
-
-                toast.loading('Submitting Record...', {id: "editGrossSales"});
-        
-                toast.success('Record Updated!', {
-                    id: "editGrossSales",
-                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                    duration: 2000
-                });
+                showSuccessToast("Record Updated!")
                 onSuccess?.()
             },
             onError: (err) => {
                 console.error("Error submitting record:", err);
-                toast.error(
-                    "Failed to submit record. Please check the input data and try again.",
-                    { duration: 2000 }
+                showErrorToast(
+                    "Failed to submit record. Please check the input data and try again."
                 );
             }
         })
@@ -46,25 +39,18 @@ export const useEditPurposeAndRate = (onSuccess?: () => void) => {
             editPurposeAndRate(values.pr_id, { 
                 purpose: values.purpose,
                 amount: values.amount,
-                category: values.category
+                category: values.category,
+                staff_id: values.staff_id
             }),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['purposeRates'] });
-
-                toast.loading('Submitting Record...', {id: "editPurposeRates"});
-        
-                toast.success('Record Updated!', {
-                    id: "editPurposeRates",
-                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                    duration: 2000
-                });
+                showSuccessToast("Record Updated!")
                 onSuccess?.()
             },
             onError: (err) => {
                 console.error("Error submitting record:", err);
-                toast.error(
-                    "Failed to submit record. Please check the input data and try again.",
-                    { duration: 2000 }
+                showErrorToast(
+                    "Failed to submit record. Please check the input data and try again."
                 );
             }
         })

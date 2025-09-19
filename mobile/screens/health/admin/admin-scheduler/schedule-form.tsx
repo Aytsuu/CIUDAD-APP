@@ -6,7 +6,6 @@ import type { ServiceScheduleFormProps,WeeklySchedule,DailySchedule,ServiceTimeS
 import { useAddDay, useAddScheduler, useAddService } from "./queries/schedulerAddQueries"
 import { useGetDays, useGetServices } from "./queries/schedulerFetchQueries"
 import { useDeleteService, useDeleteDay } from "./queries/schedulerDeleteQueries"
-import { useToastContext } from "@/components/ui/toast"
 
 
 // Placeholder for a React Native compatible toast notification
@@ -51,7 +50,7 @@ export default function ServiceScheduleForm({
   onAddDay, // Now explicitly part of props
   onClose, // Added onClose prop
 }: ServiceScheduleFormProps) {
-   const { toast } = useToastContext();
+
   // fetch services and days
   const { data: servicesData, isLoading: isLoadingServices } = useGetServices()
   const { data: daysData, isLoading: isLoadingDays } = useGetDays()

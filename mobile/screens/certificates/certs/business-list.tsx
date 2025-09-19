@@ -1,10 +1,10 @@
 import { View, Text, ScrollView, Pressable, TextInput } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button/button'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { getBusinessPermits, BusinessPermit } from '@/screens/certificates/restful-api/businessGetAPI'
+import { getBusinessPermits, BusinessPermit } from '../queries/businessPermitQueries'
 
 const BusinessList = () => {
   const [searchQuery, setSearchQuery] = useState('')

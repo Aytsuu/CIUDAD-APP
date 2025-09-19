@@ -80,10 +80,16 @@ export const useSubmitAnimalBiteReferralMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: submitAnimalBiteReferral,
-    onSuccess: () => {
-      // Invalidate the query key that 'overall.tsx' uses to refetch data
+    onSuccess: (data, variables) => {
+      // Get the patient ID from the submitted data
+      const patientId = variables.pat_id;
+      
+      // Invalidate both overall and individual queries
       queryClient.invalidateQueries({ queryKey: ["animalbite-records"] });
-      queryClient.invalidateQueries({ queryKey: ["animalbitePatientHistory"] }); // Also invalidate individual patient history queries
+      queryClient.invalidateQueries({ 
+        queryKey: ["animalBiteHistory", patientId] 
+      });
+      
       toast.success("Animal bite referral submitted successfully!");
     },
     onError: (error: any) => {
@@ -91,7 +97,6 @@ export const useSubmitAnimalBiteReferralMutation = () => {
     },
   });
 };
-
 
 export const useRefreshAllData = () => {
   const queryClient = useQueryClient()

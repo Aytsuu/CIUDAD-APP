@@ -248,6 +248,22 @@ export default function FamilyPlanningPage() {
         reasonForFP: followUpPrefillRecord.reasonForFP || "", // Preserve existing value
         otherReasonForFP: followUpPrefillRecord.otherReasonForFP || "", // Preserve existing value
         reason: followUpPrefillRecord.reason || "", // Add this line
+        weight: followUpPrefillRecord.weight,
+      height: followUpPrefillRecord.height,
+      bloodPressure: followUpPrefillRecord.bloodPressure,
+      pulseRate: followUpPrefillRecord.pulseRate,
+      skinExamination: followUpPrefillRecord.skinExamination,
+      conjunctivaExamination: followUpPrefillRecord.conjunctivaExamination,
+      neckExamination: followUpPrefillRecord.neckExamination,
+      breastExamination: followUpPrefillRecord.breastExamination,
+      abdomenExamination: followUpPrefillRecord.abdomenExamination,
+      extremitiesExamination: followUpPrefillRecord.extremitiesExamination,
+      pelvicExamination: followUpPrefillRecord.pelvicExamination,
+      cervicalConsistency: followUpPrefillRecord.cervicalConsistency,
+      cervicalTenderness: followUpPrefillRecord.cervicalTenderness,
+      cervicalAdnexal: followUpPrefillRecord.cervicalAdnexal,
+      uterinePosition: followUpPrefillRecord.uterinePosition,
+      uterineDepth: followUpPrefillRecord.uterineDepth,
       }
       setFormData(prefillData)
       setIsPrefillingData(false)

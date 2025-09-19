@@ -2,6 +2,7 @@
 import React from "react";
 import { View, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Button } from "@/components/ui/button/button";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
 import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus, Venus, NotebookPen } from "lucide-react-native";
@@ -13,7 +14,7 @@ const { width } = Dimensions.get('window');
 
 const Homepage = () => {
   // Get pending appointments count
-  const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments();
+  // const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments();
 
   const modules = [
     { name: 'Child Health Records', route: 'admin/childhealth/overall', icon: Baby },
@@ -184,10 +185,10 @@ const Homepage = () => {
             >
               <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My appointments</Text>
               {/* Notification Badge */}
-              <NotificationBadge 
+              {/* <NotificationBadge 
                 count={pendingCount} 
                 showBadge={!isLoadingPending && pendingCount > 0} 
-              />
+              /> */}
             </TouchableOpacity>
           </View>
 

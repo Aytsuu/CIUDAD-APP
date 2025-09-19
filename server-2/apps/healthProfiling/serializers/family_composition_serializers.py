@@ -26,10 +26,25 @@ class FamilyCompositionExtendedSerializer(serializers.ModelSerializer):
     info = obj.rp.per
     return f"{info.per_lname}, {info.per_fname}" + \
           (f" {info.per_mname[0]}." if info.per_mname else '')
+  
 
-    
 class FamilyCompositionBulkCreateSerializer(serializers.ModelSerializer):
   class Meta:
     model = FamilyComposition
     fields = '__all__'
     read_only_fields = ['fc_id']
+
+class RespondentsInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RespondentsInfo
+        fields = '__all__'
+
+class HealthRelatedDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HealthRelatedDetails
+        fields = '__all__'
+
+class MotherHealthInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MotherHealthInfo
+        fields = '__all__'

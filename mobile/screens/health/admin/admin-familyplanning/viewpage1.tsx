@@ -27,6 +27,7 @@ import {
   AlertCircle,
 } from "lucide-react-native";
 import { FPRecordData } from "./FPRecordData";
+import { LoadingState } from "@/components/ui/loading-state";
 
 export default function FpRecordViewPage1() {
   const { fprecordId } = useLocalSearchParams();
@@ -55,13 +56,7 @@ export default function FpRecordViewPage1() {
   ];
 
   if (isLoading) {
-    return (
-      <View className="flex-1 bg-gray-50 items-center justify-center p-6">
-        <Loader2 size={32} color="#3B82F6" />
-        <Text className="text-lg text-gray-600 mt-4">Loading record...</Text>
-      </View>
-    );
-  }
+    return <LoadingState/> }
 
   if (isError) {
     return (

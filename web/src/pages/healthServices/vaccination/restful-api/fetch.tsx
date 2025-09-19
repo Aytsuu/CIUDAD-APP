@@ -1,15 +1,6 @@
 import { useState, useEffect } from "react";
 import { api2 } from "@/api/api";
-import {
-  getVaccintStocks,
-} from "./get";
-
-
-
-
-
-
-
+import { getVaccintStocks } from "./get";
 
 // In fetchVaccinesWithStockVacID function
 export const fetchVaccinesWithStockVacID = (vacId: number) => {
@@ -38,12 +29,10 @@ export const fetchVaccinesWithStockVacID = (vacId: number) => {
         }
 
         // Filter by vac_id first
-        const filteredByVacId = stocks.filter(stock => stock.vac_id === vacId);
+        const filteredByVacId = stocks.filter((stock) => stock.vac_id === vacId);
 
         const availableStocks = filteredByVacId.filter((stock) => {
-          const isExpired =
-            stock.inv_details?.expiry_date &&
-            new Date(stock.inv_details.expiry_date) < new Date();
+          const isExpired = stock.inv_details?.expiry_date && new Date(stock.inv_details.expiry_date) < new Date();
           return stock.vacStck_qty_avail > 0 && !isExpired;
         });
 
@@ -57,27 +46,19 @@ export const fetchVaccinesWithStockVacID = (vacId: number) => {
         const transformedData = {
           default: sortedStocks,
           formatted: sortedStocks.map((stock: any) => ({
-            id: `${stock.vacStck_id},${stock.vac_id},${
-              stock.vaccinelist?.vac_name || "Unknown Vaccine"
-            },${stock.inv_details?.expiry_date || "No Expiry"}`,
+            id: `${stock.vacStck_id},${stock.vac_id},${stock.vaccinelist?.vac_name || "Unknown Vaccine"},${stock.inv_details?.expiry_date || "No Expiry"}`,
             name: (
               <div className="flex items-center gap-3">
-                <span className="bg-blue-500 rounded text-white p-1 text-xs">
-                  {stock.vac_id}
-                </span>
+                <span className="bg-blue-500 rounded text-white p-1 text-xs">{stock.vac_id}</span>
                 {`${stock.vaccinelist?.vac_name || "Unknown Vaccine"} 
-                (Available: ${stock.vacStck_qty_avail}) ${
-                  stock.inv_details?.expiry_date 
-                    ? `[Exp: ${new Date(stock.inv_details.expiry_date).toLocaleDateString()}]` 
-                    : ''
-                }`}
+                (Available: ${stock.vacStck_qty_avail}) ${stock.inv_details?.expiry_date ? `[Exp: ${new Date(stock.inv_details.expiry_date).toLocaleDateString()}]` : ""}`}
               </div>
             ),
             vac_id: String(stock.vac_id),
             expiry: stock.inv_details?.expiry_date || null,
             available: stock.vacStck_qty_avail,
             expiryDate: stock.inv_details?.expiry_date ? new Date(stock.inv_details.expiry_date) : null
-          })),
+          }))
         };
 
         setVaccines(transformedData);
@@ -95,23 +76,16 @@ export const fetchVaccinesWithStockVacID = (vacId: number) => {
   return {
     vaccineStocksOptions: vaccines.formatted,
     defaultVaccineStocks: vaccines.default,
-    isLoading,
+    isLoading
   };
 };
 
 export const checkVaccineStatus = async (pat_id: string, vac_id: number) => {
   try {
-    const response = await api2.get(
-      `/vaccination/check-vaccine/${pat_id}/${vac_id}`
-    );
+    const response = await api2.get(`/vaccination/check-vaccine/${pat_id}/${vac_id}`);
     return response.data; // Return the data from the response
   } catch (error: unknown) {
     // Handle errors (you can customize this based on your needs)
     console.error("Error checking vaccine status:", error);
   }
 };
-
-
-
-
-

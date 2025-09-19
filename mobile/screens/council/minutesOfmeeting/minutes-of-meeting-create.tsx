@@ -1,25 +1,27 @@
 import { FormInput } from "@/components/ui/form/form-input";
 import { minutesOfMeetingFormSchema } from "@/form-schema/council/minutesOfMeetingSchema";
 import _ScreenLayout from '@/screens/_ScreenLayout'
-import DocumentUploader, { DocumentFileType } from '@/components/ui/document-upload';
 import { View, TouchableOpacity, Text, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ChevronLeft } from 'lucide-react-native';
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod"
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";
 import FormComboCheckbox from "@/components/ui/form/form-combo-checkbox";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-or-time-input";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useInsertMinutesOfMeeting } from "./queries/MOMInsertQueries";
-import MultiImageUploader, { MediaFileType } from '@/components/ui/multi-media-upload';
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
+import DocumentPickerComponent, {DocumentItem} from '@/components/ui/document-upload';
+
 
 export default function MOMCreate(){
     const router = useRouter();
-    const [documentFiles, setDocumentFiles] = useState<DocumentFileType[]>([]);
-    const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([])
     const {mutate: addMOM, isPending} = useInsertMinutesOfMeeting()
+    const [selectedImages, setSelectedImages] = useState<MediaItem[]>([]);
+    const [selectedDocuments, setSelectedDocuments] = useState<DocumentItem[]>([]);
+    const [fileError, setFileError] = useState<string | null>(null);
 
     const meetingAreaOfFocus = [
         { id: "gad", name: "GAD" },
@@ -35,31 +37,35 @@ export default function MOMCreate(){
             meetingAgenda: "",
             meetingDate: "",
             meetingAreaOfFocus: [],
-            meetingFile: [],
-            meetingSuppDoc: []
          }
     })
 
-    useEffect(() => {
-        setValue('meetingFile', documentFiles.map(file => ({
-            name: file.name,
-            type: file.type,
-            path: file.path,
-            uri: file.publicUrl || file.uri
-        })));
-    }, [documentFiles, setValue]);  
-
-    useEffect(() => {
-            setValue('meetingSuppDoc', mediaFiles.map(file => ({
-            name: file.name,
-            type: file.type,
-            path: file.path,
-            uri: file.publicUrl || file.uri
-            })));
-    }, [mediaFiles, setValue]);
 
     const onSubmit = (values: z.infer<typeof minutesOfMeetingFormSchema>) => {
-        addMOM(values)
+        setFileError(null);
+        if (selectedDocuments.length === 0) {
+            setFileError("Meeting File is required.");
+        } else {
+            const suppDocs = selectedImages.map((media) => ({
+                name: media.name,
+                type: media.type,
+                file: media.file
+            }))
+
+            const files = selectedDocuments.map((media) => ({
+                name: media.name,
+                type: media.type,
+                file: media.file
+            }))
+
+            const payload = {
+                ...values,
+                files,
+                suppDocs
+            }
+
+            addMOM(payload)
+        }
     }
 
 
@@ -74,8 +80,14 @@ export default function MOMCreate(){
             showExitButton={false}
             loading={isPending}
             loadingMessage='Submitting...'
+            stickyFooter={true}
+            footer={
+                  <Button onPress={handleSubmit(onSubmit)}className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
+                        <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
+                    </Button>
+            }
         >
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
                 <View className="mb-8">
                     <View className="space-y-4">
 
@@ -98,6 +110,7 @@ export default function MOMCreate(){
                                 label="Meeting Date"
                                 name="meetingDate"
                                 type="date"
+                                maximumDate={new Date()}
                             />
 
                             <FormComboCheckbox
@@ -110,28 +123,26 @@ export default function MOMCreate(){
 
                             <View className="pt-5">
                                 <Text className="text-[13px] font-PoppinsRegular">Meeting File</Text>
-                                <DocumentUploader
-                                    mediaFiles={documentFiles}
-                                    setMediaFiles={setDocumentFiles}
-                                    maxFiles={1}
+                                <DocumentPickerComponent
+                                    selectedDocuments={selectedDocuments}
+                                    setSelectedDocuments={setSelectedDocuments}
+                                    multiple={false} 
+                                    maxDocuments={1} 
                                 />
+                                {fileError && (
+                                    <Text className="text-red-500 text-xs font-semibold">
+                                        {fileError}
+                                    </Text>
+                                )}
                             </View>
 
                             <View className="pt-7">
                                 <Text className="text-[12px] font-PoppinsRegular pb-1">Supporting Documents</Text>
-                                <MultiImageUploader
-                                    mediaFiles={mediaFiles}
-                                    setMediaFiles={setMediaFiles}
+                                <MediaPicker
+                                    selectedImages={selectedImages}
+                                    setSelectedImages={setSelectedImages}
+                                    multiple={true}
                                 />
-                            </View>
-
-                            <View className="pt-4 pb-8 bg-white border-t border-gray-100 px-4 mt-5">
-                                <Button
-                                    onPress={handleSubmit(onSubmit)}
-                                    className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg"
-                                >
-                                    <Text className="text-white font-PoppinsSemiBold text-[16px]">Submit</Text>
-                                </Button>
                             </View>
                     </View>
                 </View>

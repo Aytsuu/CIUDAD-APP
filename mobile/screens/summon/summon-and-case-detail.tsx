@@ -9,7 +9,7 @@ import { useEscalateCase, useResolveCase } from "./queries/summonUpdateQueries"
 import { formatTime } from "@/helpers/timeFormatter"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { ConfirmationModal } from "@/components/ui/confirmationModal"
 import { useState } from "react"
 

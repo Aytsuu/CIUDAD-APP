@@ -4,7 +4,8 @@ import { ArrowUpDown, Loader2 } from "lucide-react";
 import { FamilyRecord, MemberRecord } from "../ProfilingTypes";
 import { calculateAge } from "@/helpers/ageCalculator";
 import React from "react";
-import { useLoading } from "@/context/LoadingContext";import { Combobox } from "@/components/ui/combobox";
+import { useLoading } from "@/context/LoadingContext";
+import { Combobox } from "@/components/ui/combobox";
 import { useResidentsFamSpecificList } from "../queries/profilingFetchQueries";
 import { formatResidents } from "../ProfilingFormats";
 import ViewButton from "@/components/ui/view-button";
@@ -43,7 +44,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     ),
     cell: ({ row }) => {
       const {showLoading, hideLoading} = useLoading();
-      const { data: residentsFamSpecificList, isLoading } = useResidentsFamSpecificList(row.getValue('fam_id'));
+      const { data: residentsFamSpecificList, isLoading } = useResidentsFamSpecificList(row.original.fam_id);
       const formattedResidents = React.useMemo(() => 
         formatResidents(residentsFamSpecificList)
       , [residentsFamSpecificList])
@@ -59,7 +60,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
       return (
         <Combobox
           options={formattedResidents}
-          value={row.getValue('members')}
+          value={row.original.members}
           placeholder="Search member"
           emptyMessage="No resident found"
           staticVal={true}
@@ -70,7 +71,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
   },
   {
     accessorKey: "fam_building",
-    header: "Building",
+    header: "Household Occupancy",
   },
   {
     accessorKey: "father",
@@ -88,7 +89,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     accessorKey: "fam_date_registered",
     header: "Date Registered",
     cell: ({row}) => (
-      formatDate(row.original.fam_date_registered, "long")
+      formatDate(row.original.fam_date_registered, "short" as any)
     )
   },
   {
@@ -167,7 +168,7 @@ export const familyMembersCol = (
           await updateFamilyRole({
             familyId: family.fam_id,
             residentId: row.original.rp_id,
-            fc_role: capitalize(value)
+            fc_role: capitalize(value) as any
           });
           setIsChanging(false)
         }catch (err) {
@@ -181,7 +182,7 @@ export const familyMembersCol = (
             <Loader2 className="w-5 h-5 animate-spin"/>
           </Button>) : (
           <DropdownLayout
-            trigger={<Button className={buttonStyle}>{role} </Button>}
+            trigger={<Button className={buttonStyle}>{role as string} </Button>}
             options={[
               {id: "mother", name: "Mother"}, 
               {id: "father", name: "Father"},

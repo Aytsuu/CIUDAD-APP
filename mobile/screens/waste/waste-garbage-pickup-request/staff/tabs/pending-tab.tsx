@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Modal, Image } from "react-native";
 import { CheckCircle, XCircle, X, Search, Info } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { useGetGarbagePendingRequest } from "../queries/garbagePickupStaffFetchQueries";
 import { formatTimestamp } from "@/helpers/timestampformatter";
@@ -20,6 +20,7 @@ export default function PendingGarbageRequest() {
 
   const filteredData = pendingReqData.filter((request) => {
     const searchString = `
+      ${request.garb_id} 
       ${request.garb_requester} 
       ${request.garb_location} 
       ${request.garb_waste_type} 
@@ -109,18 +110,21 @@ export default function PendingGarbageRequest() {
                 className="border border-gray-200 rounded-lg bg-white"
               >
                 <CardHeader className="border-b border-gray-200 p-4">
-                  <View className="flex-row justify-between items-center">
-                    <View>
-                      <Text className="font-medium">{request.garb_requester}</Text>
-                      <Text className="text-sm text-gray-500">
-                        Sitio: {request.sitio_name}, {request.garb_location}
-                      </Text>
-                    </View>
-                    <View className="flex-row gap-1 items-center">
-                      <Text className="text-xs text-gray-500">
-                        {formatTimestamp(request.garb_created_at)}
-                      </Text>
-                    </View>
+                  <View className="flex flex-row justify-between items-center">
+                      <View className="flex-1">
+                        <View className='flex flex-row items-center gap-2 mb-1'>
+                          <View className="bg-blue-600 px-3 py-1 rounded-full self-start">
+                            <Text className="text-white font-bold text-sm tracking-wide">{request.garb_id}</Text>
+                          </View>
+                          <Text className="font-medium">{request.garb_requester}</Text>
+                        </View>
+                        <View className='flex flex-row justify-between items-center gap-2'>
+                            <Text className="text-xs text-gray-500">
+                              Sitio: {request.sitio_name}, {request.garb_location}
+                            </Text>
+                            <Text className="text-xs text-gray-500">{formatTimestamp(request.garb_created_at)}</Text>
+                        </View>
+                      </View>
                   </View>
                 </CardHeader>
                 <CardContent className="p-4">

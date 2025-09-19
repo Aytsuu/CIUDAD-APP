@@ -29,6 +29,7 @@ export default function CompletedTable() {
     
     // Then filter by search query
     const matchesSearch = searchQuery === "" || `
+      ${request.garb_id} 
       ${request.garb_requester} 
       ${request.garb_location} 
       ${request.garb_waste_type} 
@@ -36,6 +37,7 @@ export default function CompletedTable() {
       ${request.conf_staff_conf_date}
       ${request.conf_resident_conf_date}
       ${request.sitio_name}
+      ${request.staff_name}
     `.toLowerCase().includes(searchQuery.toLowerCase())
     
     return matchesSitio && matchesSearch && request.conf_staff_conf === true
@@ -213,6 +215,14 @@ export default function CompletedTable() {
                     <div className="flex-shrink-0 min-w-0 w-56">
                       <div className="space-y-2">
                         <div>
+                            <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
+                              <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
+                                {request.garb_id}
+                              </p>
+                            </div>
+                        </div>
+
+                        <div>
                           <h3 className="font-semibold text-sm text-gray-900 truncate">{request.garb_requester}</h3>
                           <p className="text-xs text-gray-500 mt-0.5">{request.sitio_name}</p>
                         </div>
@@ -245,7 +255,7 @@ export default function CompletedTable() {
                             {request.conf_staff_conf_date && ` (${formatTimestamp(request.conf_staff_conf_date)})`}
                           </p>
                         </div>
-                         <div>
+                        <div>
                           <p className="text-xs text-gray-500 uppercase tracking-wide">Resident</p>
                           <p
                             className={`text-xs font-medium mt-0.5 ${request.conf_resident_conf ? "text-green-600" : "text-red-600"}`}
@@ -255,6 +265,14 @@ export default function CompletedTable() {
                               ` (${formatTimestamp(request.conf_resident_conf_date)})`}
                           </p>
                         </div>
+                        {request.staff_name && (
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Accepted & Assigned By</p>
+                            <p className="text-xs font-medium text-gray-900 mt-0.5">
+                              {request.staff_name}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
 

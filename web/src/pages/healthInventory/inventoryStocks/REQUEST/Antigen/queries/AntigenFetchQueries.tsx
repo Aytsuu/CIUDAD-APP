@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCombinedStock } from "../restful-api/AntigenGetAPI";
-import { getVaccine, getVaccineStocks } from "../restful-api/VaccineGetAPI";
+import { getCombinedStock } from "../restful-api/get";
+import { getVaccine, getVaccineStocks } from "../restful-api/get";
 import { showErrorToast } from "@/components/ui/toast";
 
 

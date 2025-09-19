@@ -24,17 +24,14 @@ export const VaccineColumns = (
   setVaccineToDelete: React.Dispatch<React.SetStateAction<number | null>>,
   setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>,
   setSelectedVaccine: React.Dispatch<React.SetStateAction<VaccineRecords | null>>,
-  setModalMode: React.Dispatch<React.SetStateAction<'add' | 'edit'>>,
+  setModalMode: React.Dispatch<React.SetStateAction<"add" | "edit">>,
   setShowVaccineModal: React.Dispatch<React.SetStateAction<boolean>>,
-  setSelectedSupply: React.Dispatch<React.SetStateAction<VaccineRecords | null>>,
   setShowSupplyModal: React.Dispatch<React.SetStateAction<boolean>>
 ): ColumnDef<VaccineRecords>[] => [
   {
     accessorKey: "vaccineName",
-    header: "Name",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("vaccineName")}</div>
-    ),
+    header: "Vaccine Name",
+    cell: ({ row }) => <div className="font-medium">{row.getValue("vaccineName")}</div>
   },
   {
     accessorKey: "vaccineType",
@@ -42,44 +39,22 @@ export const VaccineColumns = (
     cell: ({ row }) => {
       const value = row.getValue("vaccineType");
       if (value === "N/A") return <div className="text-gray-500">N/A</div>;
-      
-      return (
-        <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            value === "Routine"
-              ? "bg-blue-100 text-blue-800"
-              : value === "Primary Series"
-              ? "bg-purple-100 text-purple-800"
-              : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {String(value)}
-        </span>
-      );
-    },
+
+      return <span className={`px-2 py-1 rounded-full text-xs ${value === "Routine" ? "bg-blue-100 text-blue-800" : value === "Primary Series" ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-800"}`}>{String(value)}</span>;
+    }
   },
   {
     accessorKey: "ageGroup",
     header: "Age Group",
-    cell: ({ row }) => (
-      <div className="text-sm">{row.getValue("ageGroup") || "N/A"}</div>
-    ),
+    cell: ({ row }) => <div className="text-sm">{row.getValue("ageGroup") || "N/A"}</div>
   },
   {
     accessorKey: "doses",
     header: "Total Doses",
     cell: ({ row }) => {
       const value = row.getValue("doses");
-      return (
-        <div className="text-center">
-          {value === "N/A" ? (
-            <span className="text-gray-500">N/A</span>
-          ) : (
-            String(value)
-          )}
-        </div>
-      );
-    },
+      return <div className="text-center">{value === "N/A" ? <span className="text-gray-500">N/A</span> : String(value)}</div>;
+    }
   },
   {
     accessorKey: "doseDetails",
@@ -88,7 +63,7 @@ export const VaccineColumns = (
       const vaccine = row.original;
       const doseDetails = vaccine.doseDetails;
 
-      if (doseDetails.length === 0 || vaccine.category === "supply") {
+      if (doseDetails.length === 0) {
         return <div className="text-sm text-gray-500">N/A</div>;
       }
 
@@ -100,9 +75,7 @@ export const VaccineColumns = (
             </div>
           ) : (
             <>
-              <div className="text-sm">
-                Dose 1: Starts at {vaccine.ageGroup}
-              </div>
+              <div className="text-sm">Dose 1: Starts at {vaccine.ageGroup}</div>
               {doseDetails
                 .filter((dose) => dose.doseNumber > 1)
                 .map((dose, index) => (
@@ -114,7 +87,7 @@ export const VaccineColumns = (
           )}
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "action",
@@ -124,12 +97,12 @@ export const VaccineColumns = (
 
       return (
         <div className="flex justify-center gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => {
               setSelectedVaccine(record);
-              setModalMode('edit');
+              setModalMode("edit");
               setShowVaccineModal(true);
               setShowSupplyModal(false);
             }}
@@ -149,16 +122,15 @@ export const VaccineColumns = (
           </Button>
         </div>
       );
-    },
-  },
+    }
+  }
 ];
 
 // Columns for Supplies Tab
 export const SupplyColumns = (
   setVaccineToDelete: React.Dispatch<React.SetStateAction<number | null>>,
   setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>,
-  setSelectedVaccine: React.Dispatch<React.SetStateAction<VaccineRecords | null>>,
-  setModalMode: React.Dispatch<React.SetStateAction<'add' | 'edit'>>,
+  setModalMode: React.Dispatch<React.SetStateAction<"add" | "edit">>,
   setShowVaccineModal: React.Dispatch<React.SetStateAction<boolean>>,
   setSelectedSupply: React.Dispatch<React.SetStateAction<VaccineRecords | null>>,
   setShowSupplyModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -166,11 +138,9 @@ export const SupplyColumns = (
   {
     accessorKey: "vaccineName",
     header: "Supply Name",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("vaccineName")}</div>
-    ),
+    cell: ({ row }) => <div className="font-medium">{row.getValue("vaccineName")}</div>
   },
- 
+
   {
     accessorKey: "action",
     header: "Actions",
@@ -179,12 +149,12 @@ export const SupplyColumns = (
 
       return (
         <div className="flex justify-center gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => {
               setSelectedSupply(record);
-              setModalMode('edit');
+              setModalMode("edit");
               setShowSupplyModal(true);
               setShowVaccineModal(false);
             }}
@@ -204,6 +174,6 @@ export const SupplyColumns = (
           </Button>
         </div>
       );
-    },
-  },
+    }
+  }
 ];

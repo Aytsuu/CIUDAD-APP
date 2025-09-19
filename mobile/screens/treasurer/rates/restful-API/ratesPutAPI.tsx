@@ -52,11 +52,6 @@ const editPurposeAndRate = async (pr_id: string, purposeAndRate: {
 
         const res = await api.post('treasurer/purpose-and-rate/', newRecord);
 
-        await api.patch(`council/update-template-pr-id/`, {
-          old_pr_id: pr_id,
-          new_pr_id: res.data.pr_id,
-        });
-
         return res.data.pr_id;
   } catch (error) {
     console.error("Error in editAnnualGrossSales:", error);

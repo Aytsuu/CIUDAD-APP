@@ -1,216 +1,23 @@
-
-// "use client"
-// import { useState } from 'react';
-// import {Input} from '../../../../components/ui/input.tsx';
-// import {Label} from '../../../../components/ui/label.tsx';
-// import {DatePicker} from '../../../../components/ui/datepicker.tsx';
-// import {Textarea} from '../../../../components/ui/textarea.tsx';
-// import {Button} from '../../../../components/ui/button/button.tsx';
-// import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form/form.tsx";
-// import { ChevronLeft } from "lucide-react";
-// import DialogLayout from "@/components/ui/dialog/dialog-layout";
-// import { ArrowLeft } from 'lucide-react';
-// import { Checkbox } from "@/components/ui/checkbox";
-// import {
-//     Accordion,
-//     AccordionContent,
-//     AccordionItem,
-//     AccordionTrigger,
-// } from "@/components/ui/accordion";
-
-// import { Link } from 'react-router';
-
-
-// import { zodResolver } from "@hookform/resolvers/zod"
-// import { useForm } from "react-hook-form"
-// import { z } from "zod"
-// import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema.ts';
-// import Tiptap from '@/components/ui/tiptap/tiptap.tsx';
-
-// function AddResolution() {
-//     const form = useForm<z.infer<typeof resolutionFormSchema>>({
-//         resolver: zodResolver(resolutionFormSchema),
-//         mode: 'onChange',
-//         defaultValues: {
-//             resTitle: "",        
-//             resDate: "",
-//             resDetails: "",
-//             resAreaOfFocus: [],
-//         },
-//     });
-
-//     let resAreaOfFocus = [
-//         "Council", "GAD", 
-//         "Waste Committee", "Finance"
-//     ];
-
-//     function onSubmit(values: z.infer<typeof resolutionFormSchema>) {
-//         console.log("Values", values);
-//     }
-
-//     return (
-//         <div className="flex w-full mx-auto h-full justify-center">
-//             <Form {...form}>
-//                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-//                     <div className="text-[#394360] pb-2">
-//                         <Link to="/res-page">
-//                             <Button 
-//                                 className="text-black p-2 self-start"
-//                                 variant={"outline"}
-//                             >
-//                                 <ChevronLeft />
-//                             </Button>                     
-//                         </Link>
-//                     </div>
-
-//                     {/* Ordinance Description Field */}
-//                     <FormField
-//                         control={form.control}
-//                         name="resDetails"
-//                         render={({ field }) => (
-//                             <FormItem>
-//                                 <FormLabel></FormLabel>
-//                                 <FormControl>
-//                                     <Tiptap description={field.value} onChange={field.onChange} />
-//                                 </FormControl>
-//                                 <FormMessage />
-//                             </FormItem>
-//                         )}
-//                     />
-
-//                     <div className="flex items-center justify-end p-[40px]">
-//                         {/* Dialog with Form Inside */}
-//                         <DialogLayout
-//                             trigger={
-//                                 <div className="bg-primary hover:bg-primary/90 text-white text-sm font-medium px-6 py-2 rounded-md cursor-pointer flex items-center">
-//                                     Next
-//                                 </div>
-//                             }
-//                             className="max-w-[30%] max-h-[460px] flex flex-col overflow-auto scrollbar-custom"
-//                             title="Resolution Details"
-//                             description="Add details."
-//                             mainContent={
-//                                 <div>
-//                                     {/* Form Inside Dialog */}
-//                                     <Form {...form}>
-//                                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-//                                             {/* Ordinance Title Field */}
-//                                             <FormField
-//                                                 control={form.control}
-//                                                 name="resTitle"
-//                                                 render={({ field }) => (
-//                                                     <FormItem>
-//                                                         <FormLabel>Resolution Title</FormLabel>
-//                                                         <FormControl>
-//                                                             <Textarea
-//                                                                 className="w-full p-2 shadow-sm h-20 mt-[12px] rounded-[5px] resize-none"
-//                                                                 placeholder="Enter Ordinance Title"
-//                                                                 {...field}>
-//                                                             </Textarea>                                                            
-//                                                         </FormControl>
-//                                                         <FormMessage />
-//                                                     </FormItem>
-//                                                 )}
-//                                             />
-
-//                                             {/* Date Approved Field */}
-//                                             <FormField
-//                                                 control={form.control}
-//                                                 name="resDate"
-//                                                 render={({ field }) => (
-//                                                     <FormItem>
-//                                                         <FormLabel>Date Approved</FormLabel>
-//                                                         <FormControl>
-//                                                             <input type="date" {...field} className="mt-[8px] w-full border border-[#B3B7BD] p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-[3px]" />
-//                                                         </FormControl>
-//                                                         <FormMessage />
-//                                                     </FormItem>
-//                                                 )}
-//                                             />
-
-//                                             {/* Categories Field */}
-//                                             <Accordion type="single" collapsible>
-//                                                 <AccordionItem value="category-list">
-//                                                     <AccordionTrigger>Select Categories</AccordionTrigger>
-//                                                     <AccordionContent>
-//                                                         <div className="space-y-2">
-//                                                             {resAreaOfFocus.map((area, index) => (
-//                                                                 <FormField
-//                                                                     key={index}
-//                                                                     control={form.control}
-//                                                                     name="resAreaOfFocus"
-//                                                                     render={({ field }) => {
-//                                                                         const selectedCategory = field.value ?? [];
-//                                                                         return (
-//                                                                             <FormItem className="flex flex-row items-start space-x-3 space-y-0.5">
-//                                                                                 <FormControl>
-//                                                                                     <Checkbox
-//                                                                                         id={`area-${index}`}
-//                                                                                         className="h-5 w-5"
-//                                                                                         checked={selectedCategory.includes(area)}
-//                                                                                         onCheckedChange={(checked) => {
-//                                                                                             field.onChange(
-//                                                                                                 checked
-//                                                                                                     ? [...selectedCategory, area]
-//                                                                                                     : selectedCategory.filter((name: string) => name !== area)
-//                                                                                             );
-//                                                                                         }}
-//                                                                                     />
-//                                                                                 </FormControl>
-//                                                                                 <FormLabel
-//                                                                                     htmlFor={`category-${index}`}
-//                                                                                     className="cursor-pointer whitespace-normal break-words flex-1"
-//                                                                                     style={{ wordBreak: "break-all" }} // Ensures long words break
-//                                                                                 >
-//                                                                                     {area}
-//                                                                                 </FormLabel>
-//                                                                             </FormItem>
-//                                                                         );
-//                                                                     }}
-//                                                                 />
-//                                                             ))}
-//                                                         </div>
-//                                                     </AccordionContent>
-//                                                 </AccordionItem>
-//                                             </Accordion>
-
-//                                             {/* Submit Button (Inside Dialog) */}
-//                                             <div className="flex items-center justify-end pt-6">
-//                                                 <Button type="submit" className="w-[100px]">
-//                                                     Create
-//                                                 </Button>
-//                                             </div>
-//                                         </form>
-//                                     </Form>
-//                                 </div>
-//                             }
-//                         />
-//                     </div>
-//                 </form>
-//             </Form>
-//         </div>
-//     );
-// }
-
-// export default AddResolution;
-
-
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Tabs, TabsList, TabsTrigger } from '../../../../components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import {Button} from '../../../../components/ui/button/button.tsx';
-import { Form, FormControl, FormField, FormItem, FormMessage, } from "@/components/ui/form/form";
+import { Form } from "@/components/ui/form/form";
+import { FormInput } from '@/components/ui/form/form-input.tsx';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input.tsx';
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
+import { ComboboxInput } from '@/components/ui/form/form-combo-box-search.tsx'; 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema.ts';
+import { useResolution } from './queries/resolution-fetch-queries';
+import { useApprovedProposals } from './queries/resolution-fetch-queries';
 import { useCreateResolution } from './queries/resolution-add-queries.tsx';
-
-
-
+import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface ResolutionCreateFormProps {
     onSuccess?: () => void; 
@@ -218,40 +25,53 @@ interface ResolutionCreateFormProps {
 
 
 function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
+    const { user } = useAuth();
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
+    const [resolutionType, setResolutionType] = useState<"new" | "old">("new");
+    const [resolutionNumbers, setResolutionNumbers] = useState<string[]>([]);
+    const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
 
+    // Fetch mutation
+    const { data: resolutionData = [] } = useResolution();    
+    const { data: gadProposals = [], isLoading: isLoadingProposals } = useApprovedProposals();
 
-    //Create mutation
-    const { mutate: createResolution } = useCreateResolution(onSuccess);
-
+    // Create mutation
+    const { mutate: createResolution, isPending } = useCreateResolution(onSuccess);
 
     const form = useForm<z.infer<typeof resolutionFormSchema>>({
         resolver: zodResolver(resolutionFormSchema),
         mode: 'onChange',
         defaultValues: {
+            res_num: "",
             res_title: "",        
             res_date_approved: "",
             res_area_of_focus: [],
-            res_file: undefined,
+            gpr_id: "",
         },
     });
 
+    // Watch the area of focus to show/hide proposal reference
+    const watchAreaOfFocus = form.watch("res_area_of_focus");
+    
+    // Update local state when form values change
+    useEffect(() => {
+        setSelectedAreas(watchAreaOfFocus || []);
+    }, [watchAreaOfFocus]);
 
-    // useEffect(() => {
-    //     if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
-    //         form.setValue('res_file', mediaFiles.map(file => ({
-    //             name: file.file.name,
-    //             type: file.file.type,
-    //             path: file.storagePath || '',
-    //             url: file.publicUrl || ''
-    //         })));
-    //     } else {
-    //         form.setValue('res_file', []);
-    //     }
-    // }, [mediaFiles, form]);
+    // Extract resolution numbers from fetched data
+    useEffect(() => {
+        if (resolutionData && resolutionData.length > 0) {
+            const numbers = resolutionData.map((resolution: any) => resolution.res_num);
+            setResolutionNumbers(numbers);
+        }
+    }, [resolutionData]);    
 
-
+    // Validator for the res_num format
+    const validateResolutionNumberFormat = (resNum: string): boolean => {
+        const pattern = /^\d{3}-\d{2}$/;
+        return pattern.test(resNum);
+    };    
 
     const meetingAreaOfFocus = [
         { id: "gad", name: "GAD" },
@@ -260,15 +80,101 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
         { id: "waste", name: "Waste Committee" }
     ];
 
+
+    const selectedProposal = gadProposals.find(
+        (item) => item.id === form.watch("gpr_id")
+    );
+
+
+    // Check if GAD is selected
+    const isGADSelected = selectedAreas.includes("gad");
+
     function onSubmit(values: z.infer<typeof resolutionFormSchema>) {
-        createResolution(values)
+        
+        // For new resolutions, ensure res_num is empty
+        if (resolutionType === "new") {
+            values.res_num = "";
+        } else {
+            
+            if (resolutionNumbers.includes(values.res_num)) {
+                form.setError("res_num", {
+                    type: "manual",
+                    message: `Resolution number already exists. Please use a different number.`,
+                });                
+                return; // Stop form submission
+            }
+
+            if (!validateResolutionNumberFormat(values.res_num)) {
+                form.setError("res_num", {
+                    type: "manual",
+                    message: "Resolution number must be in the format: 001-25 (3 digits, dash, 2 digits)",
+                });                
+                return;                 
+            }              
+        }
+
+        if(!values.gpr_id){
+            values.gpr_id = "";
+        }
+        
+        const files = mediaFiles.map((media) => ({
+            'name': media.name,
+            'type': media.type,
+            'file': media.file
+        }))        
+
+        const allValues = {
+            ...values,
+            files,
+            staff: user?.staff?.staff_id
+        }
+
+        createResolution(allValues)
+        // console.log("CREATED RESOLUTION: ", allValues)
     }
 
-    return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}   className="space-y-4">
+    if (isLoadingProposals) {
+        return (
+            <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <div className="flex justify-end">
+                    <Skeleton className="h-10 w-24" />
+                </div>
+            </div>
+        );
+    }    
 
-                    {/*Resolution Title*/}
+    return (
+        <div className="space-y-4">
+            {/* Tabs for New/Old Resolution */}
+            <Tabs 
+                value={resolutionType} 
+                onValueChange={(value) => setResolutionType(value as "new" | "old")}
+                className="w-full"
+            >
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="new">New Resolution</TabsTrigger>
+                    <TabsTrigger value="old">Existing Resolution</TabsTrigger>
+                </TabsList>
+            </Tabs>
+
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    {/* Resolution Number - Only show for Old resolutions */}
+                    {resolutionType === "old" && (
+                        <FormInput
+                            control={form.control}
+                            name="res_num"
+                            label="Resolution Number"
+                            placeholder="Enter Resolution Number"
+                        />
+                    )}
+
+                    {/* Resolution Title */}
                     <FormTextArea
                         control={form.control}
                         name="res_title"
@@ -276,7 +182,7 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
                         placeholder="Enter Resolution Title" 
                     />         
 
-                    {/*Resolution Date Approved*/}
+                    {/* Resolution Date Approved */}
                     <FormDateTimeInput
                         control={form.control}
                         name="res_date_approved"
@@ -284,40 +190,58 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
                         type="date"    
                     />
 
-                    {/*Resolution File Upload*/}
-                    <FormField
-                        control={form.control}
-                        name="res_file"
-                        render={({ }) => (
-                            <FormItem>
-                                <FormControl>
-                                    <MediaUpload
-                                        title="Resolution File"
-                                        description="Upload resolution documentation"
-                                        mediaFiles={mediaFiles}
-                                        setMediaFiles={setMediaFiles}
-                                        activeVideoId={activeVideoId}
-                                        setActiveVideoId={setActiveVideoId}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />                                
-
-                    {/*Resolution Area of Focus*/}
+                    {/* Resolution Area of Focus */}
                     <FormComboCheckbox
                         control={form.control}
                         name="res_area_of_focus"
                         label="Select Area of Focus"
                         options={meetingAreaOfFocus}
-                    />                               
+                    />                           
+
+                    {/* Proposal Reference - Only show if GAD is selected */}
+                    {isGADSelected && (
+                        <ComboboxInput
+                            value={selectedProposal?.name || ""}
+                            options={gadProposals}
+                            label="GAD Proposal Reference"
+                            placeholder="Select an approved GAD proposal..."
+                            emptyText="No approved GAD proposals found."
+                            onSelect={(_value, item) => {
+                                if (item) form.setValue("gpr_id", item.id);
+                            }}
+                            displayKey="name"   
+                            valueKey="id"        
+                            className="w-full"
+                        />
+                    )}
+
+                    {/* Resolution File Upload */}
+                    <MediaUpload
+                        title=""
+                        description="Upload Resolution File"
+                        mediaFiles={mediaFiles}
+                        activeVideoId={activeVideoId}
+                        setMediaFiles={setMediaFiles}
+                        setActiveVideoId={setActiveVideoId}
+                        acceptableFiles='document'
+                        maxFiles={1}
+                    />                             
 
                     <div className="flex justify-end pt-5 space-x-2">
-                        <Button type="submit">Save Entry</Button>
+                        <Button type="submit" disabled={isPending}>
+                            {isPending ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Submitting...
+                                </>
+                            ) : (
+                                "Save"
+                            )}
+                        </Button>
                     </div>
-            </form>
-        </Form>
+                </form>
+            </Form>
+        </div>
     );
 }
 

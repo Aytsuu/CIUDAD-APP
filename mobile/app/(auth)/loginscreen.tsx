@@ -1,5 +1,7 @@
-import LoginScreen from "@/screens/auth/login/loginscreen"
+import Login from "@/screens/auth/login/loginscreen"
+import HomeScreen from "@/screens/home"
+import Homepage from "@/screens/health/home"
 
 export default () => {
-    return <LoginScreen/>
+    return <Login/>
 }

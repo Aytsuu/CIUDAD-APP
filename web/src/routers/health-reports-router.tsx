@@ -19,6 +19,7 @@ import MonthlyInventoryFirstAidRecords from "@/pages/healthServices/Reports/inve
 import MonthlyInventoryFirstAidDetails from "@/pages/healthServices/Reports/inventory/firstaid/records";
 import MonthlyInventoryAntigenRecords from "@/pages/healthServices/Reports/inventory/antigen/monthly";
 import MonthlyInventoryAntigenDetails from "@/pages/healthServices/Reports/inventory/antigen/records";
+
 // OPT
 import MonthlyOPTRecords from "@/pages/healthServices/Reports/opt-tracking/monthly";
 import MonthlyOPTDetails from "@/pages/healthServices/Reports/opt-tracking/records";
@@ -46,7 +47,6 @@ import AntigenInventoryReportsTabs from "@/pages/healthServices/Reports/inventor
 
 import MonthlyNewChildrenRecords from "@/pages/healthServices/Reports/newchildren-list-report/monthly";
 import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/Reports/newchildren-list-report/records";
-import path from "path";
 export const reports_router = [
   {
     path: "/bhw-monthly-reports",

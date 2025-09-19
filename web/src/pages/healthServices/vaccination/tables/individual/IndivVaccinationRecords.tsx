@@ -11,7 +11,6 @@ import { IndivVaccineColumns } from "../columns/indiv_vac-col";
 import { PatientInfoCard } from "@/components/ui//patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { Patient } from "@/pages/healthServices/restful-api-patient/type";
-import { filter } from "../columns/types";
 import { useIndivPatientVaccinationRecords, useFollowupVaccines, useUnvaccinatedVaccines, usePatientVaccinationDetails } from "../../queries/fetch";
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";

@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form";
 import { useEditPurposeAndRate } from "../queries/RatesUpdateQueries"
 import { PurposeAndRatesEditSchema } from "@/form-schema/treasurer/rates-edit-form-schema"
+import { useAuth } from "@/context/AuthContext"
 
 function RatesEditFormPage4({pr_id, pr_purpose, pr_rate, onSuccess}: {
     pr_id: string;
@@ -13,17 +14,18 @@ function RatesEditFormPage4({pr_id, pr_purpose, pr_rate, onSuccess}: {
     pr_rate: number;
     onSuccess?: () => void;
 }){
-
+    const {user} = useAuth()
     const form = useForm<z.infer<typeof PurposeAndRatesEditSchema>>({
         resolver: zodResolver(PurposeAndRatesEditSchema),
         defaultValues: {
             purpose: pr_purpose,
             amount: pr_rate.toString(),
-            category: "Permit Clearance",
+            category: "Business Permit",
+            staff_id: user?.staff?.staff_id
         }
     })
 
-    const {mutate: editPurposeRate} = useEditPurposeAndRate(onSuccess)
+    const {mutate: editPurposeRate, isPending} = useEditPurposeAndRate(onSuccess)
 
     const onSubmit = (value: z.infer<typeof PurposeAndRatesEditSchema>) => {
         console.log(value); 
@@ -64,7 +66,9 @@ function RatesEditFormPage4({pr_id, pr_purpose, pr_rate, onSuccess}: {
                     )}></FormField>
 
                     <div className="flex justify-end mt-[20px]">
-                        <Button type="submit" className="w-[100px]">Save</Button>
+                        <Button type="submit" className="w-[100px]" disabled={isPending}>
+                            {isPending ? "Saving..." : "Save"}
+                        </Button>
                     </div>
                 </div>
             </form>

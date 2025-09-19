@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -18,17 +18,11 @@ export default function CommodityList() {
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [comToDelete, setComToDelete] = useState<string | null>(null);
   const [showCommodityModal, setShowCommodityModal] = useState(false);
-  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const [selectedCommodity, setSelectedCommodity] = useState<CommodityRecords | null>(null);
-  
-  const columns = CommodityColumns(
-    setComToDelete, 
-    setIsDeleteConfirmationOpen, 
-    setSelectedCommodity, 
-    setModalMode, 
-    setShowCommodityModal
-  );
-  
+
+  const columns = CommodityColumns(setComToDelete, setIsDeleteConfirmationOpen, setSelectedCommodity, setModalMode, setShowCommodityModal);
+
   const { data: commodities, isLoading: isLoadingCommodities } = useCommodities();
   const deleteMutation = useDeleteCommodity();
 
@@ -43,12 +37,7 @@ export default function CommodityList() {
   }, [commodities]);
 
   const filteredCommodities = useMemo(() => {
-    return formatCommodityData().filter((record) =>
-      Object.values(record)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    );
+    return formatCommodityData().filter((record) => Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase()));
   }, [searchQuery, formatCommodityData]);
 
   const handleDelete = () => {
@@ -59,13 +48,10 @@ export default function CommodityList() {
   };
 
   const totalPages = Math.ceil(filteredCommodities.length / pageSize);
-  const paginatedCommodities = filteredCommodities.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedCommodities = filteredCommodities.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleAddNew = () => {
-    setModalMode('add');
+    setModalMode("add");
     setSelectedCommodity(null);
     setShowCommodityModal(true);
   };
@@ -75,16 +61,8 @@ export default function CommodityList() {
       <div className="hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative w-full">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-              size={17}
-            />
-            <Input
-              placeholder="Search..."
-              className="pl-10 bg-white w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+            <Input placeholder="Search..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
         </div>
         <Button onClick={handleAddNew}>
@@ -123,7 +101,7 @@ export default function CommodityList() {
             options={[
               { id: "", name: "Export as CSV" },
               { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" },
+              { id: "", name: "Export as PDF" }
             ]}
           />
         </div>
@@ -140,36 +118,18 @@ export default function CommodityList() {
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
-            Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredCommodities.length)} of{" "}
-            {filteredCommodities.length} rows
+            Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredCommodities.length)} of {filteredCommodities.length} rows
           </p>
-          {paginatedCommodities.length > 0 && (
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          )}
+          {paginatedCommodities.length > 0 && <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
         </div>
       </div>
 
-      <ConfirmationDialog
-        isOpen={isDeleteConfirmationOpen}
-        onOpenChange={setIsDeleteConfirmationOpen}
-        onConfirm={handleDelete}
-        title="Delete Commodity"
-        description="Are you sure you want to delete this commodity? This action cannot be undone."
-      />
+      <ConfirmationDialog isOpen={isDeleteConfirmationOpen} onOpenChange={setIsDeleteConfirmationOpen} onConfirm={handleDelete} title="Delete Commodity" description="Are you sure you want to delete this commodity? This action cannot be undone." />
 
       {showCommodityModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <CommodityModal
-              mode={modalMode}
-              initialData={selectedCommodity ?? undefined}
-              onClose={() => setShowCommodityModal(false)}
-            />
+            <CommodityModal mode={modalMode} initialData={selectedCommodity ?? undefined} onClose={() => setShowCommodityModal(false)} />
           </div>
         </div>
       )}

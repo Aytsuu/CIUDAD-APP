@@ -5,6 +5,7 @@ import * as MediaLibrary from "expo-media-library"
 import * as FileSystem from 'expo-file-system';
 import { Ionicons } from "@expo/vector-icons"
 import { getMimeType } from "@/helpers/fileHandling";
+import { CloudUpload } from "@/lib/icons/CloudUpload";
 
 export interface MediaItem {
   uri: string
@@ -19,6 +20,11 @@ interface MediaPickerProps {
   setSelectedImages: React.Dispatch<React.SetStateAction<MediaItem[]>>
   multiple?: boolean
   maxImages?: number
+  editable?: boolean
+  showRemoveButtons?: boolean
+  showClearAllButton?: boolean
+  onlyRemoveNewImages?: boolean
+  initialImageIds?: string[]
 }
 
 export default function MediaPicker({
@@ -26,6 +32,11 @@ export default function MediaPicker({
   setSelectedImages,
   multiple = false,
   maxImages = 10,
+  editable = true,
+  showRemoveButtons = true,
+  showClearAllButton = true,
+  onlyRemoveNewImages = false,
+  initialImageIds = [],
 }: MediaPickerProps) {
   const [galleryVisible, setGalleryVisible] = React.useState<boolean>(false)
   const [cameraVisible, setCameraVisible] = React.useState<boolean>(false)
@@ -40,12 +51,10 @@ export default function MediaPicker({
     let isMounted = true
     const checkPermissions = async () => {
       try {
-        // Request media library permission
         const mediaLibraryStatus = await MediaLibrary.requestPermissionsAsync()
         if (mediaLibraryStatus.status !== "granted" && isMounted) {
           console.warn("Permission to access media library was denied")
         }
-        // Request camera permission
         if (!hasPermission) {
           const cameraPermission = await requestPermission()
           if (!cameraPermission && isMounted) {
@@ -57,11 +66,13 @@ export default function MediaPicker({
       }
     }
 
-    checkPermissions()
+    if (editable) {
+      checkPermissions()
+    }
     return () => {
       isMounted = false
     }
-  }, [hasPermission, requestPermission])
+  }, [hasPermission, requestPermission, editable])
 
   const fetchGalleryAssets = async () => {
     try {
@@ -77,6 +88,8 @@ export default function MediaPicker({
   }
 
   const openGallery = async () => {
+    if (!editable) return;
+    
     const { status } = await MediaLibrary.getPermissionsAsync()
     if (status !== "granted") {
       const { status: reqStatus } = await MediaLibrary.requestPermissionsAsync()
@@ -87,17 +100,13 @@ export default function MediaPicker({
     }
     await fetchGalleryAssets()
     
-    // Pre-select already selected images in the gallery
     const preSelectedItems = new Set<string>()
-    
-    // Get all gallery assets to find matching URIs
     const media = await MediaLibrary.getAssetsAsync({
       mediaType: "photo",
       first: 100,
       sortBy: ["creationTime"],
     })
     
-    // Find gallery items that match already selected images
     selectedImages.forEach(selectedImage => {
       const matchingAsset = media.assets.find(asset => asset.uri === selectedImage.uri)
       if (matchingAsset) {
@@ -116,12 +125,10 @@ export default function MediaPicker({
       const newMediaItems = await Promise.all(
         imageData.map(async (data) => {
           try {
-            // Read as base64
             const base64Data = await FileSystem.readAsStringAsync(data.uri, {
               encoding: FileSystem.EncodingType.Base64
             });
 
-            // Determine MIME type
             const mimeType = await getMimeType(data.uri);
 
             return {
@@ -138,7 +145,6 @@ export default function MediaPicker({
         })
       );
 
-      // Filter out any null values from failed processing
       const validMediaItems = newMediaItems.filter((item) => item !== null);
 
       if (multiple) {
@@ -157,22 +163,20 @@ export default function MediaPicker({
   };
 
   const handleGallerySelection = (item: MediaLibrary.Asset) => {
+    if (!editable) return;
+    
     if (!multiple) {
-      // Single selection mode
       handleSelectedImages([{uri: item.uri, filename: item.filename}])
       setGalleryVisible(false)
       return
     }
 
-    // Multiple selection mode
     const newSelected = new Set(selectedGalleryItems)
     
     if (newSelected.has(item.id)) {
-      // Unchecking - remove from gallery selection and from selected images
       newSelected.delete(item.id)
       setSelectedImages(prev => prev.filter(selectedImage => selectedImage.uri !== item.uri))
     } else {
-      // Checking - add to gallery selection
       if (newSelected.size < maxImages) {
         newSelected.add(item.id)
       } else {
@@ -190,7 +194,7 @@ export default function MediaPicker({
   }
 
   const takePhoto = async () => {
-    if (!hasPermission) {
+    if (!editable || !hasPermission) {
       Alert.alert("Permission Required", "Camera permission is required to take photos.")
       return
     }
@@ -205,13 +209,11 @@ export default function MediaPicker({
           flash: "off",
         })
         
-        // Save photo to media library to get proper URI
         const asset = await MediaLibrary.createAssetAsync(`file://${photo.path}`)
 
         handleSelectedImages([{uri: asset.uri, filename: `photo_${Date.now()}.jpg`}])
         setCameraVisible(false)
 
-        // Refresh gallery after capturing
         setTimeout(fetchGalleryAssets, 1000)
       } catch (error) {
         console.error("Error taking photo:", error)
@@ -225,20 +227,89 @@ export default function MediaPicker({
     setGalleryVisible(true)
   }
 
-  const removeImage = (index: number) => {
-    setSelectedImages((prev) => {
-      const updated = prev.filter((_, i) => i !== index)
-      return updated
-    })
+  const canRemoveImage = (image: MediaItem, index: number) => {
+    if (!editable || !showRemoveButtons) return false;
+    
+    if (onlyRemoveNewImages) {
+      return !initialImageIds.includes(image.id || '');
+    }
+    
+    return true;
   }
 
-  // Function to remove all images
-  const removeAllImages = () => {
-    setSelectedImages([])
-    console.log("All images cleared")
+  const removeImage = (index: number) => {
+    const image = selectedImages[index];
+    if (!canRemoveImage(image, index)) return;
+    
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index))
   }
+
+  const getRemovableImagesCount = () => {
+    if (!onlyRemoveNewImages) return selectedImages.length;
+    
+    return selectedImages.filter(image => !initialImageIds.includes(image.id || '')).length;
+  }
+
+  const removeAllImages = () => {
+    if (!editable || !showClearAllButton) return;
+    
+    if (onlyRemoveNewImages) {
+      setSelectedImages((prev) => prev.filter(image => initialImageIds.includes(image.id || '')));
+    } else {
+      setSelectedImages([]);
+    }
+  }
+
+  // Render individual image item for the clean list view
+  const renderImageItem = ({ item, index }: { item: MediaItem; index: number }) => {
+    const isExistingImage = initialImageIds.includes(item.id || '');
+    const showRemoveButton = canRemoveImage(item, index);
+    
+    return (
+      <View className="bg-white rounded-xl mx-2 mb-3 shadow-sm border border-gray-100">
+        <View className="flex-row items-center p-3">
+          {/* Image Thumbnail */}
+          <View className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 mr-3 shadow-sm">
+            <Image 
+              source={{ uri: item.uri }} 
+              className="w-full h-full" 
+              resizeMode="cover"
+            />
+          </View>
+          
+          {/* Image Info */}
+          <View className="flex-1">
+            <Text className="text-gray-800 font-medium text-sm" numberOfLines={1}>
+              {item.name || `Image ${index + 1}`}
+            </Text>
+            <View className="flex-row items-center mt-1">
+              <Text className="text-gray-500 text-xs">
+                {item.type || 'image/jpeg'}
+              </Text>
+              {onlyRemoveNewImages && isExistingImage && (
+                <View className="ml-2 bg-blue-100 px-2 py-1 rounded-full">
+                  <Text className="text-blue-600 text-xs font-medium">Existing</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          
+          {/* Remove Button */}
+          {showRemoveButton && (
+            <TouchableOpacity
+              className="w-8 h-8 bg-red-50 rounded-full justify-center items-center ml-2"
+              onPress={() => removeImage(index)}
+            >
+              <Ionicons name="trash-outline" size={16} color="#ef4444" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  };
 
   const canSelectMore = multiple && selectedImages?.length < maxImages
+  const removableCount = getRemovableImagesCount()
 
   if (!device) {
     return (
@@ -250,71 +321,62 @@ export default function MediaPicker({
 
   return (
     <View className="flex-1">
-      {/* Display selected images as file names */}
       {selectedImages?.length > 0 ? (
         <View className="flex-1">
-          <ScrollView
+          {/* Header with count and clear button */}
+          <View className="flex-row justify-between items-center mb-3">
+            {editable && showClearAllButton && removableCount > 1 && (
+              <TouchableOpacity
+                className="bg-red-50 px-3 py-1.5 rounded-full"
+                onPress={removeAllImages}
+              >
+                <Text className="text-red-600 text-sm font-medium">
+                  {onlyRemoveNewImages ? `Clear New (${removableCount})` : `Clear All`}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          {/* Clean List View */}
+          <FlatList
+            data={selectedImages}
+            renderItem={renderImageItem}
+            keyExtractor={(item, index) => `${item.id}_${index}`}
             showsVerticalScrollIndicator={false}
-            className="flex-1"
-          >
-            <View className="p-4">
-              <Text className="text-lg font-semibold mb-3">Selected Files:</Text>
-              {selectedImages.map((image, index) => {
-                return (
-                  <View
-                    key={index}
-                    className="flex-row items-center justify-between bg-gray-100 p-3 mb-2 rounded-lg"
-                  >
-                    <View className="flex-row items-center flex-1">
-                      <Ionicons name="image" size={20} color="#666" />
-                      <Text className="ml-2 flex-1 text-gray-800" numberOfLines={1}>
-                        {image.name || `image_${index + 1}.jpg`}
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      className="bg-red-500 rounded-full w-6 h-6 justify-center items-center ml-2"
-                      onPress={() => removeImage(index)}
-                    >
-                      <Ionicons name="close" size={14} color="white" />
-                    </TouchableOpacity>
-                  </View>
-                )
-              })}
-            </View>
-          </ScrollView>
+            contentContainerStyle={{ paddingBottom: 10 }}
+          />
         </View>
       ) : (
         <TouchableOpacity
-          className="w-full h-[300px] bg-[#f0f2f5] justify-center items-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300"
-          onPress={openGallery}
+          className="w-full bg-white justify-center rounded-3xl items-center overflow-hidden border-2 border-primaryBlue shadow-lg shadow-blue-500"
+          onPress={editable ? openGallery : undefined}
         >
-          <View className="items-center">
-            <Ionicons name="add" size={28} color="#1778F2" />
-            <Text className="text-[#1778F2] text-[12px] mt-2 font-medium">{multiple ? "Add Photos" : "Add Photo"}</Text>
+          <View className="items-center p-5">
+            <View className="bg-blue-50 p-3 rounded-full">
+              <CloudUpload className="text-primaryBlue bg-blue-200"/>
+            </View>
+            <Text className="text-gray-700 text-[12px] mt-2">
+              <Text className="text-primaryBlue font-medium">
+                Click here {""}
+              </Text>
+              to upload your {multiple ? "photos" : "photo"}
+            </Text>
           </View>
         </TouchableOpacity>
       )}
 
-      {/* Clear all button for multiple mode */}
-      {multiple && selectedImages?.length > 1 && (
-        <TouchableOpacity
-          className="mt-2 p-2 bg-red-500 rounded-lg justify-center items-center"
-          onPress={removeAllImages}
-        >
-          <Text className="text-white font-medium">Clear All ({selectedImages.length})</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Add more button for multiple mode */}
-      {multiple && selectedImages?.length > 0 && canSelectMore && (
-        <TouchableOpacity
-          className="mt-2 p-3 bg-[#1778F2] rounded-lg justify-center items-center"
-          onPress={openGallery}
-        >
-          <Text className="text-white font-medium">
-            Add More Photos ({selectedImages.length}/{maxImages})
-          </Text>
-        </TouchableOpacity>
+      {/* Upload More Button */}
+      {editable && multiple && selectedImages?.length > 0 && canSelectMore && (
+        <View className="flex-row justify-center">
+          <TouchableOpacity
+            className="mt-2 p-3 bg-[#1778F2] justify-center items-center rounded-full"
+            onPress={openGallery}
+          >
+            <Text className="text-white text-sm font-medium px-4">
+              Upload ({selectedImages.length}/{maxImages})
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* Gallery Modal */}
@@ -367,18 +429,17 @@ export default function MediaPicker({
             }}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ padding: 4 }}
-            initialNumToRender={10}
-            maxToRenderPerBatch={20}
-            windowSize={5}
           />
-          <TouchableOpacity
-            className="flex-row bg-[#1778F2] p-4 rounded mx-4 my-4 justify-center items-center"
-            onPress={takePhoto}
-            disabled={!hasPermission}
-          >
-            <Ionicons name="camera" size={24} color="white" />
-            <Text className="text-white ml-2 font-semibold">Camera</Text>
-          </TouchableOpacity>
+          {editable && (
+            <TouchableOpacity
+              className="flex-row bg-[#1778F2] p-4 rounded mx-4 my-4 justify-center items-center"
+              onPress={takePhoto}
+              disabled={!hasPermission}
+            >
+              <Ionicons name="camera" size={24} color="white" />
+              <Text className="text-white ml-2 font-semibold">Camera</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </Modal>
 

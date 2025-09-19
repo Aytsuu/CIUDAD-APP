@@ -4,6 +4,7 @@ import { FontAwesome } from "@expo/vector-icons"
 import { ArrowLeft, Package, AlertCircle } from "lucide-react-native"
 import { router } from "expo-router"
 import { useCommodities } from "./useInventory"
+import { LoadingState } from "@/components/ui/loading-state"
 
 
 export default function FamilyPlanning() {
@@ -15,6 +16,8 @@ export default function FamilyPlanning() {
     await refetch()
     setRefreshing(false)
   }
+if (isLoading) {
+    return <LoadingState/>}
 
   return (
     <ScrollView className="bg-white" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>

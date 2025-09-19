@@ -2,28 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { useNotifications } from '@/context/NotificationContext'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { Bell, CheckCheck, Clock, AlertCircle, MessageSquare, Heart, Star, MoreHorizontal, Eye, EyeOff } from 'lucide-react'
+import { Bell, MoreHorizontal, Eye, EyeOff } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Notification } from '@/context/auth-types'
-
-const getNotificationIcon = (type: string) => {
-  switch (type) {
-    case 'message':
-      return <MessageSquare className="h-4 w-4 text-blue-500" />
-    case 'success':
-      return <CheckCheck className="h-4 w-4 text-green-500" />
-    case 'reminder':
-      return <Clock className="h-4 w-4 text-yellow-500" />
-    case 'like':
-      return <Heart className="h-4 w-4 text-red-500" />
-    case 'alert':
-      return <AlertCircle className="h-4 w-4 text-orange-500" />
-    case 'follow':
-      return <Star className="h-4 w-4 text-purple-500" />
-    default:
-      return <Bell className="h-4 w-4 text-gray-500" />
-  }
-}
 
 const formatTimeAgo = (dateString: string | number | Date) => {
   const now = new Date()

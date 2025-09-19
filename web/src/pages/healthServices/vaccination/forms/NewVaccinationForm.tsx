@@ -16,7 +16,7 @@ import { ChevronLeft, Loader2 } from "lucide-react";
 import { fetchVaccinesWithStock } from "../queries/fetch";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { useSubmitStep2 } from "../queries/addVacrecord";
+import { useSubmitStep2 } from "../queries/AddVacrecord";
 import { ValidationAlert } from "../../../../components/ui/vac-required-alert";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { PatientSearch, type Patient } from "@/components/ui/patientSearch";
@@ -30,9 +30,9 @@ import { VaccinationRecord } from "../tables/columns/types";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";
-import { SignatureFieldRef, SignatureField } from "../../Reports/firstaid-report/signature";
+import { SignatureFieldRef, SignatureField } from "../../reports/firstaid-report/signature";
 import { showErrorToast } from "@/components/ui/toast";
-import { fetchStaffWithPositions } from "../../Reports/firstaid-report/queries/fetchQueries";
+import { fetchStaffWithPositions } from "../../reports/firstaid-report/queries/fetchQueries";
 
 export default function VaccinationRecordForm() {
   const navigate = useNavigate();
@@ -139,84 +139,84 @@ export default function VaccinationRecordForm() {
       form.setValue("vachist_doseNo", 1);
     }
   };
-// Replace the vaccine change logic section with this corrected version:
+  // Replace the vaccine change logic section with this corrected version:
 
-const handleVaccineChange = (value: string) => {
-  form.setValue("vaccinetype", value);
-  setNextVisitDate(null);
-  setNextVisitDescription(null);
-  form.setValue("followv_date", "");
-  form.setValue("vacrec_totaldose", "");
-  setIsVaccineCompleted(false);
+  const handleVaccineChange = (value: string) => {
+    form.setValue("vaccinetype", value);
+    setNextVisitDate(null);
+    setNextVisitDescription(null);
+    form.setValue("followv_date", "");
+    form.setValue("vacrec_totaldose", "");
+    setIsVaccineCompleted(false);
 
-  if (value) {
-    const [vacStck_id, vac_id, vac_name] = value.split(",");
-    const selectedVaccine = vaccinesData?.default?.find((v: any) => v.vacStck_id === parseInt(vacStck_id, 10));
+    if (value) {
+      const [vacStck_id, vac_id, vac_name] = value.split(",");
+      const selectedVaccine = vaccinesData?.default?.find((v: any) => v.vacStck_id === parseInt(vacStck_id, 10));
 
-    if (selectedVaccine) {
-      const { vaccinelist } = selectedVaccine;
-      setSelectedVaccineType(vaccinelist.vac_type_choices);
+      if (selectedVaccine) {
+        const { vaccinelist } = selectedVaccine;
+        setSelectedVaccineType(vaccinelist.vac_type_choices);
 
-      const currentVaccineHistory = patientVaccinationRecords?.filter((record) => record.vaccine_stock?.vaccinelist?.vac_id === Number(vac_id)) || [];
-      setVaccineHistory(currentVaccineHistory);
+        const currentVaccineHistory = patientVaccinationRecords?.filter((record) => record.vaccine_stock?.vaccinelist?.vac_id === Number(vac_id)) || [];
+        setVaccineHistory(currentVaccineHistory);
 
-      let doseNumber = 1;
+        let doseNumber = 1;
 
-      // Always get the latest dose and increment by 1 for non-routine vaccines
-      if (vaccinelist.vac_type_choices !== "routine") {
-        const latestDose = currentVaccineHistory.length > 0 ? Math.max(...currentVaccineHistory.map((r) => Number(r.vachist_doseNo) || 0)) : 0;
-        doseNumber = latestDose + 1;
-      }
-
-      form.setValue("vachist_doseNo", doseNumber);
-
-      // Only set total dose for non-conditional vaccines
-      if (vaccinelist.vac_type_choices !== "conditional" && vaccinelist.no_of_doses) {
-        form.setValue("vacrec_totaldose", vaccinelist.no_of_doses.toString());
-      }
-
-      // Check if vaccine is already completed (only for non-conditional vaccines)
-      const isCompleted =
-        vaccinelist.vac_type_choices !== "conditional" &&
-        currentVaccineHistory.some((record) => {
-          const recordTotalDose = record.vacrec_details?.vacrec_totaldose ? Number(record.vacrec_details.vacrec_totaldose) : 0;
-          const currentDose = Number(doseNumber);
-          return currentDose > recordTotalDose && recordTotalDose > 0;
-        });
-
-      setIsVaccineCompleted(isCompleted);
-
-      if (isCompleted) {
-        showErrorToast(`${vac_name} vaccine is already completed (Dose ${doseNumber} of ${vaccinelist.no_of_doses})`);
-        return;
-      }
-
-      // FIXED LOGIC: Handle routine vaccines separately from other vaccine types
-      if (vaccinelist.vac_type_choices === "routine") {
-        // For routine vaccines, always calculate next visit if routine_frequency exists
-        if (vaccinelist.routine_frequency) {
-          const { interval, time_unit } = vaccinelist.routine_frequency;
-          const nextDate = calculateNextVisitDate(interval, time_unit, new Date().toISOString());
-          setNextVisitDate(nextDate.toISOString().split("T")[0]);
-          setNextVisitDescription(`Routine vaccination for ${vaccinelist.vac_name}`);
-          form.setValue("followv_date", nextDate.toISOString().split("T")[0]);
+        // Always get the latest dose and increment by 1 for non-routine vaccines
+        if (vaccinelist.vac_type_choices !== "routine") {
+          const latestDose = currentVaccineHistory.length > 0 ? Math.max(...currentVaccineHistory.map((r) => Number(r.vachist_doseNo) || 0)) : 0;
+          doseNumber = latestDose + 1;
         }
-      } else if (vaccinelist.vac_type_choices === "primary" && doseNumber < vaccinelist.no_of_doses) {
-        // For primary vaccines, only set next visit if there are more doses needed
-        if (vaccinelist.no_of_doses >= 2) {
-          const nextDoseInterval = vaccinelist.intervals.find((interval: any) => interval.dose_number === doseNumber + 1);
-          if (nextDoseInterval) {
-            const nextDate = calculateNextVisitDate(nextDoseInterval.interval, nextDoseInterval.time_unit, new Date().toISOString());
+
+        form.setValue("vachist_doseNo", doseNumber);
+
+        // Only set total dose for non-conditional vaccines
+        if (vaccinelist.vac_type_choices !== "conditional" && vaccinelist.no_of_doses) {
+          form.setValue("vacrec_totaldose", vaccinelist.no_of_doses.toString());
+        }
+
+        // Check if vaccine is already completed (only for non-conditional vaccines)
+        const isCompleted =
+          vaccinelist.vac_type_choices !== "conditional" &&
+          currentVaccineHistory.some((record) => {
+            const recordTotalDose = record.vacrec_details?.vacrec_totaldose ? Number(record.vacrec_details.vacrec_totaldose) : 0;
+            const currentDose = Number(doseNumber);
+            return currentDose > recordTotalDose && recordTotalDose > 0;
+          });
+
+        setIsVaccineCompleted(isCompleted);
+
+        if (isCompleted) {
+          showErrorToast(`${vac_name} vaccine is already completed (Dose ${doseNumber} of ${vaccinelist.no_of_doses})`);
+          return;
+        }
+
+        // FIXED LOGIC: Handle routine vaccines separately from other vaccine types
+        if (vaccinelist.vac_type_choices === "routine") {
+          // For routine vaccines, always calculate next visit if routine_frequency exists
+          if (vaccinelist.routine_frequency) {
+            const { interval, time_unit } = vaccinelist.routine_frequency;
+            const nextDate = calculateNextVisitDate(interval, time_unit, new Date().toISOString());
             setNextVisitDate(nextDate.toISOString().split("T")[0]);
-            setNextVisitDescription(`Vaccination for ${vaccinelist.vac_name}`);
+            setNextVisitDescription(`Routine vaccination for ${vaccinelist.vac_name}`);
             form.setValue("followv_date", nextDate.toISOString().split("T")[0]);
           }
+        } else if (vaccinelist.vac_type_choices === "primary" && doseNumber < vaccinelist.no_of_doses) {
+          // For primary vaccines, only set next visit if there are more doses needed
+          if (vaccinelist.no_of_doses >= 2) {
+            const nextDoseInterval = vaccinelist.intervals.find((interval: any) => interval.dose_number === doseNumber + 1);
+            if (nextDoseInterval) {
+              const nextDate = calculateNextVisitDate(nextDoseInterval.interval, nextDoseInterval.time_unit, new Date().toISOString());
+              setNextVisitDate(nextDate.toISOString().split("T")[0]);
+              setNextVisitDescription(`Vaccination for ${vaccinelist.vac_name}`);
+              form.setValue("followv_date", nextDate.toISOString().split("T")[0]);
+            }
+          }
         }
+        // For conditional vaccines or when all doses are complete, no follow-up date is set
       }
-      // For conditional vaccines or when all doses are complete, no follow-up date is set
     }
-  }
-};
+  };
 
   const onSubmitStep1 = async (data: VaccineSchemaType) => {
     setSubmitting(true);
@@ -408,7 +408,7 @@ const handleVaccineChange = (value: string) => {
                       <Combobox
                         options={vaccinesData?.formatted ?? []}
                         value={form.watch("vaccinetype") || ""}
-                        onChange={(value) => handleVaccineChange(value)}
+                        onChange={(value) => handleVaccineChange(value ?? "")}
                         placeholder={isVacstckLoading ? "Loading vaccines..." : "Search and select a vaccine"}
                         triggerClassName="font-normal w-full"
                         emptyMessage={
@@ -428,7 +428,7 @@ const handleVaccineChange = (value: string) => {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormDateTimeInput control={form.control} name="datevaccinated" label="Date Vaccinated" type="date" readOnly />
-                      <FormInput control={form.control} name="vachist_doseNo" label="Dose Number" placeholder="Enter dose number" type="number"  />
+                      <FormInput control={form.control} name="vachist_doseNo" label="Dose Number" placeholder="Enter dose number" type="number" />
                     </div>
                   </div>
 

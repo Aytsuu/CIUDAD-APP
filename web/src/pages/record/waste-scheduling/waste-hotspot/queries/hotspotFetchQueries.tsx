@@ -57,6 +57,7 @@ export type Hotspot = {
     watchman: string;
     sitio_id: string;
     wstp_id: string;
+    staff_name: string;
 }
 
 export const useGetHotspotRecords = () => {

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateCommodity } from "../../restful-api/commodity/CommodityPutAPI";
+import { updateCommodity } from "../../restful-api/commodity/put-api";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 export const useUpdateCommodity = () => {

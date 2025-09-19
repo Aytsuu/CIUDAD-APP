@@ -2,8 +2,22 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { updateAnnualDevPlan } from "./restful-api/annualPutAPI";
+import { useGetAnnualDevPlanById, useUpdateAnnualDevPlan } from "./queries/annualDevPlanFetchQueries";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
+
+const getClientOptions = () => (
+  <>
+    <option value="">Select client</option>
+    <option value="Women">Women</option>
+    <option value="LGBTQIA+">LGBTQIA+</option>
+    <option value="Senior">Senior</option>
+    <option value="PWD">PWD</option>
+    <option value="Solo Parent">Solo Parent</option>
+    <option value="Erpat">Erpat</option>
+    <option value="Children">Children</option>
+  </>
+);
 
 interface BudgetItem {
   gdb_name: string;
@@ -11,18 +25,22 @@ interface BudgetItem {
   gdb_price: string;
 }
 
+
 export default function AnnualDevelopmentPlanEdit() {
   const navigate = useNavigate();
   const { devId } = useParams();
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const staffId = user?.staff?.staff_id as string | undefined;
   const [formData, setFormData] = useState({
     dev_date: "",
     dev_client: "",
     dev_issue: "",
     dev_project: "",
+    dev_activity: "",
     dev_res_person: "",
     dev_indicator: "",
-    dev_gad_budget: "0",
+    dev_budget_items: "0",
     staff: "", // Optional staff ID - can be empty
   });
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
@@ -32,33 +50,43 @@ export default function AnnualDevelopmentPlanEdit() {
     gdb_price: "",
   });
 
-  useEffect(() => {
-    // Fetch the existing plan data
-    const fetchPlanData = async () => {
-      try {
-        const response = await fetch(`http://localhost:8000/gad/gad-annual-development-plan/${devId}/`);
-        const data = await response.json();
-        setFormData({
-          dev_date: data.dev_date,
-          dev_client: data.dev_client,
-          dev_issue: data.dev_issue,
-          dev_project: data.dev_project,
-          dev_res_person: data.dev_res_person,
-          dev_indicator: data.dev_indicator,
-          dev_gad_budget: data.dev_gad_budget,
-          staff: data.staff,
-        });
-        setBudgetItems(data.budgets || []);
-      } catch (error) {
-        console.error("Error fetching plan data:", error);
-        toast.error("Failed to fetch plan data");
-      }
-    };
+  const [activityInputs, setActivityInputs] = useState<{activity: string, participants: number}[]>([]);
+  const [currentActivityInput, setCurrentActivityInput] = useState('');
+  const [activityParticipantCount, setActivityParticipantCount] = useState<number>(1);
 
-    if (devId) {
-      fetchPlanData();
+  const { data: planData, isLoading: isFetching } = useGetAnnualDevPlanById(devId);
+
+  useEffect(() => {
+    if (planData) {
+      setFormData({
+        dev_date: planData.dev_date,
+        dev_client: planData.dev_client,
+        dev_issue: planData.dev_issue,
+        dev_project: planData.dev_project,
+        dev_activity: planData.dev_activity || "",
+        dev_res_person: planData.dev_res_person,
+        dev_indicator: planData.dev_indicator,
+        dev_budget_items: planData.dev_budget_items,
+        staff: planData.staff,
+      });
+      setBudgetItems(planData.budgets || []);
+      
+      // Parse dev_activity if it exists
+      if (planData.dev_activity) {
+        try {
+          const activities = typeof planData.dev_activity === 'string' 
+            ? JSON.parse(planData.dev_activity) 
+            : planData.dev_activity;
+          setActivityInputs(Array.isArray(activities) ? activities : []);
+        } catch (error) {
+          console.error('Error parsing dev_activity:', error);
+          setActivityInputs([]);
+        }
+      } else {
+        setActivityInputs([]);
+      }
     }
-  }, [devId, toast]);
+  }, [planData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -93,6 +121,38 @@ export default function AnnualDevelopmentPlanEdit() {
     setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_price: "" });
   };
 
+  // Activity input handlers (JSON format)
+  const addActivityInput = () => {
+    if (currentActivityInput.trim()) {
+      setActivityInputs(prev => {
+        const newActivities = [...prev, {
+          activity: currentActivityInput.trim(),
+          participants: activityParticipantCount
+        }];
+        setFormData(prev => ({
+          ...prev,
+          dev_activity: JSON.stringify(newActivities)
+        }));
+        return newActivities;
+      });
+      setCurrentActivityInput('');
+      setActivityParticipantCount(1);
+    }
+  };
+
+  const removeActivityInput = (index: number) => {
+    setActivityInputs(prev => {
+      const newActivities = prev.filter((_, i) => i !== index);
+      setFormData(prev => ({
+        ...prev,
+        dev_activity: JSON.stringify(newActivities)
+      }));
+      return newActivities;
+    });
+  };
+
+  const updateMutation = useUpdateAnnualDevPlan();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -101,14 +161,8 @@ export default function AnnualDevelopmentPlanEdit() {
       if (!devId) {
         throw new Error("No development plan ID provided");
       }
-      // Filter out empty staff value to avoid validation errors
-      const { staff, ...restFormData } = formData;
-      const payload = { 
-        ...restFormData, 
-        staff: staff || null, // Send null if staff is empty
-        budgets: budgetItems 
-      };
-      await updateAnnualDevPlan(parseInt(devId), payload);
+      const nextForm = staffId ? { ...formData, staff: staffId } : formData;
+      await updateMutation.mutateAsync({ devId: parseInt(devId), formData: nextForm, budgetItems });
       toast.success("Annual development plan updated successfully!");
       navigate(-1);
     } catch (error) {
@@ -160,52 +214,116 @@ export default function AnnualDevelopmentPlanEdit() {
                   className="border rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
-                  <option value="">Select client</option>
-                  <option value="Women">Women</option>
-                  <option value="LGBTQIA+">LGBTQIA+</option>
-                  <option value="Responsible Person">Responsible Person</option>
-                  <option value="Senior">Senior</option>
-                  <option value="PWD">PWD</option>
-                  <option value="Solo Parent">Solo Parent</option>
-                  <option value="Erpat">Erpat</option>
-                  <option value="Children">Children</option>
+                  {getClientOptions()}
                 </select>
               </div>
             </div>
 
-            <div className="flex flex-row gap-6 mb-6">
-              <div className="flex flex-col w-1/3">
-                <label className="text-sm font-medium mb-2 text-gray-700">Gender Issue or GAD Mandate</label>
+            {/* Program Details Section */}
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">Program Details</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Column */}
+                <div className="space-y-6">
+                  {/* GAD Program Title */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">GAD Program Title</label>
+                    <input
+                      type="text"
+                      name="dev_project"
+                      value={formData.dev_project}
+                      onChange={handleInputChange}
+                      placeholder="Enter GAD program details..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      required
+                    />
+                  </div>
+
+                  {/* GAD Activity Section */}
+                  <div className="space-y-4">
+                    <label className="text-sm font-medium text-gray-700">GAD Activity Details</label>
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        value={currentActivityInput}
+                        onChange={(e) => setCurrentActivityInput(e.target.value)}
+                        placeholder="Enter GAD activity details..."
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      />
+                      <input
+                        type="number"
+                        value={activityParticipantCount}
+                        onChange={(e) => setActivityParticipantCount(parseInt(e.target.value) || 1)}
+                        min="1"
+                        placeholder="Participants"
+                        className="w-32 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-center"
+                      />
+                      <Button 
+                        type="button"
+                        onClick={addActivityInput}
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors min-w-[60px]"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    <div className="border-2 border-dashed border-gray-200 rounded-lg bg-gray-50 h-32 overflow-y-auto p-3">
+                      {activityInputs.length === 0 ? (
+                        <div className="flex items-center justify-center h-full">
+                          <p className="text-gray-400 text-sm">No activities added yet</p>
+                        </div>
+                      ) : (
+                        activityInputs.map((item, index) => (
+                          <div key={index} className="flex items-center gap-3 mb-3 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div className="flex-1">
+                              <span className="text-sm text-gray-700">{item.activity}</span>
+                              <span className="text-xs text-gray-500 ml-2">({item.participants} participants)</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeActivityInput(index)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded-full transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-6">
+                  {/* Gender Issue */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Gender Issue or GAD Mandate</label>
                 <textarea 
                   name="dev_issue"
                   value={formData.dev_issue}
                   onChange={handleInputChange}
-                  className="border rounded-md px-3 py-2 w-full min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
                   placeholder="Enter gender issue or GAD mandate..."
+                      rows={4}
                   required
                 />
               </div>
-              <div className="flex flex-col w-1/3">
-                <label className="text-sm font-medium mb-2 text-gray-700">GAD Program/ Project/ Activity</label>
-                <textarea 
-                  name="dev_project"
-                  value={formData.dev_project}
-                  onChange={handleInputChange}
-                  className="border rounded-md px-3 py-2 w-full min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
-                  placeholder="Enter GAD program details..."
-                  required
-                />
-              </div>
-              <div className="flex flex-col w-1/3">
-                <label className="text-sm font-medium mb-2 text-gray-700">Performance Indicator and Target</label>
+
+                  {/* Performance Indicator */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Performance Indicator and Target</label>
                 <textarea 
                   name="dev_indicator"
                   value={formData.dev_indicator}
                   onChange={handleInputChange}
-                  className="border rounded-md px-3 py-2 w-full min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
                   placeholder="Enter performance indicators..."
+                      rows={4}
                   required
                 />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -290,7 +408,7 @@ export default function AnnualDevelopmentPlanEdit() {
                 disabled={isLoading}
                 className="text-white hover:bg-blue-700 px-6 py-2 rounded-md text-sm font-medium"
               >
-                {isLoading ? "Saving..." : "Save Changes"}
+                {isLoading ? "Saving..." : isFetching ? "Loading..." : "Save Changes"}
               </Button>
               <Button 
                 type="button"

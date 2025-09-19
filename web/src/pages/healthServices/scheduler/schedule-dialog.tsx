@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Dialog,
@@ -15,12 +15,12 @@ import type { WeeklySchedule } from "../scheduler/schedule-types"
 import { useState } from "react"
 
 interface ScheduleDialogProps {
-  weeklySchedule: WeeklySchedule
-  weekDays: Date[]
-  services: string[]
-  onSave: (schedule: WeeklySchedule) => void
-  onAddService: (serviceName: string) => void
-  onAddDay: (newDay: Date) => void
+  weeklySchedule: WeeklySchedule;
+  weekDays: Date[];
+  services: string[];
+  onSave: (schedule: WeeklySchedule) => void;
+  onAddService: (serviceName: string) => void;
+  onAddDay: (newDay: Date) => void;
 }
 
 export default function ScheduleDialog({
@@ -59,15 +59,8 @@ export default function ScheduleDialog({
           <DialogTitle>Edit Weekly Schedule</DialogTitle>
           <DialogDescription>Update your service availability for the week.</DialogDescription>
         </DialogHeader>
-        <ServiceScheduleForm
-          initialSchedule={weeklySchedule}
-          weekDays={weekDays}
-          services={services}
-          onSave={handleSave}
-          onAddService={onAddService}
-          onAddDay={onAddDay}
-        />
+        <ServiceScheduleForm initialSchedule={weeklySchedule} weekDays={weekDays} services={services} onSave={handleSave} onAddService={onAddService} onAddDay={onAddDay} />
       </DialogContent>
     </Dialog>
-  )
+  );
 }

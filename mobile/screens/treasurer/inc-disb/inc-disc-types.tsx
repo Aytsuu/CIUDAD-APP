@@ -7,6 +7,8 @@ export type Album = {
   is_archive: boolean; 
   inf_name?: string;
   dis_name?: string;
+  inf_desc?: string;
+  dis_desc?: string;
 };
 
 export type ImageItem =
@@ -59,19 +61,17 @@ export type DisbursementFolder = {
   dis_desc?: string;
 };
 
-// Define the expected response type from useCreateFolder mutation
 export interface CreateFolderResponse {
-  id: number;
+  id?: number;
   type: "income" | "disbursement";
-  name: string;
-  year: number;
+  name?: string;
+  year?: number;
   desc?: string;
-  is_archive: boolean;
-  dis_num: number;
-  inf_num: number;
+  is_archive?: boolean;
+  dis_num?: number;
+  inf_num?: number;
 }
 
-// Define the form values type to match the schema
 export interface CreateFolderFormValues {
   type: "income" | "disbursement";
   name: string;

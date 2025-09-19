@@ -1,301 +1,462 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
+  Modal,
+  TextInput,
+  FlatList,
+} from 'react-native';
 import { router } from 'expo-router';
-import { ChevronLeft, Clock, CheckCircle, XCircle, AlertTriangle, Package, Calendar, FileText, Trash2, RefreshCw } from 'lucide-react-native';
+import {
+  ChevronLeft,
+  XCircle,
+  Package,
+  RefreshCw,
+  Trash2,
+  Search,
+  Pill,
+  Calendar,
+  Clock,
+  FileText,
+  AlertCircle,
+} from 'lucide-react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api2 } from '@/api/api'; // Assuming api2 is correctly configured
-import PageLayout from '@/screens/_PageLayout'; // Assuming PageLayout is a common layout component
+import { api2 } from '@/api/api';
+import PageLayout from '@/screens/_PageLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { LoadingState } from '@/components/ui/loading-state';
 
-// Types based on your backend models
+// Types
 interface MedicineRequestItem {
-  med_details: any;
   medreqitem_id: number;
   medreqitem_qty: number;
-  reason: string;
-  status: 'pending' | 'confirmed' | 'referred' | 'declined' | 'fulfilled';
-  med: { // Direct medicine details from Medicinelist
+  reason: string | null;
+  status: string;
+  archive_reason?: string | null;
+  med_details?: {
     med_id: string;
     med_name: string;
     med_type: string;
   };
-  minv_id?: { // Medicine Inventory details (if linked via inventory)
-    minv_id: number;
-    med_id: {
-      med_id: string;
-      med_name: string;
-      med_type: string;
-    };
-  };
-  medreq_id: { // Parent MedicineRequest details
-    medreq_id: string;
-    requested_at: string;
-    status: string; // Status of the overall request
-    mode: 'app' | 'walk-in';
-  };
+  medreq_id: string;
+  requested_at: string;
+  mode: 'app' | 'walk-in';
 }
 
-const fetchUserPendingMedicineItems = async (patId: string): Promise<MedicineRequestItem[]> => {
-  const response = await api2.get(`/medicine/user-pending-items/?pat_id=${patId}`);
+interface User {
+  rp_id?: string;
+  pat_id?: string;
+}
+
+type TabType = "pending" | "cancelled" | "ready_for_pickup" | "completed";
+
+// API Functions
+const fetchUserAllMedicineItems = async (userId: string, isResident: boolean = true): Promise<MedicineRequestItem[]> => {
+  const param = isResident ? `rp_id=${userId}&include_archived=true` : `pat_id=${userId}&include_archived=true`;
+  const endpoint = isResident ? '/medicine/user-all-items/' : '/medicine/user-pending-items/';
+  const response = await api2.get(`${endpoint}?${param}`);
   const results = response.data.results || [];
+  console.log('API Response (All Items):', results); // Debug: Check all statuses
   return results.map((item: any) => ({
     medreqitem_id: item.medreqitem_id,
     medreqitem_qty: item.medreqitem_qty,
     reason: item.reason,
     status: item.status,
-    med_details: item.med_details, // Directly use med_details for medicine info
-    medreq_id: {
-      medreq_id: item.medreq_id || item.medreq_details.medreq_id,
-      requested_at: item.medreq_details.requested_at,
-      status: item.medreq_details.status || item.status,
-      mode: item.medreq_details.mode || 'walk-in',
-    },
+    archive_reason: item.archive_reason || null,
+    med_details: item.med_details || (item.med?.med_name ? { 
+      med_id: item.med?.med_id, 
+      med_name: item.med?.med_name || item.med_details?.med_name, 
+      med_type: item.med?.med_type 
+    } : undefined),
+    medreq_id: item.medreq_id || item.medreq_details?.medreq_id,
+    requested_at: item.medreq_details?.requested_at || item.requested_at,
+    mode: item.medreq_details?.mode || 'walk-in',
   }));
 };
 
-
-const cancelMedicineRequestItem = async (medreqitem_id: number): Promise<void> => {
+const cancelMedicineRequestItem = async (medreqitem_id: number, reason: string): Promise<void> => {
   try {
-    // Use the correct endpoint for deleting a specific request item
-    await api2.delete(`/medicine/delete-medicine-request-item/${medreqitem_id}/`);
+    await api2.patch(`/medicine/cancel-medicine-request-item/${medreqitem_id}/`, { archive_reason: reason });
   } catch (error) {
     console.error('Error canceling medicine request item:', error);
     throw error;
   }
 };
 
-// Status configuration for UI display
+// Utility Functions
 const getStatusConfig = (status: string) => {
-  switch (status.toLowerCase()) {
+  const lowerStatus = status.toLowerCase();
+  switch (lowerStatus) {
     case 'pending':
-      return {
-        color: 'text-yellow-600',
-        bgColor: 'bg-yellow-100',
-        borderColor: 'border-yellow-200',
-        label: 'Pending'
+      return { 
+        color: 'text-yellow-700', 
+        bgColor: 'bg-yellow-100', 
+        borderColor: 'border-yellow-200', 
+        label: 'Pending' 
       };
     case 'confirmed':
-      return {
-        color: 'text-green-600',
-        bgColor: 'bg-green-100',
-        borderColor: 'border-green-200',
-        label: 'Confirmed'
+      return { 
+        color: 'text-orange-700', 
+        bgColor: 'bg-orange-100', 
+        borderColor: 'border-orange-200', 
+        label: 'Ready for Pickup' 
       };
-    case 'referred': // This status is for individual items referred to doctor
-    case 'referred_to_doctor': // This status is for the overall request referred to doctor
-      return {
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-100',
-        borderColor: 'border-blue-200',
-        label: 'Referred to Doctor'
+    case 'referred_to_doctor':
+      return { 
+        color: 'text-blue-700', 
+        bgColor: 'bg-blue-100', 
+        borderColor: 'border-blue-200', 
+        label: 'Referred to Doctor' 
       };
     case 'declined':
-      return {
-        color: 'text-red-600',
-        bgColor: 'bg-red-100',
-        borderColor: 'border-red-200',
-        label: 'Declined'
-      };
-    case 'fulfilled': // This status is for individual items that have been given
-    case 'completed': // This status is for the overall request that has been fulfilled
-      return {
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-100',
-        borderColor: 'border-purple-200',
-        label: 'Fulfilled'
+    case 'cancelled':
+      return { 
+        color: 'text-red-700', 
+        bgColor: 'bg-red-100', 
+        borderColor: 'border-red-200', 
+        label: 'Cancelled' 
       };
     case 'ready_for_pickup':
-      return {
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-100',
-        borderColor: 'border-orange-200',
-        label: 'Ready for Pickup'
+      return { 
+        color: 'text-orange-700', 
+        bgColor: 'bg-orange-100', 
+        borderColor: 'border-orange-200', 
+        label: 'Ready for Pickup' 
+      };
+    case 'completed':
+      return { 
+        color: 'text-green-700', 
+        bgColor: 'bg-green-100', 
+        borderColor: 'border-green-200', 
+        label: 'Completed' 
       };
     default:
-      return {
-        color: 'text-gray-600',
-        bgColor: 'bg-gray-100',
-        borderColor: 'border-gray-200',
-        label: status
+      return { 
+        color: 'text-gray-700', 
+        bgColor: 'bg-gray-100', 
+        borderColor: 'border-gray-200', 
+        label: status 
       };
   }
 };
 
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  if (!dateString) return "N/A";
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch (e) {
+    return "Invalid Date";
+  }
 };
 
-export const MedicineRequestTracker: React.FC = () => {
-  const queryClient = useQueryClient();
-  const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pending' | 'in-progress' | 'completed' | 'all'>('pending');
-  // TODO: Replace with actual user ID from authentication context
-  const userId = "PT20230001"; // Example Patient ID
-
-
-const { data: requests, isLoading, error, refetch } = useQuery({
-  queryKey: ['userPendingMedicineItems', userId],
-  queryFn: () => fetchUserPendingMedicineItems(userId),
-  enabled: !!userId,
-});
-
-  const filteredRequests = requests?.filter((item) => {
-    const status = item.status.toLowerCase();
-    if (activeTab === 'all') return true;
-    if (activeTab === 'pending') return status === 'pending';
-    if (activeTab === 'in-progress') return ['confirmed', 'referred', 'referred_to_doctor', 'ready_for_pickup'].includes(status);
-    if (activeTab === 'completed') return ['fulfilled', 'completed', 'declined'].includes(status);
-    return false;
-  }) || [];
-
-
-  const cancelMutation = useMutation({
-  mutationFn: cancelMedicineRequestItem,
-  onSuccess: () => {
-    // Invalidate the correct query key for pending items
-    queryClient.invalidateQueries({ queryKey: ['userPendingMedicineItems', userId] });
-    Alert.alert('Success', 'Medicine request item cancelled successfully.');
-  },
-  onError: (error: any) => {
-    console.error('Cancellation error:', error.response?.data || error.message);
-    Alert.alert('Error', error.response?.data?.error || 'Failed to cancel request item. Please try again.');
-  },
-});
-
-  const handleCancelRequest = (item: MedicineRequestItem) => {
-  console.log('Canceling item:', {
-    medreqitem_id: item.medreqitem_id,
-    medreq_id: item.medreq_id.medreq_id,
-    medicineName: item.med_details?.med_name,
-    status: item.status,
-  });
-  const medicineName = item.med_details?.med_name || 'Unknown Medicine';
-  Alert.alert(
-    'Cancel Request Item',
-    `Are you sure you want to cancel your request for ${medicineName}? This action cannot be undone.`,
-    [
-      { text: 'No', style: 'cancel' },
-      { 
-        text: 'Yes', 
-        style: 'destructive',
-        onPress: () => cancelMutation.mutate(item.medreqitem_id) 
-      },
-    ]
+// Components
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+  const statusConfig = getStatusConfig(status);
+  return (
+    <View className={`px-3 py-1 rounded-full border ${statusConfig.bgColor} ${statusConfig.borderColor}`}>
+      <Text className={`text-xs font-semibold ${statusConfig.color}`}>
+        {statusConfig.label}
+      </Text>
+    </View>
   );
 };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  };
+const TabBar: React.FC<{
+  activeTab: TabType;
+  setActiveTab: (tab: TabType) => void;
+  counts: { pending: number; cancelled: number; ready_for_pickup: number; completed: number };
+}> = ({ activeTab, setActiveTab, counts }) => (
+  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+    <TouchableOpacity
+      onPress={() => setActiveTab('pending')}
+      className={`flex-1 items-center py-3 ${activeTab === 'pending' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'pending' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Pending ({counts.pending})
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab('ready_for_pickup')}
+      className={`flex-1 items-center py-3 ${activeTab === 'ready_for_pickup' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'ready_for_pickup' ? 'text-blue-600' : 'text-gray-600'}`}>
+        To Pick Up ({counts.ready_for_pickup})
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab('completed')}
+      className={`flex-1 items-center py-3 ${activeTab === 'completed' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'completed' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Completed ({counts.completed})
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab('cancelled')}
+      className={`flex-1 items-center py-3 ${activeTab === 'cancelled' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'cancelled' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Cancelled ({counts.cancelled})
+      </Text>
+    </TouchableOpacity>
+  </View>
+);
 
-  const renderRequestItem = (item: MedicineRequestItem) => {
-    // Prioritize 'med' for name and type, fallback to 'minv_id.med_id'
-    const medicineName = item.med_details?.med_name || 'Unknown Medicine';
-    // const medicineType = item.med?.med_type || item.minv_id?.med_id?.med_type || 'Unknown Type';
-    
-    // Use the individual item's status for its display
-    const statusConfig = getStatusConfig(item.status);
-    // const StatusIcon = statusConfig.icon;
-    
-    // Allow cancellation only if the individual item status is 'pending'
-    const canCancel = item.status === 'pending';
+const MedicineRequestCard: React.FC<{
+  item: MedicineRequestItem;
+  onCancel: () => void;
+  isCancelPending: boolean;
+}> = ({ item, onCancel, isCancelPending }) => {
+  const medicineName = item.med_details?.med_name || 'Unknown Medicine';
+  const canCancel = item.status.toLowerCase() === 'pending';
 
-    return (
-      <View key={item.medreqitem_id} className="bg-white rounded-lg border border-gray-200 mb-4 overflow-hidden shadow-sm">
-        {/* Header */}
-        <View className="p-4 border-b border-gray-100">
-          <View className="flex-row items-start justify-between">
-            <View className="flex-1 mr-3">
-              <Text className="text-lg font-semibold text-gray-900 mb-1">{medicineName}</Text>
-              {/* <Text className="text-sm text-gray-600">{medicineType}</Text> */}
-            </View>
-            <View className={`flex-row items-center px-3 py-1 rounded-full ${statusConfig.bgColor} ${statusConfig.borderColor} border`}>
-              {/* <StatusIcon size={14} color={statusConfig.color.replace('text-', '')} /> */}
-              <Text className={`ml-1 text-xs font-medium ${statusConfig.color}`}>
-                {statusConfig.label}
-              </Text>
+  return (
+    <View className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm">
+      {/* Header */}
+      <View className="p-4 border-b border-gray-100">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 mr-3">
+            <View className="flex-row items-center mb-1">
+              <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
+                <Pill color="white" size={20} />
+              </View>
+              <View className="flex-1">
+                <Text className="font-semibold text-lg text-gray-900">
+                  {medicineName}
+                </Text>
+                {/* <Text className="text-gray-500 text-sm">Qty: {item.medreqitem_qty}</Text> */}
+              </View>
             </View>
           </View>
+          <View className="items-end">
+            <StatusBadge status={item.status} />
+            {/* <View className="bg-blue-100 px-2 py-1 rounded-lg mt-2">
+              <Text className="text-blue-700 font-bold text-xs">#{item.medreqitem_id}</Text>
+            </View> */}
+          </View>
         </View>
+      </View>
 
-        {/* Details */}
-        <View className="p-4 space-y-3">
-          {/* Quantity and Request Info */}
-          {/* <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center">
-              <Package size={16} color="#6B7280" />
-              <Text className="ml-2 text-sm text-gray-700">Quantity: {item.medreqitem_qty}</Text>
-            </View>
-            <Text className="text-xs text-gray-500">Request ID: #{item.medreq_id.medreq_id}</Text>
-          </View> */}
-
-          {/* Date */}
-          <View className="flex-row items-center">
+      {/* Details */}
+      <View className="p-4 space-y-3">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center flex-1">
             <Calendar size={16} color="#6B7280" />
             <Text className="ml-2 text-sm text-gray-700">
-              Requested: {formatDate(item.medreq_id.requested_at)}
+              {formatDate(item.requested_at)}
             </Text>
           </View>
-
-          {/* Reason */}
-          {item.reason && (
-            <View className="flex-row items-start">
-              <FileText size={16} color="#6B7280" className="mt-0.5" />
-              <Text className="ml-2 text-sm text-gray-700 flex-1">
-                Reason: {item.reason}
-              </Text>
-            </View>
-          )}
-
-          {/* Mode */}
-          {/* <View className="flex-row items-center">
-            <View className={`px-2 py-1 rounded text-xs ${
-              item.medreq_id.mode === 'app' 
-                ? 'bg-blue-100 text-blue-700' 
-                : 'bg-gray-100 text-gray-700'
-            }`}>
-              <Text className="text-xs font-medium">
-                {item.medreq_id.mode === 'app' ? 'Mobile App' : 'Walk-in'}
-              </Text>
-            </View>
-          </View> */}
+          <Text className="text-sm text-gray-600 capitalize">
+            {/* {item.mode} */}
+          </Text>
         </View>
+        
+        {item.reason && (
+          <View className="flex-row items-start">
+            <FileText size={16} color="#6B7280" className="mt-0.5" />
+            <Text className="ml-2 text-sm text-gray-700 flex-1">
+              {item.reason}
+            </Text>
+          </View>
+        )}
 
-        {/* Actions */}
-        {canCancel && (
-          <View className="px-4 pb-4">
-            <TouchableOpacity
-              onPress={() => handleCancelRequest(item)}
-              disabled={cancelMutation.isPending}
-              className="flex-row items-center justify-center bg-red-50 border border-red-200 rounded-lg py-3 px-4"
-            >
-              {cancelMutation.isPending ? (
-                <ActivityIndicator size="small" color="#DC2626" />
-              ) : (
-                <>
-                  <Trash2 size={16} color="#DC2626" />
-                  <Text className="ml-2 text-red-600 font-medium">Cancel Request Item</Text>
-                </>
-              )}
-            </TouchableOpacity>
+        {item.archive_reason && (
+          <View className="flex-row items-start">
+            <AlertCircle size={16} color="#EF4444" className="mt-0.5" />
+            <Text className="ml-2 text-sm text-red-600 flex-1">
+              Cancellation: {item.archive_reason}
+            </Text>
           </View>
         )}
       </View>
-    );
-  };
 
-  if (isLoading) {
+      {/* Action Button */}
+      {canCancel && (
+        <View className="p-4 bg-red-50 border-t border-red-100">
+          <TouchableOpacity
+            onPress={onCancel}
+            disabled={isCancelPending}
+            className="flex-row items-center justify-center bg-red-500 px-4 py-3 rounded-lg"
+            activeOpacity={0.8}
+          >
+            <Trash2 size={16} color="white" />
+            <Text className="ml-2 text-white font-medium">
+              {isCancelPending ? 'Cancelling...' : 'Cancel Request'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+};
+
+// Cancel Modal Component
+const CancelModal: React.FC<{
+  visible: boolean;
+  item: MedicineRequestItem | null;
+  cancellationReason: string;
+  setCancellationReason: (reason: string) => void;
+  onConfirm: () => void;
+  onClose: () => void;
+  isPending: boolean;
+}> = ({ visible, item, cancellationReason, setCancellationReason, onConfirm, onClose, isPending }) => {
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View className="flex-1 justify-center items-center bg-black/50 p-4">
+        <View className="bg-white rounded-lg w-full max-w-md p-6">
+          <Text className="text-lg font-semibold text-gray-900 mb-2">Cancel Request</Text>
+          <Text className="text-sm text-gray-600 mb-4">
+            Are you sure you want to cancel "{item?.med_details?.med_name}"? Provide a reason:
+          </Text>
+          <TextInput
+            value={cancellationReason}
+            onChangeText={setCancellationReason}
+            placeholder="Enter cancellation reason..."
+            multiline
+            className="bg-gray-50 border border-gray-200 rounded-md p-3 mb-4 text-sm"
+            style={{ height: 80, textAlignVertical: 'top' }}
+          />
+          <View className="flex-row justify-end space-x-2">
+            <TouchableOpacity onPress={onClose} className="px-4 py-2">
+              <Text className="text-gray-600 font-medium">Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onConfirm}
+              disabled={!cancellationReason.trim() || isPending}
+              className="bg-red-500 px-4 py-2 rounded-md disabled:opacity-50"
+            >
+              <Text className="text-white font-medium">{isPending ? 'Cancelling...' : 'Confirm'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// Main Component
+const MedicineRequestTracker: React.FC = () => {
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<TabType>('pending');
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<MedicineRequestItem | null>(null);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Determine user type and ID
+  const isResident = !!user?.resident?.rp_id;
+  const userId = user?.resident?.rp_id || null;
+  const isUserReady = isAuthenticated && !!userId;
+
+  // Debug log
+  // console.log('Auth State:', { isAuthenticated, userId, isUserReady, isResident });
+ 
+  // Query for all user items
+  const {
+    data: requests = [],
+    isLoading: dataLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['userMedicineRequests', userId, isResident],
+    queryFn: () => {
+      if (!userId) {
+        throw new Error('User ID is missing - cannot fetch requests');
+      }
+      return fetchUserAllMedicineItems(userId, isResident);
+    },
+    enabled: isUserReady,
+    staleTime: 5 * 60 * 1000,
+  });
+
+
+    // Mutation for cancel
+  const cancelMutation = useMutation({
+    mutationFn: ({ medreqitem_id, reason }: { medreqitem_id: number; reason: string }) =>
+      cancelMedicineRequestItem(medreqitem_id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userMedicineRequests'] });
+      setShowCancelModal(false);
+      setCancellationReason('');
+      setSelectedItem(null);
+      Alert.alert('Success', 'Request cancelled successfully.');
+    },
+    onError: (err: any) => Alert.alert('Error', `Failed to cancel: ${err.message}`),
+  });
+
+  // Filter requests by tab and search query
+  const filteredRequests = useMemo(() => {
+    let result = requests;
+
+    // Filter by search query first
+    if (searchQuery) {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.med_details?.med_name?.toLowerCase().includes(lowerCaseQuery) ||
+          item.reason?.toLowerCase().includes(lowerCaseQuery) ||
+          item.medreqitem_id.toString().includes(lowerCaseQuery)
+      );
+    }
+
+    // Filter by active tab
+    result = result.filter((item) => {
+      const lowerStatus = item.status.toLowerCase();
+      switch (activeTab) {
+        case 'pending':
+          return lowerStatus === 'pending';
+        case 'cancelled':
+          return ['rejected', 'cancelled','referred'].includes(lowerStatus);
+        case 'ready_for_pickup':
+          return ['confirmed', 'ready_for_pickup'].includes(lowerStatus);
+        case 'completed':
+          return ['completed', 'fulfilled'].includes(lowerStatus);
+        default:
+          return true;
+      }
+    });
+
+    // Sort by date (most recent first)
+    result.sort((a, b) => new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime());
+
+    return result;
+  }, [requests, searchQuery, activeTab]);
+
+  // Counts for tabs
+  const counts = useMemo(() => ({
+    pending: requests.filter((r) => r.status.toLowerCase() === 'pending').length,
+    cancelled: requests.filter((r) => ['declined', 'cancelled'].includes(r.status.toLowerCase())).length,
+    ready_for_pickup: requests.filter((r) => ['confirmed', 'ready_for_pickup'].includes(r.status.toLowerCase())).length,
+    completed: requests.filter((r) => ['completed', 'fulfilled'].includes(r.status.toLowerCase())).length,
+  }), [requests]);
+
+  // Refresh handler
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } catch (e) {
+      console.error('Refetch error:', e);
+    }
+    setRefreshing(false);
+  }, [refetch]);
+
+  // Auth Guard
+  if (!isAuthenticated || !user) {
     return (
       <PageLayout
         leftAction={
@@ -306,11 +467,15 @@ const { data: requests, isLoading, error, refetch } = useQuery({
         headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Medicine Requests</Text>}
       >
         <View className="flex-1 justify-center items-center bg-gray-50">
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text className="mt-4 text-gray-600">Loading your requests...</Text>
+          <Text className="text-gray-600">Please log in to view your medicine requests</Text>
         </View>
       </PageLayout>
     );
+  }
+
+  // Combined Loading
+  if (authLoading || dataLoading) {
+    return <LoadingState/>
   }
 
   if (error) {
@@ -327,12 +492,9 @@ const { data: requests, isLoading, error, refetch } = useQuery({
           <XCircle size={64} color="#EF4444" />
           <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Error loading requests</Text>
           <Text className="text-gray-600 text-center mt-2 mb-6">
-            Failed to fetch your medicine requests. Please check your connection and try again.
+            Failed to load your medicine requests. Please check your connection and try again.
           </Text>
-          <TouchableOpacity
-            onPress={() => refetch()}
-            className="flex-row items-center bg-blue-600 px-6 py-3 rounded-lg"
-          >
+          <TouchableOpacity onPress={onRefresh} className="flex-row items-center bg-blue-600 px-6 py-3 rounded-lg">
             <RefreshCw size={18} color="white" />
             <Text className="ml-2 text-white font-medium">Try Again</Text>
           </TouchableOpacity>
@@ -341,49 +503,7 @@ const { data: requests, isLoading, error, refetch } = useQuery({
     );
   }
 
-  // Calculate summary stats based on individual item statuses
-const pendingCount = requests?.filter(r => r.status.toLowerCase() === 'pending').length || 0;
-  const inProgressCount = requests?.filter(r => ['confirmed', 'referred', 'referred_to_doctor', 'ready_for_pickup'].includes(r.status.toLowerCase())).length || 0;
-  const completedCount = requests?.filter(r => ['fulfilled', 'completed', 'declined'].includes(r.status.toLowerCase())).length || 0;
-  const totalCount = requests?.length || 0;
-
-  const renderTabBar = () => (
-    <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-      <TouchableOpacity
-        onPress={() => setActiveTab('pending')}
-        className={`flex-1 items-center py-2 ${activeTab === 'pending' ? 'border-b-2 border-blue-600' : ''}`}
-      >
-        <Text className={`text-sm font-medium ${activeTab === 'pending' ? 'text-blue-600' : 'text-gray-600'}`}>
-          Pending ({pendingCount})
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => setActiveTab('in-progress')}
-        className={`flex-1 items-center py-2 ${activeTab === 'in-progress' ? 'border-b-2 border-blue-600' : ''}`}
-      >
-        <Text className={`text-sm font-medium ${activeTab === 'in-progress' ? 'text-blue-600' : 'text-gray-600'}`}>
-          To pick-up ({inProgressCount})
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => setActiveTab('completed')}
-        className={`flex-1 items-center py-2 ${activeTab === 'completed' ? 'border-b-2 border-blue-600' : ''}`}
-      >
-        <Text className={`text-sm font-medium ${activeTab === 'completed' ? 'text-blue-600' : 'text-gray-600'}`}>
-          Completed ({completedCount})
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => setActiveTab('all')}
-        className={`flex-1 items-center py-2 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
-      >
-        <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
-          All ({totalCount})
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-
+  // Main Render
   return (
     <PageLayout
       leftAction={
@@ -392,72 +512,100 @@ const pendingCount = requests?.filter(r => r.status.toLowerCase() === 'pending')
         </TouchableOpacity>
       }
       headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Medicine Requests</Text>}
-      rightAction={
-        <TouchableOpacity onPress={onRefresh} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-          <RefreshCw size={20} color="#374151" />
-        </TouchableOpacity>
-      }
+        rightAction={<View className="w-10 h-10" />}
     >
-      <ScrollView 
-        className="flex-1 bg-gray-50"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        {!requests || requests.length === 0 ? (
-          <View className="flex-1 justify-center items-center px-6 py-20">
+      <View className="flex-1 bg-gray-50">
+        {/* Search Bar */}
+        <View className="bg-white px-4 py-3 border-b border-gray-200">
+          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+            <Search size={20} color="#6B7280" />
+            <TextInput
+              className="flex-1 ml-3 text-gray-800 text-base"
+              placeholder="Search medicine requests..."
+              placeholderTextColor="#9CA3AF"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+        </View>
+
+        {/* Tab Bar */}
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+
+        {/* Requests List */}
+        {requests.length === 0 ? (
+          <View className="flex-1 justify-center items-center px-6">
             <Package size={64} color="#9CA3AF" />
             <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No requests found</Text>
             <Text className="text-gray-600 text-center mt-2 mb-8">
-              You haven't made any medicine requests yet. Start by requesting the medicines you need.
+              Start by requesting medicines you need.
             </Text>
-            {/* Optional: Button to navigate to medicine request form */}
-            {/* <TouchableOpacity
-              onPress={() => router.push('/medicine-request-form')}
+            <TouchableOpacity 
+              onPress={() => router.push('/medicine-request/med-request')} 
               className="bg-blue-600 px-6 py-3 rounded-lg"
             >
               <Text className="text-white font-medium">Request Medicine</Text>
-            </TouchableOpacity> */}
+            </TouchableOpacity>
           </View>
         ) : (
-          <View className="p-4">
-            {/* Summary Stats */}
-            <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-200">
-              <Text className="text-lg font-semibold text-gray-900 mb-3">Request Summary</Text>
-              <View className="flex-row justify-between">
-                <TouchableOpacity onPress={() => setActiveTab('pending')} className="flex-1 items-center">
-                  <Text className="text-2xl font-bold text-yellow-600">{pendingCount}</Text>
-                  <Text className="text-sm text-gray-600">Pending</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setActiveTab('in-progress')} className="flex-1 items-center">
-                  <Text className="text-2xl font-bold text-green-600">{inProgressCount}</Text>
-                  <Text className="text-sm text-gray-600">To pick-up</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setActiveTab('completed')} className="flex-1 items-center">
-                  <Text className="text-2xl font-bold text-purple-600">{completedCount}</Text>
-                  <Text className="text-sm text-gray-600">Completed</Text>
-                </TouchableOpacity>
+          <FlatList
+            data={filteredRequests}
+            keyExtractor={(item) => `medicine-request-${item.medreqitem_id}`}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ padding: 16 }}
+            initialNumToRender={15}
+            maxToRenderPerBatch={20}
+            windowSize={21}
+            renderItem={({ item }) => (
+              <MedicineRequestCard
+                item={item}
+                onCancel={() => {
+                  setSelectedItem(item);
+                  setShowCancelModal(true);
+                }}
+                isCancelPending={cancelMutation.isPending}
+              />
+            )}
+            ListEmptyComponent={() => (
+              <View className="flex-1 justify-center items-center py-20">
+                <Package size={48} color="#D1D5DB" />
+                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">No requests in this category</Text>
+                <Text className="text-gray-500 text-center">
+                  {searchQuery
+                    ? `No ${activeTab} requests match your search.`
+                    : `No ${activeTab} requests found.`}
+                </Text>
               </View>
-            </View>
-
-            {/* New Tab Bar */}
-            {renderTabBar()}
-
-        <View className="space-y-4 mt-4">
-              {filteredRequests.length === 0 ? (
-                <View className="flex-1 justify-center items-center py-10">
-                  <Text className="text-gray-600 text-center">No requests in this category.</Text>
-                </View>
-              ) : (
-                filteredRequests.map(renderRequestItem)
-              )}
-            </View>
-            {/* Bottom padding */}
-            <View className="h-6" />
-          </View>
+            )}
+          />
         )}
-      </ScrollView>
+      </View>
+
+      <CancelModal
+        visible={showCancelModal}
+        item={selectedItem}
+        cancellationReason={cancellationReason}
+        setCancellationReason={setCancellationReason}
+        onConfirm={() => {
+          if (!cancellationReason.trim()) {
+            Alert.alert('Error', 'Please provide a cancellation reason.');
+            return;
+          }
+          if (selectedItem) {
+            cancelMutation.mutate({
+              medreqitem_id: selectedItem.medreqitem_id,
+              reason: cancellationReason.trim(),
+            });
+          }
+        }}
+        onClose={() => {
+          setShowCancelModal(false);
+          setCancellationReason('');
+          setSelectedItem(null);
+        }}
+        isPending={cancelMutation.isPending}
+      />
     </PageLayout>
   );
 };

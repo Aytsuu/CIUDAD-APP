@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import { Control, Controller } from 'react-hook-form';
 import { Calendar } from '@/lib/icons/Calendar';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Button } from '../button';
+import { Button } from '../button/button';
 
 interface DatePickerProps {
   control: Control<any>;
@@ -22,7 +22,7 @@ export const FormDateInput = ({ control, name, label, editable = true }: DatePic
       render={({ field: { onChange, value }, fieldState: { error } }) => (
         <View className="mb-4">
           {label && (
-            <Text className="text-[12px] font-PoppinsRegular mb-2">
+            <Text className="text-sm mb-2">
               {label}
             </Text>
           )}

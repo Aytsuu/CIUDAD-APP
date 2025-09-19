@@ -1,10 +1,8 @@
-
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { z } from "zod"
 import ReferralFormSchema from "@/form-schema/animal-bite-schema"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button/button"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form"
 import { SelectLayout } from "@/components/ui/select/select-layout"
@@ -14,10 +12,9 @@ import { toast } from "sonner"
 import { Label } from "@/components/ui/label"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
-import { submitAnimalBiteReferral } from "./db-request/postrequest"
 import { getAllPatients } from "./api/get-api"
 import { Link } from "react-router"
-
+import { useSubmitAnimalBiteReferralMutation } from "./db-request/get-query"
 type ReferralFormModalProps = {
   onClose: () => void
   onAddPatient?: (patient: any) => void
@@ -57,6 +54,7 @@ const calculateAge = (dobStr: string): number => {
 
 export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFormModalProps) {
   const todayDate = getTodayDate()
+  const { mutate: submitReferral, isPending: isSubmitting } = useSubmitAnimalBiteReferralMutation()
 
   const form = useForm<z.infer<typeof ReferralFormSchema>>({
     resolver: zodResolver(ReferralFormSchema),
@@ -83,7 +81,6 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
   const [patientsData, setPatientsData] = useState<PatientRecord[]>([])
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
   const [loading, setLoading] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Track the actual names of custom options
@@ -113,7 +110,6 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
 
   // Keep track of default options for deletion prevention
   const defaultExposureSiteIds = new Set(["Head", "Neck", "Foot", "Hand", "Trunk"])
-
   const defaultBitingAnimalIds = new Set(["Dog", "Cat", "Rodent"])
 
   useEffect(() => {
@@ -153,12 +149,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     fetchData()
   }, [])
 
-  const handlePatientSelection = (id: string) => {
+  const handlePatientSelection = (id: string | undefined) => {
+    if (!id) return
     setSelectedPatientId(id)
     const selectedPatient = patientsData.find((p) => p.pat_id.toString() === id)
-    // Removed selectedAddress as it's redundant; selectedPatient already holds the necessary info.
 
-    if (selectedPatient) { // Use selectedPatient directly
+    if (selectedPatient) {
       const personalInfo = selectedPatient.personal_info
       form.setValue("pat_id", String(selectedPatient.pat_id))
       form.setValue("p_lname", personalInfo?.per_lname || "")
@@ -167,7 +163,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       form.setValue("p_age", personalInfo?.per_dob ? calculateAge(personalInfo.per_dob) : 0)
       form.setValue("p_gender", personalInfo?.per_sex || "")
 
-      const address = selectedPatient.address // Assuming address is directly on the patient object from getAllPatients
+      const address = selectedPatient.address
       if (address) {
         const fullAddress = [
           address.sitio,
@@ -194,7 +190,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     const newOption: SelectOption = { id: newId, name: newSite }
 
     setExposureSites((prev) => [...prev, newOption])
-    setCustomExposureSiteName(newSite) // Store the actual name
+    setCustomExposureSiteName(newSite)
     toast.success(`Added new exposure site: ${newSite}`)
 
     if (callback) {
@@ -208,7 +204,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     const newOption: SelectOption = { id: newId, name: newAnimal }
 
     setBitingAnimals((prev) => [...prev, newOption])
-    setCustomBitingAnimalName(newAnimal) // Store the actual name
+    setCustomBitingAnimalName(newAnimal)
     toast.success(`Added new biting animal: ${newAnimal}`)
 
     if (callback) {
@@ -261,45 +257,45 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     }
 
     const values = form.getValues()
-    if (!values.pat_id || !values.exposure_type || !values.biting_animal || !values.referredby) { // Ensure exposure_type is also checked
+    if (!values.pat_id || !values.exposure_type || !values.biting_animal || !values.referredby) {
       toast.error("Please fill in all required fields")
       return
     }
 
-    setIsSubmitting(true)
     setError(null)
 
-    try {
-      // Add the actual names for custom options
-      const submissionData = { ...values }
+    // Add the actual names for custom options
+    const submissionData = { ...values }
 
-      // If exposure_site is a custom ID, add the actual name
-      if (values.exposure_site.startsWith("custom-")) {
-        // Find the name from the options array
-        const option = exposureSites.find((site) => site.id === values.exposure_site)
-        submissionData.exposure_site = option?.name || customExposureSiteName
-      }
-
-      // If biting_animal is a custom ID, add the actual name
-      if (values.biting_animal.startsWith("custom-")) {
-        // Find the name from the options array
-        const option = bitingAnimals.find((animal) => animal.id === values.biting_animal)
-        submissionData.biting_animal = option?.name || customBitingAnimalName
-      }
-
-      const result = await submitAnimalBiteReferral(submissionData)
-      toast.success("Animal bite referral submitted successfully!")
-      onAddPatient?.(result)
-      onClose()
-      form.reset()
-    } catch (err: any) {
-      console.error("❌ Submission error:", err)
-      const errorMessage = err?.message || "Submission failed. Please try again."
-      setError(errorMessage)
-      toast.error(errorMessage)
-    } finally {
-      setIsSubmitting(false)
+    // If exposure_site is a custom ID, add the actual name
+    if (values.exposure_site.startsWith("custom-")) {
+      // Find the name from the options array
+      const option = exposureSites.find((site) => site.id === values.exposure_site)
+      submissionData.exposure_site = option?.name || customExposureSiteName
     }
+
+    // If biting_animal is a custom ID, add the actual name
+    if (values.biting_animal.startsWith("custom-")) {
+      // Find the name from the options array
+      const option = bitingAnimals.find((animal) => animal.id === values.biting_animal)
+      submissionData.biting_animal = option?.name || customBitingAnimalName
+    }
+
+    // Use the mutation hook
+    submitReferral(submissionData, {
+      onSuccess: (result) => {
+        toast.success("Animal bite referral submitted successfully!")
+        onAddPatient?.(result)
+        onClose()
+        form.reset()
+      },
+      onError: (err: any) => {
+        console.error("❌ Submission error:", err)
+        const errorMessage = err?.message || "Submission failed. Please try again."
+        setError(errorMessage)
+        toast.error(errorMessage)
+      }
+    })
   }
 
   if (loading) {
@@ -484,7 +480,11 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
             <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !selectedPatientId} className="w-full sm:w-auto">
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || !selectedPatientId} 
+              className="w-full sm:w-auto"
+            >
               {isSubmitting ? "Submitting..." : "Submit Referral"}
             </Button>
           </div>

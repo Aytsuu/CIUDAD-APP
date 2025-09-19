@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { getMedicines } from "../../../../InventoryList/restful-api/medicine/MedicineFetchAPI";
 import { useQuery } from "@tanstack/react-query";
 import { showErrorToast } from "@/components/ui/toast";

@@ -4,7 +4,6 @@ import { BsChevronLeft } from "react-icons/bs";
 import { Link, useLocation } from "react-router-dom";
 import { Complaint } from "./complaint-type";
 import {
-  FileText,
   User,
   AlertTriangle,
   FolderOpen,
@@ -45,7 +44,7 @@ export function ComplaintViewRecord() {
       console.log("Raising issue for comp_id:", complaintData.comp_id);
 
       await raiseIssue(complaintData.comp_id);
-      // await handleSendAlert();
+      await handleSendAlert();
       await archiveComplaint(complaintData.comp_id.toString());
       setComplaintStatus((prev) => ({ ...prev, isRaised: true, isArchived: true }));
       toast.success("Issue raised successfully", {

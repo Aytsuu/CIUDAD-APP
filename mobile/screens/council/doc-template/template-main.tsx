@@ -587,7 +587,7 @@ import {
   ChevronLeft
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';

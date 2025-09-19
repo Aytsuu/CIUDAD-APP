@@ -287,7 +287,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
   return (
     <div className={`bg-white ${className}`}>
       {/* Print Button */}
-      <div className="no-print mb-4 flex justify-end">
+      <div className="no-print mb-4 flex justify-end gap-2">
         <Button onClick={handlePrint} variant="outline" className="flex gap-2 py-2 px-4 rounded border border-zinc-400">
           <Printer /> Print
         </Button>

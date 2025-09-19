@@ -11,12 +11,7 @@ import { api2 } from "@/api/api";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { FileInput } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { MedicalConsultationHistory } from "../../medicalconsultation/types";
 import { useLoading } from "@/context/LoadingContext";
@@ -93,17 +88,15 @@ export default function ForwardedCombinedHealthRecordsTable() {
     queryFn: async () => {
       const response = await api2.get("/child-health/history/checkup/");
       return response.data || [];
-    },
+    }
   });
 
   const { data: medConsultData, isLoading: medConsultLoading } = useQuery({
     queryKey: ["PendingimpoRecords"],
     queryFn: async () => {
-      const response = await api2.get(
-        "/medical-consultation/pending-medcon-record/"
-      );
+      const response = await api2.get("/medical-consultation/pending-medcon-record/");
       return response.data || [];
-    },
+    }
   });
 
   const formatRecordsData = React.useCallback((): CombinedRecord[] => {
@@ -115,14 +108,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
       const info = details.personal_info || {};
       const address = details.address || {};
 
-      const addressParts = [
-        address.add_street,
-        address.add_barangay,
-        address.add_city,
-        address.add_province,
-      ]
-        .filter(Boolean)
-        .join(", ");
+      const addressParts = [address.add_street, address.add_barangay, address.add_city, address.add_province].filter(Boolean).join(", ");
 
       const fullAddress = address.full_address || addressParts || "";
 
@@ -141,7 +127,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
         city: address.add_city || "",
         province: address.add_province || "",
         pat_type: details.pat_type || "",
-        address: fullAddress,
+        address: fullAddress
       };
 
       const checkupRecord: ChildHealthCheckupRecord = {
@@ -149,19 +135,14 @@ export default function ForwardedCombinedHealthRecordsTable() {
         chrec_details: {
           ufc_no: record.chrec_details.ufc_no || "N/A",
           family_no: record.chrec_details.family_no || "N/A",
-          mother_occupation:
-            record.chrec_details.mother_occupation || "Not specified",
-          father_occupation:
-            record.chrec_details.father_occupation || "Not specified",
-          type_of_feeding:
-            record.chrec_details.type_of_feeding || "Not specified",
-          newborn_screening:
-            record.chrec_details.newborn_screening || "Not done",
-          place_of_delivery_type:
-            record.chrec_details.place_of_delivery_type || "Not specified",
+          mother_occupation: record.chrec_details.mother_occupation || "Not specified",
+          father_occupation: record.chrec_details.father_occupation || "Not specified",
+          type_of_feeding: record.chrec_details.type_of_feeding || "Not specified",
+          newborn_screening: record.chrec_details.newborn_screening || "Not done",
+          place_of_delivery_type: record.chrec_details.place_of_delivery_type || "Not specified",
           birth_order: record.chrec_details.birth_order || 0,
           pod_location: record.chrec_details.pod_location || "Not specified",
-          created_at: record.chrec_details.created_at || "",
+          created_at: record.chrec_details.created_at || ""
         },
         chrec_id: record.chrec || "",
         created_at: record.created_at || "",
@@ -170,19 +151,18 @@ export default function ForwardedCombinedHealthRecordsTable() {
         patrec: record.chrec_details?.patrec || "",
         child_health_vital_signs: [
           {
-            chvital_id: record.child_health_vital_signs?.[0]?.chvital_id || "",
-          },
+            chvital_id: record.child_health_vital_signs?.[0]?.chvital_id || ""
+          }
         ],
         pat_details: {
-          pat_id:
-            record.chrec_details?.patrec_details?.pat_details?.pat_id || "",
-        },
+          pat_id: record.chrec_details?.patrec_details?.pat_details?.pat_id || ""
+        }
       };
 
       return {
         recordType: "child-health",
         patient: patientRecord,
-        checkup: checkupRecord,
+        checkup: checkupRecord
       };
     });
 
@@ -191,14 +171,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
       const info = details.personal_info || {};
       const address = details.address || {};
 
-      const addressParts = [
-        address.add_street,
-        address.add_barangay,
-        address.add_city,
-        address.add_province,
-      ]
-        .filter(Boolean)
-        .join(", ");
+      const addressParts = [address.add_street, address.add_barangay, address.add_city, address.add_province].filter(Boolean).join(", ");
 
       const fullAddress = address.full_address || addressParts || "";
 
@@ -212,12 +185,12 @@ export default function ForwardedCombinedHealthRecordsTable() {
         dob: info.per_dob || "",
         householdno: details.households?.[0]?.hh_id || "N/A",
         street: address.add_street || "",
-        sitio: address.sitio || "",
+        sitio: address.add_sitio || "",
         barangay: address.add_barangay || "",
         city: address.add_city || "",
         province: address.add_province || "",
         pat_type: details.pat_type || "",
-        address: fullAddress,
+        address: fullAddress
       };
 
       const consultation: MedicalConsultationHistory = {
@@ -238,20 +211,20 @@ export default function ForwardedCombinedHealthRecordsTable() {
                   per_lname: record.staff_details.rp?.per?.per_lname || "",
                   per_mname: record.staff_details.rp?.per?.per_mname || "",
                   per_suffix: record.staff_details.rp?.per?.per_suffix || "",
-                  per_dob: record.staff_details.rp?.per?.per_dob || "",
-                },
-              },
+                  per_dob: record.staff_details.rp?.per?.per_dob || ""
+                }
+              }
             }
           : null,
         patrec_details: {
-          pat_id: record.patrec_details?.pat_id || "",
-        },
+          pat_id: record.patrec_details?.pat_id || ""
+        }
       };
 
       return {
         recordType: "medical-consultation",
         patient: patientRecord,
-        consultation,
+        consultation
       };
     });
 
@@ -260,42 +233,28 @@ export default function ForwardedCombinedHealthRecordsTable() {
 
   const filteredData = React.useMemo(() => {
     return formatRecordsData().filter((record) => {
-      const searchText = `${record.patient.pat_id} ${record.patient.lname} ${
-        record.patient.fname
-      } ${
-        record.recordType === "child-health"
-          ? record.checkup.tt_status
-          : record.consultation.medrec_chief_complaint
-      }`.toLowerCase();
+      const searchText = `${record.patient.pat_id} ${record.patient.lname} ${record.patient.fname} ${record.recordType === "child-health" ? record.checkup.tt_status : record.consultation.medrec_chief_complaint}`.toLowerCase();
 
-      const typeMatches =
-        recordTypeFilter === "all" || record.recordType === recordTypeFilter;
+      const typeMatches = recordTypeFilter === "all" || record.recordType === recordTypeFilter;
 
       return searchText.includes(searchQuery.toLowerCase()) && typeMatches;
     });
   }, [searchQuery, formatRecordsData, recordTypeFilter]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const columns: ColumnDef<CombinedRecord>[] = [
     {
       accessorKey: "patient",
       header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => {
         const patient = row.original.patient;
-        const fullName =
-          `${patient.lname}, ${patient.fname} ${patient.mname}`.trim();
+        const fullName = `${patient.lname}, ${patient.fname} ${patient.mname}`.trim();
         return (
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
@@ -307,16 +266,12 @@ export default function ForwardedCombinedHealthRecordsTable() {
             </div>
           </div>
         );
-      },
+      }
     },
     {
       accessorKey: "recordType",
       header: "Record Type",
-      cell: ({ row }) => (
-        <div className="text-sm min-w-[120px] capitalize">
-          {row.original.recordType.replace("-", " ")}
-        </div>
-      ),
+      cell: ({ row }) => <div className="text-sm min-w-[120px] capitalize">{row.original.recordType.replace("-", " ")}</div>
     },
     {
       accessorKey: "details",
@@ -324,31 +279,17 @@ export default function ForwardedCombinedHealthRecordsTable() {
       cell: ({ row }) => {
         if (row.original.recordType === "child-health") {
           // Get the full record data from childHealthData
-          const fullRecord = childHealthData?.find(
-            (record: any) =>
-              row.original.recordType === "child-health" &&
-              record.chhist_id === row.original.checkup.chhist_id
-          );
+          const fullRecord = childHealthData?.find((record: any) => row.original.recordType === "child-health" && record.chhist_id === row.original.checkup.chhist_id);
 
           const vitalSigns = fullRecord?.child_health_vital_signs?.[0];
           const nutritionStatus = fullRecord?.nutrition_statuses?.[0];
 
           return (
             <div className="grid grid-cols-1 gap-1 text-sm min-w-[180px]">
-              <div>
-                Birth Order: {row.original.checkup.chrec_details.birth_order}
-              </div>
-              <div>
-                Feeding:{" "}
-                {row.original.checkup.chrec_details.type_of_feeding.replace(
-                  "_",
-                  " "
-                )}
-              </div>
+              <div>Birth Order: {row.original.checkup.chrec_details.birth_order}</div>
+              <div>Feeding: {row.original.checkup.chrec_details.type_of_feeding.replace("_", " ")}</div>
               {vitalSigns && <div>Temp: {vitalSigns.temp}°C</div>}
-              {nutritionStatus && (
-                <div>Nutrition: {nutritionStatus.wfa} (WFA)</div>
-              )}
+              {nutritionStatus && <div>Nutrition: {nutritionStatus.wfa} (WFA)</div>}
             </div>
           );
         } else {
@@ -364,7 +305,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
             </div>
           );
         }
-      },
+      }
     },
     {
       accessorKey: "HT and WT",
@@ -372,30 +313,14 @@ export default function ForwardedCombinedHealthRecordsTable() {
       cell: ({ row }) => {
         if (row.original.recordType === "child-health") {
           // Get height and weight from child health vital signs if available
-          const vitalSigns = childHealthData?.find(
-            (record: any) =>
-              row.original.recordType === "child-health" &&
-              record.chhist_id === row.original.checkup.chhist_id
-          )?.child_health_vital_signs?.[0]?.bm_details;
+          const vitalSigns = childHealthData?.find((record: any) => row.original.recordType === "child-health" && record.chhist_id === row.original.checkup.chhist_id)?.child_health_vital_signs?.[0]?.bm_details;
 
           return (
             <div className="text-sm min-w-[180px]">
               {vitalSigns && (
                 <>
-                  <div>
-                    HT:{" "}
-                    {vitalSigns.height.endsWith(".00")
-                      ? vitalSigns.height.slice(0, -3)
-                      : vitalSigns.height}{" "}
-                    cm
-                  </div>
-                  <div>
-                    WT:{" "}
-                    {vitalSigns.weight.endsWith(".00")
-                      ? vitalSigns.weight.slice(0, -3)
-                      : vitalSigns.weight}{" "}
-                    kg
-                  </div>
+                  <div>HT: {vitalSigns.height.endsWith(".00") ? vitalSigns.height.slice(0, -3) : vitalSigns.height} cm</div>
+                  <div>WT: {vitalSigns.weight.endsWith(".00") ? vitalSigns.weight.slice(0, -3) : vitalSigns.weight} kg</div>
                 </>
               )}
             </div>
@@ -404,35 +329,21 @@ export default function ForwardedCombinedHealthRecordsTable() {
           const bmi = row.original.consultation.bmi_details;
           return (
             <div className="text-sm min-w-[150px]">
-              <div>
-                HT:{" "}
-                {bmi?.height?.endsWith(".00")
-                  ? bmi.height.slice(0, -3)
-                  : bmi.height}{" "}
-                cm
-              </div>
-              <div>
-                WT:{" "}
-                {bmi?.weight?.endsWith(".00")
-                  ? bmi.weight.slice(0, -3)
-                  : bmi.weight}{" "}
-                kg
-              </div>
+              <div>HT: {bmi?.height?.endsWith(".00") ? bmi.height.slice(0, -3) : bmi.height} cm</div>
+              <div>WT: {bmi?.weight?.endsWith(".00") ? bmi.weight.slice(0, -3) : bmi.weight} kg</div>
             </div>
           );
         }
-      },
+      }
     },
     {
       accessorKey: "address",
       header: "Address",
       cell: ({ row }) => (
         <div className="flex justify-start px-2">
-          <div className="w-[250px] break-words">
-            {row.original.patient.address || "No address provided"}
-          </div>
+          <div className="w-[250px] break-words">{row.original.patient.address || "No address provided"}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "action",
@@ -440,11 +351,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
           <Link
-            to={
-              row.original.recordType === "child-health"
-                ? `/child-medical-consultation`
-                : "/medical-consultation-flow"
-            }
+            to={row.original.recordType === "child-health" ? `/child-medical-consultation` : "/medical-consultation-flow"}
             state={{
               patientData: {
                 pat_id: row.original.patient.pat_id,
@@ -456,7 +363,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
                   add_barangay: row.original.patient.barangay,
                   add_city: row.original.patient.city,
                   add_province: row.original.patient.province,
-                  sitio: row.original.patient.sitio,
+                  add_sitio: row.original.patient.sitio
                 },
                 households: [{ hh_id: row.original.patient.householdno }],
                 personal_info: {
@@ -464,12 +371,10 @@ export default function ForwardedCombinedHealthRecordsTable() {
                   per_mname: row.original.patient.mname,
                   per_lname: row.original.patient.lname,
                   per_dob: row.original.patient.dob,
-                  per_sex: row.original.patient.sex,
-                },
+                  per_sex: row.original.patient.sex
+                }
               },
-              ...(row.original.recordType === "child-health"
-                ? { checkupData: row.original.checkup }
-                : { MedicalConsultation: row.original.consultation }),
+              ...(row.original.recordType === "child-health" ? { checkupData: row.original.checkup } : { MedicalConsultation: row.original.consultation })
             }}
           >
             <Button variant="outline" size="sm">
@@ -477,8 +382,8 @@ export default function ForwardedCombinedHealthRecordsTable() {
             </Button>
           </Link>
         </div>
-      ),
-    },
+      )
+    }
   ];
 
   const isLoading = childHealthLoading || medConsultLoading;
@@ -495,20 +400,12 @@ export default function ForwardedCombinedHealthRecordsTable() {
     <>
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4">
-          <Button
-            className="text-black p-2 mb-2 self-start"
-            variant={"outline"}
-            onClick={() => navigate(-1)}
-          >
+          <Button className="text-black p-2 mb-2 self-start" variant={"outline"} onClick={() => navigate(-1)}>
             <ChevronLeft />
           </Button>
           <div className="flex-col items-center mb-4">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Combined Health Records
-            </h1>
-            <p className="text-xs sm:text-sm text-darkGray">
-              View and manage all health records in one place
-            </p>
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Combined Health Records</h1>
+            <p className="text-xs sm:text-sm text-darkGray">View and manage all health records in one place</p>
           </div>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
@@ -516,16 +413,8 @@ export default function ForwardedCombinedHealthRecordsTable() {
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search patients, ID, or details..."
-                className="pl-10 bg-white w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+              <Input placeholder="Search patients, ID, or details..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
             <SelectLayout
               placeholder="Filter record type"
@@ -534,7 +423,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
               options={[
                 { id: "all", name: "All Types" },
                 { id: "child-health", name: "Child Health" },
-                { id: "medical-consultation", name: "Medical Consultation" },
+                { id: "medical-consultation", name: "Medical Consultation" }
               ]}
               value={recordTypeFilter}
               onChange={(value) => setRecordTypeFilter(value)}
@@ -586,18 +475,11 @@ export default function ForwardedCombinedHealthRecordsTable() {
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
+              Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
             </p>
 
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           </div>
         </div>

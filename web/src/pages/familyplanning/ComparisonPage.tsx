@@ -31,7 +31,7 @@ interface YesNoCheckboxViewProps {
   value: boolean | undefined;
 }
 
-const YesNoCheckboxView: React.FC<YesNoCheckboxViewProps> = ({ label, value }) => (
+const YesNoCheckboxView: React.FC<YesNoCheckboxViewProps> = ({ value }) => (
   <div className="w-full px-3 py-2 min-h-[36px] bg-white border border-gray-300 rounded-md flex items-center shadow-sm transition-colors hover:border-gray-400">
     <div className="flex items-center gap-2">
       <input
@@ -456,7 +456,7 @@ const MultiRecordComparisonPage: React.FC = () => {
                     style={{ gridTemplateColumns: `minmax(280px, 1fr) repeat(${recordsToDisplay.length}, minmax(300px, 1fr))` }}
                   >
                     <div className="font-semibold text-xl sticky left-0 "></div>
-                    {recordsToDisplay.map((record, index) => (
+                    {recordsToDisplay.map((record) => (
                       <div key={record.fprecord_id} className="font-semibold text-lg">
                         Record {record.fprecord_id}
                         <div className="text-sm font-normal opacity-90 mt-1">

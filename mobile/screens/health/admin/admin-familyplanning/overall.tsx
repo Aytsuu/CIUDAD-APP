@@ -19,6 +19,7 @@ import PageLayout from "@/screens/_PageLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LoadingState } from "@/components/ui/loading-state";
 
 interface FPRecord {
   fprecord_id: number;
@@ -374,13 +375,8 @@ export default function OverallFpRecordsScreen() {
   };
 
   if (isLoading || isLoadingCounts) {
-    return (
-      <View className="flex-1 bg-slate-50 items-center justify-center">
-        <Loader2 size={24} color="#3b82f6" />
-        <Text className="text-slate-600 mt-3">Loading...</Text>
-      </View>
-    );
-  }
+    return <LoadingState/>}
+  
 
   if (isError || isErrorCounts) {
     return (

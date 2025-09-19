@@ -19,7 +19,7 @@ import {
   MoveRight,
 } from "lucide-react";
 import { showErrorToast } from "@/components/ui/toast";
-import { formatResidents, formatSitio } from "../../profilingFormats";
+import { formatResidents, formatSitio } from "../../ProfilingFormats";
 import { Button } from "@/components/ui/button/button";
 
 const DEFAULT_ADDRESS = [

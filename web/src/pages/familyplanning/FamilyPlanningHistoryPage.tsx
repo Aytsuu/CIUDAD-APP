@@ -1,17 +1,18 @@
 import React, { useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
+// import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { ArrowLeft, History, Eye } from "lucide-react"; // Import necessary icons
-import { ColumnDef } from "@tanstack/react-table"; // Assuming you have DataTable
-import { DataTable } from "@/components/ui/table/data-table"; // Adjust path as needed
-import { getFPRecordsForPatient, getFPCompleteRecord } from "./request-db/GetRequest"; // Adjust path and import as needed
+import { ArrowLeft, History, Eye } from "lucide-react";
+import { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/ui/table/data-table";
+import { getFPRecordsForPatient, getFPCompleteRecord } from "./request-db/GetRequest";
 import { FamilyPlanningRecordDetail } from "./types/familyplanningtypes";
-import ComparisonViewer from "./ComparisonPage";
 
+// Import the MultiRecordComparisonPage component instead of ComparisonViewer
+// import MultiRecordComparisonPage from "./ComparisonPage";
 
 // Extend or re-use types from PatientHistoryPage for display in table
 type FPRecordDisplay = {
@@ -23,16 +24,16 @@ type FPRecordDisplay = {
 };
 
 const FamilyPlanningHistoryPage: React.FC = () => {
-  const { patientId } = useParams<{ patientId: string }>(); // Assuming you navigate with a patientId
+  const { patientId } = useParams<{ patientId: string }>();
+  const navigate = useNavigate();
   const [selectedRecords, setSelectedRecords] = useState<FamilyPlanningRecordDetail[]>([]);
-  const [comparisonModalOpen, setComparisonModalOpen] = useState(false);
+  // const [comparisonModalOpen, setComparisonModalOpen] = useState(false);
 
   const {
     data: fpRecords = [],
     isLoading,
     isError,
     error,
-    // refetch: fetchCompleteRecord,
   } = useQuery<FPRecordDisplay[]>({
     queryKey: ["fpRecordsByPatient", patientId],
     queryFn: async () => {
@@ -50,9 +51,7 @@ const FamilyPlanningHistoryPage: React.FC = () => {
 
   // Function to fetch complete record details for comparison
   const fetchCompleteRecord = async (fprecordId: number): Promise<FamilyPlanningRecordDetail> => {
-    // This function should call the backend to get the full details for a single FP record
-    // Use the get_complete_fp_record endpoint
-    const record = await getFPCompleteRecord(fprecordId); // Adjust path as needed
+    const record = await getFPCompleteRecord(fprecordId);
     return record;
   };
 
@@ -78,16 +77,20 @@ const FamilyPlanningHistoryPage: React.FC = () => {
 
   const handleCompareClick = () => {
     if (selectedRecords.length === 2) {
-      setComparisonModalOpen(true);
+      // Navigate to the comparison page with the selected record IDs
+      const recordIds = selectedRecords.map(record => record.fprecord_id);
+      navigate("/familyplanning/comparison", { 
+        state: { recordIds } 
+      });
     } else {
       toast.info("Please select exactly two records to compare.");
     }
   };
 
-  const handleCloseComparisonModal = () => {
-    setComparisonModalOpen(false);
-    setSelectedRecords([]); // Clear selection after comparison
-  };
+  // const handleCloseComparisonModal = () => {
+  //   setComparisonModalOpen(false);
+  //   setSelectedRecords([]); // Clear selection after comparison
+  // };
 
   const columns: ColumnDef<FPRecordDisplay>[] = useMemo(
     () => [
@@ -130,7 +133,6 @@ const FamilyPlanningHistoryPage: React.FC = () => {
         accessorKey: "method_used",
         header: "Method Used",
       },
-      // Add more columns for relevant FP record fields
       {
         id: "actions",
         header: "Actions",
@@ -141,7 +143,6 @@ const FamilyPlanningHistoryPage: React.FC = () => {
                 <Eye className="h-4 w-4 mr-2" /> View
               </Button>
             </Link>
-            
           </div>
         ),
       },
@@ -184,23 +185,7 @@ const FamilyPlanningHistoryPage: React.FC = () => {
         )}
       </div>
 
-      {/* Comparison Modal */}
-      {comparisonModalOpen && selectedRecords.length === 2 && (
-        <DialogLayout
-          isOpen={comparisonModalOpen}
-          onOpenChange={(open: boolean) => {
-            if (!open) handleCloseComparisonModal();
-          }}
-          title="Record Comparison"
-          description="Compare key details between two selected records."
-          className="max-w-6xl max-h-[95vh] overflow-hidden" // Adjust max-w and max-h for better comparison view
-          mainContent={
-            <ComparisonViewer record1={selectedRecords[0]} record2={selectedRecords[1]} onClose={handleCloseComparisonModal} />
-          }
-        />
-      )}
-
-      
+      {/* Remove the comparison modal since we're navigating to a separate page */}
     </div>
   );
 };

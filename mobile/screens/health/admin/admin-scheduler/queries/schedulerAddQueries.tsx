@@ -5,8 +5,8 @@ import {
 	addDay
 } from "../restful-api/schedulerPostAPI";
 import { useToastContext } from "@/components/ui/toast"
+import { queryClient } from "@/lib/queryClient";
 
-import { queryClient } from "@/screens/gad/project-proposal/api/query-provider";
 
 export const useAddService = () => {
 	const { toast } = useToastContext();

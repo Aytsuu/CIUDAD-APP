@@ -1,6 +1,7 @@
-import { queryClient } from "@/screens/gad/project-proposal/api/query-provider";
+
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { getPendingMedicineRequests, submitMedicineRequest, updateRequestStatus } from "./queries/queries";
+import { queryClient } from "@/lib/queryClient";
 
 export const useSubmitMedicineRequest = () => {
   return useMutation({

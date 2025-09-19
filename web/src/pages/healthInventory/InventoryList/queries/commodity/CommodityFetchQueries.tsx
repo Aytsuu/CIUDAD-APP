@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCommodity } from "../../restful-api/commodity/CommodityFetchAPI";
+import { getCommodity } from "../../restful-api/commodity/fetch-api";
 import { api2 } from "@/api/api";
 
 export const useCommodities = () => {

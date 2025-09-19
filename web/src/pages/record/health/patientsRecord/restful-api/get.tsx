@@ -94,12 +94,34 @@ export const getAllTransientAddresses = async () => {
 
 
 
-export const getchilddata = async (pat_id: string) => {
+
+
+
+  export const checkPatientExistsGet = async (rp_id: string): Promise<boolean> => {
+    try {
+        const res = await api2.get(`medicine/check-patient-exists/${rp_id}/`);
+        if (res.status !== 200) {
+            throw new Error("Failed to check patient existence");
+        }
+        console.log(res);
+        return res.data; // Returns true or false
+    } catch (error) {
+        console.error("Error checking patient existence:", error);
+        throw error;
+    }
+}
+
+
+export const getChildData = async (id: any): Promise<any> => {
 	try {
-	  const childres = await api2.get(`/child-health/child-health-records/by-patient/${pat_id}`)
-	  return childres.data
+		const res = await api2.get(`child-health/records/by-patient/${id}/`);
+		if (res.status !== 200) {
+			throw new Error("Failed to fetch child data");
+		}
+		console.log(res);
+		return res.data; // Returns child data
 	} catch (error) {
-	  console.error("Error fetching child health records:", error)
-	  throw new Error("Failed to fetch child health records. Please try again later.")
+		console.error("Error fetching child data:", error);
+		throw error;
 	}
-  }
+}

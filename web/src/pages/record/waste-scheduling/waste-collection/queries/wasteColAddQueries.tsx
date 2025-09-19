@@ -6,14 +6,16 @@ import { wasteColData } from "../request/wasteColPostRequest";
 import WasteColSchedSchema from "@/form-schema/waste-col-form-schema";
 import { addAssCollector } from "../request/wasteColPostRequest";
 
-
+type ExtendedWasteColSchema = z.infer<typeof WasteColSchedSchema> & {
+  staff: string;
+};
 
 
 export const useCreateWasteSchedule = (onSuccess?: (wc_num: number) => void) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (values: z.infer<typeof WasteColSchedSchema>) =>
+    mutationFn: (values: ExtendedWasteColSchema) =>
       wasteColData(values),
     onSuccess: (wc_num) => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });

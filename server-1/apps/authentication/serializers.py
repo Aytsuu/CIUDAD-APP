@@ -5,6 +5,12 @@ from apps.administration.serializers.staff_serializers import StaffFullSerialize
 from apps.administration.serializers.assignment_serializers import AssignmentBaseSerializer
 from apps.administration.serializers.feature_serializers import FeatureBaseSerializer
 from apps.administration.models import Staff, Assignment, Feature, Position
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer  
+from django.http import JsonResponse
+
+User = get_user_model()
 
 class UserAccountSerializer(serializers.ModelSerializer):
     resident = ResidentProfileFullSerializer(source='rp', read_only=True)
@@ -14,7 +20,6 @@ class UserAccountSerializer(serializers.ModelSerializer):
         model = Account
         fields = [
             'acc_id',
-            'supabase_id',
             'username',
             'email',
             'profile_image',
@@ -22,7 +27,7 @@ class UserAccountSerializer(serializers.ModelSerializer):
             'staff',
             'br_id',
         ]
-        read_only_fields = ['acc_id', 'supabase_id']
+        read_only_fields = ['acc_id']
 
     def get_staff(self, obj):
         rp = getattr(obj, 'rp', None)
@@ -73,7 +78,6 @@ class UserAccountSerializer(serializers.ModelSerializer):
         
 class AuthResponseSerializer(serializers.Serializer):
     acc_id = serializers.IntegerField()
-    supabase_id = serializers.CharField()
     username = serializers.CharField()
     email = serializers.EmailField()
     profile_image = serializers.URLField(
@@ -89,3 +93,29 @@ class AuthResponseSerializer(serializers.Serializer):
         required=False,
         allow_null=True
     )
+    
+    
+class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username_field = "email"  # tell JWT to use email
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+
+        if email and password:
+            user = authenticate(request=self.context.get("request"), email=email, password=password)
+
+            if not user:
+                raise serializers.ValidationError("Invalid email or password")
+
+        refresh = self.get_token(user)
+
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "user": {
+                "id": user.acc_id,
+                "email": user.email,
+                "username": user.username,
+            }
+        }

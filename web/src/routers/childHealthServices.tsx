@@ -20,7 +20,7 @@ export const childHealthServices = [
     element: <ChildHealthHistoryDetail />,
   },
   {
-    path: "/child-health-record/:mode",
+    path: "/child-health-record/form",
     element: <ChildHealthRecordForm />,
   },
   {

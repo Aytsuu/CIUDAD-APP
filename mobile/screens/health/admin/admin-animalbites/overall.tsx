@@ -9,6 +9,7 @@ import { Link, router } from "expo-router"
 import { format } from "date-fns"
 import { useAnimalBitePatientSummary } from "./db-request/get-query"
 import PageLayout from "@/screens/_PageLayout"
+import { LoadingState } from "@/components/ui/loading-state"
 
 type PatientSummary = {
   patient_id: string
@@ -360,14 +361,7 @@ export default function AnimalBiteOverallScreen() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <View className="flex-1 bg-slate-50 items-center justify-center">
-        <ActivityIndicator size={24} color="#3b82f6" />
-        <Text className="text-slate-600 mt-3">Loading animal bite records...</Text>
-      </View>
-    )
-  }
+  if (isLoading) { return <LoadingState/> }
 
   if (isError) {
     return (

@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, ScrollView, Dimensions, TouchableOpacity, Image } from 'react-native';
 import { FamilyPlanningRecordDetail } from './familyplanningtypes'; // Import your type definition
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -73,10 +73,11 @@ const Section: React.FC<SectionProps> = ({ title, children }) => (
 const RecordComparisonScreen: React.FC = () => {
   // const navigation = useNavigation();
   const router = useRouter();
+  const params = useLocalSearchParams();
 
   // Parse the records with proper typing
-  const record1 = router.params?.record1 ? JSON.parse(router.params.record1) as FamilyPlanningRecordDetail : null;
-  const record2 = router.params?.record2 ? JSON.parse(router.params.record2) as FamilyPlanningRecordDetail : null;
+  const record1 = params.record1 ? JSON.parse(params.record1 as string) as FamilyPlanningRecordDetail : null;
+  const record2 = params.record2 ? JSON.parse(params.record2 as string) as FamilyPlanningRecordDetail : null;
 
   if (!record1 || !record2) {
     return (

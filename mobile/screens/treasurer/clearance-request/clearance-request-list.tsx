@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { getClearanceRequests, ClearanceRequest, updatePaymentStatus } from './restful-api/clearanceRequestGetAPI'
+import { getClearanceRequests, ClearanceRequest, updatePaymentStatus } from './queries/clearanceRequestQueries'
 
 const ClearanceRequestList = () => {
   const [searchQuery, setSearchQuery] = useState('')

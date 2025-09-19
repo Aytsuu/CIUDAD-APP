@@ -1,7 +1,7 @@
 import '@/global.css'
 import React from 'react'
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button/button'
 import { FormInput } from "@/components/ui/form/form-input"
 import _ScreenLayout from '@/screens/_ScreenLayout'
 import { PurposeAndRatesEditSchema } from '@/form-schema/rates-form-schema'
@@ -50,7 +50,7 @@ export default function PurposeAndRateEditForm() {
             <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
             
                 {/* Form Section */}
-                <View className="mb-8">
+                <View className="mb-8 p-4">
 
                     <View className="space-y-4">
                         <FormInput

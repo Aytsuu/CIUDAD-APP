@@ -1,41 +1,64 @@
-import React from "react"
-import { View, Text, TouchableOpacity, Dimensions } from "react-native"
+import { ChevronDown } from "@/lib/icons/ChevronDown"
+import React, { useState, useRef, useCallback } from "react"
+import { View, Text, TouchableOpacity, Dimensions, StatusBar, ScrollView } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
 
 interface PageLayoutProps {
   children: React.ReactNode
+  wrapScroll?: boolean
   // Header configuration
   showHeader?: boolean
   headerTitle?: React.ReactNode
   leftAction?: React.ReactNode
   rightAction?: React.ReactNode
+  headerBackgroundColor?: string
+  // Footer configuration
+  footer?: React.ReactNode
+  showFooter?: boolean
+  footerBackgroundColor?: string
   // Style customization
   contentPadding?: number
   backgroundColor?: string
+  // Status bar configuration
+  statusBarStyle?: 'default' | 'light-content' | 'dark-content'
+  statusBarBackgroundColor?: string
+  // Scroll indicator configuration
+  showScrollIndicator?: boolean
+  scrollIndicatorColor?: string
+  scrollIndicatorPosition?: 'right' | 'center'
 }
 
 export default function PageLayout({
   children,
+  wrapScroll = true,
   showHeader = true,
   headerTitle,
   leftAction,
   rightAction,
-  contentPadding = 16,
-  backgroundColor = 'bg-transparent'
+  headerBackgroundColor = 'bg-transparent',
+  footer,
+  showFooter = false,
+  footerBackgroundColor = 'bg-white',
+  backgroundColor = 'bg-transparent',
+  showScrollIndicator = true,
+  scrollIndicatorColor = 'bg-primaryBlue',
+  scrollIndicatorPosition = 'right',
 }: PageLayoutProps) {
+  const scrollViewRef = useRef<ScrollView>(null)
+  const [isScrollable, setIsScrollable] = useState(false)
+  const [showScrollArrow, setShowScrollArrow] = useState(false)
+  const [scrollY, setScrollY] = useState(0)
+
   // Responsive header height based on screen size
   const getResponsiveHeaderHeight = () => {
     if (screenWidth < 375) {
-      // Small screens (iPhone SE, etc.)
-      return 40
-    } else if (screenWidth < 768) {
-      // Mobile screens
-      return 40
-    } else {
-      // Tablet screens
       return 60
+    } else if (screenWidth < 768) {
+      return 60
+    } else {
+      return 70
     }
   }
 
@@ -61,42 +84,175 @@ export default function PageLayout({
     }
   }
 
+  // Responsive footer height
+  const getResponsiveFooterHeight = () => {
+    if (screenWidth < 375) {
+      return 80
+    } else if (screenWidth < 768) {
+      return 88
+    } else {
+      return 96
+    }
+  }
+
   const responsiveHeaderHeight = getResponsiveHeaderHeight()
   const responsiveFontSize = getResponsiveFontSize()
   const responsivePadding = getResponsivePadding()
+  const responsiveFooterHeight = getResponsiveFooterHeight()
+
+  // Determine if footer should be shown
+  const shouldShowFooter = showFooter || !!footer
+
+  // Handle scroll events
+  const handleScroll = useCallback((event: any) => {
+    const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent
+    const currentScrollY = contentOffset.y
+    const maxScroll = contentSize.height - layoutMeasurement.height
+    
+    setScrollY(currentScrollY)
+    
+    // Show arrow only if there's more content to scroll (not at bottom)
+    const isNearBottom = currentScrollY >= maxScroll - 50 // 50px threshold
+    setShowScrollArrow(maxScroll > 0 && !isNearBottom)
+  }, [])
+
+  // Handle content size change to determine if content is scrollable
+  const handleContentSizeChange = useCallback((contentWidth: number, contentHeight: number) => {
+    // Get the available height (screen height minus header and footer)
+    let availableHeight = screenHeight
+    if (showHeader) {
+      availableHeight -= responsiveHeaderHeight + 50 // Add some buffer for status bar
+    }
+    if (shouldShowFooter) {
+      availableHeight -= responsiveFooterHeight
+    }
+
+    const scrollable = contentHeight > availableHeight
+    setIsScrollable(scrollable)
+    setShowScrollArrow(scrollable)
+  }, [showHeader, shouldShowFooter, responsiveHeaderHeight, responsiveFooterHeight])
+
+  // Handle scroll indicator press - scroll down by viewport height
+  const handleScrollIndicatorPress = useCallback(() => {
+    if (scrollViewRef.current) {
+      // Scroll down by approximately one screen height
+      const scrollAmount = screenHeight * 0.7 // 70% of screen height
+      const newScrollY = scrollY + scrollAmount
+
+      scrollViewRef.current.scrollTo({
+        y: newScrollY,
+        animated: true,
+      })
+    }
+  }, [scrollY])
+
+  // Get scroll indicator position styles
+  const getScrollIndicatorPositionStyles = () => {
+    const baseStyles = {
+      position: 'absolute' as const,
+      bottom: shouldShowFooter ? responsiveFooterHeight + 20 : 30,
+      zIndex: 1000,
+    }
+
+    if (scrollIndicatorPosition === 'center') {
+      return {
+        ...baseStyles,
+        left: screenWidth / 2 - 25, // Center horizontally (assuming 50px width)
+      }
+    } else {
+      return {
+        ...baseStyles,
+        right: responsivePadding + 10,
+      }
+    }
+  }
 
   return (
-    <SafeAreaView className={`flex-1 ${backgroundColor} pt-4`}>
+    <View className={`flex-1 ${backgroundColor}`}>
+      {/* Header that extends to status bar */}
       {showHeader && (
-        <View
-          className="border-none shadow-none"
-          style={{
-            height: responsiveHeaderHeight,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: responsivePadding,
-            elevation: 2,
-          }}
-        >
-          {/* Left Action */}
-          {leftAction}
-          {/* Header Title */}
-          {headerTitle}
-          {/* Right Action */}
-          {rightAction}
+        <View className={`${headerBackgroundColor}`}>
+          <SafeAreaView edges={['top']} />
+          <View
+            className="border-none shadow-none"
+            style={{
+              height: responsiveHeaderHeight,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: responsivePadding,
+              elevation: 2,
+            }}
+          >
+            {leftAction}
+            {headerTitle}
+            {rightAction}
+          </View>
         </View>
       )}
 
-      {/* Content Area */}
-      <View
-        style={{
-          flex: 1,
-          paddingTop: showHeader ? responsivePadding : 0,
-        }}
+      {/* Content Area with ScrollView */}
+      <SafeAreaView 
+        edges={showHeader ? ['bottom'] : ['bottom']} 
+        className="flex-1"
       >
-        {children}
-      </View>
-    </SafeAreaView>
+        {wrapScroll ? (
+          <ScrollView
+          ref={scrollViewRef}
+          className="flex-1"
+          contentContainerStyle={{
+            paddingTop: 0,
+            paddingBottom: shouldShowFooter ? responsivePadding : 0,
+          }}
+          onScroll={handleScroll}
+          onContentSizeChange={handleContentSizeChange}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          overScrollMode="never"
+          keyboardShouldPersistTaps="handled"
+        >
+          {children}
+        </ScrollView>
+        ) : (
+          children
+        )}
+
+        {/* Footer */}
+        {shouldShowFooter && (
+          <View
+            className={`border-t border-gray-200 ${footerBackgroundColor}`}
+            style={{
+              minHeight: responsiveFooterHeight,
+              paddingHorizontal: responsivePadding,
+              paddingVertical: responsivePadding,
+              justifyContent: 'center',
+            }}
+          >
+            {footer}
+          </View>
+        )}
+
+        {/* Floating Scroll Indicator */}
+        {wrapScroll && showScrollIndicator && showScrollArrow && (
+          <View style={getScrollIndicatorPositionStyles()}>
+            <TouchableOpacity
+              onPress={handleScrollIndicatorPress}
+              className={`${scrollIndicatorColor} rounded-full shadow-lg`}
+              style={{
+                width: 45,
+                height: 45,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+              activeOpacity={1}
+            >
+              {/* Down Arrow Icon */}
+              <ChevronDown size={26} className="text-white" />
+            </TouchableOpacity>
+          </View>
+        )}
+      </SafeAreaView>
+    </View>
   )
 }

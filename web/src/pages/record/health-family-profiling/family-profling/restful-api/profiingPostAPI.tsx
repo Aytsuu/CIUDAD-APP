@@ -72,6 +72,7 @@ export const addResidentAndPersonalHealth = async (personalInfo: Record<string, 
 };
 
 
+
 // POST request for family model 
 export const addFamilyHealth = async (
   demographicInfo: Record<string, string>,

@@ -11,7 +11,7 @@ const IncomeExpenseEditFormSchema = z.object({
     iet_additional_notes: z.string().optional(),
     // receipt_image: z.string().nonempty('Receipt is required.'),
     // iet_receipt_image: z.string().url("Please upload a valid receipt image"),
-    iet_receipt_image: z.string()   
+    // iet_receipt_image: z.string()   
 })
 
 export default IncomeExpenseEditFormSchema

@@ -6,7 +6,7 @@ import z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form";
 import { useEditAnnualGrossSales } from "../queries/RatesUpdateQueries"
-
+import { useAuth } from "@/context/AuthContext"
 
 function RatesEditFormPage1({ags_id, ags_minimum, ags_maximum, ags_rate, onSuccess} : {
     ags_id: string;
@@ -15,17 +15,18 @@ function RatesEditFormPage1({ags_id, ags_minimum, ags_maximum, ags_rate, onSucce
     ags_rate: number;
     onSuccess: () => void;
 }){
-
+    const {user} = useAuth();
     const form = useForm<z.infer<typeof AnnualGrossSalesEditSchema>>({
         resolver: zodResolver(AnnualGrossSalesEditSchema),
         defaultValues:{
             maxRange: ags_maximum.toString(),
             minRange: ags_minimum.toString(),
-            amount: ags_rate.toString()
+            amount: ags_rate.toString(),
+            staff_id: user?.staff?.staff_id
         }
     })
     
-    const {mutate: editAnnualGrossSales} = useEditAnnualGrossSales(onSuccess)
+    const {mutate: editAnnualGrossSales, isPending} = useEditAnnualGrossSales(onSuccess)
 
     const onSubmit = (value: z.infer<typeof AnnualGrossSalesEditSchema>) => {
         console.log("Values:", value); 
@@ -79,7 +80,9 @@ function RatesEditFormPage1({ags_id, ags_minimum, ags_maximum, ags_rate, onSucce
                     )}></FormField>
 
                     <div className="flex justify-end mt-[20px]">
-                        <Button type="submit" className="w-[100px]">Save</Button>
+                        <Button type="submit" className="w-[100px]" disabled={isPending}>
+                            {isPending ? "Saving..." : "Save"}
+                        </Button>
                     </div>
                 </div>
             </form>

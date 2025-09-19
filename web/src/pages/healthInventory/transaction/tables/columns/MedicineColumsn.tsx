@@ -1,5 +1,4 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { MedicineRecords } from "../type";
 
 export const MedTransactioncolumns = (): ColumnDef<any>[] => [
   {

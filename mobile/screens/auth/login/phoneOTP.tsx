@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { useToastContext } from "@/components/ui/toast";
 import { useAuth } from "@/contexts/AuthContext";
 import PageLayout from "@/screens/_PageLayout";
@@ -17,7 +17,7 @@ import { ChevronLeft } from "lucide-react-native";
 const otpImage = require("@/assets/images/otp.png");
 
 export default function PhoneOTP() {
-  const { verifyOtp } = useAuth();
+  // const { verifyOtp } = useAuth();
   const { toast } = useToastContext();
   const router = useRouter();
   const { phone: rawPhone } = useLocalSearchParams<{
@@ -46,7 +46,7 @@ export default function PhoneOTP() {
     }
 
     try {
-      const User = await verifyOtp(phone, otp.join(""));
+      // const User = await verifyOtp(phone, otp.join(""));
       router.replace("/(tabs)");
     } catch (error: any) {
       toast.error("An error occurred during OTP verification");

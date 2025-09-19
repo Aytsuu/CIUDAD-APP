@@ -1,31 +1,31 @@
 // columns/MedicineCol.tsx
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
-import { Archive,Minus} from "lucide-react";
-import { Link } from "react-router-dom";
+import { Archive, Minus } from "lucide-react";
 
-export const getColumns = (
-  handleArchiveInventory: (inv_id: string) => void
-): ColumnDef<any>[] => [
+export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onOpenWastedModal?: (record: any) => void): ColumnDef<any>[] => [
   {
     accessorKey: "created_at",
     header: "Date",
     cell: ({ row }) => {
       const dateString = row.original.created_at;
-      
+
       if (!dateString) {
         return <div className="text-center text-gray-400">N/A</div>;
       }
-  
+
       try {
         const date = new Date(dateString);
         return (
-          <div className="text-center w-[90px]">
-            {date.toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
+        
+          <div className="flex justify-center">
+              <div className="text-center w-[90px]">
+            {date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric"
             })}
+          </div>
           </div>
         );
       } catch (error) {
@@ -37,13 +37,9 @@ export const getColumns = (
   {
     accessorKey: "inv_id",
     header: "ID",
-    cell: ({ row }) => (
-      <div className="text-center bg-snow p-2 rounded-md text-gray-700">
-        {row.original.inv_id || "N/A"}
-      </div>
-    )
+    cell: ({ row }) => <div className="text-center bg-snow p-2 rounded-md text-gray-700">{row.original.inv_id || "N/A"}</div>
   },
- 
+
   {
     accessorKey: "item",
     header: "Medicine Details",
@@ -52,24 +48,16 @@ export const getColumns = (
       const expired = row.original.isExpired;
       return (
         <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
-          <div
-            className={`font-medium text-center ${
-              expired ? "line-through" : ""
-            }`}
-          >
+          <div className={`font-medium text-center ${expired ? "line-through" : ""}`}>
             {item?.medicineName || "Unknown Medicine"}
             {expired && " (Expired)"}
           </div>
-          <div
-            className={`text-sm text-center ${
-              expired ? "text-red-500" : "text-gray-600"
-            }`}
-          >
+          <div className={`text-sm text-center ${expired ? "text-red-500" : "text-gray-600"}`}>
             {item?.dosage || 0} {item?.dsgUnit || ""}, {item?.form || ""}
           </div>
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "category",
@@ -77,19 +65,11 @@ export const getColumns = (
     cell: ({ row }) => {
       const expired = row.original.isExpired;
       return (
-        <div
-          className={`flex justify-center min-w-[100px] px-2 ${
-            expired ? "text-red-600" : ""
-          }`}
-        >
-          <div
-            className={`text-center w-full ${expired ? "line-through" : ""}`}
-          >
-            {row.original.category}
-          </div>
+        <div className={`flex justify-center min-w-[100px] px-2 ${expired ? "text-red-600" : ""}`}>
+          <div className={`text-center w-full ${expired ? "line-through" : ""}`}>{row.original.category}</div>
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "qty",
@@ -102,11 +82,7 @@ export const getColumns = (
 
       if (unit.toLowerCase() === "boxes" && pcs > 1) {
         return (
-          <div
-            className={`text-center ${
-              expired ? "text-red-600 line-through" : ""
-            }`}
-          >
+          <div className={`text-center ${expired ? "text-red-600 line-through" : ""}`}>
             {qty} boxes ({qty * pcs} pcs)
             {expired && " (Expired)"}
           </div>
@@ -114,16 +90,12 @@ export const getColumns = (
       }
 
       return (
-        <div
-          className={`text-center ${
-            expired ? "text-red-600 line-through" : ""
-          }`}
-        >
+        <div className={`text-center ${expired ? "text-red-600 line-through" : ""}`}>
           {qty} {unit}
           {expired && " (Expired)"}
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "availableStock",
@@ -142,88 +114,37 @@ export const getColumns = (
         const remainingPcs = availablePcs % pcs;
 
         return (
-          <div
-            className={`flex flex-col items-center ${
-              expired ? "text-red-600" : ""
-            }`}
-          >
-            <span
-              className={
-                expired
-                  ? "line-through"
-                  : isOutOfStock
-                  ? "text-red-600 font-bold"
-                  : isLow
-                  ? "text-yellow-600"
-                  : "text-black"
-              }
-            >
+          <div className={`flex flex-col items-center ${expired ? "text-red-600" : ""}`}>
+            <span className={expired ? "line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-black"}>
               {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box{fullBoxes !== 1 ? "es" : ""}
               {expired && " (Expired)"}
               {isOutOfStock && !expired && " (Out of Stock)"}
               {isLow && " (Low Stock)"}
             </span>
-            <span className={expired ? "text-red-500" : "text-blue-500"}>
-              ({availablePcs} total pcs)
-            </span>
+            <span className={expired ? "text-red-500" : "text-blue-500"}>({availablePcs} total pcs)</span>
           </div>
         );
       }
 
       return (
-        <div
-          className={`text-center ${
-            expired
-              ? "text-red-600 line-through"
-              : isOutOfStock
-              ? "text-red-600 font-bold"
-              : isLow
-              ? "text-yellow-600"
-              : "text-green-600"
-          }`}
-        >
+        <div className={`text-center ${expired ? "text-red-600 line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-green-600"}`}>
           {record.availableStock} {unit}
           {expired && " (Expired)"}
           {isOutOfStock && !expired && " (Out of Stock)"}
           {isLow && " (Low Stock)"}
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "administered",
     header: "Qty Used",
     cell: ({ row }) => {
       const expired = row.original.isExpired;
-      return (
-        <div
-          className={`text-center ${
-            expired ? "text-red-600 line-through" : "text-red-600"
-          }`}
-        >
-          {row.original.administered}
-        </div>
-      );
-    },
+      return <div className={`text-center ${expired ? "text-red-600 line-through" : "text-red-600"}`}>{row.original.administered}</div>;
+    }
   },
-  {
-    accessorKey: "wastedDose",
-    header: "Wasted Units",
-    cell: ({ row }) => {
-      const expired = row.original.isExpired;
-      return (
-        <div className="flex items-center justify-center gap-2">
-          <span
-            className={`text-sm ${
-              expired ? "text-red-600 line-through" : "text-gray-600"
-            }`}
-          >
-            {row.original.wastedDose || 0}
-          </span>
-        </div>
-      );
-    },
-  },
+
   {
     accessorKey: "expiryDate",
     header: "Expiry Date",
@@ -233,70 +154,41 @@ export const getColumns = (
       const expired = row.original.isExpired;
 
       return (
-        <div
-          className={`flex justify-center min-w-[120px] px-2 ${
-            expired ? "text-red-600" : ""
-          }`}
-        >
-          <div
-            className={`text-center w-full ${
-              expired
-                ? "font-bold line-through"
-                : isNear
-                ? "text-orange-500 font-medium"
-                : ""
-            }`}
-          >
+        <div className={`flex justify-center min-w-[120px] px-2 ${expired ? "text-red-600" : ""}`}>
+          <div className={`text-center w-full ${expired ? "font-bold line-through" : isNear ? "text-orange-500 font-medium" : ""}`}>
             {expiryDate ? new Date(expiryDate).toLocaleDateString() : "N/A"}
             {expired ? " (Expired)" : isNear ? " (Near Expiry)" : ""}
           </div>
         </div>
       );
-    },
+    }
   },
-// columns/MedicineCol.tsx - Update the actions cell
-{
-  id: "actions",
-  header: "Actions",
-  cell: ({ row }) => {
-    const medicine = row.original;
-    const expired = medicine.isExpired;
-    const outOfStock = medicine.isOutOfStock;
-    const hasAvailableStock = medicine.availableStock > 0;
+  // columns/MedicineCol.tsx - Update the actions cell
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const medicine = row.original;
+      const expired = medicine.isExpired;
+      const outOfStock = medicine.isOutOfStock;
+      const hasAvailableStock = medicine.availableStock > 0;
 
-    return (
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          className={`${
-            expired || outOfStock
-              ? "bg-red-100 border border-red-300 pointer-events-none opacity-50"
-              : "bg-red-100 border border-red-300 hover:bg-red-200"
-          }`}
-          asChild
-        >
-          <Link
-            to="/wastedMedicine"
-            state={{ wasted: row.original.id, record: row.original }}
+      return (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className={`${expired || outOfStock ? "bg-red-100 border border-red-300 pointer-events-none opacity-50" : "bg-red-100 border border-red-300 hover:bg-red-200"}`}
+            onClick={() => onOpenWastedModal?.(row.original)} // Use the modal handler
+            disabled={expired || outOfStock}
           >
             <Minus size={15} />
-          </Link>
-        </Button>
+          </Button>
 
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={() => handleArchiveInventory(medicine)}
-          disabled={hasAvailableStock && !expired}
-          title={
-            hasAvailableStock && !expired 
-              ? "Cannot archive medicine with available stock" 
-              : "Archive medicine"
-          }
-        >
-          <Archive />
-        </Button>
-      </div>
-    );
-  },
-}]
+          <Button variant="destructive" size="sm" onClick={() => handleArchiveInventory(medicine)} disabled={hasAvailableStock && !expired} title={hasAvailableStock && !expired ? "Cannot archive medicine with available stock" : "Archive medicine"}>
+            <Archive />
+          </Button>
+        </div>
+      );
+    }
+  }
+];

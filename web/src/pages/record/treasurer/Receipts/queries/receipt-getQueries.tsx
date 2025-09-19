@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { getInvoice } from "../request/receipt-get-request";
 
+
+
+
 export type Receipt = {
     inv_num: number;
     inv_serial_num: string;
@@ -9,6 +12,8 @@ export type Receipt = {
     inv_nat_of_collection: string;
     inv_pay_method: string;
     inv_payor: string; // Added this field
+    inv_discount_reason: string;
+    inv_change?: string | number;
     // Keep these if you need them separately
     payor_lname?: string;
     payor_fname?: string;
@@ -20,4 +25,4 @@ export const useInvoiceQuery = () => {
         queryFn: getInvoice,
         staleTime: 1000 * 60 * 30,
     });
-}
+};

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, } from "react";
 import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,14 +6,12 @@ import { CommodityType, CommodityListSchema } from "@/form-schema/inventory/list
 import { FormInput } from "@/components/ui/form/form-input";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
-import { Package } from "lucide-react";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { useAddCommodity } from "../queries/commodity/CommodityPostQueries";
 import { useUpdateCommodity } from "../queries/commodity/CommodityPutQueries";
-import { useQueryClient } from "@tanstack/react-query";
 import { useCommodities } from "../queries/commodity/CommodityFetchQueries";
 import { Loader2 } from "lucide-react";
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { showErrorToast, } from "@/components/ui/toast";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export const user_type_options = [
@@ -42,7 +40,6 @@ interface CommodityModalProps {
 export function CommodityModal({ mode, initialData, onClose }: CommodityModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [commodityName, setCommodityName] = useState("");
-  const [isFormValid, setIsFormValid] = useState(false);
   const { data: commodities } = useCommodities();
 
   const form = useForm<CommodityType>({
@@ -51,7 +48,8 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
       com_name: initialData?.com_name || "",
       user_type: initialData?.user_type || "",
       gender_type: initialData?.gender_type || ""
-    }
+    },
+    mode: "onChange" 
   });
 
   const { mutateAsync: addCommodityMutation } = useAddCommodity();
@@ -65,15 +63,10 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
     if (mode === "add") return true;
     if (!initialData) return false;
 
-    return data.com_name.trim().toLowerCase() !== initialData.com_name.trim().toLowerCase() || data.user_type !== initialData.user_type || data.gender_type !== initialData.gender_type;
+    return data.com_name.trim().toLowerCase() !== initialData.com_name.trim().toLowerCase() || 
+           data.user_type !== initialData.user_type || 
+           data.gender_type !== initialData.gender_type;
   };
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      const isValid = form.formState.isValid;
-      setIsFormValid(isValid);
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
 
   const handleConfirmAction = async () => {
     setIsSubmitting(true);
@@ -144,7 +137,18 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
 
   const formValues = form.watch();
   const isEditMode = mode === "edit";
-  const hasFormChanges = isEditMode && initialData ? formValues.com_name !== initialData.com_name || formValues.user_type !== initialData.user_type || formValues.gender_type !== initialData.gender_type : true;
+  
+  // Check if form is valid and has changes (for edit mode)
+  const isFormValid = form.formState.isValid;
+  const hasFormChanges = isEditMode && initialData ? 
+    formValues.com_name !== initialData.com_name || 
+    formValues.user_type !== initialData.user_type || 
+    formValues.gender_type !== initialData.gender_type 
+    : true;
+
+  // For add mode, button should be enabled when form is valid
+  // For edit mode, button should be enabled when form is valid AND has changes
+  const isButtonDisabled = isSubmitting || !isFormValid || (isEditMode && !hasFormChanges);
 
   return (
     <div>
@@ -165,7 +169,7 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
               trigger={
                 <Button 
                   type="button" 
-                  disabled={isSubmitting || (isEditMode && !hasFormChanges || !isFormValid)}
+                  disabled={isButtonDisabled}
                   onClick={handleTriggerClick}
                 >
                   {isSubmitting ? (

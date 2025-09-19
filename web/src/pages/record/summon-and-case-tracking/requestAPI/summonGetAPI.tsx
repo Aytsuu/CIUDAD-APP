@@ -49,3 +49,52 @@ export const getSummonTemplate = async () => {
     }
 };
 
+
+export const getSummonDates = async() => {
+    try{
+        const res = await api.get('clerk/summon-date-availability/')
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const getSummonTimeSlots = async(sd_id: number) => {
+    try{
+        const res = await api.get(`clerk/summon-time-availability/${sd_id}/`)
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+
+export const getSummonReqPendingList = async () => {
+    try{
+        const res = await api.get('clerk/service-charge-pending-list/')
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+export const getSummonReqRejectedList = async () => {
+    try{
+        const res = await api.get('clerk/service-charge-rejected-list/')
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+
+
+export const getComplaintDetails = async (comp_id: string) => {
+    try{
+        const res = await api.get(`/complaint/${comp_id}/`)
+
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}
+

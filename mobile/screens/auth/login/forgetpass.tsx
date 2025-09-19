@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableWithoutFeedback, Alert } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import { Input } from '@/components/ui/input';
 import { Eye } from '@/lib/icons/Eye';  
 import { EyeOff } from '@/lib/icons/EyeOff';
@@ -18,7 +18,7 @@ export default function ForgetPassword() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToastContext();
-  const { resetPassword } = useAuth();
+  // const { resetPassword } = useAuth();
 
   const handleConfirm = async () => {
     try {
@@ -38,10 +38,10 @@ export default function ForgetPassword() {
       }
 
       setLoading(true);
-      await resetPassword(password);
+      // await resetPassword(password);
       
       toast.success('Password updated successfully!');
-      router.push('/home'); // Navigate back to login
+      // router.push('/home'); // Navigate back to login
     } catch (error) {
       console.error('Password reset error:', error);
       Alert.alert('Error', 'Failed to update password. Please try again.');

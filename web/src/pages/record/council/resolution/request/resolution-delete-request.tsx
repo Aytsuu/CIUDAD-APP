@@ -1,7 +1,7 @@
 import {api} from "@/api/api";
 
 
-export const deleteResolution = async (res_num: number) => {
+export const deleteResolution = async (res_num: string) => {
     try {
         const res = await api.delete(`council/delete-resolution/${res_num}/`);
         console.log("IETNUM: ", res_num)
@@ -14,7 +14,7 @@ export const deleteResolution = async (res_num: number) => {
 };
 
 
-export const archiveOrRestoreRes = async (res_num: number, resolutionInfo: Record<string, any>) => {
+export const archiveOrRestoreRes = async (res_num: string, resolutionInfo: Record<string, any>) => {
 
     try{
 

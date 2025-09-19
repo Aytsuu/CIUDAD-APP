@@ -8,24 +8,21 @@ import { Search, Plus, FileInput, Loader2, XCircle, Clock, CalendarOff } from "l
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useArchiveAntigenStocks } from "../REQUEST/Archive/ArchivePutQueries";
 import { getStockColumns } from "./columns/AntigenCol";
 import { useNavigate } from "react-router-dom";
 import { useAntigenCombineStocks } from "../REQUEST/Antigen/queries/AntigenFetchQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { StockRecords } from "./type";
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
+import WastedModal from "../addstocksModal/WastedModal";
 
-export function isVaccine(record: StockRecords): record is StockRecords & { type: "vaccine" } {
-  return record.type === "vaccine";
+export function isVaccine(record: any): record is { type: "vaccine" } {
+  return record?.type === "vaccine";
 }
-
-export function isSupply(record: StockRecords): record is StockRecords & { type: "supply" } {
-  return record.type === "supply";
+export function isSupply(record: any): record is { type: "supply" } {
+  return record?.type === "supply";
 }
-
 export default function CombinedStockTable() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,7 +35,10 @@ export default function CombinedStockTable() {
     isExpired: boolean;
     hasAvailableStock: boolean;
   } | null>(null);
-  const queryClient = useQueryClient();
+
+  // New state for WastedModal
+  const [isWastedModalOpen, setIsWastedModalOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
 
   // Updated to use pagination parameters with filter
   const { data: apiResponse, isLoading, error } = useAntigenCombineStocks(currentPage, pageSize, searchQuery, stockFilter);
@@ -55,6 +55,7 @@ export default function CombinedStockTable() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, stockFilter]);
+
   const handleuseArchiveAntigenStocks = (antigen: any) => {
     const hasAvailableStock = antigen.availableStock > 0;
     const isExpired = antigen.isExpired;
@@ -67,6 +68,18 @@ export default function CombinedStockTable() {
     setIsArchiveConfirmationOpen(true);
   };
 
+  // New handler for opening WastedModal
+  const handleOpenWastedModal = (record: any) => {
+    setSelectedRecord(record);
+    setIsWastedModalOpen(true);
+  };
+
+  // New handler for closing WastedModal
+  const handleCloseWastedModal = () => {
+    setIsWastedModalOpen(false);
+    setSelectedRecord(null);
+  };
+
   const confirmuseArchiveAntigenStocks = async () => {
     if (inventoryToArchive !== null) {
       setIsArchiveConfirmationOpen(false);
@@ -76,8 +89,6 @@ export default function CombinedStockTable() {
           isExpired: inventoryToArchive.isExpired,
           hasAvailableStock: inventoryToArchive.hasAvailableStock
         });
-        queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
-        showSuccessToast("Archived successfully");
       } catch (error) {
         console.error("Failed to archive inventory:", error);
         showErrorToast("Failed to archive.");
@@ -87,7 +98,8 @@ export default function CombinedStockTable() {
     }
   };
 
-  const columns = getStockColumns(handleuseArchiveAntigenStocks);
+  // Updated columns to include the wasted modal handler
+  const columns = getStockColumns(handleuseArchiveAntigenStocks, handleOpenWastedModal);
 
   if (error) {
     return (
@@ -239,6 +251,7 @@ export default function CombinedStockTable() {
         </div>
       </div>
 
+      {/* Archive Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={isArchiveConfirmationOpen}
         onOpenChange={setIsArchiveConfirmationOpen}
@@ -246,6 +259,9 @@ export default function CombinedStockTable() {
         title="Archive Inventory Item"
         description="Are you sure you want to archive this item? It will be preserved in the system but removed from active inventory."
       />
+
+      {/* Wasted Modal */}
+      <WastedModal isOpen={isWastedModalOpen} onClose={handleCloseWastedModal} record={selectedRecord} mode={"antigen"} />
     </>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import SoapFormFields from "@/components/ui/soap-form";
 import { useAuth } from "@/context/AuthContext";
 import { usePhysicalExamQueries } from "../medical-con/queries.tsx/fetch";
@@ -10,46 +10,39 @@ import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices
 import { useSubmitSoapForm } from "./queries.tsx/soap-submission";
 import { soapSchema, SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { ExamSection } from "../types";
-import {useRef} from "react"
+
 interface SoapFormProps {
   patientData: any;
   checkupData: any;
   onBack: () => void;
   initialData?: any;
-  onFormDataUpdate?: (data: any) => void; // Use 'any' to be flexible
-
+  onFormDataUpdate?: (data: any) => void;
 }
 
-export default function SoapForm({
-  patientData,
-  checkupData,
-  onBack,
-  initialData,
-  onFormDataUpdate,
-}: SoapFormProps) {
+export default function SoapForm({ patientData, checkupData, onBack, initialData, onFormDataUpdate }: SoapFormProps) {
   const { user } = useAuth();
   const staff = user?.staff?.staff_id || null;
 
-
-
-  console.log("Cehck up Data", checkupData);
   const [currentPage, setCurrentPage] = useState(1);
-  const { mutate: submitSoapForm, isPending: isSubmitting } =
-    useSubmitSoapForm();
+  const { mutate: submitSoapForm, isPending: isSubmitting } = useSubmitSoapForm();
 
   const [selectedMedicines, setSelectedMedicines] = useState<any[]>(() => {
-    if (initialData?.selectedMedicines?.length)
-      return initialData.selectedMedicines;
-    if (initialData?.medicineRequest?.medicines?.length)
-      return initialData.medicineRequest.medicines;
-    if (checkupData?.find_details?.prescribed_medicines?.length)
-      return checkupData.find_details.prescribed_medicines;
+    if (initialData?.selectedMedicines?.length) return initialData.selectedMedicines;
+    if (initialData?.medicineRequest?.medicines?.length) return initialData.medicineRequest.medicines;
+    if (checkupData?.find_details?.prescribed_medicines?.length) return checkupData.find_details.prescribed_medicines;
     return [];
   });
 
   const [examSections, setExamSections] = useState<ExamSection[]>([]);
+  const isUpdating = useRef(false);
 
-  const { data: medicineStocksOptions } = fetchMedicinesWithStock();
+  // Use the medicine stocks with loading state
+  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock(true);
+
+  // Get physical exam queries with loading states
+  const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
+  const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
+  const hasPhysicalExamError = sectionsQuery.isError || optionsQuery.isError;
 
   const form = useForm<SoapFormType>({
     resolver: zodResolver(soapSchema),
@@ -60,12 +53,12 @@ export default function SoapForm({
       plantreatment_summary: initialData?.plantreatment_summary || "",
       medicineRequest: initialData?.medicineRequest || {
         pat_id: patientData?.pat_id || "",
-        medicines: [],
+        medicines: []
       },
       physicalExamResults: initialData?.physicalExamResults || [],
       selectedIllnesses: initialData?.selectedIllnesses || [],
-      followv: initialData?.followv || undefined,
-    },
+      followv: initialData?.followv || undefined
+    }
   });
 
   useEffect(() => {
@@ -77,47 +70,40 @@ export default function SoapForm({
         plantreatment_summary: initialData.plantreatment_summary || "",
         medicineRequest: initialData.medicineRequest || {
           pat_id: patientData?.pat_id || "",
-          medicines: [],
+          medicines: []
         },
         physicalExamResults: initialData.physicalExamResults || [],
         selectedIllnesses: initialData.selectedIllnesses || [],
-        followv: initialData.followv || undefined,
+        followv: initialData.followv || undefined
       });
 
-      const meds =
-        initialData.selectedMedicines ||
-        initialData.medicineRequest?.medicines ||
-        [];
+      const meds = initialData.selectedMedicines || initialData.medicineRequest?.medicines || [];
       if (meds.length) setSelectedMedicines(meds);
     }
   }, [initialData, form, patientData]);
 
+  // Add cleanup effect for form data updates
   useEffect(() => {
     return () => {
       if (onFormDataUpdate) {
         const currentValues = form.getValues();
         onFormDataUpdate({
           ...currentValues,
-          selectedMedicines,
+          selectedMedicines
         });
       }
     };
   }, [form, selectedMedicines, onFormDataUpdate]);
 
-
-
-  const isUpdating =useRef(false)
   const handleSelectedMedicinesChange = useCallback(
     (updated: any[]) => {
-      // Prevent infinite loops by checking if update is from child component
       if (isUpdating.current) {
         isUpdating.current = false;
         return;
       }
 
-      // Deep comparison to avoid unnecessary updates
-      const currentJson = JSON.stringify(selectedMedicines.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
-      const updatedJson = JSON.stringify(updated.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
+      const currentJson = JSON.stringify(selectedMedicines.sort((a, b) => a.minv_id?.localeCompare(b.minv_id)));
+      const updatedJson = JSON.stringify(updated.sort((a, b) => a.minv_id?.localeCompare(b.minv_id)));
 
       if (currentJson === updatedJson) {
         return;
@@ -134,19 +120,19 @@ export default function SoapForm({
         updated.length > 0
           ? updated.map((med) => {
               const stock = medicineStocksOptions?.find((m: any) => m.id === med.minv_id);
-              return `- ${stock?.name} ${stock?.dosage} (${med.medrec_qty} ${stock?.unit}) ${med.reason}`;
+              return `- ${stock?.name || 'Unknown'} ${stock?.dosage || ''} (${med.medrec_qty} ${stock?.unit || 'units'}) ${med.reason || ''}`;
             })
           : [];
 
       const newSummary = [...summaryWithoutMeds, ...medLines].join("\n");
 
+      isUpdating.current = true;
       form.setValue("plantreatment_summary", newSummary);
       form.setValue("medicineRequest", {
         pat_id: patientData?.pat_id || "",
         medicines: updated
       });
 
-      // Only call onFormDataUpdate if it exists
       if (onFormDataUpdate) {
         const currentValues = form.getValues();
         onFormDataUpdate({
@@ -155,7 +141,7 @@ export default function SoapForm({
         });
       }
     },
-    [form, patientData, medicineStocksOptions, onFormDataUpdate] // Remove selectedMedicines from dependencies
+    [form, patientData, medicineStocksOptions, onFormDataUpdate, selectedMedicines]
   );
 
   const handlePageChange = useCallback((page: number) => {
@@ -171,7 +157,7 @@ export default function SoapForm({
         onFormDataUpdate({
           ...form.getValues(),
           selectedIllnesses: ids,
-          selectedMedicines,
+          selectedMedicines
         });
       }
     },
@@ -187,38 +173,29 @@ export default function SoapForm({
         onFormDataUpdate({
           ...form.getValues(),
           assessment_summary: text,
-          selectedMedicines,
+          selectedMedicines
         });
       }
     },
     [form, selectedMedicines, onFormDataUpdate]
   );
 
-  const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
-
   useEffect(() => {
     if (sectionsQuery.data && optionsQuery.data) {
-      const sections: ExamSection[] = sectionsQuery.data.map(
-        (section: any) => ({
-          pe_section_id: section.pe_section_id,
-          title: section.title,
-          isOpen: false,
-          options: [],
-        })
-      );
+      const sections: ExamSection[] = sectionsQuery.data.map((section: any) => ({
+        pe_section_id: section.pe_section_id,
+        title: section.title,
+        isOpen: false,
+        options: []
+      }));
 
       optionsQuery.data.forEach((option: any) => {
-        const section = sections.find(
-          (s) => s.pe_section_id === option.pe_section
-        );
+        const section = sections.find((s) => s.pe_section_id === option.pe_section);
         if (section) {
           section.options.push({
             pe_option_id: option.pe_option_id,
             text: option.text,
-            checked:
-              form
-                .getValues("physicalExamResults")
-                ?.includes(option.pe_option_id) || false,
+            checked: form.getValues("physicalExamResults")?.includes(option.pe_option_id) || false
           });
         }
       });
@@ -232,7 +209,7 @@ export default function SoapForm({
       const currentValues = form.getValues();
       onFormDataUpdate({
         ...currentValues,
-        selectedMedicines,
+        selectedMedicines
       });
     }
     onBack();
@@ -243,15 +220,13 @@ export default function SoapForm({
       formData: data,
       patientData,
       checkupData,
-      staffId: staff,
+      staffId: staff
     });
   };
 
   return (
     <div>
-      <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">
-        Page 2 of 2
-      </div>
+      <div className="font-light text-zinc-400 flex justify-end mb-8 mt-4">Page 2 of 2</div>
 
       <SoapFormFields
         form={form}
@@ -259,6 +234,9 @@ export default function SoapForm({
         setExamSections={setExamSections}
         medicineStocksOptions={medicineStocksOptions || []}
         selectedMedicines={selectedMedicines}
+        isMedicineLoading={isMedicineLoading}
+        isPhysicalExamLoading={isPhysicalExamLoading}
+        hasPhysicalExamError={hasPhysicalExamError}
         onSelectedMedicinesChange={handleSelectedMedicinesChange}
         currentPage={currentPage}
         onPageChange={handlePageChange}

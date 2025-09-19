@@ -1,6 +1,6 @@
 import type React from "react";
 import { useState, useRef } from "react";
-import { User, Camera, Loader2, Info, Cake, Mail, Building2, Heart, GraduationCap, Phone, MapPin, Home, Users, Edit3, Save, X, Settings, Shield } from "lucide-react";
+import { User, Camera, Loader2, Info, Cake, Mail, Building2, Heart, GraduationCap, Phone, MapPin, Home, Users, Edit3, Save, Settings, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -12,7 +12,7 @@ import { updateProfilePicture } from "../api-operations/restful-api/accountApi";
 import sanRoqueLogo  from "@/assets/images/sanRoqueLogo.svg"
 
 export default function Profile() {
-  const { user, refreshSession } = useAuth();
+  const { user } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [editMode, setEditMode] = useState({
@@ -45,12 +45,15 @@ export default function Profile() {
 
     try {
       await updateProfilePicture(file);
+
+      // await dispatch(updateProfilePicture({
+      //   profile_image: response.profile_image
+      // }));
+
       toast.dismiss(loadingToast);
       toast.success("Profile picture updated");
-      await refreshSession();
     } catch (error: any) {
       setUploadError(error.message || "Upload failed");
-      toast.dismiss(loadingToast);
       toast.error("Upload failed");
     } finally {
       setIsUploading(false);
@@ -64,7 +67,7 @@ export default function Profile() {
     }));
   };
 
-  if (!user?.supabase_id) {
+  if (!user) {
     return (
       <div className="w-full h-full flex items-center justify-center min-h-[400px] bg-white/50">
         <div className="flex flex-col items-center gap-4 p-8 bg-white rounded-2xl shadow-lg">
@@ -76,7 +79,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen px-4">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         
         {/* Header Section with Cover Photo Effect */}
@@ -336,7 +339,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.per?.per_ed_attainment}
+                    {user?.resident?.per?.per_edAttainment}
                   </div>
                 </div>
               </div>

@@ -1,9 +1,6 @@
 import React from "react";
 import { Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
-import RegisterCompletion from "./individual/IndividualCompletion";
 import { FaceRecognitionCamHandle, FaceRecognition } from "./FaceRecognition";
 
 export default function TakeAPhoto({params} : {params: Record<string, any>}) {

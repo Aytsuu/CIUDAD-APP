@@ -1,11 +1,11 @@
 import '@/global.css';
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import { FormInput } from "@/components/ui/form/form-input";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { garbagePickupRequestCreateSchema } from '@/form-schema/waste/garbage-pickup-schema-resident';
-import { Form, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -13,15 +13,16 @@ import z from "zod";
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
-import MultiImageUploader, {MediaFileType} from '@/components/ui/multi-media-upload';
-import { useEffect, useState } from 'react';
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useGetSitio } from './queries/garbagePickupResidentFetchQueries';
 import { useAddaGarbagePickupRequest } from './queries/garbagePickupResidentInsertQueries';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function GarbagePickupForm() {
+  const {user} = useAuth()  
   const router = useRouter();
-  const [mediaFiles, setMediaFiles] = useState<MediaFileType[]>([]);
-  const { data: fetchedSitio = [], isLoading } = useGetSitio();
+  const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
+  const { data: fetchedSitio = [], isLoading: isLoadingSitio } = useGetSitio();
   const {mutate: addRequest, isPending} = useAddaGarbagePickupRequest()
 
   const wasteTypes = [
@@ -47,25 +48,22 @@ export default function GarbagePickupForm() {
       garb_pref_time: '',
       garb_waste_type: '',
       garb_additional_notes: '',
-      garb_image: [],
+      rp_id: user.resident.rp_id
     }
   });
 
-  useEffect(() => {
-    setValue('garb_image', mediaFiles.map(file => ({
-      name: file.name,
-      type: file.type,
-      path: file.path,
-      uri: file.publicUrl || file.uri
-    })));
-  }, [mediaFiles, setValue]);
-
   const onSubmit = (values: z.infer<typeof garbagePickupRequestCreateSchema>) => {
-    addRequest(values)
-    // alert(values.garb_image)
+
+    const files = selectedImages.map((media) => ({
+        name: media.name,
+        type: media.type,
+        file: media.file
+    }))
+
+    addRequest({values, files})
   };
 
-  if (isLoading) {
+  if (isLoadingSitio) {
     return (
       <_ScreenLayout>
         <View className="flex-1 items-center justify-center">
@@ -78,18 +76,18 @@ export default function GarbagePickupForm() {
 
   return (
     <_ScreenLayout
+      showExitButton={false}
       customLeftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} className="text-black" />
         </TouchableOpacity>
       }
       headerBetweenAction={<Text className="text-[13px]">Request a Garbage Pickup</Text>}
-      showExitButton={false}
-      loading={isLoading || isPending}
+      loading={isPending}
       loadingMessage='Loading...'
     >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="mb-8">
+        <View className="mb-8 p-4">
           <View className="space-y-4">
             <FormSelect
               control={control}
@@ -131,16 +129,18 @@ export default function GarbagePickupForm() {
 
             <View className="mb-3 mt-3">
               <Text className="text-[12px] font-PoppinsRegular pb-1">Add a Photo of Items for Pickup</Text>
-              {errors.garb_image && (
+              {/* {errors.selectedImages && (
                 <Text className="text-red-500 text-xs">
-                  {errors.garb_image.message}
+                  {errors.selectedImages.message}
                 </Text>
-              )}
-              <MultiImageUploader
-                mediaFiles={mediaFiles}
-                setMediaFiles={setMediaFiles}
-                maxFiles={1}
-              />
+              )} */}
+              
+              <MediaPicker
+                selectedImages={selectedImages}
+                setSelectedImages={setSelectedImages}
+                multiple={false}
+                maxImages={1}
+              /> 
             </View>
 
             <FormTextArea

@@ -5,6 +5,7 @@ import { ArrowLeft, Trash2, ShoppingBag, Pill, Upload, Camera, X, CheckCircle, A
 import { useGlobalCartState, removeFromCart, clearCart, addUploadedFile, removeUploadedFile, UploadedFile } from "./cart-state";
 import { submitMedicineRequest } from "./queries/queries";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function CartScreen() {
   const { cartItems, uploadedFiles } = useGlobalCartState();
@@ -14,7 +15,16 @@ export default function CartScreen() {
   const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
   const requiresPrescription = cartItems.some(item => item.med_type === "Prescription");
+const { user } = useAuth();
+  const userId = user?.resident?.rp_id;
+  // console.log("Auth user:", JSON.stringify(user, null, 2));
 
+
+  if (!userId) {
+    Alert.alert("Error", "Please log in to request medicines");
+    router.back();
+    return null;
+  }
   const checkFileSize = (fileSize?: number, fileName?: string): boolean => {
     if (fileSize && fileSize > MAX_FILE_SIZE) {
       Alert.alert(
@@ -113,6 +123,7 @@ const handleConfirm = async () => {
   setIsSubmitting(true); // Start loading
 
   try {
+    
     const formData = new FormData();
     const medicineData = cartItems.map(item => ({
       minv_id: item.minv_id,
@@ -121,8 +132,25 @@ const handleConfirm = async () => {
       med_type: item.med_type,
     }));
     formData.append("medicines", JSON.stringify(medicineData)); // Single string
-    const patientId = "PT20230001";
-    formData.append("pat_id", patientId); // Single string
+
+    const rpId = user?.resident?.rp_id;   // e.g., "RP12345"
+    const patId = user?.resident?.patient?.pat_id;  // e.g., "PT20230001"
+    console.log("rp id and pat_id: ", rpId, patId);
+
+    if (!patId && !rpId) {
+      throw new Error("User must have either a patient ID or resident ID.");
+    }
+    
+    if (patId) {
+      // User is a patient: Use pat_id
+      console.log("Submitting with pat_id:", patId);
+      formData.append("pat_id", patId);
+    } else {
+      // User is a resident (no patient record): Use rp_id
+      console.log("Submitting with rp_id:", rpId);
+      formData.append("rp_id", rpId);
+    }
+    
     uploadedFiles.forEach(file => {
       formData.append("files", {
         uri: file.uri,
@@ -135,7 +163,7 @@ const handleConfirm = async () => {
     if (response.success) {
       const orderItems = cartItems.map(item => ({
         id: item.minv_id,
-        name: item.name,
+        name: item.name, 
         unit: "pc/s",
         reason: item.reason,
         hasPrescription: item.med_type === "Prescription",

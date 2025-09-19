@@ -1,8 +1,8 @@
 from django.db import models
 from datetime import date
+from ..abstract_classes import AbstractModels
 
-# Create your models here.
-class Position(models.Model):
+class Position(AbstractModels):
     pos_id = models.BigAutoField(primary_key=True)    
     pos_title = models.CharField(max_length=100)
     pos_max = models.IntegerField(default=1)
@@ -14,7 +14,7 @@ class Position(models.Model):
     class Meta:
         db_table = 'position'
 
-class Feature(models.Model):
+class Feature(AbstractModels):
     feat_id = models.BigAutoField(primary_key=True)
     feat_name = models.CharField(max_length=100)
     feat_group = models.CharField(max_length=100)
@@ -24,7 +24,7 @@ class Feature(models.Model):
     class Meta:
         db_table = 'feature'
 
-class Assignment(models.Model):
+class Assignment(AbstractModels):
     assi_id = models.BigAutoField(primary_key=True)
     assi_permission = models.CharField(max_length=20, default="VIEW ONLY")
     feat = models.ForeignKey(Feature, on_delete=models.CASCADE)
@@ -37,10 +37,10 @@ class Assignment(models.Model):
         unique_together = (('feat', 'pos'))
 
 
-class Staff(models.Model):
+class Staff(AbstractModels):
     staff_id = models.CharField(primary_key=True,max_length=50)
     staff_assign_date = models.DateField(default=date.today)
-    staff_type = models.CharField(max_length=20, default="Barangay Staff")
+    staff_type = models.CharField(max_length=20, default="BARANGAY STAFF")
     rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, related_name="staff_assignments")
     pos = models.ForeignKey(Position, on_delete=models.CASCADE, related_name='staffs')
     manager = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subordinates')

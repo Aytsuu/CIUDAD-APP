@@ -1,74 +1,89 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
-import { X, Send, AlertCircle } from "lucide-react";
+import { X, Send, AlertCircle, Forward } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
-import { toast } from "sonner";
-import { api2 } from "@/api/api";
+import { useUpdateMedicineRequestItem } from "../queries/post";
+import { useEffect } from "react";
 
 // Define the form schema
-const referralFormSchema = z.object({
+const reasonFormSchema = z.object({
   reason: z.string().min(1, "Reason is required").max(500, "Reason must be less than 500 characters")
 });
 
-type ReferralFormValues = z.infer<typeof referralFormSchema>;
+type ReasonFormValues = z.infer<typeof reasonFormSchema>;
 
-interface RejectProps {
+type ModalMode = "reject" | "refer";
+
+interface ActionModalProps {
   isOpen: boolean;
   onClose: () => void;
   data: any;
+  mode: ModalMode;
   isLoading?: boolean;
-  onSuccess?: () => void; // Add callback for successful rejection
 }
 
-export const Reject = ({
-  isOpen,
-  onClose,
-  data,
-  isLoading = false,
-  onSuccess
-}: RejectProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const form = useForm<ReferralFormValues>({
-    resolver: zodResolver(referralFormSchema),
+// Custom Loader2 component with animated spin
+const Loader2 = ({ className = "h-4 w-4" }: { className?: string }) => <div className={`animate-spin rounded-full border-2 border-current border-t-transparent ${className}`} />;
+
+export const ActionModal = ({ isOpen, onClose, data, mode }: ActionModalProps) => {
+  const { mutate: updateMedicineRequest, isPending: isSubmitting } = useUpdateMedicineRequestItem();
+
+  const form = useForm<ReasonFormValues>({
+    resolver: zodResolver(reasonFormSchema),
     defaultValues: {
       reason: ""
     }
   });
 
-  const handleSubmit = async (formData: ReferralFormValues) => {
-    setIsSubmitting(true);
-    try {
-      // Prepare the data for API call
-      const updateData = {
-        status: 'rejected',
-        archive_reason: formData.reason,
-        is_archived: true
-      };
-
-      // Make the PATCH request
-      await api2.patch(`/medicine/medicine-request-item/${data.medreqitem_id}/`, updateData);
-      
-      form.reset();
-      toast.success("Document rejected successfully");
-      
-      // Call the success callback if provided
-      if (onSuccess) {
-        onSuccess();
-      }
-      
-      onClose();
-    } catch (error) {
-      console.error("Rejection failed:", error);
-      toast.error("Failed to reject document");
-    } finally {
-      setIsSubmitting(false);
+  // Get modal configuration based on mode
+  const modalConfig = {
+    reject: {
+      title: "Reject Document",
+      icon: AlertCircle,
+      iconColor: "text-amber-600",
+      buttonText: "Send Notification",
+      buttonColor: "bg-amber-600 hover:bg-amber-700",
+      status: "rejected",
+      isArchived: true,
+      archive_reason: "The document was rejected because it was invalid or did not match the request."
+    },
+    refer: {
+      title: "Refer Request",
+      icon: Forward,
+      iconColor: "text-blue-600",
+      buttonText: "Refer Document",
+      buttonColor: "bg-blue-600 hover:bg-blue-700",
+      status: "referred",
+      archive_reason: `We regret to inform you that your request has been referred due to the medicine specifically "${data.med_name}" being out of stock. You may submit another request when the medicine becomes available. Please note that availability will be prioritized based on the order of requests. There is also a possibility that your request may be referred again depending on stock availability.`
     }
+  };
+
+  const config = modalConfig[mode];
+  const IconComponent = config.icon;
+  useEffect(() => {
+    form.setValue("reason", config.archive_reason || "");
+  }, [isOpen]);
+  const handleSubmit = async (formData: ReasonFormValues) => {
+    const updateData = {
+      status: config.status,
+      archive_reason: config.archive_reason || formData.reason,
+      is_archived: true
+    };
+
+    // Call the mutation
+    updateMedicineRequest(
+      { medreqitem_id: data.medreqitem_id, data: updateData },
+      {
+        onSuccess: () => {
+          form.reset();
+          onClose();
+        }
+      }
+    );
   };
 
   const handleClose = () => {
@@ -84,16 +99,10 @@ export const Reject = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-amber-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Reject Document</h2>
+            <IconComponent className={`h-5 w-5 ${config.iconColor}`} />
+            <h2 className="text-xl font-semibold text-gray-900">{config.title}</h2>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            className="h-8 w-8 rounded-full hover:bg-gray-100"
-            disabled={isSubmitting}
-          >
+          <Button variant="ghost" size="icon" onClick={handleClose} className="h-8 w-8 rounded-full hover:bg-gray-100" disabled={isSubmitting}>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -108,39 +117,23 @@ export const Reject = ({
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <FormTextArea
-                name="reason"
-                control={form.control}
-                label=""
-                placeholder="Enter the reason for rejection..."
-                rows={4}
-              />
+              <FormTextArea name="reason" control={form.control} label="" placeholder={`Enter the reason for ${mode}...`} rows={10} />
 
               {/* Modal Footer */}
               <div className="flex gap-3 justify-end pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleClose}
-                  disabled={isSubmitting}
-                  className="min-w-[80px]"
-                >
+                <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="min-w-[80px]">
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || !form.formState.isValid}
-                  className="min-w-[80px] bg-amber-600 hover:bg-amber-700"
-                >
+                <Button type="submit" disabled={isSubmitting || !form.formState.isValid} className={`min-w-[80px] ${config.buttonColor} disabled:opacity-50 disabled:cursor-not-allowed`}>
                   {isSubmitting ? (
                     <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <Loader2 className="h-4 w-4 text-white" />
                       Sending...
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <Send className="h-4 w-4" />
-                      Send Notification
+                      {config.buttonText}
                     </div>
                   )}
                 </Button>
@@ -151,4 +144,4 @@ export const Reject = ({
       </div>
     </div>
   );
-};    
+};

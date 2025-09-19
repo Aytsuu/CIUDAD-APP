@@ -4,38 +4,41 @@ import { z } from "zod";
 const today = new Date();
 today.setHours(0, 0, 0, 0);
 
+const getPhilippineToday = (): Date => {
+  const now = new Date();
+  const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+  phTime.setHours(0, 0, 0, 0);
+  return phTime;
+};
+
+const isWeekend = (date: Date): boolean => {
+  const day = date.getDay()
+  return day === 0 || day === 6 // Sunday = 0, Saturday = 6
+}
+
 export const ServiceProvisionRecordSchema = z.object({
   dateOfVisit: z.string().min(1, "Date of visit is required"),
   methodAccepted: z.string().optional(),
   nameOfServiceProvider: z.string().nonempty("Provider name is required"),
   dateOfFollowUp: z.preprocess(
-  (arg) => (arg === '' ? null : arg),
-  z.union([
-    z.literal(null),
-    z.coerce.date()
-      .refine((date) => date > today, { message: "Date of follow-up must be a future date." })
-      .transform((date) => formatDate(date)),  
-  ])
-),
-
+    (arg) => (arg === "" ? null : arg),
+    z.union([
+      z.literal(null),
+      z.coerce
+        .date()
+        .refine((date) => date > today, { message: "Follow-up date must be a future date" })
+        .refine((date) => !isWeekend(date), { message: "Follow-up date cannot be on weekends (Saturday or Sunday)" })
+        .transform((date) => formatDate(date)),
+    ]),
+  ),
   bloodPressure: z.string().optional(),
   methodQuantity: z.string().optional(),
   serviceProviderSignature: z.string().nonempty("Please sign and save the signature first"),
-  medicalFindings: z.string().nonempty("Findings are required"),
-  weight: z.coerce
-    .number()
-    .min(1, "Weight is required")
-    .max(300, "Weight must be realistic (1-300kg)"),
-  bp_systolic: z.coerce
-    .number()
-    .min(100, "Systolic BP must be 60-250")
-    .max(150, "Systolic BP must be 60-250"),
-  bp_diastolic: z.coerce
-    .number()
-    .min(40, "Diastolic BP must be 40-150")
-    .max(110, "Diastolic BP must be 40-150"),
-});
-
+  medicalFindings: z.string().nonempty("Medical findings are required"),
+  weight: z.coerce.number().min(1, "Weight is required").max(300, "Weight must be realistic (1-300kg)"),
+  bp_systolic: z.coerce.number().min(60, "Systolic BP must be 60-250").max(250, "Systolic BP must be 60-250"),
+  bp_diastolic: z.coerce.number().min(40, "Diastolic BP must be 40-150").max(150, "Diastolic BP must be 40-150"),
+})
 
 const PregnancyCheckSchema = z.object({
   breastfeeding: z.boolean().default(false),

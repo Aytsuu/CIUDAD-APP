@@ -14,7 +14,7 @@ function RatesFormPage4({onSuccess}: {onSuccess?: () => void}){
         defaultValues: {
             purpose: "",
             amount: "",
-            category: "Permit Clearance",
+            category: "Business Permit",
         }
     })
 

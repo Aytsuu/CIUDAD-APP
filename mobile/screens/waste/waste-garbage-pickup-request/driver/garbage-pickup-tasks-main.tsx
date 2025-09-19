@@ -7,7 +7,7 @@ import { useRouter } from "expo-router";
 import GarbagePickupTasks from "./garbage-pickup-tasks";
 import GarbageCompletedTasks from "./garbage-pickup-completed-tasks";
 
-export default function GarbagePickupTasksMain() {
+export default function DriverTasksMain() {
   const [activeTab, setActiveTab] = useState<"pickup" | "completed">("pickup");
   const [showSearch, setShowSearch] = useState(false);
   const router = useRouter();

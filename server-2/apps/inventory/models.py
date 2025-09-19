@@ -133,7 +133,6 @@ class Inventory(models.Model):
     is_Archived = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
     
-
     def save(self, *args, **kwargs):
         if not self.inv_id:
             # Ensure expiry_date is provided
@@ -185,6 +184,7 @@ class MedicineInventory(models.Model):
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_inventories', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     wasted = models.PositiveIntegerField(default=0)
+    temporary_deduction= models.PositiveIntegerField(default=0)
 
     class Meta: 
         db_table = 'medicine_inventory'
@@ -416,7 +416,6 @@ class AntigenTransaction(models.Model):
     vacStck_id = models.ForeignKey(VaccineStock, on_delete=models.PROTECT,  db_column='vacStck_id',related_name='antigen_transactions', null=True, blank=True)
     imzStck_id = models.ForeignKey(ImmunizationStock, on_delete=models.PROTECT, db_column='imzStck_id',related_name='antigen_transactions' ,null=True, blank=True)
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='antigen_transactions', null=True, blank=True)  
-
 
     class Meta:
         db_table = 'antigen_transaction'

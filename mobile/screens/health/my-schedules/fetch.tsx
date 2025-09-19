@@ -1,24 +1,14 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { 
-	getResident, 
-	getPatients, 
-	getPatientDetails, 
-	getAllFollowUpVisits, 
-	getAllTransientAddresses,
-	getchilddata,
- } from "./get";
-import { AppointmentFilters } from "./get";
-
-
-
- export const useChildHealthRecords = (patientId: string | undefined) => {
+import { getResident, getPatients, getPatientDetails, AppointmentFilters, getAllFollowUpVisits, getAllTransientAddresses, checkPatientExistsGet, getChildData } from "./get";
+export const useChildData = (id: any,) => {
 	return useQuery({
-	  queryKey: ["childHealthRecords", patientId],
-	  queryFn: () => getchilddata(patientId ?? ""),
-	  refetchOnMount: false,
-	  staleTime: 300000, // 5 minutes
-	});
-  };
+		queryKey: ['childData', id],
+		queryFn: () => getChildData(id),
+		staleTime: 300000, // 5 minutes
+		enabled: !!id,
+	})
+}
+
 // resident query keys
 export const residentQueryKey = {
 	allResidents: ["residents"],
@@ -103,5 +93,13 @@ export const useAllTransientAddresses = (options = []) => {
 		staleTime: 60 * 3,
 		retry: 3,
 		... options,
+	})
+}
+
+export const useCheckPatientExists = (rp_id: string) => {
+	return useQuery({
+		queryKey: ['checkPatientExists', rp_id],
+		queryFn: () => checkPatientExistsGet(rp_id),
+		staleTime: 300000, // 5 minutes
 	})
 }

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToastContext } from '@/components/ui/toast';
@@ -15,7 +15,6 @@ export default function VerifyEmail() {
   const [codeSent, setCodeSent] = useState(false);
   const router = useRouter();
   const { toast } = useToastContext();
-  // const { verifyOtp, sendOtp } = useAuth(); // We'll add these to your AuthContext
 
   const handleSendCode = async () => {
     try {

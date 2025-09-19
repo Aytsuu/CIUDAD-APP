@@ -10,11 +10,13 @@ from apps.profiling.serializers.all_record_serializers import *
 from apps.profiling.models import ResidentProfile, BusinessRespondent
 from apps.profiling.serializers.all_record_serializers import *
 from apps.administration.models import Staff
+from apps.account.models import Account
 from ..models import FamilyComposition
 from datetime import datetime
 from ..utils import *
 from utils.supabase_client import upload_to_storage
 from ..utils import *
+from ..tasks import DoubleQueries
 
 class AllRecordTableView(generics.GenericAPIView):
   serializer_class = AllRecordTableSerializer
@@ -45,20 +47,15 @@ class AllRecordTableView(generics.GenericAPIView):
     respondents = [
       {
         'id': res.br_id,
-        'lname': res.per.per_lname,
-        'fname': res.per.per_fname,
-        'mname': res.per.per_mname,
-        'suffix': res.per.per_suffix,
-        'sex': res.per.per_sex,
+        'lname': res.br_lname,
+        'fname': res.br_fname,
+        'mname': res.br_mname,
+        'suffix': '',
+        'sex': res.br_sex,
         'date_registered': res.br_date_registered,
         'type': 'Business',
       }
-      for res in BusinessRespondent.objects.select_related('per').filter(
-          Q(per__per_fname__icontains=search) |
-          Q(per__per_lname__icontains=search) |
-          Q(per__per_mname__icontains=search) |
-          Q(per__per_suffix__icontains=search)
-      )
+      for res in BusinessRespondent.objects.all()
     ]
     
     unified_data = residents + respondents
@@ -78,11 +75,13 @@ class CompleteRegistrationView(APIView):
     family = request.data.get("family", None)
     business = request.data.get("business", None)
     staff = request.data.get("staff", None)
+    
 
     if staff:
       staff=Staff.objects.filter(staff_id=staff).first()
 
     results = {}
+    hh = []
 
     if personal:
         per_id = personal.get("per_id", None)
@@ -98,7 +97,7 @@ class CompleteRegistrationView(APIView):
           results["rp_id"] = rp.pk
 
     if account:
-        self.create_account(account, staff)
+        self.create_account(account, rp)
 
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
@@ -116,6 +115,10 @@ class CompleteRegistrationView(APIView):
         if bus:
           results["bus_id"] = bus.pk
 
+    # Perform double query
+    double_queries = DoubleQueries()
+    double_queries.complete_profile(request.data) 
+    
     return Response(results, status=status.HTTP_200_OK)
   
   def create_resident_profile(self, personal, staff):
@@ -159,8 +162,13 @@ class CompleteRegistrationView(APIView):
 
     return resident_profile
 
-  def create_account(self, account, staff):
-    return
+  def create_account(self, account, rp):
+    instance = Account.objects.create_user(
+      **account,
+      rp=rp,
+      username=account['phone']
+    )
+    return instance
   
   def create_household(self, houses, rp, staff):
     # data = [undefined, sitio, street]
@@ -194,7 +202,7 @@ class CompleteRegistrationView(APIView):
       fam_indigenous=livingSolo["indigenous"],
       fam_building=livingSolo["building"],
       hh=hh[int(household_no)] if is_owned_selected else \
-        Household.objects.get(hh_id=livingSolo["householdNo"]),
+        Household.objects.get(hh_id=household_no),
       staff=staff
     )
 

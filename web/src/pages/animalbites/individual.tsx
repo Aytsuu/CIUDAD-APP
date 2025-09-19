@@ -103,7 +103,7 @@ const ReferralSlip: React.FC<{ record: PatientRecordDetail }> = ({ record }) => 
                 </div>
             </div>
             <div className="flex justify-end p-4 bg-gray-100 border-t rounded-b-lg">
-                <Button onClick={handlePrint} className="text-white"><Printer size={16} className="mr-2"/>Print / Save as PDF</Button>
+                <Button onClick={handlePrint} className="text-white"><Printer size={16} className="mr-2"/>Print</Button>
             </div>
             
         </div>
@@ -122,10 +122,12 @@ const IndividualPatientHistory: React.FC = () => {
     isLoading,
     isError,
     error,
+    refetch,
   } = useQuery<PatientRecordDetail[], Error>({
     queryKey: ["animalBiteHistory", id],
     queryFn: () => getAnimalBitePatientDetails(id),
     enabled: !!id,
+    refetchOnWindowFocus: true,
   });
   
    const patientData = useMemo(() => {
@@ -133,7 +135,7 @@ const IndividualPatientHistory: React.FC = () => {
     
     const firstRecord = patientRecords[0];
     return {
-      pat_id: Number(firstRecord.patient_id),
+      pat_id: String(firstRecord.patient_id),
       pat_type: "Animal Bite Patient",
       personal_info: {
         per_fname: firstRecord.patient_fname || "",

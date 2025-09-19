@@ -11,8 +11,8 @@ export const useAddaGarbagePickupRequest = (onSuccess?: () => void) => {
         const router = useRouter();
 
         return useMutation({
-            mutationFn: (values: z.infer<typeof garbagePickupRequestCreateSchema>) => 
-            addGarbagePickupRequest(values),
+            mutationFn: (data: {values: z.infer<typeof garbagePickupRequestCreateSchema>; files: {name: string | undefined; type: string | undefined; file: string | undefined }[]}) => 
+            addGarbagePickupRequest(data.values, data.files),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['garbageRequest'] });
 

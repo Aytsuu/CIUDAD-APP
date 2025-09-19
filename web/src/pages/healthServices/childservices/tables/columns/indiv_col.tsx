@@ -20,31 +20,34 @@ const FindingsCell = ({ findings }: { findings: FindingsData }) => {
   // Function to format text with bullet points for dashes
   const formatTextWithBullets = (text: string) => {
     if (!text) return null;
-    
-    return text.split('\n').map((line, index) => {
-      const trimmedLine = line.trim();
-      if (!trimmedLine) return null;
-      
-      // Check if line starts with a dash or contains a dash followed by text
-      if (trimmedLine.startsWith('-') || trimmedLine.includes(' - ')) {
-        const parts = trimmedLine.split(' - ').filter(part => part.trim() !== '');
+
+    return text
+      .split("\n")
+      .map((line, index) => {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) return null;
+
+        // Check if line starts with a dash or contains a dash followed by text
+        if (trimmedLine.startsWith("-") || trimmedLine.includes(" - ")) {
+          const parts = trimmedLine.split(" - ").filter((part) => part.trim() !== "");
+          return (
+            <div key={index} className="mb-1">
+              {parts.map((part, partIndex) => (
+                <div key={partIndex} className="ml-2">
+                  • {part.replace(/^-/, "").trim()}
+                </div>
+              ))}
+            </div>
+          );
+        }
+
         return (
           <div key={index} className="mb-1">
-            {parts.map((part, partIndex) => (
-              <div key={partIndex} className="ml-2">
-                • {part.replace(/^-/, '').trim()}
-              </div>
-            ))}
+            {trimmedLine}
           </div>
         );
-      }
-      
-      return (
-        <div key={index} className="mb-1">
-          {trimmedLine}
-        </div>
-      );
-    }).filter(Boolean);
+      })
+      .filter(Boolean);
   };
 
   return (
@@ -53,33 +56,25 @@ const FindingsCell = ({ findings }: { findings: FindingsData }) => {
         {findings.subj_summary && (
           <div className="mb-2">
             <strong className="text-gray-700">Subjective:</strong>
-            <div className="text-gray-600">
-              {formatTextWithBullets(findings.subj_summary)}
-            </div>
+            <div className="text-gray-600">{formatTextWithBullets(findings.subj_summary)}</div>
           </div>
         )}
         {findings.obj_summary && (
           <div className="mb-2">
             <strong className="text-gray-700">Objective:</strong>
-            <div className="text-gray-600">
-              {formatTextWithBullets(findings.obj_summary)}
-            </div>
+            <div className="text-gray-600">{formatTextWithBullets(findings.obj_summary)}</div>
           </div>
         )}
         {findings.assessment_summary && (
           <div className="mb-2">
             <strong className="text-gray-700">Assessment:</strong>
-            <div className="text-gray-600">
-              {formatTextWithBullets(findings.assessment_summary)}
-            </div>
+            <div className="text-gray-600">{formatTextWithBullets(findings.assessment_summary)}</div>
           </div>
         )}
         {findings.plantreatment_summary && (
           <div>
             <strong className="text-gray-700">Plan/Treatment:</strong>
-            <div className="text-gray-600">
-              {formatTextWithBullets(findings.plantreatment_summary)}
-            </div>
+            <div className="text-gray-600">{formatTextWithBullets(findings.plantreatment_summary)}</div>
           </div>
         )}
       </div>
@@ -87,7 +82,7 @@ const FindingsCell = ({ findings }: { findings: FindingsData }) => {
   );
 };
 
-export const getChildHealthColumns = (childData: any,nutritionalStatusData:any): ColumnDef<any>[] => [
+export const getChildHealthColumns = (childData: any, nutritionalStatusData: any): ColumnDef<any>[] => [
   {
     accessorKey: "id",
     header: "#",
