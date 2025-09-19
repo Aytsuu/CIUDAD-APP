@@ -25,30 +25,13 @@ jobs:
               repo: context.repo.repo,
               body: `BEFORE SUBMITTING PULL REQUEST
 
-              /helpers (web and mobile)
-              dateFormatter.tsx        <--- Delete file
-              withTransition.tsx       <--- Only tsx, the rest should be changed to ts
+              ---- ADD CONDITION TO ONLY SHOW LOGS ON DEVELOPMENT OR DELETE CONSOLE.LOG IF NOT NECESSARY---- 
+              SAMPLE: 
+                export default function HelloWorld() {
 
-              server-1 and server-2    <--- Production ready (change settings.py to production), Most importantly, make sure all your installed libraries are present in the requirements.txt
-              APIs                     <--- Production ready (change api baseUrl to import.meta.env.VITE_API_URL and api2 baseUrl to import.meta.env.VITE_API_URL2)
+                  {process.env.NODE_ENV === 'development' && console.log("HELLO WORLD!")}  <--- DEVELOPMENT MODE ONLY
 
-              /routers
-              main_router.tsx          <--- Ensure children has withTransition()
+                  return
+                }
 
-              /pages/record/health
-              generateDefaultValues.ts  <--- Delete file (redundant, already have this file in /helpers folder)
-
-              /components/ui (web)
-              card.tsx                  <--- 
-
-              /components/ui/card (web)
-              card.tsx                  <--- Transfer outside, from /components/ui/card to /components/ui ... keep only card-layout inside
-
-              /components/ui (mobile)
-              - Create a folder named button, then transfer file button.tsx inside the folder you created.
-              
-
-              /pages/record/profiling   <--- Make sure all files are upper case, as it will overwrite the existing files in master.
-
-              check BUILD ERROR FOR PRODUCTION in the issues page, fix bugs on files under your module`
             })
