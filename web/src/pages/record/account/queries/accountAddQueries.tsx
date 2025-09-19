@@ -5,7 +5,7 @@ export const useAddAccount = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({accountInfo, residentId} : {
-      accountInfo: Record<string, string>
+      accountInfo: Record<string, any>
       residentId: string
     }) => {
       // Add logging to debug the payload
