@@ -26,12 +26,17 @@ jobs:
               body: `BEFORE SUBMITTING PULL REQUEST
 
               ---- ADD CONDITION TO ONLY SHOW LOGS ON DEVELOPMENT OR DELETE CONSOLE.LOG IF NOT NECESSARY---- 
-              SAMPLE: 
+              SAMPLE 1 (COMPONENTS): 
                 export default function HelloWorld() {
-
                   {process.env.NODE_ENV === 'development' && console.log("HELLO WORLD!")}  <--- DEVELOPMENT MODE ONLY
-
                   return
+                }
+              
+              SAMPLE 2 (QUERIES):
+                try {
+
+                } catch (error) {
+                  {process.env.NODE_ENV === 'development' && console.error(error)}  <--- DEVELOPMENT MODE ONLY
                 }
 
             })
