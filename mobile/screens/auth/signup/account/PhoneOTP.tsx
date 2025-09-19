@@ -62,6 +62,8 @@ export default function PhoneOTP({ params }: { params: Record<string, any> }) {
   };
 
   const send = async () => {
+    console.log('Base URL:', process.env.EXPO_API_URL);
+
     if (!(await trigger("accountFormSchema.phone"))) {
       return;
     }

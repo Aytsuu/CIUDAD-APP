@@ -87,7 +87,7 @@ export default function WeeklyAR() {
     })
     .filter((monthData) => monthData.hasData || monthData.missingWeeks.length > 0)
 
-  console.log(organizedData)
+  {process.env.NODE_ENV === 'development' && console.log(organizedData)}
 
   // Get recent reports (last 7 days or most recent 10 items) for selected year
   const recentReports = filteredWeeklyAR
