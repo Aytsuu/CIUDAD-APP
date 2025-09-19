@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAnnualDevPlansByYear } from "./restful-api/annualGetAPI";
 import { toast } from "sonner";
-import { useGetProjectProposals } from "@/pages/record/gad/project-proposal/queries/projprop-fetchqueries";
+import { useGetProjectProposals, useGetProjectProposal } from "@/pages/record/gad/project-proposal/queries/projprop-fetchqueries";
 import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog/dialog";
+import ViewProjectProposal from "@/pages/record/gad/project-proposal/view-projprop";
 
 interface AnnualDevelopmentPlanViewProps {
   year: number;
@@ -37,10 +44,20 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   const navigate = useNavigate();
   const [plans, setPlans] = useState<DevelopmentPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [_isPdfLoading, setIsPdfLoading] = useState(true);
 
   // Fetch GAD Project Proposals and Resolutions to determine links per mandate
   const { data: proposals = [] } = useGetProjectProposals();
   const { data: resolutions = [] } = useResolution();
+
+  const { data: detailedProject } = useGetProjectProposal(
+    selectedProject?.gprId || 0,
+    {
+      enabled: isViewDialogOpen && !!selectedProject?.gprId,
+    }
+  );
 
   // Build quick lookup maps
   const proposalByDevId = useMemo(() => {
@@ -81,6 +98,23 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
 
   const handleEdit = (devId: number) => {
     navigate(`/gad-annual-development-plan/edit/${devId}`);
+  };
+
+  const handleViewProject = (proposal: any) => {
+    if (selectedProject?.gprId === proposal.gprId && isViewDialogOpen) return;
+
+    setIsViewDialogOpen(false);
+    setSelectedProject(null);
+
+    setTimeout(() => {
+      setSelectedProject(proposal);
+      setIsViewDialogOpen(true);
+    }, 50);
+  };
+
+  const closePreview = () => {
+    setIsViewDialogOpen(false);
+    setSelectedProject(null);
   };
 
   return (
@@ -304,9 +338,13 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                       return (
                         <div className="flex gap-2">
                           {hasProposal && (
-                            <Link to={{ pathname: "/gad-project-proposal", search: `?gprId=${proposal.gprId}` }}>
-                              <Button size="sm" variant="outline">Proposal</Button>
-                            </Link>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleViewProject(proposal)}
+                            >
+                              Proposal
+                            </Button>
                           )}
                           {hasResolution && (
                             <Link to={{ pathname: "/res-page", search: `?gprId=${proposal.gprId}` }}>
@@ -340,6 +378,35 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
         </Button>
         <Button className="bg-red-600 text-white hover:bg-red-700 w-28">Delete</Button>
       </div>
+
+      <Dialog open={isViewDialogOpen} onOpenChange={closePreview}>
+        <DialogContent className="max-w-[90vw] w-[90vw] h-[95vh] max-h-[95vh] p-0 flex flex-col">
+          <DialogHeader className="p-4 bg-background border-b sticky top-0 z-50">
+            <div className="flex items-center justify-between w-full">
+              <DialogTitle className="text-left">
+                {selectedProject?.projectTitle || "Project Proposal"}
+              </DialogTitle>
+              <div className="flex gap-2">
+                <X
+                  className="text-gray-500 cursor-pointer hover:text-gray-700"
+                  size={20}
+                  onClick={closePreview}
+                />
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto relative">
+            {selectedProject && (
+              <ViewProjectProposal
+                project={detailedProject || selectedProject}
+                onLoad={() => setIsPdfLoading(false)}
+                onError={() => setIsPdfLoading(false)}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
