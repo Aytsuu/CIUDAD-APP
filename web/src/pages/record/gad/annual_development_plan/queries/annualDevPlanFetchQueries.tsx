@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createAnnualDevPlan } from "../restful-api/annualPostAPI";
-import { getAnnualDevPlanById } from "../restful-api/annualGetAPI";
+import { getAnnualDevPlanById, getAnnualDevPlansByYear } from "../restful-api/annualGetAPI";
 import { updateAnnualDevPlan } from "../restful-api/annualPutAPI";
 
 export interface BudgetItem {
@@ -77,5 +77,15 @@ export const useUpdateAnnualDevPlan = () => {
             };
             return await updateAnnualDevPlan(devId, payload);
         },
+    });
+};
+
+export const useGetAnnualDevPlansByYear = (year: number) => {
+    return useQuery({
+        queryKey: ["annualDevPlans", year],
+        queryFn: async () => {
+            return await getAnnualDevPlansByYear(year);
+        },
+        enabled: Boolean(year),
     });
 };
