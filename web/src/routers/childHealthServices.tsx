@@ -8,23 +8,23 @@ import ChildMedicalConsultation from "@/pages/healthServices/doctor/child-medica
 
 export const childHealthServices = [
   {
-    path: "/all-child-health-records",
+    path: "/services/childhealthrecords",
     element: <AllChildHealthRecords />,
   },
   {
-    path: "//child-health-records",
+    path: "/services/childhealthrecords/records",
     element: <InvChildHealthRecords />,
   },
   {
-    path: "/child-health-history-detail",
+    path: "/services/childhealthrecords/records/history",
     element: <ChildHealthHistoryDetail />,
   },
   {
-    path: "/child-health-record/form",
+    path: "/services/childhealthrecords/form",
     element: <ChildHealthRecordForm />,
   },
   {
-    path: "/child-medical-consultation",
+    path: "/forwarded-records/medical-consultation/child",
     element: <ChildMedicalConsultation />,
   },
   {

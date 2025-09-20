@@ -187,14 +187,13 @@ const healthItems: BaseMenuItem[] = [
     title: "Services",
     url: "/",
     items: [
-      // { title: "Forwarded Records", url: "/forwarded-records" },
       { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Medical Consultation ", url: "/allMedRecords" },
       { title: "Family Planning", url: "/FamPlanning_table" },
       { title: "Maternal", url: "/maternalrecords" },
-      { title: "Child Health", url: "/all-child-health-records" },
-      { title: "Vaccination", url: "/VaccinationManagement" },
-      { title: "Medicine", url: "/all-medicine-records" },
+      { title: "Child Health", url: "/services/childhealthrecords" },
+      { title: "Vaccination", url: "/services/vaccination" },
+      { title: "Medicine", url: "/services/medicine" },
       { title: "Firstaid", url: "/all-firstaid-records" },
       { title: "Schedules", url: "/health-appointments" }
     ]
@@ -214,7 +213,7 @@ const healthItems: BaseMenuItem[] = [
     items: [
       {
         title: "Medicine Request",
-        url: "/medicine-request"
+        url: "/request/medicine"
       },
       { title: "Medical Consultation", url: "/" }
     ]

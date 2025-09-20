@@ -16,7 +16,6 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useLoading } from "@/context/LoadingContext";
 
 export default function AllVaccinationRecords() {
-  const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -227,7 +226,7 @@ export default function AllVaccinationRecords() {
 
         <div className="w-full sm:w-auto">
           <Button className="w-full sm:w-auto">
-            <Link to="/vaccination-record-form" state={{ mode: "newvaccination_record" }}>
+            <Link to="/services/vaccination/form" state={{ mode: "newvaccination_record" }}>
               New Record
             </Link>
           </Button>

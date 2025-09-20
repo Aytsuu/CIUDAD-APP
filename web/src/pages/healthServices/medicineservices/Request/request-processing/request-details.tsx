@@ -19,7 +19,7 @@ import { registerPatient } from "@/pages/record/health/patientsRecord/restful-ap
 import { useCheckPatientExists } from "@/pages/record/health/patientsRecord/queries/fetch";
 import { PersonalInfoCard } from "./personal-info";
 import { useCreateMedicineAllocation } from "../queries/post";
-import { SignatureField, SignatureFieldRef } from "@/pages/healthServices/reports/firstaid-report/signature";
+import { SignatureField, SignatureFieldRef } from "@/pages/healthServices/Reports/firstaid-report/signature";
 
 export default function MedicineRequestDetail() {
   const location = useLocation();
@@ -32,6 +32,7 @@ export default function MedicineRequestDetail() {
   const request = location.state?.params?.request as any;
   console.log("mrfreq", request);
   console.log("personal info", patientData);
+  const status=request.mode
 
   const [searchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);

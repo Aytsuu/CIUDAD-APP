@@ -7,7 +7,7 @@ export const doctorRouting = [
 
 
 {
-  path:"/medical-consultation-flow",
+  path:"/forwarded-records/medical-consultation/adult",
   element:<MedicalConsultationFlow/>
 }
 

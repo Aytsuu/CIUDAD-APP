@@ -58,51 +58,25 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
             Q(patient_records__patrec_type='Vaccination Record'),
             Q(patient_records__vaccination_records__vaccination_histories__vachist_status__in=['completed', 'partially vaccinated'])
         ).select_related(
-            'rp_id__per', 
-            'trans_id'
-        ).prefetch_related(
-            'rp_id__per__personaladdress_set__add__sitio',
-            'patient_records__vaccination_records__vaccination_histories'
+            'rp_id__per',         
+            'trans_id',             
+            'trans_id__tradd_id'   
+       
         ).distinct().order_by('-vaccination_count')
         
         # Track if any filter is applied
-        filters_applied = False
-        original_count = queryset.count()
-        
-        # Search filter
+       
         search_query = self.request.query_params.get('search', '').strip()
-        
         if search_query and len(search_query) >= 2:
-            filters_applied = True
-            queryset = self._apply_vaccination_search_filter(queryset, search_query)
-            if queryset.count() == 0 and original_count > 0:
-                return Patient.objects.none()
+            queryset = apply_patient_search_filter(queryset, search_query)
         
         # Patient type filter
         patient_type_search = self.request.query_params.get('patient_type', '').strip()
-        if patient_type_search:
-            filters_applied = True
+        if patient_type_search and patient_type_search != 'all':
             queryset = apply_patient_type_filter(queryset, patient_type_search)
-            if queryset.count() == 0 and original_count > 0:
-                return Patient.objects.none()
-        
-        
         
         return queryset
     
-    def _apply_vaccination_search_filter(self, queryset, search_term):
-        """
-        Apply search filter for vaccination records
-        """
-        return queryset.filter(
-            Q(rp_id__per__per_fname__icontains=search_term) |
-            Q(rp_id__per__per_lname__icontains=search_term) |
-            Q(rp_id__per__per_mname__icontains=search_term) |
-            Q(patient_records__vaccination_records__vaccination_histories__vac_id__vac_name__icontains=search_term) |
-            Q(rp_id__per__personaladdress_set__add__add_sitio__icontains=search_term) |
-            Q(rp_id__per__personaladdress_set__add__add_street__icontains=search_term) |
-            Q(rp_id__per__personaladdress_set__add__add_barangay__icontains=search_term)
-        )
     
    
     def list(self, request, *args, **kwargs):

@@ -245,7 +245,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
           <div className="flex justify-center gap-2">
             <ViewButton
               onClick={() => {
-                navigate(row.original.record_type === "child-health" ? "/child-medical-consultation" : "/medical-consultation-flow", {
+                navigate(row.original.record_type === "child-health" ? "/forwarded-records/medical-consultation/child" : "/forwarded-records/medical-consultation/adult", {
                   state: {
                     patientData,
                     // Pass only the current row's data instead of combinedData

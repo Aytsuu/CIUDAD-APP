@@ -116,7 +116,7 @@ export default function Records({
                             </div>
                           </div>
                         </div>
-                        <Link to="/invVaccinationRecord" state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
+                        <Link to="//services/vaccination/records" state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
                           <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-sky-300 text-sky-800 font-medium">
                             View Details
                           </Button>
@@ -139,7 +139,7 @@ export default function Records({
                             </div>
                           </div>
                         </div>
-                        <Link to="/IndivMedicineRecord" state={{ params: { patientData: patientLinkData } }}>
+                        <Link to="/services/medicine/records" state={{ params: { patientData: patientLinkData } }}>
                           <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium">
                             View Details
                           </Button>
@@ -236,7 +236,7 @@ export default function Records({
                             </div>
                           </div>
                           <Link
-                            to="/child-health-records"
+                            to="/services/childhealthrecords/records"
                             state={{ ChildHealthRecord: firstChildHealthRecord }}
                           >
                             <Button

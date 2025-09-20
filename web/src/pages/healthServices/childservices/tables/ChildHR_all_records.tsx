@@ -243,7 +243,7 @@ export default function AllChildHealthRecords() {
 
         <div className="w-full sm:w-auto">
           <Link
-            to="/child-health-record/form"
+            to="/services/childhealthrecords/form"
             state={{
               params: {
                 mode: "newchildhealthrecord"

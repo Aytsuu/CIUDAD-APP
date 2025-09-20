@@ -84,7 +84,7 @@ export default function IndivVaccinationRecords() {
               <AlertCircle className="h-4 w-4 text-yellow-500" />
               <Label className="text-base font-semibold text-yellow-500">No patient selected</Label>
             </div>
-            <p className="text-sm text-gray-700">Please select a patient from the medicine records page first.</p>
+            <p className="text-sm text-gray-700">Please select a patient from the vacciantion records page first.</p>
           </div>
         )}
 
@@ -140,7 +140,7 @@ export default function IndivVaccinationRecords() {
                 </div> */}
             <Button className="w-full sm:w-auto">
               <Link
-                to="/vaccination-record-form"
+                to="/services/vaccination/form"
                 state={{
                   mode: "addnewvaccination_record",
                   params: { patientData }

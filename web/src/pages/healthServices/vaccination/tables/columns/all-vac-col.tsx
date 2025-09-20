@@ -97,7 +97,7 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
       return (
         <ViewButton
           onClick={() => {
-            navigate("/invMedicalRecord", {
+            navigate("/services/vaccination/records", {
               state: {
                 params: {
                   patientData

@@ -113,7 +113,7 @@ export const childColumns: ColumnDef<ChildHealthRecord>[] = [
       return (
             <ViewButton
               onClick={() =>
-              navigate(`/child-health-records`, {
+              navigate(`/services/childhealthrecords/records`, {
                 state: {
                 ChildHealthRecord: row.original,
                 mode: "addnewchildhealthrecord",

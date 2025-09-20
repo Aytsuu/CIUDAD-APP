@@ -167,7 +167,7 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
       return (
         <div className="flex justify-center gap-2">
           <Link
-            to="/child-health-history-detail"
+            to="/services/childhealthrecords/records/history"
             state={{
               params: {
                 chhistId: row.original.chhist_id,

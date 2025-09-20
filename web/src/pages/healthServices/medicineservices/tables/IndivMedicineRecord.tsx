@@ -92,7 +92,7 @@ export default function IndivMedicineRecords() {
           </div>
         )}
 
-        <div className="w-full lg:flex justify-between items-center mb-4 gap-6 mt-4">
+        <div className="w-full lg:flex justify-between items-center  px-4 gap-6 mt-4 bg-white py-4 border ">
           <div className="flex gap-2 items-center p-2">
             <div className="flex items-center justify-center">
               <Pill className="h-6 w-6 text-blue-600" />
@@ -126,9 +126,9 @@ export default function IndivMedicineRecords() {
           </div>
         </div>
 
-        <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-center sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-            <div className="flex gap-x-2 items-center">
+        <div className="h-full w-full rounded-md bg-white border">
+          <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-center sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 border">
+            <div className="flex gap-x-2 items-centFer">
               <p className="text-xs sm:text-sm">Show</p>
               <Input
                 type="number"
@@ -178,6 +178,7 @@ export default function IndivMedicineRecords() {
               <DataTable columns={medicineRecordColumns} data={medicineRecords} />
             )}
           </div>
+          <hr></hr>
 
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">

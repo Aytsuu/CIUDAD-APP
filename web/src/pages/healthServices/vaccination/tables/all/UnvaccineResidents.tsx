@@ -240,7 +240,7 @@ export default function UnvaccinatedResidents() {
         </div>
         <div>
           <Button className="w-full sm:w-auto">
-            <Link to="/patNewVacRecF3/vaccination-record-form" state={{ mode: "newvaccination_record" }}>
+            <Link to="/services/vaccination/form" state={{ mode: "newvaccination_record" }}>
               New Record
             </Link>
           </Button>

@@ -108,7 +108,7 @@ export const medicineRequestColumns: ColumnDef<any>[] = [
       <div className="flex justify-center gap-2">
         <Button variant="outline" size="sm" asChild disabled={!row.original.medreq_id} aria-label="View details">
           <Link
-            to={"/medicine-request-detail"}
+            to={"/request/medicine/pending-pickup"}
             state={{
               params: {
                 request: row.original,
