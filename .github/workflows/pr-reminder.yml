@@ -39,4 +39,4 @@ jobs:
                   {process.env.NODE_ENV === 'development' && console.error(error)}  <--- DEVELOPMENT MODE ONLY
                 }
 
-            })
+              `})
