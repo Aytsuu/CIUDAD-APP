@@ -168,7 +168,7 @@ export default function IncidentReportForm() {
         ir_involved: Number(ir_involved) || 0,
         ir_time,
         ir_severity: severityLevel,
-        rp: user?.resident?.rp_id,
+        rp: user?.rp,
         files,
       }
 

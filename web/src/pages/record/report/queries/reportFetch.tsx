@@ -31,7 +31,6 @@ export const useGetIRInfo = (ir_id: string) => {
         const res = await api.get(`report/ir/${ir_id}/info/`);
         return res.data;
       } catch (err) {
-        console.error(err)
         throw err;
       }
     }
@@ -51,8 +50,7 @@ export const useGetAcknowledgementReport = (page: number, pageSize: number, sear
           }
         });
         return res.data;
-      } catch (err) {
-        console.error(err);
+      } catch (err) {;
         throw err;
       }
     },
@@ -68,7 +66,6 @@ export const useGetARInfo = (arId: string) => {
         const res = await api.get(`report/ar/${arId}/info/`);
         return res.data;
       } catch (err) {
-        console.error(err)
         throw err;
       }
     },
@@ -84,8 +81,7 @@ export const useGetWeeklyAR = () => {
       try {
         const res = await api.get('report/war/comp/list/');
         return res.data;
-      } catch (err) {
-        console.error(err);
+      } catch (err) {;
         throw err;
       }
     },
@@ -101,7 +97,6 @@ export const useGetWARInfo = (warId: string) => {
         const res = await api.get(`report/war/${warId}/info/`);
         return res.data;
       } catch (err) {
-        console.error(err)
         throw err;
       }
     },
