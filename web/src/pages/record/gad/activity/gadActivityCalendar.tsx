@@ -74,9 +74,21 @@ function GADActivityPage() {
         try {
           // Handle different formats of indicator data
           if (typeof raw === 'string') {
+            const trimmed = raw.trim();
+            
+  
+            if (trimmed.includes('participants)') && trimmed.includes(',')) {
+              return trimmed.split(',').map(item => item.trim()).join(', ');
+            }
+            
+          
+            if (trimmed.includes('participants)')) {
+              return trimmed;
+            }
+            
             // Try to parse JSON string
-            if (raw.startsWith('[') || raw.startsWith('{')) {
-              const parsed = JSON.parse(raw);
+            if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+              const parsed = JSON.parse(trimmed);
               if (Array.isArray(parsed)) {
                 return parsed.map((item: any) => {
                   if (typeof item === 'object' && item.count && item.category) {
@@ -86,7 +98,7 @@ function GADActivityPage() {
                 }).join(', ');
               }
             }
-            return raw;
+            return trimmed;
           } else if (Array.isArray(raw)) {
             return raw.map((item: any) => {
               if (typeof item === 'object' && item.count && item.category) {

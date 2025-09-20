@@ -12,15 +12,21 @@ import { GADAnnualDevPlanCreateSchema, type GADAnnualDevPlanCreateInput } from "
 import { useAuth } from "@/context/AuthContext";
 import { Checkbox } from "@/components/ui/checkbox";
 
+const clientOptions = [
+  { value: "Women", label: "Women" },
+  { value: "LGBTQIA+", label: "LGBTQIA+" },
+  { value: "Senior", label: "Senior" },
+  { value: "PWD", label: "PWD" },
+  { value: "Solo Parent", label: "Solo Parent" },
+  { value: "Erpat", label: "Erpat" },
+  { value: "Children", label: "Children" }
+];
+
 const getClientOptions = () => (
   <>
-    <option value="Women">Women</option>
-    <option value="LGBTQIA+">LGBTQIA+</option>
-    <option value="Senior">Senior</option>
-    <option value="PWD">PWD</option>
-    <option value="Solo Parent">Solo Parent</option>
-    <option value="Erpat">Erpat</option>
-    <option value="Children">Children</option>
+    {clientOptions.map(option => (
+      <option key={option.value} value={option.value}>{option.label}</option>
+    ))}
   </>
 );
 
@@ -564,7 +570,19 @@ export default function AnnualDevelopmentPlanEdit() {
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 >
                   <option value="">Select performance indicator</option>
-                  {getClientOptions()}
+                  {clientOptions.map((option) => {
+                    const isSelected = indicatorInputs.some(input => input.indicator === option.value);
+                    return (
+                      <option 
+                        key={option.value} 
+                        value={option.value} 
+                        disabled={isSelected}
+                        className={isSelected ? "text-gray-400 bg-gray-100" : ""}
+                      >
+                        {option.label} {isSelected ? "(Already Selected)" : ""}
+                      </option>
+                    );
+                  })}
                 </select>
                 <input
                   type="number"
@@ -618,13 +636,19 @@ export default function AnnualDevelopmentPlanEdit() {
           <div className="space-y-4">
             <ComboboxInput
               value={form.watch("dev_res_person")}
-              options={staffOptions}
+              options={staffOptions.map(staff => ({
+                ...staff,
+                isSelected: selectedStaff.some(selected => selected.staff_id === staff.staff_id),
+                full_name: selectedStaff.some(selected => selected.staff_id === staff.staff_id) 
+                  ? `${staff.full_name} (Already Selected)` 
+                  : staff.full_name
+              }))}
               isLoading={staffLoading}
               label=""
               placeholder="Search staff by name to assign responsibilities"
               emptyText="No staff found"
               onSelect={(_, item) => {
-                if (!item) return;
+                if (!item || item.isSelected) return;
                 setSelectedStaff(prev => {
                   const exists = prev.some(s => s.staff_id === item.staff_id);
                   if (exists) return prev;
