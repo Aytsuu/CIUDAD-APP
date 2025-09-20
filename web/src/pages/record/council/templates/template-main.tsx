@@ -2490,7 +2490,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_applicantName: `${fname} ${lname}`,      
       temp_w_sign_applicant: true,
       temp_w_seal: false,
-      temp_body: `\nThis is to certify that /*${lname}, ${fname}*/, ${deceasedAge} years of age, a resident of ${address}, Barangay San Roque (Ciudad) Cebu City for 1 year availing the benefits of Republic Act 11261, otherwise known as First Time Jobseeker Act of 2019. ` +
+      temp_body: `\nThis is to certify that /*${lname}, ${fname}*/, ${age} years of age, a resident of ${address}, Barangay San Roque (Ciudad) Cebu City for 1 year availing the benefits of Republic Act 11261, otherwise known as First Time Jobseeker Act of 2019. ` +
       "do hereby declare, agree and undertake to abide and be bound by the following:\n\n\n" +
       "1. That this is the first time that I will actively look for a job and therefore requesting that a Barangay Certification be issued in my favor to avail the benefits of laws;\n\n" +
       "2. That I am aware that the benefit and previliges under that said law shall be valid only for one (1) year from the date that the Barangay Certification is issued;\n\n" +

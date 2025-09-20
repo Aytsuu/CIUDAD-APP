@@ -844,31 +844,68 @@ function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
     }
 
     if (template.temp_w_sign_right) {
-      const captainX = pageWidth - marginValue - 200;
+      const rightMarginX = pageWidth - marginValue; // Right margin position
+      const textPadding = 10; // Optional padding from the right margin
+
+      doc.setFont("times", "normal");
+      doc.setFontSize(10);
+      const authorityText = "BY THE AUTHORITY OF THE BARANGAY CAPTAIN";
+      const authorityWidth = doc.getTextWidth(authorityText);
+      const authorityX = rightMarginX - authorityWidth - textPadding;
+      doc.text(authorityText, authorityX, currentY);
+
+      currentY += 50;
 
       doc.setFont("times", "bold");
       doc.setFontSize(10);
-      doc.text(`HON. ${signatory}`, captainX, currentY);
+      doc.setTextColor("#009fff");       
+      
+      // Calculate right-aligned position for the first line
+      const signatoryText = `HON. ${signatory}`;
+      const signatoryWidth = doc.getTextWidth(signatoryText);
+      const signatoryX = rightMarginX - signatoryWidth - textPadding;
+      doc.text(signatoryText, signatoryX, currentY);
       
       currentY += 12;
       
+      // Calculate right-aligned position for the second line
       doc.setFont("times", "normal");
       doc.setFontSize(11);
-      doc.text("Barangay Councilor", captainX, currentY);
+      const councilorText = "Barangay Councilor";
+      const councilorWidth = doc.getTextWidth(councilorText);
+      const councilorX = rightMarginX - councilorWidth - textPadding;
+      doc.text(councilorText, councilorX, currentY);
       
       currentY += 18;
       
+      // Calculate right-aligned position for the third line
       doc.setFont("times", "bold");
+      doc.setTextColor(0, 0, 0); 
       doc.setFontSize(10);
-      doc.text("HON. VIRGINIA N. ABENOJA", captainX, currentY);
+      const captainNameText = "HON. VIRGINIA N. ABENOJA";
+      const captainNameWidth = doc.getTextWidth(captainNameText);
+      const captainNameX = rightMarginX - captainNameWidth - textPadding;
+      doc.text(captainNameText, captainNameX, currentY);
 
+      // Calculate right-aligned position for the fourth line
       doc.setFont("times", "normal");
       doc.setFontSize(11);
-      doc.text("Punong Barangay, San Roque Ciudad", captainX, currentY + 12);
+      const captainTitleText = "Punong Barangay, San Roque Ciudad";
+      const captainTitleWidth = doc.getTextWidth(captainTitleText);
+      const captainTitleX = rightMarginX - captainTitleWidth - textPadding;
+      doc.text(captainTitleText, captainTitleX, currentY + 12);
     }
 
     if (template.temp_w_sign_left) {
+
+      doc.setFont("times", "normal");
+      doc.setFontSize(9);
+      doc.text("BY THE AUTHORITY OF THE BARANGAY CAPTAIN", signatureX, currentY);      
+
+      currentY += 50;      
+
       doc.setFont("times", "bold");
+      doc.setTextColor("#009fff"); 
       doc.setFontSize(10);
       doc.text(`HON. ${signatory}`, signatureX, currentY);
       
@@ -881,6 +918,7 @@ function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
       currentY += 18;
       
       doc.setFont("times", "bold");
+      doc.setTextColor(0, 0, 0);
       doc.setFontSize(10);
       doc.text("HON. VIRGINIA N. ABENOJA", signatureX, currentY);
 
@@ -890,6 +928,7 @@ function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
     }
 
     if (template.temp_w_sign_applicant) {
+
       doc.setFont("times", "bold");
       
       doc.text(`${template.temp_applicantName}`, signatureX, currentY);
@@ -899,19 +938,26 @@ function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
       doc.setLineWidth(0.5);
       doc.line(signatureX, underlineY, signatureX + textWidth, underlineY);
 
-      currentY += 15;
-      
-      doc.setFont("times", "bold");
-      doc.text("NAME AND SIGNATURE OF APPLICANT", signatureX, currentY);
-      
-      currentY += 15;
+      currentY += 12;
       
       doc.setFont("times", "normal");
+      doc.text("NAME AND SIGNATURE OF APPLICANT", signatureX, currentY);
+      
+      currentY += 11;
+      
+      doc.setFont("times", "bold");
       doc.setFontSize(9);
       doc.text("CERTIFIED TRUE AND CORRECT:", signatureX, currentY);
+
+      currentY += 20;      
+
+      doc.setFont("times", "normal");
+
+      doc.text("BY THE AUTHORITY OF THE BARANGAY CAPTAIN", signatureX, currentY);      
       
-      currentY += 50;
+      currentY += 40;
       
+      doc.setTextColor("#009fff"); // set to blue 
       doc.setFont("times", "bold");
       doc.setFontSize(10);
       doc.text(`HON. ${signatory}`, signatureX, currentY);
@@ -922,8 +968,9 @@ function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
       doc.setFontSize(11);
       doc.text("Barangay Councilor", signatureX, currentY);
       
-      currentY += 18;
+      currentY += 14;
       
+      doc.setTextColor(0, 0, 0); //set to black
       doc.setFont("times", "bold");
       doc.setFontSize(10);
       doc.text("HON. VIRGINIA N. ABENOJA", signatureX, currentY);
