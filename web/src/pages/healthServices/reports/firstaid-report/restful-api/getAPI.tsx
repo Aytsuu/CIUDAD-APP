@@ -56,3 +56,7 @@ export const getStaffList = async () => {
     throw error;
   }
 };
+
+
+
+// export  const getDoctorList = async () => { 

@@ -48,11 +48,20 @@ export const useSubmitSoapForm = () => {
       const response = await createchildSoapForm(payload);
       return response; // This will be passed to onSuccess
     },
-    onSuccess: (data) => {
-      console.log("SOAP form created successfully:", data);
+    onSuccess: () => {
       showSuccessToast("SOAP Form submitted successfully");
       queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] });
       queryClient.invalidateQueries({ queryKey: ["patientMedicalDetails"] });
+      queryClient.invalidateQueries({ queryKey: ["CombinedHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] });
+      queryClient.invalidateQueries({ queryKey: ["consultationHistory"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingSoapForms"] });
+      queryClient.invalidateQueries({ queryKey: ["processingmedrequest"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingmedrequest"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingmedrequestitems"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
+      queryClient.invalidateQueries({ queryKey: ["nextufc"] });
       navigate(-1);
     },
     onError: (error: Error) => {

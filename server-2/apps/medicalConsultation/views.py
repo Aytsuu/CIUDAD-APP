@@ -26,15 +26,6 @@ from apps.inventory.models import MedicineInventory
 from pagination import *
 from apps.healthProfiling.models import *
 
-# ALL RECORDS
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
-from django.db.models import Count, Q
-from datetime import datetime, timedelta
-
-
-
 class PatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = PatientMedConsultationRecordSerializer
     pagination_class = StandardResultsPagination
@@ -115,7 +106,8 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     
-# MEDICAL CONSULTAION FORWARDED
+    
+#================== MEDICAL CONSULTAION FORWARDED TABLE==================
 class CombinedHealthRecordsView(APIView):
     pagination_class = StandardResultsPagination
     
@@ -266,6 +258,8 @@ class CombinedHealthRecordsView(APIView):
                     'vital_signs': vital_data,
                     'bmi_details': bmi_data,
                     'staff_details': staff_details,
+                    'patrec':record.patrec_id, 
+
                     'patrec_details': {
                         'pat_id': patient.pat_id,
                         'patient_details': patient_details
@@ -392,15 +386,6 @@ class UpdateMedicalConsultationRecordView(generics.UpdateAPIView):
     lookup_field = 'medrec_id'
 
 
-# INDIVIDUAL PATIENT RECORDS
-# class ViewMedicalConsultationRecordView(generics.ListAPIView):
-#     serializer_class = MedicalConsultationRecordSerializer
-#     def get_queryset(self):
-#         pat_id = self.kwargs['pat_id']
-#         return MedicalConsultation_Record.objects.filter(
-#             patrec__pat_id=pat_id,
-#             medrec_status='completed' 
-#         ).order_by('-created_at')
 class ViewMedicalConsultationRecordView(generics.ListAPIView):
     serializer_class = MedicalConsultationRecordSerializer
     pagination_class = StandardResultsPagination
@@ -482,7 +467,7 @@ class MedicalConsultationTotalCountAPIView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# CREATE STEP1
+#================================ CREATE STEP1
 class CreateMedicalConsultationView(APIView):
     @transaction.atomic
     def post(self, request):
@@ -555,6 +540,14 @@ class CreateMedicalConsultationView(APIView):
                 staff=staff,
             )
 
+            assigned_staff = None
+            selected_staff_id = data.get('selectedDoctorStaffId')
+            if selected_staff_id:  # This checks for truthy values (not None, not empty string)
+                try:
+                    assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
+                except Staff.DoesNotExist:
+                    print(f"Staff with ID {selected_staff_id} does not exist")
+       
             # 4. Create MedicalConsultation_Record
             medrec = MedicalConsultation_Record.objects.create(
                 patrec=patrec,
@@ -563,6 +556,7 @@ class CreateMedicalConsultationView(APIView):
                 find=None,
                 medrec_chief_complaint=data["medrec_chief_complaint"],
                 staff=staff,
+                assigned_to=assigned_staff
             )
 
             return Response(

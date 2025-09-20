@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import  { useState, useEffect, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
-import { Search, Loader2, FileInput } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, Loader2, FileInput, ChevronLeft, Users, Home, UserCheck } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -13,34 +13,109 @@ import { useLoading } from "@/context/LoadingContext";
 import { filterOptions } from "./types";
 import { childColumns } from "./columns/all_col";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function AllChildHealthRecords() {
-  const { data: childHealthRecords, isLoading } = useChildHealthRecords();
+  const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
 
-  const formatChildHealthData = useCallback((): any[] => {
-    if (!childHealthRecords) return [];
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [patientTypeFilter, setPatientTypeFilter] = useState("all");
 
-    return childHealthRecords.map((record: any) => {
-      const childInfo = record.patrec_details?.pat_details?.personal_info || {};
-      const motherInfo = record.patrec_details?.pat_details?.family_head_info?.family_heads?.mother?.personal_info || {};
-      const fatherInfo = record.patrec_details?.pat_details?.family_head_info?.family_heads?.father?.personal_info || {};
-      const addressInfo = record.patrec_details?.pat_details?.address || {};
+  // Debounce search query to avoid too many API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Build query parameters
+  const queryParams = useMemo(
+    () => ({
+      page: currentPage,
+      page_size: pageSize,
+      search: debouncedSearchQuery || undefined,
+      patient_type: patientTypeFilter !== "all" ? patientTypeFilter : undefined
+    }),
+    [currentPage, pageSize, debouncedSearchQuery, patientTypeFilter]
+  );
+
+  // Fetch data with parameters
+  const { data: apiResponse, isLoading, error } = useChildHealthRecords(queryParams);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, patientTypeFilter]);
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
+  // Handle API response structure
+  const {
+    childRecords,
+    totalCount,
+    totalPages: apiTotalPages
+  } = useMemo(() => {
+    if (!apiResponse) {
+      return { childRecords: [], totalCount: 0, totalPages: 1 };
+    }
+
+    // Check if response is paginated
+    if (apiResponse.results) {
+      // Paginated response
+      return {
+        childRecords: apiResponse.results,
+        totalCount: apiResponse.count || 0,
+        totalPages: Math.ceil((apiResponse.count || 0) / pageSize)
+      };
+    } else if (Array.isArray(apiResponse)) {
+      // Direct array response (fallback)
+      return {
+        childRecords: apiResponse,
+        totalCount: apiResponse.length,
+        totalPages: Math.ceil(apiResponse.length / pageSize)
+      };
+    } else {
+      // Unknown structure
+      return { childRecords: [], totalCount: 0, totalPages: 1 };
+    }
+  }, [apiResponse, pageSize]);
+
+  const formatChildHealthData = useCallback((): any[] => {
+    if (!childRecords || !Array.isArray(childRecords)) {
+      return [];
+    }
+
+    return childRecords.map((record: any) => {
+      // Extract data from the backend response structure
+      const patrecDetails = record.patrec_details || {};
+      const patientDetails = patrecDetails.pat_details || {};
+      const personalInfo = patientDetails.personal_info || {};
+      const addressInfo = patientDetails.address || {};
+      const familyHeadInfo = patientDetails.family_head_info || {};
+      const familyHeads = familyHeadInfo.family_heads || {};
+      
+      const motherInfo = familyHeads.mother?.personal_info || {};
+      const fatherInfo = familyHeads.father?.personal_info || {};
 
       return {
         chrec_id: record.chrec_id,
-        pat_id: record.patrec_details?.pat_details?.pat_id || "",
-        fname: childInfo.per_fname || "",
-        lname: childInfo.per_lname || "",
-        mname: childInfo.per_mname || "",
-        sex: childInfo.per_sex || "",
-        age: calculateAge(childInfo.per_dob).toString(),
-        dob: childInfo.per_dob || "",
-        householdno: record.patrec_details?.pat_details?.households?.[0]?.hh_id || "",
-        address: [addressInfo.add_sitio, addressInfo.add_street, addressInfo.add_barangay, addressInfo.add_city, addressInfo.add_province].filter((part) => part && part.trim() !== "").join(", ") || "No address Provided",
+        pat_id: patientDetails.pat_id || "",
+        fname: personalInfo.per_fname || "",
+        lname: personalInfo.per_lname || "",
+        mname: personalInfo.per_mname || "",
+        sex: personalInfo.per_sex || "",
+        age: personalInfo.per_dob ? calculateAge(personalInfo.per_dob).toString() : "",
+        dob: personalInfo.per_dob || "",
+        householdno: patientDetails.households?.[0]?.hh_id || "",
+        address: addressInfo.full_address || "No address Provided",
         sitio: addressInfo.add_sitio || "",
         landmarks: addressInfo.add_landmarks || "",
-        pat_type: record.patrec_details?.pat_details?.pat_type || "",
+        pat_type: patientDetails.pat_type || "",
         mother_fname: motherInfo.per_fname || "",
         mother_lname: motherInfo.per_lname || "",
         mother_mname: motherInfo.per_mname || "",
@@ -61,132 +136,187 @@ export default function AllChildHealthRecords() {
         pod_location_details: record.pod_location_details || "",
         health_checkup_count: record.health_checkup_count || 0,
         birth_order: record.birth_order || "",
-        tt_status: record.tt_status || "" // Optional field for TT status
+        tt_status: record.tt_status || ""
       };
     });
-  }, [childHealthRecords]);
+  }, [childRecords]);
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [currentData, setCurrentData] = useState<any[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-  const [selectedFilter, setSelectedFilter] = useState("all");
+  const formattedData = formatChildHealthData();
+  const totalPages = apiTotalPages || Math.ceil(totalCount / pageSize);
 
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading]);
-
-  useEffect(() => {
-    const formattedData = formatChildHealthData();
-    const filtered = formattedData.filter((item) => {
-      const matchesFilter = selectedFilter === "all" || (selectedFilter === "resident" && item.pat_type.toLowerCase() === "resident") || (selectedFilter === "transient" && item.pat_type.toLowerCase() === "transient");
-
-      const matchesSearch =
-        `${item.fname} ${item.lname} ${item.mname} ` +
-        `${item.mother_fname} ${item.mother_lname} ${item.mother_mname} ` +
-        `${item.father_fname} ${item.father_lname} ${item.father_mname} ` +
-        `${item.address} ${item.sitio} ${item.family_no} ${item.pat_type}`.toLowerCase().includes(searchQuery.toLowerCase());
-
-      return matchesFilter && matchesSearch;
+  // Calculate resident and transient counts
+  const calculateCounts = useCallback(() => {
+    if (!childRecords) return { residents: 0, transients: 0 };
+    
+    let residents = 0;
+    let transients = 0;
+    
+    childRecords.forEach((record: any) => {
+      const patrecDetails = record.patrec_details || {};
+      const patientDetails = patrecDetails.pat_details || {};
+      const patType = patientDetails.pat_type || "";
+      
+      if (patType === 'Resident') residents++;
+      if (patType === 'Transient') transients++;
     });
-
-    setFilteredData(filtered);
-    setTotalPages(Math.ceil(filtered.length / pageSize));
-    setCurrentPage(1);
-  }, [searchQuery, selectedFilter, pageSize, childHealthRecords, formatChildHealthData]);
-
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setCurrentData(filteredData.slice(startIndex, endIndex));
-  }, [currentPage, pageSize, filteredData]);
+    
+    return { residents, transients };
+  }, [childRecords]);
+  
+  const { residents, transients } = calculateCounts();
 
   return (
-    <>
-      <MainLayoutComponent title="Child Health Record" description="Manage and View Child's Record">
-        <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
-          <div className="w-full flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-              <Input placeholder="Search..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+    <MainLayoutComponent title="Child Health Record" description="Manage and View Child's Record">
+      
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Total Card */}
+        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="p-3 bg-blue-100 rounded-full mr-4">
+              <Users className="h-6 w-6 text-blue-600" />
             </div>
-            <SelectLayout placeholder="Filter records" label="" className="bg-white w-full sm:w-48" options={filterOptions} value={selectedFilter} onChange={(value) => setSelectedFilter(value)} />
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Records</p>
+              <p className="text-2xl font-bold text-gray-800">{totalCount}</p>
+            </div>
           </div>
+          <div className="text-right">
+            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">All</span>
+          </div>
+        </div>
+        
+        {/* Resident Card */}
+        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="p-3 bg-green-100 rounded-full mr-4">
+              <Home className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Residents</p>
+              <p className="text-2xl font-bold text-gray-800">{residents}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">Resident</span>
+          </div>
+        </div>
+        
+        {/* Transient Card */}
+        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="p-3 bg-purple-100 rounded-full mr-4">
+              <UserCheck className="h-6 w-6 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Transients</p>
+              <p className="text-2xl font-bold text-gray-800">{transients}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">Transient</span>
+          </div>
+        </div>
+      </div>
 
-          <div className="w-full sm:w-auto">
-            <Link
-              to="/child-health-record/form"
-              state={{
-                params: {
-                  mode: "newchildhealthrecord" // This is the key part
-                }
+      {/* Filters Section */}
+      <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white">
+        <div className="w-full flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+            <Input 
+              placeholder="Search by name, family no, UFC no..." 
+              className="pl-10 bg-white w-full" 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+            />
+          </div>
+          <SelectLayout
+            placeholder="Patient Type"
+            label=""
+            className="bg-white w-full sm:w-48"
+            options={filterOptions}
+            value={patientTypeFilter}
+            onChange={(value) => setPatientTypeFilter(value)}
+          />
+        </div>
+
+        <div className="w-full sm:w-auto">
+          <Link
+            to="/child-health-record/form"
+            state={{
+              params: {
+                mode: "newchildhealthrecord"
+              }
+            }}
+          >
+            <Button className="w-full sm:w-auto">New Record</Button>
+          </Link>
+        </div>
+      </div>
+
+      <div className="h-full w-full rounded-md">
+        <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="flex gap-x-2 items-center">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input
+              type="number"
+              className="w-14 h-8"
+              value={pageSize}
+              onChange={(e) => {
+                const value = +e.target.value;
+                setPageSize(value >= 1 ? value : 1);
+                setCurrentPage(1);
               }}
-            >
-              <Button className="w-full sm:w-auto">New Record</Button>
-            </Link>
+              min="1"
+            />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
+          <div className="flex justify-end sm:justify-start">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
+                  <FileInput size={16} />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-            <div className="flex gap-x-3 justify-start items-center">
-              <p className="text-xs sm:text-sm">Show</p>
-              <Input
-                type="number"
-                className="w-[70px] h-8 flex items-center justify-center text-center"
-                value={pageSize}
-                onChange={(e) => {
-                  const value = +e.target.value;
-                  setPageSize(value >= 1 ? value : 1);
-                }}
-                min="1"
-              />
-              <p className="text-xs sm:text-sm">Entries</p>
+        <div className="bg-white w-full overflow-x-auto border">
+          {isLoading ? (
+            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Loading...</span>
             </div>
-            <div className="flex justify-end sm:justify-start">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
-                    <FileInput size={16} />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+          ) : error ? (
+            <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
+              <span>Error loading data. Please try again.</span>
             </div>
-          </div>
-
-          <div className="bg-white w-full overflow-x-auto">
-            {isLoading ? (
-              <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">loading....</span>
-              </div>
-            ) : (
-              <DataTable columns={childColumns} data={currentData} />
-            )}
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing {currentData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
-            </p>
-
-            <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-            </div>
+          ) : (
+            <DataTable columns={childColumns} data={formattedData} />
+          )}
+        </div>
+        
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border">
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing {formattedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
+          </p>
+          <div className="w-full sm:w-auto flex justify-center">
+            <PaginationLayout 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={setCurrentPage} 
+            />
           </div>
         </div>
-      </MainLayoutComponent>
-    </>
+      </div>
+    </MainLayoutComponent>
   );
 }

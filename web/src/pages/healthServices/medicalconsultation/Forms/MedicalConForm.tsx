@@ -26,8 +26,8 @@ import { showErrorToast } from "@/components/ui/toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { ttStatusOptions,doctors,contraceptiveOptions,maritalStatusOptions } from "./options";
-
+import { ttStatusOptions, contraceptiveOptions, maritalStatusOptions } from "./options";
+import { fetchStaffWithPositions } from "@/pages/healthServices/Reports/firstaid-report/queries/fetchQueries";
 
 export default function MedicalConsultationForm() {
   const location = useLocation();
@@ -39,6 +39,8 @@ export default function MedicalConsultationForm() {
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [selectedPatientData, setSelectedPatientData] = useState<any>(patientData || null);
   const pat_id = selectedPatientId.split(",")[0].trim() || patientData?.pat_id || "";
+  const { data: staffOptions, isLoading: staffLoading } = fetchStaffWithPositions();
+  const [selectedStaffId, setSelectedStaffId] = useState("");
   const { data: latestVitals, isLoading: isVitalsLoading, error: vitalsError } = useLatestVitals(pat_id);
   const { data: previousMeasurements, isLoading: isMeasurementsLoading, error: measurementsError } = usePreviousBMI(pat_id);
   const non_membersubmit = useSubmitMedicalConsultation();
@@ -72,9 +74,11 @@ export default function MedicalConsultationForm() {
       smk_stickused_aday: "N/A",
       smk_yrs: "N/A",
       is_passive: false,
-      alchl_bottleused_aday: "N/A"
+      alchl_bottleused_aday: "N/A",
+      selectedDoctorStaffId: ""
     }
   });
+  const { setValue } = form;
 
   // Watch for PhilHealth membership status to conditionally show fields
   const isPhilHealthMember = form.watch("is_philhealthmember");
@@ -285,19 +289,22 @@ export default function MedicalConsultationForm() {
                   <div className="flex gap-5 flex-col">
                     <FormInput control={form.control} name="bhw_assignment" label="BHW Assigned:" placeholder="BHW Assigned" />
                     <div>
-                      <Label className="font-medium text-black/65 mb-2 block">Forward to Doctor</Label>
-                      <Combobox
-                        options={doctors}
-                        value={form.watch("doctor") || ""}
-                        onChange={(value) => form.setValue("doctor", value || "")}
-                        placeholder="Select doctor"
-                        triggerClassName="font-normal w-full"
-                        emptyMessage={
-                          <div className="flex gap-2 justify-center items-center">
-                            <Label className="font-normal text-[13px]">No doctors available</Label>
-                          </div>
-                        }
-                      />
+                      <div className="mt-6">
+                        <Label className="block mb-2">Forward To</Label>
+                        <div className="relative">
+                          <Combobox
+                            options={staffOptions?.formatted || []}
+                            value={selectedStaffId}
+                            onChange={(value) => {
+                              setSelectedStaffId(value || "");
+                              setValue("selectedDoctorStaffId", value || ""); // Also set the form value
+                            }}
+                            placeholder={staffLoading ? "Loading staff..." : "Select staff member"}
+                            emptyMessage="No available staff members"
+                            triggerClassName="w-full"
+                          />
+                        </div>
+                      </div>
                       {form.formState.errors.doctor && <p className="text-red-500 text-sm mt-1">{form.formState.errors.doctor.message}</p>}
                     </div>
                   </div>

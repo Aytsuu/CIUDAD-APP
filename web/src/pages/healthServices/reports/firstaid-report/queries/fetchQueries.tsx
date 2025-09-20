@@ -24,6 +24,9 @@ export const useFirstAidChart = (month: string) => {
   });
 };
 
+
+
+
 export const fetchStaffWithPositions = () => {
   return useQuery({
     queryKey: ["staffPositions"],

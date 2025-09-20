@@ -138,6 +138,7 @@ export const nonPhilHealthSchema = z.object({
   smk_yrs: z.string().optional().default("N/A"),
   is_passive: z.boolean().optional().default(false),
   alchl_bottleused_aday: z.string().optional().default("N/A"),
+  selectedDoctorStaffId: z.string().optional().default(""),
 });
 
 export type nonPhilHealthType = z.infer<typeof nonPhilHealthSchema>;

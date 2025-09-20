@@ -22,7 +22,7 @@ from apps.patientrecords.models import *
 from apps.inventory.models import AntigenTransaction,VaccineStock, VaccineList, Inventory
 from pagination import *
 from apps.healthProfiling.models import ResidentProfile, PersonalAddress
-
+from apps.medicalConsultation.utils import *
 
 
 class VaccineRecordView(generics.ListCreateAPIView):
@@ -39,23 +39,120 @@ class VaccinationHistoryView(generics.ListCreateAPIView):
     serializer_class = VaccinationHistorySerializer
     queryset  =VaccinationHistory.objects.all()
     
-# all Vaccination  Display  
+
 class PatientVaccinationRecordsView(generics.ListAPIView):
     serializer_class = PatientVaccinationRecordSerializer
-
+    pagination_class = StandardResultsPagination
+    
     def get_queryset(self):
-        return Patient.objects.filter(
+        # Base queryset with annotations for vaccination count
+        queryset = Patient.objects.annotate(
+            vaccination_count=Count(
+                'patient_records__vaccination_records__vaccination_histories',
+                filter=Q(
+                    patient_records__vaccination_records__vaccination_histories__vachist_status__in=['completed', 'partially vaccinated']
+                ),
+                distinct=True
+            )
+        ).filter(
             Q(patient_records__patrec_type='Vaccination Record'),
             Q(patient_records__vaccination_records__vaccination_histories__vachist_status__in=['completed', 'partially vaccinated'])
-        ).distinct()
+        ).select_related(
+            'rp_id__per', 
+            'trans_id'
+        ).prefetch_related(
+            'rp_id__per__personaladdress_set__add__sitio',
+            'patient_records__vaccination_records__vaccination_histories'
+        ).distinct().order_by('-vaccination_count')
+        
+        # Track if any filter is applied
+        filters_applied = False
+        original_count = queryset.count()
+        
+        # Search filter
+        search_query = self.request.query_params.get('search', '').strip()
+        
+        if search_query and len(search_query) >= 2:
+            filters_applied = True
+            queryset = self._apply_vaccination_search_filter(queryset, search_query)
+            if queryset.count() == 0 and original_count > 0:
+                return Patient.objects.none()
+        
+        # Patient type filter
+        patient_type_search = self.request.query_params.get('patient_type', '').strip()
+        if patient_type_search:
+            filters_applied = True
+            queryset = apply_patient_type_filter(queryset, patient_type_search)
+            if queryset.count() == 0 and original_count > 0:
+                return Patient.objects.none()
+        
+        
+        
+        return queryset
+    
+    def _apply_vaccination_search_filter(self, queryset, search_term):
+        """
+        Apply search filter for vaccination records
+        """
+        return queryset.filter(
+            Q(rp_id__per__per_fname__icontains=search_term) |
+            Q(rp_id__per__per_lname__icontains=search_term) |
+            Q(rp_id__per__per_mname__icontains=search_term) |
+            Q(patient_records__vaccination_records__vaccination_histories__vac_id__vac_name__icontains=search_term) |
+            Q(rp_id__per__personaladdress_set__add__add_sitio__icontains=search_term) |
+            Q(rp_id__per__personaladdress_set__add__add_street__icontains=search_term) |
+            Q(rp_id__per__personaladdress_set__add__add_barangay__icontains=search_term)
+        )
+    
+   
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
-
+# Fixed version of your TobeAdministeredVaccinationView
 class TobeAdministeredVaccinationView(generics.ListAPIView):
     serializer_class = VaccinationHistorySerializer
+    pagination_class = StandardResultsPagination
+    
     def get_queryset(self):
-        return VaccinationHistory.objects.filter(
+        # Get assigned_to from URL parameters
+        assigned_to = self.kwargs.get('assigned_to')
+        
+        queryset = VaccinationHistory.objects.filter(
             vachist_status='in queue',
+            assigned_to=assigned_to  # Add the assigned_to filter
         ).order_by('-created_at')
+        
+        # Get query parameters
+        search_query = self.request.query_params.get('search', '')
+        patient_type = self.request.query_params.get('patient_type', 'all')
+        
+        # Apply search filter - FIXED: Use pat_id instead of pat
+        if search_query:
+            queryset = queryset.filter(
+                Q(vacrec__patrec_id__pat_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tran_fname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tran_lname__icontains=search_query) |
+                Q(vacStck_id__vac_id__vac_name__icontains=search_query) |
+                Q(vacStck_id__batch_number__icontains=search_query)
+            )
+        
+        # Apply patient type filter - FIXED: Use pat_id instead of pat
+        if patient_type != 'all':
+            if patient_type == 'resident':
+                queryset = queryset.filter(vacrec__patrec_id__pat_id__pat_type='Resident')
+            elif patient_type == 'transient':
+                queryset = queryset.filter(vacrec__patrec_id__pat_id__pat_type='Transient')
+        
+        return queryset
         
 class CountScheduledVaccinationView(APIView):
     def get(self, request):

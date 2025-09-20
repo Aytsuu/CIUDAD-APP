@@ -27,13 +27,99 @@ from apps.patientrecords.models import *
 from apps.healthProfiling.models import *
 from pagination import *
 from apps.inventory.models import * 
+from apps.medicalConsultation.utils import apply_patient_type_filter
 
 
+# views.py
 
-class ChildHealthRecordsView(generics.ListCreateAPIView):
-    queryset = ChildHealthrecord.objects.all()
+
+class ChildHealthRecordsView(generics.ListAPIView):
     serializer_class = ChildHealthrecordSerializer
-
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        # Base queryset with annotations for health history count
+        queryset = ChildHealthrecord.objects.annotate(
+            health_checkup_count=Count(
+                'child_health_histories',
+                distinct=True
+            )
+        ).select_related(
+            'patrec__pat_id',
+            'patrec__pat_id__rp_id',
+            'patrec__pat_id__rp_id__per',
+            'patrec__pat_id__trans_id'
+        ).prefetch_related(
+            'patrec__pat_id__rp_id__per__personaladdress_set',
+            'patrec__pat_id__rp_id__per__personaladdress_set__add',
+            'child_health_histories'
+        ).order_by('-created_at')
+        
+        # Track if any filter is applied
+        filters_applied = False
+        original_count = queryset.count()
+        
+        # Search filter
+        search_query = self.request.query_params.get('search', '').strip()
+        
+        if search_query and len(search_query) >= 2:
+            filters_applied = True
+            queryset = self._apply_child_search_filter(queryset, search_query)
+            if queryset.count() == 0 and original_count > 0:
+                return ChildHealthrecord.objects.none()
+        
+        # Patient type filter
+        patient_type_search = self.request.query_params.get('patient_type', '').strip()
+        if patient_type_search:
+            filters_applied = True
+            queryset = apply_patient_type_filter(queryset, patient_type_search)
+            if queryset.count() == 0 and original_count > 0:
+                return ChildHealthrecord.objects.none()
+        
+    
+        
+        return queryset
+    
+    def _apply_child_search_filter(self, queryset, search_term):
+        """
+        Apply search filter for child health records
+        """
+        return queryset.filter(
+            Q(patrec__pat_id__rp_id__per__per_fname__icontains=search_term) |
+            Q(patrec__pat_id__rp_id__per__per_lname__icontains=search_term) |
+            Q(patrec__pat_id__rp_id__per__per_mname__icontains=search_term) |
+            Q(family_no__icontains=search_term) |
+            Q(ufc_no__icontains=search_term) |
+            Q(patrec__pat_id__rp_id__per__personaladdress_set__add__add_sitio__icontains=search_term) |
+            Q(patrec__pat_id__rp_id__per__personaladdress_set__add__add_street__icontains=search_term) |
+            Q(patrec__pat_id__rp_id__per__personaladdress_set__add__add_barangay__icontains=search_term)
+        )
+    
+    def _apply_status_filter(self, queryset, status):
+        """
+        Filter by TT status
+        """
+        # Filter by TT status from child health histories
+        if status.lower() == 'completed':
+            return queryset.filter(child_health_histories__tt_status='completed')
+        elif status.lower() == 'pending':
+            return queryset.filter(child_health_histories__tt_status='pending')
+        elif status.lower() == 'active':
+            return queryset.filter(child_health_histories__status='active')
+        elif status.lower() == 'inactive':
+            return queryset.filter(child_health_histories__status='inactive')
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class ChildHealthHistoryView(generics.ListCreateAPIView):
     queryset = ChildHealth_History.objects.all()
@@ -700,7 +786,7 @@ class CompleteChildHealthRecordAPIView(APIView):
             birth_order=submitted_data.get('birth_order', 0),
             newborn_screening=newborn_screening,
             staff=staff_instance,
-            patrec=patient_record,
+            patrec=patient_record,  
             landmarks=submitted_data.get('landmarks'),
             nbscreening_result=submitted_data.get('nbscreening_result'), 
             newbornInitiatedbf=submitted_data.get('newbornInitiatedbf', False)
@@ -716,6 +802,7 @@ class CompleteChildHealthRecordAPIView(APIView):
                 assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
             except Staff.DoesNotExist:
                 print(f"Staff with ID {selected_staff_id} does not exist")
+       
         # Create the child health history record
         child_health_history = ChildHealth_History.objects.create(
             chrec=child_health_record,
