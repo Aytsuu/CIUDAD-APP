@@ -2332,6 +2332,7 @@ interface RequestProps {
 type Template = {
   temp_title: string;
   temp_subtitle?: string;
+  temp_no_header?: boolean;
   temp_belowHeaderContent?: string;
   temp_barangayLogo: string;
   temp_cityLogo: string;
@@ -2478,6 +2479,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
     {
       temp_id: "Oath of Undertaking",
       temp_title: "OATH OF UNDERTAKING",
+      temp_no_header: true,
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
       temp_email: templates[0]?.temp_email,  
@@ -2490,18 +2492,18 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_applicantName: `${fname} ${lname}`,      
       temp_w_sign_applicant: true,
       temp_w_seal: false,
-      temp_body: `\nThis is to certify that /*${lname}, ${fname}*/, ${age} years of age, a resident of ${address}, Barangay San Roque (Ciudad) Cebu City for 1 year availing the benefits of Republic Act 11261, otherwise known as First Time Jobseeker Act of 2019. ` +
-      "do hereby declare, agree and undertake to abide and be bound by the following:\n\n\n" +
-      "1. That this is the first time that I will actively look for a job and therefore requesting that a Barangay Certification be issued in my favor to avail the benefits of laws;\n\n" +
-      "2. That I am aware that the benefit and previliges under that said law shall be valid only for one (1) year from the date that the Barangay Certification is issued;\n\n" +
-      "3. That I can avail the benefits of the law only once;\n\n" +
-      "4. That I understand that my personal information shall be included in the Roster/List of First Time Jobseekers and will not be used to any unlawful purpose;\n\n" +
-      "5. That I will inform and/or report to the Barangay personally through text or other means or through my family/relatives once I get employed and;\n\n" +
-      "6. That I am not a beneficiaries of the Job Start Program under R.A No. 10869 and other laws that give similar exemptions for the documents or transactions exempted unde R.A No. 11261;\n\n" +
-      "7. That if issued the requested Certification, I will not use the same in any fraud neither falsify nor help and/or assist in the fabrication of the said certification;\n\n" +
-      "8. That this undertaking is made solely for the purpose of obtaining a Barangay certification consisting with objective of R.A No. 112261 and not any other purpose;\n\n" +
+      temp_body: `This is to certify that /*${lname}, ${fname}*/, ${age} years of age, a resident of ${address}, Barangay San Roque (Ciudad) Cebu City for 1 year availing the benefits of Republic Act 11261, otherwise known as First Time Jobseeker Act of 2019. ` +
+      "do hereby declare, agree and undertake to abide and be bound by the following:\n\n" +
+      "1. That this is the first time that I will actively look for a job and therefore requesting that a Barangay Certification be issued in my favor to avail the benefits of laws;\n" +
+      "2. That I am aware that the benefit and previliges under that said law shall be valid only for one (1) year from the date that the Barangay Certification is issued;\n" +
+      "3. That I can avail the benefits of the law only once;\n" +
+      "4. That I understand that my personal information shall be included in the Roster/List of First Time Jobseekers and will not be used to any unlawful purpose;\n" +
+      "5. That I will inform and/or report to the Barangay personally through text or other means or through my family/relatives once I get employed and;\n" +
+      "6. That I am not a beneficiaries of the Job Start Program under R.A No. 10869 and other laws that give similar exemptions for the documents or transactions exempted unde R.A No. 11261;\n" +
+      "7. That if issued the requested Certification, I will not use the same in any fraud neither falsify nor help and/or assist in the fabrication of the said certification;\n" +
+      "8. That this undertaking is made solely for the purpose of obtaining a Barangay certification consisting with objective of R.A No. 112261 and not any other purpose;\n" +
       "9. That I concent to the use of my personal information pursuant to the Data Provicy Act and other applicable laws, rules and regulation;\n\n" +
-      `Signed this ${FormattedIssuanceDate} in Barangay San Roque (Ciudad) Cebu City.`
+      `Signed this /*${FormattedIssuanceDate}*/ in Barangay San Roque (Ciudad) Cebu City.`
     }, 
   ]
 

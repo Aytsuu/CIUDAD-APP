@@ -558,6 +558,8 @@ import { veraMonoBold } from "@/assets/fonts/VeraMono-Bold-bold";
 interface Template {
   temp_title: string;
   temp_subtitle?: string;
+  temp_no_header?: boolean;
+  temp_no_footer?: boolean;
   temp_belowHeaderContent?: string;
   temp_barangayLogo: string;
   temp_cityLogo: string;
@@ -1031,7 +1033,9 @@ function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
       let yPos = marginValue;
 
       // Generate header for this page
-      yPos = generateHeader(doc, template, yPos, pageWidth, marginValue);
+      if(!template.temp_no_header){
+        yPos = generateHeader(doc, template, yPos, pageWidth, marginValue);
+      }
 
       // Generate content for this page
       generatePageContent(doc, template, yPos, pageWidth, pageHeight, marginValue);
