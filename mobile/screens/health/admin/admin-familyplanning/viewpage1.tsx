@@ -4,28 +4,7 @@ import { View, Text, ScrollView, Image, TouchableOpacity, Dimensions } from "rea
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, router } from "expo-router";
 import { getFPCompleteRecord } from "./GetRequest";
-import {
-  User,
-  Calendar,
-  MapPin,
-  Heart,
-  Activity,
-  Stethoscope,
-  FileText,
-  ArrowRight,
-  GraduationCap,
-  CreditCard,
-  Home,
-  Baby,
-  TrendingUp,
-  Scale,
-  Ruler,
-  Droplets,
-  UserCheck,
-  Clock,
-  Loader2,
-  AlertCircle,
-} from "lucide-react-native";
+import { User,Calendar,MapPin,Heart,Activity,Stethoscope,FileText,GraduationCap,CreditCard,Baby,TrendingUp,Scale,Ruler,Droplets,UserCheck,Clock,AlertCircle,} from "lucide-react-native";
 import { FPRecordData } from "./FPRecordData";
 import { LoadingState } from "@/components/ui/loading-state";
 
@@ -210,7 +189,7 @@ export default function FpRecordViewPage1() {
               <View className="flex-1">
                 <Text className="text-sm text-gray-500 mb-1">Average Monthly Income</Text>
                 <Text className="text-sm font-medium text-gray-900">
-                  {recordData.avg_monthly_income?.toLocaleString() ?? "Not specified"}
+                  {recordData.avg_monthly_income_display?.toLocaleString() ?? "Not specified"}
                 </Text>
               </View>
             </View>
@@ -389,40 +368,40 @@ export default function FpRecordViewPage1() {
             </View>
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">Abnormal Discharge:</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.risk_sti?.abnormalDischarge ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.risk_sti?.abnormalDischarge ? "Yes" : "No"}</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.sexuallyTransmittedInfections?.abnormalDischarge ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.sexuallyTransmittedInfections?.abnormalDischarge ? "Yes" : "No"}</Text>
               </View>
             </View>
-            {recordData.risk_sti?.abnormalDischarge && (
+            {recordData.sexuallyTransmittedInfections?.abnormalDischarge && (
               <View className="flex-row items-center justify-between mb-4">
                 <Text className="text-sm text-gray-500">Discharge from:</Text>
                 <View className="px-3 py-1 rounded-full bg-blue-100 text-blue-800">
-                  <Text className="text-xs font-medium">{recordData.risk_sti?.dischargeFrom ?? "N/A"}</Text>
+                  <Text className="text-xs font-medium">{recordData.sexuallyTransmittedInfections?.dischargeFrom ?? "N/A"}</Text>
                 </View>
               </View>
             )}
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">Sores:</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.risk_sti?.sores ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.risk_sti?.sores ? "Yes" : "No"}</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.sexuallyTransmittedInfections?.sores ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.sexuallyTransmittedInfections?.sores ? "Yes" : "No"}</Text>
               </View>
             </View>
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">Pain:</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.obstetricalHistory?.pain ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.obstetricalHistory?.pain ? "Yes" : "No"}</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.sexuallyTransmittedInfections?.pain ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.sexuallyTransmittedInfections?.pain ? "Yes" : "No"}</Text>
               </View>
             </View>
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">History:</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.obstetricalHistory?.history ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.obstetricalHistory?.history ? "Yes" : "No"}</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.sexuallyTransmittedInfections?.history ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.sexuallyTransmittedInfections?.history ? "Yes" : "No"}</Text>
               </View>
             </View>
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-sm text-gray-500">HIV:</Text>
-              <View className={`px-3 py-1 rounded-full ${recordData.obstetricalHistory?.hiv ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
-                <Text className="text-xs font-medium">{recordData.obstetricalHistory?.hiv ? "Yes" : "No"}</Text>
+              <View className={`px-3 py-1 rounded-full ${recordData.sexuallyTransmittedInfections?.hiv ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                <Text className="text-xs font-medium">{recordData.sexuallyTransmittedInfections ?.hiv ? "Yes" : "No"}</Text>
               </View>
             </View>
           </View>
@@ -530,7 +509,7 @@ export default function FpRecordViewPage1() {
               </View>
               <View className="flex-1">
                 <Text className="text-sm text-gray-500 mb-1">Skin Examination</Text>
-                <Text className="text-sm font-medium text-gray-900">{recordData.skinExamination ?? "N/A"}</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.fp_physical_exam?.skin_exam ?? "N/A"}</Text>
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
@@ -539,7 +518,7 @@ export default function FpRecordViewPage1() {
               </View>
               <View className="flex-1">
                 <Text className="text-sm text-gray-500 mb-1">Conjunctiva Examination</Text>
-                <Text className="text-sm font-medium text-gray-900">{recordData.conjunctivaExamination ?? "N/A"}</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.fp_physical_exam?.conjunctiva_exam ?? "N/A"}</Text>
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
@@ -548,7 +527,7 @@ export default function FpRecordViewPage1() {
               </View>
               <View className="flex-1">
                 <Text className="text-sm text-gray-500 mb-1">Neck Examination</Text>
-                <Text className="text-sm font-medium text-gray-900">{recordData.neckExamination ?? "N/A"}</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.fp_physical_exam?.neck_exam ?? "N/A"}</Text>
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
@@ -557,7 +536,7 @@ export default function FpRecordViewPage1() {
               </View>
               <View className="flex-1">
                 <Text className="text-sm text-gray-500 mb-1">Breast Examination</Text>
-                <Text className="text-sm font-medium text-gray-900">{recordData.breastExamination ?? "N/A"}</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.fp_physical_exam?.breast_exam ?? "N/A"}</Text>
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
@@ -566,7 +545,7 @@ export default function FpRecordViewPage1() {
               </View>
               <View className="flex-1">
                 <Text className="text-sm text-gray-500 mb-1">Abdomen Examination</Text>
-                <Text className="text-sm font-medium text-gray-900">{recordData.abdomenExamination ?? "N/A"}</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.fp_physical_exam?.abdomen_exam ?? "N/A"}</Text>
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
@@ -575,7 +554,7 @@ export default function FpRecordViewPage1() {
               </View>
               <View className="flex-1">
                 <Text className="text-sm text-gray-500 mb-1">Extremities Examination</Text>
-                <Text className="text-sm font-medium text-gray-900">{recordData.extremitiesExamination ?? "N/A"}</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.fp_physical_exam?.extremities_exam ?? "N/A"}</Text>
               </View>
             </View>
             <View className="border-t border-gray-100 pt-4 mt-2">

@@ -159,56 +159,56 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
               />
             </div>
             <span className="text-xs italic mt-5 m">
-              {(formData.weight > 0 || formData.height > 0) && (
-                `Weight & height last recorded (y/m/d): ${
-                  formData.bodyMeasurementRecordedAt 
-                    ? formatDate(formData.bodyMeasurementRecordedAt) 
-                    : 'N/A'
-                }`
-              )}
-            </span>
+  {(formData.weight > 0 || formData.height > 0) && (
+    `Weight & height last recorded (y/m/d): ${
+      formData.bodyMeasurementRecordedAt 
+        ? formatDate(formData.bodyMeasurementRecordedAt) 
+        : formatDate(new Date().toISOString().split('T')[0])
+    }`
+  )}
+</span>
             <div className="grid md:grid-cols-3 gap-6 mt-6">
               {/* Skin Examination */}
               {renderRadioGroup("SKIN", "skinExamination", [
-                { value: "normal", label: "Normal" },
-                { value: "pale", label: "Pale" },
-                { value: "yellowish", label: "Yellowish" },
-                { value: "hematoma", label: "Hematoma" },
+                { value: "Normal", label: "Normal" },
+                { value: "Pale", label: "Pale" },
+                { value: "Yellowish", label: "Yellowish" },
+                { value: "Hematoma", label: "Hematoma" },
               ])}
 
               {/* Conjunctiva Examination */}
               {renderRadioGroup("CONJUNCTIVA", "conjunctivaExamination", [
-                { value: "normal", label: "Normal" },
-                { value: "pale", label: "Pale" },
-                { value: "yellowish", label: "Yellowish" },
+                { value: "Normal", label: "Normal" },
+                { value: "Pale", label: "Pale" },
+                { value: "Yellowish", label: "Yellowish" },
               ])}
 
               {/* Neck Examination */}
               {renderRadioGroup("NECK", "neckExamination", [
-                { value: "normal", label: "Normal" },
-                { value: "neck_mass", label: "Neck mass" },
-                { value: "enlarged_lymph_nodes", label: "Enlarged lymph nodes" },
+                { value: "Normal", label: "Normal" },
+                { value: "Neck Mass", label: "Neck Mass" },
+                { value: "Enlarged Lymph Nodes", label: "Enlarged Lymph Nodes" },
               ])}
 
               {/* Breast Examination */}
               {renderRadioGroup("BREAST", "breastExamination", [
-                { value: "normal", label: "Normal" },
-                { value: "mass", label: "Mass" },
-                { value: "nipple_discharge", label: "Nipple discharge" },
+                { value: "Normal", label: "Normal" },
+                { value: "Mass", label: "Mass" },
+                { value: "Nipple Discharge", label: "Nipple Discharge" },
               ])}
 
               {/* Abdomen Examination */}
               {renderRadioGroup("ABDOMEN", "abdomenExamination", [
-                { value: "normal", label: "Normal" },
-                { value: "abdominal_mass", label: "Abdominal mass" },
-                { value: "varicosities", label: "Varicosities" },
+                { value: "Normal", label: "Normal" },
+                { value: "Abdominal Mass", label: "Abdominal Mass" },
+                { value: "Varicosities", label: "Varicosities" },
               ])}
 
               {/* Extremities Examination */}
               {renderRadioGroup("EXTREMITIES", "extremitiesExamination", [
-                { value: "normal", label: "Normal" },
-                { value: "edema", label: "Edema" },
-                { value: "varicosities", label: "Varicosities" },
+                { value: "Normal", label: "Normal" },
+                { value: "Edema", label: "Edema" },
+                { value: "Varicosities", label: "Varicosities" },
               ])}
             </div>
 

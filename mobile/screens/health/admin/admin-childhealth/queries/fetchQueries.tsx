@@ -1,7 +1,6 @@
 // src/hooks/useChildHealthRecord.ts
 import { useQuery } from "@tanstack/react-query";
-import { getChildHealthRecords,getNutrionalSummary } from "../restful-api/get";
-import { getChildHealthHistory } from "../restful-api/get";
+import { getChildHealthRecords, getNutrionalSummary, getChildHealthHistory } from "../restful-api/get";
 
 export function useChildHealthRecords() {
   return useQuery({

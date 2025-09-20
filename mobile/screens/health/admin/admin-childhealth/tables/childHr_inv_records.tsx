@@ -13,12 +13,11 @@ import { VaccinationStatusCards } from "@/components/healthcomponents/vaccinatio
 import { VaccinationStatusCardsSkeleton } from "@/components/healthcomponents/vaccinationstatus-skeleton";
 
 // Hooks and types
-import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 import { ChrRecords } from "./types";
 import { useFollowupChildHealthandVaccines, usePatientVaccinationDetails, useUnvaccinatedVaccines } from "../../../vaccination/queries/fetch";
 // import { LoadingContext } from "@/contexts/LoadingContext";
-import { HorizontalDataTable } from "@/components/healthcomponents/data-table";
-import { getChildHealthColumns } from "./columns/indiv_col";
+// import { getChildHealthColumns } from "./columns/indiv_col";
+import { useChildHealthHistory } from "../queries/fetchQueries";
 
 export default function InvChildHealthRecords() {
   const router = useRouter();
@@ -26,14 +25,6 @@ export default function InvChildHealthRecords() {
   console.log('InvChildHealthRecords: Received params via useLocalSearchParams:', params);
   console.log('InvChildHealthRecords: Expected route prop:', arguments[0]?.route);
 
-  // const loadingContext = useContext(LoadingContext);
-  // const { isLoading: globalLoading, showLoading, hideLoading } = loadingContext || {
-  //   isLoading: false,
-  //   showLoading: () => console.warn("LoadingProvider not found"),
-  //   hideLoading: () => console.warn("LoadingProvider not found"),
-  // };
-
-  // Parse ChildHealthRecord with robust validation
   let ChildHealthRecord = null;
   try {
     if (!params || !params.ChildHealthRecord) {
@@ -60,7 +51,7 @@ export default function InvChildHealthRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 5;
- const columns = useMemo(() => getChildHealthColumns(childData), [childData]);
+//  const columns = useMemo(() => getChildHealthColumns(childData), [childData]);
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } =
     useUnvaccinatedVaccines(childData?.pat_id, childData?.dob);
   const { data: followUps = [], isLoading: followupLoading } =
@@ -343,7 +334,7 @@ export default function InvChildHealthRecords() {
             <View className="mt-5">
               <FollowUpsCard childHealthFollowups={followUps} />
             </View>
-            <HorizontalDataTable columns={columns} data={currentData} />
+            {/* <HorizontalDataTable columns={columns} data={currentData} /> */}
           </View>
        
       </View>

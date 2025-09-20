@@ -466,7 +466,7 @@ const MedicineRequestTracker: React.FC = () => {
         }
         headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Medicine Requests</Text>}
       >
-        <View className="flex-1 justify-center items-center bg-gray-50">
+        <View className="flex-1 justify-center items-center mt-10">
           <Text className="text-gray-600">Please log in to view your medicine requests</Text>
         </View>
       </PageLayout>

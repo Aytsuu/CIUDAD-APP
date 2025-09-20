@@ -70,22 +70,26 @@ export const FamilyPlanningView = () => {
   const componentRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
-    contentRef: componentRef,
-    pageStyle: `
-      @page {
-        size: 8.5in 13in;
-        margin: 0.5in;
+  contentRef: componentRef,
+  pageStyle: `
+    @page {
+      size: 8.5in 13in;
+      margin: 0.25in; /* Reduced margin to fit more content */
+    }
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
       }
-      @media print {
-        body {
-          -webkit-print-color-adjust: exact;
-        }
-        .no-print {
-          display: none !important;
-        }
+      .no-print {
+        display: none !important;
       }
-    `,
-  });
+      .print-content {
+        height: 100%; /* Ensure content uses full page height */
+        overflow: visible; /* Prevent overflow issues */
+      }
+    }
+  `,
+});
 
   const {
     data: recordData,
@@ -401,15 +405,15 @@ export const FamilyPlanningView = () => {
 
               <Label className=" col-span-2">Reason for FP:</Label>
               <InputLine className="col-span-4" value={recordData.reasonForFP} />
-              {(recordData.reasonForFP === "fp_others" ||
+              {(recordData.reasonForFP === "Others" ||
                 recordData.reasonForFP === "sideeffects") && (
                 <>
                   <Label className=" col-span-2 mt-0">
-                    {recordData.reasonForFP === "fp_others"
+                    {recordData.reasonForFP === "Others"
                       ? "Other Reason for FP:"
                       : "Side Effect:"}
                   </Label>
-                  <InputLine className="col-span-4" value={recordData.otherReasonForFP} />
+                  <InputLine className="col-span-4" value={recordData.fp_type?.fpt_reason} />
                 </>
               )}
 
@@ -841,122 +845,122 @@ export const FamilyPlanningView = () => {
                     <div>
                       {" "}
                       SKIN:{" "}
-                      <InputLine className="h-4" value={recordData.skinExamination} />
+                      <InputLine className="h-4" value={recordData.fp_physical_exam.skin_exam} />
                     </div>
                     <div>
                       {" "}
                       CONJUNCTIVA:{" "}
                       <InputLine
                         className="h-4"
-                        value={recordData.conjunctivaExamination}
+                        value={recordData.fp_physical_exam.conjunctiva_exam}
                       />{" "}
                     </div>
                     <div>
                       NECK:
-                      <InputLine className="h-4" value={recordData.neckExamination} />{" "}
+                      <InputLine className="h-4" value={recordData.fp_physical_exam.neck_exam} />{" "}
                     </div>
                     <div>
                       {" "}
                       BREAST:{" "}
-                      <InputLine className="h-4" value={recordData.breastExamination} />{" "}
+                      <InputLine className="h-4" value={recordData.fp_physical_exam.breast_exam} />{" "}
                     </div>
                     <div>
                       {" "}
                       ABDOMEN:{" "}
-                      <InputLine className="h-4" value={recordData.abdomenExamination} />{" "}
+                      <InputLine className="h-4" value={recordData.fp_physical_exam.abdomen_exam} />{" "}
                     </div>
                     <div>
                       {" "}
                       EXTREMITIES{" "}
                       <InputLine
                         className="h-4"
-                        value={recordData.extremitiesExamination}
+                        value={recordData.fp_physical_exam.extremities_exam}
                       />{" "}
                     </div>
                   </div>
 
                   <div className="mt-2">
-                    <div className="font-semibold">
-                      PELVIC EXAMINATION (For IUD Acceptors):
-                    </div>
-                    <div className="ml-4 grid grid-cols-2 gap-1">
-                      <div className="flex items-center gap-1">
-                        <span>Pelvic Examination:</span>
-                        <InputLine
-                          className="flex-1 h-4"
-                          value={recordData.pelvicExamination}
-                        />
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span>Cervical Consistency:</span>
-                        <InputLine
-                          className="flex-1 h-4"
-                          value={recordData.cervicalConsistency}
-                        />
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span>Cervical Tenderness:</span>
-                        <div className="flex gap-1">
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="checkbox"
-                              checked={recordData.cervicalTenderness === true}
-                              disabled
-                              className="h-3 w-3"
-                            />
-                            <span>Yes</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="checkbox"
-                              checked={recordData.cervicalTenderness === false}
-                              disabled
-                              className="h-3 w-3"
-                            />
-                            <span>No</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span>Adnexal mass/tenderness:</span>
-                        <div className="flex gap-1">
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="checkbox"
-                              checked={recordData.cervicalAdnexal === true}
-                              disabled
-                              className="h-3 w-3"
-                            />
-                            <span>Yes</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="checkbox"
-                              checked={recordData.cervicalAdnexal === false}
-                              disabled
-                              className="h-3 w-3"
-                            />
-                            <span>No</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span>Uterine Position:</span>
-                        <InputLine
-                          className="flex-1 h-4"
-                          value={recordData.uterinePosition}
-                        />
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span>Uterine depth:</span>
-                        <InputLine
-                          className="flex-1 h-4"
-                          value={recordData.uterineDepth}
-                        />
-                        <span>cm</span>
-                      </div>
-                    </div>
-                  </div>
+  <div className="font-semibold">
+    PELVIC EXAMINATION (For IUD Acceptors):
+  </div>
+  <div className="grid grid-cols-2 gap-1">
+    <div className="flex items-center gap-1">
+      <span>Pelvic Examination:</span>
+      <InputLine
+        className="flex-1 h-4"
+        value={recordData.fp_pelvic_exam?.pelvicExamination ?? "N/A"}
+      />
+    </div>
+    <div className="flex items-center gap-1">
+      <span>Cervical Consistency:</span>
+      <InputLine
+        className="flex-1 h-4"
+        value={recordData.fp_pelvic_exam?.cervicalConsistency ?? "N/A"}
+      />
+    </div>
+    <div className="flex items-center gap-1">
+      <span>Cervical Tenderness:</span>
+      <div className="flex gap-1">
+        <div className="flex items-center gap-1">
+          <input
+            type="checkbox"
+            checked={recordData.fp_pelvic_exam?.cervicalTenderness === true}
+            disabled
+            className="h-3 w-3"
+          />
+          <span>Yes</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <input
+            type="checkbox"
+            checked={recordData.fp_pelvic_exam?.cervicalTenderness === false}
+            disabled
+            className="h-3 w-3"
+          />
+          <span>No</span>
+        </div>
+      </div>
+    </div>
+    <div className="flex items-center gap-1">
+      <span>Adnexal mass/tenderness:</span>
+      <div className="flex gap-1">
+        <div className="flex items-center gap-1">
+          <input
+            type="checkbox"
+            checked={recordData.fp_pelvic_exam?.cervicalAdnexal === true}
+            disabled
+            className="h-3 w-3"
+          />
+          <span>Yes</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <input
+            type="checkbox"
+            checked={recordData.fp_pelvic_exam?.cervicalAdnexal === false}
+            disabled
+            className="h-3 w-3"
+          />
+          <span>No</span>
+        </div>
+      </div>
+    </div>
+    <div className="flex items-center gap-1">
+      <span>Uterine Position:</span>
+      <InputLine
+        className="flex-1 h-4"
+        value={recordData.fp_pelvic_exam?.uterinePosition ?? "N/A"}
+      />
+    </div>
+    <div className="flex items-center gap-1">
+      <span>Uterine depth:</span>
+      <InputLine
+        className="flex-1 h-4"
+        value={recordData.fp_pelvic_exam?.uterineDepth ?? "N/A"}
+      />
+      <span>cm</span>
+    </div>
+  </div>
+</div>
                 </div>
               </div>
 

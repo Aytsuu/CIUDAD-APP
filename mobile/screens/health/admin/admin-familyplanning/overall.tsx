@@ -3,18 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, RefreshControl } fro
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { getFPPatientsCounts, getFPRecordsList } from "./GetRequest";
-import {
-  ArrowLeft,
-  Search,
-  FileText,
-  Loader2,
-  AlertCircle,
-  ChevronRight,
-  ChevronLeft,
-  Users,
-  UserCheck,
-  UserPlus
-} from "lucide-react-native";
+import { Search,FileText,AlertCircle,ChevronRight,ChevronLeft,Users,UserCheck,UserPlus} from "lucide-react-native";
 import PageLayout from "@/screens/_PageLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button/button";

@@ -241,7 +241,7 @@ const Homepage = () => {
         </View>
 
         <View className="px-5 mt-4 mb-6">
-          <Text className="text-gray-800 text-xl font-PoppinsSemiBold mb-5">Manage</Text>
+          <Text className="text-gray-800 text-xl font-PoppinsSemiBold mb-5">Check</Text>
           <View className="flex-row flex-wrap justify-between">
             {modules.map((module, index) => {
               const Icon = module.icon;

@@ -201,7 +201,7 @@ const stats = calculatePatientStats()
   ]
 
   return (
-    <div className="container mx-auto p-3 py-10">
+    <div className="container mx-auto p-3 ">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Animal Bites Records</h1>

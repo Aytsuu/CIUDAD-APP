@@ -10,11 +10,11 @@ import {
   Dimensions
 } from "react-native";
 import { ChevronLeft, ChevronRight, History, Baby } from "lucide-react-native";
-import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 import { ChildHealthHistoryRecord } from "./types";
 import { getSupplementStatusesFields } from "./config";
 import { PatientSummarySection } from "./currenthistory";
 import { router } from "expo-router";
+import { useChildHealthHistory } from "../queries/fetchQueries";
 
 interface Props {
   route: {
@@ -596,10 +596,7 @@ export default function ChildHealthHistoryDetail({ route, navigation }: Props) {
     [fullHistoryData]
   );
 
-  const { 
-    data: historyData, 
-    isLoading, 
-  } = useChildHealthHistory(chrecId);
+  const { data: historyData, isLoading, } = useChildHealthHistory(chrecId);
 
   useEffect(() => {
     console.log('ChildHealthHistoryDetail: historyData:', historyData);

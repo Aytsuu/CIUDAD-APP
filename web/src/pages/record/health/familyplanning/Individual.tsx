@@ -1,10 +1,10 @@
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getFPRecordsForPatient } from "@/pages/familyplanning/request-db/GetRequest";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft, FileText, LayoutList, Plus, MessageCircleWarning } from "lucide-react";
+import { ArrowLeft, FileText, LayoutList, Plus, MessageCircleWarning, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
@@ -23,6 +23,36 @@ import type { IndividualFPRecordDetail } from "@/pages/familyplanning/request-db
 // import { FollowUpTimeline } from "@/components/followup-timeline";
 import { PatientOverviewStats } from "@/components/patient-overviewStats";
 
+// Helper function to calculate days difference between dates
+const calculateDaysDifference = (dateString: string): number => {
+  if (!dateString) return Infinity;
+  
+  const today = new Date();
+  const targetDate = new Date(dateString);
+  
+  // Set both dates to midnight for accurate day difference calculation
+  today.setHours(0, 0, 0, 0);
+  targetDate.setHours(0, 0, 0, 0);
+  
+  const diffTime = targetDate.getTime() - today.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
+// Function to check if follow-up should be disabled
+const shouldDisableFollowUp = (record: IndividualFPRecordDetail): { disabled: boolean; daysLeft: number } => {
+  if (!record.dateOfFollowUp) {
+    return { disabled: false, daysLeft: Infinity };
+  }
+  
+  const daysDifference = calculateDaysDifference(record.dateOfFollowUp);
+  
+  // Disable if missed by more than 3 days
+  return {
+    disabled: daysDifference < -3,
+    daysLeft: daysDifference
+  };
+};
+
 // Updated function to determine follow-up status based on backend status and date
 const getFollowUpDisplayStatus = (followv_status?: string, followUpDate?: string) => {
   // If no follow-up data exists
@@ -32,7 +62,19 @@ const getFollowUpDisplayStatus = (followv_status?: string, followUpDate?: string
       className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200" 
     };
   }
-
+  if (followv_status.toLowerCase() === "missed") {
+    return { 
+      status: "Missed", 
+      className: "bg-red-100 text-red-800 border-red-300 hover:bg-red-200" 
+    };
+  }
+  
+  if (followv_status.toLowerCase() === "dropout") {
+    return { 
+      status: "Dropped Out", 
+      className: "bg-red-100 text-red-800 border-red-300 hover:bg-red-200" 
+    };
+  }
   // If status is "Completed", always show as completed regardless of date
   if (followv_status.toLowerCase() === "completed") {
     return { 
@@ -75,11 +117,29 @@ const getFollowUpDisplayStatus = (followv_status?: string, followUpDate?: string
   };
 };
 
-// Check if any record has missed follow-ups for the warning banner
-const hasMissedFollowUps = (records: IndividualFPRecordDetail[]) => {
-  return records.some(record => {
+// UPDATED: Check if the LATEST group has missed follow-ups for the warning banner
+const hasLatestGroupMissedFollowUps = (groupedRecords: [string, IndividualFPRecordDetail[]][]) => {
+  // If no groups exist, return false
+  if (groupedRecords.length === 0) return false;
+  
+  // Get the latest group (first group after sorting)
+  const latestGroup = groupedRecords[0][1]; // [1] gets the records array from the tuple
+  
+  return latestGroup.some(record => {
     const { status } = getFollowUpDisplayStatus(record.followv_status, record.dateOfFollowUp);
-    return status === "Missed";
+    return status === "Missed" || status === "Dropped Out";
+  });
+};
+
+// UPDATED: Get missed follow-ups from the latest group only
+const getLatestGroupMissedFollowUps = (groupedRecords: [string, IndividualFPRecordDetail[]][]) => {
+  if (groupedRecords.length === 0) return [];
+  
+  const latestGroup = groupedRecords[0][1];
+  
+  return latestGroup.filter(record => {
+    const { status } = getFollowUpDisplayStatus(record.followv_status, record.dateOfFollowUp);
+    return status === "Missed" || status === "Dropped Out";
   });
 };
 
@@ -88,6 +148,16 @@ const IndividualFamPlanningTable: React.FC = () => {
   const location = useLocation();
   const { patientId } = location.state || {};
   const [selectedRecords, setSelectedRecords] = useState<IndividualFPRecordDetail[]>([]);
+  const [currentTime, setCurrentTime] = useState(new Date()); // For countdown timer
+
+  // Update time every minute for countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
 
   const {
     data: fpPatientRecords = [],
@@ -180,6 +250,7 @@ const IndividualFamPlanningTable: React.FC = () => {
     state: { gender: patientInfoForCard?.personal_info.per_sex || "Unknown" },
   });
 };
+  
   const groupedRecords = useMemo(() => {
     const groups: { [key: string]: IndividualFPRecordDetail[] } = {};
     fpPatientRecords.forEach((record) => {
@@ -307,7 +378,7 @@ const IndividualFamPlanningTable: React.FC = () => {
       {
         accessorKey: "dateOfFollowUp",
         header: "Next Follow-up Visit",
-        cell: ({ row }) => formatDate(row.original.dateOfFollowUp || ""),
+        cell: ({ row }) => formatDate(row.original.dateOfFollowUp || "No follow-up visit date"),
       },
       {
         accessorKey: "followv_status",
@@ -363,6 +434,11 @@ const IndividualFamPlanningTable: React.FC = () => {
     );
   }
 
+  // Calculate days left for the latest group
+  const latestGroupDaysLeft = groupedRecords.length > 0 
+    ? shouldDisableFollowUp(groupedRecords[0][1][0]).daysLeft 
+    : Infinity;
+
   return (
     <div className="container mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="flex items-center justify-between mb-6">
@@ -398,27 +474,42 @@ const IndividualFamPlanningTable: React.FC = () => {
       <div className="mt-4"></div>
       <PatientOverviewStats records={fpPatientRecords} />
 
-
-      {hasMissedFollowUps(fpPatientRecords) && (
+      {/* UPDATED: Only show warning for latest group missed follow-ups */}
+      {hasLatestGroupMissedFollowUps(groupedRecords) && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
           <div className="flex items-center">
             <MessageCircleWarning className="h-5 w-5 text-red-500 mr-2" />
             <h3 className="text-red-800 font-medium">
-              This patient has missed follow-up appointments!
+              This patient has missed follow-up appointments for their current method!
             </h3>
           </div>
           <ul className="list-disc pl-5 mt-2 text-red-700">
-            {fpPatientRecords
-              .filter((record) => {
-                const { status } = getFollowUpDisplayStatus(record.followv_status, record.dateOfFollowUp);
-                return status === "Missed";
-              })
+            {getLatestGroupMissedFollowUps(groupedRecords)
               .map((record, index) => (
                 <li key={index}>
                   Missed follow-up on {formatDate(record.dateOfFollowUp ?? "")} (Record #{record.fprecord})
                 </li>
               ))}
           </ul>
+          
+          {/* Countdown display for when follow-up will be disabled */}
+          {latestGroupDaysLeft < 0 && latestGroupDaysLeft > -4 && (
+            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-center">
+              <Calendar className="h-4 w-4 text-amber-600 mr-2" />
+              <span className="text-amber-800 font-medium">
+                Follow-up will be disabled after 3 days of inactivity & no new record is added.
+              </span>
+            </div>
+          )}
+          
+          {latestGroupDaysLeft <= -4 && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md flex items-center">
+              <MessageCircleWarning className="h-4 w-4 text-red-600 mr-2" />
+              <span className="text-red-800 font-medium">
+                Follow-up has been disabled (missed by more than 3 days)
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -431,6 +522,8 @@ const IndividualFamPlanningTable: React.FC = () => {
           <Accordion type="single" collapsible className="w-full">
             {groupedRecords.map(([patrecId, records], index) => {
               const isLatestGroup = index === 0; // First group is always the latest
+              const { disabled } = shouldDisableFollowUp(records[0]);
+              
               return (
                 <AccordionItem key={patrecId} value={patrecId}>
                   <AccordionTrigger className="hover:bg-gray-50 transition-colors">
@@ -442,15 +535,29 @@ const IndividualFamPlanningTable: React.FC = () => {
                         </Badge>
                       </div>
                       {isLatestGroup ? (
-                        <Button
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddFollowUp(records[0]);
-                          }}
-                        >
-                          <Plus className="h-4 w-4 mr-1" /> Add Follow-up
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                onClick={(e:any) => {
+                                  e.stopPropagation();
+                                  handleAddFollowUp(records[0]);
+                                }}
+                                disabled={disabled}
+                                className={disabled ? "text-gray-400 cursor-not-allowed" : ""}
+                              >
+                                <Plus className="h-4 w-4 mr-1" /> 
+                                Add Follow-up
+                              </Button>
+                            </TooltipTrigger>
+                            {disabled && (
+                              <TooltipContent>
+                                <p>Follow-up disabled: Missed appointment by more than 3 days</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
                       ) : (
                         <TooltipProvider>
                           <Tooltip>
@@ -460,7 +567,7 @@ const IndividualFamPlanningTable: React.FC = () => {
                                 variant="ghost"
                                 disabled
                                 className="text-gray-400"
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(e:any) => e.stopPropagation()}
                               >
                                 <Plus className="h-4 w-4 mr-1" /> Follow-up not available
                               </Button>

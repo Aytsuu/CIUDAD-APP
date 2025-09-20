@@ -691,6 +691,7 @@ console.log("Gender type: ",effectiveGender)
                   placeholder="No."
                   className="col-span-1"
                   {...inputProps}
+                  readOnly={true}
                 />
                 <FormInput
                   control={form.control}
@@ -699,6 +700,7 @@ console.log("Gender type: ",effectiveGender)
                   placeholder="Street"
                   className="col-span-1"
                   {...inputProps}
+                  readOnly={true}
                 />
                 <FormInput
                   control={form.control}
@@ -707,6 +709,7 @@ console.log("Gender type: ",effectiveGender)
                   placeholder="Barangay"
                   className="col-span-1"
                   {...inputProps}
+                  readOnly={true}
                 />
                 <FormInput
                   control={form.control}
@@ -715,6 +718,7 @@ console.log("Gender type: ",effectiveGender)
                   placeholder="Municipality/City"
                   className="col-span-1"
                   {...inputProps}
+                  readOnly={true}
                 />
                 <FormInput
                   control={form.control}
@@ -723,6 +727,7 @@ console.log("Gender type: ",effectiveGender)
                   placeholder="Province"
                   className="col-span-1"
                   {...inputProps}
+                  readOnly={true}
                 />
               </div>
             </div>
