@@ -289,7 +289,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                         );
                       })()}
                       <div className="mt-2 text-xs text-gray-500">
-                        {new Date(plan.dev_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                        {new Date(plan.dev_date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </div>
                     </div>
                   </td>

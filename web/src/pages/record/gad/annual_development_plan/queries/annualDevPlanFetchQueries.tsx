@@ -1,6 +1,6 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createAnnualDevPlan } from "../restful-api/annualPostAPI";
-import { getAnnualDevPlanById } from "../restful-api/annualGetAPI";
+import { getAnnualDevPlanById, getAnnualDevPlansByYear } from "../restful-api/annualGetAPI";
 import { updateAnnualDevPlan } from "../restful-api/annualPutAPI";
 
 export interface BudgetItem {
@@ -22,6 +22,8 @@ export interface AnnualDevPlanFormData {
 }
 
 export const useCreateAnnualDevPlan = () => {
+    const queryClient = useQueryClient();
+    
     return useMutation({
         mutationFn: async (args: { formData: AnnualDevPlanFormData; budgetItems: BudgetItem[]; resPersons?: string[] }) => {
             const { formData, budgetItems, resPersons } = args;
@@ -45,6 +47,11 @@ export const useCreateAnnualDevPlan = () => {
 
             return await createAnnualDevPlan(payload);
         },
+        onSuccess: () => {
+            // Invalidate and refetch annual dev plans queries to update the calendar
+            queryClient.invalidateQueries({ queryKey: ["annualDevPlans"] });
+            queryClient.invalidateQueries({ queryKey: ["annualDevPlan"] });
+        },
     });
 };
 
@@ -60,6 +67,8 @@ export const useGetAnnualDevPlanById = (devId?: string) => {
 };
 
 export const useUpdateAnnualDevPlan = () => {
+    const queryClient = useQueryClient();
+    
     return useMutation({
         mutationFn: async (args: { devId: number; formData: AnnualDevPlanFormData; budgetItems: BudgetItem[] }) => {
             const { devId, formData, budgetItems } = args;
@@ -77,5 +86,20 @@ export const useUpdateAnnualDevPlan = () => {
             };
             return await updateAnnualDevPlan(devId, payload);
         },
+        onSuccess: () => {
+            // Invalidate and refetch annual dev plans queries to update the calendar
+            queryClient.invalidateQueries({ queryKey: ["annualDevPlans"] });
+            queryClient.invalidateQueries({ queryKey: ["annualDevPlan"] });
+        },
+    });
+};
+
+export const useGetAnnualDevPlansByYear = (year: number) => {
+    return useQuery({
+        queryKey: ["annualDevPlans", year],
+        queryFn: async () => {
+            return await getAnnualDevPlansByYear(year);
+        },
+        enabled: Boolean(year),
     });
 };
