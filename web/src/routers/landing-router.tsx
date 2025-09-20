@@ -11,7 +11,7 @@ import About from '@/pages/landing/about';
 import Home from '@/pages/landing/home';
 import Donation from '@/pages/landing/donation';
 import Announcements from '@/pages/landing/announcements';
-
+import ForgotPassword from '@/pages/landing/ForgotPass';
 export const landing_router: RouteObject[] = [
   {
     path: "/",
@@ -53,7 +53,6 @@ export const landing_router: RouteObject[] = [
         path: "sign-in",
         element: <SignIn />
       },
-<<<<<<< HEAD
       {
         path: "forgot-password",
         element: <ForgotPassword />
@@ -64,8 +63,4 @@ export const landing_router: RouteObject[] = [
       }
     ]
   }
-=======
-    ]
-  },
->>>>>>> master
 ];

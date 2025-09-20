@@ -112,7 +112,7 @@ class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
 
         for recipient in created_recipients:
             if recipient.ar_category == "staff":
-                pos = Position.objects.get(pos_title=recipient.ar_type)
+                pos = Position.objects.get(pos_title__icontains=recipient.ar_type)
                 staff_members = Staff.objects.filter(pos=pos)
                 rec_list.extend(staff_members)
             else:

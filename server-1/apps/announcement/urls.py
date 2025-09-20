@@ -10,7 +10,7 @@ from .views import (
 urlpatterns = [
     # Announcement
     path("create/", AnnouncementView.as_view(), name="create-announcements"),
-    path("announcements/<int:ann_id>/", AnnouncementDetailView.as_view(), name="announcements-detail"),
+    path("<int:ann_id>/", AnnouncementDetailView.as_view(), name="announcements-detail"),
     path("list/", AnnouncementView.as_view(), name="retrieve-announcements"),
     path('created-received/<str:staff_id>/', AnnouncementCreatedReceivedView.as_view()),
     

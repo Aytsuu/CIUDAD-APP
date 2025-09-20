@@ -165,19 +165,9 @@ export default function LandingLayout() {
                   <Button>Dashboard</Button>
                 </Link>
               ) : (
-<<<<<<< HEAD
                 <Link to={"/sign-in"}>
                   <Button>Sign In</Button>
                 </Link>
-=======
-              <DialogLayout
-                trigger={<Button>Sign in</Button>}
-                className="p-0 m-0 border-0 bg-transparent shadow-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-0 focus:shadow-none max-w-none w-auto h-auto"
-                mainContent={
-                  <SignIn/>
-                }
-              />
->>>>>>> master
               )}
             </nav>
           </div>

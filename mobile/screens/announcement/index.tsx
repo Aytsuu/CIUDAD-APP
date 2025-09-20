@@ -17,6 +17,7 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { FileText } from "@/lib/icons/FileText"
 import { Calendar } from "@/lib/icons/Calendar"
 import { Clock, Bell, Mail, MessageSquare } from "lucide-react-native"
+import { getDateTimeFormat } from "@/helpers/dateHelpers"
 
 export default function AnnouncementListPage() {
   const router = useRouter()
@@ -33,23 +34,6 @@ export default function AnnouncementListPage() {
     setIsRefreshing(false)
   }
 
-  const formatDate = (date: string | null) => {
-    if (!date) return null
-    try {
-      const d = new Date(date)
-      return new Intl.DateTimeFormat("en-PH", {
-        year: "numeric",
-        month: "long",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-        timeZone: "Asia/Manila",
-      }).format(d)
-    } catch {
-      return null
-    }
-  }
 
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
@@ -101,7 +85,7 @@ export default function AnnouncementListPage() {
                 </Text>
               </View>
               <Text className="ml-6 text-gray-600 text-sm">
-                {formatDate(item.ann_created_at)}
+                {getDateTimeFormat(item.ann_created_at, true)}
               </Text>
             </View>
           )}
@@ -114,7 +98,7 @@ export default function AnnouncementListPage() {
                   <Clock size={14} className="text-gray-500 mr-2" />
                   <Text className="text-gray-600 text-xs">Start At</Text>
                   <Text className="text-gray-800 text-sm ml-2">
-                    {formatDate(item.ann_start_at)}
+                    {getDateTimeFormat(item.ann_start_at, true)}
                   </Text>
                 </View>
               )}
@@ -123,7 +107,7 @@ export default function AnnouncementListPage() {
                   <Clock size={14} className="text-gray-500 mr-2" />
                   <Text className="text-gray-600 text-xs">End At</Text>
                   <Text className="text-gray-800 text-sm ml-2">
-                    {formatDate(item.ann_end_at)}
+                    {getDateTimeFormat(item.ann_end_at, true)}
                   </Text>
                 </View>
               )}
@@ -137,7 +121,7 @@ export default function AnnouncementListPage() {
                 <View className="flex-row items-center mb-2">
                   <Clock size={14} className="text-blue-500 mr-2" />
                   <Text className="text-gray-700 text-sm font-medium">
-                    Posted On {formatDate(item.ann_start_at)}
+                    Posted On {getDateTimeFormat(item.ann_start_at, true)}
                   </Text>
                 </View>
               )}
@@ -154,7 +138,7 @@ export default function AnnouncementListPage() {
                       <Clock size={14} className="text-green-500 mr-2" />
                       <Text className="text-gray-600 text-xs">Start At</Text>
                       <Text className="text-gray-800 text-sm ml-2">
-                        {formatDate(item.ann_event_start)}
+                        {getDateTimeFormat(item.ann_event_start, true)}
                       </Text>
                     </View>
                   )}
@@ -163,7 +147,7 @@ export default function AnnouncementListPage() {
                       <Clock size={14} className="text-red-500 mr-2" />
                       <Text className="text-gray-600 text-xs">End At</Text>
                       <Text className="text-gray-800 text-sm ml-2">
-                        {formatDate(item.ann_event_end)}
+                        {getDateTimeFormat(item.ann_event_end, true)}
                       </Text>
                     </View>
                   )}
@@ -247,6 +231,7 @@ export default function AnnouncementListPage() {
 
   return (
     <PageLayout
+      wrapScroll={false}
       leftAction={
         <TouchableOpacity
           onPress={() => {
