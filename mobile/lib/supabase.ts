@@ -1,11 +1,11 @@
 import 'react-native-url-polyfill/auto'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createClient } from '@supabase/supabase-js'
-import { useQueryClient } from '@tanstack/react-query'
+import Constants from 'expo-constants'
 
 export const supabase = createClient(
-  process.env.EXPO_PUBLIC_SUPABASE_URL || "",
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "",
+  Constants.expoConfig?.extra?.supabaseUrl || "",
+  Constants.expoConfig?.extra?.supabaseAnonKey || "",
   {
     auth: {
       storage: AsyncStorage,

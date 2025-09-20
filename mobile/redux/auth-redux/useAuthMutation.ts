@@ -23,7 +23,7 @@ export const useLoginMutation = () => {
       dispatch(setAuthData({ 
         accessToken: data.access_token, 
         user: data.user,
-        refreshToken: data.refresh_token 
+        refreshToken: data.refresh 
       }));
       dispatch(setLoading(false));
     },
@@ -54,7 +54,7 @@ export const useSignupMutation = () => {
         dispatch(setAuthData({ 
           accessToken: data.access_token, 
           user: data.user,
-          refreshToken: data.refresh_token 
+          refreshToken: data.refresh_token
         }));
       }
       dispatch(setLoading(false));
@@ -114,12 +114,12 @@ export const useVerifyOTPMutation = () => {
       dispatch(setLoading(true));
       dispatch(clearError());
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       if (data.access_token && data.user) {
         dispatch(setAuthData({ 
           accessToken: data.access_token, 
           user: data.user,
-          refreshToken: data.refresh_token 
+          refreshToken: data.refresh 
         }));
         dispatch(clearOtpState());
       }
