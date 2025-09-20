@@ -97,6 +97,7 @@ class Disbursement_Voucher(models.Model):
     dis_or_num = models.CharField(max_length=255, null=True)  
     dis_paydate = models.DateField(default=date.today)
     dis_payacc = models.JSONField(default=list, null=True)
+    dis_signatories = models.JSONField(default=list, null=True)
     dis_is_archive = models.BooleanField(default=False)        
     
     staff = models.ForeignKey(

@@ -1,7 +1,5 @@
 import CardLayout from "@/components/ui/card/card-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import {
   Plus,
@@ -45,8 +43,6 @@ import { DisbursementVoucher, DisbursementFile } from "./incDisb-types";
 import { DocumentCard } from "./disbursement-suppdocs-modal";
 
 function TreasurerDisbursementVouchers() {
-  const filter = [{ id: "All", name: "All" }];
-
   const {
     data: disbursements = [],
     isLoading,
@@ -61,8 +57,6 @@ function TreasurerDisbursementVouchers() {
   const { mutate: restoreDisbursement } = useRestoreDisbursementVoucher();
   const { mutate: archiveDisbursementFile } = useArchiveDisbursementFile();
   const { mutate: restoreDisbursementFile } = useRestoreDisbursementFile();
-
-  const [selectedFilter, setSelectedFilter] = useState("All");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -109,10 +103,6 @@ function TreasurerDisbursementVouchers() {
   }, [detailedDisbursement, selectedDisbursement]);
 
   const filteredDisbursements = (disbursements as DisbursementVoucher[])
-    .filter((_disbursement: DisbursementVoucher) => {
-      if (selectedFilter === "All") return true;
-      return false;
-    })
     .filter((disbursement: DisbursementVoucher) => {
       return viewMode === "active"
         ? disbursement.dis_is_archive === false
@@ -128,7 +118,6 @@ function TreasurerDisbursementVouchers() {
       return payee.includes(search) || particulars.includes(search);
     });
 
-  // Calculate pagination values
   const totalPages = Math.ceil(filteredDisbursements.length / pageSize);
   const paginatedDisbursements = filteredDisbursements.slice(
     (currentPage - 1) * pageSize,
@@ -316,16 +305,6 @@ function TreasurerDisbursementVouchers() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex flex-row gap-2 justify-center items-center">
-            <Label>Filter: </Label>
-            <SelectLayout
-              className="bg-white"
-              options={filter}
-              placeholder="Filter"
-              value={selectedFilter}
-              onChange={(value: string) => setSelectedFilter(value)}
-            />
-          </div>
           {viewMode === "active" && (
             <DialogLayout
               trigger={
@@ -370,15 +349,6 @@ function TreasurerDisbursementVouchers() {
         )}
         {paginatedDisbursements.map(
           (disbursement: DisbursementVoucher, index: number) => {
-            const total =
-              disbursement.dis_particulars?.reduce((sum, item) => {
-                const amount =
-                  typeof item.amount === "string"
-                    ? parseFloat(item.amount) || 0
-                    : item.amount || 0;
-                return sum + amount;
-              }, 0) || 0;
-
             return (
               <CardLayout
                 key={disbursement.dis_num || index}
@@ -447,9 +417,7 @@ function TreasurerDisbursementVouchers() {
                   <div className="space-y-2">
                     <div className="line-clamp-2 text-sm text-gray-600">
                       <strong>Particulars:</strong>{" "}
-                      {disbursement.dis_particulars
-                        ?.map((p) => p.description)
-                        .join(", ") || "No particulars provided"}
+                      {disbursement.dis_particulars?.map((p) => p.forPayment).join(", ") || "No particulars provided"}
                     </div>
                     <div className="flex items-center justify-end mt-2">
                       <div>
@@ -474,7 +442,6 @@ function TreasurerDisbursementVouchers() {
           }
         )}
 
-        {/* Pagination Section */}
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
             Showing {(currentPage - 1) * pageSize + 1}-
@@ -567,7 +534,7 @@ function TreasurerDisbursementVouchers() {
                     .map((file) => (
                       <DocumentCard
                         key={file.disf_num}
-                        file={file}
+                        doc={file}
                         showActions={
                           selectedDisbursement?.dis_is_archive === false
                         }
@@ -600,7 +567,7 @@ function TreasurerDisbursementVouchers() {
                     .map((file) => (
                       <DocumentCard
                         key={file.disf_num}
-                        file={file}
+                        doc={file}
                         showActions={
                           selectedDisbursement?.dis_is_archive === false
                         }

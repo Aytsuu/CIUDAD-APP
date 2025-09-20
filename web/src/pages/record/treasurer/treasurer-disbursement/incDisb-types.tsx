@@ -19,6 +19,12 @@ export interface FileMutationVariables {
   disfNum: string;
 }
 
+export interface Signatory {
+  name: string;
+  position: string;
+  type: "certified_appropriation" | "certified_availability" | "certified_validity";
+}
+
 export type DisbursementFile = {
   disf_num: any;
   disf_name: string;
@@ -35,6 +41,7 @@ export type DisbursementVoucher = {
   dis_date: string;
   dis_fund: number;
   dis_particulars: any[];
+  dis_signatories: Signatory[];
   dis_docs: any[];
   dis_checknum: string;
   dis_bank: string;
@@ -54,6 +61,7 @@ export type DisbursementInput = {
   dis_date: string;
   dis_fund: number;
   dis_particulars: any[];
+  dis_signatories: Signatory[];
   dis_checknum: string;
   dis_bank: string;
   dis_or_num: string;
@@ -83,6 +91,7 @@ export interface DisbursementFormValues {
   dis_date: string;
   dis_fund: string;
   dis_particulars: ParticularItem[];
+  dis_signatories: Signatory[];
   dis_checknum: string;
   dis_bank: string;
   dis_or_num: string;
@@ -128,6 +137,7 @@ export const prepareDisbursementPayload = (disbursementData: any) => {
     dis_date: disbursementData.dis_date,
     dis_fund: disbursementData.dis_fund,
     dis_particulars: disbursementData.dis_particulars,
+    dis_signatories: disbursementData.dis_signatories,
     dis_docs: disbursementData.dis_docs,
     dis_checknum: disbursementData.dis_checknum || "",
     dis_bank: disbursementData.dis_bank || "",
@@ -155,6 +165,7 @@ export const prepareEditDisbursementPayload = (disbursementData: any) => {
     dis_date: disbursementData.dis_date,
     dis_fund: disbursementData.dis_fund,
     dis_particulars: disbursementData.dis_particulars,
+    dis_signatories: disbursementData.dis_signatories,
     dis_docs: disbursementData.dis_docs,
     dis_checknum: disbursementData.dis_checknum || "",
     dis_bank: disbursementData.dis_bank || "",
