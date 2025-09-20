@@ -12,6 +12,8 @@ import { useAuth } from "@/context/AuthContext";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import { DisbursementVoucherFormProps, DisbursementInput, FileInput, ParticularItem, PayAccItem, DisbursementFormValues, Signatory } from "./incDisb-types";
+import { DisbursementSchema } from "@/form-schema/treasurer/disbursement-schema";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
   onSuccess,
@@ -27,6 +29,7 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
   const addFilesMutation = useAddDisbursementFiles(); 
 
   const form = useForm<DisbursementFormValues>({
+    resolver: zodResolver(DisbursementSchema),
     defaultValues: {
       dis_payee: "",
       dis_tin: "",

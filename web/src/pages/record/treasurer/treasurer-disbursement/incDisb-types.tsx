@@ -59,7 +59,7 @@ export type DisbursementInput = {
   dis_payee: string;
   dis_tin: string;
   dis_date: string;
-  dis_fund: number;
+  dis_fund: any;
   dis_particulars: any[];
   dis_signatories: Signatory[];
   dis_checknum: string;
