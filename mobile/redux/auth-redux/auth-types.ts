@@ -1,9 +1,11 @@
 export interface User {
     acc_id: string;
     email: string;
-    username?: string;
+    phone: string;
     profile_image?: string;
-    resident?: Record <string, any>;
+    personal: Record<string, any>;
+    br?: string
+    rp?: string
     staff?: Record<string, any>;
 }
 
@@ -33,7 +35,7 @@ export interface SignupCredentials {
 
 export interface TokenResponse {
     access_token: string;
-    // refresh_token: string;
+    refresh: string;
     user: User;
 }
 
