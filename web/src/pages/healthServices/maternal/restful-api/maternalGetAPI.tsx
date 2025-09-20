@@ -2,6 +2,14 @@
 
 import { api2 } from "@/api/api"
 
+// interfaces
+export interface MaternalPatientFilters {
+  page?: number;
+	page_size?: number;
+	status?: string;
+	search?: string;
+}
+
 export const getPatients = async () => {
   try {
       const res = await api2.get("patientrecords/patient/view/create/")
@@ -12,13 +20,34 @@ export const getPatients = async () => {
 }
 
 // maternal-records
-export const getMaternalRecords = async () => {
+export const getMaternalRecords = async (filters: MaternalPatientFilters = {}) => {
   try {
-    const res = await api2.get("maternal/maternal-patients/")
-    return res.data.patients || [];
+    const params = new URLSearchParams();
+
+    if(filters.page) params.append('page', filters.page.toString());
+    if(filters.page_size) params.append('page_size', filters.page_size.toString());
+    if(filters.status && filters.status !== 'All') params.append('status', filters.status);
+    if(filters.search) params.append('search', filters.search);
+
+    const queryString = params.toString();
+    const url = queryString ? `maternal/maternal-patients/?${queryString}` : "maternal/maternal-patients/"
+
+    const res = await api2.get(url);
+    return res.data || {count: 0, next: null, previous: null, results: []};
   } catch (error) {
     console.error("Error fetching maternal records: ", error);
-    throw error;
+    return error || {count: 0, next: null, previous: null, results: []};
+  }
+}
+
+// maternal count and active pregnancies count
+export const getMaternalCounts = async () => {
+  try {
+    const res = await api2.get("maternal/counts/")
+    return res.data
+  } catch (error) {
+    console.error("Error fetching maternal counts: ", error);
+    return error;
   }
 }
 
@@ -74,16 +103,6 @@ export const getPatientPostpartumCount = async (patientId: string): Promise<numb
     }
 
     return 0
-  }
-}
-
-export const getActivePregnanciesCount = async () => {
-  try {
-    const res = await api2.get("maternal/pregnancy_count/")
-    return res.data.active_pregnancy_count || 0;
-  } catch (error) {
-    console.error("Error fetching active pregnancies count: ", error);
-    throw error;
   }
 }
 

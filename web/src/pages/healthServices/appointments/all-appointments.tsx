@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { ArrowUpDown, Search, FileInput, AlertCircle } from "lucide-react"
+import { ArrowUpDown, Search, FileInput, AlertCircle, Loader2, FileText } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
 import { DataTable } from "@/components/ui/table/data-table"
@@ -15,11 +15,13 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { useLoading } from "@/context/LoadingContext"
 
+import { getAgeInUnit } from "@/helpers/ageCalculator"
+
 import ScheduleTab from "./appointments-tab"
 
 import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries/fetch"
 
-
+// main component
 export default function ScheduleRecords() {
   type ScheduleRecord = {
     id: number
@@ -44,9 +46,10 @@ export default function ScheduleRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
-  const [timeFrame, setTimeFrame] = useState("today");
+  const [timeFrame, setTimeFrame] = useState("all");
+  const [isTimeFrameLoading, setIsTimeFrameLoading] = useState(false);
 
-  const { showLoading, hideLoading } = useLoading();
+  const { showLoading, hideLoading } = useLoading(); // for loading state
 
   // fetch data 
   const { data: paginatedData, isLoading, error, refetch } = useAllFollowUpVisits({
@@ -56,6 +59,22 @@ export default function ScheduleRecords() {
     search: searchTerm || undefined,
     time_frame: timeFrame,
   })
+
+  // age unit handler
+  function getBestAgeUnit(dob: string): { value: number; unit: string } {
+    const years = getAgeInUnit(dob, "years");
+    if (years > 0) return { value: years, unit: years === 1 ? "yr" : "yrs" };
+
+    const months = getAgeInUnit(dob, "months");
+    if (months > 0) return { value: months, unit: months === 1 ? "mo" : "mos" };
+
+    const weeks = getAgeInUnit(dob, "weeks");
+    if (weeks > 0) return { value: weeks, unit: weeks === 1 ? "wk" : "wks" };
+
+    const days = getAgeInUnit(dob, "days");
+    return { value: days, unit: days === 1 ? "day" : "days" };
+  }
+  
 
   // Transform the Django API data to match our ScheduleRecord type
   const transformedData = useMemo((): ScheduleRecord[] => {
@@ -70,26 +89,9 @@ export default function ScheduleRecords() {
         }
 
         const patientInfo = patientDetails.patient_info || patientDetails.personal_info || {}
+        const { value: ageInfo, unit: ageUnit } = getBestAgeUnit(patientInfo.per_dob || "")
         const address = patientDetails.address || {}
 
-        const calculateAge = (dob: string) => {
-          if (!dob) return { age: 0, ageTime: "yrs" }
-          try {
-            const birthDate = new Date(dob)
-            const today = new Date()
-            let age = today.getFullYear() - birthDate.getFullYear()
-            const monthDiff = today.getMonth() - birthDate.getMonth()
-
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-              age--
-            }
-            return { age: Math.max(0, age), ageTime: "yrs" }
-          } catch {
-            return { age: 0, ageTime: "yrs" }
-          }
-        }
-
-        const ageInfo = calculateAge(patientInfo.per_dob)
 
         const formatDate = (dateStr: string) => {
           if (!dateStr) return new Date().toISOString().split("T")[0]
@@ -107,14 +109,14 @@ export default function ScheduleRecords() {
             lastName: patientInfo.per_lname || "Unknown",
             middleName: patientInfo.per_mname || "",
             gender: patientInfo.per_sex || "Unknown",
-            age: ageInfo.age,
-            ageTime: ageInfo.ageTime,
+            age: ageInfo,
+            ageTime: ageUnit,
             patientId: patientDetails.pat_id || patientInfo.pat_id || "",
           },
           scheduledDate: formatDate(visit.followv_date || visit.date),
           purpose: visit.followv_description || visit.description || visit.purpose || "Follow-up Visit",
-          status: visit.followv_status || visit.status || "Pending",
-          sitio: address.sitio || address.location || "Unknown",
+          status: visit.followv_status || "Pending",
+          sitio: address.add_sitio || "Unknown",
           type: patientDetails.pat_type || "Unknown",
           patrecType: patientDetails.patrec_type || "Unknown",
         }
@@ -135,7 +137,7 @@ export default function ScheduleRecords() {
 
   const handleSearch = (search: string) => {
     setSearchTerm(search)
-    setPage(1) // Reset to first page on search
+    setPage(1)
   }
 
   const handleFilterChange = (filter: string) => {
@@ -149,8 +151,13 @@ export default function ScheduleRecords() {
   }
 
   const handleTimeFrameChange = (timeFrame: string) => {
+    setIsTimeFrameLoading(true);
     setTimeFrame(timeFrame)
     setPage(1)
+
+    setTimeout(() => {
+      setIsTimeFrameLoading(false);
+    }, 1000)
   }
 
   // determine if missed 
@@ -168,12 +175,12 @@ export default function ScheduleRecords() {
 
   const columns: ColumnDef<ScheduleRecord>[] = [
     {
-      accessorKey: "id",
-      header: "Schedule ID",
+      accessorKey: "no",
+      header: "No.",
       cell: ({ row }) => (
         <div className="flex justify-center">
           <div className="flex justify-center items-center gap-2 cursor-pointer bg-blue-100 text-blue-800 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
+            {row.index + 1}
           </div>
         </div>
       ),
@@ -227,7 +234,7 @@ export default function ScheduleRecords() {
       header: "Purpose",
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[150px] px-2">
-          <div className="w-full truncate">{row.original.purpose}</div>
+          <div className="w-full break-words">{row.original.purpose}</div>
         </div>
       ),
     },
@@ -237,10 +244,10 @@ export default function ScheduleRecords() {
       cell: ({ row }) => {
         const actualStatus = getAppointmentStatus(row.original.scheduledDate, row.original.status)
         const statusColors = {
-          pending: "bg-yellow-100 text-yellow-800",
-          completed: "bg-green-100 text-green-800",
-          missed: "bg-red-100 text-red-800",
-          cancelled: "bg-gray-100 text-gray-800",
+          pending: "bg-yellow-100 text-yellow-800 text-transform: capitalize",
+          completed: "bg-green-100 text-green-800 text-transform: capitalize",
+          missed: "bg-red-100 text-red-800 text-transform: capitalize",
+          cancelled: "bg-gray-100 text-gray-800 text-transform: capitalize",
         }
 
         return (
@@ -283,9 +290,7 @@ export default function ScheduleRecords() {
                 <div
                   className="bg-white hover:bg-gray-50 border text-black px-4 py-2 rounded cursor-pointer"
                   onClick={() => {
-                    // Handle view action - you can navigate to patient details
                     console.log("View patient:", row.original.patient.patientId)
-                    // You can add navigation logic here
                   }}
                 >
                   <p className="font-semibold">View</p>
@@ -336,14 +341,14 @@ export default function ScheduleRecords() {
     window.URL.revokeObjectURL(url)
   }
 
-  // Loading state
+  // Loading state for global spinner (optional)
   useEffect(() => {
     if (isLoading) {
-      showLoading()
+      showLoading();
     } else {
-      hideLoading()
+      hideLoading();
     }
-  }, [isLoading])
+  }, [isLoading, showLoading, hideLoading]);
 
   // Error state
   if (error) {
@@ -361,6 +366,8 @@ export default function ScheduleRecords() {
     )
   }
 
+  const showLoadingState = isLoading || isTimeFrameLoading;
+
   return (
     <LayoutWithBack title="Scheduled Follow-up Visits" description="View patient appointment schedules">
       <div className="w-full h-full bg-white/40 p-2 flex flex-col">
@@ -371,6 +378,7 @@ export default function ScheduleRecords() {
 
           <div className="flex justify-center items-center">
             <span className="text-sm font-semibold text-center text-white bg-blue-500 rounded-lg py-2 px-3 hover:bg-blue-600 shadow-md transition-colors duration-200 ease-in-out cursor-pointer">
+              
               Defaulters Tracking
             </span>
           </div>
@@ -429,12 +437,19 @@ export default function ScheduleRecords() {
             </div>
           </div>
 
-          <div className="w-full h-[30rem] overflow-x-auto">
-            {transformedData.length > 0 ? (
+          <div className="w-full overflow-x-auto">
+            {showLoadingState ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="animate-spin" /> Loading...
+              </div>
+            ) : transformedData.length > 0 ? (
               <DataTable columns={columns} data={transformedData} />
             ) : (
-              <div className="flex items-center justify-center h-64">
-                <p className="text-gray-500">No follow-up visits found</p>
+              <div className="flex justify-center">
+                <p className="flex text-gray-500 items-center"> 
+                  <FileText size={28}/> 
+                  No follow-up visits found for {timeFrame === "today" ? "today" : timeFrame === "thisWeek" ? "this week" : "this month"}
+                </p>
               </div>
             )}
           </div>
@@ -442,7 +457,7 @@ export default function ScheduleRecords() {
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-gray-600 pl-0 sm:pl-4">
-              Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, paginatedData?.count)} of {paginatedData?.count} rows
+              Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, paginatedData?.count) || 0} of {paginatedData?.count} rows
             </p>
 
             {/* Pagination */}

@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
-from django.db.models import OuterRef, Exists, Prefetch
+from django.db.models import OuterRef, Exists, Prefetch, Q, Count
 from rest_framework.response import Response
 
 from apps.maternal.serializer import *
@@ -11,6 +11,7 @@ from apps.maternal.serializers.prenatal_serializer import *
 from apps.maternal.serializers.pregnancy_serializer import *
 
 from apps.patientrecords.serializers.patients_serializers import *
+from apps.pagination import StandardResultsPagination
 from .models import *
 from .utils import *
 
@@ -249,53 +250,78 @@ class PostpartumRecordDetailView(generics.RetrieveAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
+class MaternalPatientListView(generics.ListAPIView):
+    serializer_class = PatientSerializer
+    pagination_class = StandardResultsPagination
 
-@api_view(['GET'])
-def get_maternal_patients(request):
-    try:
-        maternal_patients = Patient.objects.filter(
+    def get_queryset(self):
+        queryset = Patient.objects.filter(
             Exists(PatientRecord.objects.filter(
                 pat_id=OuterRef('pat_id'),
                 patrec_type__in=['Prenatal', 'Postpartum Care']
             ))
+        ).annotate(
+            active_pregnancy_count=Count('pregnancy', filter=Q(pregnancy__status='active'))
         ).distinct()
 
-        serializer = PatientSerializer(maternal_patients, many=True)
 
-        return Response({
-            'success': True,
-            'patients': serializer.data,
-            'count': maternal_patients.count()  
-        }, status=status.HTTP_200_OK)
+        params = self.request.query_params
+        status = params.get('status')
+        search = params.get('search')
 
-    except Exception as e:
-        return Response({
-            'success': False,
-            'error': str(e)
+        filters = Q()
+
+        if status and status.lower() not in ["all", ""]:
+            filters &= Q(pat_type=status)
+
+        if search:
+            search = search.strip()
+            if search:
+                search_filters = Q()
+
+                search_filters |= (
+                    Q(rp_id__per__per_fname__icontains=search) |
+                    Q(rp_id__per__per_mname__icontains=search) |
+                    Q(rp_id__per__per_lname__icontains=search) 
+                ) 
+
+                search_filters |= (
+                    Q(trans_id__tran_fname__icontains=search) |
+                    Q(trans_id__tran_lname__icontains=search) |
+                    Q(trans_id__tran_mname__icontains=search)
+                )
+                
+                filters &= search_filters
+        
+        if filters:
+            queryset = queryset.filter(filters)
             
-        }, status=500)
+        return queryset
 
 
-@api_view(['GET'])
-def get_all_active_pregnancies(request):
-    """Get all active pregnancies with related prenatal and postpartum records"""
-    try:
-        pregnancies = Pregnancy.objects.filter(
-            status="active"
-        ).count()
+# Fix: Use APIView and return Response in get method
+from rest_framework.views import APIView
 
-        return Response({
-            'success': True,
-            'active_pregnancy_count': pregnancies
-        }, status=status.HTTP_200_OK)
+class MaternalCountView(APIView):
+    def get(self, request):
+        try:
+            total_patients = Patient.objects.filter(
+                Exists(Pregnancy.objects.filter(
+                    pat_id=OuterRef('pat_id')
+                ))
+            ).distinct().count()
+            active_pregnancy_count = Pregnancy.objects.filter(status='active').count()
 
-    except Exception as e:
-        logger.error(f"Error fetching active pregnancies: {str(e)}")
-        return Response(
-            {'error': f'Failed to fetch active pregnancies: {str(e)}'},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
+            return Response({
+                'total_patients': total_patients,
+                'active_pregnancies': active_pregnancy_count
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error fetching counts: {str(e)}")
+            return Response({
+                'error': 'Failed to fetch counts'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 
 @api_view(['GET'])
 def get_patient_prenatal_count(request, pat_id):

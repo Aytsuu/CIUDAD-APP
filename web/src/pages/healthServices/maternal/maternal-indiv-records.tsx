@@ -375,7 +375,7 @@ export default function MaternalIndivRecords() {
       <LayoutWithBack title="Maternal Records" description="Manage mother's individual maternal records">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin mr-2" />
-          <span>Loading maternal individual records...</span>
+          <span>Loading records...</span>
         </div>
       </LayoutWithBack>
     )

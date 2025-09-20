@@ -26,7 +26,6 @@ import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 
 import { generateDefaultValues } from "@/pages/record/health/patientsRecord/generateDefaultValues"
 import { capitalize } from "@/helpers/capitalize"
-import { formatResidents } from "../../profiling/ProfilingFormats"
 
 import { useResidents, useAllTransientAddresses } from "./queries/fetch"
 import { useAddPatient } from "./queries/add"
@@ -119,8 +118,6 @@ export default function CreatePatientRecord() {
   const { data: residentsData, isLoading: residentLoading } = useResidents()
   const { data: transAddress, isLoading: transAddressLoading } = useAllTransientAddresses()
 
-  const formattedResidents = formatResidents(residentsData)
-
   const patientType = form.watch("patientType")
   const phId = form.watch("philhealthId")
 
@@ -179,7 +176,7 @@ export default function CreatePatientRecord() {
         id: personal.rp_id.toString(),
         name: (
           <>
-            <span className="rounded-md px-2 py-1 font-poppins mr-1 bg-blue-600 text-white"># {personal.rp_id} </span>
+            <span className="rounded-md px-2 py-1 font-poppins mr-2 bg-green-500 text-white">#{personal.rp_id} </span>
             {personal.personal_info?.per_lname || ""}, {personal.personal_info?.per_fname || ""} {personal.personal_info?.per_mname || ""}
             
           </>
@@ -433,7 +430,7 @@ export default function CreatePatientRecord() {
                           <Label className="text-black/70">Resident</Label>
                           <div className="grid mt-[6.5px] ">
                             <Combobox
-                              options={formattedResidents}
+                              options={persons.formatted }
                               value={selectedResidentId}
                               onChange={handlePatientSelection}
                               placeholder={residentLoading ? "Loading residents..." : "Select a resident"}

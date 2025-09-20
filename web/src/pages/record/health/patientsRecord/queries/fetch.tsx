@@ -84,6 +84,8 @@ export const useAllFollowUpVisits = (filters: AppointmentFilters, options = {}) 
     queryFn: () => getAllFollowUpVisits(filters),
     staleTime: 60 * 2,
     retry: 3,
+	refetchOnMount: false,
+	refetchInterval: 2 * 1000,
 	placeholderData: keepPreviousData,
     ...options,
   })

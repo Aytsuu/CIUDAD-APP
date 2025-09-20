@@ -3,13 +3,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { getPatients, 
 			getMaternalRecords, 
+			getMaternalCounts,
 			getPatientPostpartumCount,
 			getPregnancyDetails,
 			getPrenatalPatientMedHistory,
 			getPrenatalPatientObsHistory,
 			getPrenatalPatientBodyMeasurement,
 			getPatientPrenatalCount,
-			getActivePregnanciesCount,
 			getPrenatalPatientFollowUpVisits,
 			getPrenatalPatientPrevHospitalization,
 			getPrenatalPatientPrevPregnancy,
@@ -21,6 +21,8 @@ import { getPatients,
 			getLatestPatientPostpartumRecord,
 			getIllnessList,
 } from "../restful-api/maternalGetAPI";
+
+import { MaternalPatientFilters } from "../restful-api/maternalGetAPI";
 
 
 // for getPatients
@@ -34,22 +36,25 @@ export const usePatients = () => {
 }
 
 // for getMaternalRecords
-export const useMaternalRecords = () => {
+export const useMaternalRecords = (filters: MaternalPatientFilters, options = {}) => {
 	return useQuery({
-		queryKey: ["maternalRecords"],
-		queryFn: getMaternalRecords,
+		queryKey: ["maternalRecords", filters],
+		queryFn: () => getMaternalRecords(filters),
 		staleTime: 20 * 1000,
 		retry: 2,
+		refetchInterval: 2000,
+		...options
 	});
 }
 
-// for getActivePregnanciesCount
-export const useActivepregnanciesCount = () => {
+// maternal and active pregnancies count
+export const useMaternalCounts = () => {
 	return useQuery({
-		queryKey: ["activePregnanciesCount"],
-		queryFn: getActivePregnanciesCount,
-		staleTime: 60 * 1, 
-		retry: 2,
+		queryKey: ["maternalCounts"],
+		queryFn: getMaternalCounts,
+		staleTime: 20 * 1000, 
+		retry: 1, 
+		refetchInterval: 2000,
 	})
 }
 

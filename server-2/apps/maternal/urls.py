@@ -3,8 +3,8 @@ from . import views
 from .views import *
 
 urlpatterns=[
-    path('maternal-patients/', views.get_maternal_patients, name='get-maternal-patients'),
-	path('pregnancy_count/', get_all_active_pregnancies, name='active-pregnancies-count'),
+    path('maternal-patients/', MaternalPatientListView.as_view(), name='get-maternal-patients'),
+	path('counts/', MaternalCountView.as_view(), name='maternal-count'),
     path('pregnancy/<str:pat_id>/details/', get_patient_pregnancy_records, name='pregnancy-records-details' ),
 
     path('patient/<str:pat_id>/medicalhistory/', PrenatalPatientMedHistoryView.as_view(), name='prenatal-patient-medical-history'),

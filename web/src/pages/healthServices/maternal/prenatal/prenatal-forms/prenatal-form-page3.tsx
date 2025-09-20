@@ -537,8 +537,8 @@ export default function PrenatalFormThirdPg({
                         {/* 1st Trimester */}
                         <Card className="border rounded-md px-3 py-5">
                           <CardContent>
-                            <Label className="col-span-2">1st Trimester</Label>
-                            <Label className="text-black text-opacity-50 italic ml-1">(up to 12 wks and 6 days)</Label>
+                            <Label className="col-span-2">1 - 3 Months of AOG</Label>
+                            <Label className="text-black text-opacity-50 italic ml-1">(atleast 1 visit)</Label>
                             <div className="border px-5 py-3 rounded-md mt-2">
                               <div className="mb-2">
                                 <FormDateTimeInput
@@ -548,22 +548,22 @@ export default function PrenatalFormThirdPg({
                                   type="date"
                                 />
                               </div>
-                              <div className="mb-2">
+                              {/* <div className="mb-2">
                                 <FormDateTimeInput
                                   control={form.control}
                                   name="ancVisits.firstTriTwo"
                                   label="2nd visit"
                                   type="date"
                                 />
-                              </div>
+                              </div> */}
                             </div>
                           </CardContent>
                         </Card>
                         {/* 2nd Trimester */}
                         <Card className="border rounded-md py-5 px-3">
                           <CardContent>
-                            <Label className="col-span-2">2nd Trimester</Label>
-                            <Label className="text-black text-opacity-50 italic ml-1">(13-27 wks and 6 days)</Label>
+                            <Label className="col-span-2">4 - 6 Months of AOG</Label>
+                            <Label className="text-black text-opacity-50 italic ml-1">(atleast 2 visits)</Label>
                             <div className="border px-5 py-3 rounded-md mt-2">
                               <div className="mb-2">
                                 <FormDateTimeInput
@@ -587,8 +587,8 @@ export default function PrenatalFormThirdPg({
                         {/* 3rd Trimester */}
                         <Card className="grid border px-3 py-5 rounded-md">
                           <CardContent>
-                            <Label className="col-span-2">3rd Trimester</Label>
-                            <Label className="text-black text-opacity-50 italic ml-1">(28 wks to 40 wks)</Label>
+                            <Label className="col-span-2">7 - 9 Months of AOG</Label>
+                            <Label className="text-black text-opacity-50 italic ml-1">(atleast 5 visits)</Label>
                             <div className="border px-5 py-3 rounded-md mt-2">
                               <div className="mb-2">
                                 <FormDateTimeInput
@@ -611,6 +611,14 @@ export default function PrenatalFormThirdPg({
                                   control={form.control}
                                   name="ancVisits.thirdTriThree"
                                   label="3rd visit"
+                                  type="date"
+                                />
+                              </div>
+                              <div>
+                                <FormDateTimeInput
+                                  control={form.control}
+                                  name="ancVisits.thirdTriFour"
+                                  label="4th visit"
                                   type="date"
                                 />
                               </div>
