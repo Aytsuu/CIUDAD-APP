@@ -1,22 +1,12 @@
 import React from "react"
-import { Form } from "@/components/ui/form/form"
 import { Card } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/table/data-table"
-import { capitalizeAllFields } from "@/helpers/capitalize"
 import { useLoading } from "@/context/LoadingContext"
-import { Loader2, Building2, ChevronLeft } from "lucide-react"
-import { useAuth } from "@/context/AuthContext"
+import { Loader2, Building2 } from "lucide-react"
 import { useLocation } from "react-router"
-import { formatSitio } from "../ProfilingFormats"
-import { useResidentForm } from "../resident/form/useResidentForm"
-import { useAddAddress, useAddPerAddress } from "../queries/profilingAddQueries"
-import { useUpdateProfile } from "../queries/profilingUpdateQueries"
 import { Type } from "../ProfilingEnums"
-import { useOwnedBusinesses, useRespondentInfo, useSitioList } from "../queries/profilingFetchQueries"
+import { useOwnedBusinesses, useRespondentInfo } from "../queries/profilingFetchQueries"
 import { businessDetailsColumns } from "../resident/ResidentColumns"
-import PersonalInfoForm from "../resident/form/PersonalInfoForm"
-import { Button } from "@/components/ui/button/button"
-import { useSafeNavigate } from "@/hooks/use-safe-navigate"
 
 // Loading Component
 const ActivityIndicator = ({ message }: { message: string }) => (
@@ -51,38 +41,18 @@ export default function RespondentDetails() {
   // ============= STATE INITIALIZATION ===============
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params, [location.state]);
-  const { user } = useAuth()
-  const { safeNavigate } = useSafeNavigate();
+  // const { user } = useAuth()
   const { showLoading, hideLoading } = useLoading()
-  const { mutateAsync: updateProfile } = useUpdateProfile()
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
-  const [formType, setFormType] = React.useState<Type>(params?.type)
-  const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false)
-  const [addresses, setAddresses] = React.useState<Record<string, any>[]>([])
-  const [validAddresses, setValidAddresses] = React.useState<boolean[]>([])
-  const { mutateAsync: addAddress } = useAddAddress()
-  const { mutateAsync: addPersonalAddress } = useAddPerAddress()
+  // const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
+  const [formType, _setFormType] = React.useState<Type>(params?.type)
+  const [_isReadOnly, setIsReadOnly] = React.useState<boolean>(false)
   const { data: respondentInfo, isLoading: isLoadingRespondentInfo } = useRespondentInfo(params?.data.respondentId)
   const { data: ownedBusinesses, isLoading: isLoadingBusinesses } = useOwnedBusinesses({
     br: params?.data.respondentId,
   })
-  const { data: sitioList } = useSitioList()
 
-  const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } = useResidentForm(respondentInfo)
   const businesses = ownedBusinesses?.results || []
-  const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList])
 
-  const validator = React.useMemo(
-    () =>
-      addresses?.map(
-        (address: any) =>
-          address.add_province !== "" &&
-          address.add_city !== "" &&
-          address.add_barangay !== "" &&
-          (address.add_barangay === "San Roque" ? address.sitio !== "" : address.add_external_sitio !== ""),
-      ),
-    [addresses],
-  )
   // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
     if (isLoadingRespondentInfo || isLoadingBusinesses) showLoading()
@@ -93,114 +63,41 @@ export default function RespondentDetails() {
     // Set the form values when the component mounts
     if (formType == Type.Viewing) {
       setIsReadOnly(true)
-      setAddresses(respondentInfo?.per_addresses)
     }
     formType === Type.Editing && setIsReadOnly(false)
   }, [formType, respondentInfo])
 
-  React.useEffect(() => {
-    setAddresses(respondentInfo?.per_addresses)
-  }, [respondentInfo])
 
   // ============== ====== HANDLERS ====================
-  const validateAddresses = React.useCallback(() => {
-    setValidAddresses(validator)
-    const isValidAll = validator.every((valid: any) => valid === true)
-    return isValidAll
-  }, [addresses])
+  // const submit = async () => {
+  //   if (!(await form.trigger())) {
+  //     handleSubmitError("Please fill out all required fields")
+  //     return
+  //   }
 
-  const submit = async () => {
-    setIsSubmitting(true)
-    if (!(await form.trigger())) {
-      setIsSubmitting(false)
-      handleSubmitError("Please fill out all required fields")
-      return
-    }
-    if (!validateAddresses()) {
-      setIsSubmitting(false)
-      handleSubmitError("Please fill out all required fields")
-      return
-    }
-    try {
-      const isAddressAdded = respondentInfo?.per_addresses?.length < addresses.length
-      const values = form.getValues()
-      const {per_age, ...personalInfoRest } = respondentInfo 
-      if (
-        checkDefaultValues(
-          { ...values, per_addresses: addresses },
-          personalInfoRest,
-        )
-      ) {
-        setIsSubmitting(false)
-        setFormType(Type.Viewing)
-        handleSubmitError("No changes made")
-        return
-      }
-      
-      const initialiAddresses = addresses.slice(0, respondentInfo?.per_addresses?.length);
-      const addedAddress = addresses.slice(respondentInfo?.per_addresses?.length, addresses.length);
+  //   try {
+  //     const values = form.getValues()
+  //     const {per_age, ...personalInfoRest } = respondentInfo 
+  //     if (
+  //       checkDefaultValues(
+  //         values,
+  //         personalInfoRest,
+  //       )
+  //     ) {
+  //       setIsSubmitting(false)
+  //       setFormType(Type.Viewing)
+  //       handleSubmitError("No changes made")
+  //       return
+  //     }
 
-      // Add new address to the database
-      if (isAddressAdded) {
-        await addAddress(addedAddress, {
-          onSuccess: (new_addresses) => {
-            // Format the addresses to match the expected format
-            const per_addresses = new_addresses.map((address: any) => {
-              return {
-                add: address.add_id,
-                per: respondentInfo?.per_id,
-              }
-            })
-
-            const initial_per_addresses = initialiAddresses.map((address: any) => ({
-              add: address.add_id,
-              per: respondentInfo?.per_id,
-              initial: true
-            }));
-
-            // Link personal address
-            addPersonalAddress({
-              data: [...per_addresses, ...initial_per_addresses], 
-              staff_id: user?.staff?.staff_id
-            })
-          },
-        })
-
-        if (
-          checkDefaultValues(
-            { ...values, per_addresses: initialiAddresses },
-            personalInfoRest,
-          )
-        ) {
-          setIsSubmitting(false)
-          setFormType(Type.Viewing)
-          handleSubmitSuccess("Profile updated successfully");
-          return
-        }
-      }
-      // Update the profile and address if any changes were made
-      updateProfile(
-        {
-          personalId: respondentInfo?.per_id,
-          values: {
-            ...capitalizeAllFields(values),
-            per_addresses: isAddressAdded ? initialiAddresses : addresses,
-            staff_id: user?.staff?.staff_id,
-          },
-        },
-        {
-          onSuccess: () => {
-            handleSubmitSuccess("Profile updated successfully")
-            setIsSubmitting(false)
-            setFormType(Type.Viewing)
-          },
-        },
-      )
-    } catch (err) {
-      setIsSubmitting(false);
-      throw err
-    }
-  }
+  //     handleSubmitSuccess("Profile updated successfully")
+  //     setFormType(Type.Viewing)
+  //   } catch (err) {
+  //     showErrorToast("Failed to update profile. Please try again.")
+  //   } finally {
+  //     setIsSubmitting(false)
+  //   }
+  // }
 
   // Render Business Card Content
   const renderBusinessContent = () => {
@@ -234,47 +131,12 @@ export default function RespondentDetails() {
   return (
     <div className="grid gap-4">
       <Card className="w-full p-10">
-        <div className="pb-4 flex gap-4">
-          <div>
-            <Button onClick={() => safeNavigate.back()} variant={"outline"} size={'sm'}>
-              <ChevronLeft />
-            </Button>
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold">Personal Information</h2>
-            {formType === Type.Editing ? (
-              <p className="text-xs text-black/50">Fill out all necessary fields</p>
-            ) : (
-              <p className="text-xs text-black/50">Viewing the complete information of Respondent No. {params?.data?.respondentId}</p>
-            )}
-          </div>
-        </div>
         {isLoadingRespondentInfo ? (
           <ActivityIndicator message="Loading personal information..." />
         ) : (
-          <Form {...form}>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                submit()
-              }}
-              className="flex flex-col gap-4"
-            >
-              <PersonalInfoForm
-                formattedSitio={formattedSitio}
-                addresses={addresses}
-                validAddresses={validAddresses}
-                setValidAddresses={setValidAddresses}
-                setAddresses={setAddresses}
-                form={form}
-                formType={formType}
-                isSubmitting={isSubmitting}
-                submit={submit}
-                isReadOnly={isReadOnly}
-                setFormType={setFormType}
-              />
-            </form>
-          </Form>
+          <div>
+
+          </div>
         )}
       </Card>
 
