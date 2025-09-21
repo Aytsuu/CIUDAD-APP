@@ -49,8 +49,8 @@ export type DisbursementVoucher = {
   dis_paydate: string;
   dis_payacc: any[];
   dis_is_archive: boolean;
-  staff_id?: number;
-  staff_name?: string;
+  staff_id?: any;
+  staff_name?: any;
   files?: DisbursementFile[];
 };
 
@@ -67,7 +67,7 @@ export type DisbursementInput = {
   dis_or_num: string;
   dis_paydate: string;
   dis_payacc: any[];
-  staff?: number;
+  staff?: any;
   dis_is_archive?: boolean;
 };
 
@@ -97,7 +97,7 @@ export interface DisbursementFormValues {
   dis_or_num: string;
   dis_paydate: string;
   dis_payacc: PayAccItem[];
-  staff?: number;
+  staff?: any;
   files: MediaUploadType[];
 }
 
@@ -113,7 +113,7 @@ export type DisbursementFileInput = {
 };
 
 export type Staff = {
-  staff_id: number;
+  staff_id: any;
   full_name: string;
   position: string;
 };
@@ -160,6 +160,7 @@ export const prepareDisbursementPayload = (disbursementData: any) => {
 
 export const prepareEditDisbursementPayload = (disbursementData: any) => {
   const payload = {
+    dis_num: disbursementData.dis_num,
     dis_payee: disbursementData.dis_payee,
     dis_tin: disbursementData.dis_tin || "",
     dis_date: disbursementData.dis_date,

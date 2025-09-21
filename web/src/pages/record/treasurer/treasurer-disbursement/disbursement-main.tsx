@@ -82,10 +82,18 @@ function TreasurerDisbursementVouchers() {
     }
   );
 
-  const { data: disbursementFiles = [], isLoading: isFilesLoading } =
-    useGetDisbursementFiles(selectedDisbursement?.dis_num?.toString() || "", {
-      enabled: !!selectedDisbursement?.dis_num,
-    });
+  const { data: disbursementFiles = [], isLoading: isFilesLoading  } = useGetDisbursementFiles(
+  selectedDisbursement?.dis_num?.toString() || "", 
+  {
+    enabled: !!selectedDisbursement?.dis_num,
+  }
+);
+
+const disbursementWithFiles = detailedDisbursement 
+  ? { ...detailedDisbursement, files: disbursementFiles }
+  : selectedDisbursement
+  ? { ...selectedDisbursement, files: disbursementFiles }
+  : null;
 
   useEffect(() => {
     if (isFilesDialogOpen) {
@@ -602,7 +610,7 @@ function TreasurerDisbursementVouchers() {
                   setSelectedDisbursement(null);
                   setEditingDisbursement(null);
                 }}
-                existingVoucher={editingDisbursement}
+                existingVoucher={disbursementWithFiles}
               />
             </div>
           }

@@ -85,7 +85,7 @@ const barangayItems: BaseMenuItem[] = [
         url: "/treasurer-income-expense-main",
       },
       {
-        title: "Disbursement",
+        title: "Disbursement Voucher",
         url: "/treasurer-disbursement",
       },
       {
