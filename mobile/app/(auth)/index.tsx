@@ -9,6 +9,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <Business/>
+    return <App/>
 }
  
