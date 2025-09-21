@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 import secrets
 from rest_framework import status
+from utils.email import send_email
 
 # 6 digit otp
 def generate_otp():

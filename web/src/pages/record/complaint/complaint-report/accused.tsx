@@ -40,13 +40,7 @@ export const AccusedInfo = () => {
     { id: "Other", name: "Other" },
     { id: "Prefer not to say", name: "Prefer not to say" },
   ];
-
-  // Add debug logging
-  // useEffect(() => {
-  //   console.log('Current accused:', currentAccused);
-  //   console.log('Form errors:', control.formState.errors);
-  // }, [currentAccused, control.formState.errors]);
-
+  
   useEffect(() => {
     if (fields.length === 0) {
       append({

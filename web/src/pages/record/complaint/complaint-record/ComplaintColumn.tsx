@@ -3,13 +3,7 @@ import type { Complaint } from "../complaint-type";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { usePostArchiveComplaint } from "../api-operations/queries/complaintPostQueries";
-import {
-  UserCheck2,
-  ArrowUpDown,
-  MoreHorizontal,
-  File,
-  ArchiveIcon,
-} from "lucide-react";
+import { ArrowUpDown,MoreHorizontal,File,ArchiveIcon} from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Checkbox } from "@/components/ui/checkbox";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
@@ -86,26 +80,16 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
   },
   {
     accessorKey: "comp_id",
-    header: ({ column }) => (
+    header: () => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Complaint Id
-        <ArrowUpDown size={14} />
+        ID
       </div>
     ),
     cell: ({ row }) => {
       return (
         <div className="relative flex items-center justify-center h-full">
-          {/* Icon on the far left */}
-          <div className="absolute left-2">
-            <TooltipLayout
-              trigger={<UserCheck2 className="text-green-500" size={20} />}
-              content="Filed"
-            />
-          </div>
-
           {/* Badge centered */}
           <Badge variant="outline" className="font-medium">
             {row.original.comp_id}
@@ -158,12 +142,12 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Accused
+        Respondent
         <ArrowUpDown size={14} />
       </div>
     ),
     cell: ({ row }) => {
-      const accusedPersons = row.original.accused_persons;
+      const accusedPersons = row.original.accused;
       if (!accusedPersons || accusedPersons.length === 0) {
         return <div className="text-gray-500">No accused persons</div>;
       }

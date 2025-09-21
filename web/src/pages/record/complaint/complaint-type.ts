@@ -38,6 +38,7 @@ export interface ComplaintFile {
 
 export interface Complaint {
   comp_id: number;
+  comp_location: string;
   comp_incident_type: string;
   comp_datetime: string;
   comp_allegation: string;
@@ -45,8 +46,8 @@ export interface Complaint {
   comp_created_at: string;
   comp_is_archive: boolean;
   comp_status: string;
+  staff: Record<string,any>;
   complainant: Complainant[];
-  accused_persons: Accused[];
-  complaint_file?: ComplaintFile[];
-  
+  accused: Accused[];
+  comp_file?: ComplaintFile[];
 }

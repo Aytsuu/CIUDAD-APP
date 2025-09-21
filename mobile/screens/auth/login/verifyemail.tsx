@@ -5,7 +5,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToastContext } from '@/components/ui/toast';
 
 export default function VerifyEmail() {
@@ -13,7 +12,6 @@ export default function VerifyEmail() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
-  const router = useRouter();
   const { toast } = useToastContext();
 
   const handleSendCode = async () => {

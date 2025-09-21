@@ -5,21 +5,11 @@ import { Complaint } from "./complaint-type";
 import {
   AlertTriangle,
   FolderOpen,
-  Calendar,
-  MapPin,
-  Hash,
-  Clock,
-  UserCheck,
-  UserX,
-  Phone,
-  Mail,
   FileText,
   Download,
   Eye,
   Shield,
   FileWarning,
-  User,
-  Building,
 } from "lucide-react";
 import { toast } from "sonner";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -31,7 +21,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export function ComplaintViewRecord() {
@@ -82,11 +71,11 @@ export function ComplaintViewRecord() {
     }
   };
 
-  const handleSendAlert = async (srId: string) => {
+  const handleSendAlert = async (sr_id: string) => {
     try {
       await send({
         title: "Service Request Created",
-        message: `Service Request ${srId} has been created for Complaint ${complaintData.comp_id}`,
+        message: `Service Request ${sr_id} has been created for Complaint ${complaintData.comp_id}`,
         recipient_ids: [user?.acc_id || ""],
         metadata: {
           action_url: "/service-requests",
@@ -139,105 +128,8 @@ export function ComplaintViewRecord() {
     return "Not provided";
   };
 
-  const renderPersonCard = (person: any, type: "complainant" | "accused") => (
-    <Card
-      key={person.cpnt_id || person.acsd_id}
-      className="hover:shadow-md transition-all duration-200 border-l-4 border-l-blue-500"
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className={`p-2 rounded-full ${
-                type === "complainant"
-                  ? "bg-blue-100 text-blue-600"
-                  : "bg-red-100 text-red-600"
-              }`}
-            >
-              {type === "complainant" ? (
-                <UserCheck className="w-4 h-4" />
-              ) : (
-                <UserX className="w-4 h-4" />
-              )}
-            </div>
-            <div>
-              <CardTitle className="text-lg font-semibold text-gray-900">
-                {person.cpnt_name || person.acsd_name || "Unknown"}
-              </CardTitle>
-              <p className="text-sm text-gray-500 capitalize">{type}</p>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-              Age & Gender
-            </p>
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-gray-400" />
-              <p className="text-sm font-medium text-gray-900">
-                {person.cpnt_age || person.acsd_age || "N/A"} years,{" "}
-                {person.cpnt_gender || person.acsd_gender || "N/A"}
-              </p>
-            </div>
-          </div>
-
-          {type === "complainant" && person.cpnt_number && (
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Contact
-              </p>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-gray-400" />
-                <p className="text-sm font-medium text-gray-900">
-                  {person.cpnt_number}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {type === "complainant" && person.cpnt_relation_to_respondent && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-              Relation to Respondent
-            </p>
-            <p className="text-sm font-medium text-gray-900">
-              {person.cpnt_relation_to_respondent}
-            </p>
-          </div>
-        )}
-
-        {type === "accused" && person.acsd_description && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-              Description
-            </p>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              {person.acsd_description}
-            </p>
-          </div>
-        )}
-
-        <Separator className="my-3" />
-
-        <div className="space-y-1">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-2">
-            <MapPin className="w-3 h-3" />
-            Address
-          </p>
-          <p className="text-sm text-gray-700 leading-relaxed pl-5">
-            {formatPersonAddress(person)}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   const renderDocumentsSection = () => {
-    const files = complaintData?.complaint_files || [];
+    const files = complaintData?.comp_file || [];
 
     if (files.length === 0) {
       return (
@@ -412,26 +304,7 @@ export function ComplaintViewRecord() {
 
   return (
     <LayoutWithBack
-      title={
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
-          <div>
-            <span className="block text-xl sm:text-2xl font-bold">
-              Complaint Details
-            </span>
-            <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-gray-500">
-              <div className="flex items-center gap-1">
-                <Hash className="w-3 h-3" />
-                <span>ID: {complaintData.comp_id}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                <span>Filed: {formattedCreatedAt}</span>
-              </div>
-            </div>
-          </div>
-          <div className="sm:ml-auto">{headerActions}</div>
-        </div>
-      }
+      title={"Complaint Details"}
       description={`Review and manage complaint record #${complaintData.comp_id}`}
     >
       <div className="space-y-6">
@@ -452,13 +325,13 @@ export function ComplaintViewRecord() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {complaintData.accused_persons?.length || 0}
+                    {complaintData.accused?.length || 0}
                   </p>
                   <p className="text-sm text-gray-600">Accused</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {complaintData.complaint_file?.length || 0}
+                    {complaintData.comp_file?.length || 0}
                   </p>
                   <p className="text-sm text-gray-600">Documents</p>
                 </div>
@@ -570,16 +443,16 @@ export function ComplaintViewRecord() {
             )}
 
           {/* Accused Persons Section */}
-          {complaintData.accused_persons &&
-            complaintData.accused_persons.length > 0 && (
+          {complaintData.accused &&
+            complaintData.accused.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-gray-900">
-                    Accused Persons ({complaintData.accused_persons.length})
+                    Accused Persons ({complaintData.accused.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {complaintData.accused_persons.map((person) => (
+                  {complaintData.accused.map((person) => (
                     <div key={person.acsd_id} className="p-4 border rounded">
                       <div className="space-y-3">
                         <h4 className="font-medium text-gray-900">
@@ -619,7 +492,7 @@ export function ComplaintViewRecord() {
           {renderDocumentsSection()}
 
           {/* Staff Information */}
-          {complaintData.staff_id && (
+          {complaintData.staff && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-gray-900">Assigned Staff</CardTitle>
@@ -627,13 +500,13 @@ export function ComplaintViewRecord() {
               <CardContent>
                 <div className="space-y-2">
                   <p className="font-medium text-gray-900">
-                    {complaintData.staff_id.staff_name}
+                    {complaintData.staff.staff_name}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {complaintData.staff_id.staff_position}
+                    {complaintData.staff.staff_position}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {complaintData.staff_id.staff_department}
+                    {complaintData.staff.staff_department}
                   </p>
                 </div>
               </CardContent>

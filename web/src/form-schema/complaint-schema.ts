@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// Address schema
 const addressSchema = z.object({
   street: z.string().min(1, "Street is required"),
   barangay: z.string().min(1, "Barangay is required"),
@@ -32,22 +31,20 @@ const complainantSchema = z.object({
 const accusedSchema = z.object({
   type: z.enum(["manual", "resident"]).default("manual"),
   rp_id: z.string().nullable().optional(),
-  acsd_name: z.string().min(1, "Name/alias is required"), // Changed from alias
+  acsd_name: z.string().min(1, "Name/alias is required"), 
   acsd_age: z.string() // Changed from age
     .min(1, "Age is required")
     .refine((val) => {
       const age = parseInt(val);
       return !isNaN(age) && age >= 1 && age <= 150;
     }, "Age must be a valid number between 1 and 150"),
-  acsd_gender: z.string().min(1, "Gender is required"), // Changed from gender
+  acsd_gender: z.string().min(1, "Gender is required"), 
   genderInput: z.string().optional(),
-  acsd_description: z.string().min(10, "Description must be at least 10 characters"), // Changed from description
-  acsd_address: z.string().optional(), // Changed
+  acsd_description: z.string().min(10, "Description must be at least 10 characters"), 
+  acsd_address: z.string().optional(), 
   address: addressSchema.optional(),
 });
 
-// Incident schema - matches backend Complaint model fields
-// In your complaint-schema.ts
 const incidentSchema = z.object({
   comp_location: z.string().min(1, "Location is required"),
   comp_incident_type: z.string().min(1, "Incident type is required"),
@@ -59,8 +56,6 @@ const incidentSchema = z.object({
   otherType: z.string().optional(),
 });
 
-
-// Document/file schema - matches backend Complaint_File model
 const documentSchema = z.object({
   comp_file_name: z.string(),
   comp_file_size: z.number(),
@@ -88,14 +83,12 @@ export const complaintFormSchema = z.object({
 });
 
 
-// TypeScript type inference
 export type ComplaintFormData = z.infer<typeof complaintFormSchema>;
 export type ComplainantData = z.infer<typeof complainantSchema>;
 export type AccusedData = z.infer<typeof accusedSchema>;
 export type IncidentData = z.infer<typeof incidentSchema>;
 export type DocumentData = z.infer<typeof documentSchema>;
 
-// Transform functions for backend compatibility
 export const transformComplainantForBackend = (complainant: ComplainantData) => {
   let address = complainant.cpnt_address || "";
   

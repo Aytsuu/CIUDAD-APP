@@ -125,7 +125,6 @@ export const ComplainantInfo = () => {
     { id: "Male", name: "Male" },
     { id: "Female", name: "Female" },
     { id: "Other", name: "Other" },
-    { id: "Prefer not to say", name: "Prefer not to say" },
   ];
 
   useEffect(() => {
@@ -258,7 +257,7 @@ export const ComplainantInfo = () => {
                   isLoading={isResidentsLoading}
                   placeholder="Search by ID or name..."
                   emptyText="No residents found."
-                  onSelect={(displayValue, item) => {
+                  onSelect={(item) => {
                     if (item) {
                       selectResidentComplainant(item);
                     }
@@ -358,7 +357,6 @@ export const ComplainantInfo = () => {
               placeholder="e.g. Neighbor, Friend, Relative"
             />
           ) : (
-            /* For manual entry, show all fields */
             <>
               <FormInput
                 control={control}

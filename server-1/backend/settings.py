@@ -1,7 +1,6 @@
 # ---------------------------------------------------
 # PRODUCTION SERVER
 # ---------------------------------------------------
-
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
@@ -10,7 +9,6 @@ import os
 from corsheaders.defaults import default_headers
 import firebase_admin
 from firebase_admin import credentials
-
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent

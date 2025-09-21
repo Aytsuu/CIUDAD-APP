@@ -82,7 +82,6 @@ export default function Login() {
         overScrollMode="never"
         className="flex-1"
       >
-
         {currentStep === 1 && (
           <View className="flex-1">
             {loginMethod === "phone" ? (

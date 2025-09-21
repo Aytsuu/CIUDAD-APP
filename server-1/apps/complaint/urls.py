@@ -1,9 +1,10 @@
 from django.urls import path
 from .view import *
 from .views.update_complaint_view import *
+from .views.raise_issue import *
 # from .views.archive_complaint_view import *
 # from .views.search_complaint_view import *
-# from .views.create_complaint_view import *
+from .views.create_complaint_view import *
 
 urlpatterns = [
     
@@ -20,6 +21,7 @@ urlpatterns = [
     path('complainant/search/', SearchComplainantsView.as_view(), name='search-complainants'),
     path('accused/search/', SearchAccusedView.as_view(), name='search-accused'),
     path('complainant/all/', AllResidentsView.as_view(), name='all-residents'),
+    
     # Update
     path('<int:comp_id>/update/', ComplaintUpdateView.as_view(), name='complaint-update'),
     

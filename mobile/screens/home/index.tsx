@@ -68,7 +68,7 @@ export default function HomeScreen() {
     return <LoadingModal visible={true} />;
   }
   console.log("User: ", user)
-  console.log("User Data:", user?.staff?.rp?.pos_id);
+  console.log("User Data:", user?.staff?.rp?.per?.per_contact);
 
   // Optimized feature rendering logic
   const renderFeatureItem = (item: any, index: number, isToggleButton = false) => (
@@ -276,3 +276,56 @@ export default function HomeScreen() {
     </PageLayout>
   );
 }
+
+// import React from "react";
+// import { ScrollView, View, Text } from "react-native";
+// import { useAuth } from "@/contexts/AuthContext";
+// import PageLayout from "../_PageLayout";
+// import { LoadingModal } from "@/components/ui/loading-modal";
+
+// export default function HomeScreen() {
+//   const { user, isLoading } = useAuth();
+
+//   if (isLoading) return <LoadingModal visible={true} />;
+
+//   // 🔹 Recursive renderer
+//   const RenderTree = ({ data, indent = 0 }) => {
+//     if (typeof data !== "object" || data === null) {
+//       return (
+//         <Text style={{ marginLeft: indent, color: "#111" }}>
+//           {String(data)}
+//         </Text>
+//       );
+//     }
+
+//     return (
+//       <View style={{ marginLeft: indent }}>
+//         {Object.entries(data).map(([key, value], index) => (
+//           <View key={index} style={{ marginBottom: 2 }}>
+//             <Text style={{ fontWeight: "600", color: "#333" }}>
+//               {key}:
+//             </Text>
+//             {typeof value === "object" ? (
+//               <RenderTree data={value} indent={indent + 12} />
+//             ) : (
+//               <Text style={{ marginLeft: indent + 12, color: "#555" }}>
+//                 {String(value)}
+//               </Text>
+//             )}
+//           </View>
+//         ))}
+//       </View>
+//     );
+//   };
+
+//   return (
+//     <PageLayout showHeader={false}>
+//       <ScrollView style={{ padding: 16 }}>
+//         <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 12 }}>
+//           User Data
+//         </Text>
+//         <RenderTree data={user} />
+//       </ScrollView>
+//     </PageLayout>
+//   );
+// }

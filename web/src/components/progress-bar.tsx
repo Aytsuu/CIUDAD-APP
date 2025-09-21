@@ -25,9 +25,9 @@ export const ProgressBar = ({
 
   return (
     <div
-      className={`flex items-center justify-center w-full px-6 py-8 ${className}`}
+      className={`flex items-center justify-center w-full ${className}`}
     >
-      <div className="w-full max-w-6xl relative">
+      <div className="w-full max-w-4xl relative">
         {/* Base gray connecting line */}
         <div 
           className="absolute top-6 h-0.5 bg-gray-300"
