@@ -42,7 +42,6 @@ class ActiveBusinessTableView(generics.ListAPIView):
 
   def get_queryset(self):
     queryset = Business.objects.filter(~Q(bus_status='Pending')).select_related(
-      'add',
       'staff',
     ).prefetch_related(
       'business_files'
@@ -50,12 +49,11 @@ class ActiveBusinessTableView(generics.ListAPIView):
       'bus_id',
       'bus_name',
       'bus_gross_sales',
+      'bus_location',
       'bus_date_verified',
       'staff__rp__per__per_lname',
       'staff__rp__per__per_fname',
       'staff__rp__per__per_mname',
-      'add__sitio__sitio_name',
-      'add__add_street'
     )
 
     search_query = self.request.query_params.get('search', '').strip()
@@ -64,9 +62,7 @@ class ActiveBusinessTableView(generics.ListAPIView):
         Q(bus_id__icontains=search_query) |
         Q(bus_name__icontains=search_query) |
         Q(bus_gross_sales__icontains=search_query) |
-        Q(bus_date_registered__icontains=search_query) |
-        Q(add__sitio__sitio_name__icontains=search_query) |
-        Q(add__add_street__icontains=search_query) 
+        Q(bus_location=search_query) 
       ).distinct()
 
     return queryset.order_by('bus_id')

@@ -62,6 +62,7 @@ class AllRecordTableView(generics.GenericAPIView):
     page = self.paginate_queryset(unified_data)
     serializer = self.get_serializer(page, many=True)
     return self.get_paginated_response(serializer.data)
+  
 
 class CompleteRegistrationView(APIView):
   permission_classes = [AllowAny]
@@ -110,10 +111,6 @@ class CompleteRegistrationView(APIView):
     if family:
         self.join_family(family, rp)
 
-    if business:
-        bus = self.create_business(business, rp, staff)
-        if bus:
-          results["bus_id"] = bus.pk
 
     # Perform double query
     double_queries = PostQueries()
@@ -125,6 +122,11 @@ class CompleteRegistrationView(APIView):
           error_detail = response.text
       raise serializers.ValidationError({"error": error_detail})
     
+    if business:
+        bus = self.create_business(business, rp, staff)
+        if bus:
+          results["bus_id"] = bus.pk
+          
     return Response(results, status=status.HTTP_200_OK)
   
   def create_resident_profile(self, personal, staff):
@@ -170,10 +172,13 @@ class CompleteRegistrationView(APIView):
 
   def create_account(self, account, rp):
     instance = Account.objects.create_user(
-      **account,
+      phone=account.get('phone'),
+      email=account.get("email", None),
       rp=rp,
-      username=account['phone']
+      username=account.get('phone'),
+      password=account.get('password')
     )
+
     return instance
   
   def create_household(self, houses, rp, staff):
@@ -228,26 +233,15 @@ class CompleteRegistrationView(APIView):
     )
   
   def create_business(self, business, rp, staff):
-    sitio = business.get("sitio", None)
-    street = business.get("bus_street", None)
     files = business.get("files", [])
-
-    if sitio and street:
-      add,_ = Address.objects.get_or_create(
-        add_province="Cebu",
-        add_city="Cebu City",
-        add_barangay="San Roque (ciudad)",
-        sitio=Sitio.objects.filter(sitio_id=sitio).first(),
-        add_street=street
-      )
     
     business = Business(
       bus_name=business["bus_name"],
       bus_gross_sales=business["bus_gross_sales"],
+      bus_location=business["bus_location"],
       bus_status="Active",
       bus_date_verified=datetime.today(),
       rp=rp,
-      add=add,
       staff=staff
     )
     business._history_user=staff

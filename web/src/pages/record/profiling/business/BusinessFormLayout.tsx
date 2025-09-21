@@ -182,37 +182,10 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
         ...(!noPersonalInfo && {per: per}),
         ...(rp_id && {rp: rp_id}),
         ...businessData,
-        sitio: businessData.sitio.toLowerCase(),
         bus_status: "Active",
         staff: user?.staff?.staff_id,
         create_files: files
       })
-
-      // if(!rp_id) { // For non-resident
-      //   const personal = await addPersonal(capitalizeAllFields(per));
-      //   const respondent = await addBusinessRespondent({
-      //     per: personal.per_id,
-      //   });
-
-      //   await addBusiness({
-      //     ...businessData,
-      //     bus_status: 'Active',
-      //     br: respondent?.br_id,
-      //     staff: user?.staff?.staff_id,
-      //     files: files,
-      //   })
-
-      // } else {
-      //   await addBusiness({
-      //     ...businessData,
-      //     ...((rp_id || tab_params?.residentId) && {
-      //       rp: tab_params?.residentId || rp_id?.split(" ")[0],
-      //     }),
-      //     bus_status: 'Active',
-      //     staff: user?.staff?.staff_id,
-      //     files: files,
-      //   })
-      // }
 
       setIsSubmitting(false);
       showSuccessToast("Business registered successfully!")
@@ -246,7 +219,6 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
           ...((formType !== Type.Request && !_.isEqual(initialFiles, files)) && {
             edit_files: files
           }),
-          sitio: businessData.sitio.toLowerCase(),
           staff: user?.staff?.staff_id || "",
         },
         businessId: params?.busId,
@@ -287,8 +259,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     const formIsValid = await form.trigger([
       "bus_name", 
       "bus_gross_sales", 
-      "bus_street", 
-      "sitio"
+      "bus_location", 
     ])
 
     // Validate form
